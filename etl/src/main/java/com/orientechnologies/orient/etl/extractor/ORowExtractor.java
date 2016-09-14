@@ -20,7 +20,6 @@ package com.orientechnologies.orient.etl.extractor;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.etl.OETLProcessor;
 import com.orientechnologies.orient.etl.OExtractedItem;
 
 import java.io.BufferedReader;
@@ -31,8 +30,8 @@ import java.util.NoSuchElementException;
 public class ORowExtractor extends OAbstractSourceExtractor {
   protected BufferedReader bReader;
   protected OExtractedItem next;
-  protected boolean        multiLine = true;
-  protected String         lineFeed  = "\r\n";
+  protected boolean multiLine = true;
+  protected String  lineFeed  = "\r\n";
 
   @Override
   public String getName() {
@@ -40,14 +39,14 @@ public class ORowExtractor extends OAbstractSourceExtractor {
   }
 
   @Override
-  public void configure(final OETLProcessor iProcessor, final ODocument iConfiguration, final OCommandContext iContext) {
-    super.configure(iProcessor, iConfiguration, iContext);
+  public void configure(final ODocument iConfiguration, final OCommandContext iContext) {
+    super.configure(iConfiguration, iContext);
 
     if (iConfiguration.containsField("multiLine"))
-      multiLine = (Boolean) iConfiguration.field("multiLine");
+      multiLine = iConfiguration.<Boolean>field("multiLine");
 
     if (iConfiguration.containsField("lineFeed"))
-      lineFeed = (String) iConfiguration.field("lineFeed");
+      lineFeed = iConfiguration.field("lineFeed");
   }
 
   @Override

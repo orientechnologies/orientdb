@@ -1,36 +1,23 @@
 package com.orientechnologies.orient.core.index.sbtree.local;
 
-import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
-import com.orientechnologies.orient.core.config.OStorageConfiguration;
-import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
-import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
-import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
-import org.mockito.Mockito;
+import org.assertj.core.api.Assertions;
+import org.junit.*;
 import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,14 +25,10 @@ import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 /**
  * @author Andrey Lomakin
  * @since 8/27/13
  */
-@Test
 public class SBTreeWALTest extends SBTreeTest {
   static {
     OGlobalConfiguration.FILE_LOCK.setValue(false);
@@ -68,18 +51,8 @@ public class SBTreeWALTest extends SBTreeTest {
   private OReadCache             expectedReadCache;
   private OWriteCache            expectedWriteCache;
 
-  @BeforeClass
-  @Override
-  public void beforeClass() {
-  }
-
-  @AfterClass
-  @Override
-  public void afterClass() {
-  }
-
-  @BeforeMethod
-  public void beforeMethod() throws IOException {
+  @Before
+  public void before() throws IOException {
     buildDirectory = System.getProperty("buildDirectory", ".");
     buildDirectory += "/sbtreeWithWALTest";
 
@@ -91,7 +64,7 @@ public class SBTreeWALTest extends SBTreeTest {
     createActualSBTree();
   }
 
-  @AfterMethod
+  @After
   @Override
   public void afterMethod() throws Exception {
     databaseDocumentTx.open("admin", "admin");
@@ -228,25 +201,29 @@ public class SBTreeWALTest extends SBTreeTest {
     assertFileRestoreFromWAL();
   }
 
-  @Test(enabled = false)
+  @Test
+  @Ignore
   @Override
   public void testNullKeysInSBTree() {
     super.testNullKeysInSBTree();
   }
 
-  @Test(enabled = false)
+  @Test
+  @Ignore
   @Override
   public void testIterateEntriesMajor() {
     super.testIterateEntriesMajor();
   }
 
-  @Test(enabled = false)
+  @Test
+  @Ignore
   @Override
   public void testIterateEntriesMinor() {
     super.testIterateEntriesMinor();
   }
 
-  @Test(enabled = false)
+  @Test
+  @Ignore
   @Override
   public void testIterateEntriesBetween() {
     super.testIterateEntriesBetween();
@@ -269,7 +246,7 @@ public class SBTreeWALTest extends SBTreeTest {
   }
 
   private void restoreDataFromWAL() throws IOException {
-    ODiskWriteAheadLog log = new ODiskWriteAheadLog(4, -1, 10 * 1024L * OWALPage.PAGE_SIZE, null, actualStorage);
+    ODiskWriteAheadLog log = new ODiskWriteAheadLog(4, -1, 10 * 1024L * OWALPage.PAGE_SIZE, null, false, actualStorage);
     OLogSequenceNumber lsn = log.begin();
 
     List<OWALRecord> atomicUnit = new ArrayList<OWALRecord>();
@@ -295,18 +272,13 @@ public class SBTreeWALTest extends SBTreeTest {
             final OFileCreatedWALRecord fileCreatedCreatedRecord = (OFileCreatedWALRecord) restoreRecord;
             final String fileName = fileCreatedCreatedRecord.getFileName().replace("actualSBTree", "expectedSBTree");
 
-            if (expectedWriteCache.exists(fileName))
-              expectedReadCache.openFile(fileName, fileCreatedCreatedRecord.getFileId(), expectedWriteCache);
-            else
+            if (!expectedWriteCache.exists(fileName))
               expectedReadCache.addFile(fileName, fileCreatedCreatedRecord.getFileId(), expectedWriteCache);
           } else {
             final OUpdatePageRecord updatePageRecord = (OUpdatePageRecord) restoreRecord;
 
             final long fileId = updatePageRecord.getFileId();
             final long pageIndex = updatePageRecord.getPageIndex();
-
-            if (!expectedWriteCache.isOpen(fileId))
-              expectedReadCache.openFile(fileId, expectedWriteCache);
 
             OCacheEntry cacheEntry = expectedReadCache.load(fileId, pageIndex, true, expectedWriteCache, 1);
             if (cacheEntry == null) {
@@ -320,7 +292,7 @@ public class SBTreeWALTest extends SBTreeTest {
 
             cacheEntry.acquireExclusiveLock();
             try {
-              ODurablePage durablePage = new ODurablePage(cacheEntry, null);
+              ODurablePage durablePage = new ODurablePage(cacheEntry);
               durablePage.restoreChanges(updatePageRecord.getChanges());
               durablePage.setLsn(updatePageRecord.getLsn());
 
@@ -362,8 +334,9 @@ public class SBTreeWALTest extends SBTreeTest {
     while (bytesRead >= 0) {
       fileTwo.readFully(actualContent, 0, bytesRead);
 
-      Assert.assertEquals(expectedContent, actualContent);
+      //      Assert.assertEquals(expectedContent, actualContent);
 
+      Assertions.assertThat(expectedContent).isEqualTo(actualContent);
       expectedContent = new byte[OClusterPage.PAGE_SIZE];
       actualContent = new byte[OClusterPage.PAGE_SIZE];
       bytesRead = fileOne.read(expectedContent);

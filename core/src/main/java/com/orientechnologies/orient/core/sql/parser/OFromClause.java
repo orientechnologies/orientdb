@@ -31,5 +31,34 @@ public class OFromClause extends SimpleNode {
   public OFromItem getItem() {
     return item;
   }
+
+  public void setItem(OFromItem item) {
+    this.item = item;
+  }
+
+  public OFromClause copy() {
+    OFromClause result= new OFromClause(-1);
+    result.item = item.copy();
+    return result;
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OFromClause that = (OFromClause) o;
+
+    if (item != null ? !item.equals(that.item) : that.item != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    return item != null ? item.hashCode() : 0;
+  }
+
 }
 /* JavaCC - OriginalChecksum=051839d20dabfa4cce26ebcbe0d03a86 (do not edit this line) */

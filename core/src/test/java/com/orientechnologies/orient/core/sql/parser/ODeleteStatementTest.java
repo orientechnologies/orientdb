@@ -10,17 +10,17 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.testng.Assert.fail;
+import static org.junit.Assert.fail;
 
-@Test public class ODeleteStatementTest {
+public class ODeleteStatementTest {
 
   protected SimpleNode checkRightSyntax(String query) {
     return checkSyntax(query, true);
@@ -47,6 +47,7 @@ import static org.testng.Assert.fail;
     return null;
   }
 
+  @Test
   public void testDeleteFromIndexBinary() {
 
     ODatabaseDocument database = new ODatabaseDocumentTx("memory:ODeleteStatementTestDeleteFromIndexBinary");
@@ -85,6 +86,7 @@ import static org.testng.Assert.fail;
     database.close();
   }
 
+  @Test
   public void deleteFromSubqueryWithWhereTest() {
 
     ODatabaseDocument database = new ODatabaseDocumentTx("memory:ODeleteStatementTestFromSubqueryWithWhereTest");

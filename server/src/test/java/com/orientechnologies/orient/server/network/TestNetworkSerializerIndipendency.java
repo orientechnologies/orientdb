@@ -48,8 +48,8 @@ public class TestNetworkSerializerIndipendency {
       dbTx.commit();
       ODocument doc = dbTx.load(document.getIdentity());
       assertEquals(doc.fields(), document.fields());
-      assertEquals(doc.field("name"), document.field("name"));
-      assertEquals(doc.field("surname"), document.field("surname"));
+      assertEquals(doc.<Object>field("name"), document.field("name"));
+      assertEquals(doc.<Object>field("surname"), document.field("surname"));
     } finally {
       if (dbTx != null) {
         dbTx.close();
@@ -63,13 +63,13 @@ public class TestNetworkSerializerIndipendency {
 
   private void dropDatabase() throws IOException {
     OServerAdmin admin = new OServerAdmin("remote:localhost/test");
-    admin.connect("root", "D2AFD02F20640EC8B7A5140F34FCA49D2289DB1F0D0598BB9DE8AAA75A0792F3");
+    admin.connect("root", "root");
     admin.dropDatabase("plocal");
   }
 
   private void createDatabase() throws IOException {
     OServerAdmin admin = new OServerAdmin("remote:localhost/test");
-    admin.connect("root", "D2AFD02F20640EC8B7A5140F34FCA49D2289DB1F0D0598BB9DE8AAA75A0792F3");
+    admin.connect("root", "root");
     admin.createDatabase("document", "plocal");
   }
 
@@ -91,8 +91,8 @@ public class TestNetworkSerializerIndipendency {
       dbTx.commit();
       ODocument doc = dbTx.load(document.getIdentity());
       assertEquals(doc.fields(), document.fields());
-      assertEquals(doc.field("name"), document.field("name"));
-      assertEquals(doc.field("surname"), document.field("surname"));
+      assertEquals(doc.<Object>field("name"), document.field("name"));
+      assertEquals(doc.<Object>field("surname"), document.field("surname"));
     } finally {
       if (dbTx != null) {
         dbTx.close();

@@ -38,8 +38,8 @@ public class OETLStubRandomExtractor extends OAbstractExtractor {
   private int delay = 0;
 
   @Override
-  public void configure(OETLProcessor iProcessor, ODocument iConfiguration, OCommandContext iContext) {
-    super.configure(iProcessor, iConfiguration, iContext);
+  public void configure(ODocument iConfiguration, OCommandContext iContext) {
+    super.configure(iConfiguration, iContext);
 
     if (iConfiguration.containsField("items"))
       items = ((Number) iConfiguration.field("items")).longValue();

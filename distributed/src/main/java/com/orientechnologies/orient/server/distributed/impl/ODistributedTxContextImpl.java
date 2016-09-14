@@ -19,12 +19,15 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.server.distributed.*;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
+import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.ODistributedTxContext;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRecordReplicatedTask;
-import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 import java.util.ArrayList;
@@ -41,18 +44,37 @@ public class ODistributedTxContextImpl implements ODistributedTxContext {
   private final ODistributedRequestId reqId;
   private final List<ORemoteTask>     undoTasks     = new ArrayList<ORemoteTask>();
   private final List<ORID>            acquiredLocks = new ArrayList<ORID>();
+  private final long                  startedOn     = System.currentTimeMillis();
 
   public ODistributedTxContextImpl(final ODistributedDatabase iDatabase, final ODistributedRequestId iRequestId) {
     db = iDatabase;
     reqId = iRequestId;
   }
 
-  public synchronized void lock(final ORID rid) {
-    final ODistributedRequestId lockHolder = db.lockRecord(rid, reqId);
-    if (lockHolder != null)
-      throw new ODistributedRecordLockedException(rid, lockHolder);
+  @Override
+  public String toString() {
+    return "reqId=" + reqId + " undoTasks=" + undoTasks.size() + " startedOn=" + startedOn;
+  }
 
-    acquiredLocks.add(rid);
+  @Override
+  public synchronized void lock(ORID rid) {
+    lock(rid, -1);
+  }
+
+  @Override
+  public synchronized void lock(ORID rid, long timeout) {
+    if (timeout < 0)
+      timeout = OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT.getValueAsInteger();
+
+    if (!rid.isPersistent())
+      // CREATE A COPY TO MAINTAIN THE LOCK ON THE CLUSTER AVOIDING THE RID IS TRANSFORMED IN PERSISTENT. THIS ALLOWS TO HAVE
+      // PARALLEL TX BECAUSE NEW RID LOCKS THE ENTIRE CLUSTER.
+      rid = new ORecordId(rid.getClusterId(), -1l);
+
+    if (db.lockRecord(rid, reqId, timeout))
+      // NEW LOCK (FALSE=LOCK WAS ALREADY TAKEN. THIS CAN HAPPEN WITH CREATE, BECAUSE THE RID IS ON CLUSTER ID ONLY (LIKE #25:-1),
+      // SO 2 CREATE OPERATIONS AGAIN THE SAME CLUSTER RESULT IN 2 LOCKS AGAINST THE SAME RESOURCE
+      acquiredLocks.add(rid);
   }
 
   public ODistributedRequestId getReqId() {
@@ -93,7 +115,8 @@ public class ODistributedTxContextImpl implements ODistributedTxContext {
     for (ORemoteTask task : undoTasks) {
       try {
 
-        db.getManager().executeOnLocalNode(reqId, task, database);
+        if (task != null)
+          db.getManager().executeOnLocalNode(reqId, task, database);
 
       } catch (Exception e) {
         ODistributedServerLog.error(this, db.getManager().getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
@@ -110,11 +133,15 @@ public class ODistributedTxContextImpl implements ODistributedTxContext {
   }
 
   @Override
-  public void unlock() {
+  public synchronized void unlock() {
     if (!acquiredLocks.isEmpty()) {
       for (ORID lockedRID : acquiredLocks)
         db.unlockRecord(lockedRID, reqId);
       acquiredLocks.clear();
     }
+  }
+
+  public long getStartedOn() {
+    return startedOn;
   }
 }

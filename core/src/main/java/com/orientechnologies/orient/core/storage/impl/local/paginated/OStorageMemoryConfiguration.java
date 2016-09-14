@@ -21,9 +21,9 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
 import java.io.IOException;
-import java.util.Map;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -50,10 +50,8 @@ public class OStorageMemoryConfiguration extends OStorageConfiguration {
   }
 
   @Override
-  public OStorageConfiguration load(final Map<String, Object> iProperties) throws OSerializationException {
-    initConfiguration();
-
-    bindPropertiesToContext(iProperties);
+  public OStorageConfiguration load(final OContextConfiguration configuration) throws OSerializationException {
+    initConfiguration(configuration);
 
     try {
       fromStream(serializedContent);

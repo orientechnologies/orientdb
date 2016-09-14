@@ -2,21 +2,17 @@ package com.orientechnologies.orient.core.serialization.serializer.binary.impl.i
 
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
-import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
+import org.junit.Assert;import org.junit.Before; import org.junit.Test;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-@Test
 public class OSimpleKeySerializerTest {
   private static final int    FIELD_SIZE = 9;
   private static final Double OBJECT     = Math.PI;
   private OSimpleKeySerializer<Double> simpleKeySerializer;
   byte[] stream = new byte[FIELD_SIZE];
 
-  @BeforeClass
+  @Before
   public void beforeClass() {
     simpleKeySerializer = new OSimpleKeySerializer<Double>();
   }

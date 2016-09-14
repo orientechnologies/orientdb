@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
@@ -61,7 +62,7 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
   private final OClientConnection           connection;
 
   public OTransactionOptimisticProxy(OClientConnection connection, ONetworkProtocolBinary protocolBinary) throws IOException {
-    super((ODatabaseDocumentTx) connection.getDatabase());
+    super(connection.getDatabase());
     channel = protocolBinary.getChannel();
     clientTxId = channel.readInt();
     this.protocolVersion = connection.getData().protocolVersion;
@@ -194,8 +195,13 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
       tempEntries.clear();
 
       // UNMARSHALL ALL THE RECORD AT THE END TO BE SURE ALL THE RECORD ARE LOADED IN LOCAL TX
-      for (ORecord record : createdRecords.values())
+      for (ORecord record : createdRecords.values()) {
         unmarshallRecord(record);
+        if (record instanceof ODocument) {
+          // Force conversion of value to class for trigger default values.
+          ODocumentInternal.autoConvertValueToClass(connection.getDatabase(), (ODocument) record);
+        }
+      }
       for (ORecord record : updatedRecords.values())
         unmarshallRecord(record);
 
@@ -246,34 +252,28 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
           continue;
 
         final Object key;
-        try {
-          ODocument keyContainer;
-          if (protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_24) {
+        ODocument keyContainer;
+        if (protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_24) {
 
-            final String serializedKey = OStringSerializerHelper.decode((String) entry.field("k"));
-            if (serializedKey.equals("*"))
-              keyContainer = null;
-            else {
-              keyContainer = new ODocument();
-              keyContainer.setLazyLoad(false);
-              ORecordSerializerSchemaAware2CSV.INSTANCE.fromString(serializedKey, keyContainer, null);
-            }
-          } else {
-            keyContainer = entry.field("k");
+          final String serializedKey = OStringSerializerHelper.decode((String) entry.field("k"));
+          if (serializedKey.equals("*"))
+            keyContainer = null;
+          else {
+            keyContainer = new ODocument();
+            keyContainer.setLazyLoad(false);
+            ORecordSerializerSchemaAware2CSV.INSTANCE.fromString(serializedKey, keyContainer, null);
           }
-          if (keyContainer != null) {
-            final Object storedKey = keyContainer.field("key");
-            if (storedKey instanceof List)
-              key = new OCompositeKey((List<? extends Comparable<?>>) storedKey);
-            else if (Boolean.TRUE.equals(keyContainer.field("binary"))) {
-              key = OStreamSerializerAnyStreamable.INSTANCE.fromStream((byte[]) storedKey);
-            } else
-              key = storedKey;
-          } else
-            key = null;
-        } catch (IOException ioe) {
-          throw OException.wrapException(new OTransactionException("Error during index changes deserialization. "), ioe);
+        } else {
+          keyContainer = entry.field("k");
         }
+        if (keyContainer != null) {
+          final Object storedKey = keyContainer.field("key");
+          if (storedKey instanceof List)
+            key = new OCompositeKey((List<? extends Comparable<?>>) storedKey);
+          else
+            key = storedKey;
+        } else
+          key = null;
 
         for (final ODocument op : operations) {
           final int operation = (Integer) op.rawField("o");

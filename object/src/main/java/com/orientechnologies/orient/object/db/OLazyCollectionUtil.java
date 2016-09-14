@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.object.db;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -16,8 +17,8 @@ public class OLazyCollectionUtil {
     ODatabaseInternal<?> databaseOwner = ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner();
     if (databaseOwner instanceof ODatabasePojoAbstract) {
       return (ODatabasePojoAbstract<TYPE>) databaseOwner;
-    } else if (databaseOwner instanceof ODatabaseDocumentTx) {
-      return (ODatabasePojoAbstract<TYPE>) new OObjectDatabaseTx((ODatabaseDocumentTx) databaseOwner);
+    } else if (databaseOwner instanceof ODatabaseDocumentInternal) {
+      return (ODatabasePojoAbstract<TYPE>) new OObjectDatabaseTx((ODatabaseDocumentInternal) databaseOwner);
     }
     throw new IllegalStateException("Current database not of expected type");
   }

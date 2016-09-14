@@ -14,7 +14,6 @@ public class OrientJdbcStatementTest extends OrientJdbcBaseTest {
   public void shouldCreateStatement() throws Exception {
     Statement stmt = conn.createStatement();
     assertThat(stmt).isNotNull();
-    ;
     stmt.close();
     assertThat(stmt.isClosed()).isTrue();
 
@@ -23,6 +22,7 @@ public class OrientJdbcStatementTest extends OrientJdbcBaseTest {
   @Test
   public void shouldReturnEmptyResultSetOnEmptyQuery() throws SQLException {
     Statement stmt = conn.createStatement();
+
     assertThat(stmt.execute("")).isFalse();
     assertThat(stmt.getResultSet()).isNull();
     ;
@@ -49,6 +49,7 @@ public class OrientJdbcStatementTest extends OrientJdbcBaseTest {
     String query = String.format("select sequence('%s').next()", "theSequence");
     Statement stmt = conn.createStatement();
     stmt.executeQuery(query);
+
 
   }
 }

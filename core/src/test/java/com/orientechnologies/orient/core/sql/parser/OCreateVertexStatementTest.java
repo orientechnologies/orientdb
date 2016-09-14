@@ -1,13 +1,12 @@
 package com.orientechnologies.orient.core.sql.parser;
 
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
-import static org.testng.Assert.fail;
+import static org.junit.Assert.fail;
 
-@Test
 public class OCreateVertexStatementTest {
 
   protected SimpleNode checkRightSyntax(String query) {
@@ -35,6 +34,7 @@ public class OCreateVertexStatementTest {
     return null;
   }
 
+  @Test
   public void testSimpleCreate() {
     checkRightSyntax("create vertex");
     checkRightSyntax("create vertex V");
@@ -51,6 +51,7 @@ public class OCreateVertexStatementTest {
     printTree("create vertex (a,b) values (\"1\", \"2\")");
   }
 
+  @Test
   public void testSimpleCreateSet() {
     checkRightSyntax("create vertex Foo set a = 1");
     checkRightSyntax("create vertex Foo set a = '1'");
@@ -60,27 +61,25 @@ public class OCreateVertexStatementTest {
 
   }
 
-
+  @Test
   public void testEmptyArrayCreate() {
     checkRightSyntax("create vertex Foo set a = 'foo'");
     checkRightSyntax("create vertex Foo set a = []");
-//    checkRightSyntax("create vertex Foo set a = [ ]");
+    //    checkRightSyntax("create vertex Foo set a = [ ]");
   }
 
-
+  @Test
   public void testEmptyMapCreate() {
     checkRightSyntax("create vertex Foo set a = {}");
     checkRightSyntax("create vertex Foo SET a = { }");
   }
 
-
+  @Test
   public void testInsertIntoCluster() {
-    checkRightSyntax("create vertex cluster:default (equaledges, name, list) values ('yes', 'square', ['bottom', 'top','left','right'] )");
+    checkRightSyntax(
+        "create vertex cluster:default (equaledges, name, list) values ('yes', 'square', ['bottom', 'top','left','right'] )");
 
   }
-
-
-
 
   private void printTree(String s) {
     OrientSql osql = getParserFor(s);

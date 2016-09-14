@@ -175,6 +175,7 @@ public class LuceneTransactionEmbeddedQueryTest {
 
       db.begin();
 
+      //select in transaction while updating
       ODocument record = vertices.get(0);
       Collection p1 = record.field("p1");
       p1.remove("update removed");

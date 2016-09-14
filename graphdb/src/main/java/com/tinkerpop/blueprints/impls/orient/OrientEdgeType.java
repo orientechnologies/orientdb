@@ -46,6 +46,7 @@ public class OrientEdgeType extends OrientElementType {
   }
 
   @Override
+  @Deprecated
   public OrientEdgeType getSuperClass() {
     return new OrientEdgeType(graph, super.getSuperClass());
   }

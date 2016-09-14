@@ -123,13 +123,6 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     return atomicOperationsManager.startAtomicOperation(this, trackNonTxOperations);
   }
 
-  protected OWALChanges getChanges(OAtomicOperation atomicOperation, OCacheEntry entry) {
-    if (atomicOperation == null)
-      return null;
-
-    return atomicOperation.getChanges(entry.getFileId(), entry.getPageIndex());
-  }
-
   protected long getFilledUpTo(OAtomicOperation atomicOperation, long fileId) throws IOException {
     if (atomicOperation == null)
       return writeCache.getFilledUpTo(fileId);
@@ -180,16 +173,9 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
 
   protected long openFile(OAtomicOperation atomicOperation, String fileName) throws IOException {
     if (atomicOperation == null)
-      return readCache.openFile(fileName, writeCache);
+      return writeCache.loadFile(fileName);
 
-    return atomicOperation.openFile(fileName);
-  }
-
-  protected void openFile(OAtomicOperation atomicOperation, long fileId) throws IOException {
-    if (atomicOperation == null)
-      readCache.openFile(fileId, writeCache);
-    else
-      atomicOperation.openFile(fileId);
+    return atomicOperation.loadFile(fileName);
   }
 
   protected void deleteFile(OAtomicOperation atomicOperation, long fileId) throws IOException {

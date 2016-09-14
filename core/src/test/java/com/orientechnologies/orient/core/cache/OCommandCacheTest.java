@@ -26,8 +26,8 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -103,7 +103,8 @@ public class OCommandCacheTest {
       Assert.assertEquals(maxResultsetSize, OGlobalConfiguration.COMMAND_CACHE_MAX_RESULSET_SIZE.getValue());
 
     } catch (IOException e) {
-      Assert.fail("Cannot find file configuration", e);
+      Assert.fail("Cannot find file configuration");
+
     } finally {
       db.drop();
     }

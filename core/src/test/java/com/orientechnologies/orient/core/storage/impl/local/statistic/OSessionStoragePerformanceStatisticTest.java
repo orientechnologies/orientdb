@@ -2,14 +2,15 @@ package com.orientechnologies.orient.core.storage.impl.local.statistic;
 
 import com.orientechnologies.common.types.OModifiableInteger;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Test;
 
 import java.util.HashMap;
 import java.util.Map;
 
-@Test
 public class OSessionStoragePerformanceStatisticTest {
+
+  @Test
   public void testReadFromCache() {
     final OModifiableInteger increment = new OModifiableInteger();
 
@@ -35,7 +36,8 @@ public class OSessionStoragePerformanceStatisticTest {
       sessionStoragePerformanceStatistic.stopPageReadFromCacheTimer();
 
       increment.setValue(150);
-      sessionStoragePerformanceStatistic.startComponentOperation("c2po", OSessionStoragePerformanceStatistic.ComponentType.GENERAL);//c2po inside of c1po
+      sessionStoragePerformanceStatistic
+          .startComponentOperation("c2po", OSessionStoragePerformanceStatistic.ComponentType.GENERAL);//c2po inside of c1po
       sessionStoragePerformanceStatistic.startPageReadFromCacheTimer();
       sessionStoragePerformanceStatistic.stopPageReadFromCacheTimer();
       sessionStoragePerformanceStatistic.completeComponentOperation();//c2po
@@ -83,22 +85,23 @@ public class OSessionStoragePerformanceStatisticTest {
 
     final ODocument doc = sessionStoragePerformanceStatistic.toDocument();
 
-    Assert.assertEquals(doc.field("amountOfPagesReadFromCache"), 150L);
-    Assert.assertEquals(doc.field("readSpeedFromCacheInPages"), 10000000L);
+    Assert.assertEquals(doc.field("amountOfPagesReadFromCache"), Long.valueOf(150L));
+    Assert.assertEquals(doc.field("readSpeedFromCacheInPages"), Long.valueOf(10000000L));
 
     final ODocument docC1PO = doc.<Map<String, ODocument>>field("dataByComponent").get("c1po");
 
-    Assert.assertEquals(docC1PO.field("amountOfPagesReadFromCache"), 100L);
-    Assert.assertEquals(docC1PO.field("readSpeedFromCacheInPages"), 10000000L);
-    Assert.assertEquals(docC1PO.field("amountOfPagesPerOperation"), 2L);
+    Assert.assertEquals(docC1PO.field("amountOfPagesReadFromCache"), Long.valueOf(100L));
+    Assert.assertEquals(docC1PO.field("readSpeedFromCacheInPages"), Long.valueOf(10000000L));
+    Assert.assertEquals(docC1PO.field("amountOfPagesPerOperation"), Long.valueOf(2L));
 
     final ODocument docC2PO = doc.<Map<String, ODocument>>field("dataByComponent").get("c2po");
 
-    Assert.assertEquals(docC2PO.field("amountOfPagesReadFromCache"), 50L);
-    Assert.assertEquals(docC2PO.field("readSpeedFromCacheInPages"), 6666666L);
-    Assert.assertEquals(docC2PO.field("amountOfPagesPerOperation"), 1L);
+    Assert.assertEquals(docC2PO.field("amountOfPagesReadFromCache"), Long.valueOf(50L));
+    Assert.assertEquals(docC2PO.field("readSpeedFromCacheInPages"), Long.valueOf(6666666L));
+    Assert.assertEquals(docC2PO.field("amountOfPagesPerOperation"), Long.valueOf(1L));
   }
 
+  @Test
   public void testReadFromFile() {
     final OModifiableInteger increment = new OModifiableInteger();
 
@@ -157,20 +160,21 @@ public class OSessionStoragePerformanceStatisticTest {
 
     final ODocument doc = sessionStoragePerformanceStatistic.toDocument();
 
-    Assert.assertEquals(doc.field("amountOfPagesReadFromFile"), 1500L);
-    Assert.assertEquals(doc.field("readSpeedFromFileInPages"), 100000000L);
+    Assert.assertEquals(doc.<Long>field("amountOfPagesReadFromFile"), Long.valueOf(1500L));
+    Assert.assertEquals(doc.<Long>field("readSpeedFromFileInPages"), Long.valueOf(100000000L));
 
     final ODocument docC1PO = doc.<Map<String, ODocument>>field("dataByComponent").get("c1po");
 
-    Assert.assertEquals(docC1PO.field("amountOfPagesReadFromFile"), 1000L);
-    Assert.assertEquals(docC1PO.field("readSpeedFromFileInPages"), 100000000L);
+    Assert.assertEquals(docC1PO.<Long>field("amountOfPagesReadFromFile"), Long.valueOf(1000L));
+    Assert.assertEquals(docC1PO.field("readSpeedFromFileInPages"), Long.valueOf(100000000L));
 
     final ODocument docC2PO = doc.<Map<String, ODocument>>field("dataByComponent").get("c2po");
 
-    Assert.assertEquals(docC2PO.field("amountOfPagesReadFromFile"), 500L);
-    Assert.assertEquals(docC2PO.field("readSpeedFromFileInPages"), 66666666L);
+    Assert.assertEquals(docC2PO.field("amountOfPagesReadFromFile"), Long.valueOf(500L));
+    Assert.assertEquals(docC2PO.field("readSpeedFromFileInPages"), Long.valueOf(66666666L));
   }
 
+  @Test
   public void testWriteInCache() {
     final OModifiableInteger increment = new OModifiableInteger();
 
@@ -228,20 +232,21 @@ public class OSessionStoragePerformanceStatisticTest {
 
     ODocument doc = sessionStoragePerformanceStatistic.toDocument();
 
-    Assert.assertEquals(doc.field("amountOfPagesWrittenInCache"), 150L);
-    Assert.assertEquals(doc.field("writeSpeedInCacheInPages"), 10000000L);
+    Assert.assertEquals(doc.field("amountOfPagesWrittenInCache"), Long.valueOf(150L));
+    Assert.assertEquals(doc.field("writeSpeedInCacheInPages"), Long.valueOf(10000000L));
 
     final ODocument docC1PO = doc.<Map<String, ODocument>>field("dataByComponent").get("c1po");
 
-    Assert.assertEquals(docC1PO.field("amountOfPagesWrittenInCache"), 100L);
-    Assert.assertEquals(docC1PO.field("writeSpeedInCacheInPages"), 10000000L);
+    Assert.assertEquals(docC1PO.field("amountOfPagesWrittenInCache"), Long.valueOf(100L));
+    Assert.assertEquals(docC1PO.field("writeSpeedInCacheInPages"), Long.valueOf(10000000L));
 
     final ODocument docC2PO = doc.<Map<String, ODocument>>field("dataByComponent").get("c2po");
 
-    Assert.assertEquals(docC2PO.field("amountOfPagesWrittenInCache"), 50L);
-    Assert.assertEquals(docC2PO.field("writeSpeedInCacheInPages"), 6666666L);
+    Assert.assertEquals(docC2PO.field("amountOfPagesWrittenInCache"), Long.valueOf(50L));
+    Assert.assertEquals(docC2PO.field("writeSpeedInCacheInPages"), Long.valueOf(6666666L));
   }
 
+  @Test
   public void testCommitCount() {
     OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = new OSessionStoragePerformanceStatistic(100,
         new OSessionStoragePerformanceStatistic.NanoTimer() {
@@ -268,9 +273,10 @@ public class OSessionStoragePerformanceStatisticTest {
 
     final ODocument doc = sessionStoragePerformanceStatistic.toDocument();
 
-    Assert.assertEquals(doc.field("commitTime"), 100L);
+    Assert.assertEquals(doc.field("commitTime"), Long.valueOf(100L));
   }
 
+  @Test
   public void testCacheHit() {
     OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = new OSessionStoragePerformanceStatistic(100,
         new OSessionStoragePerformanceStatistic.NanoTimer() {
@@ -311,15 +317,16 @@ public class OSessionStoragePerformanceStatisticTest {
 
     final ODocument doc = sessionStoragePerformanceStatistic.toDocument();
 
-    Assert.assertEquals(doc.field("cacheHits"), 50);
+    Assert.assertEquals(doc.field("cacheHits"), Integer.valueOf(50));
 
     final ODocument docC1PO = doc.<Map<String, ODocument>>field("dataByComponent").get("c1po");
-    Assert.assertEquals(docC1PO.field("cacheHits"), 75);
+    Assert.assertEquals(docC1PO.field("cacheHits"), Integer.valueOf(75));
 
     final ODocument docC2PO = doc.<Map<String, ODocument>>field("dataByComponent").get("c2po");
-    Assert.assertEquals(docC2PO.field("cacheHits"), 100);
+    Assert.assertEquals(docC2PO.field("cacheHits"), Integer.valueOf(100));
   }
 
+  @Test
   public void testPushComponentCounters() {
     final OModifiableInteger counterOne = new OModifiableInteger();
 
@@ -339,7 +346,8 @@ public class OSessionStoragePerformanceStatisticTest {
     sessionStoragePerformanceStatisticOne.pushComponentCounters(counters);
     sessionStoragePerformanceStatisticOne.pushComponentCounters("c3po", performanceCountersHolder);
 
-    sessionStoragePerformanceStatisticOne.startComponentOperation("c3po", OSessionStoragePerformanceStatistic.ComponentType.GENERAL);
+    sessionStoragePerformanceStatisticOne
+        .startComponentOperation("c3po", OSessionStoragePerformanceStatistic.ComponentType.GENERAL);
 
     sessionStoragePerformanceStatisticOne.incrementPageAccessOnCacheLevel(false);
     sessionStoragePerformanceStatisticOne.incrementPageAccessOnCacheLevel(false);
@@ -376,11 +384,13 @@ public class OSessionStoragePerformanceStatisticTest {
           }
         }, -1);
 
-    sessionStoragePerformanceStatisticTwo.startComponentOperation("c3po", OSessionStoragePerformanceStatistic.ComponentType.GENERAL);
+    sessionStoragePerformanceStatisticTwo
+        .startComponentOperation("c3po", OSessionStoragePerformanceStatistic.ComponentType.GENERAL);
     sessionStoragePerformanceStatisticTwo.incrementPageAccessOnCacheLevel(true);
     sessionStoragePerformanceStatisticTwo.completeComponentOperation();
 
-    sessionStoragePerformanceStatisticTwo.startComponentOperation("c1po", OSessionStoragePerformanceStatistic.ComponentType.GENERAL);
+    sessionStoragePerformanceStatisticTwo
+        .startComponentOperation("c1po", OSessionStoragePerformanceStatistic.ComponentType.GENERAL);
 
     sessionStoragePerformanceStatisticTwo.startPageReadFromCacheTimer();
     sessionStoragePerformanceStatisticTwo.stopPageReadFromCacheTimer();
@@ -479,6 +489,7 @@ public class OSessionStoragePerformanceStatisticTest {
     Assert.assertEquals(counters.get("c1po").getWriteSpeedInCacheInPages(), 10000000);
   }
 
+  @Test
   public void testSystemCounters() {
     final OModifiableInteger counterOne = new OModifiableInteger();
 
@@ -561,6 +572,7 @@ public class OSessionStoragePerformanceStatisticTest {
     Assert.assertEquals(counters.getCommitTime(), 150);
   }
 
+  @Test
   public void testCleanOnSnapshot() {
     final OModifiableInteger counter = new OModifiableInteger(-100);
 
@@ -575,7 +587,6 @@ public class OSessionStoragePerformanceStatisticTest {
         }, 200);
 
     OSessionStoragePerformanceStatistic.PerformanceCountersHolder performanceCountersHolder = new OSessionStoragePerformanceStatistic.PerformanceCountersHolder();
-
 
     statistic.startComponentOperation("c3po", OSessionStoragePerformanceStatistic.ComponentType.GENERAL);
     statistic.incrementPageAccessOnCacheLevel(false);//100

@@ -23,22 +23,18 @@ import java.nio.ByteOrder;
 
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
-import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
+import org.junit.Assert;import org.junit.Before; import org.junit.Test;
 /**
  * @author Andrey Lomakin
  * @since 04.04.12
  */
-@Test
 public class DecimalSerializerTest {
   private final static int        FIELD_SIZE = 9;
   private static final byte[]     stream     = new byte[FIELD_SIZE];
   private static final BigDecimal OBJECT     = new BigDecimal(new BigInteger("20"), 2);
   private ODecimalSerializer decimalSerializer;
 
-  @BeforeClass
+  @Before
   public void beforeClass() {
     decimalSerializer = new ODecimalSerializer();
   }

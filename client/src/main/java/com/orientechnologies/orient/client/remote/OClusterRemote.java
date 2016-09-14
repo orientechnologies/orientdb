@@ -19,16 +19,12 @@
  */
 package com.orientechnologies.orient.client.remote;
 
+import java.io.IOException;
+
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.OStorage;
-
-import java.io.IOException;
+import com.orientechnologies.orient.core.storage.*;
 
 /**
  * Remote cluster implementation
@@ -91,7 +87,8 @@ public class OClusterRemote implements OCluster {
   }
 
   @Override
-  public OPhysicalPosition createRecord(byte[] content, int recordVersion, byte recordType, OPhysicalPosition allocatedPosition) throws IOException {
+  public OPhysicalPosition createRecord(byte[] content, int recordVersion, byte recordType, OPhysicalPosition allocatedPosition)
+      throws IOException {
     throw new UnsupportedOperationException("createRecord");
   }
 
@@ -116,8 +113,8 @@ public class OClusterRemote implements OCluster {
   }
 
   @Override
-  public ORawBuffer readRecordIfVersionIsNotLatest(long clusterPosition, int recordVersion) throws IOException,
-      ORecordNotFoundException {
+  public ORawBuffer readRecordIfVersionIsNotLatest(long clusterPosition, int recordVersion)
+      throws IOException, ORecordNotFoundException {
     throw new UnsupportedOperationException("readRecordIfVersionIsNotLatest");
   }
 
@@ -154,11 +151,18 @@ public class OClusterRemote implements OCluster {
     throw new UnsupportedOperationException("getTombstonesCount()");
   }
 
+  @Override
   public long getFirstPosition() {
     return 0;
   }
 
+  @Override
   public long getLastPosition() {
+    return 0;
+  }
+
+  @Override
+  public long getNextPosition() throws IOException {
     return 0;
   }
 
@@ -226,11 +230,6 @@ public class OClusterRemote implements OCluster {
   }
 
   @Override
-  public String compression() {
-    throw new UnsupportedOperationException("compression()");
-  }
-
-  @Override
   public boolean hideRecord(long position) {
     throw new UnsupportedOperationException("Operation is not supported for given cluster implementation");
   }
@@ -238,5 +237,10 @@ public class OClusterRemote implements OCluster {
   @Override
   public ORecordConflictStrategy getRecordConflictStrategy() {
     return null;
+  }
+
+  @Override
+  public void acquireAtomicExclusiveLock() {
+    throw new UnsupportedOperationException("remote cluster doesn't support atomic locking");
   }
 }

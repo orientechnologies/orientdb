@@ -22,7 +22,6 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLProcessHaltedException;
-import com.orientechnologies.orient.etl.OETLProcessor;
 
 public class OFlowTransformer extends OAbstractTransformer {
   private String operation;
@@ -35,14 +34,14 @@ public class OFlowTransformer extends OAbstractTransformer {
   }
 
   @Override
-  public void configure(OETLProcessor iProcessor, final ODocument iConfiguration, OCommandContext iContext) {
-    super.configure(iProcessor, iConfiguration, iContext);
+  public void configure(final ODocument iConfiguration, OCommandContext iContext) {
+    super.configure(iConfiguration, iContext);
     operation = iConfiguration.field("operation");
     if (operation == null)
       throw new OConfigurationException("Flow transformer has not mandatory 'operation' field");
     if (!operation.equalsIgnoreCase("halt") && !operation.equalsIgnoreCase("skip"))
-      throw new OConfigurationException("Flow transformer has invalid 'operation' field='" + operation
-          + "', while supported are: 'skip' and 'halt'");
+      throw new OConfigurationException(
+          "Flow transformer has invalid 'operation' field='" + operation + "', while supported are: 'skip' and 'halt'");
   }
 
   @Override

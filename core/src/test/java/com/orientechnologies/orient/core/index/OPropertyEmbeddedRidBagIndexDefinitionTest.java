@@ -1,20 +1,17 @@
 package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.Before; import org.junit.After;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 1/30/14
  */
-@Test
-public class OPropertyEmbeddedRidBagIndexDefinitionTest extends OPropertyRidBagAbstractIndexDefinitionTest {
+public class OPropertyEmbeddedRidBagIndexDefinitionTest extends OPropertyRidBagAbstractIndexDefinition {
   private int topThreshold;
   private int bottomThreshold;
 
-  @BeforeMethod
+  @Before
 	@Override
   public void beforeMethod() {
 		super.beforeMethod();
@@ -26,7 +23,7 @@ public class OPropertyEmbeddedRidBagIndexDefinitionTest extends OPropertyRidBagA
     OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(Integer.MAX_VALUE);
   }
 
-  @AfterMethod
+  @After
   public void afterMethod() {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(topThreshold);
     OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(bottomThreshold);

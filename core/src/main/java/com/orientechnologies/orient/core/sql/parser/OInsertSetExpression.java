@@ -16,4 +16,20 @@ public class OInsertSetExpression {
     right.toString(params, builder);
 
   }
+
+  public OInsertSetExpression copy() {
+    OInsertSetExpression result = new OInsertSetExpression();
+    result.left = left == null ? null : left.copy();
+    result.right = right == null ? null : right.copy();
+    return result;
+  }
+
+  public OIdentifier getLeft() {
+    return left;
+  }
+
+  public OExpression getRight() {
+    return right;
+  }
 }
+

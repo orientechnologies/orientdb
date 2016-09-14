@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import org.assertj.core.api.Assertions;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -105,7 +106,9 @@ public class LuceneInsertMultithreadTest {
 
     OIndex idx = schema.getClass("City").getClassIndex("City.name");
 
-    Assert.assertEquals(idx.getSize(), THREADS * CYCLE);
+//    Assert.assertEquals(, THREADS * CYCLE);
+
+    Assertions.assertThat(idx.getSize()).isEqualTo(THREADS * CYCLE);
     databaseDocumentTx.drop();
   }
 

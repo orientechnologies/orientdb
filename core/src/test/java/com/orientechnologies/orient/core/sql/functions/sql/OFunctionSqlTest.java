@@ -6,15 +6,13 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert; import org.junit.Test;
 
 import java.util.ArrayList;
 
 /**
  * Created by Enrico Risa on 07/04/15.
  */
-@Test
 public class OFunctionSqlTest {
 
   @Test

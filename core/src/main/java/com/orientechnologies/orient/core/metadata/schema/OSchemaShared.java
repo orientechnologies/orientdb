@@ -25,8 +25,6 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.types.OModifiableInteger;
 import com.orientechnologies.common.util.OArrays;
-import com.orientechnologies.orient.core.OOrientShutdownListener;
-import com.orientechnologies.orient.core.OOrientStartupListener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -65,8 +63,7 @@ import java.util.concurrent.Callable;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 @SuppressWarnings("unchecked")
-public class OSchemaShared extends ODocumentWrapperNoClass
-    implements OSchema, OCloseable, OOrientStartupListener, OOrientShutdownListener {
+public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, OCloseable {
   private static final int  NOT_EXISTENT_CLUSTER_ID = -1;
   public static final  int  CURRENT_VERSION_NUMBER  = 4;
   public static final  int  VERSION_NUMBER_V4       = 4;
@@ -83,7 +80,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass
 
   private final OClusterSelectionFactory clusterSelectionFactory = new OClusterSelectionFactory();
 
-  private volatile ThreadLocal<OModifiableInteger> modificationCounter  = new OModificationsCounter();
+  private final    OModifiableInteger              modificationCounter  = new OModifiableInteger();
   private final    List<OGlobalProperty>           properties           = new ArrayList<OGlobalProperty>();
   private final    Map<String, OGlobalProperty>    propertiesByNameType = new HashMap<String, OGlobalProperty>();
   private          Set<Integer>                    blobClusters         = new HashSet<Integer>();
@@ -110,38 +107,25 @@ public class OSchemaShared extends ODocumentWrapperNoClass
     super(new ODocument().setTrackingChanges(false));
     this.clustersCanNotBeSharedAmongClasses = clustersCanNotBeSharedAmongClasses;
 
-    Orient.instance().registerWeakOrientStartupListener(this);
-    Orient.instance().registerWeakOrientShutdownListener(this);
-  }
-
-  @Override
-  public void onShutdown() {
-    modificationCounter = null;
-  }
-
-  @Override
-  public void onStartup() {
-    if (modificationCounter == null)
-      modificationCounter = new OModificationsCounter();
   }
 
   public static Character checkClassNameIfValid(String iName) throws OSchemaException {
     if (iName == null)
       throw new IllegalArgumentException("Name is null");
 
-    iName = iName.trim();
-
-    final int nameSize = iName.length();
-
-    if (nameSize == 0)
-      throw new IllegalArgumentException("Name is empty");
-
-    for (int i = 0; i < nameSize; ++i) {
-      final char c = iName.charAt(i);
-      if (c == ':' || c == ',' || c == ';' || c == ' ' || c == '@' || c == '=' || c == '.' || c == '#')
-        // INVALID CHARACTER
-        return c;
-    }
+//    iName = iName.trim();
+//
+//    final int nameSize = iName.length();
+//
+//    if (nameSize == 0)
+//      throw new IllegalArgumentException("Name is empty");
+//
+//    for (int i = 0; i < nameSize; ++i) {
+//      final char c = iName.charAt(i);
+//      if (c == ':' || c == ',' || c == ';' || c == ' ' || c == '@' || c == '=' || c == '.' || c == '#')
+//        // INVALID CHARACTER
+//        return c;
+//    }
 
     return null;
   }
@@ -159,7 +143,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass
 
     for (int i = 0; i < nameSize; ++i) {
       final char c = iName.charAt(i);
-      if (c == ':' || c == ',' || c == ';' || c == ' ' || c == '%' || c == '=')
+      if (c == ':' || c == ',' || c == ';' || c == ' ' || c == '=')
         // INVALID CHARACTER
         return c;
     }
@@ -522,7 +506,10 @@ public class OSchemaShared extends ODocumentWrapperNoClass
       } else if (storage instanceof OStorageProxy) {
         final OCommandSQL commandSQL = new OCommandSQL(cmd.toString());
         db.command(commandSQL).execute();
+        final OClass classToDrop = getClass(className);
         reload();
+        if (getClass(className) == null) // really dropped, for example there may be no rights to drop a class
+          dropClassIndexes(classToDrop);
       } else
         dropClassInternal(className);
 
@@ -600,7 +587,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass
 
   public void acquireSchemaWriteLock() {
     rwSpinLock.acquireWriteLock();
-    modificationCounter.get().increment();
+    modificationCounter.increment();
   }
 
   public void releaseSchemaWriteLock() {
@@ -608,8 +595,9 @@ public class OSchemaShared extends ODocumentWrapperNoClass
   }
 
   public void releaseSchemaWriteLock(final boolean iSave) {
+    int count;
     try {
-      if (modificationCounter.get().intValue() == 1) {
+      if (modificationCounter.intValue() == 1) {
         // if it is embedded storage modification of schema is done by internal methods otherwise it is done by
         // by sql commands and we need to reload local replica
 
@@ -624,13 +612,15 @@ public class OSchemaShared extends ODocumentWrapperNoClass
         version++;
       }
     } finally {
+      modificationCounter.decrement();
+      count = modificationCounter.intValue();
       rwSpinLock.releaseWriteLock();
-      modificationCounter.get().decrement();
+
     }
 
-    assert modificationCounter.get().intValue() >= 0;
+    assert count >= 0;
 
-    if (modificationCounter.get().intValue() == 0 && getDatabase().getStorage().getUnderlying() instanceof OStorageProxy) {
+    if (count == 0 && getDatabase().getStorage().getUnderlying() instanceof OStorageProxy) {
       getDatabase().getStorage().reload();
     }
   }
@@ -663,7 +653,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass
   @Override
   public void fromStream() {
     rwSpinLock.acquireWriteLock();
-    modificationCounter.get().increment();
+    modificationCounter.increment();
     try {
       // READ CURRENT SCHEMA VERSION
       final Integer schemaVersion = (Integer) document.field("schemaVersion");
@@ -765,7 +755,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass
 
     } finally {
       version++;
-      modificationCounter.get().decrement();
+      modificationCounter.decrement();
       rwSpinLock.releaseWriteLock();
     }
   }
@@ -835,15 +825,20 @@ public class OSchemaShared extends ODocumentWrapperNoClass
     }
   }
 
+  
   @Override
   public OSchemaShared load() {
+    throw new UnsupportedOperationException();
+  }
+  
+  public OSchemaShared load(ODatabaseDocumentInternal database) {
 
     rwSpinLock.acquireWriteLock();
     try {
-      if (!new ORecordId(getDatabase().getStorage().getConfiguration().schemaRecordId).isValid())
+      if (!new ORecordId(database.getStorage().getConfiguration().schemaRecordId).isValid())
         throw new OSchemaNotCreatedException("Schema is not created and cannot be loaded");
 
-      ((ORecordId) document.getIdentity()).fromString(getDatabase().getStorage().getConfiguration().schemaRecordId);
+      ((ORecordId) document.getIdentity()).fromString(database.getStorage().getConfiguration().schemaRecordId);
       reload("*:-1 index:0");
 
       snapshot = new OImmutableSchema(this);
@@ -855,12 +850,15 @@ public class OSchemaShared extends ODocumentWrapperNoClass
   }
 
   public void create() {
+    throw new UnsupportedOperationException();
+  }
+  
+  public void create(final ODatabaseDocumentInternal database) {
     rwSpinLock.acquireWriteLock();
     try {
-      final ODatabaseDocumentInternal db = getDatabase();
       super.save(OMetadataDefault.CLUSTER_INTERNAL_NAME);
-      db.getStorage().getConfiguration().schemaRecordId = document.getIdentity().toString();
-      db.getStorage().getConfiguration().update();
+      database.getStorage().getConfiguration().schemaRecordId = document.getIdentity().toString();
+      database.getStorage().getConfiguration().update();
       snapshot = new OImmutableSchema(this);
     } finally {
       rwSpinLock.releaseWriteLock();
@@ -988,7 +986,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass
               cmd.append(" extends ");
             else
               cmd.append(", ");
-            cmd.append(superClass.getName());
+            cmd.append('`').append(superClass.getName()).append('`');
             first = false;
             superClassesList.add(superClass);
           }
@@ -1131,13 +1129,6 @@ public class OSchemaShared extends ODocumentWrapperNoClass
     try {
       if (className == null || className.length() == 0)
         throw new OSchemaException("Found class name null or empty");
-
-      if (Character.isDigit(className.charAt(0)))
-        throw new OSchemaException("Found invalid class name. Cannot start with numbers");
-
-      final Character wrongCharacter = checkClassNameIfValid(className);
-      if (wrongCharacter != null)
-        throw new OSchemaException("Found invalid class name. Character '" + wrongCharacter + "' cannot be used in class name.");
 
       final ODatabaseDocumentInternal database = getDatabase();
       final OStorage storage = database.getStorage();

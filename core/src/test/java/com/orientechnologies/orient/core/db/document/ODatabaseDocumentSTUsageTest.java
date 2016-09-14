@@ -1,12 +1,15 @@
 package com.orientechnologies.orient.core.db.document;
 
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Test;
 
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
-@Test
 public class ODatabaseDocumentSTUsageTest {
+
+  @Test
   public void testShareBetweenThreads() {
     final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:ODatabaseDocumentSTUsageTest");
     db.create();
@@ -15,12 +18,9 @@ public class ODatabaseDocumentSTUsageTest {
     db.open("admin", "admin");
 
     ExecutorService singleThread = Executors.newSingleThreadExecutor();
-    Future<Object> future = singleThread.submit(new Callable<Object>() {
-      @Override
-      public Object call() throws Exception {
-        db.open("admin", "admin");
-        return null;
-      }
+    Future<Object> future = singleThread.submit(() -> {
+      db.open("admin", "admin");
+      return null;
     });
 
     try {

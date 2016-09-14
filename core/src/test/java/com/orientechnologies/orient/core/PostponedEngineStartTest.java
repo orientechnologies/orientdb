@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core;
 
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
@@ -33,9 +34,9 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.tx.OTransaction;
-import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -51,14 +52,14 @@ import java.util.concurrent.Callable;
  */
 public class PostponedEngineStartTest {
 
-  private Orient ORIENT;
+  private static Orient ORIENT;
 
-  private OEngine ENGINE1;
-  private OEngine ENGINE2;
-  private OEngine FAULTY_ENGINE;
+  private static OEngine ENGINE1;
+  private static OEngine ENGINE2;
+  private static OEngine FAULTY_ENGINE;
 
   @BeforeClass
-  public void before() {
+  public static void before() {
     ORIENT = new Orient() {
       @Override
       public Orient startup() {
@@ -145,30 +146,45 @@ public class PostponedEngineStartTest {
     Assert.assertTrue(engine.isRunning());
   }
 
-  @Test
+  //  @Test(expected = IllegalStateException.class)
   public void testGetRunningEngineShouldThrowIfEngineIsUnknown() {
-    Assert.assertThrows(IllegalStateException.class, new Assert.ThrowingRunnable() {
-      @Override
-      public void run() throws Throwable {
-        ORIENT.getRunningEngine("unknown engine");
-      }
-    });
+    //    Assert.assertThrows(IllegalStateException.class, new Assert.ThrowingRunnable() {
+    //      @Override
+    //      public void run() throws Throwable {
+    //        ORIENT.getRunningEngine("unknown engine");
+    //      }
+    //    });
+    try {
+      ORIENT.getRunningEngine("unknown engine");
+      Assert.fail();
+    } catch (Exception e) {
+      // exception expected
+    }
+
   }
 
-  //@Test
+  //@Test(expected = IllegalStateException.class)
   public void testGetRunningEngineShouldThrowIfEngineIsUnableToStart() {
     OEngine engine = ORIENT.getEngine(FAULTY_ENGINE.getName());
-    Assert.assertNotNull(engine, "engine should be registered");
+    Assert.assertNotNull(engine);
 
-    Assert.assertThrows(IllegalStateException.class, new Assert.ThrowingRunnable() {
-      @Override
-      public void run() throws Throwable {
-        ORIENT.getRunningEngine(FAULTY_ENGINE.getName());
-      }
-    });
+    //    Assert.assertThrows(IllegalStateException.class, new Assert.ThrowingRunnable() {
+    //      @Override
+    //      public void run() throws Throwable {
+    //        ORIENT.getRunningEngine(FAULTY_ENGINE.getName());
+    //      }
+    //    });
+    try {
 
-    engine = ORIENT.getEngine(FAULTY_ENGINE.getName());
-    Assert.assertNull(engine, "engine should be unregistered");
+      ORIENT.getRunningEngine(FAULTY_ENGINE.getName());
+
+      engine = ORIENT.getEngine(FAULTY_ENGINE.getName());
+      Assert.assertNull(engine);
+      Assert.fail();
+    } catch (Exception e) {
+      // exception expected
+    }
+
   }
 
   private static class NamedEngine extends OEngineAbstract {
@@ -215,12 +231,12 @@ public class PostponedEngineStartTest {
         }
 
         @Override
-        public void open(String iUserName, String iUserPassword, Map<String, Object> iProperties) {
+        public void open(String iUserName, String iUserPassword, OContextConfiguration contextConfiguration) {
 
         }
 
         @Override
-        public void create(Map<String, Object> iProperties) {
+        public void create(OContextConfiguration contextConfiguration) {
 
         }
 

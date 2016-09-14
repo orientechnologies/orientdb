@@ -26,7 +26,7 @@
     <parent>
         <groupId>com.orientechnologies</groupId>
         <artifactId>orientdb-parent</artifactId>
-        <version>2.2.1-SNAPSHOT</version>
+        <version>3.0.0-SNAPSHOT</version>
         <relativePath>../</relativePath>
     </parent>
 
@@ -38,11 +38,16 @@
         <osgi.import>sun.misc;resolution:=optional,*</osgi.import>
         <osgi.export>
             com.orientechnologies.orient.console.*,
-            com.orientechnologies.orient.server.config.*
+            com.orientechnologies.orient.server.config.*,
+            com.orientechnologies.orient.stresstest.*
         </osgi.export>
         <jar.manifest.mainclass>com.orientechnologies.orient.console.OConsoleDatabaseApp</jar.manifest.mainclass>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <argLine>-XX:MaxDirectMemorySize=512g</argLine>
+        <argLine>
+            -XX:MaxDirectMemorySize=512g
+            -Dmemory.directMemory.trackMode=true
+            -Djava.util.logging.manager=com.orientechnologies.common.log.OLogManager$DebugLogManager
+        </argLine>
     </properties>
 
     <dependencies>
@@ -62,6 +67,13 @@
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-client</artifactId>
             <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-core</artifactId>
+            <version>${project.version}</version>
+            <type>test-jar</type>
+            <scope>test</scope>
         </dependency>
 
 

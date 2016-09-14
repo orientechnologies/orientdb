@@ -18,16 +18,16 @@
 
 package com.orientechnologies.orient.etl.transformer;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.*;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.etl.OETLBaseTest;
+import org.assertj.core.api.Assertions;
+import org.junit.Test;
 
 import java.util.Date;
 import java.util.List;
 
-import org.junit.Test;
-
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.etl.OETLBaseTest;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.*;
 
 /**
  * Tests ETL CSV Transformer.
@@ -71,7 +71,10 @@ public class OCSVTransformerTest extends OETLBaseTest {
       assertEquals(3, doc.fields());
       assertEquals(names[i], doc.field("name"));
       assertEquals(surnames[i], doc.field("surname"));
-      assertEquals(i, doc.field("id"));
+      //      assertEquals(i, doc.<Integer>field("id"));
+
+      Assertions.assertThat(doc.<Integer>field("id")).isEqualTo(i);
+
       i++;
     }
   }
@@ -114,7 +117,9 @@ public class OCSVTransformerTest extends OETLBaseTest {
     process(cfgJson);
     List<ODocument> res = getResult();
     ODocument doc = res.get(0);
-    assertEquals(10.78f, doc.field("firstNumber"));
+    //    assertEquals(10.78f, (Float) doc.field("firstNumber"));
+
+    Assertions.assertThat(doc.<Float>field("firstNumber")).isEqualTo(10.78f);
   }
 
   @Test
@@ -123,7 +128,9 @@ public class OCSVTransformerTest extends OETLBaseTest {
     process(cfgJson);
     List<ODocument> res = getResult();
     ODocument doc = res.get(0);
-    assertEquals(10.78f, doc.field("firstNumber"));
+    //    assertEquals(10.78f, doc.field("firstNumber"));
+    Assertions.assertThat(doc.<Float>field("firstNumber")).isEqualTo(10.78f);
+
   }
 
   @Test
@@ -132,7 +139,9 @@ public class OCSVTransformerTest extends OETLBaseTest {
     process(cfgJson);
     List<ODocument> res = getResult();
     ODocument doc = res.get(0);
-    assertEquals(10.78f, doc.field("firstNumber"));
+    //    assertEquals(10.78f, doc.field("firstNumber"));
+    Assertions.assertThat(doc.<Float>field("firstNumber")).isEqualTo(10.78f);
+
   }
 
   @Test
@@ -143,7 +152,10 @@ public class OCSVTransformerTest extends OETLBaseTest {
     process(cfgJson);
     List<ODocument> res = getResult();
     ODocument doc = res.get(0);
-    assertEquals(minDouble, (Double) doc.field("secondNumber"));
+    //    assertEquals(minDouble, (Double) doc.field("secondNumber"));
+
+    Assertions.assertThat(doc.<Double>field("secondNumber")).isEqualTo(minDouble);
+
   }
 
   @Test
@@ -154,7 +166,9 @@ public class OCSVTransformerTest extends OETLBaseTest {
     process(cfgJson);
     List<ODocument> res = getResult();
     ODocument doc = res.get(0);
-    assertEquals(minDouble, (Double) doc.field("secondNumber"));
+    //    assertEquals(minDouble, (Double) doc.field("secondNumber"));
+    Assertions.assertThat(doc.<Double>field("secondNumber")).isEqualTo(minDouble);
+
   }
 
   @Test
@@ -294,9 +308,9 @@ public class OCSVTransformerTest extends OETLBaseTest {
     assertThat(res).hasSize(1);
     ODocument doc = res.get(0);
 
-    assertThat(doc.<Integer> field("id")).isEqualTo(1);
-    assertThat(doc.<String> field("text")).isEqualTo("my test text");
-    assertThat(doc.<Integer> field("num")).isEqualTo(1);
+    assertThat(doc.<Integer>field("id")).isEqualTo(1);
+    assertThat(doc.<String>field("text")).isEqualTo("my test text");
+    assertThat(doc.<Integer>field("num")).isEqualTo(1);
   }
 
   @Test
@@ -316,10 +330,10 @@ public class OCSVTransformerTest extends OETLBaseTest {
     process(cfgJson);
     List<ODocument> res = getResult();
     ODocument doc = res.get(0);
-    assertThat(doc.<Integer> field("id ")).isEqualTo(1);
-    assertThat(doc.field("text")).isNull();
-    assertThat(doc.<String> field("text ")).isEqualTo("my test text");
-    assertThat(doc.<Integer> field("num ")).isEqualTo(1);
+    assertThat(doc.<Integer>field("id ")).isEqualTo(1);
+    assertThat(doc.<String>field("text")).isNull();
+    assertThat(doc.<String>field("text ")).isEqualTo("my test text");
+    assertThat(doc.<Integer>field("num ")).isEqualTo(1);
   }
 
   @Test
@@ -340,9 +354,9 @@ public class OCSVTransformerTest extends OETLBaseTest {
     process(cfgJson);
     List<ODocument> res = getResult();
     ODocument doc = res.get(0);
-    assertThat(doc.<Integer> field("id ")).isEqualTo(1);
-    assertThat(doc.<String> field("text ")).isEqualTo("my test \"\" text");
-    assertThat(doc.<Integer> field("num ")).isEqualTo(1);
+    assertThat(doc.<Integer>field("id ")).isEqualTo(1);
+    assertThat(doc.<String>field("text ")).isEqualTo("my test \"\" text");
+    assertThat(doc.<Integer>field("num ")).isEqualTo(1);
   }
 
   public void testNegativeInteger() {
@@ -350,7 +364,7 @@ public class OCSVTransformerTest extends OETLBaseTest {
     process(cfgJson);
     List<ODocument> res = getResult();
     ODocument doc = res.get(0);
-    assertThat(doc.<Integer> field("id")).isEqualTo(-1);
+    assertThat(doc.<Integer>field("id")).isEqualTo(-1);
 
   }
 
@@ -359,6 +373,6 @@ public class OCSVTransformerTest extends OETLBaseTest {
     process(cfgJson);
     List<ODocument> res = getResult();
     ODocument doc = res.get(0);
-    assertThat(doc.<Float> field("id")).isEqualTo(-1.0f);
+    assertThat(doc.<Float>field("id")).isEqualTo(-1.0f);
   }
 }

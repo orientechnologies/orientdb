@@ -175,11 +175,13 @@ public class OPropertyAbstractDelegate implements OProperty {
     return delegate.createIndex(iType);
   }
 
-  @Override public OIndex<?> createIndex(String iType, ODocument metadata) {
+  @Override
+  public OIndex<?> createIndex(String iType, ODocument metadata) {
     return delegate.createIndex(iType, metadata);
   }
 
-  @Override public OIndex<?> createIndex(OClass.INDEX_TYPE iType, ODocument metadata) {
+  @Override
+  public OIndex<?> createIndex(OClass.INDEX_TYPE iType, ODocument metadata) {
     return delegate.createIndex(iType, metadata);
   }
 

@@ -12,6 +12,7 @@ public class OMatchFilterItem extends SimpleNode {
   protected OWhereClause        whileCondition;
   protected OArrayRangeSelector depth;
   protected OInteger            maxDepth;
+  protected Boolean             optional;
 
   public OMatchFilterItem(int id) {
     super(id);
@@ -21,7 +22,9 @@ public class OMatchFilterItem extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
@@ -63,6 +66,65 @@ public class OMatchFilterItem extends SimpleNode {
       builder.append(")");
       return;
     }
+
+    if (optional != null) {
+      builder.append("optional: ");
+      builder.append(optional);
+      return;
+    }
+  }
+
+  @Override public OMatchFilterItem copy() {
+    OMatchFilterItem result = new OMatchFilterItem(-1);
+    result.className = className == null ? null : className.copy();
+    result.classNames = classNames == null ? null : classNames.copy();
+    result.alias = alias == null ? null : alias.copy();
+    result.filter = filter == null ? null : filter.copy();
+    result.whileCondition = whileCondition == null ? null : whileCondition.copy();
+    result.depth = depth == null ? null : depth.copy();
+    result.maxDepth = maxDepth == null ? null : maxDepth.copy();
+    result.optional = optional;
+    return result;
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OMatchFilterItem that = (OMatchFilterItem) o;
+
+    if (className != null ? !className.equals(that.className) : that.className != null)
+      return false;
+    if (classNames != null ? !classNames.equals(that.classNames) : that.classNames != null)
+      return false;
+    if (alias != null ? !alias.equals(that.alias) : that.alias != null)
+      return false;
+    if (filter != null ? !filter.equals(that.filter) : that.filter != null)
+      return false;
+    if (whileCondition != null ? !whileCondition.equals(that.whileCondition) : that.whileCondition != null)
+      return false;
+    if (depth != null ? !depth.equals(that.depth) : that.depth != null)
+      return false;
+    if (maxDepth != null ? !maxDepth.equals(that.maxDepth) : that.maxDepth != null)
+      return false;
+    if (optional != null ? !optional.equals(that.optional) : that.optional != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = className != null ? className.hashCode() : 0;
+    result = 31 * result + (classNames != null ? classNames.hashCode() : 0);
+    result = 31 * result + (alias != null ? alias.hashCode() : 0);
+    result = 31 * result + (filter != null ? filter.hashCode() : 0);
+    result = 31 * result + (whileCondition != null ? whileCondition.hashCode() : 0);
+    result = 31 * result + (depth != null ? depth.hashCode() : 0);
+    result = 31 * result + (maxDepth != null ? maxDepth.hashCode() : 0);
+    result = 31 * result + (optional != null ? optional.hashCode() : 0);
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=74bf4765509f102180cac29f2295031e (do not edit this line) */

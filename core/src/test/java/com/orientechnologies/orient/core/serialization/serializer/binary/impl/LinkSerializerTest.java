@@ -18,10 +18,7 @@ package com.orientechnologies.orient.core.serialization.serializer.binary.impl;
 
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
-import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
+import org.junit.Assert;import org.junit.Before; import org.junit.Test;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.serialization.types.OShortSerializer;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -32,7 +29,6 @@ import java.nio.ByteBuffer;
  * @author Ilya Bershadskiy (ibersh20-at-gmail.com)
  * @since 07.02.12
  */
-@Test
 public class LinkSerializerTest {
   private static final int FIELD_SIZE = OShortSerializer.SHORT_SIZE + OLongSerializer.LONG_SIZE;
   byte[] stream = new byte[FIELD_SIZE];
@@ -41,7 +37,7 @@ public class LinkSerializerTest {
   private ORecordId       OBJECT;
   private OLinkSerializer linkSerializer;
 
-  @BeforeClass
+  @Before
   public void beforeClass() {
     OBJECT = new ORecordId(clusterId, position);
     linkSerializer = new OLinkSerializer();

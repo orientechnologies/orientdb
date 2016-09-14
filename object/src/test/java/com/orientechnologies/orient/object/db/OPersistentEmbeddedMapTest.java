@@ -4,12 +4,11 @@ import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.entity.OEntityManager;
 import com.orientechnologies.orient.object.db.entity.Car;
 import com.orientechnologies.orient.object.db.entity.Person;
-import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -20,7 +19,7 @@ public class OPersistentEmbeddedMapTest {
 
   private OPartitionedDatabasePool pool;
 
-  @BeforeMethod
+  @Before
   public void setup() {
     final String url = "memory:tmpdb";
     new OObjectDatabaseTx(url).create().close();
@@ -40,7 +39,7 @@ public class OPersistentEmbeddedMapTest {
     }
   }
 
-  @AfterMethod
+  @After
   public void destroy() {
     pool.close();
   }
@@ -69,6 +68,5 @@ public class OPersistentEmbeddedMapTest {
 
     return new Person("John", placeToCar);
   }
-
 
 }

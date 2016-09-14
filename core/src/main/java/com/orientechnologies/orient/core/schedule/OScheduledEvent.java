@@ -277,7 +277,7 @@ public class OScheduledEvent extends ODocumentWrapper {
   private void bindDb() {
     final ODatabaseDocumentInternal tlDb = ODatabaseRecordThreadLocal.INSTANCE.get();
     if (tlDb != null && !tlDb.isClosed())
-      this.db = ((ODatabaseDocumentTx) tlDb).copy();
+      this.db = tlDb.copy();
   }
 
   private OFunction getFunctionSafe() {

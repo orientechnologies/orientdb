@@ -18,7 +18,6 @@
   *
   */
 
-
 options {
 	TRACK_TOKENS = true;
   	JDK_VERSION = "1.6";
@@ -43,12 +42,8 @@ import com.orientechnologies.orient.core.exception.OQueryParsingException;
 /** Orient Database Sql grammar. */
 public class OrientSql {
 
-  class ValidationStats{
-    int luceneCount = 0;
-  }
   private int inputParamCount = 0;
 
-  private List<ValidationStats> validationStats = new ArrayList<ValidationStats>();
 
     public OrientSql(InputStream stream) {
       this(new JavaCharStream(stream));
@@ -328,6 +323,8 @@ TOKEN:
     |
     < COMMIT: ( "C" | "c") ( "O" | "o")  ( "M" | "m") ( "M" | "m") ( "I" | "i")  ( "T" | "t") >
     |
+    < ROLLBACK: ( "R" | "r") ( "O" | "o")  ( "L" | "l") ( "L" | "l") ( "B" | "b") ( "A" | "a") ( "C" | "c") ( "K" | "k")>
+    |
     < IF: ( "I" | "i") ( "F" | "f") >
     |
     < ISOLATION: ( "I" | "i") ( "S" | "s") ( "O" | "o") ( "L" | "l") ( "A" | "a") ( "T" | "t") ( "I" | "i") ( "O" | "o") ( "N" | "n") >
@@ -345,6 +342,12 @@ TOKEN:
 	< SEQUENCE: ( "S" | "s") ( "E" | "e") ( "Q" | "q") ( "U" | "u") ( "E" | "e") ( "N" | "n") ( "C" | "c") ( "E" | "e") >
 	|
 	< START: ( "S" | "s") ( "T" | "t") ( "A" | "a") ( "R" | "r") ( "T" | "t") >
+	|
+	< OPTIONAL: ( "O" | "o") ( "P" | "p") ( "T" | "t") ( "I" | "i") ( "O" | "o") ( "N" | "n") ( "A" | "a") ( "L" | "l") >
+	|
+	< COUNT: ( "C" | "c") ( "O" | "o") ( "U" | "u") ( "N" | "n") ( "T" | "t") >
+	|
+	< DISTINCT: ( "D" | "d") ( "I" | "i") ( "S" | "s") ( "T" | "t") ( "I" | "i") ( "N" | "n") ( "C" | "c") ( "T" | "t") >
 	|
 	< THIS: "@" ( ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "s" | "S" ) ) >
 	|
@@ -769,6 +772,8 @@ OIdentifier Identifier():
     |
     token = <COMMIT>
     |
+    token = <ROLLBACK>
+    |
     token = <IF>
     |
     token = <ISOLATION>
@@ -788,6 +793,10 @@ OIdentifier Identifier():
     token = <CACHE>
     |
     token = <START>
+    |
+    token = <OPTIONAL>
+    |
+    token = <COUNT>
     |
     quotedToken = <QUOTED_IDENTIFIER>
 ) {
@@ -818,7 +827,10 @@ OInteger Integer():
 }
 {
 (
-    [ <MINUS> {sign = -1;} ] tokenVal = <INTEGER_LITERAL> {jjtThis.value = sign * Long.parseLong(tokenVal.image);}
+    [ <MINUS> {sign = -1;} ] tokenVal = <INTEGER_LITERAL> {
+        //jjtThis.value = sign * Long.parseLong(tokenVal.image);
+        jjtThis.setValue(sign, tokenVal.image);
+    }
 ) { return jjtThis; }
 }
 
@@ -981,6 +993,8 @@ OStatement StatementInternal():
                 |
                 result = CommitStatement()
                 |
+                result = RollbackStatement()
+                |
                 result = ReturnStatement()
                 |
                 result = SleepStatement()
@@ -1022,7 +1036,7 @@ OStatement QueryStatement():
 }
 
 OSelectWithoutTargetStatement SelectWithoutTargetStatement():
-{validationStats.add(0, new ValidationStats());}
+{}
 {
     (
     	<SELECT>
@@ -1053,13 +1067,13 @@ OSelectWithoutTargetStatement SelectWithoutTargetStatement():
         [ <NOCACHE> { jjtThis.noCache = true; } ]
     )
     {
-        jjtThis.validate(validationStats.remove(0));
+        jjtThis.validate();
         return jjtThis;
     }
 }
 
 OSelectStatement SelectStatement():
-{validationStats.add(0, new ValidationStats());}
+{}
 {
     (
    	    <SELECT>
@@ -1095,7 +1109,7 @@ OSelectStatement SelectStatement():
         [ <NOCACHE> { jjtThis.noCache = true; } ]
     )
     {
-        jjtThis.validate(validationStats.remove(0));
+        jjtThis.validate();
         return jjtThis;
     }
 }
@@ -1508,7 +1522,7 @@ OUpdateStatement UpdateStatement():
     	[ <UPSERT> { jjtThis.upsert = true; } ]
     	[
     	    <RETURN>
-    	    ( <BEFORE> { jjtThis.returnBefore = true; } | <AFTER> { jjtThis.returnAfter = true; } )
+    	    ( <BEFORE> { jjtThis.returnBefore = true; } | <AFTER> { jjtThis.returnAfter = true; } | <COUNT> { jjtThis.returnCount = true; })
     	    [
     	        jjtThis.returnProjection = Projection()
     	    ]
@@ -1759,7 +1773,6 @@ OInsertBody InsertBody():
             |
             ( <CONTENT> jjtThis.content = Json() )
          )
-         //[ <RETURN> jjtThis.returnProjection = Projection() ]
     )
     { return jjtThis; }
 }
@@ -1900,8 +1913,18 @@ OProjection Projection():
 }
 {
     (
-	 	lastItem = ProjectionItem() {items.add(lastItem);} ( "," lastItem = ProjectionItem() {items.add(lastItem);} )*
-	)
+        LOOKAHEAD(ProjectionItem())
+        (
+            lastItem = ProjectionItem() {items.add(lastItem);} ( "," lastItem = ProjectionItem() {items.add(lastItem);} )*
+        )
+        |
+        (
+            <DISTINCT> { jjtThis.distinct = true; }
+            (
+                lastItem = ProjectionItem() {items.add(lastItem);} ( "," lastItem = ProjectionItem() {items.add(lastItem);} )*
+            )
+        )
+    )
 	{
 	    jjtThis.items = items;
 	    return jjtThis;
@@ -2009,7 +2032,9 @@ OFunctionCall FunctionCall():
 {
     (
     	(
-    	    jjtThis.name = Identifier()
+    	    (  jjtThis.name = Identifier() )
+    	    |
+    	    ( <DISTINCT> { jjtThis.name = new OIdentifier("distinct"); } )
     	)
     	<LPAREN>
     	(
@@ -2113,23 +2138,24 @@ OModifier Modifier():
     { return jjtThis; }
 }
 
+
 OExpression Expression():
 {Token token; }
 {
     (
-        <NULL> {jjtThis.value = null;}
+        <NULL> {jjtThis.isNull = true; jjtThis.value = null;}
         |
         LOOKAHEAD( Rid() )
-        jjtThis.value = Rid()
+        jjtThis.rid = Rid() { jjtThis.value = jjtThis.rid; }
         |
         LOOKAHEAD( MathExpression() )
-        jjtThis.value = MathExpression()
+        jjtThis.mathExpression = MathExpression() { jjtThis.value = jjtThis.mathExpression; }
         |
-        jjtThis.value = Json()
+        jjtThis.json = Json() {jjtThis.value = jjtThis.json; }
         |
-        <TRUE> {jjtThis.value = true;}
+        <TRUE> { jjtThis.booleanValue = true; jjtThis.value = true; }
         |
-        <FALSE> {jjtThis.value = false;}
+        <FALSE> { jjtThis.booleanValue = false; jjtThis.value = false; }
 	)
 	{ return jjtThis; }
 }
@@ -2306,13 +2332,13 @@ OFromItem FromItem():
     (
     	lastRid = Rid() { jjtThis.rids.add(lastRid); }
     	|
-    	/*(
+    	(
     	    <LBRACKET> lastRid = Rid() { jjtThis.rids.add(lastRid); }
     	    (
     	        <COMMA> lastRid = Rid() { jjtThis.rids.add(lastRid); }
     	    )* <RBRACKET>
     	)
-    	|*/
+    	|
     	jjtThis.cluster = Cluster()
     	|
     	jjtThis.clusterList = ClusterList()
@@ -2322,17 +2348,33 @@ OFromItem FromItem():
     	|
         jjtThis.metadata = MetadataIdentifier()
     	|
-    	<LPAREN> jjtThis.statement = QueryStatement() <RPAREN>
+    	(
+    	    <LPAREN> jjtThis.statement = QueryStatement() <RPAREN>
+    	    [
+                LOOKAHEAD( Modifier() )
+                jjtThis.modifier = Modifier()
+            ]
+    	)
     	|
     	jjtThis.inputParam = InputParameter()
     	|
-    	(
-            jjtThis.identifier = BaseIdentifier()
+        LOOKAHEAD(2)
+        (
+            jjtThis.functionCall = FunctionCall()
             [
                 LOOKAHEAD( Modifier() )
                 jjtThis.modifier = Modifier()
             ]
         )
+    	|
+    	(
+            jjtThis.identifier = Identifier()
+            [
+                LOOKAHEAD( Modifier() )
+                jjtThis.modifier = Modifier()
+            ]
+        )
+
     )
     { return jjtThis; }
 }
@@ -2625,11 +2667,6 @@ OLuceneOperator LuceneOperator():
 (
 	<LUCENE>
 ){
-    ValidationStats stats = validationStats.get(0);
-    stats.luceneCount++;
-//    if(stats.luceneCount > 1){
-//        throw new OQueryParsingException("Two or more LUCENE operators are not allowed in the same query");
-//    }
     return jjtThis;
 }
 }
@@ -2937,7 +2974,7 @@ OOrderBy OrderBy():
                 }
                 (
                     (
-                        lastIdentifier = Identifier() { lastItem.alias = lastIdentifier.toString(); }
+                        lastIdentifier = Identifier() { lastItem.alias = lastIdentifier.getStringValue(); }
                         [ lastModifier = Modifier()  { lastItem.modifier = lastModifier; } ]
                     )
                     |
@@ -2958,7 +2995,7 @@ OOrderBy OrderBy():
                 }
                 (
                     (
-                        lastIdentifier = Identifier() { lastItem.alias = lastIdentifier.toString(); }
+                        lastIdentifier = Identifier() { lastItem.alias = lastIdentifier.getStringValue(); }
                         [ lastModifier = Modifier()  { lastItem.modifier = lastModifier; } ]
                     )
                     |
@@ -3417,6 +3454,15 @@ OMatchFilterItem MatchFilterItem():
         (
             <MAXDEPTH> <COLON> jjtThis.maxDepth = Integer()
         )
+        |
+        (
+            <OPTIONAL> <COLON>
+            (
+                <TRUE> { jjtThis.optional = true; }
+                |
+                <FALSE> { jjtThis.optional = false; }
+            )
+        )
     )
     { return jjtThis; }
 }
@@ -3680,10 +3726,9 @@ OFindReferencesStatement FindReferencesStatement():
     [
     	<LBRACKET> { jjtThis.targets = new ArrayList<SimpleNode>(); }
     	(
-    	    LOOKAHEAD(IndexIdentifier())
-    		lastTarget = IndexIdentifier()
+    	    lastTarget = Identifier()
             |
-    		lastTarget = Identifier()
+            lastTarget = Cluster()
     	){ jjtThis.targets.add(lastTarget); }
     	(
     		<COMMA>
@@ -3888,7 +3933,9 @@ ODropClassStatement DropClassStatement():
 }
 
 OCreatePropertyStatement CreatePropertyStatement():
-{}
+{
+	OCreatePropertyAttributeStatement lastAttribute;
+}
 {
 	<CREATE> <PROPERTY>
 	(
@@ -3899,8 +3946,30 @@ OCreatePropertyStatement CreatePropertyStatement():
 		[
 			jjtThis.linkedType = Identifier()
 		]
+		[
+		    <LPAREN>
+		    lastAttribute = CreatePropertyAttributeStatement() { jjtThis.attributes.add(lastAttribute); }
+		    (<COMMA> lastAttribute = CreatePropertyAttributeStatement() { jjtThis.attributes.add(lastAttribute); })*
+		    <RPAREN>
+		]
 		[ <UNSAFE> { jjtThis.unsafe = true; } ]
 	)
+	{ return jjtThis; }
+}
+
+OCreatePropertyAttributeStatement CreatePropertyAttributeStatement():
+{
+}
+{	
+    (   
+        (
+            jjtThis.settingName = Identifier()
+            [LOOKAHEAD( { getToken(1).kind != COMMA && getToken(1).kind != RPAREN} )
+               jjtThis.settingValue = Expression()
+            ]
+        )
+	)
+	
 	{ return jjtThis; }
 }
 
@@ -4369,6 +4438,15 @@ OCommitStatement CommitStatement():
     {return jjtThis;}
 }
 
+ORollbackStatement RollbackStatement():
+{ }
+{
+    (
+        <ROLLBACK>
+    )
+    {return jjtThis;}
+}
+
 OReturnStatement ReturnStatement():
 { }
 {
@@ -4442,8 +4520,8 @@ OCreateSequenceStatement CreateSequenceStatement():
         }
 
         [ <START> jjtThis.start = Expression() ]
-        [ <INCREMENT> jjtThis.start = Expression() ]
-        [ <CACHE> jjtThis.start = Expression() ]
+        [ <INCREMENT> jjtThis.increment = Expression() ]
+        [ <CACHE> jjtThis.cache = Expression() ]
     )
     { return jjtThis; }
 }
@@ -4457,8 +4535,8 @@ OAlterSequenceStatement AlterSequenceStatement():
         <ALTER> <SEQUENCE>
         jjtThis.name = Identifier()
         [ <START> jjtThis.start = Expression() ]
-        [ <INCREMENT> jjtThis.start = Expression() ]
-        [ <CACHE> jjtThis.start = Expression() ]
+        [ <INCREMENT> jjtThis.increment = Expression() ]
+        [ <CACHE> jjtThis.cache = Expression() ]
     )
     { return jjtThis; }
 }

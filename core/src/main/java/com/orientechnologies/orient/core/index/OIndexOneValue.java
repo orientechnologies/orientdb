@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.*;
-
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
@@ -28,7 +26,10 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerRID;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+
+import java.util.*;
 
 /**
  * Abstract Index implementation that allows only one value for a key.
@@ -101,8 +102,9 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
         if (mergeSameKey != null && mergeSameKey)
           return (ODocument) indexedRID.getRecord();
         else
-          throw new OIndexException("Cannot index record : " + record + " found duplicated key '" + key + "' in index " + getName()
-              + " previously assigned to the record " + indexedRID);
+          throw new ORecordDuplicatedException(String
+              .format("Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s",
+                  record, key, getName(), indexedRID), getName(), indexedRID.getIdentity());
       }
       return null;
     } finally {

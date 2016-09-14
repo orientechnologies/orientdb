@@ -64,6 +64,7 @@ public class OVertexTransformerTest extends OETLBaseTest {
         + "{edge:{ class: 'E', joinFieldName: 'parent', lookup: 'V.idf', unresolvedLinkAction: 'CREATE' }, if: '$input.parent IS NOT NULL'}"
         + "], loader: { orientdb: { dbURL: 'memory:OETLBaseTest', dbType:'graph', useLightweightEdges:false } } }");
 
+    graph.makeActive();;
     assertThat(graph.countVertices("V")).isEqualTo(2);
   }
 

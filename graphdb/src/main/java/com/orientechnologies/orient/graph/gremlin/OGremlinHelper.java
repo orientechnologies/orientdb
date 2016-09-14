@@ -75,7 +75,7 @@ public class OGremlinHelper {
   }
 
   @SuppressWarnings("unchecked")
-  public static Object execute(final ODatabaseDocumentTx iDatabase, final String iText,
+  public static Object execute(final ODatabaseDocumentInternal iDatabase, final String iText,
       final Map<Object, Object> iConfiguredParameters, Map<Object, Object> iCurrentParameters, final List<Object> iResult,
       final OGremlinCallback iBeforeExecution, final OGremlinCallback iAfterExecution) {
     return execute(OGremlinHelper.global().acquireGraph(iDatabase), iText, iConfiguredParameters, iCurrentParameters, iResult,
@@ -290,7 +290,7 @@ public class OGremlinHelper {
     return instance;
   }
 
-  public static ODatabaseDocumentTx getGraphDatabase(final ODatabaseDocumentInternal iCurrentDatabase) {
+  public static ODatabaseDocumentInternal getGraphDatabase(final ODatabaseDocumentInternal iCurrentDatabase) {
     ODatabaseDocumentInternal currentDb = ODatabaseRecordThreadLocal.INSTANCE.get();
     if (currentDb == null && iCurrentDatabase != null)
       // GET FROM THE RECORD
@@ -299,12 +299,7 @@ public class OGremlinHelper {
     if (currentDb != null)
       currentDb = (ODatabaseDocumentInternal) currentDb.getDatabaseOwner();
 
-    final ODatabaseDocumentTx db;
-    if (currentDb instanceof ODatabaseDocumentTx)
-      db = (ODatabaseDocumentTx) currentDb;
-    else
-      throw new OCommandExecutionException("Cannot find a database of type ODatabaseDocumentTx or ODatabaseDocumentTx");
-    return db;
+    return currentDb;
   }
 
   public static String getEngineVersion() {
@@ -330,7 +325,7 @@ public class OGremlinHelper {
   public void releaseEngine(final ScriptEngine engine) {
   }
 
-  public OrientGraph acquireGraph(final ODatabaseDocumentTx database) {
+  public OrientGraph acquireGraph(final ODatabaseDocumentInternal database) {
     return new OrientGraph(database);
   }
 

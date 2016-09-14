@@ -8,65 +8,20 @@ import com.orientechnologies.orient.core.exception.OConcurrentModificationExcept
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.*;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
-@Test
 public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
   private int topThreshold;
   private int bottomThreshold;
 
-  private final class LevelKey {
-    private final ORID rid;
-    private final int  level;
-
-    private LevelKey(ORID rid, int level) {
-      this.rid = rid;
-      this.level = level;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o)
-        return true;
-      if (o == null || getClass() != o.getClass())
-        return false;
-
-      LevelKey levelKey = (LevelKey) o;
-
-      if (level != levelKey.level)
-        return false;
-      if (!rid.equals(levelKey.rid))
-        return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = rid.hashCode();
-      result = 31 * result + level;
-      return result;
-    }
-  }
-
-  @BeforeClass
+  @Before
   public void setUp() throws Exception {
     database.declareIntent(new OIntentMassiveInsert());
   }
 
-  @BeforeMethod
+  @Before
   public void beforeMethod() {
     topThreshold = OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
     bottomThreshold = OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.getValueAsInteger();
@@ -75,12 +30,13 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(-1);
   }
 
-  @AfterMethod
+  @After
   public void afterMethod() {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(topThreshold);
     OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(bottomThreshold);
   }
 
+  @Test
   public void testAddTwoNewDocuments() {
     database.begin();
     ODocument rootDoc = new ODocument();
@@ -109,6 +65,7 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     Assert.assertEquals(ridBag.size(), 0);
   }
 
+  @Test
   public void testAddTwoNewDocumentsWithCME() {
     final ODocument cmeDoc = new ODocument();
     cmeDoc.save();
@@ -151,6 +108,7 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     Assert.assertEquals(ridBag.size(), 0);
   }
 
+  @Test
   public void testAddTwoAdditionalNewDocuments() {
     database.begin();
 
@@ -200,6 +158,7 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     Assert.assertTrue(addedDocs.remove(iterator.next()));
   }
 
+  @Test
   public void testAddingDocsDontUpdateVersion() {
     ODocument rootDoc = new ODocument();
 
@@ -228,6 +187,7 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     Assert.assertEquals(rootDoc.getVersion(), version);
   }
 
+  @Test
   public void testAddingDocsDontUpdateVersionInTx() {
     database.begin();
 
@@ -261,6 +221,7 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     Assert.assertEquals(rootDoc.getVersion(), version);
   }
 
+  @Test
   public void testAddTwoAdditionalNewDocumentsWithCME() {
     final ODocument cmeDoc = new ODocument();
     cmeDoc.save();
@@ -327,6 +288,7 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     Assert.assertTrue(addedDocs.remove(iterator.next()));
   }
 
+  @Test
   public void testAddTwoSavedDocuments() {
     long recordsCount = database.countClusterElements(database.getDefaultClusterId());
 
@@ -352,6 +314,7 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     Assert.assertEquals(database.countClusterElements(database.getDefaultClusterId()), recordsCount);
   }
 
+  @Test
   public void testAddTwoAdditionalSavedDocuments() {
     database.begin();
 
@@ -403,6 +366,7 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     Assert.assertTrue(addedDocs.remove(iterator.next()));
   }
 
+  @Test
   public void testAddTwoAdditionalSavedDocumentsWithCME() {
     final ODocument cmeDoc = new ODocument();
     cmeDoc.save();
@@ -471,6 +435,7 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     Assert.assertTrue(addedDocs.remove(iterator.next()));
   }
 
+  @Test
   public void testAddInternalDocumentsAndSubDocuments() {
     database.begin();
 
@@ -549,6 +514,7 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     Assert.assertTrue(addedDocs.remove(iterator.next()));
   }
 
+  @Test
   public void testAddInternalDocumentsAndSubDocumentsWithCME() {
     final ODocument cmeDoc = new ODocument();
     cmeDoc.save();
@@ -646,7 +612,8 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
   /**
    * This test is no longer useful
    */
-  @Test(enabled = false)
+  @Test
+  @Ignore
   public void testAddTwoSavedDocumentsWithoutTx() {
     ODocument docOne = new ODocument();
     ODocument docTwo = new ODocument();
@@ -681,7 +648,8 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
   /**
    * This test is no longer useful
    */
-  @Test(enabled = false)
+  @Test
+  @Ignore
   public void testAddOneSavedDocumentsAndDeleteOneWithoutTx() {
     ODocument docOne = new ODocument();
     docOne.save();
@@ -731,6 +699,7 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     Assert.assertTrue(!iterator.hasNext());
   }
 
+  @Test
   public void testRandomModificationsNotTx() {
     final long seed = System.currentTimeMillis();
     System.out.println("testRandomModificationsNotTx seed: " + seed);
@@ -801,6 +770,7 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     }
   }
 
+  @Test
   public void testVisibility() {
     ODocument document = new ODocument();
     ORidBag ridBag = new ORidBag();
@@ -842,10 +812,12 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     Assert.assertEquals(ridBagTwo.size(), 3);
   }
 
+  @Test
   public void testRandomChangedInTxLevel2() {
     testRandomChangedInTx(2);
   }
 
+  @Test
   public void testRandomChangedInTxLevel1() {
     testRandomChangedInTx(1);
   }
@@ -881,6 +853,7 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     assertDocsAfterRollback(0, levels, addedDocPerLevel, rootDoc);
   }
 
+  @Test
   public void testRandomChangedInTxWithCME() {
     final ODocument cmeDoc = new ODocument();
     cmeDoc.save();
@@ -930,6 +903,7 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     assertDocsAfterRollback(0, levels, addedDocPerLevel, rootDoc);
   }
 
+  @Test
   public void testFromEmbeddedToSBTreeRollback() {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(5);
     OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(5);
@@ -983,6 +957,7 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     Assert.assertTrue(docsToAdd.isEmpty());
   }
 
+  @Test
   public void testFromEmbeddedToSBTreeTXWithCME() {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(5);
     OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(5);
@@ -1054,6 +1029,7 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     Assert.assertTrue(docsToAdd.isEmpty());
   }
 
+  @Test
   public void testFromEmbeddedToSBTreeWithCME() {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(5);
     OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(5);
@@ -1111,6 +1087,7 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     Assert.assertTrue(docsToAdd.isEmpty());
   }
 
+  @Test
   public void testFromSBTreeToEmbeddedRollback() {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(5);
     OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(7);
@@ -1164,6 +1141,7 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     Assert.assertTrue(docsToAdd.isEmpty());
   }
 
+  @Test
   public void testFromSBTreeToEmbeddedTxWithCME() {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(5);
     OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(7);
@@ -1238,7 +1216,8 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
   /**
    * This test is no longer useful
    */
-  @Test(enabled = false)
+  @Test
+  @Ignore
   public void testFromSBTreeToEmbeddedWithCME() {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(5);
     OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(7);
@@ -1368,7 +1347,8 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
 
   }
 
-  private void assertDocsAfterRollback(int level, int levels, Map<LevelKey, List<OIdentifiable>> addedDocPerLevel, ODocument rootDoc) {
+  private void assertDocsAfterRollback(int level, int levels, Map<LevelKey, List<OIdentifiable>> addedDocPerLevel,
+      ODocument rootDoc) {
     ORidBag ridBag = rootDoc.field("ridBag");
     List<OIdentifiable> addedDocs = new ArrayList<OIdentifiable>(addedDocPerLevel.get(new LevelKey(rootDoc.getIdentity(), level)));
 
@@ -1384,5 +1364,39 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     }
 
     Assert.assertTrue(addedDocs.isEmpty());
+  }
+
+  private final class LevelKey {
+    private final ORID rid;
+    private final int  level;
+
+    private LevelKey(ORID rid, int level) {
+      this.rid = rid;
+      this.level = level;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o)
+        return true;
+      if (o == null || getClass() != o.getClass())
+        return false;
+
+      LevelKey levelKey = (LevelKey) o;
+
+      if (level != levelKey.level)
+        return false;
+      if (!rid.equals(levelKey.rid))
+        return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = rid.hashCode();
+      result = 31 * result + level;
+      return result;
+    }
   }
 }

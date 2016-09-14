@@ -5,14 +5,10 @@ import com.orientechnologies.common.serialization.types.OShortSerializer;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
-import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
+import org.junit.Assert;import org.junit.Before; import org.junit.Test;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-@Test
 public class OStreamSerializerRIDTest {
   private static final int  FIELD_SIZE = OShortSerializer.SHORT_SIZE + OLongSerializer.LONG_SIZE;
   private static final int  clusterId  = 5;
@@ -20,7 +16,7 @@ public class OStreamSerializerRIDTest {
   private ORecordId            OBJECT;
   private OStreamSerializerRID streamSerializerRID;
 
-  @BeforeClass
+  @Before
   public void beforeClass() {
     OBJECT = new ORecordId(clusterId, position);
     streamSerializerRID = new OStreamSerializerRID();

@@ -7,11 +7,7 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
-import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
+import org.junit.Assert;import org.junit.Before; import org.junit.After;import org.junit.Test;
 /**
  * Created by tglman on 01/02/16.
  */
@@ -19,7 +15,7 @@ public class UniqueIndexTest {
 
   private ODatabaseDocument db;
 
-  @BeforeMethod
+  @Before
   public void before() {
     db = new ODatabaseDocumentTx("memory:" + UniqueIndexTest.class.getSimpleName());
     db.create();
@@ -51,7 +47,7 @@ public class UniqueIndexTest {
     Assert.assertEquals(fromDb.field("MailAddress"), "jane@doe.com");
   }
 
-  @AfterMethod
+  @After
   public void after() {
     db.drop();
   }

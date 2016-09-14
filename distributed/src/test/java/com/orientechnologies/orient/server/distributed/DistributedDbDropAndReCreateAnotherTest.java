@@ -25,7 +25,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
  */
 public class DistributedDbDropAndReCreateAnotherTest extends AbstractServerClusterTxTest {
   final static int SERVERS       = 3;
-  private int      lastServerNum = 0;
+  private      int lastServerNum = 0;
 
   @Test
   public void test() throws Exception {
@@ -56,7 +56,7 @@ public class DistributedDbDropAndReCreateAnotherTest extends AbstractServerClust
 
       final String dbName = getDatabaseURL(server);
 
-      banner("RE-CREATING DATABASE " + dbName + " ON SERVER " + server.getServerId());
+      banner("(RE)CREATING DATABASE " + dbName + " ON SERVER " + server.getServerId());
 
       final OrientGraphNoTx db = new OrientGraphNoTx(dbName);
       onAfterDatabaseCreation(db);
@@ -68,7 +68,7 @@ public class DistributedDbDropAndReCreateAnotherTest extends AbstractServerClust
 
     Thread.sleep(2000);
 
-    executeMultipleTest();
+    executeMultipleTest(0);
   }
 
   protected String getDatabaseURL(final ServerRun server) {

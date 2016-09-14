@@ -4,21 +4,21 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 public class ORecordLazySetPeristentTest {
 
   private ODatabaseDocument db;
 
-  @BeforeTest
+  @Before
   public void init() throws Exception {
     String url = "memory:" + ORecordLazySetPeristentTest.class.getSimpleName();
     db = new ODatabaseDocumentTx(url);
@@ -104,7 +104,7 @@ public class ORecordLazySetPeristentTest {
     db.commit();
   }
 
-  @AfterTest
+  @After
   public void close() {
     if (db != null) {
       db.activateOnCurrentThread();

@@ -24,7 +24,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.script.OScriptInjection;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.graph.gremlin.OGremlinHelper;
 import com.orientechnologies.orient.graph.script.OScriptGraphOrientWrapper;
 import com.orientechnologies.orient.graph.server.command.OServerCommandPostCommandGraph;
@@ -73,16 +72,14 @@ public class OGraphServerHandler extends OServerPluginAbstract implements OScrip
 
   @Override
   public void startup() {
+    final OServerNetworkListener listener = server.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
+    if (listener != null)
+      listener.registerStatelessCommand(new OServerCommandPostCommandGraph());
+
     if (!enabled)
       return;
 
     OGremlinHelper.global().setMaxGraphPool(graphPoolMax).create();
-
-    final OServerNetworkListener listener = server.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
-    if (listener == null)
-      throw new OConfigurationException("HTTP listener not found");
-
-    listener.registerStatelessCommand(new OServerCommandPostCommandGraph());
   }
 
   @Override

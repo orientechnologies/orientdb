@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.core.sql.parser;
 
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 
@@ -8,7 +7,6 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.concurrent.Callable;
 
 /**
  * This class is an LRU cache for already parsed SQL statement executors. It stores itself in the storage as a resource. It also
@@ -54,11 +52,7 @@ public class OStatementCache {
       return parse(statement);
     }
 
-    OStatementCache resource = db.getStorage().getResource(OStatementCache.class.getSimpleName(), new Callable<OStatementCache>() {
-      @Override public OStatementCache call() throws Exception {
-        return new OStatementCache(OGlobalConfiguration.STATEMENT_CACHE_SIZE.getValueAsInteger());
-      }
-    });
+    OStatementCache resource = db.getSharedContext().getStatementCache();
     return resource.get(statement);
   }
 

@@ -41,24 +41,24 @@ import java.util.Set;
 
 /**
  * Index engine implementation that relies on multiple hash indexes partitioned by key.
- * 
+ *
  * @author Luca Garulli
  */
 public final class OAutoShardingIndexEngine implements OIndexEngine {
-  public static final int                        VERSION                             = 1;
-  public static final String                     SUBINDEX_METADATA_FILE_EXTENSION    = ".asm";
-  public static final String                     SUBINDEX_TREE_FILE_EXTENSION        = ".ast";
-  public static final String                     SUBINDEX_BUCKET_FILE_EXTENSION      = ".asb";
-  public static final String                     SUBINDEX_NULL_BUCKET_FILE_EXTENSION = ".asn";
+  public static final int    VERSION                             = 1;
+  public static final String SUBINDEX_METADATA_FILE_EXTENSION    = ".asm";
+  public static final String SUBINDEX_TREE_FILE_EXTENSION        = ".ast";
+  public static final String SUBINDEX_BUCKET_FILE_EXTENSION      = ".asb";
+  public static final String SUBINDEX_NULL_BUCKET_FILE_EXTENSION = ".asn";
 
   private final OAbstractPaginatedStorage        storage;
   private final boolean                          durableInNonTx;
   private final OMurmurHash3HashFunction<Object> hashFunction;
-  private List<OHashTable<Object, Object>>       partitions;
-  private OAutoShardingStrategy                  strategy;
-  private int                                    version;
+  private       List<OHashTable<Object, Object>> partitions;
+  private       OAutoShardingStrategy            strategy;
+  private       int                              version;
   private final String                           name;
-  private int                                    partitionSize;
+  private       int                              partitionSize;
 
   public OAutoShardingIndexEngine(final String iName, final Boolean iDurableInNonTxMode, final OAbstractPaginatedStorage iStorage,
       final int iVersion) {
@@ -137,7 +137,7 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   public void deleteWithoutLoad(final String indexName) {
     if (partitions != null)
       for (OHashTable<Object, Object> p : partitions)
-        p.deleteWithoutLoad(indexName, (OAbstractPaginatedStorage) getDatabase().getStorage().getUnderlying());
+        p.deleteWithoutLoad(indexName);
   }
 
   @Override
@@ -158,8 +158,8 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
 
     partitions = new ArrayList<OHashTable<Object, Object>>(partitionSize);
     for (int i = 0; i < partitionSize; ++i) {
-      partitions
-          .add(new OLocalHashTable<Object, Object>(name + "_" + i, SUBINDEX_METADATA_FILE_EXTENSION, SUBINDEX_TREE_FILE_EXTENSION,
+      partitions.add(
+          new OLocalHashTable<Object, Object>(name + "_" + i, SUBINDEX_METADATA_FILE_EXTENSION, SUBINDEX_TREE_FILE_EXTENSION,
               SUBINDEX_BUCKET_FILE_EXTENSION, SUBINDEX_NULL_BUCKET_FILE_EXTENSION, hashFunction, durableInNonTx, storage));
     }
   }
@@ -247,9 +247,9 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   @Override
   public OIndexKeyCursor keyCursor() {
     return new OIndexKeyCursor() {
-      private int                                      nextPartition = 1;
-      private OHashTable<Object, Object>               hashTable;
-      private int                                      nextEntriesIndex;
+      private int nextPartition = 1;
+      private OHashTable<Object, Object> hashTable;
+      private int nextEntriesIndex;
       private OHashIndexBucket.Entry<Object, Object>[] entries;
 
       {
@@ -294,13 +294,13 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public OIndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
+  public OIndexCursor iterateEntriesBetween(final Object rangeFrom, final boolean fromInclusive,final  Object rangeTo,final  boolean toInclusive,
       boolean ascSortOrder, ValuesTransformer transformer) {
     throw new UnsupportedOperationException("iterateEntriesBetween");
   }
 
   @Override
-  public OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
+  public OIndexCursor iterateEntriesMajor(final Object fromKey, final boolean isInclusive, final boolean ascSortOrder,
       ValuesTransformer transformer) {
     throw new UnsupportedOperationException("iterateEntriesMajor");
   }
@@ -318,6 +318,17 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   @Override
   public Object getLastKey() {
     throw new UnsupportedOperationException("lastKey");
+  }
+
+  @Override
+  public boolean acquireAtomicExclusiveLock(final Object key) {
+    getPartition(key).acquireAtomicExclusiveLock();
+    return false;
+  }
+
+  @Override
+  public String getIndexNameByKey(final Object key ){
+    return getPartition(key).getName();
   }
 
   private ODatabaseDocumentInternal getDatabase() {

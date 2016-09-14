@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.orient.core.storage.impl.local.OFullCheckpointRequestListener;
+import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationMetadata;
 
 import java.io.File;
@@ -51,8 +52,7 @@ public interface OWriteAheadLog {
   OLogSequenceNumber logAtomicOperationStartRecord(boolean isRollbackSupported, OOperationUnitId unitId) throws IOException;
 
   OLogSequenceNumber logAtomicOperationEndRecord(OOperationUnitId operationUnitId, boolean rollback, OLogSequenceNumber startLsn,
-      Map<String, OAtomicOperationMetadata<?>> atomicOperationMetadata)
-      throws IOException;
+      Map<String, OAtomicOperationMetadata<?>> atomicOperationMetadata) throws IOException;
 
   OLogSequenceNumber log(OWALRecord record) throws IOException;
 
@@ -77,6 +77,10 @@ public interface OWriteAheadLog {
   void addFullCheckpointListener(OFullCheckpointRequestListener listener);
 
   void removeFullCheckpointListener(OFullCheckpointRequestListener listener);
+
+  void addLowDiskSpaceListener(OLowDiskSpaceListener listener);
+
+  void removeLowDiskSpaceListener(OLowDiskSpaceListener listener);
 
   void moveLsnAfter(OLogSequenceNumber lsn) throws IOException;
 

@@ -25,5 +25,34 @@ public class ORebuildIndexStatement extends OStatement {
       name.toString(params, builder);
     }
   }
+
+  @Override public ORebuildIndexStatement copy() {
+    ORebuildIndexStatement result = new ORebuildIndexStatement(-1);
+    result.all = all;
+    result.name = name == null ? null : name.copy();
+    return result;
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    ORebuildIndexStatement that = (ORebuildIndexStatement) o;
+
+    if (all != that.all)
+      return false;
+    if (name != null ? !name.equals(that.name) : that.name != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = (all ? 1 : 0);
+    result = 31 * result + (name != null ? name.hashCode() : 0);
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=baca3c54112f1c08700ebdb691fa85bd (do not edit this line) */

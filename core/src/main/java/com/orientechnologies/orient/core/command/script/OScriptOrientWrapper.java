@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.command.script;
 
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 
@@ -44,8 +45,8 @@ public class OScriptOrientWrapper {
     if (db == null)
       throw new OConfigurationException("No database instance found in context");
 
-    if (db instanceof ODatabaseDocumentTx)
-      return new OScriptDocumentDatabaseWrapper((ODatabaseDocumentTx) db);
+    if (db instanceof ODatabaseDocumentInternal)
+      return new OScriptDocumentDatabaseWrapper((ODatabaseDocumentInternal) db);
 
     throw new OConfigurationException("No valid database instance found in context: " + db + ", class: " + db.getClass());
   }

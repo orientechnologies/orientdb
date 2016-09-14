@@ -64,7 +64,7 @@ public class OIndexRebuildOutputListener implements OProgressListener {
         OLogManager.instance().info(this, "--> %3.2f%% progress, %,d indexed so far (%,d items/sec)", iPercent, iCounter,
             ((iCounter - lastCounter) / 10));
       else
-        OLogManager.instance().debug(this, "--> %3.2f%% progress, %,d indexed so far (%,d items/sec)", iPercent, iCounter,
+        OLogManager.instance().info(this, "--> %3.2f%% progress, %,d indexed so far (%,d items/sec)", iPercent, iCounter,
             ((iCounter - lastCounter) / 10));
       lastDump = now;
       lastCounter = iCounter;

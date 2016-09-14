@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.index.hashindex.local.arc;
 
+import com.orientechnologies.common.collection.closabledictionary.OClosableLinkedContainer;
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
@@ -8,63 +9,45 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
-import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
 import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
+import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Queue;
-import java.util.Random;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicIntegerArray;
-import java.util.concurrent.atomic.AtomicLongArray;
-import java.util.concurrent.atomic.AtomicReferenceArray;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
 
 /**
  * @author Artem Loginov
  */
-@Test
 public class ReadWriteCacheConcurrentTest {
-  private final int systemOffset = 2 * (OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE);
-
-  private static final int THREAD_COUNT = 4;
-  private static final int PAGE_COUNT   = 20;
-  private static final int FILE_COUNT   = 8;
-  private O2QCache    readBuffer;
-  private OWriteCache writeBuffer;
-
+  private static final int                                  THREAD_COUNT    = 4;
+  private static final int                                  PAGE_COUNT      = 20;
+  private static final int                                  FILE_COUNT      = 8;
+  private final        int                                  systemOffset    =
+      2 * (OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE);
+  private final        ExecutorService                      executorService = Executors.newFixedThreadPool(THREAD_COUNT);
+  private final        List<Future<Void>>                   futures         = new ArrayList<Future<Void>>(THREAD_COUNT);
+  private final        AtomicReferenceArray<Queue<Integer>> pagesQueue      = new AtomicReferenceArray<Queue<Integer>>(FILE_COUNT);
+  private O2QCache               readBuffer;
+  private OWOWCache              writeBuffer;
   private OLocalPaginatedStorage storageLocal;
+  private String[]               fileNames;
+  private byte                   seed;
+  private AtomicLongArray                              fileIds         = new AtomicLongArray(FILE_COUNT);
+  private AtomicIntegerArray                           pageCounters    = new AtomicIntegerArray(FILE_COUNT);
+  private AtomicBoolean                                continuousWrite = new AtomicBoolean(true);
+  private AtomicInteger                                version         = new AtomicInteger(1);
+  private OClosableLinkedContainer<Long, OFileClassic> files           = new OClosableLinkedContainer<Long, OFileClassic>(1024);
 
-  private String[] fileNames;
-  private byte     seed;
-  private final ExecutorService                      executorService = Executors.newFixedThreadPool(THREAD_COUNT);
-  private final List<Future<Void>>                   futures         = new ArrayList<Future<Void>>(THREAD_COUNT);
-  private       AtomicLongArray                      fileIds         = new AtomicLongArray(FILE_COUNT);
-  private       AtomicIntegerArray                   pageCounters    = new AtomicIntegerArray(FILE_COUNT);
-  private final AtomicReferenceArray<Queue<Integer>> pagesQueue      = new AtomicReferenceArray<Queue<Integer>>(FILE_COUNT);
-
-  private AtomicBoolean continuousWrite = new AtomicBoolean(true);
-  private AtomicInteger version         = new AtomicInteger(1);
-
-  @BeforeClass
+  @Before
   public void beforeClass() throws IOException {
 
     OGlobalConfiguration.FILE_LOCK.setValue(Boolean.FALSE);
@@ -88,7 +71,7 @@ public class ReadWriteCacheConcurrentTest {
     }
   }
 
-  @BeforeMethod
+  @Before
   public void beforeMethod() throws IOException {
     if (writeBuffer != null && readBuffer != null)
       readBuffer.closeStorage(writeBuffer);
@@ -109,13 +92,12 @@ public class ReadWriteCacheConcurrentTest {
 
   private void initBuffer() throws IOException {
     writeBuffer = new OWOWCache(false, 8 + systemOffset, new OByteBufferPool(8 + systemOffset), 10000, null, -1,
-        15000 * (8 + systemOffset),
-        4 * (8 + systemOffset) + 15000 * (8 + systemOffset), storageLocal,
-        true, 1);
+        15000 * (8 + systemOffset), 4 * (8 + systemOffset) + 15000 * (8 + systemOffset), storageLocal, true, files, 1);
+    writeBuffer.loadRegisteredFiles();
     readBuffer = new O2QCache(4 * (8 + systemOffset), 8 + systemOffset, true, 20);
   }
 
-  @AfterClass
+  @After
   public void afterClass() throws IOException {
     readBuffer.closeStorage(writeBuffer);
     readBuffer.clear();
@@ -214,7 +196,7 @@ public class ReadWriteCacheConcurrentTest {
       byte[] content = new byte[8];
       fileClassic.read(i * (8 + systemOffset) + systemOffset, content, 8);
 
-      Assert.assertEquals(content, new byte[] { version, 2, 3, seed, 5, 6, (byte) k, (byte) (i & 0xFF) }, " i = " + i);
+      Assert.assertEquals(content, new byte[] { version, 2, 3, seed, 5, 6, (byte) k, (byte) (i & 0xFF) });
     }
     fileClassic.close();
   }
@@ -234,8 +216,7 @@ public class ReadWriteCacheConcurrentTest {
     }
 
     private void writeToFile(int fileNumber, long pageIndex) throws IOException {
-      OCacheEntry cacheEntry = readBuffer
-          .load(fileIds.get(fileNumber), pageIndex, false, writeBuffer, 1);
+      OCacheEntry cacheEntry = readBuffer.load(fileIds.get(fileNumber), pageIndex, false, writeBuffer, 1);
       if (cacheEntry == null) {
         do {
           if (cacheEntry != null)
@@ -306,15 +287,13 @@ public class ReadWriteCacheConcurrentTest {
       long pageIndex = Math.abs(new Random().nextInt() % PAGE_COUNT);
       int fileNumber = new Random().nextInt(FILE_COUNT);
 
-      OCacheEntry cacheEntry = readBuffer
-          .load(fileIds.get(fileNumber), pageIndex, false, writeBuffer, 1);
+      OCacheEntry cacheEntry = readBuffer.load(fileIds.get(fileNumber), pageIndex, false, writeBuffer, 1);
       OCachePointer pointer = cacheEntry.getCachePointer();
 
       final ByteBuffer buffer = pointer.getSharedBuffer();
       buffer.position(systemOffset);
       byte[] content = new byte[8];
       buffer.get(content);
-
 
       readBuffer.release(cacheEntry, writeBuffer);
 

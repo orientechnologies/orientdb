@@ -1,21 +1,24 @@
 package com.orientechnologies.orient.core.index.hashindex.local.cache;
 
-import java.util.ArrayList;
+import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
+import  java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.Callable;
 
+import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.local.twoq.ConcurrentLRUList;
 import com.orientechnologies.orient.core.storage.cache.local.twoq.LRUList;
-import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
-import org.testng.Assert;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.test.ConcurrentTestHelper;
 import com.orientechnologies.orient.test.TestFactory;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.util.*;
+import java.util.concurrent.Callable;
 
 /**
  * Concurrent test for {@link ConcurrentLRUList}.
@@ -26,10 +29,10 @@ public class ConcurrentLRUListConcurrentTest {
   private static final int AMOUNT_OF_OPERATIONS = 100000;
   private static final int THREAD_COUNT         = 8;
 
-  private LRUList          list                 = new ConcurrentLRUList();
-  private volatile long    c                    = 47;
+  private          LRUList list = new ConcurrentLRUList();
+  private volatile long    c    = 47;
 
-  @BeforeMethod
+  @Before
   public void setUp() throws Exception {
     list = new ConcurrentLRUList();
   }
@@ -44,7 +47,7 @@ public class ConcurrentLRUListConcurrentTest {
 
   @Test
   public void testConcurrentAddAndRemove() throws Exception {
-    Collection<Integer> res = ConcurrentTestHelper.<Integer> build().add(THREAD_COUNT, new AdderFactory())
+    Collection<Integer> res = ConcurrentTestHelper.<Integer>build().add(THREAD_COUNT, new AdderFactory())
         .add(THREAD_COUNT, new RemoveLRUFactory()).go();
 
     int expectedSize = 0;
@@ -57,14 +60,14 @@ public class ConcurrentLRUListConcurrentTest {
 
   @Test
   public void testAddRemoveSameEntries() throws Exception {
-    ConcurrentTestHelper.<Integer> build().add(THREAD_COUNT, new AddSameFactory()).add(THREAD_COUNT, new RemoveLRUFactory()).go();
+    ConcurrentTestHelper.<Integer>build().add(THREAD_COUNT, new AddSameFactory()).add(THREAD_COUNT, new RemoveLRUFactory()).go();
 
     assertListConsistency();
   }
 
   @Test
   public void testAllOperationsRandomEntries() throws Exception {
-    ConcurrentTestHelper.<Integer> build().add(THREAD_COUNT, new RandomAdderFactory()).add(THREAD_COUNT, new RandomRemoveFactory())
+    ConcurrentTestHelper.<Integer>build().add(THREAD_COUNT, new RandomAdderFactory()).add(THREAD_COUNT, new RandomRemoveFactory())
         .add(THREAD_COUNT, new RemoveLRUFactory()).go();
 
     assertListConsistency();
@@ -127,7 +130,7 @@ public class ConcurrentLRUListConcurrentTest {
         @Override
         public Integer call() throws Exception {
           for (int i = 0; i < AMOUNT_OF_OPERATIONS; i++) {
-            list.putToMRU(new OCacheEntry(threadNumber, i, null, false));
+            list.putToMRU(new OCacheEntryImpl(threadNumber, i, null, false));
           }
           return AMOUNT_OF_OPERATIONS;
         }
@@ -166,7 +169,7 @@ public class ConcurrentLRUListConcurrentTest {
         public Integer call() throws Exception {
           Random r = new Random();
           for (int i = 0; i < AMOUNT_OF_OPERATIONS; i++) {
-            list.putToMRU(new OCacheEntry(0, r.nextInt(200), null, false));
+            list.putToMRU(new OCacheEntryImpl(0, r.nextInt(200), null, false));
             consumeCPU(r.nextInt(500) + 1000);
           }
           return AMOUNT_OF_OPERATIONS;
@@ -185,7 +188,7 @@ public class ConcurrentLRUListConcurrentTest {
         public Integer call() throws Exception {
           Random r = new Random();
           for (int i = 0; i < AMOUNT_OF_OPERATIONS; i++) {
-            list.putToMRU(new OCacheEntry(0, 0, null, false));
+            list.putToMRU(new OCacheEntryImpl(0, 0, null, false));
             consumeCPU(r.nextInt(500) + 1000);
           }
           return AMOUNT_OF_OPERATIONS;

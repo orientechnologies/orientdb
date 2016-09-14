@@ -44,6 +44,7 @@ import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.method.OSQLMethod;
+import com.orientechnologies.orient.core.util.ODateHelper;
 
 import java.lang.reflect.Array;
 import java.text.DateFormat;
@@ -83,8 +84,9 @@ public class ODocumentHelper {
       Collections.sort(ioResultSet, new ODocumentComparator(iOrderCriteria, context));
   }
 
-  @SuppressWarnings("unchecked") public static <RET> RET convertField(final ODocument iDocument, final String iFieldName,
-      OType type, Class<?> iFieldType, Object iValue) {
+  @SuppressWarnings("unchecked")
+  public static <RET> RET convertField(final ODocument iDocument, final String iFieldName, OType type, Class<?> iFieldType,
+      Object iValue) {
     if (iFieldType == null && type != null)
       iFieldType = type.getDefaultJavaType();
 
@@ -202,8 +204,8 @@ public class ODocumentHelper {
           // _fieldValues.put(iFieldName, newValue);
           return (RET) newValue;
         } catch (ParseException pe) {
-          final String dateFormat =
-              ((String) iValue).length() > config.dateFormat.length() ? config.dateTimeFormat : config.dateFormat;
+          final String dateFormat = ((String) iValue).length() > config.dateFormat.length() ? config.dateTimeFormat
+              : config.dateFormat;
           throw OException.wrapException(
               new OQueryParsingException("Error on conversion of date '" + iValue + "' using the format: " + dateFormat), pe);
         }
@@ -215,12 +217,13 @@ public class ODocumentHelper {
     return (RET) iValue;
   }
 
-  @SuppressWarnings("unchecked") public static <RET> RET getFieldValue(Object value, final String iFieldName) {
+  @SuppressWarnings("unchecked")
+  public static <RET> RET getFieldValue(Object value, final String iFieldName) {
     return (RET) getFieldValue(value, iFieldName, null);
   }
 
-  @SuppressWarnings("unchecked") public static <RET> RET getFieldValue(Object value, final String iFieldName,
-      final OCommandContext iContext) {
+  @SuppressWarnings("unchecked")
+  public static <RET> RET getFieldValue(Object value, final String iFieldName, final OCommandContext iContext) {
     if (value == null)
       return null;
 
@@ -276,7 +279,7 @@ public class ODocumentHelper {
         else if (value instanceof OIdentifiable)
           currentRecord = (OIdentifiable) value;
 
-        //        final int end = iFieldName.indexOf(']', nextSeparatorPos);
+        // final int end = iFieldName.indexOf(']', nextSeparatorPos);
         final int end = findClosingBracketPosition(iFieldName, nextSeparatorPos);
         if (end == -1)
           throw new IllegalArgumentException("Missed closed ']'");
@@ -291,14 +294,14 @@ public class ODocumentHelper {
           value = ((OCommandContext) value).getVariables();
 
         if (value instanceof OIdentifiable) {
-          final ORecord record =
-              currentRecord != null && currentRecord instanceof OIdentifiable ? ((OIdentifiable) currentRecord).getRecord() : null;
+          final ORecord record = currentRecord != null && currentRecord instanceof OIdentifiable
+              ? ((OIdentifiable) currentRecord).getRecord() : null;
 
           final Object index = getIndexPart(iContext, indexPart);
           final String indexAsString = index != null ? index.toString() : null;
 
-          final List<String> indexParts = OStringSerializerHelper
-              .smartSplit(indexAsString, ',', OStringSerializerHelper.DEFAULT_IGNORE_CHARS);
+          final List<String> indexParts = OStringSerializerHelper.smartSplit(indexAsString, ',',
+              OStringSerializerHelper.DEFAULT_IGNORE_CHARS);
           final List<String> indexRanges = OStringSerializerHelper.smartSplit(indexAsString, '-', ' ');
           final List<String> indexCondition = OStringSerializerHelper.smartSplit(indexAsString, '=', ' ');
 
@@ -322,8 +325,8 @@ public class ODocumentHelper {
 
             final String[] fieldNames = doc.fieldNames();
             final int rangeFrom = from != null && !from.isEmpty() ? Integer.parseInt(from) : 0;
-            final int rangeTo =
-                to != null && !to.isEmpty() ? Math.min(Integer.parseInt(to), fieldNames.length - 1) : fieldNames.length - 1;
+            final int rangeTo = to != null && !to.isEmpty() ? Math.min(Integer.parseInt(to), fieldNames.length - 1)
+                : fieldNames.length - 1;
 
             final Object[] values = new Object[rangeTo - rangeFrom + 1];
 
@@ -345,16 +348,16 @@ public class ODocumentHelper {
             if (conditionFieldValue != null && fieldValue != null)
               conditionFieldValue = OType.convert(conditionFieldValue, fieldValue.getClass());
 
-            if (fieldValue == null && !conditionFieldValue.equals("null") || fieldValue != null && !fieldValue
-                .equals(conditionFieldValue))
+            if (fieldValue == null && !conditionFieldValue.equals("null")
+                || fieldValue != null && !fieldValue.equals(conditionFieldValue))
               value = null;
           }
         } else if (value instanceof Map<?, ?>) {
           final Object index = getIndexPart(iContext, indexPart);
           final String indexAsString = index != null ? index.toString() : null;
 
-          final List<String> indexParts = OStringSerializerHelper
-              .smartSplit(indexAsString, ',', OStringSerializerHelper.DEFAULT_IGNORE_CHARS);
+          final List<String> indexParts = OStringSerializerHelper.smartSplit(indexAsString, ',',
+              OStringSerializerHelper.DEFAULT_IGNORE_CHARS);
           final List<String> indexRanges = OStringSerializerHelper.smartSplit(indexAsString, '-', ' ');
           final List<String> indexCondition = OStringSerializerHelper.smartSplit(indexAsString, '=', ' ');
 
@@ -377,8 +380,8 @@ public class ODocumentHelper {
 
             final List<String> fieldNames = new ArrayList<String>(map.keySet());
             final int rangeFrom = from != null && !from.isEmpty() ? Integer.parseInt(from) : 0;
-            final int rangeTo =
-                to != null && !to.isEmpty() ? Math.min(Integer.parseInt(to), fieldNames.size() - 1) : fieldNames.size() - 1;
+            final int rangeTo = to != null && !to.isEmpty() ? Math.min(Integer.parseInt(to), fieldNames.size() - 1)
+                : fieldNames.size() - 1;
 
             final Object[] values = new Object[rangeTo - rangeFrom + 1];
 
@@ -400,8 +403,8 @@ public class ODocumentHelper {
             if (conditionFieldValue != null && fieldValue != null)
               conditionFieldValue = OType.convert(conditionFieldValue, fieldValue.getClass());
 
-            if (fieldValue == null && !conditionFieldValue.equals("null") || fieldValue != null && !fieldValue
-                .equals(conditionFieldValue))
+            if (fieldValue == null && !conditionFieldValue.equals("null")
+                || fieldValue != null && !fieldValue.equals(conditionFieldValue))
               value = null;
           }
 
@@ -443,9 +446,8 @@ public class ODocumentHelper {
             String to = indexRanges.get(1);
 
             final int rangeFrom = from != null && !from.isEmpty() ? Integer.parseInt(from) : 0;
-            final int rangeTo = to != null && !to.isEmpty() ?
-                Math.min(Integer.parseInt(to), OMultiValue.getSize(value) - 1) :
-                OMultiValue.getSize(value) - 1;
+            final int rangeTo = to != null && !to.isEmpty() ? Math.min(Integer.parseInt(to), OMultiValue.getSize(value) - 1)
+                : OMultiValue.getSize(value) - 1;
 
             final Object[] values = new Object[rangeTo - rangeFrom + 1];
             for (int i = rangeFrom; i <= rangeTo; ++i)
@@ -591,7 +593,7 @@ public class ODocumentHelper {
   private static boolean isFieldName(String indexAsString) {
     indexAsString = indexAsString.trim();
     if (indexAsString.startsWith("`") && indexAsString.endsWith("`")) {
-      //quoted identifier
+      // quoted identifier
       return !indexAsString.substring(1, indexAsString.length() - 1).contains("`");
     }
     boolean firstChar = true;
@@ -649,8 +651,8 @@ public class ODocumentHelper {
     return index;
   }
 
-  @SuppressWarnings("unchecked") protected static Object filterItem(final String iConditionFieldName,
-      final Object iConditionFieldValue, final Object iValue) {
+  @SuppressWarnings("unchecked")
+  protected static Object filterItem(final String iConditionFieldName, final Object iConditionFieldValue, final Object iValue) {
     if (iValue instanceof OIdentifiable) {
       final ORecord rec = ((OIdentifiable) iValue).getRecord();
       if (rec instanceof ODocument) {
@@ -679,11 +681,13 @@ public class ODocumentHelper {
   /**
    * Retrieves the value crossing the map with the dotted notation
    *
-   * @param iKey Field(s) to retrieve. If are multiple fields, then the dot must be used as separator
+   * @param iKey
+   *          Field(s) to retrieve. If are multiple fields, then the dot must be used as separator
    * @param iMap
    * @return
    */
-  @SuppressWarnings("unchecked") public static Object getMapEntry(final Map<String, ?> iMap, final Object iKey) {
+  @SuppressWarnings("unchecked")
+  public static Object getMapEntry(final Map<String, ?> iMap, final Object iKey) {
     if (iMap == null || iKey == null)
       return null;
 
@@ -711,40 +715,41 @@ public class ODocumentHelper {
   }
 
   public static Object getIdentifiableValue(final OIdentifiable iCurrent, final String iFieldName) {
-    if (iFieldName == null || iFieldName.length() == 0)
+    if (iFieldName == null)
       return null;
 
-    final char begin = iFieldName.charAt(0);
-    if (begin == '@') {
-      // RETURN AN ATTRIBUTE
-      if (iFieldName.equalsIgnoreCase(ATTRIBUTE_THIS))
-        return iCurrent.getRecord();
-      else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_RID))
-        return iCurrent.getIdentity();
-      else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_RID_ID))
-        return iCurrent.getIdentity().getClusterId();
-      else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_RID_POS))
-        return iCurrent.getIdentity().getClusterPosition();
-      else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_VERSION))
-        return iCurrent.getRecord().getVersion();
-      else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_CLASS))
-        return ((ODocument) iCurrent.getRecord()).getClassName();
-      else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_TYPE))
-        return Orient.instance().getRecordFactoryManager().getRecordTypeName(ORecordInternal.getRecordType(iCurrent.getRecord()));
-      else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_SIZE)) {
-        final byte[] stream = iCurrent.getRecord().toStream();
-        return stream != null ? stream.length : 0;
-      } else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_FIELDS))
-        return ((ODocument) iCurrent.getRecord()).fieldNames();
-      else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_RAW))
-        return new String(iCurrent.getRecord().toStream());
+    if(iFieldName.length() > 0) {
+      final char begin = iFieldName.charAt(0);
+      if (begin == '@') {
+        // RETURN AN ATTRIBUTE
+        if (iFieldName.equalsIgnoreCase(ATTRIBUTE_THIS))
+          return iCurrent.getRecord();
+        else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_RID))
+          return iCurrent.getIdentity();
+        else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_RID_ID))
+          return iCurrent.getIdentity().getClusterId();
+        else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_RID_POS))
+          return iCurrent.getIdentity().getClusterPosition();
+        else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_VERSION))
+          return iCurrent.getRecord().getVersion();
+        else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_CLASS))
+          return ((ODocument) iCurrent.getRecord()).getClassName();
+        else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_TYPE))
+          return Orient.instance().getRecordFactoryManager().getRecordTypeName(ORecordInternal.getRecordType(iCurrent.getRecord()));
+        else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_SIZE)) {
+          final byte[] stream = iCurrent.getRecord().toStream();
+          return stream != null ? stream.length : 0;
+        } else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_FIELDS))
+          return ((ODocument) iCurrent.getRecord()).fieldNames();
+        else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_RAW))
+          return new String(iCurrent.getRecord().toStream());
+      }
     }
-
     if (iCurrent == null)
       return null;
 
     final ODocument doc = ((ODocument) iCurrent.getRecord());
-    if (doc == null) {//broken link
+    if (doc == null) {// broken link
       return null;
     }
     doc.checkForFields(iFieldName);
@@ -843,9 +848,11 @@ public class ODocumentHelper {
       else if (function.startsWith("PREFIX("))
         result = OIOUtils.getStringContent(args.get(0)) + currentValue.toString();
       else if (function.startsWith("FORMAT("))
-        if (currentValue instanceof Date)
-          result = new SimpleDateFormat(OIOUtils.getStringContent(args.get(0))).format(currentValue);
-        else
+        if (currentValue instanceof Date) {
+          SimpleDateFormat formatter = new SimpleDateFormat(OIOUtils.getStringContent(args.get(0)));
+          formatter.setTimeZone(ODateHelper.getDatabaseTimeZone());
+          result = formatter.format(currentValue);
+        } else
           result = String.format(OIOUtils.getStringContent(args.get(0)), currentValue.toString());
       else if (function.startsWith("LEFT(")) {
         final int len = Integer.parseInt(args.get(0));
@@ -865,7 +872,8 @@ public class ODocumentHelper {
     return result;
   }
 
-  @SuppressWarnings("unchecked") public static Object cloneValue(ODocument iCloned, final Object fieldValue) {
+  @SuppressWarnings("unchecked")
+  public static Object cloneValue(ODocument iCloned, final Object fieldValue) {
 
     if (fieldValue != null) {
       if (fieldValue instanceof ODocument && !((ODocument) fieldValue).getIdentity().isValid()) {
@@ -970,13 +978,14 @@ public class ODocumentHelper {
    * Makes a deep comparison field by field to check if the passed ODocument instance is identical as identity and content to the
    * current one. Instead equals() just checks if the RID are the same.
    *
-   * @param iOther ODocument instance
+   * @param iOther
+   *          ODocument instance
    * @return true if the two document are identical, otherwise false
    * @see #equals(Object)
    */
-  @SuppressWarnings("unchecked") public static boolean hasSameContentOf(final ODocument iCurrent,
-      final ODatabaseDocumentInternal iMyDb, final ODocument iOther, final ODatabaseDocumentInternal iOtherDb,
-      RIDMapper ridMapper) {
+  @SuppressWarnings("unchecked")
+  public static boolean hasSameContentOf(final ODocument iCurrent, final ODatabaseDocumentInternal iMyDb, final ODocument iOther,
+      final ODatabaseDocumentInternal iOtherDb, RIDMapper ridMapper) {
     return hasSameContentOf(iCurrent, iMyDb, iOther, iOtherDb, ridMapper, true);
   }
 
@@ -984,13 +993,14 @@ public class ODocumentHelper {
    * Makes a deep comparison field by field to check if the passed ODocument instance is identical in the content to the current
    * one. Instead equals() just checks if the RID are the same.
    *
-   * @param iOther ODocument instance
+   * @param iOther
+   *          ODocument instance
    * @return true if the two document are identical, otherwise false
    * @see #equals(Object)
    */
-  @SuppressWarnings("unchecked") public static boolean hasSameContentOf(final ODocument iCurrent,
-      final ODatabaseDocumentInternal iMyDb, final ODocument iOther, final ODatabaseDocumentInternal iOtherDb, RIDMapper ridMapper,
-      final boolean iCheckAlsoIdentity) {
+  @SuppressWarnings("unchecked")
+  public static boolean hasSameContentOf(final ODocument iCurrent, final ODatabaseDocumentInternal iMyDb, final ODocument iOther,
+      final ODatabaseDocumentInternal iOtherDb, RIDMapper ridMapper, final boolean iCheckAlsoIdentity) {
     if (iOther == null)
       return false;
 
@@ -1351,7 +1361,8 @@ public class ODocumentHelper {
     otherBag.setAutoConvertToRecord(false);
 
     final ORidBag otherBagCopy = makeDbCall(iOtherDb, new ODbRelatedCall<ORidBag>() {
-      @Override public ORidBag call(ODatabaseDocumentInternal database) {
+      @Override
+      public ORidBag call(ODatabaseDocumentInternal database) {
         final ORidBag otherRidBag = new ORidBag();
         otherRidBag.setAutoConvertToRecord(false);
 
@@ -1375,7 +1386,8 @@ public class ODocumentHelper {
         }
       })) {
         final OIdentifiable myIdentifiable = makeDbCall(iMyDb, new ODbRelatedCall<OIdentifiable>() {
-          @Override public OIdentifiable call(ODatabaseDocumentInternal database) {
+          @Override
+          public OIdentifiable call(ODatabaseDocumentInternal database) {
             return myIterator.next();
           }
         });
@@ -1391,7 +1403,8 @@ public class ODocumentHelper {
           otherRid = myIdentifiable.getIdentity();
 
         makeDbCall(iOtherDb, new ODbRelatedCall<Object>() {
-          @Override public Object call(ODatabaseDocumentInternal database) {
+          @Override
+          public Object call(ODatabaseDocumentInternal database) {
             otherBagCopy.remove(otherRid);
             return null;
           }
@@ -1400,7 +1413,8 @@ public class ODocumentHelper {
       }
 
       return makeDbCall(iOtherDb, new ODbRelatedCall<Boolean>() {
-        @Override public Boolean call(ODatabaseDocumentInternal database) {
+        @Override
+        public Boolean call(ODatabaseDocumentInternal database) {
           return otherBagCopy.isEmpty();
         }
       });
@@ -1418,8 +1432,8 @@ public class ODocumentHelper {
     if (myValue == null)
       return true;
 
-    if (myValue.getClass().isArray() && !otherValue.getClass().isArray() || !myValue.getClass().isArray() && otherValue.getClass()
-        .isArray())
+    if (myValue.getClass().isArray() && !otherValue.getClass().isArray()
+        || !myValue.getClass().isArray() && otherValue.getClass().isArray())
       return false;
 
     if (myValue.getClass().isArray() && otherValue.getClass().isArray()) {
@@ -1485,7 +1499,7 @@ public class ODocumentHelper {
           deleteCrossRefs(iRid, (ODocument) fieldValue);
         } else if (OMultiValue.isMultiValue(fieldValue)) {
           // MULTI-VALUE (COLLECTION, ARRAY OR MAP), CHECK THE CONTENT
-          for (final Iterator<?> it = OMultiValue.getMultiValueIterator(fieldValue); it.hasNext(); ) {
+          for (final Iterator<?> it = OMultiValue.getMultiValueIterator(fieldValue); it.hasNext();) {
             final Object item = it.next();
 
             if (fieldValue.equals(iRid)) {

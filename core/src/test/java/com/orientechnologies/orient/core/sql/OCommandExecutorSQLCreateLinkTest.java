@@ -22,28 +22,26 @@ package com.orientechnologies.orient.core.sql;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import java.util.List;
 
-@Test
 public class OCommandExecutorSQLCreateLinkTest {
-  private static String DB_STORAGE             = "memory";
-  private static String DB_NAME                = "OCommandExecutorSQLCreateLinkTest";
-
-  ODatabaseDocumentTx   db;
+  static ODatabaseDocumentTx db;
+  private static String DB_STORAGE = "memory";
+  private static String DB_NAME    = "OCommandExecutorSQLCreateLinkTest";
 
   @BeforeClass
-  public void beforeClass() throws Exception {
+  public static void beforeClass() throws Exception {
     db = new ODatabaseDocumentTx(DB_STORAGE + ":" + DB_NAME);
     db.create();
   }
 
   @AfterClass
-  public void afterClass() throws Exception {
+  public static void afterClass() throws Exception {
     if (db.isClosed()) {
       db.open("admin", "admin");
     }
@@ -95,13 +93,13 @@ public class OCommandExecutorSQLCreateLinkTest {
     Object otherKeys = result.get(0).field("other");
     Assert.assertNotNull(otherKeys);
     Assert.assertTrue(otherKeys instanceof List);
-    Assert.assertEquals(((List)otherKeys).get(0), "pkb1_1");
+    Assert.assertEquals(((List) otherKeys).get(0), "pkb1_1");
 
     otherKeys = result.get(1).field("other");
     Assert.assertNotNull(otherKeys);
     Assert.assertTrue(otherKeys instanceof List);
-    Assert.assertEquals(((List)otherKeys).size(), 2);
-    Assert.assertTrue(((List)otherKeys).contains("pkb1_2"));
-    Assert.assertTrue(((List)otherKeys).contains("pkb1_3"));
+    Assert.assertEquals(((List) otherKeys).size(), 2);
+    Assert.assertTrue(((List) otherKeys).contains("pkb1_2"));
+    Assert.assertTrue(((List) otherKeys).contains("pkb1_3"));
   }
 }

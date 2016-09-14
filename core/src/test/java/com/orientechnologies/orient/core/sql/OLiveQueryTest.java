@@ -28,8 +28,7 @@ import com.orientechnologies.orient.core.sql.query.OLiveQuery;
 import com.orientechnologies.orient.core.sql.query.OLiveResultListener;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.storage.OCluster;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert; import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +38,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by luigidellaquila on 13/04/15.
  */
-@Test public class OLiveQueryTest {
+public class OLiveQueryTest {
 
   private CountDownLatch latch = new CountDownLatch(2);
 
@@ -47,7 +46,8 @@ import java.util.concurrent.TimeUnit;
 
     public List<ORecordOperation> ops = new ArrayList<ORecordOperation>();
 
-    @Override public void onLiveResult(int iLiveToken, ORecordOperation iOp) throws OException {
+    @Override
+    public void onLiveResult(int iLiveToken, ORecordOperation iOp) throws OException {
       ops.add(iOp);
       latch.countDown();
     }
@@ -65,6 +65,7 @@ import java.util.concurrent.TimeUnit;
 
   @Test
   public void testLiveInsert() throws InterruptedException {
+
     ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OLiveQueryTest");
     db.activateOnCurrentThread();
     db.create();

@@ -37,8 +37,8 @@ public class OLuceneTxChangesMultiRid extends OLuceneTxChangesAbstract {
   private final Map<String, List<String>> deleted     = new HashMap<String, List<String>>();
   private final Set<Document>             deletedDocs = new HashSet<Document>();
 
-  public OLuceneTxChangesMultiRid(OLuceneIndexEngine engine, IndexWriter writer) {
-    super(engine, writer);
+  public OLuceneTxChangesMultiRid(OLuceneIndexEngine engine, IndexWriter writer, IndexWriter deletedIdx) {
+    super(engine, writer, deletedIdx);
   }
 
   public void put(Object key, OIdentifiable value, Document doc) throws IOException {
@@ -56,7 +56,9 @@ public class OLuceneTxChangesMultiRid extends OLuceneTxChangesAbstract {
         deleted.put(value.getIdentity().toString(), strings);
       }
       strings.add(key.toString());
-      deletedDocs.add(engine.buildDocument(key, value));
+      Document doc = engine.buildDocument(key, value);
+      deletedDocs.add(doc);
+      deletedIdx.addDocument(doc);
     }
   }
 

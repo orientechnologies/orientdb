@@ -396,7 +396,7 @@ public class OMatchStatementExecutionTest {
                 "match {class:Person, where:(name = 'n1')}.both('Friend'){as:friend}.both('Friend'){class: Person, where:(name = 'n4')} return friend.name"))
         .execute();
     assertEquals(1, qResult.size());
-    assertEquals("n2", qResult.get(0).field("friend_name"));
+    assertEquals("n2", qResult.get(0).getProperty("friend.name"));
   }
 
   @Test
@@ -407,7 +407,7 @@ public class OMatchStatementExecutionTest {
                 "match {class:Person, where:(name = 'n1')}-Friend-{as:friend}-Friend-{class: Person, where:(name = 'n4')} return friend.name"))
         .execute();
     assertEquals(1, qResult.size());
-    assertEquals("n2", qResult.get(0).field("friend_name"));
+    assertEquals("n2", qResult.get(0).getProperty("friend.name"));
   }
 
   @Test
@@ -917,7 +917,7 @@ public class OMatchStatementExecutionTest {
   }
 
   @Test
-  public void testTriangle2() {
+  public void testTriangle2Old() {
     StringBuilder query = new StringBuilder();
     query.append("match ");
     query.append("{class:TriangleV, as: friend1}");
@@ -933,9 +933,31 @@ public class OMatchStatementExecutionTest {
     ODocument friend1 = ((OIdentifiable) doc.field("friend1")).getRecord();
     ODocument friend2 = ((OIdentifiable) doc.field("friend2")).getRecord();
     ODocument friend3 = ((OIdentifiable) doc.field("friend3")).getRecord();
-    assertEquals(0, friend1.field("uid"));
-    assertEquals(1, friend2.field("uid"));
-    assertEquals(2, friend3.field("uid"));
+    assertEquals(0, friend1.<Object>field("uid"));
+    assertEquals(1, friend2.<Object>field("uid"));
+    assertEquals(2, friend3.<Object>field("uid"));
+  }
+
+  @Test
+  public void testTriangle2() {
+    StringBuilder query = new StringBuilder();
+    query.append("match ");
+    query.append("{class:TriangleV, as: friend1}");
+    query.append("  .out('TriangleE'){class:TriangleV, as: friend2, where: (uid = 1)}");
+    query.append("  .out('TriangleE'){as: friend3},");
+    query.append("{class:TriangleV, as: friend1}");
+    query.append("  .out('TriangleE'){as: friend3}");
+    query.append("return $patterns");
+
+    List<ODocument> result = db.command(new OCommandSQL(query.toString())).execute();
+    assertEquals(1, result.size());
+    ODocument doc = result.get(0);
+    ODocument friend1 = ((OIdentifiable) doc.field("friend1")).getRecord();
+    ODocument friend2 = ((OIdentifiable) doc.field("friend2")).getRecord();
+    ODocument friend3 = ((OIdentifiable) doc.field("friend3")).getRecord();
+    assertEquals(0, friend1.<Object>field("uid"));
+    assertEquals(1, friend2.<Object>field("uid"));
+    assertEquals(2, friend3.<Object>field("uid"));
   }
 
   @Test
@@ -955,9 +977,9 @@ public class OMatchStatementExecutionTest {
     ODocument friend1 = ((OIdentifiable) doc.field("friend1")).getRecord();
     ODocument friend2 = ((OIdentifiable) doc.field("friend2")).getRecord();
     ODocument friend3 = ((OIdentifiable) doc.field("friend3")).getRecord();
-    assertEquals(0, friend1.field("uid"));
-    assertEquals(1, friend2.field("uid"));
-    assertEquals(2, friend3.field("uid"));
+    assertEquals(0, friend1.<Object>field("uid"));
+    assertEquals(1, friend2.<Object>field("uid"));
+    assertEquals(2, friend3.<Object>field("uid"));
   }
 
   @Test
@@ -1033,7 +1055,7 @@ public class OMatchStatementExecutionTest {
     List<OIdentifiable> result = db.command(new OCommandSQL(query.toString())).execute();
     assertEquals(2, result.size());
     for (OIdentifiable d : result) {
-      assertEquals(((ODocument) ((ODocument) d.getRecord()).field("friend1")).field("uid"), 1);
+      assertEquals(((ODocument) ((ODocument) d.getRecord()).field("friend1")).<Object>field("uid"), 1);
     }
   }
 
@@ -1048,7 +1070,7 @@ public class OMatchStatementExecutionTest {
     List<OIdentifiable> result = db.command(new OCommandSQL(query.toString())).execute();
     assertEquals(1, result.size());
     for (OIdentifiable d : result) {
-      assertEquals(((ODocument) ((ODocument) d.getRecord()).field("friend1")).field("uid"), 1);
+      assertEquals(((ODocument) ((ODocument) d.getRecord()).field("friend1")).<Object>field("uid"), 1);
     }
   }
 
@@ -1146,7 +1168,7 @@ public class OMatchStatementExecutionTest {
     assertTrue(foo instanceof List);
     assertEquals(1, ((List) foo).size());
     Vertex resultVertex = (Vertex) ((List) foo).get(0);
-    assertEquals(2, resultVertex.getProperty("uid"));
+    assertEquals(2, resultVertex.<Object>getProperty("uid"));
   }
 
   @Test
@@ -1297,6 +1319,48 @@ public class OMatchStatementExecutionTest {
     assertEquals(expectedNames, names);
   }
 
+  @Test
+  public void testOptional() throws Exception {
+    List<ODocument> qResult = db.command(new OCommandSQL("match {class:Person, as: person} -NonExistingEdge-> {as:b, optional:true} return person, b.name")).execute();
+    assertEquals(6, qResult.size());
+    for (ODocument doc : qResult) {
+      assertTrue(doc.fieldNames().length == 2);
+      OIdentifiable personId = doc.field("person");
+      ODocument person = personId.getRecord();
+      String name = person.field("name");
+      assertTrue(name.startsWith("n"));
+    }
+  }
+
+  @Test
+  public void testOptional2() throws Exception {
+    List<ODocument> qResult = db.command(new OCommandSQL("match {class:Person, as: person} --> {as:b, optional:true, where:(nonExisting = 12)} return person, b.name")).execute();
+    assertEquals(6, qResult.size());
+    for (ODocument doc : qResult) {
+      assertTrue(doc.fieldNames().length == 2);
+      OIdentifiable personId = doc.field("person");
+      ODocument person = personId.getRecord();
+      String name = person.field("name");
+      assertTrue(name.startsWith("n"));
+    }
+  }
+
+  @Test
+  public void testOptional3() throws Exception {
+    List<ODocument> qResult = db
+        .command(
+            new OCommandSQL(
+                "select friend.name as name from ("
+                    + "match {class:Person, as:a, where:(name = 'n1' and 1 + 1 = 2)}.out('Friend'){as:friend, where:(name = 'n2' and 1 + 1 = 2)},"
+                    + "{as:a}.out(){as:b, where:(nonExisting = 12), optional:true},"
+                    + "{as:friend}.out(){as:b, optional:true}"
+                    + " return friend)"))
+        .execute();
+    assertEquals(1, qResult.size());
+    assertEquals("n2", qResult.get(0).field("name"));
+
+  }
+
   private List<OIdentifiable> getManagedPathElements(String managerName) {
     StringBuilder query = new StringBuilder();
     query.append("  match {class:Employee, as:boss, where: (name = '" + managerName + "')}");
@@ -1323,6 +1387,5 @@ public class OMatchStatementExecutionTest {
 
   private static OProfiler getProfilerInstance() throws Exception {
     return Orient.instance().getProfiler();
-
   }
 }

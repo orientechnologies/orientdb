@@ -1,13 +1,12 @@
 package com.orientechnologies.orient.core.sql.parser;
 
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
-import static org.testng.Assert.fail;
+import static org.junit.Assert.fail;
 
-@Test
 public class OUpdateStatementTest {
 
   protected SimpleNode checkRightSyntax(String query) {
@@ -32,7 +31,10 @@ public class OUpdateStatementTest {
         }
         fail();
       }
-
+//      System.out.println(query);
+//      System.out.println("->");
+//      System.out.println(result.toString());
+//      System.out.println("............");
 
       return result;
     } catch (Exception e) {
@@ -45,6 +47,7 @@ public class OUpdateStatementTest {
     return null;
   }
 
+  @Test
   public void testSimpleInsert() {
     checkRightSyntax("update  Foo set a = b");
     checkRightSyntax("update  Foo set a = 'b'");
@@ -60,6 +63,7 @@ public class OUpdateStatementTest {
     printTree("update  Foo set a = a.b.toLowerCase(), b=out('pippo')[0]");
   }
 
+  @Test
   public void testCollections() {
     checkRightSyntax("update Foo add a = b");
     checkWrongSyntax("update Foo add 'a' = b");
@@ -70,6 +74,7 @@ public class OUpdateStatementTest {
     checkRightSyntax("update Foo put a = 'b', 'c'");
   }
 
+  @Test
   public void testJson() {
     checkRightSyntax("update Foo merge {'a':'b', 'c':{'d':'e'}} where name = 'foo'");
     checkRightSyntax("update Foo content {'a':'b', 'c':{'d':'e', 'f': ['a', 'b', 4]}} where name = 'foo'");
@@ -92,20 +97,24 @@ public class OUpdateStatementTest {
     checkRightSyntax("UPDATE V SET key = \"test\", value = {\"f12\":\"test\\\\\"} UPSERT WHERE key = \"test\"");
   }
 
+  @Test
   public void testTargetQuery() {
     //issue #4415
     checkRightSyntax("update (select from (traverse References from ( select from Node WHERE Email = 'julia@local'  ) ) WHERE @class = 'Node' and $depth <= 1 and Active = true ) set Points = 0 RETURN BEFORE $current.Points");
   }
 
+  @Test
   public void testTargetMultipleRids() {
     checkRightSyntax("update [#9:0, #9:1] set foo = 'bar'");
   }
 
+  @Test
   public void testDottedTarget() {
     //issue #5397
     checkRightSyntax("update $publishedVersionEdge.row set isPublished = false");
   }
 
+  @Test
   public void testLockRecord() {
     checkRightSyntax("update foo set bar = 1 lock record");
     checkRightSyntax("update foo set bar = 1 lock none");
@@ -117,6 +126,12 @@ public class OUpdateStatementTest {
     checkRightSyntax("update foo set bar = 1 LOCK DEFAULT");
 
     checkWrongSyntax("update foo set bar = 1 LOCK Foo");
+  }
+
+  @Test
+  public void testReturnCount() {
+    checkRightSyntax("update foo set bar = 1 RETURN COUNT");
+    checkRightSyntax("update foo set bar = 1 return count");
   }
 
   private void printTree(String s) {

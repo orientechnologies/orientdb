@@ -49,7 +49,7 @@ public class OrderedEdgesGraphTest {
       graph.setUseLightweightEdges(true);
       int i = 1;
       for (Edge e : loadedPerson.getEdges(Direction.OUT)) {
-        assertEquals(e.getVertex(Direction.IN).getProperty("index"), i++);
+        assertEquals(e.getVertex(Direction.IN).<Object>getProperty("index"), i++);
       }
     } finally {
       graph.shutdown();
@@ -78,8 +78,8 @@ public class OrderedEdgesGraphTest {
       graph.setUseLightweightEdges(true);
       loadedPerson = graph.getVertex(mainPerson.getId());
       edges = loadedPerson.getRecord().field("out_Knows");
-      assertEquals(graph.getVertex(edges.get(9)).getProperty("index"), 11);
-      assertEquals(graph.getVertex(edges.get(99)).getProperty("index"), 10);
+      assertEquals(graph.getVertex(edges.get(9)).<Object>getProperty("index"), 11);
+      assertEquals(graph.getVertex(edges.get(99)).<Object>getProperty("index"), 10);
     } finally {
       graph.shutdown();
     }

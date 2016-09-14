@@ -11,50 +11,50 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.util.*;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 public class ODocumentSchemafullSerializationTest {
 
-  private static final String       CITY           = "city";
-  private static final String       NUMBER         = "number";
-  private static final String       INT_FIELD      = NUMBER;
-  private static final String       NAME           = "name";
-  private static final String       MAP_BYTES      = "bytesMap";
-  private static final String       MAP_DOUBLE     = "doubleMap";
-  private static final String       MAP_FLOAT      = "floatMap";
-  private static final String       MAP_DATE       = "dateMap";
-  private static final String       MAP_SHORT      = "shortMap";
-  private static final String       MAP_LONG       = "mapLong";
-  private static final String       MAP_INT        = "mapInt";
-  private static final String       MAP_STRING     = "mapString";
-  private static final String       LIST_MIXED     = "listMixed";
-  private static final String       LIST_BOOLEANS  = "booleans";
-  private static final String       LIST_BYTES     = "bytes";
-  private static final String       LIST_DATES     = "dates";
-  private static final String       LIST_DOUBLES   = "doubles";
-  private static final String       LIST_FLOATS    = "floats";
-  private static final String       LIST_INTEGERS  = "integers";
-  private static final String       LIST_LONGS     = "longs";
-  private static final String       LIST_SHORTS    = "shorts";
-  private static final String       LIST_STRINGS   = "listStrings";
-  private static final String       SHORT_FIELD    = "shortNumber";
-  private static final String       LONG_FIELD     = "longNumber";
-  private static final String       STRING_FIELD   = "stringField";
-  private static final String       FLOAT_NUMBER   = "floatNumber";
-  private static final String       DOUBLE_NUMBER  = "doubleNumber";
-  private static final String       BYTE_FIELD     = "byteField";
-  private static final String       BOOLEAN_FIELD  = "booleanField";
-  private static final String       DATE_FIELD     = "dateField";
-  private static final String       RECORDID_FIELD = "recordField";
-  private static final String       EMBEDDED_FIELD = "embeddedField";
-  private static final String       ANY_FIELD      = "anyField";
+  private static final String CITY           = "city";
+  private static final String NUMBER         = "number";
+  private static final String INT_FIELD      = NUMBER;
+  private static final String NAME           = "name";
+  private static final String MAP_BYTES      = "bytesMap";
+  private static final String MAP_DOUBLE     = "doubleMap";
+  private static final String MAP_FLOAT      = "floatMap";
+  private static final String MAP_DATE       = "dateMap";
+  private static final String MAP_SHORT      = "shortMap";
+  private static final String MAP_LONG       = "mapLong";
+  private static final String MAP_INT        = "mapInt";
+  private static final String MAP_STRING     = "mapString";
+  private static final String LIST_MIXED     = "listMixed";
+  private static final String LIST_BOOLEANS  = "booleans";
+  private static final String LIST_BYTES     = "bytes";
+  private static final String LIST_DATES     = "dates";
+  private static final String LIST_DOUBLES   = "doubles";
+  private static final String LIST_FLOATS    = "floats";
+  private static final String LIST_INTEGERS  = "integers";
+  private static final String LIST_LONGS     = "longs";
+  private static final String LIST_SHORTS    = "shorts";
+  private static final String LIST_STRINGS   = "listStrings";
+  private static final String SHORT_FIELD    = "shortNumber";
+  private static final String LONG_FIELD     = "longNumber";
+  private static final String STRING_FIELD   = "stringField";
+  private static final String FLOAT_NUMBER   = "floatNumber";
+  private static final String DOUBLE_NUMBER  = "doubleNumber";
+  private static final String BYTE_FIELD     = "byteField";
+  private static final String BOOLEAN_FIELD  = "booleanField";
+  private static final String DATE_FIELD     = "dateField";
+  private static final String RECORDID_FIELD = "recordField";
+  private static final String EMBEDDED_FIELD = "embeddedField";
+  private static final String ANY_FIELD      = "anyField";
   private ODatabaseDocumentInternal databaseDocument;
   private OClass                    simple;
   private ORecordSerializer         serializer;
@@ -70,7 +70,7 @@ public class ODocumentSchemafullSerializationTest {
     this(new ORecordSerializerSchemaAware2CSV());
   }
 
-  @BeforeMethod
+  @Before
   public void before() {
     ODatabaseDocumentTx.setDefaultSerializer(serializer);
     databaseDocument = new ODatabaseDocumentTx("memory:" + ODocumentSchemafullSerializationTest.class.getSimpleName()).create();
@@ -123,11 +123,11 @@ public class ODocumentSchemafullSerializationTest {
     clazzEmbComp.createProperty("addressByStreet", OType.EMBEDDEDMAP, address);
   }
 
-  @AfterMethod
+  @After
   public void after() {
     databaseDocument.drop();
-    ODatabaseDocumentTx.setDefaultSerializer(ORecordSerializerFactory.instance().getFormat(
-        OGlobalConfiguration.DB_DOCUMENT_SERIALIZER.getValueAsString()));
+    ODatabaseDocumentTx.setDefaultSerializer(
+        ORecordSerializerFactory.instance().getFormat(OGlobalConfiguration.DB_DOCUMENT_SERIALIZER.getValueAsString()));
   }
 
   @Test
@@ -150,16 +150,16 @@ public class ODocumentSchemafullSerializationTest {
     ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
 
     assertEquals(extr.fields(), document.fields());
-    assertEquals(extr.field(STRING_FIELD), document.field(STRING_FIELD));
-    assertEquals(extr.field(INT_FIELD), document.field(INT_FIELD));
-    assertEquals(extr.field(SHORT_FIELD), document.field(SHORT_FIELD));
-    assertEquals(extr.field(LONG_FIELD), document.field(LONG_FIELD));
-    assertEquals(extr.field(FLOAT_NUMBER), document.field(FLOAT_NUMBER));
-    assertEquals(extr.field(DOUBLE_NUMBER), document.field(DOUBLE_NUMBER));
-    assertEquals(extr.field(BYTE_FIELD), document.field(BYTE_FIELD));
-    assertEquals(extr.field(BOOLEAN_FIELD), document.field(BOOLEAN_FIELD));
-    assertEquals(extr.field(DATE_FIELD), document.field(DATE_FIELD));
-    assertEquals(extr.field(RECORDID_FIELD), document.field(RECORDID_FIELD));
+    assertEquals(extr.<Object>field(STRING_FIELD), document.field(STRING_FIELD));
+    assertEquals(extr.<Object>field(INT_FIELD), document.field(INT_FIELD));
+    assertEquals(extr.<Object>field(SHORT_FIELD), document.field(SHORT_FIELD));
+    assertEquals(extr.<Object>field(LONG_FIELD), document.field(LONG_FIELD));
+    assertEquals(extr.<Object>field(FLOAT_NUMBER), document.field(FLOAT_NUMBER));
+    assertEquals(extr.<Object>field(DOUBLE_NUMBER), document.field(DOUBLE_NUMBER));
+    assertEquals(extr.<Object>field(BYTE_FIELD), document.field(BYTE_FIELD));
+    assertEquals(extr.<Object>field(BOOLEAN_FIELD), document.field(BOOLEAN_FIELD));
+    assertEquals(extr.<Object>field(DATE_FIELD), document.field(DATE_FIELD));
+    assertEquals(extr.<Object>field(RECORDID_FIELD), document.field(RECORDID_FIELD));
   }
 
   @SuppressWarnings({ "rawtypes", "unchecked" })
@@ -244,13 +244,13 @@ public class ODocumentSchemafullSerializationTest {
     ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
 
     assertEquals(extr.fields(), document.fields());
-    assertEquals(extr.field(LIST_STRINGS), document.field(LIST_STRINGS));
-    assertEquals(extr.field(LIST_INTEGERS), document.field(LIST_INTEGERS));
-    assertEquals(extr.field(LIST_DOUBLES), document.field(LIST_DOUBLES));
-    assertEquals(extr.field(LIST_DATES), document.field(LIST_DATES));
-    assertEquals(extr.field(LIST_BYTES), document.field(LIST_BYTES));
-    assertEquals(extr.field(LIST_BOOLEANS), document.field(LIST_BOOLEANS));
-    assertEquals(extr.field(LIST_MIXED), document.field(LIST_MIXED));
+    assertEquals(extr.<Object>field(LIST_STRINGS), document.field(LIST_STRINGS));
+    assertEquals(extr.<Object>field(LIST_INTEGERS), document.field(LIST_INTEGERS));
+    assertEquals(extr.<Object>field(LIST_DOUBLES), document.field(LIST_DOUBLES));
+    assertEquals(extr.<Object>field(LIST_DATES), document.field(LIST_DATES));
+    assertEquals(extr.<Object>field(LIST_BYTES), document.field(LIST_BYTES));
+    assertEquals(extr.<Object>field(LIST_BOOLEANS), document.field(LIST_BOOLEANS));
+    assertEquals(extr.<Object>field(LIST_MIXED), document.field(LIST_MIXED));
   }
 
   @Test
@@ -301,12 +301,12 @@ public class ODocumentSchemafullSerializationTest {
     byte[] res = serializer.toStream(document, false);
     ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
     assertEquals(extr.fields(), document.fields());
-    assertEquals(extr.field(MAP_STRING), document.field(MAP_STRING));
-    assertEquals(extr.field(MAP_LONG), document.field(MAP_LONG));
-    assertEquals(extr.field(MAP_SHORT), document.field(MAP_SHORT));
-    assertEquals(extr.field(MAP_DATE), document.field(MAP_DATE));
-    assertEquals(extr.field(MAP_DOUBLE), document.field(MAP_DOUBLE));
-    assertEquals(extr.field(MAP_BYTES), document.field(MAP_BYTES));
+    assertEquals(extr.<Object>field(MAP_STRING), document.field(MAP_STRING));
+    assertEquals(extr.<Object>field(MAP_LONG), document.field(MAP_LONG));
+    assertEquals(extr.<Object>field(MAP_SHORT), document.field(MAP_SHORT));
+    assertEquals(extr.<Object>field(MAP_DATE), document.field(MAP_DATE));
+    assertEquals(extr.<Object>field(MAP_DOUBLE), document.field(MAP_DOUBLE));
+    assertEquals(extr.<Object>field(MAP_BYTES), document.field(MAP_BYTES));
   }
 
   @Test
@@ -324,9 +324,9 @@ public class ODocumentSchemafullSerializationTest {
     assertEquals(document.fields(), extr.fields());
     ODocument emb = extr.field(EMBEDDED_FIELD);
     assertNotNull(emb);
-    assertEquals(emb.field(NAME), embedded.field(NAME));
-    assertEquals(emb.field(NUMBER), embedded.field(NUMBER));
-    assertEquals(emb.field(CITY), embedded.field(CITY));
+    assertEquals(emb.<Object>field(NAME), embedded.field(NAME));
+    assertEquals(emb.<Object>field(NUMBER), embedded.field(NUMBER));
+    assertEquals(emb.<Object>field(CITY), embedded.field(CITY));
   }
 
   @Test
@@ -338,14 +338,14 @@ public class ODocumentSchemafullSerializationTest {
     byte[] res = serializer.toStream(document, false);
     ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
     assertEquals(document.fields(), extr.fields());
-    assertEquals(extr.field(ANY_FIELD), false);
+    assertEquals(extr.<Object>field(ANY_FIELD), false);
 
     extr.field(ANY_FIELD, false);
 
     res = serializer.toStream(extr, false);
     ODocument extr2 = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
     assertEquals(extr.fields(), extr2.fields());
-    assertEquals(extr2.field(ANY_FIELD), false);
+    assertEquals(extr2.<Object>field(ANY_FIELD), false);
 
   }
 

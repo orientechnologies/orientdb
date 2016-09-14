@@ -1,11 +1,10 @@
 package com.orientechnologies.common.test;
 
-import org.testng.annotations.Test;
-
+import org.junit.Test;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-@Test
+
 public abstract class SpeedTestAbstract implements SpeedTest {
   protected final SpeedTestData data;
 
@@ -21,7 +20,8 @@ public abstract class SpeedTestAbstract implements SpeedTest {
     data = new SpeedTestData(iGroup);
   }
 
-  @Test(enabled = false)
+
+  @Test
   public abstract void cycle() throws Exception;
 
   public void init() throws Exception {

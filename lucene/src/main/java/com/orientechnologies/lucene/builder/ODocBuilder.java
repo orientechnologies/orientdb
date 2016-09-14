@@ -19,7 +19,6 @@
 package com.orientechnologies.lucene.builder;
 
 import com.orientechnologies.lucene.OLuceneIndexType;
-import com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
@@ -31,35 +30,35 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract.*;
+
 /**
  * Created by Enrico Risa on 02/09/15.
  */
 public class ODocBuilder implements DocBuilder {
+
   @Override
   public Document build(OIndexDefinition definition, Object key, OIdentifiable value, Map<String, Boolean> fieldsToStore,
       ODocument metadata) {
     Document doc = new Document();
 
     if (value != null) {
-      doc.add(OLuceneIndexType.createField(OLuceneIndexEngineAbstract.RID, value.getIdentity().toString(), Field.Store.YES,
-          Field.Index.NOT_ANALYZED_NO_NORMS));
+      doc.add(OLuceneIndexType.createField(RID, value.getIdentity().toString(), Field.Store.YES));
     }
     List<Object> formattedKey = formatKeys(definition, key);
 
     int i = 0;
-    for (String f : definition.getFields()) {
+    for (String field : definition.getFields()) {
       Object val = formattedKey.get(i);
       i++;
       if (val != null) {
-        if (isToStore(f, fieldsToStore).equals(Field.Store.YES)) {
-          doc.add(OLuceneIndexType
-              .createField(f + OLuceneIndexEngineAbstract.STORED, val, Field.Store.YES, Field.Index.NOT_ANALYZED_NO_NORMS));
-        }
-        doc.add(OLuceneIndexType.createField(f, val, Field.Store.NO, Field.Index.ANALYZED));
-        //for experimental index: prefix with class name and dot: Person.name
-        doc.add(OLuceneIndexType.createField(definition.getClassName() + "." + f, val, Field.Store.NO, Field.Index.ANALYZED));
+        doc.add(OLuceneIndexType.createField(field, val, Field.Store.YES));
+
+        //for single uber index
+//        doc.add(OLuceneIndexType.createField(definition.getClassName() + "." + field, val, Field.Store.YES));
       }
     }
+
     return doc;
   }
 

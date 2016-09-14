@@ -18,6 +18,7 @@
 package com.orientechnologies.orient.jdbc;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.OConstants;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -27,10 +28,9 @@ import java.sql.SQLFeatureNotSupportedException;
 import java.util.Properties;
 import java.util.logging.Logger;
 
-public class OrientJdbcDriver implements java.sql.Driver {
+import static com.orientechnologies.orient.core.OConstants.*;
 
-  public static final int MAJOR_VERSION = 2;
-  public static final int MINOR_VERSION = 2;
+public class OrientJdbcDriver implements java.sql.Driver {
 
   static {
     try {
@@ -41,7 +41,7 @@ public class OrientJdbcDriver implements java.sql.Driver {
   }
 
   public static String getVersion() {
-    return "OrientDB " + MAJOR_VERSION + "." + MINOR_VERSION + " JDBC Driver";
+    return "OrientDB " + OConstants.getVersion() + " JDBC Driver";
   }
 
   @Override
@@ -56,6 +56,7 @@ public class OrientJdbcDriver implements java.sql.Driver {
   public Connection connect(String url, Properties info) throws SQLException {
     if (!acceptsURL(url))
       return null;
+
     return new OrientJdbcConnection(url, info);
   }
 
@@ -71,12 +72,12 @@ public class OrientJdbcDriver implements java.sql.Driver {
 
   @Override
   public int getMajorVersion() {
-    return MAJOR_VERSION;
+    return ORIENT_VERSION_MAJOR;
   }
 
   @Override
   public int getMinorVersion() {
-    return MINOR_VERSION;
+    return ORIENT_VERSION_MINOR;
   }
 
   @Override

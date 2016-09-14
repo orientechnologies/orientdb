@@ -32,10 +32,6 @@ import com.orientechnologies.orient.core.id.ORID;
  */
 public class OConcurrentModificationException extends ONeedRetryException implements OHighLevelException {
 
-  private static final String MESSAGE_OPERATION      = "are";
-  private static final String MESSAGE_RECORD_VERSION = "your=v";
-  private static final String MESSAGE_DB_VERSION     = "db=v";
-
   private static final long   serialVersionUID       = 1L;
 
   private ORID                rid;

@@ -4,29 +4,23 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class ODocumentFieldConversionTest {
 
   private ODatabaseDocumentTx db;
   private OClass              clazz;
 
-  @BeforeTest
+  @Before
   public void before() {
     db = new ODatabaseDocumentTx("memory:" + this.getClass().getSimpleName());
     db.create();
@@ -110,23 +104,32 @@ public class ODocumentFieldConversionTest {
     ODocument doc = new ODocument(clazz);
     doc.field("integer", 2L);
     assertTrue(doc.field("integer") instanceof Integer);
-    assertEquals(2, doc.field("integer"));
+    //    assertEquals(2, doc.field("integer"));
+
+    assertThat(doc.<Integer>field("integer")).isEqualTo(2);
 
     doc.field("integer", 3f);
     assertTrue(doc.field("integer") instanceof Integer);
-    assertEquals(3, doc.field("integer"));
+    //    assertEquals(3, doc.field("integer"));
+
+    assertThat(doc.<Integer>field("integer")).isEqualTo(3);
 
     doc.field("integer", 4d);
     assertTrue(doc.field("integer") instanceof Integer);
-    assertEquals(4, doc.field("integer"));
+    //    assertEquals(4, doc.field("integer"));
+
+    assertThat(doc.<Integer>field("integer")).isEqualTo(4);
 
     doc.field("integer", "5");
     assertTrue(doc.field("integer") instanceof Integer);
-    assertEquals(5, doc.field("integer"));
+    //    assertEquals(5, doc.field("integer"));
+    assertThat(doc.<Integer>field("integer")).isEqualTo(5);
 
     doc.field("integer", new BigDecimal("6"));
     assertTrue(doc.field("integer") instanceof Integer);
-    assertEquals(6, doc.field("integer"));
+    //    assertEquals(6, doc.field("integer"));
+
+    assertThat(doc.<Integer>field("integer")).isEqualTo(6);
 
     // doc.field("integer", true);
     // assertTrue(doc.field("integer") instanceof Integer);
@@ -173,23 +176,32 @@ public class ODocumentFieldConversionTest {
 
     doc.field("float", 1);
     assertTrue(doc.field("float") instanceof Float);
-    assertEquals(1f, doc.field("float"));
+    //    assertEquals(1f, doc.field("float"));
+
+    assertThat(doc.<Float>field("float")).isEqualTo(1f);
 
     doc.field("float", 2L);
     assertTrue(doc.field("float") instanceof Float);
-    assertEquals(2f, doc.field("float"));
+    //    assertEquals(2f, doc.field("float"));
+
+    assertThat(doc.<Float>field("float")).isEqualTo(2f);
 
     doc.field("float", "3");
     assertTrue(doc.field("float") instanceof Float);
-    assertEquals(3f, doc.field("float"));
+
+    assertThat(doc.<Float>field("float")).isEqualTo(3f);
 
     doc.field("float", 4d);
     assertTrue(doc.field("float") instanceof Float);
-    assertEquals(4f, doc.field("float"));
+    //    assertEquals(4f, doc.field("float"));
+
+    assertThat(doc.<Float>field("float")).isEqualTo(4f);
 
     doc.field("float", new BigDecimal("6"));
     assertTrue(doc.field("float") instanceof Float);
-    assertEquals(6f, doc.field("float"));
+    //    assertEquals(6f, doc.field("float"));
+
+    assertThat(doc.<Float>field("float")).isEqualTo(6f);
 
     // doc.field("float", true);
     // assertTrue(doc.field("float") instanceof Float);
@@ -204,23 +216,33 @@ public class ODocumentFieldConversionTest {
 
     doc.field("double", 1);
     assertTrue(doc.field("double") instanceof Double);
-    assertEquals(1d, doc.field("double"));
+    //    assertEquals(1d, doc.field("double"));
+
+    assertThat(doc.<Double>field("double")).isEqualTo(1d);
 
     doc.field("double", 2L);
     assertTrue(doc.field("double") instanceof Double);
-    assertEquals(2d, doc.field("double"));
+    //    assertEquals(2d, doc.field("double"));
+
+    assertThat(doc.<Double>field("double")).isEqualTo(2d);
 
     doc.field("double", "3");
     assertTrue(doc.field("double") instanceof Double);
-    assertEquals(3d, doc.field("double"));
+    //    assertEquals(3d, doc.field("double"));
+
+    assertThat(doc.<Double>field("double")).isEqualTo(3d);
 
     doc.field("double", 4f);
     assertTrue(doc.field("double") instanceof Double);
-    assertEquals(4d, doc.field("double"));
+    //    assertEquals(4d, doc.field("double"));
+
+    assertThat(doc.<Double>field("double")).isEqualTo(4d);
 
     doc.field("double", new BigDecimal("6"));
     assertTrue(doc.field("double") instanceof Double);
-    assertEquals(6d, doc.field("double"));
+    //    assertEquals(6d, doc.field("double"));
+
+    assertThat(doc.<Double>field("double")).isEqualTo(6d);
 
     // doc.field("double", true);
     // assertTrue(doc.field("double") instanceof Double);
@@ -235,23 +257,33 @@ public class ODocumentFieldConversionTest {
 
     doc.field("long", 1);
     assertTrue(doc.field("long") instanceof Long);
-    assertEquals(1L, doc.field("long"));
+    //    assertEquals(1L, doc.field("long"));
+
+    assertThat(doc.<Long>field("long")).isEqualTo(1L);
 
     doc.field("long", 2f);
     assertTrue(doc.field("long") instanceof Long);
-    assertEquals(2L, doc.field("long"));
+    //    assertEquals(2L, doc.field("long"));
+
+    assertThat(doc.<Long>field("long")).isEqualTo(2L);
 
     doc.field("long", "3");
     assertTrue(doc.field("long") instanceof Long);
-    assertEquals(3L, doc.field("long"));
+    //    assertEquals(3L, doc.field("long"));
+
+    assertThat(doc.<Long>field("long")).isEqualTo(3L);
 
     doc.field("long", 4d);
     assertTrue(doc.field("long") instanceof Long);
-    assertEquals(4L, doc.field("long"));
+    //    assertEquals(4L, doc.field("long"));
+
+    assertThat(doc.<Long>field("long")).isEqualTo(4L);
 
     doc.field("long", new BigDecimal("6"));
     assertTrue(doc.field("long") instanceof Long);
-    assertEquals(6L, doc.field("long"));
+    //    assertEquals(6L, doc.field("long"));
+
+    assertThat(doc.<Long>field("long")).isEqualTo(6L);
 
     // doc.field("long", true);
     // assertTrue(doc.field("long") instanceof Long);
@@ -328,19 +360,28 @@ public class ODocumentFieldConversionTest {
 
     doc.field("float", 2, OType.INTEGER);
     assertTrue(doc.field("float") instanceof Float);
-    assertEquals(2f, doc.field("float"));
+    //    assertEquals(2f, doc.field("float"));
+
+    assertThat(doc.<Float>field("float")).isEqualTo(2f);
 
     doc.field("integer", 3f, OType.FLOAT);
     assertTrue(doc.field("integer") instanceof Integer);
-    assertEquals(3, doc.field("integer"));
+    //    assertEquals(3, doc.field("integer"));
+
+    assertThat(doc.<Integer>field("integer")).isEqualTo(3);
 
     doc.field("double", 1l, OType.LONG);
     assertTrue(doc.field("double") instanceof Double);
-    assertEquals(1d, doc.field("double"));
+    //    assertEquals(1d, doc.field("double"));
+
+    assertThat(doc.<Double>field("double")).isEqualTo(1d);
 
     doc.field("long", 1d, OType.DOUBLE);
     assertTrue(doc.field("long") instanceof Long);
-    assertEquals(1L, doc.field("long"));
+    //    assertEquals(1L, doc.field("long"));
+
+    assertThat(doc.<Long>field("long")).isEqualTo(1L);
+
     ODatabaseRecordThreadLocal.INSTANCE.remove();
   }
 
@@ -360,13 +401,19 @@ public class ODocumentFieldConversionTest {
 
     doc.setClass(clazz);
     assertTrue(doc.field("float") instanceof Float);
-    assertEquals(1f, doc.field("float"));
+    //    assertEquals(1f, doc.field("float"));
+
+    assertThat(doc.<Float>field("float")).isEqualTo(1f);
 
     assertTrue(doc.field("integer") instanceof Integer);
-    assertEquals(3, doc.field("integer"));
+    //    assertEquals(3, doc.field("integer"));
+
+    assertThat(doc.<Integer>field("integer")).isEqualTo(3);
 
     assertTrue(doc.field("long") instanceof Long);
-    assertEquals(2L, doc.field("long"));
+    //    assertEquals(2L, doc.field("long"));
+
+    assertThat(doc.<Long>field("long")).isEqualTo(2L);
 
     assertTrue(doc.field("string") instanceof String);
     assertEquals("25", doc.field("string"));
@@ -864,7 +911,7 @@ public class ODocumentFieldConversionTest {
     values.put("eighth", BigDecimal.ONE);
   }
 
-  @AfterTest
+  @After
   public void after() {
     db.activateOnCurrentThread();
     db.drop();

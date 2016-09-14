@@ -21,8 +21,15 @@
 package com.orientechnologies.orient.server.network.protocol.binary;
 
 import com.orientechnologies.orient.core.command.OCommandResultListener;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OFetchException;
+import com.orientechnologies.orient.core.fetch.OFetchContext;
+import com.orientechnologies.orient.core.fetch.OFetchHelper;
+import com.orientechnologies.orient.core.fetch.remote.ORemoteFetchContext;
 import com.orientechnologies.orient.core.fetch.remote.ORemoteFetchListener;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -68,5 +75,39 @@ public class OSyncCommandResultListener extends OAbstractCommandResultListener {
 
   public boolean isEmpty() {
     return false;
+  }
+
+  @Override
+  public void linkdedBySimpleValue(ODocument doc) {
+
+    ORemoteFetchListener listener = new ORemoteFetchListener() {
+      @Override
+      protected void sendRecord(ORecord iLinked) {
+        if (!alreadySent.contains(iLinked))
+          fetchedRecordsToSend.add(iLinked);
+      }
+
+      @Override
+      public void parseLinked(ODocument iRootRecord, OIdentifiable iLinked, Object iUserObject, String iFieldName,
+          OFetchContext iContext) throws OFetchException {
+        if (!(iLinked instanceof ORecordId)) {
+          sendRecord(iLinked.getRecord());
+        }
+      }
+
+      @Override
+      public void parseLinkedCollectionValue(ODocument iRootRecord, OIdentifiable iLinked, Object iUserObject, String iFieldName,
+          OFetchContext iContext) throws OFetchException {
+
+        if (!(iLinked instanceof ORecordId)) {
+          sendRecord(iLinked.getRecord());
+        }
+
+      }
+
+    };
+    final OFetchContext context = new ORemoteFetchContext();
+    OFetchHelper.fetch(doc, doc, OFetchHelper.buildFetchPlan(""), listener, context, "");
+
   }
 }

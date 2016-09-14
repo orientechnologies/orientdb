@@ -19,9 +19,7 @@
  */
 package com.orientechnologies.orient.core.id;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.List;
 
 import com.orientechnologies.common.util.OPatternConst;
@@ -64,7 +62,7 @@ public class ORecordId implements ORID {
 
   /**
    * Copy constructor.
-   * 
+   *
    * @param parentRid
    *          Source object
    */
@@ -191,6 +189,16 @@ public class ORecordId implements ORID {
 
   public ORecordId copy() {
     return new ORecordId(clusterId, clusterPosition);
+  }
+
+  public void toStream(final DataOutput out) throws IOException {
+    out.writeShort(clusterId);
+    out.writeLong(clusterPosition);
+  }
+
+  public void fromStream(final DataInput in) throws IOException {
+    clusterId = in.readShort();
+    clusterPosition = in.readLong();
   }
 
   public ORecordId fromStream(final InputStream iStream) throws IOException {
@@ -324,9 +332,9 @@ public class ORecordId implements ORID {
 
   private void checkClusterLimits() {
     if (clusterId < -2)
-      throw new ODatabaseException("RecordId cannot support negative cluster id. You've used: " + clusterId);
+      throw new ODatabaseException("RecordId cannot support negative cluster id. Found: " + clusterId);
 
     if (clusterId > CLUSTER_MAX)
-      throw new ODatabaseException("RecordId cannot support cluster id major than 32767. You've used: " + clusterId);
+      throw new ODatabaseException("RecordId cannot support cluster id major than 32767. Found: " + clusterId);
   }
 }

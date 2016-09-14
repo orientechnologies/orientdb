@@ -24,11 +24,12 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.testng.annotations.Test;
+import org.assertj.core.api.Assertions;
+import org.junit.Test;
 
 import java.util.*;
 
-import static org.testng.Assert.*;
+import static org.junit.Assert.*;
 
 public class OCommandExecutorSQLUpdateTest {
   @Test
@@ -282,15 +283,22 @@ public class OCommandExecutorSQLUpdateTest {
 
     db.command(new OCommandSQL("UPDATE test INCREMENT count = 2")).execute();
     queried.reload();
-    assertEquals(queried.field("count"), 22);
+    //    assertEquals(queried.field("count"), 22);
+
+    Assertions.assertThat(queried.<Integer>field("count")).isEqualTo(22);
 
     db.command(new OCommandSQL("UPDATE test INCREMENT `map.nestedCount` = 5")).execute();
     queried.reload();
-    assertEquals(queried.field("map.nestedCount"), 15);
+    //    assertEquals(queried.field("map.nestedCount"), 15);
+
+    Assertions.assertThat(queried.<Integer>field("map.nestedCount")).isEqualTo(15);
 
     db.command(new OCommandSQL("UPDATE test INCREMENT map.nestedCount = 5")).execute();
     queried.reload();
-    assertEquals(queried.field("map.nestedCount"), 20);
+
+    Assertions.assertThat(queried.<Integer>field("map.nestedCount")).isEqualTo(20);
+
+    //    assertEquals(queried.field("map.nestedCount"), 20);
 
     db.close();
   }
@@ -431,9 +439,7 @@ public class OCommandExecutorSQLUpdateTest {
       db.command(new OCommandSQL("UPDATE cluster:foo set bar = {\"value\":\"foo\\\\\"}")).execute();
       Iterable result = db.query(new OSQLSynchQuery<Object>("select from cluster:foo"));
       ODocument doc = (ODocument) result.iterator().next();
-      assertEquals(((ODocument)doc.field("bar")).field("value"), "foo\\");
-
-
+      assertEquals(((ODocument) doc.field("bar")).field("value"), "foo\\");
 
     } finally {
       db.close();
@@ -457,7 +463,7 @@ public class OCommandExecutorSQLUpdateTest {
       Iterator iterator = result.iterator();
       assertTrue(iterator.hasNext());
       ODocument doc = (ODocument) iterator.next();
-      assertEquals(((ODocument)doc.field("bar")).field("value"), "foo\\");
+      assertEquals(((ODocument) doc.field("bar")).field("value"), "foo\\");
       assertFalse(iterator.hasNext());
 
       db.command(new OCommandSQL("insert into cluster:fooadditional1 set bar = {\"value\":\"zz\\\\\"}")).execute();
@@ -466,7 +472,7 @@ public class OCommandExecutorSQLUpdateTest {
       iterator = result.iterator();
       assertTrue(iterator.hasNext());
       doc = (ODocument) iterator.next();
-      assertEquals(((ODocument)doc.field("bar")).field("value"), "foo\\");
+      assertEquals(((ODocument) doc.field("bar")).field("value"), "foo\\");
       assertFalse(iterator.hasNext());
     } finally {
       db.close();
@@ -493,10 +499,10 @@ public class OCommandExecutorSQLUpdateTest {
       Iterator<?> iterator = result.iterator();
       assertTrue(iterator.hasNext());
       ODocument doc = (ODocument) iterator.next();
-      assertEquals(((ODocument)doc.field("bar")).field("value"), "foo\\");
+      assertEquals(((ODocument) doc.field("bar")).field("value"), "foo\\");
       assertTrue(iterator.hasNext());
       doc = (ODocument) iterator.next();
-      assertEquals(((ODocument)doc.field("bar")).field("value"), "foo\\");
+      assertEquals(((ODocument) doc.field("bar")).field("value"), "foo\\");
       assertFalse(iterator.hasNext());
     } finally {
       db.close();
@@ -522,6 +528,29 @@ public class OCommandExecutorSQLUpdateTest {
       assertEquals(result.size(), 1);
       ODocument doc = result.get(0);
       assertNull(doc.field("_allowRead"));
+    } finally {
+      db.close();
+    }
+  }
+
+  @Test
+  public void testUpdateReturnCount() throws Exception {
+    //issue #5564
+    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:testUpdateReturnCount");
+    db.create();
+    try {
+      db.command(new OCommandSQL("CREATE class Foo")).execute();
+
+      ODocument d = new ODocument("Foo");
+      d.field("name", "foo");
+      d.save();
+      d = new ODocument("Foo");
+      d.field("name", "bar");
+      d.save();
+
+      Object result = db.command(new OCommandSQL("update Foo set surname = 'baz' return count")).execute();
+
+      assertEquals(2, result);
     } finally {
       db.close();
     }

@@ -61,8 +61,7 @@ import java.util.Map;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract.OLUCENE_BASE_DIR;
-import static com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract.RID;
+import static com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract.*;
 
 public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements OOrientListener {
 
@@ -145,7 +144,7 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
     final IndexWriter indexWriter = createIndexWriter(dir);
 
     mgrWriter = new TrackingIndexWriter(indexWriter);
-    searcherManager = new SearcherManager(indexWriter, true, null);
+    searcherManager = new SearcherManager(indexWriter, true, true, null);
 
     if (nrt != null) {
       nrt.close();

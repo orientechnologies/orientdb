@@ -6,18 +6,24 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
+import com.orientechnologies.orient.core.sql.executor.AggregationContext;
+import com.orientechnologies.orient.core.sql.executor.OFuncitonAggregationContext;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.functions.OIndexableSQLFunction;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class OFunctionCall extends SimpleNode {
 
-  protected OIdentifier       name;
-  protected boolean           star   = false;
+  protected OIdentifier name;
+
   protected List<OExpression> params = new ArrayList<OExpression>();
 
   public OFunctionCall(int id) {
@@ -36,11 +42,20 @@ public class OFunctionCall extends SimpleNode {
   }
 
   public boolean isStar() {
-    return star;
-  }
 
-  public void setStar(boolean star) {
-    this.star = star;
+    if (this.params.size() != 1) {
+      return false;
+    }
+    OExpression param = params.get(0);
+    if (param.mathExpression == null || !(param.mathExpression instanceof OBaseExpression)) {
+
+      return false;
+    }
+    OBaseExpression base = (OBaseExpression) param.mathExpression;
+    if (base.identifier == null || base.identifier.suffix == null) {
+      return false;
+    }
+    return base.identifier.suffix.star;
   }
 
   public List<OExpression> getParams() {
@@ -54,17 +69,13 @@ public class OFunctionCall extends SimpleNode {
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     name.toString(params, builder);
     builder.append("(");
-    if (star) {
-      builder.append("*");
-    } else {
-      boolean first = true;
-      for (OExpression expr : this.params) {
-        if (!first) {
-          builder.append(", ");
-        }
-        expr.toString(params, builder);
-        first = false;
+    boolean first = true;
+    for (OExpression expr : this.params) {
+      if (!first) {
+        builder.append(", ");
       }
+      expr.toString(params, builder);
+      first = false;
     }
     builder.append(")");
   }
@@ -76,13 +87,31 @@ public class OFunctionCall extends SimpleNode {
   private Object execute(Object targetObjects, OCommandContext ctx, String name) {
     List<Object> paramValues = new ArrayList<Object>();
     for (OExpression expr : this.params) {
-      paramValues.add(expr.execute((OIdentifiable) ctx.getVariable("$current"), ctx));
+      Object current = ctx.getVariable("$current");
+      if (current instanceof OIdentifiable) {
+        paramValues.add(expr.execute((OIdentifiable) current, ctx));
+      } else if (current instanceof OResult) {
+        paramValues.add(expr.execute((OResult) current, ctx));
+      } else if (current == null) {
+        paramValues.add(expr.execute((OResult) current, ctx));
+      } else {
+        throw new OCommandExecutionException("Invalid value for $current: " + current);
+      }
     }
     OSQLFunction function = OSQLEngine.getInstance().getFunction(name);
     if (function != null) {
-      return function.execute(targetObjects, (OIdentifiable) ctx.getVariable("$current"), null, paramValues.toArray(), ctx);
+      Object current = ctx.getVariable("$current");
+      if (current instanceof OIdentifiable) {
+        return function.execute(targetObjects, (OIdentifiable) current, null, paramValues.toArray(), ctx);
+      } else if (current instanceof OResult) {
+        return function.execute(targetObjects, ((OResult) current).getElement(), null, paramValues.toArray(), ctx);
+      } else if (current == null) {
+        return function.execute(targetObjects, null, null, paramValues.toArray(), ctx);
+      } else {
+        throw new OCommandExecutionException("Invalid value for $current: " + current);
+      }
     }
-    throw new UnsupportedOperationException("finisho OFunctionCall implementation!");
+    throw new UnsupportedOperationException("finish OFunctionCall implementation!");
   }
 
   public static ODatabaseDocumentInternal getDatabase() {
@@ -96,7 +125,7 @@ public class OFunctionCall extends SimpleNode {
 
   /**
    * see OIndexableSQLFunction.searchFromTarget()
-   * 
+   *
    * @param target
    * @param ctx
    * @param operator
@@ -107,31 +136,237 @@ public class OFunctionCall extends SimpleNode {
       Object rightValue) {
     OSQLFunction function = OSQLEngine.getInstance().getFunction(name.getStringValue());
     if (function instanceof OIndexableSQLFunction) {
-      return ((OIndexableSQLFunction) function).searchFromTarget(target, operator, rightValue, ctx,
-          this.getParams().toArray(new OExpression[] {}));
+      return ((OIndexableSQLFunction) function)
+          .searchFromTarget(target, operator, rightValue, ctx, this.getParams().toArray(new OExpression[] {}));
     }
     return null;
   }
 
   /**
-   *
-   * @param target
-   *          query target
-   * @param ctx
-   *          execution context
-   * @param operator
-   *          operator at the right of the function
-   * @param rightValue
-   *          value to compare to funciton result
+   * @param target     query target
+   * @param ctx        execution context
+   * @param operator   operator at the right of the function
+   * @param rightValue value to compare to funciton result
    * @return the approximate number of items returned by the condition execution, -1 if the extimation cannot be executed
    */
   public long estimateIndexedFunction(OFromClause target, OCommandContext ctx, OBinaryCompareOperator operator, Object rightValue) {
     OSQLFunction function = OSQLEngine.getInstance().getFunction(name.getStringValue());
     if (function instanceof OIndexableSQLFunction) {
-      return ((OIndexableSQLFunction) function).estimate(target, operator, rightValue, ctx,
-          this.getParams().toArray(new OExpression[] {}));
+      return ((OIndexableSQLFunction) function)
+          .estimate(target, operator, rightValue, ctx, this.getParams().toArray(new OExpression[] {}));
     }
     return -1;
+  }
+
+  /**
+   * tests if current function is an indexed function AND that function can also be executed without using the index
+   *
+   * @param target   the query target
+   * @param context  the execution context
+   * @param operator
+   * @param right
+   * @return true if current function is an indexed funciton AND that function can also be executed without using the index, false otherwise
+   */
+  public boolean canExecuteIndexedFunctionWithoutIndex(OFromClause target, OCommandContext context, OBinaryCompareOperator operator,
+      Object right) {
+    OSQLFunction function = OSQLEngine.getInstance().getFunction(name.getStringValue());
+    if (function instanceof OIndexableSQLFunction) {
+      return ((OIndexableSQLFunction) function)
+          .canExecuteWithoutIndex(target, operator, right, context, this.getParams().toArray(new OExpression[] {}));
+    }
+    return false;
+  }
+
+  /**
+   * tests if current function is an indexed function AND that function can be used on this target
+   *
+   * @param target   the query target
+   * @param context  the execution context
+   * @param operator
+   * @param right
+   * @return true if current function is an indexed function AND that function can be used on this target, false otherwise
+   */
+  public boolean allowsIndexedFunctionExecutionOnTarget(OFromClause target, OCommandContext context,
+      OBinaryCompareOperator operator, Object right) {
+    OSQLFunction function = OSQLEngine.getInstance().getFunction(name.getStringValue());
+    if (function instanceof OIndexableSQLFunction) {
+      return ((OIndexableSQLFunction) function)
+          .allowsIndexedExecution(target, operator, right, context, this.getParams().toArray(new OExpression[] {}));
+    }
+    return false;
+  }
+
+  /**
+   * tests if current expression is an indexed function AND the function has also to be executed after the index search.
+   * In some cases, the index search is accurate, so this condition can be excluded from further evaluation. In other cases
+   * the result from the index is a superset of the expected result, so the function has to be executed anyway for further filtering
+   *
+   * @param target  the query target
+   * @param context the execution context
+   * @return true if current expression is an indexed function AND the function has also to be executed after the index search.
+   */
+  public boolean executeIndexedFunctionAfterIndexSearch(OFromClause target, OCommandContext context,
+      OBinaryCompareOperator operator, Object right) {
+    OSQLFunction function = OSQLEngine.getInstance().getFunction(name.getStringValue());
+    if (function instanceof OIndexableSQLFunction) {
+      return ((OIndexableSQLFunction) function)
+          .shouldExecuteAfterSearch(target, operator, right, context, this.getParams().toArray(new OExpression[] {}));
+    }
+    return false;
+  }
+
+  public boolean isExpand() {
+    return name.getStringValue().equals("expand");
+  }
+
+  public boolean needsAliases(Set<String> aliases) {
+    for (OExpression param : params) {
+      if (param.needsAliases(aliases)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public boolean isAggregate() {
+    if (isAggregateFunction()) {
+      return true;
+    }
+
+    for (OExpression exp : params) {
+      if (exp.isAggregate()) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  public SimpleNode splitForAggregation(AggregateProjectionSplit aggregateProj) {
+    if (isAggregate()) {
+      OFunctionCall newFunct = new OFunctionCall(-1);
+      newFunct.name = this.name;
+      OIdentifier functionResultAlias = aggregateProj.getNextAlias();
+
+      if (isAggregateFunction()) {
+
+        if (isStar()) {
+          for (OExpression param : params) {
+            newFunct.getParams().add(param);
+          }
+        } else {
+          for (OExpression param : params) {
+            if (param.isAggregate()) {
+              throw new OCommandExecutionException(
+                  "Cannot calculate an aggregate function of another aggregate function " + toString());
+            }
+            OIdentifier nextAlias = aggregateProj.getNextAlias();
+            OProjectionItem paramItem = new OProjectionItem(-1);
+            paramItem.alias = nextAlias;
+            paramItem.expression = param;
+            aggregateProj.getPreAggregate().add(paramItem);
+
+            newFunct.params.add(new OExpression(nextAlias));
+          }
+        }
+        aggregateProj.getAggregate().add(createProjection(newFunct, functionResultAlias));
+        return new OExpression(functionResultAlias);
+      } else {
+        if (isStar()) {
+          for (OExpression param : params) {
+            newFunct.getParams().add(param);
+          }
+        } else {
+          for (OExpression param : params) {
+            newFunct.getParams().add(param.splitForAggregation(aggregateProj));
+          }
+        }
+      }
+      return newFunct;
+    }
+    return this;
+  }
+
+  private boolean isAggregateFunction() {
+    OSQLFunction function = OSQLEngine.getInstance().getFunction(name.getStringValue());
+    function.config(this.params.toArray());
+    return function.aggregateResults();
+  }
+
+  private OProjectionItem createProjection(OFunctionCall newFunct, OIdentifier alias) {
+    OLevelZeroIdentifier l0 = new OLevelZeroIdentifier(-1);
+    l0.functionCall = newFunct;
+    OBaseIdentifier l1 = new OBaseIdentifier(-1);
+    l1.levelZero = l0;
+    OBaseExpression l2 = new OBaseExpression(-1);
+    l2.identifier = l1;
+    OExpression l3 = new OExpression(-1);
+    l3.mathExpression = l2;
+    OProjectionItem item = new OProjectionItem(-1);
+    item.alias = alias;
+    item.expression = l3;
+    return item;
+  }
+
+  public boolean isEarlyCalculated() {
+    for (OExpression param : params) {
+      if (!param.isEarlyCalculated()) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  public AggregationContext getAggregationContext(OCommandContext ctx) {
+    OSQLFunction function = OSQLEngine.getInstance().getFunction(name.getStringValue());
+    function.config(this.params.toArray());
+
+    OFuncitonAggregationContext result = new OFuncitonAggregationContext(function, this.params);
+    return result;
+  }
+
+  public OFunctionCall copy() {
+    OFunctionCall result = new OFunctionCall(-1);
+    result.name = name;
+    result.params = params.stream().map(x -> x.copy()).collect(Collectors.toList());
+    return result;
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OFunctionCall that = (OFunctionCall) o;
+
+    if (name != null ? !name.equals(that.name) : that.name != null)
+      return false;
+    if (params != null ? !params.equals(that.params) : that.params != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = name != null ? name.hashCode() : 0;
+    result = 31 * result + (params != null ? params.hashCode() : 0);
+    return result;
+  }
+
+  public boolean refersToParent() {
+    if (params != null) {
+      for (OExpression param : params) {
+        if (param != null && param.refersToParent()) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  public OIdentifier getName() {
+    return name;
   }
 }
 /* JavaCC - OriginalChecksum=290d4e1a3f663299452e05f8db718419 (do not edit this line) */

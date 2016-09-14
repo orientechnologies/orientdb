@@ -31,8 +31,6 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
-import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
-import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerRaw;
 
 /**
  * The rawest representation of a record. It's schema less. Use this if you need to store Strings or byte[] without matter about the
@@ -106,7 +104,6 @@ public class ORecordBytes extends ORecordAbstract implements OBlob {
   @Override
   protected void setup() {
     super.setup();
-    _recordFormat = ORecordSerializerFactory.instance().getFormat(ORecordSerializerRaw.NAME);
   }
 
   /**

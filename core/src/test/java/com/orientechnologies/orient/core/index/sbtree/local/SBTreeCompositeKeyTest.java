@@ -1,20 +1,5 @@
 package com.orientechnologies.orient.core.index.sbtree.local;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
-
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.DatabaseAbstractTest;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
@@ -22,27 +7,34 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Andrey Lomakin
  * @since 15.08.13
  */
-@Test
 public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
 
   private OSBTree<OCompositeKey, OIdentifiable> localSBTree;
 
-  @BeforeClass
-  public void beforeClass() {
-    super.beforeClass();
 
+  @Before
+  public void beforeMethod() {
     localSBTree = new OSBTree<OCompositeKey, OIdentifiable>("localSBTreeCompositeKeyTest", ".sbt", false, ".nbt",
         (OAbstractPaginatedStorage) database.getStorage().getUnderlying());
     localSBTree.create(OCompositeKeySerializer.INSTANCE, OLinkSerializer.INSTANCE, null, 2, false);
-  }
 
-  @BeforeMethod
-  public void beforeMethod() {
     for (double i = 1; i < 4; i++) {
       for (double j = 1; j < 10; j++) {
         final OCompositeKey compositeKey = new OCompositeKey();
@@ -53,22 +45,19 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
     }
   }
 
-  @AfterMethod
-  public void afterMethod() {
-    localSBTree.clear();
-  }
 
-  @AfterClass
+  @After
   public void afterClass() throws Exception {
+    localSBTree.clear();
     localSBTree.clear();
     localSBTree.delete();
 
-    super.afterClass();
   }
 
+  @Test
   public void testIterateBetweenValuesInclusive() {
-    OSBTree.OSBTreeCursor<OCompositeKey, OIdentifiable> cursor = localSBTree.iterateEntriesBetween(compositeKey(2.0), true,
-        compositeKey(3.0), true, true);
+    OSBTree.OSBTreeCursor<OCompositeKey, OIdentifiable> cursor = localSBTree
+        .iterateEntriesBetween(compositeKey(2.0), true, compositeKey(3.0), true, true);
 
     Set<ORID> orids = extractRids(cursor);
 
@@ -91,9 +80,10 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
     }
   }
 
+  @Test
   public void testIterateBetweenValuesFromInclusive() {
-    OSBTree.OSBTreeCursor<OCompositeKey, OIdentifiable> cursor = localSBTree.iterateEntriesBetween(compositeKey(2.0), true,
-        compositeKey(3.0), false, true);
+    OSBTree.OSBTreeCursor<OCompositeKey, OIdentifiable> cursor = localSBTree
+        .iterateEntriesBetween(compositeKey(2.0), true, compositeKey(3.0), false, true);
 
     Set<ORID> orids = extractRids(cursor);
     assertEquals(orids.size(), 9);
@@ -112,9 +102,10 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
     }
   }
 
+  @Test
   public void testIterateBetweenValuesToInclusive() {
-    OSBTree.OSBTreeCursor<OCompositeKey, OIdentifiable> cursor = localSBTree.iterateEntriesBetween(compositeKey(2.0), false,
-        compositeKey(3.0), true, true);
+    OSBTree.OSBTreeCursor<OCompositeKey, OIdentifiable> cursor = localSBTree
+        .iterateEntriesBetween(compositeKey(2.0), false, compositeKey(3.0), true, true);
     Set<ORID> orids = extractRids(cursor);
 
     assertEquals(orids.size(), 9);
@@ -133,9 +124,10 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
     }
   }
 
+  @Test
   public void testIterateEntriesNonInclusive() {
-    OSBTree.OSBTreeCursor<OCompositeKey, OIdentifiable> cursor = localSBTree.iterateEntriesBetween(compositeKey(2.0), false,
-        compositeKey(3.0), false, true);
+    OSBTree.OSBTreeCursor<OCompositeKey, OIdentifiable> cursor = localSBTree
+        .iterateEntriesBetween(compositeKey(2.0), false, compositeKey(3.0), false, true);
     Set<ORID> orids = extractRids(cursor);
 
     assertEquals(orids.size(), 0);
@@ -164,9 +156,10 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
     }
   }
 
+  @Test
   public void testIterateBetweenValuesInclusivePartialKey() {
-    OSBTree.OSBTreeCursor<OCompositeKey, OIdentifiable> cursor = localSBTree.iterateEntriesBetween(compositeKey(2.0, 4.0), true,
-        compositeKey(3.0), true, true);
+    OSBTree.OSBTreeCursor<OCompositeKey, OIdentifiable> cursor = localSBTree
+        .iterateEntriesBetween(compositeKey(2.0, 4.0), true, compositeKey(3.0), true, true);
     Set<ORID> orids = extractRids(cursor);
 
     assertEquals(orids.size(), 15);
@@ -193,9 +186,10 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
     }
   }
 
+  @Test
   public void testIterateBetweenValuesFromInclusivePartialKey() {
-    OSBTree.OSBTreeCursor<OCompositeKey, OIdentifiable> cursor = localSBTree.iterateEntriesBetween(compositeKey(2.0, 4.0), true,
-        compositeKey(3.0), false, true);
+    OSBTree.OSBTreeCursor<OCompositeKey, OIdentifiable> cursor = localSBTree
+        .iterateEntriesBetween(compositeKey(2.0, 4.0), true, compositeKey(3.0), false, true);
 
     Set<ORID> orids = extractRids(cursor);
     assertEquals(orids.size(), 6);
@@ -214,9 +208,10 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
     }
   }
 
+  @Test
   public void testIterateBetweenValuesToInclusivePartialKey() {
-    OSBTree.OSBTreeCursor<OCompositeKey, OIdentifiable> cursor = localSBTree.iterateEntriesBetween(compositeKey(2.0, 4.0), false,
-        compositeKey(3.0), true, true);
+    OSBTree.OSBTreeCursor<OCompositeKey, OIdentifiable> cursor = localSBTree
+        .iterateEntriesBetween(compositeKey(2.0, 4.0), false, compositeKey(3.0), true, true);
 
     Set<ORID> orids = extractRids(cursor);
     assertEquals(orids.size(), 14);
@@ -243,9 +238,10 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
 
   }
 
+  @Test
   public void testIterateBetweenValuesNonInclusivePartial() {
-    OSBTree.OSBTreeCursor<OCompositeKey, OIdentifiable> cursor = localSBTree.iterateEntriesBetween(compositeKey(2.0, 4.0), false,
-        compositeKey(3.0), false, true);
+    OSBTree.OSBTreeCursor<OCompositeKey, OIdentifiable> cursor = localSBTree
+        .iterateEntriesBetween(compositeKey(2.0, 4.0), false, compositeKey(3.0), false, true);
 
     Set<ORID> orids = extractRids(cursor);
     assertEquals(orids.size(), 5);
@@ -264,6 +260,7 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
     }
   }
 
+  @Test
   public void testIterateValuesMajorInclusivePartial() {
     OSBTree.OSBTreeCursor<OCompositeKey, OIdentifiable> cursor = localSBTree.iterateEntriesMajor(compositeKey(2.0), true, true);
     Set<ORID> orids = extractRids(cursor);
@@ -286,6 +283,7 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
       }
   }
 
+  @Test
   public void testIterateMajorNonInclusivePartial() {
     OSBTree.OSBTreeCursor<OCompositeKey, OIdentifiable> cursor = localSBTree.iterateEntriesMajor(compositeKey(2.0), false, true);
     Set<ORID> orids = extractRids(cursor);
@@ -305,6 +303,7 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
     }
   }
 
+  @Test
   public void testIterateValuesMajorInclusive() {
     OSBTree.OSBTreeCursor<OCompositeKey, OIdentifiable> cursor = localSBTree
         .iterateEntriesMajor(compositeKey(2.0, 3.0), true, true);
@@ -331,9 +330,10 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
       }
   }
 
+  @Test
   public void testIterateValuesMajorNonInclusive() {
-    OSBTree.OSBTreeCursor<OCompositeKey, OIdentifiable> cursor = localSBTree.iterateEntriesMajor(compositeKey(2.0, 3.0), false,
-        true);
+    OSBTree.OSBTreeCursor<OCompositeKey, OIdentifiable> cursor = localSBTree
+        .iterateEntriesMajor(compositeKey(2.0, 3.0), false, true);
     Set<ORID> orids = extractRids(cursor);
     assertEquals(orids.size(), 15);
 
@@ -357,6 +357,7 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
       }
   }
 
+  @Test
   public void testIterateValuesMinorInclusivePartial() {
     OSBTree.OSBTreeCursor<OCompositeKey, OIdentifiable> cursor = localSBTree.iterateEntriesMinor(compositeKey(3.0), true, true);
     Set<ORID> orids = extractRids(cursor);
@@ -379,6 +380,7 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
 
   }
 
+  @Test
   public void testIterateValuesMinorNonInclusivePartial() {
     OSBTree.OSBTreeCursor<OCompositeKey, OIdentifiable> cursor = localSBTree.iterateEntriesMinor(compositeKey(3.0), false, true);
     Set<ORID> orids = extractRids(cursor);
@@ -400,6 +402,7 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
       }
   }
 
+  @Test
   public void testIterateValuesMinorInclusive() {
     OSBTree.OSBTreeCursor<OCompositeKey, OIdentifiable> cursor = localSBTree
         .iterateEntriesMinor(compositeKey(3.0, 2.0), true, true);
@@ -428,9 +431,10 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
       }
   }
 
+  @Test
   public void testIterateValuesMinorNonInclusive() {
-    OSBTree.OSBTreeCursor<OCompositeKey, OIdentifiable> cursor = localSBTree.iterateEntriesMinor(compositeKey(3.0, 2.0), false,
-        true);
+    OSBTree.OSBTreeCursor<OCompositeKey, OIdentifiable> cursor = localSBTree
+        .iterateEntriesMinor(compositeKey(3.0, 2.0), false, true);
     Set<ORID> orids = extractRids(cursor);
 
     assertEquals(orids.size(), 19);

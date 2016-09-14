@@ -18,10 +18,7 @@ package com.orientechnologies.common.serialization.types;
 
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
-import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
+import org.junit.Assert;import org.junit.Before; import org.junit.Test;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Random;
@@ -30,14 +27,13 @@ import java.util.Random;
  * @author Ilya Bershadskiy (ibersh20-at-gmail.com)
  * @since 19.01.12
  */
-@Test
 public class StringSerializerTest {
   byte[] stream;
   private int               FIELD_SIZE;
   private String            OBJECT;
   private OStringSerializer stringSerializer;
 
-  @BeforeClass
+  @Before
   public void beforeClass() {
     stringSerializer = new OStringSerializer();
     Random random = new Random();

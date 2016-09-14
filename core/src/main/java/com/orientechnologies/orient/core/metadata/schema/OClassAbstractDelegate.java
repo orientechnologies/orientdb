@@ -71,11 +71,13 @@ public abstract class OClassAbstractDelegate implements OClass {
   }
 
   @Override
+  @Deprecated
   public OClass getSuperClass() {
     return delegate.getSuperClass();
   }
 
   @Override
+  @Deprecated
   public OClass setSuperClass(final OClass iSuperClass) {
     delegate.setSuperClass(iSuperClass);
     return this;
@@ -271,6 +273,7 @@ public abstract class OClassAbstractDelegate implements OClass {
   }
 
   @Override
+  @Deprecated
   public Collection<OClass> getBaseClasses() {
     return delegate.getSubclasses();
   }
@@ -286,6 +289,7 @@ public abstract class OClassAbstractDelegate implements OClass {
   }
 
   @Override
+  @Deprecated
   public Collection<OClass> getAllBaseClasses() {
     return delegate.getAllSubclasses();
   }

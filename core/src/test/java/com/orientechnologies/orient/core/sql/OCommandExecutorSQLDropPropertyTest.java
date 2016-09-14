@@ -23,26 +23,25 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
-@Test
 public class OCommandExecutorSQLDropPropertyTest {
+  static ODatabaseDocumentTx db;
   private static String DB_STORAGE = "memory";
   private static String DB_NAME    = "OCommandExecutorSQLDropPropertyTest";
-
   private int ORDER_SKIP_LIMIT_ITEMS = 100 * 1000;
 
-  ODatabaseDocumentTx db;
-
-  @BeforeClass public void beforeClass() throws Exception {
+  @BeforeClass
+  public static void beforeClass() throws Exception {
     db = new ODatabaseDocumentTx(DB_STORAGE + ":" + DB_NAME);
     db.create();
 
   }
 
-  @Test public void test() {
+  @Test
+  public void test() {
     OSchemaProxy schema = db.getMetadata().getSchema();
     OClass foo = schema.createClass("Foo");
 

@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.server.distributed.task;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
+import com.orientechnologies.common.exception.OHighLevelException;
 
 /**
  * Exception thrown when a distributed operation doesn't reach the quorum.
@@ -27,7 +28,7 @@ import com.orientechnologies.common.concur.ONeedRetryException;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class ODistributedOperationException extends ONeedRetryException {
+public class ODistributedOperationException extends ONeedRetryException implements OHighLevelException {
 
   private static final long serialVersionUID = 1L;
 

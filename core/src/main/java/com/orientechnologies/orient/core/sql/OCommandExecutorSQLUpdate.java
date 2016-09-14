@@ -55,43 +55,41 @@ import java.util.*;
 
 /**
  * SQL UPDATE command.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract
     implements OCommandDistributedReplicateRequest, OCommandResultListener {
-  public static final String                    KEYWORD_UPDATE    = "UPDATE";
-  private static final String                   KEYWORD_ADD       = "ADD";
-  private static final String                   KEYWORD_PUT       = "PUT";
-  private static final String                   KEYWORD_REMOVE    = "REMOVE";
-  private static final String                   KEYWORD_INCREMENT = "INCREMENT";
-  private static final String                   KEYWORD_MERGE     = "MERGE";
-  private static final String                   KEYWORD_UPSERT    = "UPSERT";
-  private static final String                   KEYWORD_EDGE      = "EDGE";
-  private static final Object                   EMPTY_VALUE       = new Object();
-  private List<OPair<String, Object>>           setEntries        = new ArrayList<OPair<String, Object>>();
-  private List<OPair<String, Object>>           addEntries        = new ArrayList<OPair<String, Object>>();
-  private List<OTriple<String, String, Object>> putEntries        = new ArrayList<OTriple<String, String, Object>>();
-  private List<OPair<String, Object>>           removeEntries     = new ArrayList<OPair<String, Object>>();
-  private List<OPair<String, Object>>           incrementEntries  = new ArrayList<OPair<String, Object>>();
-  private ODocument                             merge             = null;
-  private String                                lockStrategy      = "NONE";
-  private OReturnHandler                        returnHandler     = new ORecordCountHandler();
-  private OQuery<?>                             query;
-  private OSQLFilter                            compiledFilter;
-  private String                                subjectName;
-  private OCommandParameters                    parameters;
-  private boolean                               upsertMode        = false;
-  private boolean                               isUpsertAllowed   = false;
-  private boolean                               updated           = false;
-  private OClass                                clazz             = null;
-  private DISTRIBUTED_EXECUTION_MODE            distributedMode;
+  public static final  String                                KEYWORD_UPDATE    = "UPDATE";
+  private static final String                                KEYWORD_ADD       = "ADD";
+  private static final String                                KEYWORD_PUT       = "PUT";
+  private static final String                                KEYWORD_REMOVE    = "REMOVE";
+  private static final String                                KEYWORD_INCREMENT = "INCREMENT";
+  private static final String                                KEYWORD_MERGE     = "MERGE";
+  private static final String                                KEYWORD_UPSERT    = "UPSERT";
+  private static final String                                KEYWORD_EDGE      = "EDGE";
+  private static final Object                                EMPTY_VALUE       = new Object();
+  private              List<OPair<String, Object>>           setEntries        = new ArrayList<OPair<String, Object>>();
+  private              List<OPair<String, Object>>           addEntries        = new ArrayList<OPair<String, Object>>();
+  private              List<OTriple<String, String, Object>> putEntries        = new ArrayList<OTriple<String, String, Object>>();
+  private              List<OPair<String, Object>>           removeEntries     = new ArrayList<OPair<String, Object>>();
+  private              List<OPair<String, Object>>           incrementEntries  = new ArrayList<OPair<String, Object>>();
+  private              ODocument                             merge             = null;
+  private              String                                lockStrategy      = "NONE";
+  private              OReturnHandler                        returnHandler     = new ORecordCountHandler();
+  private OQuery<?>          query;
+  private OSQLFilter         compiledFilter;
+  private String             subjectName;
+  private OCommandParameters parameters;
+  private boolean upsertMode      = false;
+  private boolean isUpsertAllowed = false;
+  private boolean updated         = false;
+  private OClass  clazz           = null;
+  private DISTRIBUTED_EXECUTION_MODE distributedMode;
 
-  private boolean                               updateEdge        = false;
+  private boolean updateEdge = false;
 
-  @SuppressWarnings("unchecked")
-  public OCommandExecutorSQLUpdate parse(final OCommandRequest iRequest) {
+  @SuppressWarnings("unchecked") public OCommandExecutorSQLUpdate parse(final OCommandRequest iRequest) {
     final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
 
     String queryText = textRequest.getText();
@@ -132,16 +130,17 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract
 
       String word = parserNextWord(true);
 
-      if (parserIsEnded() || (!word.equals(KEYWORD_SET) && !word.equals(KEYWORD_ADD) && !word.equals(KEYWORD_PUT)
-          && !word.equals(KEYWORD_REMOVE) && !word.equals(KEYWORD_INCREMENT) && !word.equals(KEYWORD_CONTENT)
-          && !word.equals(KEYWORD_MERGE) && !word.equals(KEYWORD_LOCK) && !word.equals(KEYWORD_RETURN)
-          && !word.equals(KEYWORD_UPSERT) && !word.equals(KEYWORD_EDGE)))
-        throwSyntaxErrorException("Expected keyword " + KEYWORD_SET + "," + KEYWORD_ADD + "," + KEYWORD_CONTENT + ","
-            + KEYWORD_MERGE + "," + KEYWORD_PUT + "," + KEYWORD_REMOVE + "," + KEYWORD_INCREMENT + "," + KEYWORD_LOCK + " or "
-            + KEYWORD_RETURN + " or " + KEYWORD_UPSERT + " or " + KEYWORD_EDGE);
+      if (parserIsEnded() || (!word.equals(KEYWORD_SET) && !word.equals(KEYWORD_ADD) && !word.equals(KEYWORD_PUT) && !word
+          .equals(KEYWORD_REMOVE) && !word.equals(KEYWORD_INCREMENT) && !word.equals(KEYWORD_CONTENT) && !word.equals(KEYWORD_MERGE)
+          && !word.equals(KEYWORD_LOCK) && !word.equals(KEYWORD_RETURN) && !word.equals(KEYWORD_UPSERT) && !word
+          .equals(KEYWORD_EDGE)))
+        throwSyntaxErrorException(
+            "Expected keyword " + KEYWORD_SET + "," + KEYWORD_ADD + "," + KEYWORD_CONTENT + "," + KEYWORD_MERGE + "," + KEYWORD_PUT
+                + "," + KEYWORD_REMOVE + "," + KEYWORD_INCREMENT + "," + KEYWORD_LOCK + " or " + KEYWORD_RETURN + " or "
+                + KEYWORD_UPSERT + " or " + KEYWORD_EDGE);
 
-      while ((!parserIsEnded() && !parserGetLastWord().equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE))
-          || parserGetLastWord().equals(KEYWORD_UPSERT)) {
+      while ((!parserIsEnded() && !parserGetLastWord().equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE)) || parserGetLastWord()
+          .equals(KEYWORD_UPSERT)) {
         word = parserGetLastWord();
 
         if (word.equals(KEYWORD_CONTENT))
@@ -180,14 +179,14 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract
         query = database
             .command(new OSQLAsynchQuery<ODocument>(subjectName.substring(1, subjectName.length() - 1), this).setContext(context));
 
-        if (additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE)
-            || additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_LIMIT))
-          compiledFilter = OSQLEngine.getInstance().parseCondition(parserText.substring(parserGetCurrentPosition()), getContext(),
-              KEYWORD_WHERE);
+        if (additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE) || additionalStatement
+            .equals(OCommandExecutorSQLAbstract.KEYWORD_LIMIT))
+          compiledFilter = OSQLEngine.getInstance()
+              .parseCondition(parserText.substring(parserGetCurrentPosition()), getContext(), KEYWORD_WHERE);
 
-      } else if (additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE)
-          || additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_LIMIT)
-          || additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_LET) || additionalStatement.equals(KEYWORD_LOCK)) {
+      } else if (additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE) || additionalStatement
+          .equals(OCommandExecutorSQLAbstract.KEYWORD_LIMIT) || additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_LET)
+          || additionalStatement.equals(KEYWORD_LOCK)) {
         if (this.preParsedStatement != null) {
           Map<Object, Object> params = ((OCommandRequestText) iRequest).getParameters();
           OUpdateStatement updateStm = (OUpdateStatement) preParsedStatement;
@@ -202,7 +201,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract
             selectString.append(" ");
             updateStm.limit.toString(params, selectString);
           }
-          if(updateStm.timeout!=null){
+          if (updateStm.timeout != null) {
             selectString.append(" ");
             updateStm.timeout.toString(params, selectString);
           }
@@ -230,13 +229,12 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract
               .substring(parserGetCurrentPosition()), this);
         }
 
-        isUpsertAllowed = (((OMetadataInternal) getDatabase().getMetadata()).getImmutableSchemaSnapshot()
-            .getClass(subjectName) != null);
+        isUpsertAllowed = (((OMetadataInternal) getDatabase().getMetadata()).getImmutableSchemaSnapshot().getClass(subjectName)
+            != null);
       } else if (!additionalStatement.isEmpty())
         throwSyntaxErrorException("Invalid keyword " + additionalStatement);
       else
-        query = new OSQLAsynchQuery<ODocument>("select from " + getSelectTarget() , this);
-
+        query = new OSQLAsynchQuery<ODocument>("select from " + getSelectTarget(), this);
 
       if (upsertMode && !isUpsertAllowed)
         throwSyntaxErrorException("Upsert only works with class names ");
@@ -257,10 +255,10 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract
   }
 
   private String getSelectTarget() {
-    if(preParsedStatement == null){
+    if (preParsedStatement == null) {
       return subjectName;
     }
-    return ((OUpdateStatement)preParsedStatement).target.toString();
+    return ((OUpdateStatement) preParsedStatement).target.toString();
   }
 
   public Object execute(final Map<Object, Object> iArgs) {
@@ -279,7 +277,6 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract
       queryArgs = iArgs;
     }
 
-    query.setUseCache(false);
     query.setContext(context);
 
     returnHandler.reset();
@@ -325,8 +322,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract
   /**
    * Update current record.
    */
-  @SuppressWarnings("unchecked")
-  public boolean result(final Object iRecord) {
+  @SuppressWarnings("unchecked") public boolean result(final Object iRecord) {
     final ODocument record = ((OIdentifiable) iRecord).getRecord();
 
     if (isUpdateEdge() && !isRecordInstanceOf(iRecord, "E")) {
@@ -363,11 +359,9 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract
 
   /**
    * checks if an object is an OIdentifiable and an instance of a particular (schema) class
-   * 
-   * @param iRecord
-   *          The record object
-   * @param orientClass
-   *          The schema class
+   *
+   * @param iRecord     The record object
+   * @param orientClass The schema class
    * @return
    */
   private boolean isRecordInstanceOf(Object iRecord, String orientClass) {
@@ -386,9 +380,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract
 
   /**
    * handles vertex consistency after an UPDATE EDGE
-   * 
-   * @param record
-   *          the edge record
+   *
+   * @param record the edge record
    */
   private void handleUpdateEdge(ODocument record) {
     if (!updateEdge) {
@@ -408,23 +401,24 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract
 
   /**
    * updates old and new vertices connected to an edge after out/in update on the edge itself
-   * 
-   * @param edge
-   *          the edge
-   * @param prevVertex
-   *          the previously connected vertex
-   * @param currentVertex
-   *          the currently connected vertex
-   * @param direction
-   *          the direction ("out" or "in")
+   *
+   * @param edge          the edge
+   * @param prevVertex    the previously connected vertex
+   * @param currentVertex the currently connected vertex
+   * @param direction     the direction ("out" or "in")
    */
   private void changeVertexEdgePointer(ODocument edge, OIdentifiable prevVertex, OIdentifiable currentVertex, String direction) {
     if (prevVertex != null && !prevVertex.equals(currentVertex)) {
-      String vertexFieldName = direction + "_" + edge.getClassName();
+      String edgeClassName = edge.getClassName();
+      if (edgeClassName.equalsIgnoreCase("E")) {
+        edgeClassName = "";
+      }
+      String vertexFieldName = direction + "_" + edgeClassName;
       ODocument prevOutDoc = ((OIdentifiable) prevVertex).getRecord();
       ORidBag prevBag = prevOutDoc.field(vertexFieldName);
       if (prevBag != null) {
         prevBag.remove(edge);
+        prevOutDoc.save();
       }
 
       ODocument currentVertexDoc = ((OIdentifiable) currentVertex).getRecord();
@@ -446,32 +440,29 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract
     }
   }
 
-  @Override
-  public String getSyntax() {
+  @Override public String getSyntax() {
     return "UPDATE <class>|cluster:<cluster>> [SET|ADD|PUT|REMOVE|INCREMENT|CONTENT {<JSON>}|MERGE {<JSON>}] [[,] <field-name> = <expression>|<sub-command>]* [LOCK <NONE|RECORD>] [UPSERT] [RETURN <COUNT|BEFORE|AFTER>] [WHERE <conditions>]";
   }
 
-  @Override
-  public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
+  @Override public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
     if (distributedMode == null)
       // REPLICATE MODE COULD BE MORE EFFICIENT ON MASSIVE UPDATES
-      distributedMode = upsertMode || query == null || getDatabase().getTransaction().isActive() ? DISTRIBUTED_EXECUTION_MODE.LOCAL
-          : DISTRIBUTED_EXECUTION_MODE.REPLICATE;
+      distributedMode = upsertMode || query == null || getDatabase().getTransaction().isActive() ?
+          DISTRIBUTED_EXECUTION_MODE.LOCAL :
+          DISTRIBUTED_EXECUTION_MODE.REPLICATE;
     return distributedMode;
   }
 
-  @Override
-  public DISTRIBUTED_RESULT_MGMT getDistributedResultManagement() {
-    return distributedMode == DISTRIBUTED_EXECUTION_MODE.LOCAL ? DISTRIBUTED_RESULT_MGMT.CHECK_FOR_EQUALS
-        : DISTRIBUTED_RESULT_MGMT.MERGE;
+  @Override public DISTRIBUTED_RESULT_MGMT getDistributedResultManagement() {
+    return distributedMode == DISTRIBUTED_EXECUTION_MODE.LOCAL ?
+        DISTRIBUTED_RESULT_MGMT.CHECK_FOR_EQUALS :
+        DISTRIBUTED_RESULT_MGMT.MERGE;
   }
 
-  @Override
-  public void end() {
+  @Override public void end() {
   }
 
-  @Override
-  public int getSecurityOperationType() {
+  @Override public int getSecurityOperationType() {
     return ORole.PERMISSION_UPDATE;
   }
 
@@ -497,9 +488,9 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract
 
       parserSkipWhiteSpaces();
       final StringBuilder buffer = new StringBuilder();
-      parserSetCurrentPosition(OStringSerializerHelper.parse(parserText, buffer, parserGetCurrentPosition(), -1,
-          OStringSerializerHelper.DEFAULT_FIELD_SEPARATOR, true, true, false, -1, false,
-          OStringSerializerHelper.DEFAULT_IGNORE_CHARS));
+      parserSetCurrentPosition(OStringSerializerHelper
+          .parse(parserText, buffer, parserGetCurrentPosition(), -1, OStringSerializerHelper.DEFAULT_FIELD_SEPARATOR, true, true,
+              false, -1, false, OStringSerializerHelper.DEFAULT_IGNORE_CHARS));
       fieldValue = buffer.toString();
     }
     return fieldValue;
@@ -519,9 +510,9 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract
       parserNextWord(false, " ");
       String returning = parserGetLastWord().trim();
       Object returnExpression = null;
-      if (returning.equalsIgnoreCase(KEYWORD_WHERE) || returning.equalsIgnoreCase(KEYWORD_TIMEOUT)
-          || returning.equalsIgnoreCase(KEYWORD_LIMIT) || returning.equalsIgnoreCase(KEYWORD_UPSERT)
-          || returning.equalsIgnoreCase(KEYWORD_LOCK) || returning.length() == 0) {
+      if (returning.equalsIgnoreCase(KEYWORD_WHERE) || returning.equalsIgnoreCase(KEYWORD_TIMEOUT) || returning
+          .equalsIgnoreCase(KEYWORD_LIMIT) || returning.equalsIgnoreCase(KEYWORD_UPSERT) || returning.equalsIgnoreCase(KEYWORD_LOCK)
+          || returning.length() == 0) {
         parserGoBack();
       } else {
         if (returning.startsWith("$") || returning.startsWith("@"))
@@ -549,7 +540,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract
 
       if (restricted != null && restricted.isSuperClassOf(record.getSchemaClass())) {
         for (OProperty prop : restricted.properties()) {
-          fieldsToPreserve.field(prop.getName(), record.field(prop.getName()));
+          fieldsToPreserve.field(prop.getName(), record.<Object>field(prop.getName()));
         }
       }
 
@@ -557,13 +548,13 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract
       if (recordClass != null && recordClass.isSubClassOf("V")) {
         for (String fieldName : record.fieldNames()) {
           if (fieldName.startsWith("in_") || fieldName.startsWith("out_")) {
-            fieldsToPreserve.field(fieldName, record.field(fieldName));
+            fieldsToPreserve.field(fieldName, record.<Object>field(fieldName));
           }
         }
       } else if (recordClass != null && recordClass.isSubClassOf("E")) {
         for (String fieldName : record.fieldNames()) {
           if (fieldName.equals("in") || fieldName.equals("out")) {
-            fieldsToPreserve.field(fieldName, record.field(fieldName));
+            fieldsToPreserve.field(fieldName, record.<Object>field(fieldName));
           }
         }
       }
@@ -685,8 +676,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract
     return updated;
   }
 
-  @SuppressWarnings({ "unchecked", "rawtypes" })
-  private boolean handlePutEntries(ODocument record) {
+  @SuppressWarnings({ "unchecked", "rawtypes" }) private boolean handlePutEntries(ODocument record) {
     boolean updated = false;
     if (!putEntries.isEmpty()) {
       // BIND VALUES TO PUT (AS MAP)
@@ -696,8 +686,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract
         if (fieldValue == null) {
           if (ODocumentInternal.getImmutableSchemaClass(record) != null) {
             final OProperty property = ODocumentInternal.getImmutableSchemaClass(record).getProperty(entry.getKey());
-            if (property != null && (property.getType() != null
-                && (!property.getType().equals(OType.EMBEDDEDMAP) && !property.getType().equals(OType.LINKMAP)))) {
+            if (property != null && (property.getType() != null && (!property.getType().equals(OType.EMBEDDEDMAP) && !property
+                .getType().equals(OType.LINKMAP)))) {
               throw new OCommandExecutionException("field " + entry.getKey() + " is not defined as a map");
             }
           }
@@ -912,13 +902,11 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract
       throwSyntaxErrorException("Entries to increment <field> = <value> are missed. Example: salary = -100");
   }
 
-  @Override
-  public QUORUM_TYPE getQuorumType() {
+  @Override public QUORUM_TYPE getQuorumType() {
     return QUORUM_TYPE.WRITE;
   }
 
-  @Override
-  public Object getResult() {
+  @Override public Object getResult() {
     return null;
   }
 }

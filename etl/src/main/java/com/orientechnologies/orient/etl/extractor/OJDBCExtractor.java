@@ -23,41 +23,35 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.etl.OETLProcessor;
 import com.orientechnologies.orient.etl.OExtractedItem;
 
 import java.io.Reader;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.Types;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 
 public class OJDBCExtractor extends OAbstractExtractor {
-  protected String       url;
-  protected String       userName;
-  protected String       userPassword;
-  protected String       query;
-  protected String       queryCount;
+  protected String url;
+  protected String userName;
+  protected String userPassword;
+  protected String query;
+  protected String queryCount;
 
-  protected String       driverClass;
-  protected Connection   conn;
-  protected Statement    stm;
-  protected ResultSet    rs;
-  protected boolean      didNext     = false;
-  protected boolean      hasNext     = false;
-  protected int          rsColumns;
+  protected String     driverClass;
+  protected Connection conn;
+  protected Statement  stm;
+  protected ResultSet  rs;
+  protected boolean didNext = false;
+  protected boolean hasNext = false;
+  protected int rsColumns;
   protected List<String> columnNames = null;
   protected List<OType>  columnTypes = null;
   protected int          fetchSize   = 10000;
 
   @Override
-  public void configure(OETLProcessor iProcessor, ODocument iConfiguration, OCommandContext iContext) {
-    super.configure(iProcessor, iConfiguration, iContext);
+  public void configure(ODocument iConfiguration, OCommandContext iContext) {
+    super.configure(iConfiguration, iContext);
 
     driverClass = (String) resolve(iConfiguration.field("driver"));
     url = (String) resolve(iConfiguration.field("url"));
@@ -78,8 +72,9 @@ public class OJDBCExtractor extends OAbstractExtractor {
       conn = DriverManager.getConnection(url, userName, userPassword);
     } catch (Exception e) {
 
-      throw OException.wrapException(new OConfigurationException("[JDBC extractor] error on connecting to JDBC url '" + url
-          + "' using user '" + userName + "' and the password provided"), e);
+      throw OException.wrapException(new OConfigurationException(
+              "[JDBC extractor] error on connecting to JDBC url '" + url + "' using user '" + userName + "' and the password provided"),
+          e);
     }
   }
 
@@ -203,8 +198,8 @@ public class OJDBCExtractor extends OAbstractExtractor {
       }
       return hasNext;
     } catch (SQLException e) {
-      throw new OExtractorException("[JDBC extractor] error on moving forward in resultset of query '" + query
-          + "'. Previous position was " + current, e);
+      throw new OExtractorException(
+          "[JDBC extractor] error on moving forward in resultset of query '" + query + "'. Previous position was " + current, e);
     }
   }
 
@@ -227,8 +222,8 @@ public class OJDBCExtractor extends OAbstractExtractor {
       return new OExtractedItem(current++, doc);
 
     } catch (SQLException e) {
-      throw new OExtractorException("[JDBC extractor] error on moving forward in resultset of query '" + query
-          + "'. Previous position was " + current, e);
+      throw new OExtractorException(
+          "[JDBC extractor] error on moving forward in resultset of query '" + query + "'. Previous position was " + current, e);
     }
   }
 

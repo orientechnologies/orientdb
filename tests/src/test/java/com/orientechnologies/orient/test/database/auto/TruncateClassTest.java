@@ -15,18 +15,6 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import org.testng.Assert;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexCursor;
@@ -36,18 +24,20 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import org.testng.Assert;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
-@Test
-public class TruncateClassTest extends DocumentDBBaseTest {
+import java.util.*;
 
-  @Parameters(value = "url")
-  public TruncateClassTest(@Optional String url) {
+@Test public class TruncateClassTest extends DocumentDBBaseTest {
+
+  @Parameters(value = "url") public TruncateClassTest(@Optional String url) {
     super(url);
   }
 
-  @SuppressWarnings("unchecked")
-  @Test
-  public void testTruncateClass() {
+  @SuppressWarnings("unchecked") @Test public void testTruncateClass() {
 
     OSchema schema = database.getMetadata().getSchema();
     OClass testClass = getOrCreateClass(schema);
@@ -85,8 +75,7 @@ public class TruncateClassTest extends DocumentDBBaseTest {
     schema.dropClass("test_class");
   }
 
-  @Test
-  public void testTruncateVertexClass() {
+  @Test public void testTruncateVertexClass() {
     database.command(new OCommandSQL("create class TestTruncateVertexClass extends V")).execute();
     database.command(new OCommandSQL("create vertex TestTruncateVertexClass set name = 'foo'")).execute();
 
@@ -104,8 +93,7 @@ public class TruncateClassTest extends DocumentDBBaseTest {
 
   }
 
-  @Test
-  public void testTruncateVertexClassSubclasses() {
+  @Test public void testTruncateVertexClassSubclasses() {
 
     database.command(new OCommandSQL("create class TestTruncateVertexClassSuperclass")).execute();
     database.command(new OCommandSQL("create class TestTruncateVertexClassSubclass extends TestTruncateVertexClassSuperclass"))
@@ -127,21 +115,16 @@ public class TruncateClassTest extends DocumentDBBaseTest {
 
   }
 
-  @Test
-  public void testTruncateVertexClassSubclassesWithIndex() {
+  @Test public void testTruncateVertexClassSubclassesWithIndex() {
 
     database.command(new OCommandSQL("create class TestTruncateVertexClassSuperclassWithIndex")).execute();
     database.command(new OCommandSQL("create property TestTruncateVertexClassSuperclassWithIndex.name STRING")).execute();
-    database
-        .command(
-            new OCommandSQL(
-                "create index TestTruncateVertexClassSuperclassWithIndex_index on TestTruncateVertexClassSuperclassWithIndex (name) NOTUNIQUE"))
+    database.command(new OCommandSQL(
+        "create index TestTruncateVertexClassSuperclassWithIndex_index on TestTruncateVertexClassSuperclassWithIndex (name) NOTUNIQUE"))
         .execute();
 
-    database
-        .command(
-            new OCommandSQL(
-                "create class TestTruncateVertexClassSubclassWithIndex extends TestTruncateVertexClassSuperclassWithIndex"))
+    database.command(
+        new OCommandSQL("create class TestTruncateVertexClassSubclassWithIndex extends TestTruncateVertexClassSuperclassWithIndex"))
         .execute();
 
     database.command(new OCommandSQL("insert into TestTruncateVertexClassSuperclassWithIndex set name = 'foo'")).execute();
@@ -178,5 +161,32 @@ public class TruncateClassTest extends DocumentDBBaseTest {
     }
     schema.save();
     return testClass;
+  }
+
+  @SuppressWarnings("unchecked") @Test public void testTruncateClassWithCommandCache() {
+
+    OSchema schema = database.getMetadata().getSchema();
+    OClass testClass = getOrCreateClass(schema);
+
+    boolean ccWasEnabled = database.getMetadata().getCommandCache().isEnabled();
+    database.getMetadata().getCommandCache().enable();
+
+    database.command(new OCommandSQL("truncate class test_class")).execute();
+
+    database.save(new ODocument(testClass).field("name", "x").field("data", Arrays.asList(1, 2)));
+    database.save(new ODocument(testClass).field("name", "y").field("data", Arrays.asList(3, 0)));
+
+    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from test_class"));
+    Assert.assertEquals(result.size(), 2);
+
+    database.command(new OCommandSQL("truncate class test_class")).execute();
+
+    result = database.query(new OSQLSynchQuery<ODocument>("select from test_class"));
+    Assert.assertEquals(result.size(), 0);
+
+    schema.dropClass("test_class");
+    if (!ccWasEnabled) {
+      database.getMetadata().getCommandCache().disable();
+    }
   }
 }

@@ -4,14 +4,12 @@ import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert; import org.junit.Test;
 
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordOperationMetadata;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationMetadata;
 
-@Test
 public class OAtomicUnitEndRecordTest {
   public void recordMetadataSerializationTest() throws IOException {
     ORecordOperationMetadata recordOperationMetadata = new ORecordOperationMetadata();

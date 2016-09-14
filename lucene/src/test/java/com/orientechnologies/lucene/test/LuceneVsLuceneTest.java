@@ -30,6 +30,7 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
+import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
@@ -102,8 +103,8 @@ public class LuceneVsLuceneTest extends BaseLuceneTest {
       String title = oDocument.field("title");
       if (title != null) {
         Document d = new Document();
-        d.add(new Field("title", title, Field.Store.NO, Field.Index.ANALYZED));
 
+        d.add(new TextField("title", title, Field.Store.NO));
         indexWriter.addDocument(d);
 
       }
@@ -121,7 +122,7 @@ public class LuceneVsLuceneTest extends BaseLuceneTest {
 
     int i = 0;
     for (ScoreDoc hit : hits) {
-      Assert.assertEquals(oDocs.get(i).field("$score"), hit.score);
+      Assert.assertEquals(oDocs.get(i).<Object>field("$score"), hit.score);
       i++;
     }
     reader.close();

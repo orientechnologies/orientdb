@@ -33,5 +33,42 @@ public class OCluster extends SimpleNode {
       builder.append("cluster:" + clusterNumber);
     }
   }
+
+  public String getClusterName() {
+    return clusterName;
+  }
+
+  public Integer getClusterNumber() {
+    return clusterNumber;
+  }
+
+  public OCluster copy() {
+    OCluster result = new OCluster(-1);
+    result.clusterName = clusterName;
+    result.clusterNumber = clusterNumber;
+    return result;
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OCluster oCluster = (OCluster) o;
+
+    if (clusterName != null ? !clusterName.equals(oCluster.clusterName) : oCluster.clusterName != null)
+      return false;
+    if (clusterNumber != null ? !clusterNumber.equals(oCluster.clusterNumber) : oCluster.clusterNumber != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = clusterName != null ? clusterName.hashCode() : 0;
+    result = 31 * result + (clusterNumber != null ? clusterNumber.hashCode() : 0);
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=d27abf009fe7db482fbcaac9d52ba192 (do not edit this line) */

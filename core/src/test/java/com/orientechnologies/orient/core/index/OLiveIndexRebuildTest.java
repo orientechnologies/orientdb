@@ -7,8 +7,9 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Ignore;
+import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,7 +19,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-@Test(enabled = false)
 public class OLiveIndexRebuildTest {
   private final OPartitionedDatabasePool pool = new OPartitionedDatabasePool("memory:liveIndexRebuild", "admin", "admin");
 
@@ -29,6 +29,8 @@ public class OLiveIndexRebuildTest {
   private final String        databaseURL = "memory:liveIndexRebuild";
   private final AtomicBoolean stop        = new AtomicBoolean();
 
+  @Test
+  @Ignore
   public void testLiveIndexRebuild() throws Exception {
     final ODatabaseDocumentTx database = new ODatabaseDocumentTx(databaseURL);
     database.create();

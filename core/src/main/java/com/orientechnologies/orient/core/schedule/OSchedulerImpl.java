@@ -16,8 +16,7 @@
 
 package com.orientechnologies.orient.core.schedule;
 
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -69,10 +68,13 @@ public class OSchedulerImpl implements OScheduler {
 
   @Override
   public void load() {
-    final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    throw new UnsupportedOperationException();
+  }
 
-    if (db.getMetadata().getSchema().existsClass(OScheduledEvent.CLASS_NAME)) {
-      final Iterable<ODocument> result = db.browseClass(OScheduledEvent.CLASS_NAME);
+  public void load(ODatabaseDocumentInternal database) {
+
+    if (database.getMetadata().getSchema().existsClass(OScheduledEvent.CLASS_NAME)) {
+      final Iterable<ODocument> result = database.browseClass(OScheduledEvent.CLASS_NAME);
       for (ODocument d : result) {
         final OScheduledEvent event = new OScheduledEvent(d);
 
@@ -81,7 +83,7 @@ public class OSchedulerImpl implements OScheduler {
       }
     }
   }
-
+  
   @Override
   public void close() {
     for (OScheduledEvent event : events.values()) {
@@ -92,15 +94,18 @@ public class OSchedulerImpl implements OScheduler {
 
   @Override
   public void create() {
-    final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
-    if (db.getMetadata().getSchema().existsClass(OScheduledEvent.CLASS_NAME))
+    throw new UnsupportedOperationException();
+  }
+  
+  public void create(ODatabaseDocumentInternal database) {
+    if (database.getMetadata().getSchema().existsClass(OScheduledEvent.CLASS_NAME))
       return;
-    final OClass f = db.getMetadata().getSchema().createClass(OScheduledEvent.CLASS_NAME);
+    final OClass f = database.getMetadata().getSchema().createClass(OScheduledEvent.CLASS_NAME);
     f.createProperty(OScheduledEvent.PROP_NAME, OType.STRING, (OType) null, true).setMandatory(true).setNotNull(true);
     f.createProperty(OScheduledEvent.PROP_RULE, OType.STRING, (OType) null, true).setMandatory(true).setNotNull(true);
     f.createProperty(OScheduledEvent.PROP_ARGUMENTS, OType.EMBEDDEDMAP, (OType) null, true);
     f.createProperty(OScheduledEvent.PROP_STATUS, OType.STRING, (OType) null, true);
-    f.createProperty(OScheduledEvent.PROP_FUNC, OType.LINK, db.getMetadata().getSchema().getClass(OFunction.CLASS_NAME), true)
+    f.createProperty(OScheduledEvent.PROP_FUNC, OType.LINK, database.getMetadata().getSchema().getClass(OFunction.CLASS_NAME), true)
         .setMandatory(true).setNotNull(true);
     f.createProperty(OScheduledEvent.PROP_STARTTIME, OType.DATETIME, (OType) null, true);
   }

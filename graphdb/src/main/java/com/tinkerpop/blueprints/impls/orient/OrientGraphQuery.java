@@ -23,6 +23,7 @@ package com.tinkerpop.blueprints.impls.orient;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.tx.OTransaction;
 import com.tinkerpop.blueprints.*;
 import com.tinkerpop.blueprints.util.DefaultGraphQuery;
 
@@ -151,7 +152,8 @@ public class OrientGraphQuery extends DefaultGraphQuery {
     if (limit == 0)
       return Collections.emptyList();
 
-    if (((OrientBaseGraph) graph).getRawGraph().getTransaction().isActive() || hasCustomPredicate()) {
+    OTransaction transaction = ((OrientBaseGraph) graph).getRawGraph().getTransaction();
+    if (transaction.isActive() && transaction.getEntryCount() > 0 || hasCustomPredicate()) {
       // INSIDE TRANSACTION QUERY DOESN'T SEE IN MEMORY CHANGES, UNTIL
       // SUPPORTED USED THE BASIC IMPL
       String[] classes = allSubClassesLabels();

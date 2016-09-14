@@ -67,8 +67,8 @@ public class LuceneMultiFieldTest extends BaseLuceneTest {
 
     final ODocument index = databaseDocumentTx.getMetadata().getIndexManager().getIndex("Song.title_author").getMetadata();
 
-    assertThat(index.field("author_index")).isEqualTo(StandardAnalyzer.class.getName());
-    assertThat(index.field("title_index")).isEqualTo(EnglishAnalyzer.class.getName());
+    assertThat(index.<Object>field("author_index")).isEqualTo(StandardAnalyzer.class.getName());
+    assertThat(index.<Object>field("title_index")).isEqualTo(EnglishAnalyzer.class.getName());
     InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql");
 
     databaseDocumentTx.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();

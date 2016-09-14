@@ -5,27 +5,28 @@ package com.orientechnologies.orient.core.sql.parser;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class OUpdateOperations extends SimpleNode {
-  protected static final int           TYPE_SET             = 0;
-  protected static final int           TYPE_PUT             = 1;
-  protected static final int           TYPE_MERGE           = 2;
-  protected static final int           TYPE_CONTENT         = 3;
-  protected static final int           TYPE_INCREMENT       = 4;
-  protected static final int           TYPE_ADD             = 5;
-  protected static final int           TYPE_REMOVE          = 6;
+  public static final int TYPE_SET       = 0;
+  public static final int TYPE_PUT       = 1;
+  public static final int TYPE_MERGE     = 2;
+  public static final int TYPE_CONTENT   = 3;
+  public static final int TYPE_INCREMENT = 4;
+  public static final int TYPE_ADD       = 5;
+  public static final int TYPE_REMOVE    = 6;
 
-  protected int                        type;
+  protected int type;
 
-  protected List<OUpdateItem>          updateItems          = new ArrayList<OUpdateItem>();
+  protected List<OUpdateItem> updateItems = new ArrayList<OUpdateItem>();
 
-  protected List<OUpdatePutItem>       updatePutItems       = new ArrayList<OUpdatePutItem>();
+  protected List<OUpdatePutItem> updatePutItems = new ArrayList<OUpdatePutItem>();
 
-  protected OJson                      json;
+  protected OJson json;
 
   protected List<OUpdateIncrementItem> updateIncrementItems = new ArrayList<OUpdateIncrementItem>();
 
-  protected List<OUpdateRemoveItem>    updateRemoveItems    = new ArrayList<OUpdateRemoveItem>();
+  protected List<OUpdateRemoveItem> updateRemoveItems = new ArrayList<OUpdateRemoveItem>();
 
   public OUpdateOperations(int id) {
     super(id);
@@ -35,7 +36,9 @@ public class OUpdateOperations extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
@@ -105,5 +108,76 @@ public class OUpdateOperations extends SimpleNode {
     }
   }
 
+  public OUpdateOperations copy() {
+
+    OUpdateOperations result = new OUpdateOperations(-1);
+    result.type = type;
+    result.updateItems = updateItems == null ? null : updateItems.stream().map(x -> x.copy()).collect(Collectors.toList());
+    result.updatePutItems = updatePutItems == null ? null : updatePutItems.stream().map(x -> x.copy()).collect(Collectors.toList());
+    result.json = json == null ? null : json.copy();
+    result.updateIncrementItems =
+        updateIncrementItems == null ? null : updateIncrementItems.stream().map(x -> x.copy()).collect(Collectors.toList());
+    result.updateRemoveItems =
+        updateRemoveItems == null ? null : updateRemoveItems.stream().map(x -> x.copy()).collect(Collectors.toList());
+    return result;
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OUpdateOperations that = (OUpdateOperations) o;
+
+    if (type != that.type)
+      return false;
+    if (updateItems != null ? !updateItems.equals(that.updateItems) : that.updateItems != null)
+      return false;
+    if (updatePutItems != null ? !updatePutItems.equals(that.updatePutItems) : that.updatePutItems != null)
+      return false;
+    if (json != null ? !json.equals(that.json) : that.json != null)
+      return false;
+    if (updateIncrementItems != null ? !updateIncrementItems.equals(that.updateIncrementItems) : that.updateIncrementItems != null)
+      return false;
+    if (updateRemoveItems != null ? !updateRemoveItems.equals(that.updateRemoveItems) : that.updateRemoveItems != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = type;
+    result = 31 * result + (updateItems != null ? updateItems.hashCode() : 0);
+    result = 31 * result + (updatePutItems != null ? updatePutItems.hashCode() : 0);
+    result = 31 * result + (json != null ? json.hashCode() : 0);
+    result = 31 * result + (updateIncrementItems != null ? updateIncrementItems.hashCode() : 0);
+    result = 31 * result + (updateRemoveItems != null ? updateRemoveItems.hashCode() : 0);
+    return result;
+  }
+
+  public int getType() {
+    return type;
+  }
+
+  public List<OUpdateItem> getUpdateItems() {
+    return updateItems;
+  }
+
+  public List<OUpdatePutItem> getUpdatePutItems() {
+    return updatePutItems;
+  }
+
+  public OJson getJson() {
+    return json;
+  }
+
+  public List<OUpdateIncrementItem> getUpdateIncrementItems() {
+    return updateIncrementItems;
+  }
+
+  public List<OUpdateRemoveItem> getUpdateRemoveItems() {
+    return updateRemoveItems;
+  }
 }
 /* JavaCC - OriginalChecksum=0eca3b3e4e3d96c42db57b7cd89cf755 (do not edit this line) */

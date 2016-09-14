@@ -37,6 +37,8 @@ import javax.management.ObjectName;
 import java.io.File;
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadInfo;
+import java.lang.management.ThreadMXBean;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
@@ -45,7 +47,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public abstract class OAbstractProfiler extends OSharedResourceAbstract
     implements OProfiler, OOrientStartupListener, OProfilerMXBean {
 
-  protected final Map<String, OProfilerHookValue>        hooks         = new ConcurrentHashMap<String, OProfilerHookValue>();
+  protected final Map<String, OProfilerHookRuntime>      hooks         = new ConcurrentHashMap<String, OProfilerHookRuntime>();
   protected final ConcurrentHashMap<String, String>      dictionary    = new ConcurrentHashMap<String, String>();
   protected final ConcurrentHashMap<String, METRIC_TYPE> types         = new ConcurrentHashMap<String, METRIC_TYPE>();
   protected long                                         recordingFrom = -1;
@@ -54,6 +56,26 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract
 
   public interface OProfilerHookValue {
     Object getValue();
+  }
+
+  public class OProfilerHookRuntime {
+    public OProfilerHookValue hook;
+    public METRIC_TYPE        type;
+
+    public OProfilerHookRuntime(final OProfilerHookValue hook, final METRIC_TYPE type) {
+      this.hook = hook;
+      this.type = type;
+    }
+  }
+
+  public class OProfilerHookStatic {
+    public Object      value;
+    public METRIC_TYPE type;
+
+    public OProfilerHookStatic(final Object value, final METRIC_TYPE type) {
+      this.value = value;
+      this.type = type;
+    }
   }
 
   private static final class MemoryChecker extends TimerTask {
@@ -334,7 +356,7 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract
     if (iName != null) {
       unregisterHookValue(iName);
       updateMetadata(iMetadataName, iDescription, iType);
-      hooks.put(iName, iHookValue);
+      hooks.put(iName, new OProfilerHookRuntime(iHookValue, iType));
     }
   }
 
@@ -395,5 +417,33 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract
   @Override
   public void unregisterListener(OProfilerListener listener) {
     listeners.remove(listener);
+  }
+
+  @Override
+  public String threadDump() {
+    final StringBuilder dump = new StringBuilder();
+    dump.append("THREAD DUMP\n");
+    final ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
+    final ThreadInfo[] threadInfos = threadMXBean.getThreadInfo(threadMXBean.getAllThreadIds(), 100);
+    for (ThreadInfo threadInfo : threadInfos) {
+      dump.append('"');
+      dump.append(threadInfo.getThreadName());
+      dump.append("\" ");
+      final Thread.State state = threadInfo.getThreadState();
+      dump.append("\n   java.lang.Thread.State: ");
+      dump.append(state);
+      final StackTraceElement[] stackTraceElements = threadInfo.getStackTrace();
+      for (final StackTraceElement stackTraceElement : stackTraceElements) {
+        dump.append("\n        at ");
+        dump.append(stackTraceElement);
+      }
+      dump.append("\n\n");
+    }
+    return dump.toString();
+  }
+
+  @Override
+  public METRIC_TYPE getType(final String k) {
+    return types.get(k);
   }
 }

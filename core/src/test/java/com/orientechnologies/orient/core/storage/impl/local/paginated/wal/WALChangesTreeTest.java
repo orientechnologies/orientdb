@@ -1,13 +1,11 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.common.directmemory.OByteBufferPool;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert; import org.junit.Test;
 
 import java.nio.ByteBuffer;
 import java.util.Random;
 
-@Test
 public class WALChangesTreeTest {
   public void testOneAdd() {
     final OWALChangesTree tree = new OWALChangesTree();

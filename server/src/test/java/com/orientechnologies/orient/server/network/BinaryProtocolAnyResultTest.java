@@ -36,7 +36,7 @@ public class BinaryProtocolAnyResultTest {
   @Test
   public void scriptReturnValueTest() throws IOException {
     OServerAdmin server = new OServerAdmin("remote:localhost");
-    server.connect("root","D2AFD02F20640EC8B7A5140F34FCA49D2289DB1F0D0598BB9DE8AAA75A0792F3");
+    server.connect("root","root");
     server.createDatabase("test","graph","memory");
     ODatabaseDocumentTx db = new ODatabaseDocumentTx("remote:localhost/test");
     db.open("admin","admin");

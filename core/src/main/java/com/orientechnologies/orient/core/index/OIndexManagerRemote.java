@@ -21,9 +21,9 @@ package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -38,8 +38,8 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
   private static final String QUERY_DROP       = "drop index %s";
   private static final long   serialVersionUID = -6570577338095096235L;
 
-  public OIndexManagerRemote(final ODatabaseDocument iDatabase) {
-    super(iDatabase);
+  public OIndexManagerRemote() {
+    super();
   }
 
   public OIndex<?> createIndex(final String iName, final String iType, final OIndexDefinition iIndexDefinition,
@@ -62,7 +62,7 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
       getDatabase().command(new OCommandSQL(createIndexDDL)).execute();
 
       ORecordInternal.setIdentity(document,
-          new ORecordId(ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().indexMgrRecordId));
+          new ORecordId(getDatabase().getStorage().getConfiguration().indexMgrRecordId));
 
       if (progressListener != null)
         progressListener.onCompletition(this, true);
@@ -70,7 +70,7 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
       reload();
 
       final Locale locale = getServerLocale();
-      return preProcessBeforeReturn(indexes.get(iName.toLowerCase(locale)));
+      return preProcessBeforeReturn(getDatabase(), indexes.get(iName.toLowerCase(locale)));
     } finally {
       releaseExclusiveLock();
     }
@@ -108,11 +108,21 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
   public void recreateIndexes() {
     throw new UnsupportedOperationException("recreateIndexes()");
   }
+  
+  @Override
+  public void recreateIndexes(ODatabaseDocumentInternal database) {
+    throw new UnsupportedOperationException("recreateIndexes(ODatabaseDocumentInternal)");    
+  }
 
   @Override
   public void waitTillIndexRestore() {
   }
 
+  @Override
+  public boolean autoRecreateIndexesAfterCrash(ODatabaseDocumentInternal database) {
+    return false;
+  }
+  
   @Override
   public boolean autoRecreateIndexesAfterCrash() {
     return false;
@@ -159,4 +169,13 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
       releaseExclusiveLock();
     }
   }
+
+  protected OIndex<?> preProcessBeforeReturn(ODatabaseDocumentInternal database, final OIndex<?> index) {
+    if (index instanceof OIndexRemoteMultiValue)
+      return new OIndexTxAwareMultiValue(database, (OIndex<Set<OIdentifiable>>) index);
+    else if (index instanceof OIndexRemoteOneValue)
+      return new OIndexTxAwareOneValue(database, (OIndex<OIdentifiable>) index);
+    return index;
+  }
+
 }

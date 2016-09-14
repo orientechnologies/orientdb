@@ -19,18 +19,6 @@
  */
 package com.orientechnologies.orient.server;
 
-import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.exception.OSystemException;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.metadata.security.OToken;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
-import com.orientechnologies.orient.enterprise.channel.binary.OTokenSecurityException;
-import com.orientechnologies.orient.server.config.OServerUserConfiguration;
-import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
-import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
-import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
-
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -41,19 +29,31 @@ import java.util.WeakHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.exception.OSystemException;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.metadata.security.OToken;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
+import com.orientechnologies.orient.enterprise.channel.binary.OTokenSecurityException;
+import com.orientechnologies.orient.server.config.OServerUserConfiguration;
+import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
+import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
+import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
+
 public class OClientConnection {
-  private final int                            id;
-  private final long                           since;
-  private Set<ONetworkProtocol>                protocols = Collections.newSetFromMap(new WeakHashMap<ONetworkProtocol, Boolean>());
-  private volatile ONetworkProtocol            protocol;
-  private volatile ODatabaseDocumentInternal   database;
-  private volatile OServerUserConfiguration    serverUser;
-  private ONetworkProtocolData                 data      = new ONetworkProtocolData();
-  private OClientConnectionStats               stats     = new OClientConnectionStats();
-  private Lock                                 lock      = new ReentrantLock();
-  private Boolean                              tokenBased;
-  private byte[]                               tokenBytes;
-  private OToken                               token;
+  private final int                          id;
+  private final long                         since;
+  private Set<ONetworkProtocol>              protocols = Collections.newSetFromMap(new WeakHashMap<ONetworkProtocol, Boolean>());
+  private volatile ONetworkProtocol          protocol;
+  private volatile ODatabaseDocumentInternal database;
+  private volatile OServerUserConfiguration  serverUser;
+  private ONetworkProtocolData               data      = new ONetworkProtocolData();
+  private OClientConnectionStats             stats     = new OClientConnectionStats();
+  private Lock                               lock      = new ReentrantLock();
+  private Boolean                            tokenBased;
+  private byte[]                             tokenBytes;
+  private OToken                             token;
+  private boolean                            disconnectOnAfter;
 
   public OClientConnection(final int id, final ONetworkProtocol protocol) throws IOException {
     this.id = id;
@@ -157,11 +157,12 @@ public class OClientConnection {
       if (!protocols.contains(protocol))
         throw new OTokenSecurityException("No valid session found, provide a token");
     } else {
-      // Active This Optimization but it need a periodic check on session
-      /*
-       * if(tokenBytes != null && tokenBytes.length > 0){ if(tokenBytes.equals(tokenFromNetwork)) //SAME SESSION AND TOKEN DO
-       * NOTHING return; }
-       */
+      //IF the byte from the network are the same of the one i have a don't check them
+      if (tokenBytes != null && tokenBytes.length > 0) {
+        if (tokenBytes.equals(tokenFromNetwork)) // SAME SESSION AND TOKEN DO
+          return;
+      }
+      
       OToken token = null;
       try {
         if (tokenFromNetwork != null)
@@ -169,12 +170,15 @@ public class OClientConnection {
       } catch (Exception e) {
         throw OException.wrapException(new OSystemException("Error on token parse"), e);
       }
+      
       if (token == null || !token.getIsVerified()) {
         cleanSession();
+        protocol.getServer().getClientConnectionManager().disconnect(this);
         throw new OTokenSecurityException("The token provided is not a valid token, signature does not match");
       }
       if (!handler.validateBinaryToken(token)) {
         cleanSession();
+        protocol.getServer().getClientConnectionManager().disconnect(this);
         throw new OTokenSecurityException("The token provided is expired");
       }
       if (tokenBased == null) {
@@ -195,6 +199,7 @@ public class OClientConnection {
     }
     database = null;
     protocols.clear();
+    
   }
 
   public void endOperation() {
@@ -213,7 +218,7 @@ public class OClientConnection {
 
   }
 
-  public void init(OServer server) {
+  public void init(final OServer server) {
     if (database == null) {
       setData(server.getTokenHandler().getProtocolDataFromToken(this, token));
 
@@ -224,9 +229,9 @@ public class OClientConnection {
       final String type = token.getDatabaseType();
       if (db != null && type != null) {
         if (data.serverUser) {
-          setDatabase((ODatabaseDocumentTx) server.openDatabase(type + ":" + db, token.getUserName(), null, data, true));
+          setDatabase(server.openDatabase(type + ":" + db, token.getUserName(), null, data, true));
         } else
-          setDatabase((ODatabaseDocumentTx) server.openDatabase(type + ":" + db, token));
+          setDatabase((ODatabaseDocumentInternal) server.openDatabase(type + ":" + db, token));
       }
     }
   }
@@ -306,5 +311,13 @@ public class OClientConnection {
     data.commandInfo = "Listening";
     data.commandDetail = "-";
     stats.lastCommandReceived = System.currentTimeMillis();
+  }
+  
+  public void setDisconnectOnAfter(boolean disconnectOnAfter) {
+    this.disconnectOnAfter = disconnectOnAfter;
+  }
+  
+  public boolean isDisconnectOnAfter() {
+    return disconnectOnAfter;
   }
 }

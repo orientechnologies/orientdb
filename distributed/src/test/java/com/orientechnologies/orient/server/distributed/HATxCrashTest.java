@@ -15,9 +15,9 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.concurrent.Callable;
@@ -26,14 +26,13 @@ import java.util.concurrent.Callable;
  * Distributed TX test against "remote" protocol. It starts 3 servers and during a stress test, kill last server. The test checks
  * all the clients can auto-reconnect to the next available server.
  */
-public class HATxCrashTest extends AbstractServerClusterTxTest {
+public class HATxCrashTest extends AbstractHARemoveNode {
   final static int SERVERS       = 3;
   volatile boolean inserting     = true;
   volatile int     serverStarted = 0;
   volatile boolean lastServerOn  = false;
 
   @Test
-  @Ignore
   public void test() throws Exception {
     startupNodesInSequence = true;
     count = 500;
@@ -75,6 +74,7 @@ public class HATxCrashTest extends AbstractServerClusterTxTest {
               public Object call() throws Exception {
                 Assert.assertTrue("Insert was too fast", inserting);
                 banner("SIMULATE FAILURE ON SERVER " + (SERVERS - 1));
+                delayWriter = 100;
                 serverInstance.get(SERVERS - 1).crashServer();
                 poolFactory.reset();
                 lastServerOn = false;
@@ -99,7 +99,6 @@ public class HATxCrashTest extends AbstractServerClusterTxTest {
                     try {
                       serverInstance.get(SERVERS - 1)
                           .startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
-                      delayWriter = 10;
                       lastServerOn = true;
                     } catch (Exception e) {
                       e.printStackTrace();
@@ -123,6 +122,14 @@ public class HATxCrashTest extends AbstractServerClusterTxTest {
   @Override
   protected void onAfterExecution() throws Exception {
     inserting = false;
+
+    waitFor(5000, new OCallable<Boolean, Void>() {
+      @Override
+      public Boolean call(Void iArgument) {
+        return lastServerOn;
+      }
+    }, "Server 2 is not active yet");
+
     Assert.assertTrue(lastServerOn);
   }
 

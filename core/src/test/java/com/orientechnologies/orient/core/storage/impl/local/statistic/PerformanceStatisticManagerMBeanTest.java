@@ -1,7 +1,7 @@
 package com.orientechnologies.orient.core.storage.impl.local.statistic;
 
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Test;
 
 import javax.management.*;
 import java.util.Arrays;
@@ -9,8 +9,9 @@ import java.util.HashSet;
 
 import static org.mockito.Mockito.*;
 
-@Test
 public class PerformanceStatisticManagerMBeanTest {
+
+  @Test
   public void testMbeanInfo() {
     final OPerformanceStatisticManager manager = mock(OPerformanceStatisticManager.class);
     when(manager.getComponentNames()).thenReturn(new HashSet<String>(Arrays.asList("com1", "com2")));
@@ -335,7 +336,7 @@ public class PerformanceStatisticManagerMBeanTest {
       }
     }
 
-    Assert.assertTrue(found, "Operation with name " + name + " was not found");
+    Assert.assertTrue("Operation with name " + name + " was not found", found);
   }
 
   private void assertAttribute(MBeanAttributeInfo[] attributes, String name, Class clazz) {
@@ -350,7 +351,7 @@ public class PerformanceStatisticManagerMBeanTest {
       }
     }
 
-    Assert.assertTrue(found, "Property with name " + name + " was not found");
+    Assert.assertTrue("Property with name " + name + " was not found", found);
   }
 
 }

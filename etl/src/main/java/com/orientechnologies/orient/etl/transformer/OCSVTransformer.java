@@ -42,9 +42,9 @@ public class OCSVTransformer extends OAbstractTransformer {
   private long         skipFrom           = -1;
   private long         skipTo             = -1;
   private long         line               = -1;
-  private String       nullValue;
-  private Character    stringCharacter    = '"';
-  private boolean      unicode            = true;
+  private String nullValue;
+  private Character stringCharacter = '"';
+  private boolean   unicode         = true;
 
   public static boolean isFinite(final float value) {
     return Math.abs(value) <= Float.MAX_VALUE;
@@ -52,26 +52,26 @@ public class OCSVTransformer extends OAbstractTransformer {
 
   @Override
   public ODocument getConfiguration() {
-    return new ODocument().fromJSON("{parameters:[" + getCommonConfigurationParameters()
-        + ",{separator:{optional:true,description:'Column separator'}},"
-        + "{columnsOnFirstLine:{optional:true,description:'Columns are described in the first line'}},"
-        + "{columns:{optional:true,description:'Columns array containing names, and optionally type after :'}},"
-        + "{nullValue:{optional:true,description:'Value to consider as NULL. Default is not declared'}},"
-        + "{unicode:{optional:true,description:'Support unicode values as \\u<code>'}},"
-        + "{stringCharacter:{optional:true,description:'String character delimiter. Use \"\" to do not use any delimitator'}},"
-        + "{skipFrom:{optional:true,description:'Line number where start to skip',type:'int'}},"
-        + "{skipTo:{optional:true,description:'Line number where skip ends',type:'int'}}"
-        + "],input:['String'],output:'ODocument'}");
+    return new ODocument().fromJSON(
+        "{parameters:[" + getCommonConfigurationParameters() + ",{separator:{optional:true,description:'Column separator'}},"
+            + "{columnsOnFirstLine:{optional:true,description:'Columns are described in the first line'}},"
+            + "{columns:{optional:true,description:'Columns array containing names, and optionally type after :'}},"
+            + "{nullValue:{optional:true,description:'Value to consider as NULL. Default is not declared'}},"
+            + "{unicode:{optional:true,description:'Support unicode values as \\u<code>'}},"
+            + "{stringCharacter:{optional:true,description:'String character delimiter. Use \"\" to do not use any delimitator'}},"
+            + "{skipFrom:{optional:true,description:'Line number where start to skip',type:'int'}},"
+            + "{skipTo:{optional:true,description:'Line number where skip ends',type:'int'}}"
+            + "],input:['String'],output:'ODocument'}");
   }
 
   @Override
-  public void configure(final OETLProcessor iProcessor, final ODocument iConfiguration, final OCommandContext iContext) {
-    super.configure(iProcessor, iConfiguration, iContext);
+  public void configure(final ODocument iConfiguration, final OCommandContext iContext) {
+    super.configure(iConfiguration, iContext);
 
     if (iConfiguration.containsField("separator"))
       separator = iConfiguration.field("separator").toString().charAt(0);
     if (iConfiguration.containsField("columnsOnFirstLine"))
-      columnsOnFirstLine = (Boolean) iConfiguration.field("columnsOnFirstLine");
+      columnsOnFirstLine = iConfiguration.<Boolean>field("columnsOnFirstLine");
     if (iConfiguration.containsField("columns")) {
       final List<String> columns = iConfiguration.field("columns");
       columnNames = new ArrayList<String>(columns.size());
@@ -87,9 +87,9 @@ public class OCSVTransformer extends OAbstractTransformer {
       }
     }
     if (iConfiguration.containsField("skipFrom"))
-      skipFrom = ((Number) iConfiguration.field("skipFrom")).longValue();
+      skipFrom = (iConfiguration.<Number>field("skipFrom")).longValue();
     if (iConfiguration.containsField("skipTo"))
-      skipTo = ((Number) iConfiguration.field("skipTo")).longValue();
+      skipTo = (iConfiguration.<Number>field("skipTo")).longValue();
     if (iConfiguration.containsField("nullValue"))
       nullValue = iConfiguration.field("nullValue");
     if (iConfiguration.containsField("unicode"))
@@ -115,8 +115,8 @@ public class OCSVTransformer extends OAbstractTransformer {
 
     log(OETLProcessor.LOG_LEVELS.DEBUG, "parsing=%s", input);
 
-    final List<String> fields = OStringSerializerHelper.smartSplit(input.toString(), new char[] { separator }, 0, -1, false, false,
-        false, false, unicode);
+    final List<String> fields = OStringSerializerHelper
+        .smartSplit(input.toString(), new char[] { separator }, 0, -1, false, false, false, false, unicode);
 
     if (!isColumnNamesCorrect(fields))
       return null;
@@ -141,7 +141,8 @@ public class OCSVTransformer extends OAbstractTransformer {
 
       } catch (Exception e) {
         processor.getStats().incrementErrors();
-        log(OETLProcessor.LOG_LEVELS.ERROR, "Error on setting document field %s=%s (cause=%s)", fieldName, fieldValue, e.toString());
+        log(OETLProcessor.LOG_LEVELS.ERROR, "Error on setting document field %s=%s (cause=%s)", fieldName, fieldValue,
+            e.toString());
       }
     }
 
@@ -260,8 +261,8 @@ public class OCSVTransformer extends OAbstractTransformer {
     if (iValue == null || iValue.isEmpty() || "NULL".equals(iValue))
       return null;
 
-    if (stringCharacter != null && iValue.length() > 1
-        && (iValue.charAt(0) == stringCharacter && iValue.charAt(iValue.length() - 1) == stringCharacter))
+    if (stringCharacter != null && iValue.length() > 1 && (iValue.charAt(0) == stringCharacter
+        && iValue.charAt(iValue.length() - 1) == stringCharacter))
       return iValue.substring(1, iValue.length() - 1);
 
     return iValue;

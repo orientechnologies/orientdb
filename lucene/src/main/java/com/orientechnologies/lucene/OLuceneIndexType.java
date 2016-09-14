@@ -21,12 +21,24 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.document.*;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.LegacyDoubleField;
+import org.apache.lucene.document.LegacyFloatField;
+import org.apache.lucene.document.LegacyIntField;
+import org.apache.lucene.document.LegacyLongField;
+import org.apache.lucene.document.StringField;
+import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.*;
+import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.LegacyNumericRangeQuery;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.Sort;
+import org.apache.lucene.search.SortField;
+import org.apache.lucene.search.TermQuery;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -38,23 +50,30 @@ import java.util.Map;
  */
 public class OLuceneIndexType {
 
-  public static Field createField(String fieldName, Object value, Field.Store store, Field.Index analyzed) {
+  public static Field createField(String fieldName, Object value, Field.Store store/*,Field.Index index*/) {
 
+    store = Field.Store.YES;
     if (value instanceof Number) {
       Number number = (Number) value;
       if (value instanceof Long)
-        return new LongField(fieldName, number.longValue(), store);
+        return new LegacyLongField(fieldName, number.longValue(), store);
       else if (value instanceof Float)
-        return new FloatField(fieldName, number.floatValue(), store);
+        return new LegacyFloatField(fieldName, number.floatValue(), store);
       else if (value instanceof Double)
-        return new DoubleField(fieldName, number.doubleValue(), store);
+        return new LegacyDoubleField(fieldName, number.doubleValue(), store);
 
-      return new IntField(fieldName, number.intValue(), store);
+      return new LegacyIntField(fieldName, number.intValue(), store);
 
     } else if (value instanceof Date) {
-      return new LongField(fieldName, ((Date) value).getTime(), store);
+      return new LegacyLongField(fieldName, ((Date) value).getTime(), store);
     }
-    return new Field(fieldName, value.toString(), store, analyzed);
+
+    if (fieldName.equalsIgnoreCase(OLuceneIndexEngineAbstract.RID)) {
+      StringField ridField = new StringField(fieldName, value.toString(), store);
+      return ridField;
+    }
+
+    return new TextField(fieldName, value.toString(), store);
 
   }
 
@@ -93,8 +112,8 @@ public class OLuceneIndexType {
   public static Query createDeleteQuery(OIdentifiable value, List<String> fields, Object key) {
 
     final BooleanQuery.Builder queryBuilder = new BooleanQuery.Builder();
-    queryBuilder.add(new TermQuery(new Term(OLuceneIndexEngineAbstract.RID, value.getIdentity().toString())),
-        BooleanClause.Occur.MUST);
+
+    queryBuilder.add(createQueryId(value), BooleanClause.Occur.MUST);
 
     Map<String, String> values = new HashMap<String, String>();
     // TODO Implementation of Composite keys with Collection
@@ -104,7 +123,7 @@ public class OLuceneIndexType {
       values.put(fields.iterator().next(), key.toString());
     }
     for (String s : values.keySet()) {
-      queryBuilder.add(new TermQuery(new Term(s + OLuceneIndexEngineAbstract.STORED, values.get(s))), BooleanClause.Occur.MUST);
+      queryBuilder.add(new TermQuery(new Term(s, values.get(s).toLowerCase())), BooleanClause.Occur.MUST);
     }
     return queryBuilder.build();
   }
@@ -156,8 +175,8 @@ public class OLuceneIndexType {
 
   public static Sort sort(Query query, OIndexDefinition index, boolean ascSortOrder) {
     String key = index.getFields().iterator().next();
-    Number number = ((NumericRangeQuery) query).getMin();
-    number = number != null ? number : ((NumericRangeQuery) query).getMax();
+    Number number = ((LegacyNumericRangeQuery<Number>) query).getMin();
+    number = number != null ? number : ((LegacyNumericRangeQuery<Number>) query).getMax();
     SortField.Type fieldType = SortField.Type.INT;
     if (number instanceof Long) {
       fieldType = SortField.Type.LONG;

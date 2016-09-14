@@ -1,15 +1,14 @@
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.orient.core.command.OCommandResultListener;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.sql.query.OSQLNonBlockingQuery;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert; import org.junit.Test;
 
 /**
  * Created by luigidellaquila on 13/04/15.
  */
-@Test
 public class ONonBlockingQueryTest {
 
   static class MyResultListener implements OCommandResultListener {
@@ -36,7 +35,7 @@ public class ONonBlockingQueryTest {
     //issue #5244
     OLiveCommandExecutorSQLFactory.init();
 
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:ONonBlockingQueryTest");
+    ODatabaseDocument db = new ODatabaseDocumentTx("memory:ONonBlockingQueryTest");
     db.activateOnCurrentThread();
     db.create();
 

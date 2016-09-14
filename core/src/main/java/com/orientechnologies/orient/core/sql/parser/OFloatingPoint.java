@@ -8,6 +8,7 @@ public class OFloatingPoint extends ONumber {
 
   protected int    sign        = 1;
   protected String stringValue = null;
+  Number finalValue = null;
 
   public OFloatingPoint(int id) {
     super(id);
@@ -17,9 +18,35 @@ public class OFloatingPoint extends ONumber {
     super(p, id);
   }
 
-  @Override
-  public Number getValue() {
-    return Double.parseDouble((sign == -1 ? "-" : "") + stringValue);
+  @Override public Number getValue() {
+    if (finalValue != null) {
+      return finalValue;
+    }
+    if (stringValue.endsWith("F") || stringValue.endsWith("f")) {
+      try {
+        finalValue = Float.parseFloat(stringValue.substring(0, stringValue.length() - 1)) * sign;
+      } catch (Exception e) {
+        return null;//TODO NaN?
+      }
+    } else if (stringValue.endsWith("D") || stringValue.endsWith("d")) {
+      try {
+        finalValue = Double.parseDouble(stringValue.substring(0, stringValue.length() - 1)) * sign;
+      } catch (Exception e) {
+        return null;//TODO NaN?
+      }
+    } else {
+      try {
+        double returnValue = Double.parseDouble(stringValue) * sign;
+        if (Math.abs(returnValue) < Float.MAX_VALUE) {
+          finalValue = (float) returnValue;
+        } else {
+          finalValue = returnValue;
+        }
+      } catch (Exception e) {
+        return null;//TODO NaN?
+      }
+    }
+    return finalValue;
   }
 
   public int getSign() {
@@ -43,6 +70,35 @@ public class OFloatingPoint extends ONumber {
       builder.append("-");
     }
     builder.append(stringValue);
+  }
+
+  @Override public OFloatingPoint copy() {
+    OFloatingPoint result = new OFloatingPoint(-1);
+    result.sign = sign;
+    result.stringValue = stringValue;
+    return result;
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OFloatingPoint that = (OFloatingPoint) o;
+
+    if (sign != that.sign)
+      return false;
+    if (stringValue != null ? !stringValue.equals(that.stringValue) : that.stringValue != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = sign;
+    result = 31 * result + (stringValue != null ? stringValue.hashCode() : 0);
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=46acfb589f666717595e28f1b19611ae (do not edit this line) */

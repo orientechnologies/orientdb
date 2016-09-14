@@ -1,26 +1,5 @@
 package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Random;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -29,26 +8,127 @@ import com.orientechnologies.orient.core.exception.OConcurrentModificationExcept
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
-@Test
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Random;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+
 public class OSBTreeRidBagConcurrencyMultiRidBag {
-  public static final String                                         URL                 = "plocal:target/testdb/OSBTreeRidBagConcurrencyMultiRidBag";
-  private final AtomicInteger                                        positionCounter     = new AtomicInteger();
-  private final ConcurrentHashMap<ORID, ConcurrentSkipListSet<ORID>> ridTreePerDocument  = new ConcurrentHashMap<ORID, ConcurrentSkipListSet<ORID>>();
-  private final AtomicReference<Long>                                lastClusterPosition = new AtomicReference<Long>();
+  public static final String                                               URL                 = "plocal:target/testdb/OSBTreeRidBagConcurrencyMultiRidBag";
+  private final       AtomicInteger                                        positionCounter     = new AtomicInteger();
+  private final       ConcurrentHashMap<ORID, ConcurrentSkipListSet<ORID>> ridTreePerDocument  = new ConcurrentHashMap<ORID, ConcurrentSkipListSet<ORID>>();
+  private final       AtomicReference<Long>                                lastClusterPosition = new AtomicReference<Long>();
 
-  private final CountDownLatch                                       latch               = new CountDownLatch(1);
+  private final CountDownLatch latch = new CountDownLatch(1);
 
-  private ExecutorService                                            threadExecutor      = Executors.newCachedThreadPool();
-  private ScheduledExecutorService                                   addDocExecutor      = Executors.newScheduledThreadPool(5);
+  private ExecutorService          threadExecutor = Executors.newCachedThreadPool();
+  private ScheduledExecutorService addDocExecutor = Executors.newScheduledThreadPool(5);
 
-  private volatile boolean                                           cont                = true;
+  private volatile boolean cont = true;
 
-  private int                                                        linkbagCacheSize;
-  private int                                                        evictionSize;
+  private int linkbagCacheSize;
+  private int evictionSize;
 
-  private int                                                        topThreshold;
-  private int                                                        bottomThreshold;
+  private int topThreshold;
+  private int bottomThreshold;
+
+  @Before
+  public void beforeMethod() {
+    linkbagCacheSize = OGlobalConfiguration.SBTREEBONSAI_LINKBAG_CACHE_SIZE.getValueAsInteger();
+    evictionSize = OGlobalConfiguration.SBTREEBONSAI_LINKBAG_CACHE_EVICTION_SIZE.getValueAsInteger();
+    topThreshold = OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
+    bottomThreshold = OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.getValueAsInteger();
+
+    OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(30);
+    OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(20);
+
+    OGlobalConfiguration.SBTREEBONSAI_LINKBAG_CACHE_SIZE.setValue(1000);
+    OGlobalConfiguration.SBTREEBONSAI_LINKBAG_CACHE_EVICTION_SIZE.setValue(100);
+  }
+
+  @After
+  public void afterMethod() {
+    OGlobalConfiguration.SBTREEBONSAI_LINKBAG_CACHE_SIZE.setValue(linkbagCacheSize);
+    OGlobalConfiguration.SBTREEBONSAI_LINKBAG_CACHE_EVICTION_SIZE.setValue(evictionSize);
+    OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(topThreshold);
+    OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(bottomThreshold);
+  }
+
+  @Test
+  public void testConcurrency() throws Exception {
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx(URL);
+    if (db.exists()) {
+      db.open("admin", "admin");
+      db.drop();
+    }
+
+    db.create();
+    for (int i = 0; i < 100; i++) {
+      ODocument document = new ODocument();
+      ORidBag ridBag = new ORidBag();
+      document.field("ridBag", ridBag);
+
+      document.save();
+
+      ridTreePerDocument.put(document.getIdentity(), new ConcurrentSkipListSet<ORID>());
+      lastClusterPosition.set(document.getIdentity().getClusterPosition());
+    }
+
+    final List<Future<?>> futures = new ArrayList<Future<?>>();
+
+    Random random = new Random();
+    for (int i = 0; i < 5; i++)
+      addDocExecutor.scheduleAtFixedRate(new DocumentAdder(), random.nextInt(250), 250, TimeUnit.MILLISECONDS);
+
+    for (int i = 0; i < 5; i++)
+      futures.add(threadExecutor.submit(new RidAdder(i)));
+
+    for (int i = 0; i < 5; i++)
+      futures.add(threadExecutor.submit(new RidDeleter(i)));
+
+    latch.countDown();
+
+    Thread.sleep(30 * 60000);
+
+    addDocExecutor.shutdown();
+    addDocExecutor.awaitTermination(30, TimeUnit.SECONDS);
+
+    Thread.sleep(30 * 60000);
+
+    cont = false;
+
+    for (Future<?> future : futures)
+      future.get();
+
+    long amountOfRids = 0;
+    for (ORID rid : ridTreePerDocument.keySet()) {
+      ODocument document = db.load(rid);
+      document.setLazyLoad(false);
+
+      final ConcurrentSkipListSet<ORID> ridTree = ridTreePerDocument.get(rid);
+
+      final ORidBag ridBag = document.field("ridBag");
+
+      for (OIdentifiable identifiable : ridBag)
+        Assert.assertTrue(ridTree.remove(identifiable.getIdentity()));
+
+      Assert.assertTrue(ridTree.isEmpty());
+      amountOfRids += ridBag.size();
+    }
+
+    System.out.println("Total  records added :  " + db.countClusterElements(db.getDefaultClusterId()));
+    System.out.println("Total rids added : " + amountOfRids);
+
+    db.drop();
+  }
 
   public final class DocumentAdder implements Runnable {
     @Override
@@ -212,94 +292,5 @@ public class OSBTreeRidBagConcurrencyMultiRidBag {
           .println(RidDeleter.class.getSimpleName() + ":" + id + "-" + deletedRecords + " were deleted. retries : " + retries);
       return null;
     }
-  }
-
-  @BeforeMethod
-  public void beforeMethod() {
-    linkbagCacheSize = OGlobalConfiguration.SBTREEBONSAI_LINKBAG_CACHE_SIZE.getValueAsInteger();
-    evictionSize = OGlobalConfiguration.SBTREEBONSAI_LINKBAG_CACHE_EVICTION_SIZE.getValueAsInteger();
-    topThreshold = OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
-    bottomThreshold = OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.getValueAsInteger();
-
-    OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(30);
-    OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(20);
-
-    OGlobalConfiguration.SBTREEBONSAI_LINKBAG_CACHE_SIZE.setValue(1000);
-    OGlobalConfiguration.SBTREEBONSAI_LINKBAG_CACHE_EVICTION_SIZE.setValue(100);
-  }
-
-  @AfterMethod
-  public void afterMethod() {
-    OGlobalConfiguration.SBTREEBONSAI_LINKBAG_CACHE_SIZE.setValue(linkbagCacheSize);
-    OGlobalConfiguration.SBTREEBONSAI_LINKBAG_CACHE_EVICTION_SIZE.setValue(evictionSize);
-    OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(topThreshold);
-    OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(bottomThreshold);
-  }
-
-  public void testConcurrency() throws Exception {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(URL);
-    if (db.exists()) {
-      db.open("admin", "admin");
-      db.drop();
-    }
-
-    db.create();
-    for (int i = 0; i < 100; i++) {
-      ODocument document = new ODocument();
-      ORidBag ridBag = new ORidBag();
-      document.field("ridBag", ridBag);
-
-      document.save();
-
-      ridTreePerDocument.put(document.getIdentity(), new ConcurrentSkipListSet<ORID>());
-      lastClusterPosition.set(document.getIdentity().getClusterPosition());
-    }
-
-    final List<Future<?>> futures = new ArrayList<Future<?>>();
-
-    Random random = new Random();
-    for (int i = 0; i < 5; i++)
-      addDocExecutor.scheduleAtFixedRate(new DocumentAdder(), random.nextInt(250), 250, TimeUnit.MILLISECONDS);
-
-    for (int i = 0; i < 5; i++)
-      futures.add(threadExecutor.submit(new RidAdder(i)));
-
-    for (int i = 0; i < 5; i++)
-      futures.add(threadExecutor.submit(new RidDeleter(i)));
-
-    latch.countDown();
-
-    Thread.sleep(30 * 60000);
-
-    addDocExecutor.shutdown();
-    addDocExecutor.awaitTermination(30, TimeUnit.SECONDS);
-
-    Thread.sleep(30 * 60000);
-
-    cont = false;
-
-    for (Future<?> future : futures)
-      future.get();
-
-    long amountOfRids = 0;
-    for (ORID rid : ridTreePerDocument.keySet()) {
-      ODocument document = db.load(rid);
-      document.setLazyLoad(false);
-
-      final ConcurrentSkipListSet<ORID> ridTree = ridTreePerDocument.get(rid);
-
-      final ORidBag ridBag = document.field("ridBag");
-
-      for (OIdentifiable identifiable : ridBag)
-        Assert.assertTrue(ridTree.remove(identifiable.getIdentity()));
-
-      Assert.assertTrue(ridTree.isEmpty());
-      amountOfRids += ridBag.size();
-    }
-
-    System.out.println("Total  records added :  " + db.countClusterElements(db.getDefaultClusterId()));
-    System.out.println("Total rids added : " + amountOfRids);
-
-    db.drop();
   }
 }

@@ -18,10 +18,7 @@ package com.orientechnologies.common.serialization.types;
 
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
-import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
+import org.junit.Assert;import org.junit.Before; import org.junit.Test;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
@@ -29,14 +26,13 @@ import java.nio.ByteOrder;
  * @author Ilya Bershadskiy (ibersh20-at-gmail.com)
  * @since 18.01.12
  */
-@Test
 public class LongSerializerTest {
   private static final int  FIELD_SIZE = 8;
   private static final Long OBJECT     = 999999999999999999L;
   private OLongSerializer longSerializer;
   byte[] stream = new byte[FIELD_SIZE];
 
-  @BeforeClass
+  @Before
   public void beforeClass() {
     longSerializer = new OLongSerializer();
   }

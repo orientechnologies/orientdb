@@ -1,8 +1,6 @@
 package com.orientechnologies.orient.core.sql.parser;
 
-import org.testng.annotations.Test;
-
-@Test
+import org.junit.Test;
 public class ODropPropertyStatementTest extends OParserTestAbstract {
 
   @Test

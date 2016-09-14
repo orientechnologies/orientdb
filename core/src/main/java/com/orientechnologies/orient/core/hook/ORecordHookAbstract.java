@@ -175,6 +175,9 @@ public abstract class ORecordHookAbstract implements ORecordHook {
   public void onRecordFinalizeCreation(final ORecord record) {
   }
 
+  public void onRecordFinalizeDeletion(final ORecord record) {
+  }
+
   public RESULT onTrigger(final TYPE iType, final ORecord record) {
     switch (iType) {
     case BEFORE_CREATE:
@@ -243,6 +246,10 @@ public abstract class ORecordHookAbstract implements ORecordHook {
 
     case FINALIZE_UPDATE:
       onRecordFinalizeUpdate(record);
+      break;
+
+    case FINALIZE_DELETION:
+      onRecordFinalizeDeletion(record);
       break;
 
     }

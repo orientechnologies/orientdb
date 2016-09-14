@@ -2,8 +2,7 @@ package com.orientechnologies.common.serialization;
 
 import java.nio.ByteOrder;
 
-import org.testng.Assert;
-
+import org.junit.Assert;
 /**
  * @author Andrey Lomakin
  * @since 21.05.13

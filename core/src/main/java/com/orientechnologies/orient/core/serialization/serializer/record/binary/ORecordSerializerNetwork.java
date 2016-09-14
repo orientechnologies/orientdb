@@ -22,7 +22,9 @@ package com.orientechnologies.orient.core.serialization.serializer.record.binary
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 
@@ -60,8 +62,13 @@ public class ORecordSerializerNetwork implements ORecordSerializer {
       return iRecord;
     if (iRecord == null)
       iRecord = new ODocument();
-    else
-      checkTypeODocument(iRecord);
+    else if (iRecord instanceof OBlob) {
+      iRecord.fromStream(iSource);
+      return iRecord;
+    } else if (iRecord instanceof ORecordFlat) {
+      iRecord.fromStream(iSource);
+      return iRecord;
+    }
 
     BytesContainer container = new BytesContainer(iSource);
     container.skip(1);
@@ -81,17 +88,21 @@ public class ORecordSerializerNetwork implements ORecordSerializer {
 
   @Override
   public byte[] toStream(final ORecord iSource, final boolean iOnlyDelta) {
-    checkTypeODocument(iSource);
+    if (iSource instanceof OBlob) {
+      return iSource.toStream();
+    } else if (iSource instanceof ORecordFlat) {
+      return iSource.toStream();
+    } else {
+      final BytesContainer container = new BytesContainer();
 
-    final BytesContainer container = new BytesContainer();
+      // WRITE SERIALIZER VERSION
+      int pos = container.alloc(1);
+      container.bytes[pos] = CURRENT_RECORD_VERSION;
+      // SERIALIZE RECORD
+      serializerByVersion[CURRENT_RECORD_VERSION].serialize((ODocument) iSource, container, false);
 
-    // WRITE SERIALIZER VERSION
-    int pos = container.alloc(1);
-    container.bytes[pos] = CURRENT_RECORD_VERSION;
-    // SERIALIZE RECORD
-    serializerByVersion[CURRENT_RECORD_VERSION].serialize((ODocument) iSource, container, false);
-
-    return container.fitBytes();
+      return container.fitBytes();
+    }
   }
 
   @Override

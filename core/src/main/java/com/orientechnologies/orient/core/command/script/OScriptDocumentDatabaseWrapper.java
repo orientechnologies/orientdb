@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
 import com.orientechnologies.orient.core.db.ODatabase.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.ODatabase.STATUS;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -60,9 +61,9 @@ import com.orientechnologies.orient.core.tx.OTransaction;
  */
 @SuppressWarnings("unchecked")
 public class OScriptDocumentDatabaseWrapper {
-  protected ODatabaseDocumentTx database;
+  protected ODatabaseDocumentInternal database;
 
-  public OScriptDocumentDatabaseWrapper(final ODatabaseDocumentTx database) {
+  public OScriptDocumentDatabaseWrapper(final ODatabaseDocumentInternal database) {
     this.database = database;
   }
 
@@ -329,7 +330,7 @@ public class OScriptDocumentDatabaseWrapper {
   }
 
   public void reload(ORecord iRecord) {
-    database.reload(iRecord);
+    database.reload(iRecord, null, false);
   }
 
   public void reload(ORecord iRecord, String iFetchPlan, boolean iIgnoreCache) {
@@ -381,8 +382,8 @@ public class OScriptDocumentDatabaseWrapper {
     return database.save(iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
   }
 
-  public ODatabaseDocumentTx delete(ODocument iRecord) {
-    return database.delete(iRecord);
+  public ODatabaseDocument delete(ODocument iRecord) {
+    return (ODatabaseDocument) database.delete(iRecord);
   }
 
   public long countClass(String iClassName) {

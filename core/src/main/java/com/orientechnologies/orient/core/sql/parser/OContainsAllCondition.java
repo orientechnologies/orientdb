@@ -4,10 +4,12 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class OContainsAllCondition extends OBooleanExpression {
 
@@ -15,7 +17,7 @@ public class OContainsAllCondition extends OBooleanExpression {
 
   protected OExpression right;
 
-  protected OOrBlock    rightBlock;
+  protected OOrBlock rightBlock;
 
   public OContainsAllCondition(int id) {
     super(id);
@@ -25,16 +27,20 @@ public class OContainsAllCondition extends OBooleanExpression {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
 
-  @Override
-  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
-    return false;// TODO
+  @Override public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+    throw new UnsupportedOperationException("TODO Implement ContainsAll!!!");//TODO
   }
 
+  @Override public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
+    throw new UnsupportedOperationException("TODO Implement ContainsAll!!!");//TODO
+  }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     left.toString(params, builder);
@@ -64,8 +70,7 @@ public class OContainsAllCondition extends OBooleanExpression {
     this.right = right;
   }
 
-  @Override
-  public boolean supportsBasicCalculation() {
+  @Override public boolean supportsBasicCalculation() {
     if (left != null && !left.supportsBasicCalculation()) {
       return false;
     }
@@ -78,8 +83,7 @@ public class OContainsAllCondition extends OBooleanExpression {
     return true;
   }
 
-  @Override
-  protected int getNumberOfExternalCalculations() {
+  @Override protected int getNumberOfExternalCalculations() {
     int total = 0;
     if (left != null && !left.supportsBasicCalculation()) {
       total++;
@@ -93,8 +97,7 @@ public class OContainsAllCondition extends OBooleanExpression {
     return total;
   }
 
-  @Override
-  protected List<Object> getExternalCalculationConditions() {
+  @Override protected List<Object> getExternalCalculationConditions() {
     List<Object> result = new ArrayList<Object>();
     if (left != null && !left.supportsBasicCalculation()) {
       result.add(left);
@@ -105,6 +108,76 @@ public class OContainsAllCondition extends OBooleanExpression {
     if (rightBlock != null) {
       result.addAll(rightBlock.getExternalCalculationConditions());
     }
+    return result;
+  }
+
+  @Override public boolean needsAliases(Set<String> aliases) {
+    if (left.needsAliases(aliases)) {
+      return true;
+    }
+
+    if (right != null && right.needsAliases(aliases)) {
+      return true;
+    }
+    if (rightBlock != null && rightBlock.needsAliases(aliases)) {
+      return true;
+    }
+    return false;
+  }
+
+  @Override public OContainsAllCondition copy() {
+    OContainsAllCondition result = new OContainsAllCondition(-1);
+    result.left = left.copy();
+    result.right = right == null ? null : right.copy();
+    result.rightBlock = rightBlock == null ? null : rightBlock.copy();
+    return result;
+  }
+
+  @Override public void extractSubQueries(SubQueryCollector collector) {
+    left.extractSubQueries(collector);
+    if (right != null) {
+      right.extractSubQueries(collector);
+    }
+    if (rightBlock != null) {
+      rightBlock.extractSubQueries(collector);
+    }
+  }
+
+  @Override public boolean refersToParent() {
+    if (left != null && left.refersToParent()) {
+      return true;
+    }
+    if (right != null && right.refersToParent()) {
+      return true;
+    }
+    if (rightBlock != null && rightBlock.refersToParent()) {
+      return true;
+    }
+    return false;
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OContainsAllCondition that = (OContainsAllCondition) o;
+
+    if (left != null ? !left.equals(that.left) : that.left != null)
+      return false;
+    if (right != null ? !right.equals(that.right) : that.right != null)
+      return false;
+    if (rightBlock != null ? !rightBlock.equals(that.rightBlock) : that.rightBlock != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = left != null ? left.hashCode() : 0;
+    result = 31 * result + (right != null ? right.hashCode() : 0);
+    result = 31 * result + (rightBlock != null ? rightBlock.hashCode() : 0);
     return result;
   }
 }

@@ -20,13 +20,12 @@ package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 import java.util.List;
 
-import static org.testng.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
 
-@Test
 public class OCommandExecutorSQLSelectTestIndex {
 
   @Test
@@ -49,11 +48,11 @@ public class OCommandExecutorSQLSelectTestIndex {
     }
   }
 
-
   @Test
-  public void testIndexOnHierarchyChange(){
+  public void testIndexOnHierarchyChange() {
     //issue #5743
-    ODatabaseDocumentTx databaseDocumentTx = new ODatabaseDocumentTx("memory:OCommandExecutorSQLSelectTestIndex_testIndexOnHierarchyChange");
+    ODatabaseDocumentTx databaseDocumentTx = new ODatabaseDocumentTx(
+        "memory:OCommandExecutorSQLSelectTestIndex_testIndexOnHierarchyChange");
     databaseDocumentTx.create();
     try {
 

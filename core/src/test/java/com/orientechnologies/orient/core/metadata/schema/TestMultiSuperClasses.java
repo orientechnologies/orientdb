@@ -1,25 +1,21 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.OSchemaException;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.List;
 
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.exception.OSchemaException;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import static org.junit.Assert.*;
 
 public class TestMultiSuperClasses {
   private ODatabaseDocumentTx db;
 
-  @BeforeMethod
+  @Before
   public void setUp() {
     db = new ODatabaseDocumentTx("memory:" + TestMultiSuperClasses.class.getSimpleName());
     if (db.exists()) {
@@ -28,7 +24,7 @@ public class TestMultiSuperClasses {
       db.create();
   }
 
-  @AfterMethod
+  @After
   public void after() {
     db.close();
   }
@@ -122,7 +118,8 @@ public class TestMultiSuperClasses {
     assertTrue(cClass.isSubClassOf(bClass));
   }
 
-  @Test(expectedExceptions = { OSchemaException.class }, expectedExceptionsMessageRegExp = "(?s).*recursion.*")
+  @Test(expected = OSchemaException.class)//, expectedExceptionsMessageRegExp = "(?s).*recursion.*"
+  // )
   public void testPreventionOfCycles() {
     final OSchema oSchema = db.getMetadata().getSchema();
     OClass aClass = oSchema.createAbstractClass("cycleA");
@@ -143,7 +140,7 @@ public class TestMultiSuperClasses {
     assertTrue(cClass.existsProperty("property"));
   }
 
-  @Test(expectedExceptions = { OSchemaException.class }, expectedExceptionsMessageRegExp = "(?s).*conflict.*")
+  @Test(expected = OSchemaException.class)//}, expectedExceptionsMessageRegExp = "(?s).*conflict.*")
   public void testParametersImpactBadScenario() {
     final OSchema oSchema = db.getMetadata().getSchema();
     OClass aClass = oSchema.createAbstractClass("impactBadA");

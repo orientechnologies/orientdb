@@ -1,13 +1,5 @@
 package com.orientechnologies.orient.core.sql;
 
-import static org.testng.AssertJUnit.assertEquals;
-
-import java.util.List;
-
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -15,15 +7,22 @@ import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
 
 public class TestOrderByIndexPropDesc {
 
   private static final String DOCUMENT_CLASS_NAME = "MyDocument";
   private static final String PROP_INDEXED_STRING = "dateProperty";
 
-  private ODatabaseDocument   db;
+  private ODatabaseDocument db;
 
-  @BeforeMethod
+  @Before
   public void init() throws Exception {
     db = new ODatabaseDocumentTx("memory:test");
     db.create();
@@ -32,7 +31,7 @@ public class TestOrderByIndexPropDesc {
     oclass.createIndex("index", INDEX_TYPE.NOTUNIQUE, PROP_INDEXED_STRING);
   }
 
-  @AfterMethod
+  @After
   public void drop() {
     if (db != null) {
       db.drop();
@@ -58,8 +57,8 @@ public class TestOrderByIndexPropDesc {
       db.save(doc);
     }
 
-    List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from " + DOCUMENT_CLASS_NAME + " order by "
-        + PROP_INDEXED_STRING + " desc"));
+    List<ODocument> result = db
+        .query(new OSQLSynchQuery<ODocument>("select from " + DOCUMENT_CLASS_NAME + " order by " + PROP_INDEXED_STRING + " desc"));
     for (ODocument d : result) {
       // System.out.println(d.<Integer>field(PROP_INDEXED_STRING));
     }

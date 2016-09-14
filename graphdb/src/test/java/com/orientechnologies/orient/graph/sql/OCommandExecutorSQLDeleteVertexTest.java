@@ -33,35 +33,22 @@ import java.util.List;
 /**
  * @author Luigi Dell'Aquila
  */
-@RunWith(JUnit4.class)
 public class OCommandExecutorSQLDeleteVertexTest {
 
-  private static ODatabaseDocumentTx db;
+  private ODatabaseDocumentTx db;
 
-  @BeforeClass
-  public static void init() throws Exception {
+  @Before
+  public void init() throws Exception {
     db = new ODatabaseDocumentTx("memory:" + OCommandExecutorSQLDeleteVertexTest.class.getSimpleName());
-    if (db.exists()) {
-      db.open("admin", "admin");
-      db.drop();
-    }
-
     db.create();
-
     final OSchema schema = db.getMetadata().getSchema();
     schema.createClass("User", schema.getClass("V"));
   }
 
-  @AfterClass
-  public static void tearDown() throws Exception {
-    db.activateOnCurrentThread();
+  @After
+  public void tearDown() throws Exception {
     db.drop();
     db = null;
-  }
-
-  @Before
-  public void setUp() throws Exception {
-    db.getMetadata().getSchema().getClass("User").truncate();
   }
 
   @Test

@@ -37,7 +37,7 @@ public interface OETLComponent {
    * @param configuration
    * @param context
    */
-  void configure(OETLProcessor processor, ODocument configuration, OCommandContext context);
+  void configure(ODocument configuration, OCommandContext context);
 
   void begin();
 
@@ -49,4 +49,6 @@ public interface OETLComponent {
    * @return the name of the component
    */
   String getName();
+
+  void setProcessor(OETLProcessor processor);
 }

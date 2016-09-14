@@ -54,8 +54,8 @@ public class ODefaultRemoteTaskFactory implements ORemoteTaskFactory {
     case OTxTask.FACTORYID: // 7
       return new OTxTask();
 
-    case OCompletedTxTask.FACTORYID: // 8
-      return new OCompletedTxTask();
+    case OCompleted2pcTask.FACTORYID: // 8
+      return new OCompleted2pcTask();
 
     case OStopServerTask.FACTORYID: // 9
       return new OStopServerTask();
@@ -77,6 +77,18 @@ public class ODefaultRemoteTaskFactory implements ORemoteTaskFactory {
 
     case OCopyDatabaseChunkTask.FACTORYID: // 15
       return new OCopyDatabaseChunkTask();
+
+    case OHeartbeatTask.FACTORYID: // 16
+      return new OHeartbeatTask();
+
+    case ORepairRecordsTask.FACTORYID: // 17
+      return new ORepairRecordsTask();
+
+    case ORepairClusterTask.FACTORYID: // 18
+      return new ORepairClusterTask();
+
+    case OClusterRepairInfoTask.FACTORYID: // 18
+      return new OClusterRepairInfoTask();
     }
 
     throw new IllegalArgumentException("Task with code " + code + " is not supported");

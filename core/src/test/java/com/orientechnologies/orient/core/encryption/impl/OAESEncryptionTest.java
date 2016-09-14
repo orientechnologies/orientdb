@@ -10,8 +10,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert; import org.junit.Test;
 
 import java.io.File;
 import java.util.List;
@@ -21,11 +20,11 @@ import java.util.List;
  * @author Luca Garulli
  * @since 22.04.2015
  */
-@Test
 public class OAESEncryptionTest extends AbstractEncryptionTest {
   private static final String DBNAME_DATABASETEST = "testCreatedAESEncryptedDatabase";
   private static final String DBNAME_CLUSTERTEST  = "testCreatedAESEncryptedCluster";
 
+  @Test
   public void testOAESEncryptedCompressionNoKey() {
     try {
       testEncryption(OAESEncryption.NAME);
@@ -34,6 +33,7 @@ public class OAESEncryptionTest extends AbstractEncryptionTest {
     }
   }
 
+  @Test
   public void testOAESEncryptedInvalidKey() {
     try {
       testEncryption(OAESEncryption.NAME, "ee");
@@ -42,10 +42,12 @@ public class OAESEncryptionTest extends AbstractEncryptionTest {
     }
   }
 
+  @Test
   public void testOAESEncrypted() {
     testEncryption(OAESEncryption.NAME, "T1JJRU5UREJfSVNfQ09PTA==");
   }
 
+  @Test
   public void testCreatedAESEncryptedDatabase() {
     String buildDirectory = System.getProperty("buildDirectory", ".");
 
@@ -122,6 +124,7 @@ public class OAESEncryptionTest extends AbstractEncryptionTest {
     }
   }
 
+  @Test
   public void testCreatedAESEncryptedCluster() {
     final String buildDirectory = System.getProperty("buildDirectory", ".");
     final String dbPath = buildDirectory + File.separator + DBNAME_CLUSTERTEST;
@@ -183,6 +186,7 @@ public class OAESEncryptionTest extends AbstractEncryptionTest {
       } catch (OSecurityException e) {
         Assert.assertTrue(true);
       } finally {
+        db.activateOnCurrentThread();
         db.close();
         storage.close(true, false);
       }

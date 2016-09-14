@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.core.cache.OCommandCache;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -34,20 +35,18 @@ import java.util.Map;
 
 /**
  * SQL TRUNCATE CLASS command: Truncates an entire class deleting all configured clusters where the class relies on.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 public class OCommandExecutorSQLTruncateClass extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
   public static final String KEYWORD_TRUNCATE    = "TRUNCATE";
   public static final String KEYWORD_CLASS       = "CLASS";
   public static final String KEYWORD_POLYMORPHIC = "POLYMORPHIC";
-  private OClass             schemaClass;
-  private boolean            unsafe              = false;
-  private boolean            deep                = false;
+  private OClass schemaClass;
+  private boolean unsafe = false;
+  private boolean deep   = false;
 
-  @SuppressWarnings("unchecked")
-  public OCommandExecutorSQLTruncateClass parse(final OCommandRequest iRequest) {
+  @SuppressWarnings("unchecked") public OCommandExecutorSQLTruncateClass parse(final OCommandRequest iRequest) {
     final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
 
     String queryText = textRequest.getText();
@@ -110,7 +109,7 @@ public class OCommandExecutorSQLTruncateClass extends OCommandExecutorSQLAbstrac
     if (schemaClass == null)
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
-    final long recs = schemaClass.count();
+    final long recs = schemaClass.count(deep);
     if (recs > 0 && !unsafe) {
       if (schemaClass.isSubClassOf("V")) {
         throw new OCommandExecutionException(
@@ -127,11 +126,13 @@ public class OCommandExecutorSQLTruncateClass extends OCommandExecutorSQLAbstrac
         long subclassRecs = schemaClass.count();
         if (subclassRecs > 0) {
           if (subclass.isSubClassOf("V")) {
-            throw new OCommandExecutionException("'TRUNCATE CLASS' command cannot be used on not empty vertex classes ("
-                + subclass.getName() + "). Apply the 'UNSAFE' keyword to force it (at your own risk)");
+            throw new OCommandExecutionException(
+                "'TRUNCATE CLASS' command cannot be used on not empty vertex classes (" + subclass.getName()
+                    + "). Apply the 'UNSAFE' keyword to force it (at your own risk)");
           } else if (subclass.isSubClassOf("E")) {
-            throw new OCommandExecutionException("'TRUNCATE CLASS' command cannot be used on not empty edge classes ("
-                + subclass.getName() + "). Apply the 'UNSAFE' keyword to force it (at your own risk)");
+            throw new OCommandExecutionException(
+                "'TRUNCATE CLASS' command cannot be used on not empty edge classes (" + subclass.getName()
+                    + "). Apply the 'UNSAFE' keyword to force it (at your own risk)");
           }
         }
       }
@@ -139,9 +140,11 @@ public class OCommandExecutorSQLTruncateClass extends OCommandExecutorSQLAbstrac
 
     try {
       schemaClass.truncate();
+      invalidateCommandCache(schemaClass);
       if (deep) {
         for (OClass subclass : subclasses) {
           subclass.truncate();
+          invalidateCommandCache(subclass);
         }
       }
     } catch (IOException e) {
@@ -151,18 +154,33 @@ public class OCommandExecutorSQLTruncateClass extends OCommandExecutorSQLAbstrac
     return recs;
   }
 
-  @Override
-  public long getDistributedTimeout() {
+  private void invalidateCommandCache(OClass clazz) {
+    if (clazz == null) {
+      return;
+    }
+    OCommandCache commandCache = getDatabase().getMetadata().getCommandCache();
+    if (commandCache != null && commandCache.isEnabled()) {
+      int[] clusterIds = clazz.getClusterIds();
+      if (clusterIds != null) {
+        for (int i : clusterIds) {
+          String clusterName = getDatabase().getClusterNameById(i);
+          if (clusterName != null) {
+            commandCache.invalidateResultsOfCluster(clusterName);
+          }
+        }
+      }
+    }
+  }
+
+  @Override public long getDistributedTimeout() {
     return OGlobalConfiguration.DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT.getValueAsLong();
   }
 
-  @Override
-  public String getSyntax() {
+  @Override public String getSyntax() {
     return "TRUNCATE CLASS <class-name>";
   }
 
-  @Override
-  public QUORUM_TYPE getQuorumType() {
+  @Override public QUORUM_TYPE getQuorumType() {
     return QUORUM_TYPE.WRITE;
   }
 }

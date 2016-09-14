@@ -34,7 +34,6 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
-import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerAnyStreamable;
@@ -44,11 +43,7 @@ import com.orientechnologies.orient.core.util.ODateHelper;
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 @SuppressWarnings("serial")
 public abstract class ORecordSerializerStringAbstract implements ORecordSerializer, Serializable {
@@ -300,21 +295,21 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
                 continue;
               }
             } else if (c == 'f')
-              return OType.FLOAT;
+              return index != (iValue.length() - 1) ? OType.STRING : OType.FLOAT;
             else if (c == 'c')
-              return OType.DECIMAL;
+              return index != (iValue.length() - 1) ? OType.STRING : OType.DECIMAL;
             else if (c == 'l')
-              return OType.LONG;
+              return index != (iValue.length() - 1) ? OType.STRING : OType.LONG;
             else if (c == 'd')
-              return OType.DOUBLE;
+              return index != (iValue.length() - 1) ? OType.STRING : OType.DOUBLE;
             else if (c == 'b')
-              return OType.BYTE;
+              return index != (iValue.length() - 1) ? OType.STRING : OType.BYTE;
             else if (c == 'a')
-              return OType.DATE;
+              return index != (iValue.length() - 1) ? OType.STRING : OType.DATE;
             else if (c == 't')
-              return OType.DATETIME;
+              return index != (iValue.length() - 1) ? OType.STRING : OType.DATETIME;
             else if (c == 's')
-              return OType.SHORT;
+              return index != (iValue.length() - 1) ? OType.STRING : OType.SHORT;
 
           return OType.STRING;
         }
@@ -331,7 +326,8 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 
     // CHECK IF THE DECIMAL NUMBER IS A FLOAT OR DOUBLE
     final double dou = Double.parseDouble(iValue);
-    if ((dou <= Float.MAX_VALUE || dou >= Float.MIN_VALUE) && new Double(new Double(dou).floatValue()).doubleValue() == dou) {
+    if (dou <= Float.MAX_VALUE && dou >= Float.MIN_VALUE && Double.toString(dou).equals(Float.toString((float) dou))
+        && new Double(new Double(dou).floatValue()).doubleValue() == dou) {
       return OType.FLOAT;
     } else if (!new Double(dou).toString().equals(iValue)) {
       return OType.DECIMAL;

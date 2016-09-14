@@ -39,7 +39,8 @@ public interface OIndexEngine {
   void flush();
 
   void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
-      OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, Map<String, String> engineProperties, ODocument metadata);
+      OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, Map<String, String> engineProperties,
+      ODocument metadata);
 
   void delete();
 
@@ -85,6 +86,21 @@ public interface OIndexEngine {
   int getVersion();
 
   String getName();
+
+  /**
+   * <p>Acquires exclusive lock in the active atomic operation running on the current thread for this index engine.
+   *
+   * <p>If this index engine supports a more narrow locking, for example key-based sharding, it may use the provided {@code key} to
+   * infer a more narrow lock scope, but that is not a requirement.
+   *
+   * @param key the index key to lock.
+   *
+   * @return {@code true} if this index was locked entirely, {@code false} if this index locking is sensitive to the provided {@code
+   * key} and only some subset of this index was locked.
+   */
+  boolean acquireAtomicExclusiveLock(Object key);
+
+  String getIndexNameByKey(Object key);
 
   interface ValuesTransformer {
     Collection<OIdentifiable> transformFromValue(Object value);

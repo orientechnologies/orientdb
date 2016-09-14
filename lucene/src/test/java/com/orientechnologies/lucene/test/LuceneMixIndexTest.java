@@ -39,9 +39,7 @@ import java.util.List;
 public class LuceneMixIndexTest extends BaseLuceneAutoTest {
 
   @Before
-  @Override
-  public void init() {
-    super.init();
+  public void initLocal() {
 
     OSchema schema = databaseDocumentTx.getMetadata().getSchema();
     OClass v = schema.getClass("V");
@@ -67,22 +65,22 @@ public class LuceneMixIndexTest extends BaseLuceneAutoTest {
   @Test
   public void testMixQuery() {
 
-    List<ODocument> docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(
-        "select * from Song where  author = 'Hornsby' and [title] LUCENE \"(title:mountain)\" "));
+    List<ODocument> docs = databaseDocumentTx.query(
+        new OSQLSynchQuery<ODocument>("select * from Song where  author = 'Hornsby' and [title] LUCENE \"(title:mountain)\" "));
 
     Assert.assertEquals(docs.size(), 1);
 
-    docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(
-        "select * from Song where  author = 'Hornsby' and title LUCENE \"(title:mountain)\" "));
+    docs = databaseDocumentTx.query(
+        new OSQLSynchQuery<ODocument>("select * from Song where  author = 'Hornsby' and title LUCENE \"(title:mountain)\" "));
 
     Assert.assertEquals(docs.size(), 1);
 
-    docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(
-        "select * from Song where  author = 'Hornsby' and [title] LUCENE \"(title:ballad)\" "));
+    docs = databaseDocumentTx.query(
+        new OSQLSynchQuery<ODocument>("select * from Song where  author = 'Hornsby' and [title] LUCENE \"(title:ballad)\" "));
     Assert.assertEquals(docs.size(), 0);
 
-    docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(
-        "select * from Song where  author = 'Hornsby' and title LUCENE \"(title:ballad)\" "));
+    docs = databaseDocumentTx
+        .query(new OSQLSynchQuery<ODocument>("select * from Song where  author = 'Hornsby' and title LUCENE \"(title:ballad)\" "));
     Assert.assertEquals(docs.size(), 0);
 
   }
@@ -96,8 +94,8 @@ public class LuceneMixIndexTest extends BaseLuceneAutoTest {
 
     Assert.assertEquals(docs.size(), 1);
 
-    docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(
-        "select * from Song where author = 'Hornsby' and lyrics LUCENE \"(lyrics:happy)\" "));
+    docs = databaseDocumentTx
+        .query(new OSQLSynchQuery<ODocument>("select * from Song where author = 'Hornsby' and lyrics LUCENE \"(lyrics:happy)\" "));
 
     Assert.assertEquals(docs.size(), 1);
 

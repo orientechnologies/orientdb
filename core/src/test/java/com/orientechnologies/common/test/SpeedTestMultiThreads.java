@@ -1,10 +1,8 @@
 package com.orientechnologies.common.test;
 
-import org.testng.annotations.Test;
-
+import org.junit.Test;
 import java.lang.reflect.Constructor;
 
-@Test(enabled = false)
 public abstract class SpeedTestMultiThreads extends SpeedTestAbstract {
   protected final Class<? extends SpeedTestThread> threadClass;
   protected final int                              threads;

@@ -17,7 +17,7 @@
     <parent>
         <groupId>com.orientechnologies</groupId>
         <artifactId>orientdb-parent</artifactId>
-        <version>2.2.1-SNAPSHOT</version>
+        <version>3.0.0-SNAPSHOT</version>
         <relativePath>../</relativePath>
     </parent>
 
@@ -27,7 +27,12 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <argLine>-Xmx3072m -XX:MaxDirectMemorySize=512g</argLine>
+        <argLine>
+            -Xmx3072m
+            -XX:MaxDirectMemorySize=512g
+            -Dmemory.directMemory.trackMode=true
+            -Djava.util.logging.manager=com.orientechnologies.common.log.OLogManager$DebugLogManager
+        </argLine>
     </properties>
 
     <dependencies>
@@ -134,7 +139,12 @@
                         <storage.diskCache.bufferSize>4096</storage.diskCache.bufferSize>
                         <memory.directMemory.trackMode>true</memory.directMemory.trackMode>
                     </systemPropertyVariables>
-
+                    <properties>
+                        <property>
+                            <name>listener</name>
+                            <value>com.orientechnologies.OTestNGTestLeaksListener</value>
+                        </property>
+                    </properties>
                 </configuration>
                 <executions>
                     <execution>

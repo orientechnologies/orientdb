@@ -4,6 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class OTruncateRecordStatement extends OStatement {
   protected ORid       record;
@@ -17,8 +18,7 @@ public class OTruncateRecordStatement extends OStatement {
     super(p, id);
   }
 
-  @Override
-  public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("TRUNCATE RECORD ");
     if (record != null) {
       record.toString(params, builder);
@@ -34,6 +34,35 @@ public class OTruncateRecordStatement extends OStatement {
       }
       builder.append("]");
     }
+  }
+
+  @Override public OTruncateRecordStatement copy() {
+    OTruncateRecordStatement result = new OTruncateRecordStatement(-1);
+    result.record = record == null ? null : record.copy();
+    result.records = records == null ? null : records.stream().map(x -> x.copy()).collect(Collectors.toList());
+    return result;
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OTruncateRecordStatement that = (OTruncateRecordStatement) o;
+
+    if (record != null ? !record.equals(that.record) : that.record != null)
+      return false;
+    if (records != null ? !records.equals(that.records) : that.records != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = record != null ? record.hashCode() : 0;
+    result = 31 * result + (records != null ? records.hashCode() : 0);
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=9da68e9fe4c4bf94a12d8a6f8864097a (do not edit this line) */

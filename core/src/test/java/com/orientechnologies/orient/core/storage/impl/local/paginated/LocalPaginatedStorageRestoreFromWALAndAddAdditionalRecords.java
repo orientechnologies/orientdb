@@ -1,32 +1,6 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
+import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -39,21 +13,31 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
+import org.junit.*;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 /**
  * @author Andrey Lomakin
  * @since 18.06.13
  */
-@Test
-public class LocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords {
-  private ODatabaseDocumentTx testDocumentTx;
-  private ODatabaseDocumentTx baseDocumentTx;
-  private File                buildDir;
 
-  private ExecutorService     executorService = Executors.newCachedThreadPool();
+public class LocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords {
+  private static File                buildDir;
+  private        ODatabaseDocumentTx testDocumentTx;
+  private        ODatabaseDocumentTx baseDocumentTx;
+  private ExecutorService executorService = Executors.newCachedThreadPool();
 
   @BeforeClass
-  public void beforeClass() {
+  public static void beforeClass() {
     OGlobalConfiguration.MVRBTREE_RID_BINARY_THRESHOLD.setValue(-1);
     OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.setValue("nothing");
     OGlobalConfiguration.FILE_LOCK.setValue(false);
@@ -69,14 +53,17 @@ public class LocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords {
   }
 
   @AfterClass
-  public void afterClass() {
-    buildDir.delete();
+  public static void afterClass() throws IOException {
+//    Files.delete(buildDir.toPath());
+    OFileUtils.deleteRecursively(buildDir);
   }
 
-  @BeforeMethod
-  public void beforeMethod() {
-    baseDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDir.getAbsolutePath()
-        + "/baseLocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords");
+  @Before
+  public void beforeMethod() throws IOException {
+    OFileUtils.deleteRecursively(buildDir);
+
+    baseDocumentTx = new ODatabaseDocumentTx(
+        "plocal:" + buildDir.getAbsolutePath() + "/baseLocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords");
     if (baseDocumentTx.exists()) {
       baseDocumentTx.open("admin", "admin");
       baseDocumentTx.drop();
@@ -85,9 +72,10 @@ public class LocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords {
     baseDocumentTx.create();
 
     createSchema(baseDocumentTx);
+
   }
 
-  @AfterMethod
+  @After
   public void afterMethod() {
     testDocumentTx.open("admin", "admin");
     testDocumentTx.drop();
@@ -96,6 +84,7 @@ public class LocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords {
     baseDocumentTx.drop();
   }
 
+  @Test @Ignore
   public void testRestoreAndAddNewItems() throws Exception {
     List<Future<Void>> futures = new ArrayList<Future<Void>>();
 
@@ -123,8 +112,8 @@ public class LocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords {
     baseDocumentTx.close();
     storage.close();
 
-    testDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDir.getAbsolutePath()
-        + "/testLocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords");
+    testDocumentTx = new ODatabaseDocumentTx(
+        "plocal:" + buildDir.getAbsolutePath() + "/testLocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords");
     testDocumentTx.open("admin", "admin");
     testDocumentTx.close();
 

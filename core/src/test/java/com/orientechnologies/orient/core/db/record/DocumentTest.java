@@ -25,24 +25,19 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
+import org.junit.Assert;import org.junit.After; import org.junit.Before; import org.junit.Test;
 import java.util.Map;
 
-@Test
 public class DocumentTest {
   private ODatabaseDocumentTx db;
 
-  @BeforeClass
+  @Before
   public void before() {
     db = new ODatabaseDocumentTx("memory:" + DocumentTest.class.getSimpleName());
     db.create();
   }
 
-  @AfterClass
+  @After
   public void after() {
     db.drop();
   }

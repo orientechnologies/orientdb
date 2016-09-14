@@ -2,13 +2,12 @@ package com.orientechnologies.orient.core.metadata.function;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 /**
  * Created by tglman on 10/02/16.
@@ -17,13 +16,13 @@ public class OFunctionLibraryTest {
 
   private ODatabaseDocument db;
 
-  @BeforeMethod
+  @Before
   public void before() {
     db = new ODatabaseDocumentTx("memory:" + OFunctionLibraryTest.class.getSimpleName());
     db.create();
   }
 
-  @AfterMethod
+  @After
   public void after() {
     db.drop();
   }
@@ -36,7 +35,7 @@ public class OFunctionLibraryTest {
     assertNotNull(func);
   }
 
-  @Test(expectedExceptions = OFunctionDuplicatedException.class)
+  @Test(expected = OFunctionDuplicatedException.class)
   public void testDuplicateFunctionCreate() {
     OFunction func = db.getMetadata().getFunctionLibrary().createFunction("TestFunc");
     assertNotNull(func);

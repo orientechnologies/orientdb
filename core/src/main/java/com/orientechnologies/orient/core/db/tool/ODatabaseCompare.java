@@ -53,8 +53,8 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 public class ODatabaseCompare extends ODatabaseImpExpAbstract {
-  private ODatabaseDocumentTx databaseOne;
-  private ODatabaseDocumentTx databaseTwo;
+  private ODatabaseDocumentInternal databaseOne;
+  private ODatabaseDocumentInternal databaseTwo;
 
   private boolean compareEntriesForAutomaticIndexes = false;
   private boolean autoDetectExportImportMap         = true;

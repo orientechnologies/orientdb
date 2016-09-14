@@ -2,25 +2,24 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class OModifier extends SimpleNode {
 
-  boolean                    squareBrackets = false;
+  boolean squareBrackets = false;
   OArrayRangeSelector        arrayRange;
   OOrBlock                   condition;
   OArraySingleValuesSelector arraySingleValues;
   OMethodCall                methodCall;
   OSuffixIdentifier          suffix;
 
-  OModifier                  next;
+  OModifier next;
 
   public OModifier(int id) {
     super(id);
@@ -30,7 +29,9 @@ public class OModifier extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
@@ -68,42 +69,234 @@ public class OModifier extends SimpleNode {
     } else if (arrayRange != null) {
       result = arrayRange.execute(iCurrentRecord, result, ctx);
     } else if (condition != null) {
-      result = filterByCondition(iCurrentRecord, result, ctx);
+      result = filterByCondition(result, ctx);
     } else if (arraySingleValues != null) {
       result = arraySingleValues.execute(iCurrentRecord, result, ctx);
-    } 
+    }
     if (next != null) {
       result = next.execute(iCurrentRecord, result, ctx);
     }
     return result;
   }
 
-  private Object filterByCondition(OIdentifiable iCurrentRecord, Object iResult, OCommandContext ctx) {
-    if(iResult==null){
+  public Object execute(OResult iCurrentRecord, Object result, OCommandContext ctx) {
+    if (methodCall != null) {
+      result = methodCall.execute(result, ctx);
+    } else if (suffix != null) {
+      result = suffix.execute(result, ctx);
+    } else if (arrayRange != null) {
+      result = arrayRange.execute(iCurrentRecord, result, ctx);
+    } else if (condition != null) {
+      result = filterByCondition(result, ctx);
+    } else if (arraySingleValues != null) {
+      result = arraySingleValues.execute(iCurrentRecord, result, ctx);
+    }
+    if (next != null) {
+      result = next.execute(iCurrentRecord, result, ctx);
+    }
+    return result;
+  }
+
+  private Object filterByCondition(Object iResult, OCommandContext ctx) {
+    if (iResult == null) {
       return null;
     }
     List<Object> result = new ArrayList<Object>();
-    if(iResult.getClass().isArray()){
-      for(int i=0;i< Array.getLength(iResult); i++){
+    if (iResult.getClass().isArray()) {
+      for (int i = 0; i < Array.getLength(iResult); i++) {
         Object item = Array.get(iResult, i);
-        if(condition.evaluate(item, ctx)){
+        if (condition.evaluate(item, ctx)) {
           result.add(item);
         }
       }
       return result;
     }
-    if(iResult instanceof Iterable){
+    if (iResult instanceof Iterable) {
       iResult = ((Iterable) iResult).iterator();
     }
-    if(iResult instanceof Iterator){
-      while(((Iterator) iResult).hasNext()){
+    if (iResult instanceof Iterator) {
+      while (((Iterator) iResult).hasNext()) {
         Object item = ((Iterator) iResult).next();
-        if(condition.evaluate(item, ctx)){
+        if (condition.evaluate(item, ctx)) {
           result.add(item);
         }
       }
     }
     return result;
   }
+
+  public boolean needsAliases(Set<String> aliases) {
+    if (condition != null && condition.needsAliases(aliases)) {
+      return true;
+    }
+
+    if (arraySingleValues != null && arraySingleValues.needsAliases(aliases)) {
+      return true;
+    }
+
+    if (arrayRange != null && arrayRange.needsAliases(aliases)) {
+      return true;
+    }
+
+    if (methodCall != null && methodCall.needsAliases(aliases)) {
+      return true;
+    }
+
+    if (next != null && next.needsAliases(aliases)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  public OModifier copy() {
+    OModifier result = new OModifier(-1);
+    result.squareBrackets = squareBrackets;
+    result.arrayRange = arrayRange == null ? null : arrayRange.copy();
+    result.condition = condition == null ? null : condition.copy();
+    result.arraySingleValues = arraySingleValues == null ? null : arraySingleValues.copy();
+    result.methodCall = methodCall == null ? null : methodCall.copy();
+    result.suffix = suffix == null ? null : suffix.copy();
+    result.next = next == null ? null : next.copy();
+
+    return result;
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OModifier oModifier = (OModifier) o;
+
+    if (squareBrackets != oModifier.squareBrackets)
+      return false;
+    if (arrayRange != null ? !arrayRange.equals(oModifier.arrayRange) : oModifier.arrayRange != null)
+      return false;
+    if (condition != null ? !condition.equals(oModifier.condition) : oModifier.condition != null)
+      return false;
+    if (arraySingleValues != null ? !arraySingleValues.equals(oModifier.arraySingleValues) : oModifier.arraySingleValues != null)
+      return false;
+    if (methodCall != null ? !methodCall.equals(oModifier.methodCall) : oModifier.methodCall != null)
+      return false;
+    if (suffix != null ? !suffix.equals(oModifier.suffix) : oModifier.suffix != null)
+      return false;
+    if (next != null ? !next.equals(oModifier.next) : oModifier.next != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = (squareBrackets ? 1 : 0);
+    result = 31 * result + (arrayRange != null ? arrayRange.hashCode() : 0);
+    result = 31 * result + (condition != null ? condition.hashCode() : 0);
+    result = 31 * result + (arraySingleValues != null ? arraySingleValues.hashCode() : 0);
+    result = 31 * result + (methodCall != null ? methodCall.hashCode() : 0);
+    result = 31 * result + (suffix != null ? suffix.hashCode() : 0);
+    result = 31 * result + (next != null ? next.hashCode() : 0);
+    return result;
+  }
+
+  public void extractSubQueries(SubQueryCollector collector) {
+    if (arrayRange != null) {
+      arrayRange.extractSubQueries(collector);
+    }
+    if (condition != null) {
+      condition.extractSubQueries(collector);
+    }
+    if (arraySingleValues != null) {
+      arraySingleValues.extractSubQueries(collector);
+    }
+    if (methodCall != null) {
+      methodCall.extractSubQueries(collector);
+    }
+    if (suffix != null) {
+      suffix.extractSubQueries(collector);
+    }
+    if (next != null) {
+      next.extractSubQueries(collector);
+    }
+
+  }
+
+  public boolean refersToParent() {
+    if (arrayRange != null && arrayRange.refersToParent()) {
+      return true;
+    }
+    if (condition != null && condition.refersToParent()) {
+      return true;
+    }
+
+    if (arraySingleValues != null && arraySingleValues.refersToParent()) {
+      return true;
+    }
+    if (methodCall != null && methodCall.refersToParent()) {
+      return true;
+    }
+    if (suffix != null && suffix.refersToParent()) {
+      return true;
+    }
+    return false;
+  }
+
+  protected void setValue(OResult currentRecord, Object target, Object value, OCommandContext ctx) {
+    if (next == null) {
+      doSetValue(currentRecord, target, value, ctx);
+    } else {
+      Object newTarget = calculateLocal(currentRecord, target, ctx);
+      if (newTarget != null) {
+        next.setValue(currentRecord, newTarget, value, ctx);
+      }
+    }
+  }
+
+  private void doSetValue(OResult currentRecord, Object target, Object value, OCommandContext ctx) {
+    if (methodCall != null) {
+      //do nothing
+    } else if (suffix != null) {
+      suffix.setValue(target, value, ctx);
+    } else if (arrayRange != null) {
+      arrayRange.setValue(target, value, ctx);
+    } else if (condition != null) {
+      //do nothing
+    } else if (arraySingleValues != null) {
+      arraySingleValues.setValue(currentRecord, target, value, ctx);
+    }
+  }
+
+  private Object calculateLocal(OResult currentRecord, Object target, OCommandContext ctx) {
+    if (methodCall != null) {
+      return methodCall.execute(target, ctx);
+    } else if (suffix != null) {
+      return suffix.execute(target, ctx);
+    } else if (arrayRange != null) {
+      return arrayRange.execute(currentRecord, target, ctx);
+    } else if (condition != null) {
+      if (target instanceof OResult || target instanceof OIdentifiable || target instanceof Map) {
+        if (condition.evaluate(target, ctx)) {
+          return target;
+        } else {
+          return null;
+        }
+      } else if (OMultiValue.isMultiValue(target)) {
+        List<Object> result = new ArrayList<>();
+        for (Object o : OMultiValue.getMultiValueIterable(target)) {
+          if (condition.evaluate(target, ctx)) {
+            result.add(o);
+          }
+        }
+        return result;
+      } else {
+        return null;
+      }
+    } else if (arraySingleValues != null) {
+      return arraySingleValues.execute(currentRecord, target, ctx);
+    }
+    return null;
+
+  }
+
 }
 /* JavaCC - OriginalChecksum=39c21495d02f9b5007b4a2d6915496e1 (do not edit this line) */

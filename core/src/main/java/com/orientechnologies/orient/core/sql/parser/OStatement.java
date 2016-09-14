@@ -4,8 +4,11 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
+import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
+import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 
 import java.util.Map;
@@ -22,7 +25,9 @@ public class OStatement extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
@@ -31,12 +36,11 @@ public class OStatement extends SimpleNode {
     throw new UnsupportedOperationException("missing implementation in " + getClass().getSimpleName());
   }
 
-  public void validate(OrientSql.ValidationStats stats) throws OCommandSQLParsingException {
+  public void validate() throws OCommandSQLParsingException {
 
   }
 
-  @Override
-  public String toString(String prefix) {
+  @Override public String toString(String prefix) {
     StringBuilder builder = new StringBuilder();
     toString(null, builder);
     return builder.toString();
@@ -44,6 +48,30 @@ public class OStatement extends SimpleNode {
 
   public Object execute(OSQLAsynchQuery<ODocument> request, OCommandContext context, OProgressListener progressListener) {
     throw new UnsupportedOperationException("Unsupported command: " + getClass().getSimpleName());
+  }
+
+  public OTodoResultSet execute(ODatabase db, Object[] args) {
+    throw new UnsupportedOperationException();
+  }
+
+  public OTodoResultSet execute(ODatabase db, Map args) {
+    throw new UnsupportedOperationException();
+  }
+
+  public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx) {
+    throw new UnsupportedOperationException();
+  }
+
+  public OStatement copy() {
+    throw new UnsupportedOperationException("IMPLEMENT copy() ON " + getClass().getSimpleName());
+  }
+
+  public boolean refersToParent() {
+    throw new UnsupportedOperationException("Implement " + getClass().getSimpleName() + ".refersToParent()");
+  }
+
+  public boolean isIdempotent() {
+    return false;
   }
 }
 /* JavaCC - OriginalChecksum=589c4dcc8287f430e46d8eb12b0412c5 (do not edit this line) */

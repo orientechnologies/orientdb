@@ -27,10 +27,7 @@ import com.orientechnologies.orient.core.OUncompletedCommit;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseInternal;
-import com.orientechnologies.orient.core.db.ODatabaseListener;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -98,7 +95,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
    *
    * @param iDatabase an open database connection
    */
-  public OObjectDatabaseTx(ODatabaseDocumentTx iDatabase) {
+  public OObjectDatabaseTx(ODatabaseDocumentInternal iDatabase) {
     super(iDatabase);
     underlying.setDatabaseOwner(this);
     init();
@@ -224,14 +221,14 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
     checkOpeness();
     checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_READ, iClassName);
 
-    return new OObjectIteratorClass<RET>(this, (ODatabaseDocumentTx) getUnderlying(), iClassName, iPolymorphic);
+    return new OObjectIteratorClass<RET>(this, getUnderlying(), iClassName, iPolymorphic);
   }
 
   public <RET> OObjectIteratorCluster<RET> browseCluster(final String iClusterName) {
     checkOpeness();
     checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_READ, iClusterName);
 
-    return (OObjectIteratorCluster<RET>) new OObjectIteratorCluster<Object>(this, (ODatabaseDocumentTx) getUnderlying(),
+    return (OObjectIteratorCluster<RET>) new OObjectIteratorCluster<Object>(this, getUnderlying(),
         getClusterIdByName(iClusterName));
   }
 
@@ -955,5 +952,11 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
         newEntries = null;
     }
   }
+
+  @Override
+  public OSharedContext getSharedContext() {
+    return underlying.getSharedContext();
+  }
+
 
 }

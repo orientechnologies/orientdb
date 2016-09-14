@@ -1,21 +1,5 @@
 package com.orientechnologies.orient.core.record.impl;
 
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.Assert.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -23,28 +7,29 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
+
+import java.util.*;
+
+import static org.junit.Assert.*;
 
 public class ODocumentSchemalessSerializationTest {
 
   protected ORecordSerializer serializer;
-  private ORecordSerializer   defaultSerializer;
+  private   ORecordSerializer defaultSerializer;
 
-  public ODocumentSchemalessSerializationTest(ORecordSerializer serializer) {
-    this.serializer = serializer;
-  }
-
-  public ODocumentSchemalessSerializationTest() {
-    this(new ORecordSerializerSchemaAware2CSV());
-  }
-
-  @BeforeMethod
+  @Before
   public void before() {
+    serializer = new ORecordSerializerSchemaAware2CSV();
     defaultSerializer = ODatabaseDocumentTx.getDefaultSerializer();
     ODatabaseDocumentTx.setDefaultSerializer(serializer);
     ODatabaseRecordThreadLocal.INSTANCE.remove();
   }
 
-  @AfterMethod
+  @After
   public void after() {
     ODatabaseDocumentTx.setDefaultSerializer(defaultSerializer);
   }
@@ -69,17 +54,17 @@ public class ODocumentSchemalessSerializationTest {
     ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
 
     assertEquals(extr.fields(), document.fields());
-    assertEquals(extr.field("name"), document.field("name"));
-    assertEquals(extr.field("age"), document.field("age"));
-    assertEquals(extr.field("youngAge"), document.field("youngAge"));
-    assertEquals(extr.field("oldAge"), document.field("oldAge"));
-    assertEquals(extr.field("heigth"), document.field("heigth"));
-    assertEquals(extr.field("bitHeigth"), document.field("bitHeigth"));
-    assertEquals(extr.field("class"), document.field("class"));
+    assertEquals(extr.<String>field("name"), document.field("name"));
+    assertEquals(extr.<String>field("age"), document.field("age"));
+    assertEquals(extr.<String>field("youngAge"), document.field("youngAge"));
+    assertEquals(extr.<String>field("oldAge"), document.field("oldAge"));
+    assertEquals(extr.<String>field("heigth"), document.field("heigth"));
+    assertEquals(extr.<String>field("bitHeigth"), document.field("bitHeigth"));
+    assertEquals(extr.<String>field("class"), document.field("class"));
     // TODO fix char management issue:#2427
     // assertEquals(document.field("character"), extr.field("character"));
-    assertEquals(extr.field("alive"), document.field("alive"));
-    assertEquals(extr.field("date"), document.field("date"));
+    assertEquals(extr.<String>field("alive"), document.field("alive"));
+    assertEquals(extr.<String>field("date"), document.field("date"));
     // assertEquals(extr.field("recordId"), document.field("recordId"));
 
   }
@@ -166,13 +151,13 @@ public class ODocumentSchemalessSerializationTest {
     ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
 
     assertEquals(extr.fields(), document.fields());
-    assertEquals(extr.field("listStrings"), document.field("listStrings"));
-    assertEquals(extr.field("integers"), document.field("integers"));
-    assertEquals(extr.field("doubles"), document.field("doubles"));
-    assertEquals(extr.field("dates"), document.field("dates"));
-    assertEquals(extr.field("bytes"), document.field("bytes"));
-    assertEquals(extr.field("booleans"), document.field("booleans"));
-    assertEquals(extr.field("listMixed"), document.field("listMixed"));
+    assertEquals(extr.<String>field("listStrings"), document.field("listStrings"));
+    assertEquals(extr.<String>field("integers"), document.field("integers"));
+    assertEquals(extr.<String>field("doubles"), document.field("doubles"));
+    assertEquals(extr.<String>field("dates"), document.field("dates"));
+    assertEquals(extr.<String>field("bytes"), document.field("bytes"));
+    assertEquals(extr.<String>field("booleans"), document.field("booleans"));
+    assertEquals(extr.<String>field("listMixed"), document.field("listMixed"));
   }
 
   @Test
@@ -222,12 +207,12 @@ public class ODocumentSchemalessSerializationTest {
     byte[] res = serializer.toStream(document, false);
     ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
     assertEquals(extr.fields(), document.fields());
-    assertEquals(extr.field("mapString"), document.field("mapString"));
-    assertEquals(extr.field("mapLong"), document.field("mapLong"));
-    assertEquals(extr.field("shortMap"), document.field("shortMap"));
-    assertEquals(extr.field("dateMap"), document.field("dateMap"));
-    assertEquals(extr.field("doubleMap"), document.field("doubleMap"));
-    assertEquals(extr.field("bytesMap"), document.field("bytesMap"));
+    assertEquals(extr.<String>field("mapString"), document.field("mapString"));
+    assertEquals(extr.<String>field("mapLong"), document.field("mapLong"));
+    assertEquals(extr.<String>field("shortMap"), document.field("shortMap"));
+    assertEquals(extr.<String>field("dateMap"), document.field("dateMap"));
+    assertEquals(extr.<String>field("doubleMap"), document.field("doubleMap"));
+    assertEquals(extr.<String>field("bytesMap"), document.field("bytesMap"));
   }
 
   @Test
@@ -243,8 +228,8 @@ public class ODocumentSchemalessSerializationTest {
     assertEquals(document.fields(), extr.fields());
     ODocument emb = extr.field("embed");
     assertNotNull(emb);
-    assertEquals(emb.field("name"), embedded.field("name"));
-    assertEquals(emb.field("surname"), embedded.field("surname"));
+    assertEquals(emb.<String>field("name"), embedded.field("name"));
+    assertEquals(emb.<String>field("surname"), embedded.field("surname"));
 
   }
 
@@ -266,8 +251,8 @@ public class ODocumentSchemalessSerializationTest {
     assertEquals(1, mapS.size());
     ODocument emb = mapS.get("embedded");
     assertNotNull(emb);
-    assertEquals(emb.field("name"), embeddedInMap.field("name"));
-    assertEquals(emb.field("surname"), embeddedInMap.field("surname"));
+    assertEquals(emb.<String>field("name"), embeddedInMap.field("name"));
+    assertEquals(emb.<String>field("surname"), embeddedInMap.field("surname"));
 
   }
 
@@ -299,18 +284,19 @@ public class ODocumentSchemalessSerializationTest {
     assertEquals(1, ser.size());
     ODocument inList = ser.get(0);
     assertNotNull(inList);
-    assertEquals(inList.field("name"), embeddedInList.field("name"));
-    assertEquals(inList.field("surname"), embeddedInList.field("surname"));
+    assertEquals(inList.<String>field("name"), embeddedInList.field("name"));
+    assertEquals(inList.<String>field("surname"), embeddedInList.field("surname"));
 
     Set<ODocument> setEmb = extr.field("embeddedSet");
     assertEquals(1, setEmb.size());
     ODocument inSet = setEmb.iterator().next();
     assertNotNull(inSet);
-    assertEquals(inSet.field("name"), embeddedInSet.field("name"));
-    assertEquals(inSet.field("surname"), embeddedInSet.field("surname"));
+    assertEquals(inSet.<String>field("name"), embeddedInSet.field("name"));
+    assertEquals(inSet.<String>field("surname"), embeddedInSet.field("surname"));
   }
 
-  @Test(enabled = false)
+  @Test
+  @Ignore
   public void testCsvGetTypeByValue() {
     Object res = ORecordSerializerStringAbstract.getTypeValue("-");
     assertTrue(res instanceof String);

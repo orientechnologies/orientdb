@@ -17,5 +17,9 @@ class OCreateVertexStatementEmpty extends OCreateVertexStatement {
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
+
+  @Override public OCreateVertexStatement copy() {
+    return super.copy();
+  }
 }
 /* JavaCC - OriginalChecksum=016e27188dd8fae2a4e129ad660c5c23 (do not edit this line) */

@@ -1,34 +1,27 @@
 package com.orientechnologies.orient.core.metadata;
 
-import static org.testng.Assert.assertEquals;
-
-import java.util.List;
-
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.metadata.schema.*;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import java.util.List;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import static org.junit.Assert.assertEquals;
 
-@Test
 public class ClassTest {
-  private static ODatabaseDocumentTx db                   = null;
-  public static final String         SHORTNAME_CLASS_NAME = "TestShortName";
+  public static final String              SHORTNAME_CLASS_NAME = "TestShortName";
+  private static      ODatabaseDocumentTx db                   = null;
 
-  @BeforeMethod
+  @Before
   public void setUp() throws Exception {
     db = new ODatabaseDocumentTx("memory:" + ClassTest.class.getSimpleName());
     if (db.exists()) {
@@ -38,7 +31,7 @@ public class ClassTest {
     db.create();
   }
 
-  @AfterClass
+  @After
   public void tearDown() throws Exception {
     if (db.isClosed())
       db.open("admin", "admin");
@@ -63,14 +56,14 @@ public class ClassTest {
 
     String shortName = "shortname";
     oClass.setShortName(shortName);
-    Assert.assertEquals(shortName, oClass.getShortName());
-    Assert.assertEquals(shortName, queryShortName());
+    assertEquals(shortName, oClass.getShortName());
+    assertEquals(shortName, queryShortName());
 
     // FAILS, saves null value and stores "null" string (not null value) internally
     shortName = "null";
     oClass.setShortName(shortName);
-    Assert.assertEquals(shortName, oClass.getShortName());
-    Assert.assertEquals(shortName, queryShortName());
+    assertEquals(shortName, oClass.getShortName());
+    assertEquals(shortName, queryShortName());
 
     oClass.setShortName(null);
     Assert.assertNull(oClass.getShortName());
@@ -90,15 +83,15 @@ public class ClassTest {
 
     String shortName = "shortName";
     oClass.setShortName(shortName);
-    Assert.assertEquals(shortName, oClass.getShortName());
+    assertEquals(shortName, oClass.getShortName());
     OClass shorted = schema.getClass(shortName);
     Assert.assertNotNull(shorted);
-    Assert.assertEquals(shortName, shorted.getShortName());
+    assertEquals(shortName, shorted.getShortName());
     OMetadataInternal intern = db.getMetadata();
     OImmutableSchema immSchema = intern.getImmutableSchemaSnapshot();
     shorted = immSchema.getClass(shortName);
     Assert.assertNotNull(shorted);
-    Assert.assertEquals(shortName, shorted.getShortName());
+    assertEquals(shortName, shorted.getShortName());
 
   }
 
@@ -141,8 +134,8 @@ public class ClassTest {
     document = new ODocument("ClassOne");
     document.save();
 
-    Assert.assertEquals(db.countClass("ClassTwo"), 2);
-    Assert.assertEquals(db.countClass("ClassOne"), 1);
+    assertEquals(db.countClass("ClassTwo"), 2);
+    assertEquals(db.countClass("ClassOne"), 1);
 
     classOne.setName("ClassThree");
 
@@ -152,16 +145,16 @@ public class ClassTest {
 
     Assert.assertTrue(writeCache.exists("classone" + OPaginatedCluster.DEF_EXTENSION));
 
-    Assert.assertEquals(db.countClass("ClassTwo"), 2);
-    Assert.assertEquals(db.countClass("ClassThree"), 1);
+    assertEquals(db.countClass("ClassTwo"), 2);
+    assertEquals(db.countClass("ClassThree"), 1);
 
     classOne.setName("ClassOne");
     Assert.assertTrue(writeCache.exists("classone" + OPaginatedCluster.DEF_EXTENSION));
 
-    Assert.assertEquals(db.countClass("ClassTwo"), 2);
-    Assert.assertEquals(db.countClass("ClassOne"), 1);
+    assertEquals(db.countClass("ClassTwo"), 2);
+    assertEquals(db.countClass("ClassOne"), 1);
   }
-  
+
   @Test
   public void testOClassAndOPropertyDescription() {
     final OSchema oSchema = db.getMetadata().getSchema();
@@ -176,7 +169,7 @@ public class ClassTest {
     oProperty = oClass.getProperty("property");
     assertEquals(oClass.getDescription(), "DescriptionTest-class-description");
     assertEquals(oProperty.getDescription(), "DescriptionTest-property-description");
-    
+
     oClass = db.getMetadata().getImmutableSchemaSnapshot().getClass("DescriptionTest");
     oProperty = oClass.getProperty("property");
     assertEquals(oClass.getDescription(), "DescriptionTest-class-description");
@@ -184,10 +177,11 @@ public class ClassTest {
   }
 
   private String queryShortName() {
-    String selectShortNameSQL = "select shortName from ( select flatten(classes) from cluster:internal )" + " where name = \""
-        + SHORTNAME_CLASS_NAME + "\"";
+    String selectShortNameSQL =
+        "select shortName from ( select flatten(classes) from cluster:internal )" + " where name = \"" + SHORTNAME_CLASS_NAME
+            + "\"";
     List<ODocument> result = db.command(new OCommandSQL(selectShortNameSQL)).execute();
-    Assert.assertEquals(1, result.size());
+    assertEquals(1, result.size());
     return result.get(0).field("shortName");
   }
 }

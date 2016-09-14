@@ -1,9 +1,9 @@
 package com.orientechnologies.orient.core.metadata.sequence;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OProxedResource;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence.SEQUENCE_TYPE;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.Set;
 
@@ -11,8 +11,8 @@ import java.util.Set;
  * @author Matan Shukry (matanshukry@gmail.com)
  * @since 3/2/2015
  */
-public class OSequenceLibraryProxy extends OProxedResource<OSequenceLibrary> implements OSequenceLibrary {
-    public OSequenceLibraryProxy(final OSequenceLibrary iDelegate, final ODatabaseDocumentInternal iDatabase) {
+public class OSequenceLibraryProxy extends OProxedResource<OSequenceLibraryImpl> implements OSequenceLibrary {
+    public OSequenceLibraryProxy(final OSequenceLibraryImpl iDelegate, final ODatabaseDocumentInternal iDatabase) {
         super(iDelegate, iDatabase);
     }
 
@@ -28,46 +28,36 @@ public class OSequenceLibraryProxy extends OProxedResource<OSequenceLibrary> imp
 
     @Override
     public OSequence getSequence(String iName) {
-        return delegate.getSequence(iName);
+        return delegate.getSequence(database,iName);
     }
 
     @Override
     public OSequence createSequence(String iName, SEQUENCE_TYPE sequenceType, OSequence.CreateParams params) {
-        return delegate.createSequence(iName, sequenceType, params);
+        return delegate.createSequence(database,iName, sequenceType, params);
     }
 
     @Override
     public void dropSequence(String iName) {
-        delegate.dropSequence(iName);
-    }
-
-    @Override
-    public OSequence onSequenceCreated(ODocument iDocument) {
-        return delegate.onSequenceCreated(iDocument);
-    }
-
-    @Override
-    public OSequence onSequenceUpdated(ODocument iDocument) {
-        return delegate.onSequenceUpdated(iDocument);
-    }
-
-    @Override
-    public void onSequenceDropped(ODocument iDocument) {
-        delegate.onSequenceDropped(iDocument);
+      delegate.dropSequence(database,iName);
     }
 
     @Override
     public void create() {
-        delegate.create();
+        delegate.create(database);
     }
 
     @Override
     public void load() {
-        delegate.load();
+      delegate.load(database);
     }
 
     @Override
     public void close() {
         delegate.close();
     }
+    
+    public OSequenceLibraryImpl getDelegate(){
+      return delegate;
+    }
+    
 }

@@ -28,8 +28,8 @@ import java.util.Map;
  * @author henryzhao81-at-gmail.com
  * @since Mar 28, 2013
  */
-public class OSchedulerProxy extends OProxedResource<OScheduler> implements OScheduler {
-  public OSchedulerProxy(final OScheduler iDelegate, final ODatabaseDocumentInternal iDatabase) {
+public class OSchedulerProxy extends OProxedResource<OSchedulerImpl> implements OScheduler {
+  public OSchedulerProxy(final OSchedulerImpl iDelegate, final ODatabaseDocumentInternal iDatabase) {
     super(iDelegate, iDatabase);
   }
 
@@ -55,16 +55,16 @@ public class OSchedulerProxy extends OProxedResource<OScheduler> implements OSch
 
   @Override
   public void load() {
-    delegate.load();
+    delegate.load(database);
   }
 
   @Override
   public void close() {
-    delegate.close();
+    //DO NOTHING THE DELEGATE CLOSE IS MANAGED IN A DIFFERENT CONTEXT
   }
 
   @Override
   public void create() {
-    delegate.create();
+    delegate.create(database);
   }
 }

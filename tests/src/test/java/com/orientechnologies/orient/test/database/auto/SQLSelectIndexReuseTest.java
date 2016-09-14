@@ -2518,7 +2518,7 @@ public class SQLSelectIndexReuseTest extends AbstractIndexReuseTest {
     ODocument result = (ODocument) database.query(
         new OSQLSynchQuery<ODocument>("select count(*) from CountFunctionWithNotUniqueIndexTest where a = 'a' and b = 'c'")).get(0);
 
-    Assert.assertEquals(result.field("count", Long.class), 0l);
+    Assert.assertEquals(result.<Object>field("count", Long.class), 0l);
 
     Assert.assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 1);
     Assert.assertEquals(profiler.getCounter("db.demo.query.compositeIndexUsed"), oldcompositeIndexUsed);
@@ -2543,7 +2543,7 @@ public class SQLSelectIndexReuseTest extends AbstractIndexReuseTest {
     ODocument result = (ODocument) database.query(
         new OSQLSynchQuery<ODocument>("select count(*) from CountFunctionWithUniqueIndexTest where a = 'a' and b = 'c'")).get(0);
 
-    Assert.assertEquals(result.field("count", Long.class), 2l);
+    Assert.assertEquals(result.<Object>field("count", Long.class), 2l);
     doc.delete();
 
     Assert.assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 1);

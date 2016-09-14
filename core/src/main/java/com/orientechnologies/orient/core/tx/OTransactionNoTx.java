@@ -22,7 +22,10 @@ package com.orientechnologies.orient.core.tx;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.OUncompletedCommit;
 import com.orientechnologies.orient.core.db.ODatabase.OPERATION_MODE;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.document.LatestVersionRecordReader;
+import com.orientechnologies.orient.core.db.document.RecordReader;
+import com.orientechnologies.orient.core.db.document.SimpleRecordReader;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -39,7 +42,10 @@ import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 
 /**
  * No operation transaction.
@@ -48,7 +54,7 @@ import java.util.*;
  * 
  */
 public class OTransactionNoTx extends OTransactionAbstract {
-  public OTransactionNoTx(final ODatabaseDocumentTx iDatabase) {
+  public OTransactionNoTx(final ODatabaseDocumentInternal iDatabase) {
     super(iDatabase);
   }
 
@@ -92,7 +98,7 @@ public class OTransactionNoTx extends OTransactionAbstract {
       return null;
 
     return database.executeReadRecord((ORecordId) iRid, iRecord, -1, iFetchPlan, ignoreCache, !ignoreCache, loadTombstone,
-        iLockingStrategy, new ODatabaseDocumentTx.SimpleRecordReader());
+        iLockingStrategy, new SimpleRecordReader());
   }
 
   @Deprecated
@@ -102,7 +108,7 @@ public class OTransactionNoTx extends OTransactionAbstract {
       return null;
 
     return database.executeReadRecord((ORecordId) iRid, iRecord, -1, iFetchPlan, ignoreCache, iUpdateCache, loadTombstone,
-        iLockingStrategy, new ODatabaseDocumentTx.SimpleRecordReader());
+        iLockingStrategy, new SimpleRecordReader());
   }
 
   public ORecord loadRecord(final ORID iRid, final ORecord iRecord, final String iFetchPlan, final boolean ignoreCache) {
@@ -110,7 +116,7 @@ public class OTransactionNoTx extends OTransactionAbstract {
       return null;
 
     return database.executeReadRecord((ORecordId) iRid, iRecord, -1, iFetchPlan, ignoreCache, !ignoreCache, false,
-        OStorage.LOCKING_STRATEGY.NONE, new ODatabaseDocumentTx.SimpleRecordReader());
+        OStorage.LOCKING_STRATEGY.NONE, new SimpleRecordReader());
   }
 
   @Override
@@ -123,11 +129,11 @@ public class OTransactionNoTx extends OTransactionAbstract {
     if (rid.isNew())
       return null;
 
-    final ODatabaseDocumentTx.RecordReader recordReader;
+    final RecordReader recordReader;
     if (force) {
-      recordReader = new ODatabaseDocumentTx.SimpleRecordReader();
+      recordReader = new SimpleRecordReader();
     } else {
-      recordReader = new ODatabaseDocumentTx.LatestVersionRecordReader();
+      recordReader = new LatestVersionRecordReader();
     }
 
     final ORecord loadedRecord = database.executeReadRecord((ORecordId) rid, record, -1, fetchPlan, ignoreCache, !ignoreCache,
@@ -150,7 +156,7 @@ public class OTransactionNoTx extends OTransactionAbstract {
       return null;
 
     return database.executeReadRecord((ORecordId) rid, null, recordVersion, fetchPlan, ignoreCache, !ignoreCache, false,
-        OStorage.LOCKING_STRATEGY.NONE, new ODatabaseDocumentTx.LatestVersionRecordReader());
+        OStorage.LOCKING_STRATEGY.NONE, new LatestVersionRecordReader());
   }
 
   /**

@@ -1,23 +1,24 @@
 package com.orientechnologies.orient.core.index.sbtree.local;
 
-import java.nio.ByteBuffer;
-import java.util.Random;
-
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
+import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import org.testng.Assert;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import org.assertj.core.api.Assertions;
+import org.junit.Assert;
+import org.junit.Test;
+
+import java.nio.ByteBuffer;
+import java.util.Random;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 10/1/13
  */
-@Test
 public class SBTreeValuePageTest {
+  @Test
   public void fillPageDataTest() throws Exception {
     OByteBufferPool bufferPool = OByteBufferPool.instance();
     ByteBuffer bufferOne = bufferPool.acquireDirect(true);
@@ -25,9 +26,9 @@ public class SBTreeValuePageTest {
     OCachePointer cachePointerOne = new OCachePointer(bufferOne, bufferPool, new OLogSequenceNumber(0, 0), 0, 0);
     cachePointerOne.incrementReferrer();
 
-    OCacheEntry cacheEntryOne = new OCacheEntry(0, 0, cachePointerOne, false);
+    OCacheEntry cacheEntryOne = new OCacheEntryImpl(0, 0, cachePointerOne, false);
     cacheEntryOne.acquireExclusiveLock();
-    OSBTreeValuePage valuePageOne = new OSBTreeValuePage(cacheEntryOne, null, true);
+    OSBTreeValuePage valuePageOne = new OSBTreeValuePage(cacheEntryOne, true);
 
     byte[] data = new byte[ODurablePage.MAX_PAGE_SIZE_BYTES + 100];
     Random random = new Random();
@@ -40,10 +41,10 @@ public class SBTreeValuePageTest {
     OCachePointer cachePointerTwo = new OCachePointer(bufferTwo, bufferPool, new OLogSequenceNumber(0, 0), 0, 0);
     cachePointerTwo.incrementReferrer();
 
-    OCacheEntry cacheEntryTwo = new OCacheEntry(0, 0, cachePointerTwo, false);
+    OCacheEntry cacheEntryTwo = new OCacheEntryImpl(0, 0, cachePointerTwo, false);
     cacheEntryTwo.acquireExclusiveLock();
 
-    OSBTreeValuePage valuePageTwo = new OSBTreeValuePage(cacheEntryTwo, null, true);
+    OSBTreeValuePage valuePageTwo = new OSBTreeValuePage(cacheEntryTwo, true);
     offset = valuePageTwo.fillBinaryContent(data, offset);
 
     Assert.assertEquals(offset, data.length);
@@ -59,8 +60,7 @@ public class SBTreeValuePageTest {
     offset = valuePageTwo.readBinaryContent(readData, offset);
     Assert.assertEquals(offset, data.length);
 
-    Assert.assertEquals(data, readData);
-
+    Assertions.assertThat(data).isEqualTo(readData);
     cacheEntryOne.releaseExclusiveLock();
     cacheEntryTwo.releaseExclusiveLock();
 
@@ -68,6 +68,7 @@ public class SBTreeValuePageTest {
     cachePointerTwo.decrementReferrer();
   }
 
+  @Test
   public void testFreeListPointer() throws Exception {
     OByteBufferPool bufferPool = OByteBufferPool.instance();
     ByteBuffer buffer = bufferPool.acquireDirect(true);
@@ -75,10 +76,10 @@ public class SBTreeValuePageTest {
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, new OLogSequenceNumber(0, 0), 0, 0);
     cachePointer.incrementReferrer();
 
-    OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
+    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false);
     cacheEntry.acquireExclusiveLock();
 
-    OSBTreeValuePage valuePage = new OSBTreeValuePage(cacheEntry, null, true);
+    OSBTreeValuePage valuePage = new OSBTreeValuePage(cacheEntry, true);
     valuePage.setNextFreeListPage(124);
     Assert.assertEquals(valuePage.getNextFreeListPage(), 124);
 

@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -26,6 +27,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 /**
  * Distributed TX test against "plocal" protocol.
  */
+@Ignore
 public class LocalConcurrentTxNoAutoRetryTest extends AbstractDistributedConcurrentTxTest {
 
   private static final int SERVERS = 3;

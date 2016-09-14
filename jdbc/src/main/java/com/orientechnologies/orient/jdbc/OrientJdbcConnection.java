@@ -19,8 +19,9 @@ package com.orientechnologies.orient.jdbc;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
+import com.orientechnologies.orient.core.db.OPartitionedDatabasePoolFactory;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 import java.sql.Array;
@@ -50,17 +51,20 @@ import java.util.concurrent.Executor;
  */
 public class OrientJdbcConnection implements Connection {
 
+  protected static final OPartitionedDatabasePoolFactory POOL_FACTORY = new OPartitionedDatabasePoolFactory();
+
   private final String     dbUrl;
   private final Properties info;
   private final boolean    usePool;
 
-  private ODatabaseDocument   database;
-  private boolean             readOnly;
-  private boolean             autoCommit;
-  private ODatabase.STATUS    status;
+  private ODatabaseDocument database;
+  private boolean           readOnly;
+  private boolean           autoCommit;
+  private ODatabase.STATUS  status;
 
-  public OrientJdbcConnection(final String dbUrl, final Properties info) {
-    this.dbUrl = dbUrl.replace("jdbc:orient:", "");
+  public OrientJdbcConnection(final String jdbcdDUrl, final Properties info) {
+
+    this.dbUrl = jdbcdDUrl.replace("jdbc:orient:", "");
 
     this.info = info;
 
@@ -70,20 +74,18 @@ public class OrientJdbcConnection implements Connection {
 
     usePool = Boolean.parseBoolean(info.getProperty("db.usePool", "false"));
     if (usePool) {
-      final int poolMinSize = Integer
-          .parseInt(info.getProperty("db.pool.min", OGlobalConfiguration.DB_POOL_MAX.getValueAsString()));
-      final int poolMaxSize = Integer
-          .parseInt(info.getProperty("db.pool.max", OGlobalConfiguration.DB_POOL_MAX.getValueAsString()));
-
-      database = ODatabaseDocumentPool.global(poolMinSize, poolMaxSize).acquire(this.dbUrl, username, password);
+      OPartitionedDatabasePool pool = POOL_FACTORY.get(dbUrl, username, password);
+      database = pool.acquire();
     } else {
       database = new ODatabaseDocumentTx(this.dbUrl);
       database.open(username, password);
+      database.activateOnCurrentThread();
     }
     status = ODatabase.STATUS.OPEN;
   }
 
   public Statement createStatement() throws SQLException {
+
     return new OrientJdbcStatement(this);
   }
 
@@ -325,5 +327,9 @@ public class OrientJdbcConnection implements Connection {
 
   public void setNetworkTimeout(Executor arg0, int arg1) throws SQLException {
     OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT.setValue(arg1);
+  }
+
+  public Properties getInfo() {
+    return info;
   }
 }

@@ -1,7 +1,14 @@
 package com.orientechnologies.orient.core.record.impl;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import org.junit.After;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -11,33 +18,26 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.schema.OType;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 /**
  * Tests that {@link ODocument} is serializable.
- * 
+ *
  * @author Artem Orobets (enisher-at-gmail.com)
  * @since 12/20/12
  */
 public class ODocumentSerializationPersistentTest {
 
-  private ODatabaseDocumentTx db;
-  private ORID                docId;
-  private ORID                linkedId;
+  private static ODatabaseDocumentTx db;
+  private static ORID                docId;
+  private static ORID                linkedId;
 
   @BeforeClass
-  public void setUp() throws Exception {
+  public static void setUp() throws Exception {
 
     db = new ODatabaseDocumentTx("memory:testdocumentserialization");
+
     db.create();
 
     final ODocument doc = new ODocument();
@@ -50,6 +50,11 @@ public class ODocumentSerializationPersistentTest {
     doc.save();
     docId = doc.getIdentity();
     linkedId = linkedDoc.getIdentity();
+  }
+
+  @After
+  public void tearDown() throws Exception {
+
   }
 
   @Test
@@ -65,14 +70,14 @@ public class ODocumentSerializationPersistentTest {
     final ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(byteArrayOutputStream.toByteArray()));
     final ODocument loadedDoc = (ODocument) in.readObject();
 
-    Assert.assertEquals(loadedDoc.getIdentity(), docId);
-    Assert.assertEquals(loadedDoc.getVersion(), doc.getVersion());
-    Assert.assertEquals(loadedDoc.field("name"), "Artem");
-    Assert.assertEquals(loadedDoc.field("country"), linkedId);
+    assertEquals(loadedDoc.getIdentity(), docId);
+    assertEquals(loadedDoc.getVersion(), doc.getVersion());
+    assertEquals(loadedDoc.field("name"), "Artem");
+    assertEquals(loadedDoc.field("country"), linkedId);
 
     final List<Integer> numbers = loadedDoc.field("numbers");
     for (int i = 0; i < numbers.size(); i++) {
-      Assert.assertEquals((int) numbers.get(i), i);
+      assertEquals((int) numbers.get(i), i);
     }
   }
 
@@ -101,8 +106,8 @@ public class ODocumentSerializationPersistentTest {
     List<ODocument> emb = extr.field("emb");
     assertNotNull(emb);
     assertEquals(((ORidBag) emb.get(0).field("rids")).size(), rids.size());
-    assertEquals(emb.get(1).field("text"), doc2.field("text"));
-    assertEquals(extr.field("name"), doc.field("name"));
+    assertEquals(emb.get(1).<String>field("text"), doc2.field("text"));
+    assertEquals(extr.<String>field("name"), doc.field("name"));
 
   }
 }

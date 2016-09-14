@@ -19,8 +19,7 @@
  */
 package com.orientechnologies.orient.core.sql.parser.operators;
 
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert; import org.junit.Test;
 
 import com.orientechnologies.orient.core.sql.parser.OLikeOperator;
 

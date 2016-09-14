@@ -23,14 +23,16 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Collection;
+
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * Created by enricorisa on 28/06/14.
@@ -70,16 +72,18 @@ public class LuceneInsertDeleteTest extends BaseLuceneTest {
 
     OIndex idx = schema.getClass("City").getClassIndex("City.name");
     Collection<?> coll = (Collection<?>) idx.get("Rome");
-    Assert.assertEquals(coll.size(), 1);
-    Assert.assertEquals(idx.getSize(), 1);
+
+    assertThat(coll).hasSize(1);
+    assertThat(idx.getSize()).isEqualTo(1);
+
     OIdentifiable next = (OIdentifiable) coll.iterator().next();
-    doc = databaseDocumentTx.load(next.getRecord());
+    doc = databaseDocumentTx.load(next.<ORecord>getRecord());
 
     databaseDocumentTx.delete(doc);
 
     coll = (Collection<?>) idx.get("Rome");
-    Assert.assertEquals(coll.size(), 0);
-    Assert.assertEquals(idx.getSize(), 0);
+    assertThat(coll).hasSize(0);
+    assertThat(idx.getSize()).isEqualTo(0);
 
   }
 }

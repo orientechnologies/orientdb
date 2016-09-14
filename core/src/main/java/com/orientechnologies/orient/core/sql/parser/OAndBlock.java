@@ -6,10 +6,12 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class OAndBlock extends OBooleanExpression {
   List<OBooleanExpression> subBlocks = new ArrayList<OBooleanExpression>();
@@ -22,8 +24,22 @@ public class OAndBlock extends OBooleanExpression {
     super(p, id);
   }
 
-  @Override
-  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+  @Override public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+
+    if (getSubBlocks() == null) {
+      return true;
+    }
+
+    for (OBooleanExpression block : subBlocks) {
+      if (!block.evaluate(currentRecord, ctx)) {
+        return false;
+      }
+    }
+    return true;
+
+  }
+
+  @Override public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
 
     if (getSubBlocks() == null) {
       return true;
@@ -64,8 +80,7 @@ public class OAndBlock extends OBooleanExpression {
     }
   }
 
-  @Override
-  protected boolean supportsBasicCalculation() {
+  @Override protected boolean supportsBasicCalculation() {
     for (OBooleanExpression expr : subBlocks) {
       if (!expr.supportsBasicCalculation()) {
         return false;
@@ -74,8 +89,7 @@ public class OAndBlock extends OBooleanExpression {
     return true;
   }
 
-  @Override
-  protected int getNumberOfExternalCalculations() {
+  @Override protected int getNumberOfExternalCalculations() {
     int result = 0;
     for (OBooleanExpression expr : subBlocks) {
       result += expr.getNumberOfExternalCalculations();
@@ -83,8 +97,7 @@ public class OAndBlock extends OBooleanExpression {
     return result;
   }
 
-  @Override
-  protected List<Object> getExternalCalculationConditions() {
+  @Override protected List<Object> getExternalCalculationConditions() {
     List<Object> result = new ArrayList<Object>();
     for (OBooleanExpression expr : subBlocks) {
       result.addAll(expr.getExternalCalculationConditions());
@@ -118,7 +131,7 @@ public class OAndBlock extends OBooleanExpression {
           result.add(subAndItem);
         } else {
           ;
-          for(OAndBlock oldResultItem:oldResult) {
+          for (OAndBlock oldResultItem : oldResult) {
             OAndBlock block = new OAndBlock(-1);
             block.subBlocks.addAll(oldResultItem.subBlocks);
             for (OBooleanExpression resultItem : subAndItem.subBlocks) {
@@ -134,12 +147,74 @@ public class OAndBlock extends OBooleanExpression {
   }
 
   protected OAndBlock encapsulateInAndBlock(OBooleanExpression item) {
-    if(item instanceof OAndBlock){
-      return (OAndBlock)item;
+    if (item instanceof OAndBlock) {
+      return (OAndBlock) item;
     }
     OAndBlock result = new OAndBlock(-1);
     result.subBlocks.add(item);
     return result;
+  }
+
+  @Override public boolean needsAliases(Set<String> aliases) {
+    for (OBooleanExpression block : subBlocks) {
+      if (block.needsAliases(aliases)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public OAndBlock copy() {
+    OAndBlock result = new OAndBlock(-1);
+    for (OBooleanExpression exp : subBlocks) {
+      result.subBlocks.add(exp.copy());
+    }
+    return result;
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OAndBlock andBlock = (OAndBlock) o;
+
+    if (subBlocks != null ? !subBlocks.equals(andBlock.subBlocks) : andBlock.subBlocks != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    return subBlocks != null ? subBlocks.hashCode() : 0;
+  }
+
+  @Override public boolean isEmpty() {
+    if (subBlocks.isEmpty()) {
+      return true;
+    }
+    for (OBooleanExpression block : subBlocks) {
+      if (!block.isEmpty()) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @Override public void extractSubQueries(SubQueryCollector collector) {
+    for (OBooleanExpression exp : subBlocks) {
+      exp.extractSubQueries(collector);
+    }
+  }
+
+  @Override public boolean refersToParent() {
+    for (OBooleanExpression exp : subBlocks) {
+      if(exp.refersToParent()){
+        return true;
+      }
+    }
+    return false;
   }
 
 }

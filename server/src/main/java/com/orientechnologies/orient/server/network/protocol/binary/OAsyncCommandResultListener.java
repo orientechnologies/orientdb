@@ -23,9 +23,14 @@ package com.orientechnologies.orient.server.network.protocol.binary;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OFetchException;
+import com.orientechnologies.orient.core.fetch.OFetchContext;
+import com.orientechnologies.orient.core.fetch.OFetchHelper;
+import com.orientechnologies.orient.core.fetch.remote.ORemoteFetchContext;
 import com.orientechnologies.orient.core.fetch.remote.ORemoteFetchListener;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OClientConnection;
 
 import java.io.IOException;
@@ -98,4 +103,39 @@ public class OAsyncCommandResultListener extends OAbstractCommandResultListener 
     return empty.get();
   }
 
+  @Override
+  public void linkdedBySimpleValue(ODocument doc) {
+    ORemoteFetchListener listener = new ORemoteFetchListener() {
+      @Override
+      protected void sendRecord(ORecord iLinked) {
+        if (!alreadySent.contains(iLinked.getIdentity())) {
+          alreadySent.add(iLinked.getIdentity());
+          try {
+            protocol.channel.writeByte((byte) 2); // CACHE IT ON THE CLIENT
+            protocol.writeIdentifiable(connection, iLinked);
+          } catch (IOException e) {
+            OLogManager.instance().error(this, "Cannot write against channel", e);
+          }
+        }
+      }
+      
+      @Override
+      public void parseLinked(ODocument iRootRecord, OIdentifiable iLinked, Object iUserObject, String iFieldName,
+          OFetchContext iContext) throws OFetchException {
+        if (iLinked instanceof ORecord)
+          sendRecord((ORecord) iLinked);
+      }
+      
+      @Override
+      public void parseLinkedCollectionValue(ODocument iRootRecord, OIdentifiable iLinked, Object iUserObject, String iFieldName,
+          OFetchContext iContext) throws OFetchException {
+        if (iLinked instanceof ORecord)
+          sendRecord((ORecord) iLinked);      
+      }
+      
+    };
+    final OFetchContext context = new ORemoteFetchContext();
+    OFetchHelper.fetch(doc, doc, OFetchHelper.buildFetchPlan(""), listener, context, "");
+  }
+  
 }

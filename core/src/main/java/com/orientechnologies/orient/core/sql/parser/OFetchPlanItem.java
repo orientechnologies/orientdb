@@ -8,12 +8,12 @@ import java.util.Map;
 
 public class OFetchPlanItem extends SimpleNode {
 
-  protected Boolean      star;
+  protected Boolean star;
 
-  protected OInteger     leftDepth;
-  protected boolean      leftStar = false;
+  protected OInteger leftDepth;
+  protected boolean leftStar = false;
 
-  protected OInteger     rightDepth;
+  protected OInteger rightDepth;
 
   protected List<String> fieldChain = new ArrayList<String>();
 
@@ -25,7 +25,9 @@ public class OFetchPlanItem extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
@@ -38,7 +40,7 @@ public class OFetchPlanItem extends SimpleNode {
         builder.append("[");
         leftDepth.toString(params, builder);
         builder.append("]");
-      }else if(leftStar){
+      } else if (leftStar) {
         builder.append("[*]");
       }
 
@@ -54,6 +56,47 @@ public class OFetchPlanItem extends SimpleNode {
     }
     builder.append(":");
     rightDepth.toString(params, builder);
+  }
+
+  public OFetchPlanItem copy() {
+    OFetchPlanItem result = new OFetchPlanItem(-1);
+    result.star = star;
+    result.leftDepth = leftDepth == null ? null : leftDepth.copy();
+    result.leftStar = leftStar;
+    result.rightDepth = rightDepth == null ? null : rightDepth.copy();
+    result.fieldChain.addAll(fieldChain);
+    return result;
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OFetchPlanItem that = (OFetchPlanItem) o;
+
+    if (leftStar != that.leftStar)
+      return false;
+    if (star != null ? !star.equals(that.star) : that.star != null)
+      return false;
+    if (leftDepth != null ? !leftDepth.equals(that.leftDepth) : that.leftDepth != null)
+      return false;
+    if (rightDepth != null ? !rightDepth.equals(that.rightDepth) : that.rightDepth != null)
+      return false;
+    if (fieldChain != null ? !fieldChain.equals(that.fieldChain) : that.fieldChain != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = star != null ? star.hashCode() : 0;
+    result = 31 * result + (leftDepth != null ? leftDepth.hashCode() : 0);
+    result = 31 * result + (leftStar ? 1 : 0);
+    result = 31 * result + (rightDepth != null ? rightDepth.hashCode() : 0);
+    result = 31 * result + (fieldChain != null ? fieldChain.hashCode() : 0);
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=b7f4c9a97a8f2ca3d85020e054a9ad16 (do not edit this line) */

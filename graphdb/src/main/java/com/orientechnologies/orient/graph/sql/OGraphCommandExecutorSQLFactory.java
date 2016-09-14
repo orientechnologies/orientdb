@@ -73,12 +73,12 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
    * @return Transactional OrientGraph implementation from the current database in thread local.
    */
   public static OrientGraph getGraph(final boolean autoStartTx, OModifiableBoolean shouldBeShutDown) {
-    final ODatabaseDocument database = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.get();
 
     final OrientBaseGraph result = OrientBaseGraph.getActiveGraph();
 
     if (result != null && (result instanceof OrientGraph)) {
-      final ODatabaseDocumentTx graphDb = result.getRawGraph();
+      final ODatabaseDocumentInternal graphDb = result.getRawGraph();
 
       // CHECK IF THE DATABASE + USER IN TL IS THE SAME IN ORDER TO USE IT
       if (canReuseActiveGraph(graphDb, database)) {
@@ -94,10 +94,10 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
       }
     }
     // Set it again on ThreadLocal because the getRawGraph() may have set a closed db in the thread-local
-    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseDocumentInternal) database);
+    ODatabaseRecordThreadLocal.INSTANCE.set(database);
     shouldBeShutDown.setValue(true);
 
-    final OrientGraph g = new OrientGraph((ODatabaseDocumentTx) database, false);
+    final OrientGraph g = new OrientGraph(database, false);
     if (autoStartTx && autoTxStartRequired(database))
       g.begin();
     return g;
@@ -107,12 +107,12 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
    * @return a Non Transactional OrientGraph implementation from the current database in thread local.
    */
   public static OrientGraphNoTx getGraphNoTx(final OModifiableBoolean shouldBeShutDown) {
-    final ODatabaseDocument database = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.get();
 
     final OrientBaseGraph result = OrientBaseGraph.getActiveGraph();
 
     if (result != null && (result instanceof OrientGraphNoTx)) {
-      final ODatabaseDocumentTx graphDb = result.getRawGraph();
+      final ODatabaseDocumentInternal graphDb = result.getRawGraph();
 
       // CHECK IF THE DATABASE + USER IN TL IS THE SAME IN ORDER TO USE IT
       if (canReuseActiveGraph(graphDb, database)) {
@@ -127,8 +127,8 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
 
     // Set it again on ThreadLocal because the getRawGraph() may have set a closed db in the thread-local
     shouldBeShutDown.setValue(true);
-    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseDocumentInternal) database);
-    return new OrientGraphNoTx((ODatabaseDocumentTx) database);
+    ODatabaseRecordThreadLocal.INSTANCE.set(database);
+    return new OrientGraphNoTx(database);
   }
 
   /**
@@ -136,7 +136,7 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
    *         local.
    */
   public static OrientBaseGraph getAnyGraph(final OModifiableBoolean shouldBeShutDown) {
-    final ODatabaseDocument database = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.get();
 
     final OrientBaseGraph result = OrientBaseGraph.getActiveGraph();
 
@@ -155,8 +155,8 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
 
     // Set it again on ThreadLocal because the getRawGraph() may have set a closed db in the thread-local
     shouldBeShutDown.setValue(true);
-    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseDocumentInternal) database);
-    return new OrientGraphNoTx((ODatabaseDocumentTx) database);
+    ODatabaseRecordThreadLocal.INSTANCE.set(database);
+    return new OrientGraphNoTx(database);
   }
 
   public static <T> T runInTx(final OrientGraph graph, final GraphCallBack<T> callBack) {

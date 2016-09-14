@@ -18,10 +18,7 @@ package com.orientechnologies.common.serialization.types;
 
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
-import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
+import org.junit.Assert;import org.junit.Before; import org.junit.Test;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Date;
@@ -30,14 +27,13 @@ import java.util.Date;
  * @author Ilya Bershadskiy (ibersh20-at-gmail.com)
  * @since 20.01.12
  */
-@Test
 public class DateTimeSerializerTest {
   private final static int  FIELD_SIZE = 8;
   private static final Date OBJECT     = new Date();
   private ODateTimeSerializer dateTimeSerializer;
   private static final byte[] stream = new byte[FIELD_SIZE];
 
-  @BeforeClass
+  @Before
   public void beforeClass() {
     dateTimeSerializer = new ODateTimeSerializer();
   }

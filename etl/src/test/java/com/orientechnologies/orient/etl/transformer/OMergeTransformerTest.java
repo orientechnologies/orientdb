@@ -38,16 +38,14 @@ public class OMergeTransformerTest extends OETLBaseTest {
     assertThat(vertices).hasSize(1);
     final Vertex inserted = vertices.iterator().next();
 
-    assertThat(inserted.getProperty("name")).isEqualTo("FirstName");
-    assertThat(inserted.getProperty("num")).isEqualTo(10000);
+    assertThat(inserted.<String>getProperty("name")).isEqualTo("FirstName");
+    assertThat(inserted.<Integer>getProperty("num")).isEqualTo(10000);
 
     //update graph with CSV: avoid num to be casted to integer forcing string
-    process(" {source: { content: { value: 'num,name\n10000,FirstNameUpdated' } }, "
-        + "extractor : { csv: {} }," + " transformers: ["
-        + "{merge: {  joinFieldName:'num', lookup:'Person.num'}}, "
-        + "{vertex: { class:'Person', skipDuplicates: false}}"
-        + "],"
-        + "loader: { orientdb: { dbURL: 'memory:OETLBaseTest', dbType:'graph', tx: true} } }");
+    process(
+        " {source: { content: { value: 'num,name\n10000,FirstNameUpdated' } }, " + "extractor : { csv: {} }," + " transformers: ["
+            + "{merge: {  joinFieldName:'num', lookup:'Person.num'}}, " + "{vertex: { class:'Person', skipDuplicates: false}}"
+            + "]," + "loader: { orientdb: { dbURL: 'memory:OETLBaseTest', dbType:'graph', tx: true} } }");
 
     //verify
     graph = new OrientGraph("memory:OETLBaseTest");
@@ -60,8 +58,8 @@ public class OMergeTransformerTest extends OETLBaseTest {
     final Vertex updated = vertices.iterator().next();
 
     ORecord load = graph.getRawGraph().load((ORID) updated.getId());
-    assertThat(updated.getProperty("name")).isEqualTo("FirstNameUpdated");
-    assertThat(updated.getProperty("num")).isEqualTo(10000);
+    assertThat(updated.<String>getProperty("name")).isEqualTo("FirstNameUpdated");
+    assertThat(updated.<Integer>getProperty("num")).isEqualTo(10000);
   }
 
   @Test
@@ -80,7 +78,7 @@ public class OMergeTransformerTest extends OETLBaseTest {
     assertThat(vertices).hasSize(1);
     final Vertex updated = vertices.iterator().next();
 
-    assertThat(updated.getProperty("name")).isEqualTo("FirstNameUpdated");
+    assertThat(updated.<String>getProperty("name")).isEqualTo("FirstNameUpdated");
   }
 
 }

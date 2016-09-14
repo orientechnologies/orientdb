@@ -20,14 +20,12 @@
 
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.common.concur.ONeedRetryException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
-import junit.framework.Assert;
+import com.tinkerpop.blueprints.impls.orient.*;
+import org.junit.Assert;
 
 import java.util.Date;
 import java.util.UUID;
@@ -38,6 +36,8 @@ import java.util.concurrent.Callable;
  */
 public abstract class AbstractServerClusterGraphTest extends AbstractServerClusterInsertTest {
   protected OrientGraphFactory factory;
+  protected ORID               rootVertexId;
+  protected Object             lock = new Object();
 
   class TxWriter implements Callable<Void> {
     private final String databaseUrl;
@@ -54,46 +54,78 @@ public abstract class AbstractServerClusterGraphTest extends AbstractServerClust
     public Void call() throws Exception {
       String name = Integer.toString(serverId);
 
-      for (int i = 0; i < count; i++) {
-        final OrientGraph graph = factory.getTx();
-        try {
-          if ((i + 1) % 100 == 0)
-            System.out.println("\nWriter " + databaseUrl + " managed " + (i + 1) + "/" + count + " vertices so far");
-
+      synchronized (lock) {
+        if (rootVertexId == null) {
+          // ONLY THE FIRST TIME CREATE THE ROOT
+          OrientGraph graph = factory.getTx();
           try {
-            OrientVertex person = createVertex(graph, serverId, threadId, i);
-            updateVertex(graph, person);
-            checkVertex(graph, person);
-            // checkIndex(database, (String) person.field("name"), person.getIdentity());
+            OrientVertex root = createVertex(graph, serverId, threadId, 0);
+            rootVertexId = root.getIdentity();
+          } finally {
+            graph.shutdown();
+          }
+        }
+      }
 
-            graph.commit();
+      int itemInTx = 0;
+      final OrientBaseGraph graph = factory.getTx();
+      try {
+        for (int i = 1; i <= count; i++) {
+          if (i % 100 == 0)
+            System.out.println("\nWriter " + databaseUrl + " managed " + i + "/" + count + " vertices so far");
 
-            Assert.assertTrue(person.getIdentity().isPersistent());
-          } catch (Exception e) {
-            graph.rollback();
-            throw e;
+          for (int retry = 0; retry < 100; retry++) {
+            try {
+              OrientVertex person = createVertex(graph, serverId, threadId, i);
+               updateVertex(graph, person);
+               checkVertex(graph, person);
+
+              final OrientVertex root = graph.getVertex(rootVertexId);
+              root.addEdge("E", person);
+
+              // checkIndex(database, (String) person.field("name"), person.getIdentity());
+
+              if (i % 10 == 0 || i == count) {
+                graph.commit();
+                itemInTx = 0;
+              } else
+                itemInTx++;
+
+              break;
+
+            } catch (ONeedRetryException e) {
+              graph.rollback();
+              i -= itemInTx;
+              itemInTx = 0;
+              // RETRY
+            } catch (Exception e) {
+              graph.rollback();
+              throw e;
+            }
           }
 
           if (delayWriter > 0)
             Thread.sleep(delayWriter);
-
-        } catch (InterruptedException e) {
-          System.out.println("Writer received interrupt (db=" + databaseUrl);
-          Thread.currentThread().interrupt();
-          break;
-        } catch (Exception e) {
-          System.out.println("Writer received exception (db=" + databaseUrl);
-          e.printStackTrace();
-          break;
-        } finally {
-          runningWriters.countDown();
-          graph.shutdown();
         }
+      } catch (InterruptedException e) {
+        System.out.println("Writer received interrupt (db=" + databaseUrl);
+        Thread.currentThread().interrupt();
+      } catch (Exception e) {
+        System.out.println("Writer received exception (db=" + databaseUrl);
+        e.printStackTrace();
+      } finally {
+        runningWriters.countDown();
+        graph.shutdown();
       }
 
       System.out.println("\nWriter " + name + " END");
       return null;
     }
+  }
+
+  @Override
+  protected void computeExpected(int serverId) {
+    expected = writerCount * count * serverId + baseCount + 1;
   }
 
   protected void onAfterExecution() {
@@ -121,7 +153,11 @@ public abstract class AbstractServerClusterGraphTest extends AbstractServerClust
     provider.createProperty("totalPurchased", OType.DECIMAL);
 
     factory = new OrientGraphFactory(graph.getRawGraph().getURL(), "admin", "admin", false);
+    setFactorySettings(factory);
     factory.setStandardElementConstraints(false);
+  }
+
+  protected void setFactorySettings(OrientGraphFactory factory) {
   }
 
   @Override
@@ -129,18 +165,18 @@ public abstract class AbstractServerClusterGraphTest extends AbstractServerClust
     return new TxWriter(serverId, threadId, databaseURL);
   }
 
-  protected OrientVertex createVertex(OrientGraph graph, int serverId, int threadId, int i) {
+  protected OrientVertex createVertex(OrientBaseGraph graph, int serverId, int threadId, int i) {
     final String uniqueId = serverId + "-" + threadId + "-" + i;
 
-    return graph.addVertex("class:Person", "id", UUID.randomUUID().toString(), "name", "Billy" + uniqueId, "surname", "Mayes"
-        + uniqueId, "birthday", new Date(), "children", uniqueId);
+    return graph.addVertex("class:Person", "id", UUID.randomUUID().toString(), "name", "Billy" + uniqueId, "surname",
+        "Mayes" + uniqueId, "birthday", new Date(), "children", uniqueId);
   }
 
-  protected void updateVertex(OrientGraph graph, OrientVertex v) {
+  protected void updateVertex(OrientBaseGraph graph, OrientVertex v) {
     v.setProperty("updated", true);
   }
 
-  protected void checkVertex(OrientGraph graph, OrientVertex v) {
+  protected void checkVertex(OrientBaseGraph graph, OrientVertex v) {
     v.reload();
     Assert.assertEquals(v.getProperty("updated"), Boolean.TRUE);
   }

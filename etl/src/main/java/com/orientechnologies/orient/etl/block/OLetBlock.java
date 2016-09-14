@@ -30,14 +30,14 @@ public class OLetBlock extends OAbstractBlock {
 
   @Override
   public ODocument getConfiguration() {
-    return new ODocument().fromJSON("{parameters:[{name:{optional:false,description:'Variable name'}},"
-        + "{value:{optional:true,description:'Variable value'}}"
-        + "{expression:{optional:true,description:'Expression to evaluate'}}" + "]}");
+    return new ODocument().fromJSON(
+        "{parameters:[{name:{optional:false,description:'Variable name'}}," + "{value:{optional:true,description:'Variable value'}}"
+            + "{expression:{optional:true,description:'Expression to evaluate'}}" + "]}");
   }
 
   @Override
-  public void configure(OETLProcessor iProcessor, final ODocument iConfiguration, final OCommandContext iContext) {
-    super.configure(iProcessor, iConfiguration, iContext);
+  public void configure(final ODocument iConfiguration, final OCommandContext iContext) {
+    super.configure(iConfiguration, iContext);
 
     name = iConfiguration.field("name");
     if (iConfiguration.containsField("value")) {

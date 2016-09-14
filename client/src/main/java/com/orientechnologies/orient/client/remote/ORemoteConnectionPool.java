@@ -11,12 +11,10 @@ import com.orientechnologies.orient.enterprise.channel.OChannel;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelListener;
 
-import java.util.Map;
-
 /**
  * Created by tglman on 01/10/15.
  */
-public class ORemoteConnectionPool implements OResourcePoolListener<String, OChannelBinaryAsynchClient>, OChannelListener {
+public class ORemoteConnectionPool implements OResourcePoolListener<String, OChannelBinaryAsynchClient> {
 
   private OResourcePool<String, OChannelBinaryAsynchClient> pool;
   private ORemoteConnectionPushListener                     listener;
@@ -26,8 +24,7 @@ public class ORemoteConnectionPool implements OResourcePoolListener<String, OCha
     listener = createAsyncListener ? new ORemoteConnectionPushListener() : null;
   }
 
-  protected OChannelBinaryAsynchClient createNetworkConnection(String iServerURL, final OContextConfiguration clientConfiguration,
-      Map<String, Object> iAdditionalArg) throws OIOException {
+  protected OChannelBinaryAsynchClient createNetworkConnection(String iServerURL, final OContextConfiguration clientConfiguration) throws OIOException {
     if (iServerURL == null)
       throw new IllegalArgumentException("server url is null");
 
@@ -58,9 +55,6 @@ public class ORemoteConnectionPool implements OResourcePoolListener<String, OCha
       final OChannelBinaryAsynchClient ch = new OChannelBinaryAsynchClient(remoteHost, remotePort, databaseName,
           clientConfiguration, OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION, listener);
 
-      // REGISTER MYSELF AS LISTENER TO REMOVE THE CHANNEL FROM THE POOL IN CASE OF CLOSING
-      ch.registerListener(this);
-
       return ch;
 
     } catch (OIOException e) {
@@ -74,7 +68,7 @@ public class ORemoteConnectionPool implements OResourcePoolListener<String, OCha
 
   @Override
   public OChannelBinaryAsynchClient createNewResource(final String iKey, final Object... iAdditionalArgs) {
-    return createNetworkConnection(iKey, (OContextConfiguration) iAdditionalArgs[0], (Map<String, Object>) iAdditionalArgs[1]);
+    return createNetworkConnection(iKey, (OContextConfiguration) iAdditionalArgs[0]);
   }
 
   @Override
@@ -94,22 +88,10 @@ public class ORemoteConnectionPool implements OResourcePoolListener<String, OCha
     return pool;
   }
 
-  @Override
-  public void onChannelClose(final OChannel channel) {
-    OChannelBinaryAsynchClient conn = (OChannelBinaryAsynchClient) channel;
-
-    if (pool == null)
-      throw new IllegalStateException("Connection cannot be released because the pool doesn't exist anymore");
-
-    pool.remove(conn);
-
-  }
 
   public OChannelBinaryAsynchClient acquire(final String iServerURL, final long timeout,
-      final OContextConfiguration clientConfiguration, final Map<String, Object> iConfiguration,
-      final OStorageRemoteAsynchEventListener iListener) {
-    final OChannelBinaryAsynchClient ret = pool.getResource(iServerURL, timeout, clientConfiguration, iConfiguration,
-        iListener != null);
+      final OContextConfiguration clientConfiguration, final OStorageRemoteAsynchEventListener iListener) {
+    final OChannelBinaryAsynchClient ret = pool.getResource(iServerURL, timeout, clientConfiguration, iListener != null);
     if (listener != null && iListener != null)
       listener.addListener(this, ret, iListener);
     return ret;

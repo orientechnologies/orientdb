@@ -293,11 +293,13 @@ public class OImmutableProperty implements OProperty {
     throw new UnsupportedOperationException();
   }
 
-  @Override public OIndex<?> createIndex(String iType, ODocument metadata) {
+  @Override
+  public OIndex<?> createIndex(String iType, ODocument metadata) {
     throw new UnsupportedOperationException();
   }
 
-  @Override public OIndex<?> createIndex(OClass.INDEX_TYPE iType, ODocument metadata) {
+  @Override
+  public OIndex<?> createIndex(OClass.INDEX_TYPE iType, ODocument metadata) {
     throw new UnsupportedOperationException();
   }
 

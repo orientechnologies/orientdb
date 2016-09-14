@@ -16,12 +16,12 @@
 
 package com.orientechnologies.common.util;
 
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.nio.ByteBuffer;
 
-import static org.testng.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Artem Loginov (logart2007-at-gmail.com)
@@ -32,7 +32,7 @@ public class OByteBufferUtilsTest {
   private ByteBuffer buffer1;
   private ByteBuffer buffer2;
 
-  @BeforeMethod
+  @Before
   public void setUp() throws Exception {
     buffer1 = ByteBuffer.allocate(10);
     buffer2 = ByteBuffer.allocate(10);

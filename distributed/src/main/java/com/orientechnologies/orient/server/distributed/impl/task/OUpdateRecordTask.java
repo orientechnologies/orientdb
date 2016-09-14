@@ -22,24 +22,25 @@ package com.orientechnologies.orient.server.distributed.impl.task;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.OPlaceholder;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.ODistributedRequest;
-import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRecordReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
+import java.util.Arrays;
 
 /**
  * Distributed updated record task used for synchronization.
@@ -55,6 +56,7 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
   protected byte[]          content;
 
   private transient ORecord record;
+  private byte[]            previousRecordContent;
 
   public OUpdateRecordTask() {
   }
@@ -93,27 +95,55 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
       ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "updating record %s/%s v.%d",
           database.getName(), rid.toString(), version);
 
-    checkRecordExists();
+    prepareUndoOperation();
+    if (previousRecord == null) {
+      // RESURRECT/CREATE IT
 
-    ORecord loadedRecord = previousRecord.copy();
+      final OPlaceholder ph = (OPlaceholder) new OCreateRecordTask(rid, content, version, recordType).executeRecordTask(requestId,
+          iServer, iManager, database);
+      record = ph.getRecord();
 
-    if (loadedRecord instanceof ODocument) {
-      // APPLY CHANGES FIELD BY FIELD TO MARK DIRTY FIELDS FOR INDEXES/HOOKS
-      final ODocument newDocument = (ODocument) getRecord();
+      if (record == null)
+        ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+            "+-> Error on updating record %s", rid);
 
-      ODocument loadedDocument = (ODocument) loadedRecord;
-      int loadedRecordVersion = loadedDocument.merge(newDocument, false, false).getVersion();
-      ORecordInternal.setVersion(loadedDocument, version);
-    } else
-      ORecordInternal.fill(loadedRecord, rid, version, content, true);
+    } else {
+      // UPDATE IT
+      final int loadedVersion = previousRecord.getVersion();
 
-    loadedRecord.setDirty();
+      if (loadedVersion == version + 1 && Arrays.equals(content, previousRecordContent)) {
+        // OPERATION ALREADY EXECUTED
+        record = previousRecord;
+      } else {
+        final ORecord loadedRecord = previousRecord.copy();
 
-    record = database.save(loadedRecord);
+        if (loadedRecord instanceof ODocument) {
+          // APPLY CHANGES FIELD BY FIELD TO MARK DIRTY FIELDS FOR INDEXES/HOOKS
+          final ODocument newDocument = (ODocument) getRecord();
+
+          final ODocument loadedDocument = (ODocument) loadedRecord;
+          loadedDocument.merge(newDocument, false, false).getVersion();
+          ORecordInternal.setVersion(loadedDocument, version);
+        } else
+          ORecordInternal.fill(loadedRecord, rid, version, content, true);
+
+        loadedRecord.setDirty();
+
+        record = database.save(loadedRecord);
+
+        if (record == null)
+          ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+              "+-> Error on updating record %s", rid);
+
+        if (version < 0 && ODistributedServerLog.isDebugEnabled())
+          ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+              "+-> Reverted %s from version %d to %d", rid, loadedVersion, record.getVersion());
+      }
+    }
 
     if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "+-> updated record %s/%s v.%d [%s]",
-          database.getName(), rid.toString(), record.getVersion(), record);
+      ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+          "+-> updated record %s/%s v.%d [%s]", database.getName(), rid.toString(), record.getVersion(), record);
 
     return record.getVersion();
   }
@@ -154,16 +184,16 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
   }
 
   @Override
-  public void writeExternal(final ObjectOutput out) throws IOException {
-    super.writeExternal(out);
+  public void toStream(final DataOutput out) throws IOException {
+    super.toStream(out);
     out.writeInt(content.length);
     out.write(content);
-    out.write(recordType);
+    out.writeByte(recordType);
   }
 
   @Override
-  public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
-    super.readExternal(in);
+  public void fromStream(final DataInput in, final ORemoteTaskFactory factory) throws IOException {
+    super.fromStream(in, factory);
     final int contentSize = in.readInt();
     content = new byte[contentSize];
     in.readFully(content);
@@ -192,4 +222,22 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
     return FACTORYID;
   }
 
+  @Override
+  public ORecord prepareUndoOperation() {
+    if (previousRecord == null) {
+      // READ DIRECTLY FROM THE UNDERLYING STORAGE
+      final OStorageOperationResult<ORawBuffer> loaded = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying()
+          .readRecord(rid, null, true, null);
+
+      if (loaded == null || loaded.getResult() == null)
+        return null;
+
+      // SAVE THE CONTENT TO COMPARE IN CASE
+      previousRecordContent = loaded.getResult().buffer;
+
+      previousRecord = Orient.instance().getRecordFactoryManager().newInstance(loaded.getResult().recordType);
+      ORecordInternal.fill(previousRecord, rid, loaded.getResult().version, loaded.getResult().getBuffer(), false);
+    }
+    return previousRecord;
+  }
 }

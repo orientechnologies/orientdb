@@ -1,0 +1,51 @@
+package com.orientechnologies.orient.core.sql.executor;
+
+import com.orientechnologies.common.concur.OTimeoutException;
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.sql.parser.OExpression;
+import com.orientechnologies.orient.core.sql.parser.OIdentifier;
+
+/**
+ * Created by luigidellaquila on 03/08/16.
+ */
+public class GlobalLetExpressionStep extends AbstractExecutionStep {
+  private final OIdentifier varname;
+  private final OExpression expression;
+
+  boolean executed = false;
+
+  public GlobalLetExpressionStep(OIdentifier varName, OExpression expression, OCommandContext ctx) {
+    super(ctx);
+    this.varname = varName;
+    this.expression = expression;
+  }
+
+  @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+    getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
+    calculate(ctx);
+    return new OInternalResultSet();
+  }
+
+  private void calculate(OCommandContext ctx) {
+    if (executed) {
+      return;
+    }
+    Object value = expression.execute((OResult) null, ctx);
+    ctx.setVariable(varname.getStringValue(), value);
+    executed = true;
+  }
+
+  @Override public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
+
+  }
+
+  @Override public void sendResult(Object o, Status status) {
+
+  }
+
+  @Override public String prettyPrint(int depth, int indent) {
+    String spaces = OExecutionStepInternal.getIndent(depth, indent);
+    return spaces + "+ LET (once)\n" +
+        spaces + "  " + varname + " = " + expression;
+  }
+}

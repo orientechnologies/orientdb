@@ -4,25 +4,24 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import org.junit.After;
 import org.junit.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.Before;
+import org.junit.Test;
 
-import static org.junit.Assert.assertNotNull;
-import static org.testng.AssertJUnit.*;
+import static org.junit.Assert.*;
 
 public class AlterPropertyTest {
 
   private ODatabaseDocument db;
 
-  @BeforeMethod
+  @Before
   public void before() {
     db = new ODatabaseDocumentTx("memory:" + AlterPropertyTest.class.getSimpleName());
     db.create();
   }
 
-  @AfterMethod
+  @After
   public void after() {
     db.drop();
   }

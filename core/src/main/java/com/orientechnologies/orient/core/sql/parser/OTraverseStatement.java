@@ -5,6 +5,7 @@ package com.orientechnologies.orient.core.sql.parser;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class OTraverseStatement extends OStatement {
 
@@ -14,15 +15,15 @@ public class OTraverseStatement extends OStatement {
 
   protected List<OTraverseProjectionItem> projections = new ArrayList<OTraverseProjectionItem>();
 
-  protected OFromClause                   target;
+  protected OFromClause target;
 
-  protected OWhereClause                  whereClause;
+  protected OWhereClause whereClause;
 
-  protected OLimit                        limit;
+  protected OLimit limit;
 
-  protected Strategy                      strategy;
+  protected Strategy strategy;
 
-  protected OInteger                      maxDepth;
+  protected OInteger maxDepth;
 
   public OTraverseStatement(int id) {
     super(id);
@@ -77,5 +78,49 @@ public class OTraverseStatement extends OStatement {
 
   }
 
+  @Override public OStatement copy() {
+    OTraverseStatement result = new OTraverseStatement(-1);
+    result.projections = projections == null ? null : projections.stream().map(x -> x.copy()).collect(Collectors.toList());
+    result.target = target == null ? null : target.copy();
+    result.whereClause = whereClause == null ? null : whereClause.copy();
+    result.limit = limit == null ? null : limit.copy();
+    result.strategy = strategy;
+    result.maxDepth = maxDepth == null ? null : maxDepth.copy();
+    return result;
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OTraverseStatement that = (OTraverseStatement) o;
+
+    if (projections != null ? !projections.equals(that.projections) : that.projections != null)
+      return false;
+    if (target != null ? !target.equals(that.target) : that.target != null)
+      return false;
+    if (whereClause != null ? !whereClause.equals(that.whereClause) : that.whereClause != null)
+      return false;
+    if (limit != null ? !limit.equals(that.limit) : that.limit != null)
+      return false;
+    if (strategy != that.strategy)
+      return false;
+    if (maxDepth != null ? !maxDepth.equals(that.maxDepth) : that.maxDepth != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = projections != null ? projections.hashCode() : 0;
+    result = 31 * result + (target != null ? target.hashCode() : 0);
+    result = 31 * result + (whereClause != null ? whereClause.hashCode() : 0);
+    result = 31 * result + (limit != null ? limit.hashCode() : 0);
+    result = 31 * result + (strategy != null ? strategy.hashCode() : 0);
+    result = 31 * result + (maxDepth != null ? maxDepth.hashCode() : 0);
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=47399a3a3d5a423768bbdc70ee957464 (do not edit this line) */

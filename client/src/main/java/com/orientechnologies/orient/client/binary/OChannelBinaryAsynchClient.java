@@ -24,6 +24,7 @@ import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OSystemException;
+import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.client.remote.OStorageRemoteNodeSession;
@@ -189,7 +190,6 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
             readCondition.signalAll();
             releaseReadLock();
             readLock = false;
-            close();
 
             throw e;
           } finally {
@@ -207,11 +207,9 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
                 iRequesterId, currentSessionId);
 
           if (iTimeout > 0 && (System.currentTimeMillis() - startClock) > iTimeout) {
-            // CLOSE THE SOCKET TO CHANNEL TO AVOID FURTHER DIRTY DATA
-            close();
             readLock = false;
 
-            throw new OTimeoutException("Timeout on reading response from the server "
+            throw new IOException("Timeout on reading response from the server "
                 + (socket != null ? socket.getRemoteSocketAddress() : "") + " for the request " + iRequesterId);
           }
 
@@ -221,7 +219,6 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
               OLogManager.instance().info(this, "Unread responses %d > %d, consider the buffer as dirty: clean it", unreadResponse,
                   maxUnreadResponses);
 
-            close();
             readLock = false;
 
             throw new IOException("Timeout on reading response");
@@ -453,17 +450,21 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
               + (throwable != null ? throwable.getClass().getName() : "null"));
   }
 
-  public void beginRequest(byte iCommand, OStorageRemoteSession session)
+  public void beginRequest(final byte iCommand, final OStorageRemoteSession session)
       throws IOException {
-    OStorageRemoteNodeSession nodeSession = session.get(getServerURL());
+    final OStorageRemoteNodeSession nodeSession = session.getServerSession(getServerURL());
+
+    if( nodeSession == null )
+      throw new OIOException("Invalid session for URL '"+getServerURL()+"'");
+
     writeByte(iCommand);
     writeInt(nodeSession.getSessionId());
     if (nodeSession.getToken() != null) {
-      if (!session.has(this)) {
+//      if (!session.hasConnection(this) || true) {
         writeBytes(nodeSession.getToken());
-        session.add(this);
-      } else
-        writeBytes(new byte[] {});
+//        session.addConnection(this);
+//      } else
+//        writeBytes(new byte[] {});
     }
   }
 }

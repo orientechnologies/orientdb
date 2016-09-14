@@ -24,24 +24,21 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
+import com.orientechnologies.orient.core.sql.query.OResultSet;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * IN operator.
  *
  * @author Luca Garulli
- *
  */
 public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
 
@@ -49,14 +46,12 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
     super("IN", 5, false);
   }
 
-  @Override
-  public OIndexReuseType getIndexReuseType(final Object iLeft, final Object iRight) {
+  @Override public OIndexReuseType getIndexReuseType(final Object iLeft, final Object iRight) {
     return OIndexReuseType.INDEX_METHOD;
   }
 
-  @SuppressWarnings("unchecked")
-  @Override
-  public OIndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
+  @SuppressWarnings("unchecked") @Override public OIndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index,
+      List<Object> keyParams, boolean ascSortOrder) {
     final OIndexDefinition indexDefinition = index.getDefinition();
 
     final OIndexInternal<?> internalIndex = index.getInternal();
@@ -66,7 +61,7 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
 
     if (indexDefinition.getParamCount() == 1) {
       final Object inKeyValue = keyParams.get(0);
-      final Collection<Object> inParams;
+      Collection<Object> inParams;
       if (inKeyValue instanceof List<?>)
         inParams = (Collection<Object>) inKeyValue;
       else if (inKeyValue instanceof OSQLFilterItem)
@@ -74,6 +69,23 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
       else
         inParams = Collections.singleton(inKeyValue);
 
+      if (inParams instanceof OResultSet) {//manage IN (subquery)
+        Set newInParams = new HashSet();
+        for (Object o : ((OResultSet) inParams)) {
+          if (o instanceof ODocument && ((ODocument) o).getIdentity().getClusterId() < -1) {
+            ODocument doc = (ODocument) o;
+            String[] fieldNames = doc.fieldNames();
+            if (fieldNames.length == 1) {
+              newInParams.add(doc.field(fieldNames[0]));
+            } else {
+              newInParams.add(o);
+            }
+          } else {
+            newInParams.add(o);
+          }
+        }
+        inParams = newInParams;
+      }
       final List<Object> inKeys = new ArrayList<Object>();
 
       boolean containsNotCompatibleKey = false;
@@ -155,8 +167,7 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
     return cursor;
   }
 
-  @Override
-  public ORID getBeginRidRange(Object iLeft, Object iRight) {
+  @Override public ORID getBeginRidRange(Object iLeft, Object iRight) {
     final Iterable<?> ridCollection;
     final int ridSize;
     if (iRight instanceof OSQLFilterItemField && ODocumentHelper.ATTRIBUTE_RID.equals(((OSQLFilterItemField) iRight).getRoot())) {
@@ -165,8 +176,8 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
 
       ridCollection = OMultiValue.getMultiValueIterable(iLeft);
       ridSize = OMultiValue.getSize(iLeft);
-    } else if (iLeft instanceof OSQLFilterItemField
-        && ODocumentHelper.ATTRIBUTE_RID.equals(((OSQLFilterItemField) iLeft).getRoot())) {
+    } else if (iLeft instanceof OSQLFilterItemField && ODocumentHelper.ATTRIBUTE_RID
+        .equals(((OSQLFilterItemField) iLeft).getRoot())) {
       if (iRight instanceof OSQLFilterItem)
         iRight = ((OSQLFilterItem) iRight).getValue(null, null, null);
       ridCollection = OMultiValue.getMultiValueIterable(iRight);
@@ -179,8 +190,7 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
     return rids == null ? null : Collections.min(rids);
   }
 
-  @Override
-  public ORID getEndRidRange(Object iLeft, Object iRight) {
+  @Override public ORID getEndRidRange(Object iLeft, Object iRight) {
     final Iterable<?> ridCollection;
     final int ridSize;
     if (iRight instanceof OSQLFilterItemField && ODocumentHelper.ATTRIBUTE_RID.equals(((OSQLFilterItemField) iRight).getRoot())) {
@@ -189,8 +199,8 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
 
       ridCollection = OMultiValue.getMultiValueIterable(iLeft, false);
       ridSize = OMultiValue.getSize(iLeft);
-    } else if (iLeft instanceof OSQLFilterItemField
-        && ODocumentHelper.ATTRIBUTE_RID.equals(((OSQLFilterItemField) iLeft).getRoot())) {
+    } else if (iLeft instanceof OSQLFilterItemField && ODocumentHelper.ATTRIBUTE_RID
+        .equals(((OSQLFilterItemField) iLeft).getRoot())) {
       if (iRight instanceof OSQLFilterItem)
         iRight = ((OSQLFilterItem) iRight).getValue(null, null, null);
 
@@ -204,10 +214,8 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
     return rids == null ? null : Collections.max(rids);
   }
 
-  @Override
-  @SuppressWarnings("unchecked")
-  protected boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
-      final Object iRight, OCommandContext iContext) {
+  @Override @SuppressWarnings("unchecked") protected boolean evaluateExpression(final OIdentifiable iRecord,
+      final OSQLFilterCondition iCondition, final Object iLeft, final Object iRight, OCommandContext iContext) {
     if (OMultiValue.isMultiValue(iLeft)) {
       if (iRight instanceof Collection<?>) {
         // AGAINST COLLECTION OF ITEMS

@@ -18,6 +18,7 @@
 
 package com.orientechnologies.orient.etl;
 
+import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
@@ -36,15 +37,17 @@ public abstract class OETLBaseTest {
   protected String[] surnames = new String[] { "Miner", "Ferguson", "Cancelli", "Lavori", "Raggio", "Eagles", "Smiles",
       "Ironcutter" };
 
-  protected OrientGraph   graph;
-  protected OETLProcessor proc;
+  protected OrientGraph               graph;
+  protected OETLProcessor             proc;
+  private   OETLProcessorConfigurator configurator;
 
   @Before
   public void setUp() {
     graph = new OrientGraph("memory:OETLBaseTest");
     graph.setUseLightweightEdges(false);
-    proc = new OETLProcessor();
-    proc.getFactory().registerLoader(OETLStubLoader.class);
+    OETLComponentFactory factory = new OETLComponentFactory().registerLoader(OETLStubLoader.class)
+        .registerExtractor(OETLStubRandomExtractor.class);
+    configurator = new OETLProcessorConfigurator(factory);
   }
 
   @After
@@ -57,14 +60,14 @@ public abstract class OETLBaseTest {
   }
 
   protected void process(final String cfgJson) {
-    ODocument cfg = new ODocument().fromJSON(cfgJson, "noMap");
-    proc.parse(cfg, null);
-    proc.execute();
+
+    process(cfgJson,new OBasicCommandContext());
   }
 
   protected void process(final String cfgJson, final OCommandContext iContext) {
     ODocument cfg = new ODocument().fromJSON(cfgJson, "noMap");
-    proc.parse(cfg, iContext);
+
+    proc = configurator.parse(cfg, iContext);
     proc.execute();
   }
 }

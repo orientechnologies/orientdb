@@ -53,6 +53,7 @@ public class BasicScenarioTest extends AbstractScenarioTest {
   public void test() throws Exception {
     init(SERVERS);
     prepare(false);
+    useTransactions = true;
     super.executeWritesOnServers.addAll(super.serverInstance);
     execute();
   }

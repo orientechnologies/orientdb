@@ -100,4 +100,27 @@ public class SQLUpdateEdgeTest {
 
   }
 
+  @Test
+  public void testUpdateEdgeOfTypeE(){
+    //issue #6378
+    ODocument v1 = database.command(new OCommandSQL("create vertex")).execute();
+    ODocument v2 = database.command(new OCommandSQL("create vertex")).execute();
+    ODocument v3 = database.command(new OCommandSQL("create vertex")).execute();
+
+    Iterable<OrientEdge> edges = database.command(new OCommandSQL("create edge E from " + v1.getIdentity() + " to "+v2.getIdentity())).execute();
+    OrientEdge edge = edges.iterator().next();
+
+    database.command(new OCommandSQL("UPDATE EDGE "+edge.getIdentity()+" SET in = "+v3.getIdentity())).execute();
+
+    Iterable<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select expand(out()) from "+v1.getIdentity())).execute();
+    Assert.assertEquals(result.iterator().next().getIdentity(), v3.getIdentity());
+
+    result = database.command(new OSQLSynchQuery<ODocument>("select expand(in()) from "+v3.getIdentity())).execute();
+    Assert.assertEquals(result.iterator().next().getIdentity(), v1.getIdentity());
+
+    result = database.command(new OSQLSynchQuery<ODocument>("select expand(in()) from "+v2.getIdentity())).execute();
+    Assert.assertFalse(result.iterator().hasNext());
+
+  }
+
 }

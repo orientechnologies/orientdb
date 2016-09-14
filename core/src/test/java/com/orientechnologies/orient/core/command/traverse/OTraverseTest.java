@@ -1,12 +1,13 @@
 package com.orientechnologies.orient.core.command.traverse;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,11 +18,11 @@ import java.util.List;
  */
 public class OTraverseTest {
 
-  private ODatabaseDocumentTx db;
+  private ODatabaseDocument db;
   private ODocument           rootDocument;
   private OTraverse           traverse;
 
-  @BeforeMethod
+  @Before
   public void setUp() throws Exception {
     db = new ODatabaseDocumentTx("memory:" + OTraverseTest.class.getSimpleName());
     if (db.exists()) {
@@ -36,7 +37,7 @@ public class OTraverseTest {
     traverse.target(rootDocument).fields("*");
   }
 
-  @AfterMethod
+  @After
   public void tearDown() throws Exception {
     db.drop();
   }
@@ -77,7 +78,8 @@ public class OTraverseTest {
 
     rootDocument.save();
 
-    final List<ODocument> expectedResult = Arrays.asList(rootDocument, a, aa, ab, b, ba, bb, c1, c1a, c1b, c2, c2a, c2b, c3, c3a, c3b);
+    final List<ODocument> expectedResult = Arrays
+        .asList(rootDocument, a, aa, ab, b, ba, bb, c1, c1a, c1b, c2, c2a, c2b, c3, c3a, c3b);
 
     final List<OIdentifiable> results = traverse.execute();
 
@@ -121,8 +123,8 @@ public class OTraverseTest {
 
     rootDocument.save();
 
-    final List<ODocument> expectedResult = Arrays.asList(rootDocument, a, b, aa, ab, ba, bb, c1, c2, c3, c1a, c1b, c2a, c2b, c3a,
-        c3b);
+    final List<ODocument> expectedResult = Arrays
+        .asList(rootDocument, a, b, aa, ab, ba, bb, c1, c2, c3, c1a, c1b, c2a, c2b, c3a, c3b);
 
     final List<OIdentifiable> results = traverse.execute();
 

@@ -24,7 +24,7 @@ import java.util.concurrent.locks.Lock;
 
 /**
  * Lock Manager interface.
- * 
+ *
  * @author Luca Garulli
  * @since 2.2.0
  */
@@ -39,7 +39,7 @@ public interface OLockManager<T> {
 
   Lock[] acquireExclusiveLocksInBatch(T... values);
 
-  void acquireExclusiveLocksInBatch(Collection<T> values);
+  Lock[] acquireExclusiveLocksInBatch(Collection<T> values);
 
   void lockAllExclusive();
 

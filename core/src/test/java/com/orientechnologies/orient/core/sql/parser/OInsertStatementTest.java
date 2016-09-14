@@ -1,13 +1,12 @@
 package com.orientechnologies.orient.core.sql.parser;
 
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
-import static org.testng.Assert.fail;
+import static org.junit.Assert.fail;
 
-@Test
 public class OInsertStatementTest {
 
   protected SimpleNode checkRightSyntax(String query) {
@@ -35,6 +34,7 @@ public class OInsertStatementTest {
     return null;
   }
 
+  @Test
   public void testSimpleInsert() {
     checkRightSyntax("insert into Foo (a) values (1)");
     checkRightSyntax("insert into Foo (a) values ('1')");
@@ -46,50 +46,52 @@ public class OInsertStatementTest {
 
   }
 
-
+  @Test
   public void testInsertIntoCluster() {
-    checkRightSyntax("insert into cluster:default (equaledges, name, list) values ('yes', 'square', ['bottom', 'top','left','right'] )");
-    checkRightSyntax("insert into CLUSTER:default (equaledges, name, list) values ('yes', 'square', ['bottom', 'top','left','right'] )");
+    checkRightSyntax(
+        "insert into cluster:default (equaledges, name, list) values ('yes', 'square', ['bottom', 'top','left','right'] )");
+    checkRightSyntax(
+        "insert into CLUSTER:default (equaledges, name, list) values ('yes', 'square', ['bottom', 'top','left','right'] )");
 
-    checkRightSyntax("insert into Foo cluster foo1 (equaledges, name, list) values ('yes', 'square', ['bottom', 'top','left','right'] )");
-    checkRightSyntax("insert into Foo CLUSTER foo1 (equaledges, name, list) values ('yes', 'square', ['bottom', 'top','left','right'] )");
+    checkRightSyntax(
+        "insert into Foo cluster foo1 (equaledges, name, list) values ('yes', 'square', ['bottom', 'top','left','right'] )");
+    checkRightSyntax(
+        "insert into Foo CLUSTER foo1 (equaledges, name, list) values ('yes', 'square', ['bottom', 'top','left','right'] )");
 
   }
 
+  @Test
   public void testInsertSelectTimeout() {
     checkRightSyntax("insert into foo return foo select from bar TIMEOUT 10 ");
     checkRightSyntax("insert into foo return foo select from bar TIMEOUT 10 return");
     checkRightSyntax("insert into foo return foo select from bar TIMEOUT 10 exception");
   }
 
+  @Test
   public void testInsertInsert() {
     checkRightSyntax("insert into foo set bar = (insert into foo set a = 'foo') ");
   }
 
+  @Test
   public void testInsertEmbeddedDocs() {
-    checkRightSyntax("INSERT INTO Activity SET user = #14:1, story = #18:2, `like` = { \n"
-        + "      count: 0, \n"
-        + "      latest: [], \n"
-        + "      '@type': 'document', \n"
-        + "      '@class': 'Like'\n"
-        + "    }");
+    checkRightSyntax(
+        "INSERT INTO Activity SET user = #14:1, story = #18:2, `like` = { \n" + "      count: 0, \n" + "      latest: [], \n"
+            + "      '@type': 'document', \n" + "      '@class': 'Like'\n" + "    }");
 
-    checkRightSyntax("INSERT INTO Activity SET user = #14:1, story = #18:2, `like` = { \n"
-        + "      count: 0, \n"
-        + "      latest: [], \n"
-        + "      '@type': 'document', \n"
-        + "      '@class': 'Like'\n"
-        + "    }");
+    checkRightSyntax(
+        "INSERT INTO Activity SET user = #14:1, story = #18:2, `like` = { \n" + "      count: 0, \n" + "      latest: [], \n"
+            + "      '@type': 'document', \n" + "      '@class': 'Like'\n" + "    }");
   }
 
-  public void testJsonEscaping(){
+  @Test
+  public void testJsonEscaping() {
     //issue #5911
     checkRightSyntax("insert into Bookmark content {\"data\""
         + ":\"DPl62xXzEqG3tIPv7jYYWK34IG4bwTUNk0UUnhYHOluUdPiMQOLSz3V\\/GraBuzbEbjDARS6X1wUh53Dh3\\/hFpSXVy74iw4K7\\/WvwtyvdDJ51\\/6qg8RgPyL8qByNXnqxLviMaZk+UZCNmJ+wPJ+\\/Jphtb\\/cNPw5HmbTIA2VxOq"
         + "1OybZIuJaTRVD5tO8sVpMqJTa4IFjMb69vlIYpWctEYByp7gtBCRQOsBeLydnoW+DUOeG1jDyrMmA4hi5M+ctwdn9Vb5wqTjWw=\",\"isRead\":\"N\",\"id\":\"52013784-4e32-4e9b-9676-1814ca1256fb\",\"isPrivate\":\"F\",\"is"
         + "Shared\":0}");
   }
-  
+
   private void printTree(String s) {
     OrientSql osql = getParserFor(s);
     try {

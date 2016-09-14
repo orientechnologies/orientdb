@@ -50,7 +50,12 @@ import org.apache.lucene.document.Field;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.TrackingIndexWriter;
-import org.apache.lucene.search.*;
+import org.apache.lucene.search.ControlledRealTimeReopenThread;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.search.SearcherManager;
+import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.RAMDirectory;
@@ -59,11 +64,14 @@ import org.apache.lucene.util.Version;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory.AnalyzerKind.INDEX;
-import static com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory.AnalyzerKind.QUERY;
+import static com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory.AnalyzerKind.*;
 
 public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdaptiveExternal
     implements OLuceneIndexEngine, OOrientListener {
@@ -83,7 +91,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
   protected ControlledRealTimeReopenThread nrt;
   protected ODocument                      metadata;
   protected Version                        version;
-  protected Map<String, Boolean> collectionFields = new HashMap<String, Boolean>();
+  protected Map<String, Boolean> collectionFields = new HashMap<>();
   protected TimerTask commitTask;
   protected AtomicBoolean closed = new AtomicBoolean(true);
   private long      reopenToken;
@@ -98,7 +106,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
 
   }
 
-  //TODO: move to utility class
+  // TODO: move to utility class
   public static void sendTotalHits(String indexName, OCommandContext context, int totalHits) {
     if (context != null) {
 
@@ -111,7 +119,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
     }
   }
 
-  //TODO: move to utility class
+  // TODO: move to utility class
   public static void sendLookupTime(String indexName, OCommandContext context, final TopDocs docs, final Integer limit,
       long startFetching) {
     if (context != null) {
@@ -209,12 +217,13 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
     directory = directoryFactory.createDirectory(getDatabase(), name, metadata);
     final IndexWriter indexWriter = createIndexWriter(directory);
     mgrWriter = new TrackingIndexWriter(indexWriter);
-    searcherManager = new SearcherManager(indexWriter, true, null);
+    searcherManager = new SearcherManager(indexWriter, true, true, null);
 
     if (nrt != null) {
       nrt.close();
     }
 
+    reopenToken = 0;
     nrt = new ControlledRealTimeReopenThread(mgrWriter, searcherManager, 60.00, 0.1);
     nrt.setDaemon(true);
     nrt.start();
@@ -252,7 +261,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
       }
 
       if (directory instanceof FSDirectory) {
-        Path path = ((FSDirectory) this.directory).getDirectory();
+        final Path path = ((FSDirectory) this.directory).getDirectory();
         OFileUtils.deleteRecursively(path.toFile());
       }
 
@@ -322,7 +331,6 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
   @Override
   public void load(String indexName, OBinarySerializer valueSerializer, boolean isAutomatic, OBinarySerializer keySerializer,
       OType[] keyTypes, boolean nullPointerSupport, int keySize, Map<String, String> engineProperties) {
-    // initIndex(indexName, indexDefinition, isAutomatic, metadata);
   }
 
   @Override
@@ -370,6 +378,11 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
     return name;
   }
 
+  @Override
+  public String getIndexNameByKey(final Object key) {
+    return name;
+  }
+
   private String getIndexPath(OLocalPaginatedStorage storageLocalAbstract) {
     return getIndexPath(storageLocalAbstract, name);
   }
@@ -403,7 +416,9 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
 
   protected void deleteDocument(Query query) {
     try {
+
       reopenToken = mgrWriter.deleteDocuments(query);
+
       if (!mgrWriter.getIndexWriter().hasDeletions()) {
         OLogManager.instance()
             .error(this, "Error on deleting document by query '%s' to Lucene index", new OIndexException("Error deleting document"),
@@ -412,6 +427,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error on deleting document by query '%s' to Lucene index", e, query);
     }
+
   }
 
   protected boolean isCollectionDelete() {
@@ -455,9 +471,9 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
   @Override
   public OLuceneTxChanges buildTxChanges() throws IOException {
     if (isCollectionDelete()) {
-      return new OLuceneTxChangesMultiRid(this, createIndexWriter(new RAMDirectory()));
+      return new OLuceneTxChangesMultiRid(this, createIndexWriter(new RAMDirectory()), createIndexWriter(new RAMDirectory()));
     } else {
-      return new OLuceneTxChangesSingleRid(this, createIndexWriter(new RAMDirectory()));
+      return new OLuceneTxChangesSingleRid(this, createIndexWriter(new RAMDirectory()), createIndexWriter(new RAMDirectory()));
     }
   }
 
@@ -502,5 +518,10 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error on releasing Lucene index", e);
     }
+  }
+
+  @Override
+  public boolean acquireAtomicExclusiveLock(Object key) {
+    return true; // do nothing
   }
 }

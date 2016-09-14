@@ -4,8 +4,12 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.sql.executor.AggregationContext;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.util.Map;
+import java.util.Set;
 
 public class OLevelZeroIdentifier extends SimpleNode {
   protected OFunctionCall functionCall;
@@ -20,7 +24,9 @@ public class OLevelZeroIdentifier extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
@@ -36,6 +42,19 @@ public class OLevelZeroIdentifier extends SimpleNode {
   }
 
   public Object execute(OIdentifiable iCurrentRecord, OCommandContext ctx) {
+    if (functionCall != null) {
+      return functionCall.execute(iCurrentRecord, ctx);
+    }
+    if (collection != null) {
+      return collection.execute(iCurrentRecord, ctx);
+    }
+    if (Boolean.TRUE.equals(self)) {
+      return iCurrentRecord;
+    }
+    throw new UnsupportedOperationException();
+  }
+
+  public Object execute(OResult iCurrentRecord, OCommandContext ctx) {
     if (functionCall != null) {
       return functionCall.execute(iCurrentRecord, ctx);
     }
@@ -69,6 +88,193 @@ public class OLevelZeroIdentifier extends SimpleNode {
       return functionCall.executeIndexedFunction(target, context, operator, right);
     }
     return null;
+  }
+
+  /**
+   * tests if current expression is an indexed funciton AND that function can also be executed without using the index
+   *
+   * @param target   the query target
+   * @param context  the execution context
+   * @param operator
+   * @param right
+   * @return true if current expression is an indexed funciton AND that function can also be executed without using the index, false otherwise
+   */
+  public boolean canExecuteIndexedFunctionWithoutIndex(OFromClause target, OCommandContext context, OBinaryCompareOperator operator,
+      Object right) {
+    if (this.functionCall == null) {
+      return false;
+    }
+    return functionCall.canExecuteIndexedFunctionWithoutIndex(target, context, operator, right);
+  }
+
+  /**
+   * tests if current expression is an indexed function AND that function can be used on this target
+   * @param target the query target
+   * @param context the execution context
+   * @param operator
+   * @param right
+   * @return true if current expression involves an indexed function AND that function can be used on this target, false otherwise
+   */
+  public boolean allowsIndexedFunctionExecutionOnTarget(OFromClause target, OCommandContext context, OBinaryCompareOperator operator,
+      Object right){
+    if (this.functionCall == null) {
+      return false;
+    }
+    return functionCall.allowsIndexedFunctionExecutionOnTarget(target, context, operator, right);
+  }
+
+  /**
+   * tests if current expression is an indexed function AND the function has also to be executed after the index search.
+   * In some cases, the index search is accurate, so this condition can be excluded from further evaluation. In other cases
+   * the result from the index is a superset of the expected result, so the function has to be executed anyway for further filtering
+   * @param target the query target
+   * @param context the execution context
+   * @return true if current expression is an indexed function AND the function has also to be executed after the index search.
+   */
+  public boolean executeIndexedFunctionAfterIndexSearch(OFromClause target, OCommandContext context, OBinaryCompareOperator operator,
+      Object right){
+    if (this.functionCall == null) {
+      return false;
+    }
+    return functionCall.executeIndexedFunctionAfterIndexSearch(target, context, operator, right);
+  }
+
+  public boolean isExpand() {
+    if (functionCall != null) {
+      return functionCall.isExpand();
+    }
+    return false;
+  }
+
+  public OExpression getExpandContent() {
+    if (functionCall.getParams().size() != 1) {
+      throw new OCommandExecutionException("Invalid expand expression: " + functionCall.toString());
+    }
+    return functionCall.getParams().get(0);
+  }
+
+  public boolean needsAliases(Set<String> aliases) {
+    if (functionCall != null && functionCall.needsAliases(aliases)) {
+      return true;
+    }
+    if (collection != null && collection.needsAliases(aliases)) {
+      return true;
+    }
+    return false;
+  }
+
+  public boolean isAggregate() {
+    if (functionCall != null && functionCall.isAggregate()) {
+      return true;
+    }
+    if (collection != null && collection.isAggregate()) {
+      return true;
+    }
+    return false;
+  }
+
+  public boolean isEarlyCalculated() {
+    if (functionCall != null && functionCall.isEarlyCalculated()) {
+      return true;
+    }
+    if (Boolean.TRUE.equals(self)) {
+      return false;
+    }
+    if (collection != null && collection.isEarlyCalculated()) {
+      return true;
+    }
+    return false;
+  }
+
+  public SimpleNode splitForAggregation(AggregateProjectionSplit aggregateProj) {
+    if (isAggregate()) {
+      OLevelZeroIdentifier result = new OLevelZeroIdentifier(-1);
+      if (functionCall != null) {
+        SimpleNode node = functionCall.splitForAggregation(aggregateProj);
+        if (node instanceof OFunctionCall) {
+          result.functionCall = (OFunctionCall) node;
+        } else {
+          return node;
+        }
+      } else if (collection != null) {
+        result.collection = collection.splitForAggregation(aggregateProj);
+        return result;
+      } else {
+        throw new IllegalStateException();
+      }
+      return result;
+    } else {
+      return this;
+    }
+  }
+
+  public AggregationContext getAggregationContext(OCommandContext ctx) {
+    if (isAggregate()) {
+      OLevelZeroIdentifier result = new OLevelZeroIdentifier(-1);
+      if (functionCall != null) {
+        return functionCall.getAggregationContext(ctx);
+      }
+    }
+    throw new OCommandExecutionException("cannot aggregate on " + toString());
+  }
+
+  public OLevelZeroIdentifier copy() {
+    OLevelZeroIdentifier result = new OLevelZeroIdentifier(-1);
+    result.functionCall=  functionCall==null?null:functionCall.copy();
+    result.self = self;
+    result.collection = collection==null?null:collection.copy();
+    return result;
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OLevelZeroIdentifier that = (OLevelZeroIdentifier) o;
+
+    if (functionCall != null ? !functionCall.equals(that.functionCall) : that.functionCall != null)
+      return false;
+    if (self != null ? !self.equals(that.self) : that.self != null)
+      return false;
+    if (collection != null ? !collection.equals(that.collection) : that.collection != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = functionCall != null ? functionCall.hashCode() : 0;
+    result = 31 * result + (self != null ? self.hashCode() : 0);
+    result = 31 * result + (collection != null ? collection.hashCode() : 0);
+    return result;
+  }
+
+  public void setCollection(OCollection collection) {
+    this.collection = collection;
+  }
+
+  public boolean refersToParent() {
+    if(functionCall!=null && functionCall.refersToParent()){
+      return true;
+    }
+    if(collection!=null && collection.refersToParent()){
+      return true;
+    }
+    return false;
+  }
+
+  public OFunctionCall getFunctionCall() {
+    return functionCall;
+  }
+
+  public Boolean getSelf() {
+    return self;
+  }
+
+  public OCollection getCollection() {
+    return collection;
   }
 }
 /* JavaCC - OriginalChecksum=0305fcf120ba9395b4c975f85cdade72 (do not edit this line) */

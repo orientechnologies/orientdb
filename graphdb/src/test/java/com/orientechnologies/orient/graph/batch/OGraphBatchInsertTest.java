@@ -100,7 +100,7 @@ public class OGraphBatchInsertTest extends TestCase {
       if (new Long(0).equals(doc.field("uid"))) {
         found0 = true;
         assertEquals("foo", doc.field("foo"));
-        assertEquals(3, doc.field("bar"));
+        assertEquals(3, doc.<Object>field("bar"));
       } else {
         assertNotSame("foo", doc.field("foo"));
         assertNotSame(3, doc.field("bar"));

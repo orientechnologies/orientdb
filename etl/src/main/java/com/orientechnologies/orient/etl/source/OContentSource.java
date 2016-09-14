@@ -18,14 +18,13 @@
 
 package com.orientechnologies.orient.etl.source;
 
-import java.io.BufferedReader;
-import java.io.Reader;
-import java.io.StringReader;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.etl.OETLProcessor;
+
+import java.io.BufferedReader;
+import java.io.Reader;
+import java.io.StringReader;
 
 /**
  * ETL Source created with a string content.
@@ -34,7 +33,9 @@ public class OContentSource extends OAbstractSource {
   protected BufferedReader reader;
 
   @Override
-  public void configure(OETLProcessor iProcessor, ODocument iConfiguration, OCommandContext iContext) {
+  public void configure(ODocument iConfiguration, OCommandContext iContext) {
+    super.configure(iConfiguration, iContext);
+
     final Object value = iConfiguration.field("value");
     if (value != null) {
       String stringContent;

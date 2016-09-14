@@ -39,13 +39,13 @@ import java.util.Set;
  * @since 8/30/13
  */
 public class OSBTreeIndexEngine implements OIndexEngine {
-  public static final int               VERSION                    = 1;
+  public static final int VERSION = 1;
 
-  public static final String            DATA_FILE_EXTENSION        = ".sbt";
-  public static final String            NULL_BUCKET_FILE_EXTENSION = ".nbt";
+  public static final String DATA_FILE_EXTENSION        = ".sbt";
+  public static final String NULL_BUCKET_FILE_EXTENSION = ".nbt";
 
   private final OSBTree<Object, Object> sbTree;
-  private int                           version;
+  private       int                     version;
   private final String                  name;
 
   public OSBTreeIndexEngine(String name, Boolean durableInNonTxMode, OAbstractPaginatedStorage storage, int version) {
@@ -73,12 +73,12 @@ public class OSBTreeIndexEngine implements OIndexEngine {
 
   @Override
   public void flush() {
-    sbTree.flush();
   }
 
   @Override
   public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
-      OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, Map<String, String> engineProperties, ODocument metadata) {
+      OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, Map<String, String> engineProperties,
+      ODocument metadata) {
     sbTree.create(keySerializer, valueSerializer, keyTypes, keySize, nullPointerSupport);
   }
 
@@ -221,12 +221,23 @@ public class OSBTreeIndexEngine implements OIndexEngine {
     return true;
   }
 
+  @Override
+  public boolean acquireAtomicExclusiveLock(Object key) {
+    sbTree.acquireAtomicExclusiveLock();
+    return true;
+  }
+
+  @Override
+  public String getIndexNameByKey(Object key) {
+    return name;
+  }
+
   private static final class OSBTreeIndexCursor extends OIndexAbstractCursor {
     private final OSBTree.OSBTreeCursor<Object, Object> treeCursor;
     private final ValuesTransformer                     valuesTransformer;
 
-    private Iterator<OIdentifiable>                     currentIterator = OEmptyIterator.IDENTIFIABLE_INSTANCE;
-    private Object                                      currentKey      = null;
+    private Iterator<OIdentifiable> currentIterator = OEmptyIterator.IDENTIFIABLE_INSTANCE;
+    private Object                  currentKey      = null;
 
     private OSBTreeIndexCursor(OSBTree.OSBTreeCursor<Object, Object> treeCursor, ValuesTransformer valuesTransformer) {
       this.treeCursor = treeCursor;

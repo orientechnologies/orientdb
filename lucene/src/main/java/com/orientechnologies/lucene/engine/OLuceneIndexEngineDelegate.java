@@ -192,6 +192,11 @@ public class OLuceneIndexEngineDelegate implements OLuceneIndexEngine, OFreezabl
   }
 
   @Override
+  public String getIndexNameByKey(final Object key) {
+    return delegate.getIndexNameByKey(key);
+  }
+
+  @Override
   public void init(String indexName, String indexType, OIndexDefinition indexDefinition, boolean isAutomatic, ODocument metadata) {
     if (delegate == null) {
       if (FULLTEXT.name().equalsIgnoreCase(indexType)) {
@@ -271,7 +276,11 @@ public class OLuceneIndexEngineDelegate implements OLuceneIndexEngine, OFreezabl
 
   @Override
   public void release() {
-
     delegate.release();
+  }
+
+  @Override
+  public boolean acquireAtomicExclusiveLock(Object key) {
+    return delegate.acquireAtomicExclusiveLock(key);
   }
 }

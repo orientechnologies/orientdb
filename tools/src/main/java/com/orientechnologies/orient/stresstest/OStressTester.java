@@ -21,65 +21,63 @@ package com.orientechnologies.orient.stresstest;
 
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.client.remote.OStorageRemote;
+import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.index.OIndexManager;
-import com.orientechnologies.orient.core.index.OPropertyIndexDefinition;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.stresstest.operations.OOperationsExecutor;
-import com.orientechnologies.orient.stresstest.operations.OOperationsSet;
-import com.orientechnologies.orient.stresstest.output.OConsoleWriter;
-import com.orientechnologies.orient.stresstest.output.OJsonResultsFormatter;
-import com.orientechnologies.orient.stresstest.output.OOperationsExecutorResults;
-import com.orientechnologies.orient.stresstest.output.OStressTestResults;
-import com.orientechnologies.orient.stresstest.util.OConstants;
-import com.orientechnologies.orient.stresstest.util.ODatabaseIdentifier;
-import com.orientechnologies.orient.stresstest.util.ODatabaseUtils;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.stresstest.workload.OCheckWorkload;
+import com.orientechnologies.orient.stresstest.workload.OWorkload;
+import com.orientechnologies.orient.stresstest.workload.OWorkloadFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 /**
- * The main class of the OStressTester.
- * It is instantiated from the OStressTesterCommandLineParser and takes care of
- * launching the needed threads (OOperationsExecutor) for executing the operations
- * of the test.
+ * The main class of the OStressTester. It is instantiated from the OStressTesterCommandLineParser and takes care of launching the
+ * needed threads (OOperationsExecutor) for executing the operations of the test.
  *
  * @author Andrea Iacono
  */
 public class OStressTester {
+  /**
+   * The access mode to the database
+   */
+  public enum OMode {
+    PLOCAL, MEMORY, REMOTE, DISTRIBUTED
+  }
 
-  private int                 threadsNumber;
-  private int                 iterationsNumber;
-  private ODatabaseIdentifier databaseIdentifier;
-  private int                 txNumber;
-  private String              outputResultFile;
-  private OOperationsSet      operationsSet;
-  private OConsoleWriter      consoleProgressWriter;
-  private OStressTestResults  stressTestResults;
+  private final ODatabaseIdentifier     databaseIdentifier;
+  private OConsoleProgressWriter        consoleProgressWriter;
+  private final OStressTesterSettings   settings;
 
-  public OStressTester(ODatabaseIdentifier databaseIdentifier, OOperationsSet operationsSet, int iterationsNumber,
-      int threadsNumber, int txNumber, String outputResultFile) throws Exception {
-    this.operationsSet = operationsSet;
-    this.iterationsNumber = iterationsNumber;
-    this.threadsNumber = threadsNumber;
+  private static final OWorkloadFactory workloadFactory = new OWorkloadFactory();
+  private List<OWorkload>               workloads       = new ArrayList<OWorkload>();
+
+  public OStressTester(final List<OWorkload> workloads, ODatabaseIdentifier databaseIdentifier,
+      final OStressTesterSettings settings) throws Exception {
+    this.workloads = workloads;
     this.databaseIdentifier = databaseIdentifier;
-    this.txNumber = txNumber;
-    this.outputResultFile = outputResultFile;
-    stressTestResults = new OStressTestResults(operationsSet, databaseIdentifier.getMode(), threadsNumber, iterationsNumber);
-    consoleProgressWriter = new OConsoleWriter(operationsSet, threadsNumber, iterationsNumber);
+    this.settings = settings;
+  }
+
+  public static void main(String[] args) {
+    System.out.println(String.format("OrientDB Stress Tool v.%s - %s", OConstants.getVersion(), OConstants.COPYRIGHT));
+
+    int returnValue = 1;
+    try {
+      final OStressTester stressTester = OStressTesterCommandLineParser.getStressTester(args);
+      returnValue = stressTester.execute();
+    } catch (Exception ex) {
+      System.err.println(ex.getMessage());
+    }
+    System.exit(returnValue);
   }
 
   @SuppressWarnings("unchecked")
-  private int execute() throws Exception {
+  public int execute() throws Exception {
 
-    long startTime;
-    long totalTime = 0;
     int returnCode = 0;
 
     // we don't want logs from DB
@@ -87,78 +85,95 @@ public class OStressTester {
 
     // creates the temporary DB where to execute the test
     ODatabaseUtils.createDatabase(databaseIdentifier);
-    consoleProgressWriter.printMessage(String.format("Created database [%s].", databaseIdentifier.getUrl()));
+    System.out.println(String.format("Created database [%s].", databaseIdentifier.getUrl()));
 
-    // opens the newly created db and creates an index on the class we're going to use
-    ODatabase database = ODatabaseUtils.openDatabase(databaseIdentifier);
-    if (database == null) {
-      throw new Exception("Couldn't open database " + databaseIdentifier.getName() + ".");
-    }
     try {
-      final OSchema schema = database.getMetadata().getSchema();
-      final OClass oClass = schema.createClass(OConstants.CLASS_NAME);
-      oClass.createProperty("name", OType.STRING);
-      OIndexManager indexManager = database.getMetadata().getIndexManager();
-      indexManager.createIndex(OConstants.INDEX_NAME, OClass.INDEX_TYPE.UNIQUE.toString(),
-          new OPropertyIndexDefinition(OConstants.CLASS_NAME, "name", OType.STRING), oClass.getClusterIds(), null, null);
-    } finally {
-      database.close();
-    }
+      for (OWorkload workload : workloads) {
+        consoleProgressWriter = new OConsoleProgressWriter(workload);
 
-    // starts the test
-    try {
+        consoleProgressWriter.start();
 
-      // iterates n times
-      for (int i = 0; i < iterationsNumber; i++) {
+        consoleProgressWriter.printMessage(
+            String.format("\nStarting workload %s (concurrencyLevel=%d)...", workload.getName(), settings.concurrencyLevel));
 
-        // creates the operations executors
-        List<Callable<OOperationsExecutorResults>> operationsExecutors = new ArrayList<Callable<OOperationsExecutorResults>>();
-        for (int j = 0; j < threadsNumber; j++) {
-          operationsExecutors.add(new OOperationsExecutor(databaseIdentifier, operationsSet, txNumber, consoleProgressWriter));
-        }
+        final long startTime = System.currentTimeMillis();
 
-        // starts parallel execution (blocking call)
-        startTime = System.currentTimeMillis();
-        List<Future<OOperationsExecutorResults>> threadsResults = Executors.newFixedThreadPool(threadsNumber)
-            .invokeAll(operationsExecutors);
-        totalTime += System.currentTimeMillis() - startTime;
+        workload.execute(settings, databaseIdentifier);
 
-        // add the output of every executor
-        for (Future<OOperationsExecutorResults> threadResults : threadsResults) {
-          stressTestResults.addThreadResults(threadResults.get());
+        final long endTime = System.currentTimeMillis();
+
+        consoleProgressWriter.sendShutdown();
+
+        System.out.println(String.format("\n- Total execution time: %.3f secs", ((float) (endTime - startTime) / 1000f)));
+
+        System.out.println(workload.getFinalResult());
+
+        dumpHaMetrics();
+
+        if (settings.checkDatabase && workload instanceof OCheckWorkload) {
+          System.out.println(String.format("- Checking database..."));
+          ((OCheckWorkload) workload).check(databaseIdentifier);
+          System.out.println(String.format("- Check completed"));
         }
       }
-      // stops total benchmarking
-      stressTestResults.addTotalExecutionTime(totalTime);
 
-      // prints out total output
-      System.out.println("\r                                                                                             ");
-      System.out.println(stressTestResults.toString());
+      if (settings.resultOutputFile != null)
+        writeFile();
 
-      // if specified, writes output to file
-      if (outputResultFile != null) {
-        OIOUtils.writeFile(new File(outputResultFile), OJsonResultsFormatter.format(stressTestResults));
-      }
     } catch (Exception ex) {
       System.err.println("\nAn error has occurred while running the stress test: " + ex.getMessage());
       returnCode = 1;
     } finally {
       // we don't need to drop the in-memory DB
-      if (databaseIdentifier.getMode() != OMode.MEMORY) {
+      if (settings.keepDatabaseAfterTest || databaseIdentifier.getMode() == OMode.MEMORY)
+        consoleProgressWriter.printMessage(String.format("\nDatabase is available on [%s].", databaseIdentifier.getUrl()));
+      else {
         ODatabaseUtils.dropDatabase(databaseIdentifier);
-        consoleProgressWriter.printMessage(String.format("Dropped database [%s].", databaseIdentifier.getUrl()));
+        consoleProgressWriter.printMessage(String.format("\nDropped database [%s].", databaseIdentifier.getUrl()));
       }
+
     }
 
     return returnCode;
   }
 
-  public int getIterationsNumber() {
-    return iterationsNumber;
+  private void dumpHaMetrics() {
+    if (settings.haMetrics) {
+      final ODatabase db = ODatabaseUtils.openDatabase(databaseIdentifier, OStorageRemote.CONNECTION_STRATEGY.STICKY);
+      try {
+        final String output = db.command(new OCommandSQL("ha status -latency -messages -output=text")).execute();
+        System.out.println("HA METRICS");
+        System.out.println(output);
+
+      } catch (Exception e) {
+        // IGNORE IT
+      } finally {
+        db.close();
+      }
+    }
+
+  }
+
+  private void writeFile() {
+    try {
+      final StringBuilder output = new StringBuilder();
+      output.append("{\"result\":[");
+      int i = 0;
+      for (OWorkload workload : workloads) {
+        if (i++ > 0)
+          output.append(",");
+        output.append(workload.getFinalResultAsJson());
+      }
+      output.append("]}");
+
+      OIOUtils.writeFile(new File(settings.resultOutputFile), output.toString());
+    } catch (IOException e) {
+      System.err.println("\nError on writing the result file : " + e.getMessage());
+    }
   }
 
   public int getThreadsNumber() {
-    return threadsNumber;
+    return settings.concurrencyLevel;
   }
 
   public OMode getMode() {
@@ -174,18 +189,10 @@ public class OStressTester {
   }
 
   public int getTransactionsNumber() {
-    return txNumber;
+    return settings.operationsPerTransaction;
   }
 
-  public static void main(String[] args) {
-    int returnValue = 1;
-    try {
-      OStressTester stressTester = OStressTesterCommandLineParser.getStressTester(args);
-      returnValue = stressTester.execute();
-    } catch (Exception ex) {
-      System.err.println(ex.getMessage());
-    }
-    System.exit(returnValue);
+  public static OWorkloadFactory getWorkloadFactory() {
+    return workloadFactory;
   }
-
 }

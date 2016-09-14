@@ -63,11 +63,13 @@ public class OMetadataObject implements OMetadataInternal {
   }
 
   @Override
+  @Deprecated
   public void load() {
     underlying.load();
   }
 
   @Override
+  @Deprecated
   public void create() throws IOException {
     underlying.create();
   }
@@ -105,6 +107,7 @@ public class OMetadataObject implements OMetadataInternal {
   }
 
   @Override
+  @Deprecated
   public void close() {
     underlying.close();
   }

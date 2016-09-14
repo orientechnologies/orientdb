@@ -107,7 +107,7 @@ public class OEdgeTransformerTest extends OETLBaseTest {
     assertEquals(3, v1Props.size());
     assertEquals(v1.getProperty("name"), "Luca");
     assertEquals(v1.getProperty("surname"), "Garulli");
-    assertEquals(v1.getProperty("fid"), 1);
+    assertEquals(v1.<Integer>getProperty("fid"), Integer.valueOf(1));
 
     final Iterator<Edge> edge = v1.getEdges(Direction.IN).iterator();
     assertTrue(edge.hasNext());
@@ -116,7 +116,7 @@ public class OEdgeTransformerTest extends OETLBaseTest {
     assertNotNull(e);
     final Set<String> eProps = e.getPropertyKeys();
     assertEquals(1, eProps.size());
-    assertEquals(e.getProperty("since"), 1996);
+    assertEquals(e.<Integer>getProperty("since"), Integer.valueOf(1996));
 
     final Vertex v0 = e.getVertex(Direction.OUT);
     assertNotNull(v0);
@@ -126,7 +126,7 @@ public class OEdgeTransformerTest extends OETLBaseTest {
     assertEquals(3, v0Props.size());
     assertEquals(v0.getProperty("name"), "Jay");
     assertEquals(v0.getProperty("surname"), "Miner");
-    assertEquals(v0.getProperty("id"), 0);
+    assertEquals(v0.<Integer>getProperty("id"), Integer.valueOf(0));
   }
 
   @Test

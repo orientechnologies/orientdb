@@ -9,17 +9,12 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.junit.Test;
 
 import static com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSONTest.TestCustom.ONE;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.Assert.assertEquals;
 
 /**
  * Created by tglman on 25/05/16.
  */
 public class ORecordSerializerJSONTest {
-
-  public enum TestCustom {
-    ONE, TWO
-  }
 
   @Test
   public void testCustomSerialization() {
@@ -39,6 +34,10 @@ public class ORecordSerializerJSONTest {
     } finally {
       db.drop();
     }
+  }
+
+  public enum TestCustom {
+    ONE, TWO
   }
 
 }

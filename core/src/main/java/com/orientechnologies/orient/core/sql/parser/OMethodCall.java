@@ -6,22 +6,26 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionFiltered;
 import com.orientechnologies.orient.core.sql.method.OSQLMethod;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class OMethodCall extends SimpleNode {
 
-  static Set<String>          graphMethods         = new HashSet<String>(Arrays.asList(new String[] { "out", "in", "both", "outE",
-      "inE", "bothE", "bothV", "outV", "inV"      }));
+  static Set<String> graphMethods = new HashSet<String>(
+      Arrays.asList(new String[] { "out", "in", "both", "outE", "inE", "bothE", "bothV", "outV", "inV" }));
 
-  static Set<String>          bidirectionalMethods = new HashSet<String>(Arrays.asList(new String[] { "out", "in", "both", "oute", "ine", "inv", "outv" }));
+  static Set<String> bidirectionalMethods = new HashSet<String>(
+      Arrays.asList(new String[] { "out", "in", "both", "oute", "ine", "inv", "outv" }));
 
-  protected OIdentifier       methodName;
-  protected List<OExpression> params               = new ArrayList<OExpression>();
+  protected OIdentifier methodName;
+  protected List<OExpression> params = new ArrayList<OExpression>();
 
   public OMethodCall(int id) {
     super(id);
@@ -69,13 +73,21 @@ public class OMethodCall extends SimpleNode {
       Iterable<OIdentifiable> iPossibleResults) {
     List<Object> paramValues = new ArrayList<Object>();
     for (OExpression expr : iParams) {
-      paramValues.add(expr.execute((OIdentifiable) ctx.getVariable("$current"), ctx));
+      Object val = ctx.getVariable("$current");
+      if (val instanceof OIdentifiable) {
+        paramValues.add(expr.execute((OIdentifiable) val, ctx));
+      } else if (val instanceof OResult) {
+        paramValues.add(expr.execute((OResult) val, ctx));
+      } else {
+        throw new OCommandExecutionException("Invalild value for $current: " + val);
+      }
     }
     if (graphMethods.contains(name)) {
       OSQLFunction function = OSQLEngine.getInstance().getFunction(name);
       if (function instanceof OSQLFunctionFiltered) {
-        return ((OSQLFunctionFiltered) function).execute(targetObjects, (OIdentifiable) ctx.getVariable("$current"), null,
-            paramValues.toArray(), iPossibleResults, ctx);
+        return ((OSQLFunctionFiltered) function)
+            .execute(targetObjects, (OIdentifiable) ctx.getVariable("$current"), null, paramValues.toArray(), iPossibleResults,
+                ctx);
       } else {
         return function.execute(targetObjects, (OIdentifiable) ctx.getVariable("$current"), null, paramValues.toArray(), ctx);
       }
@@ -83,7 +95,11 @@ public class OMethodCall extends SimpleNode {
     }
     OSQLMethod method = OSQLEngine.getMethod(name);
     if (method != null) {
-      return method.execute(targetObjects, (OIdentifiable) ctx.getVariable("$current"), ctx, targetObjects, paramValues.toArray());
+      Object val = ctx.getVariable("$current");
+      if (val instanceof OResult) {
+        val = ((OResult) val).getElement();
+      }
+      return method.execute(targetObjects, (OIdentifiable) val, ctx, targetObjects, paramValues.toArray());
     }
     throw new UnsupportedOperationException("OMethod call, something missing in the implementation...?");
 
@@ -129,5 +145,61 @@ public class OMethodCall extends SimpleNode {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 
+  public boolean needsAliases(Set<String> aliases) {
+    for (OExpression param : params) {
+      if (param.needsAliases(aliases)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public OMethodCall copy() {
+    OMethodCall result = new OMethodCall(-1);
+    result.methodName = methodName.copy();
+    result.params = params.stream().map(x -> x.copy()).collect(Collectors.toList());
+    return result;
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OMethodCall that = (OMethodCall) o;
+
+    if (methodName != null ? !methodName.equals(that.methodName) : that.methodName != null)
+      return false;
+    if (params != null ? !params.equals(that.params) : that.params != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = methodName != null ? methodName.hashCode() : 0;
+    result = 31 * result + (params != null ? params.hashCode() : 0);
+    return result;
+  }
+
+  public void extractSubQueries(SubQueryCollector collector) {
+    if (params != null) {
+      for (OExpression param : params) {
+        param.extractSubQueries(collector);
+      }
+    }
+  }
+
+  public boolean refersToParent() {
+    if (params != null) {
+      for (OExpression exp : params) {
+        if (exp.refersToParent()) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
 }
 /* JavaCC - OriginalChecksum=da95662da21ceb8dee3ad88c0d980413 (do not edit this line) */

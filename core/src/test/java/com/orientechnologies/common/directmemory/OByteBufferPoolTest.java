@@ -1,14 +1,16 @@
 package com.orientechnologies.common.directmemory;
 
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Ignore;
+import org.junit.Test;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
 
-@Test public class OByteBufferPoolTest {
+public class OByteBufferPoolTest {
+  @Test
   public void testAcquireReleaseSinglePage() {
     OByteBufferPool pool = new OByteBufferPool(12);
     Assert.assertEquals(pool.getSize(), 0);
@@ -42,6 +44,7 @@ import java.util.concurrent.*;
     Assert.assertEquals(pool.getSize(), 1);
   }
 
+  @Test
   public void testAcquireReleasePageWithPreallocation() {
     OByteBufferPool pool = new OByteBufferPool(10, 300);
 
@@ -66,7 +69,8 @@ import java.util.concurrent.*;
     }
   }
 
-  @Test(enabled = false)
+  @Test
+  @Ignore
   public void testAcquireReleasePageWithPreallocationInMT() throws Exception {
     final OByteBufferPool pool = new OByteBufferPool(10, 300);
 

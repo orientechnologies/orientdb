@@ -33,7 +33,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -48,6 +47,7 @@ import static org.junit.Assert.assertTrue;
  * - server0's request has reached the write quorum and propagates the new value to all the servers in the cluster
  */
 
+@Ignore
 public class TwoClientsRecordUpdateTxOnThreeServersScenarioTest extends AbstractScenarioTest {
 
   private final String        RECORD_ID   = "R001";
@@ -73,7 +73,6 @@ public class TwoClientsRecordUpdateTxOnThreeServersScenarioTest extends Abstract
                                             }
                                           };
 
-  @Ignore
   @Test
   public void test() throws Exception {
     init(3);

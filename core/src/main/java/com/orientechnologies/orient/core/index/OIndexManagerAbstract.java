@@ -39,7 +39,6 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sharding.auto.OAutoShardingIndexFactory;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
@@ -67,21 +66,25 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 
   protected ReadWriteLock                                     lock               = new ReentrantReadWriteLock();
 
-  public OIndexManagerAbstract(final ODatabaseDocument iDatabase) {
+  public OIndexManagerAbstract() {
     super(new ODocument().setTrackingChanges(false));
   }
 
   @Override
   public OIndexManagerAbstract load() {
-    if (!autoRecreateIndexesAfterCrash()) {
+    throw new UnsupportedOperationException();
+  }
+
+  public OIndexManagerAbstract load(ODatabaseDocumentInternal database) {
+    if (!autoRecreateIndexesAfterCrash(database)) {
       acquireExclusiveLock();
       try {
-        if (getDatabase().getStorage().getConfiguration().indexMgrRecordId == null)
+        if (database.getStorage().getConfiguration().indexMgrRecordId == null)
           // @COMPATIBILITY: CREATE THE INDEX MGR
-          create();
+          create(database);
 
         // RELOAD IT
-        ((ORecordId) document.getIdentity()).fromString(getDatabase().getStorage().getConfiguration().indexMgrRecordId);
+        ((ORecordId) document.getIdentity()).fromString(database.getStorage().getConfiguration().indexMgrRecordId);
         super.reload("*:-1 index:0");
       } finally {
         releaseExclusiveLock();
@@ -132,6 +135,12 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
   }
 
   public void create() {
+    throw new UnsupportedOperationException();
+  }
+  
+  public abstract boolean autoRecreateIndexesAfterCrash(ODatabaseDocumentInternal database);
+  
+  public void create(ODatabaseDocumentInternal database) {
     acquireExclusiveLock();
     try {
       try {
@@ -143,8 +152,8 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
           save(OMetadataDefault.CLUSTER_INTERNAL_NAME);
         }
       }
-      getDatabase().getStorage().getConfiguration().indexMgrRecordId = document.getIdentity().toString();
-      getDatabase().getStorage().getConfiguration().update();
+      database.getStorage().getConfiguration().indexMgrRecordId = document.getIdentity().toString();
+      database.getStorage().getConfiguration().update();
 
       OIndexFactory factory = OIndexes.getFactory(OClass.INDEX_TYPE.DICTIONARY.toString(), null);
       createIndex(DICTIONARY_NAME, OClass.INDEX_TYPE.DICTIONARY.toString(),
@@ -162,12 +171,16 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     }
   }
 
-  public Collection<? extends OIndex<?>> getIndexes() {
+  public Collection<? extends OIndex<?>> getIndexes(ODatabaseDocumentInternal database) {
     final Collection<OIndex<?>> rawResult = indexes.values();
     final List<OIndex<?>> result = new ArrayList<OIndex<?>>(rawResult.size());
     for (final OIndex<?> index : rawResult)
-      result.add(preProcessBeforeReturn(index));
+      result.add(preProcessBeforeReturn(database, index));
     return result;
+  }
+  
+  public Collection<? extends OIndex<?>> getIndexes() {
+    throw new UnsupportedOperationException();
   }
 
   public OIndex<?> getIndex(final String iName) {
@@ -176,7 +189,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     final OIndex<?> index = indexes.get(iName.toLowerCase(locale));
     if (index == null)
       return null;
-    return preProcessBeforeReturn(index);
+    return preProcessBeforeReturn(getDatabase(), index);
   }
 
   @Override
@@ -287,7 +300,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     for (final OIndex<?> index : rawResult) {
       //ignore indexes that ignore null values on partial match
       if (fields.size() == index.getDefinition().getFields().size() || !index.getDefinition().isNullValuesIgnored()) {
-        transactionalResult.add(preProcessBeforeReturn(index));
+        transactionalResult.add(preProcessBeforeReturn(getDatabase(), index));
       }
     }
 
@@ -332,7 +345,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 
     for (final Set<OIndex<?>> propertyIndexes : propertyIndex.values())
       for (final OIndex<?> index : propertyIndexes)
-        indexes.add(preProcessBeforeReturn(index));
+        indexes.add(preProcessBeforeReturn(getDatabase(), index));
   }
 
   @Override
@@ -357,7 +370,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     final OIndex<?> index = indexes.get(indexName);
     if (index != null && index.getDefinition() != null && index.getDefinition().getClassName() != null
         && className.equals(index.getDefinition().getClassName().toLowerCase(locale)))
-      return preProcessBeforeReturn(index);
+      return preProcessBeforeReturn(getDatabase(), index);
     return null;
   }
 
@@ -371,7 +384,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
       if (index != null && OAutoShardingIndexFactory.AUTOSHARDING_ALGORITHM.equals(index.getAlgorithm())
           && index.getDefinition() != null && index.getDefinition().getClassName() != null
           && className.equals(index.getDefinition().getClassName().toLowerCase(locale)))
-        return preProcessBeforeReturn(index);
+        return preProcessBeforeReturn(getDatabase(), index);
     }
     return null;
   }
@@ -421,6 +434,10 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 
+  protected static OStorage getStorage(){
+    return getDatabase().getStorage();
+  }
+  
   protected ODatabaseDocumentInternal getDatabaseIfDefined() {
     return ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
   }
@@ -488,22 +505,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     return result;
   }
 
-  protected static OIndex<?> preProcessBeforeReturn(final OIndex<?> index) {
-    if (!(getDatabase().getStorage() instanceof OStorageProxy)) {
-      if (index instanceof OIndexMultiValues)
-        return new OIndexTxAwareMultiValue(getDatabase(), (OIndex<Set<OIdentifiable>>) index);
-      else if (index instanceof OIndexDictionary)
-        return new OIndexTxAwareDictionary(getDatabase(), (OIndex<OIdentifiable>) index);
-      else if (index instanceof OIndexOneValue)
-        return new OIndexTxAwareOneValue(getDatabase(), (OIndex<OIdentifiable>) index);
-    } else {
-      if (index instanceof OIndexRemoteMultiValue)
-        return new OIndexTxAwareMultiValue(getDatabase(), (OIndex<Set<OIdentifiable>>) index);
-      else if (index instanceof OIndexRemoteOneValue)
-        return new OIndexTxAwareOneValue(getDatabase(), (OIndex<OIdentifiable>) index);
-    }
-    return index;
-  }
+  protected abstract OIndex<?> preProcessBeforeReturn(ODatabaseDocumentInternal database, final OIndex<?> index);
 
   private OIndex<?> createDictionaryIfNeeded() {
     acquireExclusiveLock();
@@ -522,10 +524,12 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
   }
 
   protected Locale getServerLocale() {
-    ODatabaseDocumentInternal db = getDatabase();
-    OStorage storage = db.getStorage();
+    OStorage storage = getStorage();
     OStorageConfiguration configuration = storage.getConfiguration();
     return configuration.getLocaleInstance();
   }
 
+  public abstract void recreateIndexes(ODatabaseDocumentInternal database);
+
+  
 }

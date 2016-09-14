@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.tx;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -41,7 +42,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public abstract class OTransactionAbstract implements OTransaction {
-  protected final ODatabaseDocumentTx           database;
+  protected final ODatabaseDocumentInternal           database;
   protected TXSTATUS                            status         = TXSTATUS.INVALID;
   protected ISOLATION_LEVEL                     isolationLevel = ISOLATION_LEVEL.READ_COMMITTED;
   protected HashMap<ORID, LockedRecordMetadata> locks          = new HashMap<ORID, LockedRecordMetadata>();
@@ -55,7 +56,7 @@ public abstract class OTransactionAbstract implements OTransaction {
     }
   }
 
-  protected OTransactionAbstract(final ODatabaseDocumentTx iDatabase) {
+  protected OTransactionAbstract(final ODatabaseDocumentInternal iDatabase) {
     database = iDatabase;
   }
 
@@ -98,7 +99,7 @@ public abstract class OTransactionAbstract implements OTransaction {
     return status;
   }
 
-  public ODatabaseDocumentTx getDatabase() {
+  public ODatabaseDocumentInternal getDatabase() {
     return database;
   }
 
@@ -224,7 +225,7 @@ public abstract class OTransactionAbstract implements OTransaction {
     return lockedRecords;
   }
 
-  protected String getClusterName(final ORecord record) {
+  public String getClusterName(final ORecord record) {
     if (ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().isRemote())
       // DON'T ASSIGN CLUSTER WITH REMOTE: SERVER KNOWS THE RIGHT CLUSTER BASED ON LOCALITY
       return null;

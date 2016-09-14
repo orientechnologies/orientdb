@@ -32,13 +32,13 @@ import java.io.IOException;
 
 /**
  * Running server instance.
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class ServerRun {
-  protected final String serverId;
-  protected String       rootPath;
-  protected OServer      server;
+  protected final String  serverId;
+  protected       String  rootPath;
+  protected       OServer server;
 
   public ServerRun(final String iRootPath, final String serverId) {
     this.rootPath = iRootPath;
@@ -51,6 +51,11 @@ public class ServerRun {
 
   public static String getDatabasePath(final String iServerId, final String iDatabaseName) {
     return getServerHome(iServerId) + "/databases/" + iDatabaseName;
+  }
+
+  @Override
+  public String toString() {
+    return server.getDistributedManager().getLocalNodeName() + "(" + serverId + ")";
   }
 
   public OServer getServerInstance() {
@@ -90,15 +95,18 @@ public class ServerRun {
 
     new File(dbPath).mkdirs();
 
-    final OrientGraphFactory factory = new OrientGraphFactory("plocal:" + dbPath);
-    if (factory.exists()) {
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx("plocal:" + dbPath);
+    if (db.exists()) {
       System.out.println("Dropping previous database '" + iName + "' under: " + dbPath + "...");
-      new ODatabaseDocumentTx("plocal:" + dbPath).open("admin", "admin").drop();
+      db.open("admin", "admin").drop();
       OFileUtils.deleteRecursively(new File(dbPath));
     }
 
-    if (iCfgCallback != null)
+    final OrientGraphFactory factory = new OrientGraphFactory("plocal:" + dbPath);
+
+    if (iCfgCallback != null) {
       iCfgCallback.call(factory);
+    }
 
     System.out.println("Creating database '" + iName + "' under: " + dbPath + "...");
     return factory.getNoTx();

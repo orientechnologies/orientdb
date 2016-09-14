@@ -63,7 +63,7 @@ public class OHttpGraphResponse extends OHttpResponse {
     if (accept != null && accept.contains("text/csv"))
       throw new IllegalArgumentException("Graph mode cannot accept '" + accept + "'");
 
-    final OrientGraphNoTx graph = new OrientGraphNoTx((ODatabaseDocumentTx) ODatabaseRecordThreadLocal.INSTANCE.get());
+    final OrientGraphNoTx graph = new OrientGraphNoTx(ODatabaseRecordThreadLocal.INSTANCE.get());
 
     // DIVIDE VERTICES FROM EDGES
     final Set<OrientVertex> vertices = new HashSet<OrientVertex>();
@@ -132,8 +132,8 @@ public class OHttpGraphResponse extends OHttpResponse {
       json.writeAttribute("@rid", edge.getIdentity());
       json.writeAttribute("@class", edge.getRecord().getClassName());
 
-      json.writeAttribute("from", edge.getVertex(Direction.OUT).getId());
-      json.writeAttribute("to", edge.getVertex(Direction.IN).getId());
+      json.writeAttribute("out", edge.getVertex(Direction.OUT).getId());
+      json.writeAttribute("in", edge.getVertex(Direction.IN).getId());
 
       for (String field : edge.getPropertyKeys()) {
         final Object v = edge.getProperty(field);

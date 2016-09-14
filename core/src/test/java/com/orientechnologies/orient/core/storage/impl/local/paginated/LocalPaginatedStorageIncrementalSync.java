@@ -16,9 +16,9 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.Test;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Test;
 
 import java.io.*;
 import java.nio.channels.Channels;
@@ -26,12 +26,11 @@ import java.nio.channels.FileChannel;
 import java.util.HashSet;
 import java.util.Random;
 
-@Test
 public class LocalPaginatedStorageIncrementalSync {
   private ODatabaseDocumentTx originalDB;
   private ODatabaseDocumentTx syncDB;
 
-  @AfterMethod
+  @After
   public void afterMethod() {
     originalDB.activateOnCurrentThread();
     originalDB.drop();
@@ -40,6 +39,7 @@ public class LocalPaginatedStorageIncrementalSync {
     syncDB.drop();
   }
 
+  @Test
   public void testIncrementalSynch() throws Exception {
     OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.setValue(true);
 
@@ -100,7 +100,7 @@ public class LocalPaginatedStorageIncrementalSync {
       final OutputStream bufferedOutputStream = new BufferedOutputStream(outputStream);
 
       ((OAbstractPaginatedStorage) originalDB.getStorage()).recordsChangedAfterLSN(startLSN, bufferedOutputStream,
-          new HashSet<String>());
+          new HashSet<String>(),null);
       bufferedOutputStream.close();
 
       dataFile.close();

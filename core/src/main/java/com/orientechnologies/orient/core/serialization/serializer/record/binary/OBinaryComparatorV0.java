@@ -29,11 +29,13 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.util.ODateHelper;
 
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.TimeZone;
 
 /**
  * Implementation v0 of comparator based on protocol v0.
@@ -1090,7 +1092,8 @@ public class OBinaryComparatorV0 implements OBinaryComparator {
             final SimpleDateFormat dateFormat = db != null ? db.getStorage().getConfiguration().getDateFormatInstance()
                 : new SimpleDateFormat(OStorageConfiguration.DEFAULT_DATE_FORMAT);
             final Date value2AsDate = dateFormat.parse(value2AsString);
-            final long value2 = value2AsDate.getTime();
+            long value2 = value2AsDate.getTime();
+            value2 = ORecordSerializerBinaryV0.convertDayToTimezone(ODateHelper.getDatabaseTimeZone(), TimeZone.getTimeZone("GMT"), value2);
             return (value1 < value2) ? -1 : ((value1 == value2) ? 0 : 1);
           } catch (ParseException e) {
             try {
@@ -1098,7 +1101,8 @@ public class OBinaryComparatorV0 implements OBinaryComparator {
                   : new SimpleDateFormat(OStorageConfiguration.DEFAULT_DATETIME_FORMAT);
 
               final Date value2AsDate = dateFormat.parse(value2AsString);
-              final long value2 = value2AsDate.getTime();
+              long value2 = value2AsDate.getTime();
+              value2 = ORecordSerializerBinaryV0.convertDayToTimezone(ODateHelper.getDatabaseTimeZone(), TimeZone.getTimeZone("GMT"), value2);
               return (value1 < value2) ? -1 : ((value1 == value2) ? 0 : 1);
             } catch (ParseException e1) {
               return new Date(value1).toString().compareTo(value2AsString);

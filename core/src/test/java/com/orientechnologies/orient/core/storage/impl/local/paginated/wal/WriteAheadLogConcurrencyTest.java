@@ -1,41 +1,31 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+import org.junit.*;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NavigableMap;
 import java.util.Random;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Andrey Lomakin
  * @since 16.05.13
  */
-@Test(enabled = false)
 public class WriteAheadLogConcurrencyTest {
   private ODiskWriteAheadLog writeAheadLog;
-  private File                                                           testDir;
+  private File               testDir;
   private NavigableMap<OLogSequenceNumber, WriteAheadLogTest.TestRecord> recordConcurrentMap = new ConcurrentSkipListMap<OLogSequenceNumber, WriteAheadLogTest.TestRecord>();
-  private ExecutorService                                                writerExecutor;
-  private AtomicReference<OLogSequenceNumber>                            lastCheckpoint      = new AtomicReference<OLogSequenceNumber>();
+  private ExecutorService writerExecutor;
+  private AtomicReference<OLogSequenceNumber> lastCheckpoint = new AtomicReference<OLogSequenceNumber>();
 
-  @BeforeClass(enabled = false)
+  @Before
   public void beforeClass() throws Exception {
     OWALRecordsFactory.INSTANCE.registerNewRecord((byte) 128, WriteAheadLogTest.TestRecord.class);
 
@@ -51,11 +41,13 @@ public class WriteAheadLogConcurrencyTest {
     when(localPaginatedStorage.getStoragePath()).thenReturn(testDir.getAbsolutePath());
     when(localPaginatedStorage.getName()).thenReturn("WriteAheadLogConcurrencyTest");
 
-    writeAheadLog = new ODiskWriteAheadLog(200, 500, OWALPage.PAGE_SIZE * 800, null, localPaginatedStorage);
+    writeAheadLog = new ODiskWriteAheadLog(200, 500, OWALPage.PAGE_SIZE * 800, null, false, localPaginatedStorage);
 
     writerExecutor = Executors.newCachedThreadPool();
   }
 
+  @Test
+  @Ignore
   public void testConcurrentWrites() throws Exception {
     CountDownLatch startLatch = new CountDownLatch(1);
 
@@ -70,8 +62,8 @@ public class WriteAheadLogConcurrencyTest {
       System.out.println(seed);
 
     for (int i = 0; i < 8; i++)
-      futures.add(writerExecutor.submit(new ConcurrentWriter(seeds.get(i), startLatch, writeAheadLog, recordConcurrentMap,
-          lastCheckpoint)));
+      futures.add(writerExecutor
+          .submit(new ConcurrentWriter(seeds.get(i), startLatch, writeAheadLog, recordConcurrentMap, lastCheckpoint)));
 
     startLatch.countDown();
 
@@ -91,7 +83,7 @@ public class WriteAheadLogConcurrencyTest {
     Assert.assertEquals(lastCheckpoint.get(), writeAheadLog.getLastCheckpoint());
   }
 
-  @AfterClass(enabled = false)
+  @After
   public void afterClass() throws Exception {
     writeAheadLog.delete();
 
@@ -101,7 +93,7 @@ public class WriteAheadLogConcurrencyTest {
 
   private static final class ConcurrentWriter implements Callable<Void> {
     private final CountDownLatch                                                 startLatch;
-    private final ODiskWriteAheadLog writeAheadLog;
+    private final ODiskWriteAheadLog                                             writeAheadLog;
     private final NavigableMap<OLogSequenceNumber, WriteAheadLogTest.TestRecord> recordConcurrentMap;
     private final Random                                                         random;
     private final AtomicReference<OLogSequenceNumber>                            lastCheckpoint;

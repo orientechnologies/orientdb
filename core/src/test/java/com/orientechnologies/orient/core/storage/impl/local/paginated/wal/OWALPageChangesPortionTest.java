@@ -1,9 +1,10 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.orient.core.Orient;
-import org.testng.Assert;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.assertj.core.api.Assertions;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.nio.ByteBuffer;
 import java.util.Random;
@@ -12,14 +13,14 @@ import java.util.Random;
  * @author Andrey Lomakin <lomakin.andrey@gmail.com>.
  * @since 8/19/2015
  */
-@Test
 public class OWALPageChangesPortionTest {
 
-  @BeforeMethod
+  @Before
   public void before() {
     Orient.instance();
   }
 
+  @Test
   public void testSingleLongValueInStartChunk() {
     byte[] data = new byte[1024];
     ByteBuffer pointer = ByteBuffer.wrap(data);
@@ -30,6 +31,7 @@ public class OWALPageChangesPortionTest {
 
   }
 
+  @Test
   public void testSingleLongValuesInMiddleOfChunk() {
     byte[] data = new byte[1024];
     ByteBuffer pointer = ByteBuffer.wrap(data);
@@ -40,6 +42,7 @@ public class OWALPageChangesPortionTest {
 
   }
 
+  @Test
   public void testSingleIntValue() {
     byte[] data = new byte[1024];
     ByteBuffer pointer = ByteBuffer.wrap(data);
@@ -50,6 +53,7 @@ public class OWALPageChangesPortionTest {
 
   }
 
+  @Test
   public void testSingleShortValue() {
     byte[] data = new byte[1024];
     ByteBuffer pointer = ByteBuffer.wrap(data);
@@ -60,6 +64,7 @@ public class OWALPageChangesPortionTest {
 
   }
 
+  @Test
   public void testSingleByteValue() {
     byte[] data = new byte[1024];
     ByteBuffer pointer = ByteBuffer.wrap(data);
@@ -70,6 +75,7 @@ public class OWALPageChangesPortionTest {
 
   }
 
+  @Test
   public void testMoveData() {
     byte[] data = new byte[1024];
     ByteBuffer pointer = ByteBuffer.wrap(data);
@@ -79,11 +85,12 @@ public class OWALPageChangesPortionTest {
 
     changesCollector.setBinaryValue(pointer, values, 64);
     changesCollector.moveData(pointer, 64, 74, 4);
-    Assert.assertEquals(changesCollector.getBinaryValue(pointer, 64, 4), values);
+//    Assert.assertEquals(changesCollector.getBinaryValue(pointer, 64, 4), values);
 
+    Assertions.assertThat(changesCollector.getBinaryValue(pointer, 64, 4)).isEqualTo(values);
   }
 
-
+  @Test
   public void testBinaryValueTwoChunksFromStart() {
     byte[] data = new byte[1024];
     ByteBuffer pointer = ByteBuffer.wrap(data);
@@ -96,10 +103,12 @@ public class OWALPageChangesPortionTest {
 
     changesCollector.setBinaryValue(pointer, changes, 64);
 
-    Assert.assertEquals(changesCollector.getBinaryValue(pointer, 64, 128), changes);
+    //    Assert.assertEquals(changesCollector.getBinaryValue(pointer, 64, 128), changes);
 
+    Assertions.assertThat(changesCollector.getBinaryValue(pointer, 64, 128)).isEqualTo(changes);
   }
 
+  @Test
   public void testBinaryValueTwoChunksInMiddle() {
     byte[] data = new byte[1024];
     ByteBuffer pointer = ByteBuffer.wrap(data);
@@ -112,11 +121,13 @@ public class OWALPageChangesPortionTest {
 
     changesCollector.setBinaryValue(pointer, changes, 32);
 
-    Assert.assertEquals(changesCollector.getBinaryValue(pointer, 32, 128), changes);
+    //    Assert.assertEquals(changesCollector.getBinaryValue(pointer, 32, 32128), changes);
+
+    Assertions.assertThat(changesCollector.getBinaryValue(pointer, 32, 128)).isEqualTo(changes);
 
   }
 
-
+  @Test
   public void testBinaryValueTwoChunksTwoPortionsInMiddle() {
     byte[] data = new byte[65536];
     ByteBuffer pointer = ByteBuffer.wrap(data);
@@ -129,11 +140,12 @@ public class OWALPageChangesPortionTest {
 
     changesCollector.setBinaryValue(pointer, changes, 1000);
 
-    Assert.assertEquals(changesCollector.getBinaryValue(pointer, 1000, 1024), changes);
+    //    Assert.assertEquals(changesCollector.getBinaryValue(pointer, 1000, 1024), changes);
 
+    Assertions.assertThat(changesCollector.getBinaryValue(pointer, 1000, 1024)).isEqualTo(changes);
   }
 
-
+  @Test
   public void testSimpleApplyChanges() {
     byte[] data = new byte[1024];
     ByteBuffer pointer = ByteBuffer.wrap(data);
@@ -146,16 +158,21 @@ public class OWALPageChangesPortionTest {
 
     changesCollector.setBinaryValue(pointer, changes, 32);
 
-    Assert.assertEquals(changesCollector.getBinaryValue(pointer, 32, 128), changes);
+    //    Assert.assertEquals(changesCollector.getBinaryValue(pointer, 32, 128), changes);
 
+    Assertions.assertThat(changesCollector.getBinaryValue(pointer, 32, 128)).isEqualTo(changes);
     changesCollector.applyChanges(pointer);
     byte[] res = new byte[128];
     pointer.position(32);
     pointer.get(res);
-    Assert.assertEquals(res, changes);
+//    Assert.assertEquals(res, changes);
+
+
+    Assertions.assertThat(res).isEqualTo(changes);
+
   }
 
-
+  @Test
   public void testSerializationAndRestore() {
     byte[] data = new byte[1024];
     ByteBuffer pointer = ByteBuffer.wrap(data);
@@ -168,7 +185,9 @@ public class OWALPageChangesPortionTest {
 
     changesCollector.setBinaryValue(pointer, changes, 32);
 
-    Assert.assertEquals(changesCollector.getBinaryValue(pointer, 32, 128), changes);
+    //    Assert.assertEquals(changesCollector.getBinaryValue(pointer, 32, 128), changes);
+
+    Assertions.assertThat(changesCollector.getBinaryValue(pointer, 32, 128)).isEqualTo(changes);
 
     ByteBuffer newBuffer = ByteBuffer.wrap(new byte[1024]);
     newBuffer.put(pointer.array());
@@ -184,6 +203,7 @@ public class OWALPageChangesPortionTest {
 
   }
 
+  @Test
   public void testEmptyChanges() {
     OWALPageChangesPortion changesCollector = new OWALPageChangesPortion(1024);
     int size = changesCollector.serializedSize();
@@ -196,6 +216,7 @@ public class OWALPageChangesPortionTest {
 
   }
 
+  @Test
   public void testReadNoChanges() {
     byte[] data = new byte[1024];
     data[0] = 1;
@@ -208,6 +229,7 @@ public class OWALPageChangesPortionTest {
     Assert.assertEquals(bytes[1], 2);
   }
 
+  @Test
   public void testGetCrossChanges() {
     byte[] data = new byte[1024];
     ByteBuffer pointer = ByteBuffer.wrap(data);
@@ -226,9 +248,13 @@ public class OWALPageChangesPortionTest {
     byte[] expected = new byte[128];
     System.arraycopy(changes, 0, expected, 0, 32);
     System.arraycopy(changes, 0, expected, 96, 32);
-    Assert.assertEquals(content, expected);
+//    Assert.assertEquals(content, expected);
+
+    Assertions.assertThat(content).isEqualTo(expected);
+
   }
 
+  @Test
   public void testMultiPortionReadIfFirstPortionIsNotChanged() {
     final byte[] data = new byte[OWALPageChangesPortion.PORTION_BYTES * 4];
     final ByteBuffer pointer = ByteBuffer.wrap(data);
@@ -245,7 +271,10 @@ public class OWALPageChangesPortionTest {
     final byte[] expected = new byte[OWALPageChangesPortion.PORTION_BYTES * 2];
     System.arraycopy(smallChange, 0, expected, OWALPageChangesPortion.PORTION_BYTES + 37, smallChange.length);
 
-    Assert.assertEquals(actual, expected);
+//    Assert.assertEquals(actual, expected);
+
+    Assertions.assertThat(actual).isEqualTo(expected);
+
   }
 
 }

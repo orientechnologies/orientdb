@@ -7,10 +7,13 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class OOrBlock extends OBooleanExpression {
   List<OBooleanExpression> subBlocks = new ArrayList<OBooleanExpression>();
@@ -23,8 +26,20 @@ public class OOrBlock extends OBooleanExpression {
     super(p, id);
   }
 
-  @Override
-  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+  @Override public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+    if (getSubBlocks() == null) {
+      return true;
+    }
+
+    for (OBooleanExpression block : subBlocks) {
+      if (block.evaluate(currentRecord, ctx)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Override public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
     if (getSubBlocks() == null) {
       return true;
     }
@@ -38,7 +53,9 @@ public class OOrBlock extends OBooleanExpression {
   }
 
   public boolean evaluate(Object currentRecord, OCommandContext ctx) {
-    if (currentRecord instanceof OIdentifiable) {
+    if (currentRecord instanceof OResult) {
+      return evaluate((OResult) currentRecord, ctx);
+    } else if (currentRecord instanceof OIdentifiable) {
       return evaluate((OIdentifiable) currentRecord, ctx);
     } else if (currentRecord instanceof Map) {
       ODocument doc = new ODocument();
@@ -75,8 +92,7 @@ public class OOrBlock extends OBooleanExpression {
     }
   }
 
-  @Override
-  protected boolean supportsBasicCalculation() {
+  @Override protected boolean supportsBasicCalculation() {
     for (OBooleanExpression expr : subBlocks) {
       if (!expr.supportsBasicCalculation()) {
         return false;
@@ -85,8 +101,7 @@ public class OOrBlock extends OBooleanExpression {
     return true;
   }
 
-  @Override
-  protected int getNumberOfExternalCalculations() {
+  @Override protected int getNumberOfExternalCalculations() {
     int result = 0;
     for (OBooleanExpression expr : subBlocks) {
       result += expr.getNumberOfExternalCalculations();
@@ -94,8 +109,7 @@ public class OOrBlock extends OBooleanExpression {
     return result;
   }
 
-  @Override
-  protected List<Object> getExternalCalculationConditions() {
+  @Override protected List<Object> getExternalCalculationConditions() {
     List<Object> result = new ArrayList<Object>();
     for (OBooleanExpression expr : subBlocks) {
       result.addAll(expr.getExternalCalculationConditions());
@@ -119,14 +133,73 @@ public class OOrBlock extends OBooleanExpression {
 
   public List<OAndBlock> flatten() {
     List<OAndBlock> result = new ArrayList<OAndBlock>();
-    for(OBooleanExpression sub:subBlocks){
+    for (OBooleanExpression sub : subBlocks) {
       List<OAndBlock> childFlattened = sub.flatten();
-      for(OAndBlock child:childFlattened){
+      for (OAndBlock child : childFlattened) {
         result.add(child);
       }
     }
     return result;
   }
 
+  @Override public boolean needsAliases(Set<String> aliases) {
+    for (OBooleanExpression expr : subBlocks) {
+      if (expr.needsAliases(aliases)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Override public OOrBlock copy() {
+    OOrBlock result = new OOrBlock(-1);
+    result.subBlocks = subBlocks.stream().map(x -> x.copy()).collect(Collectors.toList());
+    return result;
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OOrBlock oOrBlock = (OOrBlock) o;
+
+    if (subBlocks != null ? !subBlocks.equals(oOrBlock.subBlocks) : oOrBlock.subBlocks != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    return subBlocks != null ? subBlocks.hashCode() : 0;
+  }
+
+  @Override public boolean isEmpty() {
+    if (subBlocks.isEmpty()) {
+      return true;
+    }
+    for (OBooleanExpression block : subBlocks) {
+      if (!block.isEmpty()) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @Override public void extractSubQueries(SubQueryCollector collector) {
+    for (OBooleanExpression block : subBlocks) {
+      block.extractSubQueries(collector);
+    }
+  }
+
+  @Override public boolean refersToParent() {
+    for (OBooleanExpression exp : subBlocks) {
+      if (exp != null && exp.refersToParent()) {
+        return true;
+      }
+    }
+    return false;
+  }
 }
 /* JavaCC - OriginalChecksum=98d3077303a598705894dbb7bd4e1573 (do not edit this line) */

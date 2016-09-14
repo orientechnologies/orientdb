@@ -20,12 +20,6 @@ public interface OSequenceLibrary {
 
   void dropSequence(String iName);
 
-  OSequence onSequenceCreated(ODocument iDocument);
-
-  OSequence onSequenceUpdated(ODocument iDocument);
-
-  void onSequenceDropped(ODocument iDocument);
-
   void create();
 
   void load();

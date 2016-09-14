@@ -20,7 +20,6 @@
 
 package com.orientechnologies.orient.core.storage.cache.local.twoq;
 
-import com.orientechnologies.common.concur.lock.ODistributedCounter;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OPartitionedLockManager;
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
@@ -44,6 +43,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -87,7 +87,7 @@ public class O2QCache implements OReadCache {
   /**
    * Counts how much time we warned user that limit of amount of pinned pages is reached.
    */
-  private final ODistributedCounter pinnedPagesWarningCounter = new ODistributedCounter();
+  private final LongAdder pinnedPagesWarningCounter = new LongAdder();
 
   /**
    * Cache of value which is contained inside of {@link #pinnedPagesWarningCounter}. It is used to speed up calculation of warnings.
@@ -181,92 +181,6 @@ public class O2QCache implements OReadCache {
   }
 
   @Override
-  public long openFile(final String fileName, OWriteCache writeCache) throws IOException {
-    Long fileId = writeCache.isOpen(fileName);
-    if (fileId != null)
-      return fileId;
-
-    cacheLock.acquireWriteLock();
-    try {
-      fileId = writeCache.isOpen(fileName);
-      if (fileId != null)
-        return fileId;
-
-      fileId = writeCache.openFile(fileName);
-      Set<Long> oldPages = filePages.put(fileId, Collections.newSetFromMap(new ConcurrentHashMap<Long, Boolean>()));
-      assert oldPages == null || oldPages.isEmpty();
-
-      return fileId;
-    } finally {
-      cacheLock.releaseWriteLock();
-    }
-  }
-
-  @Override
-  public long openFile(long fileId, OWriteCache writeCache) throws IOException {
-    fileId = OAbstractWriteCache.checkFileIdCompatibility(writeCache.getId(), fileId);
-
-    if (writeCache.isOpen(fileId))
-      return fileId;
-
-    cacheLock.acquireReadLock();
-    Lock fileLock;
-    try {
-      fileLock = fileLockManager.acquireExclusiveLock(fileId);
-      try {
-        if (writeCache.isOpen(fileId))
-          return fileId;
-
-        writeCache.openFile(fileId);
-        Set<Long> oldPages = filePages.put(fileId, Collections.newSetFromMap(new ConcurrentHashMap<Long, Boolean>()));
-        assert oldPages == null || oldPages.isEmpty();
-
-      } finally {
-        fileLockManager.releaseLock(fileLock);
-      }
-    } finally {
-      cacheLock.releaseReadLock();
-    }
-
-    return fileId;
-  }
-
-  @Override
-  public long openFile(String fileName, long fileId, OWriteCache writeCache) throws IOException {
-    fileId = OAbstractWriteCache.checkFileIdCompatibility(writeCache.getId(), fileId);
-
-    Long existingFileId = writeCache.isOpen(fileName);
-    if (existingFileId != null) {
-      if (writeCache.fileIdsAreEqual(fileId, existingFileId))
-        return fileId;
-
-      throw new OStorageException(
-          "File with given name already exists but has different id " + existingFileId + " vs. proposed " + fileId);
-    }
-
-    cacheLock.acquireWriteLock();
-    try {
-      existingFileId = writeCache.isOpen(fileName);
-
-      if (existingFileId != null) {
-        if (writeCache.fileIdsAreEqual(fileId, existingFileId))
-          return fileId;
-
-        throw new OStorageException(
-            "File with given name already exists but has different id " + existingFileId + " vs. proposed " + fileId);
-      }
-
-      writeCache.openFile(fileName, fileId);
-      Set<Long> oldPages = filePages.put(fileId, Collections.newSetFromMap(new ConcurrentHashMap<Long, Boolean>()));
-      assert oldPages == null || oldPages.isEmpty();
-    } finally {
-      cacheLock.releaseWriteLock();
-    }
-
-    return fileId;
-  }
-
-  @Override
   public long addFile(String fileName, long fileId, OWriteCache writeCache) throws IOException {
     fileId = OAbstractWriteCache.checkFileIdCompatibility(writeCache.getId(), fileId);
 
@@ -293,7 +207,7 @@ public class O2QCache implements OReadCache {
       if (pinnedPagesWarningsCache < MAX_PERCENT_OF_PINED_PAGES) {
         pinnedPagesWarningCounter.increment();
 
-        final long warnings = pinnedPagesWarningCounter.get();
+        final long warnings = pinnedPagesWarningCounter.sum();
         if (warnings < MAX_PERCENT_OF_PINED_PAGES) {
           pinnedPagesWarningsCache = (int) warnings;
 
@@ -821,7 +735,7 @@ public class O2QCache implements OReadCache {
       final long pageIndex = dataInputStream.readLong();
       try {
         final long fileId = writeCache.externalFileId(internalFileId);
-        final OCacheEntry cacheEntry = new OCacheEntry(fileId, pageIndex, null, false);
+        final OCacheEntry cacheEntry = new OCacheEntryImpl(fileId, pageIndex, null, false);
 
         Set<Long> pages = filePages.get(fileId);
         if (pages == null) {
@@ -871,7 +785,7 @@ public class O2QCache implements OReadCache {
       final long pageIndex = dataInputStream.readLong();
       try {
         final long fileId = writeCache.externalFileId(internalFileId);
-        final OCacheEntry entry = new OCacheEntry(fileId, pageIndex, null, false);
+        final OCacheEntry entry = new OCacheEntryImpl(fileId, pageIndex, null, false);
         filePositionMap.put(new PageKey(fileId, pageIndex), new OPair<Long, OCacheEntry>(position, entry));
         queuePositionMap.put(position, entry);
 
@@ -885,9 +799,6 @@ public class O2QCache implements OReadCache {
     for (final Map.Entry<PageKey, OPair<Long, OCacheEntry>> entry : filePositionMap.entrySet()) {
       final PageKey pageKey = entry.getKey();
       final OPair<Long, OCacheEntry> pair = entry.getValue();
-
-      if (!writeCache.isOpen(pageKey.fileId))
-        writeCache.openFile(pageKey.fileId);
 
       final OCachePointer[] pointers = writeCache.load(pageKey.fileId, pageKey.pageIndex, 1, false, cacheHit);
 
@@ -979,7 +890,7 @@ public class O2QCache implements OReadCache {
       }
     } catch (Exception e) {
       OLogManager.instance()
-          .error(this, "Cannot store state of cache for storage placed under %s", writeCache.getRootDirectory(), e);
+          .error(this, "Cannot store state of cache for storage placed under %s (error: %s)", writeCache.getRootDirectory(), e);
     } finally {
       cacheLock.releaseWriteLock();
     }
@@ -1152,7 +1063,7 @@ public class O2QCache implements OReadCache {
 
   private UpdateCacheResult entryIsAbsentInQueues(long fileId, long pageIndex, OCachePointer dataPointer) {
     OCacheEntry cacheEntry;
-    cacheEntry = new OCacheEntry(fileId, pageIndex, dataPointer, false);
+    cacheEntry = new OCacheEntryImpl(fileId, pageIndex, dataPointer, false);
     a1in.putToMRU(cacheEntry);
 
     Set<Long> pages = filePages.get(fileId);

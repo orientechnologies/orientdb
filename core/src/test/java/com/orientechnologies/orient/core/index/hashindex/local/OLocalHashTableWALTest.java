@@ -14,8 +14,9 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPa
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
-import org.testng.Assert;
-import org.testng.annotations.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -28,8 +29,7 @@ import java.util.List;
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 5/19/14
  */
-@Test
-public class OLocalHashTableWALTest extends OLocalHashTableTest {
+public class OLocalHashTableWALTest extends OLocalHashTableBase {
   static {
     OGlobalConfiguration.FILE_LOCK.setValue(false);
   }
@@ -41,17 +41,7 @@ public class OLocalHashTableWALTest extends OLocalHashTableTest {
 
   private ODatabaseDocumentTx expectedDatabaseDocumentTx;
 
-  @BeforeClass
-  @Override
-  public void beforeClass() {
-  }
-
-  @AfterClass
-  @Override
-  public void afterClass() {
-  }
-
-  @BeforeMethod
+  @Before
   public void beforeMethod() throws IOException {
     buildDirectory = System.getProperty("buildDirectory", ".");
 
@@ -92,9 +82,8 @@ public class OLocalHashTableWALTest extends OLocalHashTableTest {
     diskWriteAheadLog.preventCutTill(diskWriteAheadLog.getFlushedLsn());
   }
 
-  @AfterMethod
-  @Override
-  public void afterMethod() throws IOException {
+  @After
+  public void after() throws IOException {
     if (databaseDocumentTx.isClosed())
       databaseDocumentTx.open("admin", "admin");
 
@@ -257,7 +246,8 @@ public class OLocalHashTableWALTest extends OLocalHashTableTest {
     final OWriteCache expectedWriteCache = ((OAbstractPaginatedStorage) expectedDatabaseDocumentTx.getStorage()).getWriteCache();
 
     for (OWALRecord walRecord : records) {
-      atomicUnit.add(walRecord);
+      if (walRecord instanceof OOperationUnitBodyRecord)
+        atomicUnit.add(walRecord);
 
       if (!atomicChangeIsProcessed && walRecord instanceof OAtomicUnitStartRecord) {
         atomicChangeIsProcessed = true;
@@ -276,9 +266,6 @@ public class OLocalHashTableWALTest extends OLocalHashTableTest {
             final long fileId = updatePageRecord.getFileId();
             final long pageIndex = updatePageRecord.getPageIndex();
 
-            if (!expectedWriteCache.isOpen(fileId))
-              expectedReadCache.openFile(fileId, expectedWriteCache);
-
             OCacheEntry cacheEntry = expectedReadCache.load(fileId, pageIndex, true, expectedWriteCache, 1);
             if (cacheEntry == null)
               do {
@@ -287,7 +274,7 @@ public class OLocalHashTableWALTest extends OLocalHashTableTest {
 
             cacheEntry.acquireExclusiveLock();
             try {
-              ODurablePage durablePage = new ODurablePage(cacheEntry, null);
+              ODurablePage durablePage = new ODurablePage(cacheEntry);
               durablePage.restoreChanges(updatePageRecord.getChanges());
               durablePage.setLsn(updatePageRecord.getLsn());
             } finally {
@@ -298,9 +285,7 @@ public class OLocalHashTableWALTest extends OLocalHashTableTest {
             final OFileCreatedWALRecord fileCreatedCreatedRecord = (OFileCreatedWALRecord) restoreRecord;
             String fileName = fileCreatedCreatedRecord.getFileName().replace("actualLocalHashTable", "expectedLocalHashTable");
 
-            if (expectedWriteCache.exists(fileName))
-              expectedReadCache.openFile(fileName, fileCreatedCreatedRecord.getFileId(), expectedWriteCache);
-            else
+            if (!expectedWriteCache.exists(fileName))
               expectedReadCache.addFile(fileName, fileCreatedCreatedRecord.getFileId(), expectedWriteCache);
           }
         }
@@ -309,7 +294,8 @@ public class OLocalHashTableWALTest extends OLocalHashTableTest {
       } else {
         Assert.assertTrue(walRecord instanceof OUpdatePageRecord || walRecord instanceof OFileCreatedWALRecord
             || walRecord instanceof ONonTxOperationPerformedWALRecord || walRecord instanceof OFullCheckpointStartRecord
-            || walRecord instanceof OCheckpointEndRecord);
+            || walRecord instanceof OCheckpointEndRecord || walRecord instanceof OFuzzyCheckpointStartRecord
+            || walRecord instanceof OFuzzyCheckpointEndRecord);
       }
 
     }

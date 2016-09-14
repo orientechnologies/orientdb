@@ -1,11 +1,14 @@
 package com.orientechnologies.orient.etl.extractor;
 
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLBaseTest;
 import com.orientechnologies.orient.etl.transformer.OCSVTransformer;
 import org.junit.Test;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
 
@@ -49,7 +52,8 @@ public class OCSVExtractorTest extends OETLBaseTest {
       assertEquals(3, doc.fields());
       assertEquals(names[i], doc.field("name"));
       assertEquals(surnames[i], doc.field("surname"));
-      assertEquals(i, doc.field("id"));
+      assertThat(doc.<Integer>field("id")).isEqualTo(i);
+
       i++;
     }
   }
@@ -118,7 +122,9 @@ public class OCSVExtractorTest extends OETLBaseTest {
     List<ODocument> res = getResult();
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
-    assertEquals(10.78f, doc.field("firstNumber"));
+    //    assertEquals(10.78f, doc.field("firstNumber"));
+    assertThat(doc.<Float>field("firstNumber")).isEqualTo(10.78f);
+
   }
 
   @Test
@@ -128,7 +134,9 @@ public class OCSVExtractorTest extends OETLBaseTest {
     List<ODocument> res = getResult();
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
-    assertEquals(10.78f, doc.field("firstNumber"));
+    //    assertEquals(10.78f, doc.field("firstNumber"));
+    assertThat(doc.<Float>field("firstNumber")).isEqualTo(10.78f);
+
   }
 
   @Test
@@ -138,7 +146,9 @@ public class OCSVExtractorTest extends OETLBaseTest {
     List<ODocument> res = getResult();
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
-    assertEquals(10.78f, doc.field("firstNumber"));
+    //    assertEquals(10.78f, doc.field("firstNumber"));
+    assertThat(doc.<Float>field("firstNumber")).isEqualTo(10.78f);
+
   }
 
   @Test
@@ -277,7 +287,7 @@ public class OCSVExtractorTest extends OETLBaseTest {
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
     assertEquals(new Integer(1), (Integer) doc.field("id"));
-    assertThat(doc.field("title")).isNull();
+    assertThat(doc.<String>field("title")).isNull();
     // assertEquals("", (String) doc.field("title"));
     assertEquals("Hello", (String) doc.field("text"));
   }
@@ -290,7 +300,7 @@ public class OCSVExtractorTest extends OETLBaseTest {
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
     assertEquals(new Integer(1), (Integer) doc.field("id"));
-    assertThat(doc.field("title")).isNull();
+    assertThat(doc.<String>field("title")).isNull();
     assertEquals("Hello", (String) doc.field("text"));
   }
 
@@ -327,7 +337,7 @@ public class OCSVExtractorTest extends OETLBaseTest {
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
     assertThat(doc.<Integer>field("id ")).isEqualTo(1);
-    assertThat(doc.field("text")).isNull();
+    assertThat(doc.<String>field("text")).isNull();
     assertThat(doc.<String>field("text ")).isEqualTo("my test text");
     assertThat(doc.<Integer>field("num ")).isEqualTo(1);
   }
@@ -377,18 +387,68 @@ public class OCSVExtractorTest extends OETLBaseTest {
     assertThat(doc.<Float>field("id")).isEqualTo(-1.0f);
   }
 
-
   @Test
   public void testLinkType() {
     String cfgJson = "{source: { content: { value: 'id\n#1:1'} }, extractor : { csv : {'columns':['id:LINK']} }, loader : { test: {} } }";
     process(cfgJson);
     List<ODocument> res = getResult();
-    assertFalse(res.isEmpty());
-    ODocument doc = res.get(1);
-    System.out.println(doc.toJSON());
+    assertThat(res).hasSize(1);
+    ODocument doc = res.get(0);
 
     assertThat(doc.<String>field("id")).isEqualTo("#1:1");
 
+  }
+
+  @Test
+  public void testBooleanType() {
+    String cfgJson = "{source: { content: { value: 'fake\ntrue'} }, extractor : { csv : {} }, loader : { test: {} } }";
+    process(cfgJson);
+    List<ODocument> res = getResult();
+    assertThat(res).hasSize(1);
+    ODocument doc = res.get(0);
+
+    assertThat(doc.<Boolean>field("fake")).isTrue();
+
+  }
+
+  @Test
+  public void testColumsDefinitions() {
+    String cfgJson = "{source: { content: { value: 'name,date,datetime\nfrank,2008-04-30,2015-03-30 11:00'} }, extractor : { csv : { 'columns':['name:string','date:date','datetime:datetime']} }, loader : { test: {} } }";
+    process(cfgJson);
+    List<ODocument> res = getResult();
+    assertThat(res).hasSize(1);
+    ODocument doc = res.get(0);
+
+    System.out.println(doc.toJSON());
+    assertThat(doc.<Date>field("date")).isEqualTo("2008-04-30");
+
+    //DATETIME: java.util.Date from DB,
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+
+    LocalDateTime time = LocalDateTime.parse("2015-03-30 11:00", formatter);
+
+    DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+
+    assertThat(df.format(doc.<Date>field("datetime"))).isEqualTo("2015-03-30 11:00");
+
+  }
+
+  @Test
+  public void testCsvParsingFormat  () {
+
+//    CSVFormat format = CSVFormat.valueOf("MySQL");
+
+    String cfgJson = "{source: { content: { value: 'name,date,datetime\nfrank,2008-04-30,2015-03-30 11:00'} }, extractor : { csv : { \"predefinedFormat\": \"Default\",'columns':['name:string','date:date','datetime:datetime']} }, loader : { test: {} } }";
+    process(cfgJson);
+    List<ODocument> res = getResult();
+    assertThat(res).hasSize(1);
+    ODocument doc = res.get(0);
+
+    assertThat(doc.<Date>field("date")).isEqualTo("2008-04-30");
+
+    DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+
+    assertThat(df.format(doc.<Date>field("datetime"))).isEqualTo("2015-03-30 11:00");
 
   }
 }

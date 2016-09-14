@@ -138,8 +138,7 @@ public class OTokenHandlerImpl implements OTokenHandler {
       return false;
     }
     final OrientJwtPayload payload = (OrientJwtPayload) ((JsonWebToken) token).getPayload();
-    if (token.getDatabase().equalsIgnoreCase(database) && token.getExpiry() > System.currentTimeMillis()
-        && payload.getNotBefore() < System.currentTimeMillis()) {
+    if (token.getDatabase().equalsIgnoreCase(database) && token.isNowValid()) {
       valid = true;
     }
     // TODO: Other validations... (e.g. check audience, etc.)
@@ -262,7 +261,7 @@ public class OTokenHandlerImpl implements OTokenHandler {
 
       token.setIsVerified(verifyTokenSignature(token.getHeader(), binaryToken, 0, end, decodedSignature));
       return token;
-    } catch (IOException e) {
+    } catch (Exception e) {
       throw OException.wrapException(new OSystemException("Error on token parsing"), e);
     }
   }

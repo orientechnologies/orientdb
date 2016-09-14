@@ -57,8 +57,8 @@ public class OFileSource extends OAbstractSource {
   }
 
   @Override
-  public void configure(OETLProcessor iProcessor, ODocument iConfiguration, OCommandContext iContext) {
-    super.configure(iProcessor, iConfiguration, iContext);
+  public void configure( ODocument iConfiguration, OCommandContext iContext) {
+    super.configure(iConfiguration, iContext);
 
     if (iConfiguration.containsField("lock"))
       lockFile = iConfiguration.<Boolean> field("lock");

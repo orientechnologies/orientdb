@@ -31,9 +31,9 @@ import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import java.util.Collection;
 import java.util.Set;
 
-public class OIndexManagerProxy extends OProxedResource<OIndexManager> implements OIndexManager {
+public class OIndexManagerProxy extends OProxedResource<OIndexManagerAbstract> implements OIndexManager {
 
-  public OIndexManagerProxy(final OIndexManager iDelegate, final ODatabaseDocumentInternal iDatabase) {
+  public OIndexManagerProxy(final OIndexManagerAbstract iDelegate, final ODatabaseDocumentInternal iDatabase) {
     super(iDelegate, iDatabase);
   }
 
@@ -45,15 +45,15 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManager> implement
    * Force reloading of indexes.
    */
   public OIndexManager reload() {
-    return delegate.load();
+    return delegate.load(database);
   }
 
   public void create() {
-    delegate.create();
+    delegate.create(database);
   }
 
   public Collection<? extends OIndex<?>> getIndexes() {
-    return delegate.getIndexes();
+    return delegate.getIndexes(database);
   }
 
   public OIndex<?> getIndex(final String iName) {
@@ -68,7 +68,7 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManager> implement
       final int[] clusterIdsToIndex, final OProgressListener progressListener, final ODocument metadata) {
 
     if (isDistributedCommand()) {
-      final OIndexManagerRemote remoteIndexManager = new OIndexManagerRemote(database);
+      final OIndexManagerRemote remoteIndexManager = new OIndexManagerRemote();
       return remoteIndexManager.createIndex(iName, iType, indexDefinition, clusterIdsToIndex, progressListener, metadata);
     }
 
@@ -79,7 +79,7 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManager> implement
   public OIndex<?> createIndex(final String iName, final String iType, final OIndexDefinition iIndexDefinition,
       final int[] iClusterIdsToIndex, final OProgressListener progressListener, final ODocument metadata, final String algorithm) {
     if (isDistributedCommand()) {
-      final OIndexManagerRemote remoteIndexManager = new OIndexManagerRemote(database);
+      final OIndexManagerRemote remoteIndexManager = new OIndexManagerRemote();
       return remoteIndexManager.createIndex(iName, iType, iIndexDefinition, iClusterIdsToIndex, progressListener, metadata,
           algorithm);
     }
@@ -93,7 +93,7 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManager> implement
 
   public OIndexManager dropIndex(final String iIndexName) {
     if (isDistributedCommand()) {
-      final OIndexManagerRemote remoteIndexManager = new OIndexManagerRemote(database);
+      final OIndexManagerRemote remoteIndexManager = new OIndexManagerRemote();
       return remoteIndexManager.dropIndex(iIndexName);
     }
 
@@ -157,7 +157,7 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManager> implement
 
   @Override
   public void recreateIndexes() {
-    delegate.recreateIndexes();
+    delegate.recreateIndexes(database);
   }
 
   @Override
@@ -167,7 +167,7 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManager> implement
 
   @Override
   public boolean autoRecreateIndexesAfterCrash() {
-    return delegate.autoRecreateIndexesAfterCrash();
+    return delegate.autoRecreateIndexesAfterCrash(database);
   }
 
   @Override

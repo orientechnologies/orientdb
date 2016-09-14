@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.command;
 
 import com.orientechnologies.common.concur.OTimeoutException;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
@@ -34,15 +35,19 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * Basic implementation of OCommandContext interface that stores variables in a map. Supports parent/child context to build a tree
  * of contexts. If a variable is not found on current object the search is applied recursively on child contexts.
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * 
+ *
  */
 public class OBasicCommandContext implements OCommandContext {
   public static final String                                                         EXECUTION_BEGUN       = "EXECUTION_BEGUN";
   public static final String                                                         TIMEOUT_MS            = "TIMEOUT_MS";
   public static final String                                                         TIMEOUT_STRATEGY      = "TIMEOUT_STARTEGY";
   public static final String                                                         INVALID_COMPARE_COUNT = "INVALID_COMPARE_COUNT";
+
+
+  protected ODatabase database;
+  protected Object[] args;
 
   protected boolean                                                                  recordMetrics         = false;
   protected OCommandContext                                                          parent;
@@ -57,6 +62,8 @@ public class OBasicCommandContext implements OCommandContext {
   private com.orientechnologies.orient.core.command.OCommandContext.TIMEOUT_STRATEGY timeoutStrategy;
   protected AtomicLong                                                               resultsProcessed      = new AtomicLong(0);
   protected Set<Object>                                                              uniqueResult          = new HashSet<Object>();
+
+
 
   public OBasicCommandContext() {
   }
@@ -220,7 +227,7 @@ public class OBasicCommandContext implements OCommandContext {
 
   /**
    * Set the inherited context avoiding to copy all the values every time.
-   * 
+   *
    * @return
    */
   public OCommandContext setChild(final OCommandContext iContext) {
@@ -251,6 +258,14 @@ public class OBasicCommandContext implements OCommandContext {
     }
     return this;
   }
+
+  public OCommandContext setParentWithoutOverridingChild(final OCommandContext iParentContext) {
+    if (parent != iParentContext) {
+      parent = iParentContext;
+    }
+    return this;
+  }
+
 
   @Override
   public String toString() {
@@ -332,7 +347,7 @@ public class OBasicCommandContext implements OCommandContext {
 
   /**
    * returns the number of results processed. This is intended to be used with LIMIT in SQL statements
-   * 
+   *
    * @return
    */
   public AtomicLong getResultsProcessed() {
@@ -350,5 +365,13 @@ public class OBasicCommandContext implements OCommandContext {
       toAdd = new ODocumentEqualityWrapper((ODocument) o);
     }
     return this.uniqueResult.add(toAdd);
+  }
+
+  public ODatabase getDatabase() {
+    return database;
+  }
+
+  public void setDatabase(ODatabase database) {
+    this.database = database;
   }
 }

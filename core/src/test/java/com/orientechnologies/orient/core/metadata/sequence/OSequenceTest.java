@@ -122,4 +122,15 @@ public class OSequenceTest {
     assertThat(sequences.getSequenceCount()).isEqualTo(0);
   }
 
+
+  @Test
+  public void testCreateSequenceWithoutExplicitDefaults() throws Exception {
+    // issue #6484
+    OSequence.CreateParams params = new OSequence.CreateParams().setStart(0L);
+    sequences.createSequence("mySeq", OSequence.SEQUENCE_TYPE.ORDERED, params);
+    OSequence myseq = sequences.getSequence("MYSEQ");
+    assertThat(myseq.current()).isEqualTo(0);
+    assertThat(myseq.next()).isEqualTo(1);
+  }
+
 }

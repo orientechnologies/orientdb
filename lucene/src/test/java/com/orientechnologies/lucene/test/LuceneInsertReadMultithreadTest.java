@@ -45,13 +45,9 @@ public class LuceneInsertReadMultithreadTest extends BaseLuceneTest {
 
   protected String url = "";
 
-  public LuceneInsertReadMultithreadTest() {
-    super();
-  }
-
   @Before
   public void init() {
-    initDB(true);
+    initDB();
 
     url = databaseDocumentTx.getURL();
     OSchema schema = databaseDocumentTx.getMetadata().getSchema();

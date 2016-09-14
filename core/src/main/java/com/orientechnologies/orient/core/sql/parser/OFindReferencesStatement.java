@@ -2,8 +2,17 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.sql.executor.OFindReferencesExecutionPlanner;
+import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
+import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
+
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class OFindReferencesStatement extends OStatement {
   protected ORid       rid;
@@ -21,8 +30,39 @@ public class OFindReferencesStatement extends OStatement {
 
   }
 
-  @Override
-  public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override public boolean isIdempotent() {
+    return true;
+  }
+
+  @Override public OTodoResultSet execute(ODatabase db, Object[] args) {
+    OBasicCommandContext ctx = new OBasicCommandContext();
+    ctx.setDatabase(db);
+    Map<Object, Object> params = new HashMap<>();
+    if (args != null) {
+      for (int i = 0; i < args.length; i++) {
+        params.put(i, args[i]);
+      }
+    }
+    ctx.setInputParameters(params);
+    OInternalExecutionPlan executionPlan = createExecutionPlan(ctx);
+
+    return new OLocalResultSet(executionPlan);
+  }
+
+  @Override public OTodoResultSet execute(ODatabase db, Map params) {
+    OBasicCommandContext ctx = new OBasicCommandContext();
+    ctx.setDatabase(db);
+    ctx.setInputParameters(params);
+    OInternalExecutionPlan executionPlan = createExecutionPlan(ctx);
+
+    return new OLocalResultSet(executionPlan);
+  }
+
+  @Override public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx) {
+    return new OFindReferencesExecutionPlanner(this).createExecutionPlan(ctx);
+  }
+
+  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("FIND REFERENCES ");
     if (rid != null) {
       rid.toString(params, builder);
@@ -45,5 +85,49 @@ public class OFindReferencesStatement extends OStatement {
     }
   }
 
+  @Override public OFindReferencesStatement copy() {
+    OFindReferencesStatement result = new OFindReferencesStatement(-1);
+    result.rid = rid == null ? null : rid.copy();
+    result.subQuery = subQuery == null ? null : subQuery.copy();
+    result.targets = targets == null ? null : targets.stream().map(x -> x.copy()).collect(Collectors.toList());
+    return result;
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OFindReferencesStatement that = (OFindReferencesStatement) o;
+
+    if (rid != null ? !rid.equals(that.rid) : that.rid != null)
+      return false;
+    if (subQuery != null ? !subQuery.equals(that.subQuery) : that.subQuery != null)
+      return false;
+    if (targets != null ? !targets.equals(that.targets) : that.targets != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = rid != null ? rid.hashCode() : 0;
+    result = 31 * result + (subQuery != null ? subQuery.hashCode() : 0);
+    result = 31 * result + (targets != null ? targets.hashCode() : 0);
+    return result;
+  }
+
+  public ORid getRid() {
+    return rid;
+  }
+
+  public OStatement getSubQuery() {
+    return subQuery;
+  }
+
+  public List<SimpleNode> getTargets() {
+    return targets;
+  }
 }
 /* JavaCC - OriginalChecksum=be781e05acef94aa5edd7438b4ead6d5 (do not edit this line) */

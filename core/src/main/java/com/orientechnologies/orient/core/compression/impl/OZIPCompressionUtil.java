@@ -41,7 +41,7 @@ import java.util.zip.ZipOutputStream;
 
 /**
  * Compression Utility.
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class OZIPCompressionUtil {
@@ -191,7 +191,7 @@ public class OZIPCompressionUtil {
       if (iOutput != null)
         iOutput.onMessage("error: " + e);
 
-      OLogManager.instance().error(OZIPCompression.class, "Cannot compress file: %s", e, folderName);
+      OLogManager.instance().error(OZIPCompressionUtil.class, "Cannot compress file: %s", e, folderName);
       throw e;
     } finally {
       zos.closeEntry();
@@ -200,8 +200,9 @@ public class OZIPCompressionUtil {
     if (iOutput != null) {
       final long ratio = ze.getSize() > 0 ? 100 - (ze.getCompressedSize() * 100 / ze.getSize()) : 0;
 
-      iOutput.onMessage("ok size=" + OFileUtils.getSizeAsString(ze.getSize()) + " compressedSize=" + ze.getCompressedSize()
-          + " ratio=" + ratio + "%% elapsed=" + OIOUtils.getTimeAsString(System.currentTimeMillis() - begin) + "");
+      iOutput.onMessage(
+          "ok size=" + OFileUtils.getSizeAsString(ze.getSize()) + " compressedSize=" + ze.getCompressedSize() + " ratio=" + ratio
+              + "%% elapsed=" + OIOUtils.getTimeAsString(System.currentTimeMillis() - begin) + "");
     }
   }
 }

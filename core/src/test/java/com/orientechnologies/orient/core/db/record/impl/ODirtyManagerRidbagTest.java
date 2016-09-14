@@ -1,11 +1,5 @@
 package com.orientechnologies.orient.core.db.record.impl;
 
-import static org.testng.AssertJUnit.assertEquals;
-
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -14,12 +8,17 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODirtyManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 public class ODirtyManagerRidbagTest {
 
   private ODatabaseDocument db;
 
-  @BeforeMethod
+  @Before
   public void before() {
     db = new ODatabaseDocumentTx("memory:" + ODirtyManagerRidbagTest.class.getSimpleName());
     db.create();
@@ -44,7 +43,7 @@ public class ODirtyManagerRidbagTest {
     }
   }
 
-  @AfterMethod
+  @After
   public void after() {
     db.drop();
   }

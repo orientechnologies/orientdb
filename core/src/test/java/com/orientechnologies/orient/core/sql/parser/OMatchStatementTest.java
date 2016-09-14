@@ -1,13 +1,12 @@
 package com.orientechnologies.orient.core.sql.parser;
 
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
-import static org.testng.Assert.fail;
+import static org.junit.Assert.fail;
 
-@Test
 public class OMatchStatementTest {
 
   protected SimpleNode checkRightSyntax(String query) {
@@ -91,7 +90,6 @@ public class OMatchStatementTest {
     query.append("   where: (name = 'foo' and surname = 'bar' or aaa in [1,2,3]), ");
     query.append("   maxDepth: 10 ");
     query.append("} return foo");
-    System.out.println(query);
     checkRightSyntax(query.toString());
   }
 
@@ -104,7 +102,6 @@ public class OMatchStatementTest {
     query.append("   where: (name = 'foo' and surname = 'bar' or aaa in [1,2,3]), ");
     query.append("   maxDepth: 10 ");
     query.append("} return foo");
-    System.out.println(query);
     checkRightSyntax(query.toString());
   }
 
@@ -113,7 +110,6 @@ public class OMatchStatementTest {
     StringBuilder query = new StringBuilder();
     query.append("MATCH {}");
     query.append("  .(out().in(){class:'v'}.both('Foo')){maxDepth: 3}.out() return foo");
-    System.out.println(query);
     checkRightSyntax(query.toString());
   }
 
@@ -122,7 +118,6 @@ public class OMatchStatementTest {
     StringBuilder query = new StringBuilder();
     query.append("MATCH {}");
     query.append("  .(-->{}<--{class:'v'}--){maxDepth: 3}-->{} return foo");
-    System.out.println(query);
     checkRightSyntax(query.toString());
   }
 
@@ -141,7 +136,6 @@ public class OMatchStatementTest {
     query += " {class: 'V', as: foo}-->{class: 'V', as: bar} RETURN foo";
     checkRightSyntax(query);
   }
-
 
   @Test
   public void testWhile() {
@@ -163,16 +157,10 @@ public class OMatchStatementTest {
     checkRightSyntax("MATCH {class: 'V'} RETURN {'name':'foo', 'value': bar}");
   }
 
-
-  private void printTree(String s) {
-    OrientSql osql = getParserFor(s);
-    try {
-      SimpleNode n = osql.parse();
-
-    } catch (ParseException e) {
-      e.printStackTrace();
-    }
-
+  @Test
+  public void testOptional() {
+    checkRightSyntax("MATCH {class: 'V', as: foo}-->{}<-foo-{}-bar-{}-->{as: bar, optional:true} RETURN foo");
+    checkRightSyntax("MATCH {class: 'V', as: foo}-->{}<-foo-{}-bar-{}-->{as: bar, optional:false} RETURN foo");
   }
 
   protected OrientSql getParserFor(String string) {

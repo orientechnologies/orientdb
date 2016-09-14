@@ -20,9 +20,10 @@
 
 package com.tinkerpop.blueprints.impls.orient;
 
-import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import org.apache.commons.configuration.Configuration;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OTransactionException;
@@ -43,25 +44,25 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
    * @param iDatabase
    *          Underlying database object to attach
    */
-  protected OrientTransactionalGraph(final ODatabaseDocumentTx iDatabase) {
+  protected OrientTransactionalGraph(final ODatabaseDocumentInternal iDatabase) {
     this(iDatabase, true, null, null);
   }
 
-  protected OrientTransactionalGraph(final ODatabaseDocumentTx iDatabase, final String iUserName, final String iUserPasswd,
+  protected OrientTransactionalGraph(final ODatabaseDocumentInternal iDatabase, final String iUserName, final String iUserPasswd,
       final Settings iConfiguration) {
     super(iDatabase, iUserName, iUserPasswd, iConfiguration);
     setCurrentGraphInThreadLocal();
-    this.setAutoStartTx(isAutoStartTx());
+    super.setAutoStartTx(isAutoStartTx());
 
     if (isAutoStartTx())
       ensureTransaction();
   }
 
-  protected OrientTransactionalGraph(final ODatabaseDocumentTx iDatabase, final boolean iAutoStartTx, final String iUserName,
+  protected OrientTransactionalGraph(final ODatabaseDocumentInternal iDatabase, final boolean iAutoStartTx, final String iUserName,
       final String iUserPasswd) {
     super(iDatabase, iUserName, iUserPasswd, null);
     setCurrentGraphInThreadLocal();
-    this.setAutoStartTx(iAutoStartTx);
+    super.setAutoStartTx(iAutoStartTx);
 
     if (iAutoStartTx)
       ensureTransaction();
@@ -125,7 +126,7 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
   public OrientTransactionalGraph setUseLog(final boolean useLog) {
     makeActive();
 
-    settings.setUseLog( useLog );
+    settings.setUseLog(useLog);
     return this;
   }
 
@@ -133,13 +134,14 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
   public void setAutoStartTx(boolean autoStartTx) {
     makeActive();
 
-    final boolean showWarning = !autoStartTx && isAutoStartTx() && getDatabase() != null && getDatabase().getTransaction().isActive();
+    final boolean showWarning = !autoStartTx && isAutoStartTx() && getDatabase() != null
+        && getDatabase().getTransaction().isActive();
     super.setAutoStartTx(autoStartTx);
 
     if (showWarning)
       OLogManager.instance().warn(this,
-          "Auto transaction starting is turned off for the graph, but already started transaction is left open."
-              + "Commit it manually or consider disabling auto transactions while creating the graph or its factory.");
+          "Auto Transaction for graphs setting has been turned off, but a transaction was already started."
+              + " Commit it manually or consider disabling auto transactions while creating the graph.");
   }
 
   /**

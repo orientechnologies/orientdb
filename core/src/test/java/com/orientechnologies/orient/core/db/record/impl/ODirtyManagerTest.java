@@ -1,12 +1,5 @@
 package com.orientechnologies.orient.core.db.record.impl;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
-
-import java.util.*;
-
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
@@ -15,6 +8,13 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODirtyManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import org.junit.Ignore;
+import org.junit.Test;
+
+import java.util.*;
+
+import static junit.framework.TestCase.assertTrue;
+import static org.junit.Assert.assertEquals;
 
 public class ODirtyManagerTest {
 
@@ -351,7 +351,8 @@ public class ODirtyManagerTest {
     assertTrue(manager.getPointed(doc).contains(link));
   }
 
-  @Test(enabled = false)
+  @Test
+  @Ignore
   public void testLinkSetNoConvertRemove() {
     ODocument doc = new ODocument();
     doc.field("test", "ddd");
@@ -422,86 +423,6 @@ public class ODirtyManagerTest {
     // TODO: double check this, it's an overhead
     assertEquals(1, manager.getPointed(embeddedMapDoc).size());
     assertTrue(manager.getPointed(doc).contains(link));
-
-  }
-
-  @Test
-  public void testLinkListLoop() {
-    ODocument doc1 = new ODocument().field("name", "doc1");
-    ODocument doc2 = new ODocument().field("name", "doc2");
-    ODocument doc3 = new ODocument().field("name", "doc3");
-    doc1.field("other", Arrays.asList(doc2, doc3));
-    doc2.field("other", Arrays.asList(doc1, doc3));
-    doc3.field("other", Arrays.asList(doc1, doc2));
-    ODocumentInternal.convertAllMultiValuesToTrackedVersions(doc1);
-    ODirtyManager manager = ORecordInternal.getDirtyManager(doc1);
-    assertEquals(3, manager.getNewRecords().size());
-
-    assertTrue(manager.getPointed(doc1).contains(doc2));
-    assertTrue(manager.getPointed(doc1).contains(doc3));
-
-    assertTrue(manager.getPointed(doc2).contains(doc1));
-    assertTrue(manager.getPointed(doc2).contains(doc3));
-
-    assertTrue(manager.getPointed(doc3).contains(doc1));
-    assertTrue(manager.getPointed(doc3).contains(doc2));
-
-  }
-
-
-  @Test
-  public void testLinkSetLoop() {
-    ODocument doc1 = new ODocument().field("name", "doc1");
-    ODocument doc2 = new ODocument().field("name", "doc2");
-    ODocument doc3 = new ODocument().field("name", "doc3");
-    doc1.field("other", new HashSet(Arrays.asList(doc2, doc3)));
-    doc2.field("other", new HashSet(Arrays.asList(doc1, doc3)));
-    doc3.field("other", new HashSet(Arrays.asList(doc1, doc2)));
-    ODocumentInternal.convertAllMultiValuesToTrackedVersions(doc1);
-    ODirtyManager manager = ORecordInternal.getDirtyManager(doc1);
-    assertEquals(3, manager.getNewRecords().size());
-
-    assertTrue(manager.getPointed(doc1).contains(doc2));
-    assertTrue(manager.getPointed(doc1).contains(doc3));
-
-    assertTrue(manager.getPointed(doc2).contains(doc1));
-    assertTrue(manager.getPointed(doc2).contains(doc3));
-
-    assertTrue(manager.getPointed(doc3).contains(doc1));
-    assertTrue(manager.getPointed(doc3).contains(doc2));
-
-  }
-
-  @Test
-  public void testLinkMapLoop() {
-    ODocument doc1 = new ODocument().field("name", "doc1");
-    ODocument doc2 = new ODocument().field("name", "doc2");
-    ODocument doc3 = new ODocument().field("name", "doc3");
-    Map<String, OIdentifiable> map1 = new HashMap<String, OIdentifiable>();
-    map1.put("a", doc2);
-    map1.put("b", doc3);
-    doc1.field("other", map1);
-    Map<String, OIdentifiable> map2 = new HashMap<String, OIdentifiable>();
-    map2.put("a", doc1);
-    map2.put("b", doc3);
-
-    doc2.field("other", map2);
-    Map<String, OIdentifiable> map3 = new HashMap<String, OIdentifiable>();
-    map3.put("a", doc1);
-    map3.put("b", doc2);
-    doc3.field("other", map3);
-    ODocumentInternal.convertAllMultiValuesToTrackedVersions(doc1);
-    ODirtyManager manager = ORecordInternal.getDirtyManager(doc1);
-    assertEquals(3, manager.getNewRecords().size());
-
-    assertTrue(manager.getPointed(doc1).contains(doc2));
-    assertTrue(manager.getPointed(doc1).contains(doc3));
-
-    assertTrue(manager.getPointed(doc2).contains(doc1));
-    assertTrue(manager.getPointed(doc2).contains(doc3));
-
-    assertTrue(manager.getPointed(doc3).contains(doc1));
-    assertTrue(manager.getPointed(doc3).contains(doc2));
 
   }
 

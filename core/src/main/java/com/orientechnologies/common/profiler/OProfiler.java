@@ -19,22 +19,23 @@
  */
 package com.orientechnologies.common.profiler;
 
-import java.io.PrintStream;
-import java.util.Date;
-import java.util.Map;
-
-import javax.annotation.CheckReturnValue;
-import javax.annotation.meta.When;
-
 import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.common.util.OService;
+
+import javax.annotation.CheckReturnValue;
+import javax.annotation.meta.When;
+import java.io.PrintStream;
+import java.util.Date;
+import java.util.Map;
 
 public interface OProfiler extends OService {
 
   enum METRIC_TYPE {
     CHRONO, COUNTER, STAT, SIZE, ENABLED, TEXT
   }
+
+  METRIC_TYPE getType(String k);
 
   void updateCounter(String iStatName, String iDescription, long iPlus);
 
@@ -107,4 +108,6 @@ public interface OProfiler extends OService {
   void registerListener(OProfilerListener listener);
 
   void unregisterListener(OProfilerListener listener);
+
+  String threadDump();
 }

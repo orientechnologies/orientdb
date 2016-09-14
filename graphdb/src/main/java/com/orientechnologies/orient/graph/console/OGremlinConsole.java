@@ -15,15 +15,26 @@
  */
 package com.orientechnologies.orient.graph.console;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
+import java.util.Map;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.ZipInputStream;
+
 import com.orientechnologies.common.console.TTYConsoleReader;
 import com.orientechnologies.common.console.annotation.ConsoleCommand;
 import com.orientechnologies.common.console.annotation.ConsoleParameter;
 import com.orientechnologies.orient.console.OConsoleDatabaseApp;
 import com.orientechnologies.orient.core.command.OCommandExecutorNotFoundException;
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImportException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.graph.graphml.OGraphMLReader;
+import com.orientechnologies.orient.graph.graphml.OGraphSONReader;
 import com.orientechnologies.orient.graph.gremlin.OCommandGremlin;
 import com.orientechnologies.orient.graph.gremlin.OGremlinHelper;
 import com.tinkerpop.blueprints.impls.orient.OBonsaiTreeRepair;
@@ -31,11 +42,6 @@ import com.tinkerpop.blueprints.impls.orient.OGraphRepair;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.util.io.graphml.GraphMLWriter;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Gremlin specialized console.
@@ -108,14 +114,19 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
 
     final List<String> items = OStringSerializerHelper.smartSplit(text, ' ');
     final String fileName = items.size() <= 0 || (items.get(1)).charAt(0) == '-' ? null : items.get(1);
-    final String options = fileName != null ? text.substring((items.get(0)).length() + (items.get(1)).length() + 1).trim() : text;
+    final String optionsAsString = fileName != null ? text.substring((items.get(0)).length() + (items.get(1)).length() + 1).trim()
+        : text;
 
-    if (fileName != null && (fileName.endsWith(".graphml") || fileName.endsWith(".xml"))) {
-      message("\nImporting GRAPHML database from " + fileName + " with options (" + options + ")...");
+    final Map<String, List<String>> options = parseOptions(optionsAsString);
+
+    final String format = options.containsKey("-format") ? options.get("-format").get(0) : null;
+
+    if ((format != null && format.equalsIgnoreCase("graphml"))
+        || (fileName != null && (fileName.endsWith(".graphml") || fileName.endsWith(".xml")))) {
+      // GRAPHML
+      message("\nImporting GRAPHML database from " + fileName + " with options (" + optionsAsString + ")...");
 
       try {
-        final Map<String, List<String>> opts = parseOptions(options);
-
         final OrientGraph g = new OrientGraph(currentDatabase);
         g.setUseLog(false);
         g.setWarnOnForceClosingTx(false);
@@ -123,24 +134,93 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
         final long totalEdges = g.countEdges();
         final long totalVertices = g.countVertices();
 
-        new OGraphMLReader(g).setOptions(opts).inputGraph(g, fileName);
-        g.commit();
-        currentDatabase.commit();
+        final File file = new File(fileName);
+        if (!file.exists())
+          throw new ODatabaseImportException("Input file '" + fileName + "' not exists");
 
-        message("\nDone: imported %d vertices and %d edges", g.countVertices() - totalVertices, g.countEdges() - totalEdges);
+        InputStream is = new FileInputStream(file);
+        if (fileName.endsWith(".zip"))
+          is = new ZipInputStream(is);
+        else if (fileName.endsWith(".gz"))
+          is = new GZIPInputStream(is);
+
+        try {
+          new OGraphMLReader(g).setOptions(options).setOutput(new OCommandOutputListener() {
+            @Override
+            public void onMessage(final String iText) {
+              System.out.print("\r" + iText);
+            }
+          }).inputGraph(is);
+          g.commit();
+          currentDatabase.commit();
+
+          message("\nDone: imported %d vertices and %d edges", g.countVertices() - totalVertices, g.countEdges() - totalEdges);
+
+        } finally {
+          is.close();
+        }
 
       } catch (ODatabaseImportException e) {
         printError(e);
       }
-    } else
+    } else if ((format != null && format.equalsIgnoreCase("graphson")) || (fileName != null && (fileName.endsWith(".graphson")))) {
+      // GRAPHSON
+      message("\nImporting GRAPHSON database from " + fileName + " with options (" + optionsAsString + ")...");
+
+      try {
+        final OrientGraph g = new OrientGraph(currentDatabase);
+        g.setUseLog(false);
+        g.setWarnOnForceClosingTx(false);
+
+        final long totalEdges = g.countEdges();
+        final long totalVertices = g.countVertices();
+
+        final File file = new File(fileName);
+        if (!file.exists())
+          throw new ODatabaseImportException("Input file '" + fileName + "' not exists");
+
+        InputStream is = new FileInputStream(file);
+        if (fileName.endsWith(".zip")) {
+          is = new ZipInputStream(is);
+        } else if (fileName.endsWith(".gz")) {
+          is = new GZIPInputStream(is);
+        }
+
+        try {
+          new OGraphSONReader(g).setOutput(new OCommandOutputListener() {
+            @Override
+            public void onMessage(final String iText) {
+              System.out.print("\r" + iText);
+            }
+          }).inputGraph(is, 10000);
+
+          // new OGraphMLReader(g).setOptions(options).inputGraph(g, fileName);
+          g.commit();
+          currentDatabase.commit();
+
+          message("\nDone: imported %d vertices and %d edges", g.countVertices() - totalVertices, g.countEdges() - totalEdges);
+
+        } finally {
+          is.close();
+        }
+
+      } catch (ODatabaseImportException e) {
+        printError(e);
+      }
+    } else if (format == null)
       super.importDatabase(text);
+    else
+      throw new IllegalArgumentException("Format '" + format + "' is not supported");
   }
 
   @Override
+  @ConsoleCommand(description = "Export a database", splitInWords = false, onlineHelp = "Console-Command-Export")
   public void exportDatabase(@ConsoleParameter(name = "options", description = "Export options") String iText) throws IOException {
     checkForDatabase();
 
-    if (iText != null && (iText.endsWith(".graphml") || iText.endsWith(".xml"))) {
+    final List<String> items = OStringSerializerHelper.smartSplit(iText, ' ');
+    final String fileName = items.size() <= 1 || items.get(1).charAt(0) == '-' ? null : items.get(1);
+    if (fileName != null && (fileName.endsWith(".graphml") || fileName.endsWith(".xml"))) {
       message("\nExporting database in GRAPHML format to " + iText + "...");
 
       try {
@@ -149,11 +229,14 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
         g.setWarnOnForceClosingTx(false);
 
         // CREATE THE EXPORT FILE IF NOT EXIST YET
-        final File f = new File(iText);
-        f.getParentFile().mkdirs();
+        final File f = new File(fileName);
+
+        if (f.getParentFile() != null) {
+          f.getParentFile().mkdirs();
+        }
         f.createNewFile();
 
-        new GraphMLWriter(g).outputGraph(iText);
+        new GraphMLWriter(g).outputGraph(fileName);
 
       } catch (ODatabaseImportException e) {
         printError(e);

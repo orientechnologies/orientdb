@@ -55,10 +55,10 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLAbstract im
       queryText = preParse(queryText, iRequest);
       textRequest.setText(queryText);
       final boolean strict = getDatabase().getStorage().getConfiguration().isStrictSql();
-      if(strict){
-        this.className = ((ODropClassStatement)this.preParsedStatement).name.getStringValue();
-        this.unsafe = ((ODropClassStatement)this.preParsedStatement).unsafe;
-      }else {
+      if (strict) {
+        this.className = ((ODropClassStatement) this.preParsedStatement).name.getStringValue();
+        this.unsafe = ((ODropClassStatement) this.preParsedStatement).unsafe;
+      } else {
         oldParsing((OCommandRequestText) iRequest);
       }
     } finally {
@@ -104,7 +104,10 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLAbstract im
 
   @Override
   public long getDistributedTimeout() {
-    return OGlobalConfiguration.DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT.getValueAsLong();
+    if (className != null)
+      return 10 * getDatabase().countClass(className);
+
+    return OGlobalConfiguration.DISTRIBUTED_COMMAND_QUICK_TASK_SYNCH_TIMEOUT.getValueAsLong();
   }
 
   /**
@@ -127,16 +130,12 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLAbstract im
       // NOT EMPTY, CHECK IF CLASS IS OF VERTEX OR EDGES
       if (cls.isSubClassOf("V")) {
         // FOUND VERTEX CLASS
-        throw new OCommandExecutionException(
-            "'DROP CLASS' command cannot drop class '"
-                + className
-                + "' because it contains Vertices. Use 'DELETE VERTEX' command first to avoid broken edges in a database, or apply the 'UNSAFE' keyword to force it");
+        throw new OCommandExecutionException("'DROP CLASS' command cannot drop class '" + className
+            + "' because it contains Vertices. Use 'DELETE VERTEX' command first to avoid broken edges in a database, or apply the 'UNSAFE' keyword to force it");
       } else if (cls.isSubClassOf("E")) {
         // FOUND EDGE CLASS
-        throw new OCommandExecutionException(
-            "'DROP CLASS' command cannot drop class '"
-                + className
-                + "' because it contains Edges. Use 'DELETE EDGE' command first to avoid broken vertices in a database, or apply the 'UNSAFE' keyword to force it");
+        throw new OCommandExecutionException("'DROP CLASS' command cannot drop class '" + className
+            + "' because it contains Edges. Use 'DELETE EDGE' command first to avoid broken vertices in a database, or apply the 'UNSAFE' keyword to force it");
       }
     }
 

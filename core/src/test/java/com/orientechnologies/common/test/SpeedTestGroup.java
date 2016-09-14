@@ -6,10 +6,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.Test;
-
-@Test(alwaysRun = true)
+import org.junit.After; import org.junit.Test;
 public abstract class SpeedTestGroup {
 	protected static final int												TIME_WAIT	= 1000;
 
@@ -45,7 +42,7 @@ public abstract class SpeedTestGroup {
 		result.put(iResult, iTestName);
 	}
 
-	@AfterClass
+	@After
 	protected void tearDown() throws Exception {
 		printResults();
 	}

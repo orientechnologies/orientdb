@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OLiveResultListener;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
@@ -55,11 +56,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class OLiveCommandResultListener extends OAbstractCommandResultListener implements OLiveResultListener {
 
-  private OClientConnection connection;
-  private final AtomicBoolean empty = new AtomicBoolean(true);
-  private final int sessionId;
-  private final Set<ORID> alreadySent = new HashSet<ORID>();
-  private OClientSessions session;
+  private OClientConnection   connection;
+  private final AtomicBoolean empty       = new AtomicBoolean(true);
+  private final int           sessionId;
+  private final Set<ORID>     alreadySent = new HashSet<ORID>();
+  private OClientSessions     session;
 
   public OLiveCommandResultListener(OServer server, final OClientConnection connection, final int sessionId,
       OCommandResultListener wrappedResultListener) {
@@ -152,7 +153,8 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
         session.removeConnection(curConnection);
         connections = session.getConnections();
         if (connections.isEmpty()) {
-          OLiveQueryHook.unsubscribe(iToken, connection.getDatabase());
+          ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+          OLiveQueryHook.unsubscribe(iToken, db);
           break;
         }
       } catch (Exception e) {
@@ -175,6 +177,9 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
     boolean sendFail = true;
     do {
       List<OClientConnection> connections = session.getConnections();
+      if (connections.size() == 0) {
+        break;
+      }
       ONetworkProtocolBinary protocol = (ONetworkProtocolBinary) connections.get(0).getProtocol();
 
       OChannelBinary channel = protocol.getChannel();
@@ -223,5 +228,10 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
   public void writeBytes(DataOutputStream out, byte[] bytes) throws IOException {
     out.writeInt(bytes.length);
     out.write(bytes);
+  }
+  
+  @Override
+  public void linkdedBySimpleValue(ODocument doc) {
+    
   }
 }

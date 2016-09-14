@@ -3,23 +3,22 @@ package com.orientechnologies.orient.core.metadata.schema;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.*;
 
-import static org.testng.Assert.*;
+import static org.junit.Assert.*;
 
 public class OClassImplTest {
 
   private ODatabaseDocumentTx db;
 
-  @BeforeMethod
+  @Before
   public void setUp() {
     db = new ODatabaseDocumentTx("memory:" + OClassImplTest.class.getSimpleName());
     if (db.exists()) {
@@ -28,12 +27,12 @@ public class OClassImplTest {
       db.create();
   }
 
-  @AfterMethod
+  @After
   public void after() {
     db.close();
   }
 
-  @AfterClass
+  @After
   public void afterClass() {
     db.open("admin", "admin");
     db.drop();
@@ -41,7 +40,7 @@ public class OClassImplTest {
 
   /**
    * If class was not abstract and we call {@code setAbstract(false)} clusters should not be changed.
-   * 
+   *
    * @throws Exception
    */
   @Test
@@ -53,12 +52,12 @@ public class OClassImplTest {
 
     oClass.setAbstract(false);
 
-    Assert.assertEquals(oClass.getDefaultClusterId(), oldClusterId);
+    assertEquals(oClass.getDefaultClusterId(), oldClusterId);
   }
 
   /**
    * If class was abstract and we call {@code setAbstract(false)} a new non default cluster should be created.
-   * 
+   *
    * @throws Exception
    */
   @Test
@@ -73,7 +72,7 @@ public class OClassImplTest {
     Assert.assertFalse(oClass.getDefaultClusterId() == db.getDefaultClusterId());
   }
 
-  @Test(expectedExceptions = OSchemaException.class)
+  @Test(expected = OSchemaException.class)
   public void testCreatePropertyFailOnExistingData() {
     final OSchema oSchema = db.getMetadata().getSchema();
     OClass oClass = oSchema.createClass("Test3");
@@ -87,7 +86,7 @@ public class OClassImplTest {
 
   }
 
-  @Test(expectedExceptions = OSchemaException.class)
+  @Test(expected = OSchemaException.class)
   public void testCreatePropertyFailOnExistingDataLinkList() {
     final OSchema oSchema = db.getMetadata().getSchema();
     OClass oClass = oSchema.createClass("Test4");
@@ -102,7 +101,7 @@ public class OClassImplTest {
 
   }
 
-  @Test(expectedExceptions = OSchemaException.class)
+  @Test(expected = OSchemaException.class)
   public void testCreatePropertyFailOnExistingDataLinkSet() {
     final OSchema oSchema = db.getMetadata().getSchema();
     OClass oClass = oSchema.createClass("Test5");
@@ -117,7 +116,7 @@ public class OClassImplTest {
 
   }
 
-  @Test(expectedExceptions = OSchemaException.class)
+  @Test(expected = OSchemaException.class)
   public void testCreatePropertyFailOnExistingDataEmbeddetSet() {
     final OSchema oSchema = db.getMetadata().getSchema();
     OClass oClass = oSchema.createClass("Test6");
@@ -132,7 +131,7 @@ public class OClassImplTest {
 
   }
 
-  @Test(expectedExceptions = OSchemaException.class)
+  @Test(expected = OSchemaException.class)
   public void testCreatePropertyFailOnExistingDataEmbeddedList() {
     final OSchema oSchema = db.getMetadata().getSchema();
     OClass oClass = oSchema.createClass("Test7");
@@ -147,7 +146,7 @@ public class OClassImplTest {
 
   }
 
-  @Test(expectedExceptions = OSchemaException.class)
+  @Test(expected = OSchemaException.class)
   public void testCreatePropertyFailOnExistingDataEmbeddedMap() {
     final OSchema oSchema = db.getMetadata().getSchema();
     OClass oClass = oSchema.createClass("Test8");
@@ -162,7 +161,7 @@ public class OClassImplTest {
 
   }
 
-  @Test(expectedExceptions = OSchemaException.class)
+  @Test(expected = OSchemaException.class)
   public void testCreatePropertyFailOnExistingDataLinkMap() {
     final OSchema oSchema = db.getMetadata().getSchema();
     OClass oClass = oSchema.createClass("Test9");
@@ -288,7 +287,7 @@ public class OClassImplTest {
     assertEquals(id, prop.getId());
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void testSetUncastableType() {
     final OSchema oSchema = db.getMetadata().getSchema();
     OClass oClass = oSchema.createClass("Test16");
@@ -478,14 +477,9 @@ public class OClassImplTest {
     assertNotNull(oSchema.createClass("$OClassImplTesttestCla23ssNameSyntax_12"));
     assertNotNull(oSchema.createClass("OClassImplTesttestC$la23ssNameSyntax_12"));
     assertNotNull(oSchema.createClass("oOClassImplTesttestC$la23ssNameSyntax_12"));
-    String[] invalidClassNames = { "foo bar", "12", "#12", "12AAA", ",asdfasdf", "adsf,asdf", "asdf.sadf", ".asdf", "asdfaf.", "asdf:asdf" };
-    for (String s : invalidClassNames) {
-      try {
-        oSchema.createClass(s);
-        fail("class with invalid name is incorrectly created: '" + s + "'");
-      } catch (Exception e) {
-
-      }
+    String[] validClassNamesSince30 = { "foo bar", "12", "#12", "12AAA", ",asdfasdf", "adsf,asdf", "asdf.sadf", ".asdf", "asdfaf.", "asdf:asdf" };
+    for (String s : validClassNamesSince30) {
+      assertNotNull(oSchema.createClass(s));
     }
 
   }

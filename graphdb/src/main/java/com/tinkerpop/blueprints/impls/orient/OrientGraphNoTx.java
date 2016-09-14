@@ -24,6 +24,7 @@ import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -48,7 +49,7 @@ public class OrientGraphNoTx extends OrientBaseGraph {
    * @param iDatabase
    *          Underlying database object to attach
    */
-  public OrientGraphNoTx(final ODatabaseDocumentTx iDatabase) {
+  public OrientGraphNoTx(final ODatabaseDocumentInternal iDatabase) {
     super(iDatabase, null, null, null);
     config();
   }
@@ -78,12 +79,12 @@ public class OrientGraphNoTx extends OrientBaseGraph {
     config();
   }
 
-  public OrientGraphNoTx(final ODatabaseDocumentTx iDatabase, final String user, final String password) {
+  public OrientGraphNoTx(final ODatabaseDocumentInternal iDatabase, final String user, final String password) {
     super(iDatabase, user, password, null);
     config();
   }
 
-  public OrientGraphNoTx(final ODatabaseDocumentTx iDatabase, final String user, final String password,
+  public OrientGraphNoTx(final ODatabaseDocumentInternal iDatabase, final String user, final String password,
       final Settings iConfiguration) {
     super(iDatabase, user, password, iConfiguration);
     config();

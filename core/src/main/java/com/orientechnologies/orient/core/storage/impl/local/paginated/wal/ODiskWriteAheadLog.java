@@ -27,7 +27,6 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OFullCheckpointRequestListener;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceInformation;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
@@ -39,6 +38,7 @@ import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionSt
 import java.io.*;
 import java.lang.ref.WeakReference;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.Condition;
 import java.util.zip.CRC32;
 
@@ -79,28 +79,43 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   private final Condition segmentCreationComplete = syncObject.newCondition();
 
   private final Set<OOperationUnitId>                               activeOperations        = new HashSet<OOperationUnitId>();
-  private final List<WeakReference<OLowDiskSpaceListener>>          lowDiskSpaceListeners   = Collections
-      .synchronizedList(new ArrayList<WeakReference<OLowDiskSpaceListener>>());
-  private final List<WeakReference<OFullCheckpointRequestListener>> fullCheckpointListeners = Collections
-      .synchronizedList(new ArrayList<WeakReference<OFullCheckpointRequestListener>>());
+  private final List<WeakReference<OLowDiskSpaceListener>>          lowDiskSpaceListeners   = new CopyOnWriteArrayList<>();
+  private final List<WeakReference<OFullCheckpointRequestListener>> fullCheckpointListeners = new CopyOnWriteArrayList<>();
 
-  private static class FilenameFilter implements java.io.FilenameFilter {
-    private final OLocalPaginatedStorage storage;
+  private static class SimpleFileNameFilter implements java.io.FilenameFilter {
+    private final String storageName;
+    private final Locale locale;
 
-    public FilenameFilter(OLocalPaginatedStorage storage) {
-      this.storage = storage;
+    public SimpleFileNameFilter(OLocalPaginatedStorage storage) {
+      this.storageName = storage.getName();
+      this.locale = storage.getConfiguration().getLocaleInstance();
     }
 
     @Override
     public boolean accept(File dir, String name) {
-      return validateName(name, storage);
+      return validateSimpleName(name, storageName, locale);
+    }
+  }
+
+  private static class FilenameFilter implements java.io.FilenameFilter {
+    private final String storageName;
+    private final Locale locale;
+
+    public FilenameFilter(OLocalPaginatedStorage storage) {
+      this.storageName = storage.getName();
+      this.locale = storage.getConfiguration().getLocaleInstance();
+    }
+
+    @Override
+    public boolean accept(File dir, String name) {
+      return validateName(name, storageName, locale);
     }
   }
 
   public ODiskWriteAheadLog(OLocalPaginatedStorage storage) throws IOException {
     this(OGlobalConfiguration.WAL_CACHE_SIZE.getValueAsInteger(), OGlobalConfiguration.WAL_COMMIT_TIMEOUT.getValueAsInteger(),
         OGlobalConfiguration.WAL_MAX_SEGMENT_SIZE.getValueAsInteger() * ONE_KB * ONE_KB,
-        OGlobalConfiguration.WAL_LOCATION.getValueAsString(), storage);
+        OGlobalConfiguration.WAL_LOCATION.getValueAsString(), true, storage);
   }
 
   public void addLowDiskSpaceListener(OLowDiskSpaceListener listener) {
@@ -140,7 +155,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   public ODiskWriteAheadLog(int maxPagesCacheSize, int commitDelay, long maxSegmentSize, final String walPath,
-      final OLocalPaginatedStorage storage) throws IOException {
+      boolean filterWALFiles, final OLocalPaginatedStorage storage) throws IOException {
     this.maxPagesCacheSize = maxPagesCacheSize;
     this.commitDelay = commitDelay;
     this.maxSegmentSize = maxSegmentSize;
@@ -151,7 +166,11 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     try {
       this.walLocation = new File(calculateWalPath(this.storage, walPath));
 
-      File[] walFiles = this.walLocation.listFiles(new FilenameFilter(storage));
+      File[] walFiles;
+      if (filterWALFiles)
+        walFiles = this.walLocation.listFiles(new FilenameFilter(storage));
+      else
+        walFiles = this.walLocation.listFiles(new SimpleFileNameFilter(storage));
 
       if (walFiles == null)
         throw new IllegalStateException(
@@ -233,16 +252,44 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     return walPath;
   }
 
-  public static boolean validateName(String name, OAbstractPaginatedStorage storage) {
-    if (!name.toLowerCase(storage.getConfiguration().getLocaleInstance()).endsWith(".wal"))
+  private String getSegmentName(long order) {
+    return storage.getName() + "." + order + WAL_SEGMENT_EXTENSION;
+  }
+
+  static boolean validateSimpleName(String name, String storageName, Locale locale) {
+    if (!name.toLowerCase(locale).endsWith(".wal"))
       return false;
 
     int walOrderStartIndex = name.indexOf('.');
-
     if (walOrderStartIndex == name.length() - 4)
       return false;
 
+    final int walOrderEndIndex = name.indexOf('.', walOrderStartIndex + 1);
+
+    String walOrder = name.substring(walOrderStartIndex + 1, walOrderEndIndex);
+    try {
+      Integer.parseInt(walOrder);
+    } catch (NumberFormatException e) {
+      return false;
+    }
+
+    return true;
+  }
+
+  static boolean validateName(String name, String storageName, Locale locale) {
+    if (!name.toLowerCase(locale).endsWith(".wal"))
+      return false;
+
+    int walOrderStartIndex = name.indexOf('.');
+    if (walOrderStartIndex == name.length() - 4)
+      return false;
+
+    final String walStorageName = name.substring(0, walOrderStartIndex);
+    if (!storageName.equals(walStorageName))
+      return false;
+
     int walOrderEndIndex = name.indexOf('.', walOrderStartIndex + 1);
+
     String walOrder = name.substring(walOrderStartIndex + 1, walOrderEndIndex);
     try {
       Integer.parseInt(walOrder);
@@ -851,10 +898,6 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     OLongSerializer.INSTANCE
         .serializeLiteral(masterRecord.getPosition(), record, OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE);
     masterRecordLSNHolder.write(record);
-  }
-
-  private String getSegmentName(long order) {
-    return storage.getName() + "." + order + WAL_SEGMENT_EXTENSION;
   }
 
   private OLogSequenceNumber readFlushedLSN() throws IOException {

@@ -23,6 +23,7 @@ package com.orientechnologies.common.concur.lock;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.AbstractOwnableSynchronizer;
 import java.util.concurrent.locks.LockSupport;
 
@@ -40,11 +41,11 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer {
   private static final long serialVersionUID = 7975120282194559960L;
 
-  private final transient ODistributedCounter distributedCounter = new ODistributedCounter();
-  private final transient AtomicReference<WNode> tail = new AtomicReference<WNode>();
+  private final transient LongAdder distributedCounter;
+  private final transient AtomicReference<WNode>          tail      = new AtomicReference<WNode>();
   private final transient ThreadLocal<OModifiableInteger> lockHolds = new InitOModifiableInteger();
 
-  private final transient ThreadLocal<WNode> myNode = new InitWNode();
+  private final transient ThreadLocal<WNode> myNode   = new InitWNode();
   private final transient ThreadLocal<WNode> predNode = new ThreadLocal<WNode>();
 
   public OReadersWriterSpinLock() {
@@ -52,6 +53,8 @@ public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer {
     wNode.locked = false;
 
     tail.set(wNode);
+
+    distributedCounter = new LongAdder();
   }
 
   public void acquireReadLock() {
@@ -131,7 +134,7 @@ public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer {
 
     pNode.waitingWriter = null;
 
-    while (!distributedCounter.isEmpty())
+    while (distributedCounter.sum() != 0)
       ;
 
     setExclusiveOwnerThread(Thread.currentThread());

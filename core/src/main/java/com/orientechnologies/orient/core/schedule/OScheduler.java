@@ -61,15 +61,18 @@ public interface OScheduler {
   /**
    * Loads the scheduled events from database in memory and schedule them.
    */
+  @Deprecated
   void load();
 
   /**
    * Shuts down the scheduler.
    */
+  @Deprecated
   void close();
 
   /**
    * Creates the scheduler classes on database.
    */
+  @Deprecated
   void create();
 }

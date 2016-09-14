@@ -19,44 +19,48 @@
  */
 package com.orientechnologies.orient.server.distributed.impl.task;
 
-import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 
 /**
  * Execute a read of a record from a distributed node.
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
-public class OReadRecordTask extends OAbstractRemoteTask {
+public class OReadRecordTask extends OAbstractReadRecordTask {
   private static final long serialVersionUID = 1L;
-  public static final  int  FACTORYID        = 1;
-
-  protected ORecordId rid;
+  public static final int   FACTORYID        = 1;
 
   public OReadRecordTask() {
+    this.lockRecords = false;
   }
 
   public OReadRecordTask(final ORecordId iRid) {
-    rid = iRid;
+    super(iRid);
+    this.lockRecords = false;
   }
 
   @Override
-  public Object execute(ODistributedRequestId requestId, final OServer iServer, ODistributedServerManager iManager,
-      final ODatabaseDocumentInternal database)
-      throws Exception {
+  public void checkRecordExists() {
+  }
+
+  @Override
+  public ORecord prepareUndoOperation() {
+    return null;
+  }
+
+  @Override
+  public Object executeRecordTask(ODistributedRequestId requestId, final OServer iServer, ODistributedServerManager iManager,
+      final ODatabaseDocumentInternal database) throws Exception {
+    if (rid.clusterPosition < 0)
+      // USED TO JUST LOCK THE CLUSTER
+      return null;
+
     final ORecord record = database.load(rid);
     if (record == null)
       return null;
@@ -65,37 +69,12 @@ public class OReadRecordTask extends OAbstractRemoteTask {
   }
 
   @Override
-  public void writeExternal(final ObjectOutput out) throws IOException {
-    out.writeUTF(rid.toString());
-  }
-
-  @Override
-  public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
-    rid = new ORecordId(in.readUTF());
-  }
-
-  public OCommandDistributedReplicateRequest.QUORUM_TYPE getQuorumType() {
-    return OCommandDistributedReplicateRequest.QUORUM_TYPE.READ;
-  }
-
-  @Override
   public String getName() {
     return "record_read";
-  }
-
-  @Override
-  public String toString() {
-    return getName() + "(" + rid + ")";
-  }
-
-  @Override
-  public boolean isIdempotent() {
-    return true;
   }
 
   @Override
   public int getFactoryId() {
     return FACTORYID;
   }
-
 }

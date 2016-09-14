@@ -40,8 +40,6 @@ public class LuceneResultSet extends OLuceneAbstractResultSet {
     super(manager, queryContext);
   }
 
-
-
   @Override
   public int size() {
     return topDocs.totalHits;
@@ -54,7 +52,7 @@ public class LuceneResultSet extends OLuceneAbstractResultSet {
 
   private class OLuceneResultSetIterator implements Iterator<OIdentifiable> {
 
-    ScoreDoc[]  array;
+    ScoreDoc[] array;
     private int index;
     private int localIndex;
     private int totalHits;
@@ -64,7 +62,7 @@ public class LuceneResultSet extends OLuceneAbstractResultSet {
       index = 0;
       localIndex = 0;
       array = topDocs.scoreDocs;
-      OLuceneIndexEngineAbstract.sendTotalHits(indexName,queryContext.context, topDocs.totalHits);
+      OLuceneIndexEngineAbstract.sendTotalHits(indexName, queryContext.context, topDocs.totalHits);
     }
 
     @Override
@@ -104,11 +102,10 @@ public class LuceneResultSet extends OLuceneAbstractResultSet {
           topDocs = queryContext.getSearcher().searchAfter(array[array.length - 1], query, PAGE_SIZE);
           break;
         case FILTER_SORT:
-          topDocs = queryContext.getSearcher().searchAfter(array[array.length - 1], query, queryContext.filter, PAGE_SIZE,
-              queryContext.sort);
+          topDocs = queryContext.getSearcher().searchAfter(array[array.length - 1], query, PAGE_SIZE, queryContext.sort);
           break;
         case FILTER:
-          topDocs = queryContext.getSearcher().searchAfter(array[array.length - 1], query, queryContext.filter, PAGE_SIZE);
+          topDocs = queryContext.getSearcher().searchAfter(array[array.length - 1], query, PAGE_SIZE);
           break;
         case SORT:
           topDocs = queryContext.getSearcher().searchAfter(array[array.length - 1], query, PAGE_SIZE, queryContext.sort);

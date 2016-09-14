@@ -1,6 +1,6 @@
 package com.orientechnologies.common.io;
 
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -11,7 +11,7 @@ import java.util.Calendar;
 import java.util.Date;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.testng.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
 
 public class OIOUtilsTest {
 
@@ -69,7 +69,7 @@ public class OIOUtilsTest {
     // ISO-8859-1
     path = Paths.get("./src/test/resources/", getClass().getSimpleName() + "_iso-8859-1.txt");
 
-    asString = OIOUtils.readFileAsString(path.toFile(),StandardCharsets.ISO_8859_1);
+    asString = OIOUtils.readFileAsString(path.toFile(), StandardCharsets.ISO_8859_1);
 
     assertThat(asString).isEqualToIgnoringCase("iso-8859-1 :: èàòì?");
 

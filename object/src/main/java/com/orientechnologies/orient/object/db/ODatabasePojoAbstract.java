@@ -21,11 +21,7 @@ package com.orientechnologies.orient.object.db;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandRequest;
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseInternal;
-import com.orientechnologies.orient.core.db.ODatabaseSchemaAware;
-import com.orientechnologies.orient.core.db.ODatabaseWrapperAbstract;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.object.OObjectLazyMultivalueElement;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
@@ -43,6 +39,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.object.enhancement.OObjectProxyMethodHandler;
@@ -51,26 +48,17 @@ import javassist.util.proxy.Proxy;
 import javassist.util.proxy.ProxyObject;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
-@SuppressWarnings("unchecked")
-public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseWrapperAbstract<ODatabaseDocumentTx, T>
-    implements ODatabaseSchemaAware<T>, ODatabaseInternal<T> {
+@SuppressWarnings("unchecked") public abstract class ODatabasePojoAbstract<T extends Object>
+    extends ODatabaseWrapperAbstract<ODatabaseDocumentInternal, T> implements ODatabaseSchemaAware<T>, ODatabaseInternal<T> {
   protected IdentityHashMap<Object, ODocument> objects2Records = new IdentityHashMap<Object, ODocument>();
   protected IdentityHashMap<ODocument, T>      records2Objects = new IdentityHashMap<ODocument, T>();
   protected HashMap<ORID, ODocument>           rid2Records     = new HashMap<ORID, ODocument>();
   protected boolean                            retainObjects   = true;
 
-  public ODatabasePojoAbstract(final ODatabaseDocumentTx iDatabase) {
+  public ODatabasePojoAbstract(final ODatabaseDocumentInternal iDatabase) {
     super(iDatabase);
     iDatabase.setDatabaseOwner(this);
   }
@@ -79,8 +67,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 
   public abstract Object stream2pojo(final ODocument record, final Object iPojo, final String iFetchPlan);
 
-  @Override
-  public void close() {
+  @Override public void close() {
     objects2Records.clear();
     records2Objects.clear();
     rid2Records.clear();
@@ -107,8 +94,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
     return commit(false);
   }
 
-  @Override
-  public ODatabase<T> commit(boolean force) throws OTransactionException {
+  @Override public ODatabase<T> commit(boolean force) throws OTransactionException {
     underlying.commit(force);
 
     if (!underlying.getTransaction().isActive())
@@ -121,8 +107,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
     return rollback(false);
   }
 
-  @Override
-  public ODatabase<T> rollback(boolean force) throws OTransactionException {
+  @Override public ODatabase<T> rollback(boolean force) throws OTransactionException {
     underlying.rollback(force);
 
     if (!underlying.getTransaction().isActive()) {
@@ -150,9 +135,8 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 
   /**
    * Sets as dirty a POJO. This is useful when you change the object and need to tell to the engine to treat as dirty.
-   * 
-   * @param iPojo
-   *          User object
+   *
+   * @param iPojo User object
    */
   public void setDirty(final Object iPojo) {
     if (iPojo == null)
@@ -168,9 +152,8 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
   /**
    * Sets as not dirty a POJO. This is useful when you change some other object and need to tell to the engine to treat this one as
    * not dirty.
-   * 
-   * @param iPojo
-   *          User object
+   *
+   * @param iPojo User object
    */
   public void unsetDirty(final Object iPojo) {
     if (iPojo == null)
@@ -190,8 +173,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
   /**
    * Returns the version number of the object.
    *
-   * @param iPojo
-   *          User object
+   * @param iPojo User object
    */
   public int getVersion(final Object iPojo) {
     final ODocument record = getRecordByUserObject(iPojo, false);
@@ -204,9 +186,8 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 
   /**
    * Returns the object unique identity.
-   * 
-   * @param iPojo
-   *          User object
+   *
+   * @param iPojo User object
    */
   public ORID getIdentity(final Object iPojo) {
     final ODocument record = getRecordByUserObject(iPojo, false);
@@ -235,8 +216,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
     return (RET) new OCommandSQLPojoWrapper(this, underlying.command(iCommand));
   }
 
-  @Override
-  public <RET extends List<?>> RET query(OQuery<?> iCommand, Object... iArgs) {
+  @Override public <RET extends List<?>> RET query(OQuery<?> iCommand, Object... iArgs) {
     checkOpeness();
 
     convertParameters(iArgs);
@@ -264,6 +244,22 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
     }
 
     return (RET) resultPojo;
+  }
+
+  @Override public OTodoResultSet query(String query, Object... args) {
+    return underlying.query(query, args);//TODO
+  }
+
+  @Override public OTodoResultSet query(String query, Map args) {
+    return underlying.query(query, args);//TODO
+  }
+
+  @Override public OTodoResultSet command(String query, Object... args) {
+    return underlying.query(query, args);//TODO
+  }
+
+  @Override public OTodoResultSet command(String query, Map args) {
+    return underlying.query(query, args);//TODO
   }
 
   public ODatabase<T> delete(final ORecord iRecord) {
@@ -320,7 +316,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 
   /**
    * Returns true if current configuration retains objects, otherwise false
-   * 
+   *
    * @see #setRetainObjects(boolean)
    */
   public boolean isRetainObjects() {
@@ -330,9 +326,8 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
   /**
    * Specifies if retain handled objects in memory or not. Setting it to false can improve performance on large inserts. Default is
    * enabled.
-   * 
-   * @param iValue
-   *          True to enable, false to disable it.
+   *
+   * @param iValue True to enable, false to disable it.
    * @see #isRetainObjects()
    */
   public ODatabasePojoAbstract<T> setRetainObjects(final boolean iValue) {
@@ -480,21 +475,21 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
   }
 
   protected void clearNewEntriesFromCache() {
-    for (Iterator<Entry<ORID, ODocument>> it = rid2Records.entrySet().iterator(); it.hasNext();) {
+    for (Iterator<Entry<ORID, ODocument>> it = rid2Records.entrySet().iterator(); it.hasNext(); ) {
       Entry<ORID, ODocument> entry = it.next();
       if (entry.getKey().isNew()) {
         it.remove();
       }
     }
 
-    for (Iterator<Entry<Object, ODocument>> it = objects2Records.entrySet().iterator(); it.hasNext();) {
+    for (Iterator<Entry<Object, ODocument>> it = objects2Records.entrySet().iterator(); it.hasNext(); ) {
       Entry<Object, ODocument> entry = it.next();
       if (entry.getValue().getIdentity().isNew()) {
         it.remove();
       }
     }
 
-    for (Iterator<Entry<ODocument, T>> it = records2Objects.entrySet().iterator(); it.hasNext();) {
+    for (Iterator<Entry<ODocument, T>> it = records2Objects.entrySet().iterator(); it.hasNext(); ) {
       Entry<ODocument, T> entry = it.next();
       if (entry.getKey().getIdentity().isNew()) {
         it.remove();
@@ -504,9 +499,8 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 
   /**
    * Converts an array of parameters: if a POJO is used, then replace it with its record id.
-   * 
-   * @param iArgs
-   *          Array of parameters as Object
+   *
+   * @param iArgs Array of parameters as Object
    * @see #convertParameter(Object)
    */
   protected void convertParameters(final Object... iArgs) {
@@ -520,9 +514,8 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 
   /**
    * Convert a parameter: if a POJO is used, then replace it with its record id.
-   * 
-   * @param iParameter
-   *          Parameter to convert, if applicable
+   *
+   * @param iParameter Parameter to convert, if applicable
    * @see #convertParameters(Object...)
    */
   protected Object convertParameter(final Object iParameter) {

@@ -21,11 +21,7 @@ package com.orientechnologies.orient.core.index.engine;
 
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.index.OIndexAbstractCursor;
-import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexEngine;
-import com.orientechnologies.orient.core.index.OIndexKeyCursor;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -49,6 +45,12 @@ public class ORemoteIndexEngine implements OIndexEngine {
   }
 
   @Override
+  public String getIndexNameByKey(Object key) {
+    return name;
+  }
+
+
+  @Override
   public void init(String indexName, String indexType, OIndexDefinition indexDefinition, boolean isAutomatic, ODocument metadata) {
   }
 
@@ -58,7 +60,8 @@ public class ORemoteIndexEngine implements OIndexEngine {
 
   @Override
   public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
-      OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, Map<String, String> engineProperties, ODocument metadata) {
+      OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, Map<String, String> engineProperties,
+      ODocument metadata) {
   }
 
   @Override
@@ -118,7 +121,8 @@ public class ORemoteIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+  public OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
+      ValuesTransformer transformer) {
     return new EntriesMajorCursor();
   }
 
@@ -155,6 +159,11 @@ public class ORemoteIndexEngine implements OIndexEngine {
   @Override
   public int getVersion() {
     return -1;
+  }
+
+  @Override
+  public boolean acquireAtomicExclusiveLock(Object key) {
+    throw new UnsupportedOperationException("atomic locking is not supported by remote index engine");
   }
 
   private static class EntriesBetweenCursor extends OIndexAbstractCursor {

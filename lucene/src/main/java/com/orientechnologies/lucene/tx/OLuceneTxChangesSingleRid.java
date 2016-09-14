@@ -38,13 +38,13 @@ public class OLuceneTxChangesSingleRid extends OLuceneTxChangesAbstract {
   private final Set<String>   updated     = new HashSet<String>();
   private final Set<Document> deletedDocs = new HashSet<Document>();
 
-  public OLuceneTxChangesSingleRid(OLuceneIndexEngine engine, IndexWriter writer) {
-    super(engine, writer);
+  public OLuceneTxChangesSingleRid(OLuceneIndexEngine engine, IndexWriter writer, IndexWriter deletedIdx) {
+    super(engine, writer, deletedIdx);
   }
 
   public void put(Object key, OIdentifiable value, Document doc) throws IOException {
     if (deleted.remove(value.getIdentity().toString())) {
-      doc.add(OLuceneIndexType.createField(TMP, value.getIdentity().toString(), Field.Store.YES, Field.Index.NOT_ANALYZED_NO_NORMS));
+      doc.add(OLuceneIndexType.createField(TMP, value.getIdentity().toString(), Field.Store.YES));
       updated.add(value.getIdentity().toString());
     }
     writer.addDocument(doc);
@@ -56,7 +56,10 @@ public class OLuceneTxChangesSingleRid extends OLuceneTxChangesAbstract {
       writer.deleteDocuments(engine.deleteQuery(key, value));
     } else {
       deleted.add(value.getIdentity().toString());
-      deletedDocs.add(engine.buildDocument(key, value));
+      Document doc = engine.buildDocument(key, value);
+      deletedDocs.add(doc);
+      deletedIdx.addDocument(doc);
+
     }
   }
 

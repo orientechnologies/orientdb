@@ -20,6 +20,8 @@
 
 package com.tinkerpop.blueprints.impls.orient;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import org.apache.commons.configuration.Configuration;
 
 import com.orientechnologies.common.util.OPair;
@@ -49,7 +51,7 @@ public class OrientGraph extends OrientTransactionalGraph {
    * @param iDatabase
    *          Underlying database object to attach
    */
-  public OrientGraph(final ODatabaseDocumentTx iDatabase, final String iUserName, final String iUserPasswd) {
+  public OrientGraph(final ODatabaseDocumentInternal iDatabase, final String iUserName, final String iUserPasswd) {
     super(iDatabase, true, iUserName, iUserPasswd);
   }
 
@@ -62,7 +64,7 @@ public class OrientGraph extends OrientTransactionalGraph {
    * @param iAutoStartTx
    *          True to auto start a transaction at the beginning and after each commit/rollback
    */
-  public OrientGraph(final ODatabaseDocumentTx iDatabase, final boolean iAutoStartTx) {
+  public OrientGraph(final ODatabaseDocumentInternal iDatabase, final boolean iAutoStartTx) {
     super(iDatabase, iAutoStartTx, null, null);
   }
 
@@ -211,7 +213,7 @@ public class OrientGraph extends OrientTransactionalGraph {
    * @param iDatabase
    *          Underlying database object to attach
    */
-  public OrientGraph(final ODatabaseDocumentTx iDatabase) {
+  public OrientGraph(final ODatabaseDocumentInternal iDatabase) {
     super(iDatabase);
   }
 
@@ -221,7 +223,7 @@ public class OrientGraph extends OrientTransactionalGraph {
    * @param iDatabase
    *          Underlying database object to attach
    */
-  public OrientGraph(final ODatabaseDocumentTx iDatabase, final String iUser, final String iPassword,
+  public OrientGraph(final ODatabaseDocumentInternal iDatabase, final String iUser, final String iPassword,
       final Settings iConfiguration) {
     super(iDatabase, iUser, iPassword, iConfiguration);
   }

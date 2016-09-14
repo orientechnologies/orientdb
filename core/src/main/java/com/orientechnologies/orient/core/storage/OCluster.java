@@ -28,7 +28,7 @@ import java.io.IOException;
 public interface OCluster {
 
   enum ATTRIBUTES {
-    NAME, USE_WAL, RECORD_GROW_FACTOR, RECORD_OVERFLOW_GROW_FACTOR, COMPRESSION, CONFLICTSTRATEGY, STATUS, ENCRYPTION
+    NAME, USE_WAL, RECORD_GROW_FACTOR, RECORD_OVERFLOW_GROW_FACTOR, CONFLICTSTRATEGY, STATUS, ENCRYPTION
   }
 
   void configure(OStorage iStorage, int iId, String iClusterName, Object... iParameters) throws IOException;
@@ -61,9 +61,10 @@ public interface OCluster {
   /**
    * Allocates a physical position pointer on the storage for generate an id without a content.
    *
-   * @param recordType
-   *          the type of record of which allocate the position.
+   * @param recordType the type of record of which allocate the position.
+   *
    * @return the allocated position.
+   *
    * @throws IOException
    */
   OPhysicalPosition allocatePosition(byte recordType) throws IOException;
@@ -71,15 +72,13 @@ public interface OCluster {
   /**
    * Creates a new record in the cluster.
    *
-   * @param content
-   *          the content of the record.
-   * @param recordVersion
-   *          the current version
-   * @param recordType
-   *          the type of the record
-   * @param allocatedPosition
-   *          the eventual allocated position or null if there is no allocated position.
+   * @param content           the content of the record.
+   * @param recordVersion     the current version
+   * @param recordType        the type of the record
+   * @param allocatedPosition the eventual allocated position or null if there is no allocated position.
+   *
    * @return the position where the record si created.
+   *
    * @throws IOException
    */
   OPhysicalPosition createRecord(byte[] content, int recordVersion, byte recordType, OPhysicalPosition allocatedPosition)
@@ -113,6 +112,8 @@ public interface OCluster {
 
   long getLastPosition() throws IOException;
 
+  long getNextPosition() throws IOException;
+
   String getFileName();
 
   int getId();
@@ -132,8 +133,6 @@ public interface OCluster {
 
   float recordOverflowGrowFactor();
 
-  String compression();
-
   boolean isHashBased();
 
   boolean isSystemCluster();
@@ -150,16 +149,21 @@ public interface OCluster {
 
   /**
    * Hides records content by putting tombstone on the records position but does not delete record itself.
-   * <p>
-   * This method is used in case of record content itself is broken and cannot be read or deleted. So it is emergence method.
    *
-   * @param position
-   *          Position of record in cluster
+   * <p>This method is used in case of record content itself is broken and cannot be read or deleted. So it is emergence method.
+   *
+   * @param position Position of record in cluster
+   *
    * @return false if record does not exist.
-   * @throws java.lang.UnsupportedOperationException
-   *           In case current version of cluster does not support given operation.
+   *
+   * @throws java.lang.UnsupportedOperationException In case current version of cluster does not support given operation.
    */
   boolean hideRecord(long position) throws IOException;
 
   ORecordConflictStrategy getRecordConflictStrategy();
+
+  /**
+   * Acquires exclusive lock in the active atomic operation running on the current thread for this cluster.
+   */
+  void acquireAtomicExclusiveLock();
 }

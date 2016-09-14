@@ -50,7 +50,7 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared>implements OSche
   }
 
   public void create() {
-    delegate.create();
+    delegate.create(database);
   }
 
   public int countClasses() {
@@ -171,9 +171,10 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared>implements OSche
     return delegate.getClasses();
   }
 
+  @Deprecated
   public void load() {
 
-    delegate.load();
+    delegate.load(database);
 
   }
 
@@ -184,6 +185,7 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared>implements OSche
     return (RET) delegate;
   }
 
+  @Deprecated
   public <RET extends ODocumentWrapper> RET save() {
 
     return (RET) delegate.save();
@@ -199,7 +201,9 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared>implements OSche
     return delegate.getIdentity();
   }
 
+  @Deprecated
   public void close() {
+    // DO NOTHING THE DELEGATE CLOSE IS MANAGED IN A DIFFERENT CONTEXT
   }
 
   public String toString() {

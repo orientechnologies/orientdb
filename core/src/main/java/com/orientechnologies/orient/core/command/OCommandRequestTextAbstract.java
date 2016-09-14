@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
-import com.orientechnologies.orient.core.serialization.serializer.ONetworkThreadLocalSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
@@ -78,9 +77,9 @@ public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstrac
     return this;
   }
 
-  public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {
+  public OCommandRequestText fromStream(final byte[] iStream, ORecordSerializer serializer) throws OSerializationException {
     final OMemoryStream buffer = new OMemoryStream(iStream);
-    fromStream(buffer);
+    fromStream(buffer, serializer);
     return this;
   }
 
@@ -131,12 +130,11 @@ public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstrac
     return buffer.toByteArray();
   }
 
-  protected void fromStream(final OMemoryStream buffer) {
+  protected void fromStream(final OMemoryStream buffer, ORecordSerializer serializer) {
     text = buffer.getAsString();
 
     parameters = null;
 
-    ORecordSerializer serializer = ONetworkThreadLocalSerializer.getNetworkSerializer();
 
     final boolean simpleParams = buffer.getAsBoolean();
     if (simpleParams) {

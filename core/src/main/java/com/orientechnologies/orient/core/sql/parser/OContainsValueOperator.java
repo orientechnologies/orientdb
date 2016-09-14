@@ -13,13 +13,14 @@ public class OContainsValueOperator extends SimpleNode implements OBinaryCompare
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
 
-  @Override
-  public boolean execute(Object iLeft, Object iRight) {
+  @Override public boolean execute(Object iLeft, Object iRight) {
     if (iLeft instanceof Map<?, ?>) {
       final Map<String, ?> map = (Map<String, ?>) iLeft;
       return map.containsValue(iRight);
@@ -32,10 +33,20 @@ public class OContainsValueOperator extends SimpleNode implements OBinaryCompare
     return true;
   }
 
-  @Override
-  public String toString() {
+  @Override public OContainsValueOperator copy() {
+    return new OContainsValueOperator(-1);
+  }
+
+  @Override public String toString() {
     return "CONTAINSVALUE";
   }
 
+  @Override public boolean equals(Object obj) {
+    return obj != null && obj.getClass().equals(this.getClass());
+  }
+
+  @Override public int hashCode() {
+    return getClass().hashCode();
+  }
 }
 /* JavaCC - OriginalChecksum=5d6492dbb028b8bac69e60d4916cf341 (do not edit this line) */

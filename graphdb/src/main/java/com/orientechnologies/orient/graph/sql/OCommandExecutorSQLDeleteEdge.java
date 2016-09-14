@@ -36,18 +36,9 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientEdge;
-import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import com.tinkerpop.blueprints.impls.orient.*;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -235,30 +226,51 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware
             Set<OIdentifiable> toIds = null;
             if (toExpr != null)
               toIds = OSQLEngine.getInstance().parseRIDTarget(graph.getRawGraph(), toExpr, context, iArgs);
-
+            if(label == null )
+              label = OrientEdgeType.CLASS_NAME;
+            
             if (fromIds != null && toIds != null) {
-              // REMOVE ALL THE EDGES BETWEEN VERTICES
+              int fromCount = 0;
+              int toCount = 0;
               for (OIdentifiable fromId : fromIds) {
                 final OrientVertex v = graph.getVertex(fromId);
                 if (v != null)
-                  for (Edge e : v.getEdges(Direction.OUT)) {
-                    if (label != null && !label.equals(e.getLabel()))
-                      continue;
-
-                    final OIdentifiable inV = ((OrientEdge) e).getInVertex();
-                    if (inV != null && toIds.contains(inV.getIdentity()))
-                      edges.add((OrientEdge) e);
-                  }
+                  fromCount += v.countEdges(Direction.OUT, label);
+              }
+              for (OIdentifiable toId : toIds) {
+                final OrientVertex v = graph.getVertex(toId);
+                if (v != null)
+                  toCount += v.countEdges(Direction.IN, label);
+              }
+              if (fromCount <= toCount) {
+                // REMOVE ALL THE EDGES BETWEEN VERTICES
+                for (OIdentifiable fromId : fromIds) {
+                  final OrientVertex v = graph.getVertex(fromId);
+                  if (v != null)
+                    for (Edge e : v.getEdges(Direction.OUT, label)) {
+                      final OIdentifiable inV = ((OrientEdge) e).getInVertex();
+                      if (inV != null && toIds.contains(inV.getIdentity()))
+                        edges.add((OrientEdge) e);
+                    }
+                }
+              } else {
+                for (OIdentifiable toId : toIds) {
+                  final OrientVertex v = graph.getVertex(toId);
+                  if (v != null)
+                    for (Edge e : v.getEdges(Direction.IN, label)) {
+                      final OIdentifiable outV = ((OrientEdge) e).getOutVertex();
+                      if (outV != null && fromIds.contains(outV.getIdentity()))
+                        edges.add((OrientEdge) e);
+                    }
+                }
               }
             } else if (fromIds != null) {
               // REMOVE ALL THE EDGES THAT START FROM A VERTEXES
               for (OIdentifiable fromId : fromIds) {
+                
                 final OrientVertex v = graph.getVertex(fromId);
                 if (v != null) {
-                  for (Edge e : v.getEdges(Direction.OUT)) {
-                    if (label != null && !label.equals(e.getLabel()))
-                      continue;
-
+                  for (Edge e : v.getEdges(Direction.OUT, label)) {
                     edges.add((OrientEdge) e);
                   }
                 }
@@ -268,10 +280,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware
               for (OIdentifiable toId : toIds) {
                 final OrientVertex v = graph.getVertex(toId);
                 if (v != null) {
-                  for (Edge e : v.getEdges(Direction.IN)) {
-                    if (label != null && !label.equals(e.getLabel()))
-                      continue;
-
+                  for (Edge e : v.getEdges(Direction.IN, label)) {
                     edges.add((OrientEdge) e);
                   }
                 }
@@ -394,12 +403,29 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware
         : DISTRIBUTED_EXECUTION_MODE.LOCAL;
   }
 
+  @Override
+  public Set<String> getInvolvedClusters() {
+    final HashSet<String> result = new HashSet<String>();
+    if (rids != null) {
+      final ODatabaseDocumentInternal database = getDatabase();
+      for (ORecordId rid : rids) {
+        result.add(database.getClusterNameById(rid.getClusterId()));
+      }
+    } else if (query != null) {
+      final OCommandExecutor executor = OCommandManager.instance().getExecutor((OCommandRequestInternal) query);
+      // COPY THE CONTEXT FROM THE REQUEST
+      executor.setContext(context);
+      executor.parse(query);
+      return executor.getInvolvedClusters();
+    }
+    return result;
+  }
+
   /**
    * setLimit() for DELETE EDGE is ignored. Please use LIMIT keyword in the SQL statement
    */
   public <RET extends OCommandExecutor> RET setLimit(final int iLimit) {
-    //do nothing
+    // do nothing
     return (RET) this;
   }
 }
-

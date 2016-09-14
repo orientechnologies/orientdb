@@ -2,8 +2,7 @@ package com.orientechnologies.orient.core.index;
 
 import java.text.ParseException;
 
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert; import org.junit.Test;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;

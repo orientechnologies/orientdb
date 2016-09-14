@@ -15,16 +15,13 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import org.junit.Test;
-
-import com.orientechnologies.common.util.OCallable;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
+import org.junit.Test;
 
 /**
  * Distributed TX test by using transactions against "plocal" protocol + shutdown and restart of a node.
  */
-public class HATxTest extends AbstractServerClusterTxTest {
+public class HATxTest extends AbstractHARemoveNode {
   final static int SERVERS = 3;
 
   @Test
@@ -39,6 +36,7 @@ public class HATxTest extends AbstractServerClusterTxTest {
   protected void onAfterExecution() throws Exception {
     banner("SIMULATE SOFT SHUTDOWN OF SERVER " + (SERVERS - 1));
     serverInstance.get(SERVERS - 1).shutdownServer();
+    lastNodeIsUp.set(false);
 
     banner("RESTARTING TESTS WITH SERVER " + (SERVERS - 1) + " DOWN...");
 
@@ -51,26 +49,13 @@ public class HATxTest extends AbstractServerClusterTxTest {
     if (serverInstance.get(SERVERS - 1).server.getPluginByClass(OHazelcastPlugin.class) != null)
       serverInstance.get(SERVERS - 1).server.getPluginByClass(OHazelcastPlugin.class).waitUntilNodeOnline();
 
+    lastNodeIsUp.set(true);
+
     Thread.sleep(1000);
 
     banner("RESTARTING TESTS WITH SERVER " + (SERVERS - 1) + " UP...");
 
     executeMultipleTest();
-  }
-
-  @Override
-  protected void onBeforeChecks() throws InterruptedException {
-    // // WAIT UNTIL THE END
-    waitFor(2, new OCallable<Boolean, ODatabaseDocumentTx>() {
-      @Override
-      public Boolean call(ODatabaseDocumentTx db) {
-        final boolean ok = db.countClass("Person") >= count * writerCount * SERVERS + baseCount;
-        if (!ok)
-          System.out.println(
-              "FOUND " + db.countClass("Person") + " people instead of expected " + (count * writerCount * SERVERS) + baseCount);
-        return ok;
-      }
-    }, 10000);
   }
 
   protected String getDatabaseURL(final ServerRun server) {

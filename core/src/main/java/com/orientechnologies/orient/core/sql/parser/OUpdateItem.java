@@ -2,6 +2,9 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+
 import java.util.Map;
 
 public class OUpdateItem extends SimpleNode {
@@ -11,10 +14,10 @@ public class OUpdateItem extends SimpleNode {
   public static final int OPERATOR_STARASSIGN  = 3;
   public static final int OPERATOR_SLASHASSIGN = 4;
 
-  protected OIdentifier   left;
-  protected OModifier     leftModifier;
-  protected int           operator;
-  protected OExpression   right;
+  protected OIdentifier left;
+  protected OModifier   leftModifier;
+  protected int         operator;
+  protected OExpression right;
 
   public OUpdateItem(int id) {
     super(id);
@@ -24,11 +27,12 @@ public class OUpdateItem extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
-
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     left.toString(params, builder);
@@ -54,6 +58,118 @@ public class OUpdateItem extends SimpleNode {
 
     }
     right.toString(params, builder);
+  }
+
+  public OUpdateItem copy() {
+    OUpdateItem result = new OUpdateItem(-1);
+    result.left = left == null ? null : left.copy();
+    result.leftModifier = leftModifier == null ? null : leftModifier.copy();
+    result.operator = operator;
+    result.right = right == null ? null : right.copy();
+    return result;
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OUpdateItem that = (OUpdateItem) o;
+
+    if (operator != that.operator)
+      return false;
+    if (left != null ? !left.equals(that.left) : that.left != null)
+      return false;
+    if (leftModifier != null ? !leftModifier.equals(that.leftModifier) : that.leftModifier != null)
+      return false;
+    if (right != null ? !right.equals(that.right) : that.right != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = left != null ? left.hashCode() : 0;
+    result = 31 * result + (leftModifier != null ? leftModifier.hashCode() : 0);
+    result = 31 * result + operator;
+    result = 31 * result + (right != null ? right.hashCode() : 0);
+    return result;
+  }
+
+  public void applyUpdate(OResultInternal doc, OCommandContext ctx) {
+    Object rightValue = right.execute(doc, ctx);
+    if (leftModifier == null) {
+      applyOperation(doc, left, rightValue, ctx);
+    } else {
+      Object val = doc.getProperty(left.getStringValue());
+      leftModifier.setValue(doc, val, rightValue, ctx);
+    }
+  }
+
+  public void applyOperation(OResultInternal doc, OIdentifier attrName, Object rightValue, OCommandContext ctx) {
+
+    switch (operator) {
+    case OPERATOR_EQ:
+      doc.setProperty(attrName.getStringValue(), rightValue);
+      break;
+    case OPERATOR_MINUSASSIGN:
+      doc.setProperty(attrName.getStringValue(), calculateNewValue(doc, ctx, OMathExpression.Operator.MINUS));
+      break;
+    case OPERATOR_PLUSASSIGN:
+      doc.setProperty(attrName.getStringValue(), calculateNewValue(doc, ctx, OMathExpression.Operator.PLUS));
+      break;
+    case OPERATOR_SLASHASSIGN:
+      doc.setProperty(attrName.getStringValue(), calculateNewValue(doc, ctx, OMathExpression.Operator.SLASH));
+      break;
+    case OPERATOR_STARASSIGN:
+      doc.setProperty(attrName.getStringValue(), calculateNewValue(doc, ctx, OMathExpression.Operator.STAR));
+      break;
+    }
+  }
+
+  private Object calculateNewValue(OResultInternal doc, OCommandContext ctx, OMathExpression.Operator explicitOperator) {
+    OExpression leftEx = new OExpression(left.copy());
+    if (leftModifier != null) {
+      ((OBaseExpression) leftEx.mathExpression).modifier = leftModifier.copy();
+    }
+    OMathExpression mathExp = new OMathExpression(-1);
+    mathExp.getChildExpressions().add(leftEx.getMathExpression());
+    mathExp.getChildExpressions().add(new OParenthesisExpression(right.copy()));
+    mathExp.getOperators().add(explicitOperator);
+    return mathExp.execute(doc, ctx);
+  }
+
+  public OIdentifier getLeft() {
+    return left;
+  }
+
+  public void setLeft(OIdentifier left) {
+    this.left = left;
+  }
+
+  public OModifier getLeftModifier() {
+    return leftModifier;
+  }
+
+  public void setLeftModifier(OModifier leftModifier) {
+    this.leftModifier = leftModifier;
+  }
+
+  public int getOperator() {
+    return operator;
+  }
+
+  public void setOperator(int operator) {
+    this.operator = operator;
+  }
+
+  public OExpression getRight() {
+    return right;
+  }
+
+  public void setRight(OExpression right) {
+    this.right = right;
   }
 }
 /* JavaCC - OriginalChecksum=df7444be87bba741316df8df0d653600 (do not edit this line) */

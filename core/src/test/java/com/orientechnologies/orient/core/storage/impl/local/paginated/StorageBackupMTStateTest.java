@@ -17,11 +17,14 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Ignore;
+import org.junit.Test;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -29,26 +32,27 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Andrey Lomakin <lomakin.andrey@gmail.com>.
  * @since 10/6/2015
  */
-@Test(enabled = false)
 public class StorageBackupMTStateTest {
   static {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(3);
     OGlobalConfiguration.INDEX_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(10);
   }
 
-  private final OReadersWriterSpinLock               flowLock               = new OReadersWriterSpinLock();
+  private final OReadersWriterSpinLock flowLock = new OReadersWriterSpinLock();
 
   private final ConcurrentMap<String, AtomicInteger> classInstancesCounters = new ConcurrentHashMap<String, AtomicInteger>();
 
-  private final AtomicInteger                        classCounter           = new AtomicInteger();
+  private final AtomicInteger classCounter = new AtomicInteger();
 
-  private final String                               CLASS_PREFIX           = "StorageBackupMTStateTest";
-  private String                                     dbURL;
-  private File                                       backupDir;
-  private volatile boolean                           stop                   = false;
+  private final String CLASS_PREFIX = "StorageBackupMTStateTest";
+  private String dbURL;
+  private File   backupDir;
+  private volatile boolean stop = false;
 
-  private volatile OPartitionedDatabasePool          pool;
+  private volatile OPartitionedDatabasePool pool;
 
+  @Test
+  @Ignore
   public void testRun() throws Exception {
     String buildDirectory = System.getProperty("buildDirectory", ".");
     String dbDirectory = buildDirectory + File.separator + StorageBackupMTStateTest.class.getSimpleName();
@@ -154,11 +158,11 @@ public class StorageBackupMTStateTest {
 
     final ODatabaseCompare compare = new ODatabaseCompare("plocal:" + dbDirectory, "plocal:" + backedUpDbDirectory, "admin",
         "admin", new OCommandOutputListener() {
-          @Override
-          public void onMessage(String iText) {
-            System.out.println(iText);
-          }
-        });
+      @Override
+      public void onMessage(String iText) {
+        System.out.println(iText);
+      }
+    });
 
     Assert.assertTrue(compare.compare());
 
@@ -304,8 +308,8 @@ public class StorageBackupMTStateTest {
       long tCount = 0;
 
       while (linkedDocuments.size() < 5 && linkedDocuments.size() < linkedClassCount) {
-        List<ODocument> docs = db.query(new OSQLSynchQuery<ODocument>("select * from " + linkedClassName + " where id="
-            + random.nextInt(linkedClassCounter.get())));
+        List<ODocument> docs = db.query(new OSQLSynchQuery<ODocument>(
+            "select * from " + linkedClassName + " where id=" + random.nextInt(linkedClassCounter.get())));
 
         if (docs.size() > 0)
           linkedDocuments.add(docs.get(0));
@@ -398,8 +402,8 @@ public class StorageBackupMTStateTest {
 
               boolean deleted = false;
               do {
-                List<ODocument> docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>("select * from " + className
-                    + " where id=" + random.nextInt(classCounter.get())));
+                List<ODocument> docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(
+                    "select * from " + className + " where id=" + random.nextInt(classCounter.get())));
 
                 if (docs.size() > 0) {
                   final ODocument document = docs.get(0);

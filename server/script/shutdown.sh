@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) Orient Technologies LTD (http://www.orientechnologies.com)
+# Copyright (c) OrientDB LTD (http://www.orientdb.com)
 #
 # HISTORY:
 # 2012-07-31: Added -w option
@@ -61,6 +61,8 @@ PARAMS=$*
 if [ -f "$ORIENTDB_PID" ] && [ "${#PARAMS}" -eq 0 ] ; then
     echo "pid file detected, killing process"
     kill -15 `cat "$ORIENTDB_PID"` >/dev/null 2>&1
+    echo "waiting for OrientDB server to shutdown"
+    while ps -p `cat $ORIENTDB_PID` > /dev/null; do sleep 1; done
     rm "$ORIENTDB_PID"
 else
     echo "pid file not present or params detected"
@@ -69,6 +71,8 @@ else
         com.orientechnologies.orient.server.OServerShutdownMain $*
 
     if [ "x$wait" = "xyes" ] ; then
+      echo "wait for OrientDB server to shutdown"
+
       while true ; do
         ps auxw | grep java | grep $ORIENTDB_HOME/lib/orientdb-server > /dev/null || break
         sleep 1;

@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.command.OCommandRequestAsynch;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 import java.util.Collection;
@@ -47,7 +48,7 @@ import java.util.concurrent.TimeoutException;
 public class OSQLNonBlockingQuery<T extends Object> extends OSQLQuery<T> implements OCommandRequestAsynch {
   private static final long serialVersionUID = 1L;
 
-  public static class ONonBlockingQueryFuture implements Future, List<Future> {
+  public class ONonBlockingQueryFuture implements Future, List<Future> {
 
     protected volatile boolean finished = false;
 
@@ -71,7 +72,7 @@ public class OSQLNonBlockingQuery<T extends Object> extends OSQLQuery<T> impleme
       while (!finished) {
         wait();
       }
-      return null;
+      return OSQLNonBlockingQuery.this.getResultListener().getResult();
     }
 
     @Override
@@ -79,7 +80,7 @@ public class OSQLNonBlockingQuery<T extends Object> extends OSQLQuery<T> impleme
       while (!finished) {
         wait();
       }
-      return null;
+      return OSQLNonBlockingQuery.this.getResultListener().getResult();
     }
 
     @Override
@@ -99,7 +100,23 @@ public class OSQLNonBlockingQuery<T extends Object> extends OSQLQuery<T> impleme
 
     @Override
     public Iterator<Future> iterator() {
-      throw new UnsupportedOperationException("Trying to iterate over a non-blocking query result");
+      return new Iterator<Future>() {
+
+        @Override
+        public boolean hasNext() {
+          return false;
+        }
+
+        @Override
+        public Future next() {
+          return null;
+        }
+
+        @Override
+        public void remove() {
+          throw new UnsupportedOperationException("Unsuppored remove on non blocking query result");
+        }
+      };
     }
 
     @Override
@@ -245,9 +262,9 @@ public class OSQLNonBlockingQuery<T extends Object> extends OSQLQuery<T> impleme
 
     final ONonBlockingQueryFuture future = new ONonBlockingQueryFuture();
 
-    if (database instanceof ODatabaseDocumentTx) {
+    if (database instanceof ODatabaseDocument) {
       ODatabaseDocumentInternal currentThreadLocal = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-      final ODatabaseDocumentInternal db = ((ODatabaseDocumentTx) database).copy();
+      final ODatabaseDocumentInternal db = database.copy();
       if (currentThreadLocal != null) {
         currentThreadLocal.activateOnCurrentThread();
       } else {

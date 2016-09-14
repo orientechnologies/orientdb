@@ -40,7 +40,6 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OExecutionThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -97,7 +96,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Luca Garulli
  */
 @SuppressWarnings("unchecked")
-public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstract {
+public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstract implements OTemporaryRidGenerator {
   public static final String  KEYWORD_SELECT                = "SELECT";
   public static final String  KEYWORD_ASC                   = "ASC";
   public static final String  KEYWORD_DESC                  = "DESC";
@@ -596,7 +595,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
       if (filter(record, iContext)) {
         if(callHooks){
-          ((ODatabaseDocumentInternal)getDatabase()).callbackHooks(ORecordHook.TYPE.BEFORE_READ,record.getIdentity());
+          ((ODatabaseDocumentInternal)getDatabase()).callbackHooks(ORecordHook.TYPE.BEFORE_READ,record);
           ((ODatabaseDocumentInternal)getDatabase()).callbackHooks(ORecordHook.TYPE.AFTER_READ,record);
         }
 
@@ -682,8 +681,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
    * @param iContext
    * @return Serial as integer
    */
-  protected int getTemporaryRIDCounter(final OCommandContext iContext) {
-    final OCommandExecutorSQLSelect parentQuery = (OCommandExecutorSQLSelect) iContext.getVariable("parentQuery");
+  public int getTemporaryRIDCounter(final OCommandContext iContext) {
+    final OTemporaryRidGenerator parentQuery = (OTemporaryRidGenerator) iContext.getVariable("parentQuery");
     return parentQuery != null && parentQuery != this ? parentQuery.getTemporaryRIDCounter(iContext)
         : serialTempRID.getAndIncrement();
   }
@@ -1558,6 +1557,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   private boolean canRunParallel(int[] clusterIds, Iterator<? extends OIdentifiable> iTarget) {
+    if( getDatabase().getTransaction().isActive() )
+      return false;
+
     if (iTarget instanceof ORecordIteratorClusters) {
       if (clusterIds.length > 1) {
         final long totalRecords = getDatabase().getStorage().count(clusterIds);
@@ -1664,7 +1666,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       }
     }
 
-    final boolean res = execParallelWithPool((ORecordIteratorClusters) iTarget, (ODatabaseDocumentTx) db);
+    final boolean res = execParallelWithPool((ORecordIteratorClusters) iTarget, db);
 
     if (OLogManager.instance().isDebugEnabled())
       OLogManager.instance().debug(this, "Parallel query '%s' completed", parserText);
@@ -1703,7 +1705,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     }
   }
 
-  private boolean execParallelWithPool(final ORecordIteratorClusters iTarget, final ODatabaseDocumentTx db) {
+  private boolean execParallelWithPool(final ORecordIteratorClusters iTarget, final ODatabaseDocumentInternal db) {
     final int[] clusterIds = iTarget.getClusterIds();
 
     final List<String> clusterList = new ArrayList<String>();
@@ -2124,7 +2126,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     // try indexed functions
     Iterator<OIdentifiable> fetchedFromFunction = tryIndexedFunctions(iSchemaClass);
     if (fetchedFromFunction != null) {
-      return fetchFromTarget(fetchedFromFunction);
+      fetchFromTarget(fetchedFromFunction);
+      return true;
     }
 
     // the main condition is a set of sub-conditions separated by OR operators

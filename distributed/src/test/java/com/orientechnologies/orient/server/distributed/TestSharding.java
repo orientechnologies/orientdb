@@ -1,3 +1,18 @@
+/*
+ * Copyright 2010-2013 Luca Garulli (l.garulli--at--orientechnologies.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.orientechnologies.orient.server.distributed;
 
 import org.junit.Assert;
@@ -95,6 +110,7 @@ public class TestSharding extends AbstractServerClusterTest {
           Assert.assertEquals("Error on assigning cluster client_" + nodeName, clId, clusterId);
 
           vertices[i].setProperty("name-property", "shard_" + i);
+          vertices[i].setProperty("blob", new byte[1000]);
 
           long amount = i * 10000;
           vertices[i].setProperty("amount", amount);
@@ -104,9 +120,11 @@ public class TestSharding extends AbstractServerClusterTest {
           System.out
               .println("Create vertex, class: " + vertices[i].getLabel() + ", cluster: " + clId + " -> " + vertices[i].getRecord());
 
-          if (i > 1)
+          if (i > 1) {
             // CREATE A LIGHT-WEIGHT EDGE
-            vertices[i].addEdge("Knows-Type", vertices[i - 1]);
+            final Edge e = vertices[i].addEdge("Knows-Type", vertices[i - 1]);
+            e.setProperty("blob", new byte[1000]);
+          }
 
           // CREATE A REGULAR EDGE
           final Edge edge = vertices[i].addEdge("Buy-Type", product, new Object[] { "price", 1000 * i });

@@ -16,13 +16,11 @@
 
 package com.orientechnologies.common.serialization.types;
 
-import com.orientechnologies.orient.core.sql.parser.OCluster;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.LocalPaginatedStorageRestoreFromWAL;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
-import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -31,32 +29,36 @@ import java.nio.ByteOrder;
  * @author Ilya Bershadskiy (ibersh20-at-gmail.com)
  * @since 18.01.12
  */
-@Test
 public class FloatSerializerTest {
   private static final int   FIELD_SIZE = 4;
   private static final Float OBJECT     = 3.14f;
-  private OFloatSerializer floatSerializer;
   byte[] stream = new byte[FIELD_SIZE];
+  private OFloatSerializer floatSerializer;
 
-  @BeforeClass
+  @Before
   public void beforeClass() {
     floatSerializer = new OFloatSerializer();
   }
 
+  @Test
   public void testFieldSize() {
     Assert.assertEquals(floatSerializer.getObjectSize(null), FIELD_SIZE);
   }
 
+  @Test
   public void testSerialize() {
     floatSerializer.serialize(OBJECT, stream, 0);
     Assert.assertEquals(floatSerializer.deserialize(stream, 0), OBJECT);
   }
 
+  @Test
   public void testSerializeNative() {
     floatSerializer.serializeNative(OBJECT, stream, 0);
-    Assert.assertEquals(floatSerializer.deserializeNative(stream, 0), OBJECT);
+    Float v = floatSerializer.deserializeNative(stream, 0);
+    Assert.assertEquals(v, OBJECT);
   }
 
+  @Test
   public void testNativeDirectMemoryCompatibility() {
     floatSerializer.serializeNative(OBJECT, stream, 0);
 
@@ -67,6 +69,7 @@ public class FloatSerializerTest {
     Assert.assertEquals(floatSerializer.deserializeFromByteBufferObject(buffer), OBJECT);
   }
 
+  @Test
   public void testSerializeInByteBuffer() {
     final int serializationOffset = 5;
 
@@ -87,6 +90,7 @@ public class FloatSerializerTest {
     Assert.assertEquals(buffer.position() - serializationOffset, FIELD_SIZE);
   }
 
+  @Test
   public void testSerializeWALChanges() {
     final int serializationOffset = 5;
 

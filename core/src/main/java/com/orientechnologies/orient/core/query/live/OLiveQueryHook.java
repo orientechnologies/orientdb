@@ -69,17 +69,11 @@ public class OLiveQueryHook extends ODocumentHookAbstract implements ODatabaseLi
 
   public OLiveQueryHook(ODatabaseDocumentInternal db) {
     super(db);
-    getOpsReference(db);
     db.registerListener(this);
   }
 
   public static OLiveQueryOps getOpsReference(ODatabaseInternal db) {
-    return (OLiveQueryOps) db.getStorage().getResource("LiveQueryOps", new Callable<Object>() {
-      @Override
-      public Object call() throws Exception {
-        return new OLiveQueryOps();
-      }
-    });
+    return db.getSharedContext().getLiveQueryOps();
   }
 
   public static Integer subscribe(Integer token, OLiveQueryListener iListener, ODatabaseInternal db) {

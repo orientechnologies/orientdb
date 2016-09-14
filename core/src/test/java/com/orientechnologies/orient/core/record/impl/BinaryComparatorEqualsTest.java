@@ -6,15 +6,14 @@ import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.OBinaryField;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Test;
 
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-@Test
 public class BinaryComparatorEqualsTest extends AbstractComparatorTest {
 
   @Test
@@ -57,10 +56,10 @@ public class BinaryComparatorEqualsTest extends AbstractComparatorTest {
     Date now = format.parse(now1);
 
     Assert.assertTrue(comparator.isEqual(field(OType.DATETIME, now), field(OType.STRING, format.format(now))));
-    Assert.assertFalse(comparator.isEqual(field(OType.DATETIME, new Date(now.getTime() + 1)),
-        field(OType.STRING, format.format(now))));
-    Assert.assertFalse(comparator.isEqual(field(OType.DATETIME, new Date(now.getTime() - 1)),
-        field(OType.STRING, format.format(now))));
+    Assert.assertFalse(
+        comparator.isEqual(field(OType.DATETIME, new Date(now.getTime() + 1)), field(OType.STRING, format.format(now))));
+    Assert.assertFalse(
+        comparator.isEqual(field(OType.DATETIME, new Date(now.getTime() - 1)), field(OType.STRING, format.format(now))));
   }
 
   @Test
@@ -80,10 +79,10 @@ public class BinaryComparatorEqualsTest extends AbstractComparatorTest {
     Assert.assertFalse(comparator.isEqual(field(OType.LINK, new ORecordId(1, 2)), field(OType.LINK, new ORecordId(2, 1))));
     Assert.assertFalse(comparator.isEqual(field(OType.LINK, new ORecordId(1, 2)), field(OType.LINK, new ORecordId(0, 2))));
 
-    Assert.assertTrue(comparator.isEqual(field(OType.LINK, new ORecordId(1, 2)),
-        field(OType.STRING, new ORecordId(1, 2).toString())));
-    Assert.assertFalse(comparator.isEqual(field(OType.LINK, new ORecordId(1, 2)),
-        field(OType.STRING, new ORecordId(0, 2).toString())));
+    Assert.assertTrue(
+        comparator.isEqual(field(OType.LINK, new ORecordId(1, 2)), field(OType.STRING, new ORecordId(1, 2).toString())));
+    Assert.assertFalse(
+        comparator.isEqual(field(OType.LINK, new ORecordId(1, 2)), field(OType.STRING, new ORecordId(0, 2).toString())));
   }
 
   @Test
@@ -99,14 +98,14 @@ public class BinaryComparatorEqualsTest extends AbstractComparatorTest {
     Assert.assertFalse(comparator.isEqual(field(OType.STRING, "test", new ODefaultCollate()), field(OType.STRING, "test2")));
     Assert.assertFalse(comparator.isEqual(field(OType.STRING, "t", new ODefaultCollate()), field(OType.STRING, "te")));
 
-    Assert.assertTrue(comparator.isEqual(field(OType.STRING, "test", new ODefaultCollate()),
-        field(OType.STRING, "test", new ODefaultCollate())));
-    Assert.assertFalse(comparator.isEqual(field(OType.STRING, "test2", new ODefaultCollate()),
-        field(OType.STRING, "test", new ODefaultCollate())));
-    Assert.assertFalse(comparator.isEqual(field(OType.STRING, "test", new ODefaultCollate()),
-        field(OType.STRING, "test2", new ODefaultCollate())));
-    Assert.assertFalse(comparator.isEqual(field(OType.STRING, "t", new ODefaultCollate()),
-        field(OType.STRING, "te", new ODefaultCollate())));
+    Assert.assertTrue(
+        comparator.isEqual(field(OType.STRING, "test", new ODefaultCollate()), field(OType.STRING, "test", new ODefaultCollate())));
+    Assert.assertFalse(comparator
+        .isEqual(field(OType.STRING, "test2", new ODefaultCollate()), field(OType.STRING, "test", new ODefaultCollate())));
+    Assert.assertFalse(comparator
+        .isEqual(field(OType.STRING, "test", new ODefaultCollate()), field(OType.STRING, "test2", new ODefaultCollate())));
+    Assert.assertFalse(
+        comparator.isEqual(field(OType.STRING, "t", new ODefaultCollate()), field(OType.STRING, "te", new ODefaultCollate())));
 
     Assert.assertTrue(comparator.isEqual(field(OType.STRING, "test"), field(OType.STRING, "test", new ODefaultCollate())));
     Assert.assertFalse(comparator.isEqual(field(OType.STRING, "test2"), field(OType.STRING, "test", new ODefaultCollate())));
@@ -202,18 +201,18 @@ public class BinaryComparatorEqualsTest extends AbstractComparatorTest {
 
     if (sourceType != OType.DATETIME) {
       // STRING
-      Assert.assertTrue(comparator.isEqual(field(sourceType, value10AsSourceType),
-          field(OType.STRING, value10AsSourceType.toString())));
+      Assert.assertTrue(
+          comparator.isEqual(field(sourceType, value10AsSourceType), field(OType.STRING, value10AsSourceType.toString())));
       Assert.assertFalse(comparator.isEqual(field(sourceType, value10AsSourceType), field(OType.STRING, "9")));
       Assert.assertFalse(comparator.isEqual(field(sourceType, value10AsSourceType), field(OType.STRING, "11")));
       Assert.assertFalse(comparator.isEqual(field(sourceType, value10AsSourceType.intValue() * 2), field(OType.STRING, "11")));
 
-      Assert.assertTrue(comparator.isEqual(field(OType.STRING, value10AsSourceType.toString()),
-          field(sourceType, value10AsSourceType)));
-      Assert.assertFalse(comparator.isEqual(field(OType.STRING, value10AsSourceType.toString()),
-          field(sourceType, value10AsSourceType.intValue() - 1)));
-      Assert.assertFalse(comparator.isEqual(field(OType.STRING, value10AsSourceType.toString()),
-          field(sourceType, value10AsSourceType.intValue() + 1)));
+      Assert.assertTrue(
+          comparator.isEqual(field(OType.STRING, value10AsSourceType.toString()), field(sourceType, value10AsSourceType)));
+      Assert.assertFalse(comparator
+          .isEqual(field(OType.STRING, value10AsSourceType.toString()), field(sourceType, value10AsSourceType.intValue() - 1)));
+      Assert.assertFalse(comparator
+          .isEqual(field(OType.STRING, value10AsSourceType.toString()), field(sourceType, value10AsSourceType.intValue() + 1)));
       Assert.assertFalse(comparator.isEqual(field(OType.STRING, "" + value10AsSourceType.intValue() * 2),
           field(sourceType, value10AsSourceType.intValue())));
     }

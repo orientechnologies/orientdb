@@ -21,14 +21,16 @@ package com.orientechnologies.orient.client.binary;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OSystemException;
-import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
 import com.orientechnologies.orient.enterprise.channel.OSocketFactory;
-import com.orientechnologies.orient.enterprise.channel.binary.*;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
+import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 
 import java.io.*;
 import java.lang.reflect.Constructor;
@@ -70,7 +72,7 @@ public abstract class OChannelBinaryClientAbstract extends OChannelBinary {
         setReadResponseTimeout();
         connected();
       } catch (java.net.SocketTimeoutException e) {
-        throw new IOException("Cannot connect to host " + remoteHost + ":" + remotePort, e);
+        throw new IOException("Cannot connect to host " + remoteHost + ":" + remotePort + " (timeout=" + socketTimeout + ")", e);
       }
       try {
         inStream = new BufferedInputStream(socket.getInputStream(), socketBufferSize);

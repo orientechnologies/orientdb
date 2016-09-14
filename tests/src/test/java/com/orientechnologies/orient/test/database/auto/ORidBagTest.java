@@ -1164,12 +1164,12 @@ import static org.testng.Assert.assertTrue;
 
   public void testFromEmbeddedToSBTreeAndBack() throws IOException {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(7);
-    OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(4);
+    OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(-1);
 
     if (database.getStorage() instanceof OStorageProxy) {
       OServerAdmin server = new OServerAdmin(database.getURL()).connect("root", ODatabaseHelper.getServerRootPassword());
       server.setGlobalConfiguration(OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD, 7);
-      server.setGlobalConfiguration(OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD, 4);
+      server.setGlobalConfiguration(OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD, -1);
       server.close();
     }
 
@@ -1236,7 +1236,7 @@ import static org.testng.Assert.assertTrue;
 
     document.save();
 
-    Assert.assertTrue(ridBag.isEmbedded());
+    Assert.assertTrue(!ridBag.isEmbedded());
 
     for (OIdentifiable id : ridBag)
       Assert.assertTrue(addedItems.remove(id));
@@ -1246,7 +1246,108 @@ import static org.testng.Assert.assertTrue;
     document.reload();
 
     ridBag = document.field("ridBag");
+    Assert.assertTrue(!ridBag.isEmbedded());
+
+    addedItems.addAll(addedItemsCopy);
+    for (OIdentifiable id : ridBag)
+      Assert.assertTrue(addedItems.remove(id));
+
+    Assert.assertTrue(addedItems.isEmpty());
+  }
+
+  public void testFromEmbeddedToSBTreeAndBackTx() throws IOException {
+    OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(7);
+    OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(-1);
+
+    if (database.getStorage() instanceof OStorageProxy) {
+      OServerAdmin server = new OServerAdmin(database.getURL()).connect("root", ODatabaseHelper.getServerRootPassword());
+      server.setGlobalConfiguration(OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD, 7);
+      server.setGlobalConfiguration(OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD, -1);
+      server.close();
+    }
+
+    ORidBag ridBag = new ORidBag();
+    ODocument document = new ODocument();
+    document.field("ridBag", ridBag);
+
     Assert.assertTrue(ridBag.isEmbedded());
+    database.begin();
+    document.save();
+    database.commit();
+    document.reload();
+
+    ridBag = document.field("ridBag");
+    Assert.assertTrue(ridBag.isEmbedded());
+
+    List<OIdentifiable> addedItems = new ArrayList<OIdentifiable>();
+
+    database.begin();
+    for (int i = 0; i < 6; i++) {
+      ODocument docToAdd = new ODocument();
+      docToAdd.save();
+
+      ridBag.add(docToAdd);
+      addedItems.add(docToAdd);
+    }
+
+    document.save();
+    database.commit();
+
+    document.reload();
+
+    ridBag = document.field("ridBag");
+    Assert.assertTrue(ridBag.isEmbedded());
+
+    ODocument docToAdd = new ODocument();
+    ridBag.add(docToAdd);
+    addedItems.add(docToAdd);
+
+    database.begin();
+    document.save();
+    database.commit();
+
+    Assert.assertTrue(!ridBag.isEmbedded());
+
+    List<OIdentifiable> addedItemsCopy = new ArrayList<OIdentifiable>(addedItems);
+    for (OIdentifiable id : ridBag)
+      Assert.assertTrue(addedItems.remove(id));
+
+    Assert.assertTrue(addedItems.isEmpty());
+
+    document.reload();
+
+    ridBag = document.field("ridBag");
+    Assert.assertTrue(!ridBag.isEmbedded());
+
+    addedItems.addAll(addedItemsCopy);
+    for (OIdentifiable id : ridBag)
+      Assert.assertTrue(addedItems.remove(id));
+
+    Assert.assertTrue(addedItems.isEmpty());
+
+    addedItems.addAll(addedItemsCopy);
+
+    for (int i = 0; i < 3; i++)
+      ridBag.remove(addedItems.remove(i));
+
+    addedItemsCopy.clear();
+    addedItemsCopy.addAll(addedItems);
+
+    database.begin();
+    document.save();
+    database.commit();
+
+    Assert.assertTrue(!ridBag.isEmbedded());
+
+    for (OIdentifiable id : ridBag)
+      Assert.assertTrue(addedItems.remove(id));
+
+    Assert.assertTrue(addedItems.isEmpty());
+
+    document.reload();
+
+    ridBag = document.field("ridBag");
+    Assert.assertTrue(!ridBag.isEmbedded());
 
     addedItems.addAll(addedItemsCopy);
     for (OIdentifiable id : ridBag)
@@ -1354,6 +1455,7 @@ import static org.testng.Assert.assertTrue;
     Assert.assertEquals(teamMates.iterator().next().getIdentity(), bob.getIdentity());
   }
 
+  @Test
   public void testDocumentHelper() {
     ODocument document = new ODocument();
     ODocument embeddedDocument = new ODocument();
@@ -1510,6 +1612,7 @@ import static org.testng.Assert.assertTrue;
     Assert.assertEquals(ridBag.size(), size);
   }
 
+  @Test
   public void testJsonSerialization() {
     ODocument externalDoc = new ODocument();
     ODocument testDocument = new ODocument();

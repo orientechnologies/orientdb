@@ -2,6 +2,12 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.sql.executor.AggregationContext;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+
 import java.util.Map;
 
 public class OProjectionItem extends SimpleNode {
@@ -11,6 +17,8 @@ public class OProjectionItem extends SimpleNode {
   protected OIdentifier alias;
 
   protected OExpression expression;
+
+  protected Boolean aggregate;
 
   public OProjectionItem(int id) {
     super(id);
@@ -61,7 +69,9 @@ public class OProjectionItem extends SimpleNode {
     if (all) {
       builder.append("*");
     } else {
-      expression.toString(params, builder);
+      if (expression != null) {
+        expression.toString(params, builder);
+      }
       if (alias != null) {
 
         builder.append(" AS ");
@@ -70,14 +80,136 @@ public class OProjectionItem extends SimpleNode {
     }
   }
 
-  public OIdentifier getDefaultAlias() {
-    if (expression == null) {
-      OIdentifier result = new OIdentifier(-1);
-      result.setValue("null");
-      return result;
+  public Object execute(OIdentifiable iCurrentRecord, OCommandContext ctx) {
+    if (all) {
+      return iCurrentRecord;
     }
-    return expression.getDefaultAlias();
+    return expression.execute(iCurrentRecord, ctx);
   }
 
+  public Object execute(OResult iCurrentRecord, OCommandContext ctx) {
+    if (all) {
+      return iCurrentRecord;
+    }
+    return expression.execute(iCurrentRecord, ctx);
+  }
+
+  /**
+   * returns the final alias for this projection item (the explicit alias, if defined, or the default alias)
+   *
+   * @return the final alias for this projection item
+   */
+  public String getProjectionAliasAsString() {
+    return getProjectionAlias().getStringValue();
+  }
+
+  public OIdentifier getProjectionAlias() {
+    if (alias != null) {
+      return alias;
+    }
+    OIdentifier result = new OIdentifier(-1);
+    result.setStringValue(this.toString());
+    return result;
+  }
+
+  public boolean isExpand() {
+    return expression.isExpand();
+  }
+
+  public OProjectionItem getExpandContent() {
+    OProjectionItem result = new OProjectionItem(-1);
+    result.setExpression(expression.getExpandContent());
+    return result;
+  }
+
+  public boolean isAggregate() {
+    if (aggregate != null) {
+      return aggregate;
+    }
+    if (all) {
+      aggregate = false;
+      return false;
+    }
+    if (expression.isAggregate()) {
+      aggregate = true;
+      return true;
+    }
+    aggregate = false;
+    return false;
+  }
+
+  /**
+   * INTERNAL USE ONLY
+   * this has to be invoked ONLY if the item is aggregate!!!
+   *
+   * @param aggregateSplit
+   */
+  public OProjectionItem splitForAggregation(AggregateProjectionSplit aggregateSplit) {
+    if (isAggregate()) {
+      OProjectionItem result = new OProjectionItem(-1);
+      result.alias = getProjectionAlias();
+      result.expression = expression.splitForAggregation(aggregateSplit);
+      return result;
+    } else {
+      return this;
+    }
+  }
+
+  public AggregationContext getAggregationContext(OCommandContext ctx) {
+    if (expression == null) {
+      throw new OCommandExecutionException("Cannot aggregate on this projection: " + toString());
+    }
+    return expression.getAggregationContext(ctx);
+  }
+
+  public OProjectionItem copy() {
+    OProjectionItem result = new OProjectionItem(-1);
+    result.all = all;
+    result.alias = alias == null ? null : alias.copy();
+    result.expression = expression == null ? null : expression.copy();
+    result.aggregate = aggregate;
+    return result;
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OProjectionItem that = (OProjectionItem) o;
+
+    if (all != that.all)
+      return false;
+    if (alias != null ? !alias.equals(that.alias) : that.alias != null)
+      return false;
+    if (expression != null ? !expression.equals(that.expression) : that.expression != null)
+      return false;
+    if (aggregate != null ? !aggregate.equals(that.aggregate) : that.aggregate != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = (all ? 1 : 0);
+    result = 31 * result + (alias != null ? alias.hashCode() : 0);
+    result = 31 * result + (expression != null ? expression.hashCode() : 0);
+    result = 31 * result + (aggregate != null ? aggregate.hashCode() : 0);
+    return result;
+  }
+
+  public void extractSubQueries(SubQueryCollector collector) {
+    if (expression != null) {
+      expression.extractSubQueries(collector);
+    }
+  }
+
+  public boolean refersToParent() {
+    if(expression!=null){
+      return expression.refersToParent();
+    }
+    return false;
+  }
 }
 /* JavaCC - OriginalChecksum=6d6010734c7434a6f516e2eac308e9ce (do not edit this line) */

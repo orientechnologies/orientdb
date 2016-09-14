@@ -23,6 +23,8 @@ import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.TopDocs;
 
 import java.io.IOException;
 
@@ -31,24 +33,46 @@ import java.io.IOException;
  */
 public abstract class OLuceneTxChangesAbstract implements OLuceneTxChanges {
 
-  public static final String         TMP = "_tmp_rid";
+  public static final String TMP = "_tmp_rid";
 
   protected final IndexWriter        writer;
   protected final OLuceneIndexEngine engine;
+  protected final IndexWriter        deletedIdx;
 
-  public OLuceneTxChangesAbstract(OLuceneIndexEngine engine, IndexWriter writer) {
+  public OLuceneTxChangesAbstract(OLuceneIndexEngine engine, IndexWriter writer, IndexWriter deletedIdx) {
     this.writer = writer;
     this.engine = engine;
+    this.deletedIdx = deletedIdx;
   }
 
   public IndexSearcher searcher() {
     // TODO optimize
     try {
-      return new IndexSearcher(DirectoryReader.open(writer, true));
+      return new IndexSearcher(DirectoryReader.open(writer, true, true));
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error during searcher instantiation", e);
     }
 
     return null;
+  }
+
+  @Override
+  public long deletedDocs(Query query) {
+
+    try {
+      IndexSearcher indexSearcher = new IndexSearcher(DirectoryReader.open(deletedIdx, true, true));
+
+      //      if (filter != null) {
+      //        TopDocs search = indexSearcher.search(query, filter, Integer.MAX_VALUE);
+      //        return search.totalHits;
+      //      } else {
+      TopDocs search = indexSearcher.search(query, Integer.MAX_VALUE);
+      return search.totalHits;
+      //      }
+    } catch (IOException e) {
+      OLogManager.instance().error(this, "Error during searcher instantiation", e);
+    }
+
+    return 0;
   }
 }

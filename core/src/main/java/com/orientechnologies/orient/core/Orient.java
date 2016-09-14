@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core;
 
+import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.listener.OListenerManger;
@@ -375,22 +376,7 @@ public class Orient extends OListenerManger<OOrientListener> {
   }
 
   public void closeAllStorages() {
-    engineLock.writeLock().lock();
-    try {
-      // CLOSE ALL THE STORAGES
-      final List<OStorage> storagesCopy = new ArrayList<OStorage>(storages.values());
-      for (OStorage stg : storagesCopy) {
-        try {
-          OLogManager.instance().info(this, "- closing storage: " + stg.getName() + "...");
-          stg.close(true, false);
-        } catch (Throwable e) {
-          OLogManager.instance().warn(this, "-- error on closing storage", e);
-        }
-      }
-      storages.clear();
-    } finally {
-      engineLock.writeLock().unlock();
-    }
+   shutdownAllStorages();
   }
 
   private void shutdownAllStorages() {
@@ -928,6 +914,8 @@ public class Orient extends OListenerManger<OOrientListener> {
         if (engine.isRunning())
           engine.shutdown();
       engines.clear();
+
+      OByteBufferPool.instance().verifyState();
     }
 
     @Override

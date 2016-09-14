@@ -2,21 +2,17 @@ package com.orientechnologies.common.serialization.types;
 
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
-import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
+import org.junit.Assert;import org.junit.Before; import org.junit.Test;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.UUID;
 
-@Test
 public class OUUIDSerializerTest {
   private static final int  FIELD_SIZE = 16;
   private static final UUID OBJECT     = UUID.randomUUID();
   private OUUIDSerializer uuidSerializer;
 
-  @BeforeClass
+  @Before
   public void beforeClass() {
     uuidSerializer = new OUUIDSerializer();
   }

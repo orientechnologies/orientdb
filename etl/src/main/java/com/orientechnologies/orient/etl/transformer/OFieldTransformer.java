@@ -20,23 +20,23 @@ package com.orientechnologies.orient.etl.transformer;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
-import com.orientechnologies.orient.etl.OETLProcessor;
 
 import java.util.List;
+
+import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.DEBUG;
 
 public class OFieldTransformer extends OAbstractTransformer {
   private String       fieldName;
   private List<String> fieldNames;
   private String       expression;
   private Object       value;
-  private boolean      setOperation = true;
-  private OSQLFilter   sqlFilter;
-  private boolean      save         = false;
+  private boolean setOperation = true;
+  private OSQLFilter sqlFilter;
+  private boolean save = false;
 
   @Override
   public ODocument getConfiguration() {
@@ -51,8 +51,8 @@ public class OFieldTransformer extends OAbstractTransformer {
   }
 
   @Override
-  public void configure(OETLProcessor iProcessor, final ODocument iConfiguration, OCommandContext iContext) {
-    super.configure(iProcessor, iConfiguration, iContext);
+  public void configure(final ODocument iConfiguration, OCommandContext iContext) {
+    super.configure(iConfiguration, iContext);
     fieldName = (String) resolve(iConfiguration.field("fieldName"));
     fieldNames = (List<String>) resolve(iConfiguration.field("fieldNames"));
 
@@ -66,7 +66,7 @@ public class OFieldTransformer extends OAbstractTransformer {
       throw new IllegalArgumentException("Field transformer cannot specify both 'expression' and 'value'");
 
     if (iConfiguration.containsField("save"))
-      save = (Boolean) iConfiguration.field("save");
+      save = iConfiguration.<Boolean>field("save");
 
     if (iConfiguration.containsField("operation"))
       setOperation = "set".equalsIgnoreCase((String) iConfiguration.field("operation"));
@@ -99,22 +99,22 @@ public class OFieldTransformer extends OAbstractTransformer {
           // SET THE TRANSFORMED FIELD BACK
           doc.field(fieldName, newValue);
 
-          log(OETLProcessor.LOG_LEVELS.DEBUG, "set %s=%s in document=%s", fieldName, newValue, doc);
+          log(DEBUG, "set %s=%s in document=%s", fieldName, newValue, doc);
         } else {
           if (fieldName != null) {
             final Object prev = doc.removeField(fieldName);
-            log(OETLProcessor.LOG_LEVELS.DEBUG, "removed %s (value=%s) from document=%s", fieldName, prev, doc);
+            log(DEBUG, "removed %s (value=%s) from document=%s", fieldName, prev, doc);
           } else {
             for (String f : fieldNames) {
               final Object prev = doc.removeField(f);
-              log(OETLProcessor.LOG_LEVELS.DEBUG, "removed %s (value=%s) from document=%s", f, prev, doc);
+              log(DEBUG, "removed %s (value=%s) from document=%s", f, prev, doc);
             }
           }
         }
 
         if (save) {
-          log(OETLProcessor.LOG_LEVELS.DEBUG, "saving record %s", doc);
-          final ODatabaseDocument db = super.pipeline.getDocumentDatabase();
+          log(DEBUG, "saving record %s", doc);
+          final ODatabaseDocument db = pipeline.getDocumentDatabase();
           db.save(doc);
         }
       }

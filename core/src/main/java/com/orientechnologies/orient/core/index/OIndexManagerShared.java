@@ -25,10 +25,9 @@ import com.orientechnologies.common.util.OMultiKey;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -42,6 +41,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
+import java.nio.channels.UnsupportedAddressTypeException;
 import java.util.*;
 
 /**
@@ -57,8 +57,8 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
   protected volatile transient Thread recreateIndexesThread = null;
   private volatile boolean            rebuildCompleted      = false;
 
-  public OIndexManagerShared(final ODatabaseDocument iDatabase) {
-    super(iDatabase);
+  public OIndexManagerShared() {
+    super();
   }
 
   public OIndex<?> getIndexInternal(final String name) {
@@ -123,7 +123,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
     if (c != null)
       throw new IllegalArgumentException("Invalid index name '" + iName + "'. Character '" + c + "' is invalid");
 
-    ODatabaseInternal database = getDatabase();
+    ODatabaseDocumentInternal database = getDatabase();
     OStorage storage = database.getStorage();
 
     final Locale locale = getServerLocale();
@@ -194,7 +194,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
     if (OGlobalConfiguration.INDEX_FLUSH_AFTER_CREATE.getValueAsBoolean())
       storage.synch();
 
-    return preProcessBeforeReturn(index);
+    return preProcessBeforeReturn(database, index);
   }
 
   protected void notifyInvolvedClasses(int[] clusterIdsToIndex) {
@@ -305,20 +305,19 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
   }
 
   @Override
-  public void recreateIndexes() {
+  public void recreateIndexes(ODatabaseDocumentInternal database) {
     acquireExclusiveLock();
     try {
       if (recreateIndexesThread != null && recreateIndexesThread.isAlive())
         // BUILDING ALREADY IN PROGRESS
         return;
 
-      final ODatabaseDocument db = getDatabase();
-      document = db.load(new ORecordId(getDatabase().getStorage().getConfiguration().indexMgrRecordId));
+      document = database.load(new ORecordId(database.getStorage().getConfiguration().indexMgrRecordId));
       final ODocument doc = new ODocument();
       document.copyTo(doc);
 
       // USE A NEW DB INSTANCE
-      final ODatabaseDocumentInternal newDb = new ODatabaseDocumentTx(db.getURL());
+      final ODatabaseDocumentInternal newDb = database.copy();
 
       Runnable recreateIndexesTask = new RecreateIndexesTask(newDb, doc);
 
@@ -331,8 +330,14 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
     if (OGlobalConfiguration.INDEX_SYNCHRONOUS_AUTO_REBUILD.getValueAsBoolean()) {
       waitTillIndexRestore();
 
-      getDatabase().getMetadata().reload();
+      database.getMetadata().reload();
     }
+    
+  }
+  
+  @Override
+  public void recreateIndexes() {
+    throw new UnsupportedAddressTypeException();
   }
 
   @Override
@@ -352,18 +357,22 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
     }
   }
 
-  public boolean autoRecreateIndexesAfterCrash() {
+  public boolean autoRecreateIndexesAfterCrash(ODatabaseDocumentInternal database) {
     if (rebuildCompleted)
       return false;
 
-    final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.get();
-    final OStorage storage = database.getStorage().getUnderlying();
+    final OStorage storage = database.getStorage();
     if (storage instanceof OAbstractPaginatedStorage) {
       OAbstractPaginatedStorage paginatedStorage = (OAbstractPaginatedStorage) storage;
       return paginatedStorage.wereDataRestoredAfterOpen() && paginatedStorage.wereNonTxOperationsPerformedInPreviousOpen();
     }
 
     return false;
+  }
+
+  
+  public boolean autoRecreateIndexesAfterCrash() {
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -517,7 +526,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
         }
 
         try {
-          recreateIndexes(idxs);
+          recreateIndexes(storage, idxs);
         } finally {
           if (storage instanceof OAbstractPaginatedStorage) {
             final OAbstractPaginatedStorage abstractPaginatedStorage = (OAbstractPaginatedStorage) storage;
@@ -531,12 +540,12 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
       }
     }
 
-    private void recreateIndexes(Collection<ODocument> idxs) {
+    private void recreateIndexes(OStorage storage, Collection<ODocument> idxs) {
       ok = 0;
       errors = 0;
       for (ODocument idx : idxs) {
         try {
-          recreateIndex(idx);
+          recreateIndex(storage, idx);
 
         } catch (RuntimeException e) {
           OLogManager.instance().error(this, "Error during addition of index '%s'", e, idx);
@@ -551,7 +560,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
       OLogManager.instance().info(this, "%d indexes were restored successfully, %d errors", ok, errors);
     }
 
-    private void recreateIndex(ODocument idx) {
+    private void recreateIndex(OStorage storage, ODocument idx) {
       final OIndexInternal<?> index = createIndex(idx);
       final OIndexMetadata indexMetadata = index.loadMetadata(idx);
       final OIndexDefinition indexDefinition = indexMetadata.getIndexDefinition();
@@ -568,7 +577,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
           for (Iterator<OIndexFactory> it = OIndexes.getAllFactories(); it.hasNext();) {
             try {
               final OIndexFactory indexFactory = it.next();
-              final OIndexEngine engine = indexFactory.createIndexEngine(null, index.getName(), false, getDatabase().getStorage(),
+              final OIndexEngine engine = indexFactory.createIndexEngine(null, index.getName(), false, storage,
                   0, null);
 
               engine.deleteWithoutLoad(index.getName());
@@ -658,7 +667,19 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
       newDb.setProperty(ODatabase.OPTIONS.SECURITY.toString(), OSecurityNull.class);
       newDb.open("admin", "nopass");
 
-      ODatabaseRecordThreadLocal.INSTANCE.set(newDb);
+      newDb.activateOnCurrentThread();
     }
   }
+
+  protected OIndex<?> preProcessBeforeReturn(ODatabaseDocumentInternal database, final OIndex<?> index) {
+    if (index instanceof OIndexMultiValues)
+      return new OIndexTxAwareMultiValue(database, (OIndex<Set<OIdentifiable>>) index);
+    else if (index instanceof OIndexDictionary)
+      return new OIndexTxAwareDictionary(database, (OIndex<OIdentifiable>) index);
+    else if (index instanceof OIndexOneValue)
+      return new OIndexTxAwareOneValue(database, (OIndex<OIdentifiable>) index);
+
+    return index;
+  }
+
 }

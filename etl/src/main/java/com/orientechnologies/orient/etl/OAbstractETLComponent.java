@@ -35,9 +35,10 @@ import com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS;
 public abstract class OAbstractETLComponent implements OETLComponent {
   protected OETLProcessor   processor;
   protected OCommandContext context;
-  protected LOG_LEVELS      logLevel;
-  protected String          output;
-  protected String          ifExpression;
+  protected LOG_LEVELS logLevel = LOG_LEVELS.INFO;
+  protected String    output;
+  protected String    ifExpression;
+  protected ODocument configuration;
 
   @Override
   public ODocument getConfiguration() {
@@ -45,23 +46,22 @@ public abstract class OAbstractETLComponent implements OETLComponent {
   }
 
   @Override
-  public void configure(final OETLProcessor iProcessor, final ODocument iConfiguration, final OCommandContext iContext) {
-    processor = iProcessor;
+  public void configure(final ODocument iConfiguration, final OCommandContext iContext) {
     context = iContext;
-
+    configuration = iConfiguration;
     ifExpression = iConfiguration.field("if");
-
-    if (iConfiguration.containsField("log"))
-      logLevel = LOG_LEVELS.valueOf(iConfiguration.field("log").toString().toUpperCase());
-    else
-      logLevel = iProcessor.getLogLevel();
-
-    if (iConfiguration.containsField("output"))
-      output = iConfiguration.field("output");
   }
 
   @Override
   public void begin() {
+    if (configuration.containsField("log"))
+      logLevel = LOG_LEVELS.valueOf(configuration.field("log").toString().toUpperCase());
+    else
+      logLevel = processor.getLogLevel();
+
+    if (configuration.containsField("output"))
+      output = configuration.field("output");
+
   }
 
   @Override
@@ -73,6 +73,11 @@ public abstract class OAbstractETLComponent implements OETLComponent {
         + "{if:{optional:true,description:'Conditional expression. If true, the block is executed, otherwise is skipped'}},"
         + "{output:{optional:true,description:'Variable name to store the transformer output. If null, the output will be passed to the pipeline as input for the next component.'}}";
 
+  }
+
+  @Override
+  public void setProcessor(OETLProcessor processor) {
+    this.processor = processor;
   }
 
   @Override

@@ -29,5 +29,5 @@ else
 fi
 export JAVA
 
-exec "$JAVA" -cp "$ORIENTDB_HOME/lib/*" \
+exec "$JAVA" -XX:MaxDirectMemorySize=512g -cp "$ORIENTDB_HOME/lib/*" \
     com.orientechnologies.orient.stresstest.OStressTester $*

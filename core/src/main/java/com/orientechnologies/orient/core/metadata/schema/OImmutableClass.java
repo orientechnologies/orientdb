@@ -181,6 +181,7 @@ public class OImmutableClass implements OClass {
   }
 
   @Override
+  @Deprecated
   public OClass getSuperClass() {
     initSuperClasses();
 
@@ -188,6 +189,7 @@ public class OImmutableClass implements OClass {
   }
 
   @Override
+  @Deprecated
   public OClass setSuperClass(OClass iSuperClass) {
     throw new UnsupportedOperationException();
   }
@@ -385,7 +387,7 @@ public class OImmutableClass implements OClass {
 
   @Override
   public int[] getPolymorphicClusterIds() {
-    return polymorphicClusterIds;
+    return Arrays.copyOf(polymorphicClusterIds, polymorphicClusterIds.length);
   }
 
   public OImmutableSchema getSchema() {
@@ -417,11 +419,13 @@ public class OImmutableClass implements OClass {
   }
 
   @Override
+  @Deprecated
   public Collection<OClass> getBaseClasses() {
     return getSubclasses();
   }
 
   @Override
+  @Deprecated
   public Collection<OClass> getAllBaseClasses() {
     return getAllSubclasses();
   }

@@ -1,8 +1,8 @@
 package com.orientechnologies.orient.object.db;
 
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,7 +13,8 @@ import java.util.List;
 public class OObjectLazyListTest {
   private OObjectDatabaseTx databaseTx;
 
-  @BeforeClass protected void setUp() throws Exception {
+  @Before
+  public void setUp() throws Exception {
     databaseTx = new OObjectDatabaseTx("memory:OObjectEnumLazyListTest");
     databaseTx.create();
 
@@ -22,12 +23,14 @@ public class OObjectLazyListTest {
 
   }
 
-  @AfterClass protected void tearDown() {
+  @After
+  public void tearDown() {
 
     databaseTx.drop();
   }
 
-  @Test public void positionTest() {
+  @Test
+  public void positionTest() {
     EntityObjectWithList listObject = getTestObject();
 
     listObject = databaseTx.save(listObject);
@@ -42,7 +45,7 @@ public class OObjectLazyListTest {
     listObject = databaseTx.save(listObject);
 
     assert (listObject.getEntityObjects().get(0).getFieldValue().equals("NewObject"));
-    assert (listObject.getEntityObjects().get(listObject.getEntityObjects().size()-1).getFieldValue().equals("NewObject2"));
+    assert (listObject.getEntityObjects().get(listObject.getEntityObjects().size() - 1).getFieldValue().equals("NewObject2"));
   }
 
   private EntityObjectWithList getTestObject() {
@@ -69,10 +72,10 @@ public class OObjectLazyListTest {
   }
 
   private static class EntityObjectWithList {
+    private List<EntityObject> entityObjects = new ArrayList<EntityObject>();
+
     public EntityObjectWithList() {
     }
-
-    private List<EntityObject> entityObjects = new ArrayList<EntityObject>();
 
     public List<EntityObject> getEntityObjects() {
       return entityObjects;
@@ -84,10 +87,10 @@ public class OObjectLazyListTest {
   }
 
   private static class EntityObject {
+    private String fieldValue = null;
+
     public EntityObject() {
     }
-
-    private String fieldValue = null;
 
     public String getFieldValue() {
       return fieldValue;

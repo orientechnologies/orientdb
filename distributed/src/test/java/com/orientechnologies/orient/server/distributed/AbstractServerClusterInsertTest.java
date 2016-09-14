@@ -257,8 +257,12 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
   }
 
   protected void executeMultipleTest() throws InterruptedException, java.util.concurrent.ExecutionException {
+    executeMultipleTest(0);
+  }
+
+  protected void executeMultipleTest(final int serverNum) throws InterruptedException, java.util.concurrent.ExecutionException {
     poolFactory.reset();
-    ODatabaseDocumentTx database = poolFactory.get(getDatabaseURL(serverInstance.get(0)), "admin", "admin").acquire();
+    ODatabaseDocumentTx database = poolFactory.get(getDatabaseURL(serverInstance.get(serverNum)), "admin", "admin").acquire();
     try {
       List<ODocument> result = database.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from Person"));
       baseCount = ((Number) result.get(0).field("count")).intValue();
@@ -290,7 +294,9 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
       }
     }
 
-    expected = writerCount * count * serverId + baseCount;
+    computeExpected(serverId);
+
+    System.out.println("Expected records="+expected);
 
     List<Future<Void>> futures = executors.invokeAll(workers);
 
@@ -315,6 +321,10 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
 
     checkInsertedEntries();
     checkIndexedEntries();
+  }
+
+  protected void computeExpected(final int serverId) {
+    expected = writerCount * count * serverId + baseCount;
   }
 
   protected void onBeforeChecks() throws InterruptedException {

@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
-import org.testng.annotations.Test;
+import org.junit.Ignore;
+import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -9,9 +10,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-import static org.testng.Assert.*;
+import static org.junit.Assert.*;
 
-@Test
 public class OSelectStatementTest {
 
   protected SimpleNode checkRightSyntax(String query) {
@@ -423,7 +423,8 @@ public class OSelectStatementTest {
 
   }
 
-  @Test(enabled = false)
+  @Test
+  @Ignore
   public void testSlashInQuery() {
     checkRightSyntax("insert into test content {\"node_id\": \"MFmqvmht//sYYWB8=\"}");
     checkRightSyntax("insert into test content { \"node_id\": \"MFmqvmht\\/\\/GYsYYWB8=\"}");
@@ -451,7 +452,8 @@ public class OSelectStatementTest {
     checkRightSyntax("select from test order by (something asc),(somethingElse desc)");
   }
 
-  @Test( enabled = false)
+  @Test
+  @Ignore
   public void testMultipleLucene() {
     checkRightSyntax("select from Foo where a lucene 'a'");
     checkWrongSyntax("select from Foo where a lucene 'a' and b lucene 'a'");
@@ -687,26 +689,22 @@ public class OSelectStatementTest {
     checkRightSyntax("Select * From ACNodeAuthentication where acNodeID like \"%\" + ? + '%'");
   }
 
+  @Test
   public void testAppendParams(){
     checkRightSyntax("select from User where Account.Name like :name + '%'");
 
   }
 
+  @Test
   public void testLetMatch(){
     checkRightSyntax("select $a let $a = (MATCH {class:Foo, as:bar, where:(name = 'foo')} return $elements)");
+
   }
 
-  public void testLockRecord() {
-    checkRightSyntax("Select from foo lock record");
-    checkRightSyntax("Select from foo lock none");
-    checkRightSyntax("Select from foo lock shared");
-    checkRightSyntax("Select from foo lock default");
-    checkRightSyntax("Select from foo LOCK RECORD");
-    checkRightSyntax("Select from foo LOCK NONE");
-    checkRightSyntax("Select from foo LOCK SHARED");
-    checkRightSyntax("Select from foo LOCK DEFAULT");
-
-    checkWrongSyntax("Select from foo LOCK Foo");
+  @Test
+  public void testDistinct() {
+    checkRightSyntax("select distinct(foo) from V");
+    checkRightSyntax("select distinct foo, bar, baz from V");
   }
 
 

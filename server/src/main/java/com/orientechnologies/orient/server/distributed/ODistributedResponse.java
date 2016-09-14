@@ -19,7 +19,11 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import java.io.*;
+import com.orientechnologies.orient.core.serialization.OStreamableHelper;
+
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.Arrays;
 
 /**
@@ -27,7 +31,7 @@ import java.util.Arrays;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  *
  */
-public class ODistributedResponse implements Externalizable {
+public class ODistributedResponse {
   private ODistributedRequestId requestId;
   private String                executorNodeName;
   private String                senderNodeName;
@@ -40,7 +44,7 @@ public class ODistributedResponse implements Externalizable {
   }
 
   public ODistributedResponse(final ODistributedRequestId iRequestId, final String executorNodeName, final String senderNodeName,
-      final Serializable payload) {
+      final Object payload) {
     this.requestId = iRequestId;
     this.executorNodeName = executorNodeName;
     this.senderNodeName = senderNodeName;
@@ -73,20 +77,19 @@ public class ODistributedResponse implements Externalizable {
     return this;
   }
 
-  @Override
-  public void writeExternal(final ObjectOutput out) throws IOException {
-    out.writeObject(requestId);
+  public void toStream(final DataOutput out) throws IOException {
+    requestId.toStream(out);
     out.writeUTF(executorNodeName);
     out.writeUTF(senderNodeName);
-    out.writeObject(payload);
+    OStreamableHelper.toStream(out, payload);
   }
 
-  @Override
-  public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
-    requestId = (ODistributedRequestId) in.readObject();
+  public void fromStream(final DataInput in) throws IOException {
+    requestId = new ODistributedRequestId();
+    requestId.fromStream(in);
     executorNodeName = in.readUTF();
     senderNodeName = in.readUTF();
-    payload = (Serializable) in.readObject();
+    payload = OStreamableHelper.fromStream(in);
   }
 
   @Override
