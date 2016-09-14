@@ -2121,7 +2121,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     // try indexed functions
     Iterator<OIdentifiable> fetchedFromFunction = tryIndexedFunctions(iSchemaClass);
     if (fetchedFromFunction != null) {
-      return fetchFromTarget(fetchedFromFunction);
+      fetchFromTarget(fetchedFromFunction);
+      return true;
     }
 
     // the main condition is a set of sub-conditions separated by OR operators
