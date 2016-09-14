@@ -293,22 +293,20 @@ public class OHttpResponse {
           final List<String> orderedColumns = new ArrayList<String>(colNames);
 
           try {
-            OutputStream outputStream = getOutputStream(iArgument);
-
             // WRITE THE HEADER
             for (int col = 0; col < orderedColumns.size(); ++col) {
               if (col > 0)
-                outputStream.write(',');
+                iArgument.write(',');
 
-              outputStream.write(orderedColumns.get(col).getBytes());
+              iArgument.write(orderedColumns.get(col).getBytes());
             }
-            outputStream.write(OHttpUtils.EOL);
+            iArgument.write(OHttpUtils.EOL);
 
             // WRITE EACH RECORD
             for (ODocument doc : records) {
               for (int col = 0; col < orderedColumns.size(); ++col) {
                 if (col > 0) {
-                  outputStream.write(',');
+                  iArgument.write(',');
                 }
 
                 Object value = doc.field(orderedColumns.get(col));
@@ -316,13 +314,13 @@ public class OHttpResponse {
                   if (!(value instanceof Number))
                     value = "\"" + value + "\"";
 
-                  outputStream.write(value.toString().getBytes());
+                  iArgument.write(value.toString().getBytes());
                 }
               }
-              outputStream.write(OHttpUtils.EOL);
+              iArgument.write(OHttpUtils.EOL);
             }
 
-            outputStream.flush();
+            iArgument.flush();
 
           } catch (IOException e) {
             OLogManager.instance().error(this, "HTTP response: error on writing records", e);
@@ -343,7 +341,19 @@ public class OHttpResponse {
           @Override
           public Void call(OChunkedResponse iArgument) {
             try {
-              OutputStream outputStream = getOutputStream(iArgument);
+              OutputStream outputStream;
+
+              if (contentEncoding != null) {
+                if (contentEncoding.equals(OHttpUtils.CONTENT_ACCEPT_DEFLATE_ENCODED)) {
+                  outputStream = new DeflaterOutputStream(iArgument);
+                } else if (contentEncoding.equals(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED)) {
+                  outputStream = new GZIPOutputStream(iArgument);
+                } else {
+                  throw new OHttpRequestException("Not supported content encoding: " + contentEncoding);
+                }
+              } else {
+                outputStream = iArgument;
+              }
 
               OutputStreamWriter writer = new OutputStreamWriter(outputStream);
               writeRecordsOnStream(iFetchPlan, sendFormat, iAdditionalProperties, it, writer);
@@ -362,30 +372,6 @@ public class OHttpResponse {
         send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, buffer.toString(), null);
       }
     }
-  }
-
-	/**
-     * Get OutputStream based on content encoding.
-     *
-     * @param iArgument
-     * @return
-     * @throws IOException
-     */
-  private OutputStream getOutputStream(OutputStream iArgument) throws IOException {
-    OutputStream outputStream;
-
-    if (contentEncoding != null) {
-      if (contentEncoding.equals(OHttpUtils.CONTENT_ACCEPT_DEFLATE_ENCODED)) {
-        outputStream = new DeflaterOutputStream(iArgument);
-      } else if (contentEncoding.equals(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED)) {
-        outputStream = new GZIPOutputStream(iArgument);
-      } else {
-        throw new OHttpRequestException("Not supported content encoding: " + contentEncoding);
-      }
-    } else {
-      outputStream = iArgument;
-    }
-    return outputStream;
   }
 
   private void writeRecordsOnStream(String iFetchPlan, String iFormat, Map<String, Object> iAdditionalProperties, Iterator<Object> it,
