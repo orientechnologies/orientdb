@@ -38,8 +38,8 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
   private boolean            unicode         = true;
   private Iterator<CSVRecord> recordIterator;
   private CSVFormat           csvFormat;
-  private String nullValue  = NULL_STRING;
-  private String dateFormat = "yyyy-MM-dd";
+  private String nullValue      = NULL_STRING;
+  private String dateFormat     = "yyyy-MM-dd";
   private String dateTimeFormat = "yyyy-MM-dd hh:mm";
 
   @Override
@@ -76,7 +76,8 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
     csvFormat = CSVFormat.newFormat(',').withNullString(NULL_STRING).withEscape('\\').withQuote('"');
 
     if (iConfiguration.containsField("predefinedFormat")) {
-      csvFormat = CSVFormat.valueOf(iConfiguration.<String>field("predefinedFormat").toUpperCase());
+      csvFormat = CSVFormat.valueOf(iConfiguration.<String>field("predefinedFormat"));
+
     }
 
     if (iConfiguration.containsField("separator")) {
@@ -206,8 +207,8 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
             else
               doc.field(fieldName, transformToDateTime(fieldValueAsString));
           } else {
-          Object fieldValue = OType.convert(fieldValueAsString, fieldType.getDefaultJavaType());
-          doc.field(fieldName, fieldValue);
+            Object fieldValue = OType.convert(fieldValueAsString, fieldType.getDefaultJavaType());
+            doc.field(fieldName, fieldValue);
           }
         } catch (Exception e) {
           processor.getStats().incrementErrors();
