@@ -139,13 +139,8 @@ public class OServerCommandPostAuthToken extends OServerCommandAbstract {
   protected void sendAuthorizationRequest(final OHttpRequest iRequest, final OHttpResponse iResponse, final String iDatabaseName)
       throws IOException {
 
-    String header = "";
-    String xRequestedWithHeader = iRequest.getHeader("X-Requested-With");
-
-    if (xRequestedWithHeader == null || !xRequestedWithHeader.equals("XMLHttpRequest")) {
-      // Defaults to "WWW-Authenticate: Basic" if not an AJAX Request.
-      header = server.getSecurity().getAuthenticationHeader(iDatabaseName);
-    }
+    // Defaults to "WWW-Authenticate: Basic".
+    String header = server.getSecurity().getAuthenticationHeader(iDatabaseName);
 
     if (isJsonResponse(iResponse)) {
       sendJsonError(iResponse, OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
@@ -154,5 +149,6 @@ public class OServerCommandPostAuthToken extends OServerCommandAbstract {
       iResponse.send(OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
           "401 Unauthorized.", header);
     }
+
   }
 }

@@ -98,13 +98,8 @@ public abstract class OServerCommandAuthenticatedServerAbstract extends OServerC
     // UNAUTHORIZED
     iRequest.sessionId = SESSIONID_UNAUTHORIZED;
 
-    String header = "";
-    String xRequestedWithHeader = iRequest.getHeader("X-Requested-With");
-
-    if (xRequestedWithHeader == null || !xRequestedWithHeader.equals("XMLHttpRequest")) {
-      // Defaults to "WWW-Authenticate: Basic" if not an AJAX Request.
-      header = server.getSecurity().getAuthenticationHeader(null);
-    }
+    // Defaults to "WWW-Authenticate: Basic".
+    String header = server.getSecurity().getAuthenticationHeader(null);
 
     if (isJsonResponse(iResponse)) {
       sendJsonError(iResponse, OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
