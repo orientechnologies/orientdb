@@ -49,6 +49,8 @@ import com.orientechnologies.orient.server.network.protocol.http.command.put.OSe
 import com.orientechnologies.orient.server.network.protocol.http.command.put.OServerCommandPutDocument;
 import com.orientechnologies.orient.server.network.protocol.http.command.put.OServerCommandPutIndex;
 import com.orientechnologies.orient.server.network.protocol.http.multipart.OHttpMultipartBaseInputStream;
+import org.apache.commons.codec.binary.StringUtils;
+import org.apache.commons.compress.utils.IOUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -727,37 +729,29 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
     return null;
   }
 
+	/**
+     * Decompress gzip compressed byte array.
+     *
+     * @param zipBytes
+     * @return
+     */
   protected String deCompress(byte[] zipBytes) {
-    if(zipBytes == null || zipBytes.length == 0)
-      return null;
-    GZIPInputStream gzip = null;
-    ByteArrayInputStream in = null;
-    ByteArrayOutputStream baos = null;
+    GZIPInputStream gzipIn = null;
     try {
-      in = new ByteArrayInputStream(zipBytes);
-      gzip = new GZIPInputStream(in);
-      byte[] buffer = new byte[1024];
-      baos = new ByteArrayOutputStream();
-      int len = -1;
-      while((len = gzip.read(buffer, 0, buffer.length)) != -1) {
-        baos.write(buffer, 0, len);
-      }
-      String newstr = new String(baos.toByteArray(), "UTF-8");
-      return newstr;
-    }catch(Exception ex) {
-      ex.printStackTrace();
+      gzipIn = new GZIPInputStream(new ByteArrayInputStream(zipBytes));
+      return StringUtils.newString(IOUtils.toByteArray(gzipIn), "UTF-8");
+    } catch (IOException ex) {
+      OLogManager.instance().error(this, "Error on decompressing gzip", ex);
     } finally {
-      try{
-        if(gzip != null)
-          gzip.close();
-        if(in != null)
-          in.close();
-        if(baos != null)
-          baos.close();
-      }catch(Exception ex) {
-
+      if (gzipIn != null) {
+        try {
+          gzipIn.close();
+        } catch (IOException ex) {
+          OLogManager.instance().error(this, "Error on decompressing gzip", ex);
+        }
       }
     }
+
     return null;
   }
 
