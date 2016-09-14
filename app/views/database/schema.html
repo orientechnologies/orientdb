@@ -149,7 +149,17 @@
                               ng-click="createRecord(result['name'])">
                         <i
                           class="fa fa-plus"></i> New Record
+
+                        <a href="javascript:void(0)" tabindex="1"
+                           data-trigger="focus" data-placement="bottom"
+                           data-container="body"
+                           data-content="{{ 'Cannoct create a new record for an abstract class' }}" bs-popover>
+                          <i class="fa fa-question-circle"></i>
+                        </a>
                       </button>
+
+
+
 
                       <button href="javascript:void(0)" ng-disabled="!canDrop(result['name'])"
                               class="btn btn-danger btn-xs"
