@@ -511,6 +511,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     return cluster;
   }
 
+  public abstract String getPublicAddress();
+  
   @Override
   public ODocument getLocalNodeConfiguration() {
     final ODocument nodeCfg = new ODocument();
@@ -518,6 +520,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     nodeCfg.field("id", nodeId);
     nodeCfg.field("uuid", nodeUuid);
     nodeCfg.field("name", nodeName);
+    nodeCfg.field("publicAddress", getPublicAddress());
     nodeCfg.field("startedOn", startedOn);
     nodeCfg.field("status", getNodeStatus());
     nodeCfg.field("connections", serverInstance.getClientConnectionManager().getTotal());

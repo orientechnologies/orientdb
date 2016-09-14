@@ -496,20 +496,22 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
             throw new ODistributedException("Cannot find node '" + rNodeName + "'");
           }
         }
+        String url = cfg.field("publicAddress");
+        
+        if (url == null) {
+          final Collection<Map<String, Object>> listeners = (Collection<Map<String, Object>>) cfg.field("listeners");
+          if (listeners == null)
+            throw new ODatabaseException(
+                "Cannot connect to a remote node because bad distributed configuration: missing 'listeners' array field");
 
-        final Collection<Map<String, Object>> listeners = (Collection<Map<String, Object>>) cfg.field("listeners");
-        if (listeners == null)
-          throw new ODatabaseException(
-              "Cannot connect to a remote node because bad distributed configuration: missing 'listeners' array field");
-
-        String url = null;
-        for (Map<String, Object> listener : listeners) {
-          if (((String) listener.get("protocol")).equals("ONetworkProtocolBinary")) {
-            url = (String) listener.get("listen");
-            break;
+          for (Map<String, Object> listener : listeners) {
+            if (((String) listener.get("protocol")).equals("ONetworkProtocolBinary")) {
+              url = (String) listener.get("listen");
+              break;
+            }
           }
         }
-
+        
         if (url == null)
           throw new ODatabaseException("Cannot connect to a remote node because the url was not found");
 
@@ -565,6 +567,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     return Hazelcast.newHazelcastInstance(hazelcastConfig);
   }
 
+  @Override
+  public String getPublicAddress() {
+    return hazelcastConfig.getNetworkConfig().getPublicAddress();
+  }
+  
   @Override
   protected ODocument loadDatabaseConfiguration(final String iDatabaseName, final File file, final boolean saveCfgToDisk) {
     // FIRST LOOK IN THE CLUSTER
