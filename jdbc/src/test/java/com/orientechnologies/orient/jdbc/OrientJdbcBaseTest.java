@@ -17,17 +17,12 @@ import static java.lang.Class.forName;
 public abstract class OrientJdbcBaseTest {
 
   protected OrientJdbcConnection conn;
-
-  @BeforeClass
-  public static void loadDriver() throws ClassNotFoundException {
-//    forName(OrientJdbcDriver.class.getName());
-
-  }
+  protected ODatabaseDocumentTx  db;
 
   @Before
   public void prepareDatabase() throws Exception {
     String dbUrl = "memory:test";
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
+    db = new ODatabaseDocumentTx(dbUrl);
 
     String username = "admin";
     String password = "admin";

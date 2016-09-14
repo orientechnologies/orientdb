@@ -7,12 +7,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import static java.sql.ResultSet.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 import static org.junit.Assert.assertThat;
-import static java.sql.ResultSet.CONCUR_READ_ONLY;
-import static java.sql.ResultSet.TYPE_FORWARD_ONLY;
-
 
 public class OrientJdbcPreparedStatementTest extends OrientJdbcBaseTest {
 
@@ -68,7 +67,16 @@ public class OrientJdbcPreparedStatementTest extends OrientJdbcBaseTest {
     statement.setString(1, "testval");
     int rowsInserted = statement.executeUpdate();
 
-    assertThat(rowsInserted, equalTo(2));
+    assertThat(rowsInserted).isEqualTo(2);
+  }
+
+  @Test
+  public void testInsertRIDReturning() throws Exception {
+    conn.createStatement().executeQuery("CREATE CLASS Insertable ");
+    ResultSet result = conn.createStatement().executeQuery("INSERT INTO Insertable(id) VALUES(1) return @rid");
+
+    assertThat(result.next()).isTrue();
+    assertThat(result.getObject("id")).isNotNull();
   }
 
   @Test
@@ -119,8 +127,12 @@ public class OrientJdbcPreparedStatementTest extends OrientJdbcBaseTest {
     stmt.execute();
 
     // Let's verify the previous process
-    ResultSet resultSet = conn.createStatement().executeQuery("SELECT count(*) FROM insertable WHERE id = 'someRandomUid'");
-    assertThat(resultSet.getInt(1), equalTo(1));
+    ResultSet resultSet = conn.createStatement().executeQuery("SELECT count(*) AS num FROM insertable WHERE id = 'someRandomUid'");
+    assertThat(resultSet.getInt(1)).isEqualTo(1);
+
+    //without alias!
+    resultSet = conn.createStatement().executeQuery("SELECT count(*) FROM insertable WHERE id = 'someRandomUid'");
+    assertThat(resultSet.getInt(1)).isEqualTo(1);
   }
 
   @Test

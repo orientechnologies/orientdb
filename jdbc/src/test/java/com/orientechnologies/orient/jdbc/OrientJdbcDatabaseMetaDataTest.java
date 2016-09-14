@@ -123,7 +123,7 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
       }
 
       for (Map<String, Object> c : columns) {
-        System.out.println(c);
+//        System.out.println(c);
       }
   }
 

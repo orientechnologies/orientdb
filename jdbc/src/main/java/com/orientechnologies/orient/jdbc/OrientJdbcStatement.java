@@ -19,8 +19,7 @@ package com.orientechnologies.orient.jdbc;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandRequest;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -47,10 +46,11 @@ import static java.util.Collections.*;
 public class OrientJdbcStatement implements Statement {
 
   protected final OrientJdbcConnection connection;
-  protected final ODatabaseDocumentTx  database;
+  protected final ODatabaseDocument    database;
 
   // protected OCommandSQL query;
   protected OCommandRequest            query;
+  protected String              sql;
   protected List<ODocument>            documents;
   protected boolean                    closed;
   protected Object                     rawResult;
@@ -85,7 +85,7 @@ public class OrientJdbcStatement implements Statement {
   public OrientJdbcStatement(OrientJdbcConnection iConnection, int resultSetType, int resultSetConcurrency, int resultSetHoldability) {
     this.connection = iConnection;
     this.database = iConnection.getDatabase();
-    ODatabaseRecordThreadLocal.INSTANCE.set(database);
+    database.activateOnCurrentThread();
     documents = emptyList();
     batches = new ArrayList<String>();
     this.resultSetType = resultSetType;
@@ -94,15 +94,19 @@ public class OrientJdbcStatement implements Statement {
     info = connection.getInfo();
   }
 
-  public boolean execute(final String sql) throws SQLException {
-    if ("".equals(sql))
+  @Override
+  public boolean execute(final String sqlCommand) throws SQLException {
+
+    if ("".equals(sqlCommand))
       return false;
 
+    sql = mayCleanForSpark(sqlCommand);
+
     if (sql.equalsIgnoreCase("select 1")) {
-      documents = new ArrayList<ODocument>();
+      documents = new ArrayList<ODocument>(1);
       documents.add(new ODocument().field("1", 1));
     } else {
-      query = new OCommandSQL(mayCleanForSpark(sql));
+      query = new OCommandSQL(sql);
       try {
         rawResult = executeCommand(query);
         if (rawResult instanceof List<?>) {
