@@ -206,8 +206,6 @@ public class OrientJdbcResultSet implements ResultSet {
 
     cursor = iRowNumber;
     document = (ODocument) records.get(cursor).getRecord();
-    //    fieldNames = document.fieldNames();
-    //    System.out.println("fieldNames:: " + String.join(",", Arrays.asList(fieldNames)));
     return true;
   }
 
