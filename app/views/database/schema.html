@@ -145,19 +145,21 @@
                           class="fa fa-list-alt"></i> Query All
                       </button>
 
-                      <button href="javascript:void(0)" class="btn  btn-xs" ng-disabled="result['abstract']"
+                      <button href="javascript:void(0)" class="btn btn-xs" ng-hide="result['abstract']"
                               ng-click="createRecord(result['name'])">
                         <i
                           class="fa fa-plus"></i> New Record
 
-                        <a href="javascript:void(0)" tabindex="1"
-                           data-trigger="focus" data-placement="bottom"
-                           data-container="body"
-                           data-content="{{ 'Cannoct create a new record for an abstract class' }}" bs-popover>
-                          <i class="fa fa-question-circle"></i>
-                        </a>
+
                       </button>
 
+                      <button href="javascript:void(0)" tabindex="1" class="btn btn-xs btn-disabled disabled"  ng-show="result['abstract']"
+                         data-trigger="hover" data-placement="bottom"
+                         data-container="body"
+                         data-content="{{ 'Cannoct create a new record for an abstract class' }}" bs-popover>
+                        <i
+                          class="fa fa-plus"></i> New Record
+                      </button>
 
 
 

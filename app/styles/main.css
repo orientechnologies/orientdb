@@ -872,7 +872,9 @@ ul.arrayrid > li {
   right: 2px;
   position: absolute;
 }
-
+.btn-disabled {
+  cursor: not-allowed;
+}
 .circle-container {
   position: absolute;
   top: 40%;
