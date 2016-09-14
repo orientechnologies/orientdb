@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * 	http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -50,6 +50,7 @@ public class OrientJdbcStatement implements Statement {
 
   // protected OCommandSQL query;
   protected OCommandRequest     query;
+  protected String              sql;
   protected List<ODocument>     documents;
   protected boolean             closed;
   protected Object              rawResult;
@@ -95,15 +96,18 @@ public class OrientJdbcStatement implements Statement {
   }
 
   @Override
-  public boolean execute(final String sql) throws SQLException {
-    if ("".equals(sql))
+  public boolean execute(final String sqlCommand) throws SQLException {
+
+    if ("".equals(sqlCommand))
       return false;
+
+    sql = mayCleanForSpark(sqlCommand);
 
     if (sql.equalsIgnoreCase("select 1")) {
       documents = new ArrayList<ODocument>(1);
       documents.add(new ODocument().field("1", 1));
     } else {
-      query = new OCommandSQL(mayCleanForSpark(sql));
+      query = new OCommandSQL(sql);
       try {
         rawResult = executeCommand(query);
         if (rawResult instanceof List<?>) {

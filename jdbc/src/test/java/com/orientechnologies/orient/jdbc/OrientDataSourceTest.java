@@ -31,6 +31,12 @@ public class OrientDataSourceTest extends OrientJdbcBaseTest {
     conn.close();
     assertThat(conn.isClosed()).isTrue();
 
+    conn = ds.getConnection();
+
+    assertThat(conn).isNotNull();
+    conn.close();
+    assertThat(conn.isClosed()).isTrue();
+
   }
 
   @Test

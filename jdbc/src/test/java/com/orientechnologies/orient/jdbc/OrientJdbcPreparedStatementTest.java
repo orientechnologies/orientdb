@@ -125,13 +125,34 @@ public class OrientJdbcPreparedStatementTest extends OrientJdbcBaseTest {
     stmt.execute();
 
     // Let's verify the previous process
-    ResultSet resultSet = conn.createStatement().executeQuery("SELECT count(*) FROM insertable WHERE id = 'someRandomUid'");
+    ResultSet resultSet = conn.createStatement().executeQuery("SELECT count(*) AS num FROM insertable WHERE id = 'someRandomUid'");
+    assertThat(resultSet.getInt(1)).isEqualTo(1);
+
+    //without alias!
+    resultSet = conn.createStatement().executeQuery("SELECT count(*) FROM insertable WHERE id = 'someRandomUid'");
     assertThat(resultSet.getInt(1)).isEqualTo(1);
   }
 
   @Test
   public void shouldCreatePreparedStatementWithExtendConstructor() throws Exception {
 
+    PreparedStatement stmt = conn.prepareStatement("SELECT * FROM Item WHERE intKey = ?", TYPE_FORWARD_ONLY, CONCUR_READ_ONLY);
+    stmt.setInt(1, 1);
+
+    ResultSet rs = stmt.executeQuery();
+
+    assertThat(rs.next()).isTrue();
+
+    assertThat(rs.getString("@class")).isEqualToIgnoringCase("Item");
+
+    assertThat(rs.getString("stringKey")).isEqualTo("1");
+    assertThat(rs.getInt("intKey")).isEqualTo(1);
+    //
+  }
+
+  @Test
+  public void shouldCreatePreparedStatementWithExtendConstructorWithOutProjection() throws Exception {
+    //same test as above, no projection at all
     PreparedStatement stmt = conn.prepareStatement("SELECT FROM Item WHERE intKey = ?", TYPE_FORWARD_ONLY, CONCUR_READ_ONLY);
     stmt.setInt(1, 1);
 
