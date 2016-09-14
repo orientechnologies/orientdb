@@ -20,15 +20,14 @@
 
 package com.orientechnologies.orient.core.util;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
-
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 
 public class ODateHelper {
   public static final String DEF_DATE_FORMAT     = "yyyy-MM-dd";
@@ -39,9 +38,9 @@ public class ODateHelper {
   }
 
   public static TimeZone getDatabaseTimeZone() {
-    final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     if (db != null && !db.isClosed())
-      return ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getTimeZone();
+      return db.getStorage().getConfiguration().getTimeZone();
     return TimeZone.getDefault();
   }
 
