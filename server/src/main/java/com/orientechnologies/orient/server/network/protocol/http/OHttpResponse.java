@@ -46,14 +46,6 @@ public class OHttpResponse {
   public static final char[]   URL_SEPARATOR     = { '/' };
   private static final Charset utf8              = Charset.forName("utf8");
   
-  // Set up a date formatter that prints the date in the Http-date format as
-  // per RFC 7231, section 7.1.1.1
-  private static final SimpleDateFormat sdf;
-  static {
-    sdf = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz");
-    sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
-  }
-      
   public final String          httpVersion;
   private final OutputStream   out;
   public String                headers;
@@ -155,6 +147,11 @@ public class OHttpResponse {
     if (headers != null) {
       writeLine(headers);
     }
+    
+    // Set up a date formatter that prints the date in the Http-date format as
+    // per RFC 7231, section 7.1.1.1
+    SimpleDateFormat sdf = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz");
+    sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
 
     writeLine("Date: " + sdf.format(new Date()));
     writeLine("Content-Type: " + iContentType + "; charset=" + characterSet);
