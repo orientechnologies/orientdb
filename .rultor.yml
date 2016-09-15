@@ -1,0 +1,6 @@
+release:
+  commanders:
+    - mpollmeier
+    - velo
+  script: |
+    mvn clean deploy -f driver/pom.xml -Prelease -DskipTests
