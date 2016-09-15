@@ -7,7 +7,7 @@ schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$locatio
   $scope.currentPage = 1;
   $scope.links = {
     linkClasses: Database.getOWikiFor("Schema.html#class"),
-    linkClusterSelection: Database.getOWikiFor("SQL-Alter-Class.html"),
+    linkClusterSelection: Database.getOWikiFor("Cluster-Selection.html"),
     linkClusters: Database.getOWikiFor("Tutorial-Clusters.html"),
     linkInheritance: Database.getOWikiFor("Inheritance.html")
   }

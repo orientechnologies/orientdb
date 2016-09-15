@@ -6,7 +6,7 @@ app/components
 info
 hooks
 *.class
-
+.idea
 # Package Files #
 *.jar
 *.war
