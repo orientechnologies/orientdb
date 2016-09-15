@@ -3,10 +3,10 @@ package com.orientechnologies.lucene.analyzer;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import org.apache.lucene.analysis.StopwordAnalyzerBase;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.analysis.en.EnglishAnalyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.analysis.util.StopwordAnalyzerBase;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -14,11 +14,10 @@ import org.mockito.Mockito;
 import java.io.File;
 import java.io.IOException;
 
-import static com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory.AnalyzerKind.INDEX;
-import static com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory.AnalyzerKind.QUERY;
-import static java.util.Arrays.asList;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
+import static com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory.AnalyzerKind.*;
+import static java.util.Arrays.*;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 /**
  * Created by frank on 30/10/2015.

@@ -45,7 +45,6 @@ import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.index.TrackingIndexWriter;
 import org.apache.lucene.search.ControlledRealTimeReopenThread;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
@@ -70,7 +69,7 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
   protected     OLuceneFacetManager facetManager;
   protected     TimerTask           commitTask;
   protected AtomicBoolean closed = new AtomicBoolean(true);
-  protected TrackingIndexWriter                   mgrWriter;
+  //  protected TrackingIndexWriter                   mgrWriter;
   protected SearcherManager                       searcherManager;
   protected ControlledRealTimeReopenThread        nrt;
   private   DocBuilder                            builder;
@@ -78,8 +77,9 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
   private   Map<String, OLuceneClassIndexContext> oindexes;
   private   long                                  reopenToken;
 
-  private Analyzer indexAnalyzer;
-  private Analyzer queryAnalyzer;
+  private Analyzer    indexAnalyzer;
+  private Analyzer    queryAnalyzer;
+  private IndexWriter indexWriter;
 
   public OLuceneStorage(String name, DocBuilder builder, OQueryBuilder queryBuilder, ODocument metadata) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(),
@@ -119,7 +119,7 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
 
   private void reOpen() throws IOException {
 
-    if (mgrWriter != null) {
+    if (indexWriter != null) {
       OLogManager.instance().info(this, "index storage is open don't reopen");
 
       return;
@@ -141,16 +141,16 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
 
     }
 
-    final IndexWriter indexWriter = createIndexWriter(dir);
+    indexWriter = createIndexWriter(dir);
 
-    mgrWriter = new TrackingIndexWriter(indexWriter);
+    //    mgrWriter = new TrackingIndexWriter(indexWriter);
     searcherManager = new SearcherManager(indexWriter, true, true, null);
 
     if (nrt != null) {
       nrt.close();
     }
 
-    nrt = new ControlledRealTimeReopenThread(mgrWriter, searcherManager, 60.00, 0.1);
+    nrt = new ControlledRealTimeReopenThread(indexWriter, searcherManager, 60.00, 0.1);
     nrt.setDaemon(true);
     nrt.start();
     flush();
@@ -161,7 +161,6 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
   public void commit() {
     try {
       OLogManager.instance().info(this, "committing");
-      final IndexWriter indexWriter = mgrWriter.getIndexWriter();
       indexWriter.forceMergeDeletes();
       indexWriter.commit();
     } catch (IOException e) {
@@ -237,7 +236,7 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
     } catch (IOException e) {
       e.printStackTrace();
     }
-    return mgrWriter.getIndexWriter().maxDoc();
+    return indexWriter.maxDoc();
   }
 
   public OLuceneTxChanges buildTxChanges() throws IOException {
@@ -307,10 +306,10 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
     if (searcherManager != null)
       searcherManager.close();
 
-    if (mgrWriter != null) {
-      mgrWriter.getIndexWriter().forceMergeDeletes();
-      mgrWriter.getIndexWriter().commit();
-      mgrWriter.getIndexWriter().close();
+    if (indexWriter != null) {
+      indexWriter.forceMergeDeletes();
+      indexWriter.commit();
+      indexWriter.close();
     }
   }
 
@@ -341,7 +340,7 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
     try {
       OLogManager.instance().debug(this, "add document::  " + doc);
       final Term term = new Term(RID, doc.get(RID));
-      reopenToken = mgrWriter.updateDocument(term, doc);
+      reopenToken = indexWriter.updateDocument(term, doc);
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error on adding new document '%s' to Lucene index", e, doc);
     }
