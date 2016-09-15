@@ -40,7 +40,6 @@ import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
-import com.orientechnologies.orient.core.metadata.schema.clusterselection.ORoundRobinClusterSelectionStrategy;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
@@ -1979,7 +1978,7 @@ import java.util.concurrent.Callable;
       // REMOVE AUTO SHARDING CLUSTER SELECTION
       acquireSchemaWriteLock();
       try {
-        this.clusterSelection = new ORoundRobinClusterSelectionStrategy();
+        this.clusterSelection = owner.getClusterSelectionFactory().newInstanceOfDefaultClass();
       } finally {
         releaseSchemaWriteLock();
       }
@@ -2047,7 +2046,7 @@ import java.util.concurrent.Callable;
 
   public void setClusterSelectionInternal(final OClusterSelectionStrategy iClusterSelection) {
     // AVOID TO CHECK THIS IN LOCK TO AVOID RE-GENERATION OF IMMUTABLE SCHEMAS
-    if (this.clusterSelection.getName().equals(iClusterSelection.getName()))
+    if (this.clusterSelection.getClass().equals(iClusterSelection.getClass()))
       // NO CHANGES
       return;
 

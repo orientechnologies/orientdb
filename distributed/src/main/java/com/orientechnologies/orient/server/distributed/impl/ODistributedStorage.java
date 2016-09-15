@@ -1798,18 +1798,18 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     String newClusterName = null;
     if (cls != null) {
       OClusterSelectionStrategy clSel = cls.getClusterSelection();
-      if (!(clSel instanceof OLocalClusterStrategy)) {
+      if (!(clSel instanceof OLocalClusterWrapperStrategy)) {
         dManager.propagateSchemaChanges(db);
         clSel = cls.getClusterSelection();
       }
 
-      if (!(clSel instanceof OLocalClusterStrategy))
+      if (!(clSel instanceof OLocalClusterWrapperStrategy))
         throw new ODistributedException("Cannot install local cluster strategy on class '" + cls.getName() + "'");
 
       OLogManager.instance().info(this, "Local node '" + localNodeName + "' is not the owner for cluster '" + clusterName
           + "' (it is '" + ownerNode + "'). Reloading distributed configuration for database '" + getName() + "'");
 
-      dbCfg = ((OLocalClusterStrategy) clSel).readConfiguration();
+      dbCfg = ((OLocalClusterWrapperStrategy) clSel).readConfiguration();
       //
       // newClusterName = getPhysicalClusterNameById(clSel.getCluster(cls, null));
       // ownerNode = dbCfg.getClusterOwner(newClusterName);
