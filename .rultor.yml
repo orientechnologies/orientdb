@@ -1,0 +1,7 @@
+release:
+  commanders:
+    - mpollmeier
+    - velo
+  script: |
+    git checkout "$tag"
+    mvn clean deploy -Prelease -DskipTests
