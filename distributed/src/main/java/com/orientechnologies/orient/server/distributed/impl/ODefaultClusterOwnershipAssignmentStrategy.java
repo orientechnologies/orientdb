@@ -51,8 +51,8 @@ public class ODefaultClusterOwnershipAssignmentStrategy implements OClusterOwner
     if (availableNodes.isEmpty())
       return false;
 
-    if (!(iClass.getClusterSelection() instanceof OLocalClusterStrategy))
-      ((OClassImpl) iClass).setClusterSelectionInternal(new OLocalClusterStrategy(manager, iDatabase.getName(), iClass));
+    if (!(iClass.getClusterSelection() instanceof OLocalClusterWrapperStrategy))
+      ((OClassImpl) iClass).setClusterSelectionInternal(new OLocalClusterWrapperStrategy(manager, iDatabase.getName(), iClass, iClass.getClusterSelection()));
 
     if (iClass.isAbstract())
       return false;

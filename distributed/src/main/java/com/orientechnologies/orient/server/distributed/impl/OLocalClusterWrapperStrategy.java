@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -33,33 +34,47 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Distributed cluster selection strategy that always prefers local cluster if any reducing network latency of remote calls. It
- * computes the best cluster the first time and every-time the configuration changes.
+ * Distributed cluster selection strategy as wrapper for underlying strategies. It limitates the selection of clusters to the
+ * available ones on current server.
  * 
- * Starting from v2.2.0 a local round robin strategy is used.
- * 
- * @author Luca Garulli (l.garulli--at--orientechnologies.com)
+ * @author Luca Garulli (l.garulli--at--orientdb.com)
  * 
  */
-public class OLocalClusterStrategy implements OClusterSelectionStrategy {
-  public final static String              NAME           = "local";
-
+public class OLocalClusterWrapperStrategy implements OClusterSelectionStrategy {
   private OClass                          cls;
   private final ODistributedServerManager manager;
   private final String                    nodeName;
   private final String                    databaseName;
-  private final AtomicLong                pointer        = new AtomicLong(0);
-  private int                             lastVersion    = -1;
-  private volatile List<Integer>          bestClusterIds = new ArrayList<Integer>();
+  private int                             lastVersion = -1;
+  private OClusterSelectionStrategy       wrapped;
+  private OLocalScopedClass               localScopedClass;
 
-  public OLocalClusterStrategy(final ODistributedServerManager iManager, final String iDatabaseName, final OClass iClass) {
+  private class OLocalScopedClass extends OClassImpl {
+    public OClassImpl     wrapped;
+    public volatile int[] bestClusterIds;
+
+    public OLocalScopedClass(final OClassImpl wrapping, final int[] newBestClusters) {
+      super(wrapping.getOwner(), wrapping.getName());
+      wrapped = wrapping;
+      bestClusterIds = newBestClusters;
+    }
+
+    @Override
+    public int[] getClusterIds() {
+      return bestClusterIds;
+    }
+  }
+
+  public OLocalClusterWrapperStrategy(final ODistributedServerManager iManager, final String iDatabaseName, final OClass iClass,
+      final OClusterSelectionStrategy wrapped) {
     this.manager = iManager;
     this.nodeName = iManager.getLocalNodeName();
     this.databaseName = iDatabaseName;
     this.cls = iClass;
+    this.localScopedClass = null;
+    this.wrapped = wrapped;
   }
 
   @Override
@@ -71,7 +86,7 @@ public class OLocalClusterStrategy implements OClusterSelectionStrategy {
     if (!(storage instanceof ODistributedStorage))
       throw new IllegalStateException("Storage is not distributed");
 
-    if (bestClusterIds.isEmpty())
+    if (localScopedClass == null)
       readConfiguration();
     else {
       if (lastVersion != ((ODistributedStorage) storage).getConfigurationUpdated()) {
@@ -79,31 +94,31 @@ public class OLocalClusterStrategy implements OClusterSelectionStrategy {
         readConfiguration();
 
         ODistributedServerLog.info(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-            "New cluster list for class '%s': %s (dCfgVersion=%d)", cls.getName(), bestClusterIds, lastVersion);
+            "New cluster list for class '%s': %s (dCfgVersion=%d)", cls.getName(), localScopedClass.bestClusterIds, lastVersion);
       }
     }
 
-    final int size = bestClusterIds.size();
+    final int size = localScopedClass.bestClusterIds.length;
     if (size == 0)
       return -1;
 
     if (size == 1)
-      // ONLY ONE: RETURN THE FIRST ONE
-      return bestClusterIds.get(0);
+      // ONLY ONE: RETURN IT
+      return localScopedClass.bestClusterIds[0];
 
-    final int cluster = bestClusterIds.get((int) (pointer.getAndIncrement() % size));
+    final int cluster = wrapped.getCluster(localScopedClass, doc);
 
     if (ODistributedServerLog.isDebugEnabled())
       ODistributedServerLog.debug(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
           "%d Selected cluster %d for class '%s' from %s (dCfgVersion=%d)", Thread.currentThread().getId(), cluster, cls.getName(),
-          bestClusterIds, lastVersion);
+          localScopedClass.bestClusterIds, lastVersion);
 
     return cluster;
   }
 
   @Override
   public String getName() {
-    return NAME;
+    return wrapped.getName();
   }
 
   protected ODistributedConfiguration readConfiguration() {
@@ -151,10 +166,12 @@ public class OLocalClusterStrategy implements OClusterSelectionStrategy {
 
     db.activateOnCurrentThread();
 
-    final List<Integer> newBestClusters = new ArrayList<Integer>();
+    final int[] newBestClusters = new int[bestClusters.size()];
+    int i = 0;
     for (String c : bestClusters)
-      newBestClusters.add(db.getClusterIdByName(c));
-    bestClusterIds = newBestClusters;
+      newBestClusters[i++] = db.getClusterIdByName(c);
+
+    this.localScopedClass = new OLocalScopedClass((OClassImpl) cls, newBestClusters);
 
     final ODistributedStorage storage = (ODistributedStorage) manager.getStorage(databaseName);
     lastVersion = storage.getConfigurationUpdated();

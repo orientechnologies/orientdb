@@ -512,7 +512,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   }
 
   public abstract String getPublicAddress();
-  
+
   @Override
   public ODocument getLocalNodeConfiguration() {
     final ODocument nodeCfg = new ODocument();
@@ -1392,9 +1392,10 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       return;
 
     for (OClass c : iDatabase.getMetadata().getSchema().getClasses()) {
-      if (!(c.getClusterSelection() instanceof OLocalClusterStrategy))
+      if (!(c.getClusterSelection() instanceof OLocalClusterWrapperStrategy))
         // INSTALL ONLY ON NON-ENHANCED CLASSES
-        ((OClassImpl) c).setClusterSelectionInternal(new OLocalClusterStrategy(this, iDatabase.getName(), c));
+        ((OClassImpl) c)
+            .setClusterSelectionInternal(new OLocalClusterWrapperStrategy(this, iDatabase.getName(), c, c.getClusterSelection()));
     }
   }
 
@@ -1405,9 +1406,10 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
     final String databaseName = iDatabase.getName();
 
-    if (!(iClass.getClusterSelection() instanceof OLocalClusterStrategy))
+    if (!(iClass.getClusterSelection() instanceof OLocalClusterWrapperStrategy))
       // INJECT LOCAL CLUSTER STRATEGY
-      ((OClassImpl) iClass).setClusterSelectionInternal(new OLocalClusterStrategy(this, databaseName, iClass));
+      ((OClassImpl) iClass)
+          .setClusterSelectionInternal(new OLocalClusterWrapperStrategy(this, databaseName, iClass, iClass.getClusterSelection()));
 
     if (iClass.isAbstract())
       return false;
@@ -1575,7 +1577,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       final OSchema schema = db.getDatabaseOwner().getMetadata().getSchema();
 
       for (OClass c : schema.getClasses()) {
-        ((OClassImpl) c).setClusterSelectionInternal(new OLocalClusterStrategy(this, db.getName(), c));
+        ((OClassImpl) c)
+            .setClusterSelectionInternal(new OLocalClusterWrapperStrategy(this, db.getName(), c, c.getClusterSelection()));
       }
 
     } finally {
