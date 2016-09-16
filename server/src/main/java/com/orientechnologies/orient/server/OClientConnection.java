@@ -41,18 +41,19 @@ import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 
 public class OClientConnection {
-  private final int                            id;
-  private final long                           since;
-  private Set<ONetworkProtocol>                protocols = Collections.newSetFromMap(new WeakHashMap<ONetworkProtocol, Boolean>());
-  private volatile ONetworkProtocol            protocol;
-  private volatile ODatabaseDocumentInternal   database;
-  private volatile OServerUserConfiguration    serverUser;
-  private ONetworkProtocolData                 data      = new ONetworkProtocolData();
-  private OClientConnectionStats               stats     = new OClientConnectionStats();
-  private Lock                                 lock      = new ReentrantLock();
-  private Boolean                              tokenBased;
-  private byte[]                               tokenBytes;
-  private OToken                               token;
+  private final int                          id;
+  private final long                         since;
+  private Set<ONetworkProtocol>              protocols = Collections.newSetFromMap(new WeakHashMap<ONetworkProtocol, Boolean>());
+  private volatile ONetworkProtocol          protocol;
+  private volatile ODatabaseDocumentInternal database;
+  private volatile OServerUserConfiguration  serverUser;
+  private ONetworkProtocolData               data      = new ONetworkProtocolData();
+  private OClientConnectionStats             stats     = new OClientConnectionStats();
+  private Lock                               lock      = new ReentrantLock();
+  private Boolean                            tokenBased;
+  private byte[]                             tokenBytes;
+  private OToken                             token;
+  private boolean                            disconnectOnAfter;
 
   public OClientConnection(final int id, final ONetworkProtocol protocol) throws IOException {
     this.id = id;
@@ -310,5 +311,13 @@ public class OClientConnection {
     data.commandInfo = "Listening";
     data.commandDetail = "-";
     stats.lastCommandReceived = System.currentTimeMillis();
+  }
+  
+  public void setDisconnectOnAfter(boolean disconnectOnAfter) {
+    this.disconnectOnAfter = disconnectOnAfter;
+  }
+  
+  public boolean isDisconnectOnAfter() {
+    return disconnectOnAfter;
   }
 }

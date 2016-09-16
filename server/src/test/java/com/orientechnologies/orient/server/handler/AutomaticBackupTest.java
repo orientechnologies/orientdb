@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.server.handler;
 
 import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
@@ -42,7 +43,7 @@ public class AutomaticBackupTest {
       NotCompliantMBeanException, MBeanRegistrationException, IOException {
 
     // SET THE ORIENTDB_HOME DIRECTORY TO CHECK JSON FILE CREATION
-    tempDirectory = new File("").getAbsolutePath();
+    tempDirectory = new File("target/testhome").getAbsolutePath();
     System.setProperty("ORIENTDB_HOME", tempDirectory);
 
     server = new OServer() {
@@ -87,6 +88,89 @@ public class AutomaticBackupTest {
   }
 
   @Test
+  public void testFullBackupWithJsonConfigInclude() throws IOException, ClassNotFoundException, MalformedObjectNameException,
+      InstanceAlreadyExistsException, NotCompliantMBeanException, MBeanRegistrationException {
+    if (new File(BACKUPDIR + "/testautobackup.zip").exists())
+      new File(BACKUPDIR + "/testautobackup.zip").delete();
+
+    Assert.assertFalse(new File(tempDirectory + "/config/automatic-backup.json").exists());
+
+    String jsonConfig = OIOUtils.readStreamAsString(getClass().getResourceAsStream("automatic-backup.json"));
+
+    ODocument doc = new ODocument().fromJSON(jsonConfig);
+
+    doc.field("enabled", true);
+    doc.field("targetFileName", "${DBNAME}.zip");
+
+    doc.field("dbInclude", new String[] { "testautobackup" });
+
+    doc.field("firstTime", new SimpleDateFormat("HH:mm:ss").format(new Date(System.currentTimeMillis() + 2000)));
+
+    OIOUtils.writeFile(new File(tempDirectory + "/config/automatic-backup.json"), doc.toJSON());
+
+    final OAutomaticBackup aBackup = new OAutomaticBackup();
+
+    final OServerParameterConfiguration[] config = new OServerParameterConfiguration[] {};
+
+    aBackup.config(server, config);
+
+    try {
+      Thread.sleep(5000);
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+
+    aBackup.sendShutdown();
+
+    final ODatabaseDocumentTx database2 = new ODatabaseDocumentTx(URL2);
+    if (database2.exists())
+      database2.open("admin", "admin").drop();
+    database2.create();
+
+    database2.restore(new FileInputStream(BACKUPDIR + "/testautobackup.zip"), null, null, null);
+
+    Assert.assertEquals(database2.countClass("TestBackup"), 1);
+  }
+
+  @Test
+  public void testFullBackupWithJsonConfigExclude() throws IOException, ClassNotFoundException, MalformedObjectNameException,
+      InstanceAlreadyExistsException, NotCompliantMBeanException, MBeanRegistrationException {
+    if (new File(BACKUPDIR + "/testautobackup.zip").exists())
+      new File(BACKUPDIR + "/testautobackup.zip").delete();
+
+    Assert.assertFalse(new File(tempDirectory + "/config/automatic-backup.json").exists());
+
+    String jsonConfig = OIOUtils.readStreamAsString(getClass().getResourceAsStream("automatic-backup.json"));
+
+    ODocument doc = new ODocument().fromJSON(jsonConfig);
+
+    doc.field("enabled", true);
+    doc.field("targetFileName", "${DBNAME}.zip");
+
+    doc.field("dbExclude", new String[] { "testautobackup" });
+
+    doc.field("firstTime", new SimpleDateFormat("HH:mm:ss").format(new Date(System.currentTimeMillis() + 2000)));
+
+    OIOUtils.writeFile(new File(tempDirectory + "/config/automatic-backup.json"), doc.toJSON());
+
+    final OAutomaticBackup aBackup = new OAutomaticBackup();
+
+    final OServerParameterConfiguration[] config = new OServerParameterConfiguration[] {};
+
+    aBackup.config(server, config);
+
+    try {
+      Thread.sleep(5000);
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+
+    aBackup.sendShutdown();
+
+    Assert.assertFalse(new File(BACKUPDIR + "/testautobackup.zip").exists());
+  }
+
+  @Test
   public void testFullBackup() throws IOException, ClassNotFoundException, MalformedObjectNameException,
       InstanceAlreadyExistsException, NotCompliantMBeanException, MBeanRegistrationException {
     if (new File(BACKUPDIR + "/fullBackup.zip").exists())
@@ -121,38 +205,38 @@ public class AutomaticBackupTest {
     Assert.assertEquals(database2.countClass("TestBackup"), 1);
   }
 
-//  @Test
-  //TODO: move to EE test suite
-  public void testIncrementalBackup() throws IOException, ClassNotFoundException, MalformedObjectNameException,
-      InstanceAlreadyExistsException, NotCompliantMBeanException, MBeanRegistrationException {
-    if (new File(BACKUPDIR + "/" + DBNAME).exists())
-      OFileUtils.deleteRecursively(new File(BACKUPDIR + "/" + DBNAME));
-
-    final OAutomaticBackup aBackup = new OAutomaticBackup();
-
-    final OServerParameterConfiguration[] config = new OServerParameterConfiguration[] {
-        new OServerParameterConfiguration("firstTime",
-            new SimpleDateFormat("HH:mm:ss").format(new Date(System.currentTimeMillis() + 2000))),
-        new OServerParameterConfiguration("delay", "1d"), new OServerParameterConfiguration("mode", "INCREMENTAL_BACKUP"),
-        new OServerParameterConfiguration("target.directory", BACKUPDIR) };
-
-    aBackup.config(server, config);
-
-    try {
-      Thread.sleep(5000);
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
-
-    aBackup.sendShutdown();
-
-    final ODatabaseDocumentTx database2 = new ODatabaseDocumentTx(URL2);
-    if (database2.exists())
-      database2.open("admin", "admin").drop();
-    database2.create(BACKUPDIR + "/" + DBNAME);
-
-    Assert.assertEquals(database2.countClass("TestBackup"), 1);
-  }
+  //// @Test
+  // //TODO: move to EE test suite
+  // public void testIncrementalBackup() throws IOException, ClassNotFoundException, MalformedObjectNameException,
+  // InstanceAlreadyExistsException, NotCompliantMBeanException, MBeanRegistrationException {
+  // if (new File(BACKUPDIR + "/" + DBNAME).exists())
+  // OFileUtils.deleteRecursively(new File(BACKUPDIR + "/" + DBNAME));
+  //
+  // final OAutomaticBackup aBackup = new OAutomaticBackup();
+  //
+  // final OServerParameterConfiguration[] config = new OServerParameterConfiguration[] {
+  // new OServerParameterConfiguration("firstTime",
+  // new SimpleDateFormat("HH:mm:ss").format(new Date(System.currentTimeMillis() + 2000))),
+  // new OServerParameterConfiguration("delay", "1d"), new OServerParameterConfiguration("mode", "INCREMENTAL_BACKUP"),
+  // new OServerParameterConfiguration("target.directory", BACKUPDIR) };
+  //
+  // aBackup.config(server, config);
+  //
+  // try {
+  // Thread.sleep(5000);
+  // } catch (InterruptedException e) {
+  // e.printStackTrace();
+  // }
+  //
+  // aBackup.sendShutdown();
+  //
+  // final ODatabaseDocumentTx database2 = new ODatabaseDocumentTx(URL2);
+  // if (database2.exists())
+  // database2.open("admin", "admin").drop();
+  // database2.create(BACKUPDIR + "/" + DBNAME);
+  //
+  // Assert.assertEquals(database2.countClass("TestBackup"), 1);
+  // }
 
   @Test
   public void testExport() throws IOException, ClassNotFoundException, MalformedObjectNameException, InstanceAlreadyExistsException,

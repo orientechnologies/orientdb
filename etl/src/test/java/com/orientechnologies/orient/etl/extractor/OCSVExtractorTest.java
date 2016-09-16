@@ -429,7 +429,26 @@ public class OCSVExtractorTest extends OETLBaseTest {
 
     DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 
-    assertThat(df.format(doc.<Date>field("datetime"))).isEqualTo(formatter.format(time));
+    assertThat(df.format(doc.<Date>field("datetime"))).isEqualTo("2015-03-30 11:00");
+
+  }
+
+  @Test
+  public void testCsvParsingFormat  () {
+
+//    CSVFormat format = CSVFormat.valueOf("MySQL");
+
+    String cfgJson = "{source: { content: { value: 'name,date,datetime\nfrank,2008-04-30,2015-03-30 11:00'} }, extractor : { csv : { \"predefinedFormat\": \"Default\",'columns':['name:string','date:date','datetime:datetime']} }, loader : { test: {} } }";
+    process(cfgJson);
+    List<ODocument> res = getResult();
+    assertThat(res).hasSize(1);
+    ODocument doc = res.get(0);
+
+    assertThat(doc.<Date>field("date")).isEqualTo("2008-04-30");
+
+    DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+
+    assertThat(df.format(doc.<Date>field("datetime"))).isEqualTo("2015-03-30 11:00");
 
   }
 }

@@ -23,7 +23,11 @@ import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.parser.OSelectStatement;
+import com.orientechnologies.orient.core.sql.parser.OrientSql;
+import com.orientechnologies.orient.core.sql.parser.ParseException;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
@@ -45,36 +49,41 @@ import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author Roberto Franchini (CELI srl - franchin--at--celi.it)
  * @author Salvatore Piccione (TXT e-solutions SpA - salvo.picci--at--gmail.com)
  */
 public class OrientJdbcResultSet implements ResultSet {
+  private final List<String> fieldNames;
   private List<ODocument> records = null;
   private OrientJdbcStatement statement;
   private int cursor   = -1;
   private int rowCount = 0;
   private ODocument document;
-  private String[]  fieldNames;
   private int       type;
   private int       concurrency;
   private int       holdability;
 
-  protected OrientJdbcResultSet(final OrientJdbcStatement iOrientJdbcStatement, final List<ODocument> iRecords, final int type,
+  protected OrientJdbcResultSet(final OrientJdbcStatement statement, final List<ODocument> records, final int type,
       final int concurrency, int holdability) throws SQLException {
-    statement = iOrientJdbcStatement;
-    records = iRecords;
-    rowCount = iRecords.size();
+    this.statement = statement;
+    this.records = records;
+    rowCount = records.size();
 
     if (rowCount > 0) {
       document = (ODocument) records.get(0).getRecord();
-      fieldNames = document.fieldNames();
+    } else {
+      document = new ODocument();
     }
+
+    fieldNames = extractFieldNames(statement);
 
     activateDatabaseOnCurrentThread();
     if (type == TYPE_FORWARD_ONLY || type == TYPE_SCROLL_INSENSITIVE || type == TYPE_SCROLL_SENSITIVE)
@@ -96,6 +105,32 @@ public class OrientJdbcResultSet implements ResultSet {
       throw new SQLException(
           "Bad ResultSet Holdability type: " + holdability + " instead of one of the following values: " + HOLD_CURSORS_OVER_COMMIT
               + " or" + CLOSE_CURSORS_AT_COMMIT);
+  }
+
+  private List<String> extractFieldNames(OrientJdbcStatement statement) {
+    List<String> fields = new ArrayList<>();
+    if (statement.sql != null && !statement.sql.isEmpty()) {
+      try {
+        OrientSql osql = new OrientSql(new ByteArrayInputStream(statement.sql.getBytes()));
+
+        final OSelectStatement select = osql.SelectStatement();
+        if (select.getProjection() != null) {
+          fields.addAll(select.getProjection().getItems().stream().filter(i -> !i.isAggregate()).filter(i -> !i.isAll())
+              .map(i -> i.getProjectionAliasAsString()).collect(Collectors.toList()));
+        }
+
+        if (fields.size() == 1 && fields.contains("*")) {
+
+          fields.clear();
+        }
+      } catch (ParseException e) {
+        //NOOP
+      }
+    }
+    if (fields.isEmpty()) {
+      fields.addAll(Arrays.asList(document.fieldNames()));
+    }
+    return fields;
   }
 
   private void activateDatabaseOnCurrentThread() {
@@ -151,7 +186,8 @@ public class OrientJdbcResultSet implements ResultSet {
 
     cursor = iRowNumber;
     document = (ODocument) records.get(cursor).getRecord();
-    fieldNames = document.fieldNames();
+    //    fieldNames = document.fieldNames();
+    //    System.out.println("fieldNames:: " + String.join(",", Arrays.asList(fieldNames)));
     return true;
   }
 
@@ -190,8 +226,8 @@ public class OrientJdbcResultSet implements ResultSet {
   public int findColumn(String columnLabel) throws SQLException {
     int column = 0;
     int i = 0;
-    while (i < (fieldNames.length - 1) && column == 0) {
-      if (fieldNames[i].equals(columnLabel))
+    while (i < (fieldNames.size() - 1) && column == 0) {
+      if (fieldNames.get(i).equals(columnLabel))
         column = i + 1;
       else
         i++;
@@ -225,7 +261,7 @@ public class OrientJdbcResultSet implements ResultSet {
 
   public BigDecimal getBigDecimal(final int columnIndex) throws SQLException {
 
-    return getBigDecimal(fieldNames[getFieldIndex(columnIndex)]);
+    return getBigDecimal(fieldNames.get(getFieldIndex(columnIndex)));
   }
 
   public BigDecimal getBigDecimal(final String columnLabel) throws SQLException {
@@ -237,7 +273,7 @@ public class OrientJdbcResultSet implements ResultSet {
   }
 
   public BigDecimal getBigDecimal(final int columnIndex, final int scale) throws SQLException {
-    return getBigDecimal(fieldNames[getFieldIndex(columnIndex)], scale);
+    return getBigDecimal(fieldNames.get(getFieldIndex(columnIndex)), scale);
   }
 
   public BigDecimal getBigDecimal(String columnLabel, int scale) throws SQLException {
@@ -249,7 +285,7 @@ public class OrientJdbcResultSet implements ResultSet {
   }
 
   public InputStream getBinaryStream(int columnIndex) throws SQLException {
-    return getBinaryStream(fieldNames[getFieldIndex(columnIndex)]);
+    return getBinaryStream(fieldNames.get(getFieldIndex(columnIndex)));
   }
 
   public InputStream getBinaryStream(String columnLabel) throws SQLException {
@@ -262,7 +298,7 @@ public class OrientJdbcResultSet implements ResultSet {
   }
 
   public Blob getBlob(int columnIndex) throws SQLException {
-    return getBlob(fieldNames[getFieldIndex(columnIndex)]);
+    return getBlob(fieldNames.get(getFieldIndex(columnIndex)));
   }
 
   public Blob getBlob(String columnLabel) throws SQLException {
@@ -297,7 +333,7 @@ public class OrientJdbcResultSet implements ResultSet {
   }
 
   public boolean getBoolean(int columnIndex) throws SQLException {
-    return getBoolean(fieldNames[getFieldIndex(columnIndex)]);
+    return getBoolean(fieldNames.get(getFieldIndex(columnIndex)));
   }
 
   @SuppressWarnings("boxing")
@@ -314,7 +350,7 @@ public class OrientJdbcResultSet implements ResultSet {
 
   @SuppressWarnings("boxing")
   public byte getByte(int columnIndex) throws SQLException {
-    return getByte(fieldNames[getFieldIndex(columnIndex)]);
+    return getByte(fieldNames.get(getFieldIndex(columnIndex)));
   }
 
   public byte getByte(String columnLabel) throws SQLException {
@@ -326,7 +362,7 @@ public class OrientJdbcResultSet implements ResultSet {
   }
 
   public byte[] getBytes(int columnIndex) throws SQLException {
-    return getBytes(fieldNames[getFieldIndex(columnIndex)]);
+    return getBytes(fieldNames.get(getFieldIndex(columnIndex)));
   }
 
   public byte[] getBytes(String columnLabel) throws SQLException {
@@ -370,7 +406,7 @@ public class OrientJdbcResultSet implements ResultSet {
   }
 
   public Date getDate(int columnIndex) throws SQLException {
-    return getDate(fieldNames[getFieldIndex(columnIndex)]);
+    return getDate(fieldNames.get(getFieldIndex(columnIndex)));
   }
 
   public Date getDate(final String columnLabel) throws SQLException {
@@ -385,7 +421,7 @@ public class OrientJdbcResultSet implements ResultSet {
   }
 
   public Date getDate(final int columnIndex, final Calendar cal) throws SQLException {
-    return getDate(fieldNames[getFieldIndex(columnIndex)], cal);
+    return getDate(fieldNames.get(getFieldIndex(columnIndex)), cal);
   }
 
   public Date getDate(String columnLabel, Calendar cal) throws SQLException {
@@ -407,7 +443,8 @@ public class OrientJdbcResultSet implements ResultSet {
   }
 
   public double getDouble(final int columnIndex) throws SQLException {
-    return getDouble(fieldNames[getFieldIndex(columnIndex)]);
+    int fieldIndex = getFieldIndex(columnIndex);
+    return getDouble(fieldNames.get(fieldIndex));
   }
 
   public double getDouble(final String columnLabel) throws SQLException {
@@ -429,7 +466,7 @@ public class OrientJdbcResultSet implements ResultSet {
 
   public float getFloat(int columnIndex) throws SQLException {
 
-    return getFloat(fieldNames[getFieldIndex(columnIndex)]);
+    return getFloat(fieldNames.get(getFieldIndex(columnIndex)));
   }
 
   public float getFloat(String columnLabel) throws SQLException {
@@ -446,12 +483,13 @@ public class OrientJdbcResultSet implements ResultSet {
   }
 
   public int getInt(int columnIndex) throws SQLException {
-    return getInt(fieldNames[getFieldIndex(columnIndex)]);
+    return getInt(fieldNames.get(getFieldIndex(columnIndex)));
   }
 
   public int getInt(String columnLabel) throws SQLException {
     if ("@version".equals(columnLabel))
       return document.getVersion();
+
     try {
       final Integer r = document.field(columnLabel, OType.INTEGER);
       return r != null ? r : 0;
@@ -462,14 +500,16 @@ public class OrientJdbcResultSet implements ResultSet {
   }
 
   public long getLong(int columnIndex) throws SQLException {
-    return getLong(fieldNames[getFieldIndex(columnIndex)]);
+    return getLong(fieldNames.get(getFieldIndex(columnIndex)));
   }
 
   public long getLong(String columnLabel) throws SQLException {
+
     try {
       final Long r = document.field(columnLabel, OType.LONG);
       return r != null ? r : 0;
     } catch (Exception e) {
+      e.printStackTrace();
       throw new SQLException("An error occurred during the retrieval of the long value at column '" + columnLabel + "'", e);
     }
   }
@@ -495,7 +535,7 @@ public class OrientJdbcResultSet implements ResultSet {
   }
 
   public String getNString(int columnIndex) throws SQLException {
-    return getNString(fieldNames[getFieldIndex(columnIndex)]);
+    return getNString(fieldNames.get(getFieldIndex(columnIndex)));
   }
 
   public String getNString(String columnLabel) throws SQLException {
@@ -507,7 +547,7 @@ public class OrientJdbcResultSet implements ResultSet {
   }
 
   public Object getObject(int columnIndex) throws SQLException {
-    return getObject(fieldNames[getFieldIndex(columnIndex)]);
+    return getObject(fieldNames.get(getFieldIndex(columnIndex)));
   }
 
   public Object getObject(String columnLabel) throws SQLException {
@@ -576,7 +616,7 @@ public class OrientJdbcResultSet implements ResultSet {
 
   public short getShort(int columnIndex) throws SQLException {
 
-    return getShort(fieldNames[getFieldIndex(columnIndex)]);
+    return getShort(fieldNames.get(getFieldIndex(columnIndex)));
   }
 
   @SuppressWarnings("boxing")
@@ -592,7 +632,7 @@ public class OrientJdbcResultSet implements ResultSet {
 
   public String getString(int columnIndex) throws SQLException {
 
-    return getString(fieldNames[getFieldIndex(columnIndex)]);
+    return getString(fieldNames.get(getFieldIndex(columnIndex)));
   }
 
   public String getString(String columnLabel) throws SQLException {
@@ -610,7 +650,7 @@ public class OrientJdbcResultSet implements ResultSet {
   }
 
   public Time getTime(int columnIndex) throws SQLException {
-    return getTime(fieldNames[getFieldIndex(columnIndex)]);
+    return getTime(fieldNames.get(getFieldIndex(columnIndex)));
   }
 
   public Time getTime(String columnLabel) throws SQLException {

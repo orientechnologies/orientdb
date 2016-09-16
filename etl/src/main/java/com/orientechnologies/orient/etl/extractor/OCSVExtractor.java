@@ -76,7 +76,8 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
     csvFormat = CSVFormat.newFormat(',').withNullString(NULL_STRING).withEscape('\\').withQuote('"');
 
     if (iConfiguration.containsField("predefinedFormat")) {
-      csvFormat = CSVFormat.valueOf(iConfiguration.<String>field("predefinedFormat").toUpperCase());
+      csvFormat = CSVFormat.valueOf(iConfiguration.<String>field("predefinedFormat"));
+
     }
 
     if (iConfiguration.containsField("separator")) {

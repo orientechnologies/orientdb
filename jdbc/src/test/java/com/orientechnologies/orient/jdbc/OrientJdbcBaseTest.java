@@ -9,13 +9,12 @@ import java.io.File;
 import java.sql.DriverManager;
 import java.util.Properties;
 
-import static com.orientechnologies.orient.jdbc.OrientDbCreationHelper.createSchemaDB;
-import static com.orientechnologies.orient.jdbc.OrientDbCreationHelper.loadDB;
+import static com.orientechnologies.orient.jdbc.OrientDbCreationHelper.*;
 
 public abstract class OrientJdbcBaseTest {
 
   protected OrientJdbcConnection conn;
-  private   ODatabaseDocumentTx  db;
+  protected ODatabaseDocumentTx  db;
 
   @Before
   public void prepareDatabase() throws Exception {

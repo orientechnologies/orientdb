@@ -1,11 +1,13 @@
 package com.orientechnologies.orient.object.enhancement;
 
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Embedded;
+import javax.persistence.OneToMany;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -13,8 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
+import static org.junit.Assert.*;
 
 /**
  * @author JN <a href="mailto:jn@brain-activit.com">Julian Neuhaus</a>
@@ -26,8 +27,8 @@ public class OObjectProxyMethodHandlerTest {
 
   private Map<String, Object> fieldsAndThereDefaultValue;
 
-  @BeforeClass
-  protected void setUp() throws Exception {
+  @Before
+  public void setUp() throws Exception {
     databaseTx = new OObjectDatabaseTx("memory:OObjectEnumLazyListTest");
     databaseTx.create();
 
@@ -48,8 +49,8 @@ public class OObjectProxyMethodHandlerTest {
     fieldsAndThereDefaultValue.put("objectField", null);
   }
 
-  @AfterClass
-  protected void tearDown() {
+  @After
+  public void tearDown() {
     databaseTx.drop();
   }
 
@@ -203,6 +204,47 @@ public class OObjectProxyMethodHandlerTest {
     }
   }
 
+  @Test
+  public void testEntityWithEmbeddedFieldDetachingAllWithoutError() throws Exception {
+    EntityWithEmbeddedFields entity = new EntityWithEmbeddedFields();
+    entity.setEmbeddedType1(new EmbeddedType1());
+    entity.setEmbeddedType2(new EmbeddedType2());
+    EntityWithEmbeddedFields saved = databaseTx.save(entity);
+    databaseTx.detachAll(saved, true);
+  }
+
+  public static class EmbeddedType1 {
+  }
+
+  public static class EmbeddedType2 {
+  }
+
+  public static class EntityWithEmbeddedFields {
+    @Embedded
+    private EmbeddedType1 _embeddedType1;
+    @Embedded
+    private EmbeddedType2 _embeddedType2;
+
+    public EntityWithEmbeddedFields() {
+    }
+
+    public EmbeddedType1 getEmbeddedType1() {
+      return _embeddedType1;
+    }
+
+    public void setEmbeddedType1(EmbeddedType1 embeddedType1) {
+      _embeddedType1 = embeddedType1;
+    }
+
+    public EmbeddedType2 getEmbeddedType2() {
+      return _embeddedType2;
+    }
+
+    public void setEmbeddedType2(EmbeddedType2 embeddedType2) {
+      _embeddedType2 = embeddedType2;
+    }
+  }
+
   public class EntityWithDifferentFieldTypes {
     private byte                          byteField;
     private short                         shortField;
@@ -213,8 +255,8 @@ public class OObjectProxyMethodHandlerTest {
     private String                        stringField;
     private boolean                       booleanField;
     private EntityWithDifferentFieldTypes objectField;
-    private Map<String, String>           stringStringMap  = new HashMap<String, String>();
-    private Map<String, String>           stringStringMap2 = new HashMap<String, String>();
+    private Map<String, String> stringStringMap  = new HashMap<String, String>();
+    private Map<String, String> stringStringMap2 = new HashMap<String, String>();
 
     @OneToMany(cascade = CascadeType.ALL)
     private List<EntityWithDifferentFieldTypes> listOfEntityWithDifferentFieldTypes;
@@ -318,58 +360,6 @@ public class OObjectProxyMethodHandlerTest {
 
     public void setStringStringMap2(Map<String, String> stringStringMap2) {
       this.stringStringMap2 = stringStringMap2;
-    }
-  }
-
-  @Test
-  public void testEntityWithEmbeddedFieldDetachingAllWithoutError() throws Exception
-  {
-    EntityWithEmbeddedFields entity = new EntityWithEmbeddedFields();
-    entity.setEmbeddedType1(new EmbeddedType1());
-    entity.setEmbeddedType2(new EmbeddedType2());
-    EntityWithEmbeddedFields saved = databaseTx.save(entity);
-    databaseTx.detachAll(saved, true);
-  }
-
-  public static class EmbeddedType1
-  {
-  }
-
-  public static class EmbeddedType2
-  {
-  }
-
-  public static class EntityWithEmbeddedFields
-  {
-    @Embedded
-    private EmbeddedType1 _embeddedType1;
-    @Embedded
-    private EmbeddedType2 _embeddedType2;
-
-    public EntityWithEmbeddedFields()
-    {
-    }
-
-    public EmbeddedType1 getEmbeddedType1()
-    {
-      return _embeddedType1;
-    }
-
-    public void setEmbeddedType1(
-      EmbeddedType1 embeddedType1)
-    {
-      _embeddedType1 = embeddedType1;
-    }
-
-    public EmbeddedType2 getEmbeddedType2()
-    {
-      return _embeddedType2;
-    }
-
-    public void setEmbeddedType2(
-      EmbeddedType2 embeddedType2)
-    {
-      _embeddedType2 = embeddedType2;
     }
   }
 }

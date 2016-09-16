@@ -83,10 +83,6 @@
     <properties>
         <entry value="1" name="db.pool.min"/>
         <entry value="20" name="db.pool.max"/>
-        <entry value="false" name="cache.level1.enabled"/>
-        <entry value="1000" name="cache.level1.size"/>
-        <entry value="true" name="cache.level2.enabled"/>
-        <entry value="1000" name="cache.level2.size"/>
         <entry value="true" name="profiler.enabled"/>
         <entry value="info" name="log.console.level"/>
         <entry value="fine" name="log.file.level"/>

@@ -1,17 +1,16 @@
 package com.orientechnologies.orient.object.db;
 
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
-import com.orientechnologies.orient.core.entity.OEntityManager;
-import org.testng.annotations.Test;
+import org.junit.Test;
 
-import java.io.*;
-import java.util.Arrays;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 
-import static org.testng.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 /**
  * Created by tglman on 23/12/15.

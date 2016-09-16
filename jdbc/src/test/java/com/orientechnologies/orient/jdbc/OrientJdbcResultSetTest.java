@@ -1,12 +1,15 @@
 package com.orientechnologies.orient.jdbc;
 
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.junit.Test;
 
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.Statement;
+import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 public class OrientJdbcResultSetTest extends OrientJdbcBaseTest {
 
@@ -79,4 +82,29 @@ public class OrientJdbcResultSetTest extends OrientJdbcBaseTest {
 
   }
 
+  @Test
+  public void shouldReadRowWithNullValue() throws Exception {
+
+    db.activateOnCurrentThread();
+    db.command(new OCommandSQL("INSERT INTO Article(uuid,date, title, content) VALUES (123456, null, 'title', 'the content')"))
+        .execute();
+
+    List<ODocument> docs = db.query(new OSQLSynchQuery<>("SELECT uuid,date, title, content FROM Article WHERE uuid = 123456"));
+
+    docs.stream().forEach(d -> System.out.println(d.toJSON()));
+
+    Statement stmt = conn.createStatement();
+
+    assertThat(stmt.execute("SELECT uuid,date, title, content FROM Article WHERE uuid = 123456")).isTrue();
+    ResultSet rs = stmt.getResultSet();
+    assertThat(rs).isNotNull();
+
+    assertThat(rs.getFetchSize()).isEqualTo(1);
+
+    rs.getLong("uuid");
+    rs.getDate(2);
+
+
+
+  }
 }

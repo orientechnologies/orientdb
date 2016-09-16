@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
+import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.jdbc.OrientJdbcParameterMetadata.ParameterDefinition;
 
@@ -59,7 +60,6 @@ import java.util.Map;
  */
 public class OrientJdbcPreparedStatement extends OrientJdbcStatement implements PreparedStatement {
 
-  protected final String               sql;
   protected final Map<Integer, Object> params;
 
   public OrientJdbcPreparedStatement(OrientJdbcConnection iConnection, String sql) {
@@ -81,16 +81,18 @@ public class OrientJdbcPreparedStatement extends OrientJdbcStatement implements 
   @SuppressWarnings("unchecked")
   public ResultSet executeQuery() throws SQLException {
 
+    //    return super.executeQuery(sql);
+    sql = mayCleanForSpark(sql);
+
     if (sql.equalsIgnoreCase("select 1")) {
       // OPTIMIZATION
-      documents = new ArrayList<ODocument>();
+      documents = new ArrayList<>();
       documents.add(new ODocument().field("1", 1));
     } else {
       try {
-        ;
-
         query = new OSQLSynchQuery<ODocument>(mayCleanForSpark(sql));
         documents = database.query((OQuery<? extends Object>) query, params.values().toArray());
+
       } catch (OQueryParsingException e) {
         throw new SQLSyntaxErrorException("Error while parsing query", e);
       } catch (OException e) {

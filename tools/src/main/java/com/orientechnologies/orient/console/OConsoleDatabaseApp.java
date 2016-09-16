@@ -1319,14 +1319,18 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
             + content.length() + " bytes:\n\n" + content);
       }
     } else {
-      OLocalPaginatedStorage storage = (OLocalPaginatedStorage) currentDatabase.getStorage();
-      OPaginatedCluster cluster = (OPaginatedCluster) storage.getClusterById(id.getClusterId());
+      final OLocalPaginatedStorage storage = (OLocalPaginatedStorage) currentDatabase.getStorage();
+      final OPaginatedCluster cluster = (OPaginatedCluster) storage.getClusterById(id.getClusterId());
       if (cluster == null) {
         message("\n cluster with id %i does not exist", id.getClusterId());
         return;
       }
-      OPaginatedClusterDebug debugInfo = cluster.readDebug(id.clusterPosition);
+
       message("\n\nLOW LEVEL CLUSTER INFO");
+      final OPaginatedCluster.RECORD_STATUS status = cluster.getRecordStatus(id.clusterPosition);
+      message("\n status: %s", status);
+
+      final OPaginatedClusterDebug debugInfo = cluster.readDebug(id.clusterPosition);
       message("\n cluster fieldId: %d", debugInfo.fileId);
       message("\n cluster name: %s", cluster.getName());
 
@@ -1365,7 +1369,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       for (ORecordSerializationDebugProperty prop : deserializeDebug.properties) {
         message("\n  property name: %s", prop.name);
         message("\n  property type: %s", prop.type.name());
-        message("\n  property globlaId: %d", prop.globalId);
+        message("\n  property globalId: %d", prop.globalId);
         message("\n  fail on reading: %b", prop.faildToRead);
         if (prop.faildToRead) {
           message("\n  failed on reading position: %b", prop.failPosition);
