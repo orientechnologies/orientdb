@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -27,7 +26,6 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 /**
  * Distributed TX test against "plocal" protocol.
  */
-@Ignore
 public class LocalConcurrentTxNoAutoRetryTest extends AbstractDistributedConcurrentTxTest {
 
   private static final int SERVERS = 3;
@@ -37,14 +35,20 @@ public class LocalConcurrentTxNoAutoRetryTest extends AbstractDistributedConcurr
     expectedConcurrentException = true;
     writerCount = 3;
 
+    final int oldAutoRetry = OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY.getValueAsInteger();
     OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY.setValue(1);
+
+    final int oldLockTimeout = OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT.getValueAsInteger();
+    OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT.setValue(0);
+
     try {
 
       init(SERVERS);
       prepare(false);
       execute();
     } finally {
-      OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY.setValue(10);
+      OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT.setValue(oldLockTimeout);
+      OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY.setValue(oldAutoRetry);
     }
   }
 

@@ -359,8 +359,12 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
               dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
         }
 
-        ODistributedServerLog.info(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-            "Auto repair aligned %d records of cluster '%s'", task.getTasks().size(), clusterNames.get(0));
+        if (task.getTasks().size() == 0)
+          ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+              "Auto repair aligned %d records of cluster '%s'", task.getTasks().size(), clusterNames.get(0));
+        else
+          ODistributedServerLog.info(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+              "Auto repair aligned %d records of cluster '%s'", task.getTasks().size(), clusterNames.get(0));
       }
     }
 

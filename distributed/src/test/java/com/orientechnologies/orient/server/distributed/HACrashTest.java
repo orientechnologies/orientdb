@@ -31,7 +31,6 @@ public class HACrashTest extends AbstractServerClusterTxTest {
   volatile private int     serverStarted   = 0;
   volatile private boolean serverRestarted = false;
 
-  // @Ignore
   @Test
   public void test() throws Exception {
     startupNodesInSequence = true;
