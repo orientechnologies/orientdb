@@ -1,3 +1,7 @@
+docker:
+  as_root: true
+  image: yegor256/java8
+
 release:
   commanders:
     - mpollmeier
