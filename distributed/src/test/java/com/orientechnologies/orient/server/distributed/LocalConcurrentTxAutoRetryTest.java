@@ -32,10 +32,13 @@ public class LocalConcurrentTxAutoRetryTest extends AbstractDistributedConcurren
   @Test
   public void test() throws Exception {
     expectedConcurrentException = false;
-    writerCount = 3;
 
-    final int old = OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY.getValueAsInteger();
+    final int oldAutoRetry = OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY.getValueAsInteger();
     OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY.setValue(100);
+
+    final int oldLockTimeout = OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT.getValueAsInteger();
+    OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT.setValue(0);
+
     try {
 
       init(SERVERS);
@@ -43,7 +46,8 @@ public class LocalConcurrentTxAutoRetryTest extends AbstractDistributedConcurren
       execute();
 
     } finally {
-      OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY.setValue(old);
+      OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT.setValue(oldLockTimeout);
+      OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY.setValue(oldAutoRetry);
     }
   }
 

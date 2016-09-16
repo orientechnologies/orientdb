@@ -276,6 +276,7 @@ public class ODistributedResponseManager {
             // ANALYZE THE NODE WITHOUT A RESPONSE
             final ODistributedServerManager.DB_STATUS dbStatus = dManager.getDatabaseStatus(curr.getKey(), getDatabaseName());
             switch (dbStatus) {
+            case BACKUP:
             case SYNCHRONIZING:
               synchronizingNodes++;
               missingActiveNodes++;
@@ -339,8 +340,8 @@ public class ODistributedResponseManager {
 
       if (receivedResponses == 0) {
         if (quorum > 0 && !request.getTask().isIdempotent())
-          throw new ODistributedOperationException(
-              "No response received from any of nodes " + getExpectedNodes() + " for request " + request);
+          throw new ODistributedOperationException("No response received from any of nodes " + getExpectedNodes() + " for request "
+              + request + " after " + ((System.nanoTime() - sentOn) / 1000000) + "ms");
 
         // NO QUORUM, RETURN NULL
         return null;
@@ -359,7 +360,7 @@ public class ODistributedResponseManager {
           if (entry.getValue() != NO_RESPONSE)
             payloads.put(entry.getKey(), ((ODistributedResponse) entry.getValue()).getPayload());
 
-        if( payloads.isEmpty())
+        if (payloads.isEmpty())
           return null;
 
         final ODistributedResponse response = (ODistributedResponse) getReceivedResponses().iterator().next();

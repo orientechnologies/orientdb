@@ -53,13 +53,15 @@ public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistri
     public TxWriter(final int iServerId, final String db) {
       serverId = iServerId;
       databaseUrl = db;
+      System.out.println("\nCreated Writer " + databaseUrl + " id=" + Thread.currentThread().getId() + " managed " + "0/" + count
+          + " vertices so far");
     }
 
     @Override
     public Void call() throws Exception {
       String name = Integer.toString(serverId);
 
-      for (int i = 0; i < count; i += 2) {
+      for (int i = 0; i < count; i++) {
         final OrientGraph graph = factory.getTx();
 
         final OrientVertex localVertex = graph.getVertex(v);
@@ -84,7 +86,7 @@ public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistri
               OLogManager.instance().info(this, "increment lockExceptions %d", lockExceptions.get());
 
             } catch (ONeedRetryException e) {
-              OLogManager.instance().info(this, "Concurrent Exceptions " + e);
+              OLogManager.instance().debug(this, "Concurrent Exceptions " + e);
 
             } catch (Exception e) {
               graph.rollback();
@@ -117,6 +119,11 @@ public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistri
       System.out.println("\nWriter " + name + " END. count = " + count + " lockExceptions: " + lockExceptions);
       return null;
     }
+  }
+
+  protected AbstractDistributedConcurrentTxTest() {
+    count = 200;
+    writerCount = 3;
   }
 
   protected void onAfterExecution() {
@@ -164,13 +171,10 @@ public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistri
   protected OrientVertex createVertex(OrientBaseGraph graph, int serverId, int threadId, int i) {
     final String uniqueId = serverId + "-" + threadId + "-" + i;
 
-    final Object result = graph
-        .command(new OCommandSQL(
-            "create vertex Provider content {'id': '" + UUID.randomUUID().toString() + "', 'name': 'Billy" + uniqueId
-                + "', 'surname': 'Mayes" + uniqueId + "', 'birthday': '" + ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
-                    .getConfiguration().getDateFormatInstance().format(new Date())
-                + "', 'children': '" + uniqueId + "', 'saved': 0}"))
-        .execute();
+    final Object result = graph.command(new OCommandSQL("create vertex Provider content {'id': '" + UUID.randomUUID().toString()
+        + "', 'name': 'Billy" + uniqueId + "', 'surname': 'Mayes" + uniqueId + "', 'birthday': '"
+        + ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getDateFormatInstance().format(new Date())
+        + "', 'children': '" + uniqueId + "', 'saved': 0}")).execute();
     return (OrientVertex) result;
   }
 
