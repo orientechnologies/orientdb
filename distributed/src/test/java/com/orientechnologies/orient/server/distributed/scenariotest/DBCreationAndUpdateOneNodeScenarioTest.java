@@ -21,7 +21,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
@@ -42,7 +41,6 @@ import static org.junit.Assert.*;
 
 public class DBCreationAndUpdateOneNodeScenarioTest extends AbstractScenarioTest {
 
-  @Ignore
   @Test
   public void test() throws Exception {
     init(SERVERS);
