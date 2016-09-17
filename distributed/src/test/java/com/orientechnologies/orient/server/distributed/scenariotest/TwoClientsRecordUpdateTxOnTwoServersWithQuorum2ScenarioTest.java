@@ -22,7 +22,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.HashMap;
@@ -46,9 +45,6 @@ import static org.junit.Assert.assertEquals;
  * - client c1 tries to update the record, but server0 return a lockedrecord exception
  * - after c1 gives up, c0 tries the tx and succeeds
  */
-
-@Ignore
-// TODO Temporary Ignored
 public class TwoClientsRecordUpdateTxOnTwoServersWithQuorum2ScenarioTest extends AbstractScenarioTest {
 
   private final String                  RECORD_ID   = "R001";

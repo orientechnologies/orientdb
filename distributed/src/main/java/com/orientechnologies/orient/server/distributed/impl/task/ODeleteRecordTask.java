@@ -21,7 +21,6 @@ package com.orientechnologies.orient.server.distributed.impl.task;
 
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.server.OServer;
@@ -84,7 +83,7 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
   @Override
   public ORemoteTask getFixTask(final ODistributedRequest iRequest, final ORemoteTask iOriginalTask, final Object iBadResponse,
       final Object iGoodResponse, String executorNodeName, ODistributedServerManager dManager) {
-    return new ODeleteRecordTask(rid, version);
+    return new OFixCreateRecordTask(rid, version);
   }
 
   @Override

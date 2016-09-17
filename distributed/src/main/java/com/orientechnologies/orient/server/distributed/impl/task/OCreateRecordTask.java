@@ -260,7 +260,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
             toUpdateRecord = toUpdateRid.getRecord();
 
           if (toUpdateRecord != null)
-            result = new OUpdateRecordTask(toUpdateRid, toUpdateRecord.toStream(), toUpdateRecord.getVersion(),
+            result = new OFixUpdateRecordTask(toUpdateRid, toUpdateRecord.toStream(), toUpdateRecord.getVersion(),
                 ORecordInternal.getRecordType(toUpdateRecord));
         }
 
@@ -272,7 +272,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
 
       } else
         // ANY OTHER CASE JUST DELETE IT
-        result = new ODeleteRecordTask(new ORecordId(badResult.getIdentity()), badResult.getVersion());
+        result = new OFixCreateRecordTask(new ORecordId(badResult.getIdentity()), badResult.getVersion());
     }
 
     return result;
@@ -280,7 +280,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
 
   @Override
   public ODeleteRecordTask getUndoTask(ODistributedRequestId reqId) {
-    final ODeleteRecordTask task = new ODeleteRecordTask(rid, -1);
+    final ODeleteRecordTask task = new OFixCreateRecordTask(rid, -1);
     task.setLockRecords(false);
     return task;
   }

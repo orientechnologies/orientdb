@@ -160,13 +160,13 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
     if (iGoodResponse instanceof Integer) {
       // JUST VERSION
       final int versionCopy = ORecordVersionHelper.setRollbackMode((Integer) iGoodResponse);
-      return new OUpdateRecordTask(rid, content, versionCopy, recordType);
+      return new OFixUpdateRecordTask(rid, content, versionCopy, recordType);
 
     } else if (iGoodResponse instanceof ORecord) {
       // RECORD
       final ORecord goodRecord = (ORecord) iGoodResponse;
       final int versionCopy = ORecordVersionHelper.setRollbackMode(goodRecord.getVersion());
-      return new OUpdateRecordTask(rid, goodRecord.toStream(), versionCopy, recordType);
+      return new OFixUpdateRecordTask(rid, goodRecord.toStream(), versionCopy, recordType);
     }
 
     return null;
@@ -178,7 +178,7 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
       return null;
 
     final int versionCopy = ORecordVersionHelper.setRollbackMode(previousRecord.getVersion());
-    final OUpdateRecordTask task = new OUpdateRecordTask(rid, previousRecord.toStream(), versionCopy, recordType);
+    final OUpdateRecordTask task = new OFixUpdateRecordTask(rid, previousRecord.toStream(), versionCopy, recordType);
     task.setLockRecords(false);
     return task;
   }

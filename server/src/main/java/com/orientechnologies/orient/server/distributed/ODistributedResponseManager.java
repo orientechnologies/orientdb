@@ -704,8 +704,12 @@ public class ODistributedResponseManager {
           ODistributedServerLog.warn(this, dManager.getLocalNodeName(), targetNode, DIRECTION.OUT,
               "Sending undo message (%s) for request (%s) to server %s", undoTask, request, targetNode);
 
-          dManager.sendRequest(request.getDatabaseName(), null, OMultiValue.getSingletonList(targetNode), undoTask,
-              dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
+          final ODistributedResponse result = dManager
+              .sendRequest(request.getDatabaseName(), null, OMultiValue.getSingletonList(targetNode), undoTask,
+                  dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
+
+          ODistributedServerLog.warn(this, dManager.getLocalNodeName(), targetNode, DIRECTION.OUT,
+              "Received response from undo message (%s) for request (%s) to server %s: result", undoTask, request, targetNode, result);
         }
       }
     }

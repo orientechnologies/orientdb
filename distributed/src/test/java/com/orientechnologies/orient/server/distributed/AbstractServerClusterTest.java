@@ -30,10 +30,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.server.distributed.impl.task.OCreateRecordTask;
-import com.orientechnologies.orient.server.distributed.impl.task.ODeleteRecordTask;
-import com.orientechnologies.orient.server.distributed.impl.task.OReadRecordTask;
-import com.orientechnologies.orient.server.distributed.impl.task.OUpdateRecordTask;
+import com.orientechnologies.orient.server.distributed.impl.task.*;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import org.junit.Assert;
@@ -498,7 +495,7 @@ public abstract class AbstractServerClusterTest {
     clusterNames.add(ODatabaseRecordThreadLocal.INSTANCE.get().getClusterNameById(record.getIdentity().getClusterId()));
 
     return dManager.sendRequest(getDatabaseName(), clusterNames, Arrays.asList(servers),
-        new OUpdateRecordTask((ORecordId) record.getIdentity(), record.toStream(), record.getVersion(),
+        new OFixUpdateRecordTask((ORecordId) record.getIdentity(), record.toStream(), record.getVersion(),
             ORecordInternal.getRecordType(record)),
         dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
   }
@@ -509,7 +506,7 @@ public abstract class AbstractServerClusterTest {
     final Collection<String> clusterNames = new ArrayList<String>(1);
     clusterNames.add(ODatabaseRecordThreadLocal.INSTANCE.get().getClusterNameById(rid.getClusterId()));
 
-    return dManager.sendRequest(getDatabaseName(), clusterNames, Arrays.asList(servers), new ODeleteRecordTask(rid, -1),
+    return dManager.sendRequest(getDatabaseName(), clusterNames, Arrays.asList(servers), new OFixCreateRecordTask(rid, -1),
         dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
   }
 }
