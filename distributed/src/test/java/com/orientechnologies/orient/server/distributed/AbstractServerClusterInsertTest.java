@@ -177,7 +177,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
       final String uniqueId = serverId + "-" + threadId + "-" + i;
 
       List<ODocument> result = database
-          .query(new OSQLSynchQuery<ODocument>("select from Person where name = 'Billy" + uniqueId + "'"));
+          .query(new OSQLSynchQuery<ODocument>("select from Person where name = ?"), "Billy" + uniqueId );
       if (result.size() == 0)
         Assert.assertTrue("No record found with name = 'Billy" + uniqueId + "'!", false);
       else if (result.size() > 1)
@@ -296,7 +296,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
 
     computeExpected(serverId);
 
-    System.out.println("Expected records="+expected);
+    System.out.println("Expected records=" + expected);
 
     List<Future<Void>> futures = executors.invokeAll(workers);
 
@@ -416,9 +416,9 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
   }
 
   protected void checkIndexedEntries() {
-    if (indexName == null )
+    if (indexName == null)
       return;
-    
+
     ODatabaseDocumentTx database;
     for (ServerRun server : serverInstance) {
       if (server.isActive()) {
@@ -435,14 +435,11 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
             }
           }
 
-          Assert.assertEquals(expected, indexSize);
-
-          System.out.println("From metadata: indexes " + indexSize + " items");
+          Assert.assertEquals("Indexed items on server " + server + " are " + indexSize + ", but " + expected + " was expected",
+              expected, indexSize);
 
           List<ODocument> result = database.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from index:" + indexName));
           Assert.assertEquals(expected, ((Long) result.get(0).field("count")).longValue());
-
-          System.out.println("From sql: indexes " + indexSize + " items");
         } finally {
           database.close();
         }
