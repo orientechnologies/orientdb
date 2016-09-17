@@ -87,8 +87,14 @@ public class ODefaultRemoteTaskFactory implements ORemoteTaskFactory {
     case ORepairClusterTask.FACTORYID: // 18
       return new ORepairClusterTask();
 
-    case OClusterRepairInfoTask.FACTORYID: // 18
+    case OClusterRepairInfoTask.FACTORYID: // 19
       return new OClusterRepairInfoTask();
+
+    case OFixCreateRecordTask.FACTORYID: // 20
+      return new OFixCreateRecordTask();
+
+    case OFixUpdateRecordTask.FACTORYID: // 21
+      return new OFixUpdateRecordTask();
     }
 
     throw new IllegalArgumentException("Task with code " + code + " is not supported");

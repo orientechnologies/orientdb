@@ -29,7 +29,6 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OExecutionThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OPlaceholder;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.*;
@@ -363,7 +362,7 @@ public class ODistributedTransactionManager {
       switch (op.type) {
       case ORecordOperation.CREATED:
         // ADD UNDO TASK ONCE YHE RID OS KNOWN
-        undoTasks.add(new ODeleteRecordTask(record));
+        undoTasks.add(new OFixCreateRecordTask(record));
         break;
       }
     }
@@ -595,7 +594,7 @@ public class ODistributedTransactionManager {
           throw new ORecordNotFoundException(rid);
 
         if (op.type == ORecordOperation.UPDATED)
-          undoTask = new OUpdateRecordTask(previousRecord.get(),
+          undoTask = new OFixUpdateRecordTask(previousRecord.get(),
               ORecordVersionHelper.clearRollbackMode(previousRecord.get().getVersion()));
         else
           undoTask = new OResurrectRecordTask(previousRecord.get());

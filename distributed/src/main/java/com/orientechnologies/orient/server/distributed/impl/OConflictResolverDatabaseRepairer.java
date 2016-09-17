@@ -508,13 +508,13 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
                         // UPDATE THE RECORD
                         final ORawBuffer winnerRecord = (ORawBuffer) winner;
 
-                        completedTask.addFixTask(new OUpdateRecordTask(rid, winnerRecord.buffer,
+                        completedTask.addFixTask(new OFixUpdateRecordTask(rid, winnerRecord.buffer,
                             ORecordVersionHelper.setRollbackMode(winnerRecord.version), winnerRecord.recordType));
 
                       } else if (winner instanceof ORecordNotFoundException && value instanceof ORawBuffer) {
                         // DELETE THE RECORD
 
-                        completedTask.addFixTask(new ODeleteRecordTask(rid, -1));
+                        completedTask.addFixTask(new OFixCreateRecordTask(rid, -1));
 
                       } else if (value instanceof Throwable) {
                         // MANAGE EXCEPTION
