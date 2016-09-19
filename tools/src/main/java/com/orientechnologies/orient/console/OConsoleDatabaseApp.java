@@ -2243,13 +2243,18 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       } catch (NoSuchMethodException e) {
       }
 
-    final String fileName = items.size() <= 0 || (items.get(1)).charAt(0) == '-' ? null : items.get(1);
+    String fileName = items.size() <= 0 || (items.get(1)).charAt(0) == '-' ? null : items.get(1);
+    if (fileName != null) {
+      if ((fileName.startsWith("\"") && fileName.endsWith("\"")) || (fileName.startsWith("'") && fileName.endsWith("'"))) {
+        fileName = fileName.substring(1, fileName.length() - 1);
+      }
+    }
 
     final long startTime = System.currentTimeMillis();
     try {
 
       // FULL RESTORE
-      message("\nRestoring database '%s' from full backup...", text);
+      message("\nRestoring database '%s' from full backup...", fileName);
       final FileInputStream f = new FileInputStream(fileName);
       try {
         currentDatabase.restore(f, null, null, this);
