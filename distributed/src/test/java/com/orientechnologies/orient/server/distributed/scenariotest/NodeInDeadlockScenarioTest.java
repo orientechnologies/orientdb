@@ -24,7 +24,6 @@ import com.orientechnologies.orient.server.distributed.ServerRun;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -56,7 +55,6 @@ public class NodeInDeadlockScenarioTest extends AbstractScenarioTest {
   volatile int     serverStarted    = 0;
   volatile boolean backupInProgress = false;
 
-  @Ignore
   @Test
   public void test() throws Exception {
 
