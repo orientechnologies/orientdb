@@ -3,8 +3,9 @@ var browseConfig = angular.module('browse.services', []);
 breadcrumb.factory('BrowseConfig', function ($rootScope, Database, $location, localStorageService) {
 
 
+  
   var config = {
-    limit: 20,
+    limit: localStorageService.get('limit') || 20,
     hideSettings: true,
     keepLimit: '10',
     selectedContentType: 'JSON',
@@ -15,6 +16,7 @@ breadcrumb.factory('BrowseConfig', function ($rootScope, Database, $location, lo
       localStorageService.add(name, val);
     },
     get: function () {
+
     }
   };
 

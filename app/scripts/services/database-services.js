@@ -122,8 +122,6 @@ database.factory('Database', function (DatabaseApi, localStorageService) {
     refreshMetadata: function (database, callback) {
       var currentDb = DatabaseApi.get({database: database}, function () {
 
-
-        console.log(currentDb);
         current.name = database;
         current.username = currentDb.currentUser;
         current.metadata = currentDb;
