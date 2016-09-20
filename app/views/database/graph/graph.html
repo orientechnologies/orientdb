@@ -50,15 +50,15 @@
             </div>
 
             <!--<div class="btn-group">-->
-              <!--<button href="javascript:void(0)"-->
-                      <!--data-title="Download SVG"-->
-                      <!--data-trigger="hover"-->
-                      <!--data-placement="bottom"-->
-                      <!--bs-tooltip-->
-                      <!--class="btn btn-sm btn-default"-->
-                      <!--ng-click="download()"><i-->
-                <!--class="fa fa-download"> </i>-->
-              <!--</button>-->
+            <!--<button href="javascript:void(0)"-->
+            <!--data-title="Download SVG"-->
+            <!--data-trigger="hover"-->
+            <!--data-placement="bottom"-->
+            <!--bs-tooltip-->
+            <!--class="btn btn-sm btn-default"-->
+            <!--ng-click="download()"><i-->
+            <!--class="fa fa-download"> </i>-->
+            <!--</button>-->
             <!--</div>-->
             <div class="btn-group">
               <button href="javascript:void(0)"
@@ -161,7 +161,7 @@
                 <div class="query-info">
                   <div class="container-fluid">
                     <div class="row vertical-align">
-                      <div class="col-md-12  info">
+                      <div class="col-md-8  info">
                         <div class="query-hint-mobile">
                           <a class="btn btn-trasparent ng-scope" tabindex="1" data-trigger="focus"
                              data-placement="bottom-left" data-animation="am-flip-x" data-container="body"
@@ -193,7 +193,18 @@
                         </div>
 
                       </div>
+                      <div class="col-md-4 command">
+                        <form class="form-inline pull-right">
+                          <fieldset>
 
+                            <div class="form-group">
+                              <label>Limit</label>
+                              <input type="text" class="form-control input-sm" ng-model="config.limit"/>
+                            </div>
+
+                          </fieldset>
+                        </form>
+                      </div>
                     </div>
                   </div>
                 </div>

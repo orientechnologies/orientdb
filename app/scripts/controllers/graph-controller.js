@@ -316,13 +316,15 @@ GrapgController.controller("VertexModalBrowseController", ['$scope', '$routePara
 
 }]);
 
-GrapgController.controller("GraphController", ['$scope', '$routeParams', '$location', '$modal', '$q', 'Database', 'CommandApi', 'Spinner', 'Aside', 'DocumentApi', 'localStorageService', 'Graph', 'Icon', 'GraphConfig', 'Notification', '$rootScope', 'History', '$timeout','scroller', function ($scope, $routeParams, $location, $modal, $q, Database, CommandApi, Spinner, Aside, DocumentApi, localStorageService, Graph, Icon, GraphConfig, Notification, $rootScope, History, $timeout,scroller) {
+GrapgController.controller("GraphController", ['$scope', '$routeParams', '$location', '$modal', '$q', 'Database', 'CommandApi', 'Spinner', 'Aside', 'DocumentApi', 'localStorageService', 'Graph', 'Icon', 'GraphConfig', 'Notification', '$rootScope', 'History', '$timeout','scroller','BrowseConfig', function ($scope, $routeParams, $location, $modal, $q, Database, CommandApi, Spinner, Aside, DocumentApi, localStorageService, Graph, Icon, GraphConfig, Notification, $rootScope, History, $timeout,scroller,BrowseConfig) {
 
   var data = [];
   $scope.currentIndex = -1;
 
   $scope.history = History.histories();
 
+
+  $scope.config = BrowseConfig;
   $scope.fullscreen = false;
   $scope.additionalClass = '';
   $scope.database = Database;
@@ -367,6 +369,12 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
     fullscreen: $scope.fullscreen
   });
 
+
+  $scope.$watch("config.limit", function (data) {
+    $scope.limit = data;
+    $scope.config.set('limit', data);
+
+  });
 
   $scope.$watch("fullscreen", function (val) {
     if (val) {
@@ -1022,6 +1030,7 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
     CommandApi.graphQuery(queryBuffer, {
       database: $routeParams.database,
       language: $scope.language,
+      limit  : $scope.config.limit
     }).then(function (data) {
       $scope.graph.data(data.graph).redraw();
       $scope.history = History.push(queryBuffer);
