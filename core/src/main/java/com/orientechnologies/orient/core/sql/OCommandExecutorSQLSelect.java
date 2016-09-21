@@ -2399,6 +2399,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       if (orderByOptimizer.canBeUsedByOrderBy(index, orderedFields)) {
         final long indexRebuildVersion = index.getRebuildVersion();
 
+        if(index.getDefinition().isNullValuesIgnored()){
+          return null;
+        }
         if (index.isRebuilding())
           return null;
 
