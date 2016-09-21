@@ -1,153 +1,155 @@
 <div class="row browse-container">
-    <div class="query-container master-query">
+  <div class="query-container master-query">
 
-        <div class="query-actions" ng-show="hideSettings">
+    <div class="query-actions" ng-show="hideSettings">
 
-            <div class="btn-toolbar pull-right">
-                <div class="btn-group">
-                    <a href="{{ database.getWiki() }}"
-                       target="_blank"
-                       class="btn btn-sm btn-trasparent"
-                       data-placement="left"
-                       data-title="{{'browse.help' | translate}}"
-                       data-trigger="hover"
-                       target="_blank"
-                       data-container="body"
-                       data-animation="am-fade-and-scale"
-                       bs-tooltip>
-                        <i class="fa fa-question-circle fa-lg"></i>
-                    </a>
-                </div>
-                <div class="btn-group">
-                    <button ng-click="query()" ng-disabled="!queryText" class="btn btn-sm btn-success"><i
-                            class="fa fa-cog"></i>
-                        Run
-                    </button>
-                </div>
-                <div class="btn-group">
-                    <button ng-click="query(true)" ng-disabled="!queryText" class="btn btn-sm btn-warning"><i
-                            class="fa fa-gears"></i>
-                        Explain
-                    </button>
-                </div>
-                <div class="btn-group config">
-                    <a
-                            id ="configQueryButton"
-                            class="btn btn-trasparent btn-sm"
-                       data-placement="bottom"
-                       data-title="Query configuration"
-                       data-template="views/database/browseConfig.html"
-                       bs-popover
-                       data-toggle="dropdown"
-                       href="javascript:void(0)">
-                        <i class="icon-wrench"></i>
-                        <b class="caret"></b>
-                    </a>
-                </div>
-            </div>
+      <div class="btn-toolbar pull-right">
+        <div class="btn-group">
+          <a href="{{ database.getWiki() }}"
+             target="_blank"
+             class="btn btn-sm btn-trasparent"
+             data-placement="left"
+             data-title="{{'browse.help' | translate}}"
+             data-trigger="hover"
+             target="_blank"
+             data-container="body"
+             data-animation="am-fade-and-scale"
+             bs-tooltip>
+            <i class="fa fa-question-circle fa-lg"></i>
+          </a>
         </div>
-        <div class="query-body">
-            <div class="query-bookmark bookmarks">
-                <a class="" href="javascript:void(0)"
-                   data-placement="bottom"
-                   data-title="{{'browse.addBookmark' | translate}}"
-                   data-template="views/database/bookmark.html"
-                   bs-popover
-                   data-animation="am-fade-and-scale">
-                    <i data-title="{{'browse.addBookmark' | translate}}" data-animation="am-fade-and-scale"
-                       data-placement="left" bs-tooltip class="fa fa-star"></i>
+        <div class="btn-group">
+          <button ng-click="query()" ng-disabled="!queryText" class="btn btn-sm btn-success"><i
+            class="fa fa-cog"></i>
+            Run
+          </button>
+        </div>
+        <div class="btn-group">
+          <button ng-click="query(true)" ng-disabled="!queryText" class="btn btn-sm btn-warning"><i
+            class="fa fa-gears"></i>
+            Explain
+          </button>
+        </div>
+        <div class="btn-group config">
+          <a
+            id="configQueryButton"
+            class="btn btn-trasparent btn-sm"
+            data-placement="bottom"
+            data-title="Query configuration"
+            data-template="views/database/browseConfig.html"
+            bs-popover
+            data-toggle="dropdown"
+            href="javascript:void(0)">
+            <i class="icon-wrench"></i>
+            <b class="caret"></b>
+          </a>
+        </div>
+      </div>
+    </div>
+    <div class="query-body">
+      <div class="query-bookmark bookmarks">
+        <a class="" href="javascript:void(0)"
+           data-placement="bottom"
+           data-title="{{'browse.addBookmark' | translate}}"
+           data-template="views/database/bookmark.html"
+           bs-popover
+           data-animation="am-fade-and-scale">
+          <i data-title="{{'browse.addBookmark' | translate}}" data-animation="am-fade-and-scale"
+             data-placement="left" bs-tooltip class="fa fa-star"></i>
+        </a>
+      </div>
+      <form ng-submit="query()" class="form-inline">
+        <div ui-codemirror="editorOptions" ng-model="queryText"></div>
+      </form>
+    </div>
+    <div class="query-info">
+      <div class="container-fluid">
+        <div class="row vertical-align">
+          <div class="col-md-6  info">
+            <div class="query-hint-mobile">
+              <a class="btn btn-trasparent" tabindex="1"
+                 data-trigger="focus" data-placement="bottom-left"
+                 data-animation="am-flip-x"
+                 data-container="body"
+                 data-template="views/hints/query-hint.html" bs-popover>
+                <i class="fa fa-question-circle"></i>
+              </a>
+            </div>
+            <div class="query-hint">
+              <div class="row">
+                <div class="col-md-12">
+                  <b>Run:</b>
+                  Ctrl + Return
+                  <b>Undo:</b>
+                  Ctrl/Cmd + Z
+                  <b>Redo:</b>
+                  Ctrl/Cmd + Shift + Z
+                  <br>
+                  <b class="clear-hint">
+                    Search :</b>
+                  Ctrl/Cmd + F
+                  <b>
+                    Toggle Comment:</b>
+                  Ctrl/Cmd + /
+                  <b>
+                    Autocomplete:</b>
+                  Ctrl + Space
+                </div>
+              </div>
+            </div>
+
+          </div>
+          <div class="col-md-6  command">
+            <form class="form-inline pull-right" ng-show="!hideSettings">
+              <fieldset>
+                <div class="form-group">
+                  <label>Content Type</label>
+                  <select ng-model="config.selectedContentType" class="form-control input-sm"
+                          ng-options="q for q in contentType"></select>
+                </div>
+                <div class="form-group">
+                  <label>Limit</label>
+                  <input type="text" class="form-control input-sm" ng-model="config.limit"/>
+                </div>
+                <div class="checkbox">
+                  <label>
+                    <input type="checkbox" class="" ng-model="config.hideSettings"/> Hide settings
+                  </label>
+                </div>
+                <a href="{{ database.getWiki() }}" class="btn btn-sm btn-trasparent"
+                   data-placement="top"
+                   data-title="{{'browse.help' | translate}}"
+                   data-animation="am-fade-and-scale"
+                   data-trigger="hover"
+                   bs-tooltip>
+                  <i class="fa fa-question-circle fa-lg"></i>
                 </a>
-            </div>
-            <form ng-submit="query()" class="form-inline">
-                <div ui-codemirror="editorOptions" ng-model="queryText"></div>
+                <button ng-click="query()" ng-disabled="!queryText" class="btn btn-sm btn-success"><i
+                  class="fa fa-cog"></i>
+                  Run
+                </button>
+
+              </fieldset>
             </form>
+          </div>
         </div>
-        <div class="query-info">
-            <div class="container-fluid">
-                <div class="row vertical-align">
-                    <div class="col-md-6  info">
-                        <div class="query-hint-mobile">
-                            <a class="btn btn-trasparent" tabindex="1"
-                               data-trigger="focus" data-placement="bottom-left"
-                               data-animation="am-flip-x"
-                               data-container="body"
-                               data-template="views/hints/query-hint.html" bs-popover>
-                                <i class="fa fa-question-circle"></i>
-                            </a>
-                        </div>
-                        <div class="query-hint">
-                            <div class="row">
-                                <div class="col-md-12">
-                                    <b>Run:</b>
-                                    Ctrl + Return
-                                    <b>Undo:</b>
-                                    Ctrl/Cmd + Z
-                                    <b>Redo:</b>
-                                    Ctrl/Cmd + Shift + Z
-                                    <br>
-                                    <b class="clear-hint">
-                                        Search :</b>
-                                    Ctrl/Cmd + F
-                                    <b>
-                                        Toggle Comment:</b>
-                                    Ctrl/Cmd + /
-                                    <b>
-                                        Autocomplete:</b>
-                                    Ctrl + Space
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-                    <div class="col-md-6  command">
-                        <form class="form-inline pull-right" ng-show="!hideSettings">
-                            <fieldset>
-                                <div class="form-group">
-                                    <label>Content Type</label>
-                                    <select ng-model="config.selectedContentType" class="form-control input-sm"
-                                            ng-options="q for q in contentType"></select>
-                                </div>
-                                <div class="form-group">
-                                    <label>Limit</label>
-                                    <input type="text" class="form-control input-sm" ng-model="config.limit"/>
-                                </div>
-                                <div class="checkbox">
-                                    <label>
-                                        <input type="checkbox" class="" ng-model="config.hideSettings"/> Hide settings
-                                    </label>
-                                </div>
-                                <a href="{{ database.getWiki() }}" class="btn btn-sm btn-trasparent"
-                                   data-placement="top"
-                                   data-title="{{'browse.help' | translate}}"
-                                   data-animation="am-fade-and-scale"
-                                   data-trigger="hover"
-                                   bs-tooltip>
-                                    <i class="fa fa-question-circle fa-lg"></i>
-                                </a>
-                                <button ng-click="query()" ng-disabled="!queryText" class="btn btn-sm btn-success"><i
-                                        class="fa fa-cog"></i>
-                                    Run
-                                </button>
-
-                            </fieldset>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
+      </div>
     </div>
-    <div id="download">
+  </div>
+  <div id="download">
 
-    </div>
+  </div>
 
 
-    <div class="row search-query">
-        <div class="col-md-6 col-xs-12">
-            <form class="form-search search-history" ng-show="timeline.length >1">
-                <div class="input-group">
-                    <input type="text" class="input-xxlarge form-control search-query" ng-model="search.query"
-                           placeholder="{{'browse.searchHistory' | translate}}">
-                    <span class="input-group-btn">
+  <div class="row search-query">
+
+    <div class="col-md-6 col-xs-12">
+      <form class="form-search search-history">
+        <div class="input-group">
+          <input type="text" class="input-xxlarge form-control search-query" ng-disabled="timeline.length <2"
+                 ng-model="search.query"
+                 placeholder="{{'browse.searchHistory' | translate}}">
+          <span class="input-group-btn">
                     <button type="submit"
                             data-title="{{'browse.clearHistory' | translate}}"
                             data-animation="am-fade-and-scale"
@@ -156,31 +158,42 @@
                         <i class="fa fa-trash-o"></i>
                     </button>
                         </span>
-                </div>
-            </form>
         </div>
-        <div class="col-md-6 col-xs-12">
-
-            <div class="btn-group pull-right">
-                <button class="btn btn-sm btn-default"
-                        data-placement="left"
-                        data-title="{{'browse.showBookmark' | translate}}"
-                        data-animation="am-fade-and-scale"
-                        bs-tooltip
-                        ng-click="toggleBookmarks()">
-                    <i class="fa fa-star"> </i>
-                    Bookmarks
-                </button>
-            </div>
-        </div>
+      </form>
     </div>
 
-    <div class="container-fluid" id="fixed" when-scrolled="loadMore()">
-        <div class="row history-item" ng-repeat="item in timeline | filter:search">
-            <div ng-include="'views/database/query.html'"></div>
-        </div>
-    </div>
+    <div class="col-md-4 col-xs-12">
+      <p class="studio-well-tips-once">
+        <b>Local Storage Size</b>
+        <span class="label " ng-class="sizeLabel(localSize)">{{localSize | toSizeString}}</span>
 
+        <span class="label label-danger pointer">
+          <span class="fa fa-recycle" ng-click="cleanLocalStorage()"></span>
+        </span>
+      </p>
+
+    </div>
+    <div class="col-md-2 col-xs-12">
+
+      <div class="btn-group pull-right">
+        <button class="btn btn-sm btn-default"
+                data-placement="left"
+                data-title="{{'browse.showBookmark' | translate}}"
+                data-animation="am-fade-and-scale"
+                bs-tooltip
+                ng-click="toggleBookmarks()">
+          <i class="fa fa-star"> </i>
+          Bookmarks
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="container-fluid" id="fixed" when-scrolled="loadMore()">
+    <div class="row history-item" ng-repeat="item in timeline | filter:search">
+      <div ng-include="'views/database/query.html'"></div>
+    </div>
+  </div>
 
 
 </div>

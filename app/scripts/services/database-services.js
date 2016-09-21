@@ -122,8 +122,9 @@ database.factory('Database', function (DatabaseApi, localStorageService) {
     refreshMetadata: function (database, callback) {
       var currentDb = DatabaseApi.get({database: database}, function () {
 
+
         current.name = database;
-        current.username = currentDb.currentUser;
+        current.username = currentDb.currentUser || "root";
         current.metadata = currentDb;
         localStorageService.add("CurrentDB", current);
         if (callback)
@@ -746,7 +747,7 @@ database.factory('CommandApi', function ($http, $resource, Notification, Spinner
 
     var opts = {
       command: query,
-      mode : "graph"
+      mode: "graph"
     }
     $http.post(text, opts).success(deferred.resolve).error(deferred.reject);
     return deferred.promise;

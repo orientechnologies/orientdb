@@ -1,15 +1,43 @@
 var dbModule = angular.module('database.controller', ['database.services', 'bookmarks.services']);
-dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'localStorageService', 'Spinner', '$modal', '$q', '$window', 'Bookmarks', 'Notification', 'Aside', 'BrowseConfig', '$timeout', 'GraphConfig', 'BatchApi', 'DocumentApi', 'History', function ($scope, $routeParams, $location, Database, CommandApi, localStorageService, Spinner, $modal, $q, $window, Bookmarks, Notification, Aside, BrowseConfig, $timeout, GraphConfig, BatchApi, DocumentApi, History) {
+dbModule.controller("BrowseController", ['$scope', '$routeParams', '$route', '$location', 'Database', 'CommandApi', 'localStorageService', 'Spinner', '$modal', '$q', '$window', 'Bookmarks', 'Notification', 'Aside', 'BrowseConfig', '$timeout', 'GraphConfig', 'BatchApi', 'DocumentApi', 'History', function ($scope, $routeParams, $route, $location, Database, CommandApi, localStorageService, Spinner, $modal, $q, $window, Bookmarks, Notification, Aside, BrowseConfig, $timeout, GraphConfig, BatchApi, DocumentApi, History) {
 
   $scope.database = Database;
   $scope.limit = 20;
   $scope.config = BrowseConfig;
   $scope.bookmarksClass = "";
+
+  $scope.ls = localStorageService;
+
+  var refreshSize = function () {
+
+    $scope.config.storageSize(100, function (size) {
+      $scope.localSize = size;
+    })
+  }
+
+
+  $scope.sizeLabel = function (size) {
+    return size < 5000000 ? "label-success" : "label-warning";
+  }
+
+  refreshSize();
   $scope.items = [
     {name: "history", title: "History"},
     {name: "bookmarks", title: "Bookmarks"}
   ];
 
+
+  $scope.cleanLocalStorage = function () {
+
+    Utilities.confirm($scope, $modal, $q, {
+      title: 'Warning!',
+      body: 'You are clearing the local storage for Studio. All saved query and settings will be lost. Are you sure?',
+      success: function () {
+        localStorageService.clearAll();
+        $route.reload();
+      }
+    });
+  }
 
   $scope.history = History.histories();
 
@@ -307,6 +335,7 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
             Notification.push({content: w, autoHide: true, warning: true});
           });
         }
+        refreshSize();
       } else {
         Spinner.stopSpinner();
         Notification.push({content: "The command has been executed", autoHide: true});

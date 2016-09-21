@@ -1083,6 +1083,10 @@ div.users-ui div.container-fluid, div.role-ui div.container-fluid {
   border-left: 3px solid #FF6600;
 }
 
+.studio-well-tips-once {
+  padding: 10px;
+  /*border-left: 3px solid #FF6600;*/
+}
 .field-set {
   border-radius: 6px;
   color: inherit;

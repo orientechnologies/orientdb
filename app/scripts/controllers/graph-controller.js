@@ -316,7 +316,7 @@ GrapgController.controller("VertexModalBrowseController", ['$scope', '$routePara
 
 }]);
 
-GrapgController.controller("GraphController", ['$scope', '$routeParams', '$location', '$modal', '$q', 'Database', 'CommandApi', 'Spinner', 'Aside', 'DocumentApi', 'localStorageService', 'Graph', 'Icon', 'GraphConfig', 'Notification', '$rootScope', 'History', '$timeout','scroller','BrowseConfig', function ($scope, $routeParams, $location, $modal, $q, Database, CommandApi, Spinner, Aside, DocumentApi, localStorageService, Graph, Icon, GraphConfig, Notification, $rootScope, History, $timeout,scroller,BrowseConfig) {
+GrapgController.controller("GraphController", ['$scope', '$routeParams', '$location', '$modal', '$q', 'Database', 'CommandApi', 'Spinner', 'Aside', 'DocumentApi', 'localStorageService', 'Graph', 'Icon', 'GraphConfig', 'Notification', '$rootScope', 'History', '$timeout', 'scroller', 'BrowseConfig', function ($scope, $routeParams, $location, $modal, $q, Database, CommandApi, Spinner, Aside, DocumentApi, localStorageService, Graph, Icon, GraphConfig, Notification, $rootScope, History, $timeout, scroller, BrowseConfig) {
 
   var data = [];
   $scope.currentIndex = -1;
@@ -442,7 +442,6 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
       $scope.cm = _cm;
       if ($routeParams.q) {
         $scope.queryText = $routeParams.q;
-        $scope.query();
       }
       $scope.cm.on("change", function () { /* script */
         var wrap = $scope.cm.getWrapperElement();
@@ -518,14 +517,15 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
   }
   $scope.clear = function () {
     $scope.graph.clear();
-    Graph.data = [];
+    Graph.clear()
   }
   $scope.queryText = Graph.query;
+
+
   $scope.tmpGraphOptions = {
     data: Graph.data,
     onLoad: function (graph) {
       $scope.graph = graph;
-
       $scope.graph.on('node/click', function (v) {
 
         var q = "SELECT outE().@class.asSet() as out, inE().@class.asSet() as in from " + v.source["@rid"];
@@ -549,7 +549,7 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
               title: title,
               template: 'views/database/graph/asideVertex.html',
               show: true,
-              absolute:false,
+              absolute: false,
               fullscreen: $scope.fullscreen
             });
           }, 200);
@@ -579,7 +579,7 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
           title: title,
           template: 'views/database/graph/asideEdge.html',
           show: true,
-          absolute:false,
+          absolute: false,
           fullscreen: scope.fullscreen
         });
       }
@@ -627,6 +627,13 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
           callback(doc);
         });
       });
+
+      if ($routeParams.q) {
+        if (!$scope.queryText) {
+          $scope.queryText = $routeParams.q;
+        }
+        $scope.query();
+      }
     },
     metadata: Database.getMetadata(),
     config: config,
@@ -1030,12 +1037,15 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
     CommandApi.graphQuery(queryBuffer, {
       database: $routeParams.database,
       language: $scope.language,
-      limit  : $scope.config.limit
+      limit: $scope.config.limit
     }).then(function (data) {
       $scope.graph.data(data.graph).redraw();
       $scope.history = History.push(queryBuffer);
       $scope.currentIndex = -1;
       Spinner.stopSpinner();
+      $timeout(function () {
+        Graph.add(data.graph);
+      }, 1000);
     }).catch(function (err) {
       Spinner.stopSpinner();
       Notification.push({content: err, error: true, autoHide: true});
@@ -1155,7 +1165,7 @@ GrapgController.controller("VertexAsideController", ['$scope', '$routeParams', '
 
 
 }]);
-GrapgController.controller("EdgeAsideController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'Spinner', 'Aside','$rootScope', function ($scope, $routeParams, $location, Database, CommandApi, Spinner, Aside,$rootScope) {
+GrapgController.controller("EdgeAsideController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'Spinner', 'Aside', '$rootScope', function ($scope, $routeParams, $location, Database, CommandApi, Spinner, Aside, $rootScope) {
 
 
   $scope.database = $routeParams.database;
