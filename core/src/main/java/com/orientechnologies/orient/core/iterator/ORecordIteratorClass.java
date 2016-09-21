@@ -86,8 +86,12 @@ public class ORecordIteratorClass<REC extends ORecord> extends ORecordIteratorCl
 
     checkForSystemClusters(iDatabase, clusterIds);
 
-    Arrays.sort(clusterIds);
+    sortClusters(clusterIds);
     config();
+  }
+
+  protected void sortClusters(int[] clusterIds) {
+    Arrays.sort(clusterIds);
   }
 
   @SuppressWarnings("unchecked")

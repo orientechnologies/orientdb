@@ -1365,7 +1365,7 @@ public class OCommandExecutorSQLSelectTest {
     //issue #5572
     List<ODocument> results =db.query(new OSQLSynchQuery<ODocument>("select from TestMultipleClusters where name like :p1 + '%'"), "fo");
     assertEquals(results.size(), 1);
-    
+
     results =db.query(new OSQLSynchQuery<ODocument>("select from TestMultipleClusters where name like :p1 "), "fo");
     assertEquals(results.size(), 0);
   }
@@ -1428,6 +1428,38 @@ public class OCommandExecutorSQLSelectTest {
     assertEquals(results.size(), 1);
     results =db.query(new OSQLSynchQuery<ODocument>("SELECT from TestDateComparison WHERE dateProp <= '2016-05-01'"));
     assertEquals(results.size(), 1);
+
+  }
+
+  @Test
+  public void testOrderByRidDescMultiCluster(){
+    //issue #6694
+
+    OClass clazz = db.getMetadata().getSchema().createClass("TestOrderByRidDescMultiCluster");
+    if(clazz.getClusterIds().length<2){
+      clazz.addCluster("TestOrderByRidDescMultiCluster_11111");
+    }
+    for(int i=0;i<100;i++) {
+      db.command(new OCommandSQL("insert into TestOrderByRidDescMultiCluster set foo = "+i)).execute();
+    }
+
+    List<ODocument> results = db.query(new OSQLSynchQuery<ODocument>("SELECT from TestOrderByRidDescMultiCluster order by @rid desc"));
+    assertEquals(results.size(), 100);
+    ODocument lastDoc = null;
+    for(ODocument doc:results){
+      if(lastDoc!=null){
+        assertTrue(doc.getIdentity().compareTo(lastDoc.getIdentity()) < 0);
+      }
+    }
+
+    results = db.query(new OSQLSynchQuery<ODocument>("SELECT from TestOrderByRidDescMultiCluster order by @rid asc"));
+    assertEquals(results.size(), 100);
+    lastDoc = null;
+    for(ODocument doc:results){
+      if(lastDoc!=null){
+        assertTrue(doc.getIdentity().compareTo(lastDoc.getIdentity()) > 0);
+      }
+    }
 
   }
   private long indexUsages(ODatabaseDocumentTx db) {
