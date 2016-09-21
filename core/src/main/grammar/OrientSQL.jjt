@@ -2301,9 +2301,21 @@ OLetItem LetItem():
     	        )
     	        <RPAREN>
     	    )
-    	)
+    	){
+    	    if(jjtThis.varName.getStringValue().equalsIgnoreCase("$root")||
+               jjtThis.varName.getStringValue().equalsIgnoreCase("root")||
+               jjtThis.varName.getStringValue().equalsIgnoreCase("$parent")||
+               jjtThis.varName.getStringValue().equalsIgnoreCase("parent")||
+               jjtThis.varName.getStringValue().equalsIgnoreCase("$current")||
+               jjtThis.varName.getStringValue().equalsIgnoreCase("current")){
+               throw new OCommandSQLParsingException("invalid LET statement: "+jjtThis.varName+" is a reserved keyword");
+            }
+
+    	}
     )
-    { return jjtThis; }
+    {
+        return jjtThis;
+    }
 }
 
 
