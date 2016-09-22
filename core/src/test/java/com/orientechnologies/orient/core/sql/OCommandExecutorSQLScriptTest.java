@@ -301,4 +301,13 @@ public class OCommandExecutorSQLScriptTest {
     Assert.assertEquals(doc.field("regexp"), "'';");
   }
 
+  @Test
+  public void testReturnSelect() throws Exception {
+    StringBuilder script = new StringBuilder();
+    script.append("return (select from foo)\n");
+    List<ODocument> qResult = db.command(new OCommandScript("sql", script.toString())).execute();
+
+    Assert.assertEquals(qResult.size(), 3);
+  }
+
 }

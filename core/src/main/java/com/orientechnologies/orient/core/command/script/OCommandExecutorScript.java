@@ -555,7 +555,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
       lastResult = new OContextVariableResolver(context).parse(OIOUtils.getStringContent(iValue));
       checkIsRecordResultSet(lastResult);
     } else if (iValue.startsWith("(") && iValue.endsWith(")"))
-      lastResult = executeCommand(iValue, db);
+      lastResult = executeCommand(iValue.substring(1, iValue.length() - 1), db);
     else {
       lastResult = new OSQLPredicate(iValue).evaluate(context);
 
