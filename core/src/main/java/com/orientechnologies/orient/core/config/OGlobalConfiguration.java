@@ -449,9 +449,9 @@ public enum OGlobalConfiguration {
 
   NETWORK_HTTP_USE_TOKEN("network.http.useToken", "Enable Token based sessions for http", Boolean.class, false),
 
-  NETWORK_TOKEN_SECRETKEY("network.token.secretyKey", "Network token sercret key", String.class, ""),
+  NETWORK_TOKEN_SECRETKEY("network.token.secretKey", "Network token sercret key", String.class, ""),
 
-  NETWORK_TOKEN_ENCRIPTION_ALGORITHM("network.token.encriptionAlgorithm", "Network token algorithm", String.class, "HmacSHA256"),
+  NETWORK_TOKEN_ENCRYPTION_ALGORITHM("network.token.encryptionAlgorithm", "Network token algorithm", String.class, "HmacSHA256"),
 
   NETWORK_TOKEN_EXPIRE_TIMEOUT("network.token.expireTimeout",
       "Timeout, after which a binary session is considered to have expired (in minutes)", Integer.class, 60),

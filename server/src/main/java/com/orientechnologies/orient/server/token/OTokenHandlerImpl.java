@@ -69,7 +69,7 @@ public class OTokenHandlerImpl implements OTokenHandler {
     if (sessionTimeout != null)
       sessionInMills = sessionTimeout * 1000 * 60;
 
-    algorithm = OGlobalConfiguration.NETWORK_TOKEN_ENCRIPTION_ALGORITHM.getValueAsString();
+    algorithm = OGlobalConfiguration.NETWORK_TOKEN_ENCRYPTION_ALGORITHM.getValueAsString();
     if (algorithm != null)
       this.algorithm = algorithm;
 
