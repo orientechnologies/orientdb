@@ -56,7 +56,7 @@ public class OrientTokenHandler extends OServerPluginAbstract implements OTokenH
     if (baseSession != null)
       OGlobalConfiguration.NETWORK_TOKEN_EXPIRE_TIMEOUT.setValue(baseSession);
     if (algorithm != null)
-      OGlobalConfiguration.NETWORK_TOKEN_ENCRIPTION_ALGORITHM.setValue(algorithm);
+      OGlobalConfiguration.NETWORK_TOKEN_ENCRYPTION_ALGORITHM.setValue(algorithm);
 
   }
 
