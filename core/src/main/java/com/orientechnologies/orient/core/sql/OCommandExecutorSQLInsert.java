@@ -48,24 +48,23 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Luca Garulli
  * @author Johann Sorel (Geomatys)
  */
-public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware implements OCommandDistributedReplicateRequest,
-    OCommandResultListener {
-  public static final String             KEYWORD_INSERT   = "INSERT";
-  protected static final String          KEYWORD_RETURN   = "RETURN";
-  private static final String            KEYWORD_VALUES   = "VALUES";
-  private String                         className        = null;
-  private OClass                         clazz            = null;
-  private String                         clusterName      = null;
-  private String                         indexName        = null;
-  private List<Map<String, Object>>      newRecords;
+public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware
+    implements OCommandDistributedReplicateRequest, OCommandResultListener {
+  public static final    String KEYWORD_INSERT = "INSERT";
+  protected static final String KEYWORD_RETURN = "RETURN";
+  private static final   String KEYWORD_VALUES = "VALUES";
+  private                String className      = null;
+  private                OClass clazz          = null;
+  private                String clusterName    = null;
+  private                String indexName      = null;
+  private List<Map<String, Object>> newRecords;
   private OSQLAsynchQuery<OIdentifiable> subQuery         = null;
   private AtomicLong                     saved            = new AtomicLong(0);
   private Object                         returnExpression = null;
   private List<ODocument>                queryResult      = null;
   private boolean                        unsafe           = false;
 
-  @SuppressWarnings("unchecked")
-  public OCommandExecutorSQLInsert parse(final OCommandRequest iRequest) {
+  @SuppressWarnings("unchecked") public OCommandExecutorSQLInsert parse(final OCommandRequest iRequest) {
     final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
 
     String queryText = textRequest.getText();
@@ -94,11 +93,16 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
       parserRequiredKeyword("INTO");
 
       String subjectName = parserRequiredWord(true, "Invalid subject name. Expected cluster, class or index");
-      if (subjectName.startsWith(OCommandExecutorSQLAbstract.CLUSTER_PREFIX))
+      if (subjectName.startsWith(OCommandExecutorSQLAbstract.CLUSTER_PREFIX)) {
         // CLUSTER
         clusterName = subjectName.substring(OCommandExecutorSQLAbstract.CLUSTER_PREFIX.length());
-
-      else if (subjectName.startsWith(OCommandExecutorSQLAbstract.INDEX_PREFIX))
+        try {
+          int clusterId = Integer.parseInt(clusterName);
+          clusterName = database.getClusterNameById(clusterId);
+        } catch (Exception e) {
+          //not an integer
+        }
+      } else if (subjectName.startsWith(OCommandExecutorSQLAbstract.INDEX_PREFIX))
         // INDEX
         indexName = subjectName.substring(OCommandExecutorSQLAbstract.INDEX_PREFIX.length());
 
@@ -122,12 +126,12 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
           throw new OQueryParsingException("Class '" + className + "' was not found");
       }
 
-      if(clusterName != null && className == null){
+      if (clusterName != null && className == null) {
         ODatabaseDocumentInternal db = getDatabase();
         OCluster cluster = db.getStorage().getClusterByName(clusterName);
-        if(cluster != null){
+        if (cluster != null) {
           clazz = db.getMetadata().getSchema().getClassByClusterId(cluster.getId());
-          if(clazz != null){
+          if (clazz != null) {
             className = clazz.getName();
           }
         }
@@ -252,13 +256,11 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
     return null;
   }
 
-  @Override
-  public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
+  @Override public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
     return indexName != null ? DISTRIBUTED_EXECUTION_MODE.REPLICATE : DISTRIBUTED_EXECUTION_MODE.LOCAL;
   }
 
-  @Override
-  public Set<String> getInvolvedClusters() {
+  @Override public Set<String> getInvolvedClusters() {
     if (className != null) {
       final OClass clazz = ((OMetadataInternal) getDatabase().getMetadata()).getImmutableSchemaSnapshot().getClass(className);
       return Collections.singleton(getDatabase().getClusterNameById(clazz.getClusterSelection().getCluster(clazz, null)));
@@ -268,13 +270,11 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
     return Collections.EMPTY_SET;
   }
 
-  @Override
-  public String getSyntax() {
+  @Override public String getSyntax() {
     return "INSERT INTO [class:]<class>|cluster:<cluster>|index:<index> [(<field>[,]*) VALUES (<expression>[,]*)[,]*]|[SET <field> = <expression>|<sub-command>[,]*]|CONTENT {<JSON>} [RETURN <expression>] [FROM select-query]";
   }
 
-  @Override
-  public boolean result(final Object iRecord) {
+  @Override public boolean result(final Object iRecord) {
     final ORecord rec = ((OIdentifiable) iRecord).getRecord().copy();
 
     // RESET THE IDENTITY TO AVOID UPDATE
@@ -293,8 +293,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
     return true;
   }
 
-  @Override
-  public void end() {
+  @Override public void end() {
 
   }
 
@@ -341,7 +340,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
     final ArrayList<String> fieldNamesQuoted = new ArrayList<String>();
     parserSetCurrentPosition(OStringSerializerHelper.getParameters(parserText, beginFields, endFields, fieldNamesQuoted));
     final ArrayList<String> fieldNames = new ArrayList<String>();
-    for(String fieldName:fieldNamesQuoted){
+    for (String fieldName : fieldNamesQuoted) {
       fieldNames.add(decodeClassName(fieldName));
     }
 
@@ -361,8 +360,8 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
     int blockStart = parserGetCurrentPosition();
     int blockEnd = parserGetCurrentPosition();
 
-    final List<String> records = OStringSerializerHelper.smartSplit(parserText, new char[] { ',' }, blockStart, -1, true, true,
-        false, false);
+    final List<String> records = OStringSerializerHelper
+        .smartSplit(parserText, new char[] { ',' }, blockStart, -1, true, true, false, false);
     for (String record : records) {
 
       final List<String> values = new ArrayList<String>();
@@ -432,13 +431,11 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
     return (OIdentifiable) parsedRid;
   }
 
-  @Override
-  public QUORUM_TYPE getQuorumType() {
+  @Override public QUORUM_TYPE getQuorumType() {
     return QUORUM_TYPE.WRITE;
   }
 
-  @Override
-  public Object getResult() {
+  @Override public Object getResult() {
     return null;
   }
 }
