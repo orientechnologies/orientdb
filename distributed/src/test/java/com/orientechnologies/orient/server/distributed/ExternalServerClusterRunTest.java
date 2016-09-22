@@ -24,7 +24,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 /**
- * Start 3 servers and wait for external commands
+ * Start 3 servers and wait for external commands. This test must be ignored and activated only upon request for local debugging.
  */
 public class ExternalServerClusterRunTest extends AbstractServerClusterTest {
   public String getDatabaseName() {

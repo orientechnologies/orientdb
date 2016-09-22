@@ -194,7 +194,7 @@ public class ODistributedResponseManager {
   }
 
   public long getSentOn() {
-    return sentOn / 1000000;
+    return sentOn;
   }
 
   public void setLocalResult(final String localNodeName, final Object localResult) {
@@ -645,7 +645,7 @@ public class ODistributedResponseManager {
   private String composeConflictMessage() {
     final StringBuilder msg = new StringBuilder(256);
     msg.append("Quorum " + getQuorum() + " not reached for request (" + request + "). Elapsed="
-        + (System.currentTimeMillis() - getSentOn()) + "ms");
+        + ((System.nanoTime() - getSentOn())/1000000) + "ms");
     final List<ODistributedResponse> res = getConflictResponses();
     if (res.isEmpty())
       msg.append(" No server in conflict. ");

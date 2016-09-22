@@ -163,7 +163,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     sendShutdown();
     channel.close();
   }
-  
+
   private boolean isHandshaking(int requestType) {
     return requestType == OChannelBinaryProtocol.REQUEST_CONNECT || requestType == OChannelBinaryProtocol.REQUEST_DB_OPEN
         || requestType == OChannelBinaryProtocol.REQUEST_SHUTDOWN || requestType == OChannelBinaryProtocol.REQUEST_DB_REOPEN;
@@ -195,7 +195,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       } else
         sessionRequest(connection, requestType, clientTxId);
     } catch (Exception e) {
-      //if an exception arrive to this point we need to kill the current socket. 
+      // if an exception arrive to this point we need to kill the current socket.
       sendShutdown();
       throw e;
     }
@@ -230,7 +230,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         case OChannelBinaryProtocol.REQUEST_SHUTDOWN:
           shutdownConnection(connection);
           break;
-          
+
         case OChannelBinaryProtocol.REQUEST_DB_REOPEN:
           reopenDatabase(connection);
           break;
@@ -263,7 +263,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     try {
 
       timer = Orient.instance().getProfiler().startChrono();
-      connection = onBeforeOperationalRequest(connection, channel);      
+      connection = onBeforeOperationalRequest(connection, channel);
       OLogManager.instance().debug(this, "Request id:" + clientTxId + " type:" + requestType);
 
       try {
@@ -289,7 +289,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       Orient.instance().getProfiler().stopChrono("server.network.requests", "Total received requests", timer,
           "server.network.requests");
     }
-    
+
   }
 
   private void sessionRequest(OClientConnection connection, int requestType, int clientTxId) throws IOException {
@@ -344,7 +344,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     }
   }
 
-
   private OClientConnection onBeforeHandshakeRequest(OClientConnection connection, OChannelBinary channel) throws IOException {
     try {
       if (requestType != OChannelBinaryProtocol.REQUEST_DB_REOPEN) {
@@ -389,13 +388,12 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     OServerPluginHelper.invokeHandlerCallbackOnBeforeClientRequest(server, connection, (byte) requestType);
     return connection;
   }
-  
 
   private OClientConnection onBeforeOperationalRequest(OClientConnection connection, OChannelBinary channel) throws IOException {
     try {
       if (connection == null && requestType == OChannelBinaryProtocol.REQUEST_DB_CLOSE)
         return null;
-      
+
       if (connection != null && !Boolean.TRUE.equals(connection.getTokenBased())) {
         // BACKWARD COMPATIBILITY MODE
         connection.setTokenBytes(null);
@@ -439,8 +437,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     }
     return connection;
   }
-  
-  
+
   private void waitDistribuedIsOnline(OClientConnection connection) {
     if (requests == 0) {
       final ODistributedServerManager manager = server.getDistributedManager();
@@ -469,7 +466,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   protected boolean executeRequest(OClientConnection connection) throws IOException {
     try {
       switch (requestType) {
-
 
       case OChannelBinaryProtocol.REQUEST_DB_LIST:
         listDatabases(connection);
@@ -944,13 +940,17 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     req.fromStream(channel.getDataInput());
 
     final String dbName = req.getDatabaseName();
+    ODistributedDatabase ddb = null;
     if (dbName != null) {
-      final ODistributedDatabase ddb = manager.getMessageService().getDatabase(dbName);
-      if (ddb == null)
+      ddb = manager.getMessageService().getDatabase(dbName);
+      if (ddb == null && req.getTask().isNodeOnlineRequired())
         throw new ODistributedException("Database configuration not found for database '" + req.getDatabaseName() + "'");
 
+    }
+
+    if (ddb != null)
       ddb.processRequest(req);
-    } else
+    else
       manager.executeOnLocalNode(req.getId(), req.getTask(), null);
   }
 
@@ -1619,7 +1619,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
   private void writeSimpleValue(OClientConnection connection, OAbstractCommandResultListener listener, Object result)
       throws IOException {
-      
+
     if (connection.getData().protocolVersion >= OChannelBinaryProtocol.PROTOCOL_VERSION_35) {
       channel.writeByte((byte) 'w');
       ODocument document = new ODocument();

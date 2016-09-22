@@ -218,7 +218,7 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
   }
 
   protected void purgePendingMessages() {
-    final long now = System.currentTimeMillis();
+    final long now = System.nanoTime();
 
     final long timeout = OGlobalConfiguration.DISTRIBUTED_ASYNCH_RESPONSES_TIMEOUT.getValueAsLong();
 
@@ -227,7 +227,7 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
 
       final ODistributedResponseManager resp = item.getValue();
 
-      final long timeElapsed = now - resp.getSentOn();
+      final long timeElapsed = (now - resp.getSentOn()) / 1000000;
 
       if (timeElapsed > timeout) {
         // EXPIRED REQUEST, FREE IT!

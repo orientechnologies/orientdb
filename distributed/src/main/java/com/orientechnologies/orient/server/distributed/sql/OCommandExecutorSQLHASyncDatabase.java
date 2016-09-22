@@ -49,12 +49,6 @@ public class OCommandExecutorSQLHASyncDatabase extends OCommandExecutorSQLAbstra
   public static final String KEYWORD_SYNC     = "SYNC";
   public static final String KEYWORD_DATABASE = "DATABASE";
 
-  enum MODE {
-    FULL_REPLACE, DELTA
-  };
-
-  private MODE mode = MODE.FULL_REPLACE;
-
   public OCommandExecutorSQLHASyncDatabase parse(final OCommandRequest iRequest) {
     init((OCommandRequestText) iRequest);
 
@@ -72,11 +66,6 @@ public class OCommandExecutorSQLHASyncDatabase extends OCommandExecutorSQLAbstra
     pos = nextWord(parserText, parserTextUpperCase, pos, word, true);
     if (pos == -1 || !word.toString().equals(KEYWORD_DATABASE))
       throw new OCommandSQLParsingException("Keyword " + KEYWORD_DATABASE + " not found. Use " + getSyntax(), parserText, oldPos);
-
-    pos = nextWord(parserText, parserTextUpperCase, pos, word, false);
-    if (pos != -1) {
-      mode = MODE.valueOf(word.toString());
-    }
 
     return this;
   }
@@ -100,7 +89,7 @@ public class OCommandExecutorSQLHASyncDatabase extends OCommandExecutorSQLAbstra
 
     final String databaseName = database.getName();
 
-    return dManager.installDatabase(true, databaseName, dStg.getDistributedConfiguration().getDocument());
+    return dManager.installDatabase(true, databaseName, dStg.getDistributedConfiguration().getDocument(), false, true);
   }
 
   @Override

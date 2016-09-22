@@ -343,7 +343,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
           iNodes, localResult);
 
       // AFTER COMPUTED THE QUORUM, REMOVE THE OFFLINE NODES TO HAVE THE LIST OF REAL AVAILABLE NODES
-      final int availableNodes = manager.getAvailableNodes(iNodes, databaseName);
+      final int availableNodes = checkNodesAreOnline ? manager.getAvailableNodes(iNodes, databaseName) : iNodes.size();
 
       final int expectedResponses = localResult != null ? availableNodes + 1 : availableNodes;
 
