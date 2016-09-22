@@ -97,7 +97,10 @@ import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
@@ -193,7 +196,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       } else
         sessionRequest(connection, requestType, clientTxId);
     } catch (Exception e) {
-      //if an exception arrive to this point we need to kill the current socket. 
+      // if an exception arrive to this point we need to kill the current socket.
       sendShutdown();
       throw e;
     }
@@ -941,13 +944,17 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     req.fromStream(channel.getDataInput());
 
     final String dbName = req.getDatabaseName();
+    ODistributedDatabase ddb = null;
     if (dbName != null) {
-      final ODistributedDatabase ddb = manager.getMessageService().getDatabase(dbName);
-      if (ddb == null)
+      ddb = manager.getMessageService().getDatabase(dbName);
+      if (ddb == null && req.getTask().isNodeOnlineRequired())
         throw new ODistributedException("Database configuration not found for database '" + req.getDatabaseName() + "'");
 
+    }
+
+    if (ddb != null)
       ddb.processRequest(req);
-    } else
+    else
       manager.executeOnLocalNode(req.getId(), req.getTask(), null);
   }
 
@@ -1618,7 +1625,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
   private void writeSimpleValue(OClientConnection connection, OAbstractCommandResultListener listener, Object result)
       throws IOException {
-      
+
     if (connection.getData().protocolVersion >= OChannelBinaryProtocol.PROTOCOL_VERSION_35) {
       channel.writeByte((byte) 'w');
       ODocument document = new ODocument();

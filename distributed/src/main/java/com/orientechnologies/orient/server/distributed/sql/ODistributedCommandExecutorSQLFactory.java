@@ -26,7 +26,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Graph related command operator executor factory. It's auto-discovered.
+ * Distributed related command operator executor factory. It's auto-discovered.
  *
  * @author Luca Garulli
  */

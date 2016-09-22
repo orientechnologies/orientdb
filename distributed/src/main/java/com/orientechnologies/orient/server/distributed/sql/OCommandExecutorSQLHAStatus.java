@@ -71,7 +71,7 @@ public class OCommandExecutorSQLHAStatus extends OCommandExecutorSQLAbstract imp
 
     pos = nextWord(parserText, parserTextUpperCase, pos, word, false, " \r\n");
     if (pos == -1)
-      throw new OCommandSQLParsingException("Missing parameter. Use " + getSyntax(), parserText, oldPos);
+      throw new OCommandSQLParsingException("Missing option. Use " + getSyntax(), parserText, oldPos);
 
     while (pos > -1) {
       final String option = word.toString();
@@ -96,7 +96,7 @@ public class OCommandExecutorSQLHAStatus extends OCommandExecutorSQLAbstract imp
   }
 
   /**
-   * Execute the REMOVE SERVER command.
+   * Execute the command.
    */
   public Object execute(final Map<Object, Object> iArgs) {
     final ODatabaseDocumentInternal database = getDatabase();

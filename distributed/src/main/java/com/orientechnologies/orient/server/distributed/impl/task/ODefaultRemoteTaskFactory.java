@@ -95,6 +95,9 @@ public class ODefaultRemoteTaskFactory implements ORemoteTaskFactory {
 
     case OFixUpdateRecordTask.FACTORYID: // 21
       return new OFixUpdateRecordTask();
+
+    case OStartReplicationTask.FACTORYID: // 22
+      return new OStartReplicationTask();
     }
 
     throw new IllegalArgumentException("Task with code " + code + " is not supported");

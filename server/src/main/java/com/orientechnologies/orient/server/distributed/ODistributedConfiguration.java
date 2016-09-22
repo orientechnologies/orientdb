@@ -142,7 +142,8 @@ public class ODistributedConfiguration {
    * @param iLocalNode
    *          Local node name
    */
-  public Map<String, Collection<String>> getServerClusterMap(Collection<String> iClusterNames, final String iLocalNode) {
+  public Map<String, Collection<String>> getServerClusterMap(Collection<String> iClusterNames, final String iLocalNode,
+      final boolean optimizeForLocalOnly) {
     if (iClusterNames == null || iClusterNames.isEmpty())
       iClusterNames = DEFAULT_CLUSTER_NAME;
 
@@ -159,7 +160,7 @@ public class ODistributedConfiguration {
         }
       }
 
-      if (canUseLocalNode) {
+      if (optimizeForLocalOnly && canUseLocalNode) {
         // USE LOCAL NODE ONLY (MUCH FASTER)
         servers.put(iLocalNode, iClusterNames);
         return servers;
@@ -174,8 +175,8 @@ public class ODistributedConfiguration {
 
           // PICK THE FIRST ONE
           servers.put(s, iClusterNames);
-          return servers;
         }
+        return servers;
       }
 
       // GROUP BY SERVER WITH THE NUMBER OF CLUSTERS

@@ -75,7 +75,12 @@ public interface ODistributedServerManager {
    */
   enum DB_STATUS {
     /**
-     * The database is not started or has been put in OFFLINE status by another node. In this status the server does not receive any
+     * The database is not installed. In this status the server does not receive any request.
+     */
+    NOT_AVAILABLE,
+
+    /**
+     * The database has been put in OFFLINE status. In this status the server does not receive any
      * request.
      */
     OFFLINE,
@@ -225,7 +230,8 @@ public interface ODistributedServerManager {
 
   List<String> getOnlineNodes(String iDatabaseName);
 
-  boolean installDatabase(boolean iStartup, String databaseName, ODocument config);
+  boolean installDatabase(boolean iStartup, String databaseName, ODocument config, boolean forceDeployment,
+      boolean tryWithDeltaFirst);
 
   ORemoteTaskFactory getTaskFactory();
 

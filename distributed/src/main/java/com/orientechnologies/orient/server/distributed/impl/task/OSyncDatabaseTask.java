@@ -59,7 +59,7 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
   public Object execute(final ODistributedRequestId requestId, final OServer iServer, final ODistributedServerManager iManager,
       final ODatabaseDocumentInternal database) throws Exception {
 
-    if (!getNodeSource().equals(iManager.getLocalNodeName())) {
+    if (!iManager.getLocalNodeName().equals(getNodeSource())) {
       if (database == null)
         throw new ODistributedException("Database instance is null");
 
@@ -80,7 +80,6 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
           iManager.getConfigurationMap().put(DEPLOYDB + databaseName, random);
 
           iManager.setDatabaseStatus(getNodeSource(), databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
-//          iManager.setDatabaseStatus(iManager.getLocalNodeName(), databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
 
           ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT, "Deploying database %s...",
               databaseName);

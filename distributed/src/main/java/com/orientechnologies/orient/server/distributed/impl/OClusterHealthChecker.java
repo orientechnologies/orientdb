@@ -51,7 +51,6 @@ public class OClusterHealthChecker extends TimerTask {
     try {
 
       checkServerStatus();
-      checkDatabaseStatuses();
       checkServerInStall();
       checkServerList();
 
@@ -109,7 +108,7 @@ public class OClusterHealthChecker extends TimerTask {
 
     for (String dbName : manager.getMessageService().getDatabases()) {
       final ODistributedServerManager.DB_STATUS localNodeStatus = manager.getDatabaseStatus(manager.getLocalNodeName(), dbName);
-      if (localNodeStatus != ODistributedServerManager.DB_STATUS.OFFLINE)
+      if (localNodeStatus != ODistributedServerManager.DB_STATUS.NOT_AVAILABLE)
         // ONLY OFFLINE NODE/DB CAN BE RECOVERED
         continue;
 
@@ -128,7 +127,7 @@ public class OClusterHealthChecker extends TimerTask {
             "Trying to recover current server for database '%s'...", dbName);
 
         final boolean result = manager.installDatabase(true, dbName,
-            ((ODistributedStorage) manager.getStorage(dbName)).getDistributedConfiguration().getDocument());
+            ((ODistributedStorage) manager.getStorage(dbName)).getDistributedConfiguration().getDocument(), false, true);
 
         if (result)
           ODistributedServerLog.info(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
@@ -181,12 +180,6 @@ public class OClusterHealthChecker extends TimerTask {
     }
   }
 
-  private void setAllDatabasesOffline(final String server) {
-    for (String dbName : manager.getMessageService().getDatabases()) {
-      manager.setDatabaseStatus(server, dbName, ODistributedServerManager.DB_STATUS.OFFLINE);
-    }
-  }
-
   private void setDatabaseOffline(final String dbName, final String server) {
     if (manager.getDatabaseStatus(server, dbName) != ODistributedServerManager.DB_STATUS.ONLINE)
       return;
@@ -203,20 +196,6 @@ public class OClusterHealthChecker extends TimerTask {
       ODistributedServerLog.warn(this, manager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.OUT,
           "Server '%s' did not respond to the heartbeat message (db=%s, timeout=%dms), but cannot be set OFFLINE by configuration",
           server, dbName, OGlobalConfiguration.DISTRIBUTED_HEARTBEAT_TIMEOUT.getValueAsLong());
-    }
-  }
-
-  private void checkDatabaseStatuses() {
-    for (String dbName : manager.getMessageService().getDatabases()) {
-      final ODistributedServerManager.DB_STATUS status = (ODistributedServerManager.DB_STATUS) manager.getConfigurationMap()
-          .get(OHazelcastPlugin.CONFIG_DBSTATUS_PREFIX + manager.getLocalNodeName() + "." + dbName);
-      if (status == null) {
-        OLogManager.instance().warn(this, "Status of database '%s' on server '%s' is missing, republishing it...", dbName,
-            manager.getLocalNodeName());
-        final ODistributedDatabase ddb = manager.getMessageService().getDatabase(dbName);
-        if (ddb != null)
-          ddb.setOnline();
-      }
     }
   }
 }

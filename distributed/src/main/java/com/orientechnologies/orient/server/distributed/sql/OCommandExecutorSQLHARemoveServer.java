@@ -78,7 +78,7 @@ public class OCommandExecutorSQLHARemoveServer extends OCommandExecutorSQLAbstra
   }
 
   /**
-   * Execute the REMOVE SERVER command.
+   * Execute the command.
    */
   public Object execute(final Map<Object, Object> iArgs) {
     final ODatabaseDocumentInternal database = getDatabase();

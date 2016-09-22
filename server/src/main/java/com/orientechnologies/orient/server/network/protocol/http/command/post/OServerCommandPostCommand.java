@@ -23,7 +23,6 @@ import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
@@ -135,8 +134,10 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
       iResponse.writeResult(response, format, accept, additionalContent, mode);
 
     } finally {
-      if (db != null)
+      if (db != null) {
+        db.activateOnCurrentThread();
         db.close();
+      }
     }
 
     return false;
