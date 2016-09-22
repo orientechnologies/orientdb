@@ -76,8 +76,6 @@ import javax.naming.directory.InitialDirContext;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -1995,15 +1993,16 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     else if (host.split(":").length < 2 || host.split(":")[1].trim().length() == 0)
       host += (clientConfiguration.getValueAsBoolean(OGlobalConfiguration.CLIENT_USE_SSL) ? getDefaultSSLPort() : getDefaultPort());
 
-    // CONVERT 127.0.0.1 TO THE PUBLIC IP IF POSSIBLE
-    if (host.startsWith(LOCAL_IP)) {
-      try {
-        final String publicIP = InetAddress.getLocalHost().getHostAddress();
-        host = publicIP + host.substring(LOCAL_IP.length());
-      } catch (UnknownHostException e) {
-        // IGNORE IT
-      }
-    }
+// DISABLED BECAUSE THIS DID NOT ALLOW TO CONNECT TO LOCAL HOST ANYMORE IF THE SERVER IS BOUND TO 127.0.0.1
+// CONVERT 127.0.0.1 TO THE PUBLIC IP IF POSSIBLE
+//    if (host.startsWith(LOCAL_IP)) {
+//      try {
+//        final String publicIP = InetAddress.getLocalHost().getHostAddress();
+//        host = publicIP + host.substring(LOCAL_IP.length());
+//      } catch (UnknownHostException e) {
+//        // IGNORE IT
+//      }
+//    }
 
     synchronized (serverURLs) {
       if (!serverURLs.contains(host)) {
