@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.testng.annotations.AfterClass;
@@ -29,6 +30,7 @@ import org.testng.annotations.Test;
 import java.util.List;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.fail;
 
 @Test public class OCommandExecutorSQLCreateSequenceTest {
   private static String DB_STORAGE = "memory";
@@ -129,6 +131,27 @@ import static org.testng.Assert.assertEquals;
     for (ODocument result : results) {
       assertEquals(result.field("val"), 33L);
     }
+  }
+
+  @Test public void testDrop() {
+    db.command(new OCommandSQL("CREATE SEQUENCE SequenceDrop TYPE ORDERED")).execute();
+
+    List<ODocument> results = db.query(new OSQLSynchQuery("select sequence('SequenceDrop').next() as val"));
+    assertEquals(results.size(), 1);
+    for (ODocument result : results) {
+      assertEquals(result.field("val"), 1L);
+    }
+    db.command(new OCommandSQL("drop sequence SequenceDrop")).execute();
+
+    try {
+      results = db.query(new OSQLSynchQuery("select sequence('SequenceDrop').next() as val"));
+      fail();
+    } catch (OCommandSQLParsingException e) {
+    } catch (OCommandExecutionException e) {
+    } catch (Exception e) {
+      fail();
+    }
+
   }
 
 }
