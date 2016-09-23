@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.server.network.protocol.http.command.put;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -97,8 +96,8 @@ public class OServerCommandPutDocument extends OServerCommandDocumentAbstract {
         currentDocument.save();
       }
 
-      iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
-          currentDocument.toJSON(), OHttpUtils.HEADER_ETAG + currentDocument.getVersion());
+      iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, currentDocument.toJSON(),
+          OHttpUtils.HEADER_ETAG + currentDocument.getVersion());
 
     } finally {
       if (db != null)
