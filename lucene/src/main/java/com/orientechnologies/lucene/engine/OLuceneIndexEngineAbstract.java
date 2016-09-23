@@ -507,18 +507,13 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
 
   @Override
   public void freeze(boolean throwException) {
-
-    close();
+    // Flush on freeze
+    flush();
   }
 
   @Override
   public void release() {
-
-    try {
-      reOpen(metadata);
-    } catch (IOException e) {
-      OLogManager.instance().error(this, "Error on releasing Lucene index", e);
-    }
+    // Do nothing on release
   }
 
   @Override
