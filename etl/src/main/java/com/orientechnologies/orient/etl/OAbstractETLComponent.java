@@ -18,9 +18,7 @@
 
 package com.orientechnologies.orient.etl;
 
-import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.parser.OVariableParser;
-import com.orientechnologies.common.parser.OVariableParserListener;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -28,6 +26,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS;
+
+import static com.orientechnologies.common.parser.OSystemVariableResolver.*;
 
 /**
  * ETL abstract component.
@@ -137,35 +137,26 @@ public abstract class OAbstractETLComponent implements OETLComponent {
     return buffer.toString();
   }
 
-  protected Object resolve(final Object iContent) {
-    if (context == null || iContent == null)
-      return iContent;
+  protected Object resolve(final Object content) {
+    if (context == null || content == null)
+      return content;
 
     Object value;
-    if (iContent instanceof String) {
-      if (((String) iContent).startsWith("$") && !((String) iContent).startsWith(OSystemVariableResolver.VAR_BEGIN))
-        value = context.getVariable(iContent.toString());
-      else
-        value = OVariableParser
-            .resolveVariables((String) iContent, OSystemVariableResolver.VAR_BEGIN, OSystemVariableResolver.VAR_END,
-                new OVariableParserListener() {
-                  @Override
-                  public Object resolve(final String iVariable) {
-                    return context.getVariable(iVariable);
-                  }
-                });
-    } else
-      value = iContent;
+    if (content instanceof String) {
+      String contentAsString = (String) content;
+      if (contentAsString.startsWith("$") && !contentAsString.startsWith(VAR_BEGIN)) {
+        value = context.getVariable(content.toString());
+      } else {
+        value = OVariableParser.resolveVariables(contentAsString, VAR_BEGIN, VAR_END, variable -> context.getVariable(variable));
+      }
+    } else {
+      value = content;
+    }
 
-    if (value instanceof String)
-      value = OVariableParser.resolveVariables((String) value, "={", "}", new OVariableParserListener() {
-
-        @Override
-        public Object resolve(final String iVariable) {
-          return new OSQLPredicate(iVariable).evaluate(context);
-        }
-
-      });
+    if (value instanceof String) {
+      value = OVariableParser.resolveVariables((String) value, "={", "}",
+          variable -> new OSQLPredicate(variable).evaluate(context));
+    }
     return value;
   }
 }

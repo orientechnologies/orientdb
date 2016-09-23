@@ -23,8 +23,10 @@ import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.etl.OETLProcessor;
 import com.orientechnologies.orient.graph.gremlin.OCommandGremlin;
+
+import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.*;
+import static jdk.nashorn.internal.runtime.regexp.joni.Config.log;
 
 /**
  * Executes a command.
@@ -37,16 +39,18 @@ public class OCommandTransformer extends OAbstractTransformer {
   public ODocument getConfiguration() {
     return new ODocument().fromJSON("{parameters:[" + getCommonConfigurationParameters() + ","
         + "{language:{optional:true,description:'Command language, SQL by default'}},"
-        + "{command:{optional:false,description:'Command to execute'}}]," + "input:['ODocument'],output:'ODocument'}");
+        + "{command:{optional:false,description:'Command to execute'}}],"
+        + "input:['ODocument'],output:'ODocument'}");
   }
 
   @Override
-  public void configure(final ODocument iConfiguration, final OCommandContext iContext) {
-    super.configure(iConfiguration, iContext);
+  public void configure(final ODocument conf, final OCommandContext ctx) {
+    super.configure(conf, ctx);
 
-    if (iConfiguration.containsField("language"))
-      language = ((String) iConfiguration.field("language")).toLowerCase();
-    command = (String) iConfiguration.field("command");
+    if (conf.containsField("language"))
+      language = conf.<String>field("language").toLowerCase();
+
+    command = conf.field("command");
   }
 
   @Override
@@ -57,18 +61,23 @@ public class OCommandTransformer extends OAbstractTransformer {
   @Override
   public Object executeTransform(final Object input) {
     String runtimeCommand = (String) resolve(command);
+
     final OCommandRequest cmd;
     if (language.equals("sql")) {
       cmd = new OCommandSQL(runtimeCommand);
-      log(OETLProcessor.LOG_LEVELS.DEBUG, "executing command=%s...", runtimeCommand);
+
+
+      log(DEBUG, "executing command=%s", runtimeCommand);
     } else if (language.equals("gremlin")) {
       cmd = new OCommandGremlin(runtimeCommand);
     } else {
       cmd = new OCommandScript(language, runtimeCommand);
     }
     cmd.setContext(context);
+
+    log(DEBUG, "pipeline " + pipeline.getDocumentDatabase() );
     Object result = pipeline.getDocumentDatabase().command(cmd).execute();
-    log(OETLProcessor.LOG_LEVELS.DEBUG, "executed command=%s, result=%s", cmd, result);
+    log(DEBUG, "executed command=%s, result=%s", cmd, result);
     return result;
   }
 }

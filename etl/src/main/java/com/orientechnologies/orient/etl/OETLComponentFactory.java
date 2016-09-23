@@ -67,7 +67,6 @@ public class OETLComponentFactory {
 
     registerTransformer(OBlockTransformer.class);
     registerTransformer(OCodeTransformer.class);
-    registerTransformer(OCSVTransformer.class);
     registerTransformer(OCommandTransformer.class);
     registerTransformer(OEdgeTransformer.class);
     registerTransformer(OFieldTransformer.class);

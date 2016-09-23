@@ -24,7 +24,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS;
 import com.orientechnologies.orient.etl.loader.OLoader;
 import com.orientechnologies.orient.etl.transformer.OTransformer;
@@ -40,13 +39,13 @@ import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.*;
  * @author Luca Garulli (l.garulli-at-orientechnologies.com)
  */
 public class OETLPipeline {
-  protected final OETLProcessor          processor;
-  protected final List<OTransformer>     transformers;
-  protected final OLoader                loader;
-  protected final OCommandContext        context;
-  protected final LOG_LEVELS             logLevel;
-  protected final int                    maxRetries;
-  protected       boolean                haltOnError;
+  protected final OETLProcessor      processor;
+  protected final List<OTransformer> transformers;
+  protected final OLoader            loader;
+  protected final OCommandContext    context;
+  protected final LOG_LEVELS         logLevel;
+  protected final int                maxRetries;
+  protected       boolean            haltOnError;
   protected       ODatabaseDocument  db;
   protected       OrientBaseGraph    graph;
 
@@ -62,12 +61,10 @@ public class OETLPipeline {
     context = new OBasicCommandContext();
 
     for (OTransformer t : this.transformers) {
-//      processor.out(INFO, "passing pipeline to :: " + t.getName());
       t.setPipeline(this);
     }
 
   }
-
 
   public synchronized void begin() {
     loader.beginLoader(this);
@@ -136,6 +133,7 @@ public class OETLPipeline {
         throw e;
 
       } catch (Exception e) {
+        e.printStackTrace();
         processor.out(ERROR, "Error in Pipeline execution: %s", e);
         processor.getStats().incrementErrors();
 

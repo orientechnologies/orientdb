@@ -2,7 +2,6 @@ package com.orientechnologies.orient.etl.extractor;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLBaseTest;
-import com.orientechnologies.orient.etl.transformer.OCSVTransformer;
 import org.junit.Test;
 
 import java.text.DateFormat;
@@ -228,14 +227,6 @@ public class OCSVExtractorTest extends OETLBaseTest {
   }
 
   @Test
-  public void testGetCellContentSingleQuoted() {
-    String singleQuotedString = "\"aaa\"";
-    String unQuotedString = "aaa";
-    OCSVTransformer ocsvTransformer = new OCSVTransformer();
-    assertEquals(unQuotedString, ocsvTransformer.getCellContent(singleQuotedString));
-  }
-
-  @Test
   public void testIsFiniteFloat() {
     OCSVExtractor ocsvExtractor = new OCSVExtractor();
     assertFalse(ocsvExtractor.isFinite(Float.NaN));
@@ -434,9 +425,9 @@ public class OCSVExtractorTest extends OETLBaseTest {
   }
 
   @Test
-  public void testCsvParsingFormat  () {
+  public void testCsvParsingFormat() {
 
-//    CSVFormat format = CSVFormat.valueOf("MySQL");
+    //    CSVFormat format = CSVFormat.valueOf("MySQL");
 
     String cfgJson = "{source: { content: { value: 'name,date,datetime\nfrank,2008-04-30,2015-03-30 11:00'} }, extractor : { csv : { \"predefinedFormat\": \"Default\",'columns':['name:string','date:date','datetime:datetime']} }, loader : { test: {} } }";
     process(cfgJson);
