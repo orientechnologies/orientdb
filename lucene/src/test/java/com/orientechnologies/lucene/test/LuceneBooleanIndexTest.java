@@ -32,7 +32,6 @@ import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.memory.MemoryIndex;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -46,21 +45,15 @@ public class LuceneBooleanIndexTest extends BaseLuceneTest {
 
   @Before
   public void init() {
-    initDB();
-    OSchema schema = databaseDocumentTx.getMetadata().getSchema();
+    OSchema schema = db.getMetadata().getSchema();
     OClass v = schema.getClass("V");
     OClass song = schema.createClass("Person");
     song.setSuperClass(v);
     song.createProperty("isDeleted", OType.BOOLEAN);
 
-    databaseDocumentTx.command(new OCommandSQL("create index Person.isDeleted on Person (isDeleted) FULLTEXT ENGINE LUCENE"))
+    db.command(new OCommandSQL("create index Person.isDeleted on Person (isDeleted) FULLTEXT ENGINE LUCENE"))
         .execute();
 
-  }
-
-  @After
-  public void deInit() {
-    deInitDB();
   }
 
   @Test
@@ -69,15 +62,15 @@ public class LuceneBooleanIndexTest extends BaseLuceneTest {
     for (int i = 0; i < 1000; i++) {
       ODocument doc = new ODocument("Person");
       doc.field("isDeleted", i % 2 == 0);
-      databaseDocumentTx.save(doc);
+      db.save(doc);
     }
 
-    List<ODocument> docs = databaseDocumentTx
+    List<ODocument> docs = db
         .query(new OSQLSynchQuery<ODocument>("select from Person where isDeleted lucene false"));
 
     Assert.assertEquals(500, docs.size());
     Assert.assertEquals(false, docs.get(0).field("isDeleted"));
-    docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>("select from Person where isDeleted lucene true"));
+    docs = db.query(new OSQLSynchQuery<ODocument>("select from Person where isDeleted lucene true"));
 
     Assert.assertEquals(500, docs.size());
     Assert.assertEquals(true, docs.get(0).field("isDeleted"));

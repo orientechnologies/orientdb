@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -44,48 +43,40 @@ public class LuceneInsertUpdateTransactionTest extends BaseLuceneTest {
 
   @Before
   public void init() {
-    initDB();
-    OSchema schema = databaseDocumentTx.getMetadata().getSchema();
+    OSchema schema = db.getMetadata().getSchema();
 
-    if (schema.getClass("City") == null) {
-      OClass oClass = schema.createClass("City");
-      oClass.createProperty("name", OType.STRING);
-    }
-    databaseDocumentTx.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE")).execute();
+    OClass oClass = schema.createClass("City");
+    oClass.createProperty("name", OType.STRING);
+    db.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE")).execute();
 
-  }
-
-  @After
-  public void deInit() {
-    deInitDB();
   }
 
   @Test
   public void testInsertUpdateTransactionWithIndex() throws Exception {
 
-    OSchema schema = databaseDocumentTx.getMetadata().getSchema();
+    OSchema schema = db.getMetadata().getSchema();
     schema.reload();
-    databaseDocumentTx.begin();
+    db.begin();
     ODocument doc = new ODocument("City");
     doc.field("name", "Rome");
-    databaseDocumentTx.save(doc);
+    db.save(doc);
 
     OIndex idx = schema.getClass("City").getClassIndex("City.name");
     Assert.assertNotNull(idx);
     Collection<?> coll = (Collection<?>) idx.get("Rome");
     Assert.assertEquals(coll.size(), 1);
-    databaseDocumentTx.rollback();
+    db.rollback();
     coll = (Collection<?>) idx.get("Rome");
     Assert.assertEquals(coll.size(), 0);
-    databaseDocumentTx.begin();
+    db.begin();
     doc = new ODocument("City");
     doc.field("name", "Rome");
-    databaseDocumentTx.save(doc);
+    db.save(doc);
 
     OUser user = new OUser("test", "test");
-    databaseDocumentTx.save(user.getDocument());
+    db.save(user.getDocument());
 
-    databaseDocumentTx.commit();
+    db.commit();
     coll = (Collection<?>) idx.get("Rome");
     Assert.assertEquals(coll.size(), 1);
   }

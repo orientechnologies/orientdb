@@ -22,9 +22,9 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.OLuceneIndexType;
 import com.orientechnologies.lucene.builder.DocBuilder;
 import com.orientechnologies.lucene.builder.OQueryBuilder;
-import com.orientechnologies.lucene.collections.LuceneResultSet;
-import com.orientechnologies.lucene.collections.LuceneResultSetFactory;
-import com.orientechnologies.lucene.collections.OFullTextCompositeKey;
+import com.orientechnologies.lucene.collections.OLuceneCompositeKey;
+import com.orientechnologies.lucene.collections.OLuceneResultSet;
+import com.orientechnologies.lucene.collections.OLuceneResultSetFactory;
 import com.orientechnologies.lucene.query.QueryContext;
 import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -218,7 +218,7 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
   @Override
   public OIndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
       boolean ascSortOrder, ValuesTransformer transformer) {
-    return new LuceneIndexCursor((LuceneResultSet) get(rangeFrom), rangeFrom);
+    return new LuceneIndexCursor((OLuceneResultSet) get(rangeFrom), rangeFrom);
   }
 
   private Set<OIdentifiable> getResults(Query query, OCommandContext context, Object key, OLuceneTxChanges changes) {
@@ -229,7 +229,7 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
       if (facetManager.supportsFacets()) {
         facetManager.addFacetContext(queryContext, key);
       }
-      return LuceneResultSetFactory.INSTANCE.create(this, queryContext);
+      return OLuceneResultSetFactory.INSTANCE.create(this, queryContext);
     } catch (IOException e) {
       throw OIOException.wrapException(new OIndexException("Error reading from Lucene index"), e);
     }
@@ -288,8 +288,8 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
     try {
       Query q = queryBuilder.query(index, key, queryAnalyzer());
       OCommandContext context = null;
-      if (key instanceof OFullTextCompositeKey) {
-        context = ((OFullTextCompositeKey) key).getContext();
+      if (key instanceof OLuceneCompositeKey) {
+        context = ((OLuceneCompositeKey) key).getContext();
       }
       return getResults(q, context, key, changes);
     } catch (ParseException e) {
@@ -299,12 +299,12 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
   public class LuceneIndexCursor implements OIndexCursor {
 
-    private final Object          key;
-    private       LuceneResultSet resultSet;
+    private final Object           key;
+    private       OLuceneResultSet resultSet;
 
     private Iterator<OIdentifiable> iterator;
 
-    public LuceneIndexCursor(LuceneResultSet resultSet, Object key) {
+    public LuceneIndexCursor(OLuceneResultSet resultSet, Object key) {
       this.resultSet = resultSet;
       this.iterator = resultSet.iterator();
       this.key = key;

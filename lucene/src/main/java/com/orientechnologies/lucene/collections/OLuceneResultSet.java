@@ -34,10 +34,10 @@ import java.util.Iterator;
 /**
  * Created by Enrico Risa on 28/10/14.
  */
-public class LuceneResultSet extends OLuceneAbstractResultSet {
+public class OLuceneResultSet extends OLuceneAbstractResultSet {
 
-  public LuceneResultSet(OLuceneIndexEngine manager, QueryContext queryContext) {
-    super(manager, queryContext);
+  public OLuceneResultSet(OLuceneIndexEngine engine, QueryContext queryContext) {
+    super(engine, queryContext);
   }
 
   @Override
@@ -83,7 +83,7 @@ public class LuceneResultSet extends OLuceneAbstractResultSet {
         ret = queryContext.getSearcher().doc(score.doc);
         String rId = ret.get(OLuceneIndexEngineAbstract.RID);
         res = new OContextualRecordId(rId);
-        manager.onRecordAddedToResultSet(queryContext, res, ret, score);
+        engine.onRecordAddedToResultSet(queryContext, res, ret, score);
       } catch (IOException e) {
         e.printStackTrace();
       }

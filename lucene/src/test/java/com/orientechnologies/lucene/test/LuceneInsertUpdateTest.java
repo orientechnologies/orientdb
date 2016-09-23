@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -45,39 +44,33 @@ public class LuceneInsertUpdateTest extends BaseLuceneTest {
 
   @Before
   public void init() {
-    initDB();
 
-    OSchema schema = databaseDocumentTx.getMetadata().getSchema();
+    OSchema schema = db.getMetadata().getSchema();
     OClass oClass = schema.createClass("City");
 
     oClass.createProperty("name", OType.STRING);
-    databaseDocumentTx.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE")).execute();
-  }
-
-  @After
-  public void deInit() {
-    deInitDB();
+    db.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE")).execute();
   }
 
   @Test
   public void testInsertUpdateWithIndex() throws Exception {
 
-    OSchema schema = databaseDocumentTx.getMetadata().getSchema();
+    OSchema schema = db.getMetadata().getSchema();
 
     ODocument doc = new ODocument("City");
     doc.field("name", "Rome");
 
-    databaseDocumentTx.save(doc);
+    db.save(doc);
     OIndex idx = schema.getClass("City").getClassIndex("City.name");
     Collection<?> coll = (Collection<?>) idx.get("Rome");
     Assert.assertEquals(coll.size(), 1);
 
     OIdentifiable next = (OIdentifiable) coll.iterator().next();
-    doc = databaseDocumentTx.load(next.<ORecord>getRecord());
+    doc = db.load(next.<ORecord>getRecord());
     Assert.assertEquals(doc.field("name"), "Rome");
 
     doc.field("name", "London");
-    databaseDocumentTx.save(doc);
+    db.save(doc);
 
     coll = (Collection<?>) idx.get("Rome");
     Assert.assertEquals(coll.size(), 0);
@@ -85,11 +78,11 @@ public class LuceneInsertUpdateTest extends BaseLuceneTest {
     Assert.assertEquals(coll.size(), 1);
 
     next = (OIdentifiable) coll.iterator().next();
-    doc = databaseDocumentTx.load(next.<ORecord>getRecord());
+    doc = db.load(next.<ORecord>getRecord());
     Assert.assertEquals(doc.field("name"), "London");
 
     doc.field("name", "Berlin");
-    databaseDocumentTx.save(doc);
+    db.save(doc);
 
     coll = (Collection<?>) idx.get("Rome");
     Assert.assertEquals(coll.size(), 0);

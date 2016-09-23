@@ -42,21 +42,20 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
-import static com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE.FULLTEXT;
+import static com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE.*;
 
 /**
  * Created by Enrico Risa on 04/09/15.
  */
-public class OLuceneIndexEngineDelegate implements OLuceneIndexEngine, OFreezableStorageComponent {
+public class OLuceneIndexEngineDelegator implements OLuceneIndexEngine, OFreezableStorageComponent {
 
-  //  private final String             name;
   private final Boolean            durableInNonTxMode;
   private final OStorage           storage;
   private final int                version;
   private final String             indexName;
   private       OLuceneIndexEngine delegate;
 
-  public OLuceneIndexEngineDelegate(String name, Boolean durableInNonTxMode, OStorage storage, int version) {
+  public OLuceneIndexEngineDelegator(String name, Boolean durableInNonTxMode, OStorage storage, int version) {
 
     this.indexName = name;
     this.durableInNonTxMode = durableInNonTxMode;
@@ -73,7 +72,7 @@ public class OLuceneIndexEngineDelegate implements OLuceneIndexEngine, OFreezabl
   public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
       OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, Map<String, String> engineProperties,
       ODocument metadata) {
-
+    //NOOP
   }
 
   @Override

@@ -15,8 +15,8 @@ import org.mockito.Mockito;
 import java.io.File;
 import java.util.Collections;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 /**
  * Created by frank on 03/03/2016.
@@ -44,13 +44,13 @@ public class OLuceneDirectoryFactoryTest extends BaseLuceneTest {
 
     meta.field(OLuceneDirectoryFactory.DIRECTORY_TYPE, OLuceneDirectoryFactory.DIRECTORY_NIO);
 
-    ODatabaseDocumentTx db = dropOrCreate("plocal:./target/testDatabase/" + getDatabaseName(), true);
+    ODatabaseDocumentTx db = dropOrCreate("plocal:./target/testDatabase/" + name.getMethodName(), true);
 
     Directory directory = fc.createDirectory(db, "index.name", meta);
 
     assertThat(directory).isInstanceOf(NIOFSDirectory.class);
 
-    assertThat(new File("./target/testDatabase/" + getDatabaseName() + "/luceneIndexes/index.name")).exists();
+    assertThat(new File("./target/testDatabase/" + name.getMethodName() + "/luceneIndexes/index.name")).exists();
 
     db.drop();
 
@@ -61,13 +61,13 @@ public class OLuceneDirectoryFactoryTest extends BaseLuceneTest {
 
     meta.field(OLuceneDirectoryFactory.DIRECTORY_TYPE, OLuceneDirectoryFactory.DIRECTORY_MMAP);
 
-    ODatabaseDocumentTx db = dropOrCreate("plocal:./target/testDatabase/" + getDatabaseName(), true);
+    ODatabaseDocumentTx db = dropOrCreate("plocal:./target/testDatabase/" + name.getMethodName(), true);
 
     Directory directory = fc.createDirectory(db, "index.name", meta);
 
     assertThat(directory).isInstanceOf(MMapDirectory.class);
 
-    assertThat(new File("./target/testDatabase/" + getDatabaseName() + "/luceneIndexes/index.name")).exists();
+    assertThat(new File("./target/testDatabase/" + name.getMethodName() + "/luceneIndexes/index.name")).exists();
 
     db.drop();
 
@@ -78,7 +78,7 @@ public class OLuceneDirectoryFactoryTest extends BaseLuceneTest {
 
     meta.field(OLuceneDirectoryFactory.DIRECTORY_TYPE, OLuceneDirectoryFactory.DIRECTORY_RAM);
 
-    ODatabaseDocumentTx db = dropOrCreate("plocal:./target/testDatabase/" + getDatabaseName(), true);
+    ODatabaseDocumentTx db = dropOrCreate("plocal:./target/testDatabase/" + name.getMethodName(), true);
 
     Directory directory = fc.createDirectory(db, "index.name", meta);
 
@@ -94,10 +94,11 @@ public class OLuceneDirectoryFactoryTest extends BaseLuceneTest {
     //WRONG type!!!
     meta.field(OLuceneDirectoryFactory.DIRECTORY_TYPE, OLuceneDirectoryFactory.DIRECTORY_MMAP);
 
-    ODatabaseDocumentTx db = dropOrCreate("memory:" + getDatabaseName(), true);
+    ODatabaseDocumentTx db = dropOrCreate("memory:" + name.getMethodName(), true);
 
     Directory directory = fc.createDirectory(db, "index.name", meta);
 
     assertThat(directory).isInstanceOf(RAMDirectory.class);
   }
+
 }

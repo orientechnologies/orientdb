@@ -20,8 +20,9 @@ package com.orientechnologies.lucene.test;
 
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
-import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
+import org.junit.Rule;
+import org.junit.rules.ExternalResource;
+import org.junit.rules.TestName;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,39 +32,36 @@ import java.io.InputStream;
  */
 public abstract class BaseLuceneTest {
 
-  protected ODatabaseDocumentTx databaseDocumentTx;
-  protected String              buildDirectory;
-  private   String              url;
+  protected ODatabaseDocumentTx db;
+
+  @Rule
+  public TestName name = new TestName();
+
+  @Rule
+  public ExternalResource resource = new ExternalResource() {
+    @Override
+    protected void before() throws Throwable {
+
+      String config = System.getProperty("orientdb.test.env", "memory");
+
+      if ("ci".equals(config) || "release".equals(config)) {
+        db = new ODatabaseDocumentTx("plocal:./target/databases/" + name.getMethodName());
+      } else {
+        db = new ODatabaseDocumentTx("memory:" + name.getMethodName());
+      }
+
+      db.create();
+    }
+
+    @Override
+    protected void after() {
+      db.activateOnCurrentThread();
+      db.drop();
+    }
+
+  };
 
   public BaseLuceneTest() {
-  }
-
-  public void initDB() {
-    initDB(true);
-  }
-
-  public void initDB(boolean drop) {
-    String config = System.getProperty("orientdb.test.env");
-
-    String storageType;
-    if ("ci".equals(config) || "release".equals(config))
-      storageType = OEngineLocalPaginated.NAME;
-    else
-      storageType = System.getProperty("storageType");
-
-    if (storageType == null)
-      storageType = OEngineMemory.NAME;
-
-    buildDirectory = System.getProperty("buildDirectory", ".");
-    if (buildDirectory == null)
-      buildDirectory = ".";
-
-    if (storageType.equals(OEngineLocalPaginated.NAME))
-      url = OEngineLocalPaginated.NAME + ":" + "./target/databases/" + getDatabaseName();
-    else
-      url = OEngineMemory.NAME + ":" + getDatabaseName();
-
-    databaseDocumentTx = dropOrCreate(url, drop);
   }
 
   protected ODatabaseDocumentTx dropOrCreate(String url, boolean drop) {
@@ -86,14 +84,6 @@ public abstract class BaseLuceneTest {
     db.activateOnCurrentThread();
 
     return db;
-  }
-
-  protected final String getDatabaseName() {
-    return getClass().getSimpleName();
-  }
-
-  public void deInitDB() {
-    databaseDocumentTx.drop();
   }
 
   protected String getScriptFromStream(InputStream in) {

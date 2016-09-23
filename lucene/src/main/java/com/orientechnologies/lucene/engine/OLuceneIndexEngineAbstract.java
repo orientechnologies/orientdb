@@ -82,15 +82,14 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
   public static final String STORED = "_STORED";
 
   public static final String OLUCENE_BASE_DIR = "luceneIndexes";
-
-  protected SearcherManager                searcherManager;
-  protected OIndexDefinition               index;
-  protected String                         name;
-  protected String                         clusterIndexName;
-  protected boolean                        automatic;
-  protected ControlledRealTimeReopenThread nrt;
-  protected ODocument                      metadata;
-  protected Version                        version;
+  protected final String                         name;
+  protected       SearcherManager                searcherManager;
+  protected       OIndexDefinition               index;
+  protected       String                         clusterIndexName;
+  protected       boolean                        automatic;
+  protected       ControlledRealTimeReopenThread nrt;
+  protected       ODocument                      metadata;
+  protected       Version                        version;
   protected Map<String, Boolean> collectionFields = new HashMap<>();
   protected TimerTask commitTask;
   protected AtomicBoolean closed = new AtomicBoolean(true);
@@ -240,8 +239,6 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
     try {
       if (indexWriter.isOpen())
         indexWriter.commit();
-    } catch (IOException e) {
-      OLogManager.instance().error(this, "Error on flushing Lucene index", e);
     } catch (Throwable e) {
       OLogManager.instance().error(this, "Error on flushing Lucene index", e);
     }
@@ -354,7 +351,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
   }
 
   @Override
-  public OIndexCursor descCursor(ValuesTransformer vValuesTransformer) {
+  public OIndexCursor descCursor(ValuesTransformer valuesTransformer) {
     return null;
   }
 

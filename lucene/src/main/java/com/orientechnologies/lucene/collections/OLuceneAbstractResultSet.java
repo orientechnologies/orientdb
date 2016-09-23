@@ -40,15 +40,15 @@ public abstract class OLuceneAbstractResultSet implements Set<OIdentifiable> {
   protected final String             indexName;
   protected       TopDocs            topDocs;
   protected       Query              query;
-  protected       OLuceneIndexEngine manager;
+  protected       OLuceneIndexEngine engine;
   protected       QueryContext       queryContext;
 
-  public OLuceneAbstractResultSet(OLuceneIndexEngine manager, QueryContext queryContext) {
-    this.manager = manager;
+  public OLuceneAbstractResultSet(OLuceneIndexEngine engine, QueryContext queryContext) {
+    this.engine = engine;
     this.queryContext = queryContext;
     this.query = enhanceQuery(queryContext.query);
 
-    indexName = manager.indexName();
+    indexName = engine.indexName();
     fetchFirstBatch();
   }
 

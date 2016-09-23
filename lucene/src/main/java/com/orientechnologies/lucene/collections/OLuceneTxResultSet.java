@@ -110,7 +110,7 @@ public class OLuceneTxResultSet extends OLuceneAbstractResultSet {
     private OContextualRecordId toRecordId(Document doc, ScoreDoc score) {
       String rId = doc.get(OLuceneIndexEngineAbstract.RID);
       OContextualRecordId res = new OContextualRecordId(rId);
-      manager.onRecordAddedToResultSet(queryContext, res, doc, score);
+      engine.onRecordAddedToResultSet(queryContext, res, doc, score);
       return res;
     }
 

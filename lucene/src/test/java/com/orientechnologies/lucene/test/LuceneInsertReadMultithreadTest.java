@@ -47,26 +47,21 @@ public class LuceneInsertReadMultithreadTest extends BaseLuceneTest {
 
   @Before
   public void init() {
-    initDB();
 
-    url = databaseDocumentTx.getURL();
-    OSchema schema = databaseDocumentTx.getMetadata().getSchema();
+    url = db.getURL();
+    OSchema schema = db.getMetadata().getSchema();
     OClass oClass = schema.createClass("City");
 
     oClass.createProperty("name", OType.STRING);
-    databaseDocumentTx.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE")).execute();
+    db.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE")).execute();
   }
 
-  @After
-  public void deInit() {
-    deInitDB();
-  }
 
   @Test
   public void testConcurrentInsertWithIndex() throws Exception {
 
-    databaseDocumentTx.getMetadata().reload();
-    OSchema schema = databaseDocumentTx.getMetadata().getSchema();
+    db.getMetadata().reload();
+    OSchema schema = db.getMetadata().getSchema();
 
     Thread[] threads = new Thread[THREADS + RTHREADS];
     for (int i = 0; i < THREADS; ++i)

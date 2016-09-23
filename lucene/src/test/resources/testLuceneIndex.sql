@@ -1,4 +1,11 @@
 
+
+create class Song extends V
+create property Song.title STRING
+create property Song.author STRING
+create property Song.lyrics STRING
+create property Song.description STRING
+
 begin
 
 create vertex Song set title="BELIEVE IT OR NOT", author="Hunter"

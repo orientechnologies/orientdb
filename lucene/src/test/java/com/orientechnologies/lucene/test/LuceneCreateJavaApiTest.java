@@ -38,8 +38,7 @@ public class LuceneCreateJavaApiTest extends BaseLuceneTest {
 
   @Before
   public void init() {
-    initDB();
-    OSchema schema = databaseDocumentTx.getMetadata().getSchema();
+    OSchema schema = db.getMetadata().getSchema();
     OClass v = schema.getClass("V");
     OClass song = schema.createClass("Song");
     song.setSuperClass(v);
@@ -48,14 +47,10 @@ public class LuceneCreateJavaApiTest extends BaseLuceneTest {
     song.createProperty("description", OType.STRING);
   }
 
-  @After
-  public void deInit() {
-    deInitDB();
-  }
 
   @Test
   public void testCreateIndex() {
-    OSchema schema = databaseDocumentTx.getMetadata().getSchema();
+    OSchema schema = db.getMetadata().getSchema();
 
     OClass song = schema.getClass("Song");
 
@@ -73,7 +68,7 @@ public class LuceneCreateJavaApiTest extends BaseLuceneTest {
 
   @Test
   public void testCreateIndexCompositeWithDefaultAnalyzer() {
-    OSchema schema = databaseDocumentTx.getMetadata().getSchema();
+    OSchema schema = db.getMetadata().getSchema();
 
     OClass song = schema.getClass("Song");
 

@@ -17,7 +17,7 @@
 package com.orientechnologies.lucene.operator;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.lucene.collections.OFullTextCompositeKey;
+import com.orientechnologies.lucene.collections.OLuceneCompositeKey;
 import com.orientechnologies.lucene.index.OLuceneFullTextIndex;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
@@ -43,7 +43,12 @@ import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.memory.MemoryIndex;
 import org.apache.lucene.search.Query;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 public class OLuceneTextOperator extends OQueryTargetOperator {
 
@@ -62,11 +67,11 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
   @Override
   public OIndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
     OIndexCursor cursor;
-    Object indexResult = index.get(new OFullTextCompositeKey(keyParams).setContext(iContext));
+    Object indexResult = index.get(new OLuceneCompositeKey(keyParams).setContext(iContext));
     if (indexResult == null || indexResult instanceof OIdentifiable)
-      cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, new OFullTextCompositeKey(keyParams));
+      cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, new OLuceneCompositeKey(keyParams));
     else
-      cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult), new OFullTextCompositeKey(keyParams));
+      cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult), new OLuceneCompositeKey(keyParams));
     return cursor;
   }
 
@@ -116,17 +121,11 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
     }
     memoryIndex.reset();
 
-    Document doc = null;
-    try {
-      doc = index.buildDocument(iLeft);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-
-
+    final Document doc = index.buildDocument(iLeft);
     for (IndexableField field : doc.getFields()) {
       memoryIndex.addField(field.name(), field.stringValue(), index.indexAnalyzer());
     }
+
     Query query = null;
     try {
       query = index.buildQuery(iRight);
@@ -175,7 +174,7 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
     return false;
   }
 
-  //restituisce una lista di nomi
+  //returns a list of field names
   protected Collection<String> fields(OSQLFilterCondition iCondition) {
 
     Object left = iCondition.getLeft();

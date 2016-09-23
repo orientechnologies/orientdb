@@ -69,7 +69,6 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
   protected     OLuceneFacetManager facetManager;
   protected     TimerTask           commitTask;
   protected AtomicBoolean closed = new AtomicBoolean(true);
-  //  protected TrackingIndexWriter                   mgrWriter;
   protected SearcherManager                       searcherManager;
   protected ControlledRealTimeReopenThread        nrt;
   private   DocBuilder                            builder;
@@ -143,7 +142,6 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
 
     indexWriter = createIndexWriter(dir);
 
-    //    mgrWriter = new TrackingIndexWriter(indexWriter);
     searcherManager = new SearcherManager(indexWriter, true, true, null);
 
     if (nrt != null) {

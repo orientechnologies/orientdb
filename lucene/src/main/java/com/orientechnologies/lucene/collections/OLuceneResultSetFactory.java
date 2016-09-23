@@ -13,21 +13,32 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
-package com.orientechnologies.lucene;
+package com.orientechnologies.lucene.collections;
 
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-
-import java.util.HashSet;
-import java.util.Set;
+import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
+import com.orientechnologies.lucene.query.QueryContext;
 
 /**
- * Created by Enrico Risa on 09/12/14.
+ * Created by Enrico Risa on 16/09/15.
  */
-public class LuceneTxOperations {
+public class OLuceneResultSetFactory {
 
-  public final Set<OIdentifiable> removed = new HashSet<OIdentifiable>();
-  public final Set<OIdentifiable> added   = new HashSet<OIdentifiable>();
+  public static OLuceneResultSetFactory INSTANCE = new OLuceneResultSetFactory();
+
+  protected OLuceneResultSetFactory() {
+  }
+
+  public OLuceneAbstractResultSet create(OLuceneIndexEngine manager, QueryContext queryContext) {
+
+    if (queryContext.isInTx()) {
+      return new OLuceneTxResultSet(manager, queryContext);
+    } else {
+      return new OLuceneResultSet(manager, queryContext);
+
+    }
+
+  }
 }

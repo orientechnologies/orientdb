@@ -24,5 +24,5 @@ import java.io.IOException;
  * Created by enricorisa on 19/03/14.
  */
 public interface OLuceneIndex {
-  public IndexSearcher searcher() throws IOException;
+  IndexSearcher searcher() throws IOException;
 }

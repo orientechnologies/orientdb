@@ -27,7 +27,7 @@ import java.util.List;
  * Created by enricorisa on 02/10/14.
  */
 public class OLuceneCompositeKey extends OCompositeKey {
-  OCommandContext context;
+  private OCommandContext context;
 
   public OLuceneCompositeKey(List<?> keys) {
     super(keys);

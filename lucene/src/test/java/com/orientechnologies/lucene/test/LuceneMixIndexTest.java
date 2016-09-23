@@ -19,9 +19,6 @@
 package com.orientechnologies.lucene.test;
 
 import com.orientechnologies.orient.core.command.script.OCommandScript;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -36,50 +33,40 @@ import java.util.List;
 /**
  * Created by Enrico Risa on 02/09/15.
  */
-public class LuceneMixIndexTest extends BaseLuceneAutoTest {
+public class LuceneMixIndexTest extends BaseLuceneTest {
 
   @Before
   public void initLocal() {
 
-    OSchema schema = databaseDocumentTx.getMetadata().getSchema();
-    OClass v = schema.getClass("V");
-    OClass song = schema.createClass("Song");
-    song.setSuperClass(v);
-    song.createProperty("title", OType.STRING);
-    song.createProperty("author", OType.STRING);
-    song.createProperty("lyrics", OType.STRING);
-
-    databaseDocumentTx.command(new OCommandSQL("create index Song.author on Song (author) NOTUNIQUE")).execute();
-
-    databaseDocumentTx.command(new OCommandSQL("create index Song.composite on Song (title,lyrics) FULLTEXT ENGINE LUCENE"))
-        .execute();
-
-    // databaseDocumentTx.command(new OCommandSQL("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE")).execute();
-
     InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql");
 
-    databaseDocumentTx.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
+    db.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
+
+    db.command(new OCommandSQL("create index Song.author on Song (author) NOTUNIQUE")).execute();
+
+    db.command(new OCommandSQL("create index Song.composite on Song (title,lyrics) FULLTEXT ENGINE LUCENE"))
+        .execute();
 
   }
 
   @Test
   public void testMixQuery() {
 
-    List<ODocument> docs = databaseDocumentTx.query(
+    List<ODocument> docs = db.query(
         new OSQLSynchQuery<ODocument>("select * from Song where  author = 'Hornsby' and [title] LUCENE \"(title:mountain)\" "));
 
     Assert.assertEquals(docs.size(), 1);
 
-    docs = databaseDocumentTx.query(
+    docs = db.query(
         new OSQLSynchQuery<ODocument>("select * from Song where  author = 'Hornsby' and title LUCENE \"(title:mountain)\" "));
 
     Assert.assertEquals(docs.size(), 1);
 
-    docs = databaseDocumentTx.query(
+    docs = db.query(
         new OSQLSynchQuery<ODocument>("select * from Song where  author = 'Hornsby' and [title] LUCENE \"(title:ballad)\" "));
     Assert.assertEquals(docs.size(), 0);
 
-    docs = databaseDocumentTx
+    docs = db
         .query(new OSQLSynchQuery<ODocument>("select * from Song where  author = 'Hornsby' and title LUCENE \"(title:ballad)\" "));
     Assert.assertEquals(docs.size(), 0);
 
@@ -89,12 +76,12 @@ public class LuceneMixIndexTest extends BaseLuceneAutoTest {
   @Ignore
   public void testMixCompositeQuery() {
 
-    List<ODocument> docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(
+    List<ODocument> docs = db.query(new OSQLSynchQuery<ODocument>(
         "select * from Song where  author = 'Hornsby' and [title,lyrics] LUCENE \"(title:mountain)\" "));
 
     Assert.assertEquals(docs.size(), 1);
 
-    docs = databaseDocumentTx
+    docs = db
         .query(new OSQLSynchQuery<ODocument>("select * from Song where author = 'Hornsby' and lyrics LUCENE \"(lyrics:happy)\" "));
 
     Assert.assertEquals(docs.size(), 1);

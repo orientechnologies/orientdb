@@ -45,17 +45,16 @@ public class LuceneExportImportTest extends BaseLuceneTest {
 
   @Before
   public void init() {
-    initDB();
 
-    OSchema schema = databaseDocumentTx.getMetadata().getSchema();
+    OSchema schema = db.getMetadata().getSchema();
     OClass oClass = schema.createClass("City");
 
     oClass.createProperty("name", OType.STRING);
-    databaseDocumentTx.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE")).execute();
+    db.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE")).execute();
 
     ODocument doc = new ODocument("City");
     doc.field("name", "Rome");
-    databaseDocumentTx.save(doc);
+    db.save(doc);
   }
 
   @Test
@@ -63,19 +62,19 @@ public class LuceneExportImportTest extends BaseLuceneTest {
 
     String file = "./target/exportTest.json";
 
-    List<?> query = databaseDocumentTx.query(new OSQLSynchQuery<Object>("select from City where name lucene 'Rome'"));
+    List<?> query = db.query(new OSQLSynchQuery<Object>("select from City where name lucene 'Rome'"));
 
     Assert.assertEquals(query.size(), 1);
     try {
-      new ODatabaseExport(databaseDocumentTx, file, new OCommandOutputListener() {
+      new ODatabaseExport(db, file, new OCommandOutputListener() {
         @Override
         public void onMessage(String s) {
         }
       }).exportDatabase();
-      databaseDocumentTx.drop();
-      databaseDocumentTx.create();
+      db.drop();
+      db.create();
       GZIPInputStream stream = new GZIPInputStream(new FileInputStream(file + ".gz"));
-      new ODatabaseImport(databaseDocumentTx, stream, new OCommandOutputListener() {
+      new ODatabaseImport(db, stream, new OCommandOutputListener() {
         @Override
         public void onMessage(String s) {
         }
@@ -84,22 +83,18 @@ public class LuceneExportImportTest extends BaseLuceneTest {
       Assert.fail(e.getMessage());
     }
 
-    long city = databaseDocumentTx.countClass("City");
+    long city = db.countClass("City");
 
     Assert.assertEquals(city, 1);
 
-    OIndex<?> index = databaseDocumentTx.getMetadata().getIndexManager().getIndex("City.name");
+    OIndex<?> index = db.getMetadata().getIndexManager().getIndex("City.name");
 
     Assert.assertNotNull(index);
     Assert.assertEquals(index.getType(), "FULLTEXT");
     //    Assert.assertEquals(index.getAlgorithm(), "LUCENE");
 
-    query = databaseDocumentTx.query(new OSQLSynchQuery<Object>("select from City where name lucene 'Rome'"));
+    query = db.query(new OSQLSynchQuery<Object>("select from City where name lucene 'Rome'"));
     Assert.assertEquals(query.size(), 1);
   }
 
-  @After
-  public void deInit() {
-    deInitDB();
-  }
 }

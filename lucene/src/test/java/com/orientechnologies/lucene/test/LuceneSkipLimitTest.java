@@ -19,15 +19,12 @@
 package com.orientechnologies.lucene.test;
 
 import com.orientechnologies.orient.core.command.script.OCommandScript;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Test;
 
 import java.io.InputStream;
 import java.util.List;
@@ -37,32 +34,23 @@ import java.util.List;
  */
 public class LuceneSkipLimitTest extends BaseLuceneTest {
 
-  public LuceneSkipLimitTest() {
-  }
-
-  public LuceneSkipLimitTest(boolean remote) {
-    //super(remote);
-  }
-
+  @Test
   public void testContext() {
-    InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql");
 
-    databaseDocumentTx.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
-
-    List<ODocument> docs = databaseDocumentTx
+    List<ODocument> docs = db
         .query(new OSQLSynchQuery<ODocument>("select * from Song where [title] LUCENE \"(title:man)\""));
 
     Assert.assertEquals(docs.size(), 14);
 
     ODocument doc = docs.get(9);
-    docs = databaseDocumentTx
+    docs = db
         .query(new OSQLSynchQuery<ODocument>("select * from Song where [title] LUCENE \"(title:man)\" skip 10 limit 10"));
 
     Assert.assertEquals(docs.size(), 4);
 
     Assert.assertEquals(docs.contains(doc), false);
 
-    docs = databaseDocumentTx
+    docs = db
         .query(new OSQLSynchQuery<ODocument>("select * from Song where [title] LUCENE \"(title:man)\" skip 14 limit 10"));
 
     Assert.assertEquals(docs.size(), 0);
@@ -70,22 +58,13 @@ public class LuceneSkipLimitTest extends BaseLuceneTest {
 
   @Before
   public void init() {
-    initDB();
-    OSchema schema = databaseDocumentTx.getMetadata().getSchema();
-    OClass v = schema.getClass("V");
-    OClass song = schema.createClass("Song");
-    song.setSuperClass(v);
-    song.createProperty("title", OType.STRING);
-    song.createProperty("author", OType.STRING);
+    InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql");
 
-    databaseDocumentTx.command(new OCommandSQL("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE")).execute();
-    databaseDocumentTx.command(new OCommandSQL("create index Song.author on Song (author) FULLTEXT ENGINE LUCENE")).execute();
+    db.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
 
-  }
+    db.command(new OCommandSQL("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE")).execute();
+    db.command(new OCommandSQL("create index Song.author on Song (author) FULLTEXT ENGINE LUCENE")).execute();
 
-  @After
-  public void deInit() {
-    deInitDB();
   }
 
 }

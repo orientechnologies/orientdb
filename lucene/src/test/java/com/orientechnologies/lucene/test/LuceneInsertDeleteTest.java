@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -46,29 +45,23 @@ public class LuceneInsertDeleteTest extends BaseLuceneTest {
 
   @Before
   public void init() {
-    initDB();
 
-    OSchema schema = databaseDocumentTx.getMetadata().getSchema();
+    OSchema schema = db.getMetadata().getSchema();
     OClass oClass = schema.createClass("City");
 
     oClass.createProperty("name", OType.STRING);
-    databaseDocumentTx.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE")).execute();
-  }
-
-  @After
-  public void deInit() {
-    deInitDB();
+    db.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE")).execute();
   }
 
   @Test
   public void testInsertUpdateWithIndex() throws Exception {
 
-    databaseDocumentTx.getMetadata().reload();
-    OSchema schema = databaseDocumentTx.getMetadata().getSchema();
+    db.getMetadata().reload();
+    OSchema schema = db.getMetadata().getSchema();
 
     ODocument doc = new ODocument("City");
     doc.field("name", "Rome");
-    databaseDocumentTx.save(doc);
+    db.save(doc);
 
     OIndex idx = schema.getClass("City").getClassIndex("City.name");
     Collection<?> coll = (Collection<?>) idx.get("Rome");
@@ -77,9 +70,9 @@ public class LuceneInsertDeleteTest extends BaseLuceneTest {
     assertThat(idx.getSize()).isEqualTo(1);
 
     OIdentifiable next = (OIdentifiable) coll.iterator().next();
-    doc = databaseDocumentTx.load(next.<ORecord>getRecord());
+    doc = db.load(next.<ORecord>getRecord());
 
-    databaseDocumentTx.delete(doc);
+    db.delete(doc);
 
     coll = (Collection<?>) idx.get("Rome");
     assertThat(coll).hasSize(0);
