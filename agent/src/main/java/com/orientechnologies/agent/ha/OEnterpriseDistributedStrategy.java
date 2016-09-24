@@ -1,15 +1,15 @@
 package com.orientechnologies.agent.ha;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.impl.ODefaultDistributedStrategy;
+
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * EE implementation for quorum management. It extends the CE by supporting the data-center concept.
@@ -29,8 +29,11 @@ public class OEnterpriseDistributedStrategy extends ODefaultDistributedStrategy 
 
     final String localNode = manager.getLocalNodeName();
 
+    final boolean localDataCenterWriteQuorum = cfg.isLocalDataCenterWriteQuorum();
+    final OCommandDistributedReplicateRequest.QUORUM_TYPE quorum = request.getTask().getQuorumType();
     final String dc = cfg.getDataCenterOfServer(localNode);
-    if (dc == null || !cfg.isLocalDataCenterWriteQuorum())
+
+    if (dc == null || !localDataCenterWriteQuorum || quorum == OCommandDistributedReplicateRequest.QUORUM_TYPE.ALL)
       // NO DC: DEFAULT CFG
       return super.getNodesConcurInQuorum(manager, cfg, request, iNodes, localResult);
 
@@ -38,27 +41,30 @@ public class OEnterpriseDistributedStrategy extends ODefaultDistributedStrategy 
     final List<String> dcServers = cfg.getDataCenterServers(dc);
 
     final Set<String> nodesConcurToTheQuorum = new HashSet<String>();
-    if (request.getTask().getQuorumType() == OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE) {
+    if (quorum == OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE) {
       // ONLY MASTER NODES CONCUR TO THE MINIMUM QUORUM
       for (String node : iNodes) {
-        if (dcServers.contains(node) && cfg.getServerRole(node) == ODistributedConfiguration.ROLES.MASTER)
-          nodesConcurToTheQuorum.add(node);
+        if (cfg.getServerRole(node) == ODistributedConfiguration.ROLES.MASTER) {
+          if (!localDataCenterWriteQuorum || dcServers.contains(node))
+            nodesConcurToTheQuorum.add(node);
+        }
       }
 
-      if (localResult != null && dcServers.contains(localNode)
-          && cfg.getServerRole(localNode) == ODistributedConfiguration.ROLES.MASTER)
-        // INCLUDE LOCAL NODE TOO
-        nodesConcurToTheQuorum.add(localNode);
+      if (localResult != null && cfg.getServerRole(localNode) == ODistributedConfiguration.ROLES.MASTER) {
+        if (!localDataCenterWriteQuorum || dcServers.contains(localNode))
+          // INCLUDE LOCAL NODE TOO
+          nodesConcurToTheQuorum.add(localNode);
+      }
 
     } else {
 
       // ALL NODES IN THE DC CONCUR TO THE MINIMUM QUORUM
       for (String node : iNodes) {
-        if (dcServers.contains(node))
+        if (!localDataCenterWriteQuorum || dcServers.contains(node))
           nodesConcurToTheQuorum.add(node);
       }
 
-      if (localResult != null && dcServers.contains(localNode))
+      if (localResult != null && (!localDataCenterWriteQuorum || dcServers.contains(localNode)))
         // INCLUDE LOCAL NODE TOO
         nodesConcurToTheQuorum.add(localNode);
     }
