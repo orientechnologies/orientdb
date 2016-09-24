@@ -41,6 +41,7 @@ public class DistributedDbDropAndReCreateAnotherTest extends AbstractServerClust
       ServerRun server = serverInstance.get(0);
       ODatabaseDocumentTx db = new ODatabaseDocumentTx(getDatabaseURL(server));
       db.open("admin", "admin");
+      db.drop();
 
       server = serverInstance.get(lastServerNum);
 
