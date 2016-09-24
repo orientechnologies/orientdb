@@ -15,9 +15,11 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.OStorageException;
 
 /**
  * Distributed test on drop database.
@@ -36,13 +38,24 @@ public class DistributedDbDropTest extends AbstractServerClusterTxTest {
 
   @Override
   protected void onAfterExecution() throws Exception {
-    for (ServerRun s : serverInstance) {
-      final ODatabaseDocumentTx db = new ODatabaseDocumentTx(getDatabaseURL(s));
-      db.open("admin", "admin");
+    ServerRun s = serverInstance.get(0);
 
-      banner("DROPPING DATABASE ON SERVER " + s.getServerId());
-      db.drop();
+    final ODatabaseDocumentTx db = new ODatabaseDocumentTx(getDatabaseURL(s));
+    db.open("admin", "admin");
+
+    banner("DROPPING DATABASE ON SERVER " + s.getServerId());
+    db.drop();
+
+    for (int i = 1; i < serverInstance.size(); ++i) {
+      try {
+        final ODatabaseDocumentTx database = new ODatabaseDocumentTx(getDatabaseURL(s));
+        database.open("admin", "admin");
+        Assert.fail("The database was not deleted on server " + i);
+      } catch (OStorageException e) {
+        Assert.assertTrue(e.getCause().getMessage().contains("it does not exist"));
+      }
     }
+
   }
 
   protected String getDatabaseURL(final ServerRun server) {

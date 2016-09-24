@@ -98,6 +98,9 @@ public class ODefaultRemoteTaskFactory implements ORemoteTaskFactory {
 
     case OStartReplicationTask.FACTORYID: // 22
       return new OStartReplicationTask();
+
+    case ODropDatabaseTask.FACTORYID: // 23
+      return new ODropDatabaseTask();
     }
 
     throw new IllegalArgumentException("Task with code " + code + " is not supported");

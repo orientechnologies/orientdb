@@ -45,6 +45,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -55,6 +56,7 @@ import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.impl.*;
+import com.orientechnologies.orient.server.distributed.impl.task.ODropDatabaseTask;
 
 /**
  * Hazelcast implementation for clustering.
@@ -942,7 +944,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
       final String dbName = iDatabase.getName();
 
-      if (configurationMap.containsKey(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + dbName))
+      if (configurationMap.getHazelcastMap().containsKey(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + dbName))
         throw new ODistributedException(
             "Cannot create the new database '" + dbName + "' because it is already present in distributed configuration");
 
@@ -1009,13 +1011,23 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "Dropping database %s...", dbName);
 
+    if (!OScenarioThreadLocal.INSTANCE.isRunModeDistributed()) {
+      // DROP THE DATABASE ON ALL THE SERVERS
+      final ODistributedConfiguration dCfg = getDatabaseConfiguration(dbName);
+
+      final Set<String> servers = dCfg.getAllConfiguredServers();
+      servers.remove(nodeName);
+
+      sendRequest(dbName, null, servers, new ODropDatabaseTask(), getNextMessageIdCounter(),
+          ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
+    }
+
     super.onDrop(iDatabase);
 
     if (configurationMap != null) {
       configurationMap.put(OHazelcastPlugin.CONFIG_DBSTATUS_PREFIX + nodeName + "." + dbName, DB_STATUS.NOT_AVAILABLE);
 
-      final int availableNodes = getAvailableNodes(dbName);
-      if (availableNodes == 0) {
+      if (!OScenarioThreadLocal.INSTANCE.isRunModeDistributed()) {
         // LAST NODE HOLDING THE DATABASE, DELETE DISTRIBUTED CFG TOO
         configurationMap.remove(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + dbName);
         ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,

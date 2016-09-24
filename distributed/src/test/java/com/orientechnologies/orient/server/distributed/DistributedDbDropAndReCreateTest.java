@@ -15,9 +15,11 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
 /**
  * Distributed test on drop + recreate database.
@@ -37,23 +39,25 @@ public class DistributedDbDropAndReCreateTest extends AbstractServerClusterTxTes
   protected void onAfterExecution() throws Exception {
     int s = 0;
     do {
-      for (ServerRun server : serverInstance) {
-        final ODatabaseDocumentTx db = new ODatabaseDocumentTx(getDatabaseURL(server));
-        db.open("admin", "admin");
+      ServerRun server = serverInstance.get(0);
+      ODatabaseDocumentTx db = new ODatabaseDocumentTx(getDatabaseURL(server));
+      db.open("admin", "admin");
 
-        banner("DROPPING DATABASE ON SERVER " + server.getServerId());
-        db.drop();
-      }
+      banner("DROPPING DATABASE ON SERVERS");
+      db.drop();
 
-      ServerRun server = serverInstance.get(s);
+      Thread.sleep(2000);
+
+      Assert.assertFalse(server.getServerInstance().getDistributedManager().getConfigurationMap()
+          .containsKey(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + getDatabaseName()));
+
+      server = serverInstance.get(s);
 
       banner("RE-CREATING DATABASE ON SERVER " + server.getServerId());
 
-      final ODatabaseDocumentTx db = new ODatabaseDocumentTx(getDatabaseURL(server));
+      db = new ODatabaseDocumentTx(getDatabaseURL(server));
       db.create();
       db.close();
-
-      Thread.sleep(2000);
 
     } while (++s < serverInstance.size());
   }
