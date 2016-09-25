@@ -15,18 +15,21 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.List;
-
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.impl.OBlob;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ORecordBytes;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import java.util.List;
 
 @Test(groups = "sql-delete")
 public class SQLDeleteTest extends DocumentDBBaseTest {
@@ -71,5 +74,24 @@ public class SQLDeleteTest extends DocumentDBBaseTest {
 		Assert.assertEquals(db.countClass("Profile"), total - records.intValue());
 
 		db.close();
+	}
+
+
+	@Test public void testBinaryClusterDelete() {
+		database.command(new OCommandSQL("create blob cluster binarycluster")).execute();
+		database.reload();
+		OBlob bytes = new ORecordBytes(new byte[] { 1, 2, 3 });
+		database.save(bytes, "binarycluster");
+
+		List<OIdentifiable> result = database.query(new OSQLSynchQuery<OIdentifiable>("select from cluster:binarycluster"));
+
+		Assert.assertEquals(result.size(), 1);
+		ORID rid = result.get(0).getIdentity();
+
+		database.command(new OCommandSQL("delete from "+rid)).execute();
+
+		result = database.query(new OSQLSynchQuery<OIdentifiable>("select from cluster:binarycluster"));
+
+		Assert.assertEquals(result.size(), 0);
 	}
 }
