@@ -78,19 +78,19 @@ public class SQLDeleteTest extends DocumentDBBaseTest {
 
 
 	@Test public void testBinaryClusterDelete() {
-		database.command(new OCommandSQL("create blob cluster binarycluster")).execute();
+		database.command(new OCommandSQL("create blob cluster testbinaryclusterdelete")).execute();
 		database.reload();
 		OBlob bytes = new ORecordBytes(new byte[] { 1, 2, 3 });
-		database.save(bytes, "binarycluster");
+		database.save(bytes, "testbinaryclusterdelete");
 
-		List<OIdentifiable> result = database.query(new OSQLSynchQuery<OIdentifiable>("select from cluster:binarycluster"));
+		List<OIdentifiable> result = database.query(new OSQLSynchQuery<OIdentifiable>("select from cluster:testbinaryclusterdelete"));
 
 		Assert.assertEquals(result.size(), 1);
 		ORID rid = result.get(0).getIdentity();
 
 		database.command(new OCommandSQL("delete from "+rid)).execute();
 
-		result = database.query(new OSQLSynchQuery<OIdentifiable>("select from cluster:binarycluster"));
+		result = database.query(new OSQLSynchQuery<OIdentifiable>("select from cluster:testbinaryclusterdelete"));
 
 		Assert.assertEquals(result.size(), 0);
 	}
