@@ -28,6 +28,11 @@ public class OSQLFunctionConvertTest {
 
       db.command(new OCommandSQL("insert into TestConversion set string = 'Jay', date = sysdate(), number = 33")).execute();
 
+      ODocument doc = (ODocument) db.query(new OSQLSynchQuery<ODocument>("select from TestConversion limit 1")).get(0);
+
+
+      db.command(new OCommandSQL("update TestConversion set selfrid = 'foo"+doc.getIdentity()+"'")).execute();
+
       List<ODocument> results = db.query(new OSQLSynchQuery<ODocument>("select string.asString() as convert from TestConversion"));
       assertNotNull(results);
       assertEquals(results.size(), 1);
@@ -77,6 +82,11 @@ public class OSQLFunctionConvertTest {
       assertNotNull(results);
       assertEquals(results.size(), 1);
       assertTrue(results.get(0).field("convert") instanceof Double);
+
+      results = db.query(new OSQLSynchQuery<ODocument>("select selfrid.substring(3).convert('LINK').string as convert from TestConversion"));
+      assertNotNull(results);
+      assertEquals(results.size(), 1);
+      assertEquals(results.get(0).field("convert"), "Jay");
 
     } finally {
       db.drop();

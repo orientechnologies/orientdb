@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.etl.extractor;
 
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLBaseTest;
 import org.junit.Test;
@@ -13,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
+
 
 /**
  * Created by frank on 10/5/15.
@@ -386,8 +389,7 @@ public class OCSVExtractorTest extends OETLBaseTest {
     assertThat(res).hasSize(1);
     ODocument doc = res.get(0);
 
-    assertThat(doc.<String>field("id")).isEqualTo("#1:1");
-
+    assertThat(doc.<ORID>field("id")).isEqualTo(new ORecordId("#1:1"));
   }
 
   @Test

@@ -19,33 +19,13 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
-import java.io.Serializable;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.types.OBinary;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordLazyList;
-import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
-import com.orientechnologies.orient.core.db.record.ORecordLazySet;
-import com.orientechnologies.orient.core.db.record.OTrackedList;
-import com.orientechnologies.orient.core.db.record.OTrackedMap;
-import com.orientechnologies.orient.core.db.record.OTrackedSet;
+import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -54,12 +34,17 @@ import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.text.ParseException;
+import java.util.*;
+
 /**
  * Generic representation of a type.<br>
  * allowAssignmentFrom accepts any class, but Array.class means that the type accepts generic Arrays.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 public enum OType {
   BOOLEAN("Boolean", 0, Boolean.class, new Class<?>[] { Number.class }),
@@ -181,9 +166,8 @@ public enum OType {
 
   /**
    * Return the type by ID.
-   * 
-   * @param iId
-   *          The id to search
+   *
+   * @param iId The id to search
    * @return The type if any, otherwise null
    */
   public static OType getById(final byte iId) {
@@ -194,7 +178,7 @@ public enum OType {
 
   /**
    * Get the identifier of the type. use this instead of {@link Enum#ordinal()} for guarantee a cross code version identifier.
-   * 
+   *
    * @return the identifier of the type.
    */
   public int getId() {
@@ -203,9 +187,8 @@ public enum OType {
 
   /**
    * Return the correspondent type by checking the "assignability" of the class received as parameter.
-   * 
-   * @param iClass
-   *          Class to check
+   *
+   * @param iClass Class to check
    * @return OType instance if found, otherwise null
    */
   public static OType getTypeByClass(final Class<?> iClass) {
@@ -288,11 +271,10 @@ public enum OType {
     final Class<? extends Object> iType = iObject.getClass();
 
     if (iType.isPrimitive() || Number.class.isAssignableFrom(iType) || String.class.isAssignableFrom(iType) || Boolean.class
-        .isAssignableFrom(iType) || Date.class.isAssignableFrom(iType)
-        || (iType.isArray() && (iType.equals(byte[].class) || iType.equals(char[].class) || iType.equals(int[].class)
-            || iType.equals(long[].class) || iType.equals(double[].class) || iType.equals(float[].class)
-            || iType.equals(short[].class) || iType.equals(Integer[].class) || iType.equals(String[].class)
-            || iType.equals(Long[].class) || iType.equals(Short[].class) || iType.equals(Double[].class))))
+        .isAssignableFrom(iType) || Date.class.isAssignableFrom(iType) || (iType.isArray() && (iType.equals(byte[].class) || iType
+        .equals(char[].class) || iType.equals(int[].class) || iType.equals(long[].class) || iType.equals(double[].class) || iType
+        .equals(float[].class) || iType.equals(short[].class) || iType.equals(Integer[].class) || iType.equals(String[].class)
+        || iType.equals(Long[].class) || iType.equals(Short[].class) || iType.equals(Double[].class))))
       return true;
 
     return false;
@@ -300,15 +282,12 @@ public enum OType {
 
   /**
    * Convert types based on the iTargetClass parameter.
-   * 
-   * @param iValue
-   *          Value to convert
-   * @param iTargetClass
-   *          Expected class
+   *
+   * @param iValue       Value to convert
+   * @param iTargetClass Expected class
    * @return The converted value or the original if no conversion was applied
    */
-  @SuppressWarnings({ "unchecked", "rawtypes" })
-  public static Object convert(final Object iValue, final Class<?> iTargetClass) {
+  @SuppressWarnings({ "unchecked", "rawtypes" }) public static Object convert(final Object iValue, final Class<?> iTargetClass) {
     if (iValue == null)
       return null;
 
@@ -416,7 +395,7 @@ public enum OType {
         } else {
           return Collections.singleton(iValue);
         }
-        
+
       } else if (List.class.isAssignableFrom(iTargetClass)) {
         // The caller specifically wants a List.  If the value is a collection
         // we will add all of the items in the collection to a List.  Otherwise
@@ -428,7 +407,7 @@ public enum OType {
         } else {
           return Collections.singletonList(iValue);
         }
-        
+
       } else if (Collection.class.equals(iTargetClass)) {
         // The caller specifically wants a Collection of any type.
         // we will return a list if the value is a collection or
@@ -440,7 +419,7 @@ public enum OType {
         } else {
           return Collections.singleton(iValue);
         }
-        
+
       } else if (iTargetClass.equals(Date.class)) {
         if (iValue instanceof Number)
           return new Date(((Number) iValue).longValue());
@@ -455,8 +434,31 @@ public enum OType {
                 .parse((String) iValue);
           }
         }
-      } else if (iTargetClass.equals(String.class))
+      } else if (iTargetClass.equals(String.class)) {
         return iValue.toString();
+      } else if (iTargetClass.equals(OIdentifiable.class)) {
+        if (OMultiValue.isMultiValue(iValue)) {
+          List<OIdentifiable> result = new ArrayList<OIdentifiable>();
+          for (Object o : OMultiValue.getMultiValueIterable(iValue)) {
+            if (o instanceof OIdentifiable) {
+              result.add((OIdentifiable) o);
+            } else if (o instanceof String) {
+              try {
+                result.add(new ORecordId((String) iValue));
+              } catch (Exception e) {
+                OLogManager.instance().debug(OType.class, "Error in conversion of value '%s' to type '%s'", iValue, iTargetClass);
+              }
+            }
+          }
+          return result;
+        } else if (iValue instanceof String) {
+          try {
+            return new ORecordId((String) iValue);
+          } catch (Exception e) {
+            OLogManager.instance().debug(OType.class, "Error in conversion of value '%s' to type '%s'", iValue, iTargetClass);
+          }
+        }
+      }
     } catch (IllegalArgumentException e) {
       // PASS THROUGH
       throw e;
@@ -650,9 +652,8 @@ public enum OType {
 
   /**
    * Convert the input object to an integer.
-   * 
-   * @param iValue
-   *          Any type supported
+   *
+   * @param iValue Any type supported
    * @return The integer value if the conversion succeed, otherwise the IllegalArgumentException exception
    */
   public int asInt(final Object iValue) {
@@ -668,9 +669,8 @@ public enum OType {
 
   /**
    * Convert the input object to a long.
-   * 
-   * @param iValue
-   *          Any type supported
+   *
+   * @param iValue Any type supported
    * @return The long value if the conversion succeed, otherwise the IllegalArgumentException exception
    */
   public long asLong(final Object iValue) {
@@ -686,9 +686,8 @@ public enum OType {
 
   /**
    * Convert the input object to a float.
-   * 
-   * @param iValue
-   *          Any type supported
+   *
+   * @param iValue Any type supported
    * @return The float value if the conversion succeed, otherwise the IllegalArgumentException exception
    */
   public float asFloat(final Object iValue) {
@@ -702,9 +701,8 @@ public enum OType {
 
   /**
    * Convert the input object to a double.
-   * 
-   * @param iValue
-   *          Any type supported
+   *
+   * @param iValue Any type supported
    * @return The double value if the conversion succeed, otherwise the IllegalArgumentException exception
    */
   public double asDouble(final Object iValue) {
@@ -718,13 +716,11 @@ public enum OType {
 
   /**
    * Convert the input object to a string.
-   * 
-   * @param iValue
-   *          Any type supported
+   *
+   * @param iValue Any type supported
    * @return The string if the conversion succeed, otherwise the IllegalArgumentException exception
    */
-  @Deprecated
-  public String asString(final Object iValue) {
+  @Deprecated public String asString(final Object iValue) {
     return iValue.toString();
   }
 
@@ -749,8 +745,7 @@ public enum OType {
     return castable;
   }
 
-  @Deprecated
-  public Class<?>[] getJavaTypes() {
+  @Deprecated public Class<?>[] getJavaTypes() {
     return null;
   }
 }
