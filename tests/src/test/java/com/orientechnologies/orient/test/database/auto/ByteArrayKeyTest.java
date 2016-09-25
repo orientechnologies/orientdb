@@ -1,20 +1,16 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.Arrays;
-import java.util.Collection;
-
-import com.orientechnologies.orient.core.index.OIndexFactory;
-import org.testng.Assert;
-import org.testng.annotations.*;
-
 import com.orientechnologies.orient.core.index.OCompositeKey;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransaction;
+import org.testng.Assert;
+import org.testng.annotations.*;
+
+import java.util.Collection;
 
 /**
  * @author Andrey Lomakin

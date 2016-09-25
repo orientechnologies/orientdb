@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
+import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.storage.OCluster;
 
@@ -410,9 +411,15 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware
       if (f.getRoot().equals("?"))
         // POSITIONAL PARAMETER
         return commandParameters.getNext();
-      else if (f.getRoot().startsWith(":"))
+      else if (f.getRoot().startsWith(":")) {
         // NAMED PARAMETER
         return commandParameters.getByName(f.getRoot().substring(1));
+      }else{
+        return f.getValue(new ODocument(), null, context);
+      }
+    }else if(parsedKey instanceof OSQLFunctionRuntime){
+      OSQLFunctionRuntime f = (OSQLFunctionRuntime) parsedKey;
+      return f.execute(null, null, null, context);
     }
     return parsedKey;
   }

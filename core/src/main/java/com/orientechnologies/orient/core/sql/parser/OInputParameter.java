@@ -3,6 +3,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.serialization.OBase64Utils;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -95,6 +96,24 @@ public class OInputParameter extends SimpleNode {
       dateFormatExpr.singleQuotes = true;
       dateFormatExpr.doubleQuotes = false;
       dateFormatExpr.value = dateFormatString;
+      function.getParams().add(dateFormatExpr);
+      return function;
+    }
+    if(value instanceof byte[]){
+      OFunctionCall function = new OFunctionCall(-1);
+      function.name = new OIdentifier(-1);
+      function.name.value = "decode";
+
+      OExpression valueExpr = new OExpression(-1);
+      valueExpr.singleQuotes = true;
+      valueExpr.doubleQuotes = false;
+      valueExpr.value = OBase64Utils.encodeBytes((byte[]) value);
+      function.getParams().add(valueExpr);
+
+      OExpression dateFormatExpr = new OExpression(-1);
+      dateFormatExpr.singleQuotes = true;
+      dateFormatExpr.doubleQuotes = false;
+      dateFormatExpr.value = "base64";
       function.getParams().add(dateFormatExpr);
       return function;
     }

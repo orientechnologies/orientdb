@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
+import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
@@ -1854,6 +1855,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
         "select count(*) from testIndexWithNullValues where releaseDate is null order by releaseDate"));
     Assert.assertEquals(result2.size(), 1);
     Assert.assertEquals(((ODocument) result2.get(0)).field("count"), 2L);
+  }
+
+  @Test public void testBinaryParam() {
+    byte[] param = new byte[] { 1, 2, 3 };
+    List<OIdentifiable> result = database
+        .query(new OSQLSynchQuery<OIdentifiable>("select encode(?, 'base64') as encoded"), param);
+
+    Assert.assertEquals(result.size(), 1);
+    ODocument item = (ODocument) result.get(0);
+    Assert.assertEquals(item.field("encoded"), OBase64Utils.encodeBytes(param));
   }
 
 }
