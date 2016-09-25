@@ -1,9 +1,9 @@
 package com.orientechnologies.orient.etl.extractor;
 
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLBaseTest;
 import com.orientechnologies.orient.etl.transformer.OCSVTransformer;
-import org.apache.commons.csv.CSVFormat;
 import org.junit.Test;
 
 import java.text.DateFormat;
@@ -387,8 +387,7 @@ public class OCSVExtractorTest extends OETLBaseTest {
     assertThat(res).hasSize(1);
     ODocument doc = res.get(0);
 
-    assertThat(doc.<String>field("id")).isEqualTo("#1:1");
-
+    assertThat(doc.field("id")).isEqualTo(new ORecordId("#1:1"));
   }
 
   @Test
