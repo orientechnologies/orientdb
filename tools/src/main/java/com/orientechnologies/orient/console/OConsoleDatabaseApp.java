@@ -994,12 +994,12 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   public void script(@ConsoleParameter(name = "text", description = "Commands to execute, one per line") String iText) {
     final String language;
     final int languageEndPos = iText.indexOf(";");
-    if (languageEndPos > -1) {
-      // EXTRACT THE SCRIPT LANGUAGE
-      language = iText.substring(0, languageEndPos);
-      iText = iText.substring(languageEndPos + 1);
-    } else
+    String[] splitted = iText.split(" ")[0].split(";")[0].split("\n")[0].split("\t");
+    language = splitted[0];
+    iText = iText.substring(language.length()+1);
+    if(iText.trim().length()==0){
       throw new IllegalArgumentException("Missing language in script (sql, js, gremlin, etc.) as first argument");
+    }
 
     executeServerSideScript(language, iText);
   }
