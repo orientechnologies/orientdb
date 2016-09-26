@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -32,6 +33,7 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -1417,8 +1419,6 @@ public class OCommandExecutorSQLSelectTest {
   public void testDateComparison(){
     //issue #6389
 
-    byte[] array = new byte[]{1,4,5,74,3,45,6,127,-120,2};
-
     db.command(new OCommandSQL("create class TestDateComparison")).execute();
     db.command(new OCommandSQL("create property TestDateComparison.dateProp DATE")).execute();
 
@@ -1462,6 +1462,28 @@ public class OCommandExecutorSQLSelectTest {
     }
 
   }
+
+  @Test
+  public void testRidInequality(){
+    //issue #6605
+
+    db.command(new OCommandSQL("create class TestRidInequality")).execute();
+
+
+    db.command(new OCommandSQL("insert into TestRidInequality set name = 'foo'")).execute();
+
+    List<ODocument> results = db.query(new OSQLSynchQuery<ODocument>("SELECT from TestRidInequality"));
+    ORID rid = results.get(0).getIdentity();
+
+
+    results = db.query(new OSQLSynchQuery<ODocument>("SELECT @rid, name, if(eval(\"@rid != @rid\"), \"match\", \"no match\") as m  from TestRidInequality "));
+    Assert.assertEquals(results.size(), 1);
+    ODocument item = results.get(0);
+
+    Assert.assertEquals(item.field("m"), "no match");
+  }
+
+  
   private long indexUsages(ODatabaseDocumentTx db) {
     final long oldIndexUsage;
     try {

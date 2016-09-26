@@ -38,7 +38,8 @@ public class ODefaultQueryOperatorFactory implements OQueryOperatorFactory{
         operators.add(new OQueryOperatorEquals());
         operators.add(new OQueryOperatorAnd()); 
         operators.add(new OQueryOperatorOr()); 
-        operators.add(new OQueryOperatorNotEquals()); 
+        operators.add(new OQueryOperatorNotEquals());
+        operators.add(new OQueryOperatorNotEquals2());
         operators.add(new OQueryOperatorNot());
         operators.add(new OQueryOperatorMinorEquals()); 
         operators.add(new OQueryOperatorMinor()); 

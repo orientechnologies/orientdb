@@ -72,7 +72,7 @@ public abstract class OQueryOperator {
    * PERFORMANCE (MOST USED BEFORE)
    */
   protected static final Class<?>[] DEFAULT_OPERATORS_ORDER = { OQueryOperatorEquals.class, OQueryOperatorAnd.class,
-      OQueryOperatorOr.class, OQueryOperatorNotEquals.class, OQueryOperatorNot.class, OQueryOperatorMinorEquals.class,
+      OQueryOperatorOr.class, OQueryOperatorNotEquals.class, OQueryOperatorNotEquals2.class, OQueryOperatorNot.class, OQueryOperatorMinorEquals.class,
       OQueryOperatorMinor.class, OQueryOperatorMajorEquals.class, OQueryOperatorContainsAll.class, OQueryOperatorMajor.class,
       OQueryOperatorLike.class, OQueryOperatorMatches.class, OQueryOperatorInstanceof.class, OQueryOperatorIs.class,
       OQueryOperatorIn.class, OQueryOperatorContainsKey.class, OQueryOperatorContainsValue.class, OQueryOperatorContainsText.class,
