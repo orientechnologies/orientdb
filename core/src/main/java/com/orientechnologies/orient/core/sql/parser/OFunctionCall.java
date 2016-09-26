@@ -75,14 +75,18 @@ public class OFunctionCall extends SimpleNode {
 
   private Object execute(Object targetObjects, OCommandContext ctx, String name) {
     List<Object> paramValues = new ArrayList<Object>();
+    OIdentifiable record = ctx == null ? null : (OIdentifiable) ctx.getVariable("$current");
+    if (record == null && targetObjects instanceof OIdentifiable) {
+      record = (OIdentifiable) targetObjects;
+    }
     for (OExpression expr : this.params) {
-      paramValues.add(expr.execute((OIdentifiable) ctx.getVariable("$current"), ctx));
+      paramValues.add(expr.execute(record, ctx));
     }
     OSQLFunction function = OSQLEngine.getInstance().getFunction(name);
     if (function != null) {
-      return function.execute(targetObjects, (OIdentifiable) ctx.getVariable("$current"), null, paramValues.toArray(), ctx);
+      return function.execute(targetObjects, record, null, paramValues.toArray(), ctx);
     }
-    throw new UnsupportedOperationException("finisho OFunctionCall implementation!");
+    throw new UnsupportedOperationException("This expression is not currently supported: "+toString());
   }
 
   public static ODatabaseDocumentInternal getDatabase() {

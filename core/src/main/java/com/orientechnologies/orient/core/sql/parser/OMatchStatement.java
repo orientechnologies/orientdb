@@ -705,7 +705,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       ODocument mapDoc = new ODocument();
       mapDoc.setTrackingChanges(false);
       mapDoc.fromMap((Map) matchContext.matched);
-
+      ctx.setVariable("$current", mapDoc);
       for (OExpression item : returnItems) {
         OIdentifier returnAliasIdentifier = returnAliases.get(i);
         OIdentifier returnAlias;
@@ -714,6 +714,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
         } else {
           returnAlias = returnAliasIdentifier;
         }
+
         doc.field(returnAlias.getStringValue(), item.execute(mapDoc, ctx));
         i++;
       }
