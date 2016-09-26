@@ -226,8 +226,8 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
     convertAll();
   }
 
-  public void detachAll(boolean nonProxiedInstance, Map<Object, Object> alreadyDetached) {
-    convertAndDetachAll(nonProxiedInstance, alreadyDetached);
+  public void detachAll(boolean nonProxiedInstance, Map<Object, Object> alreadyDetached, Map<Object, Object> lazyObjects) {
+    convertAndDetachAll(nonProxiedInstance, alreadyDetached, lazyObjects);
   }
 
   @Override
@@ -285,7 +285,7 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
     converted = true;
   }
 
-  protected void convertAndDetachAll(boolean nonProxiedInstance, Map<Object, Object> alreadyDetached) {
+  protected void convertAndDetachAll(boolean nonProxiedInstance, Map<Object, Object> alreadyDetached, Map<Object, Object> lazyObjects) {
     if (converted || !convertToRecord)
       return;
 
@@ -297,10 +297,10 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
         if (e instanceof ORID) {
           e = database.getUserObjectByRecord(((ODatabaseDocument) getDatabase().getUnderlying()).load((ORID) e, fetchPlan),
                   fetchPlan);
-          super.add((TYPE) ((OObjectDatabaseTx) getDatabase()).detachAll(e, nonProxiedInstance, alreadyDetached));
+          super.add((TYPE) ((OObjectDatabaseTx) getDatabase()).detachAll(e, nonProxiedInstance, alreadyDetached, lazyObjects));
         } else if (e instanceof ODocument) {
           e = database.getUserObjectByRecord((ORecord) e, fetchPlan);
-          super.add((TYPE) ((OObjectDatabaseTx) getDatabase()).detachAll(e, nonProxiedInstance, alreadyDetached));
+          super.add((TYPE) ((OObjectDatabaseTx) getDatabase()).detachAll(e, nonProxiedInstance, alreadyDetached, lazyObjects));
         } else
           add((TYPE) e);
       }

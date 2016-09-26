@@ -38,6 +38,7 @@ import javassist.util.proxy.Proxy;
 import javassist.util.proxy.ProxyObject;
 
 import javax.persistence.CascadeType;
+import javax.persistence.FetchType;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
@@ -98,6 +99,7 @@ public class OObjectEntitySerializer {
   private static final HashMap<Class<?>, Field>                boundDocumentFields = new HashMap<Class<?>, Field>();
   private static final HashMap<Class<?>, List<String>>         transientFields     = new HashMap<Class<?>, List<String>>();
   private static final HashMap<Class<?>, List<String>>         cascadeDeleteFields = new HashMap<Class<?>, List<String>>();
+  private static final HashMap<Class<?>, List<String>>         fetchLazyFields     = new HashMap<Class<?>, List<String>>();
   private static final HashMap<Class<?>, Map<Field, Class<?>>> serializedFields    = new HashMap<Class<?>, Map<Field, Class<?>>>();
   private static final HashMap<Class<?>, Field>                fieldIds            = new HashMap<Class<?>, Field>();
   private static final HashMap<Class<?>, Field>                fieldVersions       = new HashMap<Class<?>, Field>();
@@ -225,7 +227,7 @@ public class OObjectEntitySerializer {
    *          and @Version fields it could procude data replication
    * @return the object serialized or with detached data
    */
-  public static <T> T detachAll(T o, ODatabaseObject db, boolean returnNonProxiedInstance, Map<Object, Object> alreadyDetached) {
+  public static <T> T detachAll(T o, ODatabaseObject db, boolean returnNonProxiedInstance, Map<Object, Object> alreadyDetached, Map<Object, Object> lazyObjects) {
     if (o instanceof Proxy) {
       OObjectProxyMethodHandler handler = (OObjectProxyMethodHandler) ((ProxyObject) o).getHandler();
       try {
@@ -238,7 +240,7 @@ public class OObjectEntitySerializer {
         } else if (returnNonProxiedInstance){
           return (T) alreadyDetached.get(identity);
         }
-        handler.detachAll(o, returnNonProxiedInstance, alreadyDetached);
+        handler.detachAll(o, returnNonProxiedInstance, alreadyDetached, lazyObjects);
       } catch (IllegalArgumentException e) {
         throw new OSerializationException("Error detaching object of class " + o.getClass(), e);
       } catch (IllegalAccessException e) {
@@ -344,6 +346,18 @@ public class OObjectEntitySerializer {
       currentClass = currentClass.getSuperclass();
     }
     return isTransientField;
+  }
+
+  public static boolean isFetchLazyField(Class<?> iClass, String iField) {
+    checkClassRegistration(iClass);
+    boolean isFetchLazyField = false;
+    for (Class<?> currentClass = iClass; currentClass != null && currentClass != Object.class
+        && !currentClass.equals(ODocument.class) && !isFetchLazyField;) {
+      List<String> classFetchLazyFields = fetchLazyFields.get(currentClass);
+      isFetchLazyField = classFetchLazyFields != null && classFetchLazyFields.contains(iField);
+      currentClass = currentClass.getSuperclass();
+    }
+    return isFetchLazyField;
   }
 
   public static boolean isEmbeddedField(Class<?> iClass, String iField) {
@@ -453,6 +467,9 @@ public class OObjectEntitySerializer {
               OneToOne oneToOne = ((OneToOne) ann);
               if (checkCascadeDelete(oneToOne)) {
                 addCascadeDeleteField(currentClass, fieldName);
+              }
+              if (checkFetchLazy(oneToOne)) {
+                addFetchLazyField(currentClass, fieldName);
               }
             }
           }
@@ -641,12 +658,24 @@ public class OObjectEntitySerializer {
     return false;
   }
 
+  protected static boolean checkFetchLazy(final OneToOne oneToOne) {
+    return oneToOne.fetch() == FetchType.LAZY;
+  }
+
   protected static void addCascadeDeleteField(Class<?> currentClass, final String fieldName) {
     List<String> classCascadeDeleteFields = cascadeDeleteFields.get(currentClass);
     if (classCascadeDeleteFields == null)
       classCascadeDeleteFields = new ArrayList<String>();
     classCascadeDeleteFields.add(fieldName);
     cascadeDeleteFields.put(currentClass, classCascadeDeleteFields);
+  }
+
+  protected static void addFetchLazyField(Class<?> currentClass, final String fieldName) {
+    List<String> classFetchLazyFields = fetchLazyFields.get(currentClass);
+    if (classFetchLazyFields == null)
+      classFetchLazyFields = new ArrayList<String>();
+    classFetchLazyFields.add(fieldName);
+    fetchLazyFields.put(currentClass, classFetchLazyFields);
   }
 
   public static boolean isSerializedType(final Field iField) {

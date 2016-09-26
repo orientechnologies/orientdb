@@ -153,7 +153,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
    * @throws IllegalAccessException
    * @throws NoSuchMethodException
    */
-  public void detachAll(final Object self, final boolean nonProxiedInstance, final Map<Object, Object> alreadyDetached)
+  public void detachAll(final Object self, final boolean nonProxiedInstance, final Map<Object, Object> alreadyDetached, final Map<Object, Object> lazyObjects)
       throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
     final Class<?> selfClass = self.getClass();
 
@@ -162,7 +162,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
       if (field != null) {
         Object value = getValue(self, fieldName, false, null, true);
         if (value instanceof OObjectLazyMultivalueElement) {
-          ((OObjectLazyMultivalueElement<?>) value).detachAll(nonProxiedInstance, alreadyDetached);
+          ((OObjectLazyMultivalueElement<?>) value).detachAll(nonProxiedInstance, alreadyDetached, lazyObjects);
           if (nonProxiedInstance)
             value = ((OObjectLazyMultivalueElement<?>) value).getNonOrientInstance();
         } else if (value instanceof Proxy) {
@@ -170,12 +170,25 @@ public class OObjectProxyMethodHandler implements MethodHandler {
           if (nonProxiedInstance) {
             value = OObjectEntitySerializer.getNonProxiedInstance(value);
           }
-          Object detachedValue = alreadyDetached.get(handler.doc.getIdentity());
-          if (detachedValue != null) {
-            value = detachedValue;
+
+          if (OObjectEntitySerializer.isFetchLazyField(self.getClass(), fieldName)) {
+            //just make a placeholder with only the id, so it can be fetched later (but not by orient internally)
+            //do not use the already detached map for this, that might mix up lazy and non-lazy objects
+            Object lazyValue = lazyObjects.get(handler.doc.getIdentity());
+            if (lazyValue != null) {
+              value = lazyValue;
+            } else {
+              OObjectEntitySerializer.setIdField(field.getType(), value, handler.doc.getIdentity());
+              lazyObjects.put(handler.doc.getIdentity(), value);
+            }
           } else {
-            alreadyDetached.put(handler.doc.getIdentity(), value);
-            handler.detachAll(value, nonProxiedInstance, alreadyDetached);
+            Object detachedValue = alreadyDetached.get(handler.doc.getIdentity());
+            if (detachedValue != null) {
+              value = detachedValue;
+            } else {
+              alreadyDetached.put(handler.doc.getIdentity(), value);
+              handler.detachAll(value, nonProxiedInstance, alreadyDetached, lazyObjects);
+            }
           }
         }
         OObjectEntitySerializer.setFieldValue(field, self, value);

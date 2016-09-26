@@ -155,7 +155,7 @@ public class OObjectCustomSerializerSet<TYPE> extends HashSet<TYPE> implements O
     convertAll();
   }
 
-  public void detachAll(boolean nonProxiedInstance, Map<Object, Object> alreadyDetached) {
+  public void detachAll(boolean nonProxiedInstance, Map<Object, Object> alreadyDetached, Map<Object, Object> lazyObjects) {
     convertAll();
   }
 
