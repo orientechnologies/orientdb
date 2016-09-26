@@ -86,6 +86,10 @@ public class OFunctionCall extends SimpleNode {
 
   private Object execute(Object targetObjects, OCommandContext ctx, String name) {
     List<Object> paramValues = new ArrayList<Object>();
+    OIdentifiable record = ctx == null ? null : (OIdentifiable) ctx.getVariable("$current");
+    if (record == null && targetObjects instanceof OIdentifiable) {
+      record = (OIdentifiable) targetObjects;
+    }
     for (OExpression expr : this.params) {
       Object current = ctx.getVariable("$current");
       if (current instanceof OIdentifiable) {

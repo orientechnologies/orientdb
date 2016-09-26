@@ -4,6 +4,10 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.util.Collections;
@@ -33,11 +37,61 @@ public class OInstanceofCondition extends OBooleanExpression{
   }
 
   @Override public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
-    throw new UnsupportedOperationException("TODO Implement IndexMatch!!!");//TODO
+    if (currentRecord == null) {
+      return false;
+    }
+    ORecord record = currentRecord.getRecord();
+    if (record == null) {
+      return false;
+    }
+    if (!(record instanceof ODocument)) {
+      return false;
+    }
+    ODocument doc = (ODocument) record;
+    OClass clazz = doc.getSchemaClass();
+    if (clazz == null) {
+      return false;
+    }
+    if (right != null) {
+      return clazz.isSubClassOf(right.getStringValue());
+    } else if (rightString != null) {
+      return clazz.isSubClassOf(decode(rightString));
+    }
+    return false;
+  }
+
+  private String decode(String rightString) {
+    if(rightString==null){
+      return null;
+    }
+    return OStringSerializerHelper.decode(rightString.substring(1, rightString.length()-1));
   }
 
   @Override public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
-    throw new UnsupportedOperationException("TODO Implement IndexMatch!!!");//TODO
+    if (currentRecord == null) {
+      return false;
+    }
+    if(!currentRecord.isElement()){
+      return false;
+    }
+    ORecord record = currentRecord.getElement().get().getRecord();
+    if (record == null) {
+      return false;
+    }
+    if (!(record instanceof ODocument)) {
+      return false;
+    }
+    ODocument doc = (ODocument) record;
+    OClass clazz = doc.getSchemaClass();
+    if (clazz == null) {
+      return false;
+    }
+    if (right != null) {
+      return clazz.isSubClassOf(right.getStringValue());
+    } else if (rightString != null) {
+      return clazz.isSubClassOf(decode(rightString));
+    }
+    return false;
   }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
