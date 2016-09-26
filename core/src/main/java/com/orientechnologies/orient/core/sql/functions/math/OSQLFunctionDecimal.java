@@ -49,19 +49,13 @@ public class OSQLFunctionDecimal extends OSQLFunctionMathAbstract {
 
     if (inputValue instanceof BigDecimal) {
       result = inputValue;
-    }
-    if (inputValue instanceof BigInteger) {
+    }else if (inputValue instanceof BigInteger) {
       result = new BigDecimal((BigInteger) inputValue);
-    }
-    if (inputValue instanceof Integer) {
+    }else if (inputValue instanceof Integer) {
       result = new BigDecimal(((Integer) inputValue));
-    }
-
-    if (inputValue instanceof Long) {
+    }else if (inputValue instanceof Long) {
       result = new BigDecimal(((Long) inputValue));
-    }
-
-    if (inputValue instanceof Number) {
+    }else if (inputValue instanceof Number) {
       result = new BigDecimal(((Number) inputValue).doubleValue());
     }
 

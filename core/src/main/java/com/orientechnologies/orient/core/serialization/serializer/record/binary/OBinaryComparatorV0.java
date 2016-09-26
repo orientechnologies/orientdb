@@ -585,12 +585,12 @@ public class OBinaryComparatorV0 implements OBinaryComparator {
       }
 
       case DECIMAL: {
-        final BigDecimal value1 = ODecimalSerializer.INSTANCE.deserialize(fieldValue1.bytes, fieldValue1.offset);
+        BigDecimal value1 = ODecimalSerializer.INSTANCE.deserialize(fieldValue1.bytes, fieldValue1.offset);
 
         switch (iField2.type) {
         case INTEGER: {
           final int value2 = OVarIntSerializer.readAsInteger(fieldValue2);
-          return value1.equals(new BigDecimal(value2));
+          return value1.equals(new BigDecimal(value2).setScale(value1.scale()));
         }
         case LONG:
         case DATETIME: {
@@ -613,7 +613,10 @@ public class OBinaryComparatorV0 implements OBinaryComparator {
           return value1.toString().equals(ORecordSerializerBinaryV0.readString(fieldValue2));
         }
         case DECIMAL: {
-          final BigDecimal value2 = ODecimalSerializer.INSTANCE.deserialize(fieldValue2.bytes, fieldValue2.offset);
+          BigDecimal value2 = ODecimalSerializer.INSTANCE.deserialize(fieldValue2.bytes, fieldValue2.offset);
+          int maxScale = Math.max(value1.scale(), value2.scale());
+          value1 = value1.setScale(maxScale, BigDecimal.ROUND_DOWN);
+          value2 = value2.setScale(maxScale, BigDecimal.ROUND_DOWN);
           return value1.equals(value2);
         }
         }

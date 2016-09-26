@@ -1483,7 +1483,22 @@ public class OCommandExecutorSQLSelectTest {
     Assert.assertEquals(item.field("m"), "no match");
   }
 
-  
+  @Test
+  public void testDecimalField(){
+    //issue #6742
+
+    db.command(new OCommandSQL("create class TestDecimalField")).execute();
+    db.command(new OCommandSQL("create property TestDecimalField.flag DECIMAL")).execute();
+
+
+    db.command(new OCommandSQL("insert into TestDecimalField set flag = decimal('1.0')")).execute();
+    db.command(new OCommandSQL("insert into TestDecimalField set flag = decimal('2.0')")).execute();
+
+    List<ODocument> results = db.query(new OSQLSynchQuery<ODocument>("SELECT from TestDecimalField where flag = 1"));
+    Assert.assertEquals(results.size(), 1);
+  }
+
+
   private long indexUsages(ODatabaseDocumentTx db) {
     final long oldIndexUsage;
     try {
