@@ -629,14 +629,23 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     OClass ouser = schema.getClass(OUser.CLASS_NAME);
     OClass oidentity = schema.getClass(OIdentity.CLASS_NAME);
     final Map<String, OClass> classesToDrop = new HashMap<String, OClass>();
+    final Set<String> indexes = new HashSet<String>();
     for (OClass dbClass : classes) {
       String className = dbClass.getName();
 
       if (!dbClass.isSuperClassOf(orole) && !dbClass.isSuperClassOf(ouser) && !dbClass.isSuperClassOf(oidentity)) {
         classesToDrop.put(className, dbClass);
+        for(OIndex<?> index: dbClass.getIndexes()){
+          indexes.add(index.getName());
+        }
       }
     }
 
+    final OIndexManagerProxy indexManager = database.getMetadata().getIndexManager();
+    for (String indexName : indexes) {
+      indexManager.dropIndex(indexName);
+    }
+    
     int removedClasses = 0;
     while (!classesToDrop.isEmpty()) {
       final AbstractList<String> classesReadyToDrop = new ArrayList<String>();
