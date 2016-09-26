@@ -1498,6 +1498,40 @@ public class OCommandExecutorSQLSelectTest {
     Assert.assertEquals(results.size(), 1);
   }
 
+  @Test
+  public void testCountOnSubclassIndexes(){
+    //issue #6737
+
+    db.command(new OCommandSQL("create class testCountOnSubclassIndexes_superclass")).execute();
+    db.command(new OCommandSQL("create property testCountOnSubclassIndexes_superclass.foo boolean")).execute();
+    db.command(new OCommandSQL("create index testCountOnSubclassIndexes_superclass.foo on testCountOnSubclassIndexes_superclass (foo) notunique")).execute();
+
+    db.command(new OCommandSQL("create class testCountOnSubclassIndexes_sub1 extends testCountOnSubclassIndexes_superclass")).execute();
+    db.command(new OCommandSQL("create index testCountOnSubclassIndexes_sub1.foo on testCountOnSubclassIndexes_sub1 (foo) notunique")).execute();
+
+    db.command(new OCommandSQL("create class testCountOnSubclassIndexes_sub2 extends testCountOnSubclassIndexes_superclass")).execute();
+    db.command(new OCommandSQL("create index testCountOnSubclassIndexes_sub2.foo on testCountOnSubclassIndexes_sub2 (foo) notunique")).execute();
+
+    db.command(new OCommandSQL("insert into testCountOnSubclassIndexes_sub1 set name = 'a', foo = true")).execute();
+    db.command(new OCommandSQL("insert into testCountOnSubclassIndexes_sub1 set name = 'b', foo = false")).execute();
+    db.command(new OCommandSQL("insert into testCountOnSubclassIndexes_sub2 set name = 'c', foo = true")).execute();
+    db.command(new OCommandSQL("insert into testCountOnSubclassIndexes_sub2 set name = 'd', foo = true")).execute();
+    db.command(new OCommandSQL("insert into testCountOnSubclassIndexes_sub2 set name = 'e', foo = false")).execute();
+
+
+    List<ODocument> results = db.query(new OSQLSynchQuery<ODocument>("SELECT count(*) from testCountOnSubclassIndexes_sub1 where foo = true"));
+    Assert.assertEquals(results.size(), 1);
+    Assert.assertEquals(results.get(0).field("count"), 1L);
+
+    results = db.query(new OSQLSynchQuery<ODocument>("SELECT count(*) from testCountOnSubclassIndexes_sub2 where foo = true"));
+    Assert.assertEquals(results.size(), 1);
+    Assert.assertEquals(results.get(0).field("count"), 2L);
+
+    results = db.query(new OSQLSynchQuery<ODocument>("SELECT count(*) from testCountOnSubclassIndexes_superclass where foo = true"));
+    Assert.assertEquals(results.size(), 1);
+    Assert.assertEquals(results.get(0).field("count"), 3L);
+  }
+
 
   private long indexUsages(ODatabaseDocumentTx db) {
     final long oldIndexUsage;
