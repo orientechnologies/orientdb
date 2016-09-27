@@ -46,7 +46,7 @@ public class OByteBufferPoolTest {
 
   @Test
   public void testAcquireReleasePageWithPreallocation() {
-    OByteBufferPool pool = new OByteBufferPool(10, 300);
+    OByteBufferPool pool = new OByteBufferPool(10, 300, 200);
 
     Assert.assertEquals(pool.getMaxPagesPerChunk(), 16);
 
@@ -72,7 +72,7 @@ public class OByteBufferPoolTest {
   @Test
   @Ignore
   public void testAcquireReleasePageWithPreallocationInMT() throws Exception {
-    final OByteBufferPool pool = new OByteBufferPool(10, 300);
+    final OByteBufferPool pool = new OByteBufferPool(10, 300, 200);
 
     Assert.assertEquals(pool.getMaxPagesPerChunk(), 16);
 

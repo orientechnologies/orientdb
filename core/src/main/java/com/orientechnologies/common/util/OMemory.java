@@ -145,8 +145,8 @@ public class OMemory {
     final long maxDirectMemory = getConfiguredMaxDirectMemory();
 
     if (maxDirectMemory != -1 && maxCacheSize > maxDirectMemory)
-      OLogManager.instance().warn(OMemory.class, "Configured maximum amount of memory available to the cache (" + maxCacheSize +
-          " bytes) is larger than configured JVM maximum direct memory size (" + maxDirectMemory + " bytes). That may cause "
+      OLogManager.instance().warn(OMemory.class, "Configured maximum amount of memory available to the cache (" + maxCacheSize
+          + " bytes) is larger than configured JVM maximum direct memory size (" + maxDirectMemory + " bytes). That may cause "
           + "out of memory errors, please tune the configuration up. Use the -XX:MaxDirectMemorySize JVM option to raise the JVM "
           + "maximum direct memory size or storage.diskCache.bufferSize OrientDB option to lower memory requirements of the "
           + "cache.");
@@ -193,15 +193,25 @@ public class OMemory {
    */
   public static void fixCommonConfigurationProblems() {
     final long maxDirectMemory = OMemory.getConfiguredMaxDirectMemory();
+    long diskCacheSize = OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong();
 
     if (maxDirectMemory != -1) {
       final long maxDiskCacheSize = Math.min(maxDirectMemory / 1024 / 1024, Integer.MAX_VALUE);
-      final long diskCacheSize = OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong();
+
       if (diskCacheSize > maxDiskCacheSize) {
         OLogManager.instance()
             .info(OGlobalConfiguration.class, "Lowering disk cache size from %,dMB to %,dMB.", diskCacheSize, maxDiskCacheSize);
         OGlobalConfiguration.DISK_CACHE_SIZE.setValue(maxDiskCacheSize);
+        diskCacheSize = maxDiskCacheSize;
       }
+    }
+
+    final int max32BitCacheSize = 512;
+    if (getJavaBitWidth() == 32 && diskCacheSize > max32BitCacheSize) {
+      OLogManager.instance()
+          .info(OGlobalConfiguration.class, "32 bit JVM is detected. Lowering disk cache size from %,dMB to %,dMB.", diskCacheSize,
+              max32BitCacheSize);
+      OGlobalConfiguration.DISK_CACHE_SIZE.setValue(max32BitCacheSize);
     }
 
     if (OGlobalConfiguration.MEMORY_CHUNK_SIZE.getValueAsLong()
@@ -211,6 +221,19 @@ public class OMemory {
           OGlobalConfiguration.MEMORY_CHUNK_SIZE.getValueAsLong(), newChunkSize);
       OGlobalConfiguration.MEMORY_CHUNK_SIZE.setValue(newChunkSize);
     }
+  }
+
+  private static int getJavaBitWidth() {
+    // Figure out whether bit width of running JVM
+    // Most of JREs support property "sun.arch.data.model" which is exactly what we need here
+    String dataModel = System.getProperty("sun.arch.data.model", "64"); // By default assume 64bit
+    int size = 64;
+    try {
+      size = Integer.parseInt(dataModel);
+    } catch (Throwable t) {
+      // Ignore
+    }
+    return size;
   }
 
   /**

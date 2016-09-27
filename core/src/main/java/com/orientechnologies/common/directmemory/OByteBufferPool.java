@@ -68,23 +68,10 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
    * @return Global instance is used inside of storage.
    */
   public static OByteBufferPool instance() {
-    return INSTANCE;
+    return InstanceHolder.INSTANCE;
   }
-
-  private static final OByteBufferPool INSTANCE;
 
   private static final boolean TRACK = OGlobalConfiguration.DIRECT_MEMORY_TRACK_MODE.getValueAsBoolean();
-
-  static {
-    // page size in bytes
-    final int pageSize = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
-
-    // Maximum amount of chunk size which should be allocated at once by system
-    final int memoryChunkSize = OGlobalConfiguration.MEMORY_CHUNK_SIZE.getValueAsInteger();
-
-    // instance of byte buffer which should be used by all storage components
-    INSTANCE = new OByteBufferPool(pageSize, memoryChunkSize);
-  }
 
   /**
    * Size of single byte buffer instance in bytes.
@@ -112,6 +99,11 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
   private final int maxPagesPerSingleArea;
 
   /**
+   * Limit of memory which will be allocated by big chunks (in pages)
+   */
+  private final long preAllocationLimit;
+
+  /**
    * Pool of pages which are already allocated but not used any more.
    */
   private final ConcurrentLinkedQueue<ByteBuffer> pool = new ConcurrentLinkedQueue<ByteBuffer>();
@@ -135,16 +127,19 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
    * @param pageSize Size of single page (instance of <code>DirectByteBuffer</code>) returned by pool.
    */
   public OByteBufferPool(int pageSize) {
-    this(pageSize, -1);
+    this(pageSize, -1, -1);
   }
 
   /**
-   * @param pageSize     Size of single page (<code>DirectByteBuffer</code>) returned by pool.
-   * @param maxChunkSize Maximum allocation chunk size
+   * @param pageSize           Size of single page (<code>DirectByteBuffer</code>) returned by pool.
+   * @param maxChunkSize       Maximum allocation chunk size
+   * @param preAllocationLimit Limit of memory which will be allocated by big chunks
    */
-  public OByteBufferPool(int pageSize, int maxChunkSize) {
+  public OByteBufferPool(int pageSize, int maxChunkSize, long preAllocationLimit) {
     this.pageSize = pageSize;
     this.zeroPage = ByteBuffer.allocateDirect(pageSize).order(ByteOrder.nativeOrder());
+
+    this.preAllocationLimit = (preAllocationLimit / pageSize) * pageSize;
 
     int pagesPerArea = (maxChunkSize / pageSize);
     if (pagesPerArea > 1) {
@@ -194,7 +189,6 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
    * the smallest number of iterations possible and then increment result value by 1.
    *
    * @param value Integer the most significant power of 2 should be found.
-   *
    * @return The most significant power of 2.
    */
   private int closestPowerOfTwo(int value) {
@@ -217,7 +211,6 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
    * Position of returned buffer is always zero.
    *
    * @param clear Whether returned buffer should be filled with zeros before return.
-   *
    * @return Direct memory buffer instance.
    */
   public ByteBuffer acquireDirect(boolean clear) {
@@ -236,10 +229,20 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
     }
 
     if (maxPagesPerSingleArea > 1) {
-
       final long currentAllocationPosition = nextAllocationPosition.getAndIncrement();
+
+      //all chucks consumes maxPagesPerSingleArea space with exception of last one
       final int position = (int) (currentAllocationPosition & (maxPagesPerSingleArea - 1));
       final int bufferIndex = (int) (currentAllocationPosition / maxPagesPerSingleArea);
+
+      //if we hit the end of preallocation buffer we allocate by small chunks
+      if (currentAllocationPosition >= preAllocationLimit) {
+        return trackBuffer(ByteBuffer.allocateDirect(pageSize).order(ByteOrder.nativeOrder()));
+      }
+
+      //allocation size should be the same for all buffers from chuck with the same index
+      final int allocationSize = (int) Math
+          .min(maxPagesPerSingleArea * pageSize, (preAllocationLimit - bufferIndex * maxPagesPerSingleArea) * pageSize);
 
       BufferHolder bfh = null;
       try {
@@ -253,7 +256,7 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
             bfh = new BufferHolder(bufferIndex);
 
             if (lastPreallocatedArea.compareAndSet(null, bfh)) {
-              allocateBuffer(bfh);
+              allocateBuffer(bfh, allocationSize);
             } else {
               continue;
             }
@@ -285,7 +288,7 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
             final BufferHolder bufferHolder = new BufferHolder(bufferIndex);
             if (lastPreallocatedArea.compareAndSet(bfh, bufferHolder)) {
               bfh = bufferHolder;
-              allocateBuffer(bfh);
+              allocateBuffer(bfh, allocationSize);
             } else {
               assert bufferHolder.index == bufferIndex;
               continue;
@@ -331,8 +334,7 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
    *
    * @param bfh Buffer holder for direct memory buffer to be allocated.
    */
-  private void allocateBuffer(BufferHolder bfh) {
-    final int allocationSize = maxPagesPerSingleArea * pageSize;
+  private void allocateBuffer(BufferHolder bfh, int allocationSize) {
     try {
       bfh.buffer = ByteBuffer.allocateDirect(allocationSize).order(ByteOrder.nativeOrder());
     } finally {
@@ -602,6 +604,23 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
       return buffer != null && buffer == ((TrackedBufferKey) obj).get();
     }
 
+  }
+
+  private static class InstanceHolder {
+    private static final OByteBufferPool INSTANCE;
+
+    static {
+      // page size in bytes
+      final int pageSize = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
+
+      // Maximum amount of chunk size which should be allocated at once by system
+      final int memoryChunkSize = OGlobalConfiguration.MEMORY_CHUNK_SIZE.getValueAsInteger();
+
+      final long diskCacheSize = OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsInteger() * 1024L * 1024L;
+
+      // instance of byte buffer which should be used by all storage components
+      INSTANCE = new OByteBufferPool(pageSize, memoryChunkSize, diskCacheSize);
+    }
   }
 
 }
