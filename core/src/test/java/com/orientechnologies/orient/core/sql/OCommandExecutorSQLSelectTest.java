@@ -1533,6 +1533,25 @@ public class OCommandExecutorSQLSelectTest {
   }
 
 
+  @Test
+  public void testSubquerySkipLimit(){
+    //issue #6737
+
+    db.command(new OCommandSQL("create class testSubquerySkipLimit")).execute();
+
+    db.command(new OCommandSQL("insert into testSubquerySkipLimit set name = 'a'")).execute();
+    db.command(new OCommandSQL("insert into testSubquerySkipLimit set name = 'b'")).execute();
+    db.command(new OCommandSQL("insert into testSubquerySkipLimit set name = 'c'")).execute();
+    db.command(new OCommandSQL("insert into testSubquerySkipLimit set name = 'd'")).execute();
+    db.command(new OCommandSQL("insert into testSubquerySkipLimit set name = 'e'")).execute();
+
+
+    List<ODocument> results = db.query(new OSQLSynchQuery<ODocument>("select from (SELECT from testSubquerySkipLimit order by name desc skip 1 limit 2)"));
+    Assert.assertEquals(results.size(), 2);
+    Assert.assertEquals(results.get(0).field("name"), "d");
+    Assert.assertEquals(results.get(1).field("name"), "c");
+  }
+
   private long indexUsages(ODatabaseDocumentTx db) {
     final long oldIndexUsage;
     try {

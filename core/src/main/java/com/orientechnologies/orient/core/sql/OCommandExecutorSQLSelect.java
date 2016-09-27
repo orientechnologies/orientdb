@@ -453,6 +453,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       handleNoTarget();
       handleGroupBy(context);
       applyOrderBy(true);
+      applyLimitAndSkip();
 
       subIterator = new ArrayList<OIdentifiable>((List<OIdentifiable>) getResult()).iterator();
       lastRecord = null;
