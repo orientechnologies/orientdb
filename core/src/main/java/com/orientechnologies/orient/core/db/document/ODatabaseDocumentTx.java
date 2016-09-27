@@ -1295,7 +1295,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
   @Override
   public String getClusterNameById(final int iClusterId) {
-    if (iClusterId == -1)
+    if (iClusterId < 0)
       return null;
 
     checkIfActive();
