@@ -442,7 +442,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
 
     if (throwable instanceof Throwable) {
       throw new OResponseProcessingException("Exception during response processing", (Throwable) throwable);
-    }
+    } 
     // WRAP IT
     else
       OLogManager.instance().error(this,

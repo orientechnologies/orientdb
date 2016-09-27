@@ -57,6 +57,8 @@ public class OCommandExecutorSQLDelegate extends OCommandExecutorSQLAbstract imp
       delegate.setLimit(iCommand.getLimit());
       delegate.parse(iCommand);
       delegate.setProgressListener(progressListener);
+      if (delegate.getFetchPlan() != null)
+        textRequest.setFetchPlan(delegate.getFetchPlan());
 
     } else
       throw new OCommandExecutionException("Cannot find a command executor for the command request: " + iCommand);
