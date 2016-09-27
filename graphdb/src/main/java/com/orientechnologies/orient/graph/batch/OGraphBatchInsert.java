@@ -119,8 +119,8 @@ public class OGraphBatchInsert {
 
     @Override
     public void run() {
+      ODatabaseDocument db = new ODatabaseDocumentTx(dbUrl);
       try {
-        ODatabaseDocument db = new ODatabaseDocumentTx(dbUrl);
         db.open(userName, password);
         run(db);
       } finally {
