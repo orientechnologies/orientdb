@@ -30,8 +30,11 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedLifecycleListener;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.plugin.OPluginLifecycleListener;
+import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.sun.management.OperatingSystemMXBean;
 
 import java.io.File;
@@ -55,7 +58,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Luca Garulli
  * @copyrights Orient Technologies.com
  */
-public class OEnterpriseProfiler extends OAbstractProfiler {
+public class OEnterpriseProfiler extends OAbstractProfiler implements OPluginLifecycleListener {
   protected final static Timer        timer                   = new Timer(true);
   protected final static int          BUFFER_SIZE             = 2048;
   public static final int             KEEP_ALIVE              = 60 * 1000;
@@ -729,40 +732,12 @@ public class OEnterpriseProfiler extends OAbstractProfiler {
     };
     timer.schedule(autoPause, KEEP_ALIVE, KEEP_ALIVE);
 
-    if (server.getDistributedManager() != null) {
-      final ODistributedServerManager distributedManager = server.getDistributedManager();
-      server.getDistributedManager().registerLifecycleListener(new ODistributedLifecycleListener() {
-        @Override
-        public boolean onNodeJoining(String iNode) {
-          return true;
-        }
-
-        @Override
-        public void onNodeJoined(String iNode) {
-
-        }
-
-        @Override
-        public void onNodeLeft(String iNode) {
-
-          synchronized (server) {
-            Map<String, Object> configurationMap = distributedManager.getConfigurationMap();
-            ODocument doc = (ODocument) configurationMap.get("clusterStats");
-            if (doc == null) {
-              doc = new ODocument();
-              doc.setTrackingChanges(false);
-            }
-            doc.removeField(iNode);
-            ODocumentInternal.clearTrackData(doc);
-            configurationMap.put("clusterStats", doc);
-          }
-        }
-
-        @Override
-        public void onDatabaseChangeStatus(String iNode, String iDatabaseName, ODistributedServerManager.DB_STATUS iNewStatus) {
-        }
-      });
+    if (server != null) {
+      if (server.getPluginManager() != null) {
+        server.getPluginManager().registerLifecycleListener(this);
+      }
     }
+
     autoPublish = new TimerTask() {
       @Override
       public void run() {
@@ -860,5 +835,71 @@ public class OEnterpriseProfiler extends OAbstractProfiler {
     long elapsedTime = upTime - prevUpTime;
     cpuUsage = Math.min(99F, elapsedCpu / (elapsedTime * 10000F * availableProcessors));
     return cpuUsage;
+  }
+
+  @Override
+  public void onBeforeConfig(OServerPlugin plugin, OServerParameterConfiguration[] cfg) {
+
+  }
+
+  @Override
+  public void onAfterConfig(OServerPlugin plugin, OServerParameterConfiguration[] cfg) {
+
+  }
+
+  @Override
+  public void onBeforeStartup(OServerPlugin plugin) {
+
+    if (plugin instanceof ODistributedServerManager) {
+      if (server.getDistributedManager() != null) {
+        final ODistributedServerManager distributedManager = server.getDistributedManager();
+        server.getDistributedManager().registerLifecycleListener(new ODistributedLifecycleListener() {
+          @Override
+          public boolean onNodeJoining(String iNode) {
+            return true;
+          }
+
+          @Override
+          public void onNodeJoined(String iNode) {
+
+          }
+
+          @Override
+          public void onNodeLeft(String iNode) {
+
+            synchronized (server) {
+              Map<String, Object> configurationMap = distributedManager.getConfigurationMap();
+              ODocument doc = (ODocument) configurationMap.get("clusterStats");
+              if (doc == null) {
+                doc = new ODocument();
+                doc.setTrackingChanges(false);
+              }
+              doc.removeField(iNode);
+              ODocumentInternal.clearTrackData(doc);
+              configurationMap.put("clusterStats", doc);
+            }
+          }
+
+          @Override
+          public void onDatabaseChangeStatus(String iNode, String iDatabaseName, ODistributedServerManager.DB_STATUS iNewStatus) {
+          }
+        });
+      }
+    }
+  }
+
+  @Override
+  public void onAfterStartup(OServerPlugin plugin) {
+
+  }
+
+  @Override
+  public void onBeforeShutdown(OServerPlugin plugin) {
+
+  }
+
+  @Override
+  public void onAfterShutdown(OServerPlugin plugin) {
+
   }
 }
