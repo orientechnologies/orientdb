@@ -372,9 +372,14 @@ public interface OClass extends Comparable<OClass> {
   Set<OIndex<?>> getInvolvedIndexes(Collection<String> fields);
 
   /**
+   * Returns list of indexes that contain passed in fields names as their first keys. Order of fields does not matter.
+   * <p>
+   * All indexes sorted by their count of parameters in ascending order. If there are indexes for the given set of fields in super
+   * class they will be taken into account.
+   *
    * @param fields
    *          Field names.
-   * @return <code>true</code> if given fields are contained as first key fields in class indexes.
+   * @return list of indexes that contain passed in fields names as their first keys.
    * @see #getInvolvedIndexes(java.util.Collection)
    */
   Set<OIndex<?>> getInvolvedIndexes(String... fields);
