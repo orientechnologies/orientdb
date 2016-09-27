@@ -436,4 +436,29 @@ public class OCSVExtractorTest extends OETLBaseTest {
     assertThat(df.format(doc.<Date>field("datetime"))).isEqualTo("2015-03-30 11:00");
 
   }
+
+  @Test
+  public void testMissingColumns() {
+    String cfgJson = "{source: { content: { value: 'name,value,,\nfrank,myvalue,,'} }, extractor : { csv : { \"ignoreMissingColumns\": true } }, loader : { test: {} } }";
+    process(cfgJson);
+    List<ODocument> res = getResult();
+    assertThat(res).hasSize(1);
+    ODocument doc = res.get(0);
+
+    assertThat(doc.<String>field("name")).isEqualTo("frank");
+    assertThat(doc.<String>field("value")).isEqualTo("myvalue");
+  }
+
+  @Test
+  public void testExcelFormat() {
+    String cfgJson = "{source: { content: { value: 'name,value,,\nfrank,myvalue,,'} }, extractor : { csv : { \"predefinedFormat\": \"Excel\" } }, loader : { test: {} } }";
+    process(cfgJson);
+    List<ODocument> res = getResult();
+    assertThat(res).hasSize(1);
+    ODocument doc = res.get(0);
+
+    assertThat(doc.<String>field("name")).isEqualTo("frank");
+    assertThat(doc.<String>field("value")).isEqualTo("myvalue");
+  }
+
 }

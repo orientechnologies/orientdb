@@ -53,9 +53,10 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
             + "{dateTimeFormat:{optional:true,description:'DateTime format used to parde dates. Default is yyyy-mm-dd HH:MM'}},"
             + "{quote:{optional:true,description:'String character delimiter. Use \"\" to do not use any delimitator'}},"
             + "{ignoreEmptyLines:{optional:true,description:'Ignore empty lines',type:'boolean'}},"
+            + "{ignoreMissingColumns:{optional:true,description:'Ignore empty columns',type:'boolean'}},"
             + "{skipFrom:{optional:true,description:'Line number where start to skip',type:'int'}},"
             + "{skipTo:{optional:true,description:'Line number where skip ends',type:'int'}},"
-            + "{predefinedFormat:{optional:true,description:'Name of standard csv format (from Apache commons-csv): DEFAULT, EXCEL, MYSQL, RFC4180, TDF',type:'String'}}"
+            + "{predefinedFormat:{optional:true,description:'Name of standard csv format (from Apache commons-csv): Default, Excel, MySQL, RFC4180, TDF',type:'String'}}"
             + "],input:['String'],output:'ODocument'}");
   }
 
@@ -94,6 +95,11 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
     if (iConfiguration.containsField("ignoreEmptyLines")) {
       boolean ignoreEmptyLines = iConfiguration.field("ignoreEmptyLines");
       csvFormat = csvFormat.withIgnoreEmptyLines(ignoreEmptyLines);
+    }
+
+    if (iConfiguration.containsField("ignoreMissingColumns")) {
+      boolean ignoreMissingColumns = iConfiguration.field("ignoreMissingColumns");
+      csvFormat = csvFormat.withAllowMissingColumnNames(ignoreMissingColumns);
     }
 
     if (iConfiguration.containsField("columnsOnFirstLine")) {
@@ -188,10 +194,12 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
       for (Map.Entry<String, String> en : recordAsMap.entrySet()) {
 
         final String value = en.getValue();
-        if (value == null || nullValue.equals(value) || value.isEmpty())
-          doc.field(en.getKey(), null, OType.ANY);
-        else
-          doc.field(en.getKey(), determineTheType(value));
+        if (!csvFormat.getAllowMissingColumnNames() || !en.getKey().isEmpty()) {
+          if (value == null || nullValue.equals(value) || value.isEmpty())
+            doc.field(en.getKey(), null, OType.ANY);
+          else
+            doc.field(en.getKey(), determineTheType(value));
+        }
       }
 
     } else {
