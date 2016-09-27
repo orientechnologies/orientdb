@@ -43,7 +43,7 @@ import java.util.concurrent.*;
   }
 
   public void testAcquireReleasePageWithPreallocation() {
-    OByteBufferPool pool = new OByteBufferPool(10, 300);
+    OByteBufferPool pool = new OByteBufferPool(10, 300, 200);
 
     Assert.assertEquals(pool.getMaxPagesPerChunk(), 16);
 
@@ -68,7 +68,7 @@ import java.util.concurrent.*;
 
   @Test(enabled = false)
   public void testAcquireReleasePageWithPreallocationInMT() throws Exception {
-    final OByteBufferPool pool = new OByteBufferPool(10, 300);
+    final OByteBufferPool pool = new OByteBufferPool(10, 300, 200);
 
     Assert.assertEquals(pool.getMaxPagesPerChunk(), 16);
 
