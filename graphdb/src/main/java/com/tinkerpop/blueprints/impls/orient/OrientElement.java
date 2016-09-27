@@ -282,7 +282,8 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
       if (firstValue instanceof ODocument) {
         final ODocument document = (ODocument) firstValue;
 
-        if (document.isEmbedded() || ODocumentInternal.getImmutableSchemaClass(document) == null)
+        /// clusterId -2 Is considered a projection so does not have a class but is a not embedded record
+        if (document.getIdentity().getClusterId() != -2 && (document.isEmbedded() || ODocumentInternal.getImmutableSchemaClass(document) == null))
           return (T) fieldValue;
       }
 

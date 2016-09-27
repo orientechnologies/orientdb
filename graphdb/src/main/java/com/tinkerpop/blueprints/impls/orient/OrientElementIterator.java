@@ -1,6 +1,6 @@
 /*
  *
- *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *  Copyright 2014 Orient Tec hnologies LTD (info(at)orientechnologies.com)
  *  *
  *  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  *  you may not use this file except in compliance with the License.
@@ -68,11 +68,12 @@ class OrientElementIterator<T extends Element> implements Iterator<T> {
         currentDocument.load();
 
       OImmutableClass immutableClass = ODocumentInternal.getImmutableSchemaClass(currentDocument);
-      if (immutableClass == null)
+      // clusterId -2 is a projection and is correct that doesn't have a class, we consider projection a vertex
+      if (immutableClass == null && currentDocument.getIdentity().getClusterId() != -2)
         throw new IllegalArgumentException(
             "Cannot determine the graph element type because the document class is null. Probably this is a projection, use the EXPAND() function");
 
-      if (immutableClass.isEdgeType())
+      if (currentDocument.getIdentity().getClusterId() != -2 && immutableClass.isEdgeType() )
         currentElement = new OrientEdge(graph, currentDocument);
       else
         currentElement = new OrientVertex(graph, currentDocument);
