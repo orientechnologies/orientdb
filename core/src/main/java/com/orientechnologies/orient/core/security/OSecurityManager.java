@@ -252,10 +252,12 @@ public class OSecurityManager {
    */
   private static boolean isAlgorithmSupported(final String algorithm) {
     // Java 7 specific checks.
-    if (Runtime.class.getPackage().getImplementationVersion().startsWith("1.7")) {
-      // Java 7 does not support the PBKDF2_SHA256_ALGORITHM.
-      if (algorithm.equals(PBKDF2_SHA256_ALGORITHM)) {
-        return false;
+    if (Runtime.class.getPackage() != null && Runtime.class.getPackage().getImplementationVersion() != null) {
+      if (Runtime.class.getPackage().getImplementationVersion().startsWith("1.7")) {
+        // Java 7 does not support the PBKDF2_SHA256_ALGORITHM.
+        if (algorithm != null && algorithm.equals(PBKDF2_SHA256_ALGORITHM)) {
+          return false;
+        }
       }
     }
 
