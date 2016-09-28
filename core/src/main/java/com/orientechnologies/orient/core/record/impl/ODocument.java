@@ -454,6 +454,8 @@ public class ODocument extends ORecordAbstract
   }
 
   protected static void validateEmbedded(final OProperty p, final Object fieldValue) {
+    if (fieldValue == null)
+      return;
     if (fieldValue instanceof ORecordId)
       throw new OValidationException(
           "The field '" + p.getFullName() + "' has been declared as " + p.getType() + " but the value is the RecordID "

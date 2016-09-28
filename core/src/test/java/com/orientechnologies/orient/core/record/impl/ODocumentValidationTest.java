@@ -637,6 +637,8 @@ public class ODocumentValidationTest {
       clazz.createProperty("link", OType.LINK).setLinkedClass(clazz1);
       clazz.createProperty("embedded", OType.EMBEDDED).setLinkedClass(clazz1);
       clazz.createProperty("linkList", OType.LINKLIST).setLinkedClass(clazz1);
+      clazz.createProperty("embeddedList", OType.EMBEDDEDLIST).setLinkedClass(clazz1);
+      clazz.createProperty("embeddedSet", OType.EMBEDDEDSET).setLinkedClass(clazz1);
       clazz.createProperty("linkSet", OType.LINKSET).setLinkedClass(clazz1);
       clazz.createProperty("linkMap", OType.LINKMAP).setLinkedClass(clazz1);
       clazz.createProperty("linkBag", OType.LINKBAG).setLinkedClass(clazz1);
@@ -647,6 +649,10 @@ public class ODocumentValidationTest {
       d.field("linkList", list);
       Set<ODocument> set = new HashSet<ODocument>(list);
       d.field("linkSet", set);
+      List<ODocument> embeddedList = Arrays.asList(new ODocument(clazz1), null);
+      d.field("embeddedList", embeddedList);
+      Set<ODocument> embeddedSet = new HashSet<ODocument>(embeddedList);
+      d.field("embeddedSet", embeddedSet);
 
       Map<String, ODocument> map = new HashMap<String, ODocument>();
       map.put("a", new ODocument(clazz1));
@@ -667,6 +673,8 @@ public class ODocumentValidationTest {
 
       checkField(d, "linkList", Arrays.asList(new ODocument(clazz)));
       checkField(d, "linkSet", new HashSet<ODocument>(Arrays.asList(new ODocument(clazz))));
+      checkField(d, "embeddedList", Arrays.asList(new ODocument(clazz)));
+      checkField(d, "embeddedSet", Arrays.asList(new ODocument(clazz)));
       ORidBag bag = new ORidBag();
       bag.add(new ODocument(clazz));
       checkField(d, "linkBag", bag);
