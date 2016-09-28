@@ -34,15 +34,17 @@ import static org.junit.Assert.assertEquals;
 /**
  * @author Sergey Sitnikov
  */
-public class TxAwareIndexTest {
+public class TxUniqueIndexWithCollationTest {
 
   private ODatabaseDocumentTx db;
 
   @Before
   public void before() {
-    db = new ODatabaseDocumentTx("memory:TxAwareIndexTest");
+    db = new ODatabaseDocumentTx("memory:TxUniqueIndexWithCollationTest");
     db.create();
-    db.getMetadata().getSchema().createClass("user").createProperty("name", OType.STRING).createIndex(OClass.INDEX_TYPE.UNIQUE);
+    db.getMetadata().getSchema().createClass("user").createProperty("name", OType.STRING).setCollate("ci")
+        .createIndex(OClass.INDEX_TYPE.UNIQUE);
+
     db.newInstance("user").field("name", "abc").save();
     db.newInstance("user").field("name", "aby").save();
     db.newInstance("user").field("name", "abz").save();
@@ -57,9 +59,9 @@ public class TxAwareIndexTest {
   public void testSubstrings() {
     db.begin();
 
-    db.command(new OCommandSQL("update user set name='abd' where name='aby'")).execute();
+    db.command(new OCommandSQL("update user set name='abd' where name='Aby'")).execute();
 
-    final OResultSet<ODocument> r = db.command(new OCommandSQL("select * from user where name like '%b%' order by name")).execute();
+    final OResultSet<ODocument> r = db.command(new OCommandSQL("select * from user where name like '%B%' order by name")).execute();
     assertEquals(3, r.size());
     assertEquals("abc", r.get(0).field("name"));
     assertEquals("abd", r.get(1).field("name"));
@@ -72,12 +74,28 @@ public class TxAwareIndexTest {
   public void testRange() {
     db.begin();
 
-    db.command(new OCommandSQL("update user set name='abd' where name='aby'")).execute();
+    db.command(new OCommandSQL("update user set name='Abd' where name='Aby'")).execute();
 
-    final OResultSet<ODocument> r = db.command(new OCommandSQL("select * from user where name > 'abc' order by name")).execute();
+    final OResultSet<ODocument> r = db.command(new OCommandSQL("select * from user where name >= 'abd' order by name")).execute();
     assertEquals(2, r.size());
-    assertEquals("abd", r.get(0).field("name"));
+    assertEquals("Abd", r.get(0).field("name"));
     assertEquals("abz", r.get(1).field("name"));
+
+    db.commit();
+  }
+
+  @Test
+  public void testIn() {
+    db.begin();
+
+    db.command(new OCommandSQL("update user set name='abd' where name='Aby'")).execute();
+
+    final OResultSet<ODocument> r = db
+        .command(new OCommandSQL("select * from user where name in ['Abc', 'Abd', 'Abz'] order by name")).execute();
+    assertEquals(3, r.size());
+    assertEquals("abc", r.get(0).field("name"));
+    assertEquals("abd", r.get(1).field("name"));
+    assertEquals("abz", r.get(2).field("name"));
 
     db.commit();
   }

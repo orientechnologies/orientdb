@@ -26,9 +26,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 /**
  * Transactional wrapper for dictionary index. Stores changes locally to the transaction until tx.commit(). All the other operations
  * are delegated to the wrapped OIndex instance.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 public class OIndexTxAwareDictionary extends OIndexTxAwareOneValue {
   public OIndexTxAwareDictionary(ODatabaseDocumentInternal iDatabase, OIndex<OIdentifiable> iDelegate) {

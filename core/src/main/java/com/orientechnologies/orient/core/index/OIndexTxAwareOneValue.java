@@ -34,9 +34,8 @@ import java.util.*;
 /**
  * Transactional wrapper for indexes. Stores changes locally to the transaction until tx.commit(). All the other operations are
  * delegated to the wrapped OIndex instance.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
   private static class MapEntry implements Map.Entry<Object, OIdentifiable> {
@@ -66,10 +65,10 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
 
   private class PureTxBetweenIndexForwardCursor extends OIndexAbstractCursor {
     private final OTransactionIndexChanges indexChanges;
-    private Object                         firstKey;
-    private Object                         lastKey;
+    private       Object                   firstKey;
+    private       Object                   lastKey;
 
-    private Object                         nextKey;
+    private Object nextKey;
 
     public PureTxBetweenIndexForwardCursor(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
         OTransactionIndexChanges indexChanges) {
@@ -113,10 +112,10 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
 
   private class PureTxBetweenIndexBackwardCursor extends OIndexAbstractCursor {
     private final OTransactionIndexChanges indexChanges;
-    private Object                         firstKey;
-    private Object                         lastKey;
+    private       Object                   firstKey;
+    private       Object                   lastKey;
 
-    private Object                         nextKey;
+    private Object nextKey;
 
     public PureTxBetweenIndexBackwardCursor(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
         OTransactionIndexChanges indexChanges) {
@@ -158,17 +157,18 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
 
   private class OIndexTxCursor extends OIndexAbstractCursor {
 
-    private final OIndexCursor               backedCursor;
-    private final boolean                    ascOrder;
-    private final OTransactionIndexChanges   indexChanges;
-    private OIndexCursor                     txBetweenIndexCursor;
+    private final OIndexCursor             backedCursor;
+    private final boolean                  ascOrder;
+    private final OTransactionIndexChanges indexChanges;
+    private       OIndexCursor             txBetweenIndexCursor;
 
     private Map.Entry<Object, OIdentifiable> nextTxEntry;
     private Map.Entry<Object, OIdentifiable> nextBackedEntry;
 
-    private boolean                          firstTime;
+    private boolean firstTime;
 
-    public OIndexTxCursor(OIndexCursor txCursor, OIndexCursor backedCursor, boolean ascOrder, OTransactionIndexChanges indexChanges) {
+    public OIndexTxCursor(OIndexCursor txCursor, OIndexCursor backedCursor, boolean ascOrder,
+        OTransactionIndexChanges indexChanges) {
       this.backedCursor = backedCursor;
       this.ascOrder = ascOrder;
       this.indexChanges = indexChanges;
@@ -230,7 +230,9 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
   }
 
   @Override
-  public ODocument checkEntry(final OIdentifiable iRecord, final Object iKey) {
+  public ODocument checkEntry(final OIdentifiable iRecord, Object iKey) {
+    iKey = getCollatingValue(iKey);
+
     // CHECK IF ALREADY EXISTS IN TX
     if (!database.getTransaction().isActive()) {
       final OIdentifiable previousRecord = get(iKey);
@@ -244,9 +246,9 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
         if (mergeSameKey) {
           return (ODocument) previousRecord.getRecord();
         } else
-          throw new ORecordDuplicatedException(String.format(
-              "Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s", iRecord,
-              iKey, getName(), previousRecord), getName(), previousRecord.getIdentity());
+          throw new ORecordDuplicatedException(String
+              .format("Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s",
+                  iRecord, iKey, getName(), previousRecord), getName(), previousRecord.getIdentity());
       }
       return super.checkEntry(iRecord, iKey);
     }
@@ -254,11 +256,12 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
   }
 
   @Override
-  public OIdentifiable get(final Object key) {
+  public OIdentifiable get(Object key) {
     final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
-
     if (indexChanges == null)
       return super.get(key);
+
+    key = getCollatingValue(key);
 
     OIdentifiable result;
     if (!indexChanges.cleared)
@@ -282,12 +285,14 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
   }
 
   @Override
-  public OIndexCursor iterateEntriesBetween(final Object fromKey, final boolean fromInclusive, final Object toKey,
-      final boolean toInclusive, final boolean ascOrder) {
-
+  public OIndexCursor iterateEntriesBetween(Object fromKey, final boolean fromInclusive, Object toKey, final boolean toInclusive,
+      final boolean ascOrder) {
     final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
     if (indexChanges == null)
       return super.iterateEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascOrder);
+
+    fromKey = getCollatingValue(fromKey);
+    toKey = getCollatingValue(toKey);
 
     final OIndexCursor txCursor;
     if (ascOrder)
@@ -308,6 +313,8 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
     final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
     if (indexChanges == null)
       return super.iterateEntriesMajor(fromKey, fromInclusive, ascOrder);
+
+    fromKey = getCollatingValue(fromKey);
 
     final OIndexCursor txCursor;
 
@@ -331,6 +338,8 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
     if (indexChanges == null)
       return super.iterateEntriesMinor(toKey, toInclusive, ascOrder);
 
+    toKey = getCollatingValue(toKey);
+
     final OIndexCursor txCursor;
 
     final Object firstKey = indexChanges.getFirstKey();
@@ -352,7 +361,10 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
     if (indexChanges == null)
       return super.iterateEntries(keys, ascSortOrder);
 
-    final List<Object> sortedKeys = new ArrayList<Object>(keys);
+    final List<Object> sortedKeys = new ArrayList<Object>(keys.size());
+    for (Object key : keys)
+      sortedKeys.add(getCollatingValue(key));
+
     if (ascSortOrder)
       Collections.sort(sortedKeys, ODefaultComparator.INSTANCE);
     else
