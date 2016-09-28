@@ -77,6 +77,7 @@ public abstract class ORecordAbstract implements ORecord {
 
   protected ORecordAbstract setIdentity(final ORecordId iIdentity) {
     _recordId = iIdentity;
+    getDirtyManager().setDirty(this);
     return this;
   }
 
