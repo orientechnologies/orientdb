@@ -58,7 +58,7 @@ public class RepositoryController {
   @Autowired
   protected OSecurityManager     securityManager;
 
-  @RequestMapping(value = "{owner}/{repo}/issues/{number}", method = RequestMethod.GET)
+//  @RequestMapping(value = "{owner}/{repo}/issues/{number}", method = RequestMethod.GET)
   public ResponseEntity<Issue> getSingleIssue(@PathVariable("owner") String owner, @PathVariable("repo") String repo,
       @PathVariable("number") Long number) {
 

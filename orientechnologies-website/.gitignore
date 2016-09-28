@@ -2,3 +2,4 @@ node_modules
 backup
 .idea
 .tmp
+src/main/webapp/.idea

@@ -12,10 +12,14 @@ import com.orientechnologies.website.model.schema.dto.web.MockIssueDTO;
 import com.orientechnologies.website.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.view.RedirectView;
 import reactor.core.Reactor;
 import reactor.event.Event;
 
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -28,6 +32,7 @@ import java.util.Random;
 @EnableAutoConfiguration
 @RequestMapping(value = ApiUrls.GITHUB_V1 + "/mock")
 @ApiVersion(1)
+@Profile(value = { "development", "test"})
 public class GithubMockController {
 
   @Autowired
@@ -173,8 +178,7 @@ public class GithubMockController {
         doc.field("organization", new ODocument().field("login", owner));
         doc.field("repository", new ODocument().field("name", repo));
         doc.field("issue", new ODocument().field("number", number));
-        doc.field(
-            "comment",
+        doc.field("comment",
             new ODocument().field("created_at", comment.getCreatedAt()).field("updated_at", comment.getUpdatedAt())
                 .field("id", comment.getCommentId())
                 .field("user", new ODocument().field("login", byGithubToken.getName()).field("id", byGithubToken.getId())));
@@ -192,6 +196,22 @@ public class GithubMockController {
     final OUser byGithubToken = userRepository.findByGithubToken(auth.replace("token ", ""));
 
     return byGithubToken;
+
+  }
+
+  @RequestMapping(value = "/loginAs/{username}", method = RequestMethod.GET)
+  public RedirectView loginAs(@PathVariable("username") final String username, HttpServletResponse res) {
+
+    final OUser byGithubToken = userRepository.findUserByLogin(username);
+
+    Cookie cookie = new Cookie("prjhub_token", byGithubToken.getToken());
+    cookie.setMaxAge(2000);
+    cookie.setPath("/");
+    res.addCookie(cookie);
+
+    RedirectView view = new RedirectView();
+    view.setUrl("/");
+    return view;
 
   }
 

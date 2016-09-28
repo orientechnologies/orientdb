@@ -53,6 +53,18 @@ public enum OUser implements OTypeHolder<com.orientechnologies.website.model.sch
       return OType.BOOLEAN;
     }
   },
+  PUBLIC_MUTE("publicMute") {
+    @Override
+    public OType getType() {
+      return OType.BOOLEAN;
+    }
+  },
+  INVITED("invited") {
+    @Override
+    public OType getType() {
+      return OType.BOOLEAN;
+    }
+  },
   CHAT_NOTIFICATION("chatNotification") {
     @Override
     public OType getType() {
@@ -100,10 +112,11 @@ public enum OUser implements OTypeHolder<com.orientechnologies.website.model.sch
     user.setNotification((Boolean) doc.field(NOTIFICATION.toString()));
     user.setChatNotification((Boolean) doc.field(CHAT_NOTIFICATION.toString()));
     user.setWatching((Boolean) doc.field(WATCHING.toString()));
+    user.setInvited((Boolean) doc.field(INVITED.toString()));
     user.setSecondName((String) doc.field(SECONDNAME.toString()));
     user.setCompany((String) doc.field(COMPANY.toString()));
     user.setWorkingEmail((String) doc.field(WORKINGEMAIL.toString()));
-
+    user.setPublicMute((Boolean) doc.field(PUBLIC_MUTE.toString()));
     user.setConfirmed(confirmed != null ? confirmed : false);
 
     return user;
@@ -131,8 +144,10 @@ public enum OUser implements OTypeHolder<com.orientechnologies.website.model.sch
     doc.field(SECONDNAME.toString(), entity.getSecondName());
     doc.field(WORKINGEMAIL.toString(), entity.getWorkingEmail());
     doc.field(NOTIFICATION.toString(), entity.getNotification());
-    doc.field(CHAT_NOTIFICATION.toString(),entity.getChatNotification());
+    doc.field(CHAT_NOTIFICATION.toString(), entity.getChatNotification());
     doc.field(WATCHING.toString(), entity.getWatching());
+    doc.field(PUBLIC_MUTE.toString(), entity.getPublicMute());
+    doc.field(INVITED.toString(), entity.getInvited());
     doc.field("status", "active");
     doc.field("password", "test");
     return doc;

@@ -19,6 +19,7 @@ import reactor.event.Event;
 import reactor.function.Consumer;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by Enrico Risa on 30/12/14.
@@ -156,11 +157,15 @@ public abstract class EventInternal<T> implements Consumer<Event<T>> {
       members.addAll(issueActors);
       members.addAll(issueRepository.findToNotifyActorsWatching(issue));
 
+      members = members.stream().filter(c -> {
+        return !Boolean.TRUE.equals(c.getPublicMute());
+      }).collect(Collectors.toList());
     } else {
       issueActors = issueRepository.findToNotifyPrivateActors(issue);
       members.addAll(issueActors);
     }
     String[] actorsEmail = getActorsEmail(user, members, issueActors);
+
     dests.addAll(Arrays.asList(actorsEmail));
     if (dests.size() > 0) {
       for (String actor : dests) {

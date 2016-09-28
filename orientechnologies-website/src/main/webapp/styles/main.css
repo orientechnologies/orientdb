@@ -361,6 +361,7 @@ code {
 
 .areas-panel .panel span {
   cursor: pointer;
+  display: inline-block;
   margin: 0px 5px;
 }
 

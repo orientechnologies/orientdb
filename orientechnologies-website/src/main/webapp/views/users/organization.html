@@ -11,7 +11,7 @@
         <div class="form-group">
           <div class="input-group">
             <input type="text" class="form-control" ng-model="newBot" placeholder="Add Bot"/>
-                  <span class="input-group-btn">
+            <span class="input-group-btn">
                         <button class="btn btn-success" type="submit">Add</button>
                     </span>
           </div>
@@ -45,7 +45,7 @@
         <div class="form-group">
           <div class="input-group">
             <input type="text" class="form-control" ng-model="newMember" placeholder="Add Member"/>
-                  <span class="input-group-btn">
+            <span class="input-group-btn">
                         <button class="btn btn-success" type="submit">Add</button>
                     </span>
           </div>
@@ -80,7 +80,7 @@
         <div class="form-group">
           <div class="input-group">
             <input type="text" class="form-control" ng-model="newContributor" placeholder="Add Contributor"/>
-                  <span class="input-group-btn">
+            <span class="input-group-btn">
                         <button class="btn btn-success" type="submit">Add</button>
                     </span>
           </div>
@@ -114,7 +114,7 @@
         <div class="form-group">
           <div class="input-group">
             <input type="text" class="form-control" ng-model="newRepo" placeholder="Add Repository"/>
-                  <span class="input-group-btn">
+            <span class="input-group-btn">
                         <button class="btn btn-success" type="submit">Add</button>
                     </span>
           </div>
@@ -130,8 +130,8 @@
             <div class="col-md-12">
               <ul class="list-group">
                 <a href="javascript:void(0)" class="list-group-item" ng-repeat="repo in repositories">{{repo.name}}
-                                    <span class="pull-right" ng-click="syncRepo(repo)"><i
-                                      class="fa fa-refresh"></i></span>
+                  <span class="pull-right" ng-click="syncRepo(repo)"><i
+                    class="fa fa-refresh"></i></span>
                 </a>
               </ul>
             </div>
@@ -368,6 +368,7 @@
     <div class="col-md-12">
       <div class="panel panel-default">
         <div class="panel-body">
+
           <h3><span class="label label-primary" ng-click="selectTag(tag)"
                     ng-repeat="tag in tags">{{tag.name}}</span></h3>
         </div>

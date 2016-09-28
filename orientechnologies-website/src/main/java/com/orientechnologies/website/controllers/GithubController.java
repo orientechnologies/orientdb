@@ -59,6 +59,8 @@ public class GithubController {
     String locationUrl = gitHubConfiguration.getLoginUrl() + "/access_token?client_id=" + gitHubConfiguration.getClientId()
         + "&client_secret=" + gitHubConfiguration.getClientSecret() + "&code=" + code;
 
+    RedirectView view = new RedirectView();
+    view.setUrl("/");
     try {
       URL obj = new URL(locationUrl);
 
@@ -76,19 +78,19 @@ public class GithubController {
       }
       String response = sb.toString();
       String authKey = response.split("&")[0].split("=")[1];
-      userService.initUser(authKey);
-      Cookie cookie = new Cookie("prjhub_token", authKey);
-      cookie.setMaxAge(2000);
-      cookie.setPath("/");
-      res.addCookie(cookie);
-
+      try {
+        userService.initUser(authKey);
+        Cookie cookie = new Cookie("prjhub_token", authKey);
+        cookie.setMaxAge(2000);
+        cookie.setPath("/");
+        res.addCookie(cookie);
+      } catch (Exception e) {
+        view.setUrl("/404");
+      }
     } catch (java.io.IOException e) {
-      e.printStackTrace();
+      view.setUrl("/500");
     }
 
-    RedirectView view = new RedirectView();
-
-    view.setUrl("/");
     return view;
   }
 

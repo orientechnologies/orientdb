@@ -127,8 +127,8 @@ public class OrganizationServiceImpl implements OrganizationService {
           }
           createMembership(organization, developer);
         } else {
-          throw ServiceException.create(HttpStatus.NOT_FOUND.value())
-              .withMessage("Organization %s has no member %s", org, username);
+          throw ServiceException.create(HttpStatus.NOT_FOUND.value()).withMessage("Organization %s has no member %s", org,
+              username);
         }
 
       } catch (IOException e) {
@@ -224,6 +224,7 @@ public class OrganizationServiceImpl implements OrganizationService {
   }
 
   @Override
+
   public OUser addMemberClient(String org, Integer clientId, String username) {
     Client client = organizationRepository.findClient(org, clientId);
 
@@ -231,10 +232,23 @@ public class OrganizationServiceImpl implements OrganizationService {
       OUser developer = userRepository.findUserByLogin(username);
       if (developer == null) {
         developer = new OUser(username, null, null);
+        developer.setInvited(true);
         developer = userRepository.save(developer);
       }
       createClientMembership(client, developer);
       return developer;
+    } else {
+      throw ServiceException.create(HttpStatus.NOT_FOUND.value()).withMessage("Client not Found");
+    }
+  }
+
+  @Override
+  public void removeMemberClient(String org, Integer clientId, String username) {
+    Client client = organizationRepository.findClient(org, clientId);
+
+    if (client != null) {
+      OUser developer = userRepository.findUserByLogin(username);
+      deleteClientMembership(client, developer);
     } else {
       throw ServiceException.create(HttpStatus.NOT_FOUND.value()).withMessage("Client not Found");
     }
@@ -496,9 +510,8 @@ public class OrganizationServiceImpl implements OrganizationService {
     };
 
     graph
-        .command(
-            new OCommandSQL(
-                "update ChatLog SET user=:user, room=:room, timestamp=:timestamp , notified=false UPSERT WHERE user=:user and room =:room"))
+        .command(new OCommandSQL(
+            "update ChatLog SET user=:user, room=:room, timestamp=:timestamp , notified=false UPSERT WHERE user=:user and room =:room"))
         .execute(params);
 
   }
@@ -616,6 +629,21 @@ public class OrganizationServiceImpl implements OrganizationService {
     OrientVertex devVertex = graph.getVertex(new ORecordId(user.getRid()));
 
     orgVertex.addEdge(HasMember.class.getSimpleName(), devVertex);
+
+  }
+
+  public void deleteClientMembership(Client client, OUser user) {
+    OrientGraph graph = dbFactory.getGraph();
+
+    OrientVertex orgVertex = graph.getVertex(new ORecordId(client.getId()));
+    OrientVertex devVertex = graph.getVertex(new ORecordId(user.getRid()));
+
+    for (Edge edge : devVertex.getEdges(Direction.IN, HasMember.class.getSimpleName())) {
+
+      OrientVertex vertex = (OrientVertex) edge.getVertex(Direction.OUT);
+      if (vertex.getIdentity().equals(orgVertex.getIdentity()))
+        edge.remove();
+    }
 
   }
 

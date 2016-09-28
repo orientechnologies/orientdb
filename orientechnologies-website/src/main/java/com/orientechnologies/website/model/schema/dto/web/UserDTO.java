@@ -28,8 +28,6 @@ public class UserDTO extends OUser {
 
   private Boolean      confirmed;
 
-
-
   @Override
   public Boolean getNotification() {
     return super.getNotification();
@@ -43,6 +41,11 @@ public class UserDTO extends OUser {
   @Override
   public Boolean getChatNotification() {
     return super.getChatNotification();
+  }
+
+  @Override
+  public Boolean getPublicMute() {
+    return super.getPublicMute();
   }
 
   @Override

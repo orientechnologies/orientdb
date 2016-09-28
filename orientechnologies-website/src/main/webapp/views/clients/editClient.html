@@ -108,7 +108,15 @@
                   <tbody>
                   <tr ng-repeat="member in members">
                     <td>
-                      <avatar dim="50" name="true" user="member"></avatar>
+                      <avatar dim="50" name="true" user="member">
+
+                      </avatar>
+
+                      <a href="javascript:void(0)" ng-click="removeMember(member)">
+                        <i class="fa fa-remove ">
+
+                        </i>
+                      </a>
                     </td>
                   </tr>
                   </tbody>

@@ -27,6 +27,9 @@ public interface OrganizationService {
   @Transactional
   public OUser addMemberClient(String org, Integer clientId, String username);
 
+  @Transactional
+  public void removeMemberClient(String org, Integer clientId, String username);
+
   public Repository registerRepository(String org, String repo, ImportDTO importRules);
 
   public Organization createOrganization(String name, String description);

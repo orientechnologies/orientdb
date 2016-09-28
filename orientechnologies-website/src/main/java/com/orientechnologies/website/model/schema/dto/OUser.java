@@ -31,13 +31,14 @@ public class OUser implements UserDetails {
   private Boolean notification;
   private Boolean watching;
   private Boolean chatNotification;
+  private Boolean publicMute;
 
+  private Boolean isInvited;
   private Boolean isClient;
 
   private String  clientName;
 
   private Integer clientId;
-
 
   public Boolean getNotification() {
     return notification;
@@ -194,6 +195,14 @@ public class OUser implements UserDetails {
 
   }
 
+  public Boolean getPublicMute() {
+    return publicMute;
+  }
+
+  public void setPublicMute(Boolean publicMute) {
+    this.publicMute = publicMute;
+  }
+
   public Boolean getIsClient() {
     return isClient;
   }
@@ -218,10 +227,17 @@ public class OUser implements UserDetails {
     this.clientId = clientId;
   }
 
+  public Boolean getInvited() {
+    return isInvited;
+  }
+
+  public void setInvited(Boolean invited) {
+    isInvited = invited;
+  }
+
   public void setChatNotification(Boolean chatNotification) {
     this.chatNotification = chatNotification;
   }
-
 
   public String getLogin() {
     return getName();

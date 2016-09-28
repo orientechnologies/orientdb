@@ -57,26 +57,38 @@ public class UserServiceImpl implements UserService {
 
   @Transactional
   @Override
-  public void initUser(String token) {
+  public void initUser(String token) throws ServiceException {
 
     try {
       GitHub github = new GitHub(token, gitHubConfiguration);
       GUser self = github.user();
-      OUser user = userRepository.findUserByLogin(self.getLogin());
       String email = self.getEmail();
 
+      OUser user = userRepository.findUserByLogin(self.getLogin());
+
       if (user == null) {
-        user = new OUser(self.getLogin(), token, email);
+
+        throw ServiceException.create(401);
 
       } else {
-        user.setId(self.getId());
-        user.setToken(token);
-        user.setEmail(email);
+        if (Boolean.TRUE.equals(user.getConfirmed()) || Boolean.TRUE.equals(user.getInvited())) {
+          user.setId(self.getId());
+          user.setToken(token);
+          user.setEmail(email);
+        } else {
+          throw ServiceException.create(401);
+        }
+
       }
       userRepository.save(user);
 
     } catch (Exception e) {
+      if (e instanceof ServiceException) {
+        ServiceException exception = (ServiceException) e;
+        throw exception;
+      }
       e.printStackTrace();
+
     }
   }
 
@@ -98,6 +110,7 @@ public class UserServiceImpl implements UserService {
     userDTO.setNotification(user.getNotification());
     userDTO.setWatching(user.getWatching());
     userDTO.setChatNotification(user.getChatNotification());
+    userDTO.setPublicMute(user.getPublicMute());
 
     return userDTO;
   }
@@ -233,7 +246,7 @@ public class UserServiceImpl implements UserService {
 
             if (c.getFrom() != null && c.getTo() != null) {
               Date now = new Date();
-              return c.getFrom().after(now) && c.getTo().before(now);
+              return c.getFrom().before(now) && c.getTo().after(now);
             }
 
             return false;
