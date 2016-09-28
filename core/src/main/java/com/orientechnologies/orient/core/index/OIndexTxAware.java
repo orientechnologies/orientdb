@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.Map.Entry;
-
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
@@ -29,15 +27,15 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
-import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
+
+import java.util.Map.Entry;
 
 /**
  * Transactional wrapper for indexes. Stores changes locally to the transaction until tx.commit(). All the other operations are
  * delegated to the wrapped OIndex instance.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
   private static final OAlwaysLessKey    ALWAYS_LESS_KEY    = new OAlwaysLessKey();
@@ -102,7 +100,7 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
   }
 
   @Override
-  public OIndexTxAware<T> put(final Object iKey, final OIdentifiable iValue) {
+  public OIndexTxAware<T> put(Object iKey, final OIdentifiable iValue) {
     checkForKeyType(iKey);
     final ORID rid = iValue.getIdentity();
 
@@ -113,11 +111,13 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
       else
         throw new IllegalArgumentException("Cannot store non persistent RID as index value for key '" + iKey + "'");
 
+    iKey = getCollatingValue(iKey);
+
     database.getTransaction().addIndexEntry(delegate, super.getName(), OPERATION.PUT, iKey, iValue);
     return this;
   }
 
-  public OIndexTxAware<T> putOnlyClientTrack(final Object iKey, final OIdentifiable iValue) {
+  public OIndexTxAware<T> putOnlyClientTrack(Object iKey, final OIdentifiable iValue) {
     final ORID rid = iValue.getIdentity();
 
     if (!rid.isValid())
@@ -127,29 +127,33 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
       else
         throw new IllegalArgumentException("Cannot store non persistent RID as index value for key '" + iKey + "'");
 
+    iKey = getCollatingValue(iKey);
+
     ((OTransactionRealAbstract) database.getTransaction())
         .addIndexEntry(delegate, super.getName(), OPERATION.PUT, iKey, iValue, true);
     return this;
   }
 
   @Override
-  public boolean remove(final Object key) {
+  public boolean remove(Object key) {
+    key = getCollatingValue(key);
     database.getTransaction().addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, key, null);
     return true;
   }
 
   @Override
-  public boolean remove(final Object iKey, final OIdentifiable iRID) {
+  public boolean remove(Object iKey, final OIdentifiable iRID) {
+    iKey = getCollatingValue(iKey);
     database.getTransaction().addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, iKey, iRID);
     return true;
   }
 
-  public boolean removeOnlyClientTrack(final Object iKey, final OIdentifiable iRID) {
+  public boolean removeOnlyClientTrack(Object iKey, final OIdentifiable iRID) {
+    iKey = getCollatingValue(iKey);
     ((OTransactionRealAbstract) database.getTransaction())
         .addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, iKey, iRID, true);
     return true;
   }
-
 
   @Override
   public OIndexTxAware<T> clear() {
@@ -304,4 +308,12 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
     keyFrom = enhanceCompositeKey(keyFrom, partialSearchModeFrom);
     return keyFrom;
   }
+
+  protected Object getCollatingValue(final Object key) {
+    final OIndexDefinition definition = getDefinition();
+    if (key != null && definition != null)
+      return definition.getCollate().transform(key);
+    return key;
+  }
+
 }
