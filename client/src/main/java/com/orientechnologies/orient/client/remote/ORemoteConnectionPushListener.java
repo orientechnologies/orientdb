@@ -1,21 +1,24 @@
 package com.orientechnologies.orient.client.remote;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.WeakHashMap;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
-import com.orientechnologies.orient.core.sql.query.OLiveResultListener;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelListener;
 import com.orientechnologies.orient.enterprise.channel.binary.ORemoteServerEventListener;
-
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * Created by tglman on 01/10/15.
  */
 public class ORemoteConnectionPushListener implements ORemoteServerEventListener {
 
-  private Set<ORemoteServerEventListener>                                            listeners = Collections.synchronizedSet(new HashSet<ORemoteServerEventListener>());
+  private Set<ORemoteServerEventListener>                                            listeners = Collections
+      .synchronizedSet(Collections.newSetFromMap(new WeakHashMap<ORemoteServerEventListener, Boolean>()));
   private ConcurrentMap<ORemoteServerEventListener, Set<OChannelBinaryAsynchClient>> conns     = new ConcurrentHashMap<ORemoteServerEventListener, Set<OChannelBinaryAsynchClient>>();
 
   public void addListener(final ORemoteConnectionPool pool, final OChannelBinaryAsynchClient connection, final OStorageRemoteAsynchEventListener listener) {

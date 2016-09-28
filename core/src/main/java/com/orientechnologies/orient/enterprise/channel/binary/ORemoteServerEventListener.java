@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.enterprise.channel.binary;
 
-import com.orientechnologies.orient.core.sql.query.OLiveResultListener;
-
 /**
  * Listener Interface to get called when asynchronous events are received from the remote server.
  * 

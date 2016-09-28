@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.sql.query.OLiveResultListener;
+import com.orientechnologies.orient.core.storage.OStorage.STATUS;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.ORemoteServerEventListener;
 
@@ -52,6 +53,10 @@ public class OStorageRemoteAsynchEventListener implements ORemoteServerEventList
   }
 
   public void onRequest(final byte iRequestCode, final Object obj) {
+    //Using get status to avoid to check the session.
+    if(storage.getStatus() == STATUS.CLOSED)
+      return;
+   
     if (iRequestCode == OChannelBinaryProtocol.REQUEST_PUSH_DISTRIB_CONFIG) {
       storage.updateClusterConfiguration(null, (byte[]) obj);
 
