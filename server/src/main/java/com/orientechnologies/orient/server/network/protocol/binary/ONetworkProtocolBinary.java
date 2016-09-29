@@ -505,14 +505,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         countDatabaseRecords(connection);
         break;
 
-      case OChannelBinaryProtocol.REQUEST_DB_COPY:
-        copyDatabase(connection);
-        break;
-
-      case OChannelBinaryProtocol.REQUEST_REPLICATION:
-        replicationDatabase(connection);
-        break;
-
       case OChannelBinaryProtocol.REQUEST_CLUSTER:
         distributedCluster(connection);
         break;
@@ -889,7 +881,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
     final String user = channel.readString();
     final String passwd = channel.readString();
-    connection.setServerUser(server.serverLogin(user, passwd, "connect"));
+    connection.setServerUser(server.serverLogin(user, passwd, "server.connect"));
 
     if (connection.getServerUser() == null)
       throw new OSecurityAccessException("Wrong user/password to [connect] to the remote OrientDB Server instance");
@@ -1045,7 +1037,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     final String user = channel.readString();
     final String passwd = channel.readString();
 
-    if (server.authenticate(user, passwd, "shutdown")) {
+    if (server.authenticate(user, passwd, "server.shutdown")) {
       OLogManager.instance().info(this, "Remote client %s:%d authenticated. Starting shutdown of server...",
           channel.socket.getInetAddress(), channel.socket.getPort());
 
@@ -1063,58 +1055,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         channel.socket.getInetAddress(), channel.socket.getPort());
 
     sendErrorOrDropConnection(connection, clientTxId, new OSecurityAccessException("Invalid user/password to shutdown the server"));
-  }
-
-  protected void copyDatabase(OClientConnection connection) throws IOException {
-    setDataCommandInfo(connection, "Copy the database to a remote server");
-
-    final String dbUrl = channel.readString();
-    final String dbUser = channel.readString();
-    final String dbPassword = channel.readString();
-    final String remoteServerName = channel.readString();
-    final String remoteServerEngine = channel.readString();
-
-    checkServerAccess("database.copy", connection);
-
-    final ODatabaseDocument db = (ODatabaseDocumentTx) server.openDatabase(dbUrl, dbUser, dbPassword);
-
-    beginResponse();
-    try {
-      sendOk(connection, clientTxId);
-    } finally {
-      endResponse(connection);
-    }
-  }
-
-  protected void replicationDatabase(OClientConnection connection) throws IOException {
-    setDataCommandInfo(connection, "Replication command");
-
-    final ODocument request = new ODocument(channel.readBytes());
-
-    final ODistributedServerManager dManager = server.getDistributedManager();
-    if (dManager == null)
-      throw new OConfigurationException("No distributed manager configured");
-
-    final String operation = request.field("operation");
-
-    ODocument response = null;
-
-    if (operation.equals("start")) {
-      checkServerAccess("server.replication.start", connection);
-
-    } else if (operation.equals("stop")) {
-      checkServerAccess("server.replication.stop", connection);
-
-    } else if (operation.equals("config")) {
-      checkServerAccess("server.replication.config", connection);
-
-      response = new ODocument()
-          .fromJSON(dManager.getDatabaseConfiguration((String) request.field("db")).getDocument().toJSON("prettyPrint"));
-
-    }
-
-    sendResponse(connection, response);
-
   }
 
   protected void distributedCluster(OClientConnection connection) throws IOException {
@@ -2547,7 +2487,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   }
 
   private void listDatabases(OClientConnection connection) throws IOException {
-    checkServerAccess("server.dblist", connection);
+    checkServerAccess("server.listDatabases", connection);
     final ODocument result = new ODocument();
     result.field("databases", server.getAvailableStorageNames());
 

@@ -89,7 +89,9 @@ public class OChannelBinaryProtocol {
   public static final byte REQUEST_PUSH_LIVE_QUERY     = 81;                 // SINCE 2.1
 
   // DISTRIBUTED
+  @Deprecated
   public static final byte REQUEST_DB_COPY     = 90;                 // SINCE 1.0rc8
+  @Deprecated
   public static final byte REQUEST_REPLICATION = 91;                 // SINCE 1.0
   public static final byte REQUEST_CLUSTER     = 92;                 // SINCE 1.0
   public static final byte REQUEST_DB_TRANSFER = 93;                 // NOT USED ANYMORE

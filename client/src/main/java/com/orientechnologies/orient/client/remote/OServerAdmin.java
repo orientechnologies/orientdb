@@ -533,16 +533,9 @@ public class OServerAdmin {
   }
 
   /**
-   * Copies a database to a remote server instance.
-   *
-   * @param databaseName
-   * @param iDatabaseUserName
-   * @param iDatabaseUserPassword
-   * @param iRemoteName
-   * @param iRemoteEngine
-   * @return The instance itself. Useful to execute method in chain
-   * @throws IOException
+   * This method is not supported anymore.
    */
+  @Deprecated
   public synchronized OServerAdmin copyDatabase(final String databaseName, final String iDatabaseUserName,
       final String iDatabaseUserPassword, final String iRemoteName, final String iRemoteEngine) throws IOException {
 
