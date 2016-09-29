@@ -247,15 +247,17 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
   }
 
   @Override
-  @ConsoleCommand(description = "Repair database structure")
-  public void repairDatabase(@ConsoleParameter(name = "options", description = "Options: -v", optional = true) String iOptions)
+  @ConsoleCommand(description = "Repair database structure", splitInWords = false)
+  public void repairDatabase(
+      @ConsoleParameter(name = "options", description = "Options: [--fix-graph] [--fix-links [-v]] [--fix-ridbags] [--fix-bonsai]", optional = true) String iOptions)
       throws IOException {
     checkForDatabase();
 
     final boolean fix_graph = iOptions == null || iOptions.contains("--fix-graph");
     if (fix_graph) {
       // REPAIR GRAPH
-      new OGraphRepair().repair(new OrientGraphNoTx(currentDatabase), this);
+      final Map<String, List<String>> options = parseOptions(iOptions);
+      new OGraphRepair().repair(new OrientGraphNoTx(currentDatabase), this, options);
     }
 
     final boolean fix_links = iOptions == null || iOptions.contains("--fix-links");
