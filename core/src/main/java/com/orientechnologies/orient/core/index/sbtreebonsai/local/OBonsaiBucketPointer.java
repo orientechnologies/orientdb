@@ -23,17 +23,21 @@ package com.orientechnologies.orient.core.index.sbtreebonsai.local;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 
+import java.io.Serializable;
+
 /**
  * A pointer to bucket in disk page. Defines the page and the offset in page where the bucket is placed. Is immutable.
- * 
+ *
  * @author Artem Orobets (enisher-at-gmail.com)
  */
-public class OBonsaiBucketPointer {
+public class OBonsaiBucketPointer implements Serializable {
+  private static final long serialVersionUID = 1;
+
   public static final int                  SIZE = OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE;
   public static final OBonsaiBucketPointer NULL = new OBonsaiBucketPointer(-1, -1);
 
-  private final long                       pageIndex;
-  private final int                        pageOffset;
+  private final long pageIndex;
+  private final int  pageOffset;
 
   public OBonsaiBucketPointer(long pageIndex, int pageOffset) {
     this.pageIndex = pageIndex;
@@ -74,5 +78,10 @@ public class OBonsaiBucketPointer {
 
   public boolean isValid() {
     return pageIndex >= 0;
+  }
+
+  @Override
+  public String toString() {
+    return "OBonsaiBucketPointer{" + "pageIndex=" + pageIndex + ", pageOffset=" + pageOffset + '}';
   }
 }

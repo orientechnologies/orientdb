@@ -98,7 +98,8 @@ public abstract class OSBTreeCollectionManagerAbstract implements OCloseable, OS
   public OSBTreeBonsai<OIdentifiable, Integer> loadSBTree(OBonsaiCollectionPointer collectionPointer) {
     final Object lock = treesSubsetLock(collectionPointer);
 
-    OSBTreeBonsai<OIdentifiable, Integer> tree;
+    final OSBTreeBonsai<OIdentifiable, Integer> tree;
+
     synchronized (lock) {
       SBTreeBonsaiContainer container = treeCache.get(collectionPointer);
       if (container != null) {
@@ -118,7 +119,8 @@ public abstract class OSBTreeCollectionManagerAbstract implements OCloseable, OS
 
     }
 
-    evict();
+    if (tree != null)
+      evict();
 
     return tree;
   }

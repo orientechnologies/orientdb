@@ -2156,6 +2156,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
     final OSBTreeCollectionManager sbTreeCollectionManager = connection.getDatabase().getSbTreeCollectionManager();
     final OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.loadSBTree(collectionPointer);
+
+    if (tree == null)
+      throw new ORecordContentNotFoundException(collectionPointer);
+
     try {
       final Map<OIdentifiable, OSBTreeRidBag.Change> changes = OSBTreeRidBag.ChangeSerializationHelper.INSTANCE
           .deserializeChanges(changeStream, 0);
@@ -2187,6 +2191,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
     final OSBTreeCollectionManager sbTreeCollectionManager = connection.getDatabase().getSbTreeCollectionManager();
     final OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.loadSBTree(collectionPointer);
+
+    if (tree == null)
+      throw new ORecordContentNotFoundException(collectionPointer);
+
     try {
       final OBinarySerializer<OIdentifiable> keySerializer = tree.getKeySerializer();
       OIdentifiable key = keySerializer.deserialize(keyStream, 0);
@@ -2237,6 +2245,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
     final OSBTreeCollectionManager sbTreeCollectionManager = connection.getDatabase().getSbTreeCollectionManager();
     final OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.loadSBTree(collectionPointer);
+
+    if (tree == null)
+      throw new ORecordContentNotFoundException(collectionPointer);
+
     try {
       OIdentifiable result = tree.firstKey();
       final OBinarySerializer<? super OIdentifiable> keySerializer;
@@ -2270,6 +2282,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
     final OSBTreeCollectionManager sbTreeCollectionManager = connection.getDatabase().getSbTreeCollectionManager();
     final OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.loadSBTree(collectionPointer);
+
+    if (tree == null)
+      throw new ORecordContentNotFoundException(collectionPointer);
+
     try {
       final OIdentifiable key = tree.getKeySerializer().deserialize(keyStream, 0);
 

@@ -23,20 +23,24 @@ package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OBonsaiBucketPointer;
 
+import java.io.Serializable;
+
 /**
  * The pointer to a bonsai collection.
- * 
+ *
  * Determines where the collection is stored. Contains file id and pointer to the root bucket. Is immutable.
- * 
- * @see ORidBag
+ *
  * @author Artem Orobets (enisher-at-gmail.com)
+ * @see ORidBag
  * @since 1.7rc1
  */
-public class OBonsaiCollectionPointer {
+public class OBonsaiCollectionPointer implements Serializable {
+  private static final long serialVersionUID = 1;
+
   public static final OBonsaiCollectionPointer INVALID = new OBonsaiCollectionPointer(-1, new OBonsaiBucketPointer(-1, -1));
 
-  private final long                           fileId;
-  private final OBonsaiBucketPointer           rootPointer;
+  private final long                 fileId;
+  private final OBonsaiBucketPointer rootPointer;
 
   public OBonsaiCollectionPointer(long fileId, OBonsaiBucketPointer rootPointer) {
     this.fileId = fileId;
@@ -77,5 +81,10 @@ public class OBonsaiCollectionPointer {
     int result = (int) (fileId ^ (fileId >>> 32));
     result = 31 * result + rootPointer.hashCode();
     return result;
+  }
+
+  @Override
+  public String toString() {
+    return "OBonsaiCollectionPointer{" + "fileId=" + fileId + ", rootPointer=" + rootPointer + '}';
   }
 }
