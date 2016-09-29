@@ -18,13 +18,14 @@
 
 package com.orientechnologies.orient.etl.transformer;
 
-import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.etl.OETLBaseTest;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
+
 import org.junit.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.*;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.etl.OETLBaseTest;
 
 /**
  * Tests ETL Field Transformer.
@@ -83,8 +84,8 @@ public class OFieldTransformerTest extends OETLBaseTest {
             + "{field:{log:'DEBUG', fieldName:'test', value: 33, save:true}}"
             + "], "
             + "loader: { orientdb: { dbURL: 'memory:OETLBaseTest' } } }");
-
-    OSchemaProxy schema = graph.getRawGraph().getMetadata().getSchema();
+    
+    OSchema schema = graph.getRawGraph().getMetadata().getSchema();
     schema.reload();
 
     schema.getClasses().forEach(c -> System.out.println(c.toString()));
