@@ -20,17 +20,14 @@
 
 package com.orientechnologies.common.concur.lock;
 
+import com.orientechnologies.common.types.OModifiableInteger;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.AbstractOwnableSynchronizer;
 import java.util.concurrent.locks.LockSupport;
-
-import com.orientechnologies.common.types.OModifiableInteger;
-import com.orientechnologies.orient.core.OOrientShutdownListener;
-import com.orientechnologies.orient.core.OOrientStartupListener;
-import com.orientechnologies.orient.core.Orient;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
@@ -141,8 +138,13 @@ public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer {
 
     pNode.waitingWriter = null;
 
-    while (!distributedCounter.isEmpty())
-      ;
+    while (!distributedCounter.isEmpty()) {
+      try {
+        Thread.sleep(1);
+      } catch (InterruptedException e) {
+        break;
+      }
+    }
 
     setExclusiveOwnerThread(Thread.currentThread());
 
