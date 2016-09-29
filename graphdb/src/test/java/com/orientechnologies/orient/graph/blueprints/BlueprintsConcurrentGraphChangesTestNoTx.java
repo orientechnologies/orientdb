@@ -615,6 +615,6 @@ public class BlueprintsConcurrentGraphChangesTestNoTx {
       public void onRepairedVertex(ODocument vertex) {
         Assert.fail("onRepairedVertex " + vertex);
       }
-    }).repair(graph, null);
+    }).repair(graph, null, null);
   }
 }

@@ -85,7 +85,7 @@ public abstract class OBaseGraphWorkload extends OBaseWorkload implements OCheck
       public void onMessage(String iText) {
         System.out.print("   - " + iText);
       }
-    });
+    }, null);
   }
 
   @Override

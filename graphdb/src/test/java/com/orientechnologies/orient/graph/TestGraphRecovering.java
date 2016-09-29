@@ -81,7 +81,7 @@ public class TestGraphRecovering {
 
       final TestListener eventListener = new TestListener();
 
-      new OGraphRepair().setEventListener(eventListener).repair(g, null);
+      new OGraphRepair().setEventListener(eventListener).repair(g, null, null);
 
       Assert.assertEquals(eventListener.scannedEdges, 3);
       Assert.assertEquals(eventListener.removedEdges, 0);
@@ -103,7 +103,7 @@ public class TestGraphRecovering {
 
       final TestListener eventListener = new TestListener();
 
-      new OGraphRepair().setEventListener(eventListener).repair(g, null);
+      new OGraphRepair().setEventListener(eventListener).repair(g, null, null);
 
       Assert.assertEquals(eventListener.scannedEdges, 0);
       Assert.assertEquals(eventListener.removedEdges, 0);
@@ -130,7 +130,7 @@ public class TestGraphRecovering {
 
       final TestListener eventListener = new TestListener();
 
-      new OGraphRepair().setEventListener(eventListener).repair(g, null);
+      new OGraphRepair().setEventListener(eventListener).repair(g, null, null);
 
       Assert.assertEquals(eventListener.scannedEdges, 3);
       Assert.assertEquals(eventListener.removedEdges, 3);
@@ -159,7 +159,7 @@ public class TestGraphRecovering {
 
       final TestListener eventListener = new TestListener();
 
-      new OGraphRepair().setEventListener(eventListener).repair(g, null);
+      new OGraphRepair().setEventListener(eventListener).repair(g, null, null);
 
       Assert.assertEquals(eventListener.scannedEdges, 3);
       Assert.assertEquals(eventListener.removedEdges, 3);
@@ -196,7 +196,7 @@ public class TestGraphRecovering {
 
       final TestListener eventListener = new TestListener();
 
-      new OGraphRepair().setEventListener(eventListener).repair(g, null);
+      new OGraphRepair().setEventListener(eventListener).repair(g, null, null);
 
       Assert.assertEquals(eventListener.scannedEdges, 0);
       Assert.assertEquals(eventListener.removedEdges, 0);

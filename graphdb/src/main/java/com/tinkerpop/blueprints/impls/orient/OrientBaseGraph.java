@@ -280,7 +280,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     if ("notx_sync_repair".equalsIgnoreCase(sqlGraphConsistencyMode)) {
       // WAIT FOR REPAIR TO COMPLETE
 
-      new OGraphRepair().repair(this, OLogManager.instance().getCommandOutputListener(this, Level.INFO));
+      new OGraphRepair().repair(this, OLogManager.instance().getCommandOutputListener(this, Level.INFO), null);
 
     } else if ("notx_async_repair".equalsIgnoreCase(sqlGraphConsistencyMode)) {
       // RUNNING REPAIR IN BACKGROUND
@@ -290,7 +290,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       new Thread(new Runnable() {
         @Override
         public void run() {
-          new OGraphRepair().repair(g, OLogManager.instance().getCommandOutputListener(this, Level.INFO));
+          new OGraphRepair().repair(g, OLogManager.instance().getCommandOutputListener(this, Level.INFO), null);
         }
       }).start();
     }
