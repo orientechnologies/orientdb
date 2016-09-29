@@ -200,6 +200,9 @@ public class ODistributedConfiguration {
         // RETURN THE ONLY SERVER INVOLVED
         return serverMap;
 
+      if( !optimizeForLocalOnly )
+        return serverMap;
+
       // ORDER BY NUMBER OF CLUSTERS
       final List<String> orderedServers = new ArrayList<String>(serverMap.keySet());
       Collections.sort(orderedServers, new Comparator<String>() {
