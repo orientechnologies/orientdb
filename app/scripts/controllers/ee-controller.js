@@ -358,7 +358,7 @@ ee.controller('ClusterOverviewController', function ($scope, $rootScope, ChartHe
 
       var clusterCrud = {
         name: "orientdb-cluster",
-        realtime: {chronos: {}}
+        realtime: {chronos: {}, counters: {}}
       }
       var keys = Object.keys(data);
       var cpu = 0;
@@ -405,19 +405,12 @@ ee.controller('ClusterOverviewController', function ($scope, $rootScope, ChartHe
           requests += realtime['chronos']['server.network.requests'].entries;
         }
 
-        var keys = Object.keys(realtime['chronos']).filter(function (k) {
+        var keys = Object.keys(realtime['counters']).filter(function (k) {
           return k.match(/db.*Record/g) != null;
         })
         var ops = 0;
         keys.forEach(function (k) {
           ops += realtime['counters'][k];
-
-          if (!clusterCrud.realtime['counters'][k]) {
-            clusterCrud.realtime['counters'][k] = {};
-            clusterCrud.realtime['counters'][k] = realtime['chronos'][k];
-          } else {
-            clusterCrud.realtime['counters'][k] += realtime['chronos'][k];
-          }
         });
         operations += ops;
 

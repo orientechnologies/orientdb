@@ -332,12 +332,12 @@ ctrl.controller('SingleServerController', function ($scope, $rootScope, $locatio
 
       $scope.connections = realtime['counters']['server.connections.actives'];
 
-      var keys = Object.keys(realtime['chronos']).filter(function (k) {
+      var keys = Object.keys(realtime['counters']).filter(function (k) {
         return k.match(/db.*Record/g) != null;
       })
       var ops = 0;
       keys.forEach(function (k) {
-        ops += realtime['chronos'][k].entries;
+        ops += realtime['counters'][k];
       });
 
       if (lastOps != null) {
