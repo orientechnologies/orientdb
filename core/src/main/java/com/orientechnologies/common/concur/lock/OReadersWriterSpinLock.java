@@ -28,9 +28,7 @@ import java.util.concurrent.locks.AbstractOwnableSynchronizer;
 import java.util.concurrent.locks.LockSupport;
 
 import com.orientechnologies.common.types.OModifiableInteger;
-import com.orientechnologies.orient.core.OOrientShutdownListener;
-import com.orientechnologies.orient.core.OOrientStartupListener;
-import com.orientechnologies.orient.core.Orient;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
@@ -39,14 +37,14 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  */
 @SuppressFBWarnings("SE_TRANSIENT_FIELD_NOT_RESTORED")
 public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer {
-  private static final long serialVersionUID = 7975120282194559960L;
+  private static final long                               serialVersionUID = 7975120282194559960L;
 
-  private final transient LongAdder distributedCounter;
-  private final transient AtomicReference<WNode>          tail      = new AtomicReference<WNode>();
-  private final transient ThreadLocal<OModifiableInteger> lockHolds = new InitOModifiableInteger();
+  private final transient LongAdder                       distributedCounter;
+  private final transient AtomicReference<WNode>          tail             = new AtomicReference<WNode>();
+  private final transient ThreadLocal<OModifiableInteger> lockHolds        = new InitOModifiableInteger();
 
-  private final transient ThreadLocal<WNode> myNode   = new InitWNode();
-  private final transient ThreadLocal<WNode> predNode = new ThreadLocal<WNode>();
+  private final transient ThreadLocal<WNode>              myNode           = new InitWNode();
+  private final transient ThreadLocal<WNode>              predNode         = new ThreadLocal<WNode>();
 
   public OReadersWriterSpinLock() {
     final WNode wNode = new WNode();
@@ -134,8 +132,13 @@ public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer {
 
     pNode.waitingWriter = null;
 
-    while (distributedCounter.sum() != 0)
-      ;
+    while (distributedCounter.sum() != 0) {
+      try {
+        Thread.sleep(1);
+      } catch (InterruptedException e) {
+        break;
+      }
+    }
 
     setExclusiveOwnerThread(Thread.currentThread());
 
@@ -189,7 +192,7 @@ public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer {
   private final static class WNode {
     private final Queue<Thread> waitingReaders = new ConcurrentLinkedQueue<Thread>();
 
-    private volatile boolean locked = true;
-    private volatile Thread waitingWriter;
+    private volatile boolean    locked         = true;
+    private volatile Thread     waitingWriter;
   }
 }
