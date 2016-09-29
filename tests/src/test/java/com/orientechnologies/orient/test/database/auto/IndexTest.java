@@ -271,7 +271,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "populateIndexDocuments")
   public void testIndexInMajorSelect() {
-    if (database.getStorage() instanceof OStorageProxy ) {
+    if (database.getStorage() instanceof OStorageProxy) {
       return;
     }
 
@@ -306,7 +306,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "populateIndexDocuments")
   public void testIndexInMajorEqualsSelect() {
-    if (database.getStorage() instanceof OStorageProxy ) {
+    if (database.getStorage() instanceof OStorageProxy) {
       return;
     }
 
@@ -342,7 +342,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "populateIndexDocuments")
   public void testIndexInMinorSelect() {
-    if (database.getStorage() instanceof OStorageProxy ) {
+    if (database.getStorage() instanceof OStorageProxy) {
       return;
     }
 
@@ -377,7 +377,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "populateIndexDocuments")
   public void testIndexInMinorEqualsSelect() {
-    if (database.getStorage() instanceof OStorageProxy ) {
+    if (database.getStorage() instanceof OStorageProxy) {
       return;
     }
 
@@ -412,7 +412,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "populateIndexDocuments")
   public void testIndexBetweenSelect() {
-    if (database.getStorage() instanceof OStorageProxy ) {
+    if (database.getStorage() instanceof OStorageProxy) {
       return;
     }
 
@@ -447,7 +447,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "populateIndexDocuments")
   public void testIndexInComplexSelectOne() {
-    if (database.getStorage() instanceof OStorageProxy ) {
+    if (database.getStorage() instanceof OStorageProxy) {
       return;
     }
 
@@ -484,7 +484,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "populateIndexDocuments")
   public void testIndexInComplexSelectTwo() {
-    if (database.getStorage() instanceof OStorageProxy ) {
+    if (database.getStorage() instanceof OStorageProxy) {
       return;
     }
 
@@ -787,7 +787,8 @@ public class IndexTest extends ObjectDBBaseTest {
     if (!db.getMetadata().getSchema().existsClass("IndexTestTerm")) {
       final OClass termClass = db.getMetadata().getSchema().createClass("IndexTestTerm", 1, null);
       termClass.createProperty("label", OType.STRING);
-      termClass.createIndex("idxTerm", INDEX_TYPE.UNIQUE.toString(), null, new ODocument().fields("ignoreNullValues", true), new String[]{ "label"});
+      termClass.createIndex("idxTerm", INDEX_TYPE.UNIQUE.toString(), null, new ODocument().fields("ignoreNullValues", true),
+          new String[] { "label" });
 
       db.getMetadata().getSchema().save();
     }
@@ -808,7 +809,8 @@ public class IndexTest extends ObjectDBBaseTest {
     if (!db.getMetadata().getSchema().existsClass("TransactionUniqueIndexTest")) {
       final OClass termClass = db.getMetadata().getSchema().createClass("TransactionUniqueIndexTest", 1, null);
       termClass.createProperty("label", OType.STRING);
-      termClass.createIndex("idxTransactionUniqueIndexTest", INDEX_TYPE.UNIQUE.toString(), null, new ODocument().fields("ignoreNullValues", true), new String[]{ "label"});
+      termClass.createIndex("idxTransactionUniqueIndexTest", INDEX_TYPE.UNIQUE.toString(), null,
+          new ODocument().fields("ignoreNullValues", true), new String[] { "label" });
       db.getMetadata().getSchema().save();
     }
 
@@ -844,7 +846,8 @@ public class IndexTest extends ObjectDBBaseTest {
     if (!db.getMetadata().getSchema().existsClass("TransactionUniqueIndexTest")) {
       final OClass termClass = db.getMetadata().getSchema().createClass("TransactionUniqueIndexTest", 1, null);
       termClass.createProperty("label", OType.STRING);
-      termClass.createIndex("idxTransactionUniqueIndexTest", INDEX_TYPE.UNIQUE.toString(), null, new ODocument().fields("ignoreNullValues", true), new String[]{ "label"});
+      termClass.createIndex("idxTransactionUniqueIndexTest", INDEX_TYPE.UNIQUE.toString(), null,
+          new ODocument().fields("ignoreNullValues", true), new String[] { "label" });
       db.getMetadata().getSchema().save();
     }
 
@@ -1237,7 +1240,8 @@ public class IndexTest extends ObjectDBBaseTest {
   @Test(dependsOnMethods = "testIndexRebuildDuringDetachAllNonProxiedObjectDelete")
   public void testRestoreUniqueIndex() {
     database.getMetadata().getSchema().getClass("Profile").getProperty("nick").dropIndexes();
-    database.command(new OCommandSQL("CREATE INDEX Profile.nick on Profile (nick) UNIQUE METADATA {ignoreNullValues: true}")).execute();
+    database.command(new OCommandSQL("CREATE INDEX Profile.nick on Profile (nick) UNIQUE METADATA {ignoreNullValues: true}"))
+        .execute();
     database.getMetadata().reload();
   }
 
@@ -1937,7 +1941,8 @@ public class IndexTest extends ObjectDBBaseTest {
     clazz.createProperty("reg", OType.LONG);
     clazz.createProperty("no", OType.INTEGER);
 
-    clazz.createIndex("MultikeyWithoutFieldIndexNoNullSupport", INDEX_TYPE.UNIQUE.toString(), null, new ODocument().fields("ignoreNullValues", true), new String[]{  "state", "users", "time", "reg", "no"});
+    clazz.createIndex("MultikeyWithoutFieldIndexNoNullSupport", INDEX_TYPE.UNIQUE.toString(), null,
+        new ODocument().fields("ignoreNullValues", true), new String[] { "state", "users", "time", "reg", "no" });
 
     ODocument document = new ODocument("TestMultikeyWithoutFieldNoNullSupport");
     document.field("state", (byte) 1);
@@ -2046,9 +2051,13 @@ public class IndexTest extends ObjectDBBaseTest {
       OrientEdgeType edgeType = graphNoTx.createEdgeType("CustomEdge");
       edgeType.createProperty("out", OType.LINK, vertexType);
       edgeType.createProperty("in", OType.LINK, vertexType);
-      edgeType.createIndex("CustomEdge.in", OClass.INDEX_TYPE.UNIQUE.toString(), null, new ODocument().fields("ignoreNullValues", true), new String[]{  "in"});
-      edgeType.createIndex("CustomEdge.out", OClass.INDEX_TYPE.UNIQUE.toString(), null, new ODocument().fields("ignoreNullValues", true), new String[]{  "out"});
-      edgeType.createIndex("CustomEdge.compositeInOut", OClass.INDEX_TYPE.UNIQUE.toString(), null, new ODocument().fields("ignoreNullValues", true), new String[]{ "out", "in"});
+      edgeType
+          .createIndex("CustomEdge.in", OClass.INDEX_TYPE.UNIQUE.toString(), null, new ODocument().fields("ignoreNullValues", true),
+              new String[] { "in" });
+      edgeType.createIndex("CustomEdge.out", OClass.INDEX_TYPE.UNIQUE.toString(), null,
+          new ODocument().fields("ignoreNullValues", true), new String[] { "out" });
+      edgeType.createIndex("CustomEdge.compositeInOut", OClass.INDEX_TYPE.UNIQUE.toString(), null,
+          new ODocument().fields("ignoreNullValues", true), new String[] { "out", "in" });
     }
     // graphNoTx.shutdown();
 
@@ -2074,6 +2083,126 @@ public class IndexTest extends ObjectDBBaseTest {
     checkIndexKeys(graph, "CustomEdge.in");
     checkIndexKeys(graph, "CustomEdge.out");
     checkIndexKeys(graph, "CustomEdge.compositeInOut");
+  }
+
+  public void testNullValuesCountSBTreeUnique() {
+    final ODatabaseDocumentTx db = (ODatabaseDocumentTx) database.getUnderlying();
+
+    OClass nullSBTreeClass = db.getMetadata().getSchema().createClass("NullValuesCountSBTreeUnique");
+    nullSBTreeClass.createProperty("field", OType.INTEGER);
+    nullSBTreeClass.createIndex("NullValuesCountSBTreeUniqueIndex", INDEX_TYPE.UNIQUE, "field");
+
+    ODocument docOne = new ODocument("NullValuesCountSBTreeUnique");
+    docOne.field("field", 1);
+    docOne.save();
+
+    ODocument docTwo = new ODocument("NullValuesCountSBTreeUnique");
+    docTwo.field("field", (Integer) null);
+    docTwo.save();
+
+    OIndex index = db.getMetadata().getIndexManager().getIndex("NullValuesCountSBTreeUniqueIndex");
+    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.getKeySize(), 2);
+  }
+
+  public void testNullValuesCountSBTreeNotUniqueOne() {
+    final ODatabaseDocumentTx db = (ODatabaseDocumentTx) database.getUnderlying();
+
+    OClass nullSBTreeClass = db.getMetadata().getSchema().createClass("NullValuesCountSBTreeNotUniqueOne");
+    nullSBTreeClass.createProperty("field", OType.INTEGER);
+    nullSBTreeClass.createIndex("NullValuesCountSBTreeNotUniqueOneIndex", INDEX_TYPE.NOTUNIQUE, "field");
+
+    ODocument docOne = new ODocument("NullValuesCountSBTreeNotUniqueOne");
+    docOne.field("field", 1);
+    docOne.save();
+
+    ODocument docTwo = new ODocument("NullValuesCountSBTreeNotUniqueOne");
+    docTwo.field("field", (Integer) null);
+    docTwo.save();
+
+    OIndex index = db.getMetadata().getIndexManager().getIndex("NullValuesCountSBTreeNotUniqueOneIndex");
+    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.getKeySize(), 2);
+  }
+
+  public void testNullValuesCountSBTreeNotUniqueTwo() {
+    final ODatabaseDocumentTx db = (ODatabaseDocumentTx) database.getUnderlying();
+
+    OClass nullSBTreeClass = db.getMetadata().getSchema().createClass("NullValuesCountSBTreeNotUniqueTwo");
+    nullSBTreeClass.createProperty("field", OType.INTEGER);
+    nullSBTreeClass.createIndex("NullValuesCountSBTreeNotUniqueTwoIndex", INDEX_TYPE.NOTUNIQUE, "field");
+
+    ODocument docOne = new ODocument("NullValuesCountSBTreeNotUniqueTwo");
+    docOne.field("field", (Integer) null);
+    docOne.save();
+
+    ODocument docTwo = new ODocument("NullValuesCountSBTreeNotUniqueTwo");
+    docTwo.field("field", (Integer) null);
+    docTwo.save();
+
+    OIndex index = db.getMetadata().getIndexManager().getIndex("NullValuesCountSBTreeNotUniqueTwoIndex");
+    Assert.assertEquals(index.getKeySize(), 1);
+    Assert.assertEquals(index.getSize(), 2);
+  }
+
+  public void testNullValuesCountHashUnique() {
+    final ODatabaseDocumentTx db = (ODatabaseDocumentTx) database.getUnderlying();
+
+    OClass nullSBTreeClass = db.getMetadata().getSchema().createClass("NullValuesCountHashUnique");
+    nullSBTreeClass.createProperty("field", OType.INTEGER);
+    nullSBTreeClass.createIndex("NullValuesCountHashUniqueIndex", INDEX_TYPE.UNIQUE_HASH_INDEX, "field");
+
+    ODocument docOne = new ODocument("NullValuesCountHashUnique");
+    docOne.field("field", 1);
+    docOne.save();
+
+    ODocument docTwo = new ODocument("NullValuesCountHashUnique");
+    docTwo.field("field", (Integer) null);
+    docTwo.save();
+
+    OIndex index = db.getMetadata().getIndexManager().getIndex("NullValuesCountHashUniqueIndex");
+    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.getKeySize(), 2);
+  }
+
+  public void testNullValuesCountHashNotUniqueOne() {
+    final ODatabaseDocumentTx db = (ODatabaseDocumentTx) database.getUnderlying();
+
+    OClass nullSBTreeClass = db.getMetadata().getSchema().createClass("NullValuesCountHashNotUniqueOne");
+    nullSBTreeClass.createProperty("field", OType.INTEGER);
+    nullSBTreeClass.createIndex("NullValuesCountHashNotUniqueOneIndex", INDEX_TYPE.NOTUNIQUE_HASH_INDEX, "field");
+
+    ODocument docOne = new ODocument("NullValuesCountHashNotUniqueOne");
+    docOne.field("field", 1);
+    docOne.save();
+
+    ODocument docTwo = new ODocument("NullValuesCountHashNotUniqueOne");
+    docTwo.field("field", (Integer) null);
+    docTwo.save();
+
+    OIndex index = db.getMetadata().getIndexManager().getIndex("NullValuesCountHashNotUniqueOneIndex");
+    Assert.assertEquals(index.getSize(), 2);
+    Assert.assertEquals(index.getKeySize(), 2);
+  }
+
+  public void testNullValuesCountHashNotUniqueTwo() {
+    final ODatabaseDocumentTx db = (ODatabaseDocumentTx) database.getUnderlying();
+
+    OClass nullSBTreeClass = db.getMetadata().getSchema().createClass("NullValuesCountHashNotUniqueTwo");
+    nullSBTreeClass.createProperty("field", OType.INTEGER);
+    nullSBTreeClass.createIndex("NullValuesCountHashNotUniqueTwoIndex", INDEX_TYPE.NOTUNIQUE_HASH_INDEX, "field");
+
+    ODocument docOne = new ODocument("NullValuesCountHashNotUniqueTwo");
+    docOne.field("field", (Integer) null);
+    docOne.save();
+
+    ODocument docTwo = new ODocument("NullValuesCountHashNotUniqueTwo");
+    docTwo.field("field", (Integer) null);
+    docTwo.save();
+
+    OIndex index = db.getMetadata().getIndexManager().getIndex("NullValuesCountHashNotUniqueTwoIndex");
+    Assert.assertEquals(index.getKeySize(), 1);
+    Assert.assertEquals(index.getSize(), 2);
   }
 
   private static void checkIndexKeys(OrientGraph graph, String indexName) {

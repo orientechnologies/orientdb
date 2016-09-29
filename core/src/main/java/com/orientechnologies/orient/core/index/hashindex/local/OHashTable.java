@@ -76,6 +76,8 @@ public interface OHashTable<K, V> {
 
   void flush();
 
+  boolean isNullKeyIsSupported();
+
   /**
    * Acquires exclusive lock in the active atomic operation running on the current thread for this hash table.
    */

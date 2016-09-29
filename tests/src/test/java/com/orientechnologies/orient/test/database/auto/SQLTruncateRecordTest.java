@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -24,6 +26,7 @@ import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import java.util.List;
+import java.util.Set;
 
 @Test(groups = "sql-delete")
 public class SQLTruncateRecordTest extends DocumentDBBaseTest {
@@ -49,6 +52,13 @@ public class SQLTruncateRecordTest extends DocumentDBBaseTest {
         .execute();
 
     Assert.assertEquals(records.intValue(), 1);
+
+    OClass cls = database.getMetadata().getSchema().getClass("Profile");
+    Set<OIndex<?>> indexes = cls.getIndexes();
+
+    for (OIndex<?> index : indexes) {
+      index.rebuild();
+    }
 
     Assert.assertEquals(database.countClass("Profile"), total - records.intValue());
   }

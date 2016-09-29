@@ -196,12 +196,19 @@ public class OSBTreeIndexEngine implements OIndexEngine {
     if (transformer == null)
       return sbTree.size();
     else {
+      int counter = 0;
+
+      if (sbTree.isNullPointerSupport()) {
+        final Object nullValue = sbTree.get(null);
+        if (nullValue != null) {
+          counter += transformer.transformFromValue(nullValue).size();
+        }
+      }
+
       final Object firstKey = sbTree.firstKey();
       final Object lastKey = sbTree.lastKey();
 
       if (firstKey != null && lastKey != null) {
-        int counter = 0;
-
         final OSBTree.OSBTreeCursor<Object, Object> cursor = sbTree.iterateEntriesBetween(firstKey, true, lastKey, true, true);
         Map.Entry<Object, Object> entry = cursor.next(-1);
         while (entry != null) {
@@ -212,7 +219,7 @@ public class OSBTreeIndexEngine implements OIndexEngine {
         return counter;
       }
 
-      return 0;
+      return counter;
     }
   }
 

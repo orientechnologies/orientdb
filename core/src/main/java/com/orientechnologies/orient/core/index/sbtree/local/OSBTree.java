@@ -171,6 +171,15 @@ public class OSBTree<K, V> extends ODurableComponent {
     }
   }
 
+  public boolean isNullPointerSupport() {
+    acquireSharedLock();
+    try {
+      return nullPointerSupport;
+    } finally {
+      releaseSharedLock();
+    }
+  }
+
   public V get(K key) {
     final OSessionStoragePerformanceStatistic statistic = performanceStatisticManager.getSessionPerformanceStatistic();
     startOperation();
