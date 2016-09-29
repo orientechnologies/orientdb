@@ -22,7 +22,7 @@ import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.etl.OETLBaseTest;
 import org.junit.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * Tests ETL JSON Extractor.
@@ -43,7 +43,9 @@ public class OJsonRandomExtractorTest extends OETLBaseTest {
 
     assertThat(graph.countVertices("Person")).isEqualTo(TOTAL);
 
-    graph.getRawGraph().browseClass("Person").forEach(doc -> assertThat(doc.fields()).isEqualTo(10));
+    graph.getRawGraph()
+        .browseClass("Person")
+        .forEach(doc -> assertThat(doc.fields()).isEqualTo(10));
   }
 
   @Test
@@ -56,7 +58,9 @@ public class OJsonRandomExtractorTest extends OETLBaseTest {
 
     assertThat(graph.countVertices("Person")).isEqualTo(TOTAL);
 
-    graph.getRawGraph().browseClass("Person").forEach(doc -> assertThat(doc.fields()).isEqualTo(10));
+    graph.getRawGraph()
+        .browseClass("Person")
+        .forEach(doc -> assertThat(doc.fields()).isEqualTo(10));
   }
 
   @Test
@@ -69,10 +73,9 @@ public class OJsonRandomExtractorTest extends OETLBaseTest {
 
     assertThat(graph.countVertices("Person")).isEqualTo(TOTAL);
 
-    graph.getRawGraph().browseClass("Person").forEach(doc -> assertThat(doc.fields()).isEqualTo(10));
+    graph.getRawGraph()
+        .browseClass("Person")
+        .forEach(doc -> assertThat(doc.fields()).isEqualTo(10));
   }
-
-
-
 
 }

@@ -18,15 +18,21 @@
 
 package com.orientechnologies.orient.etl;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+
 /**
  * ETL Pipeline abstract component.
  */
 public abstract class OAbstractETLPipelineComponent extends OAbstractETLComponent implements OETLPipelineComponent {
-  protected OETLPipeline pipeline;
+  protected OETLDatabaseProvider databaseProvider;
 
   @Override
-  public void setPipeline(final OETLPipeline iPipeline) {
-    pipeline = iPipeline;
-    context = iPipeline.getContext();
+  public void setDatabaseProvider(OETLDatabaseProvider databaseProvider) {
+    this.databaseProvider = databaseProvider;
+  }
+
+  @Override
+  public void setContext(OCommandContext context) {
+    this.context = context;
   }
 }

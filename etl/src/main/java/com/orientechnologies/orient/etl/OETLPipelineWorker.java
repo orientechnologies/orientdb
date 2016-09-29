@@ -19,7 +19,6 @@ final class OETLPipelineWorker implements Runnable {
   @Override
   public void run() {
     try {
-      pipeline.getDocumentDatabase();
       OExtractedItem content;
       while (!(content = queue.take()).finished) {
         pipeline.execute(content);

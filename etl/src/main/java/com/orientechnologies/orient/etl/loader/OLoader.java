@@ -20,22 +20,23 @@ package com.orientechnologies.orient.etl.loader;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.etl.OETLComponent;
+import com.orientechnologies.orient.etl.OETLDatabaseProvider;
 import com.orientechnologies.orient.etl.OETLPipeline;
-import com.orientechnologies.orient.etl.OETLPipelineComponent;
 
 /**
  * ETL Loader.
  */
 public interface OLoader extends OETLComponent {
-  void load(OETLPipeline pipeline, final Object input, OCommandContext context);
+
+  void load(OETLDatabaseProvider databaseProvider, final Object input, OCommandContext context);
 
   void beginLoader(OETLPipeline pipeline);
 
-  void endLoader(OETLPipeline pipeline);
+  void endLoader(OETLDatabaseProvider databaseProvider);
 
   long getProgress();
 
   String getUnit();
 
-  void rollback(OETLPipeline pipeline);
+  void rollback(OETLDatabaseProvider databaseProvider);
 }

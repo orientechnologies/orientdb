@@ -53,9 +53,9 @@ public class OVertexTransformer extends OAbstractTransformer {
   @Override
   public void begin() {
     if (vertexClass != null) {
-      final OClass cls = pipeline.getGraphDatabase().getVertexType(vertexClass);
+      final OClass cls = databaseProvider.getGraphDatabase().getVertexType(vertexClass);
       if (cls == null)
-        pipeline.getGraphDatabase().createVertexType(vertexClass);
+        databaseProvider.getGraphDatabase().createVertexType(vertexClass);
     }
   }
 
@@ -67,7 +67,7 @@ public class OVertexTransformer extends OAbstractTransformer {
   @Override
   public Object executeTransform(final Object input) {
 
-    OrientBaseGraph graph = pipeline.getGraphDatabase();
+    OrientBaseGraph graph = databaseProvider.getGraphDatabase();
     final OrientVertex v = graph.getVertex(input);
 
     if (v == null) {

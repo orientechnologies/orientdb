@@ -85,9 +85,9 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
 
   @Override
   public void begin() {
-    final OClass cls = pipeline.getGraphDatabase().getEdgeType(edgeClass);
+    final OClass cls = databaseProvider.getGraphDatabase().getEdgeType(edgeClass);
     if (cls == null)
-      pipeline.getGraphDatabase().createEdgeType(edgeClass);
+      databaseProvider.getGraphDatabase().createEdgeType(edgeClass);
     super.begin();
   }
 
@@ -99,7 +99,7 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
       if (o instanceof OrientVertex)
         vertex = (OrientVertex) o;
       else if (o instanceof OIdentifiable)
-        vertex = pipeline.getGraphDatabase().getVertex(o);
+        vertex = databaseProvider.getGraphDatabase().getVertex(o);
       else
         throw new OTransformException(getName() + ": input type '" + o + "' is not supported");
 
@@ -139,7 +139,7 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
         if (joinCurrentValue != null) {
           if (lookup != null) {
             final String[] lookupParts = lookup.split("\\.");
-            final OrientVertex linkedV = pipeline.getGraphDatabase().addTemporaryVertex(lookupParts[0]);
+            final OrientVertex linkedV = databaseProvider.getGraphDatabase().addTemporaryVertex(lookupParts[0]);
             linkedV.setProperty(lookupParts[1], joinCurrentValue);
 
             if (targetVertexFields != null) {
@@ -189,7 +189,7 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
 
       for (Object o : OMultiValue.getMultiValueIterable(result)) {
         OIdentifiable oid = (OIdentifiable) o;
-        final OrientVertex targetVertex = pipeline.getGraphDatabase().getVertex(oid);
+        final OrientVertex targetVertex = databaseProvider.getGraphDatabase().getVertex(oid);
 
         try {
           // CREATE THE EDGE

@@ -18,11 +18,13 @@
 
 package com.orientechnologies.orient.etl.transformer;
 
+import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLBaseTest;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.*;
 
 /**
  * Tests ETL Field Transformer.
@@ -60,7 +62,10 @@ public class OFieldTransformerTest extends OETLBaseTest {
   @Test
   public void testRemove() {
     process(
-        "{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { csv: {} }, transformers: [ {field: {fieldName:'surname', operation: 'remove'}}], loader: { test: {} } }");
+        "{source: { content: { value: 'name,surname\nJay,Miner' } }, "
+            + "extractor : { csv: {} }, "
+            + "transformers: [ {field: {fieldName:'surname', operation: 'remove'}}], "
+            + "loader: { test: {} } }");
     assertEquals(1, getResult().size());
 
     ODocument doc = getResult().get(0);
@@ -71,9 +76,21 @@ public class OFieldTransformerTest extends OETLBaseTest {
   @Test
   public void testSave() {
     process(
-        "{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { csv: {} }, transformers: [{field:{fieldName:'@class', value:'Test'}}, {field:{ fieldName:'test', value: 33, save: true}}], loader: { orientdb: { dbURL: 'memory:OETLBaseTest' } } }");
+        "{source: { content: { value: 'name,surname\nJay,Miner' } }, "
+            + "extractor : { csv: {} }, "
+            + "transformers: ["
+            + "{field:{log:'DEBUG',fieldName:'@class', value:'Test'}}, "
+            + "{field:{log:'DEBUG', fieldName:'test', value: 33, save:true}}"
+            + "], "
+            + "loader: { orientdb: { dbURL: 'memory:OETLBaseTest' } } }");
+
+    OSchemaProxy schema = graph.getRawGraph().getMetadata().getSchema();
+    schema.reload();
+
+    schema.getClasses().forEach(c -> System.out.println(c.toString()));
+
+    assertThat(schema.getClass("Test")).isNotNull();
     assertEquals(1, graph.countVertices("Test"));
-
-
   }
+
 }

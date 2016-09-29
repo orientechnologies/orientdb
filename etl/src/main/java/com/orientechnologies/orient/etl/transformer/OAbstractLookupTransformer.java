@@ -36,19 +36,15 @@ import java.util.List;
  * Merges two records. Useful when a record needs to be updated rather than created.
  */
 public abstract class OAbstractLookupTransformer extends OAbstractTransformer {
-  protected String             joinFieldName;
-  protected Object             joinValue;
-  protected String             lookup;
-  protected ACTION             unresolvedLinkAction = ACTION.NOTHING;
+  protected String joinFieldName;
+  protected Object joinValue;
+  protected String lookup;
+  protected ACTION unresolvedLinkAction = ACTION.NOTHING;
   private OSQLQuery<ODocument> sqlQuery;
   private OIndex<?>            index;
 
-  protected enum ACTION {
-    NOTHING, WARNING, ERROR, HALT, SKIP, CREATE
-  }
-
   @Override
-  public void configure( final ODocument iConfiguration, OCommandContext iContext) {
+  public void configure(final ODocument iConfiguration, OCommandContext iContext) {
     super.configure(iConfiguration, iContext);
 
     joinFieldName = iConfiguration.field("joinFieldName");
@@ -72,7 +68,7 @@ public abstract class OAbstractLookupTransformer extends OAbstractTransformer {
         if (lookup.toUpperCase().startsWith("SELECT"))
           sqlQuery = new OSQLSynchQuery<ODocument>(lookup);
         else {
-          index = pipeline.getDocumentDatabase().getMetadata().getIndexManager().getIndex(lookup);
+          index = databaseProvider.getDocumentDatabase().getMetadata().getIndexManager().getIndex(lookup);
           if (index == null) {
             log(OETLProcessor.LOG_LEVELS.DEBUG, "WARNING: index %s not found. Lookups could be really slow", lookup);
             final String[] parts = lookup.split("\\.");
@@ -89,7 +85,7 @@ public abstract class OAbstractLookupTransformer extends OAbstractTransformer {
         if (sqlQuery instanceof OSQLSynchQuery)
           ((OSQLSynchQuery) sqlQuery).resetPagination();
 
-        result = pipeline.getDocumentDatabase().query(sqlQuery, joinValue);
+        result = databaseProvider.getDocumentDatabase().query(sqlQuery, joinValue);
       }
 
       if (result != null && result instanceof Collection) {
@@ -116,5 +112,9 @@ public abstract class OAbstractLookupTransformer extends OAbstractTransformer {
     }
 
     return result;
+  }
+
+  protected enum ACTION {
+    NOTHING, WARNING, ERROR, HALT, SKIP, CREATE
   }
 }

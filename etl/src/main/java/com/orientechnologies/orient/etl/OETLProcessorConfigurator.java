@@ -100,16 +100,18 @@ public class OETLProcessorConfigurator {
 
       OETLProcessor processor = new OETLProcessor(beginBlocks, source, extractor, transformers, loader, endBlocks, context);
 
-      List<OETLComponent> components = new ArrayList<OETLComponent>();
-      components.add(source);
-      components.addAll(transformers);
-      components.addAll(beginBlocks);
-      components.addAll(endBlocks);
-      components.add(loader);
-      components.add(extractor);
-      for (OETLComponent component : components) {
-        component.setProcessor(processor);
-      }
+      List<OETLComponent> components = new ArrayList<OETLComponent>() {{
+        add(source);
+        addAll(transformers);
+        addAll(beginBlocks);
+        addAll(endBlocks);
+        add(loader);
+        add(extractor);
+      }};
+
+      components.stream()
+          .forEach(c -> c.setProcessor(processor));
+
       return processor;
     } catch (Exception e) {
       throw OException.wrapException(new OConfigurationException("Error on creating ETL processor"), e);

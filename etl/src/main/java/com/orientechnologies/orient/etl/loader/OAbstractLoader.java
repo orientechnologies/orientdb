@@ -19,7 +19,7 @@
 package com.orientechnologies.orient.etl.loader;
 
 import com.orientechnologies.orient.etl.OAbstractETLComponent;
-import com.orientechnologies.orient.etl.OAbstractETLPipelineComponent;
+import com.orientechnologies.orient.etl.OETLDatabaseProvider;
 import com.orientechnologies.orient.etl.OETLPipeline;
 
 import java.util.concurrent.atomic.AtomicLong;
@@ -35,7 +35,7 @@ public abstract class OAbstractLoader extends OAbstractETLComponent implements O
   }
 
   @Override
-  public void endLoader(OETLPipeline pipeline) {
+  public void endLoader(OETLDatabaseProvider databaseProvider) {
   }
 
   @Override

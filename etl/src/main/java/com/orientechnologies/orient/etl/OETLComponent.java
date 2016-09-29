@@ -33,7 +33,7 @@ public interface OETLComponent {
 
   /**
    * Called by the @OETLProcessor
-   * @param processor
+   *
    * @param configuration
    * @param context
    */

@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 
 import java.util.List;
 
-import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.DEBUG;
+import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.*;
 
 public class OFieldTransformer extends OAbstractTransformer {
   private String       fieldName;
@@ -113,9 +113,10 @@ public class OFieldTransformer extends OAbstractTransformer {
         }
 
         if (save) {
-          log(DEBUG, "saving record %s", doc);
-          final ODatabaseDocument db = pipeline.getDocumentDatabase();
+          log(DEBUG, "saving record %s", doc.toJSON());
+          final ODatabaseDocument db = databaseProvider.getDocumentDatabase();
           db.save(doc);
+          log(DEBUG, "saved record %s", doc.toJSON());
         }
       }
     }

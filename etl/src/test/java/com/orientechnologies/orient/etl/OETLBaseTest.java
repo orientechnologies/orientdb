@@ -45,8 +45,10 @@ public abstract class OETLBaseTest {
   public void setUp() {
     graph = new OrientGraph("memory:OETLBaseTest");
     graph.setUseLightweightEdges(false);
-    OETLComponentFactory factory = new OETLComponentFactory().registerLoader(OETLStubLoader.class)
+    OETLComponentFactory factory = new OETLComponentFactory()
+        .registerLoader(OETLStubLoader.class)
         .registerExtractor(OETLStubRandomExtractor.class);
+
     configurator = new OETLProcessorConfigurator(factory);
   }
 
@@ -61,7 +63,7 @@ public abstract class OETLBaseTest {
 
   protected void process(final String cfgJson) {
 
-    process(cfgJson,new OBasicCommandContext());
+    process(cfgJson, new OBasicCommandContext());
   }
 
   protected void process(final String cfgJson, final OCommandContext iContext) {

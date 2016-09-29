@@ -40,6 +40,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.*;
+
 /**
  * ETL processor class.
  *
@@ -126,8 +128,6 @@ public class OETLProcessor {
 
       if (cores >= 2)
         workers = cores - 1;
-
-      //      workers = cores;
     }
 
   }
@@ -194,14 +194,15 @@ public class OETLProcessor {
 
       futures.forEach(cf -> cf.join());
 
-      out(LOG_LEVELS.DEBUG, "all items extracted");
+      out(DEBUG, "all items extracted");
 
       executor.shutdown();
     } catch (OETLProcessHaltedException e) {
-      out(LOG_LEVELS.ERROR, "ETL process halted: %s", e);
+      out(ERROR, "ETL process halted: %s", e);
       executor.shutdownNow();
     } catch (Exception e) {
-      out(LOG_LEVELS.ERROR, "ETL process has problem: %s", e);
+      out(ERROR, "ETL process has problem: %s", e);
+      e.printStackTrace();
       executor.shutdownNow();
     }
   }

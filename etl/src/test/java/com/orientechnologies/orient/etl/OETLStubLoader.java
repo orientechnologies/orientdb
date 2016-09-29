@@ -23,6 +23,7 @@ package com.orientechnologies.orient.etl;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.loader.OAbstractLoader;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,13 +40,21 @@ public class OETLStubLoader extends OAbstractLoader {
   }
 
   @Override
-  public void load(OETLPipeline pipeline, Object input, OCommandContext context) {
+  public void beginLoader(OETLPipeline pipeline) {
+
+    OrientGraph graph = new OrientGraph("memory:OETLBaseTest");
+    graph.setUseLightweightEdges(false);
+    OETLDatabaseProvider provider = new OETLDatabaseProvider(graph.getRawGraph(), graph);
+    pipeline.setDatabaseProvider(provider);
+  }
+
+  @Override
+  public void load(OETLDatabaseProvider databaseProvider, Object input, OCommandContext context) {
     synchronized (loadedRecords) {
       loadedRecords.add((ODocument) input);
       progress.incrementAndGet();
     }
   }
-
 
   @Override
   public String getUnit() {
@@ -53,7 +62,7 @@ public class OETLStubLoader extends OAbstractLoader {
   }
 
   @Override
-  public void rollback(OETLPipeline pipeline) {
+  public void rollback(OETLDatabaseProvider databaseProvider) {
   }
 
   @Override

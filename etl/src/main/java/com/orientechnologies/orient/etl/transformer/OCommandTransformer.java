@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.graph.gremlin.OCommandGremlin;
 
 import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.*;
-import static jdk.nashorn.internal.runtime.regexp.joni.Config.log;
 
 /**
  * Executes a command.
@@ -66,7 +65,6 @@ public class OCommandTransformer extends OAbstractTransformer {
     if (language.equals("sql")) {
       cmd = new OCommandSQL(runtimeCommand);
 
-
       log(DEBUG, "executing command=%s", runtimeCommand);
     } else if (language.equals("gremlin")) {
       cmd = new OCommandGremlin(runtimeCommand);
@@ -75,8 +73,7 @@ public class OCommandTransformer extends OAbstractTransformer {
     }
     cmd.setContext(context);
 
-    log(DEBUG, "pipeline " + pipeline.getDocumentDatabase() );
-    Object result = pipeline.getDocumentDatabase().command(cmd).execute();
+    Object result = databaseProvider.getDocumentDatabase().command(cmd).execute();
     log(DEBUG, "executed command=%s, result=%s", cmd, result);
     return result;
   }

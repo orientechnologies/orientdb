@@ -17,7 +17,6 @@ class OETLExtractorWorker implements Runnable {
     this.counter = counter;
   }
 
-
   @Override
   public void run() {
     try {
