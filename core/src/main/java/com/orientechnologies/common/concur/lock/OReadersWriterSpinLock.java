@@ -132,12 +132,15 @@ public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer {
 
     pNode.waitingWriter = null;
 
+    final long beginTime = System.currentTimeMillis();
     while (distributedCounter.sum() != 0) {
-      try {
-        Thread.sleep(1);
-      } catch (InterruptedException e) {
-        break;
-      }
+      // IN THE WORST CASE CPU CAN BE 100% FOR MAXIMUM 1 SECOND
+      if (System.currentTimeMillis() - beginTime > 1000)
+        try {
+          Thread.sleep(1);
+        } catch (InterruptedException e) {
+          break;
+        }
     }
 
     setExclusiveOwnerThread(Thread.currentThread());
