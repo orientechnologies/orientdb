@@ -249,7 +249,7 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
   @Override
   @ConsoleCommand(description = "Repair database structure", splitInWords = false)
   public void repairDatabase(
-      @ConsoleParameter(name = "options", description = "Options: [--fix-graph] [--fix-links [-v]] [--fix-ridbags] [--fix-bonsai]", optional = true) String iOptions)
+      @ConsoleParameter(name = "options", description = "Options: [--fix-graph] [--fix-links] [-v]] [--fix-ridbags] [--fix-bonsai]", optional = true) String iOptions)
       throws IOException {
     checkForDatabase();
 
