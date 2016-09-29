@@ -155,12 +155,20 @@ public final class OHashTableIndexEngine implements OIndexEngine {
     if (transformer == null)
       return hashTable.size();
     else {
+      long counter = 0;
+
+      if (hashTable.isNullKeyIsSupported()) {
+        final Object nullValue = hashTable.get(null);
+        if (nullValue != null) {
+          counter += transformer.transformFromValue(nullValue).size();
+        }
+      }
+
       OHashIndexBucket.Entry<Object, Object> firstEntry = hashTable.firstEntry();
       if (firstEntry == null)
-        return 0;
+        return counter;
 
       OHashIndexBucket.Entry<Object, Object>[] entries = hashTable.ceilingEntries(firstEntry.key);
-      long counter = 0;
 
       while (entries.length > 0) {
         for (OHashIndexBucket.Entry<Object, Object> entry : entries)

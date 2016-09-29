@@ -389,6 +389,16 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
   }
 
   @Override
+  public boolean isNullKeyIsSupported() {
+    acquireSharedLock();
+    try {
+      return nullKeyIsSupported;
+    } finally {
+      releaseSharedLock();
+    }
+  }
+
+  @Override
   public void put(K key, V value) {
     final OSessionStoragePerformanceStatistic statistic = performanceStatisticManager.getSessionPerformanceStatistic();
     startOperation();
