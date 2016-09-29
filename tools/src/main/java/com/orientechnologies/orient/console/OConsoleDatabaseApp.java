@@ -2022,30 +2022,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       message("\nEntry removed from the dictionary.");
   }
 
-  @ConsoleCommand(description = "Copy a database to a remote server")
-  public void copyDatabase(
-      @ConsoleParameter(name = "db-name", description = "Name of the database to share") final String iDatabaseName,
-      @ConsoleParameter(name = "db-user", description = "Database user") final String iDatabaseUserName,
-      @ConsoleParameter(name = "db-password", description = "Database password") String iDatabaseUserPassword,
-      @ConsoleParameter(name = "server-name", description = "Remote server's name as <address>:<port>") final String iRemoteName,
-      @ConsoleParameter(name = "engine-name", description = "Remote server's engine to use between 'local' or 'memory'") final String iRemoteEngine)
-      throws IOException {
-
-    try {
-      if (serverAdmin == null)
-        throw new IllegalStateException("You must be connected to a remote server to share a database");
-
-      message("\nCopying database '" + iDatabaseName + "' to the server '" + iRemoteName + "' via network streaming...");
-
-      serverAdmin.copyDatabase(iDatabaseName, iDatabaseUserName, iDatabaseUserPassword, iRemoteName, iRemoteEngine);
-
-      message("\nDatabase '" + iDatabaseName + "' has been copied to the server '" + iRemoteName + "'");
-
-    } catch (Exception e) {
-      printError(e);
-    }
-  }
-
   @ConsoleCommand(description = "Displays the status of the cluster nodes")
   public void clusterStatus() throws IOException {
     if (serverAdmin == null)

@@ -19,6 +19,12 @@
  */
 package com.orientechnologies.orient.client.remote;
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
@@ -33,17 +39,11 @@ import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 /**
  * Remote administration class of OrientDB Server instances.
  */
 public class OServerAdmin {
-  protected OStorageRemote storage;
+  protected OStorageRemote        storage;
   protected OStorageRemoteSession session      = new OStorageRemoteSession(-1);
   protected String                clientType   = OStorageRemote.DRIVER_NAME;
   protected boolean               collectStats = true;
@@ -51,7 +51,8 @@ public class OServerAdmin {
   /**
    * Creates the object passing a remote URL to connect. sessionToken
    *
-   * @param iURL URL to connect. It supports only the "remote" storage type.
+   * @param iURL
+   *          URL to connect. It supports only the "remote" storage type.
    * @throws IOException
    */
   public OServerAdmin(String iURL) throws IOException {
@@ -81,8 +82,10 @@ public class OServerAdmin {
   /**
    * Connects to a remote server.
    *
-   * @param iUserName     Server's user name
-   * @param iUserPassword Server's password for the user name used
+   * @param iUserName
+   *          Server's user name
+   * @param iUserPassword
+   *          Server's password for the user name used
    * @return The instance itself. Useful to execute method in chain
    * @throws IOException
    */
@@ -204,8 +207,10 @@ public class OServerAdmin {
   /**
    * Creates a database in a remote server.
    *
-   * @param iDatabaseType 'document' or 'graph'
-   * @param iStorageMode  local or memory
+   * @param iDatabaseType
+   *          'document' or 'graph'
+   * @param iStorageMode
+   *          local or memory
    * @return The instance itself. Useful to execute method in chain
    * @throws IOException
    */
@@ -225,10 +230,14 @@ public class OServerAdmin {
   /**
    * Creates a database in a remote server.
    *
-   * @param iDatabaseName The database name
-   * @param iDatabaseType 'document' or 'graph'
-   * @param iStorageMode  local or memory
-   * @param backupPath    path to incremental backup which will be used to create database (optional)
+   * @param iDatabaseName
+   *          The database name
+   * @param iDatabaseType
+   *          'document' or 'graph'
+   * @param iStorageMode
+   *          local or memory
+   * @param backupPath
+   *          path to incremental backup which will be used to create database (optional)
    * @return The instance itself. Useful to execute method in chain
    * @throws IOException
    */
@@ -284,8 +293,10 @@ public class OServerAdmin {
   /**
    * Checks if a database exists in the remote server.
    *
-   * @param iDatabaseName The database name
-   * @param storageType   Storage type between "plocal" or "memory".
+   * @param iDatabaseName
+   *          The database name
+   * @param storageType
+   *          Storage type between "plocal" or "memory".
    * @return true if exists, otherwise false
    * @throws IOException
    */
@@ -317,7 +328,8 @@ public class OServerAdmin {
   /**
    * Checks if a database exists in the remote server.
    *
-   * @param storageType Storage type between "plocal" or "memory".
+   * @param storageType
+   *          Storage type between "plocal" or "memory".
    * @return true if exists, otherwise false
    * @throws IOException
    */
@@ -328,7 +340,8 @@ public class OServerAdmin {
   /**
    * Deprecated. Use dropDatabase() instead.
    *
-   * @param storageType Storage type between "plocal" or "memory".
+   * @param storageType
+   *          Storage type between "plocal" or "memory".
    * @return The instance itself. Useful to execute method in chain
    * @throws IOException
    * @see #dropDatabase(String)
@@ -341,8 +354,10 @@ public class OServerAdmin {
   /**
    * Drops a database from a remote server instance.
    *
-   * @param iDatabaseName The database name
-   * @param storageType   Storage type between "plocal" or "memory".
+   * @param iDatabaseName
+   *          The database name
+   * @param storageType
+   *          Storage type between "plocal" or "memory".
    * @return The instance itself. Useful to execute method in chain
    * @throws IOException
    */
@@ -392,7 +407,8 @@ public class OServerAdmin {
   /**
    * Drops a database from a remote server instance.
    *
-   * @param storageType Storage type between "plocal" or "memory".
+   * @param storageType
+   *          Storage type between "plocal" or "memory".
    * @return The instance itself. Useful to execute method in chain
    * @throws IOException
    */
@@ -403,7 +419,8 @@ public class OServerAdmin {
   /**
    * Freezes the database by locking it in exclusive mode.
    *
-   * @param storageType Storage type between "plocal" or "memory".
+   * @param storageType
+   *          Storage type between "plocal" or "memory".
    * @return
    * @throws IOException
    * @see #releaseDatabase(String)
@@ -431,7 +448,8 @@ public class OServerAdmin {
   /**
    * Releases a frozen database.
    *
-   * @param storageType Storage type between "plocal" or "memory".
+   * @param storageType
+   *          Storage type between "plocal" or "memory".
    * @return
    * @throws IOException
    * @see #freezeDatabase(String)
@@ -459,8 +477,10 @@ public class OServerAdmin {
   /**
    * Freezes a cluster by locking it in exclusive mode.
    *
-   * @param clusterId   Id of cluster to freeze
-   * @param storageType Storage type between "plocal" or "memory".
+   * @param clusterId
+   *          Id of cluster to freeze
+   * @param storageType
+   *          Storage type between "plocal" or "memory".
    * @return
    * @throws IOException
    * @see #releaseCluster(int, String)
@@ -491,8 +511,10 @@ public class OServerAdmin {
   /**
    * Releases a frozen cluster.
    *
-   * @param clusterId   Id of cluster to freeze
-   * @param storageType Storage type between "plocal" or "memory".
+   * @param clusterId
+   *          Id of cluster to freeze
+   * @param storageType
+   *          Storage type between "plocal" or "memory".
    * @return
    * @throws IOException
    * @see #freezeCluster(int, String)
@@ -530,45 +552,6 @@ public class OServerAdmin {
 
     OLogManager.instance().debug(this, "Cluster status %s", response.toJSON("prettyPrint"));
     return response;
-  }
-
-  /**
-   * Copies a database to a remote server instance.
-   *
-   * @param databaseName
-   * @param iDatabaseUserName
-   * @param iDatabaseUserPassword
-   * @param iRemoteName
-   * @param iRemoteEngine
-   * @return The instance itself. Useful to execute method in chain
-   * @throws IOException
-   */
-  public synchronized OServerAdmin copyDatabase(final String databaseName, final String iDatabaseUserName,
-      final String iDatabaseUserPassword, final String iRemoteName, final String iRemoteEngine) throws IOException {
-
-    networkAdminOperation(new OStorageRemoteOperation<Void>() {
-      @Override
-      public Void execute(final OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
-
-        try {
-          storage.beginRequest(network, OChannelBinaryProtocol.REQUEST_DB_COPY, session);
-          network.writeString(databaseName);
-          network.writeString(iDatabaseUserName);
-          network.writeString(iDatabaseUserPassword);
-          network.writeString(iRemoteName);
-          network.writeString(iRemoteEngine);
-        } finally {
-          storage.endRequest(network);
-        }
-
-        storage.getResponse(network, session);
-
-        OLogManager.instance().debug(this, "Database '%s' has been copied to the server '%s'", databaseName, iRemoteName);
-        return null;
-      }
-    }, "Cannot copy the database: " + databaseName);
-
-    return this;
   }
 
   public synchronized Map<String, String> getGlobalConfigurations() throws IOException {
@@ -690,7 +673,7 @@ public class OServerAdmin {
 
     OChannelBinaryAsynchClient network = null;
     try {
-      //TODO:replace this api with one that get connection for only the specified url.
+      // TODO:replace this api with one that get connection for only the specified url.
       String serverUrl = storage.getNextAvailableServerURL(false, session);
       do {
         try {
@@ -702,12 +685,11 @@ public class OServerAdmin {
         }
       } while (network == null);
 
-
       T res = operation.execute(network, storage.getCurrentSession());
       storage.connectionManager.release(network);
       return res;
     } catch (Exception e) {
-      if(network != null)
+      if (network != null)
         storage.connectionManager.release(network);
       storage.close(true, false);
       throw OException.wrapException(new OStorageException(errorMessage), e);
