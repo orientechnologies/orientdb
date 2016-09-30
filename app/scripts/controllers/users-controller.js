@@ -318,8 +318,28 @@ schemaModule.controller("RolesController", ['$scope', '$routeParams', '$location
     var modalPromise = $modal({template: 'views/database/users/newRule.html', scope: modalScope, show: false});
     modalScope.save = function () {
       if (!$scope.selectedRole['rules'][modalPromise.$scope.name]) {
-        $scope.selectedRole['rules'][modalPromise.$scope.name] = 0;
-        $scope.rules = Object.keys($scope.selectedRole['rules']).sort();
+
+
+        var params = {
+          resource: modalPromise.$scope.name,
+          role: $scope.selectedRole.name
+        }
+
+        var sql = "REVOKE ALL ON {{resource}} FROM {{role}}"
+        var query = S(sql).template(params).s
+        CommandApi.queryText({
+          database: $routeParams.database,
+          language: 'sql',
+          verbose: false,
+          text: query,
+          limit: $scope.limit,
+          shallow: false
+        }, function (data) {
+          $scope.selectedRole['rules'][modalPromise.$scope.name] = 0;
+          $scope.rules = Object.keys($scope.selectedRole['rules']).sort();
+          Notification.push({content: S("Resource '{{resource}}' added correctly to '{{role}}'").template(params).s});
+        })
+
       }
     }
     modalPromise.$promise.then(modalPromise.show);

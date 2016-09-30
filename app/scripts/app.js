@@ -188,7 +188,6 @@ App.config(function ($routeProvider, $httpProvider, $translateProvider, $transla
           $rootScope.$broadcast("server:down");
 
         } else if (rejection.status == 401 && checkError401(rejection.data)) {
-          console.log(rejection.data);
           Notification.push({content: rejection.data, error: true, autoHide: false});
         }
         return $q.reject(rejection);
