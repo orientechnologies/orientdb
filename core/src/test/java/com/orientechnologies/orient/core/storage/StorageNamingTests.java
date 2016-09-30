@@ -111,7 +111,7 @@ public class StorageNamingTests {
 
     @Override
     public OStorageOperationResult<ORawBuffer> readRecord(ORecordId iRid, String iFetchPlan, boolean iIgnoreCache,
-        ORecordCallback<ORawBuffer> iCallback) {
+        boolean prefetchRecords, ORecordCallback<ORawBuffer> iCallback) {
       return null;
     }
 

@@ -49,7 +49,7 @@ public class BrowseSpeedTest {
       OCluster cluster = db.getStorage().getClusterById(clId);
       final long clusterRecords = cluster.getEntries();
       for (long rid = 0; rid < clusterRecords; ++rid) {
-        final ORawBuffer buffer = cluster.readRecord(rid);
+        final ORawBuffer buffer = cluster.readRecord(rid, true);
         loaded++;
       }
     }

@@ -69,13 +69,12 @@ public interface ODatabaseDocumentInternal extends ODatabaseDocument, ODatabaseI
 
   ORecordHook.RESULT callbackHooks(final ORecordHook.TYPE type, final OIdentifiable id);
 
-  <RET extends ORecord> RET executeReadRecord(final ORecordId rid, ORecord iRecord, final int recordVersion,
-      final String fetchPlan, final boolean ignoreCache, final boolean iUpdateCache, final boolean loadTombstones,
+  <RET extends ORecord> RET executeReadRecord(final ORecordId rid, ORecord iRecord, final int recordVersion, final String fetchPlan,
+      final boolean ignoreCache, final boolean iUpdateCache, final boolean loadTombstones,
       final OStorage.LOCKING_STRATEGY lockingStrategy, RecordReader recordReader);
 
-
-  <RET extends ORecord> RET executeSaveRecord(final ORecord record, String clusterName, final int ver,
-      final OPERATION_MODE mode, boolean forceCreate, final ORecordCallback<? extends Number> recordCreatedCallback,
+  <RET extends ORecord> RET executeSaveRecord(final ORecord record, String clusterName, final int ver, final OPERATION_MODE mode,
+      boolean forceCreate, final ORecordCallback<? extends Number> recordCreatedCallback,
       ORecordCallback<Integer> recordUpdatedCallback);
 
   void executeDeleteRecord(OIdentifiable record, final int iVersion, final boolean iRequired, final OPERATION_MODE iMode,
@@ -95,7 +94,10 @@ public interface ODatabaseDocumentInternal extends ODatabaseDocument, ODatabaseI
   void callOnOpenListeners();
 
   void callOnCloseListeners();
-  
-  public <DB extends ODatabase> DB setCustom(final String name, final Object iValue);
-  
+
+  <DB extends ODatabase> DB setCustom(final String name, final Object iValue);
+
+  void setPrefetchRecords(boolean prefetchRecords);
+
+  boolean isPrefetchRecords();
 }

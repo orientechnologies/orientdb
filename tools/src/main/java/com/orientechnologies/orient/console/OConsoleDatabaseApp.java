@@ -1308,7 +1308,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     ORawBuffer record;
     ORecordId id = new ORecordId(rid);
     if (!(currentDatabase.getStorage() instanceof OLocalPaginatedStorage)) {
-      record = currentDatabase.getStorage().readRecord(rid, null, false, null).getResult();
+      record = currentDatabase.getStorage().readRecord(rid, null, false, false, null).getResult();
       if (record != null) {
         String content;
         if (Integer.parseInt(properties.get("maxBinaryDisplay")) < record.buffer.length)
@@ -1346,7 +1346,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         message(" |%30d ", page.inPageSize);
         message(" |%s", OBase64Utils.encodeBytes(page.content));
       }
-      record = cluster.readRecord(id.clusterPosition);
+      record = cluster.readRecord(id.clusterPosition, false);
     }
     if (record == null)
       throw new OSystemException("The record has been deleted");
@@ -2547,7 +2547,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     checkForDatabase();
 
     currentRecord = currentDatabase.executeReadRecord(new ORecordId(iRecordId), null, -1, iFetchPlan, true, false, false,
-        OStorage.LOCKING_STRATEGY.NONE, new SimpleRecordReader());
+        OStorage.LOCKING_STRATEGY.NONE, new SimpleRecordReader(false));
     displayRecord(null);
 
     message("\nOK");

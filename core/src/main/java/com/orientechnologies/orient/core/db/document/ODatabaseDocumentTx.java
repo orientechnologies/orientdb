@@ -101,8 +101,8 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * @author Luca Garulli
  */
-@SuppressWarnings("unchecked") public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener>
-    implements ODatabaseDocumentInternal {
+@SuppressWarnings("unchecked")
+public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> implements ODatabaseDocumentInternal {
 
   protected static ORecordSerializer defaultSerializer;
 
@@ -137,6 +137,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
   protected final ORecordHook[][] hooksByScope = new ORecordHook[ORecordHook.SCOPE.values().length][];
   protected OSharedContext sharedContext;
+
+  private boolean prefetchRecords;
 
   protected ODatabaseDocumentTx() {
     //DO NOTHING IS FOR EXTENDED OBJECTS
@@ -222,7 +224,8 @@ import java.util.concurrent.atomic.AtomicReference;
    * @param iUserPassword Password associated to the user
    * @return Current database instance.
    */
-  @Override public <DB extends ODatabase> DB open(final String iUserName, final String iUserPassword) {
+  @Override
+  public <DB extends ODatabase> DB open(final String iUserName, final String iUserPassword) {
     boolean failure = true;
     setupThreadOwner();
     activateOnCurrentThread();
@@ -393,14 +396,16 @@ import java.util.concurrent.atomic.AtomicReference;
   /**
    * {@inheritDoc}
    */
-  @Override public <DB extends ODatabase> DB create() {
+  @Override
+  public <DB extends ODatabase> DB create() {
     return create((Map<OGlobalConfiguration, Object>) null);
   }
 
   /**
    * {@inheritDoc}
    */
-  @Override public <DB extends ODatabase> DB create(String incrementalBackupPath) {
+  @Override
+  public <DB extends ODatabase> DB create(String incrementalBackupPath) {
     create();
 
     final OStorage storage = getStorage();
@@ -413,7 +418,8 @@ import java.util.concurrent.atomic.AtomicReference;
   protected void loadMetadata() {
     metadata = new OMetadataDefault(this);
     OSharedContext shared = getStorage().getResource(OSharedContext.class.getName(), new Callable<OSharedContext>() {
-      @Override public OSharedContext call() throws Exception {
+      @Override
+      public OSharedContext call() throws Exception {
         OSharedContext shared = new OSharedContext(getStorage());
         return shared;
       }
@@ -422,7 +428,8 @@ import java.util.concurrent.atomic.AtomicReference;
     shared.load(this);
   }
 
-  @Override public <DB extends ODatabase> DB create(final Map<OGlobalConfiguration, Object> iInitialSettings) {
+  @Override
+  public <DB extends ODatabase> DB create(final Map<OGlobalConfiguration, Object> iInitialSettings) {
     setupThreadOwner();
     activateOnCurrentThread();
 
@@ -458,7 +465,8 @@ import java.util.concurrent.atomic.AtomicReference;
       metadata = new OMetadataDefault(this);
       // CREATE THE DEFAULT SCHEMA WITH DEFAULT USER
       OSharedContext shared = getStorage().getResource(OSharedContext.class.getName(), new Callable<OSharedContext>() {
-        @Override public OSharedContext call() throws Exception {
+        @Override
+        public OSharedContext call() throws Exception {
           OSharedContext shared = new OSharedContext(getStorage());
           return shared;
         }
@@ -498,7 +506,8 @@ import java.util.concurrent.atomic.AtomicReference;
   /**
    * {@inheritDoc}
    */
-  @Override public void drop() {
+  @Override
+  public void drop() {
     checkOpeness();
     checkIfActive();
 
@@ -619,7 +628,8 @@ import java.util.concurrent.atomic.AtomicReference;
     return (RET) load(iIdentifiable.getIdentity());
   }
 
-  @Override public void reload() {
+  @Override
+  public void reload() {
     checkIfActive();
 
     if (this.isClosed())
@@ -634,7 +644,7 @@ import java.util.concurrent.atomic.AtomicReference;
    */
   public <RET extends ORecord> RET load(final ORID iRecordId, final String iFetchPlan, final boolean iIgnoreCache) {
     return (RET) executeReadRecord((ORecordId) iRecordId, null, -1, iFetchPlan, iIgnoreCache, !iIgnoreCache, false,
-        OStorage.LOCKING_STRATEGY.DEFAULT, new SimpleRecordReader());
+        OStorage.LOCKING_STRATEGY.DEFAULT, new SimpleRecordReader(prefetchRecords));
   }
 
   /**
@@ -685,8 +695,10 @@ import java.util.concurrent.atomic.AtomicReference;
   /**
    * {@inheritDoc}
    */
-  @Override @Deprecated public <REC extends ORecord> ORecordIteratorCluster<REC> browseCluster(final String iClusterName,
-      final Class<REC> iRecordClass, final long startClusterPosition, final long endClusterPosition, final boolean loadTombstones) {
+  @Override
+  @Deprecated
+  public <REC extends ORecord> ORecordIteratorCluster<REC> browseCluster(final String iClusterName, final Class<REC> iRecordClass,
+      final long startClusterPosition, final long endClusterPosition, final boolean loadTombstones) {
     checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_READ, iClusterName);
     checkIfActive();
 
@@ -696,7 +708,8 @@ import java.util.concurrent.atomic.AtomicReference;
         OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
-  @Override public <REC extends ORecord> ORecordIteratorCluster<REC> browseCluster(String iClusterName, Class<REC> iRecordClass,
+  @Override
+  public <REC extends ORecord> ORecordIteratorCluster<REC> browseCluster(String iClusterName, Class<REC> iRecordClass,
       long startClusterPosition, long endClusterPosition) {
     checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_READ, iClusterName);
     checkIfActive();
@@ -743,28 +756,32 @@ import java.util.concurrent.atomic.AtomicReference;
   /**
    * {@inheritDoc}
    */
-  @Override public long countClusterElements(final int[] iClusterIds) {
+  @Override
+  public long countClusterElements(final int[] iClusterIds) {
     return countClusterElements(iClusterIds, false);
   }
 
   /**
    * {@inheritDoc}
    */
-  @Override public long countClusterElements(final int iClusterId) {
+  @Override
+  public long countClusterElements(final int iClusterId) {
     return countClusterElements(iClusterId, false);
   }
 
   /**
    * {@inheritDoc}
    */
-  @Override public void truncateCluster(String clusterName) {
+  @Override
+  public void truncateCluster(String clusterName) {
     command(new OCommandSQL("truncate cluster " + clusterName)).execute();
   }
 
   /**
    * {@inheritDoc}
    */
-  @Override public long countClusterElements(int iClusterId, boolean countTombstones) {
+  @Override
+  public long countClusterElements(int iClusterId, boolean countTombstones) {
     final String name = getClusterNameById(iClusterId);
     if (name == null)
       return 0;
@@ -778,7 +795,8 @@ import java.util.concurrent.atomic.AtomicReference;
   /**
    * {@inheritDoc}
    */
-  @Override public long countClusterElements(int[] iClusterIds, boolean countTombstones) {
+  @Override
+  public long countClusterElements(int[] iClusterIds, boolean countTombstones) {
     checkIfActive();
     String name;
     for (int iClusterId : iClusterIds) {
@@ -792,7 +810,8 @@ import java.util.concurrent.atomic.AtomicReference;
   /**
    * {@inheritDoc}
    */
-  @Override public long countClusterElements(final String iClusterName) {
+  @Override
+  public long countClusterElements(final String iClusterName) {
     checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_READ, iClusterName);
     checkIfActive();
 
@@ -887,7 +906,8 @@ import java.util.concurrent.atomic.AtomicReference;
   /**
    * {@inheritDoc}
    */
-  @Override public ODatabaseInternal<?> getDatabaseOwner() {
+  @Override
+  public ODatabaseInternal<?> getDatabaseOwner() {
     ODatabaseInternal<?> current = databaseOwner;
 
     while (current != null && current != this && current.getDatabaseOwner() != current)
@@ -899,7 +919,8 @@ import java.util.concurrent.atomic.AtomicReference;
   /**
    * {@inheritDoc}
    */
-  @Override public ODatabaseInternal<ORecord> setDatabaseOwner(ODatabaseInternal<?> iOwner) {
+  @Override
+  public ODatabaseInternal<ORecord> setDatabaseOwner(ODatabaseInternal<?> iOwner) {
     databaseOwner = iOwner;
     return this;
   }
@@ -935,7 +956,8 @@ import java.util.concurrent.atomic.AtomicReference;
   /**
    * Deprecated since v2.2
    */
-  @Deprecated public void setDefaultClusterIdInternal(final int iDefClusterId) {
+  @Deprecated
+  public void setDefaultClusterIdInternal(final int iDefClusterId) {
     checkIfActive();
     getStorage().setDefaultClusterId(iDefClusterId);
   }
@@ -1058,7 +1080,8 @@ import java.util.concurrent.atomic.AtomicReference;
   /**
    * {@inheritDoc}
    */
-  @Override public OLocalRecordCache getLocalCache() {
+  @Override
+  public OLocalRecordCache getLocalCache() {
     return localCache;
   }
 
@@ -1161,14 +1184,16 @@ import java.util.concurrent.atomic.AtomicReference;
     return this;
   }
 
-  @Override public OContextConfiguration getConfiguration() {
+  @Override
+  public OContextConfiguration getConfiguration() {
     checkIfActive();
     if (storage != null)
       return storage.getConfiguration().getContextConfiguration();
     return null;
   }
 
-  @Override public boolean declareIntent(final OIntent iIntent) {
+  @Override
+  public boolean declareIntent(final OIntent iIntent) {
     checkIfActive();
 
     if (currentIntent != null) {
@@ -1188,7 +1213,8 @@ import java.util.concurrent.atomic.AtomicReference;
     return true;
   }
 
-  @Override public boolean exists() {
+  @Override
+  public boolean exists() {
     if (status == STATUS.OPEN)
       return true;
 
@@ -1198,7 +1224,8 @@ import java.util.concurrent.atomic.AtomicReference;
     return storage.exists();
   }
 
-  @Override public void close() {
+  @Override
+  public void close() {
     checkIfActive();
 
     try {
@@ -1245,44 +1272,53 @@ import java.util.concurrent.atomic.AtomicReference;
     owner.set(null);
   }
 
-  @Override public STATUS getStatus() {
+  @Override
+  public STATUS getStatus() {
     return status;
   }
 
-  @Override public long getSize() {
+  @Override
+  public long getSize() {
     checkIfActive();
     return storage.getSize();
   }
 
-  @Override public String getName() {
+  @Override
+  public String getName() {
     return storage != null ? storage.getName() : url;
   }
 
-  @Override public String getURL() {
+  @Override
+  public String getURL() {
     return url != null ? url : storage.getURL();
   }
 
-  @Override public int getDefaultClusterId() {
+  @Override
+  public int getDefaultClusterId() {
     checkIfActive();
     return storage.getDefaultClusterId();
   }
 
-  @Override public int getClusters() {
+  @Override
+  public int getClusters() {
     checkIfActive();
     return storage.getClusters();
   }
 
-  @Override public boolean existsCluster(final String iClusterName) {
+  @Override
+  public boolean existsCluster(final String iClusterName) {
     checkIfActive();
     return storage.getClusterNames().contains(iClusterName.toLowerCase());
   }
 
-  @Override public Collection<String> getClusterNames() {
+  @Override
+  public Collection<String> getClusterNames() {
     checkIfActive();
     return storage.getClusterNames();
   }
 
-  @Override public int getClusterIdByName(final String iClusterName) {
+  @Override
+  public int getClusterIdByName(final String iClusterName) {
     if (iClusterName == null)
       return -1;
 
@@ -1290,7 +1326,8 @@ import java.util.concurrent.atomic.AtomicReference;
     return storage.getClusterIdByName(iClusterName.toLowerCase());
   }
 
-  @Override public String getClusterNameById(final int iClusterId) {
+  @Override
+  public String getClusterNameById(final int iClusterId) {
     if (iClusterId < 0)
       return null;
 
@@ -1298,7 +1335,8 @@ import java.util.concurrent.atomic.AtomicReference;
     return storage.getPhysicalClusterNameById(iClusterId);
   }
 
-  @Override public long getClusterRecordSizeByName(final String clusterName) {
+  @Override
+  public long getClusterRecordSizeByName(final String clusterName) {
     checkIfActive();
     try {
       return storage.getClusterById(getClusterIdByName(clusterName)).getRecordsSize();
@@ -1307,7 +1345,8 @@ import java.util.concurrent.atomic.AtomicReference;
     }
   }
 
-  @Override public long getClusterRecordSizeById(final int clusterId) {
+  @Override
+  public long getClusterRecordSizeById(final int clusterId) {
     checkIfActive();
     try {
       return storage.getClusterById(clusterId).getRecordsSize();
@@ -1317,21 +1356,25 @@ import java.util.concurrent.atomic.AtomicReference;
     }
   }
 
-  @Override public boolean isClosed() {
+  @Override
+  public boolean isClosed() {
     return status == STATUS.CLOSED || storage.isClosed();
   }
 
-  @Override public int addCluster(final String iClusterName, final Object... iParameters) {
+  @Override
+  public int addCluster(final String iClusterName, final Object... iParameters) {
     checkIfActive();
     return storage.addCluster(iClusterName, false, iParameters);
   }
 
-  @Override public int addCluster(final String iClusterName, final int iRequestedId, final Object... iParameters) {
+  @Override
+  public int addCluster(final String iClusterName, final int iRequestedId, final Object... iParameters) {
     checkIfActive();
     return storage.addCluster(iClusterName, iRequestedId, false, iParameters);
   }
 
-  @Override public boolean dropCluster(final String iClusterName, final boolean iTruncate) {
+  @Override
+  public boolean dropCluster(final String iClusterName, final boolean iTruncate) {
     checkIfActive();
     final int clusterId = getClusterIdByName(iClusterName);
     OSchemaProxy schema = metadata.getSchema();
@@ -1344,7 +1387,8 @@ import java.util.concurrent.atomic.AtomicReference;
     return storage.dropCluster(iClusterName, iTruncate);
   }
 
-  @Override public boolean dropCluster(final int iClusterId, final boolean iTruncate) {
+  @Override
+  public boolean dropCluster(final int iClusterId, final boolean iTruncate) {
     checkIfActive();
 
     checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_DELETE, getClusterNameById(iClusterId));
@@ -1360,22 +1404,26 @@ import java.util.concurrent.atomic.AtomicReference;
     return storage.dropCluster(iClusterId, iTruncate);
   }
 
-  @Override public Object setProperty(final String iName, final Object iValue) {
+  @Override
+  public Object setProperty(final String iName, final Object iValue) {
     if (iValue == null)
       return properties.remove(iName.toLowerCase());
     else
       return properties.put(iName.toLowerCase(), iValue);
   }
 
-  @Override public Object getProperty(final String iName) {
+  @Override
+  public Object getProperty(final String iName) {
     return properties.get(iName.toLowerCase());
   }
 
-  @Override public Iterator<Map.Entry<String, Object>> getProperties() {
+  @Override
+  public Iterator<Map.Entry<String, Object>> getProperties() {
     return properties.entrySet().iterator();
   }
 
-  @Override public Object get(final ATTRIBUTES iAttribute) {
+  @Override
+  public Object get(final ATTRIBUTES iAttribute) {
     checkIfActive();
 
     if (iAttribute == null)
@@ -1425,7 +1473,8 @@ import java.util.concurrent.atomic.AtomicReference;
     return null;
   }
 
-  @Override public <DB extends ODatabase> DB set(final ATTRIBUTES iAttribute, final Object iValue) {
+  @Override
+  public <DB extends ODatabase> DB set(final ATTRIBUTES iAttribute, final Object iValue) {
     checkIfActive();
 
     if (iAttribute == null)
@@ -1574,7 +1623,8 @@ import java.util.concurrent.atomic.AtomicReference;
     return (DB) this;
   }
 
-  @Override public ORecordMetadata getRecordMetadata(final ORID rid) {
+  @Override
+  public ORecordMetadata getRecordMetadata(final ORID rid) {
     checkIfActive();
     return storage.getRecordMetadata(rid);
   }
@@ -1584,73 +1634,96 @@ import java.util.concurrent.atomic.AtomicReference;
     return currentTx;
   }
 
-  @SuppressWarnings("unchecked") @Override public <RET extends ORecord> RET load(final ORecord iRecord, final String iFetchPlan) {
+  @SuppressWarnings("unchecked")
+  @Override
+  public <RET extends ORecord> RET load(final ORecord iRecord, final String iFetchPlan) {
     checkIfActive();
     return (RET) currentTx.loadRecord(iRecord.getIdentity(), iRecord, iFetchPlan, false, false, OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
-  @SuppressWarnings("unchecked") @Override @Deprecated public <RET extends ORecord> RET load(ORecord iRecord, String iFetchPlan,
-      boolean iIgnoreCache, boolean loadTombstone, OStorage.LOCKING_STRATEGY iLockingStrategy) {
+  @SuppressWarnings("unchecked")
+  @Override
+  @Deprecated
+  public <RET extends ORecord> RET load(ORecord iRecord, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone,
+      OStorage.LOCKING_STRATEGY iLockingStrategy) {
     checkIfActive();
     return (RET) currentTx
         .loadRecord(iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache, !iIgnoreCache, loadTombstone, iLockingStrategy);
   }
 
-  @SuppressWarnings("unchecked") @Override @Deprecated public <RET extends ORecord> RET load(final ORecord iRecord,
-      final String iFetchPlan, final boolean iIgnoreCache, final boolean iUpdateCache, final boolean loadTombstone,
-      final OStorage.LOCKING_STRATEGY iLockingStrategy) {
+  @SuppressWarnings("unchecked")
+  @Override
+  @Deprecated
+  public <RET extends ORecord> RET load(final ORecord iRecord, final String iFetchPlan, final boolean iIgnoreCache,
+      final boolean iUpdateCache, final boolean loadTombstone, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     checkIfActive();
     return (RET) currentTx
         .loadRecord(iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache, iUpdateCache, loadTombstone, iLockingStrategy);
   }
 
-  @SuppressWarnings("unchecked") @Override public <RET extends ORecord> RET load(final ORecord iRecord) {
+  @SuppressWarnings("unchecked")
+  @Override
+  public <RET extends ORecord> RET load(final ORecord iRecord) {
     checkIfActive();
     return (RET) currentTx.loadRecord(iRecord.getIdentity(), iRecord, null, false);
   }
 
-  @SuppressWarnings("unchecked") @Override public <RET extends ORecord> RET load(final ORID recordId) {
+  @SuppressWarnings("unchecked")
+  @Override
+  public <RET extends ORecord> RET load(final ORID recordId) {
     return (RET) currentTx.loadRecord(recordId, null, null, false);
   }
 
-  @SuppressWarnings("unchecked") @Override public <RET extends ORecord> RET load(final ORID iRecordId, final String iFetchPlan) {
+  @SuppressWarnings("unchecked")
+  @Override
+  public <RET extends ORecord> RET load(final ORID iRecordId, final String iFetchPlan) {
     checkIfActive();
     return (RET) currentTx.loadRecord(iRecordId, null, iFetchPlan, false);
   }
 
-  @SuppressWarnings("unchecked") public <RET extends ORecord> RET loadIfVersionIsNotLatest(final ORID rid, final int recordVersion,
-      String fetchPlan, boolean ignoreCache) throws ORecordNotFoundException {
+  @SuppressWarnings("unchecked")
+  public <RET extends ORecord> RET loadIfVersionIsNotLatest(final ORID rid, final int recordVersion, String fetchPlan,
+      boolean ignoreCache) throws ORecordNotFoundException {
     checkIfActive();
     return (RET) currentTx.loadRecordIfVersionIsNotLatest(rid, recordVersion, fetchPlan, ignoreCache);
   }
 
-  @SuppressWarnings("unchecked") @Override @Deprecated public <RET extends ORecord> RET load(final ORID iRecordId,
-      String iFetchPlan, final boolean iIgnoreCache, final boolean loadTombstone, OStorage.LOCKING_STRATEGY iLockingStrategy) {
+  @SuppressWarnings("unchecked")
+  @Override
+  @Deprecated
+  public <RET extends ORecord> RET load(final ORID iRecordId, String iFetchPlan, final boolean iIgnoreCache,
+      final boolean loadTombstone, OStorage.LOCKING_STRATEGY iLockingStrategy) {
     checkIfActive();
     return (RET) currentTx.loadRecord(iRecordId, null, iFetchPlan, iIgnoreCache, loadTombstone, iLockingStrategy);
   }
 
-  @SuppressWarnings("unchecked") @Override @Deprecated public <RET extends ORecord> RET load(final ORID iRecordId,
-      String iFetchPlan, final boolean iIgnoreCache, final boolean iUpdateCache, final boolean loadTombstone,
-      OStorage.LOCKING_STRATEGY iLockingStrategy) {
+  @SuppressWarnings("unchecked")
+  @Override
+  @Deprecated
+  public <RET extends ORecord> RET load(final ORID iRecordId, String iFetchPlan, final boolean iIgnoreCache,
+      final boolean iUpdateCache, final boolean loadTombstone, OStorage.LOCKING_STRATEGY iLockingStrategy) {
     checkIfActive();
     return (RET) currentTx.loadRecord(iRecordId, null, iFetchPlan, iIgnoreCache, iUpdateCache, loadTombstone, iLockingStrategy);
   }
 
-  @SuppressWarnings("unchecked") public <RET extends ORecord> RET reload(final ORecord iRecord) {
+  @SuppressWarnings("unchecked")
+  public <RET extends ORecord> RET reload(final ORecord iRecord) {
     return reload(iRecord, null, false);
   }
 
-  @SuppressWarnings("unchecked") public <RET extends ORecord> RET reload(final ORecord iRecord, final String iFetchPlan) {
+  @SuppressWarnings("unchecked")
+  public <RET extends ORecord> RET reload(final ORecord iRecord, final String iFetchPlan) {
     return reload(iRecord, iFetchPlan, false);
   }
 
-  @SuppressWarnings("unchecked") @Override public <RET extends ORecord> RET reload(final ORecord iRecord, final String iFetchPlan,
-      final boolean iIgnoreCache) {
+  @SuppressWarnings("unchecked")
+  @Override
+  public <RET extends ORecord> RET reload(final ORecord iRecord, final String iFetchPlan, final boolean iIgnoreCache) {
     return reload(iRecord, iFetchPlan, iIgnoreCache, true);
   }
 
-  @Override public <RET extends ORecord> RET reload(ORecord record, String fetchPlan, boolean ignoreCache, boolean force) {
+  @Override
+  public <RET extends ORecord> RET reload(ORecord record, String fetchPlan, boolean ignoreCache, boolean force) {
     checkIfActive();
 
     final ORecord loadedRecord = currentTx.reloadRecord(record.getIdentity(), record, fetchPlan, ignoreCache, force);
@@ -1678,7 +1751,8 @@ import java.util.concurrent.atomic.AtomicReference;
     return this;
   }
 
-  @Override public boolean hide(ORID rid) {
+  @Override
+  public boolean hide(ORID rid) {
     checkOpeness();
     checkIfActive();
 
@@ -1688,7 +1762,8 @@ import java.util.concurrent.atomic.AtomicReference;
     return executeHideRecord(rid, OPERATION_MODE.SYNCHRONOUS);
   }
 
-  @Override public OBinarySerializerFactory getSerializerFactory() {
+  @Override
+  public OBinarySerializerFactory getSerializerFactory() {
     return componentsFactory.binarySerializerFactory;
   }
 
@@ -1725,7 +1800,7 @@ import java.util.concurrent.atomic.AtomicReference;
    */
   public <RET extends ORecord> RET load(final ORecord iRecord, final String iFetchPlan, final boolean iIgnoreCache) {
     return (RET) executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, -1, iFetchPlan, iIgnoreCache, !iIgnoreCache, false,
-        OStorage.LOCKING_STRATEGY.NONE, new SimpleRecordReader());
+        OStorage.LOCKING_STRATEGY.NONE, new SimpleRecordReader(prefetchRecords));
   }
 
   /**
@@ -1785,6 +1860,16 @@ import java.util.concurrent.atomic.AtomicReference;
       ORecordSerializationContext.pullContext();
       getMetadata().clearThreadLocalSchemaSnapshot();
     }
+  }
+
+  @Override
+  public void setPrefetchRecords(boolean prefetchRecords) {
+    this.prefetchRecords = prefetchRecords;
+  }
+
+  @Override
+  public boolean isPrefetchRecords() {
+    return prefetchRecords;
   }
 
   /**
@@ -2284,7 +2369,8 @@ import java.util.concurrent.atomic.AtomicReference;
   /**
    * {@inheritDoc}
    */
-  @Override public void freeze(final boolean throwException) {
+  @Override
+  public void freeze(final boolean throwException) {
     checkOpeness();
     if (!(getStorage() instanceof OFreezableStorageComponent)) {
       OLogManager.instance().error(this,
@@ -2307,7 +2393,8 @@ import java.util.concurrent.atomic.AtomicReference;
   /**
    * {@inheritDoc}
    */
-  @Override public void freeze() {
+  @Override
+  public void freeze() {
     checkOpeness();
     if (!(getStorage() instanceof OFreezableStorageComponent)) {
       OLogManager.instance().error(this,
@@ -2330,7 +2417,8 @@ import java.util.concurrent.atomic.AtomicReference;
   /**
    * {@inheritDoc}
    */
-  @Override public void release() {
+  @Override
+  public void release() {
     checkOpeness();
     if (!(getStorage() instanceof OFreezableStorageComponent)) {
       OLogManager.instance().error(this,
@@ -2362,7 +2450,8 @@ import java.util.concurrent.atomic.AtomicReference;
    * @param iClassName the name of class that should be used as a class of created document.
    * @return new instance of document.
    */
-  @Override public ODocument newInstance(final String iClassName) {
+  @Override
+  public ODocument newInstance(final String iClassName) {
     return new ODocument(iClassName);
   }
 
@@ -2387,7 +2476,8 @@ import java.util.concurrent.atomic.AtomicReference;
   /**
    * {@inheritDoc}
    */
-  @Override public ORecordIteratorCluster<ODocument> browseCluster(final String iClusterName) {
+  @Override
+  public ORecordIteratorCluster<ODocument> browseCluster(final String iClusterName) {
     checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_READ, iClusterName);
 
     return new ORecordIteratorCluster<ODocument>(this, this, getClusterIdByName(iClusterName));
@@ -2396,15 +2486,18 @@ import java.util.concurrent.atomic.AtomicReference;
   /**
    * {@inheritDoc}
    */
-  @Override public Iterable<ODatabaseListener> getListeners() {
+  @Override
+  public Iterable<ODatabaseListener> getListeners() {
     return getListenersCopy();
   }
 
   /**
    * {@inheritDoc}
    */
-  @Override @Deprecated public ORecordIteratorCluster<ODocument> browseCluster(String iClusterName, long startClusterPosition,
-      long endClusterPosition, boolean loadTombstones) {
+  @Override
+  @Deprecated
+  public ORecordIteratorCluster<ODocument> browseCluster(String iClusterName, long startClusterPosition, long endClusterPosition,
+      boolean loadTombstones) {
     checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_READ, iClusterName);
 
     return new ORecordIteratorCluster<ODocument>(this, this, getClusterIdByName(iClusterName), startClusterPosition,
@@ -2429,7 +2522,8 @@ import java.util.concurrent.atomic.AtomicReference;
    * @throws OValidationException             if the document breaks some validation constraints defined in the schema
    * @see #setMVCC(boolean), {@link #isMVCC()}
    */
-  @Override public <RET extends ORecord> RET save(final ORecord iRecord) {
+  @Override
+  public <RET extends ORecord> RET save(final ORecord iRecord) {
     return (RET) save(iRecord, null, OPERATION_MODE.SYNCHRONOUS, false, null, null);
   }
 
@@ -2454,7 +2548,8 @@ import java.util.concurrent.atomic.AtomicReference;
    * @throws OValidationException             if the document breaks some validation constraints defined in the schema
    * @see #setMVCC(boolean), {@link #isMVCC()}
    */
-  @Override public <RET extends ORecord> RET save(final ORecord iRecord, final OPERATION_MODE iMode, boolean iForceCreate,
+  @Override
+  public <RET extends ORecord> RET save(final ORecord iRecord, final OPERATION_MODE iMode, boolean iForceCreate,
       final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<Integer> iRecordUpdatedCallback) {
     return save(iRecord, null, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
   }
@@ -2478,7 +2573,8 @@ import java.util.concurrent.atomic.AtomicReference;
    * @throws OValidationException             if the document breaks some validation constraints defined in the schema
    * @see #setMVCC(boolean), {@link #isMVCC()}, ODocument#validate()
    */
-  @Override public <RET extends ORecord> RET save(final ORecord iRecord, final String iClusterName) {
+  @Override
+  public <RET extends ORecord> RET save(final ORecord iRecord, final String iClusterName) {
     return (RET) save(iRecord, iClusterName, OPERATION_MODE.SYNCHRONOUS, false, null, null);
   }
 
@@ -2505,7 +2601,8 @@ import java.util.concurrent.atomic.AtomicReference;
    * @throws OValidationException             if the document breaks some validation constraints defined in the schema
    * @see #setMVCC(boolean), {@link #isMVCC()}, ODocument#validate()
    */
-  @Override public <RET extends ORecord> RET save(final ORecord iRecord, String iClusterName, final OPERATION_MODE iMode,
+  @Override
+  public <RET extends ORecord> RET save(final ORecord iRecord, String iClusterName, final OPERATION_MODE iMode,
       boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback,
       ORecordCallback<Integer> iRecordUpdatedCallback) {
     checkOpeness();
@@ -2633,11 +2730,13 @@ import java.util.concurrent.atomic.AtomicReference;
   /**
    * {@inheritDoc}
    */
-  @Override public ODatabase<ORecord> commit() {
+  @Override
+  public ODatabase<ORecord> commit() {
     return commit(false);
   }
 
-  @Override public ODatabaseDocument commit(boolean force) throws OTransactionException {
+  @Override
+  public ODatabaseDocument commit(boolean force) throws OTransactionException {
     checkOpeness();
     checkIfActive();
 
@@ -2708,11 +2807,13 @@ import java.util.concurrent.atomic.AtomicReference;
     return this;
   }
 
-  @Override public OUncompletedCommit<Void> initiateCommit() {
+  @Override
+  public OUncompletedCommit<Void> initiateCommit() {
     return initiateCommit(false);
   }
 
-  @Override public OUncompletedCommit<Void> initiateCommit(boolean force) {
+  @Override
+  public OUncompletedCommit<Void> initiateCommit(boolean force) {
     checkOpeness();
     checkIfActive();
 
@@ -2767,11 +2868,13 @@ import java.util.concurrent.atomic.AtomicReference;
   /**
    * {@inheritDoc}
    */
-  @Override public ODatabase<ORecord> rollback() {
+  @Override
+  public ODatabase<ORecord> rollback() {
     return rollback(false);
   }
 
-  @Override public ODatabaseDocument rollback(boolean force) throws OTransactionException {
+  @Override
+  public ODatabaseDocument rollback(boolean force) throws OTransactionException {
     checkOpeness();
     if (currentTx.isActive()) {
 
@@ -2809,7 +2912,8 @@ import java.util.concurrent.atomic.AtomicReference;
    *
    * @Internal
    */
-  @Override public <DB extends ODatabase> DB getUnderlying() {
+  @Override
+  public <DB extends ODatabase> DB getUnderlying() {
     throw new UnsupportedOperationException();
   }
 
@@ -2818,7 +2922,8 @@ import java.util.concurrent.atomic.AtomicReference;
    *
    * @Internal
    */
-  @Override public OStorage getStorage() {
+  @Override
+  public OStorage getStorage() {
     return storage;
   }
 
@@ -2827,20 +2932,24 @@ import java.util.concurrent.atomic.AtomicReference;
    *
    * @Internal
    */
-  @Override public void replaceStorage(OStorage iNewStorage) {
+  @Override
+  public void replaceStorage(OStorage iNewStorage) {
     storage = iNewStorage;
   }
 
-  @Override public <V> V callInLock(final Callable<V> iCallable, final boolean iExclusiveLock) {
+  @Override
+  public <V> V callInLock(final Callable<V> iCallable, final boolean iExclusiveLock) {
     return storage.callInLock(iCallable, iExclusiveLock);
   }
 
-  @Override public List<String> backup(final OutputStream out, final Map<String, Object> options, final Callable<Object> callable,
+  @Override
+  public List<String> backup(final OutputStream out, final Map<String, Object> options, final Callable<Object> callable,
       final OCommandOutputListener iListener, final int compressionLevel, final int bufferSize) throws IOException {
     return storage.backup(out, options, callable, iListener, compressionLevel, bufferSize);
   }
 
-  @Override public void restore(final InputStream in, final Map<String, Object> options, final Callable<Object> callable,
+  @Override
+  public void restore(final InputStream in, final Map<String, Object> options, final Callable<Object> callable,
       final OCommandOutputListener iListener) throws IOException {
     if (storage == null)
       storage = Orient.instance().loadStorage(url);
@@ -2860,7 +2969,8 @@ import java.util.concurrent.atomic.AtomicReference;
     return getStorage().getSBtreeCollectionManager();
   }
 
-  @Override public OCurrentStorageComponentsFactory getStorageVersions() {
+  @Override
+  public OCurrentStorageComponentsFactory getStorageVersions() {
     return componentsFactory;
   }
 
@@ -2877,7 +2987,8 @@ import java.util.concurrent.atomic.AtomicReference;
     this.serializer = serializer;
   }
 
-  @Override public void resetInitialization() {
+  @Override
+  public void resetInitialization() {
     for (ORecordHook h : hooks.keySet())
       h.onUnregister();
 
@@ -2889,14 +3000,17 @@ import java.util.concurrent.atomic.AtomicReference;
     initialized = false;
   }
 
-  @Override public String incrementalBackup(final String path) {
+  @Override
+  public String incrementalBackup(final String path) {
     checkOpeness();
     checkIfActive();
 
     return storage.incrementalBackup(path);
   }
 
-  @Override @Deprecated public <DB extends ODatabaseDocument> DB checkSecurity(final String iResource, final int iOperation) {
+  @Override
+  @Deprecated
+  public <DB extends ODatabaseDocument> DB checkSecurity(final String iResource, final int iOperation) {
     final String resourceSpecific = ORule.mapLegacyResourceToSpecificResource(iResource);
     final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResource);
 
@@ -2906,7 +3020,9 @@ import java.util.concurrent.atomic.AtomicReference;
     return checkSecurity(resourceGeneric, resourceSpecific, iOperation);
   }
 
-  @Override @Deprecated public <DB extends ODatabaseDocument> DB checkSecurity(final String iResourceGeneric, final int iOperation,
+  @Override
+  @Deprecated
+  public <DB extends ODatabaseDocument> DB checkSecurity(final String iResourceGeneric, final int iOperation,
       final Object iResourceSpecific) {
     final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResourceGeneric);
     if (iResourceSpecific == null || iResourceSpecific.equals("*"))
@@ -2915,7 +3031,9 @@ import java.util.concurrent.atomic.AtomicReference;
     return checkSecurity(resourceGeneric, iOperation, iResourceSpecific);
   }
 
-  @Override @Deprecated public <DB extends ODatabaseDocument> DB checkSecurity(final String iResourceGeneric, final int iOperation,
+  @Override
+  @Deprecated
+  public <DB extends ODatabaseDocument> DB checkSecurity(final String iResourceGeneric, final int iOperation,
       final Object... iResourcesSpecific) {
     final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResourceGeneric);
     return checkSecurity(resourceGeneric, iOperation, iResourcesSpecific);
@@ -2924,28 +3042,32 @@ import java.util.concurrent.atomic.AtomicReference;
   /**
    * @return <code>true</code> if database is obtained from the pool and <code>false</code> otherwise.
    */
-  @Override public boolean isPooled() {
+  @Override
+  public boolean isPooled() {
     return false;
   }
 
   /**
    * Use #activateOnCurrentThread instead.
    */
-  @Deprecated public void setCurrentDatabaseInThreadLocal() {
+  @Deprecated
+  public void setCurrentDatabaseInThreadLocal() {
     activateOnCurrentThread();
   }
 
   /**
    * Activates current database instance on current thread.
    */
-  @Override public ODatabaseDocumentTx activateOnCurrentThread() {
+  @Override
+  public ODatabaseDocumentTx activateOnCurrentThread() {
     final ODatabaseRecordThreadLocal tl = ODatabaseRecordThreadLocal.INSTANCE;
     if (tl != null)
       tl.set(this);
     return this;
   }
 
-  @Override public boolean isActiveOnCurrentThread() {
+  @Override
+  public boolean isActiveOnCurrentThread() {
     final ODatabaseRecordThreadLocal tl = ODatabaseRecordThreadLocal.INSTANCE;
     final ODatabaseDocumentInternal db = tl != null ? tl.getIfDefined() : null;
     return db == this;
@@ -3157,7 +3279,8 @@ import java.util.concurrent.atomic.AtomicReference;
               + "). Current active database is: " + currentDatabase);
   }
 
-  @Override public int addBlobCluster(final String iClusterName, final Object... iParameters) {
+  @Override
+  public int addBlobCluster(final String iClusterName, final Object... iParameters) {
     int id;
     if (getStorage() instanceof OStorageProxy) {
       id = command(new OCommandSQL("create blob cluster :1")).execute(iClusterName);
@@ -3186,7 +3309,8 @@ import java.util.concurrent.atomic.AtomicReference;
       this.nestedCommit = nestedCommit;
     }
 
-    @Override public Void complete() {
+    @Override
+    public Void complete() {
       checkOpeness();
       checkIfActive();
 
@@ -3239,7 +3363,8 @@ import java.util.concurrent.atomic.AtomicReference;
       return null;
     }
 
-    @Override public void rollback() {
+    @Override
+    public void rollback() {
       checkOpeness();
       checkIfActive();
 
@@ -3286,11 +3411,13 @@ import java.util.concurrent.atomic.AtomicReference;
     }
   }
 
-  @Override public OSharedContext getSharedContext() {
+  @Override
+  public OSharedContext getSharedContext() {
     // NOW NEED TO GET THE CONTEXT FROM RESOURCES IN FUTURE WILL BE NOT NEEDED
     if (sharedContext == null) {
       sharedContext = storage.getResource(OSharedContext.class.getName(), new Callable<OSharedContext>() {
-        @Override public OSharedContext call() throws Exception {
+        @Override
+        public OSharedContext call() throws Exception {
           throw new ODatabaseException("Accessing to the database context before the database has bean initialized");
         }
       });

@@ -93,7 +93,7 @@ public interface OCluster {
    */
   void recycleRecord(long clusterPosition, byte[] content, int recordVersion, byte recordType) throws IOException;
 
-  ORawBuffer readRecord(long clusterPosition) throws IOException;
+  ORawBuffer readRecord(long clusterPosition, boolean prefetchRecords) throws IOException;
 
   ORawBuffer readRecordIfVersionIsNotLatest(long clusterPosition, int recordVersion) throws IOException, ORecordNotFoundException;
 

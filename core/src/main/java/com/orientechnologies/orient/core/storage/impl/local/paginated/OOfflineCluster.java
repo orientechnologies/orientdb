@@ -138,7 +138,7 @@ public class OOfflineCluster implements OCluster {
   }
 
   @Override
-  public ORawBuffer readRecord(long clusterPosition) throws IOException {
+  public ORawBuffer readRecord(long clusterPosition, boolean prefetchRecords) throws IOException {
     throw OException.wrapException(new ORecordNotFoundException(new ORecordId(id, clusterPosition),
             "Record with rid #" + id + ":" + clusterPosition + " was not found in database"),
         new OOfflineClusterException("Cannot read a record from the offline cluster '" + name + "'"));

@@ -227,7 +227,7 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
     if (previousRecord == null) {
       // READ DIRECTLY FROM THE UNDERLYING STORAGE
       final OStorageOperationResult<ORawBuffer> loaded = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying()
-          .readRecord(rid, null, true, null);
+          .readRecord(rid, null, true, false, null);
 
       if (loaded == null || loaded.getResult() == null)
         return null;

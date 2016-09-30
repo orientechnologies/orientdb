@@ -29,7 +29,6 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OExecutionThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OPlaceholder;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.*;
@@ -576,7 +575,7 @@ public class ODistributedTransactionManager {
               previousRecord.set(txEntry.getRecord());
             else {
               final OStorageOperationResult<ORawBuffer> loadedBuffer = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
-                  .getUnderlying().readRecord(rid, null, true, null);
+                  .getUnderlying().readRecord(rid, null, true, false, null);
               if (loadedBuffer != null) {
                 // LOAD THE RECORD FROM THE STORAGE AVOIDING USING THE DB TO GET THE TRANSACTIONAL CHANGES
                 final ORecord loaded = Orient.instance().getRecordFactoryManager().newInstance(loadedBuffer.getResult().recordType);
