@@ -164,7 +164,7 @@
             <plugin>
                 <groupId>com.spotify</groupId>
                 <artifactId>docker-maven-plugin</artifactId>
-                <version>0.4.3</version>
+                <version>0.4.13</version>
                 <configuration>
                     <imageName>orientdb/orientdb</imageName>
                     <imageTags>
