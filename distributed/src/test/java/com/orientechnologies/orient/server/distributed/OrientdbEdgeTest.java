@@ -57,6 +57,10 @@ public class OrientdbEdgeTest {
   public static void tearDownClass() {
     if (server != null)
       server.shutdown();
+
+    File file = new File("./target/databases/");
+    if (file.exists())
+      OFileUtils.deleteRecursively(file);
   }
 
   protected static OrientGraphFactory getGraphFactory() throws Exception {
