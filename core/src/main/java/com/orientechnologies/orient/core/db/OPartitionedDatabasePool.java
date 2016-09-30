@@ -260,12 +260,14 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
               return newDb;
             }
           } else {
+
+            for (Map.Entry<String, Object> entry : properties.entrySet()) {
+              db.setProperty(entry.getKey(), entry.getValue());
+            }
+
             openDatabase(db);
             db.partition = partition;
 
-            for (Map.Entry<String, Object> entry : properties.entrySet()) {
-             db.setProperty(entry.getKey(), entry.getValue());
-            }
             partition.acquiredConnections.incrementAndGet();
 
             data.acquireCount = 1;
