@@ -576,7 +576,7 @@ public class ODistributedTransactionManager {
               previousRecord.set(txEntry.getRecord());
             else {
               final OStorageOperationResult<ORawBuffer> loadedBuffer = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
-                  .getUnderlying().readRecord(rid, null, true, null);
+                  .getUnderlying().readRecord(rid, null, true, false, null);
               if (loadedBuffer != null) {
                 // LOAD THE RECORD FROM THE STORAGE AVOIDING USING THE DB TO GET THE TRANSACTIONAL CHANGES
                 final ORecord loaded = Orient.instance().getRecordFactoryManager().newInstance(loadedBuffer.getResult().recordType);

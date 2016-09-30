@@ -331,7 +331,7 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
 
         for (long pos = remoteEnd + 1; pos <= localEnd; ++pos) {
           final ORecordId rid = new ORecordId(clusterId, pos);
-          final ORawBuffer rawRecord = storage.readRecord(rid, null, true, null).getResult();
+          final ORawBuffer rawRecord = storage.readRecord(rid, null, true, false, null).getResult();
           if (rawRecord == null)
             continue;
 
@@ -407,7 +407,7 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
         for (ORecordId rid : rids) {
           final OStorageOperationResult<ORawBuffer> res;
           if (rid.clusterPosition > -1)
-            res = db.getStorage().readRecord(rid, null, true, null);
+            res = db.getStorage().readRecord(rid, null, true, false, null);
           else
             res = null;
 

@@ -125,7 +125,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
     case ALLOCATED:
     case PRESENT:
       final OStorageOperationResult<ORawBuffer> loadedRecord = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
-          .readRecord(rid, null, true, null);
+          .readRecord(rid, null, true, false, null);
 
       if (loadedRecord.getResult() != null) {
         // ALREADY PRESENT

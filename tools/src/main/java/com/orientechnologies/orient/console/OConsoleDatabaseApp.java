@@ -103,10 +103,10 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   protected List<OIdentifiable> currentResultSet;
   protected Object              currentResult;
   protected OServerAdmin        serverAdmin;
-  private int                   lastPercentStep;
-  private String                currentDatabaseUserName;
-  private String                currentDatabaseUserPassword;
-  private int                   maxMultiValueEntries = 10;
+  private   int                 lastPercentStep;
+  private   String              currentDatabaseUserName;
+  private   String              currentDatabaseUserPassword;
+  private int maxMultiValueEntries = 10;
 
   public OConsoleDatabaseApp(final String[] args) {
     super(args);
@@ -995,8 +995,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     final int languageEndPos = iText.indexOf(";");
     String[] splitted = iText.split(" ")[0].split(";")[0].split("\n")[0].split("\t");
     language = splitted[0];
-    iText = iText.substring(language.length()+1);
-    if(iText.trim().length()==0){
+    iText = iText.substring(language.length() + 1);
+    if (iText.trim().length() == 0) {
       throw new IllegalArgumentException("Missing language in script (sql, js, gremlin, etc.) as first argument");
     }
 
@@ -1279,8 +1279,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         throw new OSystemException("No result set where to find the requested record. Execute a query first.");
 
       if (currentResultSet.size() <= recNumber)
-        throw new OSystemException("The record requested is not part of current result set (0"
-            + (currentResultSet.size() > 0 ? "-" + (currentResultSet.size() - 1) : "") + ")");
+        throw new OSystemException("The record requested is not part of current result set (0" + (currentResultSet.size() > 0 ?
+            "-" + (currentResultSet.size() - 1) :
+            "") + ")");
 
       setCurrentRecord(recNumber);
     }
@@ -1307,15 +1308,16 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     ORawBuffer record;
     ORecordId id = new ORecordId(rid);
     if (!(currentDatabase.getStorage() instanceof OLocalPaginatedStorage)) {
-      record = currentDatabase.getStorage().readRecord(rid, null, false, null).getResult();
+      record = currentDatabase.getStorage().readRecord(rid, null, false, false, null).getResult();
       if (record != null) {
         String content;
         if (Integer.parseInt(properties.get("maxBinaryDisplay")) < record.buffer.length)
           content = new String(Arrays.copyOf(record.buffer, Integer.parseInt(properties.get("maxBinaryDisplay"))));
         else
           content = new String(record.buffer);
-        out.println("\nRaw record content. The size is " + record.buffer.length + " bytes, while settings force to print first "
-            + content.length() + " bytes:\n\n" + content);
+        out.println(
+            "\nRaw record content. The size is " + record.buffer.length + " bytes, while settings force to print first " + content
+                .length() + " bytes:\n\n" + content);
       }
     } else {
       final OLocalPaginatedStorage storage = (OLocalPaginatedStorage) currentDatabase.getStorage();
@@ -1345,7 +1347,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         message(" |%30d ", page.inPageSize);
         message(" |%s", OBase64Utils.encodeBytes(page.content));
       }
-      record = cluster.readRecord(id.clusterPosition);
+      record = cluster.readRecord(id.clusterPosition, false);
     }
     if (record == null)
       throw new OSystemException("The record has been deleted");
@@ -1474,8 +1476,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       message("\nAlias................: " + cls.getShortName());
     if (cls.hasSuperClasses())
       message("\nSuper classes........: " + Arrays.toString(cls.getSuperClassesNames().toArray()));
-    message("\nDefault cluster......: " + currentDatabase.getClusterNameById(cls.getDefaultClusterId()) + " (id="
-        + cls.getDefaultClusterId() + ")");
+    message("\nDefault cluster......: " + currentDatabase.getClusterNameById(cls.getDefaultClusterId()) + " (id=" + cls
+        .getDefaultClusterId() + ")");
 
     final StringBuilder clusters = new StringBuilder();
     for (int clId : cls.getClusterIds()) {
@@ -1770,8 +1772,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
           clusterId = currentDatabase.getClusterIdByName(clusterName);
           final OCluster cluster = currentDatabase.getStorage().getClusterById(clusterId);
 
-          final String conflictStrategy = cluster.getRecordConflictStrategy() != null
-              ? cluster.getRecordConflictStrategy().getName() : "";
+          final String conflictStrategy =
+              cluster.getRecordConflictStrategy() != null ? cluster.getRecordConflictStrategy().getName() : "";
 
           count = currentDatabase.countClusterElements(clusterName);
           totalElements += count;
@@ -2364,8 +2366,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     out.println();
 
-    if (iPropertyName.equalsIgnoreCase("limit")
-        && (Integer.parseInt(iPropertyValue) == 0 || Integer.parseInt(iPropertyValue) < -1)) {
+    if (iPropertyName.equalsIgnoreCase("limit") && (Integer.parseInt(iPropertyValue) == 0
+        || Integer.parseInt(iPropertyValue) < -1)) {
       message("\nERROR: Limit must be > 0 or = -1 (no limit)");
     } else {
 
@@ -2568,8 +2570,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   public void reloadRecordInternal(String iRecordId, String iFetchPlan) {
     checkForDatabase();
 
-    currentRecord = currentDatabase.executeReadRecord(new ORecordId(iRecordId), null, -1, iFetchPlan, true, false, false,
-        OStorage.LOCKING_STRATEGY.NONE, new ODatabaseDocumentTx.SimpleRecordReader());
+    currentRecord = currentDatabase
+        .executeReadRecord(new ORecordId(iRecordId), null, -1, iFetchPlan, true, false, false, OStorage.LOCKING_STRATEGY.NONE,
+            new ODatabaseDocumentTx.SimpleRecordReader(false));
     displayRecord(null);
 
     message("\nOK");
@@ -2579,8 +2582,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
    * Should be used only by console commands
    */
   protected void checkForRemoteServer() {
-    if (serverAdmin == null
-        && (currentDatabase == null || !(currentDatabase.getStorage() instanceof OStorageProxy) || currentDatabase.isClosed()))
+    if (serverAdmin == null && (currentDatabase == null || !(currentDatabase.getStorage() instanceof OStorageProxy)
+        || currentDatabase.isClosed()))
       throw new OSystemException(
           "Remote server is not connected. Use 'connect remote:<host>[:<port>][/<database-name>]' to connect");
   }

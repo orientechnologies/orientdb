@@ -633,7 +633,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRecordId, final String iFetchPlan,
-      final boolean iIgnoreCache, final ORecordCallback<ORawBuffer> iCallback) {
+      final boolean iIgnoreCache, final boolean prefetchRecords, final ORecordCallback<ORawBuffer> iCallback) {
 
     try {
       final String clusterName = getClusterNameByRID(iRecordId);
@@ -651,7 +651,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
         return (OStorageOperationResult<ORawBuffer>) OScenarioThreadLocal.executeAsDistributed(new Callable() {
           @Override
           public Object call() throws Exception {
-            return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, iCallback);
+            return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, prefetchRecords, iCallback);
           }
         });
       }

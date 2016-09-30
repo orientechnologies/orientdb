@@ -85,7 +85,7 @@ public interface OStorage extends OBackupable, OSharedContainer {
   OStorageOperationResult<OPhysicalPosition> createRecord(ORecordId iRecordId, byte[] iContent, int iRecordVersion,
       byte iRecordType, int iMode, ORecordCallback<Long> iCallback);
 
-  OStorageOperationResult<ORawBuffer> readRecord(ORecordId iRid, String iFetchPlan, boolean iIgnoreCache,
+  OStorageOperationResult<ORawBuffer> readRecord(ORecordId iRid, String iFetchPlan, boolean iIgnoreCache, boolean prefetchRecords,
       ORecordCallback<ORawBuffer> iCallback);
 
   OStorageOperationResult<ORawBuffer> readRecordIfVersionIsNotLatest(ORecordId rid, String fetchPlan, boolean ignoreCache,

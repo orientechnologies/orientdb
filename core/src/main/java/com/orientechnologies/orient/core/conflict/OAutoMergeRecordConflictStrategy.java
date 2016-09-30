@@ -43,7 +43,7 @@ public class OAutoMergeRecordConflictStrategy extends OVersionRecordConflictStra
 
     if (iRecordType == ODocument.RECORD_TYPE) {
       // No need lock, is already inside a lock. Use database to read temporary objects too
-      OStorageOperationResult<ORawBuffer> res = storage.readRecord(rid, null, false, null);
+      OStorageOperationResult<ORawBuffer> res = storage.readRecord(rid, null, false, false, null);
       final ODocument storedRecord = new ODocument(rid).fromStream(res.getResult().getBuffer());
 
       ODocument newRecord = (ODocument) ORecordSaveThreadLocal.getLast();

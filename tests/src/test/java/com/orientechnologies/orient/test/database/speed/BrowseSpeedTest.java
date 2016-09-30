@@ -16,11 +16,11 @@ import java.util.TimerTask;
 
 /**
  * Test the speed on browsing records at storage level. Run this with the following syntax:
- * 
+ * <p>
  * <pre>
  * BrowseSpeedTest <directory where the database is stored> <class to use for browsing>
  * </pre>
- * 
+ *
  * @author Luca Garulli
  * @since 9/17/14
  */
@@ -77,7 +77,7 @@ public class BrowseSpeedTest {
       OCluster cluster = db.getStorage().getClusterById(clId);
       final long clusterRecords = cluster.getEntries();
       for (long rid = 0; rid < clusterRecords; ++rid) {
-        final ORawBuffer buffer = cluster.readRecord(rid);
+        final ORawBuffer buffer = cluster.readRecord(rid, true);
         loaded++;
       }
     }

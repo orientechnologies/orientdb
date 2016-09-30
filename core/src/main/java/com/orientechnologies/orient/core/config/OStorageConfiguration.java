@@ -199,7 +199,7 @@ public class OStorageConfiguration implements OSerializableStream {
       // SAVE ENCRYPTION KEY IN CONFIGURATION
       configuration.setValue(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY, encryptionKey);
 
-    final byte[] record = storage.readRecord(CONFIG_RID, null, false, null).getResult().buffer;
+    final byte[] record = storage.readRecord(CONFIG_RID, null, false, false, null).getResult().buffer;
 
     if (record == null)
       throw new OStorageException("Cannot load database configuration. The database seems corrupted");

@@ -29,7 +29,6 @@ import com.orientechnologies.common.profiler.OAbstractProfiler;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.types.OModifiableBoolean;
-import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.OOrientShutdownListener;
@@ -830,10 +829,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * @param lsn                LSN from which we should find changed records
    * @param stream             Stream which will contain found records
    * @param excludedClusterIds Array of cluster ids to exclude from the export
-   *
    * @return Last LSN processed during examination of changed records, or <code>null</code> if it was impossible to find changed
    * records: write ahead log is absent, record with start LSN was not found in WAL, etc.
-   *
    * @see OGlobalConfiguration#STORAGE_TRACK_CHANGED_RECORDS_IN_WAL
    */
   public OLogSequenceNumber recordsChangedAfterLSN(final OLogSequenceNumber lsn, final OutputStream stream,
@@ -966,7 +963,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               dataOutputStream.writeBoolean(true);
               OLogManager.instance().debug(this, "Exporting deleted record %s", rid);
             } else {
-              final ORawBuffer rawBuffer = cluster.readRecord(rid.getClusterPosition());
+              final ORawBuffer rawBuffer = cluster.readRecord(rid.getClusterPosition(), false);
               assert rawBuffer != null;
 
               dataOutputStream.writeBoolean(false);
@@ -1075,73 +1072,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return null;
   }
 
-  public void scanCluster(final String iClusterName, final boolean iAscendingOrder, long iFrom, long iTo,
-      final OCallable<Boolean, ORecord> iCallback) throws IOException {
-    checkOpeness();
-    final OCluster cluster = getClusterByName(iClusterName);
-
-    if (cluster instanceof OOfflineCluster)
-      return;
-
-    if (!(cluster instanceof OPaginatedCluster))
-      throw new IllegalArgumentException("Cluster '" + iClusterName + "' (type=" + cluster.getClass() + ") does not support scan");
-
-    final long scanBatchSize = OGlobalConfiguration.QUERY_SCAN_BATCH_SIZE.getValueAsLong();
-
-    if (transaction.get() != null) {
-      if (scanBatchSize > 0) {
-        long lastPos;
-        if (iAscendingOrder) {
-          do {
-            lastPos = ((OPaginatedCluster) cluster).scan(true, iFrom, iTo, scanBatchSize, iCallback);
-            iFrom = lastPos + 1;
-          } while (lastPos >= 0);
-        } else {
-          do {
-            lastPos = ((OPaginatedCluster) cluster).scan(false, iFrom, iTo, scanBatchSize, iCallback);
-            iTo = lastPos - 1;
-          } while (lastPos > 0);
-        }
-      } else {
-        ((OPaginatedCluster) cluster).scan(iAscendingOrder, iFrom, iTo, 0, iCallback);
-      }
-
-      return;
-    }
-
-    if (scanBatchSize > 0) {
-      long lastPos;
-      if (iAscendingOrder) {
-        do {
-          lastPos = scanClusterInLock(true, (OPaginatedCluster) cluster, iFrom, iTo, scanBatchSize, iCallback);
-          iFrom = lastPos + 1;
-        } while (lastPos >= 0);
-      } else {
-        do {
-          lastPos = scanClusterInLock(false, (OPaginatedCluster) cluster, iFrom, iTo, scanBatchSize, iCallback);
-          iTo = lastPos - 1;
-        } while (lastPos > 0);
-      }
-    } else {
-      scanClusterInLock(iAscendingOrder, (OPaginatedCluster) cluster, iFrom, iTo, 0, iCallback);
-    }
-  }
-
-  protected long scanClusterInLock(final boolean iAscendingOrder, final OPaginatedCluster cluster, final long iFrom, final long iTo,
-      final long iLimit, final OCallable<Boolean, ORecord> iCallback) throws IOException {
-    stateLock.acquireReadLock();
-    try {
-
-      return cluster.scan(iAscendingOrder, iFrom, iTo, iLimit, iCallback);
-
-    } finally {
-      stateLock.releaseReadLock();
-    }
-  }
-
   @Override
   public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRid, final String iFetchPlan, boolean iIgnoreCache,
-      ORecordCallback<ORawBuffer> iCallback) {
+      boolean prefetchRecords, ORecordCallback<ORawBuffer> iCallback) {
     checkOpeness();
     final OCluster cluster;
     try {
@@ -1150,7 +1083,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       throw OException.wrapException(new ORecordNotFoundException(iRid), e);
     }
 
-    return new OStorageOperationResult<ORawBuffer>(readRecord(cluster, iRid));
+    return new OStorageOperationResult<ORawBuffer>(readRecord(cluster, iRid, prefetchRecords));
   }
 
   @Override
@@ -3007,7 +2940,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private ORawBuffer readRecord(final OCluster clusterSegment, final ORecordId rid) {
+  private ORawBuffer readRecord(final OCluster clusterSegment, final ORecordId rid, boolean prefetchRecords) {
     checkOpeness();
 
     if (!rid.isPersistent())
@@ -3017,13 +2950,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     if (transaction.get() != null) {
       // Disabled this assert have no meaning anymore
       // assert iLockingStrategy.equals(LOCKING_STRATEGY.DEFAULT);
-      return doReadRecord(clusterSegment, rid);
+      return doReadRecord(clusterSegment, rid, prefetchRecords);
     }
 
     stateLock.acquireReadLock();
     try {
       checkOpeness();
-      return doReadRecord(clusterSegment, rid);
+      return doReadRecord(clusterSegment, rid, prefetchRecords);
     } finally {
       stateLock.releaseReadLock();
     }
@@ -3048,7 +2981,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           throw new ORecordNotFoundException(rid,
               "Cannot read record " + rid + " since the position is invalid in database '" + name + '\'');
 
-        records.add(new OPair<ORecordId, ORawBuffer>(rid, doReadRecord(getClusterById(rid.clusterId), rid)));
+        records.add(new OPair<ORecordId, ORawBuffer>(rid, doReadRecord(getClusterById(rid.clusterId), rid, false)));
       }
       return records;
     }
@@ -3064,7 +2997,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         final OCluster clusterSegment = getClusterById(clusterId);
 
         for (ORecordId rid : entry.getValue()) {
-          records.add(new OPair<ORecordId, ORawBuffer>(rid, doReadRecord(clusterSegment, rid)));
+          records.add(new OPair<ORecordId, ORawBuffer>(rid, doReadRecord(clusterSegment, rid, false)));
         }
       }
     } finally {
@@ -3390,10 +3323,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private ORawBuffer doReadRecord(final OCluster clusterSegment, final ORecordId rid) {
+  private ORawBuffer doReadRecord(final OCluster clusterSegment, final ORecordId rid, boolean prefetchRecords) {
     try {
 
-      final ORawBuffer buff = clusterSegment.readRecord(rid.clusterPosition);
+      final ORawBuffer buff = clusterSegment.readRecord(rid.clusterPosition, prefetchRecords);
 
       if (buff != null && OLogManager.instance().isDebugEnabled())
         OLogManager.instance()
@@ -3487,9 +3420,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * Register the cluster internally.
    *
    * @param cluster OCluster implementation
-   *
    * @return The id (physical position into the array) of the new cluster just created. First is 0.
-   *
    * @throws IOException
    */
   private int registerCluster(final OCluster cluster) throws IOException {

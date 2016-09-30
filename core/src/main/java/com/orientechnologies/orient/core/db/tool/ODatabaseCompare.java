@@ -766,13 +766,13 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
             final ORawBuffer buffer1 = makeDbCall(databaseOne, new ODbRelatedCall<ORawBuffer>() {
               @Override
               public ORawBuffer call(ODatabaseDocumentInternal database) {
-                return database.getStorage().readRecord(rid, null, true, null).getResult();
+                return database.getStorage().readRecord(rid, null, true, false, null).getResult();
               }
             });
             final ORawBuffer buffer2 = makeDbCall(databaseTwo, new ODbRelatedCall<ORawBuffer>() {
               @Override
               public ORawBuffer call(ODatabaseDocumentInternal database) {
-                return database.getStorage().readRecord(rid2, null, true, null).getResult();
+                return database.getStorage().readRecord(rid2, null, true, false, null).getResult();
               }
             });
 

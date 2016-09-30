@@ -636,7 +636,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRid, final String iFetchPlan, final boolean iIgnoreCache,
-      final ORecordCallback<ORawBuffer> iCallback) {
+      boolean prefetchRecords, final ORecordCallback<ORawBuffer> iCallback) {
 
     if (getCurrentSession().commandExecuting)
       // PENDING NETWORK OPERATION, CAN'T EXECUTE IT NOW

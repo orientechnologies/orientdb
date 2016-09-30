@@ -218,7 +218,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
     // DELEGATE TO THE STORAGE, NO TOMBSTONES SUPPORT IN TX MODE
     final ORecord record = database.executeReadRecord((ORecordId) rid, iRecord, -1, fetchPlan, ignoreCache, iUpdateCache,
-        loadTombstone, lockingStrategy, new ODatabaseDocumentTx.SimpleRecordReader());
+        loadTombstone, lockingStrategy, new ODatabaseDocumentTx.SimpleRecordReader(database.isPrefetchRecords()));
 
     if (record != null && isolationLevel == ISOLATION_LEVEL.REPEATABLE_READ)
       // KEEP THE RECORD IN TX TO ASSURE REPEATABLE READS
@@ -249,7 +249,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
     // DELEGATE TO THE STORAGE, NO TOMBSTONES SUPPORT IN TX MODE
     final ORecord record = database.executeReadRecord((ORecordId) rid, null, recordVersion, fetchPlan, ignoreCache, !ignoreCache,
-        false, OStorage.LOCKING_STRATEGY.NONE, new ODatabaseDocumentTx.SimpleRecordReader());
+        false, OStorage.LOCKING_STRATEGY.NONE, new ODatabaseDocumentTx.SimpleRecordReader(database.isPrefetchRecords()));
 
     if (record != null && isolationLevel == ISOLATION_LEVEL.REPEATABLE_READ)
       // KEEP THE RECORD IN TX TO ASSURE REPEATABLE READS
@@ -290,7 +290,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     try {
       final ODatabaseDocumentTx.RecordReader recordReader;
       if (force) {
-        recordReader = new ODatabaseDocumentTx.SimpleRecordReader();
+        recordReader = new ODatabaseDocumentTx.SimpleRecordReader(database.isPrefetchRecords());
       } else {
         recordReader = new ODatabaseDocumentTx.LatestVersionRecordReader();
       }
