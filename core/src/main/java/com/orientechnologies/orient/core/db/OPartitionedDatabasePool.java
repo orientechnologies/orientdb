@@ -256,6 +256,8 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract implements
               return newDb;
             }
           } else {
+            properties.entrySet().forEach(p -> db.setProperty(p.getKey(), p.getValue()));
+
             openDatabase(db);
             db.partition = partition;
             partition.acquiredConnections.incrementAndGet();
@@ -264,7 +266,6 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract implements
             data.acquiredDatabase = db;
 
             acquired = true;
-            properties.entrySet().forEach(p -> db.setProperty(p.getKey(), p.getValue()));
 
             return db;
           }
