@@ -1705,7 +1705,22 @@ import java.util.concurrent.Callable;
 
   private String removeQuotes(String s) {
     s = s.trim();
-    return s.substring(1, s.length() - 1);
+    StringBuilder result = new StringBuilder();
+    boolean escaping = false;
+    for (int i = 1; i < s.length() - 1; i++) {
+      char c = s.charAt(i);
+      if (escaping) {
+        result.append(c);
+        escaping = false;
+        continue;
+      }
+      if (c == '\\') {
+        escaping = true;
+        continue;
+      }
+      result.append(c);
+    }
+    return result.toString();
   }
 
   private boolean isQuoted(String s) {

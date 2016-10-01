@@ -489,4 +489,15 @@ public class OClassImplTest {
     }
 
   }
+
+  @Test
+  public void testSetCustomWithQuotes() {
+    final OSchema oSchema = db.getMetadata().getSchema();
+    OClass oClass = oSchema.createClass("testSetCustomWithQuotes");
+
+    oClass.set(OClass.ATTRIBUTES.CUSTOM, "foo='bar\\'baz'");
+    assertEquals(oClass.getCustom("foo"), "bar'baz");
+
+  }
+
 }
