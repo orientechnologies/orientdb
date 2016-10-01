@@ -1168,8 +1168,10 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 
       document.field("min", min);
       document.field("max", max);
-      if(regexp!=null) {
+      if(regexp != null) {
         document.field("regexp", regexp);
+      } else {
+        document.removeField("regexp");
       }
       if (linkedType != null)
         document.field("linkedType", linkedType.id);
