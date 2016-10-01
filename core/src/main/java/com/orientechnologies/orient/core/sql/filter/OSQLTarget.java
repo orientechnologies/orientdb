@@ -70,7 +70,9 @@ public class OSQLTarget extends OBaseParser {
             new OQueryParsingException("Error on parsing query", parserText, parserGetCurrentPosition()), e);
 
       throw e;
-    } catch (Exception e) {
+    } catch(OCommandExecutionException ex){
+      throw ex;
+    }catch (Exception e) {
       throw OException.wrapException(new OQueryParsingException("Error on parsing query", parserText, parserGetCurrentPosition()),
           e);
     }
