@@ -87,7 +87,7 @@ public class OCommandExecutorSQLHAStopReplication extends OCommandExecutorSQLAbs
     while (pos > -1) {
       final String option = word.toString();
 
-      if (option.equalsIgnoreCase("-dropDatabase"))
+      if (option.equalsIgnoreCase("dropDatabase"))
         dropDatabase = true;
 
       pos = nextWord(parserText, parserTextUpperCase, pos, word, false);

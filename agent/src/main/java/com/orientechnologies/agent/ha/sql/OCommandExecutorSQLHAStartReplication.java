@@ -102,7 +102,7 @@ public class OCommandExecutorSQLHAStartReplication extends OCommandExecutorSQLAb
     while (pos > -1) {
       final String option = word.toString();
 
-      if (option.equalsIgnoreCase("-mode")) {
+      if (option.equalsIgnoreCase("mode")) {
         pos = nextWord(parserText, parserTextUpperCase, pos, word, false);
         if (pos == -1)
           throw new OCommandSQLParsingException("Missing mode. Use " + getSyntax(), parserText, oldPos);
@@ -164,7 +164,7 @@ public class OCommandExecutorSQLHAStartReplication extends OCommandExecutorSQLAb
 
   @Override
   public String getSyntax() {
-    return "HA START REPLICATION <server> [-mode <FULL|DELTA>]";
+    return "HA START REPLICATION <server> [mode <FULL|DELTA>]";
   }
 
   public enum MODE {
