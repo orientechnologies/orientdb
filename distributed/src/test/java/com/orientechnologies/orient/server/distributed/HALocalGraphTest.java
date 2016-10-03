@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.exception.OConcurrentModificationExcept
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.impl.OLocalClusterWrapperStrategy;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.tinkerpop.blueprints.Vertex;
@@ -30,24 +31,24 @@ import java.util.concurrent.atomic.AtomicLong;
  * 
  * @author Luca Garulli
  */
-public class HAGraphTest extends AbstractServerClusterTxTest {
+public class HALocalGraphTest extends AbstractServerClusterTxTest {
 
-  final static int            SERVERS                 = 3;
-  private static final int    CONCURRENCY_LEVEL       = 4;
-  private static final int    TOTAL_CYCLES_PER_THREAD = 10000;
+  protected final static int    SERVERS                 = 3;
+  protected static final int    CONCURRENCY_LEVEL       = 4;
+  protected static final int    TOTAL_CYCLES_PER_THREAD = 10000;
 
-  private OrientGraphFactory  graphReadFactory;
-  private ExecutorService     executorService;
-  private int                 serverStarted           = 0;
-  private AtomicLong          operations              = new AtomicLong();
+  protected OrientGraphFactory  graphReadFactory;
+  protected ExecutorService     executorService;
+  protected int                 serverStarted           = 0;
+  protected AtomicLong          operations              = new AtomicLong();
 
-  private final AtomicBoolean serverDown              = new AtomicBoolean(false);
-  private final AtomicBoolean serverRestarting        = new AtomicBoolean(false);
-  private final AtomicBoolean serverRestarted         = new AtomicBoolean(false);
+  protected final AtomicBoolean serverDown              = new AtomicBoolean(false);
+  protected final AtomicBoolean serverRestarting        = new AtomicBoolean(false);
+  protected final AtomicBoolean serverRestarted         = new AtomicBoolean(false);
 
-  List<Future<?>>             ths                     = new ArrayList<Future<?>>();
-  private TimerTask           task;
-  private volatile long       sleep                   = 0;
+  List<Future<?>>               ths                     = new ArrayList<Future<?>>();
+  private TimerTask             task;
+  private volatile long         sleep                   = 0;
 
   @Test
   public void test() throws Exception {
@@ -110,12 +111,12 @@ public class HAGraphTest extends AbstractServerClusterTxTest {
   }
 
   protected String getDatabaseURL(final ServerRun server) {
-    return "remote:localhost:2424;localhost:2425;localhost:2426/" + getDatabaseName();
+    return "plocal:" + server.getDatabasePath(getDatabaseName());
   }
 
   @Override
   public String getDatabaseName() {
-    return "dbquerytest";
+    return "HALocalGraphTest";
   }
 
   @Override
@@ -185,6 +186,10 @@ public class HAGraphTest extends AbstractServerClusterTxTest {
               Thread.sleep(sleep);
 
             OrientGraph graph = graphFactory.getTx();
+
+            if (!graph.getRawGraph().getURL().startsWith("remote:"))
+              Assert.assertTrue(graph.getVertexType("Test").getClusterSelection() instanceof OLocalClusterWrapperStrategy);
+
             try {
               if (useSQL) {
                 boolean update = true;
