@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
+import com.orientechnologies.orient.server.distributed.impl.OLocalClusterWrapperStrategy;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import org.junit.Assert;
 
@@ -142,6 +143,9 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
     }
 
     protected ODocument createRecord(ODatabaseDocumentTx database, int i, final String uid) {
+      Assert.assertTrue(
+          database.getMetadata().getSchema().getClass("Person").getClusterSelection() instanceof OLocalClusterWrapperStrategy);
+
       final String uniqueId = serverId + "-" + threadId + "-" + i;
       ODocument person = new ODocument("Person").fields("id", uid, "name", "Billy" + uniqueId, "surname", "Mayes" + uniqueId,
           "birthday", new Date(), "children", uniqueId);
@@ -154,17 +158,26 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
     }
 
     protected void updateRecord(ODatabaseDocumentTx database, int i) {
+      Assert.assertTrue(
+          database.getMetadata().getSchema().getClass("Person").getClusterSelection() instanceof OLocalClusterWrapperStrategy);
+
       ODocument doc = loadRecord(database, i);
       doc.field("updated", true);
       doc.save();
     }
 
     protected void checkRecord(ODatabaseDocumentTx database, int i) {
+      Assert.assertTrue(
+          database.getMetadata().getSchema().getClass("Person").getClusterSelection() instanceof OLocalClusterWrapperStrategy);
+
       ODocument doc = loadRecord(database, i);
       Assert.assertEquals(doc.field("updated"), Boolean.TRUE);
     }
 
     protected void checkIndex(ODatabaseDocumentTx database, final String key, final ORID rid) {
+      Assert.assertTrue(
+          database.getMetadata().getSchema().getClass("Person").getClusterSelection() instanceof OLocalClusterWrapperStrategy);
+
       final List<OIdentifiable> result = database.command(new OCommandSQL("select from index:" + indexName + " where key = ?"))
           .execute(key);
       Assert.assertNotNull(result);
@@ -174,10 +187,13 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
     }
 
     protected ODocument loadRecord(ODatabaseDocumentTx database, int i) {
+      Assert.assertTrue(
+          database.getMetadata().getSchema().getClass("Person").getClusterSelection() instanceof OLocalClusterWrapperStrategy);
+
       final String uniqueId = serverId + "-" + threadId + "-" + i;
 
-      List<ODocument> result = database
-          .query(new OSQLSynchQuery<ODocument>("select from Person where name = ?"), "Billy" + uniqueId );
+      List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from Person where name = ?"),
+          "Billy" + uniqueId);
       if (result.size() == 0)
         Assert.assertTrue("No record found with name = 'Billy" + uniqueId + "'!", false);
       else if (result.size() > 1)
@@ -187,20 +203,32 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
     }
 
     protected void updateRecord(ODatabaseDocumentTx database, ODocument doc) {
+      Assert.assertTrue(
+          database.getMetadata().getSchema().getClass("Person").getClusterSelection() instanceof OLocalClusterWrapperStrategy);
+
       doc.field("updated", true);
       doc.save();
     }
 
     protected void checkRecord(ODatabaseDocumentTx database, ODocument doc) {
+      Assert.assertTrue(
+          database.getMetadata().getSchema().getClass("Person").getClusterSelection() instanceof OLocalClusterWrapperStrategy);
+
       doc.reload();
       Assert.assertEquals(doc.field("updated"), Boolean.TRUE);
     }
 
     protected void deleteRecord(ODatabaseDocumentTx database, ODocument doc) {
+      Assert.assertTrue(
+          database.getMetadata().getSchema().getClass("Person").getClusterSelection() instanceof OLocalClusterWrapperStrategy);
+
       doc.delete();
     }
 
     protected void checkRecordIsDeleted(ODatabaseDocumentTx database, ODocument doc) {
+      Assert.assertTrue(
+          database.getMetadata().getSchema().getClass("Person").getClusterSelection() instanceof OLocalClusterWrapperStrategy);
+
       try {
         doc.reload();
         Assert.fail("Record found while it should be deleted");
