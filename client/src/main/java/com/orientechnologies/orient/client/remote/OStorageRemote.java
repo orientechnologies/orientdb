@@ -203,6 +203,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   public <T> T baseNetworkOperation(final OStorageRemoteOperation<T> operation, final String errorMessage) {
     int retry = connectionRetry;
     OStorageRemoteSession session = getCurrentSession();
+    if (session.commandExecuting)
+      throw new ODatabaseException(
+          "Cannot execute the request because an asynchronous operation is in progress. Please use a different connection");
+    
     do {
       OChannelBinaryAsynchClient network = null;
       String serverUrl = getNextAvailableServerURL(false, session);
@@ -1130,7 +1134,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       @Override
       public Object execute(final OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
         Object result = null;
-        getCurrentSession().commandExecuting = true;
+        session.commandExecuting = true;
         try {
 
           final boolean asynch = iCommand instanceof OCommandRequestAsynch && ((OCommandRequestAsynch) iCommand).isAsynchronous();
@@ -1203,7 +1207,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             endResponse(network);
           }
         } finally {
-          getCurrentSession().commandExecuting = false;
+          session.commandExecuting = false;
           if (iCommand.getResultListener() != null && !live)
             iCommand.getResultListener().end();
         }
