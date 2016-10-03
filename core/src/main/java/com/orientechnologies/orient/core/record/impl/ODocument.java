@@ -2522,37 +2522,60 @@ public class ODocument extends ORecordAbstract
         OType linkedType = prop.getLinkedType();
         if (linkedType == null)
           continue;
-        Object value = field(prop.getName());
+        final ODocumentEntry entry = _fields.get(prop.getName());
+        if (entry == null)
+          continue;
+        if (!entry.created && !entry.changed)
+          continue;
+        Object value = entry.value;
         if (value == null)
           continue;
         try {
-          if (type == OType.EMBEDDEDLIST && !(value instanceof OTrackedList)) {
-            List<Object> list = new OTrackedList<Object>(this);
+          if (type == OType.EMBEDDEDLIST) {
+            OTrackedList<Object> list = new OTrackedList<Object>(this);
             Collection<Object> values = (Collection<Object>) value;
             for (Object object : values) {
               list.add(OType.convert(object, linkedType.getDefaultJavaType()));
             }
-            field(prop.getName(), list);
-          } else if (type == OType.EMBEDDEDMAP && !(value instanceof OTrackedMap)) {
+            entry.value = list;
+            replaceListenerOnAutoconvert(entry, value);
+          } else if (type == OType.EMBEDDEDMAP) {
             Map<Object, Object> map = new OTrackedMap<Object>(this);
             Map<Object, Object> values = (Map<Object, Object>) value;
             for (Entry<Object, Object> object : values.entrySet()) {
               map.put(object.getKey(), OType.convert(object.getValue(), linkedType.getDefaultJavaType()));
             }
-            field(prop.getName(), map);
-          } else if (type == OType.EMBEDDEDSET && !(value instanceof OTrackedSet)) {
-            Set<Object> list = new OTrackedSet<Object>(this);
+            entry.value = map;
+            replaceListenerOnAutoconvert(entry, value);
+          } else if (type == OType.EMBEDDEDSET) {
+            Set<Object> set = new OTrackedSet<Object>(this);
             Collection<Object> values = (Collection<Object>) value;
             for (Object object : values) {
-              list.add(OType.convert(object, linkedType.getDefaultJavaType()));
+              set.add(OType.convert(object, linkedType.getDefaultJavaType()));
             }
-            field(prop.getName(), list);
+            entry.value = set;
+            replaceListenerOnAutoconvert(entry, value);
           }
         } catch (Exception e) {
           throw OException
               .wrapException(new OValidationException("impossible to convert value of field \"" + prop.getName() + "\""), e);
         }
       }
+    }
+  }
+
+  private void replaceListenerOnAutoconvert(final ODocumentEntry entry, Object oldValue) {
+    if (entry.changeListener != null) {
+      // A listener was there, remove on the old value add it to the new value.
+      final OTrackedMultiValue<Object, Object> oldMultiValue = (OTrackedMultiValue<Object, Object>) oldValue;
+      oldMultiValue.removeRecordChangeListener(entry.changeListener);
+      ((OTrackedMultiValue<Object, Object>) entry.value).addChangeListener(entry.changeListener);
+    } else {
+      // no listener was there add it only to the new value
+      final OSimpleMultiValueChangeListener<Object, Object> listener = new OSimpleMultiValueChangeListener<Object, Object>(this,
+          entry);
+      ((OTrackedMultiValue<Object, Object>) entry.value).addChangeListener(listener);
+      entry.changeListener = listener;
     }
   }
 
