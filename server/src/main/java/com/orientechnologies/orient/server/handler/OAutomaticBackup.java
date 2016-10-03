@@ -47,16 +47,20 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Automatically creates a backup at configured time. Starting from v2.2, this component is able also to create incremental backup
  * and export of databases. If you need a mix of different modes, configure more instances of the same component.
- * 
+ *
  * @author Luca Garulli
  */
 public class OAutomaticBackup extends OServerPluginAbstract implements OServerPluginConfigurable {
 
   private ODocument configuration;
+
+  private Set<OAutomaticBackupListener> listeners = Collections
+      .newSetFromMap(new ConcurrentHashMap<OAutomaticBackupListener, Boolean>());
 
   public enum VARIABLES {
     DBNAME, DATE
@@ -66,19 +70,19 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
     FULL_BACKUP, INCREMENTAL_BACKUP, EXPORT
   }
 
-  private String      configFile       = "${ORIENTDB_HOME}/config/automatic-backup.json";
-  private Date        firstTime        = null;
-  private long        delay            = -1;
-  private int         bufferSize       = 1048576;
-  private int         compressionLevel = 9;
-  private MODE        mode             = MODE.FULL_BACKUP;
-  private String      exportOptions;
+  private String configFile       = "${ORIENTDB_HOME}/config/automatic-backup.json";
+  private Date   firstTime        = null;
+  private long   delay            = -1;
+  private int    bufferSize       = 1048576;
+  private int    compressionLevel = 9;
+  private MODE   mode             = MODE.FULL_BACKUP;
+  private String exportOptions;
 
-  private String      targetDirectory  = "backup";
-  private String      targetFileName;
+  private String targetDirectory = "backup";
+  private String targetFileName;
   private Set<String> includeDatabases = new HashSet<String>();
   private Set<String> excludeDatabases = new HashSet<String>();
-  private OServer     serverInstance;
+  private OServer serverInstance;
 
   @Override
   public void config(final OServer iServer, final OServerParameterConfiguration[] iParams) {
@@ -137,8 +141,9 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
       // CREATE BACKUP FOLDER(S) IF ANY
       filePath.mkdirs();
 
-    OLogManager.instance().info(this, "Automatic Backup plugin installed and active: delay=%dms, firstTime=%s, targetDirectory=%s",
-        delay, firstTime, targetDirectory);
+    OLogManager.instance()
+        .info(this, "Automatic Backup plugin installed and active: delay=%dms, firstTime=%s, targetDirectory=%s", delay, firstTime,
+            targetDirectory);
 
     final TimerTask timerTask = new TimerTask() {
       @Override
@@ -191,11 +196,19 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
               case EXPORT:
                 exportDatabase(dbURL, targetDirectory + getFileName(database), db);
 
-                OLogManager.instance().info(this,
-                    "Export of database '" + dbURL + "' completed in " + (System.currentTimeMillis() - begin) + "ms");
+                OLogManager.instance()
+                    .info(this, "Export of database '" + dbURL + "' completed in " + (System.currentTimeMillis() - begin) + "ms");
                 break;
               }
 
+              try {
+
+                for (OAutomaticBackupListener listener : listeners) {
+                  listener.onBackupCompleted(dbName);
+                }
+              } catch (Exception e) {
+                OLogManager.instance().error(this, "Error on listener for database '" + dbURL, e);
+              }
               ok++;
 
             } catch (Exception e) {
@@ -352,20 +365,21 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
   }
 
   protected String getFileName(final Entry<String, String> dbName) {
-    return (String) OVariableParser.resolveVariables(targetFileName, OSystemVariableResolver.VAR_BEGIN,
-        OSystemVariableResolver.VAR_END, new OVariableParserListener() {
-          @Override
-          public String resolve(final String iVariable) {
-            if (iVariable.equalsIgnoreCase(VARIABLES.DBNAME.toString()))
-              return dbName.getKey();
-            else if (iVariable.startsWith(VARIABLES.DATE.toString())) {
-              return new SimpleDateFormat(iVariable.substring(VARIABLES.DATE.toString().length() + 1)).format(new Date());
-            }
+    return (String) OVariableParser
+        .resolveVariables(targetFileName, OSystemVariableResolver.VAR_BEGIN, OSystemVariableResolver.VAR_END,
+            new OVariableParserListener() {
+              @Override
+              public String resolve(final String iVariable) {
+                if (iVariable.equalsIgnoreCase(VARIABLES.DBNAME.toString()))
+                  return dbName.getKey();
+                else if (iVariable.startsWith(VARIABLES.DATE.toString())) {
+                  return new SimpleDateFormat(iVariable.substring(VARIABLES.DATE.toString().length() + 1)).format(new Date());
+                }
 
-            // NOT FOUND
-            throw new IllegalArgumentException("Variable '" + iVariable + "' was not found");
-          }
-        });
+                // NOT FOUND
+                throw new IllegalArgumentException("Variable '" + iVariable + "' was not found");
+              }
+            });
   }
 
   @Override
@@ -382,5 +396,17 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
   @Override
   public void changeConfig(ODocument document) {
 
+  }
+
+  public void registerListener(OAutomaticBackupListener listener) {
+    listeners.add(listener);
+  }
+
+  public void unregisterListener(OAutomaticBackupListener listener) {
+    listeners.remove(listener);
+  }
+
+  public interface OAutomaticBackupListener {
+    void onBackupCompleted(String database);
   }
 }
