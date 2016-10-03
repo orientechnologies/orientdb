@@ -518,7 +518,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
           int pos;
           String port;
           if ((pos = listenUrl.lastIndexOf(":")) != -1) {
-            port = listenUrl.substring(pos);
+            port = listenUrl.substring(pos + 1);
           } else {
             port = "2424";
           }
