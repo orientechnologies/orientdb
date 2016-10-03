@@ -276,6 +276,7 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
     return doc;
   }
 
+
   public ODocument getClusterConfig(ODistributedServerManager manager) {
     ODocument doc;
     doc = manager.getClusterConfiguration();
@@ -313,6 +314,7 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
     }
     return entries;
   }
+
 
   public ODocument doGetDatabaseInfo(OServer server, String id) {
     ODocument doc;

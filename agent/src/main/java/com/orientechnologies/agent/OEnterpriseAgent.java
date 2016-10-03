@@ -22,6 +22,7 @@ import com.orientechnologies.agent.ha.OEnterpriseDistributedStrategy;
 import com.orientechnologies.agent.http.command.*;
 import com.orientechnologies.agent.plugins.OEventPlugin;
 import com.orientechnologies.agent.profiler.OEnterpriseProfiler;
+import com.orientechnologies.agent.profiler.OEnterpriseProfilerListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
 import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
@@ -68,7 +69,8 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
     TOKEN = t;
   }
 
-  private OBackupManager backupManager;
+  private OBackupManager        backupManager;
+  protected OEnterpriseProfiler profiler;
 
   public OEnterpriseAgent() {
   }
@@ -129,6 +131,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
               }
               Map<String, Object> map = manager.getConfigurationMap();
               map.put(EE + manager.getLocalNodeName(), TOKEN);
+              manager.registerLifecycleListener(profiler);
               break;
             }
 
@@ -260,13 +263,27 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
     listener.unregisterStatelessCommand(OServerCommandPostSecurityReload.class);
   }
 
-  private void installProfiler() {
+  protected void installProfiler() {
     final OAbstractProfiler currentProfiler = (OAbstractProfiler) Orient.instance().getProfiler();
 
-    Orient.instance().setProfiler(new OEnterpriseProfiler(60, 24, currentProfiler, server));
+    profiler = new OEnterpriseProfiler(60, 24, currentProfiler, server);
+
+    Orient.instance().setProfiler(profiler);
     Orient.instance().getProfiler().startup();
 
     currentProfiler.shutdown();
+  }
+
+  public void registerListener(OEnterpriseProfilerListener listener) {
+    if (profiler != null) {
+      profiler.registerProfilerListener(listener);
+    }
+  }
+
+  public void unregisterListener(OEnterpriseProfilerListener listener) {
+    if (profiler != null) {
+      profiler.unregisterProfilerListener(listener);
+    }
   }
 
   private void uninstallProfiler() {
@@ -276,6 +293,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
     Orient.instance().getProfiler().startup();
 
     currentProfiler.shutdown();
+    profiler = null;
   }
 
   private boolean checkLicense() {
@@ -314,11 +332,16 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
   }
 
   private void installPlugins() {
-    final OEventPlugin eventPlugin = new OEventPlugin();
-    eventPlugin.config(server, null);
-    eventPlugin.startup();
-    server.getPluginManager()
-        .registerPlugin(new OServerPluginInfo(eventPlugin.getName(), null, null, null, eventPlugin, null, 0, null));
+
+    try {
+
+      final OEventPlugin eventPlugin = new OEventPlugin();
+      eventPlugin.config(server, null);
+      eventPlugin.startup();
+      server.getPluginManager()
+          .registerPlugin(new OServerPluginInfo(eventPlugin.getName(), null, null, null, eventPlugin, null, 0, null));
+    } catch (Exception ex) {
+    }
   }
 
   private void installComponents() {
@@ -327,7 +350,6 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
     }
   }
 
-  // OPluginLifecycleListener not available yet in develop
 
   // OPluginLifecycleListener
   public void onBeforeConfig(final OServerPlugin plugin, final OServerParameterConfiguration[] cfg) {

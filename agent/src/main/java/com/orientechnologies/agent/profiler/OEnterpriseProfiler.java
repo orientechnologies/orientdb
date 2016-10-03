@@ -23,18 +23,14 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
 import com.orientechnologies.common.profiler.OProfilerEntry;
 import com.orientechnologies.common.profiler.OProfilerListener;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedLifecycleListener;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.plugin.OPluginLifecycleListener;
-import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.sun.management.OperatingSystemMXBean;
 
 import java.io.File;
@@ -45,6 +41,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -58,23 +55,26 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Luca Garulli
  * @copyrights Orient Technologies.com
  */
-public class OEnterpriseProfiler extends OAbstractProfiler implements OPluginLifecycleListener {
-  protected final static Timer        timer                   = new Timer(true);
-  protected final static int          BUFFER_SIZE             = 2048;
-  public static final int             KEEP_ALIVE              = 60 * 1000;
-  protected final List<OProfilerData> snapshots               = new ArrayList<OProfilerData>();
-  protected final int                 metricProcessors        = Runtime.getRuntime().availableProcessors();
-  protected Date                      lastReset               = new Date();
-  protected OProfilerData             realTime                = new OProfilerData();
-  protected OProfilerData             lastSnapshot;
-  protected int                       elapsedToCreateSnapshot = 0;
-  protected int                       maxSnapshots            = 0;
-  protected TimerTask                 archiverTask;
-  protected TimerTask                 autoPause;
-  protected TimerTask                 autoPublish;
-  protected OServer                   server;
-  protected AtomicBoolean             paused                  = new AtomicBoolean(false);
-  protected AtomicLong                timestamp               = new AtomicLong(System.currentTimeMillis());
+public class OEnterpriseProfiler extends OAbstractProfiler implements ODistributedLifecycleListener {
+  protected final static Timer               timer                   = new Timer(true);
+  protected final static int                 BUFFER_SIZE             = 2048;
+  public static final int                    KEEP_ALIVE              = 60 * 1000;
+  protected final List<OProfilerData>        snapshots               = new ArrayList<OProfilerData>();
+  protected final int                        metricProcessors        = Runtime.getRuntime().availableProcessors();
+  protected Date                             lastReset               = new Date();
+  protected OProfilerData                    realTime                = new OProfilerData();
+  protected OProfilerData                    lastSnapshot;
+  protected int                              elapsedToCreateSnapshot = 0;
+  protected int                              maxSnapshots            = 0;
+  protected TimerTask                        archiverTask;
+  protected TimerTask                        autoPause;
+  protected TimerTask                        autoPublish;
+  protected OServer                          server;
+  protected AtomicBoolean                    paused                  = new AtomicBoolean(false);
+  protected AtomicLong                       timestamp               = new AtomicLong(System.currentTimeMillis());
+
+  protected Set<OEnterpriseProfilerListener> profilerListeners       = Collections
+      .newSetFromMap(new ConcurrentHashMap<OEnterpriseProfilerListener, Boolean>());
 
   public OEnterpriseProfiler() {
     init();
@@ -398,6 +398,14 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements OPluginLif
       return -1;
 
     return System.currentTimeMillis();
+  }
+
+  public void registerProfilerListener(OEnterpriseProfilerListener listener) {
+    profilerListeners.add(listener);
+  }
+
+  public void unregisterProfilerListener(OEnterpriseProfilerListener listener) {
+    profilerListeners.remove(listener);
   }
 
   public long stopChrono(final String iName, final String iDescription, final long iStartTime) {
@@ -732,52 +740,64 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements OPluginLif
     };
     timer.schedule(autoPause, KEEP_ALIVE, KEEP_ALIVE);
 
-    if (server != null) {
-      if (server.getPluginManager() != null) {
-        server.getPluginManager().registerLifecycleListener(this);
-      }
-    }
-
     autoPublish = new TimerTask() {
       @Override
       public void run() {
-        try {
-          if (!Boolean.TRUE.equals(paused.get())) {
+        broadcastStats();
+      }
 
-            updateStats();
-            synchronized (server) {
+    };
+    timer.schedule(autoPublish, 2000, 2000);
+  }
 
-              ODistributedServerManager distributedManager = server.getDistributedManager();
+  private void broadcastStats() {
+    try {
+      if (!Boolean.TRUE.equals(paused.get())) {
 
-              if (distributedManager != null) {
-                String localNodeName = distributedManager.getLocalNodeName();
-                if (distributedManager != null && distributedManager.isEnabled()) {
-                  Map<String, Object> configurationMap = distributedManager.getConfigurationMap();
-                  if (configurationMap != null) {
-                    ODocument doc = (ODocument) configurationMap.get("clusterStats");
+        updateStats();
+        synchronized (server) {
 
-                    if (doc == null) {
-                      doc = new ODocument();
-                      doc.setTrackingChanges(false);
+          ODistributedServerManager distributedManager = server.getDistributedManager();
+
+          if (distributedManager != null) {
+            String localNodeName = distributedManager.getLocalNodeName();
+            if (distributedManager != null && distributedManager.isEnabled()) {
+              Map<String, Object> configurationMap = distributedManager.getConfigurationMap();
+              if (configurationMap != null) {
+                ODocument doc = (ODocument) configurationMap.get("clusterStats");
+
+                if (doc == null) {
+                  doc = new ODocument();
+                  doc.setTrackingChanges(false);
+                }
+                try {
+                  ODocument entries = new ODocument().fromJSON(toJSON("realtime", null));
+                  doc.field(localNodeName, entries.toMap());
+                  configurationMap.put("clusterStats", doc);
+
+                  ODocument stats = doc.copy();
+
+                  try {
+                    for (OEnterpriseProfilerListener profilerListener : profilerListeners) {
+
+                      profilerListener.onStatsPublished(stats);
+
                     }
-                    try {
-                      ODocument entries = new ODocument().fromJSON(toJSON("realtime", null));
-                      doc.field(localNodeName, entries.toMap());
-                      configurationMap.put("clusterStats", doc);
-                    } catch (Exception e) {
-                      OLogManager.instance().debug(this, "Cannot publish realtime stats for node %s", e, localNodeName);
-                    }
+                  } catch (Exception e) {
+                    OLogManager.instance().debug(this, "Error on listener call", e, localNodeName);
                   }
+
+                } catch (Exception e) {
+                  OLogManager.instance().debug(this, "Cannot publish realtime stats for node %s", e, localNodeName);
                 }
               }
             }
           }
-        } catch (HazelcastInstanceNotActiveException e) {
-          // IGNORE IT
         }
       }
-    };
-    timer.schedule(autoPublish, 2000, 2000);
+    } catch (HazelcastInstanceNotActiveException e) {
+      // IGNORE IT
+    }
   }
 
   private void updateStats() {
@@ -838,68 +858,36 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements OPluginLif
   }
 
   @Override
-  public void onBeforeConfig(OServerPlugin plugin, OServerParameterConfiguration[] cfg) {
+  public boolean onNodeJoining(String iNode) {
+    return true;
+  }
+
+  @Override
+  public void onNodeJoined(String iNode) {
 
   }
 
   @Override
-  public void onAfterConfig(OServerPlugin plugin, OServerParameterConfiguration[] cfg) {
+  public void onNodeLeft(String iNode) {
 
-  }
-
-  @Override
-  public void onBeforeStartup(OServerPlugin plugin) {
-
-    if (plugin instanceof ODistributedServerManager) {
-      if (server.getDistributedManager() != null) {
-        final ODistributedServerManager distributedManager = server.getDistributedManager();
-        server.getDistributedManager().registerLifecycleListener(new ODistributedLifecycleListener() {
-          @Override
-          public boolean onNodeJoining(String iNode) {
-            return true;
-          }
-
-          @Override
-          public void onNodeJoined(String iNode) {
-
-          }
-
-          @Override
-          public void onNodeLeft(String iNode) {
-
-            synchronized (server) {
-              Map<String, Object> configurationMap = distributedManager.getConfigurationMap();
-              ODocument doc = (ODocument) configurationMap.get("clusterStats");
-              if (doc == null) {
-                doc = new ODocument();
-                doc.setTrackingChanges(false);
-              }
-              doc.removeField(iNode);
-              ODocumentInternal.clearTrackData(doc);
-              configurationMap.put("clusterStats", doc);
-            }
-          }
-
-          @Override
-          public void onDatabaseChangeStatus(String iNode, String iDatabaseName, ODistributedServerManager.DB_STATUS iNewStatus) {
-          }
-        });
+    if (server.getDistributedManager() != null) {
+      final ODistributedServerManager distributedManager = server.getDistributedManager();
+      synchronized (server) {
+        Map<String, Object> configurationMap = distributedManager.getConfigurationMap();
+        ODocument doc = (ODocument) configurationMap.get("clusterStats");
+        if (doc == null) {
+          doc = new ODocument();
+          doc.setTrackingChanges(false);
+        }
+        doc.removeField(iNode);
+        ODocumentInternal.clearTrackData(doc);
+        configurationMap.put("clusterStats", doc);
       }
     }
   }
 
   @Override
-  public void onAfterStartup(OServerPlugin plugin) {
-
-  }
-
-  @Override
-  public void onBeforeShutdown(OServerPlugin plugin) {
-
-  }
-
-  @Override
-  public void onAfterShutdown(OServerPlugin plugin) {
+  public void onDatabaseChangeStatus(String iNode, String iDatabaseName, ODistributedServerManager.DB_STATUS iNewStatus) {
 
   }
 }
