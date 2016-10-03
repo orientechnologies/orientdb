@@ -282,6 +282,7 @@ public class SQLInsertTest extends DocumentDBBaseTest {
     Assert.assertEquals(record.field("user"), new ORecordId(3, positions.get(0)));
   }
 
+  @Test
   public void insertSelect() {
     database.command(new OCommandSQL("CREATE CLASS UserCopy")).execute();
     database.getMetadata().getSchema().reload();
@@ -298,6 +299,7 @@ public class SQLInsertTest extends DocumentDBBaseTest {
     }
   }
 
+  @Test
   public void insertWithReturn() {
 
     if (!database.getMetadata().getSchema().existsClass("actor2")) {
@@ -355,6 +357,7 @@ public class SQLInsertTest extends DocumentDBBaseTest {
     Assert.assertEquals(sql3doc.field("Name"), "Bingo owner");
   }
 
+  @Test
   public void testAutoConversionOfEmbeddededSetNoLinkedClass() {
     OClass c = database.getMetadata().getSchema().getOrCreateClass("TestConvert");
     c.createProperty("embeddedSetNoLinkedClass", OType.EMBEDDEDSET);
@@ -373,6 +376,7 @@ public class SQLInsertTest extends DocumentDBBaseTest {
     }
   }
 
+  @Test
   public void testAutoConversionOfEmbeddededSetWithLinkedClass() {
     OClass c = database.getMetadata().getSchema().getOrCreateClass("TestConvert");
     c.createProperty("embeddedSetWithLinkedClass", OType.EMBEDDEDSET,
@@ -393,6 +397,7 @@ public class SQLInsertTest extends DocumentDBBaseTest {
     }
   }
 
+  @Test
   public void testAutoConversionOfEmbeddededListNoLinkedClass() {
     OClass c = database.getMetadata().getSchema().getOrCreateClass("TestConvert");
     c.createProperty("embeddedListNoLinkedClass", OType.EMBEDDEDLIST);
@@ -411,6 +416,7 @@ public class SQLInsertTest extends DocumentDBBaseTest {
     }
   }
 
+  @Test
   public void testAutoConversionOfEmbeddededListWithLinkedClass() {
     OClass c = database.getMetadata().getSchema().getOrCreateClass("TestConvert");
     if (!c.existsProperty("embeddedListWithLinkedClass"))
@@ -432,6 +438,7 @@ public class SQLInsertTest extends DocumentDBBaseTest {
     }
   }
 
+  @Test
   public void testAutoConversionOfEmbeddededMapNoLinkedClass() {
     OClass c = database.getMetadata().getSchema().getOrCreateClass("TestConvert");
     c.createProperty("embeddedMapNoLinkedClass", OType.EMBEDDEDMAP);
@@ -450,6 +457,7 @@ public class SQLInsertTest extends DocumentDBBaseTest {
     }
   }
 
+  @Test
   public void testAutoConversionOfEmbeddededMapWithLinkedClass() {
     OClass c = database.getMetadata().getSchema().getOrCreateClass("TestConvert");
     c.createProperty("embeddedMapWithLinkedClass", OType.EMBEDDEDMAP,
@@ -470,6 +478,7 @@ public class SQLInsertTest extends DocumentDBBaseTest {
     }
   }
 
+  @Test
   public void testAutoConversionOfEmbeddededNoLinkedClass() {
     OClass c = database.getMetadata().getSchema().getOrCreateClass("TestConvert");
     c.createProperty("embeddedNoLinkedClass", OType.EMBEDDED);
@@ -482,6 +491,7 @@ public class SQLInsertTest extends DocumentDBBaseTest {
     Assert.assertTrue(doc.field("embeddedNoLinkedClass") instanceof ODocument);
   }
 
+  @Test
   public void testEmbeddedDates() {
     OClass c = database.getMetadata().getSchema().getOrCreateClass("TestEmbeddedDates");
 
@@ -512,6 +522,7 @@ public class SQLInsertTest extends DocumentDBBaseTest {
 
   }
 
+  @Test
   public void testAutoConversionOfEmbeddededWithLinkedClass() {
     OClass c = database.getMetadata().getSchema().getOrCreateClass("TestConvert");
     c.createProperty("embeddedWithLinkedClass", OType.EMBEDDED,
@@ -526,6 +537,7 @@ public class SQLInsertTest extends DocumentDBBaseTest {
     Assert.assertEquals(((ODocument) doc.field("embeddedWithLinkedClass")).getClassName(), "TestConvertLinkedClass");
   }
 
+  @Test
   public void testInsertEmbeddedWithRecordAttributes() {
     OClass c = database.getMetadata().getSchema().getOrCreateClass("EmbeddedWithRecordAttributes");
     c.createProperty("like", OType.EMBEDDED,
@@ -541,6 +553,7 @@ public class SQLInsertTest extends DocumentDBBaseTest {
     Assert.assertEquals(((ODocument) doc.field("like")).<Object>field("count"), 0);
   }
 
+  @Test
   public void testInsertEmbeddedWithRecordAttributes2() {
     OClass c = database.getMetadata().getSchema().getOrCreateClass("EmbeddedWithRecordAttributes2");
     c.createProperty("like", OType.EMBEDDED,
@@ -556,6 +569,7 @@ public class SQLInsertTest extends DocumentDBBaseTest {
     Assert.assertEquals(((ODocument) doc.field("like")).<Object>field("count"), 0);
   }
 
+  @Test
   public void testInsertWithClusterAsFieldName() {
     OClass c = database.getMetadata().getSchema().getOrCreateClass("InsertWithClusterAsFieldName");
 
@@ -569,6 +583,7 @@ public class SQLInsertTest extends DocumentDBBaseTest {
     Assert.assertEquals(result.get(0).field("cluster"), "foo");
   }
 
+  @Test
   public void testInsertEmbeddedBigDecimal() {
     // issue #6670
     database.getMetadata().getSchema().getOrCreateClass("TestInsertEmbeddedBigDecimal");
