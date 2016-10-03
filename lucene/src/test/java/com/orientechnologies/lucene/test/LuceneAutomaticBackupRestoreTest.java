@@ -177,7 +177,7 @@ public class LuceneAutomaticBackupRestoreTest {
     assertThat(index).isNotNull();
     assertThat(index.getType()).isEqualTo(OClass.INDEX_TYPE.FULLTEXT.name());
 
-    assertThat(databaseDocumentTx.query(new OSQLSynchQuery<Object>("select from City where name lucene 'Rome'"))).hasSize(1);
+    assertThat((List<?>) databaseDocumentTx.query(new OSQLSynchQuery<Object>("select from City where name lucene 'Rome'"))).hasSize(1);
   }
 
   @Test
@@ -243,7 +243,7 @@ public class LuceneAutomaticBackupRestoreTest {
     assertThat(index).isNotNull();
     assertThat(index.getType()).isEqualTo(OClass.INDEX_TYPE.FULLTEXT.name());
 
-    assertThat(databaseDocumentTx.query(new OSQLSynchQuery<Object>("select from City where name lucene 'Rome'"))).hasSize(1);
+    assertThat((List<?>) databaseDocumentTx.query(new OSQLSynchQuery<Object>("select from City where name lucene 'Rome'"))).hasSize(1);
   }
 
 }
