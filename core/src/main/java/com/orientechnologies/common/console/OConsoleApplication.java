@@ -145,14 +145,22 @@ public class OConsoleApplication {
 
   public void message(final String iMessage, final Object... iArgs) {
     final int verboseLevel = getVerboseLevel();
-    if (verboseLevel > 1)
-      out.printf(iMessage, iArgs);
+    if (verboseLevel > 1) {
+      if (iArgs != null && iArgs.length > 0)
+        out.printf(iMessage, iArgs);
+      else
+        out.print(iMessage);
+    }
   }
 
   public void error(final String iMessage, final Object... iArgs) {
     final int verboseLevel = getVerboseLevel();
-    if (verboseLevel > 0)
-      out.printf(iMessage, iArgs);
+    if (verboseLevel > 0) {
+      if (iArgs != null && iArgs.length > 0)
+        out.printf(iMessage, iArgs);
+      else
+        out.print(iMessage);
+    }
   }
 
   public int getVerboseLevel() {
