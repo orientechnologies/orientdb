@@ -45,13 +45,6 @@ public class ORecordIteratorClassDescendentOrder<REC extends ORecord> extends OR
 
   @Override protected void sortClusters(int[] clusterIds) {
     super.sortClusters(clusterIds);
-    //reverse order
-    for(int i = 0; i < clusterIds.length / 2; i++)
-    {
-      int temp = clusterIds[i];
-      clusterIds[i] = clusterIds[clusterIds.length - i - 1];
-      clusterIds[clusterIds.length - i - 1] = temp;
-    }
   }
 
   @Override

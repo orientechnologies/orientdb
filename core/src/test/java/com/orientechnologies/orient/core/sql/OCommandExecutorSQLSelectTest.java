@@ -1450,6 +1450,7 @@ public class OCommandExecutorSQLSelectTest {
       if(lastDoc!=null){
         assertTrue(doc.getIdentity().compareTo(lastDoc.getIdentity()) < 0);
       }
+      lastDoc = doc;
     }
 
     results = db.query(new OSQLSynchQuery<ODocument>("SELECT from TestOrderByRidDescMultiCluster order by @rid asc"));
@@ -1459,6 +1460,7 @@ public class OCommandExecutorSQLSelectTest {
       if(lastDoc!=null){
         assertTrue(doc.getIdentity().compareTo(lastDoc.getIdentity()) > 0);
       }
+      lastDoc = doc;
     }
 
   }
