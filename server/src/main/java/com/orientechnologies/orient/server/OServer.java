@@ -86,7 +86,8 @@ public class OServer {
   private static final String                              ROOT_PASSWORD_VAR      = "ORIENTDB_ROOT_PASSWORD";
   private static ThreadGroup                               threadGroup;
   private static Map<String, OServer>                      distributedServers     = new ConcurrentHashMap<String, OServer>();
-  private final CountDownLatch                             startupLatch           = new CountDownLatch(1);
+  private CountDownLatch                                   startupLatch;
+  private CountDownLatch                                   shutdownLatch;
   private final boolean                                    shutdownEngineOnExit;
   protected ReentrantLock                                  lock                   = new ReentrantLock();
   protected volatile boolean                               running                = false;
@@ -192,9 +193,9 @@ public class OServer {
   public void restart() throws ClassNotFoundException, InvocationTargetException, InstantiationException, NoSuchMethodException,
       IllegalAccessException, IOException {
     try {
-      shutdown();
+      deinit();
     } finally {
-      startup();
+      Orient.instance().startup();
       startup(serverCfg.getConfiguration());
       activate();
     }
@@ -291,6 +292,11 @@ public class OServer {
     OLogManager.instance().info(this, "OrientDB Server v" + OConstants.getVersion() + " is starting up...");
 
     Orient.instance();
+
+    if (startupLatch == null)
+      startupLatch = new CountDownLatch(1);
+    if (shutdownLatch == null)
+      shutdownLatch = new CountDownLatch(1);
 
     clientConnectionManager = new OClientConnectionManager(this);
 
@@ -431,6 +437,17 @@ public class OServer {
   }
 
   public boolean shutdown() {
+    try {
+      return deinit();
+    } finally {
+      startupLatch = null;
+
+      shutdownLatch.countDown();
+      shutdownLatch = null;
+    }
+  }
+
+  protected boolean deinit() {
     if (!running)
       return false;
 
@@ -481,7 +498,7 @@ public class OServer {
         if (pluginManager != null)
           pluginManager.shutdown();
 
-        if( serverSecurity != null  )
+        if (serverSecurity != null)
           serverSecurity.shutdown();
 
       } finally {
@@ -501,6 +518,14 @@ public class OServer {
     }
 
     return true;
+  }
+
+  public void waitForShutdown() {
+    try {
+      shutdownLatch.await();
+    } catch (InterruptedException e) {
+      OLogManager.instance().error(this, "Error during waiting for OrientDB shutdown", e);
+    }
   }
 
   public String getStoragePath(final String iName) {
@@ -1200,8 +1225,7 @@ public class OServer {
       }
 
       // START ALL THE CONFIGURED PLUGINS
-      for (OServerPlugin plugin : plugins)
-      {
+      for (OServerPlugin plugin : plugins) {
         pluginManager.callListenerBeforeStartup(plugin);
         plugin.startup();
         pluginManager.callListenerAfterStartup(plugin);
