@@ -86,12 +86,19 @@ public class OFunctionCall extends SimpleNode {
 
   private Object execute(Object targetObjects, OCommandContext ctx, String name) {
     List<Object> paramValues = new ArrayList<Object>();
-    OIdentifiable record = ctx == null ? null : (OIdentifiable) ctx.getVariable("$current");
+    Object current = ctx==null?null: ctx.getVariable("$current");
+    OIdentifiable record = null;
+    if(current!=null){
+      if(current instanceof OIdentifiable){
+        record = (OIdentifiable) current;
+      }else if(current instanceof OResult){
+        record = ((OResult)current).toElement();
+      }
+    }
     if (record == null && targetObjects instanceof OIdentifiable) {
       record = (OIdentifiable) targetObjects;
     }
     for (OExpression expr : this.params) {
-      Object current = ctx.getVariable("$current");
       if (current instanceof OIdentifiable) {
         paramValues.add(expr.execute((OIdentifiable) current, ctx));
       } else if (current instanceof OResult) {
@@ -104,7 +111,6 @@ public class OFunctionCall extends SimpleNode {
     }
     OSQLFunction function = OSQLEngine.getInstance().getFunction(name);
     if (function != null) {
-      Object current = ctx.getVariable("$current");
       if (current instanceof OIdentifiable) {
         return function.execute(targetObjects, (OIdentifiable) current, null, paramValues.toArray(), ctx);
       } else if (current instanceof OResult) {

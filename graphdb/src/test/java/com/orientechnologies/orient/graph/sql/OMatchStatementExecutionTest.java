@@ -1419,6 +1419,7 @@ public class OMatchStatementExecutionTest {
     assertEquals(2, qResult.size());
   }
 
+
   @Test
   public void testInstanceof(){
 

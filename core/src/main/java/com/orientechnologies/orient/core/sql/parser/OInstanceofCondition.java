@@ -61,6 +61,34 @@ public class OInstanceofCondition extends OBooleanExpression{
     return false;
   }
 
+
+  @Override public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
+    if (currentRecord == null) {
+      return false;
+    }
+    if(!currentRecord.isElement()){
+      return false;
+    }
+    ORecord record = currentRecord.getElement().get().getRecord();
+    if (record == null) {
+      return false;
+    }
+    if (!(record instanceof ODocument)) {
+      return false;
+    }
+    ODocument doc = (ODocument) record;
+    OClass clazz = doc.getSchemaClass();
+    if (clazz == null) {
+      return false;
+    }
+    if (right != null) {
+      return clazz.isSubClassOf(right.getStringValue());
+    } else if (rightString != null) {
+      return clazz.isSubClassOf(decode(rightString));
+    }
+    return false;
+  }
+
   private String decode(String rightString) {
     if(rightString==null){
       return null;

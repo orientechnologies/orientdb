@@ -593,10 +593,13 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
         if (!(rightValues instanceof Iterable)) {
           rightValues = Collections.singleton(rightValues);
         }
+        String rightClassName = aliasClasses.get(outEdge.in.alias);
+        OClass rightClass = getDatabase().getMetadata().getSchema().getClass(rightClassName);
         for (OIdentifiable rightValue : (Iterable<OIdentifiable>) rightValues) {
           if (rightValue == null) {
             continue; //broken graph?, null reference
           }
+
           if (rightClass != null && !matchesClass(rightValue, rightClass)) {
             continue;
           }
@@ -656,10 +659,15 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
           if (!(leftValues instanceof Iterable)) {
             leftValues = Collections.singleton(leftValues);
           }
+
+          String leftClassName = aliasClasses.get(inEdge.out.alias);
+          OClass leftClass = getDatabase().getMetadata().getSchema().getClass(leftClassName);
+
           for (OIdentifiable leftValue : (Iterable<OIdentifiable>) leftValues) {
             if (leftValue == null) {
               continue; //broken graph? null reference
             }
+
             if (leftClass != null && !matchesClass(leftValue, leftClass)) {
               continue;
             }
@@ -689,7 +697,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
                   }
                 }
               }
-            } else {// searching for neighbors
+            } else { // searching for neighbors
               OWhereClause where = aliasFilters.get(inEdge.out.alias);
               String className = aliasClasses.get(inEdge.out.alias);
               OClass oClass = getDatabase().getMetadata().getSchema().getClass(className);
@@ -708,6 +716,20 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       }
     }
     return true;
+  }
+
+  private boolean matchesClass(OIdentifiable identifiable, OClass oClass) {
+    if (identifiable == null) {
+      return false;
+    }
+    ORecord record = identifiable.getRecord();
+    if (record == null) {
+      return false;
+    }
+    if (record instanceof ODocument) {
+      return ((ODocument) record).getSchemaClass().isSubClassOf(oClass);
+    }
+    return false;
   }
 
   private boolean contains(Object rightValues, OIdentifiable oIdentifiable) {
