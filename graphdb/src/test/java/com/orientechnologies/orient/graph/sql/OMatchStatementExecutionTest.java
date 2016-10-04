@@ -1396,6 +1396,27 @@ public class OMatchStatementExecutionTest {
     assertEquals(1, qResult.size());
   }
 
+  @Test
+  public void testCheckClassAsCondition(){
+
+    db.command(new OCommandSQL("CREATE CLASS testCheckClassAsCondition EXTENDS V")).execute();
+    db.command(new OCommandSQL("CREATE CLASS testCheckClassAsCondition1 EXTENDS V")).execute();
+    db.command(new OCommandSQL("CREATE CLASS testCheckClassAsCondition2 EXTENDS V")).execute();
+
+    db.command(new OCommandSQL("CREATE VERTEX testCheckClassAsCondition SET name = 'foo'")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX testCheckClassAsCondition1 SET name = 'bar'")).execute();
+    for(int i=0;i<5;i++) {
+      db.command(new OCommandSQL("CREATE VERTEX testCheckClassAsCondition2 SET name = 'baz'")).execute();
+    }
+    db.command(new OCommandSQL("CREATE EDGE E FROM (select from testCheckClassAsCondition where name = 'foo') to (select from testCheckClassAsCondition1)")).execute();
+    db.command(new OCommandSQL("CREATE EDGE E FROM (select from testCheckClassAsCondition where name = 'foo') to (select from testCheckClassAsCondition2)")).execute();
+
+    List<ODocument> qResult = db
+        .command(new OCommandSQL("MATCH {class: testCheckClassAsCondition, as: p} -E- {class: testCheckClassAsCondition1, as: q} RETURN $elements")).execute();
+
+    assertEquals(2, qResult.size());
+  }
+
   private List<OIdentifiable> getManagedPathElements(String managerName) {
     StringBuilder query = new StringBuilder();
     query.append("  match {class:Employee, as:boss, where: (name = '" + managerName + "')}");

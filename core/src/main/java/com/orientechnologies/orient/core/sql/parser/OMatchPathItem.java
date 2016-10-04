@@ -4,6 +4,9 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.*;
 
@@ -52,10 +55,13 @@ public class OMatchPathItem extends SimpleNode {
     OWhereClause filter = null;
     OWhereClause whileCondition = null;
     Integer maxDepth = null;
+    OClass oClass = null;
     if (this.filter != null) {
       filter = this.filter.getFilter();
       whileCondition = this.filter.getWhileCondition();
       maxDepth = this.filter.getMaxDepth();
+      String className = this.filter.getClassName(iCommandContext);
+      oClass = getDatabase().getMetadata().getSchema().getClass(className);
     }
 
     Set<OIdentifiable> result = new HashSet<OIdentifiable>();
@@ -68,10 +74,11 @@ public class OMatchPathItem extends SimpleNode {
         return queryResult;
       }
 
+
       for (OIdentifiable origin : queryResult) {
         Object previousMatch = iCommandContext.getVariable("$currentMatch");
         iCommandContext.setVariable("$currentMatch", origin);
-        if (filter == null || filter.matchesFilters(origin, iCommandContext)) {
+        if ((oClass==null || matchesClass(origin, oClass)) && (filter == null || filter.matchesFilters(origin, iCommandContext))) {
           result.add(origin);
         }
         iCommandContext.setVariable("$currentMatch", previousMatch);
@@ -80,7 +87,7 @@ public class OMatchPathItem extends SimpleNode {
       iCommandContext.setVariable("$depth", depth);
       Object previousMatch = iCommandContext.getVariable("$currentMatch");
       iCommandContext.setVariable("$currentMatch", startingPoint);
-      if (filter == null || filter.matchesFilters(startingPoint, iCommandContext)) {
+      if ((oClass==null || matchesClass(startingPoint, oClass)) && (filter == null || filter.matchesFilters(startingPoint, iCommandContext))) {
         result.add(startingPoint);
       }
 
@@ -105,6 +112,21 @@ public class OMatchPathItem extends SimpleNode {
     }
     return result;
   }
+
+  private boolean matchesClass(OIdentifiable identifiable, OClass oClass) {
+    if (identifiable == null) {
+      return false;
+    }
+    ORecord record = identifiable.getRecord();
+    if (record == null) {
+      return false;
+    }
+    if (record instanceof ODocument) {
+      return ((ODocument) record).getSchemaClass().isSubClassOf(oClass);
+    }
+    return false;
+  }
+
 
   protected Iterable<OIdentifiable> traversePatternEdge(OMatchStatement.MatchContext matchContext, OIdentifiable startingPoint,
       OCommandContext iCommandContext) {
