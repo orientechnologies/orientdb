@@ -2394,7 +2394,11 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           endRequest(network);
         }
 
+        int timeout = network.getSocketTimeout();
         try {
+          // Import messages are sent while import is running, using the request timeout instead of message timeout to avoid early
+          // reading interrupt.
+          network.setSocketTimeout(OGlobalConfiguration.NETWORK_REQUEST_TIMEOUT.getValueAsInteger());
           beginResponse(network, session);
           String message;
           while ((message = network.readString()) != null) {
@@ -2402,6 +2406,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           }
         } finally {
           endResponse(network);
+          network.setSocketTimeout(timeout);
         }
         return null;
       }

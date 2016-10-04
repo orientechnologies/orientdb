@@ -19,6 +19,22 @@
  */
 package com.orientechnologies.orient.client.binary;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.SocketException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OLockException;
@@ -33,21 +49,14 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
 import com.orientechnologies.orient.enterprise.channel.OSocketFactory;
-import com.orientechnologies.orient.enterprise.channel.binary.*;
-
-import java.io.*;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.SocketException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Condition;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
+import com.orientechnologies.orient.enterprise.channel.binary.ORemoteServerEventListener;
+import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 
 public class OChannelBinaryAsynchClient extends OChannelBinary {
-  protected final int                          socketTimeout;                                               // IN MS
+  private int                                  socketTimeout;                                               // IN MS
   protected final short                        srvProtocolVersion;
   private final Condition                      readCondition = getLockRead().getUnderlying().newCondition();
   private final int                            maxUnreadResponses;
@@ -75,7 +84,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
       socketTimeout = iConfig.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT);
 
       try {
-        socket.connect(new InetSocketAddress(remoteHost, remotePort), socketTimeout);
+        socket.connect(new InetSocketAddress(remoteHost, remotePort), getSocketTimeout());
         setReadResponseTimeout();
         connected();
       } catch (java.net.SocketTimeoutException e) {
@@ -397,7 +406,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
   private void setReadResponseTimeout() throws SocketException {
     final Socket s = socket;
     if (s != null && s.isConnected() && !s.isClosed())
-      s.setSoTimeout(socketTimeout);
+      s.setSoTimeout(getSocketTimeout());
   }
 
   private void setWaitResponseTimeout() throws SocketException {
@@ -450,21 +459,29 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
               + (throwable != null ? throwable.getClass().getName() : "null"));
   }
 
-  public void beginRequest(final byte iCommand, final OStorageRemoteSession session)
-      throws IOException {
+  public void beginRequest(final byte iCommand, final OStorageRemoteSession session) throws IOException {
     final OStorageRemoteNodeSession nodeSession = session.getServerSession(getServerURL());
 
-    if( nodeSession == null )
-      throw new OIOException("Invalid session for URL '"+getServerURL()+"'");
+    if (nodeSession == null)
+      throw new OIOException("Invalid session for URL '" + getServerURL() + "'");
 
     writeByte(iCommand);
     writeInt(nodeSession.getSessionId());
     if (nodeSession.getToken() != null) {
-//      if (!session.hasConnection(this) || true) {
-        writeBytes(nodeSession.getToken());
-//        session.addConnection(this);
-//      } else
-//        writeBytes(new byte[] {});
+      // if (!session.hasConnection(this) || true) {
+      writeBytes(nodeSession.getToken());
+      // session.addConnection(this);
+      // } else
+      // writeBytes(new byte[] {});
     }
   }
+
+  public int getSocketTimeout() {
+    return socketTimeout;
+  }
+
+  public void setSocketTimeout(int socketTimeout) {
+    this.socketTimeout = socketTimeout;
+  }
+
 }
