@@ -248,6 +248,10 @@ public class OrganizationServiceImpl implements OrganizationService {
 
     if (client != null) {
       OUser developer = userRepository.findUserByLogin(username);
+      developer.setInvited(false);
+      developer.setConfirmed(false);
+      developer.setToken("");
+      developer = userRepository.save(developer);
       deleteClientMembership(client, developer);
     } else {
       throw ServiceException.create(HttpStatus.NOT_FOUND.value()).withMessage("Client not Found");

@@ -14,6 +14,7 @@ import com.orientechnologies.website.repository.EnvironmentRepository;
 import com.orientechnologies.website.repository.OrganizationRepository;
 import com.orientechnologies.website.repository.RepositoryRepository;
 import com.orientechnologies.website.repository.UserRepository;
+import com.orientechnologies.website.security.OSecurityManager;
 import com.orientechnologies.website.services.OrganizationService;
 import com.orientechnologies.website.services.UserService;
 import com.tinkerpop.blueprints.Direction;
@@ -55,6 +56,9 @@ public class UserServiceImpl implements UserService {
   @Autowired
   protected GitHubConfiguration  gitHubConfiguration;
 
+  @Autowired
+  private OSecurityManager       securityManager;
+
   @Transactional
   @Override
   public void initUser(String token) throws ServiceException {
@@ -71,7 +75,9 @@ public class UserServiceImpl implements UserService {
         throw ServiceException.create(401);
 
       } else {
-        if (Boolean.TRUE.equals(user.getConfirmed()) || Boolean.TRUE.equals(user.getInvited())) {
+
+        boolean isMember = securityManager.isMemberOrSupport(user, "orientechnologies");
+        if (isMember || Boolean.TRUE.equals(user.getConfirmed()) || Boolean.TRUE.equals(user.getInvited())) {
           user.setId(self.getId());
           user.setToken(token);
           user.setEmail(email);
