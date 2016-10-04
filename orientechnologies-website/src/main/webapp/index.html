@@ -1,41 +1,41 @@
 <!doctype html>
 <html class="no-js">
 <head>
-  <meta charset="utf-8">
-  <title>Project Hub</title>
-  <meta name="body" content="">
-  <meta name="viewport" content="width=device-width">
-  <link rel="shortcut icon" type="image/png" href="images/favicon.png"/>
+    <meta charset="utf-8">
+    <title>Project Hub</title>
+    <meta name="body" content="">
+    <meta name="viewport" content="width=device-width">
+    <link rel="shortcut icon" type="image/png" href="images/favicon.png"/>
 
-  <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
-  <!-- build:css(src/main/webapp) styles/vendor.css -->
-  <!-- bower:css -->
-  <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.css" />
-  <link rel="stylesheet" href="bower_components/font-awesome/css/font-awesome.css" />
-  <link rel="stylesheet" href="bower_components/bootstrap-markdown/css/bootstrap-markdown.min.css" />
-  <link rel="stylesheet" href="bower_components/angular-motion/dist/angular-motion.css" />
-  <link rel="stylesheet" href="bower_components/jasny-bootstrap/dist/css/jasny-bootstrap.css" />
-  <link rel="stylesheet" href="bower_components/ng-tags-input/ng-tags-input.min.css" />
-  <link rel="stylesheet" href="bower_components/c3js-chart/c3.css" />
-  <link rel="stylesheet" href="bower_components/dropzone/dist/min/dropzone.min.css" />
-  <!-- endbower -->
-  <!-- endbuild -->
-  <!-- build:css(.tmp) styles/main.css -->
-  <link rel="stylesheet" href="styles/main.css">
-  <link rel="stylesheet" href="styles/menu.css">
-  <link rel="stylesheet" href="styles/responsive.css">
-  <link rel="stylesheet" href="styles/icons.css">
-  <link rel="stylesheet" href="styles/popovers.css">
-  <link rel="stylesheet" href="styles/notification.css">
-  <link rel="stylesheet" href="styles/bootstrap-suggest.css">
+    <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
+    <!-- build:css(src/main/webapp) styles/vendor.css -->
+    <!-- bower:css -->
+    <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.css"/>
+    <link rel="stylesheet" href="bower_components/font-awesome/css/font-awesome.css"/>
+    <link rel="stylesheet" href="bower_components/bootstrap-markdown/css/bootstrap-markdown.min.css"/>
+    <link rel="stylesheet" href="bower_components/angular-motion/dist/angular-motion.css"/>
+    <link rel="stylesheet" href="bower_components/jasny-bootstrap/dist/css/jasny-bootstrap.css"/>
+    <link rel="stylesheet" href="bower_components/ng-tags-input/ng-tags-input.min.css"/>
+    <link rel="stylesheet" href="bower_components/c3js-chart/c3.css"/>
+    <link rel="stylesheet" href="bower_components/dropzone/dist/min/dropzone.min.css"/>
+    <!-- endbower -->
+    <!-- endbuild -->
+    <!-- build:css(.tmp) styles/main.css -->
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/menu.css">
+    <link rel="stylesheet" href="styles/responsive.css">
+    <link rel="stylesheet" href="styles/icons.css">
+    <link rel="stylesheet" href="styles/popovers.css">
+    <link rel="stylesheet" href="styles/notification.css">
+    <link rel="stylesheet" href="styles/bootstrap-suggest.css">
 
 
-  <!-- endbuild -->
+    <!-- endbuild -->
 </head>
 <body ng-app="webappApp" class="app">
 <!--[if lt IE 7]>
 <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade
-  your browser</a> to improve your experience.</p>
+    your browser</a> to improve your experience.</p>
 <![endif]-->
 
 <!-- Add your site or application content here -->
@@ -45,16 +45,21 @@
 <div class="container-fluid app-container">
 
 
-  <div ng-view="" class="app-view"></div>
+    <div ng-view="" class="app-view"></div>
 
-  <!--<div class="footer">-->
-  <!--&lt;!&ndash;<p><span class="glyphicon glyphicon-heart"></span> from the Yeoman team</p>&ndash;&gt;-->
-  <!--</div>-->
-  <footer class="footer">
-    <div class="container">
-      <p class="text-muted">©2015 <a href="http://orientechnologies.com">Orient Technologies</a> LTD</p>
-    </div>
-  </footer>
+    <!--<div class="footer">-->
+    <!--&lt;!&ndash;<p><span class="glyphicon glyphicon-heart"></span> from the Yeoman team</p>&ndash;&gt;-->
+    <!--</div>-->
+    <footer class="footer">
+        <div class="container">
+            <p class="text-muted">&copy
+                <span id="copyright">
+                    <script>document.getElementById('copyright').appendChild(document.createTextNode(new Date().getFullYear()))</script>
+                </span>
+                <a href="http://orientdb.com">OrientDB</a> LTD
+            </p>
+        </div>
+    </footer>
 </div>
 
 
@@ -74,6 +79,10 @@
 
   ga('create', 'UA-XXXXX-X');
   ga('send', 'pageview');
+
+
+
+
 
 </script>
 
@@ -108,6 +117,7 @@
 <script src="bower_components/ment.io/dist/mentio.js"></script>
 <script src="bower_components/angular-scroll-glue/src/scrollglue.js"></script>
 <script src="bower_components/humane/humane.min.js"></script>
+<script src="bower_components/angular-otobox/otobox.js"></script>
 <script src="bower_components/angular-otobox/angular-otobox.js"></script>
 <script src="bower_components/favico.js/favico.js"></script>
 <script src="bower_components/ifvisible.js/src/ifvisible.js"></script>
@@ -116,6 +126,7 @@
 <script src="bower_components/d3/d3.js"></script>
 <script src="bower_components/c3js-chart/c3.js"></script>
 <script src="bower_components/dropzone/dist/min/dropzone.min.js"></script>
+<script src="bower_components/filesize/lib/filesize.js"></script>
 <script src="bower_components/FileSaver/FileSaver.js"></script>
 <script src="bower_components/blob/blob.js"></script>
 <!-- endbower -->

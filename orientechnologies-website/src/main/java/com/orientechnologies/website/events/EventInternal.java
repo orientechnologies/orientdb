@@ -167,6 +167,9 @@ public abstract class EventInternal<T> implements Consumer<Event<T>> {
     String[] actorsEmail = getActorsEmail(user, members, issueActors);
 
     dests.addAll(Arrays.asList(actorsEmail));
+
+    Set<String> success = new HashSet<String>(dests);
+    Set<String> fail = new HashSet<String>();
     if (dests.size() > 0) {
       for (String actor : dests) {
         SimpleMailMessage mailMessage = new SimpleMailMessage();
@@ -177,6 +180,9 @@ public abstract class EventInternal<T> implements Consumer<Event<T>> {
           mailMessage.setText(htmlContent);
           sender.send(mailMessage);
         } catch (Exception e) {
+
+          success.remove(actor);
+          fail.add(actor);
           e.printStackTrace();
           logger.error(this, e);
         }
@@ -185,10 +191,11 @@ public abstract class EventInternal<T> implements Consumer<Event<T>> {
 
     OrientGraph graph = factory.getGraph();
     ODocument doc = new ODocument("MailLog");
-
     doc.field("issue", issue.getIid());
     doc.field("action", event());
-    doc.field("actors", dests);
+    doc.field("actors", success);
+    doc.field("actorsFails", fail);
+    doc.field("timestamp", new Date());
     doc.field("content", htmlContent);
 
     graph.getRawGraph().save(doc);
