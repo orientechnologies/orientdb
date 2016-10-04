@@ -49,7 +49,7 @@ public class ConcurrencySBTreeBonsaiLocalTest {
               atomManager.startAtomicOperation(tree1, false);
               for (int i = 2000; i < 3000; i++)
                 tree1.put(new ORecordId(10, i), 1);
-              atomManager.endAtomicOperation(false, null);
+              atomManager.endAtomicOperation(false, null, tree1);
 
             } catch (Exception e) {
               throw new RuntimeException(e);
@@ -62,7 +62,7 @@ public class ConcurrencySBTreeBonsaiLocalTest {
         // Is supposed to go in deadlock correct that goes in timeout
       }
 
-      atomManager.endAtomicOperation(false, null);
+      atomManager.endAtomicOperation(false, null, tree);
       ex.get();
 
       OSBTreeRidBag bag = new OSBTreeRidBag();

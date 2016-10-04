@@ -113,7 +113,7 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
   }
 
   protected void endAtomicOperation(boolean rollback, Exception e) throws IOException {
-    atomicOperationsManager.endAtomicOperation(rollback, e);
+    atomicOperationsManager.endAtomicOperation(rollback, e, this);
   }
 
   /**

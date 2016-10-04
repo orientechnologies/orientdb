@@ -1977,13 +1977,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       T result = callback.callEngine(engine);
 
       if (atomicOperation)
-        atomicOperationsManager.endAtomicOperation(false, null);
+        atomicOperationsManager.endAtomicOperation(false, null, (String) null);
 
       return result;
     } catch (Exception e) {
       try {
         if (atomicOperation)
-          atomicOperationsManager.endAtomicOperation(true, e);
+          atomicOperationsManager.endAtomicOperation(true, e, (String) null);
 
         throw OException.wrapException(new OStorageException("Cannot put key value entry in index"), e);
       } catch (IOException ioe) {
@@ -2013,10 +2013,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       else
         engine.put(key, value);
 
-      atomicOperationsManager.endAtomicOperation(false, null);
+      atomicOperationsManager.endAtomicOperation(false, null, (String) null);
     } catch (Exception e) {
       try {
-        atomicOperationsManager.endAtomicOperation(true, e);
+        atomicOperationsManager.endAtomicOperation(true, e, (String) null);
         throw OException.wrapException(new OStorageException("Cannot put key value entry in index"), e);
       } catch (IOException ioe) {
         throw OException.wrapException(new OStorageException("Error during operation rollback"), ioe);
@@ -3008,7 +3008,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   private void endStorageTx() throws IOException {
-    atomicOperationsManager.endAtomicOperation(false, null);
+    atomicOperationsManager.endAtomicOperation(false, null, (String) null);
 
     assert atomicOperationsManager.getCurrentOperation() == null;
   }
@@ -3033,7 +3033,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     if (writeAheadLog == null || transaction.get() == null)
       return;
 
-    atomicOperationsManager.endAtomicOperation(true, null);
+    atomicOperationsManager.endAtomicOperation(true, null, (String) null);
 
     assert atomicOperationsManager.getCurrentOperation() == null;
   }
@@ -3078,9 +3078,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         final ORecordSerializationContext context = ORecordSerializationContext.getContext();
         if (context != null)
           context.executeOperations(this);
-        atomicOperationsManager.endAtomicOperation(false, null);
+        atomicOperationsManager.endAtomicOperation(false, null, (String) null);
       } catch (Exception e) {
-        atomicOperationsManager.endAtomicOperation(true, e);
+        atomicOperationsManager.endAtomicOperation(true, e, (String) null);
 
         if (e instanceof OOfflineClusterException)
           throw (OOfflineClusterException) e;
@@ -3164,9 +3164,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         final ORecordSerializationContext context = ORecordSerializationContext.getContext();
         if (context != null)
           context.executeOperations(this);
-        atomicOperationsManager.endAtomicOperation(false, null);
+        atomicOperationsManager.endAtomicOperation(false, null, (String) null);
       } catch (Exception e) {
-        atomicOperationsManager.endAtomicOperation(true, e);
+        atomicOperationsManager.endAtomicOperation(true, e, (String) null);
 
         OLogManager.instance().error(this, "Error on updating record " + rid + " (cluster: " + cluster + ")", e);
 
@@ -3215,9 +3215,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         final ORecordSerializationContext context = ORecordSerializationContext.getContext();
         if (context != null)
           context.executeOperations(this);
-        atomicOperationsManager.endAtomicOperation(false, null);
+        atomicOperationsManager.endAtomicOperation(false, null, (String) null);
       } catch (Exception e) {
-        atomicOperationsManager.endAtomicOperation(true, e);
+        atomicOperationsManager.endAtomicOperation(true, e, (String) null);
 
         OLogManager.instance().error(this, "Error on recycling record " + rid + " (cluster: " + cluster + ")", e);
 
@@ -3269,9 +3269,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         final ORecordSerializationContext context = ORecordSerializationContext.getContext();
         if (context != null)
           context.executeOperations(this);
-        atomicOperationsManager.endAtomicOperation(false, null);
+        atomicOperationsManager.endAtomicOperation(false, null, (String) null);
       } catch (Exception e) {
-        atomicOperationsManager.endAtomicOperation(true, e);
+        atomicOperationsManager.endAtomicOperation(true, e, (String) null);
         OLogManager.instance().error(this, "Error on deleting record " + rid + "( cluster: " + cluster + ")", e);
         return new OStorageOperationResult<Boolean>(false);
       }
@@ -3306,9 +3306,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         if (context != null)
           context.executeOperations(this);
 
-        atomicOperationsManager.endAtomicOperation(false, null);
+        atomicOperationsManager.endAtomicOperation(false, null, (String) null);
       } catch (Exception e) {
-        atomicOperationsManager.endAtomicOperation(true, e);
+        atomicOperationsManager.endAtomicOperation(true, e, (String) null);
         OLogManager.instance().error(this, "Error on deleting record " + rid + "( cluster: " + cluster + ")", e);
 
         return new OStorageOperationResult<Boolean>(false);
