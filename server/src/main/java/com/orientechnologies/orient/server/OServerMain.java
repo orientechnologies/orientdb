@@ -37,7 +37,23 @@ public class OServerMain {
   }
 
   public static void main(final String[] args) throws Exception {
-    instance = OServerMain.create();
-    instance.startup().activate();
+    // STARTS ORIENTDB IN A NON DAEMON THREAD TO PREVENT EXIT
+    final Thread t = new Thread() {
+      @Override
+      public void run() {
+        try {
+          instance = OServerMain.create();
+          instance.startup().activate();
+          instance.waitForShutdown();
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+      }
+    };
+
+    t.setDaemon(false);
+
+    t.start();
+    t.join();
   }
 }
