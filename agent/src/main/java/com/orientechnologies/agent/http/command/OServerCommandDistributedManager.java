@@ -35,7 +35,7 @@ import java.util.*;
 
 public class OServerCommandDistributedManager extends OServerCommandDistributedScope {
 
-  private static final String[] NAMES = { "GET|distributed/*", "PUT|distributed/*" };
+  private static final String[] NAMES = { "GET|distributed/*", "PUT|distributed/*", "POST|distributed/*" };
 
   public OServerCommandDistributedManager() {
     super("server.profiler");
@@ -50,8 +50,9 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
     try {
 
       if (iRequest.httpMethod.equals("PUT")) {
-
         doPut(iRequest, iResponse, parts);
+      } else if (iRequest.httpMethod.equals("POST")) {
+        doPost(iRequest, iResponse, parts);
       } else if (iRequest.httpMethod.equals("GET")) {
         doGet(iRequest, iResponse, parts);
       }
@@ -76,6 +77,36 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
       iResponse.send(OHttpUtils.STATUS_OK_CODE, null, null, OHttpUtils.STATUS_OK_DESCRIPTION, null);
 
     }
+  }
+
+  private void doPost(final OHttpRequest iRequest, final OHttpResponse iResponse, final String[] parts) throws IOException {
+
+    final String command = parts[1];
+
+    if (command.equalsIgnoreCase("stop")) {
+      if (parts.length < 2)
+        throw new IllegalArgumentException("Cannot stop the server: missing server name to stop");
+
+      if (server.getDistributedManager() == null)
+        throw new OConfigurationException("Cannot stop the server: local server is not distributed");
+
+      server.getDistributedManager().removeServer(parts[2]);
+
+      iResponse.send(OHttpUtils.STATUS_OK_CODE, null, null, OHttpUtils.STATUS_OK_DESCRIPTION, null);
+
+    } else if (command.equalsIgnoreCase("restart")) {
+      if (parts.length < 2)
+        throw new IllegalArgumentException("Cannot restart the server: missing server name to restart");
+
+      if (server.getDistributedManager() == null)
+        throw new OConfigurationException("Cannot restart the server: local server is not distributed");
+
+      final OHazelcastPlugin dManager = ((OHazelcastPlugin) server.getDistributedManager());
+      dManager.restartNode(parts[2]);
+
+      iResponse.send(OHttpUtils.STATUS_OK_CODE, null, null, OHttpUtils.STATUS_OK_DESCRIPTION, null);
+    }
+
   }
 
   public void changeConfig(OServer server, String database, final String jsonContent) {
