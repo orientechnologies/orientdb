@@ -22,13 +22,13 @@ import static org.junit.Assert.fail;
  */
 public class OStorageRemoteAsyncOperationTest {
 
-  private OStorageRemote storage;
+  private OStorageRemote             storage;
 
   @Mock
   private OChannelBinaryAsynchClient channel;
 
   @Mock
-  private ORemoteConnectionManager connectionManager;
+  private ORemoteConnectionManager   connectionManager;
 
   private class CallStatus {
     public String status;
@@ -40,7 +40,7 @@ public class OStorageRemoteAsyncOperationTest {
     final OStorageRemoteSession session = new OStorageRemoteSession(10);
     storage = new OStorageRemote("mock", "mock", "mock") {
       @Override
-      public <T> T baseNetworkOperation(OStorageRemoteOperation<T> operation, String errorMessage) {
+      public <T> T baseNetworkOperation(OStorageRemoteOperation<T> operation, String errorMessage, int retry) {
         try {
           return operation.execute(channel, session);
         } catch (IOException e) {
@@ -123,7 +123,7 @@ public class OStorageRemoteAsyncOperationTest {
       }
     }, "");
 
-    //SBLCK THE CALLBAC THAT SHOULD BE IN ANOTHER THREAD
+    // SBLCK THE CALLBAC THAT SHOULD BE IN ANOTHER THREAD
     callBackWait.countDown();
 
     boolean called = readDone.await(10, TimeUnit.MILLISECONDS);
