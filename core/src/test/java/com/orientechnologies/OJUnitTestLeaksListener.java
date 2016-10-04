@@ -21,6 +21,8 @@ package com.orientechnologies;
 
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+
 import org.junit.runner.Result;
 import org.junit.runner.notification.RunListener;
 
@@ -37,9 +39,8 @@ public class OJUnitTestLeaksListener extends RunListener {
   public void testRunFinished(Result result) throws Exception {
     super.testRunFinished(result);
 
-    Orient.instance().closeAllStorages();
-
     if (result.wasSuccessful()) {
+      ODatabaseDocumentTx.closeAll();
       System.out.println("Checking for direct memory leaks...");
       OByteBufferPool.instance().verifyState();
     }

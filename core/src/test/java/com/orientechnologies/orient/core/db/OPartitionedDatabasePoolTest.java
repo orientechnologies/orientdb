@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
@@ -134,6 +135,7 @@ public class OPartitionedDatabasePoolTest {
   }
 
   @Test
+  @Ignore
   public void shouldBypassSecurity() throws Exception {
     OPartitionedDatabasePool localpool = new OPartitionedDatabasePool("memory:shouldBypassSecurity", "admin", "invalid");
     localpool.setProperty(ODatabase.OPTIONS.SECURITY.toString(), OSecurityNull.class);
