@@ -9,10 +9,11 @@ public class GraphShutdownTest {
 
   @Test(expected = ODatabaseException.class)
   public void graphCommitAfterShutdown() {
-    OrientGraphFactory factory = new OrientGraphFactory("memory:test");
+    OrientGraphFactory factory = new OrientGraphFactory("memory:graphCommitAfterShutdown");
     OrientGraph graph1 = factory.getTx();
     OrientGraph graph2 = factory.getTx();
     graph2.shutdown(true); // in 2.2 this will not close the database because graph1 is still active in the pool
     graph2.commit(); // this should fail
+    factory.drop();
   }
 }

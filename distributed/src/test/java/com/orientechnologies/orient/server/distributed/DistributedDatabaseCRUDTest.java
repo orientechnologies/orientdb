@@ -80,7 +80,8 @@ public final class DistributedDatabaseCRUDTest {
           log("Created " + i + " nodes");
         }
 
-        Assert.assertTrue(graph.getVertexType("TestNode").getClusterSelection() instanceof OLocalClusterWrapperStrategy);
+        if (!graph.getRawGraph().getURL().startsWith("remote:"))
+          Assert.assertTrue(graph.getVertexType("TestNode").getClusterSelection() instanceof OLocalClusterWrapperStrategy);
       }
     }
     int edgeCounter = 1;
@@ -116,7 +117,8 @@ public final class DistributedDatabaseCRUDTest {
         }
         graph.command(new OCommandSQL(edgeSQL)).execute();
 
-        Assert.assertTrue(graph.getVertexType("TestNode").getClusterSelection() instanceof OLocalClusterWrapperStrategy );
+        if (!graph.getRawGraph().getURL().startsWith("remote:"))
+          Assert.assertTrue(graph.getVertexType("TestNode").getClusterSelection() instanceof OLocalClusterWrapperStrategy);
       }
       System.out.println();
     }
@@ -217,7 +219,8 @@ public final class DistributedDatabaseCRUDTest {
             }
             OrientGraph graph = graphFactory.getTx();
 
-            Assert.assertTrue(graph.getVertexType("TestNode").getClusterSelection() instanceof OLocalClusterWrapperStrategy );
+            if (!graph.getRawGraph().getURL().startsWith("remote:"))
+              Assert.assertTrue(graph.getVertexType("TestNode").getClusterSelection() instanceof OLocalClusterWrapperStrategy);
 
             try {
               boolean update = true;
@@ -332,7 +335,9 @@ public final class DistributedDatabaseCRUDTest {
                   Exception tex = null;
                   int k = 1;
                   for (; k <= 100 && retry; k++) {
-                    Assert.assertTrue(graph.getVertexType("TestNode").getClusterSelection() instanceof OLocalClusterWrapperStrategy );
+                    if (!graph.getRawGraph().getURL().startsWith("remote:"))
+                      Assert.assertTrue(
+                          graph.getVertexType("TestNode").getClusterSelection() instanceof OLocalClusterWrapperStrategy);
 
                     OrientVertex vtx1 = (OrientVertex) vtx;
                     try {

@@ -16,8 +16,8 @@ public class OrientJdbcDriverTest extends OrientJdbcBaseTest {
 
     Driver drv = new OrientJdbcDriver();
 
-    assertThat(drv.acceptsURL("jdbc:orient:local:./working/db/test")).isTrue();
-    assertThat(drv.acceptsURL("local:./working/db/test")).isFalse();
+    assertThat(drv.acceptsURL("jdbc:orient:local:./working/db/OrientJdbcDriverTest")).isTrue();
+    assertThat(drv.acceptsURL("local:./working/db/OrientJdbcDriverTest")).isFalse();
   }
 
   @Test
@@ -27,7 +27,7 @@ public class OrientJdbcDriverTest extends OrientJdbcBaseTest {
     info.put("user", "admin");
     info.put("password", "admin");
 
-    OrientJdbcConnection conn = (OrientJdbcConnection) DriverManager.getConnection("jdbc:orient:memory:test", info);
+    OrientJdbcConnection conn = (OrientJdbcConnection) DriverManager.getConnection("jdbc:orient:memory:OrientJdbcDriverTest", info);
 
     assertThat(conn).isNotNull();
     conn.close();

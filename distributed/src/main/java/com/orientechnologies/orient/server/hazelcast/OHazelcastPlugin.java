@@ -955,7 +955,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
       final String dbName = iDatabase.getName();
 
-      if (configurationMap.getHazelcastMap().containsKey(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + dbName))
+      if (configurationMap.containsKey(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + dbName))
         throw new ODistributedException(
             "Cannot create the new database '" + dbName + "' because it is already present in distributed configuration");
 
@@ -1036,7 +1036,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     super.onDrop(iDatabase);
 
     if (configurationMap != null) {
-      configurationMap.put(OHazelcastPlugin.CONFIG_DBSTATUS_PREFIX + nodeName + "." + dbName, DB_STATUS.NOT_AVAILABLE);
+      configurationMap.remove(OHazelcastPlugin.CONFIG_DBSTATUS_PREFIX + nodeName + "." + dbName);
 
       if (!OScenarioThreadLocal.INSTANCE.isRunModeDistributed()) {
         // LAST NODE HOLDING THE DATABASE, DELETE DISTRIBUTED CFG TOO

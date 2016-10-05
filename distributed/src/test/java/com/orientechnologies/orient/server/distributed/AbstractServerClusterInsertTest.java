@@ -143,8 +143,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
     }
 
     protected ODocument createRecord(ODatabaseDocumentTx database, int i, final String uid) {
-      Assert.assertTrue(
-          database.getMetadata().getSchema().getClass("Person").getClusterSelection() instanceof OLocalClusterWrapperStrategy);
+      checkClusterStrategy(database);
 
       final String uniqueId = serverId + "-" + threadId + "-" + i;
       ODocument person = new ODocument("Person").fields("id", uid, "name", "Billy" + uniqueId, "surname", "Mayes" + uniqueId,
@@ -158,8 +157,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
     }
 
     protected void updateRecord(ODatabaseDocumentTx database, int i) {
-      Assert.assertTrue(
-          database.getMetadata().getSchema().getClass("Person").getClusterSelection() instanceof OLocalClusterWrapperStrategy);
+      checkClusterStrategy(database);
 
       ODocument doc = loadRecord(database, i);
       doc.field("updated", true);
@@ -167,16 +165,13 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
     }
 
     protected void checkRecord(ODatabaseDocumentTx database, int i) {
-      Assert.assertTrue(
-          database.getMetadata().getSchema().getClass("Person").getClusterSelection() instanceof OLocalClusterWrapperStrategy);
-
+      checkClusterStrategy(database);
       ODocument doc = loadRecord(database, i);
       Assert.assertEquals(doc.field("updated"), Boolean.TRUE);
     }
 
     protected void checkIndex(ODatabaseDocumentTx database, final String key, final ORID rid) {
-      Assert.assertTrue(
-          database.getMetadata().getSchema().getClass("Person").getClusterSelection() instanceof OLocalClusterWrapperStrategy);
+      checkClusterStrategy(database);
 
       final List<OIdentifiable> result = database.command(new OCommandSQL("select from index:" + indexName + " where key = ?"))
           .execute(key);
@@ -187,8 +182,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
     }
 
     protected ODocument loadRecord(ODatabaseDocumentTx database, int i) {
-      Assert.assertTrue(
-          database.getMetadata().getSchema().getClass("Person").getClusterSelection() instanceof OLocalClusterWrapperStrategy);
+      checkClusterStrategy(database);
 
       final String uniqueId = serverId + "-" + threadId + "-" + i;
 
@@ -203,31 +197,33 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
     }
 
     protected void updateRecord(ODatabaseDocumentTx database, ODocument doc) {
-      Assert.assertTrue(
-          database.getMetadata().getSchema().getClass("Person").getClusterSelection() instanceof OLocalClusterWrapperStrategy);
+      checkClusterStrategy(database);
 
       doc.field("updated", true);
       doc.save();
     }
 
     protected void checkRecord(ODatabaseDocumentTx database, ODocument doc) {
-      Assert.assertTrue(
-          database.getMetadata().getSchema().getClass("Person").getClusterSelection() instanceof OLocalClusterWrapperStrategy);
+      checkClusterStrategy(database);
 
       doc.reload();
       Assert.assertEquals(doc.field("updated"), Boolean.TRUE);
     }
 
+    private void checkClusterStrategy(ODatabaseDocumentTx database) {
+      if (!databaseUrl.startsWith("remote:"))
+        Assert.assertTrue(
+            database.getMetadata().getSchema().getClass("Person").getClusterSelection() instanceof OLocalClusterWrapperStrategy);
+    }
+
     protected void deleteRecord(ODatabaseDocumentTx database, ODocument doc) {
-      Assert.assertTrue(
-          database.getMetadata().getSchema().getClass("Person").getClusterSelection() instanceof OLocalClusterWrapperStrategy);
+      checkClusterStrategy(database);
 
       doc.delete();
     }
 
     protected void checkRecordIsDeleted(ODatabaseDocumentTx database, ODocument doc) {
-      Assert.assertTrue(
-          database.getMetadata().getSchema().getClass("Person").getClusterSelection() instanceof OLocalClusterWrapperStrategy);
+      checkClusterStrategy(database);
 
       try {
         doc.reload();

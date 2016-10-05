@@ -140,9 +140,7 @@ public class OPartitionedDatabasePoolTest {
 
   @Test
   public void shouldBypassSecurity() throws Exception {
-    ODatabaseDocumentTx localdb = new ODatabaseDocumentTx("memory:test").create();
-
-    OPartitionedDatabasePool localpool = new OPartitionedDatabasePool("memory:test", "admin", "invalid");
+    OPartitionedDatabasePool localpool = new OPartitionedDatabasePool("memory:shouldBypassSecurity", "admin", "invalid");
     localpool.setProperty(ODatabase.OPTIONS.SECURITY.toString(), OSecurityNull.class);
 
     ODatabaseDocumentTx dbFromPool = localpool.acquire();

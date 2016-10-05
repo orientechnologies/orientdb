@@ -1,13 +1,5 @@
 package com.orientechnologies.orient.core.sql;
 
-import static org.testng.AssertJUnit.assertEquals;
-
-import java.util.List;
-
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -15,6 +7,13 @@ import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
+import java.util.List;
+
+import static org.testng.AssertJUnit.assertEquals;
 
 public class TestOrderByIndexPropDesc {
 
@@ -25,7 +24,7 @@ public class TestOrderByIndexPropDesc {
 
   @BeforeMethod
   public void init() throws Exception {
-    db = new ODatabaseDocumentTx("memory:test");
+    db = new ODatabaseDocumentTx("memory:TestOrderByIndexPropDesc");
     db.create();
     OClass oclass = db.getMetadata().getSchema().createClass(DOCUMENT_CLASS_NAME);
     oclass.createProperty(PROP_INDEXED_STRING, OType.INTEGER);
