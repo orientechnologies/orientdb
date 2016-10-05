@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.orientechnologies.orient.core.OUncompletedCommit;
 import com.orientechnologies.orient.core.Orient;
@@ -88,19 +89,21 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   private OStorage                                      delegateStorage;
   private ORecordConflictStrategy                       conflictStrategy;
   private ORecordSerializer                             serializer;
+  protected final AtomicReference<Thread>               owner             = new AtomicReference<Thread>();
+  private final boolean                                 ownerProtection;
 
-  private static OShutdownHandler shutdownHandler = new OShutdownHandler() {
-    @Override
-    public void shutdown() throws Exception {
-      closeAll();
-    }
+  private static OShutdownHandler                       shutdownHandler   = new OShutdownHandler() {
+                                                                            @Override
+                                                                            public void shutdown() throws Exception {
+                                                                              closeAll();
+                                                                            }
 
-    @Override
-    public int getPriority() {
-      return 10000;
-    }
-  };
-  
+                                                                            @Override
+                                                                            public int getPriority() {
+                                                                              return 10000;
+                                                                            }
+                                                                          };
+
   static {
     Orient.instance().registerOrientStartupListener(() -> Orient.instance().addShutdownHandler(shutdownHandler));
     Orient.instance().addShutdownHandler(shutdownHandler);
@@ -144,6 +147,10 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   }
 
   public ODatabaseDocumentTx(String url) {
+    this(url, true);
+  }
+
+  protected ODatabaseDocumentTx(String url, boolean ownerProtection) {
     if (url.endsWith("/"))
       url = url.substring(0, url.length() - 1);
     url = url.replace('\\', '/');
@@ -174,6 +181,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     } else {
       baseUrl = path;
     }
+    this.ownerProtection = ownerProtection;
 
   }
 
@@ -183,6 +191,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     this.baseUrl = baseUrl;
     dbName = ref.getName();
     internal = ref;
+    this.ownerProtection = true;
   }
 
   public static ORecordSerializer getDefaultSerializer() {
@@ -855,6 +864,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public <DB extends ODatabase> DB open(String iUserName, String iUserPassword) {
+    setupThreadOwner();
     if ("remote".equals(type)) {
       factory = getOrCreateRemoteFactory(baseUrl);
       OrientDBConfig config = buildConfig(null);
@@ -874,6 +884,18 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     if (serializer != null)
       internal.setSerializer(serializer);
     return (DB) this;
+  }
+
+  protected void setupThreadOwner() {
+    if (!ownerProtection)
+      return;
+
+    final Thread current = Thread.currentThread();
+    final Thread o = owner.get();
+
+    if (o != null || !owner.compareAndSet(null, current)) {
+      throw new IllegalStateException("Current instance is owned by other thread" + (o != null ? " : '" + o.getName() + "'" : ""));
+    }
   }
 
   @Override
@@ -1265,8 +1287,8 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   public OTodoResultSet query(String query, Map args) throws OCommandSQLParsingException, OCommandExecutionException {
     checkOpeness();
     return internal.query(query, args);
-  }  
-  
+  }
+
   private OrientDBConfig buildConfig(final Map<OGlobalConfiguration, Object> iProperties) {
     Map<String, Object> pars = new HashMap<>(preopenProperties);
     if (iProperties != null) {
@@ -1328,13 +1350,13 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     checkOpeness();
     internal.callOnDropListeners();
   }
-  
+
   @Override
   public boolean isPrefetchRecords() {
     checkOpeness();
     return internal.isPrefetchRecords();
   }
-  
+
   public void setPrefetchRecords(boolean prefetchRecords) {
     checkOpeness();
     internal.setPrefetchRecords(prefetchRecords);

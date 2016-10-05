@@ -415,7 +415,7 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract implements
     private PoolPartition partition;
 
     private DatabaseDocumentTxPooled(String iURL) {
-      super(iURL);
+      super(iURL, false);
     }
 
     @Override
