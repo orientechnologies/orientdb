@@ -424,15 +424,19 @@ public class OServer {
       OLogManager.instance().info(this, "OrientDB Studio available at $ANSI{blue http://%s/studio/index.html}", httpAddress);
       OLogManager.instance().info(this, "$ANSI{green:italic OrientDB Server is active} v" + OConstants.getVersion() + ".");
     } catch (ClassNotFoundException e) {
+      databases.close();
       running = false;
       throw e;
     } catch (InstantiationException e) {
+      databases.close();
       running = false;
       throw e;
     } catch (IllegalAccessException e) {
+      databases.close();
       running = false;
       throw e;
     } catch (RuntimeException e) {
+      databases.close();
       running = false;
       throw e;
     } finally {

@@ -89,18 +89,21 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   private ORecordConflictStrategy                       conflictStrategy;
   private ORecordSerializer                             serializer;
 
-  static {
-    Orient.instance().registerOrientStartupListener(() -> Orient.instance().addShutdownHandler(new OShutdownHandler() {
-      @Override
-      public void shutdown() throws Exception {
-        closeAll();
-      }
+  private static OShutdownHandler shutdownHandler = new OShutdownHandler() {
+    @Override
+    public void shutdown() throws Exception {
+      closeAll();
+    }
 
-      @Override
-      public int getPriority() {
-        return 10000;
-      }
-    }));
+    @Override
+    public int getPriority() {
+      return 10000;
+    }
+  };
+  
+  static {
+    Orient.instance().registerOrientStartupListener(() -> Orient.instance().addShutdownHandler(shutdownHandler));
+    Orient.instance().addShutdownHandler(shutdownHandler);
   }
 
   public static void closeAll() {

@@ -75,6 +75,7 @@ public class OServerTest {
     }
 
     assertThat(server.isActive()).isFalse();
+    server.shutdown();
   }
 
 }
