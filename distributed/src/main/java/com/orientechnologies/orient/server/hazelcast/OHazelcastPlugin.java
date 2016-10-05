@@ -1239,6 +1239,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
           updateCachedDatabaseConfiguration(databaseName, cfg.getDocument(), true, true);
 
       }
+
+      if( nodeLeftName.equalsIgnoreCase(nodeName))
+        // CURRENT NODE: EXIT
+        System.exit(1);
+
     } finally {
       // REMOVE NODE IN DB CFG
       if (messageService != null)
