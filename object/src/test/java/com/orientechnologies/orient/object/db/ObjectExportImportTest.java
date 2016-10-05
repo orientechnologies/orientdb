@@ -21,32 +21,39 @@ public class ObjectExportImportTest {
   public void testExportImport() throws IOException {
 
     OObjectDatabaseTx db = new OObjectDatabaseTx("memory:test");
+    OObjectDatabaseTx db1 = null;
     db.create();
-    db.setAutomaticSchemaGeneration(true);
-    db.getMetadata().getSchema().synchronizeSchema();
+    try {
+      db.setAutomaticSchemaGeneration(true);
+      db.getMetadata().getSchema().synchronizeSchema();
 
-    assertNotNull(db.getMetadata().getSchema().getClass("ODocumentWrapper"));
-    byte[] bytes;
-    ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
-    new ODatabaseExport(db.getUnderlying(), byteOutputStream, new OCommandOutputListener() {
-      @Override
-      public void onMessage(String iText) {
+      assertNotNull(db.getMetadata().getSchema().getClass("ODocumentWrapper"));
+      byte[] bytes;
+      ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
+      new ODatabaseExport(db.getUnderlying(), byteOutputStream, new OCommandOutputListener() {
+        @Override
+        public void onMessage(String iText) {
 
-      }
-    }).exportDatabase().close();
-    bytes = byteOutputStream.toByteArray();
-    OObjectDatabaseTx db1 = new OObjectDatabaseTx("memory:test1");
-    db1.create();
-    db1.setAutomaticSchemaGeneration(true);
-    db1.getMetadata().getSchema().synchronizeSchema();
-    InputStream input = new ByteArrayInputStream(bytes);
-    new ODatabaseImport(db1.getUnderlying(), input, new OCommandOutputListener() {
-      @Override
-      public void onMessage(String iText) {
+        }
+      }).exportDatabase().close();
+      bytes = byteOutputStream.toByteArray();
+      db1 = new OObjectDatabaseTx("memory:test1");
+      db1.create();
+      db1.setAutomaticSchemaGeneration(true);
+      db1.getMetadata().getSchema().synchronizeSchema();
+      InputStream input = new ByteArrayInputStream(bytes);
+      new ODatabaseImport(db1.getUnderlying(), input, new OCommandOutputListener() {
+        @Override
+        public void onMessage(String iText) {
 
-      }
-    }).importDatabase().close();
-    assertNotNull(db1.getMetadata().getSchema().getClass("ODocumentWrapper"));
+        }
+      }).importDatabase().close();
+      assertNotNull(db1.getMetadata().getSchema().getClass("ODocumentWrapper"));
+    } finally {
+      db.drop();
+      if (db1 != null)
+        db1.drop();
+    }
   }
 
 }

@@ -19,13 +19,14 @@ public class OConsoleDatatabaseAppTest {
   @Test
   public void testSelectBinaryDoc() throws IOException {
     final StringBuilder builder = new StringBuilder();
+    
     OConsoleDatabaseApp app = new OConsoleDatabaseApp(new String[] {}) {
       @Override
       public void message(String iMessage, Object... iArgs) {
         builder.append(String.format(iMessage,iArgs)).append("\n");
       }
     };
-
+    try {
     app.createDatabase("memory:test", null, null, "memory", null, null);
     ODatabaseDocument db = app.getCurrentDatabase();
     db.addBlobCluster("blobTest");
@@ -33,6 +34,9 @@ public class OConsoleDatatabaseAppTest {
     builder.setLength(0);
     app.select(" from " + record.getIdentity() +" limit -1 ");
     assertTrue(builder.toString().contains("<binary>"));
+    }finally {
+      app.dropDatabase("memory");
+    }
 
   }
 

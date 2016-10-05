@@ -14,33 +14,36 @@ public class CustomDatatypeTest {
   public void reproduce() throws Exception {
     final OObjectDatabaseTx db = new OObjectDatabaseTx("memory:CustomDatatypeTest");
     db.create();
+    try {
+      // WrappedString custom datatype registration (storing it as
+      // OType.STRING)
+      OObjectSerializerContext serializerContext = new OObjectSerializerContext();
+      serializerContext.bind(new OObjectSerializer<WrappedString, String>() {
+        @Override
+        public String serializeFieldValue(Class<?> iClass, WrappedString iFieldValue) {
+          return iFieldValue.getValue();
+        }
 
-    // WrappedString custom datatype registration (storing it as
-    // OType.STRING)
-    OObjectSerializerContext serializerContext = new OObjectSerializerContext();
-    serializerContext.bind(new OObjectSerializer<WrappedString, String>() {
-      @Override
-      public String serializeFieldValue(Class<?> iClass, WrappedString iFieldValue) {
-        return iFieldValue.getValue();
-      }
+        @Override
+        public WrappedString unserializeFieldValue(Class<?> iClass, String iFieldValue) {
+          final WrappedString result = new WrappedString();
+          result.setValue(iFieldValue);
+          return result;
+        }
+      }, db);
+      OObjectSerializerHelper.bindSerializerContext(WrappedString.class, serializerContext);
 
-      @Override
-      public WrappedString unserializeFieldValue(Class<?> iClass, String iFieldValue) {
-        final WrappedString result = new WrappedString();
-        result.setValue(iFieldValue);
-        return result;
-      }
-    }, db);
-    OObjectSerializerHelper.bindSerializerContext(WrappedString.class, serializerContext);
+      // we want schema to be generated
+      db.setAutomaticSchemaGeneration(true);
 
-    // we want schema to be generated
-    db.setAutomaticSchemaGeneration(true);
+      // register our entity
+      db.getEntityManager().registerEntityClass(Entity.class);
 
-    // register our entity
-    db.getEntityManager().registerEntityClass(Entity.class);
-
-    // Validate DB did figure out schema properly
-    Assert.assertEquals(db.getMetadata().getSchema().getClass(Entity.class).getProperty("data").getType(), OType.STRING);
+      // Validate DB did figure out schema properly
+      Assert.assertEquals(db.getMetadata().getSchema().getClass(Entity.class).getProperty("data").getType(), OType.STRING);
+    } finally {
+      db.drop();
+    }
   }
 
   public static class WrappedString {
@@ -61,7 +64,7 @@ public class CustomDatatypeTest {
   }
 
   public static class Entity {
-    private String name;
+    private String        name;
 
     private WrappedString data;
 

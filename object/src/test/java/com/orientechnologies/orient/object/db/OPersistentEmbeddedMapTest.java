@@ -18,11 +18,13 @@ import java.util.Map;
 public class OPersistentEmbeddedMapTest {
 
   private OPartitionedDatabasePool pool;
+  private OObjectDatabaseTx createdDb;
 
   @Before
   public void setup() {
     final String url = "memory:tmpdb";
-    new OObjectDatabaseTx(url).create().close();
+    createdDb = new OObjectDatabaseTx(url);
+    createdDb.create();
 
     pool = new OPartitionedDatabasePool(url, "admin", "admin");
 
@@ -42,6 +44,7 @@ public class OPersistentEmbeddedMapTest {
   @After
   public void destroy() {
     pool.close();
+    createdDb.drop();
   }
 
   @Test
