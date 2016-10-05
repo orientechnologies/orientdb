@@ -114,27 +114,28 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
   @Override
   public OLuceneIndexNotUnique put(final Object key, final OIdentifiable singleValue) {
 
-    OTransaction transaction = getDatabase().getTransaction();
-    if (transaction.isActive()) {
-      OLuceneTxChanges transactionChanges = getTransactionChanges(transaction);
-      transaction.addIndexEntry(this, super.getName(), OTransactionIndexChanges.OPERATION.PUT, encodeKey(key), singleValue);
+    if (key != null) {
+      OTransaction transaction = getDatabase().getTransaction();
+      if (transaction.isActive()) {
+        OLuceneTxChanges transactionChanges = getTransactionChanges(transaction);
+        transaction.addIndexEntry(this, super.getName(), OTransactionIndexChanges.OPERATION.PUT, encodeKey(key), singleValue);
 
-      Document luceneDoc = storage.callIndexEngine(false, false, indexId, engine -> {
-        OLuceneIndexEngine oIndexEngine = (OLuceneIndexEngine) engine;
-        return oIndexEngine.buildDocument(key, singleValue);
-      });
+        Document luceneDoc = storage.callIndexEngine(false, false, indexId, engine -> {
+          OLuceneIndexEngine oIndexEngine = (OLuceneIndexEngine) engine;
+          return oIndexEngine.buildDocument(key, singleValue);
+        });
 
-      try {
-        transactionChanges.put(key, singleValue, luceneDoc);
-      } catch (IOException e) {
-        e.printStackTrace();
+        try {
+          transactionChanges.put(key, singleValue, luceneDoc);
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+
+      } else {
+
+        storage.updateIndexEntry(indexId, key, () -> Arrays.asList(singleValue));
       }
-
-    } else {
-
-      storage.updateIndexEntry(indexId, key, () -> Arrays.asList(singleValue));
     }
-
     return this;
 
   }
@@ -142,23 +143,26 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
   @Override
   public boolean remove(final Object key, final OIdentifiable value) {
 
-    OTransaction transaction = getDatabase().getTransaction();
-    if (transaction.isActive()) {
+    if (key != null) {
+      OTransaction transaction = getDatabase().getTransaction();
+      if (transaction.isActive()) {
 
-      transaction.addIndexEntry(this, super.getName(), OTransactionIndexChanges.OPERATION.REMOVE, encodeKey(key), value);
-      OLuceneTxChanges transactionChanges = getTransactionChanges(transaction);
-      try {
-        transactionChanges.remove(key, value);
-      } catch (IOException e) {
-        OLogManager.instance().error(this, "Error while removing", e);
+        transaction.addIndexEntry(this, super.getName(), OTransactionIndexChanges.OPERATION.REMOVE, encodeKey(key), value);
+        OLuceneTxChanges transactionChanges = getTransactionChanges(transaction);
+        try {
+          transactionChanges.remove(key, value);
+        } catch (IOException e) {
+          OLogManager.instance().error(this, "Error while removing", e);
+        }
+        return true;
+      } else {
+        return storage.callIndexEngine(false, false, indexId, engine -> {
+          OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
+          return indexEngine.remove(key, value);
+        });
       }
-      return true;
-    } else {
-      return storage.callIndexEngine(false, false, indexId, engine -> {
-        OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
-        return indexEngine.remove(key, value);
-      });
     }
+    return true;
   }
 
   @Override
@@ -178,8 +182,8 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
   @Override
   public OLuceneIndexNotUnique create(String name, OIndexDefinition indexDefinition, String clusterIndexName,
       Set<String> clustersToIndex, boolean rebuild, OProgressListener progressListener) {
-    return (OLuceneIndexNotUnique) super
-        .create(indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener, determineValueSerializer());
+    return (OLuceneIndexNotUnique) super.create(indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener,
+        determineValueSerializer());
   }
 
   @Override
