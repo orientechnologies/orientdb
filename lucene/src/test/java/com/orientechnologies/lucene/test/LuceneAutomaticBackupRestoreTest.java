@@ -83,6 +83,7 @@ public class LuceneAutomaticBackupRestoreTest {
         return result;
       }
     };
+    server.startup();
 
     databaseDocumentTx = new ODatabaseDocumentTx(URL);
 
