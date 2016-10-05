@@ -101,7 +101,8 @@ import java.util.zip.ZipOutputStream;
 public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     implements OLowDiskSpaceListener, OFullCheckpointRequestListener, OIdentifiableStorage, OOrientStartupListener,
     OOrientShutdownListener, OBackgroundExceptionListener {
-  private static final int RECORD_LOCK_TIMEOUT = OGlobalConfiguration.STORAGE_RECORD_LOCK_TIMEOUT.getValueAsInteger();
+  private static final int RECORD_LOCK_TIMEOUT         = OGlobalConfiguration.STORAGE_RECORD_LOCK_TIMEOUT.getValueAsInteger();
+  private static final int WAL_RESTORE_REPORT_INTERVAL = 30 * 1000; // milliseconds
 
   private final OComparableLockManager<ORID> lockManager;
 
@@ -829,8 +830,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * @param lsn                LSN from which we should find changed records
    * @param stream             Stream which will contain found records
    * @param excludedClusterIds Array of cluster ids to exclude from the export
+   *
    * @return Last LSN processed during examination of changed records, or <code>null</code> if it was impossible to find changed
    * records: write ahead log is absent, record with start LSN was not found in WAL, etc.
+   *
    * @see OGlobalConfiguration#STORAGE_TRACK_CHANGED_RECORDS_IN_WAL
    */
   public OLogSequenceNumber recordsChangedAfterLSN(final OLogSequenceNumber lsn, final OutputStream stream,
@@ -3420,7 +3423,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * Register the cluster internally.
    *
    * @param cluster OCluster implementation
+   *
    * @return The id (physical position into the array) of the new cluster just created. First is 0.
+   *
    * @throws IOException
    */
   private int registerCluster(final OCluster cluster) throws IOException {
@@ -3915,8 +3920,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     long recordsProcessed = 0;
 
-    final int reportInterval = OGlobalConfiguration.WAL_REPORT_AFTER_OPERATIONS_DURING_RESTORE.getValueAsInteger();
+    final int reportBatchSize = OGlobalConfiguration.WAL_REPORT_AFTER_OPERATIONS_DURING_RESTORE.getValueAsInteger();
     final Map<OOperationUnitId, List<OWALRecord>> operationUnits = new HashMap<OOperationUnitId, List<OWALRecord>>();
+
+    long lastReportTime = 0;
 
     try {
       while (lsn != null) {
@@ -3962,10 +3969,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         recordsProcessed++;
 
-        if (reportInterval > 0 && recordsProcessed % reportInterval == 0) {
+        final long currentTime = System.currentTimeMillis();
+        if (reportBatchSize > 0 && recordsProcessed % reportBatchSize == 0
+            || currentTime - lastReportTime > WAL_RESTORE_REPORT_INTERVAL) {
           OLogManager.instance().info(this, "%d operations were processed, current LSN is %s last LSN is %s", recordsProcessed, lsn,
               writeAheadLog.end());
-
+          lastReportTime = currentTime;
         }
 
         lsn = writeAheadLog.next(lsn);
