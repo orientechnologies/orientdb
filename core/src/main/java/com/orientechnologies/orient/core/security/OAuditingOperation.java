@@ -28,7 +28,6 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
  * 
  */
 public enum OAuditingOperation {
-  // If you add a new operation type here, be sure to add it to "toArray()" below.
   UNSPECIFIED((byte)-1, "unspecified"), 
   CREATED(ORecordOperation.CREATED, "created"), 
   LOADED(ORecordOperation.LOADED, "loaded"),
@@ -42,10 +41,6 @@ public enum OAuditingOperation {
   NODELEFT((byte)9, "nodeLeft"),
   SECURITY((byte)10, "security"),
   RELOADEDSECURITY((byte)11, "reloadedSecurity");
-
-  public static OAuditingOperation[] toArray() {
-    return new OAuditingOperation[] { CREATED, LOADED, UPDATED, DELETED, COMMAND, CREATEDCLASS, DROPPEDCLASS, CHANGEDCONFIG, NODEJOINED, NODELEFT, SECURITY, RELOADEDSECURITY };
-  }
 
   private byte    byteOp   = -1; // -1: unspecified;
   private String  stringOp = "unspecified";
@@ -67,7 +62,7 @@ public enum OAuditingOperation {
   public static OAuditingOperation getByString(String value) {
     if (value == null || value.isEmpty()) return UNSPECIFIED;
 
-    for (OAuditingOperation op : toArray()) {
+    for (OAuditingOperation op : values()) {
       if (op.toString().equalsIgnoreCase(value)) return op;
     }
 
@@ -75,7 +70,7 @@ public enum OAuditingOperation {
   }
 
   public static OAuditingOperation getByByte(byte value) {
-    for (OAuditingOperation op : toArray()) {
+    for (OAuditingOperation op : values()) {
       if (op.getByte() == value) return op;
     }
 
