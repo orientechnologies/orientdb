@@ -1,17 +1,20 @@
 package com.orientechnologies.orient.core.db.document;
 
-import java.util.HashSet;
-import java.util.Set;
-
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class ODatabaseDocumentTxTest {
 
@@ -126,6 +129,45 @@ public class ODatabaseDocumentTxTest {
 
       db.save(doc);
 
+    } finally {
+      db.drop();
+    }
+  }
+
+  @Test
+  public void testDocFromJsonEmbedded() {
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory: testDocFromJsonEmbedded_" + ODatabaseDocumentTxTest.class.getSimpleName());
+    db.create();
+    try {
+      OSchemaProxy schema = db.getMetadata().getSchema();
+
+      OClass c0 = schema.createClass("Class0");
+
+      OClass c1 = schema.createClass("Class1");
+      c1.createProperty("account", OType.STRING);
+      c1.createProperty("meta", OType.EMBEDDED, c0);
+
+      ODocument doc = new ODocument("Class1");
+
+      doc.fromJSON("{\n" + "    \"account\": \"#25:0\",\n" + "    "
+          + "\"meta\": {"
+          + "   \"created\": \"2016-10-03T21:10:21.77-07:00\",\n" + "        \"ip\": \"0:0:0:0:0:0:0:1\",\n"
+          + "   \"contentType\": \"application/x-www-form-urlencoded\","
+          + "   \"userAgent\": \"PostmanRuntime/2.5.2\""
+          + "},"
+          + "\"data\": \"firstName=Jessica&lastName=Smith\"\n" + "}");
+
+      db.save(doc);
+
+      List<ODocument> result = db.query(new OSQLSynchQuery<Object>("select from Class0"));
+      Assert.assertEquals(result.size(), 0);
+
+      result = db.query(new OSQLSynchQuery<Object>("select from Class1"));
+      Assert.assertEquals(result.size(), 1);
+      ODocument item = result.get(0);
+      ODocument meta = item.field("meta");
+      Assert.assertEquals(meta.getClassName(), "Class0");
+      Assert.assertEquals(meta.field("ip"), "0:0:0:0:0:0:0:1");
     } finally {
       db.drop();
     }

@@ -2273,6 +2273,11 @@ public class ODocument extends ORecordAbstract
       for (OProperty prop : clazz.properties()) {
         OType type = prop.getType();
         OType linkedType = prop.getLinkedType();
+        OClass linkedClass = prop.getLinkedClass();
+        if(type == OType.EMBEDDED && linkedClass!=null){
+          convertToEmbeddedType(prop);
+          continue;
+        }
         if (linkedType == null)
           continue;
         final ODocumentEntry entry = _fields.get(prop.getName());
@@ -2314,6 +2319,44 @@ public class ODocument extends ORecordAbstract
               .wrapException(new OValidationException("impossible to convert value of field \"" + prop.getName() + "\""), e);
         }
       }
+    }
+  }
+
+  private void convertToEmbeddedType(OProperty prop) {
+    final ODocumentEntry entry = _fields.get(prop.getName());
+    OClass linkedClass = prop.getLinkedClass();
+    if (entry == null || linkedClass == null) {
+      return;
+    }
+    if (!entry.created && !entry.changed) {
+      return;
+    }
+    Object value = entry.value;
+    if (value == null) {
+      return;
+    }
+    try {
+      if (value instanceof ODocument) {
+        OClass docClass = ((ODocument) value).getSchemaClass();
+        if (docClass == null) {
+          ((ODocument) value).setClass(linkedClass);
+        } else if (!docClass.isSubClassOf(linkedClass)) {
+          throw new OValidationException(
+              "impossible to convert value of field \"" + prop.getName() + "\", incompatible with " + linkedClass);
+        }
+      } else if (value instanceof Map) {
+        removeCollectionChangeListener(entry, value);
+        ODocument newValue = new ODocument(linkedClass);
+        newValue.fromMap((Map) value);
+        entry.value = newValue;
+        newValue.addOwner(this);
+      } else {
+        throw new OValidationException("impossible to convert value of field \"" + prop.getName() + "\"");
+      }
+
+    } catch (Exception e) {
+      throw OException
+          .wrapException(new OValidationException("impossible to convert value of field \"" + prop.getName() + "\""), e);
     }
   }
 
