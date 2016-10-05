@@ -25,7 +25,7 @@ public class TestBinaryRecordsQuery {
 
   @Before
   public void before() {
-    database = new ODatabaseDocumentTx("memory:test");
+    database = new ODatabaseDocumentTx("memory:TestBinaryRecordsQuery");
     database.create();
     database.addBlobCluster("BlobCluster");
   }

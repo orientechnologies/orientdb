@@ -18,7 +18,7 @@ public class OFunctionSqlTest {
   @Test
   public void functionSqlWithParameters() {
 
-    ODatabaseDocument db = new ODatabaseDocumentTx("memory:test");
+    ODatabaseDocument db = new ODatabaseDocumentTx("memory:functionSqlWithParameters");
     db.create();
 
     // ODatabaseRecordThreadLocal.INSTANCE.set(db);
@@ -50,7 +50,7 @@ public class OFunctionSqlTest {
   @Test
   public void functionSqlWithInnerFunctionJs() {
 
-    ODatabaseDocument db = new ODatabaseDocumentTx("memory:test");
+    ODatabaseDocument db = new ODatabaseDocumentTx("memory:functionSqlWithInnerFunctionJs");
     db.create();
 
     // ODatabaseRecordThreadLocal.INSTANCE.set(db);

@@ -1,5 +1,8 @@
 package com.orientechnologies.orient.core;
 
+import org.junit.Assert;
+import org.junit.Test;
+
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -7,15 +10,13 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransaction;
-import org.junit.Assert;
-import org.junit.Test;
 
 public class TestExceptionNotOpen {
 
   @Test
   public void testExceptionNotOpenMemory() {
 
-    ODatabaseDocument db = new ODatabaseDocumentTx("memory:test");
+    ODatabaseDocument db = new ODatabaseDocumentTx("memory:testExceptionNotOpenMemory");
     try {
       db.save(new ODocument());
       Assert.fail();

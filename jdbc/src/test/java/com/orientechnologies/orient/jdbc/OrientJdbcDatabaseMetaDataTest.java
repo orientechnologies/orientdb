@@ -35,7 +35,7 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
   @Test
   public void verifyDriverAndDatabaseVersions() throws SQLException {
 
-    assertEquals("memory:test", metaData.getURL());
+    assertEquals("memory:OrientJdbcDatabaseMetaDataTest", metaData.getURL());
     assertEquals("admin", metaData.getUserName());
     assertEquals("OrientDB", metaData.getDatabaseProductName());
     assertEquals(OConstants.ORIENT_VERSION, metaData.getDatabaseProductVersion());
@@ -89,7 +89,7 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
   @Test
   public void shouldRetrieveUniqueIndexInfoForTable() throws Exception {
 
-    ResultSet indexInfo = metaData.getIndexInfo("test", "test", "Item", true, false);
+    ResultSet indexInfo = metaData.getIndexInfo("OrientJdbcDatabaseMetaDataTest", "OrientJdbcDatabaseMetaDataTest", "Item", true, false);
 
     indexInfo.next();
 
@@ -163,8 +163,8 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
     ResultSet rs = this.metaData.getTables(null, null, null, null);
 
     while (rs.next()) {
-      assertThat(rs.getString("TABLE_SCHEM")).isEqualTo("test");
-      assertThat(rs.getString("TABLE_CAT")).isEqualTo("test");
+      assertThat(rs.getString("TABLE_SCHEM")).isEqualTo("OrientJdbcDatabaseMetaDataTest");
+      assertThat(rs.getString("TABLE_CAT")).isEqualTo("OrientJdbcDatabaseMetaDataTest");
     }
 
   }

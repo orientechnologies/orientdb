@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -56,10 +57,28 @@ public class DistributedDbDropAndReCreateTest extends AbstractServerClusterTxTes
       banner("RE-CREATING DATABASE ON SERVER " + server.getServerId());
 
       db = new ODatabaseDocumentTx(getDatabaseURL(server));
-      db.create();
+
+      Assert.assertFalse(server.getServerInstance().getDistributedManager().getConfigurationMap()
+          .containsKey(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + getDatabaseName()));
+
+      for (int retry = 0; retry < 10; retry++) {
+        try {
+          db.create();
+          break;
+        } catch (ODatabaseException e) {
+          System.out.println("DB STILL IN THE CLUSTER, WAIT AND RETRY (retry " + retry + ")...");
+          Thread.sleep(1000);
+        }
+      }
+
       db.close();
 
     } while (++s < serverInstance.size());
+
+    // DROP LAST DATABASE
+    final ODatabaseDocumentTx db = new ODatabaseDocumentTx(getDatabaseURL(serverInstance.get(serverInstance.size() - 1)));
+    db.open("admin", "admin");
+    db.drop();
   }
 
   protected String getDatabaseURL(final ServerRun server) {
@@ -68,6 +87,6 @@ public class DistributedDbDropAndReCreateTest extends AbstractServerClusterTxTes
 
   @Override
   public String getDatabaseName() {
-    return "distributed-dropnocreatedb";
+    return "distributed-DistributedDbDropAndReCreateTest";
   }
 }
