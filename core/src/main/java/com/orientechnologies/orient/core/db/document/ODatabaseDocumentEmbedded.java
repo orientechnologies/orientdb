@@ -84,7 +84,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentTxOrig {
   
   private void internalOpen(final String iUserName, final String iUserPassword, OrientDBConfig config, boolean checkPassword) {
     boolean failure = true;
-    setupThreadOwner();
     activateOnCurrentThread();
     this.config = config;
     applyAttributes(config);
@@ -125,9 +124,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentTxOrig {
     } catch (Exception e) {
       close();
       throw OException.wrapException(new ODatabaseException("Cannot open database url=" + getURL()), e);
-    } finally {
-      if (failure)
-        owner.set(null);
     }
   }
 

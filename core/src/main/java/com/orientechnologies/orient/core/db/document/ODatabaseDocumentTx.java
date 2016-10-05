@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
@@ -865,24 +866,31 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   @Override
   public <DB extends ODatabase> DB open(String iUserName, String iUserPassword) {
     setupThreadOwner();
-    if ("remote".equals(type)) {
-      factory = getOrCreateRemoteFactory(baseUrl);
-      OrientDBConfig config = buildConfig(null);
-      internal = (ODatabaseDocumentInternal) factory.open(dbName, iUserName, iUserPassword, config);
+    try {
+      if ("remote".equals(type)) {
+        factory = getOrCreateRemoteFactory(baseUrl);
+        OrientDBConfig config = buildConfig(null);
+        internal = (ODatabaseDocumentInternal) factory.open(dbName, iUserName, iUserPassword, config);
 
-    } else {
-      factory = getOrCreateEmbeddedFactory(baseUrl, null);
-      OrientDBConfig config = buildConfig(null);
-      internal = (ODatabaseDocumentInternal) factory.open(dbName, iUserName, iUserPassword, config);
+      } else {
+        factory = getOrCreateEmbeddedFactory(baseUrl, null);
+        OrientDBConfig config = buildConfig(null);
+        internal = (ODatabaseDocumentInternal) factory.open(dbName, iUserName, iUserPassword, config);
+      }
+      if (databaseOwner != null)
+        internal.setDatabaseOwner(databaseOwner);
+      if (intent != null)
+        internal.declareIntent(intent);
+      if (conflictStrategy != null)
+        internal.setConflictStrategy(conflictStrategy);
+      if (serializer != null)
+        internal.setSerializer(serializer);
+      for (Entry<String, Object> pro : preopenProperties.entrySet())
+        internal.setProperty(pro.getKey(), pro.getValue());
+    } catch (RuntimeException e) {
+      clearOwner();
+      throw e;
     }
-    if (databaseOwner != null)
-      internal.setDatabaseOwner(databaseOwner);
-    if (intent != null)
-      internal.declareIntent(intent);
-    if (conflictStrategy != null)
-      internal.setConflictStrategy(conflictStrategy);
-    if (serializer != null)
-      internal.setSerializer(serializer);
     return (DB) this;
   }
 
@@ -896,6 +904,12 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     if (o != null || !owner.compareAndSet(null, current)) {
       throw new IllegalStateException("Current instance is owned by other thread" + (o != null ? " : '" + o.getName() + "'" : ""));
     }
+  }
+  
+  protected void clearOwner() {
+    if (!ownerProtection)
+      return;
+    owner.set(null);
   }
 
   @Override
@@ -911,44 +925,52 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public <DB extends ODatabase> DB create(Map<OGlobalConfiguration, Object> iInitialSettings) {
-    OrientDBConfig config = buildConfig(iInitialSettings);
-    if ("remote".equals(type)) {
-      throw new UnsupportedOperationException();
-    } else if ("memory".equals(type)) {
-      factory = getOrCreateEmbeddedFactory(baseUrl, null);
-      factory.create(dbName, null, null, OrientDBFactory.DatabaseType.MEMORY, config);
-      OrientDBConfig openConfig = OrientDBConfig.builder().fromContext(config.getConfigurations()).build();
-      internal = (ODatabaseDocumentInternal) factory.open(dbName, "admin", "admin", openConfig);
-      for (Map.Entry<ATTRIBUTES, Object> attr : preopenAttributes.entrySet()) {
-        internal.set(attr.getKey(), attr.getValue());
-      }
+    setupThreadOwner();
+    try {
+      OrientDBConfig config = buildConfig(iInitialSettings);
+      if ("remote".equals(type)) {
+        throw new UnsupportedOperationException();
+      } else if ("memory".equals(type)) {
+        factory = getOrCreateEmbeddedFactory(baseUrl, null);
+        factory.create(dbName, null, null, OrientDBFactory.DatabaseType.MEMORY, config);
+        OrientDBConfig openConfig = OrientDBConfig.builder().fromContext(config.getConfigurations()).build();
+        internal = (ODatabaseDocumentInternal) factory.open(dbName, "admin", "admin", openConfig);
+        for (Map.Entry<ATTRIBUTES, Object> attr : preopenAttributes.entrySet()) {
+          internal.set(attr.getKey(), attr.getValue());
+        }
 
-      for (ODatabaseListener oDatabaseListener : preopenListener) {
-        internal.registerListener(oDatabaseListener);
-      }
+        for (ODatabaseListener oDatabaseListener : preopenListener) {
+          internal.registerListener(oDatabaseListener);
+        }
 
-    } else {
-      factory = getOrCreateEmbeddedFactory(baseUrl, null);
-      factory.create(dbName, null, null, OrientDBFactory.DatabaseType.PLOCAL, config);
-      OrientDBConfig openConfig = OrientDBConfig.builder().fromContext(config.getConfigurations()).build();
-      internal = (ODatabaseDocumentInternal) factory.open(dbName, "admin", "admin", openConfig);
-      for (Map.Entry<ATTRIBUTES, Object> attr : preopenAttributes.entrySet()) {
-        internal.set(attr.getKey(), attr.getValue());
-      }
+      } else {
+        factory = getOrCreateEmbeddedFactory(baseUrl, null);
+        factory.create(dbName, null, null, OrientDBFactory.DatabaseType.PLOCAL, config);
+        OrientDBConfig openConfig = OrientDBConfig.builder().fromContext(config.getConfigurations()).build();
+        internal = (ODatabaseDocumentInternal) factory.open(dbName, "admin", "admin", openConfig);
+        for (Map.Entry<ATTRIBUTES, Object> attr : preopenAttributes.entrySet()) {
+          internal.set(attr.getKey(), attr.getValue());
+        }
 
-      for (ODatabaseListener oDatabaseListener : preopenListener) {
-        internal.registerListener(oDatabaseListener);
-      }
+        for (ODatabaseListener oDatabaseListener : preopenListener) {
+          internal.registerListener(oDatabaseListener);
+        }
 
+      }
+      if (databaseOwner != null)
+        internal.setDatabaseOwner(databaseOwner);
+      if (intent != null)
+        internal.declareIntent(intent);
+      if (conflictStrategy != null)
+        internal.setConflictStrategy(conflictStrategy);
+      if (serializer != null)
+        internal.setSerializer(serializer);
+      for (Entry<String, Object> pro : preopenProperties.entrySet())
+        internal.setProperty(pro.getKey(), pro.getValue());
+    } catch (RuntimeException e) {
+      clearOwner();
+      throw e;
     }
-    if (databaseOwner != null)
-      internal.setDatabaseOwner(databaseOwner);
-    if (intent != null)
-      internal.declareIntent(intent);
-    if (conflictStrategy != null)
-      internal.setConflictStrategy(conflictStrategy);
-    if (serializer != null)
-      internal.setSerializer(serializer);
     return (DB) this;
   }
 
@@ -978,6 +1000,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     this.internal.callOnDropListeners();
     factory.drop(this.getName(), null, null);
     this.internal = null;
+    clearOwner();
   }
 
   @Override
@@ -1010,6 +1033,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public void close() {
+    clearOwner();
     if (internal != null) {
       delegateStorage = internal.getStorage();
       internal.close();

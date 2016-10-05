@@ -121,7 +121,6 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentTxOrig {
   public void internalOpen(String user, String password, OrientDBConfig config) {
     this.config = config;
     boolean failure = true;
-    setupThreadOwner();
     applyAttributes(config);
     applyListeners(config);
     try {
@@ -144,10 +143,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentTxOrig {
     } catch (Exception e) {
       close();
       throw OException.wrapException(new ODatabaseException("Cannot open database url=" + getURL()), e);
-    } finally {
-      if (failure)
-        owner.set(null);
-    }
+    } 
   }
 
   private void applyAttributes(OrientDBConfig config) {
