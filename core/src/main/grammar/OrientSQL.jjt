@@ -352,6 +352,8 @@ TOKEN:
 	|
 	< STATUS: ( "S" | "s") ( "T" | "t") ( "A" | "a") ( "T" | "t") ( "U" | "u") ( "S" | "s") >
 	|
+	< SERVER: ( "S" | "s") ( "E" | "e") ( "R" | "r") ( "V" | "v") ( "E" | "e") ( "R" | "r") >
+	|
 	< THIS: "@" ( ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "s" | "S" ) ) >
 	|
 	< RECORD_ATTRIBUTE: <RID_ATTR> | <CLASS_ATTR> | <VERSION_ATTR> | <SIZE_ATTR> | <TYPE_ATTR> | <RAW_ATTR> | <RID_ID_ATTR> | <RID_POS_ATTR> | <FIELDS_ATTR> >
@@ -805,6 +807,8 @@ OIdentifier Identifier():
     |
     token = <STATUS>
     |
+    token = <SERVER>
+    |
     quotedToken = <QUOTED_IDENTIFIER>
 ) {
 
@@ -1009,6 +1013,9 @@ OStatement StatementInternal():
                 |
                 LOOKAHEAD(2)
                 result = HaStatusStatement()
+                |
+                LOOKAHEAD(2)
+                result = HaRemoveServerStatement()
             )
         )
         |
@@ -4582,7 +4589,16 @@ OHaStatusStatement HaStatusStatement():
             |
             token = "-output=text" { jjtThis.outputText = true; }
         )*
-        //TODO
+    )
+    { return jjtThis; }
+}
+
+OHaRemoveServerStatement HaRemoveServerStatement():
+{}
+{
+    (
+        <HA> <REMOVE> <SERVER>
+        jjtThis.serverName = Identifier()
     )
     { return jjtThis; }
 }
