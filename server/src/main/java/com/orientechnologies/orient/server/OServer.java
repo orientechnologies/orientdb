@@ -477,6 +477,7 @@ public class OServer {
               OLogManager.instance().error(this, "Error during shutdown of listener %s.", e, l);
             }
           }
+
         }
 
         if (networkProtocols.size() > 0) {
@@ -500,6 +501,7 @@ public class OServer {
         if (serverSecurity != null)
           serverSecurity.shutdown();
 
+        networkListeners.clear();
       } finally {
         lock.unlock();
       }
