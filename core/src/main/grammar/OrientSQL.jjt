@@ -348,6 +348,10 @@ TOKEN:
 	|
 	< COUNT: ( "C" | "c") ( "O" | "o") ( "U" | "u") ( "N" | "n") ( "T" | "t") >
 	|
+	< HA: ( "H" | "h") ( "A" | "a") >
+	|
+	< STATUS: ( "S" | "s") ( "T" | "t") ( "A" | "a") ( "T" | "t") ( "U" | "u") ( "S" | "s") >
+	|
 	< THIS: "@" ( ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "s" | "S" ) ) >
 	|
 	< RECORD_ATTRIBUTE: <RID_ATTR> | <CLASS_ATTR> | <VERSION_ATTR> | <SIZE_ATTR> | <TYPE_ATTR> | <RAW_ATTR> | <RID_ID_ATTR> | <RID_POS_ATTR> | <FIELDS_ATTR> >
@@ -797,6 +801,10 @@ OIdentifier Identifier():
     |
     token = <COUNT>
     |
+    token = <HA>
+    |
+    token = <STATUS>
+    |
     quotedToken = <QUOTED_IDENTIFIER>
 ) {
 
@@ -998,6 +1006,9 @@ OStatement StatementInternal():
                 result = ConsoleStatement()
                 |
                 result = IfStatement()
+                |
+                LOOKAHEAD(2)
+                result = HaStatusStatement()
             )
         )
         |
@@ -4540,6 +4551,38 @@ ODropSequenceStatement DropSequenceStatement():
     (
         <DROP> <SEQUENCE>
         jjtThis.name = Identifier()
+    )
+    { return jjtThis; }
+}
+
+
+
+OHaStatusStatement HaStatusStatement():
+{
+ Token token;
+}
+{
+    (
+        <HA> <STATUS>
+        (
+            token = "-servers" { jjtThis.servers = true; }
+            |
+            token = "-db" { jjtThis.db = true; }
+            |
+            token = "-latency" { jjtThis.latency = true; }
+            |
+            token = "-messages" { jjtThis.messages = true; }
+            |
+            token = "-all" {
+                jjtThis.servers = true;
+                jjtThis.db = true;
+                jjtThis.latency = true;
+                jjtThis.messages = true;
+            }
+            |
+            token = "-output=text" { jjtThis.outputText = true; }
+        )*
+        //TODO
     )
     { return jjtThis; }
 }

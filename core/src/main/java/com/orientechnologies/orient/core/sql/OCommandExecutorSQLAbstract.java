@@ -223,7 +223,6 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
 
   protected String preParse(final String queryText, final OCommandRequest iRequest) {
     final boolean strict = getDatabase().getStorage().getConfiguration().isStrictSql();
-
     if (strict) {
       try {
         final OStatement result = OStatementCache.get(queryText, getDatabase());
@@ -241,9 +240,6 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
       } catch (Exception e) {
         throwParsingException("Error parsing query: \n" + queryText + "\n" + e.getMessage(), e);
       }
-      OClass clazz = getDatabase().getMetadata().getSchema().getClass("Foo");
-      clazz.setCustom("schemaVersion", "1");
-      String version = clazz.getCustom("schemaVersion");
     }
     return queryText;
   }
