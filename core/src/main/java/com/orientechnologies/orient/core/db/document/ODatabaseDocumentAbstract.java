@@ -102,7 +102,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author Luca Garulli
  */
 @SuppressWarnings("unchecked")
-public class ODatabaseDocumentTxOrig extends OListenerManger<ODatabaseListener> implements ODatabaseDocumentInternal {
+public class ODatabaseDocumentAbstract extends OListenerManger<ODatabaseListener> implements ODatabaseDocumentInternal {
 
   protected final Map<String, Object> properties = new HashMap<String, Object>();
   protected Map<ORecordHook, ORecordHook.HOOK_POSITION> unmodifiableHooks;
@@ -134,7 +134,7 @@ public class ODatabaseDocumentTxOrig extends OListenerManger<ODatabaseListener> 
 
   private boolean prefetchRecords;
 
-  protected ODatabaseDocumentTxOrig() {
+  protected ODatabaseDocumentAbstract() {
     //DO NOTHING IS FOR EXTENDED OBJECTS
     super(false);
   }
@@ -144,11 +144,11 @@ public class ODatabaseDocumentTxOrig extends OListenerManger<ODatabaseListener> 
    *
    * @param iURL of the database
    */
-  public ODatabaseDocumentTxOrig(final String iURL) {
+  public ODatabaseDocumentAbstract(final String iURL) {
     this(iURL, false, true);
   }
 
-  public ODatabaseDocumentTxOrig(final String iURL, boolean keepStorageOpen, boolean ownerProtection) {
+  public ODatabaseDocumentAbstract(final String iURL, boolean keepStorageOpen, boolean ownerProtection) {
     super(false);
 
     this.ownerProtection = ownerProtection;
@@ -561,7 +561,7 @@ public class ODatabaseDocumentTxOrig extends OListenerManger<ODatabaseListener> 
     if (this.isClosed())
       throw new ODatabaseException("Cannot copy a closed db");
 
-    final ODatabaseDocumentTxOrig db = new ODatabaseDocumentTxOrig(this.url);
+    final ODatabaseDocumentAbstract db = new ODatabaseDocumentAbstract(this.url);
     db.setupThreadOwner();
 
     db.user = this.user;
@@ -1183,13 +1183,13 @@ public class ODatabaseDocumentTxOrig extends OListenerManger<ODatabaseListener> 
     return getStorage().getConflictStrategy();
   }
 
-  public ODatabaseDocumentTxOrig setConflictStrategy(final String iStrategyName) {
+  public ODatabaseDocumentAbstract setConflictStrategy(final String iStrategyName) {
     checkIfActive();
     getStorage().setConflictStrategy(Orient.instance().getRecordConflictStrategy().getStrategy(iStrategyName));
     return this;
   }
 
-  public ODatabaseDocumentTxOrig setConflictStrategy(final ORecordConflictStrategy iResolver) {
+  public ODatabaseDocumentAbstract setConflictStrategy(final ORecordConflictStrategy iResolver) {
     checkIfActive();
     getStorage().setConflictStrategy(iResolver);
     return this;
@@ -2326,11 +2326,11 @@ public class ODatabaseDocumentTxOrig extends OListenerManger<ODatabaseListener> 
     }
   }
 
-  public ODatabaseDocumentTxOrig begin() {
+  public ODatabaseDocumentAbstract begin() {
     return begin(OTransaction.TXTYPE.OPTIMISTIC);
   }
 
-  public ODatabaseDocumentTxOrig begin(final OTransaction.TXTYPE iType) {
+  public ODatabaseDocumentAbstract begin(final OTransaction.TXTYPE iType) {
     checkOpeness();
     checkIfActive();
 
@@ -2662,7 +2662,7 @@ public class ODatabaseDocumentTxOrig extends OListenerManger<ODatabaseListener> 
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    * @see #setMVCC(boolean), {@link #isMVCC()}
    */
-  public ODatabaseDocumentTxOrig delete(final ORecord record) {
+  public ODatabaseDocumentAbstract delete(final ORecord record) {
     checkOpeness();
     if (record == null)
       throw new ODatabaseException("Cannot delete null document");
@@ -3070,7 +3070,7 @@ public class ODatabaseDocumentTxOrig extends OListenerManger<ODatabaseListener> 
    * Activates current database instance on current thread.
    */
   @Override
-  public ODatabaseDocumentTxOrig activateOnCurrentThread() {
+  public ODatabaseDocumentAbstract activateOnCurrentThread() {
     final ODatabaseRecordThreadLocal tl = ODatabaseRecordThreadLocal.INSTANCE;
     if (tl != null)
       tl.set(this);
@@ -3341,7 +3341,7 @@ public class ODatabaseDocumentTxOrig extends OListenerManger<ODatabaseListener> 
         // WAKE UP ROLLBACK LISTENERS
         for (ODatabaseListener listener : browseListeners())
           try {
-            listener.onBeforeTxRollback(ODatabaseDocumentTxOrig.this);
+            listener.onBeforeTxRollback(ODatabaseDocumentAbstract.this);
           } catch (Throwable t) {
             OLogManager.instance().error(this, "Error before transaction rollback", t);
           }
@@ -3353,7 +3353,7 @@ public class ODatabaseDocumentTxOrig extends OListenerManger<ODatabaseListener> 
         // WAKE UP ROLLBACK LISTENERS
         for (ODatabaseListener listener : browseListeners())
           try {
-            listener.onAfterTxRollback(ODatabaseDocumentTxOrig.this);
+            listener.onAfterTxRollback(ODatabaseDocumentAbstract.this);
           } catch (Throwable t) {
             OLogManager.instance().error(this, "Error after transaction rollback", t);
           }
@@ -3363,7 +3363,7 @@ public class ODatabaseDocumentTxOrig extends OListenerManger<ODatabaseListener> 
       // WAKE UP LISTENERS
       for (ODatabaseListener listener : browseListeners())
         try {
-          listener.onAfterTxCommit(ODatabaseDocumentTxOrig.this);
+          listener.onAfterTxCommit(ODatabaseDocumentAbstract.this);
         } catch (Exception e) {
           final String message =
               "Error after the transaction has been committed. The transaction remains valid. The exception caught was on execution of "
@@ -3390,7 +3390,7 @@ public class ODatabaseDocumentTxOrig extends OListenerManger<ODatabaseListener> 
       // WAKE UP ROLLBACK LISTENERS
       for (ODatabaseListener listener : browseListeners())
         try {
-          listener.onBeforeTxRollback(ODatabaseDocumentTxOrig.this);
+          listener.onBeforeTxRollback(ODatabaseDocumentAbstract.this);
         } catch (Throwable t) {
           OLogManager.instance().error(this, "Error before transaction rollback", t);
         }
@@ -3402,7 +3402,7 @@ public class ODatabaseDocumentTxOrig extends OListenerManger<ODatabaseListener> 
       // WAKE UP ROLLBACK LISTENERS
       for (ODatabaseListener listener : browseListeners())
         try {
-          listener.onAfterTxRollback(ODatabaseDocumentTxOrig.this);
+          listener.onAfterTxRollback(ODatabaseDocumentAbstract.this);
         } catch (Throwable t) {
           OLogManager.instance().error(this, "Error after transaction rollback", t);
         }

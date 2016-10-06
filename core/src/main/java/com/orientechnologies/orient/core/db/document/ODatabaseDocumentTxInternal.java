@@ -20,11 +20,11 @@ public class ODatabaseDocumentTxInternal {
   }
 
   public static ODatabaseSessionMetadata getSessionMetadata(ODatabaseDocument db) {
-    return ((ODatabaseDocumentTxOrig) db).sessionMetadata;
+    return ((ODatabaseDocumentAbstract) db).sessionMetadata;
   }
 
   public static void setSessionMetadata(ODatabaseDocument db, ODatabaseSessionMetadata sessionMetadata) {
-    ((ODatabaseDocumentTxOrig) db).sessionMetadata = sessionMetadata;
+    ((ODatabaseDocumentAbstract) db).sessionMetadata = sessionMetadata;
   }
 
   public static ODatabaseDocumentTx wrap(ODatabaseDocumentInternal database) {

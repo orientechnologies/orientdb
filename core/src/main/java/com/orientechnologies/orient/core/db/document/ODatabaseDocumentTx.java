@@ -196,11 +196,11 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   }
 
   public static ORecordSerializer getDefaultSerializer() {
-    return ODatabaseDocumentTxOrig.getDefaultSerializer();
+    return ODatabaseDocumentAbstract.getDefaultSerializer();
   }
 
   public static void setDefaultSerializer(ORecordSerializer defaultSerializer) {
-    ODatabaseDocumentTxOrig.setDefaultSerializer(defaultSerializer);
+    ODatabaseDocumentAbstract.setDefaultSerializer(defaultSerializer);
   }
 
   @Override
@@ -1295,7 +1295,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   public void setSerializer(ORecordSerializer serializer) {
     if (internal != null) {
-      ((ODatabaseDocumentTxOrig) internal).setSerializer(serializer);
+      ((ODatabaseDocumentAbstract) internal).setSerializer(serializer);
     } else {
       this.serializer = serializer;
     }
