@@ -59,7 +59,6 @@ public class AutomaticBackupTest {
         return result;
       }
     };
-    server.startup();
   }
 
   @BeforeClass
@@ -69,11 +68,11 @@ public class AutomaticBackupTest {
   }
 
   @Before
-  public void init() {
+  public void init() throws InstantiationException, IllegalAccessException, ClassNotFoundException, IllegalArgumentException, SecurityException, InvocationTargetException, NoSuchMethodException {
     final File f = new File(OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}/config/automatic-backup.json"));
     if (f.exists())
       f.delete();
-    
+    server.startup();
     if (server.existsDatabase(DBNAME))
       server.dropDatabase(DBNAME);
     server.createDatabase(DBNAME, DatabaseType.PLOCAL, null);
@@ -136,6 +135,7 @@ public class AutomaticBackupTest {
     database2.restore(new FileInputStream(BACKUPDIR + "/testautobackup.zip"), null, null, null);
 
     Assert.assertEquals(database2.countClass("TestBackup"), 1);
+    database2.close();
   }
 
   @Test
@@ -209,6 +209,8 @@ public class AutomaticBackupTest {
     database2.restore(new FileInputStream(BACKUPDIR + "/fullBackup.zip"), null, null, null);
 
     Assert.assertEquals(database2.countClass("TestBackup"), 1);
+    
+    database2.close();
   }
 
   //// @Test
@@ -279,5 +281,7 @@ public class AutomaticBackupTest {
     new ODatabaseImport(database2, BACKUPDIR + "/fullExport.json.gz", null).importDatabase();
 
     Assert.assertEquals(database2.countClass("TestBackup"), 1);
+    
+    database2.close();
   }
 }
