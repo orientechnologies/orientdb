@@ -327,7 +327,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     } catch (Exception e) {
       for (OCluster c : clusters) {
         try {
-          c.close(false);
+          if( c != null )
+            c.close(false);
         } catch (IOException e1) {
           OLogManager.instance().error(this, "Cannot close cluster after exception on open");
         }
