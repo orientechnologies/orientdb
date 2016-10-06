@@ -85,7 +85,7 @@ public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E> imple
             /** Have no element IDs. See if there's an indexed property to use */
             Set<OrientIndexQuery> indexQueryOptions = findIndex();
 
-            if(!indexQueryOptions.isEmpty()){
+            if (!indexQueryOptions.isEmpty()) {
                 List<ElementType> elements = new ArrayList<>();
 
                 indexQueryOptions.forEach(indexQuery -> {
@@ -119,7 +119,7 @@ public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E> imple
                 .filter(hasContainer -> isLabelKey(hasContainer.getKey()))
                 .findFirst();
 
-        if(container.isPresent()) {
+        if (container.isPresent()) {
             Object value = container.get().getValue();
 
             //The ugly part. Is there anyway to know the return type of a predicate value ?
@@ -161,7 +161,6 @@ public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E> imple
             if (requestedKeyValue.isPresent()) {
                 String key = requestedKeyValue.get().getValue0();
                 Iterator<Object> values = requestedKeyValue.get().getValue1();
-
 
                 classLabels.forEach(classLabel -> {
                     String className = graph.labelToClassName(classLabel, isVertexStep() ? OImmutableClass.VERTEX_CLASS_NAME : OImmutableClass.EDGE_CLASS_NAME);
