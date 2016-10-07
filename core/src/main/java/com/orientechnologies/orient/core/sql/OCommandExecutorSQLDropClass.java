@@ -105,7 +105,8 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLAbstract im
   @Override
   public long getDistributedTimeout() {
     if (className != null)
-      return 10 * getDatabase().countClass(className);
+      return OGlobalConfiguration.DISTRIBUTED_COMMAND_QUICK_TASK_SYNCH_TIMEOUT.getValueAsLong()
+          + (2 * getDatabase().countClass(className));
 
     return OGlobalConfiguration.DISTRIBUTED_COMMAND_QUICK_TASK_SYNCH_TIMEOUT.getValueAsLong();
   }
