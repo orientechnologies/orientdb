@@ -42,7 +42,8 @@ public class VertexIndexTest {
 
     vType.createIndex("V.", "FULLTEXT", null, null, "LUCENE", new String[] { "title", "text" });
 
-    // graph.shutdown(); see #6561
+    // graph.shutdown(); //see #6561
+    graph.drop();
   }
 
   @Test
