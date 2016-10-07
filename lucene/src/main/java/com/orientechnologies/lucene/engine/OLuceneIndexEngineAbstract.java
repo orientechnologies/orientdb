@@ -90,10 +90,13 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
   private Analyzer                         indexAnalyzer;
   private Analyzer                         queryAnalyzer;
   private Directory                        directory;
+  protected OStorage                       storage;
 
-  public OLuceneIndexEngineAbstract(String indexName) {
+  public OLuceneIndexEngineAbstract(OStorage storage, String indexName) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(),
         OGlobalConfiguration.MVRBTREE_TIMEOUT.getValueAsInteger(), true);
+
+    this.storage = storage;
     this.name = indexName;
 
   }

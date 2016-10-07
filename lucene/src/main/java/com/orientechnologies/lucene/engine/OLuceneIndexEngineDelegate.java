@@ -49,12 +49,12 @@ import static com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYP
  */
 public class OLuceneIndexEngineDelegate implements OLuceneIndexEngine, OFreezableStorageComponent {
 
-  //  private final String             name;
-  private final Boolean            durableInNonTxMode;
-  private final OStorage           storage;
-  private final int                version;
-  private final String             indexName;
-  private       OLuceneIndexEngine delegate;
+  // private final String name;
+  private final Boolean      durableInNonTxMode;
+  private final OStorage     storage;
+  private final int          version;
+  private final String       indexName;
+  private OLuceneIndexEngine delegate;
 
   public OLuceneIndexEngineDelegate(String name, Boolean durableInNonTxMode, OStorage storage, int version) {
 
@@ -92,8 +92,8 @@ public class OLuceneIndexEngineDelegate implements OLuceneIndexEngine, OFreezabl
       final OBinarySerializer keySerializer, final OType[] keyTypes, final boolean nullPointerSupport, final int keySize,
       final Map<String, String> engineProperties) {
     if (delegate != null)
-      delegate
-          .load(indexName, valueSerializer, isAutomatic, keySerializer, keyTypes, nullPointerSupport, keySize, engineProperties);
+      delegate.load(indexName, valueSerializer, isAutomatic, keySerializer, keyTypes, nullPointerSupport, keySize,
+          engineProperties);
   }
 
   @Override
@@ -200,7 +200,7 @@ public class OLuceneIndexEngineDelegate implements OLuceneIndexEngine, OFreezabl
     if (delegate == null) {
       if (FULLTEXT.name().equalsIgnoreCase(indexType)) {
 
-        delegate = new OLuceneFullTextIndexEngine(indexName, new ODocBuilder(), new OQueryBuilderImpl(metadata));
+        delegate = new OLuceneFullTextIndexEngine(storage, indexName, new ODocBuilder(), new OQueryBuilderImpl(metadata));
       }
 
       delegate.init(indexName, indexType, indexDefinition, isAutomatic, metadata);

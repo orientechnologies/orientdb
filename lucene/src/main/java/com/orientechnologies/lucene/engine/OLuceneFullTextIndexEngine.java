@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.sql.parser.ParseException;
+import com.orientechnologies.orient.core.storage.OStorage;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.index.IndexWriter;
@@ -49,8 +50,8 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
   private   DocBuilder          builder;
   private   OQueryBuilder       queryBuilder;
 
-  public OLuceneFullTextIndexEngine(String idxName, DocBuilder builder, OQueryBuilder queryBuilder) {
-    super(idxName);
+  public OLuceneFullTextIndexEngine(OStorage storage, String idxName, DocBuilder builder, OQueryBuilder queryBuilder) {
+    super(storage, idxName);
     this.builder = builder;
     this.queryBuilder = queryBuilder;
   }
@@ -66,7 +67,7 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
     OLuceneIndexWriterFactory fc = new OLuceneIndexWriterFactory();
 
-    facetManager = new OLuceneFacetManager(this, metadata);
+    facetManager = new OLuceneFacetManager(storage,this, metadata);
 
     OLogManager.instance().debug(this, "Creating Lucene index in '%s'...", directory);
 

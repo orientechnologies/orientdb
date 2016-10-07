@@ -1,6 +1,5 @@
 package com.orientechnologies.lucene.sandbox;
 
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
@@ -24,7 +23,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Created by frank on 9/28/15.
@@ -42,7 +41,7 @@ public class VertexIndexTest {
 
     vType.createIndex("V.", "FULLTEXT", null, null, "LUCENE", new String[] { "title", "text" });
 
-    // graph.shutdown(); see #6561
+    graph.drop();
   }
 
   @Test
@@ -93,7 +92,7 @@ public class VertexIndexTest {
 
   @After
   public void deInit() {
-    Orient.instance().closeAllStorages(); // see #6561
+
   }
 
 }
