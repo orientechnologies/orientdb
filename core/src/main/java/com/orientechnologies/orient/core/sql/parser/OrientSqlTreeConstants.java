@@ -179,6 +179,7 @@ public interface OrientSqlTreeConstants
   public int JJTHASTATUSSTATEMENT = 173;
   public int JJTHAREMOVESERVERSTATEMENT = 174;
   public int JJTHASYNCDATABASESTATEMENT = 175;
+  public int JJTHASYNCCLUSTERSTATEMENT = 176;
 
 
   public String[] jjtNodeName = {
@@ -358,6 +359,7 @@ public interface OrientSqlTreeConstants
     "HaStatusStatement",
     "HaRemoveServerStatement",
     "HaSyncDatabaseStatement",
+    "HaSyncClusterStatement",
   };
 }
-/* JavaCC - OriginalChecksum=008988ea98561ea0ce0b5d98645edd04 (do not edit this line) */
+/* JavaCC - OriginalChecksum=09499570f92392f87f1c351a9770f1f7 (do not edit this line) */

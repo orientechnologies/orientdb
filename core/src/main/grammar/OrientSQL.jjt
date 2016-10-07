@@ -1021,8 +1021,11 @@ OStatement StatementInternal():
                 LOOKAHEAD(2)
                 result = HaRemoveServerStatement()
                 |
-                LOOKAHEAD(2)
+                LOOKAHEAD(3)
                 result = HaSyncDatabaseStatement()
+                |
+                LOOKAHEAD(3)
+                result = HaSyncClusterStatement()
             )
         )
         |
@@ -4615,6 +4618,25 @@ OHaSyncDatabaseStatement HaSyncDatabaseStatement():
 {
     (
         <HA> <SYNC> <DATABASE>
+    )
+    { return jjtThis; }
+}
+
+OHaSyncClusterStatement HaSyncClusterStatement():
+{}
+{
+    (
+        <HA> <SYNC> <CLUSTER>
+        jjtThis.clusterName = Identifier()
+        [
+            (
+                "-full_replace" {jjtThis.modeFull = true;}
+            )
+            |
+            (
+                "-merge" {jjtThis.modeMerge = true;}
+            )
+        ]
     )
     { return jjtThis; }
 }
