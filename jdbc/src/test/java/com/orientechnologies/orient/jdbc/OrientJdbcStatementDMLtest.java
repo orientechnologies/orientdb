@@ -91,7 +91,7 @@ public class OrientJdbcStatementDMLtest extends OrientJdbcBaseTest {
   }
 
   @Test
-  public void shoulCreateClassWithBatchCommand() throws IOException, SQLException {
+  public void shouldCreateClassWithBatchCommand() throws IOException, SQLException {
 
     Statement stmt = conn.createStatement();
 

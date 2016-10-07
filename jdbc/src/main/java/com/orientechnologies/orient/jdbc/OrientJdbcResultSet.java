@@ -574,6 +574,12 @@ public class OrientJdbcResultSet implements ResultSet {
   }
 
   public Object getObject(String columnLabel) throws SQLException {
+    if ("@rid".equals(columnLabel) || "rid".equals(columnLabel)) {
+      return ((ODocument) document.field("rid")).getIdentity().toString();
+    }
+    if ("@class".equals(columnLabel) || "class".equals(columnLabel))
+      return ((ODocument) document.field("rid")).getClassName();
+
     try {
       Object value = document.field(columnLabel);
       if (value == null) {
@@ -659,10 +665,17 @@ public class OrientJdbcResultSet implements ResultSet {
   }
 
   public String getString(String columnLabel) throws SQLException {
-    if ("@rid".equals(columnLabel))
-      return document.getIdentity().toString();
-    if ("@class".equals(columnLabel))
+
+    if ("@rid".equals(columnLabel) || "rid".equals(columnLabel)) {
+      return ((ODocument) document.field("rid")).getIdentity().toString();
+    }
+
+    if ("@class".equals(columnLabel) || "class".equals(columnLabel)) {
+      if (document.getClassName() != null)
       return document.getClassName();
+      return ((ODocument) document.field("rid")).getClassName();
+    }
+
     try {
       return document.field(columnLabel, OType.STRING);
     } catch (Exception e) {

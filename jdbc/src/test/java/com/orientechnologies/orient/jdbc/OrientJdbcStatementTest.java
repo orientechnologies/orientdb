@@ -44,7 +44,7 @@ public class OrientJdbcStatementTest extends OrientJdbcBaseTest {
 
 
   @Test(expected = SQLException.class)
-  public void shouldTrhowSqlExceptionOnError() throws SQLException {
+  public void shouldThrowSqlExceptionOnError() throws SQLException {
 
     String query = String.format("select sequence('%s').next()", "theSequence");
     Statement stmt = conn.createStatement();
