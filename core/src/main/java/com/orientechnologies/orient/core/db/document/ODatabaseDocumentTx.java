@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OEmbeddedDBFactory;
 import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
@@ -998,6 +999,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   public void drop() {
     checkOpeness();
     this.internal.callOnDropListeners();
+    ODatabaseRecordThreadLocal.INSTANCE.remove();
     factory.drop(this.getName(), null, null);
     this.internal = null;
     clearOwner();
