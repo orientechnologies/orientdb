@@ -200,7 +200,7 @@ public class OLuceneIndexEngineDelegator implements OLuceneIndexEngine, OFreezab
     if (delegate == null) {
       if (FULLTEXT.name().equalsIgnoreCase(indexType)) {
 
-        delegate = new OLuceneFullTextIndexEngine(indexName, new ODocBuilder(), new OQueryBuilderImpl(metadata));
+        delegate = new OLuceneFullTextIndexEngine(storage,indexName, new ODocBuilder(), new OQueryBuilderImpl(metadata));
       }
 
       delegate.init(indexName, indexType, indexDefinition, isAutomatic, metadata);

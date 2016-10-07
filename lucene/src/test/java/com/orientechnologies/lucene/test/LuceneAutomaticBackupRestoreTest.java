@@ -20,7 +20,9 @@ package com.orientechnologies.lucene.test;
 
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.OrientDBFactory;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -51,29 +53,21 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 public class LuceneAutomaticBackupRestoreTest {
 
+  private OrientDBFactory           factory;
+
   @Rule
-  public TemporaryFolder      tempFolder = new TemporaryFolder();
+  public TemporaryFolder            tempFolder = new TemporaryFolder();
 
-  private final static String DBNAME     = "LuceneAutomaticBackupRestoreTest";
-  private String              URL        = null;
-  private String              BACKUPDIR  = null;
-  private String              BACKUFILE  = null;
+  private final static String       DBNAME     = "LuceneAutomaticBackupRestoreTest";
+  private String                    URL        = null;
+  private String                    BACKUPDIR  = null;
+  private String                    BACKUFILE  = null;
 
-  private OServer             server;
-  private ODatabaseDocumentTx databaseDocumentTx;
+  private OServer                   server;
+  private ODatabaseDocumentInternal db;
 
   @Before
   public void setUp() throws Exception {
-
-    System.setProperty("ORIENTDB_HOME", tempFolder.getRoot().getAbsolutePath());
-
-    URL = "plocal:" + tempFolder.getRoot().getAbsolutePath() + File.separator + "databases" + File.separator + DBNAME;
-
-    BACKUPDIR = tempFolder.getRoot().getAbsolutePath() + File.separator + "backups";
-
-    BACKUFILE = BACKUPDIR + File.separator + DBNAME;
-
-    tempFolder.newFolder("config");
 
     server = new OServer() {
       @Override
@@ -85,26 +79,38 @@ public class LuceneAutomaticBackupRestoreTest {
     };
     server.startup();
 
-    databaseDocumentTx = new ODatabaseDocumentTx(URL);
+    System.setProperty("ORIENTDB_HOME", tempFolder.getRoot().getAbsolutePath());
+
+    String path = tempFolder.getRoot().getAbsolutePath() + File.separator + "databases";
+    factory = server.getDatabases();
+
+    URL = "plocal:" + path + File.separator + DBNAME;
+
+    BACKUPDIR = tempFolder.getRoot().getAbsolutePath() + File.separator + "backups";
+
+    BACKUFILE = BACKUPDIR + File.separator + DBNAME;
+
+    tempFolder.newFolder("config");
 
     dropIfExists();
 
-    databaseDocumentTx.create();
+    factory.create(DBNAME, null, null, OrientDBFactory.DatabaseType.PLOCAL);
 
-    databaseDocumentTx.command(new OCommandSQL("create class City ")).execute();
-    databaseDocumentTx.command(new OCommandSQL("create property City.name string")).execute();
-    databaseDocumentTx.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE")).execute();
+    db = (ODatabaseDocumentInternal) factory.open(DBNAME, "admin", "admin");
+
+    db.command(new OCommandSQL("create class City ")).execute();
+    db.command(new OCommandSQL("create property City.name string")).execute();
+    db.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE")).execute();
 
     ODocument doc = new ODocument("City");
     doc.field("name", "Rome");
-    databaseDocumentTx.save(doc);
+    db.save(doc);
   }
 
   private void dropIfExists() {
-    if (databaseDocumentTx.exists()) {
-      if (databaseDocumentTx.isClosed())
-        databaseDocumentTx.open("admin", "admin");
-      databaseDocumentTx.drop();
+
+    if (factory.exists(DBNAME, "admin", "admin")) {
+      factory.drop(DBNAME, "admin", "admin");
     }
   }
 
@@ -119,7 +125,7 @@ public class LuceneAutomaticBackupRestoreTest {
   @Test
   public void shouldBackupAndRestore() throws IOException, InterruptedException {
 
-    List<?> query = databaseDocumentTx.query(new OSQLSynchQuery<Object>("select from City where name lucene 'Rome'"));
+    List<?> query = db.query(new OSQLSynchQuery<Object>("select from City where name lucene 'Rome'"));
 
     Assert.assertEquals(query.size(), 1);
 
@@ -151,6 +157,11 @@ public class LuceneAutomaticBackupRestoreTest {
       public void onBackupCompleted(String database) {
         latch.countDown();
       }
+
+      @Override
+      public void onBackupError(String database, Exception e) {
+        latch.countDown();
+      }
     });
 
     latch.await();
@@ -158,33 +169,34 @@ public class LuceneAutomaticBackupRestoreTest {
     aBackup.sendShutdown();
 
     // RESTORE
-    databaseDocumentTx.drop();
+    dropIfExists();
 
-    databaseDocumentTx.create();
+    db = createAndOpen();
 
     FileInputStream stream = new FileInputStream(new File(BACKUFILE + ".zip"));
 
-    databaseDocumentTx.restore(stream, null, null, null);
+    db.restore(stream, null, null, null);
 
-    databaseDocumentTx.close();
+    db.close();
 
     // VERIFY
-    databaseDocumentTx.open("admin", "admin");
+    db = open();
 
-    assertThat(databaseDocumentTx.countClass("City")).isEqualTo(1);
+    assertThat(db.countClass("City")).isEqualTo(1);
 
-    OIndex<?> index = databaseDocumentTx.getMetadata().getIndexManager().getIndex("City.name");
+    OIndex<?> index = db.getMetadata().getIndexManager().getIndex("City.name");
 
     assertThat(index).isNotNull();
     assertThat(index.getType()).isEqualTo(OClass.INDEX_TYPE.FULLTEXT.name());
 
-    assertThat((List<?>) databaseDocumentTx.query(new OSQLSynchQuery<Object>("select from City where name lucene 'Rome'"))).hasSize(1);
+    assertThat((List<?>) db.query(new OSQLSynchQuery<Object>("select from City where name lucene 'Rome'"))).hasSize(1);
+
   }
 
   @Test
   public void shouldExportImport() throws IOException, InterruptedException {
 
-    List<?> query = databaseDocumentTx.query(new OSQLSynchQuery<Object>("select from City where name lucene 'Rome'"));
+    List<?> query = db.query(new OSQLSynchQuery<Object>("select from City where name lucene 'Rome'"));
 
     Assert.assertEquals(query.size(), 1);
 
@@ -216,35 +228,51 @@ public class LuceneAutomaticBackupRestoreTest {
       public void onBackupCompleted(String database) {
         latch.countDown();
       }
+
+      @Override
+      public void onBackupError(String database, Exception e) {
+        latch.countDown();
+      }
     });
     latch.await();
     aBackup.sendShutdown();
 
-    // RESTORE
-    databaseDocumentTx.drop();
+    db.close();
 
-    databaseDocumentTx.create();
+    dropIfExists();
+    // RESTORE
+
+    db = createAndOpen();
 
     GZIPInputStream stream = new GZIPInputStream(new FileInputStream(BACKUFILE + ".json.gz"));
-    new ODatabaseImport(databaseDocumentTx, stream, new OCommandOutputListener() {
+    new ODatabaseImport(db, stream, new OCommandOutputListener() {
       @Override
       public void onMessage(String s) {
       }
     }).importDatabase();
 
-    databaseDocumentTx.close();
+    db.close();
 
     // VERIFY
-    databaseDocumentTx.open("admin", "admin");
+    db = open();
 
-    assertThat(databaseDocumentTx.countClass("City")).isEqualTo(1);
+    assertThat(db.countClass("City")).isEqualTo(1);
 
-    OIndex<?> index = databaseDocumentTx.getMetadata().getIndexManager().getIndex("City.name");
+    OIndex<?> index = db.getMetadata().getIndexManager().getIndex("City.name");
 
     assertThat(index).isNotNull();
     assertThat(index.getType()).isEqualTo(OClass.INDEX_TYPE.FULLTEXT.name());
 
-    assertThat((List<?>) databaseDocumentTx.query(new OSQLSynchQuery<Object>("select from City where name lucene 'Rome'"))).hasSize(1);
+    assertThat((List<?>) db.query(new OSQLSynchQuery<Object>("select from City where name lucene 'Rome'"))).hasSize(1);
+
   }
 
+  private ODatabaseDocumentInternal createAndOpen() {
+    factory.create(DBNAME, null, null, OrientDBFactory.DatabaseType.PLOCAL);
+    return open();
+  }
+
+  private ODatabaseDocumentInternal open() {
+    return (ODatabaseDocumentInternal) factory.open(DBNAME, "admin", "admin");
+  }
 }

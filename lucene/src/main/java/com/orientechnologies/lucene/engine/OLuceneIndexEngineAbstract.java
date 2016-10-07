@@ -77,31 +77,34 @@ import static com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory.Analy
 public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdaptiveExternal
     implements OLuceneIndexEngine, OOrientListener {
 
-  public static final String RID    = "RID";
-  public static final String KEY    = "KEY";
-  public static final String STORED = "_STORED";
+  public static final String               RID              = "RID";
+  public static final String               KEY              = "KEY";
+  public static final String               STORED           = "_STORED";
 
-  public static final String OLUCENE_BASE_DIR = "luceneIndexes";
-  protected final String                         name;
-  protected       SearcherManager                searcherManager;
-  protected       OIndexDefinition               index;
-  protected       String                         clusterIndexName;
-  protected       boolean                        automatic;
-  protected       ControlledRealTimeReopenThread nrt;
-  protected       ODocument                      metadata;
-  protected       Version                        version;
-  protected Map<String, Boolean> collectionFields = new HashMap<>();
-  protected TimerTask commitTask;
-  protected AtomicBoolean closed = new AtomicBoolean(true);
-  private long        reopenToken;
-  private Analyzer    indexAnalyzer;
-  private Analyzer    queryAnalyzer;
-  private Directory   directory;
-  private IndexWriter indexWriter;
+  public static final String               OLUCENE_BASE_DIR = "luceneIndexes";
+  protected final String                   name;
+  protected final OStorage                   storage;
+  protected SearcherManager                searcherManager;
+  protected OIndexDefinition               index;
+  protected String                         clusterIndexName;
+  protected boolean                        automatic;
+  protected ControlledRealTimeReopenThread nrt;
+  protected ODocument                      metadata;
+  protected Version                        version;
+  protected Map<String, Boolean>           collectionFields = new HashMap<>();
+  protected TimerTask                      commitTask;
+  protected AtomicBoolean                  closed           = new AtomicBoolean(true);
+  private long                             reopenToken;
+  private Analyzer                         indexAnalyzer;
+  private Analyzer                         queryAnalyzer;
+  private Directory                        directory;
+  private IndexWriter                      indexWriter;
 
-  public OLuceneIndexEngineAbstract(String indexName) {
+  public OLuceneIndexEngineAbstract(OStorage storage, String indexName) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(),
         OGlobalConfiguration.MVRBTREE_TIMEOUT.getValueAsInteger(), true);
+
+    this.storage = storage;
     this.name = indexName;
 
   }
@@ -316,7 +319,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
   }
 
   protected ODatabaseDocumentInternal getDatabase() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get();
+    return ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
   }
 
   private String getIndexPath(OLocalPaginatedStorage storageLocalAbstract, String indexName) {
@@ -418,9 +421,8 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
 
       reopenToken = indexWriter.deleteDocuments(query);
       if (!indexWriter.hasDeletions()) {
-        OLogManager.instance()
-            .error(this, "Error on deleting document by query '%s' to Lucene index", new OIndexException("Error deleting document"),
-                query);
+        OLogManager.instance().error(this, "Error on deleting document by query '%s' to Lucene index",
+            new OIndexException("Error deleting document"), query);
       }
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error on deleting document by query '%s' to Lucene index", e, query);

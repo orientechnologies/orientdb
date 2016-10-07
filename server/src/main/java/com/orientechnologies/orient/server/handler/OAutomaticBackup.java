@@ -28,12 +28,9 @@ import com.orientechnologies.common.parser.OVariableParser;
 import com.orientechnologies.common.parser.OVariableParserListener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.metadata.security.OSecurityNull;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
@@ -57,7 +54,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class OAutomaticBackup extends OServerPluginAbstract implements OServerPluginConfigurable {
 
-  private ODocument configuration;
+  private ODocument                     configuration;
 
   private Set<OAutomaticBackupListener> listeners = Collections
       .newSetFromMap(new ConcurrentHashMap<OAutomaticBackupListener, Boolean>());
@@ -70,19 +67,19 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
     FULL_BACKUP, INCREMENTAL_BACKUP, EXPORT
   }
 
-  private String configFile       = "${ORIENTDB_HOME}/config/automatic-backup.json";
-  private Date   firstTime        = null;
-  private long   delay            = -1;
-  private int    bufferSize       = 1048576;
-  private int    compressionLevel = 9;
-  private MODE   mode             = MODE.FULL_BACKUP;
-  private String exportOptions;
+  private String      configFile       = "${ORIENTDB_HOME}/config/automatic-backup.json";
+  private Date        firstTime        = null;
+  private long        delay            = -1;
+  private int         bufferSize       = 1048576;
+  private int         compressionLevel = 9;
+  private MODE        mode             = MODE.FULL_BACKUP;
+  private String      exportOptions;
 
-  private String targetDirectory = "backup";
-  private String targetFileName;
+  private String      targetDirectory  = "backup";
+  private String      targetFileName;
   private Set<String> includeDatabases = new HashSet<String>();
   private Set<String> excludeDatabases = new HashSet<String>();
-  private OServer serverInstance;
+  private OServer     serverInstance;
 
   @Override
   public void config(final OServer iServer, final OServerParameterConfiguration[] iParams) {
@@ -141,9 +138,8 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
       // CREATE BACKUP FOLDER(S) IF ANY
       filePath.mkdirs();
 
-    OLogManager.instance()
-        .info(this, "Automatic Backup plugin installed and active: delay=%dms, firstTime=%s, targetDirectory=%s", delay, firstTime,
-            targetDirectory);
+    OLogManager.instance().info(this, "Automatic Backup plugin installed and active: delay=%dms, firstTime=%s, targetDirectory=%s",
+        delay, firstTime, targetDirectory);
 
     final TimerTask timerTask = new TimerTask() {
       @Override
@@ -171,7 +167,7 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
             ODatabaseDocumentInternal db = null;
             try {
               db = serverInstance.openDatabase(dbName, null, null, null, true);
-              
+
               final long begin = System.currentTimeMillis();
 
               switch (mode) {
@@ -193,8 +189,8 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
               case EXPORT:
                 exportDatabase(dbURL, targetDirectory + getFileName(database), db);
 
-                OLogManager.instance()
-                    .info(this, "Export of database '" + dbURL + "' completed in " + (System.currentTimeMillis() - begin) + "ms");
+                OLogManager.instance().info(this,
+                    "Export of database '" + dbURL + "' completed in " + (System.currentTimeMillis() - begin) + "ms");
                 break;
               }
 
@@ -211,6 +207,14 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
             } catch (Exception e) {
 
               OLogManager.instance().error(this, "Error on backup of database '" + dbURL + "' to directory: " + targetDirectory, e);
+
+              try {
+                for (OAutomaticBackupListener listener : listeners) {
+                  listener.onBackupError(dbName, e);
+                }
+              } catch (Exception l) {
+                OLogManager.instance().error(this, "Error on listener for database '" + dbURL, l);
+              }
               errors++;
 
             } finally {
@@ -362,21 +366,20 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
   }
 
   protected String getFileName(final Entry<String, String> dbName) {
-    return (String) OVariableParser
-        .resolveVariables(targetFileName, OSystemVariableResolver.VAR_BEGIN, OSystemVariableResolver.VAR_END,
-            new OVariableParserListener() {
-              @Override
-              public String resolve(final String iVariable) {
-                if (iVariable.equalsIgnoreCase(VARIABLES.DBNAME.toString()))
-                  return dbName.getKey();
-                else if (iVariable.startsWith(VARIABLES.DATE.toString())) {
-                  return new SimpleDateFormat(iVariable.substring(VARIABLES.DATE.toString().length() + 1)).format(new Date());
-                }
+    return (String) OVariableParser.resolveVariables(targetFileName, OSystemVariableResolver.VAR_BEGIN,
+        OSystemVariableResolver.VAR_END, new OVariableParserListener() {
+          @Override
+          public String resolve(final String iVariable) {
+            if (iVariable.equalsIgnoreCase(VARIABLES.DBNAME.toString()))
+              return dbName.getKey();
+            else if (iVariable.startsWith(VARIABLES.DATE.toString())) {
+              return new SimpleDateFormat(iVariable.substring(VARIABLES.DATE.toString().length() + 1)).format(new Date());
+            }
 
-                // NOT FOUND
-                throw new IllegalArgumentException("Variable '" + iVariable + "' was not found");
-              }
-            });
+            // NOT FOUND
+            throw new IllegalArgumentException("Variable '" + iVariable + "' was not found");
+          }
+        });
   }
 
   @Override
@@ -405,5 +408,7 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
 
   public interface OAutomaticBackupListener {
     void onBackupCompleted(String database);
+
+    void onBackupError(String database, Exception e);
   }
 }
