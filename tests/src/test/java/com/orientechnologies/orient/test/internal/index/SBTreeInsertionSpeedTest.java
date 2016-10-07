@@ -12,7 +12,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import java.util.Random;
 
 /**
- * @author Andrey Lomakin
+ * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 14.08.13
  */
 public class SBTreeInsertionSpeedTest extends SpeedTestMonoThread {

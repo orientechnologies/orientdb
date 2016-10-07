@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Tests cases for the Scheduler component.
  *
- * @author Luca Garulli
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OSchedulerTest {
 

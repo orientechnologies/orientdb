@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * This is internal API, do not use it.
  *
- * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientdb.com) <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
  * @since 15/12/14
  */
 @SuppressFBWarnings(value = "VO_VOLATILE_REFERENCE_TO_ARRAY")

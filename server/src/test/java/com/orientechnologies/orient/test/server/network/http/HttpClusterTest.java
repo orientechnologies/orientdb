@@ -6,7 +6,7 @@ import org.junit.Test;
 /**
  * Tests HTTP "cluster" command.
  *
- * @author Luca Garulli (l.garulli--at-orientechnologies.com)
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com) (l.garulli--at-orientdb.com)
  */
 public class HttpClusterTest extends BaseHttpDatabaseTest {
   @Test

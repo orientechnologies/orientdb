@@ -11,7 +11,7 @@ import java.lang.reflect.InvocationTargetException;
  * Enumeration with the error managed by OrientDB. This class has been introduced in v.2.2 and little by little will contain all the
  * OrientDB managed errors.
  * 
- * @author Luigi Dell'Aquila
+ * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
 @OApi(maturity = OApi.MATURITY.NEW)
 public enum OErrorCode {

@@ -1,6 +1,6 @@
 /*
   *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
   *  *
   *  *  Licensed under the Apache License, Version 2.0 (the "License");
   *  *  you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
   *  *  See the License for the specific language governing permissions and
   *  *  limitations under the License.
   *  *
-  *  * For more information: http://www.orientechnologies.com
+  *  * For more information: http://orientdb.com
   *
   */
 package com.orientechnologies.orient.core.index;
@@ -32,7 +32,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 /**
  * Container for the list of heterogeneous values that are going to be stored in in index as composite keys.
  *
- * @author Andrey lomakin, Artem Orobets
+ * @author Andrey Lomakin (a.lomakin-at-orientdb.com), Artem Orobets
  * @see com.orientechnologies.orient.core.index.mvrbtree.OMVRBTree.PartialSearchMode
  */
 @SuppressFBWarnings(value = "SE_TRANSIENT_FIELD_NOT_RESTORED")

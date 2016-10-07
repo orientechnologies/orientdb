@@ -11,7 +11,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 /*
  *
- *  *  Copyright 2015 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *  Copyright 2015 OrientDB LTD (info(-at-)orientdb.com)
  *  *
  *  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  *  you may not use this file except in compliance with the License.
@@ -25,12 +25,12 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
  *  *  See the License for the specific language governing permissions and
  *  *  limitations under the License.
  *  *
- *  * For more information: http://www.orientechnologies.com
+ *  * For more information: http://orientdb.com
  *
  */
 
 /**
- * @author Luigi Dell'Aquila
+ * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
 public class DistributedIndexes extends AbstractServerClusterTest {
   private final static int SERVERS = 2;

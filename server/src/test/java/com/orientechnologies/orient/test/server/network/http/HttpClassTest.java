@@ -6,7 +6,7 @@ import org.junit.Test;
 /**
  * Tests HTTP "class" command.
  *
- * @author Luca Garulli (l.garulli--at-orientechnologies.com)
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com) (l.garulli--at-orientdb.com)
  */
 public class HttpClassTest extends BaseHttpDatabaseTest {
   @Test

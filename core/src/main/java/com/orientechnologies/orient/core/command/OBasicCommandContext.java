@@ -1,6 +1,6 @@
 /*
  *
- *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
  *  *
  *  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  *  you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  *  *  See the License for the specific language governing permissions and
  *  *  limitations under the License.
  *  *
- *  * For more information: http://www.orientechnologies.com
+ *  * For more information: http://orientdb.com
  *
  */
 package com.orientechnologies.orient.core.command;
@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * Basic implementation of OCommandContext interface that stores variables in a map. Supports parent/child context to build a tree
  * of contexts. If a variable is not found on current object the search is applied recursively on child contexts.
  *
- * @author Luca Garulli (l.garulli--at--orientechnologies.com)
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  *
  */
 public class OBasicCommandContext implements OCommandContext {

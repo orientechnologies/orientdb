@@ -29,7 +29,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * @author Andrey Lomakin <lomakin.andrey@gmail.com>.
+ * @author Andrey Lomakin (a.lomakin-at-orientdb.com) <lomakin.andrey@gmail.com>.
  * @since 10/6/2015
  */
 public class StorageBackupMTStateTest {

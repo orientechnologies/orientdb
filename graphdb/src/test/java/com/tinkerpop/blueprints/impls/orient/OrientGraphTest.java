@@ -18,7 +18,7 @@ import java.util.Map;
 /**
  * Test suite for OrientDB graph implementation.
  * 
- * @author Luca Garulli (http://www.orientechnologies.com)
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com) (http://orientdb.com)
  */
 public abstract class OrientGraphTest extends GraphTest {
 

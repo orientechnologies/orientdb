@@ -14,7 +14,7 @@ import org.junit.Assert; import org.junit.Test;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 
 /**
- * @author Andrey Lomakin
+ * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 26.02.13
  */
 public abstract class AbstractLRUListTestTemplate {

@@ -18,7 +18,7 @@ import org.junit.Test;
 import java.util.*;
 
 /**
- * @author Luigi Dell'Aquila
+ * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
 public class OSelectStatementExecutionTest {
   static ODatabaseDocument db;

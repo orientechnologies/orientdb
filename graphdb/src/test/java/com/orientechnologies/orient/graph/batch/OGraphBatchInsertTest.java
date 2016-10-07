@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * @author Luigi Dell'Aquila (l.dellaquila-at-orientechnologies.com)
+ * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) (l.dellaquila-at-orientdb.com)
  */
 
 public class OGraphBatchInsertTest extends TestCase {

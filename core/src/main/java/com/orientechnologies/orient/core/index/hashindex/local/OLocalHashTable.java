@@ -78,7 +78,7 @@ import java.util.List;
  * <li>Index of page of first removed bucket (not splitted but removed) - 8 bytes</li>
  * </ol>
  *
- * @author Andrey Lomakin
+ * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 12.03.13
  */
 public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTable<K, V> {

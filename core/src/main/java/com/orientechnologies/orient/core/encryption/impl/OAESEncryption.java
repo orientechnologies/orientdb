@@ -16,7 +16,7 @@ import javax.crypto.spec.SecretKeySpec;
  * https://github.com/orientechnologies/orientdb/issues/89.
  * 
  * @author giastfader
- * @author Luca Garulli
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  *
  */
 public class OAESEncryption extends OAbstractEncryption {

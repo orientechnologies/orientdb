@@ -26,7 +26,7 @@ import java.util.Set;
  * GraphSONReader reads the data from a TinkerPop JSON stream to a graph.
  *
  * @author Stephen Mallette (http://stephen.genoprime.com)
- * @author Luca Garulli
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OGraphSONReader {
   private static final JsonFactory jsonFactory = new MappingJsonFactory();

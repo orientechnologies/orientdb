@@ -12,7 +12,7 @@ import java.util.Map;
  * This class is an LRU cache for already parsed SQL statement executors. It stores itself in the storage as a resource. It also
  * acts an an entry point for the SQL parser.
  *
- * @author Luigi Dell'Aquila
+ * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
 public class OStatementCache {
 

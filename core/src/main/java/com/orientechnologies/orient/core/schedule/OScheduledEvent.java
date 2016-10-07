@@ -39,7 +39,7 @@ import java.util.TimerTask;
 /**
  * Represents an instance of a scheduled event.
  *
- * @author Luca Garulli
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  * @author henryzhao81-at-gmail.com
  * @since Mar 28, 2013
  */

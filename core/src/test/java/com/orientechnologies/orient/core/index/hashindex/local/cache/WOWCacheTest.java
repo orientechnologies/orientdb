@@ -27,7 +27,7 @@ import java.util.*;
 import java.util.zip.CRC32;
 
 /**
- * @author Andrey Lomakin
+ * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 26.07.13
  */
 public class WOWCacheTest {

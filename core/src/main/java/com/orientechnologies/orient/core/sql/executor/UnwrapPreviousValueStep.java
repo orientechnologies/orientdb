@@ -10,7 +10,7 @@ import java.util.Optional;
 /**
  * for UPDATE, unwraps the current result set to return the previous value
  *
- * @author Luigi Dell'Aquila
+ * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
 public class UnwrapPreviousValueStep extends AbstractExecutionStep {
   public UnwrapPreviousValueStep(OCommandContext ctx) {

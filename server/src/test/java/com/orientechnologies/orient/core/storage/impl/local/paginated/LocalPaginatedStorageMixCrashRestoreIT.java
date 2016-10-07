@@ -31,7 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * @author Andrey Lomakin
+ * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 6/25/13
  */
 

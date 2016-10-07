@@ -7,7 +7,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
  * Counts the records from the previous steps.
  * Returns a record with a single property, called "count" containing the count of records received from pervious steps
  *
- * @author Luigi Dell'Aquila
+ * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
 public class CountStep extends AbstractExecutionStep {
 

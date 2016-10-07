@@ -14,7 +14,7 @@ import java.util.List;
 import static org.junit.Assert.*;
 
 /**
- * @author Luca Garulli
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OSQLFunctionConvertTest {
 

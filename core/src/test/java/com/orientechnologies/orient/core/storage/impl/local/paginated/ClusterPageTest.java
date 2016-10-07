@@ -18,7 +18,7 @@ import java.util.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * @author Andrey Lomakin
+ * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 20.03.13
  */
 public class ClusterPageTest {

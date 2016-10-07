@@ -21,7 +21,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 /**
- * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
+ * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 3/28/14
  */
 public class LinkSetIndexTest extends DocumentDBBaseTest {

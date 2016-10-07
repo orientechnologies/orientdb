@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
+ * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 3/24/14
  */
 @Test

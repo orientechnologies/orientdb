@@ -19,7 +19,7 @@ import java.util.Random;
 import static org.assertj.core.api.Assertions.*;
 
 /**
- * @author Luca Garulli
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  * @since 05.06.13
  */
 public abstract class AbstractEncryptionTest {

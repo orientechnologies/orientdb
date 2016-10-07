@@ -27,7 +27,7 @@ import java.util.List;
  * </code>
  *
  *
- * @author Luigi Dell'Aquila
+ * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
 public class AggregateProjectionSplit {
 

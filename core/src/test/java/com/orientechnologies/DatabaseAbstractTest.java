@@ -5,7 +5,7 @@ import org.junit.After;
 import org.junit.Before;
 
 /**
- * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
+ * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 7/16/14
  */
 public abstract class DatabaseAbstractTest {

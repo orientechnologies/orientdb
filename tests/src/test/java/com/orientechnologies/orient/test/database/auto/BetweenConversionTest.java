@@ -15,7 +15,7 @@ import org.testng.annotations.Test;
 import java.util.*;
 
 /**
- * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
+ * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 9/12/14
  */
 @Test

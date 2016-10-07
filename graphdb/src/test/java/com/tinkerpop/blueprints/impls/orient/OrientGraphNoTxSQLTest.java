@@ -9,7 +9,7 @@ import com.tinkerpop.blueprints.Graph;
 /**
  * Test suite to test avoiding of using TX in SQL commands.
  * 
- * @author Luca Garulli (http://www.orientechnologies.com)
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com) (http://orientdb.com)
  */
 @RunWith(JUnit4.class)
 public class OrientGraphNoTxSQLTest extends OrientGraphNoTxTest {

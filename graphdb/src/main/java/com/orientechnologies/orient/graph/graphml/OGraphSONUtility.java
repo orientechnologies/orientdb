@@ -31,7 +31,7 @@ import static com.tinkerpop.blueprints.util.io.graphson.ElementPropertyConfig.El
  * Helps write individual graph elements to TinkerPop JSON format known as GraphSON.
  *
  * @author Stephen Mallette (http://stephen.genoprime.com)
- * @author Luca Garulli
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OGraphSONUtility {
 

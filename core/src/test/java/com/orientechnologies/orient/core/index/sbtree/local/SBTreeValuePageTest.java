@@ -14,7 +14,7 @@ import java.nio.ByteBuffer;
 import java.util.Random;
 
 /**
- * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
+ * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 10/1/13
  */
 public class SBTreeValuePageTest {

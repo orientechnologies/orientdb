@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * Test HTTP "function" command.
  * 
- * @author Luca Garulli (l.garulli--at-orientdb.com)
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com) (l.garulli--at-orientdb.com)
  */
 public class HttpFunctionTest extends BaseHttpDatabaseTest {
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2013 Orient Technologies LTD (info--at--orientechnologies.com)
+ * Copyright 2010-2013 OrientDB LTD (info--at--orientdb.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import java.io.IOException;
 /**
  * Immutable number representing the position in WAL file (LSN).
  * 
- * @author Andrey Lomakin
+ * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 29.04.13
  */
 public class OLogSequenceNumber implements Comparable<OLogSequenceNumber> {

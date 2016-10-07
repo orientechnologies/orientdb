@@ -13,7 +13,7 @@ import java.lang.annotation.RetentionPolicy;
  * removed on further releases</li>
  * </ul>
  * 
- * @author Luca Garulli
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 @Retention(RetentionPolicy.SOURCE)
 public @interface OApi {

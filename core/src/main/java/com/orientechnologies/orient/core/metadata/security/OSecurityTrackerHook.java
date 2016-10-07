@@ -11,7 +11,7 @@ import com.orientechnologies.orient.core.Orient;
 import java.lang.ref.WeakReference;
 
 /**
- * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
+ * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 04/11/14
  */
 public class OSecurityTrackerHook extends ODocumentHookAbstract {

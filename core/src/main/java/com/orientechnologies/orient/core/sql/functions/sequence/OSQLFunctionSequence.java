@@ -11,7 +11,7 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunctionConfigurableA
 /**
  * Returns a sequence by name.
  *
- * @author Luca Garulli
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OSQLFunctionSequence extends OSQLFunctionConfigurableAbstract {
   public static final String NAME = "sequence";

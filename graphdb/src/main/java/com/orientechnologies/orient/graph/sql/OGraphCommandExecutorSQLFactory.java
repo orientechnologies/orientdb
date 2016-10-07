@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Orient Technologies.
+ * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 /**
  * Graph related command operator executor factory. It's auto-discovered.
  *
- * @author Luca Garulli
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFactory {
   public enum GRAPH_CONSISTENCY_MODE {

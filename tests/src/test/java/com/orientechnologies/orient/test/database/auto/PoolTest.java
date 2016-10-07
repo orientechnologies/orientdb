@@ -14,7 +14,7 @@ import java.util.Random;
 import java.util.concurrent.*;
 
 /**
- * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
+ * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 3/31/14
  */
 @Test

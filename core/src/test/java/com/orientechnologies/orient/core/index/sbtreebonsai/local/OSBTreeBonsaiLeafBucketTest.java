@@ -16,7 +16,7 @@ import java.nio.ByteBuffer;
 import java.util.*;
 
 /**
- * @author Andrey Lomakin
+ * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 09.08.13
  */
 public class OSBTreeBonsaiLeafBucketTest {

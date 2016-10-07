@@ -25,7 +25,7 @@ import java.util.concurrent.locks.Lock;
 /**
  * Lock Manager interface.
  *
- * @author Luca Garulli
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  * @since 2.2.0
  */
 public interface OLockManager<T> {

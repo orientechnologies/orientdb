@@ -8,7 +8,7 @@ import java.io.IOException;
 /**
  * Test HTTP "gephi" command.
  *
- * @author Luca Garulli (l.garulli--at-orientechnologies.com)
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com) (l.garulli--at-orientdb.com)
  */
 public class HttpGephiTest extends BaseHttpDatabaseTest {
   @Test

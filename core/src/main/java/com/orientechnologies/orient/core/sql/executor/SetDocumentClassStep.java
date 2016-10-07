@@ -12,7 +12,7 @@ import java.util.Optional;
 /**
  * Assigns a class to documents coming from upstream
  *
- * @author Luigi Dell'Aquila
+ * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
 public class SetDocumentClassStep extends AbstractExecutionStep {
   private final String targetClass;

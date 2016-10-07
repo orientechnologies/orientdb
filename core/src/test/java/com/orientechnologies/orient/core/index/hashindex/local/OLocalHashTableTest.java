@@ -10,7 +10,7 @@ import org.junit.After;
 import java.io.IOException;
 
 /**
- * @author Andrey Lomakin
+ * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 19.02.13
  */
 public class OLocalHashTableTest extends OLocalHashTableBase {

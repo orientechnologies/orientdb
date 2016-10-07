@@ -1,6 +1,6 @@
 /*
   *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
   *  *
   *  *  Licensed under the Apache License, Version 2.0 (the "License");
   *  *  you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
   *  *  See the License for the specific language governing permissions and
   *  *  limitations under the License.
   *  *
-  *  * For more information: http://www.orientechnologies.com
+  *  * For more information: http://orientdb.com
   *
   */
 package com.orientechnologies.orient.core.sql.functions.misc;
@@ -29,7 +29,7 @@ import java.util.List;
  * Count the record that contains a field. Use * to indicate the record instead of the field. Uses the context to save the counter
  * number. When different Number class are used, take the class with most precision.
  * 
- * @author Luca Garulli (l.garulli--at--orientechnologies.com)
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  * 
  */
 public class OSQLFunctionCount extends OSQLFunctionMathAbstract {

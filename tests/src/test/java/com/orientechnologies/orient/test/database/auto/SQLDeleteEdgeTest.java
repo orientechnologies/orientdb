@@ -12,7 +12,7 @@ import org.testng.annotations.Parameters;
 import java.util.List;
 
 /**
- * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientdb.com) <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
  * @since 04/12/14
  */
 public class SQLDeleteEdgeTest extends DocumentDBBaseTest {

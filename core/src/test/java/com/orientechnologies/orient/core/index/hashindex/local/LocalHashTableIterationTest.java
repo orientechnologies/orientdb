@@ -10,7 +10,7 @@ import org.junit.*;
 import java.util.*;
 
 /**
- * @author Andrey Lomakin
+ * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 13.03.13
  */
 public class LocalHashTableIterationTest {

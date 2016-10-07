@@ -14,7 +14,7 @@ import java.util.Map;
  * Superclass for SQL statements that are too simple to deserve an execution planner.
  * All the execution is delegated to the statement itself, with the execute(ctx) method.
  *
- * @author Luigi Dell'Aquila
+ * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
 public abstract class OSimpleExecStatement extends OStatement {
 

@@ -9,7 +9,7 @@ import org.junit.*;
 import java.io.IOException;
 
 /**
- * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
+ * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 5/15/14
  */
 public class OHashTableDirectoryTest {

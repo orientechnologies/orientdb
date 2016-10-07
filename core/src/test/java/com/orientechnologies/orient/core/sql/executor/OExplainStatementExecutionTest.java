@@ -10,7 +10,7 @@ import org.junit.Test;
 import java.util.Optional;
 
 /**
- * @author Luigi Dell'Aquila
+ * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
 public class OExplainStatementExecutionTest {
   static ODatabaseDocument db;

@@ -11,7 +11,7 @@ import org.junit.runners.JUnit4;
 import static org.junit.Assert.*;
 
 /**
- * @author Luca Garulli (http://www.orientechnologies.com)
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com) (http://orientdb.com)
  */
 @RunWith(JUnit4.class)
 public class OrientGraphFactoryTest {

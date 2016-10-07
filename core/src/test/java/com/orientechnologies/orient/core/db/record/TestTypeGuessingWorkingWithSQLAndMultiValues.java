@@ -8,7 +8,7 @@ import org.junit.Assert;import org.junit.Before; import org.junit.After;import o
 import java.util.Collection;
 
 /**
- * @author Luca Garulli
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class TestTypeGuessingWorkingWithSQLAndMultiValues {
 

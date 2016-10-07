@@ -1,6 +1,6 @@
 /*
  *
- *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
  *  *
  *  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  *  you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  *  *  See the License for the specific language governing permissions and
  *  *  limitations under the License.
  *  *
- *  * For more information: http://www.orientechnologies.com
+ *  * For more information: http://orientdb.com
  *
  */
 package com.orientechnologies.orient.server.distributed.impl.task;
@@ -39,7 +39,7 @@ import java.util.List;
  * Distributed two phase commit task. Operations can keep locks on records on the distributed servers. A second message of
  * {@link OCompleted2pcTask} is requested to unlock the records. Note that locks are freed after a (configurable) while anyway.
  *
- * @author Luca Garulli (l.garulli--at--orientdb.com)
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public abstract class OAbstract2pcTask extends OAbstractReplicatedTask {
   protected static final long                   serialVersionUID  = 1L;

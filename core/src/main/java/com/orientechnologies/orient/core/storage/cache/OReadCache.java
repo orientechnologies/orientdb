@@ -1,6 +1,6 @@
 /*
  *
- *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
  *  *
  *  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  *  you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  *  *  See the License for the specific language governing permissions and
  *  *  limitations under the License.
  *  *
- *  * For more information: http://www.orientechnologies.com
+ *  * For more information: http://orientdb.com
  *
  */
 package com.orientechnologies.orient.core.storage.cache;
@@ -56,7 +56,7 @@ import java.io.IOException;
  * always loaded in RAM ,this class of pages is needed for some data structures usually this attribute should be set to
  * <code>false</code> and it is set to <code>true</code> when storage goes through data restore procedure after system crash.
  *
- * @author Andrey Lomakin
+ * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 14.03.13
  */
 public interface OReadCache {

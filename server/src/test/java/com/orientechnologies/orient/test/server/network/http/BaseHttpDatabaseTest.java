@@ -7,7 +7,7 @@ import org.junit.Before;
 /**
  * Test HTTP "query" command.
  *
- * @author Luca Garulli (l.garulli--at-orientechnologies.com)
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com) (l.garulli--at-orientdb.com)
  */
 
 public abstract class BaseHttpDatabaseTest extends BaseHttpTest {

@@ -28,7 +28,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * @author Andrey Lomakin
+ * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 20.06.13
  */
 public class LocalPaginatedStorageCreateCrashRestoreIT {

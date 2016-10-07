@@ -24,7 +24,7 @@ import java.io.IOException;
 /**
  * Base test class for HTTP protocol.
  * 
- * @author Luca Garulli (l.garulli--at-orientechnologies.com)
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com) (l.garulli--at-orientdb.com)
  */
 public abstract class BaseHttpTest {
 

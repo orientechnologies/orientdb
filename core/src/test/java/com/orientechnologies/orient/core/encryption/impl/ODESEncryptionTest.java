@@ -17,7 +17,7 @@ import java.util.List;
 
 /**
  * @author giastfader@github
- * @author Luca Garulli
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  * @since 22.04.2015
  */
 public class ODESEncryptionTest extends AbstractEncryptionTest {

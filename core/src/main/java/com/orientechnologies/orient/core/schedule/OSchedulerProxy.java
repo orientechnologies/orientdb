@@ -24,7 +24,7 @@ import java.util.Map;
 /**
  * Proxy implementation of the Scheduler.
  * 
- * @author Luca Garulli
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  * @author henryzhao81-at-gmail.com
  * @since Mar 28, 2013
  */

@@ -29,7 +29,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * @author Andrey Lomakin
+ * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  */
 public class ComparableLockManagerTest {
   public static final int                    THREADS         = 64;

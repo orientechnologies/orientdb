@@ -10,7 +10,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import java.nio.ByteBuffer;
 
 /**
- * @author Andrey Lomakin <lomakin.andrey@gmail.com>.
+ * @author Andrey Lomakin (a.lomakin-at-orientdb.com) <lomakin.andrey@gmail.com>.
  * @since 8/17/2015
  */
 public class OWALPageChangesPortion implements OWALChanges {

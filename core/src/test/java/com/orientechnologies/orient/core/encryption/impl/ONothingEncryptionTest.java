@@ -15,7 +15,7 @@ import java.io.File;
 import java.util.List;
 
 /**
- * @author Luca Garulli
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  * @since 22.04.2015
  */
 public class ONothingEncryptionTest extends AbstractEncryptionTest {

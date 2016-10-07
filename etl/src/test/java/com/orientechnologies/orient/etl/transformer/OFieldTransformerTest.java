@@ -1,6 +1,6 @@
 /*
  *
- *  * Copyright 2010-2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  * Copyright 2010-2014 OrientDB LTD (info(-at-)orientdb.com)
  *  *
  *  * Licensed under the Apache License, Version 2.0 (the "License");
  *  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import com.orientechnologies.orient.etl.OETLBaseTest;
 /**
  * Tests ETL Field Transformer.
  *
- * @author Luca Garulli
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OFieldTransformerTest extends OETLBaseTest {
 

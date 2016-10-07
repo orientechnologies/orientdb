@@ -3,7 +3,7 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 import org.junit.Assert; import org.junit.Test;
 
 /**
- * @author Andrey Lomakin
+ * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 29.04.13
  */
 public class UpdatePageRecordTest {

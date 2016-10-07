@@ -25,7 +25,7 @@ import com.tinkerpop.blueprints.Direction;
  * Repairs a graph. Current implementation scan the entire graph. In the future the WAL will be used to make this repair task much
  * faster.
  * 
- * @author Luca Garulli
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  *
  */
 public class OGraphRepair {

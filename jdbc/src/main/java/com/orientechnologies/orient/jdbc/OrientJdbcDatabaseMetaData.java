@@ -1,5 +1,5 @@
 /**
- * Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * For more information: http://www.orientechnologies.com
+ * For more information: http://orientdb.com
  */
 package com.orientechnologies.orient.jdbc;
 
@@ -48,7 +48,7 @@ import static com.orientechnologies.orient.core.OConstants.ORIENT_VERSION_MINOR;
 /**
  * @author Roberto Franchini (CELI srl - franchini--at--celi.it)
  * @author Salvatore Piccione (TXT e-solutions SpA - salvo.picci@gmail.com)
- * @author Luca Garulli (Orient Technologies - l.garulli--at--orientechnologies.com)
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com) (OrientDB - l.garulli--at--orientdb.com)
  */
 public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
   protected final static List<String> TABLE_TYPES = Arrays.asList("TABLE", "SYSTEM TABLE");

@@ -4,7 +4,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import org.junit.Before; import org.junit.After;
 
 /**
- * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
+ * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 1/30/14
  */
 public class OPropertyEmbeddedRidBagIndexDefinitionTest extends OPropertyRidBagAbstractIndexDefinition {

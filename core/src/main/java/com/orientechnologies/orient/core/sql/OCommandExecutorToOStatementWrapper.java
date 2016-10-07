@@ -1,6 +1,6 @@
 /*
  *
- *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
  *  *
  *  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  *  you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  *  *  See the License for the specific language governing permissions and
  *  *  limitations under the License.
  *  *
- *  * For more information: http://www.orientechnologies.com
+ *  * For more information: http://orientdb.com
  *
  */
 package com.orientechnologies.orient.core.sql;
@@ -41,7 +41,7 @@ import java.util.Set;
  * Wrapper for OPrifileStorageStatement command (for compatibility with the old executor architecture,
  * this component should be removed)
  * 
- * @author Luigi Dell'Aquila
+ * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
 public class OCommandExecutorToOStatementWrapper implements OCommandExecutor {
 

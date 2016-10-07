@@ -25,7 +25,7 @@ import org.junit.Assert; import org.junit.Test;
 import java.math.BigDecimal;
 
 /**
- * @author Luigi Dell'Aquila
+ * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
 
 public class OQueryOperatorMinusTest {

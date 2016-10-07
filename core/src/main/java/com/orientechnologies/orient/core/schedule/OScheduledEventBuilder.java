@@ -26,7 +26,7 @@ import java.util.Map;
 /**
  * Builds a OSchedulerEvent with a fluent interface
  *
- * @author Luca Garulli
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  * @since v2.2
  */
 

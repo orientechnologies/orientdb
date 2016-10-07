@@ -1,6 +1,6 @@
 /*
  *
- *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
  *  *
  *  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  *  you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  *  *  See the License for the specific language governing permissions and
  *  *  limitations under the License.
  *  *
- *  * For more information: http://www.orientechnologies.com
+ *  * For more information: http://orientdb.com
  *
  */
 package com.orientechnologies.common.concur.resource;
@@ -33,8 +33,8 @@ import java.util.Map;
  * Reentrant implementation of Resource Pool. It manages multiple resource acquisition on thread local map. If you're looking for a
  * Reentrant implementation look at #OReentrantResourcePool.
  * 
- * @author Andrey Lomakin (a.lomakin--at--orientechnologies.com)
- * @author Luca Garulli (l.garulli--at--orientechnologies.com)
+ * @author Andrey Lomakin (a.lomakin-at-orientdb.com) (a.lomakin--at--orientdb.com)
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  * @see OResourcePool
  */
 public class OReentrantResourcePool<K, V> extends OResourcePool<K, V> implements OOrientStartupListener, OOrientShutdownListener {

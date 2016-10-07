@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * @author Andrey Lomakin
+ * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 6/26/13
  */
 public class LocalPaginatedStorageSmallCacheBigRecordsCrashRestoreIT {

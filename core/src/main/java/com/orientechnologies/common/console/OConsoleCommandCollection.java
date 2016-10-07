@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Orient Technologies.
+ * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
  * Copyright 2012 Geomatys.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");

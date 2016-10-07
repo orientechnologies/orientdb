@@ -21,7 +21,7 @@ import java.util.Map;
 /**
  * Scheduler interface.
  * 
- * @author Luca Garulli
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  * @author henryzhao81-at-gmail.com
  * @since Mar 28, 2013
  */

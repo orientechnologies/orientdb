@@ -1,6 +1,6 @@
 /*
  *
- *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
  *  *
  *  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  *  you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  *  *  See the License for the specific language governing permissions and
  *  *  limitations under the License.
  *  *
- *  * For more information: http://www.orientechnologies.com
+ *  * For more information: http://orientdb.com
  *  
  */
 
@@ -46,7 +46,7 @@ import java.util.Map;
  * GraphMLReader writes the data from a GraphML stream to a graph. Derived from Blueprints GraphMLReader. Supports also vertex
  * labels.
  *
- * @author Luca Garulli (l.garulli(at)orientechnologies.com)
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com) (l.garulli(at)orientdb.com)
  * @author Marko A. Rodriguez (http://markorodriguez.com)
  * @author Alex Averbuch (alex.averbuch-at-gmail.com)
  * @author Joshua Shinavier (http://fortytwo.net)

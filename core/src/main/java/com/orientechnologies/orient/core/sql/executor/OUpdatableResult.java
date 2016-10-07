@@ -6,7 +6,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.Set;
 
 /**
- * @author Luigi Dell'Aquila
+ * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
 public class OUpdatableResult extends OResultInternal {
   protected OResultInternal previousValue = null;

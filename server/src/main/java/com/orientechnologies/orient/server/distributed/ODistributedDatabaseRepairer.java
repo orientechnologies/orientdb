@@ -5,7 +5,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 /**
  * Base interface for the distributed database repairer.
  * 
- * @author Luca Garulli
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public interface ODistributedDatabaseRepairer {
   void repairRecord(ORecordId rid);

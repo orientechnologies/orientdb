@@ -1,6 +1,6 @@
 /*
  *
- *  *  Copyright 2015 Orient Technologies LTD (info(at)orientdb.com)
+ *  *  Copyright 2015 OrientDB LTD (info(at)orientdb.com)
  *  *
  *  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  *  you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ package com.orientechnologies.orient.core.sql.query;
  * The callback passed as second parameter will be invoked every time a record is created/updated/deleted
  * and it matches the query conditions.
  *
- * @author Luigi Dell'Aquila
+ * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
 public class OLiveQuery<T> extends OSQLSynchQuery<T> {
 

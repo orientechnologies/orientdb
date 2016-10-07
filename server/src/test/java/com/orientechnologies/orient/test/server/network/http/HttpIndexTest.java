@@ -10,7 +10,7 @@ import java.io.IOException;
 /**
  * Test HTTP "index" command.
  *
- * @author Luca Garulli (l.garulli--at-orientechnologies.com)
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com) (l.garulli--at-orientdb.com)
  */
 public class HttpIndexTest extends BaseHttpDatabaseTest {
 

@@ -9,7 +9,7 @@ import java.security.spec.InvalidKeySpecException;
 /**
  * Tests the salt + hash of passwords.
  * 
- * @author Luca Garulli
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class HashSaltTest {
 

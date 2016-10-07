@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2012 Luca Molino (molino.luca--AT--gmail.com)
+ * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.test.domain.business.Child;
 
 /**
- * @author luca.molino
+ * @author Luca Molino (molino.luca--at--gmail.com)
  * 
  */
 public class JavaAttachDetachTestClass {

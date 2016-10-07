@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2013 Orient Technologies LTD (info--at--orientechnologies.com)
+ * Copyright 2010-2013 OrientDB LTD (info--at--orientdb.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import java.io.IOException;
  * Represents an offline cluster, created with the "alter cluster X status offline" command. To restore the original cluster assure
  * to have the cluster files in the right path and execute: "alter cluster X status online".
  *
- * @author Luca Garulli
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  * @since 2.0
  */
 public class OOfflineCluster implements OCluster {

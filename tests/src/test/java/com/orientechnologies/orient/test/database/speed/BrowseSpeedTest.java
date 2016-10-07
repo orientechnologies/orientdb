@@ -21,7 +21,7 @@ import java.util.TimerTask;
  * BrowseSpeedTest <directory where the database is stored> <class to use for browsing>
  * </pre>
  * 
- * @author Luca Garulli
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  * @since 9/17/14
  */
 @Test

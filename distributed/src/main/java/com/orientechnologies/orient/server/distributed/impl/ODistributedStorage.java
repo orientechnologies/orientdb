@@ -1,6 +1,6 @@
 /*
  *
- *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
  *  *
  *  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  *  you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  *  *  See the License for the specific language governing permissions and
  *  *  limitations under the License.
  *  *
- *  * For more information: http://www.orientechnologies.com
+ *  * For more information: http://orientdb.com
  *
  */
 package com.orientechnologies.orient.server.distributed.impl;
@@ -81,7 +81,7 @@ import com.orientechnologies.orient.server.security.OSecurityServerUser;
 /**
  * Distributed storage implementation that routes to the owner node the request.
  *
- * @author Luca Garulli (l.garulli--at--orientechnologies.com)
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class ODistributedStorage implements OStorage, OFreezableStorageComponent, OAutoshardedStorage {
   private volatile CountDownLatch                    configurationSemaphore = new CountDownLatch(0);

@@ -10,7 +10,7 @@ import java.nio.ByteBuffer;
 import java.util.Random;
 
 /**
- * @author Andrey Lomakin <lomakin.andrey@gmail.com>.
+ * @author Andrey Lomakin (a.lomakin-at-orientdb.com) <lomakin.andrey@gmail.com>.
  * @since 8/19/2015
  */
 public class OWALPageChangesPortionTest {

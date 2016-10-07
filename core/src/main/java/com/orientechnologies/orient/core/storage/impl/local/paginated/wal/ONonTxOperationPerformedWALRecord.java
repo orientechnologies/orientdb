@@ -1,7 +1,7 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 /**
- * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientdb.com) <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
  * @since 12/12/14
  */
 public class ONonTxOperationPerformedWALRecord extends OAbstractWALRecord {

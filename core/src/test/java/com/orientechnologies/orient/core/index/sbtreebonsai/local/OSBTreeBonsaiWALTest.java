@@ -30,7 +30,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 
 /**
- * @author Andrey Lomakin
+ * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 8/27/13
  */
 public class OSBTreeBonsaiWALTest extends OSBTreeBonsaiLocalTest {

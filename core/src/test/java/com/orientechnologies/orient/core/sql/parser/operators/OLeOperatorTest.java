@@ -1,6 +1,6 @@
 /*
   *
-  *  *  Copyright 2015 Orient Technologies LTD (info(at)orientdb.com)
+  *  *  Copyright 2015 OrientDB LTD (info(at)orientdb.com)
   *  *
   *  *  Licensed under the Apache License, Version 2.0 (the "License");
   *  *  you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import org.junit.Assert; import org.junit.Test;
 import java.math.BigDecimal;
 
 /**
- * @author Luigi Dell'Aquila
+ * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
 public class OLeOperatorTest {
   @Test

@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
+ * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 2/11/14
  */
 @Test

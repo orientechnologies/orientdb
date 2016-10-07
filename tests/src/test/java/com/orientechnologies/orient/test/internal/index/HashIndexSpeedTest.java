@@ -12,7 +12,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import java.util.Random;
 
 /**
- * @author Andrey Lomakin
+ * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 30.01.13
  */
 public class HashIndexSpeedTest extends SpeedTestMonoThread {

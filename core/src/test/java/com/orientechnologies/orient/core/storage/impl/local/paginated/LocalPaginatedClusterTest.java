@@ -14,7 +14,7 @@ import java.io.IOException;
 import java.util.*;
 
 /**
- * @author Andrey Lomakin
+ * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 26.03.13
  */
 

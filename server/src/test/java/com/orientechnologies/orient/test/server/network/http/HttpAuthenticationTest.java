@@ -8,7 +8,7 @@ import java.net.URLEncoder;
 
 /**
  *
- * @author Luca Garulli (l.garulli--at-orientechnologies.com)
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com) (l.garulli--at-orientdb.com)
  */
 public class HttpAuthenticationTest extends BaseHttpDatabaseTest {
   public void testChangeOfUserOnSameConnectionIsAllowed() throws IOException {

@@ -4,7 +4,7 @@ import com.orientechnologies.common.exception.OErrorCode;
 import com.orientechnologies.common.exception.OHighLevelException;
 
 /**
- * @author Andrey Lomakin <lomakin.andrey@gmail.com>.
+ * @author Andrey Lomakin (a.lomakin-at-orientdb.com) <lomakin.andrey@gmail.com>.
  * @since 10/5/2015
  */
 public class OBackupInProgressException extends OCoreException implements OHighLevelException {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Orient Technologies.
+ * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
  * Copyright 2013 Geomatys.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +23,7 @@ import java.util.Map;
 /**
  *
  * @author Johann Sorel (Geomatys)
- * @author Luca Garulli
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OSQLMethodKeys extends OAbstractSQLMethod {
 

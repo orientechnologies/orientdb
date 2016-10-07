@@ -6,7 +6,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 
 /**
- * @author Andrey Lomakin <lomakin.andrey@gmail.com>.
+ * @author Andrey Lomakin (a.lomakin-at-orientdb.com) <lomakin.andrey@gmail.com>.
  * @since 9/28/2015
  */
 public abstract class OCoreException extends OException {

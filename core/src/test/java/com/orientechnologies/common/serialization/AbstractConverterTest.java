@@ -4,7 +4,7 @@ import java.nio.ByteOrder;
 
 import org.junit.Assert;
 /**
- * @author Andrey Lomakin
+ * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 21.05.13
  */
 public abstract class AbstractConverterTest {

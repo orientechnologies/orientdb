@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2013 Orient Technologies LTD (info--at--orientechnologies.com)
+ * Copyright 2010-2013 OrientDB LTD (info--at--orientdb.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionSt
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
- * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
+ * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 10/7/13
  */
 public class OPaginatedCluster extends ODurableComponent implements OCluster {

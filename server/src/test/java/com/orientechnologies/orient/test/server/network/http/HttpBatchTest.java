@@ -16,7 +16,7 @@ import java.util.List;
 /**
  * Test HTTP "batch" command.
  * 
- * @author Luca Garulli (l.garulli--at-orientechnologies.com)
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com) (l.garulli--at-orientdb.com)
  */
 public class HttpBatchTest extends BaseHttpDatabaseTest {
 

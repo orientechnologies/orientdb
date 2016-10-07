@@ -11,7 +11,7 @@ import java.util.Collection;
 /**
  * Tests HTTP "connect" command.
  * 
- * @author Luca Garulli (l.garulli--at-orientechnologies.com)
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com) (l.garulli--at-orientdb.com)
  */
 public class HttpConnectionTest extends BaseHttpDatabaseTest {
   @Test

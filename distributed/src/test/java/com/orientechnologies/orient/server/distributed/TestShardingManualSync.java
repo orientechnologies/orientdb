@@ -15,7 +15,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 /**
  * Tests with 2 servers the ability to resync a cluster manually.
  * 
- * @author Luca Garulli
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class TestShardingManualSync extends AbstractServerClusterTest {
 

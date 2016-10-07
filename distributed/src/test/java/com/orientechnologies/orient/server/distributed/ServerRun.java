@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2013 Luca Garulli (l.garulli--at--orientechnologies.com)
+ * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ import java.io.IOException;
 /**
  * Running server instance.
  *
- * @author Luca Garulli (l.garulli--at--orientechnologies.com)
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class ServerRun {
   protected final String  serverId;

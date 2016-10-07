@@ -7,7 +7,7 @@ import java.util.Collections;
 import java.util.Map;
 
 /**
- * @author Luigi Dell'Aquila
+ * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
 public class OMatchPathItemFirst extends OMatchPathItem {
   protected OFunctionCall function;

@@ -16,7 +16,7 @@ package com.orientechnologies.orient.core.sql.parser;
  * The modifier calculats the value of &ltdocsToUpdate&gt; = foo.bar.baz (that is a collection) an returns
  * to the top level UpdateItem an UpdateContext containig { docsToUpdate = &ltdocsToUpdate&gt;, fieldToSet = 'name'}
  *
- * @author Luigi Dell'Aquila
+ * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
 public class UpdateContext {
   public Iterable  docsToUpdate;

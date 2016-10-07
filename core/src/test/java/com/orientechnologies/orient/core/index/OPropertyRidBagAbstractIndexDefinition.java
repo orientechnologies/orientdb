@@ -12,7 +12,7 @@ import org.junit.Test;
 import java.util.*;
 
 /**
- * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
+ * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 1/30/14
  */
 public abstract class OPropertyRidBagAbstractIndexDefinition {

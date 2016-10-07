@@ -5,7 +5,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import java.util.Optional;
 
 /**
- * @author Luigi Dell'Aquila
+ * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
 public abstract class AbstractExecutionStep implements OExecutionStepInternal {
 

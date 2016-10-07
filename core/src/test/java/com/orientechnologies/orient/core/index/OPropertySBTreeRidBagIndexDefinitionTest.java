@@ -6,7 +6,7 @@ import org.junit.After;
 import org.junit.Before;
 
 /**
- * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
+ * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 1/30/14
  */
 public class OPropertySBTreeRidBagIndexDefinitionTest extends OPropertyRidBagAbstractIndexDefinition {
