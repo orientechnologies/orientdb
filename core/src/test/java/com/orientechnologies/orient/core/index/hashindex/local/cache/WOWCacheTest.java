@@ -49,7 +49,9 @@ public class WOWCacheTest {
     if (buildDirectory == null)
       buildDirectory = ".";
 
-    storageLocal = (OLocalPaginatedStorage) Orient.instance().loadStorage("plocal:" + buildDirectory + "/WOWCacheTest");
+    storageLocal = (OLocalPaginatedStorage) Orient.instance().getEngine("plocal").createStorage(buildDirectory + "/WOWCacheTest",
+        null);
+//    storageLocal = (OLocalPaginatedStorage) Orient.instance().loadStorage("plocal:" + buildDirectory + "/WOWCacheTest");
     storageLocal.create(null);
 
     fileName = "wowCacheTest.tst";

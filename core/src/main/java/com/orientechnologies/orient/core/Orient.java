@@ -83,7 +83,6 @@ public class Orient extends OListenerManger<OOrientListener> {
 
   private final ConcurrentMap<String, OEngine>                                       engines                       = new ConcurrentHashMap<String, OEngine>();
   private final ConcurrentMap<String, OStorage>                                      storages                      = new ConcurrentHashMap<String, OStorage>();
-  private final ConcurrentHashMap<Integer, Boolean>                                  storageIds                    = new ConcurrentHashMap<Integer, Boolean>();
 
   private final Map<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY> dbLifecycleListeners          = new LinkedHashMap<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY>();
   private final OScriptManager                                                       scriptManager                 = new OScriptManager();
@@ -461,116 +460,9 @@ public class Orient extends OListenerManger<OOrientListener> {
     }
   }
 
-  public OStorage loadStorage(String iURL) {
-    if (iURL == null || iURL.length() == 0)
-      throw new IllegalArgumentException("URL missed");
-
-    if (iURL.endsWith("/"))
-      iURL = iURL.substring(0, iURL.length() - 1);
-
-    // SEARCH FOR ENGINE
-    int pos = iURL.indexOf(':');
-    if (pos <= 0)
-      throw new OConfigurationException(
-          "Error in database URL: the engine was not specified. Syntax is: " + URL_SYNTAX + ". URL was: " + iURL);
-
-    final String engineName = iURL.substring(0, pos);
-
-    engineLock.readLock().lock();
-    try {
-      final OEngine engine = engines.get(engineName.toLowerCase());
-
-      if (engine == null)
-        throw new OConfigurationException("Error on opening database: the engine '" + engineName + "' was not found. URL was: "
-            + iURL + ". Registered engines are: " + engines.keySet());
-
-      if (!engine.isRunning()) {
-        final List<String> knownEngines = new ArrayList<String>(engines.keySet());
-        if (!startEngine(engine))
-          throw new OConfigurationException("Error on opening database: the engine '" + engineName
-              + "' was unable to start. URL was: " + iURL + ". Registered engines was: " + knownEngines);
-      }
-
-      // SEARCH FOR DB-NAME
-      iURL = iURL.substring(pos + 1);
-
-      if (isWindowsOS()) {
-        // WINDOWS ONLY: REMOVE DOUBLE SLASHES NOT AS PREFIX (WINDOWS PATH COULD NEED STARTING FOR "\\". EXAMPLE: "\\mydrive\db").
-        // AT
-        // THIS LEVEL BACKSLASHES ARRIVES AS SLASHES
-        iURL = iURL.charAt(0) + iURL.substring(1).replace("//", "/");
-      } else
-        // REMOVE ANY //
-        iURL = iURL.replace("//", "/");
-
-      pos = iURL.indexOf('?');
-
-      Map<String, String> parameters = null;
-      String dbPath;
-      if (pos > 0) {
-        dbPath = iURL.substring(0, pos);
-        iURL = iURL.substring(pos + 1);
-
-        // PARSE PARAMETERS
-        parameters = new HashMap<String, String>();
-        String[] pairs = iURL.split("&");
-        String[] kv;
-        for (String pair : pairs) {
-          kv = pair.split("=");
-          if (kv.length < 2)
-            throw new OConfigurationException(
-                "Error on opening database: parameter has no value. Syntax is: " + URL_SYNTAX + ". URL was: " + iURL);
-          parameters.put(kv[0], kv[1]);
-        }
-      } else
-        dbPath = iURL;
-
-      if (registerDatabaseByPath) {
-        try {
-          dbPath = new File(dbPath).getCanonicalPath();
-        } catch (IOException e) {
-          // IGNORE IT
-        }
-      }
-
-      final String dbName = registerDatabaseByPath ? dbPath : engine.getNameFromPath(dbPath);
-
-      OStorage storage;
-      // SEARCH IF ALREADY USED
-      storage = storages.get(dbName);
-      if (storage == null) {
-        // NOT FOUND: CREATE IT
-
-        do {
-          storage = engine.createStorage(dbPath, parameters);
-        } while ((storage instanceof OIdentifiableStorage)
-            && storageIds.putIfAbsent(((OIdentifiableStorage) storage).getId(), Boolean.TRUE) != null);
-
-        final OStorage oldStorage = storages.putIfAbsent(dbName, storage);
-        if (oldStorage != null)
-          storage = oldStorage;
-
-        for (OOrientListener l : browseListeners())
-          l.onStorageRegistered(storage);
-      }
-
-      return storage;
-    } finally {
-      engineLock.readLock().unlock();
-    }
-  }
 
   public boolean isWindowsOS() {
     return os.contains("win");
-  }
-
-  public OStorage getStorage(final String dbName) {
-    engineLock.readLock().lock();
-    try {
-      return storages.get(dbName);
-    } finally {
-      engineLock.readLock().unlock();
-    }
   }
 
   protected void registerEngine(final OEngine iEngine) throws IllegalArgumentException {
@@ -928,7 +820,6 @@ public class Orient extends OListenerManger<OOrientListener> {
 
     @Override
     public void shutdown() throws Exception {
-      shutdownAllStorages();
 
       // SHUTDOWN ENGINES
       for (OEngine engine : engines.values())

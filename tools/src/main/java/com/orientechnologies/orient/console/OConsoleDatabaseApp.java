@@ -264,7 +264,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     if (currentDatabase != null) {
       message("\nDisconnecting from the database [" + currentDatabaseName + "]...");
 
-      final OStorage stg = Orient.instance().getStorage(currentDatabase.getURL());
+      final OStorage stg = currentDatabase.getStorage();
 
       currentDatabase.activateOnCurrentThread();
       if (!currentDatabase.isClosed())

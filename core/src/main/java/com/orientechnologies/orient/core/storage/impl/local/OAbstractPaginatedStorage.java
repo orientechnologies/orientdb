@@ -414,12 +414,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         // CLOSE THE DATABASE BY REMOVING THE CURRENT USER
         close(true, true);
 
-        try {
-          Orient.instance().unregisterStorage(this);
-        } catch (Exception e) {
-          OLogManager.instance().error(this, "Cannot unregister storage", e);
-        }
-
         if (writeAheadLog != null)
           writeAheadLog.delete();
 

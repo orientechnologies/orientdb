@@ -553,71 +553,14 @@ public class OServer {
     }
   }
 
-  public String getStoragePath(final String iName) {
-    if (iName == null)
-      throw new IllegalArgumentException("Storage path is null");
-
-    final String name = iName.indexOf(':') > -1 ? iName.substring(iName.indexOf(':') + 1) : iName;
-
-    final String dbName = Orient.isRegisterDatabaseByPath() ? getDatabaseDirectory() + name : name;
-    final String dbPath = Orient.isRegisterDatabaseByPath() ? dbName : getDatabaseDirectory() + name;
-
-    if (dbPath.contains(".."))
-      throw new IllegalArgumentException("Storage path is invalid because it contains '..'");
-
-    if (dbPath.contains("*"))
-      throw new IllegalArgumentException("Storage path is invalid because of the wildcard '*'");
-
-    if (dbPath.startsWith("/")) {
-      if (!dbPath.startsWith(getDatabaseDirectory()))
-        throw new IllegalArgumentException("Storage path is invalid because it points to an absolute directory");
-    }
-
-    final OStorage stg = Orient.instance().getStorage(dbName);
-    if (stg != null)
-      // ALREADY OPEN
-      return stg.getURL();
-
-    // SEARCH IN CONFIGURED PATHS
-    final OServerConfiguration configuration = serverCfg.getConfiguration();
-    String dbURL = configuration.getStoragePath(name);
-    if (dbURL == null) {
-      // SEARCH IN DEFAULT DATABASE DIRECTORY
-      if (new File(OIOUtils.getPathFromDatabaseName(dbPath) + "/database.ocf").exists())
-        dbURL = "plocal:" + dbPath;
-      else
-        throw new OConfigurationException(
-            "Database '" + name + "' is not configured on server (home=" + getDatabaseDirectory() + ")");
-    }
-
-    return dbURL;
-  }
-
   public Map<String, String> getAvailableStorageNames() {
-    final OServerConfiguration configuration = serverCfg.getConfiguration();
-
-    // SEARCH IN CONFIGURED PATHS
-    final Map<String, String> storages = new HashMap<String, String>();
-    if (configuration.storages != null && configuration.storages.length > 0)
-      for (OServerStorageConfiguration s : configuration.storages)
-        storages.put(OIOUtils.getDatabaseNameFromPath(s.name), s.path);
-
-    // SEARCH IN DEFAULT DATABASE DIRECTORY
-    final String rootDirectory = getDatabaseDirectory();
-    scanDatabaseDirectory(new File(rootDirectory), storages);
-
-    for (OStorage storage : Orient.instance().getStorages()) {
-      final String storageUrl = storage.getURL();
-      // TEST IT'S OF CURRENT SERVER INSTANCE BY CHECKING THE PATH
-      if (storage instanceof OAbstractPaginatedStorage && storage.exists() && !storages.containsValue(storageUrl)
-          && isStorageOfCurrentServerInstance(storage))
-        storages.put(OIOUtils.getDatabaseNameFromPath(storage.getName()), storageUrl);
+    Set<String> dbs = listDatabases();
+    Map<String, String> toSend = new HashMap<String, String>();
+    for (String dbName : dbs) {
+      toSend.put(dbName, dbName);
     }
 
-    if (storages != null)
-      storages.remove(OSystemDatabase.SYSTEM_DB_NAME);
-
-    return storages;
+    return toSend;
   }
 
   /**

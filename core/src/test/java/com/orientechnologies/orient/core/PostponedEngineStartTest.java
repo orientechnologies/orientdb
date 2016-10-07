@@ -139,7 +139,7 @@ public class PostponedEngineStartTest {
     OEngine engine = ORIENT.getEngineIfRunning(ENGINE2.getName());
     Assert.assertNull(engine);
 
-    final OStorage storage = ORIENT.loadStorage(ENGINE2.getName() + ":storage");
+    final OStorage storage = ENGINE2.createStorage(ENGINE2.getName() + ":storage", null);
     Assert.assertNotNull(storage);
 
     engine = ORIENT.getRunningEngine(ENGINE2.getName());

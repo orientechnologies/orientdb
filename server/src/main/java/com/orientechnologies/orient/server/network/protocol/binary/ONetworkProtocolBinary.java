@@ -2571,12 +2571,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   }
 
   protected void checkStorageExistence(final String iDatabaseName) {
-    for (OStorage stg : Orient.instance().getStorages()) {
-      if (!(stg instanceof OStorageProxy) && stg.getName().equalsIgnoreCase(iDatabaseName) && stg.exists())
-        throw new ODatabaseException("Database named '" + iDatabaseName + "' already exists: " + stg);
+    if (server.existsDatabase(iDatabaseName)) {
+      throw new ODatabaseException("Database named '" + iDatabaseName + "' already exists");
     }
-  }
-  
+  }  
   
   protected int deleteRecord(final ODatabaseDocument iDatabase, final ORID rid, final int version) {
     try {

@@ -56,8 +56,9 @@ public class ReadWriteCacheConcurrentTest {
     if (buildDirectory == null)
       buildDirectory = ".";
 
-    storageLocal = (OLocalPaginatedStorage) Orient.instance()
-        .loadStorage("plocal:" + buildDirectory + "/ReadWriteCacheConcurrentTest");
+    storageLocal = (OLocalPaginatedStorage) Orient.instance().getEngine("plocal")
+        .createStorage(buildDirectory + "/ReadWriteCacheConcurrentTest", null);
+    //loadStorage("plocal:" + buildDirectory + "/ReadWriteCacheConcurrentTest");
     storageLocal.create(null);
 
     prepareFilesForTest(FILE_COUNT);

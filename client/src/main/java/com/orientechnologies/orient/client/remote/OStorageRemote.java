@@ -448,7 +448,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       super.close(iForce, onDelete);
       status = STATUS.CLOSED;
 
-      Orient.instance().unregisterStorage(this);
     } finally {
       stateLock.releaseWriteLock();
     }

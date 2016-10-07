@@ -20,11 +20,16 @@
  */
 package com.orientechnologies.orient.core.db;
 
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
+import static org.junit.Assert.assertEquals;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import org.junit.Ignore;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
 
 public class OrientDBConfigTest {
 
@@ -36,6 +41,15 @@ public class OrientDBConfigTest {
     assertEquals(settings.getConfigurations().getValue(OGlobalConfiguration.DB_POOL_MAX), 20);
     assertEquals(settings.getAttributes().get(ATTRIBUTES.VALIDATION), true);
 
+  }
+
+  @Test
+  @Ignore
+  public void testBuildSettingsFromMap() {
+    Map<String, Object> configs = new HashMap<>();
+    configs.put(OGlobalConfiguration.DB_POOL_MAX.getKey(), 20);
+    OrientDBConfig settings = OrientDBConfig.builder().fromMap(configs).build();
+    assertEquals(settings.getConfigurations().getValue(OGlobalConfiguration.DB_POOL_MAX), 20);
   }
 
 }
