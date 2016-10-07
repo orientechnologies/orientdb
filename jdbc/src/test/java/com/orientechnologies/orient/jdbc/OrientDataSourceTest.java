@@ -39,7 +39,6 @@ public class OrientDataSourceTest extends OrientJdbcBaseTest {
 
   }
 
-
   @Test
   public void shouldConnectWithPoolSizeOne() throws SQLException {
 
@@ -112,7 +111,8 @@ public class OrientDataSourceTest extends OrientJdbcBaseTest {
       });
     };
     //spawn 20 threads
-    List<CompletableFuture<Void>> futures = IntStream.range(0, 19).boxed().map(i -> CompletableFuture.runAsync(dbClient))
+    List<CompletableFuture<Void>> futures = IntStream.range(0, 19).boxed()
+        .map(i -> CompletableFuture.runAsync(dbClient))
         .collect(Collectors.toList());
 
     futures.forEach(cf -> cf.join());

@@ -53,7 +53,7 @@ public abstract class OrientJdbcBaseTest {
     db.activateOnCurrentThread();
     db.drop();
 
-    //should reset the underlying pool becasuse the db is dropped
+    //should reset the underlying pool because the db is dropped
     OrientJdbcConnection.POOL_FACTORY.reset();
   }
 }

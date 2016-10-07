@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * 	http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -115,8 +115,13 @@ public class OrientJdbcResultSet implements ResultSet {
 
         final OSelectStatement select = osql.SelectStatement();
         if (select.getProjection() != null) {
-          fields.addAll(select.getProjection().getItems().stream().filter(i -> !i.isAggregate()).filter(i -> !i.isAll())
-              .map(i -> i.getProjectionAliasAsString()).collect(Collectors.toList()));
+          fields.addAll(select.getProjection()
+              .getItems()
+              .stream()
+              .filter(i -> !i.isAggregate())
+              .filter(i -> !i.isAll())
+              .map(i -> i.getProjectionAliasAsString())
+              .collect(Collectors.toList()));
         }
 
         if (fields.size() == 1 && fields.contains("*")) {
@@ -551,6 +556,12 @@ public class OrientJdbcResultSet implements ResultSet {
   }
 
   public Object getObject(String columnLabel) throws SQLException {
+    if ("@rid".equals(columnLabel) || "rid".equals(columnLabel)) {
+      return ((ODocument) document.field("rid")).getIdentity().toString();
+    }
+    if ("@class".equals(columnLabel) || "class".equals(columnLabel))
+      return ((ODocument) document.field("rid")).getClassName();
+
     try {
       Object value = document.field(columnLabel);
       if (value == null) {
@@ -637,10 +648,16 @@ public class OrientJdbcResultSet implements ResultSet {
 
   public String getString(String columnLabel) throws SQLException {
 
-    if ("@rid".equals(columnLabel))
-      return document.getIdentity().toString();
-    if ("@class".equals(columnLabel))
-      return document.getClassName();
+    if ("@rid".equals(columnLabel) || "rid".equals(columnLabel)) {
+      return ((ODocument) document.field("rid")).getIdentity().toString();
+    }
+
+    if ("@class".equals(columnLabel) || "class".equals(columnLabel)) {
+      if (document.getClassName() != null)
+        return document.getClassName();
+      return ((ODocument) document.field("rid")).getClassName();
+    }
+
     try {
       return document.field(columnLabel, OType.STRING);
     } catch (Exception e) {
