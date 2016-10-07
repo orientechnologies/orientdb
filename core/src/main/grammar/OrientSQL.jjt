@@ -354,6 +354,8 @@ TOKEN:
 	|
 	< SERVER: ( "S" | "s") ( "E" | "e") ( "R" | "r") ( "V" | "v") ( "E" | "e") ( "R" | "r") >
 	|
+	< SYNC: ( "S" | "s") ( "Y" | "y") ( "N" | "n") ( "C" | "c") >
+	|
 	< THIS: "@" ( ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "s" | "S" ) ) >
 	|
 	< RECORD_ATTRIBUTE: <RID_ATTR> | <CLASS_ATTR> | <VERSION_ATTR> | <SIZE_ATTR> | <TYPE_ATTR> | <RAW_ATTR> | <RID_ID_ATTR> | <RID_POS_ATTR> | <FIELDS_ATTR> >
@@ -809,6 +811,8 @@ OIdentifier Identifier():
     |
     token = <SERVER>
     |
+    token = <SYNC>
+    |
     quotedToken = <QUOTED_IDENTIFIER>
 ) {
 
@@ -1016,6 +1020,9 @@ OStatement StatementInternal():
                 |
                 LOOKAHEAD(2)
                 result = HaRemoveServerStatement()
+                |
+                LOOKAHEAD(2)
+                result = HaSyncDatabaseStatement()
             )
         )
         |
@@ -4599,6 +4606,15 @@ OHaRemoveServerStatement HaRemoveServerStatement():
     (
         <HA> <REMOVE> <SERVER>
         jjtThis.serverName = Identifier()
+    )
+    { return jjtThis; }
+}
+
+OHaSyncDatabaseStatement HaSyncDatabaseStatement():
+{}
+{
+    (
+        <HA> <SYNC> <DATABASE>
     )
     { return jjtThis; }
 }
