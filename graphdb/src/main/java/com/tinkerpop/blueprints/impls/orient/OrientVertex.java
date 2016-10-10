@@ -570,13 +570,16 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
     if (oldRecord == null)
       graph.throwRecordNotFoundException(getIdentity(), "The vertex " + getIdentity() + " has been deleted");
 
-    // DELETE THE OLD RECORD FIRST TO AVOID ISSUES WITH UNIQUE CONSTRAINTS
-    oldRecord.delete();
 
     final ODocument doc = ((ODocument) rawElement.getRecord()).copy();
 
     final Iterable<Edge> outEdges = getEdges(Direction.OUT);
     final Iterable<Edge> inEdges = getEdges(Direction.IN);
+
+    // DELETE THE OLD RECORD FIRST TO AVOID ISSUES WITH UNIQUE CONSTRAINTS
+    removeEdgeFields(oldRecord);
+    oldRecord.delete();
+
 
     if (iClassName != null)
       // OVERWRITE CLASS
@@ -636,6 +639,15 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
     doc.save();
 
     return newIdentity;
+  }
+
+  private void removeEdgeFields(ORecord oldRecord) {
+    ODocument doc = (ODocument) oldRecord;
+    for (String field : doc.fieldNames()) {
+      if (field.equalsIgnoreCase("out") || field.equalsIgnoreCase("in")||field.startsWith("out_") || field.startsWith("in_")||field.startsWith("OUT_") || field.startsWith("IN_")) {
+        doc.removeField(field);
+      }
+    }
   }
 
   /**
