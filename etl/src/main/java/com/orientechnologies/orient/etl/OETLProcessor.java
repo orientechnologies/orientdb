@@ -1,6 +1,6 @@
 /*
  *
- *  * Copyright 2010-2014 OrientDB LTD (info(-at-)orientdb.com)
+ *  * Copyright 2010-2016 OrientDB LTD (info(-at-)orientdb.com)
  *  *
  *  * Licensed under the Apache License, Version 2.0 (the "License");
  *  * you may not use this file except in compliance with the License.
@@ -35,7 +35,11 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 import java.util.List;
 import java.util.TimerTask;
-import java.util.concurrent.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -186,9 +190,12 @@ public class OETLProcessor {
 
       final AtomicLong counter = new AtomicLong();
 
-      List<CompletableFuture<Void>> futures = IntStream.range(0, workers).boxed().map(i -> CompletableFuture
-          .runAsync(new OETLPipelineWorker(queue, new OETLPipeline(this, transformers, loader, logLevel, maxRetries, haltOnError)),
-              executor)).collect(Collectors.toList());
+      List<CompletableFuture<Void>> futures = IntStream.range(0, workers)
+          .boxed()
+          .map(i -> CompletableFuture.runAsync(
+              new OETLPipelineWorker(queue, new OETLPipeline(this, transformers, loader, logLevel, maxRetries, haltOnError)),
+              executor))
+          .collect(Collectors.toList());
 
       futures.add(CompletableFuture.runAsync(new OETLExtractorWorker(this, queue, counter), executor));
 

@@ -1,6 +1,6 @@
 /*
  *
- *  * Copyright 2010-2014 OrientDB LTD (info(-at-)orientdb.com)
+ *  * Copyright 2010-2016 OrientDB LTD (info(-at-)orientdb.com)
  *  *
  *  * Licensed under the Apache License, Version 2.0 (the "License");
  *  * you may not use this file except in compliance with the License.
@@ -28,8 +28,8 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 
 public class OVertexTransformer extends OAbstractTransformer {
   private String vertexClass;
-  private boolean skipDuplicates = false;
   private String clusterName;
+  private boolean skipDuplicates = false;
 
   @Override
   public ODocument getConfiguration() {
@@ -53,9 +53,10 @@ public class OVertexTransformer extends OAbstractTransformer {
   @Override
   public void begin() {
     if (vertexClass != null) {
-      final OClass cls = databaseProvider.getGraphDatabase().getVertexType(vertexClass);
+      OrientBaseGraph graph = databaseProvider.getGraphDatabase();
+      final OClass cls = graph.getVertexType(vertexClass);
       if (cls == null)
-        databaseProvider.getGraphDatabase().createVertexType(vertexClass);
+        graph.createVertexType(vertexClass);
     }
   }
 
@@ -78,7 +79,7 @@ public class OVertexTransformer extends OAbstractTransformer {
       try {
 
         v.getRecord().setClassName(vertexClass);
-        v.save(clusterName);
+        //        v.save(clusterName);
       } catch (ORecordDuplicatedException e) {
         if (skipDuplicates) {
           return null;

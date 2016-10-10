@@ -1,6 +1,6 @@
 /*
  *
- *  * Copyright 2010-2014 OrientDB LTD (info(-at-)orientdb.com)
+ *  * Copyright 2010-2016 OrientDB LTD (info(-at-)orientdb.com)
  *  *
  *  * Licensed under the Apache License, Version 2.0 (the "License");
  *  * you may not use this file except in compliance with the License.
@@ -22,7 +22,8 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLProcessHaltedException;
-import com.orientechnologies.orient.etl.OETLProcessor;
+
+import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.*;
 
 /**
  * Merges two records. Useful when a record needs to be updated rather than created.
@@ -47,18 +48,18 @@ public class OMergeTransformer extends OAbstractLookupTransformer {
     Object joinValue = ((ODocument) ((OIdentifiable) input).getRecord()).field(joinFieldName);
     final Object result = lookup(joinValue, false);
 
-    log(OETLProcessor.LOG_LEVELS.DEBUG, "joinValue=%s, lookupResult=%s", joinValue, result);
+    log(DEBUG, "joinValue=%s, lookupResult=%s", joinValue, result);
 
     if (result != null) {
       if (result instanceof OIdentifiable) {
         ((ODocument) result).merge((ODocument) input, true, false);
-        log(OETLProcessor.LOG_LEVELS.DEBUG, "merged record %s with found record=%s", result, input);
+        log(DEBUG, "merged record %s with found record=%s", result, input);
         return result;
 
       } else if (OMultiValue.isMultiValue(result) && OMultiValue.getSize(result) == 1) {
         final Object firstValue = OMultiValue.getFirstValue(result);
         ((ODocument) firstValue).merge((ODocument) ((OIdentifiable) input).getRecord(), true, false);
-        log(OETLProcessor.LOG_LEVELS.DEBUG, "merged record %s with found record=%s", firstValue, input);
+        log(DEBUG, "merged record %s with found record=%s", firstValue, input);
         return firstValue;
       } else if (OMultiValue.isMultiValue(result) && OMultiValue.getSize(result) > 1) {
         throw new OETLProcessHaltedException(
@@ -66,18 +67,18 @@ public class OMergeTransformer extends OAbstractLookupTransformer {
       }
     } else {
 
-      log(OETLProcessor.LOG_LEVELS.DEBUG, "unresolved link!!! %s", OMultiValue.getSize(result));
+      log(DEBUG, "unresolved link!!! %s", OMultiValue.getSize(result));
       // APPLY THE STRATEGY DEFINED IN unresolvedLinkAction
       switch (unresolvedLinkAction) {
       case NOTHING:
         break;
       case ERROR:
         processor.getStats().incrementErrors();
-        log(OETLProcessor.LOG_LEVELS.ERROR, "%s: ERROR Cannot resolve join for value '%s'", getName(), joinValue);
+        log(ERROR, "%s: ERROR Cannot resolve join for value '%s'", getName(), joinValue);
         break;
       case WARNING:
         processor.getStats().incrementWarnings();
-        log(OETLProcessor.LOG_LEVELS.INFO, "%s: WARN Cannot resolve join for value '%s'", getName(), joinValue);
+        log(INFO, "%s: WARN Cannot resolve join for value '%s'", getName(), joinValue);
         break;
       case SKIP:
         return null;

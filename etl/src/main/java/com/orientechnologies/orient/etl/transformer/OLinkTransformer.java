@@ -1,6 +1,6 @@
 /*
  *
- *  * Copyright 2010-2014 OrientDB LTD (info(-at-)orientdb.com)
+ *  * Copyright 2010-2016 OrientDB LTD (info(-at-)orientdb.com)
  *  *
  *  * Licensed under the Apache License, Version 2.0 (the "License");
  *  * you may not use this file except in compliance with the License.
@@ -25,9 +25,14 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLProcessHaltedException;
-import com.orientechnologies.orient.etl.OETLProcessor;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.*;
 
 /**
  * Converts a JOIN in LINK
@@ -67,7 +72,7 @@ public class OLinkTransformer extends OAbstractLookupTransformer {
   @Override
   public Object executeTransform(final Object input) {
     if (!(input instanceof OIdentifiable)) {
-      log(OETLProcessor.LOG_LEVELS.DEBUG, "skip because input value is not a record, but rather an instance of class: %s",
+      log(DEBUG, "skip because input value is not a record, but rather an instance of class: %s",
           input.getClass());
       return null;
     }
@@ -92,7 +97,7 @@ public class OLinkTransformer extends OAbstractLookupTransformer {
     } else
       result = lookup(joinRuntimeValue, true);
 
-    log(OETLProcessor.LOG_LEVELS.DEBUG, "joinRuntimeValue=%s, lookupResult=%s", joinRuntimeValue, result);
+    log(DEBUG, "joinRuntimeValue=%s, lookupResult=%s", joinRuntimeValue, result);
 
     if (result != null) {
       if (linkFieldType != null) {
@@ -129,7 +134,7 @@ public class OLinkTransformer extends OAbstractLookupTransformer {
             linkedDoc.field(lookupParts[1], joinRuntimeValue);
             linkedDoc.save();
 
-            log(OETLProcessor.LOG_LEVELS.DEBUG, "created new document=%s", linkedDoc.getRecord());
+            log(DEBUG, "created new document=%s", linkedDoc.getRecord());
 
             result = linkedDoc;
           } else
@@ -137,11 +142,11 @@ public class OLinkTransformer extends OAbstractLookupTransformer {
           break;
         case ERROR:
           processor.getStats().incrementErrors();
-          log(OETLProcessor.LOG_LEVELS.ERROR, "%s: ERROR Cannot resolve join for value '%s'", getName(), joinRuntimeValue);
+          log(ERROR, "%s: ERROR Cannot resolve join for value '%s'", getName(), joinRuntimeValue);
           break;
         case WARNING:
           processor.getStats().incrementWarnings();
-          log(OETLProcessor.LOG_LEVELS.INFO, "%s: WARN Cannot resolve join for value '%s'", getName(), joinRuntimeValue);
+          log(INFO, "%s: WARN Cannot resolve join for value '%s'", getName(), joinRuntimeValue);
           break;
         case SKIP:
           return null;
@@ -154,7 +159,7 @@ public class OLinkTransformer extends OAbstractLookupTransformer {
     // SET THE TRANSFORMED FIELD BACK
     doc.field(linkFieldName, result);
 
-    log(OETLProcessor.LOG_LEVELS.DEBUG, "set %s=%s in document=%s", linkFieldName, result, input);
+    log(DEBUG, "set %s=%s in document=%s", linkFieldName, result, input);
 
     return input;
   }

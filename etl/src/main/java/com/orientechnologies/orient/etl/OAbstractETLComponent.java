@@ -1,6 +1,6 @@
 /*
  *
- *  * Copyright 2010-2014 OrientDB LTD (info(-at-)orientdb.com)
+ *  * Copyright 2010-2016 OrientDB LTD (info(-at-)orientdb.com)
  *  *
  *  * Licensed under the Apache License, Version 2.0 (the "License");
  *  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS;
+import sun.security.x509.GeneralName;
 
 import static com.orientechnologies.common.parser.OSystemVariableResolver.*;
 

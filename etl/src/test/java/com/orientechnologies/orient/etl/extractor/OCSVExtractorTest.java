@@ -412,7 +412,6 @@ public class OCSVExtractorTest extends OETLBaseTest {
     assertThat(res).hasSize(1);
     ODocument doc = res.get(0);
 
-    System.out.println(doc.toJSON());
     assertThat(doc.<Date>field("date")).isEqualTo("2008-04-30");
 
     //DATETIME: java.util.Date from DB,

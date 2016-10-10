@@ -1,6 +1,6 @@
 /*
  *
- *  * Copyright 2010-2014 OrientDB LTD (info(-at-)orientdb.com)
+ *  * Copyright 2010-2016 OrientDB LTD (info(-at-)orientdb.com)
  *  *
  *  * Licensed under the Apache License, Version 2.0 (the "License");
  *  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ public class OXmlExtractorTest extends OETLBaseTest {
     assertEquals("Maserati", maserati.field("name"));
     assertEquals("black", maserati.field("color"));
 
-    System.out.println(doc.toJSON("prettyPrint"));
+//    System.out.println(doc.toJSON("prettyPrint"));
   }
 
   @Test
@@ -75,8 +75,8 @@ public class OXmlExtractorTest extends OETLBaseTest {
     final List<ODocument> cds = getResult();
     final Iterator<ODocument> it = cds.iterator();
 
-    for (int i = 0; i<getResult().size(); ++i)
-      System.out.println(cds.get(i).toJSON("prettyPrint"));
+//    for (int i = 0; i<getResult().size(); ++i)
+//      System.out.println(cds.get(i).toJSON("prettyPrint"));
 
     final ODocument doc1 = it.next();
     assertNotNull(doc1);

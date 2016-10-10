@@ -1,6 +1,6 @@
 /*
  *
- *  * Copyright 2010-2014 OrientDB LTD (info(-at-)orientdb.com)
+ *  * Copyright 2010-2016 OrientDB LTD (info(-at-)orientdb.com)
  *  *
  *  * Licensed under the Apache License, Version 2.0 (the "License");
  *  * you may not use this file except in compliance with the License.
@@ -88,7 +88,7 @@ public class OFieldTransformerTest extends OETLBaseTest {
     OSchema schema = graph.getRawGraph().getMetadata().getSchema();
     schema.reload();
 
-    schema.getClasses().forEach(c -> System.out.println(c.toString()));
+//    schema.getClasses().forEach(c -> System.out.println(c.toString()));
 
     assertThat(schema.getClass("Test")).isNotNull();
     assertEquals(1, graph.countVertices("Test"));

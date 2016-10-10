@@ -1,6 +1,6 @@
 /*
  *
- *  * Copyright 2010-2014 OrientDB LTD (info(-at-)orientdb.com)
+ *  * Copyright 2010-2016 OrientDB LTD (info(-at-)orientdb.com)
  *  *
  *  * Licensed under the Apache License, Version 2.0 (the "License");
  *  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.etl.OETLDatabaseProvider;
 import com.orientechnologies.orient.etl.OETLPipeline;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
@@ -54,29 +55,28 @@ import static com.orientechnologies.orient.etl.loader.OOrientDBLoader.DB_TYPE.*;
 public class OOrientDBLoader extends OAbstractLoader implements OLoader {
 
   private static String NOT_DEF = "not_defined";
-  protected String          clusterName;
-  protected String          className;
-  protected List<ODocument> classes;
-  protected List<ODocument> indexes;
-  protected OClass          schemaClass;
-  protected String          dbURL;
-  protected String dbUser     = "admin";
-  protected String dbPassword = "admin";
-
-  protected String serverUser     = NOT_DEF;
-  protected String serverPassword = NOT_DEF;
-
-  protected boolean    dbAutoCreate               = true;
-  protected boolean    dbAutoDropIfExists         = false;
-  protected boolean    dbAutoCreateProperties     = false;
-  protected boolean    useLightweightEdges        = false;
-  protected boolean    standardElementConstraints = true;
-  protected boolean    tx                         = false;
-  protected int        batchCommitSize            = 0;
-  protected AtomicLong batchCounter               = new AtomicLong(0);
-  protected DB_TYPE    dbType                     = DOCUMENT;
-  protected boolean    wal                        = true;
-  protected boolean    txUseLog                   = false;
+  private String          clusterName;
+  private String          className;
+  private List<ODocument> classes;
+  private List<ODocument> indexes;
+  private OClass          schemaClass;
+  private String          dbURL;
+  private String     dbUser                     = "admin";
+  private String     dbPassword                 = "admin";
+  private String     serverUser                 = NOT_DEF;
+  private String     serverPassword             = NOT_DEF;
+  private boolean    dbAutoCreate               = true;
+  private boolean    dbAutoDropIfExists         = false;
+  private boolean    dbAutoCreateProperties     = false;
+  private boolean    useLightweightEdges        = false;
+  private boolean    standardElementConstraints = true;
+  private boolean    tx                         = false;
+  private int        batchCommitSize            = 0;
+  private AtomicLong batchCounter               = new AtomicLong(0);
+  private DB_TYPE    dbType                     = DOCUMENT;
+  private boolean    wal                        = true;
+  private boolean    txUseLog                   = false;
+  private boolean    skipDuplicates             = false;
 
   public OOrientDBLoader() {
   }
@@ -104,8 +104,16 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
 
       final OrientVertex v = (OrientVertex) input;
 
-      v.save(clusterName);
+      try {
+        v.save(clusterName);
+      } catch (ORecordDuplicatedException e) {
+        if (skipDuplicates) {
+        } else {
+          throw e;
+        }
+      } finally {
 
+      }
     } else if (input instanceof ODocument) {
 
       final ODocument doc = (ODocument) input;
@@ -126,8 +134,9 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
 
     progress.incrementAndGet();
 
-    // DO BATCH COMMIT
-    if (batchCommitSize > 0 && batchCounter.get() > batchCommitSize) {
+    // DO BATCH COMMIT if on TX
+
+    if (tx && batchCommitSize > 0 && batchCounter.get() > batchCommitSize) {
       synchronized (this) {
         if (batchCommitSize > 0 && batchCounter.get() > batchCommitSize) {
 
@@ -250,11 +259,11 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
 
   private OClass getOrCreateClassOnGraph(ODatabaseDocument db, String iClassName, String iSuperClass) {
     OClass cls;// GRAPH
-    final OrientBaseGraph graphDatabase = new OrientGraphNoTx(db.getURL());
     OSchema schema = db.getMetadata().getSchema();
     cls = schema.getClass(iClassName);
 
     if (cls == null) {
+      final OrientBaseGraph graphDatabase = new OrientGraphNoTx(db.getURL());
       if (iSuperClass != null) {
         final OClass superClass = schema.getClass(iSuperClass);
         if (superClass == null)
@@ -274,6 +283,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
         cls = graphDatabase.createVertexType(iClassName);
         log(DEBUG, "- OrientDBLoader: created vertex class '%s'", iClassName);
       }
+      graphDatabase.shutdown();
     }
     return cls;
   }
@@ -377,6 +387,9 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
       useLightweightEdges = conf.<Boolean>field("useLightweightEdges");
     if (conf.containsField("standardElementConstraints"))
       standardElementConstraints = conf.<Boolean>field("standardElementConstraints");
+
+    if (conf.containsField("skipDuplicates"))
+      skipDuplicates = conf.field("skipDuplicates");
 
     clusterName = conf.field("cluster");
     className = conf.field("class");
