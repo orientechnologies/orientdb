@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.jdbc;
 
+import com.orientechnologies.orient.core.id.ORecordId;
 import org.junit.Test;
 
 import java.math.BigDecimal;
@@ -104,7 +105,8 @@ public class OrientJdbcResultSetMetaDataTest extends OrientJdbcBaseTest {
     assertThat(metaData.getColumnCount()).isEqualTo(7);
 
     assertThat(metaData.getColumnName(1)).isEqualTo("rid");
-    assertThat(rs.getString(1)).isEqualTo("#25:0");
+    assertThat(new ORecordId(rs.getString(1)).isPersistent()).isEqualTo(true);
+
     assertThat(rs.getObject(1)).isInstanceOf(String.class);
 
     assertThat(metaData.getColumnName(2)).isEqualTo("class");
