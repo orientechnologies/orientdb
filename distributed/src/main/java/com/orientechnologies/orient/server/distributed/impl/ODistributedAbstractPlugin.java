@@ -1196,7 +1196,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   }
 
   protected void backupCurrentDatabase(final String iDatabaseName) {
-    Orient.instance().unregisterStorageByName(iDatabaseName);
+    serverInstance.getDatabases().forceDatabaseClose(iDatabaseName);
 
     // MOVE DIRECTORY TO ../backup/databases/<db-name>
     final String backupDirectory = OGlobalConfiguration.DISTRIBUTED_BACKUP_DIRECTORY.getValueAsString();

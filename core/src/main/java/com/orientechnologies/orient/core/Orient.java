@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.core;
 
-import java.io.File;
-import java.io.IOException;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -28,13 +26,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.Timer;
@@ -51,7 +47,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
@@ -67,11 +62,9 @@ import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseThreadLocalFactory;
 import com.orientechnologies.orient.core.db.OEmbeddedDBFactory;
 import com.orientechnologies.orient.core.engine.OEngine;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.ORecordFactoryManager;
 import com.orientechnologies.orient.core.security.OSecuritySystem;
 import com.orientechnologies.orient.core.shutdown.OShutdownHandler;
-import com.orientechnologies.orient.core.storage.OIdentifiableStorage;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 public class Orient extends OListenerManger<OOrientListener> {
@@ -82,7 +75,6 @@ public class Orient extends OListenerManger<OOrientListener> {
   private static volatile boolean                                                    registerDatabaseByPath        = false;
 
   private final ConcurrentMap<String, OEngine>                                       engines                       = new ConcurrentHashMap<String, OEngine>();
-  private final ConcurrentMap<String, OStorage>                                      storages                      = new ConcurrentHashMap<String, OStorage>();
 
   private final Map<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY> dbLifecycleListeners          = new LinkedHashMap<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY>();
   private final OScriptManager                                                       scriptManager                 = new OScriptManager();
@@ -397,29 +389,6 @@ public class Orient extends OListenerManger<OOrientListener> {
     }
   }
 
-  public void closeAllStorages() {
-    shutdownAllStorages();
-  }
-
-  private void shutdownAllStorages() {
-    engineLock.writeLock().lock();
-    try {
-      // CLOSE ALL THE STORAGES
-      final List<OStorage> storagesCopy = new ArrayList<OStorage>(storages.values());
-      for (OStorage stg : storagesCopy) {
-        try {
-          OLogManager.instance().info(this, "- shutdown storage: " + stg.getName() + "...");
-          stg.shutdown();
-        } catch (Throwable e) {
-          OLogManager.instance().warn(this, "-- error on shutdown storage", e);
-        }
-      }
-      storages.clear();
-    } finally {
-      engineLock.writeLock().unlock();
-    }
-  }
-
   public boolean isActive() {
     return active;
   }
@@ -540,56 +509,12 @@ public class Orient extends OListenerManger<OOrientListener> {
     }
   }
 
-  public void unregisterStorageByName(final String name) {
-    final String dbName = registerDatabaseByPath ? name : OIOUtils.getRelativePathIfAny(name, null);
-    final OStorage stg = storages.get(dbName);
-    unregisterStorage(stg);
-  }
-
-  public void unregisterStorage(final OStorage storage) {
-    if (!active)
-      // SHUTDOWNING OR NOT ACTIVE: RETURN
-      return;
-
-    if (storage == null)
-      return;
-
-    engineLock.writeLock().lock();
-    try {
-      // UNREGISTER ALL THE LISTENER ONE BY ONE AVOIDING SELF-RECURSION BY REMOVING FROM THE LIST
-      final Iterable<OOrientListener> listenerCopy = getListenersCopy();
-      for (final OOrientListener l : listenerCopy) {
-        unregisterListener(l);
-        l.onStorageUnregistered(storage);
-      }
-
-      final List<String> storagesToRemove = new ArrayList<String>();
-
-      for (Entry<String, OStorage> s : storages.entrySet()) {
-        if (s.getValue().equals(storage))
-          storagesToRemove.add(s.getKey());
-      }
-
-      for (String dbName : storagesToRemove)
-        storages.remove(dbName);
-
-      // UNREGISTER STORAGE FROM ENGINES IN CASE IS CACHED
-      for (OEngine engine : engines.values()) {
-        engine.removeStorage(storage);
-      }
-
-    } finally {
-      engineLock.writeLock().unlock();
-    }
-  }
-
   public Collection<OStorage> getStorages() {
-    engineLock.readLock().lock();
-    try {
-      return new ArrayList<OStorage>(storages.values());
-    } finally {
-      engineLock.readLock().unlock();
+    List<OStorage> storages = new ArrayList<>();
+    for (OEmbeddedDBFactory factory : factories) {
+      storages.addAll(factory.getStorages());
     }
+    return storages;
   }
 
   /**

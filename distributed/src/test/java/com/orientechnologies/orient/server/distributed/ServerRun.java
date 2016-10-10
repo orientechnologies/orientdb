@@ -162,19 +162,11 @@ public class ServerRun {
   }
 
   public void closeStorages() {
-    for (OStorage s : Orient.instance().getStorages()) {
-      if (s instanceof OLocalPaginatedStorage && ((OLocalPaginatedStorage) s).getStoragePath().startsWith(getDatabasePath(""))) {
-        s.close(true, false);
-      }
-    }
+    ODatabaseDocumentTx.closeAll();
   }
 
   public void deleteStorages() {
-    for (OStorage s : Orient.instance().getStorages()) {
-      if (s instanceof OLocalPaginatedStorage && ((OLocalPaginatedStorage) s).getStoragePath().startsWith(getDatabasePath(""))) {
-        s.close(true, true);
-      }
-    }
+    ODatabaseDocumentTx.closeAll();
   }
 
   protected String getServerHome() {

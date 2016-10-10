@@ -19,15 +19,6 @@
  */
 package com.orientechnologies.orient.server;
 
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
-import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
-import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
-import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
-
 import java.io.IOException;
 import java.io.StringWriter;
 import java.text.DateFormat;
@@ -35,6 +26,14 @@ import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
+import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
+import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
 
 /**
  * Returns information about the server.
@@ -154,8 +153,8 @@ public class OServerInfo {
 
   public static void getStorages(final OServer server, final OJSONWriter json) throws IOException {
     json.beginCollection(1, true, "storages");
-    Collection<OStorage> storages = Orient.instance().getStorages();
-    for (OStorage s : storages) {
+    Collection<OAbstractPaginatedStorage> storages = server.getDatabases().getStorages();
+    for (OAbstractPaginatedStorage s : storages) {
       json.beginObject(2);
       writeField(json, 2, "name", s.getName());
       writeField(json, 2, "type", s.getClass().getSimpleName());

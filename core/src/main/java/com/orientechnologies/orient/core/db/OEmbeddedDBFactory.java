@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.db;
 import java.io.File;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -103,7 +104,7 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
     try {
       config = solveConfig(config);
       OAbstractPaginatedStorage storage = getStorage(name);
-      //THIS OPEN THE STORAGE ONLY THE FIRST TIME
+      // THIS OPEN THE STORAGE ONLY THE FIRST TIME
       storage.open(config.getConfigurations());
       final ODatabaseDocumentEmbedded embedded = new ODatabaseDocumentEmbedded(storage);
       embedded.internalOpen(user, password, config);
@@ -181,7 +182,8 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
       throw new OStorageExistsException("Cannot create new storage '" + name + "' because it already exists");
   }
 
-  public synchronized void restore(String name, InputStream in, Map<String, Object> options, Callable<Object> callable, OCommandOutputListener iListener) {
+  public synchronized void restore(String name, InputStream in, Map<String, Object> options, Callable<Object> callable,
+      OCommandOutputListener iListener) {
     try {
       OAbstractPaginatedStorage storage = getStorage(name);
       storage.restore(in, options, callable, iListener);
@@ -190,7 +192,7 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
       throw OException.wrapException(new ODatabaseException("Cannot create database '" + name + "'"), e);
     }
   }
-  
+
   private void internalCreate(OrientDBConfig config, OAbstractPaginatedStorage storage) {
     storage.create(config.getConfigurations());
     ORecordSerializer serializer = ORecordSerializerFactory.instance().getDefaultRecordSerializer();
@@ -319,6 +321,17 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
     if (shutdownThread != null) {
       Runtime.getRuntime().removeShutdownHook(shutdownThread);
       shutdownThread = null;
+    }
+  }
+
+  public Collection<OAbstractPaginatedStorage> getStorages() {
+    return storages.values();
+  }
+
+  public synchronized void forceDatabaseClose(String iDatabaseName) {
+    OAbstractPaginatedStorage storage = storages.remove(iDatabaseName);
+    if (storage != null) {
+      storage.close();
     }
   }
 
