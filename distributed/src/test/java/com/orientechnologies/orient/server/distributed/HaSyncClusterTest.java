@@ -40,7 +40,7 @@ import java.util.concurrent.Future;
  */
 public class HaSyncClusterTest extends AbstractServerClusterTest {
   private final static int SERVERS         = 2;
-  public static final int  NUM_RECORS      = 1000;
+  public static final int  NUM_RECORDS     = 1000;
 
   ExecutorService          executorService = Executors.newSingleThreadExecutor();
 
@@ -48,7 +48,7 @@ public class HaSyncClusterTest extends AbstractServerClusterTest {
     return "HaSyncClusterTest";
   }
 
-//  @Test
+  // @Test
   public void test() throws Exception {
     init(SERVERS);
     prepare(false);
@@ -69,7 +69,7 @@ public class HaSyncClusterTest extends AbstractServerClusterTest {
 
       Future<Long> future = invokeSyncCluster(localNodeName, serverInstance.get(1));
 
-      for (int i = 0; i < NUM_RECORS; i++) {
+      for (int i = 0; i < NUM_RECORDS; i++) {
 
         ODocument doc = new ODocument("Person");
         doc.field("name", "person" + i);
@@ -135,12 +135,12 @@ public class HaSyncClusterTest extends AbstractServerClusterTest {
               }
               long processed = messageService.getProcessedRequests() - heartbeat - deploy_cluster;
 
-              OLogManager.instance().info(this, "Waiting for processed requests to be [%d] actual [%d] with stats [%s] ",
-                  NUM_RECORS, processed, messageStats.toJSON());
+              OLogManager.instance().info(this, "Waiting for processed requests to be [%d], actual [%d] with stats [%s] ",
+                  NUM_RECORDS, processed, messageStats.toJSON());
 
-              return processed >= NUM_RECORS;
+              return processed >= NUM_RECORDS;
             }
-          }, String.format("Number for processed request should be [%s]", NUM_RECORS));
+          }, String.format("Number for processed request should be [%s]", NUM_RECORDS));
 
           List<ODocument> query = db.query(new OSQLSynchQuery("select count(*) from Person"));
 
