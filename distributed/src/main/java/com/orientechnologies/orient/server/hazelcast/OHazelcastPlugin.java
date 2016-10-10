@@ -743,6 +743,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         final String databaseName = dbNode.substring(dbNode.indexOf(".") + 1);
 
         onDatabaseEvent(nodeName, databaseName, (DB_STATUS) iEvent.getValue());
+        invokeOnDatabaseStatusChange(nodeName, databaseName, (DB_STATUS) iEvent.getValue());
       }
     } catch (HazelcastInstanceNotActiveException e) {
       OLogManager.instance().error(this, "Hazelcast is not running");
@@ -825,6 +826,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         final String databaseName = dbNode.substring(dbNode.indexOf(".") + 1);
 
         onDatabaseEvent(nodeName, databaseName, (DB_STATUS) iEvent.getValue());
+        invokeOnDatabaseStatusChange(nodeName, databaseName, (DB_STATUS) iEvent.getValue());
 
       } else if (key.startsWith(CONFIG_REGISTEREDNODES)) {
         ODistributedServerLog.info(this, nodeName, eventNodeName, DIRECTION.IN, "Received updated about registered nodes");
@@ -1072,11 +1074,20 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     if (currStatus == null || currStatus != iStatus) {
       configurationMap.put(key, iStatus);
+      invokeOnDatabaseStatusChange(iNode, iDatabaseName, iStatus);
 
-      // NOTIFY DB/NODE IS CHANGING STATUS
-      for (ODistributedLifecycleListener l : listeners) {
+    }
+  }
+
+  private void invokeOnDatabaseStatusChange(String iNode, String iDatabaseName, DB_STATUS iStatus) {
+    // NOTIFY DB/NODE IS CHANGING STATUS
+    for (ODistributedLifecycleListener l : listeners) {
+      try {
         l.onDatabaseChangeStatus(iNode, iDatabaseName, iStatus);
+      } catch (Exception e) {
+        // IGNORE IT
       }
+
     }
   }
 
@@ -1148,7 +1159,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       // SERVER REMOVED CORRECTLY
       updateCachedDatabaseConfiguration(databaseName, cfg.getDocument(), true, true);
 
-    configurationMap.put(CONFIG_DBSTATUS_PREFIX + nodeLeftName + "." + databaseName, DB_STATUS.NOT_AVAILABLE);
+    setDatabaseStatus(nodeLeftName, databaseName, DB_STATUS.NOT_AVAILABLE);
+    // configurationMap.put(CONFIG_DBSTATUS_PREFIX + nodeLeftName + "." + databaseName, DB_STATUS.NOT_AVAILABLE);
 
     return found;
   }
@@ -1240,7 +1252,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
       }
 
-      if( nodeLeftName.equalsIgnoreCase(nodeName))
+      if (nodeLeftName.equalsIgnoreCase(nodeName))
         // CURRENT NODE: EXIT
         System.exit(1);
 
