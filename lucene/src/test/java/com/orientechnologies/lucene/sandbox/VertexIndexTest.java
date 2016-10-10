@@ -1,6 +1,7 @@
 package com.orientechnologies.lucene.sandbox;
 
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
@@ -94,7 +95,7 @@ public class VertexIndexTest {
 
   @After
   public void deInit() {
-    Orient.instance().closeAllStorages(); // see #6561
+    ODatabaseDocumentTx.closeAll();
   }
 
 }
