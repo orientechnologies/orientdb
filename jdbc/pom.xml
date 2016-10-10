@@ -126,17 +126,11 @@
                         <exclude>.settings/**</exclude>
                         <exclude>.gitignore</exclude>
                         <exclude>.gitattributes</exclude>
-                        <exclude>src/test/**</exclude>
+                        <!--<exclude>src/test/**</exclude>-->
                     </excludes>
                     <strictCheck>true</strictCheck>
                 </configuration>
                 <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>format</goal>
-                        </goals>
-                    </execution>
                 </executions>
             </plugin>
         </plugins>
