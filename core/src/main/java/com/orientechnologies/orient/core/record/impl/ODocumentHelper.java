@@ -449,7 +449,11 @@ public class ODocumentHelper {
             final int rangeTo = to != null && !to.isEmpty() ? Math.min(Integer.parseInt(to), OMultiValue.getSize(value) - 1)
                 : OMultiValue.getSize(value) - 1;
 
-            final Object[] values = new Object[rangeTo - rangeFrom + 1];
+            int arraySize = rangeTo - rangeFrom + 1;
+            if (arraySize < 0) {
+              arraySize = 0;
+            }
+            final Object[] values = new Object[arraySize];
             for (int i = rangeFrom; i <= rangeTo; ++i)
               values[i - rangeFrom] = OMultiValue.getValue(value, i);
             value = values;
