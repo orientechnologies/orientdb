@@ -8,7 +8,7 @@ public
 class OHaSyncClusterStatement extends OStatement {
 
   public OIdentifier clusterName;
-  public boolean modeFull = false;
+  public boolean modeFull = true;
   public boolean modeMerge = false;
 
   public OHaSyncClusterStatement(int id) {
