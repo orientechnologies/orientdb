@@ -912,7 +912,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         serializeValue(bytes, itemValue, type, null);
       } else {
         throw new OSerializationException(
-            "Impossible serialize value of type " + value.getClass() + " with the ODocument binary serializer");
+            "Impossible serialize value of type " + itemValue.getClass() + " with the ODocument binary serializer");
       }
     }
     return pos;
