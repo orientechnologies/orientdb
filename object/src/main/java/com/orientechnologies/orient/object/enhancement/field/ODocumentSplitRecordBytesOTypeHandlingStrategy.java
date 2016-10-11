@@ -11,7 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.object.enhancement;
+package com.orientechnologies.orient.object.enhancement.field;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -30,13 +30,13 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 
 /**
- * {@link OObjectFieldOTypeHandlingStrategy} that stores each {@link OType#BINARY} object split in several {@link ORecordBytes}.
+ * {@link ODocumentFieldOTypeHandlingStrategy} that stores each {@link OType#BINARY} object split in several {@link ORecordBytes}.
  * 
  * Binary data optimization: http://orientdb.com/docs/2.2/Binary-Data.html
  * 
  * @author diegomtassis <a href="mailto:dta@compart.com">Diego Martin Tassis</a>
  */
-public class OObjectSplitRecordBytesOTypeHandlingStrategy implements OObjectFieldOTypeHandlingStrategy {
+public class ODocumentSplitRecordBytesOTypeHandlingStrategy implements ODocumentFieldOTypeHandlingStrategy {
 
   private static final int DEFAULT_CHUNK_SIZE = 64;
   private static final int BYTES_PER_KB       = 1024;
@@ -46,7 +46,7 @@ public class OObjectSplitRecordBytesOTypeHandlingStrategy implements OObjectFiel
   /**
    * Constuctor. Chunk size = {@value #DEFAULT_CHUNK_SIZE}
    */
-  public OObjectSplitRecordBytesOTypeHandlingStrategy() {
+  public ODocumentSplitRecordBytesOTypeHandlingStrategy() {
     this(DEFAULT_CHUNK_SIZE);
   }
 
@@ -55,7 +55,7 @@ public class OObjectSplitRecordBytesOTypeHandlingStrategy implements OObjectFiel
    * 
    * @param chunkSizeInKb
    */
-  public OObjectSplitRecordBytesOTypeHandlingStrategy(int chunkSizeInKb) {
+  public ODocumentSplitRecordBytesOTypeHandlingStrategy(int chunkSizeInKb) {
     this.chunkSize = chunkSizeInKb * BYTES_PER_KB;
   }
 

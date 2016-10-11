@@ -12,7 +12,7 @@
  * limitations under the License.
  */
 
-package com.orientechnologies.orient.object.enhancement;
+package com.orientechnologies.orient.object.enhancement.field;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -21,25 +21,25 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
- * {@link OObjectFieldHandlingStrategy} that deals with fields (depending on their type) in a smarter way than a
- * {@link OObjectSimpleFieldHandlingStrategy}.
+ * {@link ODocumentFieldHandlingStrategy} that deals with fields (depending on their type) in a smarter way than a
+ * {@link ODocumentSimpleFieldHandlingStrategy}.
  * 
  * @author diegomtassis <a href="mailto:dta@compart.com">Diego Martin Tassis</a>
  */
-public class OObjectSmartFieldHandlingStrategy extends OObjectSimpleFieldHandlingStrategy {
+public class ODocumentSmartFieldHandlingStrategy extends ODocumentSimpleFieldHandlingStrategy {
 
-  private final Map<OType, OObjectFieldOTypeHandlingStrategy> customTypeHandlers = new HashMap<OType, OObjectFieldOTypeHandlingStrategy>();
+  private final Map<OType, ODocumentFieldOTypeHandlingStrategy> customTypeHandlers = new HashMap<OType, ODocumentFieldOTypeHandlingStrategy>();
 
   /**
    * Constructor
    * 
    * @param typeHandlers
    */
-  public OObjectSmartFieldHandlingStrategy(Map<OType, OObjectFieldOTypeHandlingStrategy> typeHandlers) {
+  public ODocumentSmartFieldHandlingStrategy(Map<OType, ODocumentFieldOTypeHandlingStrategy> typeHandlers) {
     this.customTypeHandlers.putAll(typeHandlers);
 
     // Validate the strategy mappings
-    OObjectFieldOTypeHandlingStrategy currentStrategy;
+    ODocumentFieldOTypeHandlingStrategy currentStrategy;
     for (OType oType : this.customTypeHandlers.keySet()) {
       currentStrategy = this.customTypeHandlers.get(oType);
       if (!oType.equals(currentStrategy.getOType())) {
