@@ -27,10 +27,16 @@ import com.orientechnologies.orient.core.cache.OCommandCacheHook;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.record.OClassTrigger;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
+import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.metadata.function.OFunctionTrigger;
 import com.orientechnologies.orient.core.metadata.security.*;
+import com.orientechnologies.orient.core.metadata.sequence.OSequenceTrigger;
+import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
+import com.orientechnologies.orient.core.schedule.OSchedulerTrigger;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -263,11 +269,10 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract {
 
     localCache.clear();
 
-    if (!keepStorageOpen && storage != null)
+    if (storage != null)
       storage.close();
 
     ODatabaseRecordThreadLocal.INSTANCE.remove();
-    clearOwner();
   }
 
   @Override
@@ -304,6 +309,18 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract {
     user = null;
 
     initialized = true;
+  }
+  
+  protected void installHooksEmbedded() {
+    hooks.clear();
+    registerHook(new OClassTrigger(this), ORecordHook.HOOK_POSITION.FIRST);
+    registerHook(new ORestrictedAccessHook(this), ORecordHook.HOOK_POSITION.FIRST);
+    registerHook(new OUserTrigger(this), ORecordHook.HOOK_POSITION.EARLY);
+    registerHook(new OFunctionTrigger(this), ORecordHook.HOOK_POSITION.REGULAR);
+    registerHook(new OSequenceTrigger(this), ORecordHook.HOOK_POSITION.REGULAR);
+    registerHook(new OClassIndexManager(this), ORecordHook.HOOK_POSITION.LAST);
+    registerHook(new OSchedulerTrigger(this), ORecordHook.HOOK_POSITION.LAST);
+    registerHook(new OLiveQueryHook(this), ORecordHook.HOOK_POSITION.LAST);
   }
 
 }

@@ -387,7 +387,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
       jsonReader.readNext(OJSONReader.BEGIN_OBJECT);
 
-      database.setMVCC(false);
       database.setValidationEnabled(false);
 
       database.setStatus(STATUS.IMPORTING);

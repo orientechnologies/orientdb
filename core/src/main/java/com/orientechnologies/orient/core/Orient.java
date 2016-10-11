@@ -299,7 +299,6 @@ public class Orient extends OListenerManger<OOrientListener> {
    */
   private void initShutdownQueue() {
     addShutdownHandler(new OShutdownWorkersHandler());
-    // addShutdownHandler(new OShutdownEnginesHandler());
     addShutdownHandler(new OShutdownPendingThreadsHandler());
     addShutdownHandler(new OShutdownProfilerHandler());
     addShutdownHandler(new OShutdownCallListenersHandler());
@@ -726,33 +725,6 @@ public class Orient extends OListenerManger<OOrientListener> {
         workers.awaitTermination(2, TimeUnit.MINUTES);
       } catch (InterruptedException e) {
       }
-    }
-
-    @Override
-    public String toString() {
-      return getClass().getSimpleName();
-    }
-  }
-
-  /**
-   * Closes all storages and shutdown all engines.
-   */
-  public class OShutdownEnginesHandler implements OShutdownHandler {
-    @Override
-    public int getPriority() {
-      return SHUTDOWN_ENGINES_PRIORITY;
-    }
-
-    @Override
-    public void shutdown() throws Exception {
-
-      // SHUTDOWN ENGINES
-      for (OEngine engine : engines.values())
-        if (engine.isRunning())
-          engine.shutdown();
-      engines.clear();
-
-      OByteBufferPool.instance().verifyState();
     }
 
     @Override

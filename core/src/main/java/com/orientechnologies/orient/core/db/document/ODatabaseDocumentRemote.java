@@ -15,7 +15,7 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *
+ *  
  */
 
 package com.orientechnologies.orient.core.db.document;
@@ -29,6 +29,8 @@ import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.hook.ORecordHook;
+import com.orientechnologies.orient.core.index.ClassIndexManagerRemote;
 import com.orientechnologies.orient.core.metadata.security.*;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
@@ -166,16 +168,19 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     if (getStorage().getConfiguration().getRecordSerializerVersion() > serializer.getMinSupportedVersion())
       throw new ODatabaseException("Persistent record serializer version is not support by the current implementation");
 
-    componentsFactory = getStorage().getComponentsFactory();
-
     localCache.startup();
-
+    componentsFactory = getStorage().getComponentsFactory();
     user = null;
 
     loadMetadata();
     installHooksRemote();
 
     initialized = true;
+  }
+  
+  protected void installHooksRemote() {
+    hooks.clear();
+    registerHook(new ClassIndexManagerRemote(this), ORecordHook.HOOK_POSITION.LAST);
   }
   
   private void applyListeners(OrientDBConfig config) {

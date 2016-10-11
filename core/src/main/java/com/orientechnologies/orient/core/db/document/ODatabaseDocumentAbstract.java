@@ -30,7 +30,6 @@ import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.OUncompletedCommit;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.cache.OCommandCacheHook;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -48,20 +47,15 @@ import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.ClassIndexManagerRemote;
-import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
-import com.orientechnologies.orient.core.metadata.function.OFunctionTrigger;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.metadata.security.*;
-import com.orientechnologies.orient.core.metadata.sequence.OSequenceTrigger;
 import com.orientechnologies.orient.core.query.OQuery;
-import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordVersionHelper;
@@ -69,15 +63,12 @@ import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODirtyManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import com.orientechnologies.orient.core.schedule.OSchedulerTrigger;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSaveThreadLocal;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
-import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
-import com.orientechnologies.orient.core.sql.parser.OStatement;
 import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorageComponent;
@@ -94,7 +85,6 @@ import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Document API entrypoint.
@@ -119,13 +109,9 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   protected final Map<ORecordHook, ORecordHook.HOOK_POSITION> hooks           = new LinkedHashMap<ORecordHook, ORecordHook.HOOK_POSITION>();
   protected boolean                                           retainRecords   = true;
   protected OLocalRecordCache                                 localCache;
-  protected boolean                                           mvcc;
   protected OCurrentStorageComponentsFactory                  componentsFactory;
   protected boolean                                           initialized     = false;
   protected OTransaction                                      currentTx;
-  protected boolean                                           keepStorageOpen = false;
-  protected final AtomicReference<Thread>                     owner           = new AtomicReference<Thread>();
-  protected boolean                                           ownerProtection = true;
 
   protected ODatabaseSessionMetadata                          sessionMetadata;
 
@@ -154,17 +140,6 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
    */
   public static void setDefaultSerializer(ORecordSerializer iDefaultSerializer) {
     ORecordSerializerFactory.instance().setDefaultRecordSerializer(iDefaultSerializer);
-  }
-  protected void setupThreadOwner() {
-    if (!ownerProtection)
-      return;
-
-    final Thread current = Thread.currentThread();
-    final Thread o = owner.get();
-
-    if (o != null || !owner.compareAndSet(null, current)) {
-      throw new IllegalStateException("Current instance is owned by other thread" + (o != null ? " : '" + o.getName() + "'" : ""));
-    }
   }
 
   public void callOnOpenListeners() {
@@ -636,15 +611,14 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
    * {@inheritDoc}
    */
   public boolean isMVCC() {
-    return mvcc;
+    return true;
   }
 
   /**
    * {@inheritDoc}
    */
   public <DB extends ODatabase<?>> DB setMVCC(boolean mvcc) {
-    this.mvcc = mvcc;
-    return (DB) this;
+    throw new UnsupportedOperationException();
   }
 
   /**
@@ -866,20 +840,13 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
       localCache.clear();
 
-      if (!keepStorageOpen && storage != null)
+      if (storage != null)
         storage.close();
 
     } finally {
       // ALWAYS RESET TL
       ODatabaseRecordThreadLocal.INSTANCE.remove();
-      clearOwner();
     }
-  }
-
-  protected void clearOwner() {
-    if (!ownerProtection)
-      return;
-    owner.set(null);
   }
 
   @Override
@@ -2692,67 +2659,6 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
   private boolean pushInHook(OIdentifiable id) {
     return inHook.add(id);
-  }
-
-  private void initAtFirstOpen(String iUserName, String iUserPassword) {
-    if (initialized)
-      return;
-
-    ORecordSerializerFactory serializerFactory = ORecordSerializerFactory.instance();
-    String serializeName = getStorage().getConfiguration().getRecordSerializer();
-    if (serializeName == null)
-      serializeName = ORecordSerializerSchemaAware2CSV.NAME;
-    serializer = serializerFactory.getFormat(serializeName);
-    if (serializer == null)
-      throw new ODatabaseException("RecordSerializer with name '" + serializeName + "' not found ");
-    if (getStorage().getConfiguration().getRecordSerializerVersion() > serializer.getMinSupportedVersion())
-      throw new ODatabaseException("Persistent record serializer version is not support by the current implementation");
-
-    componentsFactory = getStorage().getComponentsFactory();
-
-    localCache.startup();
-
-    user = null;
-
-    loadMetadata();
-
-    if (!(getStorage() instanceof OStorageProxy)) {
-      if (metadata.getIndexManager().autoRecreateIndexesAfterCrash()) {
-        metadata.getIndexManager().recreateIndexes();
-
-        activateOnCurrentThread();
-        user = null;
-      }
-
-      installHooksEmbedded();
-      registerHook(new OCommandCacheHook(this), ORecordHook.HOOK_POSITION.REGULAR);
-      registerHook(new OSecurityTrackerHook(metadata.getSecurity(), this), ORecordHook.HOOK_POSITION.LAST);
-
-      user = null;
-    } else if (iUserName != null && iUserPassword != null) {
-      user = new OImmutableUser(-1, new OUser(iUserName, OUser.encryptPassword(iUserPassword))
-          .addRole(new ORole("passthrough", null, ORole.ALLOW_MODES.ALLOW_ALL_BUT)));
-      installHooksRemote();
-    }
-
-    initialized = true;
-  }
-
-  protected void installHooksEmbedded() {
-    hooks.clear();
-    registerHook(new OClassTrigger(this), ORecordHook.HOOK_POSITION.FIRST);
-    registerHook(new ORestrictedAccessHook(this), ORecordHook.HOOK_POSITION.FIRST);
-    registerHook(new OUserTrigger(this), ORecordHook.HOOK_POSITION.EARLY);
-    registerHook(new OFunctionTrigger(this), ORecordHook.HOOK_POSITION.REGULAR);
-    registerHook(new OSequenceTrigger(this), ORecordHook.HOOK_POSITION.REGULAR);
-    registerHook(new OClassIndexManager(this), ORecordHook.HOOK_POSITION.LAST);
-    registerHook(new OSchedulerTrigger(this), ORecordHook.HOOK_POSITION.LAST);
-    registerHook(new OLiveQueryHook(this), ORecordHook.HOOK_POSITION.LAST);
-  }
-
-  protected void installHooksRemote() {
-    hooks.clear();
-    registerHook(new ClassIndexManagerRemote(this), ORecordHook.HOOK_POSITION.LAST);
   }
 
   private void closeOnDelete() {
