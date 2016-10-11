@@ -1132,7 +1132,7 @@ ee.controller('ClusterDBController', function ($scope, Cluster, $rootScope, $tim
 
 });
 
-ee.controller('ClusterSingleDBController', function ($scope, Cluster, Notification, Database) {
+ee.controller('ClusterSingleDBController', function ($scope, $modal, $q, Cluster, Notification, Database, HaCommand) {
 
 
   $scope.links = {
@@ -1181,7 +1181,7 @@ ee.controller('ClusterSingleDBController', function ($scope, Cluster, Notificati
         return f != "<NEW_NODE>" && !found;
       })
       uniqueServers.forEach(function (s) {
-        servers.push({name: s});
+        servers.push({name: s, status: "NOT_AVAILABLE"});
       })
 
       servers.forEach(function (el, idx, arr) {
@@ -1201,6 +1201,7 @@ ee.controller('ClusterSingleDBController', function ($scope, Cluster, Notificati
         })
       }
       $scope.servers = servers;
+
     })
 
 
@@ -1223,6 +1224,61 @@ ee.controller('ClusterSingleDBController', function ($scope, Cluster, Notificati
 
   })
 
+  $scope.syncDatabaseTooltip = {
+    title: "Sync database"
+  }
+
+  $scope.syncDatabase = function (node) {
+
+
+    var syncClusterLink = Database.getOWikiFor("SQL-HA-Sync-Database.html");
+    var confirmMessage = S("Database <b>{{database}}</b> will be re-synchronized for node <b>{{node}}</b>. OrientDB will select the best server to provide the database. Are you sure? <a class='btn btn-trasparent btn-help' target='_blank' href='{{link}}'> <i class='fa fa-question-circle'></i></a>").template({
+      database: $scope.name,
+      node: node.name,
+      link: syncClusterLink
+    }).s
+
+    Utilities.confirm($scope, $modal, $q, {
+      title: 'Confirm Required!',
+      body: confirmMessage,
+      success: function () {
+        HaCommand.syncDatabase(node.name, $scope.name).then(function (res) {
+          var msg = S("Database {{database}} synchronized correctly ").template({
+            database: $scope.name
+          }).s;
+          Notification.push({content: msg, autoHide: true});
+        }).catch(function (err) {
+          Notification.push({content: err, error: true, autoHide: true});
+        })
+      }
+    });
+  }
+  $scope.syncCluster = function (cluster, node) {
+
+
+    var syncClusterLink = Database.getOWikiFor("SQL-HA-Sync-Cluster.html");
+    var confirmMessage = S("Cluster <b>{{cluster}}</b> of database <b>{{database}}</b> will be re-synchronized for node <b>{{node}}</b>. OrientDB will select the best server to provide the cluster. Are you sure? <a class='btn btn-trasparent btn-help' target='_blank' href='{{link}}'> <i class='fa fa-question-circle'></i></a>").template({
+      cluster: cluster,
+      database: $scope.name,
+      node: node,
+      link: syncClusterLink
+    }).s
+
+    Utilities.confirm($scope, $modal, $q, {
+      title: 'Confirm Required!',
+      body: confirmMessage,
+      success: function () {
+        HaCommand.syncCluster(node, $scope.name, cluster).then(function (res) {
+          var msg = S("Cluster {{cluster}} synchronized correctly ").template({
+            cluster: cluster
+          }).s;
+          Notification.push({content: res.result, autoHide: true});
+        }).catch(function (err) {
+          Notification.push({content: err, error: true, autoHide: true});
+        })
+      }
+    });
+  }
   $scope.saveConfig = function () {
 
     Object.keys($scope.calculatedRoles).forEach(function (k) {
@@ -1250,6 +1306,38 @@ ee.controller('ClusterSingleDBController', function ($scope, Cluster, Notificati
     }).catch(function (err) {
       Notification.push({content: err.data, error: true, autoHide: true});
     })
+
+  }
+
+
+  $scope.removeServerTooltip = {
+    title: "Remove server"
+  }
+  $scope.removeServer = function (s) {
+
+    var removeServerLink = Database.getOWikiFor("SQL-HA-Remove-Server.html");
+
+    var confirmMessage = S("Node <b>{{name}}</b> will be removed from the distributed configuration for database <b>{{database}}</b>. Are you sure? <a class='btn btn-trasparent btn-help' target='_blank' href='{{link}}'> <i class='fa fa-question-circle'></i></a>").template({
+      name: s.name,
+      database: $scope.name,
+      link: removeServerLink
+    }).s
+
+    Utilities.confirm($scope, $modal, $q, {
+      title: 'Confirm Required!',
+      body: confirmMessage,
+      success: function () {
+        HaCommand.removeNode($scope.name, s.name).then(function (res) {
+          var msg = S("Node {{name}} removed correctly from the distributed configuration for database {{database}}").template({
+            name: s.name,
+            database: $scope.name
+          }).s;
+          Notification.push({content: msg, autoHide: true});
+        }).catch(function (err) {
+          Notification.push({content: err, error: true, autoHide: true});
+        })
+      }
+    });
 
   }
 })

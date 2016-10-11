@@ -1083,6 +1083,14 @@ div.users-ui div.container-fluid, div.role-ui div.container-fluid {
   border-left: 3px solid #FF6600;
 }
 
+.yes-no-body {
+  padding: 0px;
+}
+.yes-no-body .studio-well-tips {
+
+  padding: 20px 40px;
+  font-size: 15px;
+}
 .studio-well-tips-once {
   padding: 10px;
   /*border-left: 3px solid #FF6600;*/

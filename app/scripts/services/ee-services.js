@@ -772,98 +772,148 @@ ee.factory("ChartHelper", function () {
       }
     }
   }, {
-      name: 'Read',
-      description: '',
-      transform: function (stats) {
-        try {
-          var val = helper.countOps(stats['realtime']['counters'], /db.*readRecord/g);
-          return val;
-        } catch (e) {
-          return 0;
-        }
+    name: 'Read',
+    description: '',
+    transform: function (stats) {
+      try {
+        var val = helper.countOps(stats['realtime']['counters'], /db.*readRecord/g);
+        return val;
+      } catch (e) {
+        return 0;
       }
-    }, {
-      name: 'Scan',
-      description: 'Scan records',
-      transform: function (stats) {
-        try {
-          var val = helper.countOps(stats['realtime']['counters'], /db.*scanRecord/g);
-          return val;
-        } catch (e) {
-          return 0;
-        }
+    }
+  }, {
+    name: 'Scan',
+    description: 'Scan records',
+    transform: function (stats) {
+      try {
+        var val = helper.countOps(stats['realtime']['counters'], /db.*scanRecord/g);
+        return val;
+      } catch (e) {
+        return 0;
       }
-    }, {
-      name: 'Update',
-      description: '',
-      transform: function (stats) {
-        try {
-          var val = helper.countOps(stats['realtime']['counters'], /db.*updateRecord/g);
-          return val;
-        } catch (e) {
-          return 0;
-        }
+    }
+  }, {
+    name: 'Update',
+    description: '',
+    transform: function (stats) {
+      try {
+        var val = helper.countOps(stats['realtime']['counters'], /db.*updateRecord/g);
+        return val;
+      } catch (e) {
+        return 0;
       }
-    }, {
-      name: 'Delete',
-      description: '',
-      transform: function (stats) {
-        try {
-          var val = helper.countOps(stats['realtime']['counters'], /db.*deleteRecord/g);
-          return val;
-        } catch (e) {
-          return 0;
-        }
+    }
+  }, {
+    name: 'Delete',
+    description: '',
+    transform: function (stats) {
+      try {
+        var val = helper.countOps(stats['realtime']['counters'], /db.*deleteRecord/g);
+        return val;
+      } catch (e) {
+        return 0;
       }
-    }, {
-      name: 'Conflict',
-      description: '',
-      transform: function (stats) {
-        try {
-          var val = helper.countOps(stats['realtime']['counters'], /db.*conflictRecord/g);
-          return val;
-        } catch (e) {
-          return 0;
-        }
+    }
+  }, {
+    name: 'Conflict',
+    description: '',
+    transform: function (stats) {
+      try {
+        var val = helper.countOps(stats['realtime']['counters'], /db.*conflictRecord/g);
+        return val;
+      } catch (e) {
+        return 0;
       }
-    }, {
-      name: 'Tx Commit',
-      description: '',
-      transform: function (stats) {
-        try {
-          var val = helper.countOps(stats['realtime']['counters'], /db.*txCommit/g);
-          return val;
-        } catch (e) {
-          return 0;
-        }
+    }
+  }, {
+    name: 'Tx Commit',
+    description: '',
+    transform: function (stats) {
+      try {
+        var val = helper.countOps(stats['realtime']['counters'], /db.*txCommit/g);
+        return val;
+      } catch (e) {
+        return 0;
       }
-    }, {
-      name: 'Tx Rollback',
-      description: '',
-      transform: function (stats) {
-        try {
-          var val = helper.countOps(stats['realtime']['counters'], /db.*txRollback/g);
-          return val;
-        } catch (e) {
-          return 0;
-        }
+    }
+  }, {
+    name: 'Tx Rollback',
+    description: '',
+    transform: function (stats) {
+      try {
+        var val = helper.countOps(stats['realtime']['counters'], /db.*txRollback/g);
+        return val;
+      } catch (e) {
+        return 0;
       }
-    }, {
-      name: 'Distributed Tx Retries',
-      description: '',
-      transform: function (stats) {
-        try {
-          var val = helper.countOps(stats['realtime']['counters'], /db.*distributedTxRetries/g);
-          return val;
-        } catch (e) {
-          return 0;
-        }
+    }
+  }, {
+    name: 'Distributed Tx Retries',
+    description: '',
+    transform: function (stats) {
+      try {
+        var val = helper.countOps(stats['realtime']['counters'], /db.*distributedTxRetries/g);
+        return val;
+      } catch (e) {
+        return 0;
       }
-    }]
+    }
+  }]
   return helper;
 
 })
 
+database.factory('HaCommand', function ($http, $resource, $q) {
+
+
+  var resource = $resource('');
+
+
+  resource.removeNode = function (database, server) {
+
+    var deferred = $q.defer();
+    var text = API + 'command/' + database + '/sql/-/-1?format=rid,type,version,class,graph';
+    var query = "Ha remove server {{name}}"
+    var queryText = S(query).template({name: server}).s;
+    $http.post(text, queryText).success(function (data) {
+      deferred.resolve(data)
+    }).error(function (data) {
+      deferred.reject(data);
+    });
+    return deferred.promise;
+  }
+
+  resource.syncCluster = function (server, database, cluster) {
+
+    var deferred = $q.defer();
+    var url = API + 'distributed/syncCluster/' + database + '/' + cluster;
+    if (server) {
+      url += '?node=' + server;
+    }
+    $http.post(encodeURI(url), null).success(function (data) {
+      deferred.resolve(data)
+    }).error(function (data) {
+      deferred.reject(data);
+    });
+    return deferred.promise;
+  }
+  resource.syncDatabase = function (server, database) {
+
+    var deferred = $q.defer();
+    var url = API + 'distributed/syncDatabase/' + database;
+    if (server) {
+      url += '?node=' + server;
+    }
+    $http.post(encodeURI(url), null).success(function (data) {
+      deferred.resolve(data)
+    }).error(function (data) {
+      deferred.reject(data);
+    });
+    return deferred.promise;
+  }
+  return resource
+});
 
 ee.factory("SecurityService", function (Profiler, $q, $http) {
   var config = {}

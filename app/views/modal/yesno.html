@@ -1,19 +1,24 @@
 <div class="modal" tabindex="-1" role="dialog">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" ng-click="$hide()" aria-hidden="true">×</button>
-                <h4 class="modal-title">{{title}}</h4>
-            </div>
-            <div class="modal-body">
-                {{msg}}
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn" ng-click="$hide()">Cancel</button>
-                <button class="btn btn-primary" ng-click="confirm()">Ok</button>
-            </div>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" ng-click="$hide()" aria-hidden="true">×</button>
+        <h4 class="modal-title">{{title}}</h4>
+      </div>
+      <div class="modal-body yes-no-body">
+
+        <div class="studio-well-tips">
+          <ng-bind-html
+            ng-bind-html="msg">
+          </ng-bind-html>
         </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-sm" ng-click="$hide()">Cancel</button>
+        <button class="btn btn-sm btn-primary" ng-click="confirm()">Ok</button>
+      </div>
     </div>
+  </div>
 </div>
 
 

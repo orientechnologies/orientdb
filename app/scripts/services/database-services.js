@@ -1007,7 +1007,6 @@ database.factory('ClassAlterApi', function ($http, $resource, $q) {
 
   var resource = $resource('function/:database');
 
-
   resource.changeProperty = function (database, props) {
 
     var deferred = $q.defer();
@@ -1065,5 +1064,7 @@ database.factory('ClusterAlterApi', function ($http, $resource, $q) {
   }
   return resource
 });
+
+
 
 
