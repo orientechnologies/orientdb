@@ -84,7 +84,7 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
     return open(name, user, password, null);
   }
 
-  public ODatabaseDocumentInternal openNoAutheticate(String name, String user, Class<?> sec) {
+  public synchronized ODatabaseDocumentInternal openNoAutheticate(String name, String user, Class<?> sec) {
     try {
       OrientDBConfig config = solveConfig(null);
       OAbstractPaginatedStorage storage = getStorage(name);
@@ -100,7 +100,7 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
   }
 
   @Override
-  public ODatabaseDocumentInternal open(String name, String user, String password, OrientDBConfig config) {
+  public synchronized ODatabaseDocumentInternal open(String name, String user, String password, OrientDBConfig config) {
     try {
       config = solveConfig(config);
       OAbstractPaginatedStorage storage = getStorage(name);

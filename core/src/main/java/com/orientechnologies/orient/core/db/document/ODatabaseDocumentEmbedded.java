@@ -89,7 +89,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract {
   }
   
   private void internalOpen(final String iUserName, final String iUserPassword, OrientDBConfig config, boolean checkPassword) {
-    boolean failure = true;
     activateOnCurrentThread();
     this.config = config;
     applyAttributes(config);
@@ -123,12 +122,11 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract {
       // WAKE UP LISTENERS
       callOnOpenListeners();
 
-      failure = false;
     } catch (OException e) {
-      close();
+      ODatabaseRecordThreadLocal.INSTANCE.remove();
       throw e;
     } catch (Exception e) {
-      close();
+      ODatabaseRecordThreadLocal.INSTANCE.remove();
       throw OException.wrapException(new ODatabaseException("Cannot open database url=" + getURL()), e);
     }
   }

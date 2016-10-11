@@ -246,6 +246,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   public void onOpen(final ODatabaseInternal iDatabase) {
     if (!isRelatedToLocalServer(iDatabase))
       return;
+    
+    if(!serverInstance.isActive())
+      return;
 
     final ODatabaseDocumentInternal currDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     try {
@@ -698,7 +701,10 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     // RUN ONLY IN NON-DISTRIBUTED MODE
     if (!isRelatedToLocalServer(iDatabase))
       return;
-
+    
+    if(!serverInstance.isActive())
+      return;
+    
     final ODistributedConfiguration cfg = getDatabaseConfiguration(iDatabase.getName());
     if (cfg == null)
       return;
