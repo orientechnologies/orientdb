@@ -44,6 +44,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import javax.net.ssl.SSLSocket;
 
 public class OClientConnectionManager {
   private static final long                                  TIMEOUT_PUSH     = 3000;
@@ -445,7 +446,8 @@ public class OClientConnectionManager {
         if (socket != null && !socket.isClosed() && !socket.isInputShutdown()) {
           try {
             OLogManager.instance().debug(this, "Closing input socket of thread %s", protocol);
-            socket.shutdownInput();
+            if(!(socket instanceof SSLSocket)) // An SSLSocket will throw an UnsupportedOperationException.
+              socket.shutdownInput();
           } catch (IOException e) {
             OLogManager.instance().debug(this, "Error on closing connection of %s client during shutdown", e,
                 entry.getValue().getRemoteAddress());
@@ -482,8 +484,10 @@ public class OClientConnectionManager {
         else
           socket = protocol.getChannel().socket;
 
-        if (socket != null && !socket.isClosed() && !socket.isInputShutdown())
-          socket.shutdownInput();
+        if (socket != null && !socket.isClosed() && !socket.isInputShutdown()) {
+          if(!(socket instanceof SSLSocket)) // An SSLSocket will throw an UnsupportedOperationException.
+            socket.shutdownInput();
+        }
 
       } catch (Exception e) {
         OLogManager.instance().debug(this, "Error on killing connection to %s client", e, entry.getValue().getRemoteAddress());
