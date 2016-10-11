@@ -19,6 +19,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.common.parser.OSystemVariableResolver;
 
 import javax.net.SocketFactory;
 import javax.net.ssl.KeyManagerFactory;
@@ -121,6 +122,8 @@ public class OSocketFactory {
   protected InputStream getAsStream(String path) throws IOException {
 
     InputStream input = null;
+    
+    path = OSystemVariableResolver.resolveSystemVariables(path);
 
     try {
       URL url = new URL(path);
@@ -139,6 +142,8 @@ public class OSocketFactory {
 
     if (input == null) {
       try {
+        // This resolves an issue on Windows with relative paths not working correctly.
+        path = new java.io.File(path).getAbsolutePath();      	
         input = new FileInputStream(path);
       } catch (FileNotFoundException e) {
         input = null;
