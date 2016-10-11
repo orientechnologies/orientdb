@@ -1159,8 +1159,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       // SERVER REMOVED CORRECTLY
       updateCachedDatabaseConfiguration(databaseName, cfg.getDocument(), true, true);
 
-    setDatabaseStatus(nodeLeftName, databaseName, DB_STATUS.NOT_AVAILABLE);
-    // configurationMap.put(CONFIG_DBSTATUS_PREFIX + nodeLeftName + "." + databaseName, DB_STATUS.NOT_AVAILABLE);
+    setDatabaseStatus(nodeLeftName, databaseName, DB_STATUS.OFFLINE);
+    // configurationMap.put(CONFIG_DBSTATUS_PREFIX + nodeLeftName + "." + databaseName, DB_STATUS.OFFLINE);
 
     return found;
   }
