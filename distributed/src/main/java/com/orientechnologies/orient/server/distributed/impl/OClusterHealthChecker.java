@@ -109,7 +109,7 @@ public class OClusterHealthChecker extends TimerTask {
     for (String dbName : manager.getMessageService().getDatabases()) {
       final ODistributedServerManager.DB_STATUS localNodeStatus = manager.getDatabaseStatus(manager.getLocalNodeName(), dbName);
       if (localNodeStatus != ODistributedServerManager.DB_STATUS.NOT_AVAILABLE)
-        // ONLY OFFLINE NODE/DB CAN BE RECOVERED
+        // ONLY NOT_AVAILABLE NODE/DB CAN BE RECOVERED
         continue;
 
       final List<String> servers = manager.getOnlineNodes(dbName);

@@ -948,9 +948,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   public void onCreate(final ODatabaseInternal iDatabase) {
     if (!isRelatedToLocalServer(iDatabase))
       return;
-    if(!serverInstance.isActive())
+    if (!serverInstance.isActive())
       return;
-    
+
     final ODatabaseDocumentInternal currDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     try {
 
@@ -1018,9 +1018,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   public void onDrop(final ODatabaseInternal iDatabase) {
     if (!isRelatedToLocalServer(iDatabase))
       return;
-    if(!serverInstance.isActive())
+    if (!serverInstance.isActive())
       return;
-    
+
     final String dbName = iDatabase.getName();
 
     ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "Dropping database %s...", dbName);
@@ -1151,7 +1151,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       // SERVER REMOVED CORRECTLY
       updateCachedDatabaseConfiguration(databaseName, cfg.getDocument(), true, true);
 
-    configurationMap.put(CONFIG_DBSTATUS_PREFIX + nodeLeftName + "." + databaseName, DB_STATUS.NOT_AVAILABLE);
+    setDatabaseStatus(nodeLeftName, databaseName, DB_STATUS.OFFLINE);
+    // configurationMap.put(CONFIG_DBSTATUS_PREFIX + nodeLeftName + "." + databaseName, DB_STATUS.OFFLINE);
 
     return found;
   }
