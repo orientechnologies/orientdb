@@ -886,6 +886,7 @@ public class ODocumentHelper {
 
       } else if (fieldValue instanceof ORidBag) {
         ORidBag newBag = ((ORidBag) fieldValue).copy();
+        newBag.setOwner(null);
         newBag.setOwner(iCloned);
         return newBag;
 
