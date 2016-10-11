@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.validation.ValidationBinaryComparable;
 import com.orientechnologies.orient.core.metadata.schema.validation.ValidationCollectionComparable;
+import com.orientechnologies.orient.core.metadata.schema.validation.ValidationLinkbagComparable;
 import com.orientechnologies.orient.core.metadata.schema.validation.ValidationMapComparable;
 import com.orientechnologies.orient.core.metadata.schema.validation.ValidationStringComparable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -108,6 +109,8 @@ public class OImmutableProperty implements OProperty {
       else if (type.equals(OType.EMBEDDEDLIST) || type.equals(OType.EMBEDDEDSET) || type.equals(OType.LINKLIST)
           || type.equals(OType.LINKSET))
         minComparable = new ValidationCollectionComparable((Integer) OType.convert(min, Integer.class));
+      else if (type.equals(OType.LINKBAG))
+        minComparable = new ValidationLinkbagComparable((Integer) OType.convert(min, Integer.class));
       else if (type.equals(OType.EMBEDDEDMAP) || type.equals(OType.LINKMAP))
         minComparable = new ValidationMapComparable((Integer) OType.convert(min, Integer.class));
       else
@@ -134,6 +137,8 @@ public class OImmutableProperty implements OProperty {
       else if (type.equals(OType.EMBEDDEDLIST) || type.equals(OType.EMBEDDEDSET) || type.equals(OType.LINKLIST)
           || type.equals(OType.LINKSET))
         maxComparable = new ValidationCollectionComparable((Integer) OType.convert(max, Integer.class));
+      else if (type.equals(OType.LINKBAG))
+        maxComparable = new ValidationLinkbagComparable((Integer) OType.convert(max, Integer.class));
       else if (type.equals(OType.EMBEDDEDMAP) || type.equals(OType.LINKMAP))
         maxComparable = new ValidationMapComparable((Integer) OType.convert(max, Integer.class));
       else

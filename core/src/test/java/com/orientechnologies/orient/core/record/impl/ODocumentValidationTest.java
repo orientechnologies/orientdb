@@ -333,6 +333,7 @@ public class ODocumentValidationTest {
       clazz.createProperty("linkList", OType.LINKLIST).setMax("2");
       clazz.createProperty("linkSet", OType.LINKSET).setMax("2");
       clazz.createProperty("linkMap", OType.LINKMAP).setMax("2");
+      clazz.createProperty("linkBag", OType.LINKBAG).setMax("2");
 
       ODocument d = new ODocument(clazz);
       d.field("int", 11);
@@ -358,6 +359,10 @@ public class ODocumentValidationTest {
       cont1.put("one", new ORecordId(30, 30));
       cont1.put("two", new ORecordId(30, 30));
       d.field("linkMap", cont1);
+      ORidBag bag1 = new ORidBag();
+      bag1.add(new ORecordId(40, 30));
+      bag1.add(new ORecordId(40, 33));
+      d.field("linkBag", bag1);
       d.validate();
 
       checkField(d, "int", 12);
@@ -391,6 +396,12 @@ public class ODocumentValidationTest {
       cont3.put("two", new ORecordId(30, 30));
       cont3.put("three", new ORecordId(30, 30));
       checkField(d, "linkMap", cont3);
+
+      ORidBag bag2 = new ORidBag();
+      bag2.add(new ORecordId(40, 30));
+      bag2.add(new ORecordId(40, 33));
+      bag2.add(new ORecordId(40, 31));
+      checkField(d, "linkBag", bag2);
 
     } finally {
       db.drop();
@@ -435,6 +446,7 @@ public class ODocumentValidationTest {
       clazz.createProperty("linkList", OType.LINKLIST).setMin("1");
       clazz.createProperty("linkSet", OType.LINKSET).setMin("1");
       clazz.createProperty("linkMap", OType.LINKMAP).setMin("1");
+      clazz.createProperty("linkBag", OType.LINKBAG).setMin("1");
 
       ODocument d = new ODocument(clazz);
       d.field("int", 11);
@@ -463,6 +475,9 @@ public class ODocumentValidationTest {
       HashMap<String, ORecordId> map1 = new HashMap<String, ORecordId>();
       map1.put("some", new ORecordId(40, 50));
       d.field("linkMap", map1);
+      ORidBag bag1 = new ORidBag();
+      bag1.add(new ORecordId(40, 50));
+      d.field("linkBag", bag1);
       d.validate();
 
       checkField(d, "int", 10);
@@ -485,6 +500,7 @@ public class ODocumentValidationTest {
       checkField(d, "linkList", new ArrayList<ORecordId>());
       checkField(d, "linkSet", new HashSet<ORecordId>());
       checkField(d, "linkMap", new HashMap<String, ORecordId>());
+      checkField(d, "linkBag", new ORidBag());
 
     } finally {
       db.drop();
