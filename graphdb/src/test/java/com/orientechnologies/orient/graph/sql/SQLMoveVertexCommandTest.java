@@ -56,20 +56,35 @@ public class SQLMoveVertexCommandTest extends GraphNoTxAbstractTest {
     customer.addCluster("Customer_genius");
     customerGeniusCluster = graph.getRawGraph().getClusterIdByName("Customer_genius");
 
-    provider = graph.getVertexType("Provider");
-    if (provider != null) {
-      graph.command(new OCommandSQL("delete vertex Provider")).execute();
-      graph.dropVertexType("Provider");
-    }
+    provider = reinitVertexType("Provider");
+    provider.setClusterSelection("default");
+    
+    knows = reinitEdgeType("Knows");
 
-    provider = (OrientVertexType) graph.createVertexType("Provider").setClusterSelection("default");
+    reinitVertexType("testMoveSupernode_From");
+    reinitVertexType("testMoveSupernode_To");
+    reinitEdgeType("testMoveSupernode_Edge");
 
-    knows = graph.getEdgeType("Knows");
-    if (knows != null) {
-      graph.command(new OCommandSQL("delete edge Knows")).execute();
-      graph.dropVertexType("Knows");
+  }
+
+  private OrientVertexType reinitVertexType(String className) {
+    OrientVertexType clazz = graph.getVertexType(className);
+    if (clazz != null) {
+      graph.command(new OCommandSQL("delete vertex "+className)).execute();
+      graph.dropVertexType(className);
     }
-    knows = graph.createEdgeType("Knows");
+    clazz = graph.createVertexType(className);
+    return clazz;
+  }
+
+  private OrientEdgeType reinitEdgeType(String className) {
+    OrientEdgeType clazz = graph.getEdgeType(className);
+    if (clazz != null) {
+      graph.command(new OCommandSQL("delete edge "+className)).execute();
+      graph.dropVertexType(className);
+    }
+    clazz = graph.createEdgeType(className);
+    return clazz;
   }
 
   @Test public void testMoveSingleRecordToAnotherCluster() {
@@ -286,9 +301,6 @@ public class SQLMoveVertexCommandTest extends GraphNoTxAbstractTest {
 
   @Test public void testMoveSupernode() {
 
-    graph.createVertexType("testMoveSupernode_From");
-    graph.createVertexType("testMoveSupernode_To");
-    graph.createEdgeType("testMoveSupernode_Edge");
     OrientVertex first = null;
     for (int i = 0; i < 200; i++) {
       OrientVertex vertex = graph.addVertex("class:testMoveSupernode_From");
