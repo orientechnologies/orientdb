@@ -11,8 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package com.orientechnologies.orient.object.enhancement;
+package com.orientechnologies.orient.object.enhancement.field;
 
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -22,7 +21,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * 
  * @author diegomtassis <a href="mailto:dta@compart.com">Diego Martin Tassis</a>
  */
-public interface OObjectFieldHandlingStrategy {
+public interface ODocumentFieldOTypeHandlingStrategy {
 
   /**
    * Stores an object in a document
@@ -30,10 +29,8 @@ public interface OObjectFieldHandlingStrategy {
    * @param iRecord
    * @param fieldName
    * @param fieldValue
-   * @param suggestedFieldType
-   *          ignored if the type is set in the schema
    */
-  ODocument store(ODocument iRecord, String fieldName, Object fieldValue, OType suggestedFieldType);
+  ODocument store(ODocument iRecord, String fieldName, Object fieldValue);
 
   /**
    * Retrieves a field from a document
@@ -44,6 +41,10 @@ public interface OObjectFieldHandlingStrategy {
    *          ignored if the type is set in the schema
    * @return field value
    */
-  Object load(ODocument iRecord, String fieldName, OType suggestedFieldType);
+  Object load(ODocument iRecord, String fieldName);
 
+  /**
+   * @return {@link OType} handled by the strategy.
+   */
+  OType getOType();
 }

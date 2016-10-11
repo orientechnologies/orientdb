@@ -12,17 +12,17 @@
  * limitations under the License.
  */
 
-package com.orientechnologies.orient.object.enhancement;
+package com.orientechnologies.orient.object.enhancement.field;
 
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
- * {@link OObjectFieldHandlingStrategy} that delegates to the default {@link ODocument#field(String)} implementation.
+ * {@link ODocumentFieldHandlingStrategy} that delegates to the default {@link ODocument#field(String)} implementation.
  * 
  * @author diegomtassis <a href="mailto:dta@compart.com">Diego Martin Tassis</a>
  */
-public class OObjectSimpleFieldHandlingStrategy implements OObjectFieldHandlingStrategy {
+public class ODocumentSimpleFieldHandlingStrategy implements ODocumentFieldHandlingStrategy {
 
   @Override
   public ODocument store(ODocument iRecord, String fieldName, Object fieldValue, OType suggestedFieldType) {

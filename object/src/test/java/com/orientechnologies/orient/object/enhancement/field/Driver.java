@@ -12,7 +12,7 @@
  * limitations under the License.
  */
 
-package com.orientechnologies.orient.object.enhancement;
+package com.orientechnologies.orient.object.enhancement.field;
 
 import javax.persistence.Basic;
 import javax.persistence.Id;
