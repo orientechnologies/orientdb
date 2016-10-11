@@ -18,12 +18,20 @@
 package com.orientechnologies.agent.http.command;
 
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
+import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.impl.ODistributedAbstractPlugin;
+import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
+import com.orientechnologies.orient.server.distributed.sql.OCommandExecutorSQLHASyncCluster;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
@@ -43,24 +51,8 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    final String[] parts = checkSyntax(iRequest.getUrl(), 2, "Syntax error: distributed/<command>/[<id>]");
-
     iRequest.data.commandInfo = "Distributed information";
-
-    try {
-
-      if (iRequest.httpMethod.equals("PUT")) {
-        doPut(iRequest, iResponse, parts);
-      } else if (iRequest.httpMethod.equals("POST")) {
-        doPost(iRequest, iResponse, parts);
-      } else if (iRequest.httpMethod.equals("GET")) {
-        doGet(iRequest, iResponse, parts);
-      }
-
-    } catch (Exception e) {
-      iResponse.send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, e, null);
-    }
-    return false;
+    return super.execute(iRequest, iResponse);
   }
 
   private void doPut(final OHttpRequest iRequest, final OHttpResponse iResponse, final String[] parts) throws IOException {
@@ -79,7 +71,25 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
     }
   }
 
-  private void doPost(final OHttpRequest iRequest, final OHttpResponse iResponse, final String[] parts) throws IOException {
+  @Override
+  protected void doPost(OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {
+    final String[] parts = checkSyntax(iRequest.getUrl(), 2, "Syntax error: distributed/<command>/[<id>]");
+    doPost(iRequest, iResponse, parts);
+  }
+
+  @Override
+  protected void doPut(OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {
+    final String[] parts = checkSyntax(iRequest.getUrl(), 2, "Syntax error: distributed/<command>/[<id>]");
+    doPut(iRequest, iResponse, parts);
+  }
+
+  @Override
+  protected void doGet(OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {
+    final String[] parts = checkSyntax(iRequest.getUrl(), 2, "Syntax error: distributed/<command>/[<id>]");
+    doGet(iRequest, iResponse, parts);
+  }
+
+  protected void doPost(final OHttpRequest iRequest, final OHttpResponse iResponse, final String[] parts) throws IOException {
 
     final String command = parts[1];
 
@@ -105,6 +115,53 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
       dManager.restartNode(parts[2]);
 
       iResponse.send(OHttpUtils.STATUS_OK_CODE, null, null, OHttpUtils.STATUS_OK_DESCRIPTION, null);
+    } else if (command.equalsIgnoreCase("syncCluster")) {
+
+      if (parts.length < 3)
+        throw new IllegalArgumentException("Cannot sync cluster: missing database or cluster name ");
+
+      if (server.getDistributedManager() == null)
+        throw new OConfigurationException("Cannot sync cluster: local server is not distributed");
+
+      String database = parts[2];
+      String cluster = parts[3];
+
+      // Ugly workaround
+
+      ODatabaseDocumentTx db = server.openDatabase(database, "", "", null, true);
+      ODatabaseRecordThreadLocal.INSTANCE.set(db);
+
+      Object result = OCommandExecutorSQLHASyncCluster.replaceCluster((ODistributedAbstractPlugin) server.getDistributedManager(),
+          server, database, cluster);
+      ODocument document = new ODocument().field("result", result);
+      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, document.toJSON(""), null);
+    } else if (command.equalsIgnoreCase("syncDatabase")) {
+
+      if (parts.length < 3)
+        throw new IllegalArgumentException("Cannot sync database: missing database name");
+
+      if (server.getDistributedManager() == null)
+        throw new OConfigurationException("Cannot sync database: local server is not distributed");
+
+      String database = parts[2];
+
+      ODatabaseDocumentTx db = server.openDatabase(database, "", "", null, true);
+
+      final OStorage stg = db.getStorage();
+      if (!(stg instanceof ODistributedStorage))
+        throw new ODistributedException("SYNC DATABASE command cannot be executed against a non distributed server");
+
+      final ODistributedStorage dStg = (ODistributedStorage) stg;
+
+      final OHazelcastPlugin dManager = (OHazelcastPlugin) dStg.getDistributedManager();
+      if (dManager == null || !dManager.isEnabled())
+        throw new OCommandExecutionException("OrientDB is not started in distributed mode");
+
+      boolean installDatabase = dManager.installDatabase(true, database, dStg.getDistributedConfiguration().getDocument(), false,
+          true);
+
+      ODocument document = new ODocument().field("result", installDatabase);
+      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, document.toJSON(""), null);
     }
 
   }

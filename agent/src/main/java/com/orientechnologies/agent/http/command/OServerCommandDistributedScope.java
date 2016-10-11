@@ -13,6 +13,7 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 
 import java.io.IOException;
 import java.util.List;
@@ -70,14 +71,22 @@ public abstract class OServerCommandDistributedScope extends OServerCommandDistr
   @Override
   public boolean execute(OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
 
-    if ("GET".equalsIgnoreCase(iRequest.httpMethod)) {
-      doGet(iRequest, iResponse);
-    } else if ("POST".equalsIgnoreCase(iRequest.httpMethod)) {
-      doPost(iRequest, iResponse);
-    } else if ("PUT".equalsIgnoreCase(iRequest.httpMethod)) {
-      doPut(iRequest, iResponse);
-    } else if ("DELETE".equalsIgnoreCase(iRequest.httpMethod)) {
-      doDelete(iRequest, iResponse);
+    try {
+      if (isLocalNode(iRequest)) {
+        if ("GET".equalsIgnoreCase(iRequest.httpMethod)) {
+          doGet(iRequest, iResponse);
+        } else if ("POST".equalsIgnoreCase(iRequest.httpMethod)) {
+          doPost(iRequest, iResponse);
+        } else if ("PUT".equalsIgnoreCase(iRequest.httpMethod)) {
+          doPut(iRequest, iResponse);
+        } else if ("DELETE".equalsIgnoreCase(iRequest.httpMethod)) {
+          doDelete(iRequest, iResponse);
+        }
+      } else {
+        proxyRequest(iRequest, iResponse);
+      }
+    } catch (Exception e) {
+      iResponse.send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, e, null);
     }
     return false;
   }
