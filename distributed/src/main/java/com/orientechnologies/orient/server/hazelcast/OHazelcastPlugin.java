@@ -1,6 +1,6 @@
 /*
  *
- *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
  *  *
  *  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  *  you may not use this file except in compliance with the License.
@@ -14,18 +14,10 @@
  *  *  See the License for the specific language governing permissions and
  *  *  limitations under the License.
  *  *
- *  * For more information: http://orientdb.com
+ *  * For more information: http://www.orientechnologies.com
  *
  */
 package com.orientechnologies.orient.server.hazelcast;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.security.SecureRandom;
-import java.util.*;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.locks.Lock;
 
 import com.hazelcast.config.Config;
 import com.hazelcast.config.FileSystemXmlConfig;
@@ -58,10 +50,18 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIR
 import com.orientechnologies.orient.server.distributed.impl.*;
 import com.orientechnologies.orient.server.distributed.impl.task.ODropDatabaseTask;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.security.SecureRandom;
+import java.util.*;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.locks.Lock;
+
 /**
  * Hazelcast implementation for clustering.
  *
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
+ * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class OHazelcastPlugin extends ODistributedAbstractPlugin implements MembershipListener, EntryListener<String, Object> {
 
@@ -571,6 +571,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   }
 
   protected HazelcastInstance configureHazelcast() throws FileNotFoundException {
+
     // If hazelcastConfig is null, use the file system XML config.
     if (hazelcastConfig == null) {
       hazelcastConfig = new FileSystemXmlConfig(hazelcastConfigFile);
@@ -742,6 +743,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         final String databaseName = dbNode.substring(dbNode.indexOf(".") + 1);
 
         onDatabaseEvent(nodeName, databaseName, (DB_STATUS) iEvent.getValue());
+        invokeOnDatabaseStatusChange(nodeName, databaseName, (DB_STATUS) iEvent.getValue());
       }
     } catch (HazelcastInstanceNotActiveException e) {
       OLogManager.instance().error(this, "Hazelcast is not running");
@@ -824,6 +826,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         final String databaseName = dbNode.substring(dbNode.indexOf(".") + 1);
 
         onDatabaseEvent(nodeName, databaseName, (DB_STATUS) iEvent.getValue());
+        invokeOnDatabaseStatusChange(nodeName, databaseName, (DB_STATUS) iEvent.getValue());
 
       } else if (key.startsWith(CONFIG_REGISTEREDNODES)) {
         ODistributedServerLog.info(this, nodeName, eventNodeName, DIRECTION.IN, "Received updated about registered nodes");
@@ -948,8 +951,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   public void onCreate(final ODatabaseInternal iDatabase) {
     if (!isRelatedToLocalServer(iDatabase))
       return;
-    if (!serverInstance.isActive())
-      return;
 
     final ODatabaseDocumentInternal currDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     try {
@@ -1018,8 +1019,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   public void onDrop(final ODatabaseInternal iDatabase) {
     if (!isRelatedToLocalServer(iDatabase))
       return;
-    if (!serverInstance.isActive())
-      return;
 
     final String dbName = iDatabase.getName();
 
@@ -1075,11 +1074,20 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     if (currStatus == null || currStatus != iStatus) {
       configurationMap.put(key, iStatus);
+      invokeOnDatabaseStatusChange(iNode, iDatabaseName, iStatus);
 
-      // NOTIFY DB/NODE IS CHANGING STATUS
-      for (ODistributedLifecycleListener l : listeners) {
+    }
+  }
+
+  private void invokeOnDatabaseStatusChange(final String iNode, final String iDatabaseName, final DB_STATUS iStatus) {
+    // NOTIFY DB/NODE IS CHANGING STATUS
+    for (ODistributedLifecycleListener l : listeners) {
+      try {
         l.onDatabaseChangeStatus(iNode, iDatabaseName, iStatus);
+      } catch (Exception e) {
+        // IGNORE IT
       }
+
     }
   }
 
@@ -1243,6 +1251,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
           updateCachedDatabaseConfiguration(databaseName, cfg.getDocument(), true, true);
 
       }
+
+      if (nodeLeftName.equalsIgnoreCase(nodeName))
+        // CURRENT NODE: EXIT
+        System.exit(1);
+
     } finally {
       // REMOVE NODE IN DB CFG
       if (messageService != null)
