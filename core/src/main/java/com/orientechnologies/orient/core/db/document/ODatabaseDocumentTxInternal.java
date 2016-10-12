@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.core.db.document;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseSessionMetadata;
 import com.orientechnologies.orient.core.db.OEmbeddedDBFactory;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 
@@ -17,14 +16,6 @@ public class ODatabaseDocumentTxInternal {
     if (db instanceof ODatabaseDocumentTx)
       db = ((ODatabaseDocumentTx) db).internal;
     return db;
-  }
-
-  public static ODatabaseSessionMetadata getSessionMetadata(ODatabaseDocument db) {
-    return ((ODatabaseDocumentAbstract) db).sessionMetadata;
-  }
-
-  public static void setSessionMetadata(ODatabaseDocument db, ODatabaseSessionMetadata sessionMetadata) {
-    ((ODatabaseDocumentAbstract) db).sessionMetadata = sessionMetadata;
   }
 
   public static ODatabaseDocumentTx wrap(ODatabaseDocumentInternal database) {

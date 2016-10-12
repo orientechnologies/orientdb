@@ -113,8 +113,6 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   protected boolean                                           initialized     = false;
   protected OTransaction                                      currentTx;
 
-  protected ODatabaseSessionMetadata                          sessionMetadata;
-
   protected final ORecordHook[][]                             hooksByScope    = new ORecordHook[ORecordHook.SCOPE
       .values().length][];
   protected OSharedContext                                    sharedContext;

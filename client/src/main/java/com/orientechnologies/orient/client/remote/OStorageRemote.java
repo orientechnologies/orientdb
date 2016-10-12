@@ -40,6 +40,7 @@ import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentRemote;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTxInternal;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
@@ -2317,14 +2318,14 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
   protected OStorageRemoteSession getCurrentSession() {
     ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-    db = ODatabaseDocumentTxInternal.getInternal(db);
-    if (db == null)
+    ODatabaseDocumentRemote remote = (ODatabaseDocumentRemote) ODatabaseDocumentTxInternal.getInternal(db);
+    if (remote == null)
       return null;
-    OStorageRemoteSession session = (OStorageRemoteSession) ODatabaseDocumentTxInternal.getSessionMetadata(db);
+    OStorageRemoteSession session = (OStorageRemoteSession) remote.getSessionMetadata();
     if (session == null) {
       session = new OStorageRemoteSession(sessionSerialId.decrementAndGet());
       sessions.add(session);
-      ODatabaseDocumentTxInternal.setSessionMetadata(db, session);
+      remote.setSessionMetadata(session);
     }
     return session;
   }
@@ -2344,13 +2345,13 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     ODatabaseDocumentInternal origin = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     origin = ODatabaseDocumentTxInternal.getInternal(origin);
 
-    final OStorageRemoteSession session = (OStorageRemoteSession) ODatabaseDocumentTxInternal.getSessionMetadata(source);
+    final OStorageRemoteSession session = (OStorageRemoteSession) ((ODatabaseDocumentRemote) source).getSessionMetadata();
     if (session != null) {
       // TODO:may run a session reopen
       final OStorageRemoteSession newSession = new OStorageRemoteSession(sessionSerialId.decrementAndGet());
       newSession.connectionUserName = session.connectionUserName;
       newSession.connectionUserPassword = session.connectionUserPassword;
-      ODatabaseDocumentTxInternal.setSessionMetadata(dest, newSession);
+      ((ODatabaseDocumentRemote)dest).setSessionMetadata(newSession);
     }
     try {
       dest.activateOnCurrentThread();

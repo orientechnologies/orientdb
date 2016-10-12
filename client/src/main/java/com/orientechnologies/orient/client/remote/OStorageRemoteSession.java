@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.client.remote;
 
-import com.orientechnologies.orient.core.db.ODatabaseSessionMetadata;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
 import java.util.*;
@@ -27,7 +26,7 @@ import java.util.*;
 /**
  * Created by tglman on 31/03/16.
  */
-public class OStorageRemoteSession implements ODatabaseSessionMetadata {
+public class OStorageRemoteSession {
   boolean                                commandExecuting       = false;
   int                                    serverURLIndex         = -1;
   String                                 connectionUserName     = null;

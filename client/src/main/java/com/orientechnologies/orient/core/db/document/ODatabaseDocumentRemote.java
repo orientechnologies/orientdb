@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.core.db.document;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
@@ -28,6 +29,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentAbstract;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.index.ClassIndexManagerRemote;
@@ -46,7 +48,8 @@ import java.util.Map.Entry;
  */
 public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
 
-  private OrientDBConfig config;
+  protected OStorageRemoteSession sessionMetadata;
+  private OrientDBConfig          config;
 
   public ODatabaseDocumentRemote(final OStorage storage) {
     activateOnCurrentThread();
@@ -110,7 +113,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     database.status = STATUS.OPEN;
     database.applyAttributes(config);
     database.initAtFirstOpen();
-    database.user = this.user; 
+    database.user = this.user;
     this.activateOnCurrentThread();
     return database;
   }
@@ -145,7 +148,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     } catch (Exception e) {
       close();
       throw OException.wrapException(new ODatabaseException("Cannot open database url=" + getURL()), e);
-    } 
+    }
   }
 
   private void applyAttributes(OrientDBConfig config) {
@@ -177,15 +180,23 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
 
     initialized = true;
   }
-  
+
   protected void installHooksRemote() {
     hooks.clear();
     registerHook(new ClassIndexManagerRemote(this), ORecordHook.HOOK_POSITION.LAST);
   }
-  
+
   private void applyListeners(OrientDBConfig config) {
     for (ODatabaseListener listener : config.getListeners()) {
       registerListener(listener);
     }
+  }
+
+  public OStorageRemoteSession getSessionMetadata() {
+    return sessionMetadata;
+  }
+
+  public void setSessionMetadata(OStorageRemoteSession sessionMetadata) {
+    this.sessionMetadata = sessionMetadata;
   }
 }
