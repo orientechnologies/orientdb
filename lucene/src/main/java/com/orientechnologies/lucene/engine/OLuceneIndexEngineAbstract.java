@@ -47,6 +47,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPagi
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
+import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.TrackingIndexWriter;
@@ -294,20 +295,39 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
   protected void closeIndex() throws IOException {
     OLogManager.instance().debug(this, "Closing Lucene index '" + this.name + "'...");
 
-    if (nrt != null) {
-      nrt.interrupt();
-      nrt.close();
+    closeNRT();
+
+    cancelCommitTask();
+
+    closeSearchManager();
+
+    commitAndCloseWriter();
+  }
+
+  private void commitAndCloseWriter() throws IOException {
+    if (mgrWriter != null) {
+      if (mgrWriter.getIndexWriter().isOpen()) {
+        mgrWriter.getIndexWriter().commit();
+        mgrWriter.getIndexWriter().close();
+      }
     }
+  }
+
+  private void closeSearchManager() throws IOException {
+    if (searcherManager != null)
+      searcherManager.close();
+  }
+
+  private void cancelCommitTask() {
     if (commitTask != null) {
       commitTask.cancel();
     }
+  }
 
-    if (searcherManager != null)
-      searcherManager.close();
-
-    if (mgrWriter != null) {
-      mgrWriter.getIndexWriter().commit();
-      mgrWriter.getIndexWriter().close();
+  private void closeNRT() {
+    if (nrt != null) {
+      nrt.interrupt();
+      nrt.close();
     }
   }
 
@@ -498,13 +518,25 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
 
   @Override
   public void freeze(boolean throwException) {
-    // Flush on freeze
-    flush();
+
+    try {
+      closeNRT();
+      cancelCommitTask();
+      commitAndCloseWriter();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+
   }
 
   @Override
   public void release() {
-    // Do nothing on release
+    try {
+      closeIndex();
+      reOpen(metadata);
+    } catch (IOException e) {
+      OLogManager.instance().error(this, "Error on releasing Lucene index", e);
+    }
   }
 
   @Override
