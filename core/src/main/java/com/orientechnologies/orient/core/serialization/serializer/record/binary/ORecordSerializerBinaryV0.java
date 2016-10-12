@@ -316,6 +316,9 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         // LOAD GLOBAL PROPERTY BY ID
         final int id = (len * -1) - 1;
         prop = _schema.getGlobalPropertyById(id);
+        if (prop == null) {
+          throw new OSerializationException("Missing property definition for property id '" + id + "'");
+        }
         result.add(prop.getName());
 
         // SKIP THE REST
