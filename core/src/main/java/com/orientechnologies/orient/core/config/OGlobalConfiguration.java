@@ -747,7 +747,7 @@ public enum OGlobalConfiguration {
    * @Since 2.1.3
    */
   @OApi(maturity = OApi.MATURITY.NEW)DISTRIBUTED_BACKUP_DIRECTORY("distributed.backupDirectory",
-      "Directory where the copy of an existent database is saved, before it is downloaded from the cluster", String.class,
+      "Directory where the copy of an existent database is saved, before it is downloaded from the cluster. Leave it empty to avoid the backup.", String.class,
       "../backup/databases"),
 
   /**
