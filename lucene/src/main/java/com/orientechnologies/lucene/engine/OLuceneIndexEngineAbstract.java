@@ -49,12 +49,7 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.search.ControlledRealTimeReopenThread;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.search.SearcherManager;
-import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.*;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.RAMDirectory;
@@ -63,16 +58,11 @@ import org.apache.lucene.util.Version;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory.AnalyzerKind.*;
-
-//import org.apache.lucene.index.TrackingIndexWriter;
+import static com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory.AnalyzerKind.INDEX;
+import static com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory.AnalyzerKind.QUERY;
 
 public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdaptiveExternal
     implements OLuceneIndexEngine, OOrientListener {
@@ -82,22 +72,23 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
   public static final String               STORED           = "_STORED";
 
   public static final String               OLUCENE_BASE_DIR = "luceneIndexes";
-  protected final String                   name;
-  protected final OStorage                   storage;
+
   protected SearcherManager                searcherManager;
   protected OIndexDefinition               index;
+  protected String                         name;
   protected String                         clusterIndexName;
   protected boolean                        automatic;
   protected ControlledRealTimeReopenThread nrt;
   protected ODocument                      metadata;
   protected Version                        version;
-  protected Map<String, Boolean>           collectionFields = new HashMap<>();
+  protected Map<String, Boolean>           collectionFields = new HashMap<String, Boolean>();
   protected TimerTask                      commitTask;
   protected AtomicBoolean                  closed           = new AtomicBoolean(true);
   private long                             reopenToken;
   private Analyzer                         indexAnalyzer;
   private Analyzer                         queryAnalyzer;
   private Directory                        directory;
+  protected OStorage                       storage;
   private IndexWriter                      indexWriter;
 
   public OLuceneIndexEngineAbstract(OStorage storage, String indexName) {
@@ -112,6 +103,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
   // TODO: move to utility class
   public static void sendTotalHits(String indexName, OCommandContext context, int totalHits) {
     if (context != null) {
+
       if (context.getVariable("totalHits") == null) {
         context.setVariable("totalHits", totalHits);
       } else {
@@ -192,7 +184,6 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
     try {
       indexWriter.commit();
     } catch (IOException e) {
-
       OLogManager.instance().error(this, "Error on committing Lucene index", e);
     }
   }
@@ -230,7 +221,6 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
     nrt = new ControlledRealTimeReopenThread(indexWriter, searcherManager, 60.00, 0.1);
     nrt.setDaemon(true);
     nrt.start();
-
     flush();
   }
 
@@ -301,25 +291,45 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
   protected void closeIndex() throws IOException {
     OLogManager.instance().debug(this, "Closing Lucene index '" + this.name + "'...");
 
-    if (nrt != null) {
-      nrt.interrupt();
-      nrt.close();
+    closeNRT();
+
+    cancelCommitTask();
+
+    closeSearchManager();
+
+    commitAndCloseWriter();
+  }
+
+  private void commitAndCloseWriter() throws IOException {
+    if (indexWriter != null && indexWriter.isOpen()) {
+      indexWriter.commit();
+      indexWriter.close();
     }
     if (commitTask != null) {
       commitTask.cancel();
     }
+  }
 
+  private void closeSearchManager() throws IOException {
     if (searcherManager != null)
       searcherManager.close();
+  }
 
-    if (indexWriter != null) {
-      indexWriter.commit();
-      indexWriter.close();
+  private void cancelCommitTask() {
+    if (commitTask != null) {
+      commitTask.cancel();
+    }
+  }
+
+  private void closeNRT() {
+    if (nrt != null) {
+      nrt.interrupt();
+      nrt.close();
     }
   }
 
   protected ODatabaseDocumentInternal getDatabase() {
-    return ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 
   private String getIndexPath(OLocalPaginatedStorage storageLocalAbstract, String indexName) {
@@ -333,6 +343,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
   @Override
   public void load(String indexName, OBinarySerializer valueSerializer, boolean isAutomatic, OBinarySerializer keySerializer,
       OType[] keyTypes, boolean nullPointerSupport, int keySize, Map<String, String> engineProperties) {
+    // initIndex(indexName, indexDefinition, isAutomatic, metadata);
   }
 
   @Override
@@ -427,7 +438,6 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error on deleting document by query '%s' to Lucene index", e, query);
     }
-
   }
 
   protected boolean isCollectionDelete() {
@@ -506,13 +516,25 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
 
   @Override
   public void freeze(boolean throwException) {
-    // Flush on freeze
-    flush();
+
+    try {
+      closeNRT();
+      cancelCommitTask();
+      commitAndCloseWriter();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+
   }
 
   @Override
   public void release() {
-    // Do nothing on release
+    try {
+      closeIndex();
+      reOpen(metadata);
+    } catch (IOException e) {
+      OLogManager.instance().error(this, "Error on releasing Lucene index", e);
+    }
   }
 
   @Override
