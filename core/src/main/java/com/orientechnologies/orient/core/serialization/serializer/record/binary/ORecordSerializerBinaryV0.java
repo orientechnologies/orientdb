@@ -288,15 +288,12 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
   }
 
   @Override
-  public String[] getFieldNames(final BytesContainer bytes) {
+  public String[] getFieldNames(ODocument reference, final BytesContainer bytes) {
     // SKIP CLASS NAME
     final int classNameLen = OVarIntSerializer.readAsInteger(bytes);
     bytes.skip(classNameLen);
 
     final List<String> result = new ArrayList<String>();
-
-    final OMetadataInternal metadata = (OMetadataInternal) ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata();
-    final OImmutableSchema _schema = metadata.getImmutableSchemaSnapshot();
 
     String fieldName;
     while (true) {
@@ -315,7 +312,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       } else {
         // LOAD GLOBAL PROPERTY BY ID
         final int id = (len * -1) - 1;
-        prop = _schema.getGlobalPropertyById(id);
+        prop = ODocumentInternal.getGlobalPropertyById(reference, id);
         if (prop == null) {
           throw new OSerializationException("Missing property definition for property id '" + id + "'");
         }

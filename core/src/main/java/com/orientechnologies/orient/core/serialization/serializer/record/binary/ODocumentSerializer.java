@@ -42,6 +42,7 @@ public interface ODocumentSerializer {
 
   /**
    * Returns the array of field names with no values.
+   * @param reference TODO
    */
-  String[] getFieldNames(BytesContainer iBytes);
+  String[] getFieldNames(ODocument reference, BytesContainer iBytes);
 }
