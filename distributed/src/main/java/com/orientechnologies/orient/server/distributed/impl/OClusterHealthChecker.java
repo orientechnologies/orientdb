@@ -186,10 +186,10 @@ public class OClusterHealthChecker extends TimerTask {
 
     if (OGlobalConfiguration.DISTRIBUTED_CHECK_HEALTH_CAN_OFFLINE_SERVER.getValueAsBoolean()) {
       ODistributedServerLog.warn(this, manager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.OUT,
-          "Server '%s' did not respond to the heartbeat message (db=%s, timeout=%dms). Setting the database as OFFLINE", server,
+          "Server '%s' did not respond to the heartbeat message (db=%s, timeout=%dms). Setting the database as NOT_AVAILABLE", server,
           dbName, OGlobalConfiguration.DISTRIBUTED_HEARTBEAT_TIMEOUT.getValueAsLong());
 
-      manager.setDatabaseStatus(server, dbName, ODistributedServerManager.DB_STATUS.OFFLINE);
+      manager.setDatabaseStatus(server, dbName, ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
 
     } else {
 

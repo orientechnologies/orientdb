@@ -1079,7 +1079,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     }
   }
 
-  private void invokeOnDatabaseStatusChange(String iNode, String iDatabaseName, DB_STATUS iStatus) {
+  private void invokeOnDatabaseStatusChange(final String iNode, final String iDatabaseName, final DB_STATUS iStatus) {
     // NOTIFY DB/NODE IS CHANGING STATUS
     for (ODistributedLifecycleListener l : listeners) {
       try {

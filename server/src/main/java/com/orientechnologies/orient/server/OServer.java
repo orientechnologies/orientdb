@@ -441,8 +441,10 @@ public class OServer {
     } finally {
       startupLatch = null;
 
-      shutdownLatch.countDown();
-      shutdownLatch = null;
+      if( shutdownLatch != null ) {
+        shutdownLatch.countDown();
+        shutdownLatch = null;
+      }
     }
   }
 
