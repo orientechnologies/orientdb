@@ -451,6 +451,10 @@ public class OServer {
       return res;
     } finally {
       startupLatch = null;
+<<<<<<< HEAD
+=======
+
+>>>>>>> 94254c3... HA: fixed shutdown of storages
       if (shutdownLatch != null) {
         shutdownLatch.countDown();
         shutdownLatch = null;
@@ -769,6 +773,9 @@ public class OServer {
 
   @SuppressWarnings("unchecked")
   public <RET extends OServerPlugin> RET getPlugin(final String iName) {
+    if (startupLatch == null)
+      throw new ODatabaseException("Error on plugin lookup: the server did not start correctly");
+
     try {
       startupLatch.await();
     } catch (InterruptedException e) {
