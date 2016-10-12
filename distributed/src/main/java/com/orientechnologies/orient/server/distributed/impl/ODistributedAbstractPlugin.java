@@ -1382,7 +1382,10 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     final HashSet<String> toSynchClusters = new HashSet<String>();
     for (String cl : localManagedClusters) {
       // FILTER CLUSTER CHECKING IF ANY NODE IS ACTIVE
-      if (!cfg.getServers(cl, localNodeName).isEmpty())
+      final List<String> servers = cfg.getServers(cl, localNodeName);
+      getAvailableNodes(servers, databaseName);
+
+      if (!servers.isEmpty())
         toSynchClusters.add(cl);
     }
 
