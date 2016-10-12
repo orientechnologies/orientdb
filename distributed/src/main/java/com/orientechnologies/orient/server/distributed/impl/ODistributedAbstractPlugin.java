@@ -19,6 +19,13 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
+import java.io.*;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+
 import com.hazelcast.core.HazelcastException;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.core.Member;
@@ -41,7 +48,6 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -70,18 +76,10 @@ import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
-import java.io.*;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.Lock;
-
 /**
  * Abstract plugin to manage the distributed environment.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- *
  */
 public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     implements ODistributedServerManager, ODatabaseLifecycleListener, OCommandOutputListener {
@@ -246,8 +244,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   public void onOpen(final ODatabaseInternal iDatabase) {
     if (!isRelatedToLocalServer(iDatabase))
       return;
-    
-    if(!serverInstance.isActive())
+
+    if (!serverInstance.isActive())
       return;
 
     final ODatabaseDocumentInternal currDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
@@ -701,10 +699,10 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     // RUN ONLY IN NON-DISTRIBUTED MODE
     if (!isRelatedToLocalServer(iDatabase))
       return;
-    
-    if(!serverInstance.isActive())
+
+    if (!serverInstance.isActive())
       return;
-    
+
     final ODistributedConfiguration cfg = getDatabaseConfiguration(iDatabase.getName());
     if (cfg == null)
       return;
@@ -1536,8 +1534,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     dumpServersStatus();
   }
 
-  protected boolean rebalanceClusterOwnership(final String iNode, ODatabaseInternal iDatabase,
-      final ODistributedConfiguration cfg, final Set<String> clustersWithNotAvailableOwner, final boolean rebalance) {
+  protected boolean rebalanceClusterOwnership(final String iNode, ODatabaseInternal iDatabase, final ODistributedConfiguration cfg,
+      final Set<String> clustersWithNotAvailableOwner, final boolean rebalance) {
     if (!rebalance && clustersWithNotAvailableOwner.isEmpty())
       return false;
 
@@ -1548,7 +1546,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
     if (iDatabase.isClosed())
       iDatabase = getServerInstance().openDatabase(iDatabase.getName());
-
 
     ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Reassigning cluster ownership for database %s",
         iDatabase.getName());
@@ -1584,27 +1581,13 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   }
 
   protected void installDbClustersLocalStrategy(final ODatabaseInternal iDatabase) {
-    final boolean useASuperUserDb = iDatabase.isClosed() || iDatabase.getUser() != null;
+    final OSchema schema = iDatabase.getDatabaseOwner().getMetadata().getSchema();
 
-    // USE A DATABASE WITH SUPER PRIVILEGES
-    final ODatabaseInternal db = useASuperUserDb ? messageService.getDatabase(iDatabase.getName()).getDatabaseInstance()
-        : iDatabase;
-
-    try {
-      // OVERWRITE CLUSTER SELECTION STRATEGY
-      final OSchema schema = db.getDatabaseOwner().getMetadata().getSchema();
-
-      for (OClass c : schema.getClasses()) {
+    for (OClass c : schema.getClasses()) {
+      if (!(c.getClusterSelection() instanceof OLocalClusterWrapperStrategy))
+        // OVERWRITE CLUSTER SELECTION STRATEGY
         ((OClassImpl) c)
-            .setClusterSelectionInternal(new OLocalClusterWrapperStrategy(this, db.getName(), c, c.getClusterSelection()));
-      }
-
-    } finally {
-      if (useASuperUserDb) {
-        // REPLACE CURRENT DB
-        db.close();
-        iDatabase.activateOnCurrentThread();
-      }
+            .setClusterSelectionInternal(new OLocalClusterWrapperStrategy(this, iDatabase.getName(), c, c.getClusterSelection()));
     }
   }
 
@@ -1759,7 +1742,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         }
       };
 
-      
       try {
         final ODistributedAbstractPlugin me = this;
         executeInDistributedDatabaseLock(databaseName, 0, new OCallable<Void, ODistributedConfiguration>() {
@@ -1805,9 +1787,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       } finally {
         in.close();
       }
-      
+
       ODatabaseDocumentInternal database = serverInstance.openDatabase(databaseName);
-      
+
       ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Installed database '%s' (LSN=%s)", databaseName,
           ((OAbstractPaginatedStorage) database.getStorage().getUnderlying()).getLSN());
 
