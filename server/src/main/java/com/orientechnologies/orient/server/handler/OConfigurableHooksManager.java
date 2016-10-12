@@ -20,6 +20,13 @@
 
 package com.orientechnologies.orient.server.handler;
 
+import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabase;
@@ -31,9 +38,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.config.OServerHookConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-
-import java.lang.reflect.Method;
-import java.util.List;
 
 /**
  * User: kasper fock Date: 09/11/12 Time: 22:35 Registers hooks defined the in xml configuration.
@@ -65,28 +69,27 @@ public class OConfigurableHooksManager implements ODatabaseLifecycleListener {
   }
 
   public void onOpen(ODatabaseInternal iDatabase) {
-    final ODatabase<?> db = (ODatabase<?>) iDatabase;
-    for (OServerHookConfiguration hook : configuredHooks) {
-      try {
-        final ORecordHook.HOOK_POSITION pos = ORecordHook.HOOK_POSITION.valueOf(hook.position);
-        final ORecordHook h = (ORecordHook) Class.forName(hook.clazz).newInstance();
-        if (hook.parameters != null && hook.parameters.length > 0)
-          try {
-            final Method m = h.getClass().getDeclaredMethod("config", new Class[] { OServerParameterConfiguration[].class });
-            m.invoke(h, new Object[] { hook.parameters });
-          } catch (Exception e) {
-            OLogManager
-                .instance()
-                .warn(
-                    this,
-                    "[configure] Failed to configure hook '%s'. Parameters specified but hook don support parameters. Should have a method config with parameters OServerParameterConfiguration[] ",
-                    hook.clazz);
+    if (!iDatabase.getStorage().isRemote()) {
+      final ODatabase<?> db = (ODatabase<?>) iDatabase;
+      for (OServerHookConfiguration hook : configuredHooks) {
+        try {
+          final ORecordHook.HOOK_POSITION pos = ORecordHook.HOOK_POSITION.valueOf(hook.position);
+          final ORecordHook h = (ORecordHook) Class.forName(hook.clazz).newInstance();
+          if (hook.parameters != null && hook.parameters.length > 0)
+            try {
+              final Method m = h.getClass().getDeclaredMethod("config", new Class[] { OServerParameterConfiguration[].class });
+              m.invoke(h, new Object[] { hook.parameters });
+            } catch (Exception e) {
+              OLogManager.instance().warn(this,
+                  "[configure] Failed to configure hook '%s'. Parameters specified but hook don support parameters. Should have a method config with parameters OServerParameterConfiguration[] ",
+                  hook.clazz);
 
-          }
-        db.registerHook(h, pos);
-      } catch (Exception e) {
-        OLogManager.instance().error(this, "[configure] Failed to configure hook '%s' due to the an error : ", e, hook.clazz,
-            e.getMessage());
+            }
+          db.registerHook(h, pos);
+        } catch (Exception e) {
+          OLogManager.instance().error(this, "[configure] Failed to configure hook '%s' due to the an error : ", e, hook.clazz,
+              e.getMessage());
+        }
       }
     }
   }
