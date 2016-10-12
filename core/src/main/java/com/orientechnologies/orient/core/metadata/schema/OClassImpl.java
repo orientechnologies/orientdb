@@ -2065,13 +2065,9 @@ import java.util.concurrent.Callable;
       // NO CHANGES
       return;
 
-    acquireSchemaWriteLock();
-    try {
-      checkEmbedded();
-      this.clusterSelection = iClusterSelection;
-    } finally {
-      releaseSchemaWriteLock();
-    }
+    // DON'T GET THE SCHEMA LOCK BECAUSE THIS CHANGE IS USED ONLY TO WRAP THE SELECTION STRATEGY
+    checkEmbedded();
+    this.clusterSelection = iClusterSelection;
   }
 
   public void fireDatabaseMigration(final ODatabaseDocument database, final String propertyName, final OType type) {
