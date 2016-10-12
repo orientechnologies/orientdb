@@ -734,7 +734,7 @@ public class ODocument extends ORecordAbstract
     if (_status == ORecordElement.STATUS.LOADED && _source != null && ODatabaseRecordThreadLocal.INSTANCE.isDefined()
         && !ODatabaseRecordThreadLocal.INSTANCE.get().isClosed()) {
       // DESERIALIZE FIELD NAMES ONLY (SUPPORTED ONLY BY BINARY SERIALIZER)
-      final String[] fieldNames = _recordFormat.getFieldNames(_source);
+      final String[] fieldNames = _recordFormat.getFieldNames(this, _source);
       if (fieldNames != null)
         return fieldNames;
     }

@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.core.serialization.serializer.record;
 
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public interface ORecordSerializer {
   ORecord fromStream(byte[] iSource, ORecord iRecord, String[] iFields);
@@ -33,7 +34,7 @@ public interface ORecordSerializer {
 
   int getMinSupportedVersion();
 
-  String[] getFieldNames(byte[] iSource);
+  String[] getFieldNames(ODocument reference, byte[] iSource);
 
   boolean getSupportBinaryEvaluate();
 }

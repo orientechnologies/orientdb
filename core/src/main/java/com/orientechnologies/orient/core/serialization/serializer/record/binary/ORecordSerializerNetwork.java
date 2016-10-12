@@ -95,14 +95,14 @@ public class ORecordSerializerNetwork implements ORecordSerializer {
   }
 
   @Override
-  public String[] getFieldNames(final byte[] iSource) {
+  public String[] getFieldNames(ODocument reference, final byte[] iSource) {
     if (iSource == null || iSource.length == 0)
       return new String[0];
 
     final BytesContainer container = new BytesContainer(iSource).skip(1);
 
     try {
-      return serializerByVersion[iSource[0]].getFieldNames(container);
+      return serializerByVersion[iSource[0]].getFieldNames(reference, container);
     } catch (RuntimeException e) {
       OLogManager.instance().warn(this, "Error deserializing record to get field-names, send this data for debugging: %s ",
           OBase64Utils.encodeBytes(iSource));
