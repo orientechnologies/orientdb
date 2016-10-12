@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2013 Luca Garulli (l.garulli--at--orientechnologies.com)
+ * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,9 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import java.io.File;
-import java.io.IOException;
-
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.util.OCallable;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
@@ -31,10 +25,13 @@ import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProto
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 
+import java.io.File;
+import java.io.IOException;
+
 /**
  * Running server instance.
- * 
- * @author Luca Garulli (l.garulli--at--orientechnologies.com)
+ *
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class ServerRun {
   protected final String serverId;
@@ -48,10 +45,6 @@ public class ServerRun {
 
   public static String getServerHome(final String iServerId) {
     return "target/server" + iServerId;
-  }
-
-  public static String getDatabasePath(final String iServerId, final String iDatabaseName) {
-    return getServerHome(iServerId) + "/databases/" + iDatabaseName;
   }
 
   @Override
@@ -96,11 +89,14 @@ public class ServerRun {
 
     new File(dbPath).mkdirs();
 
-    final OrientGraphFactory factory = new OrientGraphFactory("plocal:" + dbPath);
+    OrientGraphFactory factory = new OrientGraphFactory("plocal:" + dbPath);
     if (factory.exists()) {
       System.out.println("Dropping previous database '" + iName + "' under: " + dbPath + "...");
       new ODatabaseDocumentTx("plocal:" + dbPath).open("admin", "admin").drop();
       OFileUtils.deleteRecursively(new File(dbPath));
+
+      factory.drop();
+      factory = new OrientGraphFactory("plocal:" + dbPath);
     }
 
     if (iCfgCallback != null)
@@ -160,21 +156,7 @@ public class ServerRun {
   }
 
   public void closeStorages() {
-    for (OStorage s : Orient.instance().getStorages()) {
-      if (s instanceof OLocalPaginatedStorage && ((OLocalPaginatedStorage) s).getStoragePath().startsWith(getDatabasePath(""))) {
-        s.close(true, false);
-        Orient.instance().unregisterStorage(s);
-      }
-    }
-  }
-
-  public void deleteStorages() {
-    for (OStorage s : Orient.instance().getStorages()) {
-      if (s instanceof OLocalPaginatedStorage && ((OLocalPaginatedStorage) s).getStoragePath().startsWith(getDatabasePath(""))) {
-        s.close(true, true);
-        Orient.instance().unregisterStorage(s);
-      }
-    }
+    ODatabaseDocumentTx.closeAll();
   }
 
   protected String getServerHome() {
@@ -185,4 +167,7 @@ public class ServerRun {
     return getDatabasePath(serverId, iDatabaseName);
   }
 
+  public static String getDatabasePath(final String iServerId, final String iDatabaseName) {
+    return new File(getServerHome(iServerId) + "/databases/" + iDatabaseName).getAbsolutePath();
+  }
 }
