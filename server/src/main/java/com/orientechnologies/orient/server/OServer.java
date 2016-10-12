@@ -451,10 +451,6 @@ public class OServer {
       return res;
     } finally {
       startupLatch = null;
-<<<<<<< HEAD
-=======
-
->>>>>>> 94254c3... HA: fixed shutdown of storages
       if (shutdownLatch != null) {
         shutdownLatch.countDown();
         shutdownLatch = null;
