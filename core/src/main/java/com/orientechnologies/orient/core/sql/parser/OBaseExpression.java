@@ -40,6 +40,11 @@ public class OBaseExpression extends OMathExpression {
     this.identifier = new OBaseIdentifier(identifier);
   }
 
+  public OBaseExpression(String string) {
+    super(-1);
+    this.string = "\""+OStringSerializerHelper.encode(string)+"\"";
+  }
+
   public OBaseExpression(OIdentifier identifier, OModifier modifier) {
     this(identifier);
     if (modifier != null) {
@@ -50,7 +55,7 @@ public class OBaseExpression extends OMathExpression {
   public OBaseExpression(ORecordAttribute attr, OModifier modifier) {
     super(-1);
     this.identifier = new OBaseIdentifier(attr);
-    if(modifier!=null){
+    if (modifier != null) {
       this.modifier = modifier;
     }
   }
@@ -87,16 +92,18 @@ public class OBaseExpression extends OMathExpression {
     Object result = null;
     if (number != null) {
       result = number.getValue();
-    }
-    if (identifier != null) {
+    } else if (identifier != null) {
       result = identifier.execute(iCurrentRecord, ctx);
-    }
-    if (string != null && string.length() > 1) {
+    } else if (string != null && string.length() > 1) {
       result = OStringSerializerHelper.decode(string.substring(1, string.length() - 1));
+    } else if (inputParam != null) {
+      result = inputParam.bindFromInputParams(ctx.getInputParameters());
     }
+
     if (modifier != null) {
       result = modifier.execute(iCurrentRecord, result, ctx);
     }
+
     return result;
   }
 
@@ -104,12 +111,12 @@ public class OBaseExpression extends OMathExpression {
     Object result = null;
     if (number != null) {
       result = number.getValue();
-    }
-    if (identifier != null) {
+    } else if (identifier != null) {
       result = identifier.execute(iCurrentRecord, ctx);
-    }
-    if (string != null && string.length() > 1) {
+    } else if (string != null && string.length() > 1) {
       result = OStringSerializerHelper.decode(string.substring(1, string.length() - 1));
+    } else if (inputParam != null) {
+      result = inputParam.bindFromInputParams(ctx.getInputParameters());
     }
     if (modifier != null) {
       result = modifier.execute(iCurrentRecord, result, ctx);

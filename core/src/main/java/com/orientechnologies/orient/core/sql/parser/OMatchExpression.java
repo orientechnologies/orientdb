@@ -61,5 +61,21 @@ public class OMatchExpression extends SimpleNode {
     result = 31 * result + (items != null ? items.hashCode() : 0);
     return result;
   }
+
+  public OMatchFilter getOrigin() {
+    return origin;
+  }
+
+  public void setOrigin(OMatchFilter origin) {
+    this.origin = origin;
+  }
+
+  public List<OMatchPathItem> getItems() {
+    return items;
+  }
+
+  public void setItems(List<OMatchPathItem> items) {
+    this.items = items;
+  }
 }
 /* JavaCC - OriginalChecksum=73491fb653c32baf66997290db29f370 (do not edit this line) */

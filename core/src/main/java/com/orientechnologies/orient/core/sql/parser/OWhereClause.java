@@ -306,5 +306,17 @@ public class OWhereClause extends SimpleNode {
   public boolean refersToParent() {
     return baseExpression!=null && baseExpression.refersToParent();
   }
+
+  public OBooleanExpression getBaseExpression() {
+    return baseExpression;
+  }
+
+  public List<OAndBlock> getFlattened() {
+    return flattened;
+  }
+
+  public void setFlattened(List<OAndBlock> flattened) {
+    this.flattened = flattened;
+  }
 }
 /* JavaCC - OriginalChecksum=e8015d01ce1ab2bc337062e9e3f2603e (do not edit this line) */

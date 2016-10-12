@@ -85,11 +85,22 @@ public class OMethodCall extends SimpleNode {
     if (graphMethods.contains(name)) {
       OSQLFunction function = OSQLEngine.getInstance().getFunction(name);
       if (function instanceof OSQLFunctionFiltered) {
+        Object current = ctx.getVariable("$current");
+        if(current instanceof OResult){
+          current = ((OResult) current).getElement();
+        }
         return ((OSQLFunctionFiltered) function)
-            .execute(targetObjects, (OIdentifiable) ctx.getVariable("$current"), null, paramValues.toArray(), iPossibleResults,
+            .execute(targetObjects, (OIdentifiable) current, null, paramValues.toArray(), iPossibleResults,
                 ctx);
       } else {
-        return function.execute(targetObjects, (OIdentifiable) ctx.getVariable("$current"), null, paramValues.toArray(), ctx);
+        Object current = ctx.getVariable("$current");
+        if(current instanceof OIdentifiable) {
+          return function.execute(targetObjects, (OIdentifiable) current, null, paramValues.toArray(), ctx);
+        }else if(current instanceof OResult){
+          return function.execute(targetObjects,((OResult) current).getElement(), null, paramValues.toArray(), ctx);
+        } else {
+          return function.execute(targetObjects, null, null, paramValues.toArray(), ctx);
+        }
       }
 
     }

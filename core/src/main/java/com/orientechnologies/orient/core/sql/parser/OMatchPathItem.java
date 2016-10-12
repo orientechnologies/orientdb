@@ -46,7 +46,7 @@ public class OMatchPathItem extends SimpleNode {
     }
   }
 
-  protected Iterable<OIdentifiable> executeTraversal(OMatchStatement.MatchContext matchContext, OCommandContext iCommandContext,
+  public Iterable<OIdentifiable> executeTraversal(OMatchStatement.MatchContext matchContext, OCommandContext iCommandContext,
       OIdentifiable startingPoint, int depth) {
 
     OWhereClause filter = null;
@@ -159,6 +159,20 @@ public class OMatchPathItem extends SimpleNode {
     return result;
   }
 
+  public OMethodCall getMethod() {
+    return method;
+  }
 
+  public void setMethod(OMethodCall method) {
+    this.method = method;
+  }
+
+  public OMatchFilter getFilter() {
+    return filter;
+  }
+
+  public void setFilter(OMatchFilter filter) {
+    this.filter = filter;
+  }
 }
 /* JavaCC - OriginalChecksum=ffe8e0ffde583d7b21c9084eff6a8944 (do not edit this line) */

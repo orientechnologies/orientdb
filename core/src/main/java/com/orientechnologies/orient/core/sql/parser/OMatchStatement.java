@@ -6,6 +6,7 @@ import com.orientechnologies.common.exception.OErrorCode;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.*;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -17,6 +18,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OIterableRecordSource;
+import com.orientechnologies.orient.core.sql.executor.*;
 import com.orientechnologies.orient.core.sql.filter.OSQLTarget;
 import com.orientechnologies.orient.core.sql.query.OBasicResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
@@ -36,7 +38,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
   long threshold = 20;
   private int limitFromProtocol = -1;
 
-  class MatchContext {
+  public class MatchContext {
     int currentEdgeNumber = 0;
 
     Map<String, Iterable>      candidates   = new LinkedHashMap<String, Iterable>();
@@ -110,6 +112,36 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     super(p, id);
   }
 
+
+  @Override public OTodoResultSet execute(ODatabase db, Object[] args) {
+    OBasicCommandContext ctx = new OBasicCommandContext();
+    ctx.setDatabase(db);
+    Map<Object, Object> params = new HashMap<>();
+    if (args != null) {
+      for (int i = 0; i < args.length; i++) {
+        params.put(i, args[i]);
+      }
+    }
+    ctx.setInputParameters(params);
+    OInternalExecutionPlan executionPlan = createExecutionPlan(ctx);
+
+    return new OLocalResultSet(executionPlan);
+  }
+
+  @Override public OTodoResultSet execute(ODatabase db, Map params) {
+    OBasicCommandContext ctx = new OBasicCommandContext();
+    ctx.setDatabase(db);
+    ctx.setInputParameters(params);
+    OInternalExecutionPlan executionPlan = createExecutionPlan(ctx);
+
+    return new OLocalResultSet(executionPlan);
+  }
+
+  public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx) {
+    OMatchExecutionPlanner planner = new OMatchExecutionPlanner(this);
+    return planner.createExecutionPlan(ctx);
+  }
+
   /**
    * Accept the visitor. *
    */
@@ -162,7 +194,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     return (RET) this;
   }
 
-  private void buildPatterns() {
+  protected void buildPatterns() {
     assignDefaultAliases(this.matchExpressions);
     pattern = new Pattern();
     for (OMatchExpression expr : this.matchExpressions) {
@@ -753,7 +785,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     return true;
   }
 
-  private boolean returnsPathElements() {
+  public boolean returnsPathElements() {
     for (OExpression item : returnItems) {
       if (item.toString().equalsIgnoreCase("$pathElements")) {
         return true;
@@ -762,7 +794,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     return false;
   }
 
-  private boolean returnsElements() {
+  public boolean returnsElements() {
     for (OExpression item : returnItems) {
       if (item.toString().equalsIgnoreCase("$elements")) {
         return true;
@@ -771,7 +803,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     return false;
   }
 
-  private boolean returnsPatterns() {
+  public boolean returnsPatterns() {
     for (OExpression item : returnItems) {
       if (item.toString().equalsIgnoreCase("$patterns")) {
         return true;
@@ -783,7 +815,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     return false;
   }
 
-  private boolean returnsPaths() {
+  public boolean returnsPaths() {
     for (OExpression item : returnItems) {
       if (item.toString().equalsIgnoreCase("$paths")) {
         return true;
@@ -1094,6 +1126,38 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     result = 31 * result + (returnAliases != null ? returnAliases.hashCode() : 0);
     result = 31 * result + (limit != null ? limit.hashCode() : 0);
     return result;
+  }
+
+  public OLimit getLimit() {
+    return limit;
+  }
+
+  public void setLimit(OLimit limit) {
+    this.limit = limit;
+  }
+
+  public List<OIdentifier> getReturnAliases() {
+    return returnAliases;
+  }
+
+  public void setReturnAliases(List<OIdentifier> returnAliases) {
+    this.returnAliases = returnAliases;
+  }
+
+  public List<OExpression> getReturnItems() {
+    return returnItems;
+  }
+
+  public void setReturnItems(List<OExpression> returnItems) {
+    this.returnItems = returnItems;
+  }
+
+  public List<OMatchExpression> getMatchExpressions() {
+    return matchExpressions;
+  }
+
+  public void setMatchExpressions(List<OMatchExpression> matchExpressions) {
+    this.matchExpressions = matchExpressions;
   }
 }
 /* JavaCC - OriginalChecksum=6ff0afbe9d31f08b72159fcf24070c9f (do not edit this line) */

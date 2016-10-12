@@ -3508,7 +3508,8 @@ OMatchPathItem OutPathItem():
      jjtThis.method.methodName = new OIdentifier(-1);
      jjtThis.method.methodName.value = "out";
      OExpression exp = new OExpression(-1);
-     exp.value = edgeName.value;
+     OBaseExpression sub = new OBaseExpression(edgeName.getStringValue());
+     exp.mathExpression = sub;
      jjtThis.method.params.add(exp);
      return jjtThis;
     }
@@ -3539,7 +3540,8 @@ OMatchPathItem InPathItem():
      jjtThis.method.methodName = new OIdentifier(-1);
      jjtThis.method.methodName.value = "in";
      OExpression exp = new OExpression(-1);
-     exp.value = edgeName.value;
+     OBaseExpression sub = new OBaseExpression(edgeName.getStringValue());
+     exp.mathExpression = sub;
      jjtThis.method.params.add(exp);
      return jjtThis;
     }
@@ -3569,7 +3571,8 @@ OMatchPathItem BothPathItem():
      jjtThis.method.methodName = new OIdentifier(-1);
      jjtThis.method.methodName.value = "both";
      OExpression exp = new OExpression(-1);
-     exp.value = edgeName.value;
+     OBaseExpression sub = new OBaseExpression(edgeName.getStringValue());
+     exp.mathExpression = sub;
      jjtThis.method.params.add(exp);
      return jjtThis;
     }
@@ -3601,7 +3604,8 @@ OMatchPathItem OutPathItemOpt():
      jjtThis.method.methodName = new OIdentifier(-1);
      jjtThis.method.methodName.value = "out";
      OExpression exp = new OExpression(-1);
-     exp.value = edgeName.value;
+     OBaseExpression sub = new OBaseExpression(edgeName.getStringValue());
+     exp.mathExpression = sub;
      jjtThis.method.params.add(exp);
      return jjtThis;
     }
@@ -3632,7 +3636,8 @@ OMatchPathItem InPathItemOpt():
      jjtThis.method.methodName = new OIdentifier(-1);
      jjtThis.method.methodName.value = "in";
      OExpression exp = new OExpression(-1);
-     exp.value = edgeName.value;
+     OBaseExpression sub = new OBaseExpression(edgeName.getStringValue());
+     exp.mathExpression = sub;
      jjtThis.method.params.add(exp);
      return jjtThis;
     }
@@ -3662,7 +3667,8 @@ OMatchPathItem BothPathItemOpt():
      jjtThis.method.methodName = new OIdentifier(-1);
      jjtThis.method.methodName.value = "both";
      OExpression exp = new OExpression(-1);
-     exp.value = edgeName.value;
+     OBaseExpression sub = new OBaseExpression(edgeName.getStringValue());
+     exp.mathExpression = sub;
      jjtThis.method.params.add(exp);
      return jjtThis;
     }

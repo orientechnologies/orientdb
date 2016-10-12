@@ -14,6 +14,7 @@ import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryImpl;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.schedule.OSchedulerImpl;
 import com.orientechnologies.orient.core.security.OSecurityManager;
+import com.orientechnologies.orient.core.sql.executor.OQueryStats;
 import com.orientechnologies.orient.core.sql.parser.OStatementCache;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
@@ -32,6 +33,7 @@ public class OSharedContext implements OCloseable {
   private OLiveQueryHook.OLiveQueryOps liveQueryOps;
   private OCommandCache                commandCache;
   private OStatementCache              statementCache;
+  private OQueryStats                  queryStats;
 
   private volatile boolean loaded = false;
 
@@ -51,6 +53,7 @@ public class OSharedContext implements OCloseable {
     liveQueryOps = new OLiveQueryHook.OLiveQueryOps();
     commandCache = new OCommandCacheSoftRefs(storage);
     statementCache = new OStatementCache(OGlobalConfiguration.STATEMENT_CACHE_SIZE.getValueAsInteger());
+    queryStats = new OQueryStats();
   }
 
   public synchronized void load(ODatabaseDocumentInternal database) {
@@ -151,6 +154,10 @@ public class OSharedContext implements OCloseable {
 
   public OStatementCache getStatementCache() {
     return statementCache;
+  }
+
+  public OQueryStats getQueryStats(){
+    return queryStats;
   }
 
 }
