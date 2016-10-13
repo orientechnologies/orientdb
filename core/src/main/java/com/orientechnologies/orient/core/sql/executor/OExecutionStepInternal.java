@@ -62,4 +62,8 @@ public interface OExecutionStepInternal extends OExecutionStep, OExecutionCallba
     return Collections.EMPTY_LIST;
   }
 
+  default void reset() {
+    //do nothing
+  }
+
 }

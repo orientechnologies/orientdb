@@ -25,6 +25,12 @@ public abstract class AbstractUnrollStep extends AbstractExecutionStep {
     super(ctx);
   }
 
+  @Override public void reset() {
+    this.lastResult = null;
+    this.nextSubsequence = null;
+    this.nextElement = null;
+  }
+
   @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     if (prev == null || !prev.isPresent()) {
       throw new OCommandExecutionException("Cannot expand without a target");

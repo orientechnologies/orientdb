@@ -21,6 +21,10 @@ public class MatchFirstStep extends AbstractExecutionStep {
     this.node = node;
   }
 
+  @Override public void reset() {
+    this.iterator = null;
+  }
+
   @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     getPrev().ifPresent(x->x.syncPull(ctx, nRecords));
     init(ctx);

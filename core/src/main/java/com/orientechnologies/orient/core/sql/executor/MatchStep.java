@@ -22,6 +22,13 @@ public class MatchStep extends AbstractExecutionStep {
     this.edge = edge;
   }
 
+  @Override public void reset() {
+    this.upstream = null;
+    this.lastUpstreamRecord = null;
+    this.traverser = null;
+    this.nextResult = null;
+  }
+
   @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     return new OTodoResultSet() {
       int localCount = 0;

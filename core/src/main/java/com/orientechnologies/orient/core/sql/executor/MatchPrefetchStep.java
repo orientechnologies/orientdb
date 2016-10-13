@@ -24,6 +24,11 @@ public class MatchPrefetchStep extends AbstractExecutionStep {
     this.alias = alias;
   }
 
+  @Override public void reset() {
+    executed = false;
+    prefetchExecutionPlan.reset(ctx);
+  }
+
   @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     if (!executed) {
       getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
