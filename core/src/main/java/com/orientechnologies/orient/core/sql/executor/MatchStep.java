@@ -52,6 +52,7 @@ public class MatchStep extends AbstractExecutionStep {
         OResult result = nextResult;
         fetchNext(ctx, nRecords);
         localCount++;
+        ctx.setVariable("$matched", result);
         return result;
       }
 

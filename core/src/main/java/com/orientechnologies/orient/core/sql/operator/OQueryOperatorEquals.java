@@ -66,12 +66,20 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
     return equals(left, right);
   }
 
-  public static boolean equals(final Object iLeft, final Object iRight) {
+  public static boolean equals(Object iLeft, Object iRight) {
     if (iLeft == null || iRight == null)
       return false;
 
     if (iLeft == iRight) {
       return true;
+    }
+
+    if(iLeft instanceof OResult && !(iRight instanceof OResult)){
+      iLeft = ((OResult) iLeft).toElement();
+    }
+
+    if(iRight instanceof OResult && !(iLeft instanceof OResult)){
+      iRight = ((OResult) iRight).toElement();
     }
 
     // RECORD & ORID

@@ -524,6 +524,7 @@ public class OMatchStatementExecutionNewTest {
     OTodoResultSet qResult = db.query(
         "select friend.name as name from (match {class:Person, where:(name = 'n1'), as: me}.both('Friend').both('Friend'){as:friend, where: ($matched.me != $currentMatch)} return $matches)");
 
+    printExecutionPlan(qResult);
     Assert.assertTrue(qResult.hasNext());
     while (qResult.hasNext()) {
       Assert.assertNotEquals(qResult.next().getProperty("name"), "n1");
@@ -626,172 +627,158 @@ public class OMatchStatementExecutionNewTest {
     qResult.close();
   }
 
-  
-  //
-  //  @Test
-  //  public void testMaxDepth() throws Exception {
-  //    List<ODocument> qResult = db
-  //        .command(
-  //            new OCommandSQL(
-  //                "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, maxDepth: 1, where: ($depth=1) } return friend)"))
-  //        .execute();
-  //    assertEquals(2, qResult.size());
-  //
-  //    qResult = db
-  //        .command(
-  //            new OCommandSQL(
-  //                "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, maxDepth: 1 } return friend)"))
-  //        .execute();
-  //    assertEquals(3, qResult.size());
-  //
-  //    qResult = db
-  //        .command(
-  //            new OCommandSQL(
-  //                "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, maxDepth: 0 } return friend)"))
-  //        .execute();
-  //    assertEquals(1, qResult.size());
-  //
-  //    qResult = db
-  //        .command(
-  //            new OCommandSQL(
-  //                "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, maxDepth: 1, where: ($depth > 0) } return friend)"))
-  //        .execute();
-  //    assertEquals(2, qResult.size());
-  //
-  //  }
-  //
-  //  @Test
-  //  public void testMaxDepthArrow() throws Exception {
-  //    List<ODocument> qResult = db
-  //        .command(
-  //            new OCommandSQL(
-  //                "select friend.name as name from (match {class:Person, where:(name = 'n1')}-Friend->{as:friend, maxDepth: 1, where: ($depth=1) } return friend)"))
-  //        .execute();
-  //    assertEquals(2, qResult.size());
-  //
-  //    qResult = db
-  //        .command(
-  //            new OCommandSQL(
-  //                "select friend.name as name from (match {class:Person, where:(name = 'n1')}-Friend->{as:friend, maxDepth: 1 } return friend)"))
-  //        .execute();
-  //    assertEquals(3, qResult.size());
-  //
-  //    qResult = db
-  //        .command(
-  //            new OCommandSQL(
-  //                "select friend.name as name from (match {class:Person, where:(name = 'n1')}-Friend->{as:friend, maxDepth: 0 } return friend)"))
-  //        .execute();
-  //    assertEquals(1, qResult.size());
-  //
-  //    qResult = db
-  //        .command(
-  //            new OCommandSQL(
-  //                "select friend.name as name from (match {class:Person, where:(name = 'n1')}-Friend->{as:friend, maxDepth: 1, where: ($depth > 0) } return friend)"))
-  //        .execute();
-  //    assertEquals(2, qResult.size());
-  //
-  //  }
-  //
-  //  @Test
-  //  public void testManager() {
-  //    // the manager of a person is the manager of the department that person belongs to.
-  //    // if that department does not have a direct manager, climb up the hierarchy until you find one
-  //    assertEquals("c", getManager("p10").field("name"));
-  //    assertEquals("c", getManager("p12").field("name"));
-  //    assertEquals("b", getManager("p6").field("name"));
-  //    assertEquals("b", getManager("p11").field("name"));
-  //
-  //    assertEquals("c", getManagerArrows("p10").field("name"));
-  //    assertEquals("c", getManagerArrows("p12").field("name"));
-  //    assertEquals("b", getManagerArrows("p6").field("name"));
-  //    assertEquals("b", getManagerArrows("p11").field("name"));
-  //  }
-  //
-  //  private ODocument getManager(String personName) {
-  //    StringBuilder query = new StringBuilder();
-  //    query.append("select expand(manager) from (");
-  //    query.append("  match {class:Employee, where: (name = '" + personName + "')}");
-  //    query.append("  .out('WorksAt')");
-  //    query.append("  .out('ParentDepartment'){");
-  //    query.append("      while: (in('ManagerOf').size() == 0),");
-  //    query.append("      where: (in('ManagerOf').size() > 0)");
-  //    query.append("  }");
-  //    query.append("  .in('ManagerOf'){as: manager}");
-  //    query.append("  return manager");
-  //    query.append(")");
-  //
-  //    List<OIdentifiable> qResult = db.command(new OCommandSQL(query.toString())).execute();
-  //    assertEquals(1, qResult.size());
-  //    return qResult.get(0).getRecord();
-  //  }
-  //
-  //  private ODocument getManagerArrows(String personName) {
-  //    StringBuilder query = new StringBuilder();
-  //    query.append("select expand(manager) from (");
-  //    query.append("  match {class:Employee, where: (name = '" + personName + "')}");
-  //    query.append("  -WorksAt->{}-ParentDepartment->{");
-  //    query.append("      while: (in('ManagerOf').size() == 0),");
-  //    query.append("      where: (in('ManagerOf').size() > 0)");
-  //    query.append("  }<-ManagerOf-{as: manager}");
-  //    query.append("  return manager");
-  //    query.append(")");
-  //
-  //    List<OIdentifiable> qResult = db.command(new OCommandSQL(query.toString())).execute();
-  //    assertEquals(1, qResult.size());
-  //    return qResult.get(0).getRecord();
-  //  }
-  //
-  //  @Test
-  //  public void testManager2() {
-  //    // the manager of a person is the manager of the department that person belongs to.
-  //    // if that department does not have a direct manager, climb up the hierarchy until you find one
-  //    assertEquals("c", getManager2("p10").field("name"));
-  //    assertEquals("c", getManager2("p12").field("name"));
-  //    assertEquals("b", getManager2("p6").field("name"));
-  //    assertEquals("b", getManager2("p11").field("name"));
-  //
-  //    assertEquals("c", getManager2Arrows("p10").field("name"));
-  //    assertEquals("c", getManager2Arrows("p12").field("name"));
-  //    assertEquals("b", getManager2Arrows("p6").field("name"));
-  //    assertEquals("b", getManager2Arrows("p11").field("name"));
-  //  }
-  //
-  //  private ODocument getManager2(String personName) {
-  //    StringBuilder query = new StringBuilder();
-  //    query.append("select expand(manager) from (");
-  //    query.append("  match {class:Employee, where: (name = '" + personName + "')}");
-  //    query.append("   .( out('WorksAt')");
-  //    query.append("     .out('ParentDepartment'){");
-  //    query.append("       while: (in('ManagerOf').size() == 0),");
-  //    query.append("       where: (in('ManagerOf').size() > 0)");
-  //    query.append("     }");
-  //    query.append("   )");
-  //    query.append("  .in('ManagerOf'){as: manager}");
-  //    query.append("  return manager");
-  //    query.append(")");
-  //
-  //    List<OIdentifiable> qResult = db.command(new OCommandSQL(query.toString())).execute();
-  //    assertEquals(1, qResult.size());
-  //    return qResult.get(0).getRecord();
-  //  }
-  //
-  //  private ODocument getManager2Arrows(String personName) {
-  //    StringBuilder query = new StringBuilder();
-  //    query.append("select expand(manager) from (");
-  //    query.append("  match {class:Employee, where: (name = '" + personName + "')}");
-  //    query.append("   .( -WorksAt->{}-ParentDepartment->{");
-  //    query.append("       while: (in('ManagerOf').size() == 0),");
-  //    query.append("       where: (in('ManagerOf').size() > 0)");
-  //    query.append("     }");
-  //    query.append("   )<-ManagerOf-{as: manager}");
-  //    query.append("  return manager");
-  //    query.append(")");
-  //
-  //    List<OIdentifiable> qResult = db.command(new OCommandSQL(query.toString())).execute();
-  //    assertEquals(1, qResult.size());
-  //    return qResult.get(0).getRecord();
-  //  }
-  //
+  @Test public void testMaxDepth() throws Exception {
+    OTodoResultSet qResult = db.query(
+        "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, maxDepth: 1, where: ($depth=1) } return friend)");
+    Assert.assertEquals(2, size(qResult));
+    qResult.close();
+
+    qResult = db.query(
+        "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, maxDepth: 1 } return friend)");
+    Assert.assertEquals(3, size(qResult));
+    qResult.close();
+
+    qResult = db.query(
+        "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, maxDepth: 0 } return friend)");
+    Assert.assertEquals(1, size(qResult));
+    qResult.close();
+
+    qResult = db.query(
+        "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, maxDepth: 1, where: ($depth > 0) } return friend)");
+    Assert.assertEquals(2, size(qResult));
+    qResult.close();
+  }
+
+  @Test public void testMaxDepthArrow() throws Exception {
+    OTodoResultSet qResult = db.query(
+        "select friend.name as name from (match {class:Person, where:(name = 'n1')}-Friend->{as:friend, maxDepth: 1, where: ($depth=1) } return friend)");
+    Assert.assertEquals(2, size(qResult));
+    qResult.close();
+
+    qResult = db.query(
+        "select friend.name as name from (match {class:Person, where:(name = 'n1')}-Friend->{as:friend, maxDepth: 1 } return friend)");
+    Assert.assertEquals(3, size(qResult));
+    qResult.close();
+
+    qResult = db.query(
+        "select friend.name as name from (match {class:Person, where:(name = 'n1')}-Friend->{as:friend, maxDepth: 0 } return friend)");
+    Assert.assertEquals(1, size(qResult));
+    qResult.close();
+
+    qResult = db.query(
+        "select friend.name as name from (match {class:Person, where:(name = 'n1')}-Friend->{as:friend, maxDepth: 1, where: ($depth > 0) } return friend)");
+    Assert.assertEquals(2, size(qResult));
+    qResult.close();
+  }
+
+    @Test
+    public void testManager() {
+      // the manager of a person is the manager of the department that person belongs to.
+      // if that department does not have a direct manager, climb up the hierarchy until you find one
+      Assert.assertEquals("c", getManager("p10").field("name"));
+      Assert.assertEquals("c", getManager("p12").field("name"));
+      Assert.assertEquals("b", getManager("p6").field("name"));
+      Assert.assertEquals("b", getManager("p11").field("name"));
+
+      Assert.assertEquals("c", getManagerArrows("p10").field("name"));
+      Assert.assertEquals("c", getManagerArrows("p12").field("name"));
+      Assert.assertEquals("b", getManagerArrows("p6").field("name"));
+      Assert.assertEquals("b", getManagerArrows("p11").field("name"));
+    }
+
+    private ODocument getManager(String personName) {
+      StringBuilder query = new StringBuilder();
+      query.append("select expand(manager) from (");
+      query.append("  match {class:Employee, where: (name = '" + personName + "')}");
+      query.append("  .out('WorksAt')");
+      query.append("  .out('ParentDepartment'){");
+      query.append("      while: (in('ManagerOf').size() == 0),");
+      query.append("      where: (in('ManagerOf').size() > 0)");
+      query.append("  }");
+      query.append("  .in('ManagerOf'){as: manager}");
+      query.append("  return manager");
+      query.append(")");
+
+      OTodoResultSet qResult = db.query(query.toString());
+      Assert.assertTrue(qResult.hasNext());
+      OResult item = qResult.next();
+      Assert.assertFalse(qResult.hasNext());
+      return item.getElement().getRecord();
+    }
+
+    private ODocument getManagerArrows(String personName) {
+      StringBuilder query = new StringBuilder();
+      query.append("select expand(manager) from (");
+      query.append("  match {class:Employee, where: (name = '" + personName + "')}");
+      query.append("  -WorksAt->{}-ParentDepartment->{");
+      query.append("      while: (in('ManagerOf').size() == 0),");
+      query.append("      where: (in('ManagerOf').size() > 0)");
+      query.append("  }<-ManagerOf-{as: manager}");
+      query.append("  return manager");
+      query.append(")");
+
+      OTodoResultSet qResult = db.query(query.toString());
+      Assert.assertTrue(qResult.hasNext());
+      OResult item = qResult.next();
+      Assert.assertFalse(qResult.hasNext());
+      return item.getElement().getRecord();
+    }
+
+//    @Test
+//    public void testManager2() {
+//      // the manager of a person is the manager of the department that person belongs to.
+//      // if that department does not have a direct manager, climb up the hierarchy until you find one
+//      Assert.assertEquals("c", getManager2("p10").field("name"));
+//      Assert.assertEquals("c", getManager2("p12").field("name"));
+//      Assert.assertEquals("b", getManager2("p6").field("name"));
+//      Assert.assertEquals("b", getManager2("p11").field("name"));
+//
+//      Assert.assertEquals("c", getManager2Arrows("p10").field("name"));
+//      Assert.assertEquals("c", getManager2Arrows("p12").field("name"));
+//      Assert.assertEquals("b", getManager2Arrows("p6").field("name"));
+//      Assert.assertEquals("b", getManager2Arrows("p11").field("name"));
+//    }
+//
+//    private ODocument getManager2(String personName) {
+//      StringBuilder query = new StringBuilder();
+//      query.append("select expand(manager) from (");
+//      query.append("  match {class:Employee, where: (name = '" + personName + "')}");
+//      query.append("   .( out('WorksAt')");
+//      query.append("     .out('ParentDepartment'){");
+//      query.append("       while: (in('ManagerOf').size() == 0),");
+//      query.append("       where: (in('ManagerOf').size() > 0)");
+//      query.append("     }");
+//      query.append("   )");
+//      query.append("  .in('ManagerOf'){as: manager}");
+//      query.append("  return manager");
+//      query.append(")");
+//
+//      OTodoResultSet qResult = db.query(query.toString());
+//      Assert.assertTrue(qResult.hasNext());
+//      OResult item = qResult.next();
+//      Assert.assertFalse(qResult.hasNext());
+//      return item.getElement().getRecord();
+//    }
+//
+//    private ODocument getManager2Arrows(String personName) {
+//      StringBuilder query = new StringBuilder();
+//      query.append("select expand(manager) from (");
+//      query.append("  match {class:Employee, where: (name = '" + personName + "')}");
+//      query.append("   .( -WorksAt->{}-ParentDepartment->{");
+//      query.append("       while: (in('ManagerOf').size() == 0),");
+//      query.append("       where: (in('ManagerOf').size() > 0)");
+//      query.append("     }");
+//      query.append("   )<-ManagerOf-{as: manager}");
+//      query.append("  return manager");
+//      query.append(")");
+//
+//      OTodoResultSet qResult = db.query(query.toString());
+//      Assert.assertTrue(qResult.hasNext());
+//      OResult item = qResult.next();
+//      Assert.assertFalse(qResult.hasNext());
+//      return item.getElement().getRecord();
+//    }
+
   //  @Test
   //  public void testManaged() {
   //    // people managed by a manager are people who belong to his department or people who belong to sub-departments without a manager

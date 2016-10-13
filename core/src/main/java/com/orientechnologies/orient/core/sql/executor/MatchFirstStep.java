@@ -33,6 +33,7 @@ public class MatchFirstStep extends AbstractExecutionStep {
       @Override public OResult next() {
         OResultInternal result = new OResultInternal();
         result.setProperty(getAlias(), iterator.next());
+        ctx.setVariable("$matched", result);
         return result;
       }
 
