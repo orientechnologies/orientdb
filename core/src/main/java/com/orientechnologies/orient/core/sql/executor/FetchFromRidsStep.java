@@ -26,8 +26,9 @@ public class FetchFromRidsStep extends AbstractExecutionStep {
     reset();
   }
 
-  private void reset() {
+  public void reset() {
     iterator = rids.iterator();
+    nextResult = null;
   }
 
   @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
