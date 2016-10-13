@@ -91,6 +91,8 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
     this.strategy = new OAutoShardingMurmurStrategy(keySerializer);
     this.hashFunction.setValueSerializer(keySerializer);
     this.partitionSize = clustersToIndex.size();
+    if( metadata != null && metadata.containsField("partitions") )
+      this.partitionSize = metadata.field("partitions");
 
     engineProperties.put("partitions", "" + partitionSize);
 
