@@ -912,6 +912,34 @@ database.factory('HaCommand', function ($http, $resource, $q) {
     });
     return deferred.promise;
   }
+  resource.stopReplication = function (server, database) {
+
+    var deferred = $q.defer();
+    var url = API + 'distributed/stopReplication/' + database;
+    if (server) {
+      url += '?node=' + server;
+    }
+    $http.post(encodeURI(url), null).success(function (data) {
+      deferred.resolve(data)
+    }).error(function (data) {
+      deferred.reject(data);
+    });
+    return deferred.promise;
+  }
+  resource.startReplication = function (server, database) {
+
+    var deferred = $q.defer();
+    var url = API + 'distributed/startReplication/' + database;
+    if (server) {
+      url += '?node=' + server;
+    }
+    $http.post(encodeURI(url), null).success(function (data) {
+      deferred.resolve(data)
+    }).error(function (data) {
+      deferred.reject(data);
+    });
+    return deferred.promise;
+  }
   return resource
 });
 

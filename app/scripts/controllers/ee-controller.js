@@ -239,8 +239,10 @@ ee.controller('ClusterController', function ($scope, Cluster, Notification, $roo
         $scope.servers = data.members;
 
         $rootScope.$broadcast("server-list", $scope.servers);
+
         $scope.clusterStats = data.clusterStats;
 
+        $rootScope.$broadcast("db-status", data.databasesStatus);
 
       }).catch(function (error) {
         Notification.push({content: error.data, error: true, autoHide: true});
@@ -1098,24 +1100,26 @@ ee.controller('ClusterDBController', function ($scope, Cluster, $rootScope, $tim
 
   $scope.databases = null;
 
+  $scope.statuses = null;
+
   $scope.$watch('selectedDb', function (db) {
 
     if (db) {
-      $scope.$broadcast('db-chosen', {name: db, servers: $scope.databases[db]});
+      $scope.$broadcast('db-chosen', {name: db, statuses: $scope.statuses, servers: $scope.databases[db]});
     }
   })
 
   Cluster.stats().then(function (data) {
-    initDatabases(data.members);
+    initDatabases(data);
 
   }).catch(function (error) {
     Notification.push({content: error.data, error: true, autoHide: true});
     $scope.polling = false;
   })
-  function initDatabases(servers) {
+  function initDatabases(data) {
     if (!$scope.databases) {
       $scope.databases = {};
-      servers.forEach(function (s) {
+      data.members.forEach(function (s) {
         s.databases.forEach(function (db, idx) {
           if (!$scope.databases[db]) {
             $scope.databases[db] = [];
@@ -1127,12 +1131,13 @@ ee.controller('ClusterDBController', function ($scope, Cluster, $rootScope, $tim
           }
         })
       })
+      $scope.statuses = data.databasesStatus || {};
     }
   }
 
 });
 
-ee.controller('ClusterSingleDBController', function ($scope, $modal, $q, Cluster, Notification, Database, HaCommand) {
+ee.controller('ClusterSingleDBController', function ($scope, $rootScope, $modal, $q, Cluster, Notification, Database, HaCommand) {
 
 
   $scope.links = {
@@ -1147,11 +1152,18 @@ ee.controller('ClusterSingleDBController', function ($scope, $modal, $q, Cluster
   $scope.quorums = ['majority', 'all'];
 
 
+  $rootScope.$on('db-status', function (evt, statuses) {
+    $scope.servers.forEach(function (s) {
+      if (statuses[$scope.name][s.name]) {
+        s.status = statuses[$scope.name][s.name];
+      }
+    })
+  })
   $scope.$on('db-chosen', function (evt, db) {
 
 
     var servers = angular.copy(db.servers);
-
+    var statuses = angular.copy(db.statuses);
 
     Cluster.database(db.name).then(function (data) {
       $scope.config = data;
@@ -1181,10 +1193,19 @@ ee.controller('ClusterSingleDBController', function ($scope, $modal, $q, Cluster
         return f != "<NEW_NODE>" && !found;
       })
       uniqueServers.forEach(function (s) {
-        servers.push({name: s, status: "NOT_AVAILABLE"});
+
+        var status = "OFFLINE";
+
+        if (statuses[$scope.name][s.name]) {
+          status = statuses[$scope.name][s.name];
+        }
+        servers.push({name: s, status: status});
       })
 
-      servers.forEach(function (el, idx, arr) {
+      servers.forEach(function (s, idx, arr) {
+        if (statuses[$scope.name][s.name]) {
+          s.status = statuses[$scope.name][s.name];
+        }
         $scope.quorums.push((idx + 1).toString());
       })
 
@@ -1309,6 +1330,66 @@ ee.controller('ClusterSingleDBController', function ($scope, $modal, $q, Cluster
 
   }
 
+  $scope.startReplicationTooltip = {
+    title: "Start Replication"
+  }
+
+  $scope.startReplication = function (node) {
+
+
+    var syncClusterLink = Database.getOWikiFor("SQL-HA-Start-Replication.html");
+    var confirmMessage = S("The replication of database <b>{{database}}</b> will start against node <b>{{node}}</b>. Are you sure? <a class='btn btn-trasparent btn-help' target='_blank' href='{{link}}'> <i class='fa fa-question-circle'></i></a>").template({
+      database: $scope.name,
+      node: node.name,
+      link: syncClusterLink
+    }).s
+
+    Utilities.confirm($scope, $modal, $q, {
+      title: 'Confirm Required!',
+      body: confirmMessage,
+      success: function () {
+        HaCommand.startReplication(node.name, $scope.name).then(function (res) {
+          var msg = S("Replication of database {{database}} started correctly against node {{node}}").template({
+            database: $scope.name,
+            node: node.name
+          }).s;
+          Notification.push({content: msg, autoHide: true});
+        }).catch(function (err) {
+          Notification.push({content: err, error: true, autoHide: true});
+        })
+      }
+    });
+  }
+  $scope.stopReplicationTooltip = {
+    title: "Stop Replication"
+  }
+
+
+  $scope.stopReplication = function (node) {
+
+    var syncClusterLink = Database.getOWikiFor("SQL-HA-Stop-Replication.html");
+    var confirmMessage = S("The replication of database <b>{{database}}</b> will be interrupted against node <b>{{node}}</b>. Are you sure? <a class='btn btn-trasparent btn-help' target='_blank' href='{{link}}'> <i class='fa fa-question-circle'></i></a>").template({
+      database: $scope.name,
+      node: node.name,
+      link: syncClusterLink
+    }).s
+
+    Utilities.confirm($scope, $modal, $q, {
+      title: 'Confirm Required!',
+      body: confirmMessage,
+      success: function () {
+        HaCommand.stopReplication(node.name, $scope.name).then(function (res) {
+          var msg = S("Replication of database {{database}} stopped correctly against node {{node}}").template({
+            database: $scope.name,
+            node: node.name
+          }).s;
+          Notification.push({content: msg, autoHide: true});
+        }).catch(function (err) {
+          Notification.push({content: err, error: true, autoHide: true});
+        })
+      }
+    });
+  }
 
   $scope.removeServerTooltip = {
     title: "Remove server"

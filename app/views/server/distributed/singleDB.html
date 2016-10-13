@@ -154,6 +154,26 @@
                               class="fa fa-refresh pointer"></span>
                             </button>
                           </div>
+
+                          <div class="btn-group">
+                            <button class="btn btn-xs btn-default" ng-show="s.status == 'OFFLINE'"
+                                    ng-click="startReplication(s)"
+                                    data-trigger="hover" data-placement="top"
+                                    data-container="body"
+                                    bs-tooltip="startReplicationTooltip"
+                            ><span
+                              class="fa fa-play pointer"></span>
+                            </button>
+                          </div>
+                          <div class="btn-group" ng-show="s.status == 'ONLINE'">
+                            <button class="btn btn-xs btn-default" ng-click="stopReplication(s)"
+                                    data-trigger="hover" data-placement="top"
+                                    data-container="body"
+                                    bs-tooltip="stopReplicationTooltip"
+                            ><span
+                              class="fa fa-pause pointer"></span>
+                            </button>
+                          </div>
                         </div>
 
                       </td>
