@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.core.db.document;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -28,11 +29,13 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentAbstract;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.index.ClassIndexManagerRemote;
+import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.security.*;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
@@ -42,6 +45,7 @@ import com.orientechnologies.orient.core.storage.OStorageProxy;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.Callable;
 
 /**
  * Created by tglman on 30/06/16.
@@ -50,8 +54,9 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
 
   protected OStorageRemoteSession sessionMetadata;
   private OrientDBConfig          config;
+  private OStorageRemote          storage;
 
-  public ODatabaseDocumentRemote(final OStorage storage) {
+  public ODatabaseDocumentRemote(final OStorageRemote storage) {
     activateOnCurrentThread();
 
     try {
@@ -108,8 +113,8 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
 
   public ODatabaseDocumentInternal copy() {
     ODatabaseDocumentRemote database = new ODatabaseDocumentRemote(storage);
-    database.storage = ((OStorageProxy) storage).copy(this, database);
-    ((OStorageProxy) database.storage).addUser();
+    database.storage = storage.copy(this, database);
+    database.storage.addUser();
     database.status = STATUS.OPEN;
     database.applyAttributes(config);
     database.initAtFirstOpen();
@@ -198,5 +203,15 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
 
   public void setSessionMetadata(OStorageRemoteSession sessionMetadata) {
     this.sessionMetadata = sessionMetadata;
+  }
+
+  @Override
+  public OStorage getStorage() {
+    return storage;
+  }
+
+  @Override
+  public void replaceStorage(OStorage iNewStorage) {
+    throw new UnsupportedOperationException("unsupported replace of storage for remote database");
   }
 }

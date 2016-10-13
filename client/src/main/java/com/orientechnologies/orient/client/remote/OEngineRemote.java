@@ -34,14 +34,14 @@ import java.util.Map;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OEngineRemote extends OEngineAbstract {
-  public static final String NAME   = "remote";
-  public static final String PREFIX = NAME + ":";
+  public static final String                  NAME   = "remote";
+  public static final String                  PREFIX = NAME + ":";
   protected volatile ORemoteConnectionManager connectionManager;
 
   public OEngineRemote() {
   }
 
-  public OStorage createStorage(final String iURL, final Map<String, String> iConfiguration) {
+  public OStorageRemote createStorage(final String iURL, final Map<String, String> iConfiguration) {
     try {
       return new OStorageRemote(null, iURL, "rw");
     } catch (Exception e) {

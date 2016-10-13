@@ -53,7 +53,8 @@ import java.util.concurrent.Callable;
 public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract {
 
   private OrientDBConfig config;
-  
+  private OStorage       storage;
+
   public ODatabaseDocumentEmbedded(final OStorage storage) {
     activateOnCurrentThread();
 
@@ -87,7 +88,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract {
   public void internalOpen(final String iUserName, final String iUserPassword, OrientDBConfig config) {
     internalOpen(iUserName, iUserPassword, config, true);
   }
-  
+
   private void internalOpen(final String iUserName, final String iUserPassword, OrientDBConfig config, boolean checkPassword) {
     activateOnCurrentThread();
     this.config = config;
@@ -103,13 +104,13 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract {
       initAtFirstOpen();
 
       final OSecurity security = metadata.getSecurity();
-      
+
       if (user == null || user.getVersion() != security.getVersion() || !user.getName().equalsIgnoreCase(iUserName)) {
         final OUser usr;
         if (checkPassword) {
           usr = metadata.getSecurity().authenticate(iUserName, iUserPassword);
         } else {
-            usr = metadata.getSecurity().getUser(iUserName);
+          usr = metadata.getSecurity().getUser(iUserName);
         }
         if (usr != null)
           user = new OImmutableUser(security.getVersion(), usr);
@@ -155,7 +156,8 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract {
 
   /**
    * {@inheritDoc}
-   * @param config 
+   * 
+   * @param config
    */
   public void internalCreate(OrientDBConfig config) {
     this.status = STATUS.OPEN;
@@ -179,7 +181,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract {
     registerHook(new OSecurityTrackerHook(metadata.getSecurity(), this), ORecordHook.HOOK_POSITION.LAST);
 
     // WAKE UP DB LIFECYCLE LISTENER
-    for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext(); )
+    for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();)
       it.next().onCreate(getDatabaseOwner());
 
     // WAKE UP LISTENERS
@@ -198,7 +200,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract {
       }
     }
   }
-  
+
   /**
    * {@inheritDoc}
    */
@@ -308,7 +310,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract {
 
     initialized = true;
   }
-  
+
   protected void installHooksEmbedded() {
     hooks.clear();
     registerHook(new OClassTrigger(this), ORecordHook.HOOK_POSITION.FIRST);
@@ -321,5 +323,14 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract {
     registerHook(new OLiveQueryHook(this), ORecordHook.HOOK_POSITION.LAST);
   }
 
-}
+  @Override
+  public OStorage getStorage() {
+    return storage;
+  }
 
+  @Override
+  public void replaceStorage(OStorage iNewStorage) {
+    storage = iNewStorage;
+  }
+
+}

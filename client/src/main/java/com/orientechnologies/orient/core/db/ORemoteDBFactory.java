@@ -22,11 +22,12 @@ package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
+import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentRemote;
-import com.orientechnologies.orient.core.engine.OEngine;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.OStorage;
 
@@ -37,19 +38,19 @@ import java.util.*;
  * Created by tglman on 08/04/16.
  */
 public class ORemoteDBFactory implements OrientDBFactory {
-  private final Map<String, OStorage> storages = new HashMap<>();
-  private final Set<OPool<?>>         pools    = new HashSet<>();
-  private final String[]              hosts;
-  private final OEngine               remote;
-  private final OrientDBConfig        configurations;
-  private final Thread                shutdownThread;
-  private final Orient                orient;
+  private final Map<String, OStorageRemote> storages = new HashMap<>();
+  private final Set<OPool<?>>               pools    = new HashSet<>();
+  private final String[]                    hosts;
+  private final OEngineRemote               remote;
+  private final OrientDBConfig              configurations;
+  private final Thread                      shutdownThread;
+  private final Orient                      orient;
 
   public ORemoteDBFactory(String[] hosts, OrientDBConfig configurations, Orient orient) {
     super();
     this.hosts = hosts;
     this.orient = orient;
-    remote = orient.getEngine("remote");
+    remote = (OEngineRemote) orient.getEngine("remote");
 
     this.configurations = configurations != null ? configurations : OrientDBConfig.defaultConfig();
 
@@ -69,7 +70,7 @@ public class ORemoteDBFactory implements OrientDBFactory {
   @Override
   public synchronized ODatabaseDocument open(String name, String user, String password, OrientDBConfig config) {
     try {
-      OStorage storage;
+      OStorageRemote storage;
       storage = storages.get(name);
       if (storage == null) {
         storage = remote.createStorage(buildUrl(name), new HashMap<>());
@@ -103,7 +104,7 @@ public class ORemoteDBFactory implements OrientDBFactory {
   }
 
   public synchronized ORemoteDatabasePool poolOpen(String name, String user, String password, ORemotePoolByFactory pool) {
-    OStorage storage = storages.get(name);
+    OStorageRemote storage = storages.get(name);
     if (storage == null) {
       storage = remote.createStorage(buildUrl(name), new HashMap<>());
     }
