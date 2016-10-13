@@ -15,6 +15,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.orientechnologies.orient.client.remote.OServerAdmin;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
@@ -71,6 +72,7 @@ public class HookInstallServerTest {
     admin.dropDatabase("test", "memory");
     admin.close();
     server.shutdown();
+    Orient.instance().startup();
   }
 
   @Test
