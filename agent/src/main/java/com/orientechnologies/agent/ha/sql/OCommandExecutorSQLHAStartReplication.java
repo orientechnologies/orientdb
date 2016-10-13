@@ -54,7 +54,7 @@ public class OCommandExecutorSQLHAStartReplication extends OCommandExecutorSQLAb
   public static final String KEYWORD_START       = "START";
   public static final String KEYWORD_REPLICATION = "REPLICATION";
 
-  enum MODE {
+  public enum MODE {
     FULL, DELTA
   }
 
@@ -126,6 +126,13 @@ public class OCommandExecutorSQLHAStartReplication extends OCommandExecutorSQLAb
     final ODatabaseDocumentInternal database = getDatabase();
     database.checkSecurity(ORule.ResourceGeneric.DATABASE, "sync", ORole.PERMISSION_UPDATE);
 
+    final List<String> servers = new ArrayList<String>();
+    servers.add(server);
+
+    return startReplication(database, servers, mode);
+  }
+
+  public static Object startReplication(ODatabaseDocumentInternal database, List<String> servers, MODE mode) {
     final OStorage stg = database.getStorage();
     if (!(stg instanceof ODistributedStorage))
       throw new ODistributedException("HA START REPLICATION command cannot be executed against a non distributed server");
@@ -135,9 +142,6 @@ public class OCommandExecutorSQLHAStartReplication extends OCommandExecutorSQLAb
     final OHazelcastPlugin dManager = (OHazelcastPlugin) dStg.getDistributedManager();
     if (dManager == null || !dManager.isEnabled())
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
-
-    final List<String> servers = new ArrayList<String>();
-    servers.add(server);
 
     return dManager.sendRequest(database.getName(), null, servers,
         new OStartReplicationTask(database.getName(), mode == MODE.DELTA), dManager.getNextMessageIdCounter(),

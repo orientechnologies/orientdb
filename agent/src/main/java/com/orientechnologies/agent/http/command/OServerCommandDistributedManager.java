@@ -17,6 +17,7 @@
  */
 package com.orientechnologies.agent.http.command;
 
+import com.orientechnologies.agent.ha.sql.OCommandExecutorSQLHAStartReplication;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -24,6 +25,7 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
@@ -116,12 +118,15 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
 
       iResponse.send(OHttpUtils.STATUS_OK_CODE, null, null, OHttpUtils.STATUS_OK_DESCRIPTION, null);
     } else if (command.equalsIgnoreCase("syncCluster")) {
-
+      synchCluster(iResponse, parts);
+    } else if (command.equalsIgnoreCase("syncDatabase")) {
+      syncDatabase(iResponse, parts);
+    } else if (command.equalsIgnoreCase("stopReplication")) {
       if (parts.length < 3)
-        throw new IllegalArgumentException("Cannot sync cluster: missing database or cluster name ");
+        throw new IllegalArgumentException("Cannot stop replication : missing database  name ");
 
       if (server.getDistributedManager() == null)
-        throw new OConfigurationException("Cannot sync cluster: local server is not distributed");
+        throw new OConfigurationException("Cannot stop replication: local server is not distributed");
 
       String database = parts[2];
       String cluster = parts[3];
@@ -131,39 +136,80 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
       ODatabaseDocumentTx db = server.openDatabase(database, "", "", null, true);
       ODatabaseRecordThreadLocal.INSTANCE.set(db);
 
-      Object result = OCommandExecutorSQLHASyncCluster.replaceCluster((ODistributedAbstractPlugin) server.getDistributedManager(),
-          server, database, cluster);
+      String localNodeName = server.getDistributedManager().getLocalNodeName();
+
+      Object result = db.command(new OCommandSQL(String.format("ha stop replication %s ", localNodeName))).execute();
       ODocument document = new ODocument().field("result", result);
       iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, document.toJSON(""), null);
-    } else if (command.equalsIgnoreCase("syncDatabase")) {
-
+    } else if (command.equalsIgnoreCase("startReplication")) {
       if (parts.length < 3)
-        throw new IllegalArgumentException("Cannot sync database: missing database name");
+        throw new IllegalArgumentException("Cannot start replication : missing database name ");
 
       if (server.getDistributedManager() == null)
-        throw new OConfigurationException("Cannot sync database: local server is not distributed");
+        throw new OConfigurationException("Cannot start replication: local server is not distributed");
 
       String database = parts[2];
 
+      final String localNodeName = server.getDistributedManager().getLocalNodeName();
+
       ODatabaseDocumentTx db = server.openDatabase(database, "", "", null, true);
 
-      final OStorage stg = db.getStorage();
-      if (!(stg instanceof ODistributedStorage))
-        throw new ODistributedException("SYNC DATABASE command cannot be executed against a non distributed server");
+      Object result = OCommandExecutorSQLHAStartReplication.startReplication(db, new ArrayList<String>() {
+        {
+          add(localNodeName);
+        }
 
-      final ODistributedStorage dStg = (ODistributedStorage) stg;
+      }, OCommandExecutorSQLHAStartReplication.MODE.FULL);
 
-      final OHazelcastPlugin dManager = (OHazelcastPlugin) dStg.getDistributedManager();
-      if (dManager == null || !dManager.isEnabled())
-        throw new OCommandExecutionException("OrientDB is not started in distributed mode");
-
-      boolean installDatabase = dManager.installDatabase(true, database, dStg.getDistributedConfiguration().getDocument(), false,
-          true);
-
-      ODocument document = new ODocument().field("result", installDatabase);
+      ODocument document = new ODocument().field("result", result);
       iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, document.toJSON(""), null);
     }
 
+  }
+
+  private void synchCluster(OHttpResponse iResponse, String[] parts) throws IOException {
+    if (parts.length < 3)
+      throw new IllegalArgumentException("Cannot sync cluster: missing database or cluster name ");
+
+    if (server.getDistributedManager() == null)
+      throw new OConfigurationException("Cannot sync cluster: local server is not distributed");
+
+    String database = parts[2];
+    String cluster = parts[3];
+
+    ODatabaseDocumentTx db = server.openDatabase(database, "", "", null, true);
+
+    Object result = db.command(new OCommandSQL(String.format("ha sync cluster  %s ", cluster))).execute();
+    ODocument document = new ODocument().field("result", result);
+    iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, document.toJSON(""), null);
+  }
+
+  private void syncDatabase(OHttpResponse iResponse, String[] parts) throws IOException {
+    if (parts.length < 3)
+      throw new IllegalArgumentException("Cannot sync database: missing database name");
+
+    if (server.getDistributedManager() == null)
+      throw new OConfigurationException("Cannot sync database: local server is not distributed");
+
+    String database = parts[2];
+
+    ODatabaseDocumentTx db = server.openDatabase(database, "", "", null, true);
+
+    final OStorage stg = db.getStorage();
+    if (!(stg instanceof ODistributedStorage))
+      throw new ODistributedException("SYNC DATABASE command cannot be executed against a non distributed server");
+
+    final ODistributedStorage dStg = (ODistributedStorage) stg;
+
+    final OHazelcastPlugin dManager = (OHazelcastPlugin) dStg.getDistributedManager();
+    if (dManager == null || !dManager.isEnabled())
+      throw new OCommandExecutionException("OrientDB is not started in distributed mode");
+
+    boolean installDatabase = dManager.installDatabase(true, database, dStg.getDistributedConfiguration().getDocument(), false,
+        true);
+
+    ODocument document = new ODocument().field("result", installDatabase);
+    iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, document.toJSON(""), null);
   }
 
   public void changeConfig(OServer server, String database, final String jsonContent) {
@@ -195,21 +241,11 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
 
       if (id != null) {
 
-        if (manager != null) {
-          ODocument clusterStats = (ODocument) manager.getConfigurationMap().get("clusterStats");
-          if (clusterStats == null) {
-            iResponse.send(OHttpUtils.STATUS_OK_NOCONTENT_CODE, "OK", OHttpUtils.CONTENT_JSON, "{}", null);
-            return;
-          }
-          doc = new ODocument().fromMap(clusterStats.<Map<String, Object>> field(id));
-          doc.field("member", getMemberConfig(manager.getClusterConfiguration(), id));
-        } else {
-          doc = new ODocument().fromJSON(Orient.instance().getProfiler().toJSON("realtime", null));
-        }
+        doc = singleNodeStats(manager, id);
+
       } else {
         if (manager != null) {
-          doc = manager.getClusterConfiguration();
-          doc.field("clusterStats", manager.getConfigurationMap().get("clusterStats"));
+          doc = getClusterConfig(manager);
         } else {
           throw new OConfigurationException("Seems that the server is not running in distributed mode");
         }
@@ -222,6 +258,60 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
     iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, doc.toJSON(""), null);
   }
 
+  private ODocument singleNodeStats(ODistributedServerManager manager, String id) {
+    ODocument doc;
+    if (manager != null) {
+      ODocument clusterStats = (ODocument) manager.getConfigurationMap().get("clusterStats");
+      if (clusterStats == null) {
+        doc = new ODocument();
+      } else {
+        doc = new ODocument().fromMap(clusterStats.<Map<String, Object>> field(id));
+        doc.field("member", getMemberConfig(manager.getClusterConfiguration(), id));
+      }
+    } else {
+      doc = new ODocument().fromJSON(Orient.instance().getProfiler().toJSON("realtime", null));
+    }
+    return doc;
+  }
+
+  public ODocument getClusterConfig(ODistributedServerManager manager) {
+    ODocument doc;
+    doc = manager.getClusterConfiguration();
+    doc.field("clusterStats", manager.getConfigurationMap().get("clusterStats"));
+    return doc;
+  }
+
+  private ODocument calculateDBStatus(ODistributedServerManager manager, ODocument cfg) {
+
+    ODocument doc = new ODocument();
+    final Collection<ODocument> members = cfg.field("members");
+
+    Set<String> databases = new HashSet<String>();
+    for (ODocument m : members) {
+      final Collection<String> dbs = m.field("databases");
+      for (String db : dbs) {
+        databases.add(db);
+      }
+    }
+    for (String database : databases) {
+
+      doc.field(database, singleDBStatus(manager, database));
+
+    }
+    return doc;
+  }
+
+  private ODocument singleDBStatus(ODistributedServerManager manager, String database) {
+    ODocument entries = new ODocument();
+    final ODistributedConfiguration dbCfg = manager.getDatabaseConfiguration(database, false);
+    Set<String> servers = dbCfg.getAllConfiguredServers();
+    for (String serverName : servers) {
+      ODistributedServerManager.DB_STATUS databaseStatus = manager.getDatabaseStatus(serverName, database);
+      entries.field(serverName, databaseStatus.toString());
+    }
+    return entries;
+  }
+
   public ODocument doGetDatabaseInfo(OServer server, String id) {
     ODocument doc;
     ODistributedConfiguration cfg = server.getDistributedManager().getDatabaseConfiguration(id);
@@ -229,7 +319,7 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
     return doc;
   }
 
-  private ODocument doGetNodeConfig(ODistributedServerManager manager) {
+  public ODocument doGetNodeConfig(ODistributedServerManager manager) {
     ODocument doc;
     if (manager != null) {
       doc = manager.getClusterConfiguration();
@@ -278,9 +368,11 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
       configuration = new ODocument();
       member.field("configuration", configuration);
     }
-    for (String key : eval.keySet()) {
-      if (key.startsWith("system.config.")) {
-        configuration.field(key.replace("system.config.", "").replace(".", "_"), eval.get(key));
+    if (eval != null) {
+      for (String key : eval.keySet()) {
+        if (key.startsWith("system.config.")) {
+          configuration.field(key.replace("system.config.", "").replace(".", "_"), eval.get(key));
+        }
       }
     }
   }
