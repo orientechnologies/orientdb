@@ -561,81 +561,72 @@ public class OMatchStatementExecutionNewTest {
     qResult.close();
   }
 
-//  @Test public void testWhile() throws Exception {
-//
-//    OTodoResultSet qResult = db.query(
-//        "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, while: ($depth < 1)} return friend)");
-//    Assert.assertEquals(3, size(qResult));
-//    qResult.close();
-//
-//    qResult = db.query(
-//        "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, while: ($depth < 2), where: ($depth=1) } return friend)");
-//    Assert.assertEquals(2, size(qResult));
-//    qResult.close();
-//
-//    qResult = db.query(
-//        "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, while: ($depth < 4), where: ($depth=1) } return friend)");
-//    Assert.assertEquals(2, size(qResult));
-//    qResult.close();
-//
-//    qResult = db.query(
-//        "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, while: (true) } return friend)");
-//    Assert.assertEquals(6, size(qResult));
-//    qResult.close();
-//
-//    qResult = db.query(
-//        "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, while: (true) } return friend limit 3)");
-//    Assert.assertEquals(3, size(qResult));
-//    qResult.close();
-//
-//    qResult = db.query(
-//        "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, while: (true) } return friend) limit 3");
-//    Assert.assertEquals(3, size(qResult));
-//    qResult.close();
-//
-//  }
+  @Test public void testWhile() throws Exception {
+
+    OTodoResultSet qResult = db.query(
+        "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, while: ($depth < 1)} return friend)");
+    Assert.assertEquals(3, size(qResult));
+    qResult.close();
+
+    qResult = db.query(
+        "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, while: ($depth < 2), where: ($depth=1) } return friend)");
+    Assert.assertEquals(2, size(qResult));
+    qResult.close();
+
+    qResult = db.query(
+        "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, while: ($depth < 4), where: ($depth=1) } return friend)");
+    Assert.assertEquals(2, size(qResult));
+    qResult.close();
+
+    qResult = db.query(
+        "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, while: (true) } return friend)");
+    Assert.assertEquals(6, size(qResult));
+    qResult.close();
+
+    qResult = db.query(
+        "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, while: (true) } return friend limit 3)");
+    Assert.assertEquals(3, size(qResult));
+    qResult.close();
+
+    qResult = db.query(
+        "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, while: (true) } return friend) limit 3");
+    Assert.assertEquals(3, size(qResult));
+    qResult.close();
+
+  }
 
   private int size(OTodoResultSet qResult) {
     int result = 0;
-    while(qResult.hasNext()){
+    while (qResult.hasNext()) {
       result++;
       qResult.next();
     }
     return result;
   }
-  //
-  //  @Test
-  //  public void testWhileArrows() throws Exception {
-  //
-  //    List<ODocument> qResult = db
-  //        .command(
-  //            new OCommandSQL(
-  //                "select friend.name as name from (match {class:Person, where:(name = 'n1')}-Friend->{as:friend, while: ($depth < 1)} return friend)"))
-  //        .execute();
-  //    assertEquals(3, qResult.size());
-  //
-  //    qResult = db
-  //        .command(
-  //            new OCommandSQL(
-  //                "select friend.name as name from (match {class:Person, where:(name = 'n1')}-Friend->{as:friend, while: ($depth < 2), where: ($depth=1) } return friend)"))
-  //        .execute();
-  //    assertEquals(2, qResult.size());
-  //
-  //    qResult = db
-  //        .command(
-  //            new OCommandSQL(
-  //                "select friend.name as name from (match {class:Person, where:(name = 'n1')}-Friend->{as:friend, while: ($depth < 4), where: ($depth=1) } return friend)"))
-  //        .execute();
-  //    assertEquals(2, qResult.size());
-  //
-  //    qResult = db
-  //        .command(
-  //            new OCommandSQL(
-  //                "select friend.name as name from (match {class:Person, where:(name = 'n1')}-Friend->{as:friend, while: (true) } return friend)"))
-  //        .execute();
-  //    assertEquals(6, qResult.size());
-  //
-  //  }
+
+  @Test public void testWhileArrows() throws Exception {
+    OTodoResultSet qResult = db.query(
+        "select friend.name as name from (match {class:Person, where:(name = 'n1')}-Friend->{as:friend, while: ($depth < 1)} return friend)");
+    Assert.assertEquals(3, size(qResult));
+    qResult.close();
+
+    qResult = db.query(
+        "select friend.name as name from (match {class:Person, where:(name = 'n1')}-Friend->{as:friend, while: ($depth < 2), where: ($depth=1) } return friend)");
+    Assert.assertEquals(2, size(qResult));
+    qResult.close();
+
+    qResult = db.query(
+        "select friend.name as name from (match {class:Person, where:(name = 'n1')}-Friend->{as:friend, while: ($depth < 4), where: ($depth=1) } return friend)");
+    Assert.assertEquals(2, size(qResult));
+    qResult.close();
+
+    qResult = db.query(
+        "select friend.name as name from (match {class:Person, where:(name = 'n1')}-Friend->{as:friend, while: (true) } return friend)");
+    Assert.assertEquals(6, size(qResult));
+    qResult.close();
+  }
+
+  
   //
   //  @Test
   //  public void testMaxDepth() throws Exception {

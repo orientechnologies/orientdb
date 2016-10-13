@@ -72,6 +72,11 @@ public class MatchStep extends AbstractExecutionStep {
   private void fetchNext(OCommandContext ctx, int nRecords) {
     nextResult = null;
     while (true) {
+      if(traverser!=null && traverser.hasNext(ctx)){
+        nextResult = traverser.next(ctx);
+        break;
+      }
+
       if (upstream == null || !upstream.hasNext()) {
         upstream = getPrev().get().syncPull(ctx, nRecords);
       }
