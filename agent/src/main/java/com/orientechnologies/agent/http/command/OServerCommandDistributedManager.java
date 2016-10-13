@@ -19,8 +19,8 @@ package com.orientechnologies.agent.http.command;
 
 import com.orientechnologies.agent.ha.sql.OCommandExecutorSQLHAStartReplication;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -31,9 +31,7 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.impl.ODistributedAbstractPlugin;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
-import com.orientechnologies.orient.server.distributed.sql.OCommandExecutorSQLHASyncCluster;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
@@ -133,7 +131,7 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
 
       // Ugly workaround
 
-      ODatabaseDocumentTx db = server.openDatabase(database, "", "", null, true);
+      ODatabaseDocumentInternal db = server.openDatabase(database, "", "", null, true);
       ODatabaseRecordThreadLocal.INSTANCE.set(db);
 
       String localNodeName = server.getDistributedManager().getLocalNodeName();
@@ -152,7 +150,7 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
 
       final String localNodeName = server.getDistributedManager().getLocalNodeName();
 
-      ODatabaseDocumentTx db = server.openDatabase(database, "", "", null, true);
+      ODatabaseDocumentInternal db = server.openDatabase(database, "", "", null, true);
 
       Object result = OCommandExecutorSQLHAStartReplication.startReplication(db, new ArrayList<String>() {
         {
@@ -177,7 +175,7 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
     String database = parts[2];
     String cluster = parts[3];
 
-    ODatabaseDocumentTx db = server.openDatabase(database, "", "", null, true);
+    ODatabaseDocumentInternal db = server.openDatabase(database, "", "", null, true);
 
     Object result = db.command(new OCommandSQL(String.format("ha sync cluster  %s ", cluster))).execute();
     ODocument document = new ODocument().field("result", result);
@@ -193,7 +191,7 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
 
     String database = parts[2];
 
-    ODatabaseDocumentTx db = server.openDatabase(database, "", "", null, true);
+    ODatabaseDocumentInternal db = server.openDatabase(database, "", "", null, true);
 
     final OStorage stg = db.getStorage();
     if (!(stg instanceof ODistributedStorage))
