@@ -21,9 +21,7 @@ package com.orientechnologies.orient.core.storage.cache.local;
 
 import com.orientechnologies.common.collection.closabledictionary.OClosableEntry;
 import com.orientechnologies.common.collection.closabledictionary.OClosableLinkedContainer;
-import com.orientechnologies.common.concur.lock.OInterruptedException;
-import com.orientechnologies.common.concur.lock.OPartitionedLockManager;
-import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
+import com.orientechnologies.common.concur.lock.*;
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
@@ -105,6 +103,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   private final AtomicLong amountOfNewPagesAdded = new AtomicLong();
 
   private final OPartitionedLockManager<PageKey> lockManager = new OPartitionedLockManager<PageKey>();
+
   private final OLocalPaginatedStorage storageLocal;
   private final OReadersWriterSpinLock filesLock = new OReadersWriterSpinLock();
   private final ScheduledExecutorService commitExecutor;
@@ -588,7 +587,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
         pageGroup.recencyBit = true;
       } finally {
-        lockManager.releaseLock(groupLock);
+        lockManager.releaseExclusiveLock(pageKey);
       }
 
       if (exclusiveWriteCacheSize.sum() > writeCacheMaxSize) {
@@ -1534,7 +1533,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
             result = pageKey;
           }
         } finally {
-          lockManager.releaseLock(lock);
+          lockManager.releaseExclusiveLock(pageKey);
         }
       }
 
@@ -1557,7 +1556,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
             result = pageKey;
           }
         } finally {
-          lockManager.releaseLock(lock);
+          lockManager.releaseExclusiveLock(pageKey);
         }
       }
 
@@ -1634,7 +1633,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
             writeCachePages.remove(entry);
           }
         } finally {
-          lockManager.releaseLock(groupLock);
+          lockManager.releaseExclusiveLock(entry);
         }
 
         lastWritePageKey = entry;
@@ -1710,7 +1709,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
             entriesIterator.remove();
           }
         } finally {
-          lockManager.releaseLock(groupLock);
+          lockManager.releaseExclusiveLock(entry.getKey());
         }
 
         lastPageKey = pageKey;
@@ -1782,7 +1781,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
     private OLogSequenceNumber findMinLsn(OLogSequenceNumber minLsn, ConcurrentSkipListMap<PageKey, PageGroup> ring) {
       for (Map.Entry<PageKey, PageGroup> entry : ring.entrySet()) {
-        final Lock groupLock = lockManager.acquireExclusiveLock(entry.getKey());
+        lockManager.acquireExclusiveLock(entry.getKey());
         try {
           PageGroup group = entry.getValue();
           final OCachePointer pagePointer = group.page;
@@ -1792,7 +1791,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
             }
           }
         } finally {
-          lockManager.releaseLock(groupLock);
+          lockManager.releaseExclusiveLock(entry.getKey());
         }
       }
       return minLsn;
@@ -1857,7 +1856,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
           entryIterator.remove();
 
         } finally {
-          lockManager.releaseLock(groupLock);
+          lockManager.releaseExclusiveLock(pageKey);
         }
       }
     }
@@ -1902,7 +1901,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
           entryIterator.remove();
         } finally {
-          lockManager.releaseLock(groupLock);
+          lockManager.releaseExclusiveLock(pageKey);
         }
       }
     }
