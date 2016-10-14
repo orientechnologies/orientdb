@@ -2,9 +2,14 @@ docker:
   as_root: true
   image: yegor256/java8
 
+decrypt:
+  settings.xml: "repo/.rultor/settings.xml.asc"
+  pubring.gpg: "repo/.rultor/pubring.gpg.asc"
+  secring.gpg: "repo/.rultor/secring.gpg.asc"
+
 release:
   commanders:
     - mpollmeier
     - velo
   script: |
-    mvn clean deploy -f driver/pom.xml -Prelease -DskipTests -B
+    mvn clean deploy -f driver/pom.xml -Prelease -DskipTests -B --settings /home/r/settings.xml
