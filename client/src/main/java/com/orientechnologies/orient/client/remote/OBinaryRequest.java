@@ -7,7 +7,10 @@ import java.io.IOException;
 /**
  * Created by tglman on 07/06/16.
  */
-public interface OStorageRemoteOperationRead<T> {
+public interface OBinaryRequest {
 
-  T execute(final OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException;
+  void write(final OChannelBinaryAsynchClient network, OStorageRemoteSession session, int mode) throws IOException;
+  
+  byte getCommand();
+  
 }

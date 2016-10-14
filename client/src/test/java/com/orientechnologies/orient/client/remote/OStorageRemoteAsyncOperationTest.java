@@ -7,6 +7,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import java.io.IOException;
@@ -29,6 +30,10 @@ public class OStorageRemoteAsyncOperationTest {
 
   @Mock
   private ORemoteConnectionManager   connectionManager;
+  @Mock
+  private OStorageRemoteSession      session;
+  @Mock
+  private OStorageRemoteNodeSession  nodeSession;
 
   private class CallStatus {
     public String status;
@@ -37,7 +42,7 @@ public class OStorageRemoteAsyncOperationTest {
   @Before
   public void before() throws IOException {
     MockitoAnnotations.initMocks(this);
-    final OStorageRemoteSession session = new OStorageRemoteSession(10);
+    Mockito.when(session.getServerSession(Mockito.anyString())).thenReturn(nodeSession);
     storage = new OStorageRemote("mock", "mock", "mock") {
       @Override
       public <T> T baseNetworkOperation(OStorageRemoteOperation<T> operation, String errorMessage, int retry) {
@@ -47,6 +52,7 @@ public class OStorageRemoteAsyncOperationTest {
           throw new RuntimeException(e);
         }
       }
+
     };
     storage.connectionManager = connectionManager;
   }
@@ -54,15 +60,20 @@ public class OStorageRemoteAsyncOperationTest {
   @Test
   public void testSyncCall() {
     final CallStatus status = new CallStatus();
-    storage.asyncNetworkOperation(new OStorageRemoteOperationWrite() {
+    storage.asyncNetworkOperation(new OBinaryRequest() {
       @Override
-      public void execute(OChannelBinaryAsynchClient network, OStorageRemoteSession session, int mode) throws IOException {
+      public byte getCommand() {
+        return 0;
+      }
+
+      @Override
+      public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session, int mode) throws IOException {
         assertNull(status.status);
         status.status = "write";
       }
-    }, new OStorageRemoteOperationRead<Object>() {
+    }, new OBinaryResponse<Object>() {
       @Override
-      public Object execute(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+      public Object read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
         assertEquals(status.status, "write");
         status.status = "read";
         return null;
@@ -75,15 +86,21 @@ public class OStorageRemoteAsyncOperationTest {
   @Test
   public void testNoReadCall() {
     final CallStatus status = new CallStatus();
-    storage.asyncNetworkOperation(new OStorageRemoteOperationWrite() {
+    storage.asyncNetworkOperation(new OBinaryRequest() {
       @Override
-      public void execute(OChannelBinaryAsynchClient network, OStorageRemoteSession session, int mode) throws IOException {
+      public byte getCommand() {
+        // TODO Auto-generated method stub
+        return 0;
+      }
+
+      @Override
+      public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session, int mode) throws IOException {
         assertNull(status.status);
         status.status = "write";
       }
-    }, new OStorageRemoteOperationRead<Object>() {
+    }, new OBinaryResponse<Object>() {
       @Override
-      public Object execute(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+      public Object read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
         fail();
         return null;
       }
@@ -99,15 +116,21 @@ public class OStorageRemoteAsyncOperationTest {
     final CountDownLatch readDone = new CountDownLatch(1);
     final CountDownLatch callBackDone = new CountDownLatch(1);
     final Object res = new Object();
-    storage.asyncNetworkOperation(new OStorageRemoteOperationWrite() {
+    storage.asyncNetworkOperation(new OBinaryRequest() {
       @Override
-      public void execute(OChannelBinaryAsynchClient network, OStorageRemoteSession session, int mode) throws IOException {
+      public byte getCommand() {
+        // TODO Auto-generated method stub
+        return 0;
+      }
+
+      @Override
+      public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session, int mode) throws IOException {
         assertNull(status.status);
         status.status = "write";
       }
-    }, new OStorageRemoteOperationRead<Object>() {
+    }, new OBinaryResponse<Object>() {
       @Override
-      public Object execute(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+      public Object read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
         try {
           if (callBackWait.await(10, TimeUnit.MILLISECONDS))
             readDone.countDown();

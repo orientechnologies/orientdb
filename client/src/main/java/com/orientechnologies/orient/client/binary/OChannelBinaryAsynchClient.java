@@ -296,6 +296,11 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
 
   }
 
+  public void endRequest() throws IOException {
+    flush();
+    releaseWriteLock();
+  }
+  
   @Override
   public void close() {
     if (getLockRead().tryAcquireLock())
