@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.core.storage.impl.local;
 
 import com.orientechnologies.common.concur.lock.OComparableLockManager;
+import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.concur.lock.OPartitionedLockManager;
 import com.orientechnologies.common.exception.OException;
@@ -109,7 +110,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   /**
    * Lock is used to atomically update record versions.
    */
-  private final OPartitionedLockManager<ORID> recordVersionManager;
+  private final OLockManager<ORID> recordVersionManager;
 
   private final Map<String, OCluster> clusterMap = new HashMap<String, OCluster>();
   private       List<OCluster>        clusters   = new ArrayList<OCluster>();
