@@ -10,7 +10,12 @@
       <div class="panel panel-default">
         <div class="panel-heading">
           <b>{{ server.name }}</b>
+          <div class="panel-node-actions">
+            <ng-include src="'views/widget/restartButton.html'"></ng-include>
+          </div>
         </div>
+
+
         <div class="panel-body">
           <div class="row">
             <div class="col-md-3">

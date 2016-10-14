@@ -883,6 +883,34 @@ database.factory('HaCommand', function ($http, $resource, $q) {
     });
     return deferred.promise;
   }
+  resource.stopNode = function (server) {
+
+    var deferred = $q.defer();
+    var url = API + 'distributed/stop/' + server;
+    if (server) {
+      url += '?node=' + server;
+    }
+    $http.post(url).success(function (data) {
+      deferred.resolve(data)
+    }).error(function (data) {
+      deferred.reject(data);
+    });
+    return deferred.promise;
+  }
+  resource.restartNode = function (server) {
+
+    var deferred = $q.defer();
+    var url = API + 'distributed/restart/' + server;
+    if (server) {
+      url += '?node=' + server;
+    }
+    $http.post(url).success(function (data) {
+      deferred.resolve(data)
+    }).error(function (data) {
+      deferred.reject(data);
+    });
+    return deferred.promise;
+  }
 
   resource.syncCluster = function (server, database, cluster) {
 

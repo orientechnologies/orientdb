@@ -13,8 +13,17 @@
 
     <div class="col-md-10">
       <div class="col-md-4">
-        <div>
-          <i class="icon-angle-right"></i> Status: <b>{{server.status}}</b>
+        <div class="server-status">
+          <div class="row">
+            <div class="col-md-4">
+              <p>
+                <i class="icon-angle-right"></i> Status: <b>{{server.status}}</b>
+              </p>
+            </div>
+            <div class="col-md-8">
+              <ng-include src="'views/widget/restartButton.html'"></ng-include>
+            </div>
+          </div>
         </div>
         <div>
           <i class="icon-angle-right"></i> Profiler Status:

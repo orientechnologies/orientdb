@@ -2581,3 +2581,54 @@ ee.controller('OServerConfigController', function ($scope, SecurityService, Noti
 
 
 });
+
+ee.controller('RestartController', function ($scope, Notification, HaCommand, $modal, $q) {
+
+
+  $scope.restart = function () {
+
+    var confirmMessage = S("This action will restart node <b>{{node}}</b>. Are you sure?").template({
+      node: $scope.server.name
+    }).s
+
+    Utilities.confirm($scope, $modal, $q, {
+      title: 'Confirm Required!',
+      body: confirmMessage,
+      success: function () {
+        HaCommand.restartNode($scope.server.name).then(function (res) {
+          var msg = S("Node {{node}} restart completed.").template({
+            node: $scope.server.name
+          }).s;
+          Notification.push({content: msg, autoHide: true});
+        }).catch(function (err) {
+          Notification.push({content: err, error: true, autoHide: true});
+        })
+      }
+    });
+  }
+
+  $scope.shutdown = function () {
+
+    var confirmMessage = S("This action will shutdown node <b>{{node}}</b>. Are you sure?").template({
+      node: $scope.server.name
+    }).s
+
+    Utilities.confirm($scope, $modal, $q, {
+      title: 'Confirm Required!',
+      body: confirmMessage,
+      success: function () {
+        HaCommand.stopNode($scope.server.name).then(function (res) {
+          var msg = S("Node {{node}} went offline.").template({
+            node: $scope.server.name
+          }).s;
+          Notification.push({content: msg, autoHide: true});
+        }).catch(function (err) {
+          Notification.push({content: err, error: true, autoHide: true});
+        })
+      }
+    });
+  }
+
+
+});
+

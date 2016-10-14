@@ -80,6 +80,11 @@ body div.container-studio {
   margin-top: -5px;
 }
 
+.panel-node-actions{
+  display: inline-block;
+  float: right;
+  margin-top: -2px;
+}
 .console_class_functions .jumbotron {
   padding: 0px;
 }
@@ -207,6 +212,7 @@ body div.container-studio {
 .vertex-aside {
   height: 100%;
 }
+
 .asideVertex {
   width: 320px;
 }
@@ -244,7 +250,7 @@ body div.container-studio {
 }
 
 /*.aside-list-container .row:first-child {*/
-  /*height: 20%;*/
+/*height: 20%;*/
 /*}*/
 
 .aside-list-container .row:last-child {
@@ -1086,15 +1092,18 @@ div.users-ui div.container-fluid, div.role-ui div.container-fluid {
 .yes-no-body {
   padding: 0px;
 }
+
 .yes-no-body .studio-well-tips {
 
   padding: 20px 40px;
   font-size: 15px;
 }
+
 .studio-well-tips-once {
   padding: 10px;
   /*border-left: 3px solid #FF6600;*/
 }
+
 .field-set {
   border-radius: 6px;
   color: inherit;
@@ -1206,20 +1215,19 @@ div.users-ui div.container-fluid, div.role-ui div.container-fluid {
   color: #5bc0de;
 }
 
-.log-restore-finished  {
+.log-restore-finished {
   background-color: #f0ad4e;
   border-color: #f0ad4e;
 }
-.log-restore-started  {
+
+.log-restore-started {
   background-color: #f0ad4e;
   border-color: #f0ad4e;
 }
-.log-restore-finished-icon, .log-restore-started-icon  {
+
+.log-restore-finished-icon, .log-restore-started-icon {
   color: #f0ad4e;
 }
-
-
-
 
 table.table-fixed-header {
   box-sizing: border-box;
@@ -1252,10 +1260,9 @@ table.table-fixed-header * {
   flex-wrap: nowrap;
 }
 
-.table-fixed-header thead,.table-fixed-header tfoot {
+.table-fixed-header thead, .table-fixed-header tfoot {
   flex-shrink: 0;
 }
-
 
 .table-fixed-header th, .table-fixed-header tbody td {
   width: 20%; /* this can vary */
@@ -1281,13 +1288,28 @@ table.table-backup {
   width: 25%;
 }
 
-
 .noty_bar {
   max-height: 100px;
   overflow: auto;
 }
 
-
 .nav-tabs {
   margin-bottom: 15px;
+}
+
+.server-control {
+  display: inline-block;
+}
+
+.server-status p {
+  padding-top: 4px;
+}
+
+.server-status .row .col-md-4 {
+  padding-right: 0px;
+  width: 30%;
+}
+
+.server-status .row .col-md-8 {
+  padding-left: 0px;
 }
