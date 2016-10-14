@@ -105,7 +105,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   private final OWriteAheadLog writeAheadLog;
   private final AtomicLong amountOfNewPagesAdded = new AtomicLong();
 
-  private final OPartitionedLockManager<PageKey> lockManager = new OPartitionedLockManager<PageKey>();
+  private final OLockManager<PageKey> lockManager = new OPartitionedLockManager<PageKey>();
 
   private final OLocalPaginatedStorage storageLocal;
   private final OReadersWriterSpinLock filesLock = new OReadersWriterSpinLock();

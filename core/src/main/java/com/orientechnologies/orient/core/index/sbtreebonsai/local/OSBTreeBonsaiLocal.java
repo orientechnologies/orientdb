@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.core.index.sbtreebonsai.local;
 
 import com.orientechnologies.common.comparator.ODefaultComparator;
+import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.lock.OPartitionedLockManager;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
@@ -56,7 +57,7 @@ import java.util.concurrent.locks.Lock;
  * @since 1.6.0
  */
 public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTreeBonsai<K, V> {
-  OPartitionedLockManager<Long> fileLockManager = new OPartitionedLockManager<Long>();
+  OLockManager<Long> fileLockManager = new OPartitionedLockManager<Long>();
 
   private static final int                  PAGE_SIZE             =
       OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
