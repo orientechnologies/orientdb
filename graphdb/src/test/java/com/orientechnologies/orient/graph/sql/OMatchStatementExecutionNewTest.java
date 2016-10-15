@@ -908,61 +908,70 @@ public class OMatchStatementExecutionNewTest {
       return db.query(query.toString());
     }
 
-  //  @Test
-  //  public void testManaged2Arrows() {
-  //    // people managed by a manager are people who belong to his department or people who belong to sub-departments without a manager
-  //    List<OIdentifiable> managedByA = getManagedBy2Arrows("a");
-  //    assertEquals(1, managedByA.size());
-  //    assertEquals("p1", ((ODocument) managedByA.get(0).getRecord()).field("name"));
-  //
-  //    List<OIdentifiable> managedByB = getManagedBy2Arrows("b");
-  //    assertEquals(5, managedByB.size());
-  //    Set<String> expectedNames = new HashSet<String>();
-  //    expectedNames.add("p2");
-  //    expectedNames.add("p3");
-  //    expectedNames.add("p6");
-  //    expectedNames.add("p7");
-  //    expectedNames.add("p11");
-  //    Set<String> names = new HashSet<String>();
-  //    for (OIdentifiable id : managedByB) {
-  //      ODocument doc = id.getRecord();
-  //      String name = doc.field("name");
-  //      names.add(name);
-  //    }
-  //    assertEquals(expectedNames, names);
-  //  }
-  //
-  //  private List<OIdentifiable> getManagedBy2Arrows(String managerName) {
-  //    StringBuilder query = new StringBuilder();
-  //    query.append("select expand(managed) from (");
-  //    query.append("  match {class:Employee, where: (name = '" + managerName + "')}");
-  //    query.append("  -ManagerOf->{}");
-  //    query.append("  .(inE('ParentDepartment').outV()){");
-  //    query.append("      while: ($depth = 0 or in('ManagerOf').size() = 0),");
-  //    query.append("      where: ($depth = 0 or in('ManagerOf').size() = 0)");
-  //    query.append("  }<-WorksAt-{as: managed}");
-  //    query.append("  return managed");
-  //    query.append(")");
-  //
-  //    return db.command(new OCommandSQL(query.toString())).execute();
-  //  }
-  //
-  //  @Test
-  //  public void testTriangle1() {
-  //    StringBuilder query = new StringBuilder();
-  //    query.append("match ");
-  //    query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
-  //    query.append("  .out('TriangleE'){as: friend2}");
-  //    query.append("  .out('TriangleE'){as: friend3},");
-  //    query.append("{class:TriangleV, as: friend1}");
-  //    query.append("  .out('TriangleE'){as: friend3}");
-  //    query.append("return $matches");
-  //
-  //    List<?> result = db.command(new OCommandSQL(query.toString())).execute();
-  //    assertEquals(1, result.size());
-  //
-  //  }
-  //
+    @Test
+    public void testManaged2Arrows() {
+      // people managed by a manager are people who belong to his department or people who belong to sub-departments without a manager
+      OTodoResultSet managedByA = getManagedBy2Arrows("a");
+      Assert.assertTrue(managedByA.hasNext());
+      OResult item = managedByA.next();
+      Assert.assertFalse(managedByA.hasNext());
+      Assert.assertEquals("p1", item.getProperty("name"));
+
+
+      OTodoResultSet managedByB = getManagedBy2Arrows("b");
+
+      Set<String> expectedNames = new HashSet<String>();
+      expectedNames.add("p2");
+      expectedNames.add("p3");
+      expectedNames.add("p6");
+      expectedNames.add("p7");
+      expectedNames.add("p11");
+      Set<String> names = new HashSet<String>();
+      for(int i=0;i<5;i++){
+        Assert.assertTrue(managedByB.hasNext());
+        OResult id = managedByB.next();
+        String name = id.getProperty("name");
+        names.add(name);
+      }
+      Assert.assertEquals(expectedNames, names);
+    }
+
+    private OTodoResultSet getManagedBy2Arrows(String managerName) {
+      StringBuilder query = new StringBuilder();
+      query.append("select expand(managed) from (");
+      query.append("  match {class:Employee, where: (name = '" + managerName + "')}");
+      query.append("  -ManagerOf->{}");
+      query.append("  .(inE('ParentDepartment').outV()){");
+      query.append("      while: ($depth = 0 or in('ManagerOf').size() = 0),");
+      query.append("      where: ($depth = 0 or in('ManagerOf').size() = 0)");
+      query.append("  }<-WorksAt-{as: managed}");
+      query.append("  return managed");
+      query.append(")");
+
+      return db.query(query.toString());
+    }
+
+    @Test
+    public void testTriangle1() {
+      StringBuilder query = new StringBuilder();
+      query.append("match ");
+      query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
+      query.append("  .out('TriangleE'){as: friend2}");
+      query.append("  .out('TriangleE'){as: friend3},");
+      query.append("{class:TriangleV, as: friend1}");
+      query.append("  .out('TriangleE'){as: friend3}");
+      query.append("return $matches");
+
+      OTodoResultSet result = db.query(query.toString());
+
+      printExecutionPlan(result);
+
+      Assert.assertTrue(result.hasNext());
+      OResult a = result.next();
+      Assert.assertFalse(result.hasNext());
+
+    }
+  
   //  @Test
   //  public void testTriangle1Arrows() {
   //    StringBuilder query = new StringBuilder();

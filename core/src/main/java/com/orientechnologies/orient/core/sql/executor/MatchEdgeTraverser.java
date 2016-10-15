@@ -11,8 +11,8 @@ import java.util.*;
  * Created by luigidellaquila on 23/09/16.
  */
 public class MatchEdgeTraverser {
-  protected OResult       sourceRecord;
-  protected  EdgeTraversal edge;
+  protected OResult        sourceRecord;
+  protected EdgeTraversal  edge;
   protected OMatchPathItem item;
 
   Iterator<OIdentifiable> downstream;
@@ -38,26 +38,32 @@ public class MatchEdgeTraverser {
     if (!downstream.hasNext()) {
       throw new IllegalStateException();
     }
+    String alias = this.item.getFilter().getAlias();
     OIdentifiable nextElement = downstream.next();
+    Object prevValue = sourceRecord.getProperty(alias);
+    if (prevValue != null && !prevValue.equals(nextElement)) {
+      return null;
+    }
     OResultInternal result = new OResultInternal();
     for (String prop : sourceRecord.getPropertyNames()) {
       result.setProperty(prop, sourceRecord.getProperty(prop));
     }
-    result.setProperty(this.item.getFilter().getAlias(), nextElement);
+    result.setProperty(alias, nextElement);
     return result;
   }
 
   private void init(OCommandContext ctx) {
     if (downstream == null) {
       Object startingElem = sourceRecord.getProperty(edge.edge.out.alias);
-      if(startingElem instanceof OResult){
+      if (startingElem instanceof OResult) {
         startingElem = ((OResult) startingElem).getElement();
       }
       downstream = executeTraversal(ctx, this.item, (OIdentifiable) startingElem, 0).iterator();
     }
   }
 
-  protected Iterable<OIdentifiable> executeTraversal(OCommandContext iCommandContext, OMatchPathItem item, OIdentifiable startingPoint, int depth) {
+  protected Iterable<OIdentifiable> executeTraversal(OCommandContext iCommandContext, OMatchPathItem item,
+      OIdentifiable startingPoint, int depth) {
 
     OWhereClause filter = null;
     OWhereClause whileCondition = null;
@@ -100,9 +106,9 @@ public class MatchEdgeTraverser {
         Iterable<OIdentifiable> queryResult = traversePatternEdge(startingPoint, iCommandContext);
 
         for (OIdentifiable origin : queryResult) {
-//          if(origin.equals(startingPoint)){
-//            continue;
-//          }
+          //          if(origin.equals(startingPoint)){
+          //            continue;
+          //          }
           // TODO consider break strategies (eg. re-traverse nodes)
           Iterable<OIdentifiable> subResult = executeTraversal(iCommandContext, item, origin, depth + 1);
           if (subResult instanceof Collection) {
@@ -118,7 +124,6 @@ public class MatchEdgeTraverser {
     }
     return result;
   }
-
 
   //TODO refactor this method to recieve the item.
 

@@ -100,8 +100,15 @@ public class MatchStep extends AbstractExecutionStep {
         traverser = new MatchEdgeTraverser(lastUpstreamRecord, edge);
       }
 
-      if (traverser.hasNext(ctx)) {
+      boolean found = false;
+      while (traverser.hasNext(ctx)) {
         nextResult = traverser.next(ctx);
+        if(nextResult!=null) {
+          found = true;
+          break;
+        }
+      }
+      if(found){
         break;
       }
     }
