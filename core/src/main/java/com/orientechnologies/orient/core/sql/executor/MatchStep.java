@@ -96,8 +96,10 @@ public class MatchStep extends AbstractExecutionStep {
       lastUpstreamRecord = upstream.next();
       if(edge.edge.item instanceof OMultiMatchPathItem){
         traverser = new MatchMultiEdgeTraverser(lastUpstreamRecord, edge);
-      }else {
+      }else if(edge.out){
         traverser = new MatchEdgeTraverser(lastUpstreamRecord, edge);
+      }else{
+        traverser = new MatchReverseEdgeTraverser(lastUpstreamRecord, edge);
       }
 
       boolean found = false;
@@ -126,18 +128,23 @@ public class MatchStep extends AbstractExecutionStep {
     String spaces = OExecutionStepInternal.getIndent(depth, indent);
     StringBuilder result = new StringBuilder();
     result.append(spaces);
-    result.append("+ MATCH \n");
+    result.append("+ MATCH ");
+    if(edge.out) {
+      result.append("     ---->\n");
+    }else{
+      result.append("     <----\n");
+    }
     result.append(spaces);
     result.append("  ");
-    if(edge.out) {
+//
       result.append("{"+edge.edge.out.alias+"}");
       result.append(edge.edge.item.getMethod());
       result.append("{"+edge.edge.in.alias+"}");
-    }else{
-      result.append("{"+edge.edge.in.alias+"}");
-      result.append(edge.edge.item.getMethod());
-      result.append("{"+edge.edge.out.alias+"}");
-    }
+//    }else{
+//      result.append("{"+edge.edge.in.alias+"}");
+//      result.append(edge.edge.item.getMethod());
+//      result.append("{"+edge.edge.out.alias+"}");
+//    }
     return result.toString();
   }
 }

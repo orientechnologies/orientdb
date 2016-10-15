@@ -38,23 +38,50 @@ public class MatchEdgeTraverser {
     if (!downstream.hasNext()) {
       throw new IllegalStateException();
     }
-    String alias = this.item.getFilter().getAlias();
+    String endPointAlias = getEndpointAlias();
     OIdentifiable nextElement = downstream.next();
-    Object prevValue = sourceRecord.getProperty(alias);
-    if (prevValue != null && !prevValue.equals(nextElement)) {
+    Object prevValue = sourceRecord.getProperty(endPointAlias);
+    if (prevValue != null && !equals(prevValue, nextElement)) {
       return null;
     }
     OResultInternal result = new OResultInternal();
     for (String prop : sourceRecord.getPropertyNames()) {
       result.setProperty(prop, sourceRecord.getProperty(prop));
     }
-    result.setProperty(alias, nextElement);
+    result.setProperty(endPointAlias, toResult(nextElement));
     return result;
+  }
+
+  private boolean equals(Object prevValue, OIdentifiable nextElement) {
+    if (prevValue instanceof OResult) {
+      prevValue = ((OResult) prevValue).getElement();
+    }
+    if (nextElement instanceof OResult) {
+      nextElement = ((OResult) nextElement).getElement();
+    }
+    return prevValue != null && prevValue.equals(nextElement);
+  }
+
+  private Object toResult(OIdentifiable nextElement) {
+    OResultInternal result = new OResultInternal();
+    result.setElement(nextElement);
+    return result;
+  }
+
+  protected String getStartingPointAlias() {
+    return this.edge.edge.out.alias;
+  }
+
+  protected String getEndpointAlias() {
+    if (this.item != null) {
+      return this.item.getFilter().getAlias();
+    }
+    return this.edge.edge.in.alias;
   }
 
   private void init(OCommandContext ctx) {
     if (downstream == null) {
-      Object startingElem = sourceRecord.getProperty(edge.edge.out.alias);
+      Object startingElem = sourceRecord.getProperty(getStartingPointAlias());
       if (startingElem instanceof OResult) {
         startingElem = ((OResult) startingElem).getElement();
       }
@@ -87,7 +114,7 @@ public class MatchEdgeTraverser {
       for (OIdentifiable origin : queryResult) {
         Object previousMatch = iCommandContext.getVariable("$currentMatch");
         iCommandContext.setVariable("$currentMatch", origin);
-        if (filter == null || filter.matchesFilters(origin, iCommandContext)) {
+        if (matchesFilters(iCommandContext, filter, origin)) {
           result.add(origin);
         }
         iCommandContext.setVariable("$currentMatch", previousMatch);
@@ -96,7 +123,7 @@ public class MatchEdgeTraverser {
       iCommandContext.setVariable("$depth", depth);
       Object previousMatch = iCommandContext.getVariable("$currentMatch");
       iCommandContext.setVariable("$currentMatch", startingPoint);
-      if (filter == null || filter.matchesFilters(startingPoint, iCommandContext)) {
+      if (matchesFilters(iCommandContext, filter, startingPoint)) {
         result.add(startingPoint);
       }
 
@@ -125,13 +152,17 @@ public class MatchEdgeTraverser {
     return result;
   }
 
+  protected boolean matchesFilters(OCommandContext iCommandContext, OWhereClause filter, OIdentifiable origin) {
+    return filter == null || filter.matchesFilters(origin, iCommandContext);
+  }
+
   //TODO refactor this method to recieve the item.
 
   protected Iterable<OIdentifiable> traversePatternEdge(OIdentifiable startingPoint, OCommandContext iCommandContext) {
 
     Iterable possibleResults = null;
     if (this.item.getFilter() != null) {
-      String alias = this.item.getFilter().getAlias();
+      String alias = getEndpointAlias();
       Object matchedNodes = iCommandContext.getVariable(MatchPrefetchStep.PREFETCHED_MATCH_ALIAS_PREFIX + alias);
       if (matchedNodes != null) {
         if (matchedNodes instanceof Iterable) {
