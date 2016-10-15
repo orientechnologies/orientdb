@@ -136,6 +136,8 @@
                 <configuration>
                     <skip>${skipTests}</skip>
                     <repoToken>VydEbanRpaocFLETAHcF2qUZohD4tXJ6e</repoToken>
+                    <timestampFormat>yyyy-MM-dd'T'HH:mm:ss</timestampFormat>
+                    <!-- <failOnServiceError>false</failOnServiceError> -->
                 </configuration>
             </plugin>
             <plugin>
