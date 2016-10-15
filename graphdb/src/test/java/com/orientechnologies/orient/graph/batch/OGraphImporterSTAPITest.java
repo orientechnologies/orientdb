@@ -21,10 +21,13 @@ import java.util.Map;
 import java.util.TimerTask;
 
 /**
+ * Single-threads graph importer. Source file downloaded from
+ * http://snap.stanford.edu/data/amazon/productGraph/categoryFiles/ratings_Books.csv.
+ * 
  * @author Luca Garulli
  */
 
-public class OGraphImporterBasicAPITest {
+public class OGraphImporterSTAPITest {
   static int  row             = 0;
   static long lastVertexCount = 0;
   static long lastEdgeCount   = 0;
@@ -44,16 +47,16 @@ public class OGraphImporterBasicAPITest {
     OrientVertexType user = graph.createVertexType("User");
     user.createProperty("uid", OType.STRING);
 
-    final OIndex<?> userIndex = user
-        .createIndex("User.uid", OClass.INDEX_TYPE.UNIQUE.toString(), (OProgressListener) null, (ODocument) null, "AUTOSHARDING",
-            new String[] { "uid" });
+    final OIndex<?> userIndex = user.createIndex("User.uid", OClass.INDEX_TYPE.UNIQUE.toString(), (OProgressListener) null,
+        (ODocument) null, "AUTOSHARDING", new String[] { "uid" });
 
     OrientVertexType product = graph.createVertexType("Product");
     product.createProperty("uid", OType.STRING);
 
-    final OIndex<?> productIndex = product
-        .createIndex("Product.uid", OClass.INDEX_TYPE.UNIQUE.toString(), (OProgressListener) null, (ODocument) null, "AUTOSHARDING",
-            new String[] { "uid" });
+    final OIndex<?> productIndex = product.createIndex("Product.uid", OClass.INDEX_TYPE.UNIQUE.toString(), (OProgressListener) null,
+        (ODocument) null, "AUTOSHARDING", new String[] { "uid" });
+
+    graph.createEdgeType("Reviewed");
 
     final File file = new File("/Users/luca/Downloads/ratings_Books.csv");
     final BufferedReader br = new BufferedReader(new FileReader(file));
@@ -65,18 +68,16 @@ public class OGraphImporterBasicAPITest {
         final long vertexCount = roGraph.countVertices();
         final long edgeCount = roGraph.countEdges();
 
-        System.out.println(String
-            .format("%d vertices=%d %d/sec edges=%d %d/sec", row, vertexCount, ((vertexCount - lastVertexCount) * 1000 / 2000),
-                edgeCount, ((edgeCount - lastEdgeCount) * 1000 / 2000)));
+        System.out.println(String.format("%d vertices=%d %d/sec edges=%d %d/sec", row, vertexCount,
+            ((vertexCount - lastVertexCount) * 1000 / 2000), edgeCount, ((edgeCount - lastEdgeCount) * 1000 / 2000)));
 
         lastVertexCount = vertexCount;
         lastEdgeCount = edgeCount;
       }
     }, 2000, 2000);
 
-
     try {
-      for (String line; (line = br.readLine()) != null; ) {
+      for (String line; (line = br.readLine()) != null;) {
         row++;
 
         final String[] parts = line.split(",");
@@ -108,7 +109,7 @@ public class OGraphImporterBasicAPITest {
         final OrientEdge edge = graph.addEdge(null, v1, v2, "Reviewed");
         edge.setProperties(properties);
 
-        if (row % 100 == 0) {
+        if (row % 2 == 0) {
           graph.commit();
         }
       }
