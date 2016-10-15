@@ -43,7 +43,7 @@ public class OSelectExecutionPlan implements OInternalExecutionPlan {
   }
 
   @Override public void reset(OCommandContext ctx) {
-    throw new UnsupportedOperationException();
+    steps.forEach(OExecutionStepInternal::reset);
   }
 
   public void chain(OExecutionStepInternal nextStep) {

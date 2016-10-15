@@ -61,4 +61,12 @@ public class OMatchPathItemFirst extends OMatchPathItem {
     result = 31 * result + (function != null ? function.hashCode() : 0);
     return result;
   }
+
+  public OFunctionCall getFunction() {
+    return function;
+  }
+
+  public void setFunction(OFunctionCall function) {
+    this.function = function;
+  }
 }

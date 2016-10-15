@@ -137,11 +137,32 @@ public class OMatchExecutionPlanner {
     this.subPatterns = pattern.getDisjointPatterns();
   }
 
-  private void addStepsFor(OSelectExecutionPlan result, EdgeTraversal edge, OCommandContext context, boolean first) {
+  private void addStepsFor(OSelectExecutionPlan plan, EdgeTraversal edge, OCommandContext context, boolean first) {
     if (first) {
-      result.chain(new MatchFirstStep(context, edge.out ? edge.edge.out : edge.edge.in));
+      plan.chain(new MatchFirstStep(context, edge.out ? edge.edge.out : edge.edge.in));
     }
-    result.chain(new MatchStep(context, edge));
+//    if (edge.edge.item instanceof OMultiMatchPathItem) {
+//      chainComplexMachStep(plan, context, edge);
+//    } else {
+      plan.chain(new MatchStep(context, edge));
+//    }
+  }
+
+  private void chainComplexMachStep(OSelectExecutionPlan plan, OCommandContext context, EdgeTraversal edge) {
+    OMultiMatchPathItem item = (OMultiMatchPathItem) edge.edge.item;
+    if (item.getFilter() != null && item.getFilter().getWhileCondition() != null) {
+//      OSelectExecutionPlan subplan = new OSelectExecutionPlan(context);
+      //TODO build execution plan!
+//      plan.chain(new WhileMatchStep(context, edge.edge.item.getFilter().getWhileCondition(), plan));
+    } else {
+
+      PatternNode prevNode = edge.edge.out;
+      for(OMatchPathItem x:item.getItems()){
+//        PatternEdge patternE = new PatternEdge();
+        System.out.println(x);
+      }
+      //TODO
+    }
   }
 
   private void addPrefetchSteps(OSelectExecutionPlan result, Map<String, Long> estimatedRootEntries, OCommandContext context) {

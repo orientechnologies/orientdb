@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.sql.parser.OMatchPathItem;
 import com.orientechnologies.orient.core.sql.parser.OWhereClause;
 
 import java.util.*;
@@ -10,14 +11,21 @@ import java.util.*;
  * Created by luigidellaquila on 23/09/16.
  */
 public class MatchEdgeTraverser {
-  private final OResult       sourceRecord;
-  private final EdgeTraversal edge;
+  protected OResult       sourceRecord;
+  protected  EdgeTraversal edge;
+  protected OMatchPathItem item;
 
   Iterator<OIdentifiable> downstream;
 
   public MatchEdgeTraverser(OResult lastUpstreamRecord, EdgeTraversal edge) {
     this.sourceRecord = lastUpstreamRecord;
     this.edge = edge;
+    this.item = edge.edge.item;
+  }
+
+  public MatchEdgeTraverser(OResult lastUpstreamRecord, OMatchPathItem item) {
+    this.sourceRecord = lastUpstreamRecord;
+    this.item = item;
   }
 
   public boolean hasNext(OCommandContext ctx) {
@@ -35,7 +43,7 @@ public class MatchEdgeTraverser {
     for (String prop : sourceRecord.getPropertyNames()) {
       result.setProperty(prop, sourceRecord.getProperty(prop));
     }
-    result.setProperty(this.edge.edge.item.getFilter().getAlias(), nextElement);
+    result.setProperty(this.item.getFilter().getAlias(), nextElement);
     return result;
   }
 
@@ -45,19 +53,19 @@ public class MatchEdgeTraverser {
       if(startingElem instanceof OResult){
         startingElem = ((OResult) startingElem).getElement();
       }
-      downstream = executeTraversal(ctx, (OIdentifiable) startingElem, 0).iterator();
+      downstream = executeTraversal(ctx, this.item, (OIdentifiable) startingElem, 0).iterator();
     }
   }
 
-  private Iterable<OIdentifiable> executeTraversal(OCommandContext iCommandContext, OIdentifiable startingPoint, int depth) {
+  protected Iterable<OIdentifiable> executeTraversal(OCommandContext iCommandContext, OMatchPathItem item, OIdentifiable startingPoint, int depth) {
 
     OWhereClause filter = null;
     OWhereClause whileCondition = null;
     Integer maxDepth = null;
-    if (this.edge.edge.item.getFilter() != null) {
-      filter = this.edge.edge.item.getFilter().getFilter();
-      whileCondition = this.edge.edge.item.getFilter().getWhileCondition();
-      maxDepth = this.edge.edge.item.getFilter().getMaxDepth();
+    if (item.getFilter() != null) {
+      filter = item.getFilter().getFilter();
+      whileCondition = item.getFilter().getWhileCondition();
+      maxDepth = item.getFilter().getMaxDepth();
     }
 
     Set<OIdentifiable> result = new HashSet<OIdentifiable>();
@@ -66,7 +74,7 @@ public class MatchEdgeTraverser {
       // evaluated
       Iterable<OIdentifiable> queryResult = traversePatternEdge(startingPoint, iCommandContext);
 
-      if (this.edge.edge.item.getFilter() == null || this.edge.edge.item.getFilter().getFilter() == null) {
+      if (item.getFilter() == null || item.getFilter().getFilter() == null) {
         return queryResult;
       }
 
@@ -92,8 +100,11 @@ public class MatchEdgeTraverser {
         Iterable<OIdentifiable> queryResult = traversePatternEdge(startingPoint, iCommandContext);
 
         for (OIdentifiable origin : queryResult) {
+//          if(origin.equals(startingPoint)){
+//            continue;
+//          }
           // TODO consider break strategies (eg. re-traverse nodes)
-          Iterable<OIdentifiable> subResult = executeTraversal(iCommandContext, origin, depth + 1);
+          Iterable<OIdentifiable> subResult = executeTraversal(iCommandContext, item, origin, depth + 1);
           if (subResult instanceof Collection) {
             result.addAll((Collection<? extends OIdentifiable>) subResult);
           } else {
@@ -108,11 +119,14 @@ public class MatchEdgeTraverser {
     return result;
   }
 
-  private Iterable<OIdentifiable> traversePatternEdge(OIdentifiable startingPoint, OCommandContext iCommandContext) {
+
+  //TODO refactor this method to recieve the item.
+
+  protected Iterable<OIdentifiable> traversePatternEdge(OIdentifiable startingPoint, OCommandContext iCommandContext) {
 
     Iterable possibleResults = null;
-    if (this.edge.edge.item.getFilter() != null) {
-      String alias = this.edge.edge.item.getFilter().getAlias();
+    if (this.item.getFilter() != null) {
+      String alias = this.item.getFilter().getAlias();
       Object matchedNodes = iCommandContext.getVariable(MatchPrefetchStep.PREFETCHED_MATCH_ALIAS_PREFIX + alias);
       if (matchedNodes != null) {
         if (matchedNodes instanceof Iterable) {
@@ -123,7 +137,7 @@ public class MatchEdgeTraverser {
       }
     }
 
-    Object qR = this.edge.edge.item.getMethod().execute(startingPoint, possibleResults, iCommandContext);
+    Object qR = this.item.getMethod().execute(startingPoint, possibleResults, iCommandContext);
     return (qR instanceof Iterable) ? (Iterable) qR : Collections.singleton((OIdentifiable) qR);
   }
 

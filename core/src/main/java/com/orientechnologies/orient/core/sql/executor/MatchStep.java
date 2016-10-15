@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.sql.parser.OMultiMatchPathItem;
 
 import java.util.Map;
 import java.util.Optional;
@@ -93,7 +94,11 @@ public class MatchStep extends AbstractExecutionStep {
       }
 
       lastUpstreamRecord = upstream.next();
-      traverser = new MatchEdgeTraverser(lastUpstreamRecord, edge);
+      if(edge.edge.item instanceof OMultiMatchPathItem){
+        traverser = new MatchMultiEdgeTraverser(lastUpstreamRecord, edge);
+      }else {
+        traverser = new MatchEdgeTraverser(lastUpstreamRecord, edge);
+      }
 
       if (traverser.hasNext(ctx)) {
         nextResult = traverser.next(ctx);

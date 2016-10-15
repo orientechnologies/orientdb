@@ -89,5 +89,13 @@ public class OMultiMatchPathItem extends OMatchPathItem {
     result = 31 * result + (items != null ? items.hashCode() : 0);
     return result;
   }
+
+  public List<OMatchPathItem> getItems() {
+    return items;
+  }
+
+  public void setItems(List<OMatchPathItem> items) {
+    this.items = items;
+  }
 }
 /* JavaCC - OriginalChecksum=f18f107768de80b8941f166d7fafb3c0 (do not edit this line) */
