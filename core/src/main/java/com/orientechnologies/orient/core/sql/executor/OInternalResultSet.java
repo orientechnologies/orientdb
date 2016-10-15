@@ -7,7 +7,7 @@ import java.util.*;
  */
 public class OInternalResultSet implements OTodoResultSet {
   List<OResult> content = new ArrayList<>();
-  int                   next    = 0;
+  int           next    = 0;
   protected OExecutionPlan plan;
 
   @Override public boolean hasNext() {
@@ -34,4 +34,7 @@ public class OInternalResultSet implements OTodoResultSet {
     content.add(nextResult);
   }
 
+  public void reset() {
+    this.next = 0;
+  }
 }

@@ -1129,25 +1129,25 @@ public class OMatchStatementExecutionNewTest {
 
     }
 
-//    @Test
-//    public void testCartesianProduct() {
-//      StringBuilder query = new StringBuilder();
-//      query.append("match ");
-//      query.append("{class:TriangleV, as: friend1, where:(uid = 1)},");
-//      query.append("{class:TriangleV, as: friend2, where:(uid = 2 or uid = 3)}");
-//      query.append("return $matches");
-//
-//      OTodoResultSet result = db.query(query.toString());
-//      printExecutionPlan(result);
-//
-//      for (int i=0;i<2;i++) {
-//        Assert.assertTrue(result.hasNext());
-//        OResult doc = result.next();
-//        OResult friend1 = doc.getProperty("friend1");
-//        Assert.assertEquals(friend1.<Object>getProperty("uid"), 1);
-//      }
-//      Assert.assertFalse(result.hasNext());
-//    }
+    @Test
+    public void testCartesianProduct() {
+      StringBuilder query = new StringBuilder();
+      query.append("match ");
+      query.append("{class:TriangleV, as: friend1, where:(uid = 1)},");
+      query.append("{class:TriangleV, as: friend2, where:(uid = 2 or uid = 3)}");
+      query.append("return $matches");
+
+      OTodoResultSet result = db.query(query.toString());
+      printExecutionPlan(result);
+
+      for (int i=0;i<2;i++) {
+        Assert.assertTrue(result.hasNext());
+        OResult doc = result.next();
+        OResult friend1 = doc.getProperty("friend1");
+        Assert.assertEquals(friend1.<Object>getProperty("uid"), 1);
+      }
+      Assert.assertFalse(result.hasNext());
+    }
 
   //  @Test
   //  public void testCartesianProductLimit() {

@@ -16,6 +16,7 @@ public class MatchFirstStep extends AbstractExecutionStep {
   private final PatternNode node;
   Iterator<OIdentifiable> iterator;
 
+
   public MatchFirstStep(OCommandContext context, PatternNode node) {
     super(context);
     this.node = node;

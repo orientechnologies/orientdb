@@ -2,9 +2,12 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.sql.parser.OLocalResultSet;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * Created by luigidellaquila on 11/10/16.
@@ -13,14 +16,130 @@ public class CartesianProductStep extends AbstractExecutionStep {
 
   private List<OInternalExecutionPlan> subPlans = new ArrayList<>();
 
+  private boolean inited = false;
+  List<Boolean>            completedPrefetch = new ArrayList<>();//consider using resultset.reset() instead of buffering
+  List<OInternalResultSet> preFetches        = new ArrayList<>();//consider using resultset.reset() instead of buffering
+
+  List<OTodoResultSet> resultSets   = new ArrayList<>();
+  List<OResult>        currentTuple = new ArrayList<>();
+
+  OResultInternal nextRecord;
+
   public CartesianProductStep(OCommandContext ctx) {
     super(ctx);
   }
 
   @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-//    return new OInternalResultSet();
-    throw new UnsupportedOperationException("cartesian product is not yet implemented in MATCH statement");
+    getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
+    init(ctx);
+    //    return new OInternalResultSet();
+    return new OTodoResultSet() {
+      int currentCount = 0;
+
+      @Override public boolean hasNext() {
+        if (currentCount >= nRecords) {
+          return false;
+        }
+        return nextRecord != null;
+      }
+
+      @Override public OResult next() {
+        if (currentCount >= nRecords || nextRecord == null) {
+          throw new IllegalStateException();
+        }
+        OResultInternal result = nextRecord;
+        fetchNextRecord();
+        return result;
+      }
+
+      @Override public void close() {
+
+      }
+
+      @Override public Optional<OExecutionPlan> getExecutionPlan() {
+        return null;
+      }
+
+      @Override public Map<String, Object> getQueryStats() {
+        return null;
+      }
+    };
+    //    throw new UnsupportedOperationException("cartesian product is not yet implemented in MATCH statement");
     //TODO
+  }
+
+  private void init(OCommandContext ctx) {
+    if (subPlans == null || subPlans.isEmpty()) {
+      return;
+    }
+    if (inited) {
+      return;
+    }
+
+    for (OInternalExecutionPlan plan : subPlans) {
+      resultSets.add(new OLocalResultSet(plan));
+      this.preFetches.add(new OInternalResultSet());
+    }
+    fetchFirstRecord();
+    inited = true;
+  }
+
+  private void fetchFirstRecord() {
+    int i = 0;
+    for (OTodoResultSet rs : resultSets) {
+      if (!rs.hasNext()) {
+        nextRecord = null;
+        return;
+      }
+      OResult item = rs.next();
+      currentTuple.add(item);
+      completedPrefetch.add(false);
+    }
+    buildNextRecord();
+  }
+
+  private void fetchNextRecord() {
+    fetchNextRecord(resultSets.size() - 1);
+  }
+
+  private void fetchNextRecord(int level) {
+    OTodoResultSet currentRs = resultSets.get(level);
+    if (!currentRs.hasNext()) {
+      if (level <= 0) {
+        nextRecord = null;
+        currentTuple = null;
+        return;
+      }
+      currentRs = preFetches.get(level);
+      currentRs.reset();
+      resultSets.set(level, currentRs);
+      currentTuple.set(level, currentRs.next());
+      fetchNextRecord(level - 1);
+    } else {
+      currentTuple.set(level, currentRs.next());
+    }
+    buildNextRecord();
+  }
+
+  private void buildNextRecord() {
+    if (currentTuple == null) {
+      nextRecord = null;
+      return;
+    }
+    nextRecord = new OResultInternal();
+
+    for (int i = 0; i < this.currentTuple.size(); i++) {
+      OResult res = this.currentTuple.get(i);
+      for (String s : res.getPropertyNames()) {
+        nextRecord.setProperty(s, res.getProperty(s));
+      }
+      if (!completedPrefetch.get(i)) {
+        preFetches.get(i).add(res);
+        if (!resultSets.get(i).hasNext()) {
+          completedPrefetch.set(i, true);
+        }
+      }
+    }
   }
 
   @Override public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
