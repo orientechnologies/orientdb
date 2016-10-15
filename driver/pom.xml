@@ -160,6 +160,7 @@
                     </execution>
                 </executions>
                 <configuration>
+                    <forkCount>1</forkCount>
                     <forkedProcessTimeoutInSeconds>0</forkedProcessTimeoutInSeconds>
                     <redirectTestOutputToFile>true</redirectTestOutputToFile>
                     <argLine>${argLine} -Xmx2G</argLine>
