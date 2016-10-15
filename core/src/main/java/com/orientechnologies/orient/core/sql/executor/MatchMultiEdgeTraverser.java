@@ -42,32 +42,32 @@ public class MatchMultiEdgeTraverser extends MatchEdgeTraverser {
     for (OMatchPathItem sub : item.getItems()) {
       List<Object> rightSide = new ArrayList<>();
       for (Object o : nextStep) {
-        OWhereClause whileCond = sub.getFilter()==null?null:sub.getFilter().getWhileCondition();
+        OWhereClause whileCond = sub.getFilter() == null ? null : sub.getFilter().getWhileCondition();
 
         OMethodCall method = sub.getMethod();
-        if(sub instanceof OMatchPathItemFirst){
+        if (sub instanceof OMatchPathItemFirst) {
           method = ((OMatchPathItemFirst) sub).getFunction().toMethod();
         }
 
-        if(whileCond!=null) {
+        if (whileCond != null) {
           Object current = o;
-          if(current instanceof OResult){
+          if (current instanceof OResult) {
             current = ((OResult) current).getElement();
           }
           MatchEdgeTraverser subtraverser = new MatchEdgeTraverser(null, sub);
           subtraverser.executeTraversal(iCommandContext, sub, (OIdentifiable) current, 0).forEach(x -> rightSide.add(x));
 
-        }else{
+        } else {
           iCommandContext.setVariable("$current", o);
           Object nextSteps = method.execute(o, possibleResults, iCommandContext);
           if (nextSteps instanceof Collection) {
             rightSide.addAll((Collection<?>) nextSteps);
+          } else if (nextSteps instanceof OIdentifiable || nextSteps instanceof OResult) {
+            rightSide.add(nextSteps);
           } else if (nextSteps instanceof Iterable) {
             ((Iterable) nextSteps).forEach(x -> rightSide.add(x));
           } else if (nextSteps instanceof Iterator) {
             ((Iterator) nextSteps).forEachRemaining(x -> rightSide.add(x));
-          }else if( nextSteps instanceof OIdentifiable || nextSteps instanceof OResult){
-            rightSide.add(nextSteps);
           }
         }
       }
