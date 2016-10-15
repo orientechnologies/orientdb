@@ -17,7 +17,7 @@ public class CartesianProductStep extends AbstractExecutionStep {
   private List<OInternalExecutionPlan> subPlans = new ArrayList<>();
 
   private boolean inited = false;
-  List<Boolean>            completedPrefetch = new ArrayList<>();//consider using resultset.reset() instead of buffering
+  List<Boolean>            completedPrefetch = new ArrayList<>();
   List<OInternalResultSet> preFetches        = new ArrayList<>();//consider using resultset.reset() instead of buffering
 
   List<OTodoResultSet> resultSets   = new ArrayList<>();

@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.sql.parser.OLocalResultSet;
 
 import java.util.Collections;
 import java.util.Iterator;
@@ -14,30 +15,50 @@ import java.util.Optional;
  */
 public class MatchFirstStep extends AbstractExecutionStep {
   private final PatternNode node;
-  Iterator<OIdentifiable> iterator;
+  OInternalExecutionPlan executionPlan;
 
+  Iterator<OResult> iterator;
+  OTodoResultSet    subResultSet;
 
   public MatchFirstStep(OCommandContext context, PatternNode node) {
+    this(context, node, null);
+  }
+
+  public MatchFirstStep(OCommandContext context, PatternNode node, OInternalExecutionPlan subPlan) {
     super(context);
     this.node = node;
+    this.executionPlan = subPlan;
   }
 
   @Override public void reset() {
     this.iterator = null;
+    this.subResultSet = null;
+    if (executionPlan != null) {
+      executionPlan.reset(this.getContext());
+    }
   }
 
   @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    getPrev().ifPresent(x->x.syncPull(ctx, nRecords));
+    getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
     init(ctx);
     return new OTodoResultSet() {
 
       @Override public boolean hasNext() {
-        return iterator.hasNext();
+        if (iterator != null) {
+          return iterator.hasNext();
+        } else {
+          return subResultSet.hasNext();
+        }
       }
 
       @Override public OResult next() {
+
         OResultInternal result = new OResultInternal();
-        result.setProperty(getAlias(), iterator.next());
+        if (iterator != null) {
+          result.setProperty(getAlias(), iterator.next());
+        } else {
+          result.setProperty(getAlias(), subResultSet.next());
+        }
         ctx.setVariable("$matched", result);
         return result;
       }
@@ -56,26 +77,40 @@ public class MatchFirstStep extends AbstractExecutionStep {
     };
   }
 
+  private Object toResult(OIdentifiable nextElement) {
+    OResultInternal result = new OResultInternal();
+    result.setElement(nextElement);
+    return result;
+  }
+
   @Override public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
 
   }
 
   private void init(OCommandContext ctx) {
-    if (iterator == null) {
+    if (iterator == null && subResultSet == null) {
       String alias = getAlias();
       Object matchedNodes = ctx.getVariable(MatchPrefetchStep.PREFETCHED_MATCH_ALIAS_PREFIX + alias);
       if (matchedNodes != null) {
-        Iterable possibleResults;
-        if (matchedNodes instanceof Iterable) {
-          possibleResults = (Iterable) matchedNodes;
-        } else {
-          possibleResults = Collections.singleton(matchedNodes);
-        }
-        iterator = possibleResults.iterator();
+        initFromPrefetch(matchedNodes);
       } else {
-        iterator = Collections.emptyIterator();//TODO
+        initFromExecutionPlan(ctx);
       }
     }
+  }
+
+  private void initFromExecutionPlan(OCommandContext ctx) {
+    this.subResultSet = new OLocalResultSet(executionPlan);
+  }
+
+  private void initFromPrefetch(Object matchedNodes) {
+    Iterable possibleResults;
+    if (matchedNodes instanceof Iterable) {
+      possibleResults = (Iterable) matchedNodes;
+    } else {
+      possibleResults = Collections.singleton(matchedNodes);
+    }
+    iterator = possibleResults.iterator();
   }
 
   @Override public String prettyPrint(int depth, int indent) {
@@ -84,8 +119,14 @@ public class MatchFirstStep extends AbstractExecutionStep {
     result.append(spaces);
     result.append("+ SET \n");
     result.append(spaces);
-    result.append("  ");
+    result.append("   ");
     result.append(getAlias());
+    if (executionPlan != null) {
+      result.append("\n");
+      result.append(spaces);
+      result.append("  AS\n");
+      result.append(executionPlan.prettyPrint(depth + 1, indent));
+    }
 
     return result.toString();
   }

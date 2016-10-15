@@ -56,20 +56,22 @@ public class OMatchExecutionPlanner {
 
     OSelectExecutionPlan result = new OSelectExecutionPlan(context);
     Map<String, Long> estimatedRootEntries = estimateRootEntries(aliasClasses, aliasFilters, context);
+    Set<String> aliasesToPrefetch = estimatedRootEntries.entrySet().stream().filter(x -> x.getValue() < this.threshold).
+        map(x -> x.getKey()).collect(Collectors.toSet());
     if (estimatedRootEntries.values().contains(0l)) {
       return result;
     }
 
-    addPrefetchSteps(result, estimatedRootEntries, context);
+    addPrefetchSteps(result, aliasesToPrefetch, context);
 
     if (subPatterns.size() > 1) {
       CartesianProductStep step = new CartesianProductStep(context);
       for (Pattern subPattern : subPatterns) {
-        step.addSubPlan(createPlanForPattern(subPattern, context, estimatedRootEntries));
+        step.addSubPlan(createPlanForPattern(subPattern, context, estimatedRootEntries, aliasesToPrefetch));
       }
       result.chain(step);
     } else {
-      OInternalExecutionPlan plan = createPlanForPattern(pattern, context, estimatedRootEntries);
+      OInternalExecutionPlan plan = createPlanForPattern(pattern, context, estimatedRootEntries, aliasesToPrefetch);
       for (OExecutionStep step : plan.getSteps()) {
         result.chain((OExecutionStepInternal) step);
       }
@@ -113,7 +115,7 @@ public class OMatchExecutionPlanner {
   }
 
   private OInternalExecutionPlan createPlanForPattern(Pattern pattern, OCommandContext context,
-      Map<String, Long> estimatedRootEntries) {
+      Map<String, Long> estimatedRootEntries, Set<String> prefetchedAliases) {
     OSelectExecutionPlan plan = new OSelectExecutionPlan(context);
     List<EdgeTraversal> sortedEdges = sortEdges(estimatedRootEntries, pattern, context);
 
@@ -124,7 +126,17 @@ public class OMatchExecutionPlanner {
         first = false;
       }
     } else {
-      plan.chain(new MatchFirstStep(context, pattern.getAliasToNode().values().iterator().next()));
+      PatternNode node = pattern.getAliasToNode().values().iterator().next();
+      if (prefetchedAliases.contains(node.alias)) {
+        //from prefetch
+        plan.chain(new MatchFirstStep(context, node));
+      } else {
+        //from actual execution plan
+        String clazz = aliasClasses.get(node.alias);
+        OWhereClause filter = aliasFilters.get(node.alias);
+        OSelectStatement select = createSelectStatement(clazz, filter);
+        plan.chain(new MatchFirstStep(context, node, select.createExecutionPlan(context)));
+      }
     }
     return plan;
   }
@@ -141,45 +153,50 @@ public class OMatchExecutionPlanner {
     if (first) {
       plan.chain(new MatchFirstStep(context, edge.out ? edge.edge.out : edge.edge.in));
     }
-//    if (edge.edge.item instanceof OMultiMatchPathItem) {
-//      chainComplexMachStep(plan, context, edge);
-//    } else {
-      plan.chain(new MatchStep(context, edge));
-//    }
+    //    if (edge.edge.item instanceof OMultiMatchPathItem) {
+    //      chainComplexMachStep(plan, context, edge);
+    //    } else {
+    plan.chain(new MatchStep(context, edge));
+    //    }
   }
 
   private void chainComplexMachStep(OSelectExecutionPlan plan, OCommandContext context, EdgeTraversal edge) {
     OMultiMatchPathItem item = (OMultiMatchPathItem) edge.edge.item;
     if (item.getFilter() != null && item.getFilter().getWhileCondition() != null) {
-//      OSelectExecutionPlan subplan = new OSelectExecutionPlan(context);
+      //      OSelectExecutionPlan subplan = new OSelectExecutionPlan(context);
       //TODO build execution plan!
-//      plan.chain(new WhileMatchStep(context, edge.edge.item.getFilter().getWhileCondition(), plan));
+      //      plan.chain(new WhileMatchStep(context, edge.edge.item.getFilter().getWhileCondition(), plan));
     } else {
 
       PatternNode prevNode = edge.edge.out;
-      for(OMatchPathItem x:item.getItems()){
-//        PatternEdge patternE = new PatternEdge();
+      for (OMatchPathItem x : item.getItems()) {
+        //        PatternEdge patternE = new PatternEdge();
         System.out.println(x);
       }
       //TODO
     }
   }
 
-  private void addPrefetchSteps(OSelectExecutionPlan result, Map<String, Long> estimatedRootEntries, OCommandContext context) {
-    for (Map.Entry<String, Long> estimation : estimatedRootEntries.entrySet()) {
-      String targetClass = aliasClasses.get(estimation.getKey());
-      OWhereClause filter = aliasFilters.get(estimation.getKey());
-      OSelectStatement prefetchStm = new OSelectStatement(-1);
-      prefetchStm.setWhereClause(filter);
-      OFromClause from = new OFromClause(-1);
-      OFromItem fromItem = new OFromItem(-1);
-      fromItem.setIdentifier(new OIdentifier(targetClass));
-      from.setItem(fromItem);
-      prefetchStm.setTarget(from);
+  private void addPrefetchSteps(OSelectExecutionPlan result, Set<String> aliasesToPrefetch, OCommandContext context) {
+    for (String alias : aliasesToPrefetch) {
+      String targetClass = aliasClasses.get(alias);
+      OWhereClause filter = aliasFilters.get(alias);
+      OSelectStatement prefetchStm = createSelectStatement(targetClass, filter);
 
-      MatchPrefetchStep step = new MatchPrefetchStep(context, prefetchStm.createExecutionPlan(context), estimation.getKey());
+      MatchPrefetchStep step = new MatchPrefetchStep(context, prefetchStm.createExecutionPlan(context), alias);
       result.chain(step);
     }
+  }
+
+  private OSelectStatement createSelectStatement(String targetClass, OWhereClause filter) {
+    OSelectStatement prefetchStm = new OSelectStatement(-1);
+    prefetchStm.setWhereClause(filter);
+    OFromClause from = new OFromClause(-1);
+    OFromItem fromItem = new OFromItem(-1);
+    fromItem.setIdentifier(new OIdentifier(targetClass));
+    from.setItem(fromItem);
+    prefetchStm.setTarget(from);
+    return prefetchStm;
   }
 
   /**
