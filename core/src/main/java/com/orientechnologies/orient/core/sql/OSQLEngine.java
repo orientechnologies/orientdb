@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLTarget;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
@@ -282,8 +283,11 @@ public class OSQLEngine {
           result.add(iCallable.call((OIdentifiable) o));
       }
       return result;
-    } else if (iCurrent instanceof OIdentifiable)
+    } else if (iCurrent instanceof OIdentifiable) {
       return iCallable.call((OIdentifiable) iCurrent);
+    } else if(iCurrent instanceof OResult){
+      return iCallable.call(((OResult) iCurrent).getElement());
+    }
 
     return null;
   }

@@ -8,12 +8,14 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.executor.MatchPrefetchStep;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
+import com.tinkerpop.blueprints.Vertex;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import static org.junit.Assert.fail;
@@ -1151,52 +1153,57 @@ public class OMatchStatementExecutionNewTest {
     Assert.assertFalse(result.hasNext());
   }
 
-  //  @Test
-  //  public void testCartesianProductLimit() {
-  //    StringBuilder query = new StringBuilder();
-  //    query.append("match ");
-  //    query.append("{class:TriangleV, as: friend1, where:(uid = 1)},");
-  //    query.append("{class:TriangleV, as: friend2, where:(uid = 2 or uid = 3)}");
-  //    query.append("return $matches LIMIT 1");
-  //
-  //    List<OIdentifiable> result = db.command(new OCommandSQL(query.toString())).execute();
-  //    assertEquals(1, result.size());
-  //    for (OIdentifiable d : result) {
-  //      assertEquals(((ODocument) ((ODocument) d.getRecord()).field("friend1")).<Object>field("uid"), 1);
-  //    }
-  //  }
-  //
-  //  @Test
-  //  public void testArrayNumber() {
-  //    StringBuilder query = new StringBuilder();
-  //    query.append("match ");
-  //    query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
-  //    query.append("return friend1.out('TriangleE')[0] as foo");
-  //
-  //    List<?> result = db.command(new OCommandSQL(query.toString())).execute();
-  //    assertEquals(1, result.size());
-  //    ODocument doc = (ODocument) result.get(0);
-  //    Object foo = doc.field("foo");
-  //    assertNotNull(foo);
-  //    assertTrue(foo instanceof Vertex);
-  //  }
-  //
-  //  @Test
-  //  public void testArraySingleSelectors2() {
-  //    StringBuilder query = new StringBuilder();
-  //    query.append("match ");
-  //    query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
-  //    query.append("return friend1.out('TriangleE')[0,1] as foo");
-  //
-  //    List<?> result = db.command(new OCommandSQL(query.toString())).execute();
-  //    assertEquals(1, result.size());
-  //    ODocument doc = (ODocument) result.get(0);
-  //    Object foo = doc.field("foo");
-  //    assertNotNull(foo);
-  //    assertTrue(foo instanceof List);
-  //    assertEquals(2, ((List) foo).size());
-  //  }
-  //
+  @Test public void testCartesianProductLimit() {
+    StringBuilder query = new StringBuilder();
+    query.append("match ");
+    query.append("{class:TriangleV, as: friend1, where:(uid = 1)},");
+    query.append("{class:TriangleV, as: friend2, where:(uid = 2 or uid = 3)}");
+    query.append("return $matches LIMIT 1");
+
+    OTodoResultSet result = db.query(query.toString());
+
+    Assert.assertTrue(result.hasNext());
+    OResult d = result.next();
+    OResult friend1 = d.getProperty("friend1");
+    Assert.assertEquals(friend1.<Object>getProperty("uid"), 1);
+    Assert.assertFalse(result.hasNext());
+  }
+
+    @Test
+    public void testArrayNumber() {
+      StringBuilder query = new StringBuilder();
+      query.append("match ");
+      query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
+      query.append("return friend1.out('TriangleE')[0] as foo");
+
+      OTodoResultSet result = db.query(query.toString());
+
+
+      Assert.assertTrue(result.hasNext());
+
+      OResult doc = result.next();
+      Object foo = doc.getProperty("foo");
+      Assert.assertNotNull(foo);
+      Assert. assertTrue(foo instanceof Vertex);
+    }
+
+    @Test
+    public void testArraySingleSelectors2() {
+      StringBuilder query = new StringBuilder();
+      query.append("match ");
+      query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
+      query.append("return friend1.out('TriangleE')[0,1] as foo");
+
+      OTodoResultSet result = db.query(query.toString());
+      Assert.assertTrue(result.hasNext());
+      OResult doc = result.next();
+      Assert.assertFalse(result.hasNext());
+      Object foo = doc.getProperty("foo");
+      Assert.assertNotNull(foo);
+      Assert.assertTrue(foo instanceof List);
+      Assert.assertEquals(2, ((List) foo).size());
+    }
+
   //  @Test
   //  public void testArrayRangeSelectors1() {
   //    StringBuilder query = new StringBuilder();
@@ -1204,7 +1211,7 @@ public class OMatchStatementExecutionNewTest {
   //    query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
   //    query.append("return friend1.out('TriangleE')[0-1] as foo");
   //
-  //    List<?> result = db.command(new OCommandSQL(query.toString())).execute();
+  //    OTodoResultSet result = db.query(query.toString());
   //    assertEquals(1, result.size());
   //    ODocument doc = (ODocument) result.get(0);
   //    Object foo = doc.field("foo");
@@ -1220,7 +1227,7 @@ public class OMatchStatementExecutionNewTest {
   //    query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
   //    query.append("return friend1.out('TriangleE')[0-2] as foo");
   //
-  //    List<?> result = db.command(new OCommandSQL(query.toString())).execute();
+  //    OTodoResultSet result = db.query(query.toString());
   //    assertEquals(1, result.size());
   //    ODocument doc = (ODocument) result.get(0);
   //    Object foo = doc.field("foo");
@@ -1236,7 +1243,7 @@ public class OMatchStatementExecutionNewTest {
   //    query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
   //    query.append("return friend1.out('TriangleE')[0-3] as foo");
   //
-  //    List<?> result = db.command(new OCommandSQL(query.toString())).execute();
+  //    OTodoResultSet result = db.query(query.toString());
   //    assertEquals(1, result.size());
   //    ODocument doc = (ODocument) result.get(0);
   //    Object foo = doc.field("foo");
@@ -1252,7 +1259,7 @@ public class OMatchStatementExecutionNewTest {
   //    query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
   //    query.append("return friend1.out('TriangleE')[uid = 2] as foo");
   //
-  //    List<?> result = db.command(new OCommandSQL(query.toString())).execute();
+  //    OTodoResultSet result = db.query(query.toString());
   //    assertEquals(1, result.size());
   //    ODocument doc = (ODocument) result.get(0);
   //    Object foo = doc.field("foo");
@@ -1271,7 +1278,7 @@ public class OMatchStatementExecutionNewTest {
   //    query.append(".out('IndexedEdge'){class:IndexedVertex, as: two, where: (uid = 1)}");
   //    query.append("return one, two");
   //
-  //    List<?> result = db.command(new OCommandSQL(query.toString())).execute();
+  //    OTodoResultSet result = db.query(query.toString());
   //    assertEquals(1, result.size());
   //  }
   //
@@ -1283,7 +1290,7 @@ public class OMatchStatementExecutionNewTest {
   //    query.append("-IndexedEdge->{class:IndexedVertex, as: two, where: (uid = 1)}");
   //    query.append("return one, two");
   //
-  //    List<?> result = db.command(new OCommandSQL(query.toString())).execute();
+  //    OTodoResultSet result = db.query(query.toString());
   //    assertEquals(1, result.size());
   //  }
   //
