@@ -1,13 +1,6 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <parent>
-        <!-- so we can deploy with rultor -->
-        <groupId>com.jcabi</groupId>
-        <artifactId>parent</artifactId>
-        <!-- check the latest version at http://parent.jcabi.com -->
-        <version>0.46</version>
-    </parent>
     <groupId>com.michaelpollmeier</groupId>
     <artifactId>orientdb-gremlin</artifactId>
     <version>3.2.1.2-SNAPSHOT</version>
@@ -16,6 +9,8 @@
     <url>https://github.com/mpollmeier/orientdb-gremlin/</url>
 
     <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <gremlin.version>3.2.1</gremlin.version>
         <orientdb.version>2.2.8</orientdb.version>
     </properties>
@@ -55,12 +50,6 @@
             <groupId>org.apache.tinkerpop</groupId>
             <artifactId>gremlin-groovy</artifactId>
             <version>${gremlin.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.github.jeremyh</groupId>
-                    <artifactId>jBCrypt</artifactId>  <!-- travis and rultor don't find this for some reason --> 
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.orientechnologies</groupId>
@@ -98,6 +87,16 @@
             <version>18.0</version>
         </dependency>
     </dependencies>
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
+        </repository>
+    </distributionManagement>
     <build>
         <directory>${basedir}/target</directory>
         <finalName>${project.artifactId}-${project.version}</finalName>
@@ -136,8 +135,6 @@
                 <configuration>
                     <skip>${skipTests}</skip>
                     <repoToken>VydEbanRpaocFLETAHcF2qUZohD4tXJ6e</repoToken>
-                    <timestampFormat>yyyy-MM-dd'T'HH:mm:ss</timestampFormat>
-                    <!-- <failOnServiceError>false</failOnServiceError> -->
                 </configuration>
             </plugin>
             <plugin>
@@ -160,7 +157,6 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <forkCount>1</forkCount>
                     <forkedProcessTimeoutInSeconds>0</forkedProcessTimeoutInSeconds>
                     <redirectTestOutputToFile>true</redirectTestOutputToFile>
                     <argLine>${argLine} -Xmx2G</argLine>
@@ -207,45 +203,31 @@
                     </dependency>
                 </dependencies>
             </plugin>
-            <plugin>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.5.1</version>
-                <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
-                    <optimize>true</optimize>
-                    <showWarnings>true</showWarnings>
-                    <showDeprecation>true</showDeprecation>
-                    <compilerArgs>
-                        <arg>-Xlint</arg>
-                        <!-- <arg>-Werror</arg> -->
-                        <arg>-Xlint:-path</arg>
-                        <!-- @see https://blogs.oracle.com/darcy/entry/bootclasspath_older_source -->
-                        <arg>-Xlint:-options</arg>
-                        <!-- @see http://netbeans.org/bugzilla/show_bug.cgi?format=multiple&id=208666 -->
-                        <!-- this is to avoid a problem with ANTLR and JDK7 -->
-                        <arg>-Xlint:-classfile</arg>
-                        <!-- ignore APT warnings -->
-                        <arg>-Xlint:-processing</arg>
-                    </compilerArgs>
-                </configuration>
-            </plugin>
         </plugins>
         <pluginManagement>
             <plugins>
                 <plugin>
-                  <groupId>org.apache.maven.plugins</groupId>
-                  <artifactId>maven-javadoc-plugin</artifactId>
-                  <version>2.9.1</version>
-                  <executions>
-                    <execution>
-                      <id>attach-javadocs</id>
-                      <goals>
-                        <goal>jar</goal>
-                      </goals>
-                    </execution>
-                  </executions>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.1</version>
+                    <configuration>
+                        <source>1.8</source>
+                        <target>1.8</target>
+                    </configuration>
                 </plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-javadoc-plugin</artifactId>
+					<version>2.9.1</version>
+					<executions>
+						<execution>
+							<id>attach-javadocs</id>
+							<goals>
+								<goal>jar</goal>
+							</goals>
+						</execution>
+					</executions>
+				</plugin>
             </plugins>
         </pluginManagement>
     </build>
@@ -285,6 +267,55 @@
                         <configuration>
                             <skip>true</skip>
                         </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.sonatype.plugins</groupId>
+                        <artifactId>nexus-staging-maven-plugin</artifactId>
+                        <version>1.6.5</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <serverId>ossrh</serverId>
+                            <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                            <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>2.2.1</version>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>1.5</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
                     </plugin>
                 </plugins>
             </build>
