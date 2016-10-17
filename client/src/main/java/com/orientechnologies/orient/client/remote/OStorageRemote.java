@@ -278,13 +278,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       }
     }, errorMessage, retry);
   }
-
-  public <T> T networkOperation(final OStorageRemoteOperation<T> operation, final String errorMessage) {
-    return networkOperationRetry(operation, errorMessage, connectionRetry);
-  }
-
-  public <T> T networkOperation(final OBinaryRequest request, final OBinaryResponse<T> response, final String errorMessage) {
-    return networkOperation(new OStorageRemoteOperation<T>() {
+    
+  public <T> T networkOperationRetry(final OBinaryRequest request, final OBinaryResponse<T> response, final String errorMessage,
+      int retry) {
+    return baseNetworkOperation(new OStorageRemoteOperation<T>() {
       @Override
       public T execute(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
         try {
@@ -300,9 +297,15 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         } finally {
           endResponse(network);
         }
+        connectionManager.release(network);
         return res;
       }
-    }, errorMessage);
+    }, errorMessage, retry);
+  }
+  
+
+  public <T> T networkOperation(final OBinaryRequest request, final OBinaryResponse<T> response, final String errorMessage) {
+    return networkOperationRetry(request, response, errorMessage, connectionRetry);
   }
 
   public <T> T baseNetworkOperation(final OStorageRemoteOperation<T> operation, final String errorMessage, int retry) {
@@ -1635,53 +1638,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     } finally {
       stateLock.releaseWriteLock();
     }
-  }
-
-  private boolean deleteRecord(byte command, final ORecordId iRid, final int iVersion, int iMode,
-      final ORecordCallback<Boolean> iCallback, final OChannelBinaryAsynchClient network, final OStorageRemoteSession session)
-      throws IOException {
-    try {
-      beginRequest(network, command, session);
-      network.writeRID(iRid);
-      network.writeVersion(iVersion);
-      network.writeByte((byte) iMode);
-
-    } finally {
-      endRequest(network);
-    }
-
-    switch (iMode) {
-    case 0:
-      // SYNCHRONOUS
-      try {
-        beginResponse(network, session);
-        return network.readByte() == 1;
-      } finally {
-        endResponse(network);
-      }
-
-    case 1:
-      // ASYNCHRONOUS
-      if (iCallback != null) {
-        Callable<Object> response = new Callable<Object>() {
-          public Object call() throws Exception {
-            Boolean result;
-
-            try {
-              beginResponse(network, session);
-              result = network.readByte() == 1;
-            } finally {
-              endResponse(network);
-            }
-
-            iCallback.call(iRid, result);
-            return null;
-          }
-        };
-        asynchExecutor.submit(new FutureTask<Object>(response));
-      }
-    }
-    return false;
   }
 
   protected OStorageRemoteSession getCurrentSession() {

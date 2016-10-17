@@ -22,27 +22,13 @@ package com.orientechnologies.orient.client.remote.message;
 import java.io.IOException;
 
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
-import com.orientechnologies.orient.client.remote.OBinaryRequest;
+import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
-public final class OAddClusterRequest implements OBinaryRequest {
-  private final int    iRequestedId;
-  private final String iClusterName;
-
-  public OAddClusterRequest(int iRequestedId, String iClusterName) {
-    this.iRequestedId = iRequestedId;
-    this.iClusterName = iClusterName;
-  }
-
+public class OClusterStatusResponse implements OBinaryResponse<ODocument> {
   @Override
-  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session, int mode) throws IOException {
-    network.writeString(iClusterName);
-    network.writeShort((short) iRequestedId);
-  }
-
-  @Override
-  public byte getCommand() {
-    return OChannelBinaryProtocol.REQUEST_DATACLUSTER_ADD;
+  public ODocument read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+    return new ODocument(network.readBytes());
   }
 }
