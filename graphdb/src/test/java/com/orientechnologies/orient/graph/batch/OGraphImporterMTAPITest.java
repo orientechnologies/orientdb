@@ -90,11 +90,12 @@ public class OGraphImporterMTAPITest {
       threads[i] = new Thread() {
         @Override
         public void run() {
-          final OrientGraph localGraph = new OrientGraph(dbUrl, "admin", "admin");
+          final OrientGraph localGraph = new OrientGraph(dbUrl, "admin", "admin", false);
 
           final OIndex<?> userIndex = localGraph.getRawGraph().getMetadata().getIndexManager().getIndex("User.uid");
           final OIndex<?> productIndex = localGraph.getRawGraph().getMetadata().getIndexManager().getIndex("Product.uid");
 
+          localGraph.begin();
           for (int i = 0;; ++i) {
             final String line;
 
@@ -138,6 +139,7 @@ public class OGraphImporterMTAPITest {
 
                 if (i % 2 == 0) {
                   localGraph.commit();
+                  localGraph.begin();
                 }
 
                 break;
