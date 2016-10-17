@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * 	http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -108,7 +108,7 @@ public class OrientJdbcResultSetTest extends OrientJdbcBaseTest {
 
     List<ODocument> docs = db.query(new OSQLSynchQuery<>("SELECT uuid,date, title, content FROM Article WHERE uuid = 123456"));
 
-//    docs.stream().forEach(d -> System.out.println(d.toJSON()));
+    //    docs.stream().forEach(d -> System.out.println(d.toJSON()));
 
     Statement stmt = conn.createStatement();
 
@@ -123,6 +123,22 @@ public class OrientJdbcResultSetTest extends OrientJdbcBaseTest {
 
   }
 
+  @Test
+  public void shouldSelectContentInsertedByInsertContent() throws Exception {
 
+    Statement insert = conn.createStatement();
+    insert.execute("INSERT INTO Article CONTENT {'uuid':'1234567',  'title':'title', 'content':'content'} ");
 
+    Statement stmt = conn.createStatement();
+
+    assertThat(stmt.execute("SELECT uuid,date, title, content FROM Article WHERE uuid = 1234567")).isTrue();
+
+    ResultSet rs = stmt.getResultSet();
+    assertThat(rs).isNotNull();
+
+    assertThat(rs.getFetchSize()).isEqualTo(1);
+
+    assertThat(rs.getLong("uuid")).isEqualTo(1234567);
+
+  }
 }
