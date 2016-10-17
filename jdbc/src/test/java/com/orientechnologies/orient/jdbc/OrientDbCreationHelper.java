@@ -101,6 +101,8 @@ public class OrientDbCreationHelper {
     OrientVertexType writer = graph.createVertexType("Writer");
     writer.createProperty("uuid", OType.LONG).createIndex(INDEX_TYPE.UNIQUE);
     writer.createProperty("name", OType.STRING);
+    writer.createProperty("is_active", OType.BOOLEAN);
+    writer.createProperty("isActive", OType.BOOLEAN);
 
     graph.createEdgeType("Writes");
 
@@ -176,6 +178,8 @@ public class OrientDbCreationHelper {
       OrientVertex writer = db.addVertex("class:Writer");
       writer.setProperty("uuid", a);
       writer.setProperty("name", "happy writer");
+      writer.setProperty("is_active", Boolean.TRUE);
+      writer.setProperty("isActive", Boolean.TRUE);
 
       for (int i = 1; i <= totArticles; ++i) {
 
@@ -197,6 +201,8 @@ public class OrientDbCreationHelper {
     OrientVertex writer = db.addVertex("class:Writer");
     writer.setProperty("uuid", totAuthors * 2);
     writer.setProperty("name", "happy writer");
+    writer.setProperty("is_active", Boolean.TRUE);
+    writer.setProperty("isActive", Boolean.TRUE);
 
     OrientVertex post = db.addVertex("class:Post");
 
