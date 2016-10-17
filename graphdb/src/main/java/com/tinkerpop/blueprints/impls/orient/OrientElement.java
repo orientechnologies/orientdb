@@ -413,13 +413,14 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
       return ORecordId.EMPTY_RECORD_ID;
 
     final ORID rid = rawElement.getIdentity();
-    final OrientBaseGraph graph = getGraph();
-
-    if (!rid.isValid() && graph != null) {
-      // SAVE THE RECORD TO OBTAIN A VALID RID
-      graph.setCurrentGraphInThreadLocal();
-      graph.autoStartTransaction();
-      save();
+    if (!rid.isValid()) {
+      final OrientBaseGraph graph = getGraph();
+      if (graph != null) {
+        // SAVE THE RECORD TO OBTAIN A VALID RID
+        graph.setCurrentGraphInThreadLocal();
+        graph.autoStartTransaction();
+        save();
+      }
     }
     return rid;
   }
