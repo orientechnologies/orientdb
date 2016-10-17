@@ -34,6 +34,7 @@ public class OMatchExecutionPlanner {
   private List<Pattern>             subPatterns;
   private Map<String, OWhereClause> aliasFilters;
   private Map<String, String>       aliasClasses;
+  boolean foundOptional = false;
   private long threshold = 100;
 
   public OMatchExecutionPlanner(OMatchStatement stm) {
@@ -77,6 +78,9 @@ public class OMatchExecutionPlanner {
       }
     }
 
+    if(foundOptional){
+      result.chain(new RemoveEmptyOptionalsStep(context));
+    }
     addReturnStep(result, context);
 
     result.chain(new DistinctExecutionStep(context)); //TODO make it optional?
@@ -153,27 +157,11 @@ public class OMatchExecutionPlanner {
     if (first) {
       plan.chain(new MatchFirstStep(context, edge.out ? edge.edge.out : edge.edge.in));
     }
-    //    if (edge.edge.item instanceof OMultiMatchPathItem) {
-    //      chainComplexMachStep(plan, context, edge);
-    //    } else {
-    plan.chain(new MatchStep(context, edge));
-    //    }
-  }
-
-  private void chainComplexMachStep(OSelectExecutionPlan plan, OCommandContext context, EdgeTraversal edge) {
-    OMultiMatchPathItem item = (OMultiMatchPathItem) edge.edge.item;
-    if (item.getFilter() != null && item.getFilter().getWhileCondition() != null) {
-      //      OSelectExecutionPlan subplan = new OSelectExecutionPlan(context);
-      //TODO build execution plan!
-      //      plan.chain(new WhileMatchStep(context, edge.edge.item.getFilter().getWhileCondition(), plan));
-    } else {
-
-      PatternNode prevNode = edge.edge.out;
-      for (OMatchPathItem x : item.getItems()) {
-        //        PatternEdge patternE = new PatternEdge();
-        System.out.println(x);
-      }
-      //TODO
+    if(edge.edge.in.isOptionalNode()){
+      foundOptional = true;
+      plan.chain(new OptionalMatchStep(context, edge));
+    }else {
+      plan.chain(new MatchStep(context, edge));
     }
   }
 

@@ -81,7 +81,7 @@ public class MatchStep extends AbstractExecutionStep {
   private void fetchNext(OCommandContext ctx, int nRecords) {
     nextResult = null;
     while (true) {
-      if(traverser!=null && traverser.hasNext(ctx)){
+      if (traverser != null && traverser.hasNext(ctx)) {
         nextResult = traverser.next(ctx);
         break;
       }
@@ -94,25 +94,30 @@ public class MatchStep extends AbstractExecutionStep {
       }
 
       lastUpstreamRecord = upstream.next();
-      if(edge.edge.item instanceof OMultiMatchPathItem){
-        traverser = new MatchMultiEdgeTraverser(lastUpstreamRecord, edge);
-      }else if(edge.out){
-        traverser = new MatchEdgeTraverser(lastUpstreamRecord, edge);
-      }else{
-        traverser = new MatchReverseEdgeTraverser(lastUpstreamRecord, edge);
-      }
+
+      traverser = createTraverser(lastUpstreamRecord);
 
       boolean found = false;
       while (traverser.hasNext(ctx)) {
         nextResult = traverser.next(ctx);
-        if(nextResult!=null) {
+        if (nextResult != null) {
           found = true;
           break;
         }
       }
-      if(found){
+      if (found) {
         break;
       }
+    }
+  }
+
+  protected MatchEdgeTraverser createTraverser(OResult lastUpstreamRecord) {
+    if (edge.edge.item instanceof OMultiMatchPathItem) {
+      return new MatchMultiEdgeTraverser(lastUpstreamRecord, edge);
+    } else if (edge.out) {
+      return new MatchEdgeTraverser(lastUpstreamRecord, edge);
+    } else {
+      return new MatchReverseEdgeTraverser(lastUpstreamRecord, edge);
     }
   }
 
@@ -129,22 +134,16 @@ public class MatchStep extends AbstractExecutionStep {
     StringBuilder result = new StringBuilder();
     result.append(spaces);
     result.append("+ MATCH ");
-    if(edge.out) {
+    if (edge.out) {
       result.append("     ---->\n");
-    }else{
+    } else {
       result.append("     <----\n");
     }
     result.append(spaces);
     result.append("  ");
-//
-      result.append("{"+edge.edge.out.alias+"}");
-      result.append(edge.edge.item.getMethod());
-      result.append("{"+edge.edge.in.alias+"}");
-//    }else{
-//      result.append("{"+edge.edge.in.alias+"}");
-//      result.append(edge.edge.item.getMethod());
-//      result.append("{"+edge.edge.out.alias+"}");
-//    }
+    result.append("{" + edge.edge.out.alias + "}");
+    result.append(edge.edge.item.getMethod());
+    result.append("{" + edge.edge.in.alias + "}");
     return result.toString();
   }
 }

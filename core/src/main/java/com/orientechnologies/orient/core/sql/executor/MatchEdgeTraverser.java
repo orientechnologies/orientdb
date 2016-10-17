@@ -52,7 +52,7 @@ public class MatchEdgeTraverser {
     return result;
   }
 
-  private boolean equals(Object prevValue, OIdentifiable nextElement) {
+  protected boolean equals(Object prevValue, OIdentifiable nextElement) {
     if (prevValue instanceof OResult) {
       prevValue = ((OResult) prevValue).getElement();
     }
@@ -62,7 +62,7 @@ public class MatchEdgeTraverser {
     return prevValue != null && prevValue.equals(nextElement);
   }
 
-  private Object toResult(OIdentifiable nextElement) {
+  protected Object toResult(OIdentifiable nextElement) {
     OResultInternal result = new OResultInternal();
     result.setElement(nextElement);
     return result;
@@ -79,7 +79,7 @@ public class MatchEdgeTraverser {
     return this.edge.edge.in.alias;
   }
 
-  private void init(OCommandContext ctx) {
+  protected void init(OCommandContext ctx) {
     if (downstream == null) {
       Object startingElem = sourceRecord.getProperty(getStartingPointAlias());
       if (startingElem instanceof OResult) {
