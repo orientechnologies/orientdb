@@ -20,10 +20,16 @@
 
 package com.orientechnologies.orient.client.remote;
 
+import java.lang.ref.WeakReference;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
+import com.orientechnologies.orient.client.remote.message.OSBTCreateTreeRequest;
+import com.orientechnologies.orient.client.remote.message.OSBTCreateTreeResponse;
 import com.orientechnologies.orient.core.OOrientShutdownListener;
 import com.orientechnologies.orient.core.OOrientStartupListener;
 import com.orientechnologies.orient.core.Orient;
@@ -34,19 +40,12 @@ import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollecti
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManagerAbstract;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
-
-import java.io.IOException;
-import java.lang.ref.WeakReference;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
 
 /**
  * @author Artem Orobets (enisher-at-gmail.com)
  */
-public class OSBTreeCollectionManagerRemote extends OSBTreeCollectionManagerAbstract implements OOrientStartupListener,
-    OOrientShutdownListener {
+public class OSBTreeCollectionManagerRemote extends OSBTreeCollectionManagerAbstract
+    implements OOrientStartupListener, OOrientShutdownListener {
 
   private final OCollectionNetworkSerializer                      networkSerializer;
   private boolean                                                 remoteCreationAllowed = false;
@@ -84,30 +83,15 @@ public class OSBTreeCollectionManagerRemote extends OSBTreeCollectionManagerAbst
   protected OSBTreeBonsaiRemote<OIdentifiable, Integer> createTree(final int clusterId) {
     if (remoteCreationAllowed) {
       final OStorageRemote storage = (OStorageRemote) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying();
-      return storage.networkOperation(new OStorageRemoteOperation<OSBTreeBonsaiRemote<OIdentifiable, Integer>>() {
-        @Override
-        public OSBTreeBonsaiRemote<OIdentifiable, Integer> execute(final OChannelBinaryAsynchClient client,
-            OStorageRemoteSession session) throws IOException {
-          try {
-            storage.beginRequest(client, OChannelBinaryProtocol.REQUEST_CREATE_SBTREE_BONSAI, session);
-            client.writeInt(clusterId);
-          }finally {
-            storage.endRequest(client);
-          }
-          OBonsaiCollectionPointer pointer;
-          try {
-            storage.beginResponse(client, session);
-            pointer = networkSerializer.readCollectionPointer(client);
-          } finally {
-            storage.endResponse(client);
-          }
+      OBinaryRequest request = new OSBTCreateTreeRequest(clusterId);
+      OBinaryResponse<OBonsaiCollectionPointer> response = new OSBTCreateTreeResponse(this.networkSerializer);
 
-          OBinarySerializer<OIdentifiable> keySerializer = OLinkSerializer.INSTANCE;
-          OBinarySerializer<Integer> valueSerializer = OIntegerSerializer.INSTANCE;
+      OBonsaiCollectionPointer pointer = storage.networkOperation(request, response, "Cannot create sb-tree bonsai");
 
-          return new OSBTreeBonsaiRemote<OIdentifiable, Integer>(pointer, keySerializer, valueSerializer);
-        }
-      },"Cannot create sb-tree bonsai");
+      OBinarySerializer<OIdentifiable> keySerializer = OLinkSerializer.INSTANCE;
+      OBinarySerializer<Integer> valueSerializer = OIntegerSerializer.INSTANCE;
+
+      return new OSBTreeBonsaiRemote<OIdentifiable, Integer>(pointer, keySerializer, valueSerializer);
     } else {
       throw new UnsupportedOperationException("Creation of SB-Tree from remote storage is not allowed");
     }

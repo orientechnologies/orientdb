@@ -27,7 +27,7 @@ import java.util.*;
  * Created by tglman on 31/03/16.
  */
 public class OStorageRemoteSession {
-  boolean                                commandExecuting       = false;
+  public boolean                         commandExecuting       = false;
   int                                    serverURLIndex         = -1;
   String                                 connectionUserName     = null;
   String                                 connectionUserPassword = null;

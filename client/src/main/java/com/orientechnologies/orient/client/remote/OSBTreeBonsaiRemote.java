@@ -20,23 +20,26 @@
 
 package com.orientechnologies.orient.client.remote;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
-import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
+import com.orientechnologies.orient.client.remote.message.OSBTFetchEntriesMajorRequest;
+import com.orientechnologies.orient.client.remote.message.OSBTFetchEntriesMajorResponse;
+import com.orientechnologies.orient.client.remote.message.OSBTFirstKeyRequest;
+import com.orientechnologies.orient.client.remote.message.OSBTFirstKeyResponse;
+import com.orientechnologies.orient.client.remote.message.OSBTGetRealBagSizeRequest;
+import com.orientechnologies.orient.client.remote.message.OSBTGetRealBagSizeResponse;
+import com.orientechnologies.orient.client.remote.message.OSBTGetRequest;
+import com.orientechnologies.orient.client.remote.message.OSBTGetResponse;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Implementation of {@link OSBTreeBonsai} for remote storage.
@@ -73,32 +76,18 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
   @Override
   public V get(K key) {
     final OStorageRemote storage = (OStorageRemote) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying();
-
     final byte[] keyStream = new byte[keySerializer.getObjectSize(key)];
     keySerializer.serialize(key, keyStream, 0);
-    return storage.networkOperation(new OStorageRemoteOperation<V>() {
-      @Override
-      public V execute(final OChannelBinaryAsynchClient client, OStorageRemoteSession session) throws IOException {
-        storage.beginRequest(client,OChannelBinaryProtocol.REQUEST_SBTREE_BONSAI_GET, session);
-        OCollectionNetworkSerializer.INSTANCE.writeCollectionPointer(client, getCollectionPointer());
-        client.writeBytes(keyStream);
+    final OBonsaiCollectionPointer collectionPointer = getCollectionPointer();
+    OBinaryRequest request = new OSBTGetRequest(collectionPointer, keyStream);
 
-        storage.endRequest(client);
+    OBinaryResponse<byte[]> response = new OSBTGetResponse();
 
-        byte[] stream;
-        try {
-          storage.beginResponse(client, session);
-          stream = client.readBytes();
-        } finally {
-          storage.endResponse(client);
-        }
-
-        final byte serializerId = OByteSerializer.INSTANCE.deserializeLiteral(stream, 0);
-        final OBinarySerializer<V> serializer = (OBinarySerializer<V>) OBinarySerializerFactory.getInstance().getObjectSerializer(
-          serializerId);
-        return serializer.deserialize(stream, OByteSerializer.BYTE_SIZE);
-      }
-    },"Cannot get by key from sb-tree bonsai");
+    byte[] stream = storage.networkOperation(request, response, "Cannot get by key from sb-tree bonsai");
+    final byte serializerId = OByteSerializer.INSTANCE.deserializeLiteral(stream, 0);
+    final OBinarySerializer<V> serializer = (OBinarySerializer<V>) OBinarySerializerFactory.getInstance()
+        .getObjectSerializer(serializerId);
+    return serializer.deserialize(stream, OByteSerializer.BYTE_SIZE);
   }
 
   @Override
@@ -165,46 +154,14 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
     return more;
   }
 
-  private List<Map.Entry<K, V>> fetchEntriesMajor(final K key,final boolean inclusive) {
+  private List<Map.Entry<K, V>> fetchEntriesMajor(final K key, final boolean inclusive) {
     final byte[] keyStream = new byte[keySerializer.getObjectSize(key)];
     keySerializer.serialize(key, keyStream, 0);
     final OStorageRemote storage = (OStorageRemote) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying();
-    return storage.networkOperation(new OStorageRemoteOperation<List<Map.Entry<K, V>>>() {
-      @Override
-      public List<Map.Entry<K, V>> execute(final OChannelBinaryAsynchClient client, OStorageRemoteSession session) throws IOException {
-        try {
-          storage.beginRequest(client, OChannelBinaryProtocol.REQUEST_SBTREE_BONSAI_GET_ENTRIES_MAJOR, session);
-          OCollectionNetworkSerializer.INSTANCE.writeCollectionPointer(client, getCollectionPointer());
-          client.writeBytes(keyStream);
-          client.writeBoolean(inclusive);
+    OBinaryRequest request = new OSBTFetchEntriesMajorRequest(inclusive, keyStream, getCollectionPointer());
+    OBinaryResponse<List<Map.Entry<K, V>>> response = new OSBTFetchEntriesMajorResponse<K, V>(keySerializer, valueSerializer);
 
-          if (client.getSrvProtocolVersion() >= 21)
-            client.writeInt(128);
-        }finally {
-          storage.endRequest(client);
-        }
-        List<Map.Entry<K, V>> list = null;
-        try {
-          storage.beginResponse(client, session);
-          byte[] stream = client.readBytes();
-          int offset = 0;
-          final int count = OIntegerSerializer.INSTANCE.deserializeLiteral(stream, 0);
-          offset += OIntegerSerializer.INT_SIZE;
-          list = new ArrayList<Map.Entry<K, V>>(count);
-          for (int i = 0; i < count; i++) {
-            final K resultKey = keySerializer.deserialize(stream, offset);
-            offset += keySerializer.getObjectSize(stream, offset);
-            final V resultValue = valueSerializer.deserialize(stream, offset);
-            offset += valueSerializer.getObjectSize(stream, offset);
-            list.add(new TreeEntry<K, V>(resultKey, resultValue));
-          }
-        } finally {
-          storage.endResponse(client);
-        }
-
-        return list;
-      }
-    },"Cannot get first key from sb-tree bonsai");
+    return storage.networkOperation(request, response, "Cannot get first key from sb-tree bonsai");
   }
 
   @Override
@@ -216,26 +173,16 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
   @Override
   public K firstKey() {
     final OStorageRemote storage = (OStorageRemote) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying();
-    return storage.networkOperation(new OStorageRemoteOperation<K>() {
-      @Override
-      public K execute(final OChannelBinaryAsynchClient client, OStorageRemoteSession session) throws IOException {
-        storage.beginRequest(client,OChannelBinaryProtocol.REQUEST_SBTREE_BONSAI_FIRST_KEY, session);
-        OCollectionNetworkSerializer.INSTANCE.writeCollectionPointer(client, getCollectionPointer());
-        storage.endRequest(client);
-        byte[] stream;
-        try {
-          storage.beginResponse(client, session);
-          stream = client.readBytes();
-        } finally {
-          storage.endResponse(client);
-        }
+    final OBonsaiCollectionPointer collectionPointer = getCollectionPointer();
+    OBinaryRequest request = new OSBTFirstKeyRequest(collectionPointer);
+    OBinaryResponse<byte[]> response = new OSBTFirstKeyResponse();
 
-        final byte serializerId = OByteSerializer.INSTANCE.deserializeLiteral(stream, 0);
-        final OBinarySerializer<K> serializer = (OBinarySerializer<K>) OBinarySerializerFactory.getInstance().getObjectSerializer(
-          serializerId);
-        return serializer.deserialize(stream, OByteSerializer.BYTE_SIZE);
-      }
-    },"Cannot get first key from sb-tree bonsai");
+    byte[] stream = storage.networkOperation(request, response, "Cannot get first key from sb-tree bonsai");
+    final byte serializerId = OByteSerializer.INSTANCE.deserializeLiteral(stream, 0);
+    final OBinarySerializer<K> serializer = (OBinarySerializer<K>) OBinarySerializerFactory.getInstance()
+        .getObjectSerializer(serializerId);
+    return serializer.deserialize(stream, OByteSerializer.BYTE_SIZE);
+
   }
 
   @Override
@@ -244,7 +191,8 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
   }
 
   @Override
-  public void loadEntriesBetween(K keyFrom, boolean fromInclusive, K keyTo, boolean toInclusive, RangeResultListener<K, V> listener) {
+  public void loadEntriesBetween(K keyFrom, boolean fromInclusive, K keyTo, boolean toInclusive,
+      RangeResultListener<K, V> listener) {
 
     throw new UnsupportedOperationException("Not implemented yet");
   }
@@ -252,31 +200,10 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
   @Override
   public int getRealBagSize(final Map<K, OSBTreeRidBag.Change> changes) {
     final OStorageRemote storage = (OStorageRemote) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying();
-    return storage.networkOperation(new OStorageRemoteOperation<Integer>() {
-      @Override
-      public Integer execute(OChannelBinaryAsynchClient client, OStorageRemoteSession session) throws IOException {
-        try {
-          storage.beginRequest(client, OChannelBinaryProtocol.REQUEST_RIDBAG_GET_SIZE, session);
-          OCollectionNetworkSerializer.INSTANCE.writeCollectionPointer(client, getCollectionPointer());
-
-          final OSBTreeRidBag.ChangeSerializationHelper changeSerializer = OSBTreeRidBag.ChangeSerializationHelper.INSTANCE;
-          final byte[] stream = new byte[OIntegerSerializer.INT_SIZE + changeSerializer.getChangesSerializedSize(changes.size())];
-          changeSerializer.serializeChanges(changes, keySerializer, stream, 0);
-
-          client.writeBytes(stream);
-        } finally {
-          storage.endRequest(client);
-        }
-        int result;
-        try {
-          storage.beginResponse(client, session);
-          result = client.readInt();
-        } finally {
-          storage.endResponse(client);
-        }
-        return result;
-      }
-    }, "Cannot get by real bag size sb-tree bonsai");
+    final OBonsaiCollectionPointer collectionPointer = getCollectionPointer();
+    OBinaryRequest request = new OSBTGetRealBagSizeRequest<K, V>(keySerializer, collectionPointer, changes);
+    OBinaryResponse<Integer> response = new OSBTGetRealBagSizeResponse();
+    return storage.networkOperation(request, response, "Cannot get by real bag size sb-tree bonsai");
   }
 
   @Override
@@ -289,11 +216,11 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
     return valueSerializer;
   }
 
-  class TreeEntry<EK, EV> implements Map.Entry<EK, EV> {
+  public static class TreeEntry<EK, EV> implements Map.Entry<EK, EV> {
     private final EK key;
     private final EV value;
 
-    TreeEntry(EK key, EV value) {
+    public TreeEntry(EK key, EV value) {
       this.key = key;
       this.value = value;
     }
@@ -313,4 +240,5 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
       throw new UnsupportedOperationException();
     }
   }
+
 }
