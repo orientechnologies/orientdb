@@ -186,4 +186,16 @@ public class OrientJdbcResultSetMetaDataTest extends OrientJdbcBaseTest {
     assertThat(rs.getObject(1)).isInstanceOf(String.class);
 
   }
+
+  @Test
+  public void shouldReadBoolean() throws Exception {
+
+    Statement stmt = conn.createStatement();
+    ResultSet rs = stmt.executeQuery("SELECT  isActive, is_active FROM Writer");
+
+    while (rs.next()) {
+
+      System.out.println("bool:: " + rs.getBoolean(1) + " - " + rs.getBoolean(2));
+    }
+  }
 }
