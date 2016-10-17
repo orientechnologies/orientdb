@@ -35,7 +35,7 @@ public class OProfileStorageStatement extends OSimpleExecStatement {
   //new execution logic
   @Override public OTodoResultSet executeSimple(OCommandContext ctx) {
     OResultInternal result = new OResultInternal();
-    result.setProperty("operation", "optimize databae");
+    result.setProperty("operation", "optimize database");
 
     OStorage storage = ((ODatabaseInternal) ctx.getDatabase()).getStorage();
 
