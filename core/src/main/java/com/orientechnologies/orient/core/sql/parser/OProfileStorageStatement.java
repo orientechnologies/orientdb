@@ -5,7 +5,11 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -14,7 +18,7 @@ import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionSt
 
 import java.util.Map;
 
-public class OProfileStorageStatement extends OStatement {
+public class OProfileStorageStatement extends OSimpleExecStatement {
 
   protected boolean on;
 
@@ -28,6 +32,37 @@ public class OProfileStorageStatement extends OStatement {
     super(p, id);
   }
 
+  //new execution logic
+  @Override public OTodoResultSet executeSimple(OCommandContext ctx) {
+    OResultInternal result = new OResultInternal();
+    result.setProperty("operation", "optimize databae");
+
+    OStorage storage = ((ODatabaseInternal) ctx.getDatabase()).getStorage();
+
+    if (on) {
+      // activate the profiler
+      ((OAbstractPaginatedStorage) storage).startGatheringPerformanceStatisticForCurrentThread();
+      result.setProperty("value", "on");
+    } else {
+      // stop the profiler and return the stats
+      final OSessionStoragePerformanceStatistic performanceStatistic = ((OAbstractPaginatedStorage) storage)
+          .completeGatheringPerformanceStatisticForCurrentThread();
+
+      result.setProperty("value", "off");
+      if (performanceStatistic != null) {
+        result.setProperty("result", performanceStatistic.toDocument());
+      } else {
+        result.setProperty("result", "error");
+        result.setProperty("errorMessage", "profiling of storage was not started");
+      }
+    }
+
+    OInternalResultSet rs = new OInternalResultSet();
+    rs.add(result);
+    return rs;
+  }
+
+  //old execution logic
   @Override public Object execute(OSQLAsynchQuery<ODocument> request, OCommandContext context, OProgressListener progressListener) {
     try {
       ODatabaseDocumentInternal db = getDatabase();
