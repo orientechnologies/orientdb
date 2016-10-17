@@ -2,9 +2,16 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
+
 import java.util.Map;
 
-public class OReturnStatement extends OStatement {
+public class OReturnStatement extends OSimpleExecStatement {
   protected OExpression expression;
 
   public OReturnStatement(int id) {
@@ -13,6 +20,23 @@ public class OReturnStatement extends OStatement {
 
   public OReturnStatement(OrientSql p, int id) {
     super(p, id);
+  }
+
+  @Override public OTodoResultSet executeSimple(OCommandContext ctx) {
+    OInternalResultSet rs = new OInternalResultSet();
+    Object result = expression.execute((OResult) null, ctx);
+    if (result instanceof OResult) {
+      rs.add((OResult) result);
+    } else if (result instanceof OIdentifiable) {
+      OResultInternal res = new OResultInternal();
+      res.setElement((OIdentifiable) result);
+      rs.add(res);
+    } else {
+      OResultInternal res = new OResultInternal();
+      res.setProperty("value", result);
+      rs.add(res);
+    }
+    return rs;
   }
 
   @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
