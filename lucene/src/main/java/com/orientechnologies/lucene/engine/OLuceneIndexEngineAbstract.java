@@ -66,8 +66,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory.AnalyzerKind.INDEX;
 import static com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory.AnalyzerKind.QUERY;
 
-public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdaptiveExternal
-    implements OLuceneIndexEngine, OOrientListener {
+public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdaptiveExternal implements OLuceneIndexEngine {
 
   public static final String               RID              = "RID";
   public static final String               KEY              = "KEY";
@@ -86,7 +85,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
   protected Version                        version;
   protected Map<String, Boolean>           collectionFields = new HashMap<String, Boolean>();
   protected TimerTask                      commitTask;
-  protected AtomicBoolean                  closed           = new AtomicBoolean(true);
+  protected AtomicBoolean                  closed           = new AtomicBoolean(false);
   private long                             reopenToken;
   private Analyzer                         indexAnalyzer;
   private Analyzer                         queryAnalyzer;
@@ -151,7 +150,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
   public void init(String indexName, String indexType, OIndexDefinition indexDefinition, boolean isAutomatic, ODocument metadata) {
 
     // FIXME how many timers are around?
-    Orient.instance().registerListener(this);
+
     commitTask = new TimerTask() {
       @Override
       public void run() {
@@ -177,17 +176,14 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
       checkCollectionIndex(indexDefinition);
       reOpen(metadata);
 
+      closed.set(false);
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error on initializing Lucene index", e);
     }
   }
 
   protected void commit() {
-    try {
-      mgrWriter.getIndexWriter().commit();
-    } catch (IOException e) {
-      OLogManager.instance().error(this, "Error on committing Lucene index", e);
-    }
+    flush();
   }
 
   private void checkCollectionIndex(OIndexDefinition indexDefinition) {
@@ -309,6 +305,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
       if (mgrWriter.getIndexWriter().isOpen()) {
         mgrWriter.getIndexWriter().commit();
         mgrWriter.getIndexWriter().close();
+        closed.set(true);
       }
     }
   }
@@ -499,21 +496,6 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
 
   protected Field.Store isToStore(String f) {
     return collectionFields.get(f) ? Field.Store.YES : Field.Store.NO;
-  }
-
-  @Override
-  public void onShutdown() {
-    close();
-  }
-
-  @Override
-  public void onStorageRegistered(OStorage storage) {
-
-  }
-
-  @Override
-  public void onStorageUnregistered(OStorage storage) {
-
   }
 
   @Override
