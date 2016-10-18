@@ -50,6 +50,12 @@
             <groupId>org.apache.tinkerpop</groupId>
             <artifactId>gremlin-groovy</artifactId>
             <version>${gremlin.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.github.jeremyh</groupId>
+                    <artifactId>jBCrypt</artifactId>  <!-- travis and rultor don't find this for some reason -->
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.orientechnologies</groupId>
