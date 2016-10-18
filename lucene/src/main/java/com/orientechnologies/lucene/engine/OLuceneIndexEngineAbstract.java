@@ -176,7 +176,6 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
       checkCollectionIndex(indexDefinition);
       reOpen(metadata);
 
-      closed.set(false);
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error on initializing Lucene index", e);
     }
@@ -220,6 +219,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
     nrt.setDaemon(true);
     nrt.start();
     flush();
+    closed.set(false);
   }
 
   protected abstract IndexWriter createIndexWriter(Directory directory) throws IOException;
