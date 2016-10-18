@@ -2067,6 +2067,10 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
         for (Iterator<OIdentifiable> it = bag.rawIterator(); it.hasNext();) {
           final ODocument curr = getDocument(it.next(), forceReload);
 
+          if(curr == null)
+            // EDGE REMOVED
+            continue;
+
           if (curr == null)
             // ALREADY DELETED (BYPASSING GRAPH API?), JUST REMOVE THE REFERENCE FROM BAG
             it.remove();
@@ -2118,6 +2122,10 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
         // SEARCH SEQUENTIALLY (SLOWER)
         for (Iterator<OIdentifiable> it = col.iterator(); it.hasNext();) {
           final ODocument curr = getDocument(it.next(), forceReload);
+
+          if(curr == null)
+            // EDGE REMOVED
+            continue;
 
           if (iVertexToRemove.equals(curr)) {
             // FOUND AS VERTEX
@@ -2212,6 +2220,9 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   }
 
   private static ODocument getDocument(final OIdentifiable id, final boolean forceReload) {
+    if(id == null )
+      return null;
+
     final ODocument doc = id.getRecord();
 
     if (doc != null && forceReload) {
