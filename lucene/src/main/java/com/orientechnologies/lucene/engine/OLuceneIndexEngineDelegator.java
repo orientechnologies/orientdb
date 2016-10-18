@@ -113,8 +113,9 @@ public class OLuceneIndexEngineDelegator implements OLuceneIndexEngine, OFreezab
 
   @Override
   public void close() {
-
-    delegate.close();
+    if (delegate != null) {
+      delegate.close();
+    }
   }
 
   @Override
