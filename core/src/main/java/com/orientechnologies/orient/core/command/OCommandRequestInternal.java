@@ -19,10 +19,9 @@
  */
 package com.orientechnologies.orient.core.command;
 
-import com.orientechnologies.common.listener.OProgressListener;
-import com.orientechnologies.orient.core.serialization.OSerializableStream;
-
 import java.util.Map;
+
+import com.orientechnologies.common.listener.OProgressListener;
 
 /**
  * Internal specialization of generic OCommand interface.

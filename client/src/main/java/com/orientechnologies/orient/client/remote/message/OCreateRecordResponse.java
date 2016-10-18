@@ -20,39 +20,59 @@
 package com.orientechnologies.orient.client.remote.message;
 
 import java.io.IOException;
+import java.util.Map;
+import java.util.UUID;
 
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
-import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
-import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
-public class OCreateRecordResponse implements OBinaryResponse<OPhysicalPosition> {
-  private final ORecordId                iRid;
-  private final OPhysicalPosition        ppos;
-  private final OSBTreeCollectionManager collectionManager;
-  private final int                      iMode;
+public class OCreateRecordResponse implements OBinaryResponse<Long> {
 
-  public OCreateRecordResponse(ORecordId iRid, OPhysicalPosition ppos, OSBTreeCollectionManager collectionManager, int iMode) {
-    this.iRid = iRid;
-    this.ppos = ppos;
-    this.collectionManager = collectionManager;
-    this.iMode = iMode;
+  private ORecordId                           identity;
+  private int                                 version;
+  private Map<UUID, OBonsaiCollectionPointer> changedIds;
+
+  public OCreateRecordResponse() {
+  }
+
+  public OCreateRecordResponse(ORecordId identity, int version, Map<UUID, OBonsaiCollectionPointer> changedIds) {
+    this.identity = identity;
+    this.version = version;
+    this.changedIds = changedIds;
+  }
+
+  public void write(OChannelBinary channel, int protocolVersion, String recordSerializer) throws IOException {
+    channel.writeShort((short) this.identity.getClusterId());
+    channel.writeLong(this.identity.getClusterPosition());
+    channel.writeInt(version);
+    if (protocolVersion >= 20)
+      OBinaryProtocolHelper.writeCollectionChanges(channel, changedIds);
   }
 
   @Override
-  public OPhysicalPosition read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+  public Long read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
     short clusterId = network.readShort();
-    ppos.clusterPosition = network.readLong();
-    ppos.recordVersion = network.readVersion();
-    // THIS IS A COMPATIBILITY FIX TO AVOID TO FILL THE CLUSTER ID IN CASE OF ASYNC
-    if (iMode == 0) {
-      iRid.clusterId = clusterId;
-      iRid.clusterPosition = ppos.clusterPosition;
-    }
-    OStorageRemote.readCollectionChanges(network, collectionManager);
-    return ppos;
+    long posistion = network.readLong();
+    identity = new ORecordId(clusterId, posistion);
+    version = network.readVersion();
+    changedIds = OBinaryProtocolHelper.readCollectionChanges(network);
+    return posistion;
   }
+
+  public ORecordId getIdentity() {
+    return identity;
+  }
+
+  public int getVersion() {
+    return version;
+  }
+
+  public Map<UUID, OBonsaiCollectionPointer> getChangedIds() {
+    return changedIds;
+  }
+
 }

@@ -20,6 +20,10 @@
 
 package com.orientechnologies.orient.server.network.protocol.binary;
 
+import java.util.HashSet;
+import java.util.Set;
+
+import com.orientechnologies.orient.client.remote.OFetchPlanResults;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OFetchException;
@@ -31,16 +35,13 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-import java.util.HashSet;
-import java.util.Set;
-
 /**
  * Synchronous command result manager.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  *
  */
-public class OSyncCommandResultListener extends OAbstractCommandResultListener {
+public class OSyncCommandResultListener extends OAbstractCommandResultListener implements OFetchPlanResults {
   private final Set<ORecord> fetchedRecordsToSend = new HashSet<ORecord>();
   private final Set<ORecord> alreadySent          = new HashSet<ORecord>();
 

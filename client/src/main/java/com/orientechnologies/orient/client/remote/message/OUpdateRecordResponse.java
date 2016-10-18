@@ -20,24 +20,47 @@
 package com.orientechnologies.orient.client.remote.message;
 
 import java.io.IOException;
+import java.util.Map;
+import java.util.UUID;
 
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
-import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
-import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
 public class OUpdateRecordResponse implements OBinaryResponse<Integer> {
-  private final OSBTreeCollectionManager collectionManager;
 
-  public OUpdateRecordResponse(OSBTreeCollectionManager collectionManager) {
-    this.collectionManager = collectionManager;
+  private int                                 version;
+  private Map<UUID, OBonsaiCollectionPointer> changes;
+
+  public OUpdateRecordResponse(int version, Map<UUID, OBonsaiCollectionPointer> changes) {
+    this.version = version;
+    this.changes = changes;
+  }
+
+  public OUpdateRecordResponse() {
+  }
+
+  public void write(OChannelBinary channel, int protocolVersion, String recordSerializer) throws IOException {
+    channel.writeVersion(version);
+    if (protocolVersion >= 20)
+      OBinaryProtocolHelper.writeCollectionChanges(channel, changes);
   }
 
   @Override
   public Integer read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
-    Integer r = network.readVersion();
-    OStorageRemote.readCollectionChanges(network, collectionManager);
-    return r;
+    version = network.readVersion();
+    changes = OBinaryProtocolHelper.readCollectionChanges(network);
+    return version;
   }
+
+  public int getVersion() {
+    return version;
+  }
+
+  public Map<UUID, OBonsaiCollectionPointer> getChanges() {
+    return changes;
+  }
+
 }

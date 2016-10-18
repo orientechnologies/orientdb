@@ -25,16 +25,20 @@ import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
 public class ODeleteRecordRequest implements OBinaryRequest {
-  private final ORecordId iRid;
-  private final int       iVersion;
-  private byte            mode;
+  private ORecordId rid;
+  private int       version;
+  private byte      mode;
 
   public ODeleteRecordRequest(ORecordId iRid, int iVersion) {
-    this.iRid = iRid;
-    this.iVersion = iVersion;
+    this.rid = iRid;
+    this.version = iVersion;
+  }
+
+  public ODeleteRecordRequest() {
   }
 
   @Override
@@ -42,10 +46,28 @@ public class ODeleteRecordRequest implements OBinaryRequest {
     return OChannelBinaryProtocol.REQUEST_RECORD_DELETE;
   }
 
+  public void read(OChannelBinary channel, int protocolVersion, String serializerName) throws IOException {
+    rid = channel.readRID();
+    version = channel.readVersion();
+    mode = channel.readByte();
+  }
+
   @Override
   public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session, int mode) throws IOException {
-    network.writeRID(iRid);
-    network.writeVersion(iVersion);
+    network.writeRID(rid);
+    network.writeVersion(version);
     network.writeByte((byte) mode);
+  }
+
+  public byte getMode() {
+    return mode;
+  }
+
+  public ORecordId getRid() {
+    return rid;
+  }
+
+  public int getVersion() {
+    return version;
   }
 }

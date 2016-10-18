@@ -86,7 +86,7 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
             alreadySent.add(iLinked.getIdentity());
             try {
               protocol.channel.writeByte((byte) 2); // CACHE IT ON THE CLIENT
-              protocol.writeIdentifiable(connection, iLinked);
+              protocol.writeIdentifiable(protocol.channel, connection, iLinked);
             } catch (IOException e) {
               OLogManager.instance().error(this, "Cannot write against channel", e);
             }
@@ -95,7 +95,7 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
       });
       alreadySent.add(((OIdentifiable) iRecord).getIdentity());
       protocol.channel.writeByte((byte) 1); // ONE MORE RECORD
-      protocol.writeIdentifiable(connection, ((OIdentifiable) iRecord).getRecord());
+      protocol.writeIdentifiable(protocol.channel, connection, ((OIdentifiable) iRecord).getRecord());
       protocol.channel.flush();
     } catch (IOException e) {
       return false;

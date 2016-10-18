@@ -139,9 +139,9 @@ public class OStorageRemoteAsyncOperationTest {
         }
         return res;
       }
-    }, 1, new ORecordId(-1, -1), new ORecordCallback<Object>() {
+    }, 1, new ORecordId(-1, -1), new ORecordCallback<OBinaryResponse<Object>>() {
       @Override
-      public void call(ORecordId iRID, Object iParameter) {
+      public void call(ORecordId iRID, OBinaryResponse<Object> iParameter) {
         callBackDone.countDown();
       }
     }, "");

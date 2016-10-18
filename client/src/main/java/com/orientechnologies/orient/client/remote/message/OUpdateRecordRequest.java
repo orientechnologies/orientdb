@@ -25,21 +25,26 @@ import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
 public class OUpdateRecordRequest implements OBinaryRequest {
-  private final ORecordId iRid;
-  private final byte[]    iContent;
-  private final int       iVersion;
-  private final boolean   updateContent;
-  private final byte      iRecordType;
+  private ORecordId rid;
+  private byte[]    content;
+  private int       version;
+  private boolean   updateContent = true;
+  private byte      recordType;
+  private byte      mode;
 
   public OUpdateRecordRequest(ORecordId iRid, byte[] iContent, int iVersion, boolean updateContent, byte iRecordType) {
-    this.iRid = iRid;
-    this.iContent = iContent;
-    this.iVersion = iVersion;
+    this.rid = iRid;
+    this.content = iContent;
+    this.version = iVersion;
     this.updateContent = updateContent;
-    this.iRecordType = iRecordType;
+    this.recordType = iRecordType;
+  }
+
+  public OUpdateRecordRequest() {
   }
 
   @Override
@@ -47,13 +52,48 @@ public class OUpdateRecordRequest implements OBinaryRequest {
     return OChannelBinaryProtocol.REQUEST_RECORD_UPDATE;
   }
 
+  public void read(OChannelBinary channel, int protocolVersion, String serializerName) throws IOException {
+    rid = channel.readRID();
+    if (protocolVersion >= 23)
+      updateContent = channel.readBoolean();
+    content = channel.readBytes();
+    version = channel.readVersion();
+    recordType = channel.readByte();
+    mode = channel.readByte();
+  }
+
   @Override
   public void write(final OChannelBinaryAsynchClient network, final OStorageRemoteSession session, int mode) throws IOException {
-    network.writeRID(iRid);
+    network.writeRID(rid);
     network.writeBoolean(updateContent);
-    network.writeBytes(iContent);
-    network.writeVersion(iVersion);
-    network.writeByte(iRecordType);
+    network.writeBytes(content);
+    network.writeVersion(version);
+    network.writeByte(recordType);
     network.writeByte((byte) mode);
   }
+
+  public byte[] getContent() {
+    return content;
+  }
+
+  public byte getMode() {
+    return mode;
+  }
+
+  public byte getRecordType() {
+    return recordType;
+  }
+
+  public ORecordId getRid() {
+    return rid;
+  }
+
+  public int getVersion() {
+    return version;
+  }
+
+  public boolean isUpdateContent() {
+    return updateContent;
+  }
+
 }

@@ -76,7 +76,7 @@ public class OAsyncCommandResultListener extends OAbstractCommandResultListener 
             alreadySent.add(iLinked.getIdentity());
             try {
               protocol.channel.writeByte((byte) 2); // CACHE IT ON THE CLIENT
-              protocol.writeIdentifiable(connection, iLinked);
+              protocol.writeIdentifiable(protocol.channel, connection, iLinked);
             } catch (IOException e) {
               OLogManager.instance().error(this, "Cannot write against channel", e);
             }
@@ -85,7 +85,7 @@ public class OAsyncCommandResultListener extends OAbstractCommandResultListener 
       });
       alreadySent.add(((OIdentifiable) iRecord).getIdentity());
       protocol.channel.writeByte((byte) 1); // ONE MORE RECORD
-      protocol.writeIdentifiable(connection, ((OIdentifiable) iRecord).getRecord());
+      protocol.writeIdentifiable(protocol.channel, connection, ((OIdentifiable) iRecord).getRecord());
       protocol.channel.flush();// TODO review this flush... it's for non blocking...
 
       if (wrappedResultListener != null)
@@ -112,7 +112,7 @@ public class OAsyncCommandResultListener extends OAbstractCommandResultListener 
           alreadySent.add(iLinked.getIdentity());
           try {
             protocol.channel.writeByte((byte) 2); // CACHE IT ON THE CLIENT
-            protocol.writeIdentifiable(connection, iLinked);
+            protocol.writeIdentifiable(protocol.channel, connection, iLinked);
           } catch (IOException e) {
             OLogManager.instance().error(this, "Cannot write against channel", e);
           }

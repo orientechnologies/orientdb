@@ -24,10 +24,29 @@ import java.io.IOException;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
 public class OHideRecordResponse implements OBinaryResponse<Boolean> {
+  private boolean result;
+
+  public OHideRecordResponse() {
+  }
+
+  public OHideRecordResponse(boolean result) {
+    this.result = result;
+  }
+
   @Override
   public Boolean read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
-    return network.readByte() == 1;
+    result = network.readBoolean();
+    return result;
+  }
+
+  public void write(OChannelBinary channel, int protocolVersion, String recordSerializer) throws IOException {
+    channel.writeBoolean(result);
+  }
+
+  public boolean getResult() {
+    return result;
   }
 }

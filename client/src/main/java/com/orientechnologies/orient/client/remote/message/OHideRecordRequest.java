@@ -25,13 +25,18 @@ import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
 public final class OHideRecordRequest implements OBinaryRequest {
-  private final ORecordId recordId;
+  private ORecordId recordId;
+  private byte      mode;
 
   public OHideRecordRequest(ORecordId recordId) {
     this.recordId = recordId;
+  }
+
+  public OHideRecordRequest() {
   }
 
   @Override
@@ -39,9 +44,23 @@ public final class OHideRecordRequest implements OBinaryRequest {
     return OChannelBinaryProtocol.REQUEST_RECORD_HIDE;
   }
 
+  public void read(OChannelBinary channel, int protocolVersion, String serializerName) throws IOException {
+    recordId = channel.readRID();
+    mode = channel.readByte();
+  }
+
   @Override
   public void write(final OChannelBinaryAsynchClient network, final OStorageRemoteSession session, int mode) throws IOException {
     network.writeRID(recordId);
     network.writeByte((byte) mode);
   }
+
+  public ORecordId getRecordId() {
+    return recordId;
+  }
+
+  public byte getMode() {
+    return mode;
+  }
+
 }

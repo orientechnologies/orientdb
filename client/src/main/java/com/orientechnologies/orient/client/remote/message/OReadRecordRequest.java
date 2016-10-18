@@ -25,29 +25,59 @@ import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
 public final class OReadRecordRequest implements OBinaryRequest {
-  private final boolean   iIgnoreCache;
-  private final ORecordId iRid;
-  private final String    iFetchPlan;
+  private boolean   ignoreCache;
+  private ORecordId rid;
+  private String    fetchPlan;
+  private boolean   loadTumbstone;
 
-  public OReadRecordRequest(boolean iIgnoreCache, ORecordId iRid, String iFetchPlan) {
-    this.iIgnoreCache = iIgnoreCache;
-    this.iRid = iRid;
-    this.iFetchPlan = iFetchPlan;
+  public OReadRecordRequest(boolean iIgnoreCache, ORecordId iRid, String iFetchPlan, boolean iLoadTumbstone) {
+    this.ignoreCache = iIgnoreCache;
+    this.rid = iRid;
+    this.fetchPlan = iFetchPlan;
+    this.loadTumbstone = iLoadTumbstone;
+  }
+
+  public OReadRecordRequest() {
   }
 
   @Override
   public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session, int mode) throws IOException {
-    network.writeRID(iRid);
-    network.writeString(iFetchPlan != null ? iFetchPlan : "");
-    network.writeByte((byte) (iIgnoreCache ? 1 : 0));
-    network.writeByte((byte) 0);
+    network.writeRID(rid);
+    network.writeString(fetchPlan != null ? fetchPlan : "");
+    network.writeByte((byte) (ignoreCache ? 1 : 0));
+    network.writeByte((byte) (loadTumbstone ? 1 : 0));
+  }
+
+  public void read(OChannelBinary channel, int protocolVersion, String serializerName) throws IOException {
+    rid = channel.readRID();
+    fetchPlan = channel.readString();
+    ignoreCache = channel.readByte() != 0;
+    loadTumbstone = channel.readByte() != 0;
   }
 
   @Override
   public byte getCommand() {
     return OChannelBinaryProtocol.REQUEST_RECORD_LOAD;
   }
+
+  public ORecordId getRid() {
+    return rid;
+  }
+
+  public String getFetchPlan() {
+    return fetchPlan;
+  }
+
+  public boolean isIgnoreCache() {
+    return ignoreCache;
+  }
+
+  public boolean isLoadTumbstone() {
+    return loadTumbstone;
+  }
+
 }

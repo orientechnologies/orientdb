@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.client.remote.message;
 
 import java.io.IOException;
+import java.util.Set;
 
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
@@ -29,9 +30,50 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
 public class OReadRecordIfVersionIsNotLatestResponse implements OBinaryResponse<OStorageOperationResult<ORawBuffer>> {
+
+  private byte         recordType;
+  private int          version;
+  private byte[]       record;
+  private Set<ORecord> recordsToSend;
+
+  public OReadRecordIfVersionIsNotLatestResponse() {
+  }
+
+  public OReadRecordIfVersionIsNotLatestResponse(byte recordType, int version, byte[] record, Set<ORecord> recordsToSend) {
+    this.recordType = recordType;
+    this.version = version;
+    this.record = record;
+    this.recordsToSend = recordsToSend;
+  }
+
+  public void write(OChannelBinary network, int protocolVersion, String recordSerializer) throws IOException {
+    if (record != null) {
+      network.writeByte((byte) 1);
+      if (protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_27) {
+        network.writeBytes(record);
+        network.writeVersion(version);
+        network.writeByte(recordType);
+      } else {
+        network.writeByte(recordType);
+        network.writeVersion(version);
+        network.writeBytes(record);
+      }
+      for (ORecord d : recordsToSend) {
+        if (d.getIdentity().isValid()) {
+          network.writeByte((byte) 2); // CLIENT CACHE
+          // RECORD. IT ISN'T PART OF THE RESULT SET
+          OBinaryProtocolHelper.writeRecord(network, d, recordSerializer);
+        }
+      }
+    }
+    // End of the response
+    network.writeByte((byte) 0);
+  }
+
   @Override
   public OStorageOperationResult<ORawBuffer> read(OChannelBinaryAsynchClient network, OStorageRemoteSession session)
       throws IOException {

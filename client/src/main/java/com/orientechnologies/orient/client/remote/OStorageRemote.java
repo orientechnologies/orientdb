@@ -30,13 +30,13 @@ import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.FutureTask;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.naming.NamingException;
@@ -208,8 +208,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     connectionManager = engine.getConnectionManager();
   }
 
-  public <T> T asyncNetworkOperation(final OBinaryRequest request, final OBinaryResponse<T> response, int mode,
-      final ORecordId recordId, final ORecordCallback<T> callback, final String errorMessage) {
+  public <T, X extends OBinaryResponse<T>> T asyncNetworkOperation(final OBinaryRequest request, X response, int mode,
+      final ORecordId recordId, final ORecordCallback<X> callback, final String errorMessage) {
     final int pMode;
     if (mode == 1 && callback == null)
       // ASYNCHRONOUS MODE NO ANSWER
@@ -250,7 +250,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
                 } finally {
                   endResponse(network);
                 }
-                callback.call(recordId, inRes);
+                callback.call(recordId, response);
                 connectionManager.release(network);
               } catch (Throwable e) {
                 connectionManager.remove(network);
@@ -278,7 +278,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       }
     }, errorMessage, retry);
   }
-    
+
   public <T> T networkOperationRetry(final OBinaryRequest request, final OBinaryResponse<T> response, final String errorMessage,
       int retry) {
     return baseNetworkOperation(new OStorageRemoteOperation<T>() {
@@ -302,7 +302,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       }
     }, errorMessage, retry);
   }
-  
 
   public <T> T networkOperation(final OBinaryRequest request, final OBinaryResponse<T> response, final String errorMessage) {
     return networkOperationRetry(request, response, errorMessage, connectionRetry);
@@ -592,22 +591,42 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       final int iRecordVersion, final byte iRecordType, final int iMode, final ORecordCallback<Long> iCallback) {
 
     final OSBTreeCollectionManager collectionManager = ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager();
-    ORecordCallback<OPhysicalPosition> realCallback = null;
+    ORecordCallback<OCreateRecordResponse> realCallback = null;
     if (iCallback != null) {
-      realCallback = new ORecordCallback<OPhysicalPosition>() {
-        @Override
-        public void call(ORecordId iRID, OPhysicalPosition iParameter) {
-          iCallback.call(iRID, iParameter.clusterPosition);
-        }
+      realCallback = (iRID, response) -> {
+        iCallback.call(iRID, response.getIdentity().getClusterPosition());
+        updateCollectionsFromChanges(collectionManager, response.getChangedIds());
       };
     }
-    // The Upper layer require to return this also if it not really receive response from the network
+    // The Upper layer require to return this also if it not really received response from the network
     final OPhysicalPosition ppos = new OPhysicalPosition(iRecordType);
-    asyncNetworkOperation(new OCreateRecordRequest(iContent, iRid, iRecordType),
-        new OCreateRecordResponse(iRid, ppos, collectionManager, iMode), iMode, iRid, realCallback,
+    final OCreateRecordRequest request = new OCreateRecordRequest(iContent, iRid, iRecordType);
+    final OCreateRecordResponse response = new OCreateRecordResponse();
+    Long res = asyncNetworkOperation(request, response, iMode, iRid, realCallback,
         "Error on create record in cluster " + iRid.getClusterId());
+    if (res != null) {
+      ppos.clusterPosition = response.getIdentity().getClusterPosition();
+      ppos.recordVersion = response.getVersion();
+      // THIS IS A COMPATIBILITY FIX TO AVOID TO FILL THE CLUSTER ID IN CASE OF ASYNC
+      if (iMode == 0) {
+        iRid.setClusterId(response.getIdentity().getClusterId());
+        iRid.setClusterPosition(response.getIdentity().getClusterPosition());
+      }
+      updateCollectionsFromChanges(collectionManager, response.getChangedIds());
+    }
 
     return new OStorageOperationResult<OPhysicalPosition>(ppos);
+  }
+
+  private void updateCollectionsFromChanges(final OSBTreeCollectionManager collectionManager,
+      final Map<UUID, OBonsaiCollectionPointer> changes) {
+    if (collectionManager != null) {
+      for (Entry<UUID, OBonsaiCollectionPointer> coll : changes.entrySet()) {
+        collectionManager.updateCollectionPointer(coll.getKey(), coll.getValue());
+      }
+      if (ORecordSerializationContext.getDepth() <= 1)
+        collectionManager.clearPendingCollections();
+    }
   }
 
   @Override
@@ -640,7 +659,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       // PENDING NETWORK OPERATION, CAN'T EXECUTE IT NOW
       return new OStorageOperationResult<ORawBuffer>(null);
 
-    OReadRecordRequest request = new OReadRecordRequest(iIgnoreCache, iRid, iFetchPlan);
+    OReadRecordRequest request = new OReadRecordRequest(iIgnoreCache, iRid, iFetchPlan, false);
     OReadRecordResponse response = new OReadRecordResponse();
 
     return networkOperation(request, response, "Error on read record " + iRid);
@@ -661,14 +680,26 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
   public OStorageOperationResult<Integer> updateRecord(final ORecordId iRid, final boolean updateContent, final byte[] iContent,
       final int iVersion, final byte iRecordType, final int iMode, final ORecordCallback<Integer> iCallback) {
+
     final OSBTreeCollectionManager collectionManager = ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager();
 
-    Integer resVersion = asyncNetworkOperation(new OUpdateRecordRequest(iRid, iContent, iVersion, updateContent, iRecordType),
-        new OUpdateRecordResponse(collectionManager), iMode, iRid, iCallback, "Error on update record " + iRid);
+    ORecordCallback<OUpdateRecordResponse> realCallback = null;
+    if (iCallback != null) {
+      realCallback = (iRID, response) -> {
+        iCallback.call(iRID, response.getVersion());
+        updateCollectionsFromChanges(collectionManager, response.getChanges());
+      };
+    }
 
-    if (resVersion == null)
+    OUpdateRecordRequest request = new OUpdateRecordRequest(iRid, iContent, iVersion, updateContent, iRecordType);
+    OUpdateRecordResponse response = new OUpdateRecordResponse();
+    Integer resVersion = asyncNetworkOperation(request, response, iMode, iRid, realCallback, "Error on update record " + iRid);
+
+    if (resVersion != null) {
       // Returning given version in case of no answer from server
-      resVersion = iVersion;
+      resVersion = response.getVersion();
+      updateCollectionsFromChanges(collectionManager, response.getChanges());
+    }
     return new OStorageOperationResult<Integer>(resVersion);
   }
 
@@ -679,16 +710,27 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
   public OStorageOperationResult<Boolean> deleteRecord(final ORecordId iRid, final int iVersion, final int iMode,
       final ORecordCallback<Boolean> iCallback) {
-    Boolean resDelete = asyncNetworkOperation(new ODeleteRecordRequest(iRid, iVersion), new ODeleteRecordResponse(), iMode, iRid,
-        iCallback, "Error on delete record " + iRid);
+    ORecordCallback<ODeleteRecordResponse> realCallback = null;
+    if (iCallback != null)
+      realCallback = (iRID, response) -> iCallback.call(iRID, response.getResult());
+
+    final ODeleteRecordRequest request = new ODeleteRecordRequest(iRid, iVersion);
+    final ODeleteRecordResponse response = new ODeleteRecordResponse();
+    Boolean resDelete = asyncNetworkOperation(request, response, iMode, iRid, realCallback, "Error on delete record " + iRid);
     return new OStorageOperationResult<Boolean>(resDelete);
   }
 
   @Override
   public OStorageOperationResult<Boolean> hideRecord(final ORecordId recordId, final int mode,
       final ORecordCallback<Boolean> callback) {
-    Boolean resHide = asyncNetworkOperation(new OHideRecordRequest(recordId), new OHideRecordResponse(), mode, recordId, callback,
-        "Error on hide record " + recordId);
+
+    ORecordCallback<OHideRecordResponse> realCallback = null;
+    if (callback != null)
+      realCallback = (iRID, response) -> callback.call(iRID, response.getResult());
+
+    final OHideRecordRequest request = new OHideRecordRequest(recordId);
+    final OHideRecordResponse response = new OHideRecordResponse();
+    Boolean resHide = asyncNetworkOperation(request, response, mode, recordId, realCallback, "Error on hide record " + recordId);
     return new OStorageOperationResult<Boolean>(resHide);
   }
 
@@ -696,8 +738,14 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   public boolean cleanOutRecord(final ORecordId recordId, final int recordVersion, final int iMode,
       final ORecordCallback<Boolean> callback) {
 
-    return asyncNetworkOperation(new OCleanOutRecordRequest(recordVersion, recordId), new OCleanOutRecordResponse(), iMode,
-        recordId, callback, "Error on delete record " + recordId);
+    ORecordCallback<OCleanOutRecordResponse> realCallback = null;
+    if (callback != null)
+      realCallback = (iRID, response) -> callback.call(iRID, response.getResult());
+
+    final OCleanOutRecordRequest request = new OCleanOutRecordRequest(recordVersion, recordId);
+    final OCleanOutRecordResponse response = new OCleanOutRecordResponse();
+    Boolean result = asyncNetworkOperation(request, response, iMode, recordId, realCallback, "Error on delete record " + recordId);
+    return result;
   }
 
   @Override

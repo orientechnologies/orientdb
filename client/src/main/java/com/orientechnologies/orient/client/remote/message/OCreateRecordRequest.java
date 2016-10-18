@@ -63,7 +63,7 @@ public class OCreateRecordRequest implements OBinaryRequest {
     network.writeByte((byte) mode);
   }
 
-  public void read(int protocolVersion, OChannelBinary channel) throws IOException {
+  public void read(OChannelBinary channel, int protocolVersion, String serializerName) throws IOException {
     final int dataSegmentId = protocolVersion < 24 ? channel.readInt() : 0;
 
     rid = new ORecordId(channel.readShort(), ORID.CLUSTER_POS_INVALID);

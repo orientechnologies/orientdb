@@ -26,8 +26,14 @@ import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.UUID;
 import java.util.logging.Level;
 
 import com.orientechnologies.common.collection.OMultiValue;
@@ -42,7 +48,24 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.ONullSerializer;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.client.remote.OCollectionNetworkSerializer;
+import com.orientechnologies.orient.client.remote.SimpleValueFetchPlanCommandListener;
+import com.orientechnologies.orient.client.remote.message.OCleanOutRecordRequest;
+import com.orientechnologies.orient.client.remote.message.OCleanOutRecordResponse;
+import com.orientechnologies.orient.client.remote.message.OCommandRequest;
+import com.orientechnologies.orient.client.remote.message.OCommandResponse;
+import com.orientechnologies.orient.client.remote.message.OCommandResponseServer;
 import com.orientechnologies.orient.client.remote.message.OCreateRecordRequest;
+import com.orientechnologies.orient.client.remote.message.OCreateRecordResponse;
+import com.orientechnologies.orient.client.remote.message.ODeleteRecordRequest;
+import com.orientechnologies.orient.client.remote.message.ODeleteRecordResponse;
+import com.orientechnologies.orient.client.remote.message.OHideRecordRequest;
+import com.orientechnologies.orient.client.remote.message.OHideRecordResponse;
+import com.orientechnologies.orient.client.remote.message.OReadRecordIfVersionIsNotLatestRequest;
+import com.orientechnologies.orient.client.remote.message.OReadRecordIfVersionIsNotLatestResponse;
+import com.orientechnologies.orient.client.remote.message.OReadRecordRequest;
+import com.orientechnologies.orient.client.remote.message.OReadRecordResponse;
+import com.orientechnologies.orient.client.remote.message.OUpdateRecordRequest;
+import com.orientechnologies.orient.client.remote.message.OUpdateRecordResponse;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OCommandCache;
@@ -62,7 +85,12 @@ import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollecti
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
-import com.orientechnologies.orient.core.exception.*;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.exception.OSecurityAccessException;
+import com.orientechnologies.orient.core.exception.OSerializationException;
+import com.orientechnologies.orient.core.exception.OTransactionAbortedException;
 import com.orientechnologies.orient.core.fetch.OFetchContext;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.fetch.OFetchListener;
@@ -85,18 +113,31 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORecordMetadata;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineClusterException;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
-import com.orientechnologies.orient.enterprise.channel.binary.*;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryServer;
+import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
+import com.orientechnologies.orient.enterprise.channel.binary.OTokenSecurityException;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerInfo;
 import com.orientechnologies.orient.server.ShutdownHelper;
-import com.orientechnologies.orient.server.distributed.*;
+import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
+import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
+import com.orientechnologies.orient.server.distributed.ODistributedException;
+import com.orientechnologies.orient.server.distributed.ODistributedRequest;
+import com.orientechnologies.orient.server.distributed.ODistributedResponse;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
@@ -1347,9 +1388,11 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   protected void command(OClientConnection connection) throws IOException {
     setDataCommandInfo(connection, "Execute remote command");
 
-    byte type = channel.readByte();
-    final boolean live = type == 'l';
-    final boolean asynch = type == 'a';
+    OCommandRequest request = new OCommandRequest();
+    request.read(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
+
+    final boolean live = request.isLive();
+    final boolean asynch = request.isAsynch();
     if (connection == null && connection.getDatabase() == null)
       throw new IOException("Found invalid session");
 
@@ -1359,7 +1402,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       name = dbSerializerName;
     ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(name);
 
-    OCommandRequestText command = OStreamSerializerAnyStreamable.INSTANCE.fromStream(channel.readBytes(), ser);
+    OCommandRequestText command = request.getQuery();
 
     final Map<Object, Object> params = command.getParameters();
 
@@ -1440,131 +1483,13 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         boolean isRecordResultSet = true;
         if (command instanceof OCommandRequestInternal)
           isRecordResultSet = command.isRecordResultSet();
-
-        serializeValue(connection, listener, result, false, isRecordResultSet);
-
-        if (listener instanceof OSyncCommandResultListener) {
-          // SEND FETCHED RECORDS TO LOAD IN CLIENT CACHE
-          for (ORecord rec : ((OSyncCommandResultListener) listener).getFetchedRecordsToSend()) {
-            channel.writeByte((byte) 2); // CLIENT CACHE RECORD. IT
-            // ISN'T PART OF THE
-            // RESULT SET
-            writeIdentifiable(connection, rec);
-          }
-
-          channel.writeByte((byte) 0); // NO MORE RECORDS
-        }
+        OCommandResponseServer response = new OCommandResponseServer(result, listener, isRecordResultSet);
+        response.write(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
       }
 
     } finally {
       connection.getData().command = null;
       endResponse(connection);
-    }
-  }
-
-  public void serializeValue(final OClientConnection connection, final OAbstractCommandResultListener listener, Object result,
-      boolean load, boolean isRecordResultSet) throws IOException {
-    if (result == null) {
-      // NULL VALUE
-      channel.writeByte((byte) 'n');
-    } else if (result instanceof OIdentifiable) {
-      // RECORD
-      channel.writeByte((byte) 'r');
-      if (load && result instanceof ORecordId)
-        result = ((ORecordId) result).getRecord();
-
-      if (listener != null)
-        listener.result(result);
-      writeIdentifiable(connection, (OIdentifiable) result);
-    } else if (result instanceof ODocumentWrapper) {
-      // RECORD
-      channel.writeByte((byte) 'r');
-      final ODocument doc = ((ODocumentWrapper) result).getDocument();
-      if (listener != null)
-        listener.result(doc);
-      writeIdentifiable(connection, doc);
-    } else if (!isRecordResultSet) {
-      writeSimpleValue(connection, listener, result);
-    } else if (OMultiValue.isMultiValue(result)) {
-      final byte collectionType = result instanceof Set ? (byte) 's' : (byte) 'l';
-      channel.writeByte(collectionType);
-      channel.writeInt(OMultiValue.getSize(result));
-      for (Object o : OMultiValue.getMultiValueIterable(result, false)) {
-        try {
-          if (load && o instanceof ORecordId)
-            o = ((ORecordId) o).getRecord();
-          if (listener != null)
-            listener.result(o);
-
-          writeIdentifiable(connection, (OIdentifiable) o);
-        } catch (Exception e) {
-          OLogManager.instance().warn(this, "Cannot serialize record: " + o);
-          // WRITE NULL RECORD TO AVOID BREAKING PROTOCOL
-          writeIdentifiable(connection, null);
-        }
-      }
-    } else if (OMultiValue.isIterable(result)) {
-      if (connection.getData().protocolVersion >= OChannelBinaryProtocol.PROTOCOL_VERSION_32) {
-        channel.writeByte((byte) 'i');
-        for (Object o : OMultiValue.getMultiValueIterable(result)) {
-          try {
-            if (load && o instanceof ORecordId)
-              o = ((ORecordId) o).getRecord();
-            if (listener != null)
-              listener.result(o);
-
-            channel.writeByte((byte) 1); // ONE MORE RECORD
-            writeIdentifiable(connection, (OIdentifiable) o);
-          } catch (Exception e) {
-            OLogManager.instance().warn(this, "Cannot serialize record: " + o);
-          }
-        }
-        channel.writeByte((byte) 0); // NO MORE RECORD
-      } else {
-        // OLD RELEASES: TRANSFORM IN A COLLECTION
-        final byte collectionType = result instanceof Set ? (byte) 's' : (byte) 'l';
-        channel.writeByte(collectionType);
-        channel.writeInt(OMultiValue.getSize(result));
-        for (Object o : OMultiValue.getMultiValueIterable(result)) {
-          try {
-            if (load && o instanceof ORecordId)
-              o = ((ORecordId) o).getRecord();
-            if (listener != null)
-              listener.result(o);
-
-            writeIdentifiable(connection, (OIdentifiable) o);
-          } catch (Exception e) {
-            OLogManager.instance().warn(this, "Cannot serialize record: " + o);
-          }
-        }
-      }
-
-    } else {
-      // ANY OTHER (INCLUDING LITERALS)
-      writeSimpleValue(connection, listener, result);
-    }
-  }
-
-  private void writeSimpleValue(OClientConnection connection, OAbstractCommandResultListener listener, Object result)
-      throws IOException {
-
-    if (connection.getData().protocolVersion >= OChannelBinaryProtocol.PROTOCOL_VERSION_35) {
-      channel.writeByte((byte) 'w');
-      ODocument document = new ODocument();
-      document.field("result", result);
-      writeIdentifiable(connection, document);
-      if (listener != null)
-        listener.linkdedBySimpleValue(document);
-    } else {
-      channel.writeByte((byte) 'a');
-      final StringBuilder value = new StringBuilder(64);
-      if (listener != null) {
-        ODocument document = new ODocument();
-        document.field("result", result);
-        listener.linkdedBySimpleValue(document);
-      }
-      ORecordSerializerStringAbstract.fieldTypeToString(value, OType.getTypeByClass(result.getClass()), result);
-      channel.writeString(value.toString());
     }
   }
 
@@ -1574,17 +1499,17 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     if (!isConnectionAlive(connection))
       return;
 
-    final ORID rid = channel.readRID();
-    final int version = channel.readVersion();
-    final byte mode = channel.readByte();
+    ODeleteRecordRequest request = new ODeleteRecordRequest();
+    request.read(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
 
-    final int result = deleteRecord(connection.getDatabase(), rid, version);
+    final int result = deleteRecord(connection.getDatabase(), request.getRid(), request.getVersion());
 
-    if (mode < 2) {
+    if (request.getMode() < 2) {
+      ODeleteRecordResponse response = new ODeleteRecordResponse(result == 1);
       beginResponse();
       try {
         sendOk(connection, clientTxId);
-        channel.writeByte((byte) result);
+        response.write(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
       } finally {
         endResponse(connection);
       }
@@ -1597,16 +1522,17 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     if (!isConnectionAlive(connection))
       return;
 
-    final ORID rid = channel.readRID();
-    final byte mode = channel.readByte();
+    OHideRecordRequest request = new OHideRecordRequest();
+    request.read(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
 
-    final int result = hideRecord(connection.getDatabase(), rid);
+    final int result = hideRecord(connection.getDatabase(), request.getRecordId());
 
-    if (mode < 2) {
+    if (request.getMode() < 2) {
+      OHideRecordResponse response = new OHideRecordResponse(result == 1);
       beginResponse();
       try {
         sendOk(connection, clientTxId);
-        channel.writeByte((byte) result);
+        response.write(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
       } finally {
         endResponse(connection);
       }
@@ -1619,17 +1545,17 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     if (!isConnectionAlive(connection))
       return;
 
-    final ORID rid = channel.readRID();
-    final int version = channel.readVersion();
-    final byte mode = channel.readByte();
+    OCleanOutRecordRequest request = new OCleanOutRecordRequest();
+    request.read(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
 
-    final int result = cleanOutRecord(connection.getDatabase(), rid, version);
+    final int result = cleanOutRecord(connection.getDatabase(), request.getRecordId(), request.getRecordVersion());
 
-    if (mode < 2) {
+    if (request.getMode() < 2) {
+      OCleanOutRecordResponse response = new OCleanOutRecordResponse(result == 1);
       beginResponse();
       try {
         sendOk(connection, clientTxId);
-        channel.writeByte((byte) result);
+        response.write(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
       } finally {
         endResponse(connection);
       }
@@ -1653,25 +1579,31 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     if (!isConnectionAlive(connection))
       return;
 
-    final ORecordId rid = channel.readRID();
-    boolean updateContent = true;
-    if (connection.getData().protocolVersion >= 23)
-      updateContent = channel.readBoolean();
-    final byte[] buffer = channel.readBytes();
-    final int version = channel.readVersion();
-    final byte recordType = channel.readByte();
-    final byte mode = channel.readByte();
+    OUpdateRecordRequest request = new OUpdateRecordRequest();
+    request.read(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
+    final ORecordId rid = request.getRid();
+    boolean updateContent = request.isUpdateContent();
+    final byte[] buffer = request.getContent();
+    final int version = request.getVersion();
+    final byte recordType = request.getRecordType();
+    final byte mode = request.getMode();
 
     final int newVersion = updateRecord(connection, rid, buffer, version, recordType, updateContent);
 
     if (mode < 2) {
+      Map<UUID, OBonsaiCollectionPointer> changedIds;
+      OSBTreeCollectionManager collectionManager = connection.getDatabase().getSbTreeCollectionManager();
+      if (collectionManager != null) {
+        changedIds = new HashMap<>(collectionManager.changedIds());
+        collectionManager.clearChangedIds();
+      } else
+        changedIds = new HashMap<>();
+      OUpdateRecordResponse response = new OUpdateRecordResponse(newVersion, changedIds);
       beginResponse();
       try {
         sendOk(connection, clientTxId);
-        channel.writeVersion(newVersion);
+        response.write(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
 
-        if (connection.getData().protocolVersion >= 20)
-          sendCollectionChanges(connection);
       } finally {
         endResponse(connection);
       }
@@ -1684,21 +1616,24 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     if (!isConnectionAlive(connection))
       return;
     OCreateRecordRequest request = new OCreateRecordRequest();
-    request.read(connection.getData().protocolVersion, channel);
+    request.read(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
 
     final ORecord record = createRecord(connection, request.getRid(), request.getContent(), request.getRecordType());
 
     if (request.getMode() < 2) {
+      Map<UUID, OBonsaiCollectionPointer> changedIds;
+      OSBTreeCollectionManager collectionManager = connection.getDatabase().getSbTreeCollectionManager();
+      if (collectionManager != null) {
+        changedIds = new HashMap<>(collectionManager.changedIds());
+        collectionManager.clearChangedIds();
+      } else
+        changedIds = new HashMap<>();
+
+      OCreateRecordResponse response = new OCreateRecordResponse((ORecordId) record.getIdentity(), record.getVersion(), changedIds);
       beginResponse();
       try {
         sendOk(connection, clientTxId);
-        if (connection.getData().protocolVersion > OChannelBinaryProtocol.PROTOCOL_VERSION_25)
-          channel.writeShort((short) record.getIdentity().getClusterId());
-        channel.writeLong(record.getIdentity().getClusterPosition());
-        channel.writeVersion(record.getVersion());
-
-        if (connection.getData().protocolVersion >= 20)
-          sendCollectionChanges(connection);
+        response.write(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
       } finally {
         endResponse(connection);
       }
@@ -1730,69 +1665,38 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
     if (!isConnectionAlive(connection))
       return;
+    OReadRecordRequest request = new OReadRecordRequest();
+    request.read(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
 
-    final ORecordId rid = channel.readRID();
-    final String fetchPlanString = channel.readString();
+    final ORecordId rid = request.getRid();
+    final String fetchPlanString = request.getFetchPlan();
     boolean ignoreCache = false;
-    ignoreCache = channel.readByte() == 1;
+    ignoreCache = request.isIgnoreCache();
 
     boolean loadTombstones = false;
-    loadTombstones = channel.readByte() > 0;
-
+    loadTombstones = request.isLoadTumbstone();
+    OReadRecordResponse response;
     if (rid.getClusterId() == 0 && rid.getClusterPosition() == 0) {
       // @COMPATIBILITY 0.9.25
       // SEND THE DB CONFIGURATION INSTEAD SINCE IT WAS ON RECORD 0:0
       OFetchHelper.checkFetchPlanValid(fetchPlanString);
 
-      beginResponse();
-      try {
-        sendOk(connection, clientTxId);
-        channel.writeByte((byte) 1);
-        if (connection.getData().protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_27) {
-          channel
-              .writeBytes(connection.getDatabase().getStorage().getConfiguration().toStream(connection.getData().protocolVersion));
-          channel.writeVersion(0);
-          channel.writeByte(OBlob.RECORD_TYPE);
-        } else {
-          channel.writeByte(OBlob.RECORD_TYPE);
-          channel.writeVersion(0);
-          channel
-              .writeBytes(connection.getDatabase().getStorage().getConfiguration().toStream(connection.getData().protocolVersion));
-        }
-        channel.writeByte((byte) 0); // NO MORE RECORDS
-      } finally {
-        endResponse(connection);
-      }
+      byte[] record = connection.getDatabase().getStorage().getConfiguration().toStream(connection.getData().protocolVersion);
+      response = new OReadRecordResponse(OBlob.RECORD_TYPE, 0, record, new HashSet<>());
 
     } else {
       final ORecord record = connection.getDatabase().load(rid, fetchPlanString, ignoreCache, loadTombstones,
           OStorage.LOCKING_STRATEGY.NONE);
-
-      beginResponse();
-      try {
-        sendOk(connection, clientTxId);
-
+      if (record != null) {
+        byte[] bytes = getRecordBytes(connection, record);
+        final Set<ORecord> recordsToSend = new HashSet<ORecord>();
         if (record != null) {
-          channel.writeByte((byte) 1); // HAS RECORD
-          byte[] bytes = getRecordBytes(connection, record);
-          int length = trimCsvSerializedContent(connection, bytes);
-          if (connection.getData().protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_27) {
-            channel.writeBytes(bytes, length);
-            channel.writeVersion(record.getVersion());
-            channel.writeByte(ORecordInternal.getRecordType(record));
-          } else {
-            channel.writeByte(ORecordInternal.getRecordType(record));
-            channel.writeVersion(record.getVersion());
-            channel.writeBytes(bytes, length);
-          }
-
           if (fetchPlanString.length() > 0) {
             // BUILD THE SERVER SIDE RECORD TO ACCES TO THE FETCH
             // PLAN
             if (record instanceof ODocument) {
               final OFetchPlan fetchPlan = OFetchHelper.buildFetchPlan(fetchPlanString);
 
-              final Set<ORecord> recordsToSend = new HashSet<ORecord>();
               final ODocument doc = (ODocument) record;
               final OFetchListener listener = new ORemoteFetchListener() {
                 @Override
@@ -1803,24 +1707,24 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
               final OFetchContext context = new ORemoteFetchContext();
               OFetchHelper.fetch(doc, doc, fetchPlan, listener, context, "");
 
-              // SEND RECORDS TO LOAD IN CLIENT CACHE
-              for (ORecord d : recordsToSend) {
-                if (d.getIdentity().isValid()) {
-                  channel.writeByte((byte) 2); // CLIENT CACHE
-                  // RECORD. IT ISN'T PART OF THE RESULT SET
-                  writeIdentifiable(connection, d);
-                }
-              }
             }
-
           }
         }
-        channel.writeByte((byte) 0); // NO MORE RECORDS
-
-      } finally {
-        endResponse(connection);
+        response = new OReadRecordResponse(ORecordInternal.getRecordType(record), record.getVersion(), bytes, recordsToSend);
+      } else {
+        // No Record to send
+        response = new OReadRecordResponse((byte) 0, 0, null, null);
       }
+
     }
+    beginResponse();
+    try {
+      sendOk(connection, clientTxId);
+      response.write(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
+    } finally {
+      endResponse(connection);
+    }
+
   }
 
   protected void readRecordIfVersionIsNotLatest(OClientConnection connection) throws IOException {
@@ -1828,89 +1732,63 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
     if (!isConnectionAlive(connection))
       return;
+    OReadRecordIfVersionIsNotLatestRequest request = new OReadRecordIfVersionIsNotLatestRequest();
+    request.read(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
 
-    final ORecordId rid = channel.readRID();
-    final int recordVersion = channel.readVersion();
-    final String fetchPlanString = channel.readString();
+    final ORecordId rid = request.getRid();
+    final int recordVersion = request.getRecordVersion();
+    final String fetchPlanString = request.getFetchPlan();
 
-    boolean ignoreCache = channel.readByte() == 1;
+    boolean ignoreCache = request.isIgnoreCache();
 
+    OReadRecordIfVersionIsNotLatestResponse response;
     if (rid.getClusterId() == 0 && rid.getClusterPosition() == 0) {
       // @COMPATIBILITY 0.9.25
       // SEND THE DB CONFIGURATION INSTEAD SINCE IT WAS ON RECORD 0:0
       OFetchHelper.checkFetchPlanValid(fetchPlanString);
-
-      beginResponse();
-      try {
-        sendOk(connection, clientTxId);
-        channel.writeByte((byte) 1);
-        if (connection.getData().protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_27) {
-          channel
-              .writeBytes(connection.getDatabase().getStorage().getConfiguration().toStream(connection.getData().protocolVersion));
-          channel.writeVersion(0);
-          channel.writeByte(OBlob.RECORD_TYPE);
-        } else {
-          channel.writeByte(OBlob.RECORD_TYPE);
-          channel.writeVersion(0);
-          channel
-              .writeBytes(connection.getDatabase().getStorage().getConfiguration().toStream(connection.getData().protocolVersion));
-        }
-        channel.writeByte((byte) 0); // NO MORE RECORDS
-      } finally {
-        endResponse(connection);
-      }
+      byte[] record = connection.getDatabase().getStorage().getConfiguration().toStream(connection.getData().protocolVersion);
+      response = new OReadRecordIfVersionIsNotLatestResponse(OBlob.RECORD_TYPE, 0, record, new HashSet<>());
 
     } else {
       final ORecord record = connection.getDatabase().loadIfVersionIsNotLatest(rid, recordVersion, fetchPlanString, ignoreCache);
 
       beginResponse();
-      try {
-        sendOk(connection, clientTxId);
 
-        if (record != null) {
-          channel.writeByte((byte) 1); // HAS RECORD
-          byte[] bytes = getRecordBytes(connection, record);
-          int length = trimCsvSerializedContent(connection, bytes);
+      if (record != null) {
+        byte[] bytes = getRecordBytes(connection, record);
+        final Set<ORecord> recordsToSend = new HashSet<ORecord>();
+        if (fetchPlanString.length() > 0) {
+          // BUILD THE SERVER SIDE RECORD TO ACCES TO THE FETCH
+          // PLAN
+          if (record instanceof ODocument) {
+            final OFetchPlan fetchPlan = OFetchHelper.buildFetchPlan(fetchPlanString);
 
-          channel.writeByte(ORecordInternal.getRecordType(record));
-          channel.writeVersion(record.getVersion());
-          channel.writeBytes(bytes, length);
-
-          if (fetchPlanString.length() > 0) {
-            // BUILD THE SERVER SIDE RECORD TO ACCES TO THE FETCH
-            // PLAN
-            if (record instanceof ODocument) {
-              final OFetchPlan fetchPlan = OFetchHelper.buildFetchPlan(fetchPlanString);
-
-              final Set<ORecord> recordsToSend = new HashSet<ORecord>();
-              final ODocument doc = (ODocument) record;
-              final OFetchListener listener = new ORemoteFetchListener() {
-                @Override
-                protected void sendRecord(ORecord iLinked) {
-                  recordsToSend.add(iLinked);
-                }
-              };
-              final OFetchContext context = new ORemoteFetchContext();
-              OFetchHelper.fetch(doc, doc, fetchPlan, listener, context, "");
-
-              // SEND RECORDS TO LOAD IN CLIENT CACHE
-              for (ORecord d : recordsToSend) {
-                if (d.getIdentity().isValid()) {
-                  channel.writeByte((byte) 2); // CLIENT CACHE
-                  // RECORD. IT ISN'T PART OF THE RESULT SET
-                  writeIdentifiable(connection, d);
-                }
+            final ODocument doc = (ODocument) record;
+            final OFetchListener listener = new ORemoteFetchListener() {
+              @Override
+              protected void sendRecord(ORecord iLinked) {
+                recordsToSend.add(iLinked);
               }
-            }
-
+            };
+            final OFetchContext context = new ORemoteFetchContext();
+            OFetchHelper.fetch(doc, doc, fetchPlan, listener, context, "");
           }
         }
-        channel.writeByte((byte) 0); // NO MORE RECORDS
-
-      } finally {
-        endResponse(connection);
+        response = new OReadRecordIfVersionIsNotLatestResponse(ORecordInternal.getRecordType(record), record.getVersion(), bytes,
+            recordsToSend);
+      } else {
+        response = new OReadRecordIfVersionIsNotLatestResponse((byte) 0, 0, null, null);
       }
+
     }
+    beginResponse();
+    try {
+      sendOk(connection, clientTxId);
+      response.write(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
+    } finally {
+      endResponse(connection);
+    }
+
   }
 
   protected void beginResponse() {
@@ -2051,7 +1929,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     }
   }
 
-  public String getRecordSerializerName(OClientConnection connection) {
+  public static String getRecordSerializerName(OClientConnection connection) {
     return connection.getData().serializationImpl;
   }
 
@@ -2510,19 +2388,22 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
    * - 8 bytes: position in cluster <br>
    * - 4 bytes: record version <br>
    * - x bytes: record content <br>
-   *
+   * 
+   * @param channel TODO
    * @param connection
    * @param o
+   *
    * @throws IOException
    */
-  public void writeIdentifiable(OClientConnection connection, final OIdentifiable o) throws IOException {
+  public static void writeIdentifiable(OChannelBinary channel, OClientConnection connection, final OIdentifiable o)
+      throws IOException {
     if (o == null)
       channel.writeShort(OChannelBinaryProtocol.RECORD_NULL);
     else if (o instanceof ORecordId) {
       channel.writeShort(OChannelBinaryProtocol.RECORD_RID);
       channel.writeRID((ORID) o);
     } else {
-      writeRecord(connection, o.getRecord());
+      writeRecord(channel, connection, o.getRecord());
     }
   }
 
@@ -2647,7 +2528,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     return currentRecord.getVersion();
   }
 
-  public byte[] getRecordBytes(OClientConnection connection, final ORecord iRecord) {
+  public static byte[] getRecordBytes(OClientConnection connection, final ORecord iRecord) {
 
     final byte[] stream;
     String dbSerializerName = null;
@@ -2665,7 +2546,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     return stream;
   }
 
-  private void writeRecord(OClientConnection connection, final ORecord iRecord) throws IOException {
+  private static void writeRecord(OChannelBinary channel, OClientConnection connection, final ORecord iRecord) throws IOException {
     channel.writeShort((short) 0);
     channel.writeByte(ORecordInternal.getRecordType(iRecord));
     channel.writeRID(iRecord.getIdentity());
@@ -2680,13 +2561,12 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     } catch (Exception e) {
       channel.writeBytes(null);
       final String message = "Error on unmarshalling record " + iRecord.getIdentity().toString() + " (" + e + ")";
-      OLogManager.instance().error(this, message, e);
 
       throw OException.wrapException(new OSerializationException(message), e);
     }
   }
 
-  protected int trimCsvSerializedContent(OClientConnection connection, final byte[] stream) {
+  protected static int trimCsvSerializedContent(OClientConnection connection, final byte[] stream) {
     int realLength = stream.length;
     final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     if (db != null && db instanceof ODatabaseDocument) {

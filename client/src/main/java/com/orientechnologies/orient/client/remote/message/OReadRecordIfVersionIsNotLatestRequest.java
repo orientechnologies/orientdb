@@ -25,19 +25,23 @@ import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
 public class OReadRecordIfVersionIsNotLatestRequest implements OBinaryRequest {
-  private final ORecordId rid;
-  private final int       recordVersion;
-  private final String    fetchPlan;
-  private final boolean   ignoreCache;
+  private ORecordId rid;
+  private int       recordVersion;
+  private String    fetchPlan;
+  private boolean   ignoreCache;
 
   public OReadRecordIfVersionIsNotLatestRequest(ORecordId rid, int recordVersion, String fetchPlan, boolean ignoreCache) {
     this.rid = rid;
     this.recordVersion = recordVersion;
     this.fetchPlan = fetchPlan;
     this.ignoreCache = ignoreCache;
+  }
+
+  public OReadRecordIfVersionIsNotLatestRequest() {
   }
 
   @Override
@@ -48,8 +52,32 @@ public class OReadRecordIfVersionIsNotLatestRequest implements OBinaryRequest {
     network.writeByte((byte) (ignoreCache ? 1 : 0));
   }
 
+  public void read(OChannelBinary channel, int protocolVersion, String serializerName) throws IOException {
+    rid = channel.readRID();
+    recordVersion = channel.readVersion();
+    fetchPlan = channel.readString();
+    ignoreCache = channel.readByte() != 0;
+  }
+
   @Override
   public byte getCommand() {
     return OChannelBinaryProtocol.REQUEST_RECORD_LOAD_IF_VERSION_NOT_LATEST;
   }
+
+  public ORecordId getRid() {
+    return rid;
+  }
+
+  public int getRecordVersion() {
+    return recordVersion;
+  }
+
+  public String getFetchPlan() {
+    return fetchPlan;
+  }
+
+  public boolean isIgnoreCache() {
+    return ignoreCache;
+  }
+
 }

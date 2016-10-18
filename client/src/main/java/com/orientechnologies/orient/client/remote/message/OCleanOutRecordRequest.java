@@ -25,6 +25,7 @@ import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
 public class OCleanOutRecordRequest implements OBinaryRequest {
@@ -32,18 +33,23 @@ public class OCleanOutRecordRequest implements OBinaryRequest {
   private ORecordId recordId;
   private byte      mode;
 
+  public OCleanOutRecordRequest() {
+  }
+
   public OCleanOutRecordRequest(int recordVersion, ORecordId recordId) {
     this.recordVersion = recordVersion;
     this.recordId = recordId;
   }
 
-  public byte getMode() {
-    return mode;
-  }
-
   @Override
   public byte getCommand() {
     return OChannelBinaryProtocol.REQUEST_RECORD_CLEAN_OUT;
+  }
+
+  public void read(OChannelBinary channel, int protocolVersion, String serializerName) throws IOException {
+    recordId = channel.readRID();
+    recordVersion = channel.readVersion();
+    mode = channel.readByte();
   }
 
   @Override
@@ -52,4 +58,17 @@ public class OCleanOutRecordRequest implements OBinaryRequest {
     network.writeVersion(recordVersion);
     network.writeByte((byte) mode);
   }
+
+  public byte getMode() {
+    return mode;
+  }
+
+  public ORecordId getRecordId() {
+    return recordId;
+  }
+
+  public int getRecordVersion() {
+    return recordVersion;
+  }
+
 }
