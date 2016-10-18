@@ -1031,8 +1031,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       final Set<String> servers = dCfg.getAllConfiguredServers();
       servers.remove(nodeName);
 
-      sendRequest(dbName, null, servers, new ODropDatabaseTask(), getNextMessageIdCounter(),
-          ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
+      if (!servers.isEmpty())
+        sendRequest(dbName, null, servers, new ODropDatabaseTask(), getNextMessageIdCounter(),
+            ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
     }
 
     super.onDrop(iDatabase);
