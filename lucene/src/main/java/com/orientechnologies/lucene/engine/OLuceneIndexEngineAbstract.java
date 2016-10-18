@@ -26,7 +26,6 @@ import com.orientechnologies.lucene.query.QueryContext;
 import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.lucene.tx.OLuceneTxChangesMultiRid;
 import com.orientechnologies.lucene.tx.OLuceneTxChangesSingleRid;
-import com.orientechnologies.orient.core.OOrientListener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -64,8 +63,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory.AnalyzerKind.INDEX;
 import static com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory.AnalyzerKind.QUERY;
 
-public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdaptiveExternal
-    implements OLuceneIndexEngine, OOrientListener {
+public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdaptiveExternal implements OLuceneIndexEngine {
 
   public static final String               RID              = "RID";
   public static final String               KEY              = "KEY";
@@ -83,7 +81,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
   protected Version                        version;
   protected Map<String, Boolean>           collectionFields = new HashMap<String, Boolean>();
   protected TimerTask                      commitTask;
-  protected AtomicBoolean                  closed           = new AtomicBoolean(true);
+  protected AtomicBoolean                  closed           = new AtomicBoolean(false);
   private long                             reopenToken;
   private Analyzer                         indexAnalyzer;
   private Analyzer                         queryAnalyzer;
@@ -148,8 +146,6 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
   @Override
   public void init(String indexName, String indexType, OIndexDefinition indexDefinition, boolean isAutomatic, ODocument metadata) {
 
-    // FIXME how many timers are around?
-    Orient.instance().registerListener(this);
     commitTask = new TimerTask() {
       @Override
       public void run() {
@@ -181,11 +177,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
   }
 
   protected void commit() {
-    try {
-      indexWriter.commit();
-    } catch (IOException e) {
-      OLogManager.instance().error(this, "Error on committing Lucene index", e);
-    }
+    flush();
   }
 
   private void checkCollectionIndex(OIndexDefinition indexDefinition) {
@@ -221,6 +213,9 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
     nrt = new ControlledRealTimeReopenThread(indexWriter, searcherManager, 60.00, 0.1);
     nrt.setDaemon(true);
     nrt.start();
+
+    closed.set(false);
+
     flush();
   }
 
@@ -304,6 +299,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
     if (indexWriter != null && indexWriter.isOpen()) {
       indexWriter.commit();
       indexWriter.close();
+      closed.set(true);
     }
     if (commitTask != null) {
       commitTask.cancel();
@@ -497,21 +493,6 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
 
   protected Field.Store isToStore(String f) {
     return collectionFields.get(f) ? Field.Store.YES : Field.Store.NO;
-  }
-
-  @Override
-  public void onShutdown() {
-    close();
-  }
-
-  @Override
-  public void onStorageRegistered(OStorage storage) {
-
-  }
-
-  @Override
-  public void onStorageUnregistered(OStorage storage) {
-
   }
 
   @Override
