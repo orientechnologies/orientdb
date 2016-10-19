@@ -783,12 +783,15 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 
     @SuppressWarnings("rawtypes")
     protected Object setValue(final Object self, final String fieldName, Object valueToSet) {
+      
+        OType objectOType = OObjectEntitySerializer.getTypeByClass(self.getClass(), fieldName);
+        
         if (valueToSet == null) {
             Object oldValue = doc.field(fieldName);
             if (OObjectEntitySerializer.isCascadeDeleteField(self.getClass(), fieldName)
                     && oldValue instanceof OIdentifiable)
                 orphans.add(((OIdentifiable) oldValue).getIdentity());
-            setDocFieldValue(fieldName, valueToSet, OObjectEntitySerializer.getTypeByClass(self.getClass(), fieldName));
+            setDocFieldValue(fieldName, valueToSet, objectOType);
         } else if (!valueToSet.getClass().isAnonymousClass()) {
             if (valueToSet instanceof Proxy) {
                 ODocument docToSet = OObjectEntitySerializer.getDocument((Proxy) valueToSet);
@@ -799,7 +802,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
                         && oldValue instanceof OIdentifiable)
                     orphans.add(((OIdentifiable) oldValue).getIdentity());
                 setDocFieldValue(fieldName, docToSet,
-                        OObjectEntitySerializer.getTypeByClass(self.getClass(), fieldName));
+                        objectOType);
             } else if (valueToSet instanceof OIdentifiable) {
                 if (valueToSet instanceof ODocument
                         && OObjectEntitySerializer.isEmbeddedField(self.getClass(), fieldName))
@@ -809,7 +812,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
                         && oldValue instanceof OIdentifiable)
                     orphans.add(((OIdentifiable) oldValue).getIdentity());
                 setDocFieldValue(fieldName, valueToSet,
-                        OObjectEntitySerializer.getTypeByClass(self.getClass(), fieldName));
+                        objectOType);
             } else if (((valueToSet instanceof Collection<?> || valueToSet instanceof Map<?, ?>))
                     || valueToSet.getClass().isArray()) {
                 Class<?> genericMultiValueType = OReflectionHelper
@@ -839,7 +842,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
                     if (OObjectEntitySerializer.isToSerialize(valueToSet.getClass())) {
                         setDocFieldValue(fieldName, OObjectEntitySerializer.serializeFieldValue(
                                 OObjectEntitySerializer.getField(fieldName, self.getClass()).getType(), valueToSet),
-                                OObjectEntitySerializer.getTypeByClass(self.getClass(), fieldName));
+                                objectOType);
                     } else {
                         if (valueToSet.getClass().isArray()) {
                             final OClass schemaClass = doc.getSchemaClass();
@@ -851,21 +854,21 @@ public class OObjectProxyMethodHandler implements MethodHandler {
                                     OObjectEntitySerializer.typeToStream(valueToSet,
                                             schemaProperty != null ? schemaProperty.getType() : null, getDatabase(),
                                             doc),
-                                    OObjectEntitySerializer.getTypeByClass(self.getClass(), fieldName));
+                                    objectOType);
                         } else
                             setDocFieldValue(fieldName, valueToSet,
-                                    OObjectEntitySerializer.getTypeByClass(self.getClass(), fieldName));
+                                    objectOType);
                     }
                 }
             } else if (valueToSet.getClass().isEnum()) {
                 setDocFieldValue(fieldName, ((Enum) valueToSet).name(),
-                        OObjectEntitySerializer.getTypeByClass(self.getClass(), fieldName));
+                        objectOType);
             } else {
                 if (OObjectEntitySerializer.isToSerialize(valueToSet.getClass())) {
                     setDocFieldValue(fieldName,
                             OObjectEntitySerializer.serializeFieldValue(
                                     OObjectEntitySerializer.getField(fieldName, self.getClass()).getType(), valueToSet),
-                            OObjectEntitySerializer.getTypeByClass(self.getClass(), fieldName));
+                            objectOType);
                 } else if (getDatabase().getEntityManager()
                         .getEntityClass(valueToSet.getClass().getSimpleName()) != null
                         && !valueToSet.getClass().isEnum()) {
@@ -875,10 +878,10 @@ public class OObjectProxyMethodHandler implements MethodHandler {
                         ODocumentInternal.addOwner((ODocument) docToSet, doc);
 
                     setDocFieldValue(fieldName, docToSet,
-                            OObjectEntitySerializer.getTypeByClass(self.getClass(), fieldName));
+                            objectOType);
                 } else {
                     setDocFieldValue(fieldName, valueToSet,
-                            OObjectEntitySerializer.getTypeByClass(self.getClass(), fieldName));
+                            objectOType);
                 }
             }
             loadedFields.put(fieldName, doc.getVersion());
