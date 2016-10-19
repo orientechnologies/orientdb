@@ -196,7 +196,6 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     long[] longArray = new long[10];
     double[] doubleArray = new double[10];
     float[] floatArray = new float[10];
-    byte[] byteArray = new byte[10];
     boolean[] booleanArray = new boolean[10];
     Date[] dateArray = new Date[10];
     Calendar cal = Calendar.getInstance();
@@ -212,14 +211,12 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
       longArray[i] = i;
       doubleArray[i] = i;
       floatArray[i] = i;
-      byteArray[i] = (byte) i;
       booleanArray[i] = (i % 2 == 0);
       enumerationArray[i] = (i % 2 == 0) ? EnumTest.ENUM2 : ((i % 3 == 0) ? EnumTest.ENUM3 : EnumTest.ENUM1);
       cal.set(Calendar.DAY_OF_MONTH, (i + 1));
       dateArray[i] = cal.getTime();
     }
     javaObj.setText(textArray);
-    javaObj.setByteSimple(byteArray);
     javaObj.setDateField(dateArray);
     javaObj.setDoubleSimple(doubleArray);
     javaObj.setEnumeration(enumerationArray);
@@ -235,7 +232,6 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     Assert.assertNotNull(doc.field("longSimple"));
     Assert.assertNotNull(doc.field("doubleSimple"));
     Assert.assertNotNull(doc.field("floatSimple"));
-    Assert.assertNotNull(doc.field("byteSimple"));
     Assert.assertNotNull(doc.field("flagSimple"));
     Assert.assertNotNull(doc.field("dateField"));
 
@@ -252,7 +248,6 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     Assert.assertNotNull(doc.field("longSimple"));
     Assert.assertNotNull(doc.field("doubleSimple"));
     Assert.assertNotNull(doc.field("floatSimple"));
-    Assert.assertNotNull(doc.field("byteSimple"));
     Assert.assertNotNull(doc.field("flagSimple"));
     Assert.assertNotNull(doc.field("dateField"));
 
@@ -261,7 +256,6 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     Assert.assertEquals(loadedJavaObj.getLongSimple().length, 10);
     Assert.assertEquals(loadedJavaObj.getDoubleSimple().length, 10);
     Assert.assertEquals(loadedJavaObj.getFloatSimple().length, 10);
-    Assert.assertEquals(loadedJavaObj.getByteSimple().length, 10);
     Assert.assertEquals(loadedJavaObj.getFlagSimple().length, 10);
     Assert.assertEquals(loadedJavaObj.getEnumeration().length, 10);
     Assert.assertEquals(loadedJavaObj.getDateField().length, 10);
@@ -272,7 +266,6 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
       Assert.assertEquals(loadedJavaObj.getLongSimple()[i], i);
       Assert.assertEquals(loadedJavaObj.getDoubleSimple()[i], (double) i);
       Assert.assertEquals(loadedJavaObj.getFloatSimple()[i], (float) i);
-      Assert.assertEquals(loadedJavaObj.getByteSimple()[i], (byte) i);
       Assert.assertEquals(loadedJavaObj.getFlagSimple()[i], (i % 2 == 0));
       EnumTest enumCheck = (i % 2 == 0) ? EnumTest.ENUM2 : ((i % 3 == 0) ? EnumTest.ENUM3 : EnumTest.ENUM1);
       Assert.assertEquals(loadedJavaObj.getEnumeration()[i], enumCheck);
@@ -287,14 +280,12 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
       longArray[i] = j;
       doubleArray[i] = j;
       floatArray[i] = j;
-      byteArray[i] = (byte) j;
       booleanArray[i] = (j % 2 == 0);
       enumerationArray[i] = (j % 2 == 0) ? EnumTest.ENUM2 : ((j % 3 == 0) ? EnumTest.ENUM3 : EnumTest.ENUM1);
       cal.set(Calendar.DAY_OF_MONTH, (j + 1));
       dateArray[i] = cal.getTime();
     }
     loadedJavaObj.setText(textArray);
-    loadedJavaObj.setByteSimple(byteArray);
     loadedJavaObj.setDateField(dateArray);
     loadedJavaObj.setDoubleSimple(doubleArray);
     loadedJavaObj.setEnumeration(enumerationArray);
@@ -310,7 +301,6 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     Assert.assertNotNull(doc.field("longSimple"));
     Assert.assertNotNull(doc.field("doubleSimple"));
     Assert.assertNotNull(doc.field("floatSimple"));
-    Assert.assertNotNull(doc.field("byteSimple"));
     Assert.assertNotNull(doc.field("flagSimple"));
     Assert.assertNotNull(doc.field("dateField"));
 
@@ -326,7 +316,6 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     Assert.assertNotNull(doc.field("longSimple"));
     Assert.assertNotNull(doc.field("doubleSimple"));
     Assert.assertNotNull(doc.field("floatSimple"));
-    Assert.assertNotNull(doc.field("byteSimple"));
     Assert.assertNotNull(doc.field("flagSimple"));
     Assert.assertNotNull(doc.field("dateField"));
 
@@ -335,7 +324,6 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     Assert.assertEquals(loadedJavaObj.getLongSimple().length, 10);
     Assert.assertEquals(loadedJavaObj.getDoubleSimple().length, 10);
     Assert.assertEquals(loadedJavaObj.getFloatSimple().length, 10);
-    Assert.assertEquals(loadedJavaObj.getByteSimple().length, 10);
     Assert.assertEquals(loadedJavaObj.getFlagSimple().length, 10);
     Assert.assertEquals(loadedJavaObj.getEnumeration().length, 10);
     Assert.assertEquals(loadedJavaObj.getDateField().length, 10);
@@ -347,7 +335,6 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
       Assert.assertEquals(loadedJavaObj.getLongSimple()[i], j);
       Assert.assertEquals(loadedJavaObj.getDoubleSimple()[i], (double) j);
       Assert.assertEquals(loadedJavaObj.getFloatSimple()[i], (float) j);
-      Assert.assertEquals(loadedJavaObj.getByteSimple()[i], (byte) j);
       Assert.assertEquals(loadedJavaObj.getFlagSimple()[i], (j % 2 == 0));
       EnumTest enumCheck = (j % 2 == 0) ? EnumTest.ENUM2 : ((j % 3 == 0) ? EnumTest.ENUM3 : EnumTest.ENUM1);
       Assert.assertEquals(loadedJavaObj.getEnumeration()[i], enumCheck);
@@ -367,7 +354,6 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     Assert.assertTrue(((Collection<?>) doc.field("longSimple")).iterator().next() instanceof Long);
     Assert.assertTrue(((Collection<?>) doc.field("doubleSimple")).iterator().next() instanceof Double);
     Assert.assertTrue(((Collection<?>) doc.field("floatSimple")).iterator().next() instanceof Float);
-    Assert.assertTrue(((Collection<?>) doc.field("byteSimple")).iterator().next() instanceof Byte);
     Assert.assertTrue(((Collection<?>) doc.field("flagSimple")).iterator().next() instanceof Boolean);
     Assert.assertTrue(((Collection<?>) doc.field("dateField")).iterator().next() instanceof Date);
 
@@ -375,6 +361,61 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     database.delete(id);
   }
 
+  @Test(dependsOnMethods = "testSimpleTypes")
+  public void testBinaryDataType() {
+    
+    JavaBinaryDataTestClass javaObj = database.newInstance(JavaBinaryDataTestClass.class);
+    byte[] bytes = new byte[10];
+    for (int i = 0; i < 10; i++) {
+      bytes[i] = (byte) i;
+    }
+    
+    javaObj.setBinaryData(bytes);
+
+    String fieldName = "binaryData";
+    ODocument doc = database.getRecordByUserObject(javaObj, false);
+    Assert.assertNotNull(doc.field(fieldName));
+
+    JavaBinaryDataTestClass savedJavaObj = database.save(javaObj);
+    ORID id = database.getIdentity(savedJavaObj);
+    database.close();
+
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    JavaBinaryDataTestClass loadedJavaObj = database.load(id);
+    doc = database.getRecordByUserObject(loadedJavaObj, false);
+    Assert.assertNotNull(doc.field(fieldName));
+
+    Assert.assertEquals(loadedJavaObj.getBinaryData().length, 10);
+    Assert.assertEquals(loadedJavaObj.getBinaryData(), bytes);
+    
+    for (int i = 0; i < 10; i++) {
+      int j = i + 10;
+      bytes[i] = (byte) j;
+    }
+    loadedJavaObj.setBinaryData(bytes);
+
+    doc = database.getRecordByUserObject(javaObj, false);
+    Assert.assertNotNull(doc.field(fieldName));
+
+    loadedJavaObj = database.save(loadedJavaObj);
+    database.close();
+
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    loadedJavaObj = database.load(id);
+    doc = database.getRecordByUserObject(loadedJavaObj, false);
+    Assert.assertNotNull(doc.field(fieldName));
+
+    Assert.assertEquals(loadedJavaObj.getBinaryData().length, 10);
+    Assert.assertEquals(loadedJavaObj.getBinaryData(), bytes);
+
+    database.close();
+
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+
+    // TODO - remove this delete to test simple type collections JSON import/export
+    database.delete(id);
+  }
+  
   @Test(dependsOnMethods = "testSimpleArrayTypes")
   public void collectionsDocumentTypeTestPhaseOne() {
     JavaComplexTestClass a = database.newInstance(JavaComplexTestClass.class);

@@ -129,6 +129,29 @@ public class OObjectBinaryDataStorageTest {
     Assert.assertArrayEquals(brambillaPicture, loadedBrambilla.getImageData());
   }
 
+  @Test
+  public void testSaveAndLoad_BinaryFieldsSimpleRecordMapping_InstantiatePojoUsingDbFactory() throws IOException {
+
+    // setup
+    this.createDb(ODocumentFieldHandlingStrategyFactory.SIMPLE);
+
+    Driver ronnie = this.databaseTx.newInstance(Driver.class);
+    ronnie.setName("Ronnie Peterson");
+    byte[] ronniePicture = randomBytes(1024 * 32);
+    ronnie.setImageData(ronniePicture);
+
+    // exercise
+    Driver savedRonnie = this.databaseTx.save(ronnie);
+    Driver loadedRonnie = this.databaseTx.load(new ORecordId(savedRonnie.getId()));
+
+    // verify
+    Assert.assertNotNull(savedRonnie);
+    Assert.assertNotNull(loadedRonnie);
+    Assert.assertArrayEquals(ronniePicture, ronnie.getImageData());
+    Assert.assertArrayEquals(ronniePicture, savedRonnie.getImageData());
+    Assert.assertArrayEquals(ronniePicture, loadedRonnie.getImageData());
+  }
+
   private void createDb(int strategy) {
 
     // Store strategy setting
