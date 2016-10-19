@@ -24,25 +24,56 @@ import java.io.IOException;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
 public final class OAddClusterRequest implements OBinaryRequest {
-  private final int    iRequestedId;
-  private final String iClusterName;
+  private int    requestedId = -1;
+  private String clusterName;
 
   public OAddClusterRequest(int iRequestedId, String iClusterName) {
-    this.iRequestedId = iRequestedId;
-    this.iClusterName = iClusterName;
+    this.requestedId = iRequestedId;
+    this.clusterName = iClusterName;
+  }
+
+  public OAddClusterRequest() {
   }
 
   @Override
   public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session, int mode) throws IOException {
-    network.writeString(iClusterName);
-    network.writeShort((short) iRequestedId);
+    network.writeString(clusterName);
+    network.writeShort((short) requestedId);
+  }
+
+  public void read(OChannelBinary channel, int protocolVersion, String serializerName) throws IOException {
+    String type = "";
+    if (protocolVersion < 24)
+      type = channel.readString();
+    
+    this.clusterName = channel.readString();
+
+    if (protocolVersion < 24 || type.equalsIgnoreCase("PHYSICAL"))
+      // Skipping location is just for compatibility
+      channel.readString();
+
+    if (protocolVersion < 24)
+      // Skipping data segment name is just for compatibility
+      channel.readString();
+
+    this.requestedId = channel.readShort();
   }
 
   @Override
   public byte getCommand() {
     return OChannelBinaryProtocol.REQUEST_DATACLUSTER_ADD;
   }
+
+  public String getClusterName() {
+    return clusterName;
+  }
+
+  public int getRequestedId() {
+    return requestedId;
+  }
+
 }

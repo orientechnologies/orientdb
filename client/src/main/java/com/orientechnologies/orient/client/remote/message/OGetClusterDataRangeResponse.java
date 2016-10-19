@@ -24,10 +24,31 @@ import java.io.IOException;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
 public class OGetClusterDataRangeResponse implements OBinaryResponse<long[]> {
+  private long[] pos;
+
+  public OGetClusterDataRangeResponse() {
+  }
+
+  public OGetClusterDataRangeResponse(long[] pos) {
+    this.pos = pos;
+  }
+
   @Override
   public long[] read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
-    return new long[] { network.readLong(), network.readLong() };
+    pos = new long[] { network.readLong(), network.readLong() };
+    return pos;
   }
+
+  public void write(OChannelBinary channel, int protocolVersion, String recordSerializer) throws IOException {
+    channel.writeLong(pos[0]);
+    channel.writeLong(pos[1]);
+  }
+
+  public long[] getPos() {
+    return pos;
+  }
+
 }

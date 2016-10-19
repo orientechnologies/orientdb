@@ -31,14 +31,24 @@ import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OSBTreeBonsaiRemote;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
 public class OSBTFetchEntriesMajorResponse<K, V> implements OBinaryResponse<List<Entry<K, V>>> {
   private final OBinarySerializer<K> keySerializer;
   private final OBinarySerializer<V> valueSerializer;
+  private List<Map.Entry<K, V>>      list;
 
   public OSBTFetchEntriesMajorResponse(OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer) {
     this.keySerializer = keySerializer;
     this.valueSerializer = valueSerializer;
+  }
+
+  public OSBTFetchEntriesMajorResponse(OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer,
+      List<Map.Entry<K, V>> list) {
+    this.keySerializer = keySerializer;
+    this.valueSerializer = valueSerializer;
+    this.list = list;
   }
 
   @Override
@@ -58,4 +68,25 @@ public class OSBTFetchEntriesMajorResponse<K, V> implements OBinaryResponse<List
     }
     return list;
   }
+
+  public void write(OChannelBinary channel, int protocolVersion, String recordSerializer) throws IOException {
+    byte[] stream = new byte[OIntegerSerializer.INT_SIZE
+        + list.size() * (keySerializer.getFixedLength() + valueSerializer.getFixedLength())];
+    int offset = 0;
+
+    OIntegerSerializer.INSTANCE.serializeLiteral(list.size(), stream, offset);
+    offset += OIntegerSerializer.INT_SIZE;
+
+    for (Entry<K, V> entry : list) {
+      keySerializer.serialize(entry.getKey(), stream, offset);
+      offset += keySerializer.getObjectSize(entry.getKey());
+
+      valueSerializer.serialize(entry.getValue(), stream, offset);
+      offset += valueSerializer.getObjectSize(entry.getValue());
+    }
+
+    channel.writeBytes(stream);
+
+  }
+
 }

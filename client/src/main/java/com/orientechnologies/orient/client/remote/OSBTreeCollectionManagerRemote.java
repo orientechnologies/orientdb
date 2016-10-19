@@ -84,7 +84,7 @@ public class OSBTreeCollectionManagerRemote extends OSBTreeCollectionManagerAbst
     if (remoteCreationAllowed) {
       final OStorageRemote storage = (OStorageRemote) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying();
       OBinaryRequest request = new OSBTCreateTreeRequest(clusterId);
-      OBinaryResponse<OBonsaiCollectionPointer> response = new OSBTCreateTreeResponse(this.networkSerializer);
+      OBinaryResponse<OBonsaiCollectionPointer> response = new OSBTCreateTreeResponse();
 
       OBonsaiCollectionPointer pointer = storage.networkOperation(request, response, "Cannot create sb-tree bonsai");
 

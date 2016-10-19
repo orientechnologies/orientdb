@@ -22,13 +22,33 @@ package com.orientechnologies.orient.client.remote.message;
 import java.io.IOException;
 
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
-import com.orientechnologies.orient.client.remote.OBinaryResponse;
+import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
-public class OClusterStatusResponse implements OBinaryResponse<ODocument> {
+public class ODistributedStatusRequest implements OBinaryRequest {
+  private ODocument status;
+
+  public ODistributedStatusRequest() {
+  }
+
   @Override
-  public ODocument read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
-    return new ODocument(network.readBytes());
+  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session, int mode) throws IOException {
+    network.writeBytes(new ODocument().field("operation", "status").toStream());
+  }
+
+  public void read(OChannelBinary channel, int protocolVersion, String serializerName) throws IOException {
+    status = new ODocument(channel.readBytes());
+  }
+
+  public ODocument getStatus() {
+    return status;
+  }
+
+  @Override
+  public byte getCommand() {
+    return OChannelBinaryProtocol.REQUEST_CLUSTER;
   }
 }

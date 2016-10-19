@@ -24,13 +24,17 @@ import java.io.IOException;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
 public class OIncrementalBackupRequest implements OBinaryRequest {
-  private final String backupDirectory;
+  private String backupDirectory;
 
   public OIncrementalBackupRequest(String backupDirectory) {
     this.backupDirectory = backupDirectory;
+  }
+
+  public OIncrementalBackupRequest() {
   }
 
   @Override
@@ -38,8 +42,16 @@ public class OIncrementalBackupRequest implements OBinaryRequest {
     network.writeString(backupDirectory);
   }
 
+  public void read(OChannelBinary channel, int protocolVersion, String serializerName) throws IOException {
+    this.backupDirectory = channel.readString();
+  }
+
   @Override
   public byte getCommand() {
     return OChannelBinaryProtocol.REQUEST_INCREMENTAL_BACKUP;
+  }
+
+  public String getBackupDirectory() {
+    return backupDirectory;
   }
 }

@@ -55,6 +55,7 @@ import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.message.OAddClusterRequest;
 import com.orientechnologies.orient.client.remote.message.OAddClusterResponse;
+import com.orientechnologies.orient.client.remote.message.OBinaryProtocolHelper;
 import com.orientechnologies.orient.client.remote.message.OCeilingPhysicalPositionsRequest;
 import com.orientechnologies.orient.client.remote.message.OCeilingPhysicalPositionsResponse;
 import com.orientechnologies.orient.client.remote.message.OCleanOutRecordRequest;
@@ -1264,7 +1265,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
         OLogManager.instance().debug(this, "Client connected to %s with session id=%d", network.getServerURL(), sessionId);
 
-        OCluster[] cl = readDatabaseInformation(network);
+        OCluster[] cl = OBinaryProtocolHelper.readClustersArray(network);
         updateStorageInformations(cl);
 
         // READ CLUSTER CONFIGURATION
@@ -1652,7 +1653,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     return retry;
   }
 
-  public static OCluster[] readDatabaseInformation(final OChannelBinaryAsynchClient network) throws IOException {
+  public static OCluster[] readClusterArray(final OChannelBinaryAsynchClient network) throws IOException {
 
     final int tot = network.readShort();
     OCluster[] clusters = new OCluster[tot];

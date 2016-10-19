@@ -24,10 +24,29 @@ import java.io.IOException;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
 public class OSBTFirstKeyResponse implements OBinaryResponse<byte[]> {
+  private byte[] stream;
+
+  public OSBTFirstKeyResponse(byte[] stream) {
+    this.stream = stream;
+  }
+
+  public OSBTFirstKeyResponse() {
+  }
+
   @Override
   public byte[] read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
     return network.readBytes();
   }
+
+  public void write(OChannelBinary channel, int protocolVersion, String recordSerializer) throws IOException {
+    channel.writeBytes(stream);
+  }
+
+  public byte[] getStream() {
+    return stream;
+  }
+
 }

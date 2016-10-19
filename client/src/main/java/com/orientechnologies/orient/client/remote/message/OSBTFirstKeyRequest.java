@@ -26,13 +26,17 @@ import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OCollectionNetworkSerializer;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
 public class OSBTFirstKeyRequest implements OBinaryRequest {
-  private final OBonsaiCollectionPointer collectionPointer;
+  private OBonsaiCollectionPointer collectionPointer;
 
   public OSBTFirstKeyRequest(OBonsaiCollectionPointer collectionPointer) {
     this.collectionPointer = collectionPointer;
+  }
+
+  public OSBTFirstKeyRequest() {
   }
 
   @Override
@@ -40,8 +44,17 @@ public class OSBTFirstKeyRequest implements OBinaryRequest {
     OCollectionNetworkSerializer.INSTANCE.writeCollectionPointer(network, collectionPointer);
   }
 
+  public void read(OChannelBinary channel, int protocolVersion, String serializerName) throws IOException {
+    collectionPointer = OCollectionNetworkSerializer.INSTANCE.readCollectionPointer(channel);
+  }
+
   @Override
   public byte getCommand() {
     return OChannelBinaryProtocol.REQUEST_SBTREE_BONSAI_FIRST_KEY;
   }
+
+  public OBonsaiCollectionPointer getCollectionPointer() {
+    return collectionPointer;
+  }
+
 }

@@ -24,15 +24,36 @@ import java.io.IOException;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
-import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
 public class OGetRecordMetadataResponse implements OBinaryResponse<ORecordMetadata> {
+
+  private ORecordMetadata metadata;
+
+  public OGetRecordMetadataResponse() {
+  }
+
+  public OGetRecordMetadataResponse(ORecordMetadata metadata) {
+    this.metadata = metadata;
+  }
+
   @Override
   public ORecordMetadata read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
-    final ORID responseRid = network.readRID();
-    final int responseVersion = network.readVersion();
-
-    return new ORecordMetadata(responseRid, responseVersion);
+    ORecordId recordId = network.readRID();
+    int version = network.readVersion();
+    metadata = new ORecordMetadata(recordId, version);
+    return metadata;
   }
+
+  public void write(OChannelBinary channel, int protocolVersion, String recordSerializer) throws IOException {
+    channel.writeRID(metadata.getRecordId());
+    channel.writeVersion(metadata.getVersion());
+  }
+
+  public ORecordMetadata getMetadata() {
+    return metadata;
+  }
+
 }

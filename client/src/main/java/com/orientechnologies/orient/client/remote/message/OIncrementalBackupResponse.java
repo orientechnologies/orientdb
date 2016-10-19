@@ -24,11 +24,30 @@ import java.io.IOException;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
 public class OIncrementalBackupResponse implements OBinaryResponse<String> {
+
+  private String fileName;
+
+  public OIncrementalBackupResponse() {
+  }
+  
+  public OIncrementalBackupResponse(String fileName) {
+    this.fileName = fileName;
+  }
+
   @Override
   public String read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
-    String fileName = network.readString();
+    fileName = network.readString();
+    return fileName;
+  }
+
+  public void write(OChannelBinary channel, int protocolVersion, String recordSerializer) throws IOException {
+    channel.writeString(fileName);
+  }
+
+  public String getFileName() {
     return fileName;
   }
 }

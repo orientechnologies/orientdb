@@ -26,17 +26,22 @@ import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OCollectionNetworkSerializer;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
 public class OSBTFetchEntriesMajorRequest implements OBinaryRequest {
-  private final boolean            inclusive;
-  private final byte[]             keyStream;
+  private boolean                  inclusive;
+  private byte[]                   keyStream;
   private OBonsaiCollectionPointer pointer;
+  private int                      pageSize;
 
   public OSBTFetchEntriesMajorRequest(boolean inclusive, byte[] keyStream, OBonsaiCollectionPointer pointer) {
     this.inclusive = inclusive;
     this.keyStream = keyStream;
     this.pointer = pointer;
+  }
+
+  public OSBTFetchEntriesMajorRequest() {
   }
 
   @Override
@@ -47,8 +52,35 @@ public class OSBTFetchEntriesMajorRequest implements OBinaryRequest {
     network.writeInt(128);
   }
 
+  public void read(OChannelBinary channel, int protocolVersion, String serializerName) throws IOException {
+    this.pointer = OCollectionNetworkSerializer.INSTANCE.readCollectionPointer(channel);
+    this.keyStream = channel.readBytes();
+    this.inclusive = channel.readBoolean();
+    if (protocolVersion >= 21)
+      this.pageSize = channel.readInt();
+    else
+      this.pageSize = 128;
+  }
+
   @Override
   public byte getCommand() {
     return OChannelBinaryProtocol.REQUEST_SBTREE_BONSAI_GET_ENTRIES_MAJOR;
   }
+
+  public byte[] getKeyStream() {
+    return keyStream;
+  }
+
+  public OBonsaiCollectionPointer getPointer() {
+    return pointer;
+  }
+
+  public boolean isInclusive() {
+    return inclusive;
+  }
+
+  public int getPageSize() {
+    return pageSize;
+  }
+
 }

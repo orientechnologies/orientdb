@@ -25,13 +25,17 @@ import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
 public class OGetRecordMetadataRequest implements OBinaryRequest {
-  private final ORID rid;
+  private ORID rid;
 
   public OGetRecordMetadataRequest(ORID rid) {
     this.rid = rid;
+  }
+
+  public OGetRecordMetadataRequest() {
   }
 
   @Override
@@ -39,8 +43,16 @@ public class OGetRecordMetadataRequest implements OBinaryRequest {
     network.writeRID(rid);
   }
 
+  public void read(OChannelBinary channel, int protocolVersion, String serializerName) throws IOException {
+    rid = channel.readRID();
+  }
+
   @Override
   public byte getCommand() {
     return OChannelBinaryProtocol.REQUEST_RECORD_METADATA;
+  }
+
+  public ORID getRid() {
+    return rid;
   }
 }

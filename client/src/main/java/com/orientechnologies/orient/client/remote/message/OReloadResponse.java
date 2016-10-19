@@ -23,13 +23,33 @@ import java.io.IOException;
 
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
-import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
 public class OReloadResponse implements OBinaryResponse<OCluster[]> {
+
+  private OCluster[] clusters;
+
+  public OReloadResponse() {
+  }
+  
+  public OReloadResponse(OCluster[] clusters) {
+    this.clusters = clusters;
+  }
+
   @Override
   public OCluster[] read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
-    return OStorageRemote.readDatabaseInformation(network);
+    this.clusters = OBinaryProtocolHelper.readClustersArray(network);
+    return this.clusters;
   }
+
+  public void write(OChannelBinary channel, int protocolVersion, String recordSerializer) throws IOException {
+    OBinaryProtocolHelper.writeClustersArray(channel, clusters, protocolVersion);
+  }
+
+  public OCluster[] getClusters() {
+    return clusters;
+  }
+
 }

@@ -24,10 +24,31 @@ import java.io.IOException;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
 public final class OCountResponse implements OBinaryResponse<Long> {
+
+  private long count;
+
+  public OCountResponse(long count) {
+    this.count = count;
+  }
+
+  public OCountResponse() {
+  }
+
   @Override
   public Long read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
-    return network.readLong();
+    count = network.readLong();
+    return count;
   }
+
+  public void write(OChannelBinary channel, int protocolVersion, String recordSerializer) throws IOException {
+    channel.writeLong(count);
+  }
+
+  public long getCount() {
+    return count;
+  }
+
 }

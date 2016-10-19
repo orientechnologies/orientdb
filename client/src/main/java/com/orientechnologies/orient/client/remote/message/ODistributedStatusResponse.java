@@ -22,19 +22,35 @@ package com.orientechnologies.orient.client.remote.message;
 import java.io.IOException;
 
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
-import com.orientechnologies.orient.client.remote.OBinaryRequest;
+import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
-public class OClusterStatusRequest implements OBinaryRequest {
-  @Override
-  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session, int mode) throws IOException {
-    network.writeBytes(new ODocument().field("operation", "status").toStream());
+public class ODistributedStatusResponse implements OBinaryResponse<ODocument> {
+
+  private ODocument clusterConfig;
+
+  public ODistributedStatusResponse() {
+  }
+
+  public ODistributedStatusResponse(ODocument clusterConfig) {
+    this.clusterConfig = clusterConfig;
   }
 
   @Override
-  public byte getCommand() {
-    return OChannelBinaryProtocol.REQUEST_CLUSTER;
+  public ODocument read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+    clusterConfig = new ODocument(network.readBytes());
+    return clusterConfig;
+  }
+
+  public void write(OChannelBinary channel, int protocolVersion, String recordSerializer) throws IOException {
+    byte[] bytes = ORecordSerializerFactory.instance().getFormat(recordSerializer).toStream(clusterConfig, false);
+    channel.writeBytes(bytes);
+  }
+
+  public ODocument getClusterConfig() {
+    return clusterConfig;
   }
 }

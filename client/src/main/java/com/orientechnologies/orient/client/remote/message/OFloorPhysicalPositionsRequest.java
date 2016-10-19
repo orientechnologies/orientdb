@@ -25,15 +25,19 @@ import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
 public class OFloorPhysicalPositionsRequest implements OBinaryRequest {
-  private final OPhysicalPosition physicalPosition;
-  private final int               clusterId;
+  private OPhysicalPosition physicalPosition;
+  private int               clusterId;
 
   public OFloorPhysicalPositionsRequest(OPhysicalPosition physicalPosition, int clusterId) {
     this.physicalPosition = physicalPosition;
     this.clusterId = clusterId;
+  }
+
+  public OFloorPhysicalPositionsRequest() {
   }
 
   @Override
@@ -42,8 +46,22 @@ public class OFloorPhysicalPositionsRequest implements OBinaryRequest {
     network.writeLong(physicalPosition.clusterPosition);
   }
 
+  public void read(OChannelBinary channel, int protocolVersion, String serializerName) throws IOException {
+    this.clusterId = channel.readInt();
+    this.physicalPosition = new OPhysicalPosition(channel.readLong());
+  }
+
   @Override
   public byte getCommand() {
     return OChannelBinaryProtocol.REQUEST_POSITIONS_FLOOR;
   }
+
+  public int getClusterId() {
+    return clusterId;
+  }
+
+  public OPhysicalPosition getPhysicalPosition() {
+    return physicalPosition;
+  }
+
 }

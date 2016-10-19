@@ -28,19 +28,24 @@ import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OCollectionNetworkSerializer;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag.Change;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
-public class OSBTGetRealBagSizeRequest<K, V> implements OBinaryRequest {
+public class OSBTGetRealBagSizeRequest implements OBinaryRequest {
 
-  private final OBonsaiCollectionPointer collectionPointer;
-  private final Map<K, Change>           changes;
-  private OBinarySerializer<K>           keySerializer;
+  private OBonsaiCollectionPointer         collectionPointer;
+  private Map<OIdentifiable, Change>       changes;
+  private OBinarySerializer<OIdentifiable> keySerializer;
 
-  public OSBTGetRealBagSizeRequest(OBinarySerializer<K> keySerializer, OBonsaiCollectionPointer collectionPointer,
-      Map<K, Change> changes) {
+  public OSBTGetRealBagSizeRequest() {
+  }
+
+  public OSBTGetRealBagSizeRequest(OBinarySerializer<OIdentifiable> keySerializer, OBonsaiCollectionPointer collectionPointer,
+      Map<OIdentifiable, Change> changes) {
     this.collectionPointer = collectionPointer;
     this.changes = changes;
     this.keySerializer = keySerializer;
@@ -55,8 +60,24 @@ public class OSBTGetRealBagSizeRequest<K, V> implements OBinaryRequest {
     network.writeBytes(stream);
   }
 
+  public void read(OChannelBinary channel, int protocolVersion, String serializerName) throws IOException {
+    collectionPointer = OCollectionNetworkSerializer.INSTANCE.readCollectionPointer(channel);
+    byte[] stream = channel.readBytes();
+    final OSBTreeRidBag.ChangeSerializationHelper changeSerializer = OSBTreeRidBag.ChangeSerializationHelper.INSTANCE;
+    changes = changeSerializer.deserializeChanges(stream, 0);
+  }
+
   @Override
   public byte getCommand() {
     return OChannelBinaryProtocol.REQUEST_RIDBAG_GET_SIZE;
   }
+
+  public Map<OIdentifiable, Change> getChanges() {
+    return changes;
+  }
+
+  public OBonsaiCollectionPointer getCollectionPointer() {
+    return collectionPointer;
+  }
+
 }

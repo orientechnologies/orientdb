@@ -24,15 +24,31 @@ import java.io.IOException;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
 public final class ODropClusterResponse implements OBinaryResponse<Boolean> {
+
+  private boolean result;
+
+  public ODropClusterResponse() {
+  }
+
+  public ODropClusterResponse(boolean result) {
+    this.result = result;
+  }
+
   @Override
   public Boolean read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
-    byte result = 0;
-    result = network.readByte();
-    if (result == 1) {
-      return true;
-    }
-    return false;
+    result = network.readByte() != 0;
+    return result;
   }
+
+  public void write(OChannelBinary channel, int protocolVersion, String recordSerializer) throws IOException {
+    channel.writeByte((byte) (result ? 1 : 0));
+  }
+
+  public boolean getResult() {
+    return result;
+  }
+
 }

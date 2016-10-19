@@ -26,16 +26,31 @@ import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OCollectionNetworkSerializer;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
 public class OSBTCreateTreeResponse implements OBinaryResponse<OBonsaiCollectionPointer> {
-  private OCollectionNetworkSerializer networkSerializer;
 
-  public OSBTCreateTreeResponse(OCollectionNetworkSerializer networkSerializer) {
-    this.networkSerializer = networkSerializer;
+  private OBonsaiCollectionPointer collenctionPointer;
+
+  public OSBTCreateTreeResponse(OBonsaiCollectionPointer collenctionPointer) {
+    this.collenctionPointer = collenctionPointer;
+  }
+
+  public OSBTCreateTreeResponse() {
   }
 
   @Override
   public OBonsaiCollectionPointer read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
-    return networkSerializer.readCollectionPointer(network);
+    collenctionPointer = OCollectionNetworkSerializer.INSTANCE.readCollectionPointer(network);
+    return collenctionPointer;
   }
+
+  public void write(OChannelBinary channel, int protocolVersion, String recordSerializer) throws IOException {
+    OCollectionNetworkSerializer.INSTANCE.writeCollectionPointer(channel, collenctionPointer);
+  }
+
+  public OBonsaiCollectionPointer getCollenctionPointer() {
+    return collenctionPointer;
+  }
+
 }

@@ -24,28 +24,50 @@ import java.io.IOException;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
 public final class OCountRequest implements OBinaryRequest {
-  private final int[]   iClusterIds;
-  private final boolean countTombstones;
+  private int[]   clusterIds;
+  private boolean countTombstones;
 
   public OCountRequest(int[] iClusterIds, boolean countTombstones) {
-    this.iClusterIds = iClusterIds;
+    this.clusterIds = iClusterIds;
     this.countTombstones = countTombstones;
+  }
+
+  public OCountRequest() {
   }
 
   @Override
   public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session, int mode) throws IOException {
-    network.writeShort((short) iClusterIds.length);
-    for (int iClusterId : iClusterIds)
+    network.writeShort((short) clusterIds.length);
+    for (int iClusterId : clusterIds)
       network.writeShort((short) iClusterId);
 
     network.writeByte(countTombstones ? (byte) 1 : (byte) 0);
+  }
+
+  public void read(OChannelBinary channel, int protocolVersion, String serializerName) throws IOException {
+    int nclusters = channel.readShort();
+    clusterIds = new int[nclusters];
+    for (int i = 0; i < clusterIds.length; i++) {
+      clusterIds[i] = channel.readShort();
+    }
+    countTombstones = channel.readByte() != 0;
   }
 
   @Override
   public byte getCommand() {
     return OChannelBinaryProtocol.REQUEST_DATACLUSTER_COUNT;
   }
+
+  public int[] getClusterIds() {
+    return clusterIds;
+  }
+
+  public boolean isCountTombstones() {
+    return countTombstones;
+  }
+
 }

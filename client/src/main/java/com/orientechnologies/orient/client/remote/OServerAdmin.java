@@ -29,8 +29,8 @@ import com.orientechnologies.common.concur.lock.OModificationOperationProhibited
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
-import com.orientechnologies.orient.client.remote.message.OClusterStatusRequest;
-import com.orientechnologies.orient.client.remote.message.OClusterStatusResponse;
+import com.orientechnologies.orient.client.remote.message.ODistributedStatusRequest;
+import com.orientechnologies.orient.client.remote.message.ODistributedStatusResponse;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -528,9 +528,9 @@ public class OServerAdmin {
    */
   public ODocument clusterStatus() {
 
-    OBinaryRequest request = new OClusterStatusRequest();
+    OBinaryRequest request = new ODistributedStatusRequest();
 
-    OBinaryResponse<ODocument> responseOperation = new OClusterStatusResponse();
+    OBinaryResponse<ODocument> responseOperation = new ODistributedStatusResponse();
 
     ODocument response = storage.networkOperation(request, responseOperation, "Error on executing Cluster status ");
 

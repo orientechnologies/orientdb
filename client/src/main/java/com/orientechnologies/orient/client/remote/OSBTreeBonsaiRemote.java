@@ -35,8 +35,10 @@ import com.orientechnologies.orient.client.remote.message.OSBTGetRealBagSizeResp
 import com.orientechnologies.orient.client.remote.message.OSBTGetRequest;
 import com.orientechnologies.orient.client.remote.message.OSBTGetResponse;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag.Change;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
@@ -201,7 +203,8 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
   public int getRealBagSize(final Map<K, OSBTreeRidBag.Change> changes) {
     final OStorageRemote storage = (OStorageRemote) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying();
     final OBonsaiCollectionPointer collectionPointer = getCollectionPointer();
-    OBinaryRequest request = new OSBTGetRealBagSizeRequest<K, V>(keySerializer, collectionPointer, changes);
+    OBinaryRequest request = new OSBTGetRealBagSizeRequest((OBinarySerializer<OIdentifiable>) keySerializer, collectionPointer,
+        (Map<OIdentifiable, Change>) changes);
     OBinaryResponse<Integer> response = new OSBTGetRealBagSizeResponse();
     return storage.networkOperation(request, response, "Cannot get by real bag size sb-tree bonsai");
   }
