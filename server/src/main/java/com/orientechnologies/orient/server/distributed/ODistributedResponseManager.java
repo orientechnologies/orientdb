@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
@@ -142,7 +143,11 @@ public class ODistributedResponseManager {
               // BOTH NULL
               foundBucket = true;
             else if (rgPayload != null) {
-              if (rgPayload.equals(responsePayload))
+              if (rgPayload instanceof ODocument && responsePayload instanceof ODocument && !((ODocument) rgPayload).getIdentity().isValid()
+                  && ((ODocument) rgPayload).hasSameContentOf((ODocument) responsePayload))
+                // SAME RESULT
+                foundBucket = true;
+              else if (rgPayload.equals(responsePayload))
                 // SAME RESULT
                 foundBucket = true;
               else if (rgPayload instanceof Collection && responsePayload instanceof Collection) {
@@ -645,7 +650,7 @@ public class ODistributedResponseManager {
   private String composeConflictMessage() {
     final StringBuilder msg = new StringBuilder(256);
     msg.append("Quorum " + getQuorum() + " not reached for request (" + request + "). Elapsed="
-        + ((System.nanoTime() - getSentOn())/1000000) + "ms");
+        + ((System.nanoTime() - getSentOn()) / 1000000) + "ms");
     final List<ODistributedResponse> res = getConflictResponses();
     if (res.isEmpty())
       msg.append(" No server in conflict. ");
@@ -704,12 +709,13 @@ public class ODistributedResponseManager {
           ODistributedServerLog.warn(this, dManager.getLocalNodeName(), targetNode, DIRECTION.OUT,
               "Sending undo message (%s) for request (%s) to server %s", undoTask, request, targetNode);
 
-          final ODistributedResponse result = dManager
-              .sendRequest(request.getDatabaseName(), null, OMultiValue.getSingletonList(targetNode), undoTask,
-                  dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
+          final ODistributedResponse result = dManager.sendRequest(request.getDatabaseName(), null,
+              OMultiValue.getSingletonList(targetNode), undoTask, dManager.getNextMessageIdCounter(),
+              ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
 
           ODistributedServerLog.warn(this, dManager.getLocalNodeName(), targetNode, DIRECTION.OUT,
-              "Received response from undo message (%s) for request (%s) to server %s: result", undoTask, request, targetNode, result);
+              "Received response from undo message (%s) for request (%s) to server %s: result", undoTask, request, targetNode,
+              result);
         }
       }
     }
