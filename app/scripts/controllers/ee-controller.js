@@ -1729,10 +1729,13 @@ ee.controller('TeleporterController', function ($scope, Teleporter, $timeout, No
 
           if ($scope.job && $scope.job.log) {
             $scope.job.status = data.jobs[0].status;
+
             var pos = CodeMirror.Pos($scope.cm.lastLine());
-            var log = data.jobs[0].log.replace($scope.job.log, "");
+            var log = data.jobs[0].log.replace($scope.lastLog.log, "");
             $scope.cm.replaceRange(log, pos);
+            $scope.lastLog = angular.copy(data.jobs[0]);
           } else {
+            $scope.lastLog = angular.copy(data.jobs[0]);
             $scope.job = data.jobs[0];
           }
 
