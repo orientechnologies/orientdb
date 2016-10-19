@@ -264,11 +264,16 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     else if (key.equals("_rid"))
       return (T) rawElement.getIdentity().toString();
 
-    final Object fieldValue = getRecord().field(key);
+    final ODocument record = getRecord();
+    if( record == null )
+      // NO RECORD
+      return null;
+
+    final Object fieldValue = record.field(key);
     if (graph != null && fieldValue instanceof OIdentifiable && !(((OIdentifiable) fieldValue).getRecord() instanceof OBlob)) {
-      ODocument record = ((OIdentifiable) fieldValue).getRecord();
-      if (record != null) {
-        final OClass schemaClass = record.getSchemaClass();
+      ODocument fieldRecord = ((OIdentifiable) fieldValue).getRecord();
+      if (fieldRecord != null) {
+        final OClass schemaClass = fieldRecord.getSchemaClass();
         if (schemaClass != null && (schemaClass.isVertexType() || schemaClass.isEdgeType())) {
           // CONVERT IT TO VERTEX/EDGE
           return (T) graph.getElement(fieldValue);
