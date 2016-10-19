@@ -2014,7 +2014,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     beginResponse();
     try {
       sendOk(connection, clientTxId);
-      channel.writeBytes(iResponse != null ? iResponse.toStream() : null);
+      byte[] bytes = null;
+      if (iResponse != null)
+        bytes = getRecordBytes(connection, iResponse);
+      channel.writeBytes(bytes);
     } finally {
       endResponse(connection);
     }
