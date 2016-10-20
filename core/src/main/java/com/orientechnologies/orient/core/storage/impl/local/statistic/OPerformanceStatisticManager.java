@@ -123,7 +123,7 @@ public class OPerformanceStatisticManager {
   /**
    * Indicates whether gathering of performance data for whole system is switched on/off.
    */
-  private boolean enabled = false;
+  private final AtomicBoolean enabled = new AtomicBoolean(false);
 
   /**
    * Indicates whether gathering of performance data for single thread is switched on/off.
@@ -258,6 +258,7 @@ public class OPerformanceStatisticManager {
   /**
    * @param intervalBetweenSnapshots Interval between snapshots of performance data for each thread statistic.
    * @param cleanUpInterval          Interval between time series of performance data.
+   *
    * @see OSessionStoragePerformanceStatistic
    */
   public OPerformanceStatisticManager(OAbstractPaginatedStorage storage, long intervalBetweenSnapshots, long cleanUpInterval) {
@@ -329,7 +330,7 @@ public class OPerformanceStatisticManager {
   public void startThreadMonitoring() {
     switchLock.acquireWriteLock();
     try {
-      if (enabled)
+      if (enabled.get())
         throw new IllegalStateException("Monitoring is already started on system level and can not be started on thread level");
 
       enabledForCurrentThread.set(true);
@@ -362,10 +363,10 @@ public class OPerformanceStatisticManager {
   public void startMonitoring() {
     switchLock.acquireWriteLock();
     try {
-      if (!statistics.isEmpty() && !enabled)
+      if (!statistics.isEmpty() && !enabled.get())
         throw new IllegalStateException("Monitoring is already started on thread level and can not be started on system level");
 
-      enabled = true;
+      enabled.set(true);
 
       deadThreadsStatistic = null;
       postMeasurementStatistic = null;
@@ -380,7 +381,7 @@ public class OPerformanceStatisticManager {
   public void stopMonitoring() {
     switchLock.acquireWriteLock();
     try {
-      enabled = false;
+      enabled.set(false);
 
       final PerformanceCountersHolder countersHolder = ComponentType.GENERAL.newCountersHolder();
       final Map<String, PerformanceCountersHolder> componentCountersHolder = new HashMap<String, PerformanceCountersHolder>();
@@ -416,6 +417,7 @@ public class OPerformanceStatisticManager {
    *
    * @param storageName Name of storage of given manager
    * @param storageId   Id of storage of given manager
+   *
    * @see OStorage#getName()
    * @see OIdentifiableStorage#getId()
    */
@@ -454,6 +456,7 @@ public class OPerformanceStatisticManager {
    *
    * @param storageName Name of storage of given manager
    * @param storageId   Id of storage of given manager
+   *
    * @see OStorage#getName()
    * @see OIdentifiableStorage#getId()
    */
@@ -494,9 +497,12 @@ public class OPerformanceStatisticManager {
    * <code>null</code> if none of both methods {@link #startMonitoring()} or {@link #startThreadMonitoring()} are called.
    */
   public OSessionStoragePerformanceStatistic getSessionPerformanceStatistic() {
+    if (!enabled.get() && !enabledForCurrentThread.get())
+      return null;
+
     switchLock.acquireReadLock();
     try {
-      if (!enabled && !enabledForCurrentThread.get())
+      if (!enabled.get() && !enabledForCurrentThread.get())
         return null;
 
       final Thread currentThread = Thread.currentThread();
@@ -506,7 +512,8 @@ public class OPerformanceStatisticManager {
         return performanceStatistic;
       }
 
-      performanceStatistic = new OSessionStoragePerformanceStatistic(intervalBetweenSnapshots, enabled ? cleanUpInterval : -1);
+      performanceStatistic = new OSessionStoragePerformanceStatistic(intervalBetweenSnapshots,
+          enabled.get() ? cleanUpInterval : -1);
 
       statistics.put(currentThread, performanceStatistic);
 
@@ -522,13 +529,14 @@ public class OPerformanceStatisticManager {
    * If null value is passed or data for component with passed in name does not exist then <code>-1</code> will be returned.
    *
    * @param componentName Name of component data of which should be returned. Name is case sensitive.
+   *
    * @return Average amount of pages which were read from cache for component with given name during single data operation or value
    * which is less than 0, which means that value cannot be calculated.
    */
   public long getAmountOfPagesPerOperation(String componentName) {
     switchLock.acquireReadLock();
     try {
-      if (enabled) {
+      if (enabled.get()) {
         final PerformanceCountersHolder componentCountersHolder = ComponentType.GENERAL.newCountersHolder();
         fetchComponentCounters(componentName, componentCountersHolder);
         return componentCountersHolder.getAmountOfPagesPerOperation();
@@ -555,7 +563,7 @@ public class OPerformanceStatisticManager {
   public int getCacheHits() {
     switchLock.acquireReadLock();
     try {
-      if (enabled) {
+      if (enabled.get()) {
         final PerformanceCountersHolder countersHolder = ComponentType.GENERAL.newCountersHolder();
         fetchSystemCounters(countersHolder);
         return countersHolder.getCacheHits();
@@ -577,12 +585,13 @@ public class OPerformanceStatisticManager {
    * system will be returned. If data for component with passed in name does not exist then <code>-1</code> will be returned.
    *
    * @param componentName Name of component data of which should be returned. Name is case sensitive.
+   *
    * @return Percent of cache hits or value which is less than 0, which means that value cannot be calculated.
    */
   public int getCacheHits(String componentName) {
     switchLock.acquireReadLock();
     try {
-      if (enabled) {
+      if (enabled.get()) {
         final PerformanceCountersHolder countersHolder = ComponentType.GENERAL.newCountersHolder();
         fetchComponentCounters(componentName, countersHolder);
         return countersHolder.getCacheHits();
@@ -609,7 +618,7 @@ public class OPerformanceStatisticManager {
   public long getCommitTime() {
     switchLock.acquireReadLock();
     try {
-      if (enabled) {
+      if (enabled.get()) {
         final PerformanceCountersHolder countersHolder = ComponentType.GENERAL.newCountersHolder();
         fetchSystemCounters(countersHolder);
         return countersHolder.getCommitTime();
@@ -632,7 +641,7 @@ public class OPerformanceStatisticManager {
   public long getReadSpeedFromCacheInPages() {
     switchLock.acquireReadLock();
     try {
-      if (enabled) {
+      if (enabled.get()) {
         final PerformanceCountersHolder countersHolder = ComponentType.GENERAL.newCountersHolder();
         fetchSystemCounters(countersHolder);
         return countersHolder.getReadSpeedFromCacheInPages();
@@ -654,13 +663,14 @@ public class OPerformanceStatisticManager {
    * <code>-1</code> will be returned.
    *
    * @param componentName Name of component data of which should be returned. Name is case sensitive.
+   *
    * @return Read speed of data in pages per second on cache level or value which is less than 0, which means that value cannot be
    * calculated.
    */
   public long getReadSpeedFromCacheInPages(String componentName) {
     switchLock.acquireReadLock();
     try {
-      if (enabled) {
+      if (enabled.get()) {
         final PerformanceCountersHolder countersHolder = ComponentType.GENERAL.newCountersHolder();
         fetchComponentCounters(componentName, countersHolder);
         return countersHolder.getReadSpeedFromCacheInPages();
@@ -688,7 +698,7 @@ public class OPerformanceStatisticManager {
   public long getReadSpeedFromFileInPages() {
     switchLock.acquireReadLock();
     try {
-      if (enabled) {
+      if (enabled.get()) {
         final PerformanceCountersHolder countersHolder = ComponentType.GENERAL.newCountersHolder();
         fetchSystemCounters(countersHolder);
         return countersHolder.getReadSpeedFromFileInPages();
@@ -710,13 +720,14 @@ public class OPerformanceStatisticManager {
    * will be returned.
    *
    * @param componentName Name of component data of which should be returned. Name is case sensitive.
+   *
    * @return Read speed of data from file system in pages per second or value which is less than 0, which means that value cannot be
    * calculated.
    */
   public long getReadSpeedFromFileInPages(String componentName) {
     switchLock.acquireReadLock();
     try {
-      if (enabled) {
+      if (enabled.get()) {
         final PerformanceCountersHolder countersHolder = ComponentType.GENERAL.newCountersHolder();
         fetchComponentCounters(componentName, countersHolder);
         return countersHolder.getReadSpeedFromFileInPages();
@@ -743,7 +754,7 @@ public class OPerformanceStatisticManager {
   public long getWriteSpeedInCacheInPages() {
     switchLock.acquireReadLock();
     try {
-      if (enabled) {
+      if (enabled.get()) {
         final PerformanceCountersHolder countersHolder = ComponentType.GENERAL.newCountersHolder();
         fetchSystemCounters(countersHolder);
         return countersHolder.getWriteSpeedInCacheInPages();
@@ -766,13 +777,14 @@ public class OPerformanceStatisticManager {
    * <code>-1</code> will be returned.
    *
    * @param componentName Name of component data of which should be returned. Name is case sensitive.
+   *
    * @return Write speed of data in pages per second on cache level or value which is less than 0, which means that value cannot be
    * calculated.
    */
   public long getWriteSpeedInCacheInPages(String componentName) {
     switchLock.acquireReadLock();
     try {
-      if (enabled) {
+      if (enabled.get()) {
         final PerformanceCountersHolder countersHolder = ComponentType.GENERAL.newCountersHolder();
         fetchComponentCounters(componentName, countersHolder);
         return countersHolder.getWriteSpeedInCacheInPages();
@@ -799,7 +811,7 @@ public class OPerformanceStatisticManager {
   public long getWriteCachePagesPerFlush() {
     switchLock.acquireReadLock();
     try {
-      if (enabled) {
+      if (enabled.get()) {
         WritCacheCountersHolder holder = fetchWriteCacheCounters();
         if (holder != null)
           return holder.getPagesPerFlush();
@@ -828,7 +840,7 @@ public class OPerformanceStatisticManager {
   public long getWriteCacheFlushOperationsTime() {
     switchLock.acquireReadLock();
     try {
-      if (enabled) {
+      if (enabled.get()) {
         WritCacheCountersHolder holder = fetchWriteCacheCounters();
         if (holder != null)
           return holder.getFlushOperationsTime();
@@ -857,7 +869,7 @@ public class OPerformanceStatisticManager {
   public long getWriteCacheFuzzyCheckpointTime() {
     switchLock.acquireReadLock();
     try {
-      if (enabled) {
+      if (enabled.get()) {
         WritCacheCountersHolder holder = fetchWriteCacheCounters();
         if (holder != null)
           return holder.getFuzzyCheckpointTime();
@@ -885,7 +897,7 @@ public class OPerformanceStatisticManager {
   public long getFullCheckpointTime() {
     switchLock.acquireReadLock();
     try {
-      if (enabled) {
+      if (enabled.get()) {
         StorageCountersHolder holder = fetchStorageCounters();
         if (holder != null)
           return holder.getFullCheckpointTime();
@@ -913,7 +925,7 @@ public class OPerformanceStatisticManager {
   public long getFullCheckpointCount() {
     switchLock.acquireReadLock();
     try {
-      if (enabled) {
+      if (enabled.get()) {
         fullCheckpointCount = storage.getFullCheckpointCount();
         return fullCheckpointCount;
       } else {
@@ -930,7 +942,7 @@ public class OPerformanceStatisticManager {
   public long getReadCacheSize() {
     switchLock.acquireReadLock();
     try {
-      if (enabled) {
+      if (enabled.get()) {
         final O2QCache cache = gerReadCache();
         if (cache != null)
           readCacheSize = cache.getUsedMemory();
@@ -951,7 +963,7 @@ public class OPerformanceStatisticManager {
     switchLock.acquireReadLock();
     try {
 
-      if (enabled) {
+      if (enabled.get()) {
         final OWOWCache cache = getWowCache();
         if (cache != null) {
           writeCacheSize = cache.getWriteCacheSize();
@@ -972,7 +984,7 @@ public class OPerformanceStatisticManager {
   public long getExclusiveWriteCacheSize() {
     switchLock.acquireReadLock();
     try {
-      if (enabled) {
+      if (enabled.get()) {
         final OWOWCache cache = getWowCache();
         if (cache != null) {
           exclusiveWriteCacheSize = cache.getExclusiveWriteCacheSize();
@@ -994,7 +1006,7 @@ public class OPerformanceStatisticManager {
   public long getWriteCacheOverflowCount() {
     switchLock.acquireReadLock();
     try {
-      if (enabled) {
+      if (enabled.get()) {
         final OWOWCache cache = getWowCache();
         if (cache != null) {
           writeCacheOverflowCount = cache.getCacheOverflowCount();
@@ -1015,7 +1027,7 @@ public class OPerformanceStatisticManager {
   public long getWALSize() {
     switchLock.acquireReadLock();
     try {
-      if (enabled) {
+      if (enabled.get()) {
         final ODiskWriteAheadLog wal = getWriteAheadLog();
         if (wal != null) {
           walSize = wal.size();
@@ -1037,7 +1049,7 @@ public class OPerformanceStatisticManager {
   public long getWALCacheOverflowCount() {
     switchLock.acquireReadLock();
     try {
-      if (enabled) {
+      if (enabled.get()) {
         final ODiskWriteAheadLog wal = getWriteAheadLog();
         if (wal != null)
           walCacheOverflowCount = wal.getCacheOverflowCount();
@@ -1057,7 +1069,7 @@ public class OPerformanceStatisticManager {
   public long getWALLogRecordTime() {
     switchLock.acquireReadLock();
     try {
-      if (enabled) {
+      if (enabled.get()) {
         final WALCountersHolder holder = fetchWALCounters();
         if (holder != null)
           return holder.getLogTime();
@@ -1086,7 +1098,7 @@ public class OPerformanceStatisticManager {
   public long getWALStartAOLogRecordTime() {
     switchLock.acquireReadLock();
     try {
-      if (enabled) {
+      if (enabled.get()) {
         final WALCountersHolder holder = fetchWALCounters();
         if (holder != null)
           return holder.getStartAOTime();
@@ -1115,7 +1127,7 @@ public class OPerformanceStatisticManager {
   public long getWALStopAOLogRecordTime() {
     switchLock.acquireReadLock();
     try {
-      if (enabled) {
+      if (enabled.get()) {
         final WALCountersHolder holder = fetchWALCounters();
         if (holder != null)
           return holder.getStopAOTime();
@@ -1143,7 +1155,7 @@ public class OPerformanceStatisticManager {
   public long getWALFlushTime() {
     switchLock.acquireReadLock();
     try {
-      if (enabled) {
+      if (enabled.get()) {
         final WALCountersHolder holder = fetchWALCounters();
 
         if (holder != null)
