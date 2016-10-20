@@ -96,7 +96,7 @@ public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer {
     final OModifiableInteger lHolds = lockHolds.get();
     final int holds = lHolds.intValue();
     if (holds > 1) {
-      lockHolds.get().decrement();
+      lHolds.decrement();
       return;
     } else if (holds < 0) {
       // write lock was acquired before, do nothing
