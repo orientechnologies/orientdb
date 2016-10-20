@@ -1206,10 +1206,30 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
                     if (OStorageRemote.this.asynchEventListener != null)
                       OStorageRemote.this.asynchEventListener.unregisterLiveListener(token);
                   } else {
-                    OLiveResultListener listener = (OLiveResultListener) iCommand.getResultListener();
-                    // TODO pass db copy!!!
+                    final OLiveResultListener listener = (OLiveResultListener) iCommand.getResultListener();
+                    ODatabaseDocumentInternal current = ODatabaseRecordThreadLocal.INSTANCE.get();
+                    final ODatabaseDocument dbCopy = current.copy();
                     ORemoteConnectionPool pool = OStorageRemote.this.connectionManager.getPool(network.getServerURL());
-                    OStorageRemote.this.asynchEventListener.registerLiveListener(pool, token, listener);
+                    OStorageRemote.this.asynchEventListener.registerLiveListener(pool, token, new OLiveResultListener() {
+
+                      @Override
+                      public void onUnsubscribe(int iLiveToken) {
+                        listener.onUnsubscribe(iLiveToken);
+                        dbCopy.close();
+                      }
+
+                      @Override
+                      public void onLiveResult(int iLiveToken, ORecordOperation iOp) throws OException {
+                        dbCopy.activateOnCurrentThread();
+                        listener.onLiveResult(iLiveToken, iOp);
+                      }
+
+                      @Override
+                      public void onError(int iLiveToken) {
+                        listener.onError(iLiveToken);
+                        dbCopy.close();
+                      }
+                    });
                   }
                 } else {
                   throw new OStorageException("Cannot execute live query, returned null token");
