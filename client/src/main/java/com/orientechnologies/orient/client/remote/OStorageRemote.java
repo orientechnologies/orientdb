@@ -64,6 +64,8 @@ import com.orientechnologies.orient.client.remote.message.OCommandRequest;
 import com.orientechnologies.orient.client.remote.message.OCommandResponse;
 import com.orientechnologies.orient.client.remote.message.OCommitRequest;
 import com.orientechnologies.orient.client.remote.message.OCommitResponse;
+import com.orientechnologies.orient.client.remote.message.OCommitResponse.OCreatedRecordResponse;
+import com.orientechnologies.orient.client.remote.message.OCommitResponse.OUpdatedRecordResponse;
 import com.orientechnologies.orient.client.remote.message.OCountRecordsRequest;
 import com.orientechnologies.orient.client.remote.message.OCountRecordsResponse;
 import com.orientechnologies.orient.client.remote.message.OCountRequest;
@@ -858,11 +860,27 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   public List<ORecordOperation> commit(final OTransaction iTx, final Runnable callback) {
-    OBinaryRequest request = new OCommitRequest(iTx);
+    OBinaryRequest request = new OCommitRequest(iTx.getId(), iTx.isUsingLog(),
+        (Iterable<ORecordOperation>) iTx.getAllRecordEntries(), iTx.getIndexChanges());
 
-    OBinaryResponse<Void> response = new OCommitResponse(iTx);
+    OCommitResponse response = new OCommitResponse();
 
     networkOperation(request, response, "Error on commit");
+
+    for (OCreatedRecordResponse created : response.getCreated()) {
+      iTx.updateIdentityAfterCommit(created.getCurrentRid(), created.getCreatedRid());
+    }
+    for (OUpdatedRecordResponse updated : response.getUpdated()) {
+      ORecordOperation rop = iTx.getRecordEntry(updated.getRid());
+      if (rop != null) {
+        if (updated.getVersion() > rop.getRecord().getVersion() + 1)
+          // IN CASE OF REMOTE CONFLICT STRATEGY FORCE UNLOAD DUE TO INVALID CONTENT
+          rop.getRecord().unload();
+        ORecordInternal.setVersion(rop.getRecord(), updated.getVersion());
+      }
+    }
+    updateCollectionsFromChanges(ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager(),
+        response.getCollectionChanges());
     // SET ALL THE RECORDS AS UNDIRTY
     for (ORecordOperation txEntry : iTx.getAllRecordEntries())
       ORecordInternal.unsetDirty(txEntry.getRecord());

@@ -20,51 +20,126 @@
 package com.orientechnologies.orient.client.remote.message;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
-import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
 public final class OCommitResponse implements OBinaryResponse<Void> {
-  private final OTransaction iTx;
+  public static class OCreatedRecordResponse {
+    private final ORecordId currentRid;
+    private final ORecordId createdRid;
 
-  public OCommitResponse(OTransaction iTx) {
-    this.iTx = iTx;
+    public OCreatedRecordResponse(ORecordId currentRid, ORecordId createdRid) {
+      this.currentRid = currentRid;
+      this.createdRid = createdRid;
+    }
+
+    public ORecordId getCreatedRid() {
+      return createdRid;
+    }
+
+    public ORecordId getCurrentRid() {
+      return currentRid;
+    }
+
+  }
+
+  public static class OUpdatedRecordResponse {
+    private final ORecordId rid;
+    private final int       version;
+
+    public OUpdatedRecordResponse(ORecordId rid, int version) {
+      this.rid = rid;
+      this.version = version;
+    }
+
+    public ORecordId getRid() {
+      return rid;
+    }
+
+    public int getVersion() {
+      return version;
+    }
+  }
+
+  private List<OCreatedRecordResponse>        created;
+  private List<OUpdatedRecordResponse>        updated;
+  private Map<UUID, OBonsaiCollectionPointer> collectionChanges;
+
+  public OCommitResponse(List<OCreatedRecordResponse> created, List<OUpdatedRecordResponse> updated,
+      Map<UUID, OBonsaiCollectionPointer> collectionChanges) {
+    super();
+    this.created = created;
+    this.updated = updated;
+    this.collectionChanges = collectionChanges;
+  }
+
+  public OCommitResponse() {
   }
 
   @Override
   public Void read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+
     final int createdRecords = network.readInt();
+    created = new ArrayList<>(createdRecords);
     ORecordId currentRid;
     ORecordId createdRid;
     for (int i = 0; i < createdRecords; i++) {
       currentRid = network.readRID();
       createdRid = network.readRID();
 
-      iTx.updateIdentityAfterCommit(currentRid, createdRid);
+      created.add(new OCreatedRecordResponse(currentRid, createdRid));
     }
-
     final int updatedRecords = network.readInt();
+    updated = new ArrayList<>(updatedRecords);
     ORecordId rid;
     for (int i = 0; i < updatedRecords; ++i) {
       rid = network.readRID();
       int version = network.readVersion();
-      ORecordOperation rop = iTx.getRecordEntry(rid);
-      if (rop != null) {
-        if (version > rop.getRecord().getVersion() + 1)
-          // IN CASE OF REMOTE CONFLICT STRATEGY FORCE UNLOAD DUE TO INVALID CONTENT
-          rop.getRecord().unload();
-        ORecordInternal.setVersion(rop.getRecord(), version);
-      }
+      updated.add(new OUpdatedRecordResponse(rid, version));
     }
 
-    OStorageRemote.readCollectionChanges(network, ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager());
+    collectionChanges = OBinaryProtocolHelper.readCollectionChanges(network);
+
     return null;
   }
+
+  @Override
+  public void write(OChannelBinary channel, int protocolVersion, String recordSerializer) throws IOException {
+
+    channel.writeInt(created.size());
+    for (OCreatedRecordResponse createdRecord : created) {
+      channel.writeRID(createdRecord.currentRid);
+      channel.writeRID(createdRecord.createdRid);
+    }
+
+    channel.writeInt(updated.size());
+    for (OUpdatedRecordResponse updatedRecord : updated) {
+      channel.writeRID(updatedRecord.rid);
+      channel.writeVersion(updatedRecord.version);
+    }
+    if (protocolVersion >= 20)
+      OBinaryProtocolHelper.writeCollectionChanges(channel, collectionChanges);
+  }
+
+  public List<OCreatedRecordResponse> getCreated() {
+    return created;
+  }
+
+  public List<OUpdatedRecordResponse> getUpdated() {
+    return updated;
+  }
+
+  public Map<UUID, OBonsaiCollectionPointer> getCollectionChanges() {
+    return collectionChanges;
+  }
+
 }

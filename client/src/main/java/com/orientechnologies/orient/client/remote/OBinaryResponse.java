@@ -10,7 +10,7 @@ import java.io.IOException;
  */
 public interface OBinaryResponse<T> {
 
-//  void write(OChannelBinary channel, int protocolVersion, String recordSerializer) throws IOException;
+  void write(OChannelBinary channel, int protocolVersion, String recordSerializer) throws IOException;
 
   T read(final OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException;
 }

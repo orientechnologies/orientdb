@@ -12,7 +12,7 @@ public interface OBinaryRequest {
 
   void write(final OChannelBinaryAsynchClient network, OStorageRemoteSession session, int mode) throws IOException;
 
-//  void read(OChannelBinary channel, int protocolVersion, String serializerName) throws IOException;
+  void read(OChannelBinary channel, int protocolVersion, String serializerName) throws IOException;
 
   byte getCommand();
 

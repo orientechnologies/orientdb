@@ -3,6 +3,8 @@ package com.orientechnologies.orient.client.remote;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -71,6 +73,12 @@ public class OStorageRemoteAsyncOperationTest {
         assertNull(status.status);
         status.status = "write";
       }
+
+      @Override
+      public void read(OChannelBinary channel, int protocolVersion, String serializerName) throws IOException {
+
+      }
+
     }, new OBinaryResponse<Object>() {
       @Override
       public Object read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
@@ -78,6 +86,11 @@ public class OStorageRemoteAsyncOperationTest {
         status.status = "read";
         return null;
       }
+
+      @Override
+      public void write(OChannelBinary channel, int protocolVersion, String recordSerializer) throws IOException {
+      }
+
     }, 0, new ORecordId(-1, -1), null, "");
 
     assertEquals(status.status, "read");
@@ -98,12 +111,26 @@ public class OStorageRemoteAsyncOperationTest {
         assertNull(status.status);
         status.status = "write";
       }
+
+      @Override
+      public void read(OChannelBinary channel, int protocolVersion, String serializerName) throws IOException {
+        // TODO Auto-generated method stub
+
+      }
+
     }, new OBinaryResponse<Object>() {
       @Override
       public Object read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
         fail();
         return null;
       }
+
+      @Override
+      public void write(OChannelBinary channel, int protocolVersion, String recordSerializer) throws IOException {
+        // TODO Auto-generated method stub
+
+      }
+
     }, 1, new ORecordId(-1, -1), null, "");
 
     assertEquals(status.status, "write");
@@ -128,6 +155,12 @@ public class OStorageRemoteAsyncOperationTest {
         assertNull(status.status);
         status.status = "write";
       }
+
+      @Override
+      public void read(OChannelBinary channel, int protocolVersion, String serializerName) throws IOException {
+
+      }
+
     }, new OBinaryResponse<Object>() {
       @Override
       public Object read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
@@ -138,6 +171,10 @@ public class OStorageRemoteAsyncOperationTest {
           e.printStackTrace();
         }
         return res;
+      }
+
+      @Override
+      public void write(OChannelBinary channel, int protocolVersion, String recordSerializer) throws IOException {
       }
     }, 1, new ORecordId(-1, -1), new ORecordCallback<OBinaryResponse<Object>>() {
       @Override

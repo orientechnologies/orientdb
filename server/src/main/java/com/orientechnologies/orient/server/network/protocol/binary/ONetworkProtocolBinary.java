@@ -26,6 +26,7 @@ import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -56,6 +57,8 @@ import com.orientechnologies.orient.client.remote.message.OCleanOutRecordRequest
 import com.orientechnologies.orient.client.remote.message.OCleanOutRecordResponse;
 import com.orientechnologies.orient.client.remote.message.OCommandRequest;
 import com.orientechnologies.orient.client.remote.message.OCommandResponseServer;
+import com.orientechnologies.orient.client.remote.message.OCommitRequest;
+import com.orientechnologies.orient.client.remote.message.OCommitResponse;
 import com.orientechnologies.orient.client.remote.message.OCountRecordsResponse;
 import com.orientechnologies.orient.client.remote.message.OCountRequest;
 import com.orientechnologies.orient.client.remote.message.OCountResponse;
@@ -99,6 +102,8 @@ import com.orientechnologies.orient.client.remote.message.OSBTGetRequest;
 import com.orientechnologies.orient.client.remote.message.OSBTGetResponse;
 import com.orientechnologies.orient.client.remote.message.OUpdateRecordRequest;
 import com.orientechnologies.orient.client.remote.message.OUpdateRecordResponse;
+import com.orientechnologies.orient.client.remote.message.OCommitResponse.OCreatedRecordResponse;
+import com.orientechnologies.orient.client.remote.message.OCommitResponse.OUpdatedRecordResponse;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OCommandCache;
@@ -801,7 +806,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       return;
     OGetClusterDataRangeRequest request = new OGetClusterDataRangeRequest();
     request.read(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
-    
+
     final long[] pos = connection.getDatabase().getStorage().getClusterDataRange(request.getClusterId());
     OGetClusterDataRangeResponse response = new OGetClusterDataRangeResponse(pos);
     beginResponse();
@@ -1343,7 +1348,12 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     if (!isConnectionAlive(connection))
       return;
 
-    final OTransactionOptimisticProxy tx = new OTransactionOptimisticProxy(connection, this);
+    OCommitRequest request = new OCommitRequest();
+    request.read(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
+
+    final OTransactionOptimisticProxy tx = new OTransactionOptimisticProxy(connection.getDatabase(), request.getTxId(),
+        request.isUsingLong(), request.getOperations(), request.getIndexChanges(), connection.getData().protocolVersion,
+        connection.getData().serializationImpl);
 
     try {
       try {
@@ -1359,30 +1369,28 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         } catch (final ORecordNotFoundException e) {
           throw e.getCause() instanceof OOfflineClusterException ? (OOfflineClusterException) e.getCause() : e;
         }
+        List<OCreatedRecordResponse> createdRecords = new ArrayList<>(tx.getCreatedRecords().size());
+        for (Entry<ORecordId, ORecord> entry : tx.getCreatedRecords().entrySet()) {
+          createdRecords.add(new OCreatedRecordResponse(entry.getKey(), (ORecordId) entry.getValue().getIdentity()));
+          // IF THE NEW OBJECT HAS VERSION > 0 MEANS THAT HAS BEEN UPDATED IN THE SAME TX. THIS HAPPENS FOR GRAPHS
+          if (entry.getValue().getVersion() > 0)
+            tx.getUpdatedRecords().put((ORecordId) entry.getValue().getIdentity(), entry.getValue());
+        }
+
+        List<OUpdatedRecordResponse> updatedRecords = new ArrayList<>(tx.getUpdatedRecords().size());
+        for (Entry<ORecordId, ORecord> entry : tx.getUpdatedRecords().entrySet()) {
+          updatedRecords.add(new OUpdatedRecordResponse(entry.getKey(), entry.getValue().getVersion()));
+        }
+        OSBTreeCollectionManager collectionManager = connection.getDatabase().getSbTreeCollectionManager();
+        Map<UUID, OBonsaiCollectionPointer> changedIds = null;
+        if (collectionManager != null) {
+          changedIds = collectionManager.changedIds();
+        }
+        OCommitResponse response = new OCommitResponse(createdRecords, updatedRecords, changedIds);
         beginResponse();
         try {
           sendOk(connection, clientTxId);
-
-          // SEND BACK ALL THE RECORD IDS FOR THE CREATED RECORDS
-          channel.writeInt(tx.getCreatedRecords().size());
-          for (Entry<ORecordId, ORecord> entry : tx.getCreatedRecords().entrySet()) {
-            channel.writeRID(entry.getKey());
-            channel.writeRID(entry.getValue().getIdentity());
-
-            // IF THE NEW OBJECT HAS VERSION > 0 MEANS THAT HAS BEEN UPDATED IN THE SAME TX. THIS HAPPENS FOR GRAPHS
-            if (entry.getValue().getVersion() > 0)
-              tx.getUpdatedRecords().put((ORecordId) entry.getValue().getIdentity(), entry.getValue());
-          }
-
-          // SEND BACK ALL THE NEW VERSIONS FOR THE UPDATED RECORDS
-          channel.writeInt(tx.getUpdatedRecords().size());
-          for (Entry<ORecordId, ORecord> entry : tx.getUpdatedRecords().entrySet()) {
-            channel.writeRID(entry.getKey());
-            channel.writeVersion(entry.getValue().getVersion());
-          }
-
-          if (connection.getData().protocolVersion >= 20)
-            sendCollectionChanges(connection);
+          response.write(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
         } finally {
           endResponse(connection);
         }
@@ -1605,16 +1613,11 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
     OUpdateRecordRequest request = new OUpdateRecordRequest();
     request.read(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
-    final ORecordId rid = request.getRid();
-    boolean updateContent = request.isUpdateContent();
-    final byte[] buffer = request.getContent();
-    final int version = request.getVersion();
-    final byte recordType = request.getRecordType();
-    final byte mode = request.getMode();
 
-    final int newVersion = updateRecord(connection, rid, buffer, version, recordType, updateContent);
+    final int newVersion = updateRecord(connection, request.getRid(), request.getContent(), request.getVersion(),
+        request.getRecordType(), request.isUpdateContent());
 
-    if (mode < 2) {
+    if (request.getMode() < 2) {
       Map<UUID, OBonsaiCollectionPointer> changedIds;
       OSBTreeCollectionManager collectionManager = connection.getDatabase().getSbTreeCollectionManager();
       if (collectionManager != null) {
@@ -1622,6 +1625,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         collectionManager.clearChangedIds();
       } else
         changedIds = new HashMap<>();
+
       OUpdateRecordResponse response = new OUpdateRecordResponse(newVersion, changedIds);
       beginResponse();
       try {
