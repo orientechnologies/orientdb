@@ -44,7 +44,6 @@ import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
-import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.ONullSerializer;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.client.remote.OCollectionNetworkSerializer;
@@ -59,9 +58,13 @@ import com.orientechnologies.orient.client.remote.message.OCommandRequest;
 import com.orientechnologies.orient.client.remote.message.OCommandResponseServer;
 import com.orientechnologies.orient.client.remote.message.OCommitRequest;
 import com.orientechnologies.orient.client.remote.message.OCommitResponse;
+import com.orientechnologies.orient.client.remote.message.OCommitResponse.OCreatedRecordResponse;
+import com.orientechnologies.orient.client.remote.message.OCommitResponse.OUpdatedRecordResponse;
 import com.orientechnologies.orient.client.remote.message.OCountRecordsResponse;
 import com.orientechnologies.orient.client.remote.message.OCountRequest;
 import com.orientechnologies.orient.client.remote.message.OCountResponse;
+import com.orientechnologies.orient.client.remote.message.OCreateDatabaseRequest;
+import com.orientechnologies.orient.client.remote.message.OCreateDatabaseResponse;
 import com.orientechnologies.orient.client.remote.message.OCreateRecordRequest;
 import com.orientechnologies.orient.client.remote.message.OCreateRecordResponse;
 import com.orientechnologies.orient.client.remote.message.ODeleteRecordRequest;
@@ -70,12 +73,24 @@ import com.orientechnologies.orient.client.remote.message.ODistributedStatusRequ
 import com.orientechnologies.orient.client.remote.message.ODistributedStatusResponse;
 import com.orientechnologies.orient.client.remote.message.ODropClusterRequest;
 import com.orientechnologies.orient.client.remote.message.ODropClusterResponse;
+import com.orientechnologies.orient.client.remote.message.ODropDatabaseRequest;
+import com.orientechnologies.orient.client.remote.message.ODropDatabaseResponse;
+import com.orientechnologies.orient.client.remote.message.OExistsDatabaseRequest;
+import com.orientechnologies.orient.client.remote.message.OExistsDatabaseResponse;
 import com.orientechnologies.orient.client.remote.message.OFloorPhysicalPositionsRequest;
 import com.orientechnologies.orient.client.remote.message.OFloorPhysicalPositionsResponse;
+import com.orientechnologies.orient.client.remote.message.OFreezeDatabaseRequest;
+import com.orientechnologies.orient.client.remote.message.OFreezeDatabaseResponse;
 import com.orientechnologies.orient.client.remote.message.OGetClusterDataRangeRequest;
 import com.orientechnologies.orient.client.remote.message.OGetClusterDataRangeResponse;
+import com.orientechnologies.orient.client.remote.message.OGetGlobalConfigurationRequest;
+import com.orientechnologies.orient.client.remote.message.OGetGlobalConfigurationResponse;
+import com.orientechnologies.orient.client.remote.message.OGetGlobalConfigurationsRequest;
+import com.orientechnologies.orient.client.remote.message.OGetGlobalConfigurationsResponse;
 import com.orientechnologies.orient.client.remote.message.OGetRecordMetadataRequest;
 import com.orientechnologies.orient.client.remote.message.OGetRecordMetadataResponse;
+import com.orientechnologies.orient.client.remote.message.OGetServerInfoRequest;
+import com.orientechnologies.orient.client.remote.message.OGetServerInfoResponse;
 import com.orientechnologies.orient.client.remote.message.OGetSizeResponse;
 import com.orientechnologies.orient.client.remote.message.OHideRecordRequest;
 import com.orientechnologies.orient.client.remote.message.OHideRecordResponse;
@@ -83,12 +98,15 @@ import com.orientechnologies.orient.client.remote.message.OHigherPhysicalPositio
 import com.orientechnologies.orient.client.remote.message.OHigherPhysicalPositionsResponse;
 import com.orientechnologies.orient.client.remote.message.OIncrementalBackupRequest;
 import com.orientechnologies.orient.client.remote.message.OIncrementalBackupResponse;
+import com.orientechnologies.orient.client.remote.message.OListDatabasesReponse;
+import com.orientechnologies.orient.client.remote.message.OListDatabasesRequest;
 import com.orientechnologies.orient.client.remote.message.OLowerPhysicalPositionsRequest;
 import com.orientechnologies.orient.client.remote.message.OLowerPhysicalPositionsResponse;
 import com.orientechnologies.orient.client.remote.message.OReadRecordIfVersionIsNotLatestRequest;
 import com.orientechnologies.orient.client.remote.message.OReadRecordIfVersionIsNotLatestResponse;
 import com.orientechnologies.orient.client.remote.message.OReadRecordRequest;
 import com.orientechnologies.orient.client.remote.message.OReadRecordResponse;
+import com.orientechnologies.orient.client.remote.message.OReleaseDatabaseRequest;
 import com.orientechnologies.orient.client.remote.message.OReloadResponse;
 import com.orientechnologies.orient.client.remote.message.OSBTCreateTreeRequest;
 import com.orientechnologies.orient.client.remote.message.OSBTCreateTreeResponse;
@@ -100,10 +118,10 @@ import com.orientechnologies.orient.client.remote.message.OSBTGetRealBagSizeRequ
 import com.orientechnologies.orient.client.remote.message.OSBTGetRealBagSizeResponse;
 import com.orientechnologies.orient.client.remote.message.OSBTGetRequest;
 import com.orientechnologies.orient.client.remote.message.OSBTGetResponse;
+import com.orientechnologies.orient.client.remote.message.OSetGlobalConfigurationRequest;
+import com.orientechnologies.orient.client.remote.message.OSetGlobalConfigurationResponse;
 import com.orientechnologies.orient.client.remote.message.OUpdateRecordRequest;
 import com.orientechnologies.orient.client.remote.message.OUpdateRecordResponse;
-import com.orientechnologies.orient.client.remote.message.OCommitResponse.OCreatedRecordResponse;
-import com.orientechnologies.orient.client.remote.message.OCommitResponse.OUpdatedRecordResponse;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OCommandCache;
@@ -121,7 +139,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
-import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -1172,22 +1189,20 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
   protected void dropDatabase(OClientConnection connection) throws IOException {
     setDataCommandInfo(connection, "Drop database");
-    String dbName = channel.readString();
 
-    String storageType = null;
-    storageType = channel.readString();
-
-    if (storageType == null)
-      storageType = "plocal";
+    ODropDatabaseRequest request = new ODropDatabaseRequest();
+    request.read(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
 
     checkServerAccess("database.drop", connection);
 
-    server.dropDatabase(dbName);
-    OLogManager.instance().info(this, "Dropped database '%s'", dbName);
+    server.dropDatabase(request.getDatabaseName());
+    OLogManager.instance().info(this, "Dropped database '%s'", request.getDatabaseName());
     connection.close();
+    ODropDatabaseResponse response = new ODropDatabaseResponse();
     beginResponse();
     try {
       sendOk(connection, clientTxId);
+      response.write(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
     } finally {
       endResponse(connection);
     }
@@ -1195,22 +1210,17 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
   protected void existsDatabase(OClientConnection connection) throws IOException {
     setDataCommandInfo(connection, "Exists database");
-    final String dbName = channel.readString();
-
-    String storageType = null;
-    storageType = channel.readString();
-
-    if (storageType == null)
-      storageType = "plocal";
+    OExistsDatabaseRequest request = new OExistsDatabaseRequest();
+    request.read(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
 
     checkServerAccess("database.exists", connection);
 
-    boolean result = server.existsDatabase(dbName);
-
+    boolean result = server.existsDatabase(request.getDatabaseName());
+    OExistsDatabaseResponse response = new OExistsDatabaseResponse(result);
     beginResponse();
     try {
       sendOk(connection, clientTxId);
-      channel.writeByte((byte) (result ? 1 : 0));
+      response.write(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
     } finally {
       endResponse(connection);
     }
@@ -1219,37 +1229,29 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   protected void createDatabase(OClientConnection connection) throws IOException {
     setDataCommandInfo(connection, "Create database");
 
-    String dbName = channel.readString();
-    String dbType = ODatabaseDocument.TYPE;
-    // READ DB-TYPE FROM THE CLIENT
-    dbType = channel.readString();
-    String storageType = channel.readString();
-    String backupPath = null;
-
-    if (connection.getData().protocolVersion > 35) {
-      backupPath = channel.readString();
-    }
+    OCreateDatabaseRequest request = new OCreateDatabaseRequest();
+    request.read(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
 
     checkServerAccess("database.create", connection);
-    checkStorageExistence(dbName);
 
-    if (server.existsDatabase(dbName))
-      throw new ODatabaseException("Database named '" + dbName + "' already exists");
-    if (backupPath != null && !"".equals(backupPath.trim())) {
-      server.restore(dbName, backupPath);
-      // Just for logging
-      storageType = "plocal";
+    if (server.existsDatabase(request.getDatabaseName()))
+      throw new ODatabaseException("Database named '" + request.getDatabaseName() + "' already exists");
+    if (request.getBackupPath() != null && !"".equals(request.getBackupPath().trim())) {
+      server.restore(request.getDatabaseName(), request.getBackupPath());
     } else {
-      server.createDatabase(dbName, DatabaseType.valueOf(storageType.toUpperCase()), null);
+      server.createDatabase(request.getDatabaseName(), DatabaseType.valueOf(request.getStorageMode().toUpperCase()), null);
     }
-    OLogManager.instance().info(this, "Created database '%s' of type '%s'", dbName, storageType);
+    OLogManager.instance().info(this, "Created database '%s' of type '%s'", request.getDatabaseName(), request.getStorageMode());
 
     // TODO: it should be here an additional check for open with the right user
-    connection.setDatabase(server.openDatabase(dbName, connection.getData().serverUsername, null, connection.getData(), true));
+    connection.setDatabase(
+        server.openDatabase(request.getDatabaseName(), connection.getData().serverUsername, null, connection.getData(), true));
 
+    OCreateDatabaseResponse response = new OCreateDatabaseResponse();
     beginResponse();
     try {
       sendOk(connection, clientTxId);
+      response.write(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
     } finally {
       endResponse(connection);
     }
@@ -1267,34 +1269,37 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     setDataCommandInfo(connection, "List config");
 
     checkServerAccess("server.config.get", connection);
+    OGetGlobalConfigurationsRequest request = new OGetGlobalConfigurationsRequest();
+    request.read(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
 
+    Map<String, String> configs = new HashMap<>();
+    for (OGlobalConfiguration cfg : OGlobalConfiguration.values()) {
+
+      String key;
+      try {
+        key = cfg.getKey();
+      } catch (Exception e) {
+        key = "?";
+      }
+
+      String value;
+      if (cfg.isHidden())
+        value = "<hidden>";
+      else
+        try {
+          value = cfg.getValueAsString() != null ? cfg.getValueAsString() : "";
+        } catch (Exception e) {
+          value = "";
+        }
+      configs.put(key, value);
+    }
+
+    OGetGlobalConfigurationsResponse response = new OGetGlobalConfigurationsResponse(configs);
     beginResponse();
     try {
       sendOk(connection, clientTxId);
+      response.write(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
 
-      channel.writeShort((short) OGlobalConfiguration.values().length);
-      for (OGlobalConfiguration cfg : OGlobalConfiguration.values()) {
-
-        String key;
-        try {
-          key = cfg.getKey();
-        } catch (Exception e) {
-          key = "?";
-        }
-
-        String value;
-        if (cfg.isHidden())
-          value = "<hidden>";
-        else
-          try {
-            value = cfg.getValueAsString() != null ? cfg.getValueAsString() : "";
-          } catch (Exception e) {
-            value = "";
-          }
-
-        channel.writeString(key);
-        channel.writeString(value);
-      }
     } finally {
       endResponse(connection);
     }
@@ -1305,20 +1310,24 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
     checkServerAccess("server.config.set", connection);
 
-    final String key = channel.readString();
-    final String value = channel.readString();
-    final OGlobalConfiguration cfg = OGlobalConfiguration.findByKey(key);
+    OSetGlobalConfigurationRequest request = new OSetGlobalConfigurationRequest();
+    request.read(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
+
+    final OGlobalConfiguration cfg = OGlobalConfiguration.findByKey(request.getKey());
 
     if (cfg != null) {
-      cfg.setValue(value);
+      cfg.setValue(request.getValue());
       if (!cfg.isChangeableAtRuntime())
-        throw new OConfigurationException("Property '" + key + "' cannot be changed at runtime. Change the setting at startup");
+        throw new OConfigurationException(
+            "Property '" + request.getKey() + "' cannot be changed at runtime. Change the setting at startup");
     } else
-      throw new OConfigurationException("Property '" + key + "' was not found in global configuration");
+      throw new OConfigurationException("Property '" + request.getKey() + "' was not found in global configuration");
 
+    OSetGlobalConfigurationResponse response = new OSetGlobalConfigurationResponse();
     beginResponse();
     try {
       sendOk(connection, clientTxId);
+      response.write(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
     } finally {
       endResponse(connection);
     }
@@ -1328,15 +1337,16 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     setDataCommandInfo(connection, "Get config");
 
     checkServerAccess("server.config.get", connection);
+    OGetGlobalConfigurationRequest request = new OGetGlobalConfigurationRequest();
+    request.read(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
+    final OGlobalConfiguration cfg = OGlobalConfiguration.findByKey(request.getKey());
 
-    final String key = channel.readString();
-    final OGlobalConfiguration cfg = OGlobalConfiguration.findByKey(key);
     String cfgValue = cfg != null ? cfg.isHidden() ? "<hidden>" : cfg.getValueAsString() : "";
-
+    OGetGlobalConfigurationResponse response = new OGetGlobalConfigurationResponse(cfgValue);
     beginResponse();
     try {
       sendOk(connection, clientTxId);
-      channel.writeString(cfgValue);
+      response.write(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
     } finally {
       endResponse(connection);
     }
@@ -1905,24 +1915,24 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
   protected void freezeDatabase(OClientConnection connection) throws IOException {
     setDataCommandInfo(connection, "Freeze database");
-    String dbName = channel.readString();
 
     checkServerAccess("database.freeze", connection);
+    OFreezeDatabaseRequest request = new OFreezeDatabaseRequest();
+    request.read(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
 
-    String storageType = null;
-    storageType = channel.readString();
-
-    ODatabaseDocumentInternal database = server.openDatabase(dbName, connection.getServerUser().name, null, connection.getData(),
-        true);
+    ODatabaseDocumentInternal database = server.openDatabase(request.getName(), connection.getServerUser().name, null,
+        connection.getData(), true);
     connection.setDatabase(database);
 
     OLogManager.instance().info(this, "Freezing database '%s'", connection.getDatabase().getURL());
 
     connection.getDatabase().freeze(true);
+    OFreezeDatabaseResponse response = new OFreezeDatabaseResponse();
 
     beginResponse();
     try {
       sendOk(connection, clientTxId);
+      response.write(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
     } finally {
       endResponse(connection);
     }
@@ -1930,28 +1940,30 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
   protected void releaseDatabase(OClientConnection connection) throws IOException {
     setDataCommandInfo(connection, "Release database");
-    String dbName = channel.readString();
+    OReleaseDatabaseRequest request = new OReleaseDatabaseRequest();
+    request.read(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
 
     checkServerAccess("database.release", connection);
-
     String storageType = null;
-    storageType = channel.readString();
+    storageType = request.getStorageType();
 
     if (storageType == null)
       storageType = "plocal";
 
-    ODatabaseDocumentInternal database = server.openDatabase(dbName, connection.getServerUser().name, null, connection.getData(),
-        true);
+    ODatabaseDocumentInternal database = server.openDatabase(request.getName(), connection.getServerUser().name, null,
+        connection.getData(), true);
 
     connection.setDatabase(database);
 
     OLogManager.instance().info(this, "Realising database '%s'", connection.getDatabase().getURL());
 
     connection.getDatabase().release();
+    ODeleteRecordResponse response = new ODeleteRecordResponse();
 
     beginResponse();
     try {
       sendOk(connection, clientTxId);
+      response.write(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
     } finally {
       endResponse(connection);
     }
@@ -2242,24 +2254,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     return true;
   }
 
-  private void sendCollectionChanges(OClientConnection connection) throws IOException {
-    OSBTreeCollectionManager collectionManager = connection.getDatabase().getSbTreeCollectionManager();
-    if (collectionManager != null) {
-      Map<UUID, OBonsaiCollectionPointer> changedIds = collectionManager.changedIds();
-
-      channel.writeInt(changedIds.size());
-
-      for (Entry<UUID, OBonsaiCollectionPointer> entry : changedIds.entrySet()) {
-        UUID id = entry.getKey();
-        channel.writeLong(id.getMostSignificantBits());
-        channel.writeLong(id.getLeastSignificantBits());
-
-        OCollectionNetworkSerializer.INSTANCE.writeCollectionPointer(channel, entry.getValue());
-      }
-      collectionManager.clearChangedIds();
-    }
-  }
-
   private void sendDatabaseInformation(OClientConnection connection) throws IOException {
     final Collection<? extends OCluster> clusters = connection.getDatabase().getStorage().getClusterInstances();
     OBinaryProtocolHelper.writeClustersArray(channel, clusters.toArray(new OCluster[clusters.size()]),
@@ -2268,21 +2262,21 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
   private void listDatabases(OClientConnection connection) throws IOException {
     checkServerAccess("server.listDatabases", connection);
-    final ODocument result = new ODocument();
+
+    OListDatabasesRequest request = new OListDatabasesRequest();
+    request.read(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
     Set<String> dbs = server.listDatabases();
     Map<String, String> toSend = new HashMap<String, String>();
     for (String dbName : dbs) {
       toSend.put(dbName, dbName);
     }
-    result.field("databases", toSend);
-
     setDataCommandInfo(connection, "List databases");
+    OListDatabasesReponse response = new OListDatabasesReponse(toSend);
 
     beginResponse();
     try {
       sendOk(connection, clientTxId);
-      byte[] stream = getRecordBytes(connection, result);
-      channel.writeBytes(stream);
+      response.write(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
     } finally {
       endResponse(connection);
     }
@@ -2290,13 +2284,15 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
   private void serverInfo(OClientConnection connection) throws IOException {
     checkServerAccess("server.info", connection);
-
     setDataCommandInfo(connection, "Server Info");
+    OGetServerInfoRequest request = new OGetServerInfoRequest();
+    request.read(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
 
+    OGetServerInfoResponse response = new OGetServerInfoResponse(OServerInfo.getServerInfo(server));
     beginResponse();
     try {
       sendOk(connection, clientTxId);
-      channel.writeString(OServerInfo.getServerInfo(server));
+      response.write(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
     } finally {
       endResponse(connection);
     }

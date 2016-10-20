@@ -20,17 +20,35 @@
 package com.orientechnologies.orient.client.remote;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
+import com.orientechnologies.orient.client.remote.message.OCreateDatabaseRequest;
+import com.orientechnologies.orient.client.remote.message.OCreateDatabaseResponse;
 import com.orientechnologies.orient.client.remote.message.ODistributedStatusRequest;
 import com.orientechnologies.orient.client.remote.message.ODistributedStatusResponse;
+import com.orientechnologies.orient.client.remote.message.ODropDatabaseRequest;
+import com.orientechnologies.orient.client.remote.message.ODropDatabaseResponse;
+import com.orientechnologies.orient.client.remote.message.OExistsDatabaseRequest;
+import com.orientechnologies.orient.client.remote.message.OExistsDatabaseResponse;
+import com.orientechnologies.orient.client.remote.message.OFreezeDatabaseRequest;
+import com.orientechnologies.orient.client.remote.message.OFreezeDatabaseResponse;
+import com.orientechnologies.orient.client.remote.message.OGetGlobalConfigurationRequest;
+import com.orientechnologies.orient.client.remote.message.OGetGlobalConfigurationResponse;
+import com.orientechnologies.orient.client.remote.message.OGetGlobalConfigurationsRequest;
+import com.orientechnologies.orient.client.remote.message.OGetGlobalConfigurationsResponse;
+import com.orientechnologies.orient.client.remote.message.OGetServerInfoRequest;
+import com.orientechnologies.orient.client.remote.message.OGetServerInfoResponse;
+import com.orientechnologies.orient.client.remote.message.OListDatabasesReponse;
+import com.orientechnologies.orient.client.remote.message.OListDatabasesRequest;
+import com.orientechnologies.orient.client.remote.message.OReleaseDatabaseRequest;
+import com.orientechnologies.orient.client.remote.message.OReleaseDatabaseResponse;
+import com.orientechnologies.orient.client.remote.message.OSetGlobalConfigurationRequest;
+import com.orientechnologies.orient.client.remote.message.OSetGlobalConfigurationResponse;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -138,28 +156,12 @@ public class OServerAdmin {
    *
    * @throws IOException
    */
-  @SuppressWarnings("unchecked")
   public synchronized Map<String, String> listDatabases() throws IOException {
-    return networkAdminOperation(new OStorageRemoteOperation<Map<String, String>>() {
-      @Override
-      public Map<String, String> execute(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
-        try {
-          storage.beginRequest(network, OChannelBinaryProtocol.REQUEST_DB_LIST, session);
-        } finally {
-          storage.endRequest(network);
-        }
 
-        final ODocument result = new ODocument();
-        try {
-          storage.beginResponse(network, session);
-          result.fromStream(network.readBytes());
-        } finally {
-          storage.endResponse(network);
-        }
+    OBinaryRequest request = new OListDatabasesRequest();
+    OBinaryResponse<Map<String, String>> response = new OListDatabasesReponse();
 
-        return (Map<String, String>) result.field("databases");
-      }
-    }, "Cannot retrieve the configuration list");
+    return networkAdminOperation(request, response, "Cannot retrieve the configuration list");
 
   }
 
@@ -168,27 +170,13 @@ public class OServerAdmin {
    *
    * @throws IOException
    */
-  @SuppressWarnings("unchecked")
   public synchronized ODocument getServerInfo() throws IOException {
-    return networkAdminOperation(new OStorageRemoteOperation<ODocument>() {
-      @Override
-      public ODocument execute(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
-        try {
-          storage.beginRequest(network, OChannelBinaryProtocol.REQUEST_SERVER_INFO, session);
-        } finally {
-          storage.endRequest(network);
-        }
-
-        final ODocument result = new ODocument();
-        try {
-          storage.beginResponse(network, session);
-          result.fromJSON(network.readString());
-        } finally {
-          storage.endResponse(network);
-        }
-        return result;
-      }
-    }, "Cannot retrieve server information");
+    OBinaryRequest request = new OGetServerInfoRequest();
+    OBinaryResponse<String> response = new OGetServerInfoResponse();
+    String result = networkAdminOperation(request, response, "Cannot retrieve server information");
+    ODocument res = new ODocument();
+    res.fromJSON(result);
+    return res;
   }
 
   public int getSessionId() {
@@ -242,32 +230,16 @@ public class OServerAdmin {
       OLogManager.instance().error(this, message);
       throw new OStorageException(message);
     } else {
-      networkAdminOperation(new OStorageRemoteOperation<Void>() {
-        @Override
-        public Void execute(final OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
-          String storageMode;
-          if (iStorageMode == null)
-            storageMode = "plocal";
-          else
-            storageMode = iStorageMode;
+      String storageMode;
+      if (iStorageMode == null)
+        storageMode = "plocal";
+      else
+        storageMode = iStorageMode;
 
-          try {
-            storage.beginRequest(network, OChannelBinaryProtocol.REQUEST_DB_CREATE, session);
-            network.writeString(iDatabaseName);
-            if (network.getSrvProtocolVersion() >= 8)
-              network.writeString(iDatabaseType);
-            network.writeString(storageMode);
+      OBinaryRequest request = new OCreateDatabaseRequest(iDatabaseName, iDatabaseName, storageMode, backupPath);
+      OBinaryResponse<Void> response = new OCreateDatabaseResponse();
 
-            if (network.getSrvProtocolVersion() > 35)
-              network.writeString(backupPath);
-          } finally {
-            storage.endRequest(network);
-          }
-
-          storage.getResponse(network, session);
-          return null;
-        }
-      }, "Cannot create the remote storage: " + storage.getName());
+      networkAdminOperation(request, response, "Cannot create the remote storage: " + storage.getName());
 
     }
 
@@ -292,27 +264,10 @@ public class OServerAdmin {
    * @throws IOException
    */
   public synchronized boolean existsDatabase(final String iDatabaseName, final String storageType) throws IOException {
+    OBinaryRequest request = new OExistsDatabaseRequest(iDatabaseName, storageType);
+    OBinaryResponse<Boolean> response = new OExistsDatabaseResponse();
 
-    return networkAdminOperation(new OStorageRemoteOperation<Boolean>() {
-      @Override
-      public Boolean execute(final OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
-
-        try {
-          storage.beginRequest(network, OChannelBinaryProtocol.REQUEST_DB_EXIST, session);
-          network.writeString(iDatabaseName);
-          network.writeString(storageType);
-        } finally {
-          storage.endRequest(network);
-        }
-
-        try {
-          storage.beginResponse(network, session);
-          return network.readByte() == 1;
-        } finally {
-          storage.endResponse(network);
-        }
-      }
-    }, "Error on checking existence of the remote storage: " + storage.getName());
+    return networkAdminOperation(request, response, "Error on checking existence of the remote storage: " + storage.getName());
 
   }
 
@@ -350,29 +305,9 @@ public class OServerAdmin {
    */
   public synchronized OServerAdmin dropDatabase(final String iDatabaseName, final String storageType) throws IOException {
 
-    boolean retry = true;
-    while (retry) {
-      retry = networkAdminOperation(new OStorageRemoteOperation<Boolean>() {
-        @Override
-        public Boolean execute(final OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
-          try {
-            try {
-              storage.beginRequest(network, OChannelBinaryProtocol.REQUEST_DB_DROP, session);
-              network.writeString(iDatabaseName);
-              network.writeString(storageType);
-            } finally {
-              storage.endRequest(network);
-            }
-
-            storage.getResponse(network, session);
-            return false;
-          } catch (OModificationOperationProhibitedException oope) {
-            return handleDBFreeze();
-          }
-
-        }
-      }, "Cannot delete the remote storage: " + storage.getName());
-    }
+    OBinaryRequest request = new ODropDatabaseRequest(iDatabaseName, storageType);
+    OBinaryResponse<Void> response = new ODropDatabaseResponse();
+    networkAdminOperation(request, response, "Cannot delete the remote storage: " + storage.getName());
 
     final Set<OStorage> underlyingStorages = new HashSet<OStorage>();
 
@@ -411,21 +346,11 @@ public class OServerAdmin {
    * @see #releaseDatabase(String)
    */
   public synchronized OServerAdmin freezeDatabase(final String storageType) throws IOException {
-    networkAdminOperation(new OStorageRemoteOperation<Void>() {
-      @Override
-      public Void execute(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
-        try {
-          storage.beginRequest(network, OChannelBinaryProtocol.REQUEST_DB_FREEZE, session);
-          network.writeString(storage.getName());
-          network.writeString(storageType);
-        } finally {
-          storage.endRequest(network);
-        }
 
-        storage.getResponse(network, session);
-        return null;
-      }
-    }, "Cannot freeze the remote storage: " + storage.getName());
+    OBinaryRequest request = new OFreezeDatabaseRequest(storage.getName(), storageType);
+    OBinaryResponse<Void> response = new OFreezeDatabaseResponse();
+
+    networkAdminOperation(request, response, "Cannot freeze the remote storage: " + storage.getName());
 
     return this;
   }
@@ -439,84 +364,12 @@ public class OServerAdmin {
    * @see #freezeDatabase(String)
    */
   public synchronized OServerAdmin releaseDatabase(final String storageType) throws IOException {
-    networkAdminOperation(new OStorageRemoteOperation<Void>() {
-      @Override
-      public Void execute(final OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
-        try {
-          storage.beginRequest(network, OChannelBinaryProtocol.REQUEST_DB_RELEASE, session);
-          network.writeString(storage.getName());
-          network.writeString(storageType);
-        } finally {
-          storage.endRequest(network);
-        }
 
-        storage.getResponse(network, session);
-        return null;
-      }
-    }, "Cannot release the remote storage: " + storage.getName());
+    OBinaryRequest request = new OReleaseDatabaseRequest(storage.getName(), storageType);
 
-    return this;
-  }
+    OBinaryResponse<Void> response = new OReleaseDatabaseResponse();
 
-  /**
-   * Freezes a cluster by locking it in exclusive mode.
-   *
-   * @param clusterId Id of cluster to freeze
-   * @param storageType Storage type between "plocal" or "memory".
-   * @return
-   * @throws IOException
-   * @see #releaseCluster(int, String)
-   */
-
-  public synchronized OServerAdmin freezeCluster(final int clusterId, final String storageType) throws IOException {
-
-    networkAdminOperation(new OStorageRemoteOperation<Void>() {
-      @Override
-      public Void execute(final OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
-        try {
-          storage.beginRequest(network, OChannelBinaryProtocol.REQUEST_DATACLUSTER_FREEZE, session);
-          network.writeString(storage.getName());
-          network.writeShort((short) clusterId);
-          network.writeString(storageType);
-        } finally {
-          storage.endRequest(network);
-        }
-
-        storage.getResponse(network, session);
-        return null;
-      }
-    }, "Cannot freeze the remote cluster " + clusterId + " on storage: " + storage.getName());
-
-    return this;
-  }
-
-  /**
-   * Releases a frozen cluster.
-   *
-   * @param clusterId Id of cluster to freeze
-   * @param storageType Storage type between "plocal" or "memory".
-   * @return
-   * @throws IOException
-   * @see #freezeCluster(int, String)
-   */
-  public synchronized OServerAdmin releaseCluster(final int clusterId, final String storageType) throws IOException {
-
-    networkAdminOperation(new OStorageRemoteOperation<Void>() {
-      @Override
-      public Void execute(final OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
-        try {
-          storage.beginRequest(network, OChannelBinaryProtocol.REQUEST_DATACLUSTER_RELEASE, session);
-          network.writeString(storage.getName());
-          network.writeShort((short) clusterId);
-          network.writeString(storageType);
-        } finally {
-          storage.endRequest(network);
-        }
-
-        storage.getResponse(network, session);
-        return null;
-      }
-    }, "Cannot release the remote cluster " + clusterId + " on storage: " + storage.getName());
+    networkAdminOperation(request, response, "Cannot release the remote storage: " + storage.getName());
 
     return this;
   }
@@ -539,61 +392,32 @@ public class OServerAdmin {
   }
 
   public synchronized Map<String, String> getGlobalConfigurations() throws IOException {
-    return networkAdminOperation(new OStorageRemoteOperation<Map<String, String>>() {
-      @Override
-      public Map<String, String> execute(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
-        final Map<String, String> config = new HashMap<String, String>();
-        storage.beginRequest(network, OChannelBinaryProtocol.REQUEST_CONFIG_LIST, session);
-        storage.endRequest(network);
 
-        try {
-          storage.beginResponse(network, session);
-          final int num = network.readShort();
-          for (int i = 0; i < num; ++i)
-            config.put(network.readString(), network.readString());
-        } finally {
-          storage.endResponse(network);
-        }
+    OBinaryRequest request = new OGetGlobalConfigurationsRequest();
 
-        return config;
-      }
-    }, "Cannot retrieve the configuration list");
+    OBinaryResponse<Map<String, String>> response = new OGetGlobalConfigurationsResponse();
+
+    return networkAdminOperation(request, response, "Cannot retrieve the configuration list");
 
   }
 
   public synchronized String getGlobalConfiguration(final OGlobalConfiguration config) throws IOException {
-    return networkAdminOperation(new OStorageRemoteOperation<String>() {
-      @Override
-      public String execute(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
-        storage.beginRequest(network, OChannelBinaryProtocol.REQUEST_CONFIG_GET, session);
-        network.writeString(config.getKey());
-        storage.endRequest(network);
 
-        try {
-          storage.beginResponse(network, session);
-          return network.readString();
-        } finally {
-          storage.endResponse(network);
-        }
-      }
-    }, "Cannot retrieve the configuration value: " + config.getKey());
+    OBinaryRequest request = new OGetGlobalConfigurationRequest(config.getKey());
+
+    OBinaryResponse<String> response = new OGetGlobalConfigurationResponse();
+
+    return networkAdminOperation(request, response, "Cannot retrieve the configuration value: " + config.getKey());
   }
 
   public synchronized OServerAdmin setGlobalConfiguration(final OGlobalConfiguration config, final Object iValue)
       throws IOException {
 
-    networkAdminOperation(new OStorageRemoteOperation<Void>() {
-      @Override
-      public Void execute(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
-        storage.beginRequest(network, OChannelBinaryProtocol.REQUEST_CONFIG_SET, session);
-        network.writeString(config.getKey());
-        network.writeString(iValue != null ? iValue.toString() : "");
-        storage.endRequest(network);
-        storage.getResponse(network, session);
+    OBinaryRequest request = new OSetGlobalConfigurationRequest(config.getKey(), iValue != null ? iValue.toString() : "");
 
-        return null;
-      }
-    }, "Cannot set the configuration value: " + config.getKey());
+    OBinaryResponse<Void> response = new OSetGlobalConfigurationResponse();
+
+    networkAdminOperation(request, response, "Cannot set the configuration value: " + config.getKey());
     return this;
   }
 
@@ -615,7 +439,7 @@ public class OServerAdmin {
   public boolean isConnected() {
     return storage != null && !storage.isClosed();
   }
-  
+
   private boolean handleDBFreeze() {
     boolean retry;
     OLogManager.instance().warn(this,
@@ -629,6 +453,30 @@ public class OServerAdmin {
       Thread.currentThread().interrupt();
     }
     return retry;
+  }
+
+  protected <T> T networkAdminOperation(final OBinaryRequest request, final OBinaryResponse<T> response,
+      final String errorMessage) {
+    return networkAdminOperation(new OStorageRemoteOperation<T>() {
+      @Override
+      public T execute(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+        try {
+          network.beginRequest(request.getCommand(), session);
+          request.write(network, session, 0);
+        } finally {
+          network.endRequest();
+        }
+        final T res;
+        try {
+          storage.beginResponse(network, session);
+          res = response.read(network, session);
+        } finally {
+          storage.endResponse(network);
+        }
+        storage.connectionManager.release(network);
+        return res;
+      }
+    }, errorMessage);
   }
 
   protected <T> T networkAdminOperation(final OStorageRemoteOperation<T> operation, final String errorMessage) {
