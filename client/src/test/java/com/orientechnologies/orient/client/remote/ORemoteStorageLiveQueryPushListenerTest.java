@@ -1,17 +1,16 @@
 package com.orientechnologies.orient.client.remote;
 
 import com.orientechnologies.orient.core.sql.query.OLiveResultListener;
+import org.junit.Before;
+import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 /**
  * Created by tglman on 26/10/15.
  */
 public class ORemoteStorageLiveQueryPushListenerTest {
-
 
   @Mock
   private OStorageRemote        storage;
@@ -20,7 +19,7 @@ public class ORemoteStorageLiveQueryPushListenerTest {
   @Mock
   private OLiveResultListener   listener;
 
-  @BeforeMethod
+  @Before
   public void before() {
     MockitoAnnotations.initMocks(this);
   }
@@ -32,6 +31,5 @@ public class ORemoteStorageLiveQueryPushListenerTest {
     storageListener.onEndUsedConnections(pool);
     Mockito.verify(listener, Mockito.only()).onError(10);
   }
-
 
 }

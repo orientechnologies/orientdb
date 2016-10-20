@@ -32,13 +32,14 @@ import java.io.InputStream;
  */
 public abstract class BaseLuceneTest {
 
-  protected ODatabaseDocumentTx db;
-
   @Rule
   public TestName name = new TestName();
 
+  protected ODatabaseDocumentTx db;
+
   @Rule
   public ExternalResource resource = new ExternalResource() {
+
     @Override
     protected void before() throws Throwable {
 
@@ -60,9 +61,6 @@ public abstract class BaseLuceneTest {
     }
 
   };
-
-  public BaseLuceneTest() {
-  }
 
   protected ODatabaseDocumentTx dropOrCreate(String url, boolean drop) {
     ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);

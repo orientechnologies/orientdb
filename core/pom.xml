@@ -189,7 +189,7 @@
                     <properties>
                         <property>
                             <name>listener</name>
-                            <value>com.orientechnologies.OTestNGTestLeaksListener</value>
+                            <value>com.orientechnologies.OJUnitTestLeaksListener</value>
                         </property>
                     </properties>
                 </configuration>
@@ -236,12 +236,6 @@
             <artifactId>orientdb-test-commons</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
-            <!--<exclusions>-->
-                <!--<exclusion>-->
-                    <!--<groupId>org.testng</groupId>-->
-                    <!--<artifactId>testng</artifactId>-->
-                <!--</exclusion>-->
-            <!--</exclusions>-->
         </dependency>
 
         <dependency>

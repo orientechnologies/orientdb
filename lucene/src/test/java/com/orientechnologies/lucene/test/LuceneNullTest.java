@@ -5,8 +5,8 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+import org.junit.Assert;
 import org.junit.Test;
-import org.testng.Assert;
 
 /**
  * Created by Enrico Risa on 05/10/16.

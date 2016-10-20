@@ -1,13 +1,5 @@
 package com.orientechnologies.orient.core.index.sbtreebonsai.local;
 
-import java.util.*;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -15,19 +7,34 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import org.assertj.core.api.Assertions;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.NavigableMap;
+import java.util.NavigableSet;
+import java.util.Random;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 12.08.13
  */
-@Test
 public class OSBTreeBonsaiLocalTest {
   private static final int KEYS_COUNT = 500000;
-  protected OSBTreeBonsaiLocal<Integer, OIdentifiable> sbTree;
-  protected ODatabaseDocumentTx                        databaseDocumentTx;
+  protected static OSBTreeBonsaiLocal<Integer, OIdentifiable> sbTree;
+  protected static ODatabaseDocumentTx                        databaseDocumentTx;
 
   @BeforeClass
-  public void beforeClass() {
+  public static void beforeClass() {
     String buildDirectory = System.getProperty("buildDirectory");
     if (buildDirectory == null)
       buildDirectory = "./target";
@@ -45,16 +52,16 @@ public class OSBTreeBonsaiLocalTest {
     sbTree.create(OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE);
   }
 
-  @AfterMethod
-  public void afterMethod() throws Exception {
-    sbTree.clear();
-  }
-
   @AfterClass
-  public void afterClass() throws Exception {
+  public static void afterClass() throws Exception {
     sbTree.clear();
     sbTree.delete();
     databaseDocumentTx.drop();
+  }
+
+  @After
+  public void afterMethod() throws Exception {
+    sbTree.clear();
   }
 
   @Test
@@ -64,13 +71,16 @@ public class OSBTreeBonsaiLocalTest {
     Assert.assertNull(result);
   }
 
+  @Test
   public void testKeyPut() throws Exception {
     for (int i = 0; i < KEYS_COUNT; i++) {
       sbTree.put(i, new ORecordId(i % 32000, i));
     }
 
-    for (int i = 0; i < KEYS_COUNT; i++)
-      Assert.assertEquals(sbTree.get(i), new ORecordId(i % 32000, i), i + " key is absent");
+    for (int i = 0; i < KEYS_COUNT; i++) {
+      //      Assert.assertEquals(sbTree.get(i), new ORecordId(i % 32000, i), i + " key is absent");
+      Assertions.assertThat(sbTree.get(i)).isEqualTo(new ORecordId(i % 32000, i));
+    }
 
     Assert.assertEquals(0, (int) sbTree.firstKey());
     Assert.assertEquals(KEYS_COUNT - 1, (int) sbTree.lastKey());
@@ -80,6 +90,7 @@ public class OSBTreeBonsaiLocalTest {
 
   }
 
+  @Test
   public void testKeyPutRandomUniform() throws Exception {
     final NavigableSet<Integer> keys = new TreeSet<Integer>();
     final Random random = new Random();
@@ -99,6 +110,7 @@ public class OSBTreeBonsaiLocalTest {
       Assert.assertEquals(sbTree.get(key), new ORecordId(key % 32000, key));
   }
 
+  @Test
   public void testKeyPutRandomGaussian() throws Exception {
     final double mx = Integer.MAX_VALUE / 2.;
     final double dx = Integer.MAX_VALUE / 8.;
@@ -126,6 +138,7 @@ public class OSBTreeBonsaiLocalTest {
       Assert.assertEquals(sbTree.get(key), new ORecordId(key % 32000, key));
   }
 
+  @Test
   public void testKeyDeleteRandomUniform() throws Exception {
     NavigableSet<Integer> keys = new TreeSet<Integer>();
     for (int i = 0; i < KEYS_COUNT; i++) {
@@ -154,6 +167,7 @@ public class OSBTreeBonsaiLocalTest {
     }
   }
 
+  @Test
   public void testKeyDeleteRandomGaussian() throws Exception {
     final double mx = Integer.MAX_VALUE / 2.;
     final double dx = Integer.MAX_VALUE / 8.;
@@ -197,6 +211,7 @@ public class OSBTreeBonsaiLocalTest {
     }
   }
 
+  @Test
   public void testKeyDelete() throws Exception {
     for (int i = 0; i < KEYS_COUNT; i++) {
       sbTree.put(i, new ORecordId(i % 32000, i));
@@ -218,6 +233,7 @@ public class OSBTreeBonsaiLocalTest {
     }
   }
 
+  @Test
   public void testKeyAddDelete() throws Exception {
     for (int i = 0; i < KEYS_COUNT; i++) {
       sbTree.put(i, new ORecordId(i % 32000, i));
@@ -247,6 +263,7 @@ public class OSBTreeBonsaiLocalTest {
     }
   }
 
+  @Test
   public void testValuesMajor() {
     NavigableMap<Integer, ORID> keyValues = new TreeMap<Integer, ORID>();
     Random random = new Random();
@@ -265,6 +282,7 @@ public class OSBTreeBonsaiLocalTest {
     Assert.assertEquals(sbTree.lastKey(), keyValues.lastKey());
   }
 
+  @Test
   public void testValuesMinor() {
     NavigableMap<Integer, ORID> keyValues = new TreeMap<Integer, ORID>();
     Random random = new Random();
@@ -283,6 +301,7 @@ public class OSBTreeBonsaiLocalTest {
     Assert.assertEquals(sbTree.lastKey(), keyValues.lastKey());
   }
 
+  @Test
   public void testValuesBetween() {
     NavigableMap<Integer, ORID> keyValues = new TreeMap<Integer, ORID>();
     Random random = new Random();
@@ -303,6 +322,7 @@ public class OSBTreeBonsaiLocalTest {
     Assert.assertEquals(sbTree.lastKey(), keyValues.lastKey());
   }
 
+  @Test
   public void testAddKeyValuesInTwoBucketsAndMakeFirstEmpty() throws Exception {
     for (int i = 0; i < 110; i++)
       sbTree.put(i, new ORecordId(i % 32000, i));
@@ -319,6 +339,7 @@ public class OSBTreeBonsaiLocalTest {
       Assert.assertEquals(sbTree.get(i), new ORecordId(i % 32000, i));
   }
 
+  @Test
   public void testAddKeyValuesInTwoBucketsAndMakeLastEmpty() throws Exception {
     for (int i = 0; i < 110; i++)
       sbTree.put(i, new ORecordId(i % 32000, i));
@@ -335,6 +356,7 @@ public class OSBTreeBonsaiLocalTest {
       Assert.assertEquals(sbTree.get(i), new ORecordId(i % 32000, i));
   }
 
+  @Test
   public void testAddKeyValuesAndRemoveFirstMiddleAndLastPages() throws Exception {
     for (int i = 0; i < 326; i++)
       sbTree.put(i, new ORecordId(i % 32000, i));

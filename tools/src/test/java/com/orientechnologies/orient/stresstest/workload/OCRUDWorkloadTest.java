@@ -1,10 +1,12 @@
 package com.orientechnologies.orient.stresstest.workload;
 
+import org.junit.Test;
+
 import static org.junit.Assert.*;
 
 public class OCRUDWorkloadTest {
 
-  @org.junit.Test
+  @Test
   public void testParsing() throws Exception {
 
     try {

@@ -11,11 +11,19 @@ import com.orientechnologies.orient.server.distributed.impl.OLocalClusterWrapper
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.impls.orient.*;
+import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import org.junit.Assert;
 import org.junit.Test;
-import org.testng.Assert;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
+import java.util.Date;
+import java.util.List;
+import java.util.TimerTask;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -28,27 +36,24 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * 3 nodes, the test is started after the 1st node is up & running. The test is composed by multiple (8) parallel threads that
  * update the same records 20,000 times.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class HALocalGraphTest extends AbstractServerClusterTxTest {
 
-  protected final static int    SERVERS                 = 3;
-  protected static final int    CONCURRENCY_LEVEL       = 4;
-  protected static final int    TOTAL_CYCLES_PER_THREAD = 10000;
-
-  protected OrientGraphFactory  graphReadFactory;
-  protected ExecutorService     executorService;
-  protected int                 serverStarted           = 0;
-  protected AtomicLong          operations              = new AtomicLong();
-
-  protected final AtomicBoolean serverDown              = new AtomicBoolean(false);
-  protected final AtomicBoolean serverRestarting        = new AtomicBoolean(false);
-  protected final AtomicBoolean serverRestarted         = new AtomicBoolean(false);
-
-  List<Future<?>>               ths                     = new ArrayList<Future<?>>();
-  private TimerTask             task;
-  private volatile long         sleep                   = 0;
+  protected final static int           SERVERS                 = 3;
+  protected static final int           CONCURRENCY_LEVEL       = 4;
+  protected static final int           TOTAL_CYCLES_PER_THREAD = 10000;
+  protected final        AtomicBoolean serverDown              = new AtomicBoolean(false);
+  protected final        AtomicBoolean serverRestarting        = new AtomicBoolean(false);
+  protected final        AtomicBoolean serverRestarted         = new AtomicBoolean(false);
+  protected OrientGraphFactory graphReadFactory;
+  protected ExecutorService    executorService;
+  protected int        serverStarted = 0;
+  protected AtomicLong operations    = new AtomicLong();
+  List<Future<?>> ths = new ArrayList<Future<?>>();
+  private TimerTask task;
+  private volatile long sleep = 0;
 
   @Test
   public void test() throws Exception {

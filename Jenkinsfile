@@ -35,6 +35,16 @@ node("master") {
 
 }
 
+stage 'Javadoc'
+node("master") {
+    sh "rm -rf *"
+    unstash 'source'
+    def mvnHome = tool 'mvn'
+    sh "${mvnHome}/bin/mvn  --batch-mode -V -U -e javadoc:aggregate"
+
+    sh "rsync -ra --stats ${WORKSPACE}/target/site/apidocs/ -e \"ssh -p 59965\" root@144.76.167.241:/vz/private/103/var/www/wordpress/javadoc/2.2.x/  "
+}
+
 
 stage 'Run CI profile, crash tests and distributed tests on java8'
 parallel(

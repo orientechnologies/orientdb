@@ -14,16 +14,19 @@ import org.junit.Test;
 public class OAlterSequenceStatementExecutionTest {
   static ODatabaseDocument db;
 
-  @BeforeClass public static void beforeClass() {
-    db = new ODatabaseDocumentTx("memory:OAlterPropertyStatementExecutionTest");
+  @BeforeClass
+  public static void beforeClass() {
+    db = new ODatabaseDocumentTx("memory:OAlterSequenceStatementExecutionTest");
     db.create();
   }
 
-  @AfterClass public static void afterClass() {
+  @AfterClass
+  public static void afterClass() {
     db.close();
   }
 
-  @Test public void testSetIncrement() {
+  @Test
+  public void testSetIncrement() {
     String sequenceName = "testSetStart";
     db.getMetadata().getSequenceLibrary()
         .createSequence(sequenceName, OSequence.SEQUENCE_TYPE.ORDERED, new OSequence.CreateParams());

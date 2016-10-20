@@ -1,13 +1,5 @@
 package com.orientechnologies.orient.core.sql;
 
-import static org.testng.AssertJUnit.assertEquals;
-
-import java.util.List;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -15,13 +7,19 @@ import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.util.List;
 
 public class TestOrderByIndexPropDesc {
 
   private static final String DOCUMENT_CLASS_NAME = "MyDocument";
   private static final String PROP_INDEXED_STRING = "dateProperty";
 
-  private ODatabaseDocument   db;
+  private ODatabaseDocument db;
 
   @Before
   public void init() throws Exception {
@@ -64,7 +62,7 @@ public class TestOrderByIndexPropDesc {
       // System.out.println(d.<Integer>field(PROP_INDEXED_STRING));
     }
 
-    assertEquals(count, result.size());
+    Assert.assertEquals(count, result.size());
 
   }
 

@@ -5,10 +5,10 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Test;
 
-import static org.testng.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 /**
  * @author Luigi Dell'Aquila
@@ -43,7 +43,7 @@ public class ORebuildIndexStatementExecutionTest {
       Assert.assertEquals(resultRecord.<Object>getProperty("totalIndexed"), 2l);
       Assert.assertFalse(result.hasNext());
       assertEquals(db.query(new OSQLSynchQuery<Object>("select from " + className + " where key = 'a'")).size(), 2);
-    }finally{
+    } finally {
       db.drop();
     }
   }

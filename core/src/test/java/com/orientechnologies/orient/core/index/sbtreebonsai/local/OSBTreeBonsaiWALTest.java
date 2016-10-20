@@ -1,33 +1,40 @@
 package com.orientechnologies.orient.core.index.sbtreebonsai.local;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.util.ArrayList;
-import java.util.List;
-
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.cache.OReadCache;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
+import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitEndRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitStartRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODiskWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFileCreatedWALRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ONonTxOperationPerformedWALRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitBodyRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OUpdatePageRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALPage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -52,17 +59,7 @@ public class OSBTreeBonsaiWALTest extends OSBTreeBonsaiLocalTest {
 
   private OAtomicOperationsManager actualAtomicOperationsManager;
 
-  @BeforeClass
-  @Override
-  public void beforeClass() {
-  }
-
-  @AfterClass
-  @Override
-  public void afterClass() {
-  }
-
-  @BeforeMethod
+  @Before
   public void beforeMethod() throws IOException {
     buildDirectory = System.getProperty("buildDirectory", ".");
 
@@ -72,7 +69,7 @@ public class OSBTreeBonsaiWALTest extends OSBTreeBonsaiLocalTest {
     createActualSBTree();
   }
 
-  @AfterMethod
+  @After
   @Override
   public void afterMethod() throws Exception {
     Assert.assertNull(actualAtomicOperationsManager.getCurrentOperation());
@@ -218,24 +215,28 @@ public class OSBTreeBonsaiWALTest extends OSBTreeBonsaiLocalTest {
     assertFileRestoreFromWAL();
   }
 
-  @Test(enabled = false)
+  @Test
+  @Ignore
   public void testGetFisrtKeyInEmptyTree() throws Exception {
     super.testGetFisrtKeyInEmptyTree();
   }
 
-  @Test(enabled = false)
+  @Test
+  @Ignore
   @Override
   public void testValuesMajor() {
     super.testValuesMajor();
   }
 
-  @Test(enabled = false)
+  @Test
+  @Ignore
   @Override
   public void testValuesMinor() {
     super.testValuesMinor();
   }
 
-  @Test(enabled = false)
+  @Test
+  @Ignore
   @Override
   public void testValuesBetween() {
     super.testValuesBetween();

@@ -2,13 +2,10 @@ package com.orientechnologies.orient.client.remote;
 
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelListener;
+import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.mockito.internal.verification.VerificationModeFactory;
-import org.testng.annotations.Test;
-
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
 
 /**
  * Created by tglman on 22/10/15.
@@ -58,6 +55,5 @@ public class ORemoteConnectionPushListenerTest {
     Mockito.verify(listener, VerificationModeFactory.only()).onEndUsedConnections(pool);
 
   }
-
 
 }

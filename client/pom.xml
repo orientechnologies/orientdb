@@ -77,7 +77,7 @@
                     <properties>
                         <property>
                             <name>listener</name>
-                            <value>com.orientechnologies.OTestNGTestLeaksListener</value>
+                            <value>com.orientechnologies.OJUnitTestLeaksListener</value>
                         </property>
                     </properties>
                 </configuration>

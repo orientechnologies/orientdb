@@ -2,19 +2,18 @@ package com.orientechnologies.orient.core.storage.cache.local.twoq;
 
 import com.orientechnologies.common.collection.closabledictionary.OClosableLinkedContainer;
 import com.orientechnologies.common.directmemory.OByteBufferPool;
-import com.orientechnologies.orient.core.storage.cache.*;
-import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
-import org.testng.Assert;
-
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
 import com.orientechnologies.orient.core.exception.OAllCacheEntriesAreUsedException;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
+import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.cache.OPageDataVerificationError;
+import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
@@ -23,7 +22,11 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecordsFactory;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WriteAheadLogTest;
 import org.assertj.core.api.Assertions;
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,7 +42,7 @@ public class ReadWriteDiskCacheTest {
   public static final  int PAGE_SIZE               = userDataSize + systemOffset;
   public static final  int READ_CACHE_MAX_MEMORY   = 4 * PAGE_SIZE;
   public static final  int WRITE_CACHE_MAX_SIZE    = writeCacheAmountOfPages * PAGE_SIZE;
-  private static O2QCache    readBuffer;
+  private static O2QCache  readBuffer;
   private static OWOWCache writeBuffer;
   private static OClosableLinkedContainer<Long, OFileClassic> files = new OClosableLinkedContainer<Long, OFileClassic>(1024);
 
@@ -59,8 +62,8 @@ public class ReadWriteDiskCacheTest {
 
     storagePath = buildDirectory + "/ReadWriteDiskCacheTest";
     storageLocal = (OLocalPaginatedStorage) Orient.instance().getEngine("plocal").createStorage(storagePath, null);
-//    storageLocal = (OLocalPaginatedStorage) Orient.instance().loadStorage("plocal:" + storagePath);
-    storageLocal.create(null);
+    //    storageLocal = (OLocalPaginatedStorage) Orient.instance().loadStorage("plocal:" + storagePath);
+    storageLocal.create(new OContextConfiguration());
     storageLocal.close(true, false);
 
     fileName = "readWriteDiskCacheTest.tst";
@@ -1205,7 +1208,7 @@ public class ReadWriteDiskCacheTest {
     byte[] content = new byte[userDataSize + systemOffset];
     fileClassic.read(pageIndex * (userDataSize + systemOffset), content, userDataSize + systemOffset);
 
-//    Assert.assertEquals(Arrays.copyOfRange(content, systemOffset, userDataSize + systemOffset), value);
+    //    Assert.assertEquals(Arrays.copyOfRange(content, systemOffset, userDataSize + systemOffset), value);
 
     Assertions.assertThat(Arrays.copyOfRange(content, systemOffset, userDataSize + systemOffset)).isEqualTo(value);
 
