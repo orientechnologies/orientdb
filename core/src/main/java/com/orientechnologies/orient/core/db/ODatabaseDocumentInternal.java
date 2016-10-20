@@ -74,4 +74,6 @@ public interface ODatabaseDocumentInternal extends ODatabaseDocument, ODatabaseI
   boolean isPrefetchRecords();
 
   void setPrefetchRecords(boolean prefetchRecords);
+  
+  public ODatabaseDocumentInternal copy();
 }
