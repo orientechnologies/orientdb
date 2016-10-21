@@ -11,22 +11,27 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import static com.orientechnologies.orient.core.sql.executor.ExecutionPlanPrintUtils.*;
+
 /**
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
 public class ODeleteStatementExecutionTest {
   static ODatabaseDocument db;
 
-  @BeforeClass public static void beforeClass() {
+  @BeforeClass
+  public static void beforeClass() {
     db = new ODatabaseDocumentTx("memory:ODeleteStatementExecutionTest");
     db.create();
   }
 
-  @AfterClass public static void afterClass() {
+  @AfterClass
+  public static void afterClass() {
     db.close();
   }
 
-  @Test public void testSimple() {
+  @Test
+  public void testSimple() {
     String className = "testSimple";
     db.getMetadata().getSchema().createClass(className);
     for (int i = 0; i < 10; i++) {
@@ -55,7 +60,8 @@ public class ODeleteStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testUnsafe1() {
+  @Test
+  public void testUnsafe1() {
     String className = "testUnsafe1";
     OClass v = db.getMetadata().getSchema().getClass("V");
     if (v == null) {
@@ -77,7 +83,8 @@ public class ODeleteStatementExecutionTest {
     }
   }
 
-  @Test public void testUnsafe2() {
+  @Test
+  public void testUnsafe2() {
     String className = "testUnsafe2";
     OClass v = db.getMetadata().getSchema().getClass("V");
     if (v == null) {
@@ -112,7 +119,8 @@ public class ODeleteStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testReturnBefore() {
+  @Test
+  public void testReturnBefore() {
     String className = "testReturnBefore";
     db.getMetadata().getSchema().createClass(className);
     for (int i = 0; i < 10; i++) {
@@ -141,7 +149,8 @@ public class ODeleteStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testLimit() {
+  @Test
+  public void testLimit() {
     String className = "testLimit";
     db.getMetadata().getSchema().createClass(className);
     for (int i = 0; i < 10; i++) {
@@ -169,7 +178,8 @@ public class ODeleteStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testIndex1() {
+  @Test
+  public void testIndex1() {
     String className = "testIndex1";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
@@ -195,7 +205,8 @@ public class ODeleteStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testIndex2() {
+  @Test
+  public void testIndex2() {
     String className = "testIndex2";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
@@ -226,7 +237,5 @@ public class ODeleteStatementExecutionTest {
     Assert.assertFalse(result.hasNext());
     result.close();
   }
-
-
 
 }

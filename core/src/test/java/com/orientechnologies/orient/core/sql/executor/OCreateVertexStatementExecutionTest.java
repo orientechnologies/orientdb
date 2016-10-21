@@ -13,6 +13,8 @@ import org.junit.Test;
 import java.util.HashSet;
 import java.util.Set;
 
+import static com.orientechnologies.orient.core.sql.executor.ExecutionPlanPrintUtils.printExecutionPlan;
+
 /**
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
