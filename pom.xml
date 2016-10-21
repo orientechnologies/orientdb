@@ -357,6 +357,32 @@
                         <includeFilterFile>findbugs_filter.xml</includeFilterFile>
                     </configuration>
                 </plugin>
+
+                <plugin>
+                    <groupId>com.mycila</groupId>
+                    <artifactId>license-maven-plugin</artifactId>
+                    <version>3.0</version>
+                    <inherited>true</inherited>
+                    <configuration>
+                        <header>ODB-ASL-LICENSE.txt</header>
+                        <aggregate>true</aggregate>
+                        <failIfMissing>true</failIfMissing>
+                        <encoding>UTF-8</encoding>
+                        <useDefaultExcludes>true</useDefaultExcludes>
+                        <strictCheck>false</strictCheck>
+                        <excludes>
+                            <exclude>**/assembly/**</exclude>
+                            <exclude>**/config/**</exclude>
+                            <exclude>**/resources/**</exclude>
+                            <exclude>emptyfile*</exclude>
+                            <exclude>*.txt</exclude>
+                            <exclude>*.properties</exclude>
+                        </excludes>
+                    </configuration>
+                    <executions>
+                    </executions>
+                </plugin>
+
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>license-maven-plugin</artifactId>
@@ -521,6 +547,7 @@
                 </configuration>
             </plugin>
 
+
         </plugins>
     </build>
 
@@ -581,53 +608,6 @@
             </build>
         </profile>
 
-        <profile>
-            <id>java6</id>
-            <activation>
-                <jdk>[1.0,1.7)</jdk>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-compiler-plugin</artifactId>
-                        <configuration>
-                            <compilerArgument>-XDignore.symbol.file</compilerArgument>
-                            <source>${maven.compiler.source}</source>
-                            <target>${maven.compiler.target}</target>
-                            <showDeprecation>true</showDeprecation>
-                            <showWarnings>true</showWarnings>
-                            <optimize>true</optimize>
-                            <excludes>
-                                <exclude>com/orientechnologies/common/directmemory/OUnsafeMemoryJava7.java</exclude>
-                            </excludes>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <profile>
-            <id>java7</id>
-            <activation>
-                <jdk>1.7</jdk>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-compiler-plugin</artifactId>
-                        <configuration>
-                            <source>${maven.compiler.source}</source>
-                            <target>${maven.compiler.target}</target>
-                            <showDeprecation>true</showDeprecation>
-                            <showWarnings>true</showWarnings>
-                            <optimize>true</optimize>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
         <profile>
             <id>java8</id>
             <activation>
