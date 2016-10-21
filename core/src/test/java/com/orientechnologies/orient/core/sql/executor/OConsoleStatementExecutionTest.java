@@ -14,16 +14,19 @@ import org.junit.Test;
 public class OConsoleStatementExecutionTest {
   static ODatabaseDocument db;
 
-  @BeforeClass public static void beforeClass() {
+  @BeforeClass
+  public static void beforeClass() {
     db = new ODatabaseDocumentTx("memory:OConsoleStatementExecutionTest");
     db.create();
   }
 
-  @AfterClass public static void afterClass() {
+  @AfterClass
+  public static void afterClass() {
     db.close();
   }
 
-  @Test public void testError() {
+  @Test
+  public void testError() {
     OTodoResultSet result = db.command("console.error 'foo bar'");
     Assert.assertNotNull(result);
     Assert.assertTrue(result.hasNext());
@@ -33,7 +36,8 @@ public class OConsoleStatementExecutionTest {
     Assert.assertEquals("foo bar", item.getProperty("message"));
   }
 
-  @Test public void testLog() {
+  @Test
+  public void testLog() {
     OTodoResultSet result = db.command("console.log 'foo bar'");
     Assert.assertNotNull(result);
     Assert.assertTrue(result.hasNext());
@@ -43,7 +47,8 @@ public class OConsoleStatementExecutionTest {
     Assert.assertEquals("foo bar", item.getProperty("message"));
   }
 
-  @Test public void testInvalidLevel() {
+  @Test
+  public void testInvalidLevel() {
     try {
       db.command("console.bla 'foo bar'");
       Assert.fail();
@@ -53,14 +58,6 @@ public class OConsoleStatementExecutionTest {
       Assert.fail();
     }
 
-  }
-
-  private void printExecutionPlan(String query, OTodoResultSet result) {
-    if (query != null) {
-      System.out.println(query);
-    }
-    result.getExecutionPlan().ifPresent(x -> System.out.println(x.prettyPrint(0, 3)));
-    System.out.println();
   }
 
 }

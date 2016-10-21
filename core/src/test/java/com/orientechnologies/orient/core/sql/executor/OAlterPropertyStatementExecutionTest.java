@@ -10,6 +10,8 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import static com.orientechnologies.orient.core.sql.executor.ExecutionPlanPrintUtils.printExecutionPlan;
+
 /**
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
@@ -65,12 +67,5 @@ public class OAlterPropertyStatementExecutionTest {
     result.close();
   }
 
-  private void printExecutionPlan(String query, OTodoResultSet result) {
-    if (query != null) {
-      System.out.println(query);
-    }
-    result.getExecutionPlan().ifPresent(x -> System.out.println(x.prettyPrint(0, 3)));
-    System.out.println();
-  }
 
 }

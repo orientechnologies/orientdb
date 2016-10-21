@@ -11,22 +11,27 @@ import org.junit.Test;
 import java.util.HashSet;
 import java.util.Set;
 
+import static com.orientechnologies.orient.core.sql.executor.ExecutionPlanPrintUtils.*;
+
 /**
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
 public class OInsertStatementExecutionTest {
   static ODatabaseDocument db;
 
-  @BeforeClass public static void beforeClass() {
+  @BeforeClass
+  public static void beforeClass() {
     db = new ODatabaseDocumentTx("memory:OInsertStatementExecutionTest");
     db.create();
   }
 
-  @AfterClass public static void afterClass() {
+  @AfterClass
+  public static void afterClass() {
     db.close();
   }
 
-  @Test public void testInsertSet() {
+  @Test
+  public void testInsertSet() {
     String className = "testInsertSet";
     db.getMetadata().getSchema().createClass(className);
 
@@ -51,7 +56,8 @@ public class OInsertStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testInsertValue() {
+  @Test
+  public void testInsertValue() {
     String className = "testInsertValue";
     db.getMetadata().getSchema().createClass(className);
 
@@ -77,7 +83,8 @@ public class OInsertStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testInsertValue2() {
+  @Test
+  public void testInsertValue2() {
     String className = "testInsertValue2";
     db.getMetadata().getSchema().createClass(className);
 
@@ -111,7 +118,8 @@ public class OInsertStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testInsertFromSelect1() {
+  @Test
+  public void testInsertFromSelect1() {
     String className1 = "testInsertFromSelect1";
     db.getMetadata().getSchema().createClass(className1);
 
@@ -153,7 +161,8 @@ public class OInsertStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testInsertFromSelect2() {
+  @Test
+  public void testInsertFromSelect2() {
     String className1 = "testInsertFromSelect2";
     db.getMetadata().getSchema().createClass(className1);
 
@@ -165,7 +174,7 @@ public class OInsertStatementExecutionTest {
       doc.setProperty("surname", "surname" + i);
       doc.save();
     }
-    OTodoResultSet result = db.command("insert into " + className2 + " ( select from " + className1+")");
+    OTodoResultSet result = db.command("insert into " + className2 + " ( select from " + className1 + ")");
     printExecutionPlan(result);
 
     for (int i = 0; i < 10; i++) {
@@ -195,7 +204,8 @@ public class OInsertStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testContent() {
+  @Test
+  public void testContent() {
     String className = "testContent";
     db.getMetadata().getSchema().createClass(className);
 
@@ -219,18 +229,6 @@ public class OInsertStatementExecutionTest {
     }
     Assert.assertFalse(result.hasNext());
     result.close();
-  }
-
-  private void printExecutionPlan(OTodoResultSet result) {
-    printExecutionPlan(null, result);
-  }
-
-  private void printExecutionPlan(String query, OTodoResultSet result) {
-    if (query != null) {
-      System.out.println(query);
-    }
-    result.getExecutionPlan().ifPresent(x -> System.out.println(x.prettyPrint(0, 3)));
-    System.out.println();
   }
 
 }

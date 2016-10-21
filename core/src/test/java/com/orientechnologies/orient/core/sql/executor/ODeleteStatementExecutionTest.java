@@ -227,16 +227,6 @@ public class ODeleteStatementExecutionTest {
     result.close();
   }
 
-  private void printExecutionPlan(OTodoResultSet result) {
-    printExecutionPlan(null, result);
-  }
 
-  private void printExecutionPlan(String query, OTodoResultSet result) {
-    if (query != null) {
-      System.out.println(query);
-    }
-    result.getExecutionPlan().ifPresent(x -> System.out.println(x.prettyPrint(0, 3)));
-    System.out.println();
-  }
 
 }

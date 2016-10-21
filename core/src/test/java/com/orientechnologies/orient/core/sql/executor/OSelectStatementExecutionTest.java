@@ -15,7 +15,16 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+
+import static com.orientechnologies.orient.core.sql.executor.ExecutionPlanPrintUtils.printExecutionPlan;
 
 /**
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
@@ -23,17 +32,20 @@ import java.util.*;
 public class OSelectStatementExecutionTest {
   static ODatabaseDocument db;
 
-  @BeforeClass public static void beforeClass() {
+  @BeforeClass
+  public static void beforeClass() {
 
     db = new ODatabaseDocumentTx("memory:OSelectStatementExecutionTest");
     db.create();
   }
 
-  @AfterClass public static void afterClass() {
+  @AfterClass
+  public static void afterClass() {
     db.close();
   }
 
-  @Test public void testSelectNoTarget() {
+  @Test
+  public void testSelectNoTarget() {
     OTodoResultSet result = db.query("select 1 as one, 2 as two, 2+3");
     Assert.assertTrue(result.hasNext());
     OResult item = result.next();
@@ -46,7 +58,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testSelectNoTargetSkip() {
+  @Test
+  public void testSelectNoTargetSkip() {
     OTodoResultSet result = db.query("select 1 as one, 2 as two, 2+3 skip 1");
     Assert.assertFalse(result.hasNext());
     printExecutionPlan(result);
@@ -54,7 +67,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testSelectNoTargetSkipZero() {
+  @Test
+  public void testSelectNoTargetSkipZero() {
     OTodoResultSet result = db.query("select 1 as one, 2 as two, 2+3 skip 0");
     Assert.assertTrue(result.hasNext());
     OResult item = result.next();
@@ -67,7 +81,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testSelectNoTargetLimit0() {
+  @Test
+  public void testSelectNoTargetLimit0() {
     OTodoResultSet result = db.query("select 1 as one, 2 as two, 2+3 limit 0");
     Assert.assertFalse(result.hasNext());
     printExecutionPlan(result);
@@ -75,7 +90,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testSelectNoTargetLimit1() {
+  @Test
+  public void testSelectNoTargetLimit1() {
     OTodoResultSet result = db.query("select 1 as one, 2 as two, 2+3 limit 1");
     Assert.assertTrue(result.hasNext());
     OResult item = result.next();
@@ -88,12 +104,14 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testSelectNoTargetLimitx() {
+  @Test
+  public void testSelectNoTargetLimitx() {
     OTodoResultSet result = db.query("select 1 as one, 2 as two, 2+3 skip 0 limit 0");
     printExecutionPlan(result);
   }
 
-  @Test public void testSelectFullScan1() {
+  @Test
+  public void testSelectFullScan1() {
     String className = "TestSelectFullScan1";
     db.getMetadata().getSchema().createClass(className);
     for (int i = 0; i < 100000; i++) {
@@ -114,7 +132,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testSelectFullScanOrderByRidAsc() {
+  @Test
+  public void testSelectFullScanOrderByRidAsc() {
     String className = "testSelectFullScanOrderByRidAsc";
     db.getMetadata().getSchema().createClass(className);
     for (int i = 0; i < 100000; i++) {
@@ -141,7 +160,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testSelectFullScanOrderByRidDesc() {
+  @Test
+  public void testSelectFullScanOrderByRidDesc() {
     String className = "testSelectFullScanOrderByRidDesc";
     db.getMetadata().getSchema().createClass(className);
     for (int i = 0; i < 100000; i++) {
@@ -168,7 +188,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testSelectFullScanLimit1() {
+  @Test
+  public void testSelectFullScanLimit1() {
     String className = "testSelectFullScanLimit1";
     db.getMetadata().getSchema().createClass(className);
     for (int i = 0; i < 300; i++) {
@@ -191,7 +212,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testSelectFullScanSkipLimit1() {
+  @Test
+  public void testSelectFullScanSkipLimit1() {
     String className = "testSelectFullScanSkipLimit1";
     db.getMetadata().getSchema().createClass(className);
     for (int i = 0; i < 300; i++) {
@@ -214,7 +236,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testSelectOrderByDesc() {
+  @Test
+  public void testSelectOrderByDesc() {
     String className = "testSelectOrderByDesc";
     db.getMetadata().getSchema().createClass(className);
     for (int i = 0; i < 30; i++) {
@@ -241,7 +264,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testSelectOrderByAsc() {
+  @Test
+  public void testSelectOrderByAsc() {
     String className = "testSelectOrderByAsc";
     db.getMetadata().getSchema().createClass(className);
     for (int i = 0; i < 30; i++) {
@@ -268,7 +292,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testSelectOrderByMassiveAsc() {
+  @Test
+  public void testSelectOrderByMassiveAsc() {
     String className = "testSelectOrderByMassiveAsc";
     db.getMetadata().getSchema().createClass(className);
     for (int i = 0; i < 100000; i++) {
@@ -292,7 +317,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testSelectOrderWithProjections() {
+  @Test
+  public void testSelectOrderWithProjections() {
     String className = "testSelectOrderWithProjections";
     db.getMetadata().getSchema().createClass(className);
     for (int i = 0; i < 100; i++) {
@@ -322,7 +348,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testSelectOrderWithProjections2() {
+  @Test
+  public void testSelectOrderWithProjections2() {
     String className = "testSelectOrderWithProjections2";
     db.getMetadata().getSchema().createClass(className);
     for (int i = 0; i < 100; i++) {
@@ -352,7 +379,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testSelectFullScanWithFilter1() {
+  @Test
+  public void testSelectFullScanWithFilter1() {
     String className = "testSelectFullScanWithFilter1";
     db.getMetadata().getSchema().createClass(className);
     for (int i = 0; i < 300; i++) {
@@ -375,7 +403,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testSelectFullScanWithFilter2() {
+  @Test
+  public void testSelectFullScanWithFilter2() {
     String className = "testSelectFullScanWithFilter2";
     db.getMetadata().getSchema().createClass(className);
     for (int i = 0; i < 300; i++) {
@@ -398,7 +427,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testProjections() {
+  @Test
+  public void testProjections() {
     String className = "testProjections";
     db.getMetadata().getSchema().createClass(className);
     for (int i = 0; i < 300; i++) {
@@ -425,7 +455,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testCountStar() {
+  @Test
+  public void testCountStar() {
     String className = "testCountStar";
     db.getMetadata().getSchema().createClass(className);
 
@@ -448,7 +479,8 @@ public class OSelectStatementExecutionTest {
     }
   }
 
-  @Test public void testCountStar2() {
+  @Test
+  public void testCountStar2() {
     String className = "testCountStar2";
     db.getMetadata().getSchema().createClass(className);
 
@@ -458,10 +490,10 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
     try {
-      OTodoResultSet result = db.query("select count(*), name from " + className+" group by name");
+      OTodoResultSet result = db.query("select count(*), name from " + className + " group by name");
       printExecutionPlan(result);
       Assert.assertNotNull(result);
-      for(int i=0;i<5;i++) {
+      for (int i = 0; i < 5; i++) {
         Assert.assertTrue(result.hasNext());
         OResult next = result.next();
         Assert.assertNotNull(next);
@@ -474,7 +506,8 @@ public class OSelectStatementExecutionTest {
     }
   }
 
-  @Test public void testAggretateMixedWithNonAggregate() {
+  @Test
+  public void testAggretateMixedWithNonAggregate() {
     String className = "testAggretateMixedWithNonAggregate";
     db.getMetadata().getSchema().createClass(className);
 
@@ -488,7 +521,8 @@ public class OSelectStatementExecutionTest {
     }
   }
 
-  @Test public void testAggretateMixedWithNonAggregateInCollection() {
+  @Test
+  public void testAggretateMixedWithNonAggregateInCollection() {
     String className = "testAggretateMixedWithNonAggregateInCollection";
     db.getMetadata().getSchema().createClass(className);
 
@@ -502,7 +536,8 @@ public class OSelectStatementExecutionTest {
     }
   }
 
-  @Test public void testAggretateInCollection() {
+  @Test
+  public void testAggretateInCollection() {
     String className = "testAggretateInCollection";
     db.getMetadata().getSchema().createClass(className);
 
@@ -515,7 +550,8 @@ public class OSelectStatementExecutionTest {
     }
   }
 
-  @Test public void testAggretateMixedWithNonAggregateConstants() {
+  @Test
+  public void testAggretateMixedWithNonAggregateConstants() {
     String className = "testAggretateMixedWithNonAggregateConstants";
     db.getMetadata().getSchema().createClass(className);
 
@@ -529,7 +565,8 @@ public class OSelectStatementExecutionTest {
     }
   }
 
-  @Test public void testAggregateSum() {
+  @Test
+  public void testAggregateSum() {
     String className = "testAggregateSum";
     db.getMetadata().getSchema().createClass(className);
     for (int i = 0; i < 10; i++) {
@@ -548,7 +585,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testAggregateSumGroupBy() {
+  @Test
+  public void testAggregateSumGroupBy() {
     String className = "testAggregateSumGroupBy";
     db.getMetadata().getSchema().createClass(className);
     for (int i = 0; i < 10; i++) {
@@ -579,7 +617,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testAggregateSumMaxMinGroupBy() {
+  @Test
+  public void testAggregateSumMaxMinGroupBy() {
     String className = "testAggregateSumMaxMinGroupBy";
     db.getMetadata().getSchema().createClass(className);
     for (int i = 0; i < 10; i++) {
@@ -614,7 +653,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testAggregateSumNoGroupByInProjection() {
+  @Test
+  public void testAggregateSumNoGroupByInProjection() {
     String className = "testAggregateSumNoGroupByInProjection";
     db.getMetadata().getSchema().createClass(className);
     for (int i = 0; i < 10; i++) {
@@ -644,7 +684,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testAggregateSumNoGroupByInProjection2() {
+  @Test
+  public void testAggregateSumNoGroupByInProjection2() {
     String className = "testAggregateSumNoGroupByInProjection2";
     db.getMetadata().getSchema().createClass(className);
     for (int i = 0; i < 10; i++) {
@@ -667,7 +708,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testFetchFromClusterNumber() {
+  @Test
+  public void testFetchFromClusterNumber() {
     String className = "testFetchFromClusterNumber";
     OSchema schema = db.getMetadata().getSchema();
     OClass clazz = schema.createClass(className);
@@ -694,7 +736,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testFetchFromClusterNumberOrderByRidDesc() {
+  @Test
+  public void testFetchFromClusterNumberOrderByRidDesc() {
     String className = "testFetchFromClusterNumberOrderByRidDesc";
     OSchema schema = db.getMetadata().getSchema();
     OClass clazz = schema.createClass(className);
@@ -721,7 +764,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testFetchFromClusterNumberOrderByRidAsc() {
+  @Test
+  public void testFetchFromClusterNumberOrderByRidAsc() {
     String className = "testFetchFromClusterNumberOrderByRidAsc";
     OSchema schema = db.getMetadata().getSchema();
     OClass clazz = schema.createClass(className);
@@ -748,7 +792,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testFetchFromClustersNumberOrderByRidAsc() {
+  @Test
+  public void testFetchFromClustersNumberOrderByRidAsc() {
     String className = "testFetchFromClustersNumberOrderByRidAsc";
     OSchema schema = db.getMetadata().getSchema();
     OClass clazz = schema.createClass(className);
@@ -787,7 +832,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testQueryAsTarget() {
+  @Test
+  public void testQueryAsTarget() {
     String className = "testQueryAsTarget";
     OSchema schema = db.getMetadata().getSchema();
     OClass clazz = schema.createClass(className);
@@ -812,7 +858,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testQuerySchema() {
+  @Test
+  public void testQuerySchema() {
     OTodoResultSet result = db.query("select from metadata:schema");
     printExecutionPlan(result);
 
@@ -825,7 +872,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testQueryMetadataIndexManager() {
+  @Test
+  public void testQueryMetadataIndexManager() {
     OTodoResultSet result = db.query("select from metadata:indexmanager");
     printExecutionPlan(result);
     for (int i = 0; i < 1; i++) {
@@ -837,21 +885,24 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testQueryMetadataIndexManager2() {
+  @Test
+  public void testQueryMetadataIndexManager2() {
     OTodoResultSet result = db.query("select expand(indexes) from metadata:indexmanager");
     printExecutionPlan(result);
     Assert.assertTrue(result.hasNext());
     result.close();
   }
 
-  @Test public void testNonExistingRids() {
+  @Test
+  public void testNonExistingRids() {
     OTodoResultSet result = db.query("select from #0:100000000");
     printExecutionPlan(result);
     Assert.assertFalse(result.hasNext());
     result.close();
   }
 
-  @Test public void testFetchFromSingleRid() {
+  @Test
+  public void testFetchFromSingleRid() {
     OTodoResultSet result = db.query("select from #0:1");
     printExecutionPlan(result);
     Assert.assertTrue(result.hasNext());
@@ -860,7 +911,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testFetchFromSingleRid2() {
+  @Test
+  public void testFetchFromSingleRid2() {
     OTodoResultSet result = db.query("select from [#0:1]");
     printExecutionPlan(result);
     Assert.assertTrue(result.hasNext());
@@ -869,7 +921,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testFetchFromSingleRid3() {
+  @Test
+  public void testFetchFromSingleRid3() {
     OTodoResultSet result = db.query("select from [#0:1, #0:2]");
     printExecutionPlan(result);
     Assert.assertTrue(result.hasNext());
@@ -880,7 +933,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testFetchFromSingleRid4() {
+  @Test
+  public void testFetchFromSingleRid4() {
     OTodoResultSet result = db.query("select from [#0:1, #0:2, #0:100000]");
     printExecutionPlan(result);
     Assert.assertTrue(result.hasNext());
@@ -891,7 +945,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testFetchFromIndex() {
+  @Test
+  public void testFetchFromIndex() {
     String className = "testFetchFromIndex";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
@@ -911,7 +966,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testFetchFromIndexMajor() {
+  @Test
+  public void testFetchFromIndexMajor() {
     String className = "testFetchFromIndexMajor";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
@@ -934,7 +990,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testFetchFromIndexMajorEqual() {
+  @Test
+  public void testFetchFromIndexMajorEqual() {
     String className = "testFetchFromIndexMajorEqual";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
@@ -957,7 +1014,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testFetchFromIndexMinor() {
+  @Test
+  public void testFetchFromIndexMinor() {
     String className = "testFetchFromIndexMinor";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
@@ -980,7 +1038,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testFetchFromIndexLessOrEqual() {
+  @Test
+  public void testFetchFromIndexLessOrEqual() {
     String className = "testFetchFromIndexLessOrEqual";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
@@ -1003,7 +1062,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testFetchFromIndexBetween() {
+  @Test
+  public void testFetchFromIndexBetween() {
     String className = "testFetchFromIndexBetween";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
@@ -1026,7 +1086,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testFetchFromIndexWithoutConditions1() {
+  @Test
+  public void testFetchFromIndexWithoutConditions1() {
     String className = "testFetchFromIndexWithoutConditions1";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
@@ -1049,7 +1110,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testFetchFromIndexWithoutConditions2() {
+  @Test
+  public void testFetchFromIndexWithoutConditions2() {
     String className = "testFetchFromIndexWithoutConditions2";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
@@ -1069,7 +1131,8 @@ public class OSelectStatementExecutionTest {
     }
   }
 
-  @Test public void testFetchFromIndexValues() {
+  @Test
+  public void testFetchFromIndexValues() {
     String className = "testFetchFromIndexValues";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
@@ -1105,7 +1168,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testFetchFromIndexValuesAsc() {
+  @Test
+  public void testFetchFromIndexValuesAsc() {
     String className = "testFetchFromIndexValuesAsc";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
@@ -1141,7 +1205,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testFetchFromIndexValuesDesc() {
+  @Test
+  public void testFetchFromIndexValuesDesc() {
     String className = "testFetchFromIndexValuesDesc";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
@@ -1177,7 +1242,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testFetchFromIndexValuesDescWithCondition() {
+  @Test
+  public void testFetchFromIndexValuesDescWithCondition() {
     String className = "testFetchFromIndexValuesDescWithCondition";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
@@ -1203,7 +1269,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testFetchFromClassWithIndex() {
+  @Test
+  public void testFetchFromClassWithIndex() {
     String className = "testFetchFromClassWithIndex";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
@@ -1235,7 +1302,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testFetchFromClassWithIndexes() {
+  @Test
+  public void testFetchFromClassWithIndexes() {
     String className = "testFetchFromClassWithIndexes";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
@@ -1274,7 +1342,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testFetchFromClassWithIndexes2() {
+  @Test
+  public void testFetchFromClassWithIndexes2() {
     String className = "testFetchFromClassWithIndexes2";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
@@ -1297,7 +1366,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testFetchFromClassWithIndexes3() {
+  @Test
+  public void testFetchFromClassWithIndexes3() {
     String className = "testFetchFromClassWithIndexes3";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
@@ -1327,7 +1397,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testFetchFromClassWithIndexes4() {
+  @Test
+  public void testFetchFromClassWithIndexes4() {
     String className = "testFetchFromClassWithIndexes4";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
@@ -1358,7 +1429,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testFetchFromClassWithIndexes5() {
+  @Test
+  public void testFetchFromClassWithIndexes5() {
     String className = "testFetchFromClassWithIndexes5";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
@@ -1387,7 +1459,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testFetchFromClassWithIndexes6() {
+  @Test
+  public void testFetchFromClassWithIndexes6() {
     String className = "testFetchFromClassWithIndexes6";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
@@ -1409,7 +1482,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testFetchFromClassWithIndexes7() {
+  @Test
+  public void testFetchFromClassWithIndexes7() {
     String className = "testFetchFromClassWithIndexes7";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
@@ -1435,7 +1509,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testFetchFromClassWithIndexes8() {
+  @Test
+  public void testFetchFromClassWithIndexes8() {
     String className = "testFetchFromClassWithIndexes8";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
@@ -1457,7 +1532,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testFetchFromClassWithIndexes9() {
+  @Test
+  public void testFetchFromClassWithIndexes9() {
     String className = "testFetchFromClassWithIndexes9";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
@@ -1483,7 +1559,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testFetchFromClassWithIndexes10() {
+  @Test
+  public void testFetchFromClassWithIndexes10() {
     String className = "testFetchFromClassWithIndexes10";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
@@ -1509,7 +1586,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testFetchFromClassWithIndexes11() {
+  @Test
+  public void testFetchFromClassWithIndexes11() {
     String className = "testFetchFromClassWithIndexes11";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
@@ -1534,7 +1612,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testFetchFromClassWithIndexes12() {
+  @Test
+  public void testFetchFromClassWithIndexes12() {
     String className = "testFetchFromClassWithIndexes12";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
@@ -1559,7 +1638,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testFetchFromClassWithIndexes13() {
+  @Test
+  public void testFetchFromClassWithIndexes13() {
     String className = "testFetchFromClassWithIndexes13";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
@@ -1584,7 +1664,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testFetchFromClassWithIndexes14() {
+  @Test
+  public void testFetchFromClassWithIndexes14() {
     String className = "testFetchFromClassWithIndexes14";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
@@ -1611,7 +1692,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testFetchFromClassWithIndexes15() {
+  @Test
+  public void testFetchFromClassWithIndexes15() {
     String className = "testFetchFromClassWithIndexes15";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
@@ -1635,7 +1717,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testFetchFromClassWithHashIndexes1() {
+  @Test
+  public void testFetchFromClassWithHashIndexes1() {
     String className = "testFetchFromClassWithHashIndexes1";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
@@ -1664,7 +1747,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testFetchFromClassWithHashIndexes2() {
+  @Test
+  public void testFetchFromClassWithHashIndexes2() {
     String className = "testFetchFromClassWithHashIndexes2";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
@@ -1694,7 +1778,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testExpand1() {
+  @Test
+  public void testExpand1() {
     String childClassName = "testExpand1_child";
     String parentClassName = "testExpand1_parent";
     OClass childClass = db.getMetadata().getSchema().createClass(childClassName);
@@ -1725,7 +1810,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testExpand2() {
+  @Test
+  public void testExpand2() {
     String childClassName = "testExpand2_child";
     String parentClassName = "testExpand2_parent";
     OClass childClass = db.getMetadata().getSchema().createClass(childClassName);
@@ -1759,7 +1845,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testExpand3() {
+  @Test
+  public void testExpand3() {
     String childClassName = "testExpand3_child";
     String parentClassName = "testExpand3_parent";
     OClass childClass = db.getMetadata().getSchema().createClass(childClassName);
@@ -1798,7 +1885,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testDistinct1() {
+  @Test
+  public void testDistinct1() {
     String className = "testDistinct1";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
@@ -1823,7 +1911,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testDistinct2() {
+  @Test
+  public void testDistinct2() {
     String className = "testDistinct2";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
@@ -1848,7 +1937,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testLet1() {
+  @Test
+  public void testLet1() {
     OTodoResultSet result = db.query("select $a as one, $b as two let $a = 1, $b = 1+1");
     Assert.assertTrue(result.hasNext());
     OResult item = result.next();
@@ -1859,7 +1949,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testLet1Long() {
+  @Test
+  public void testLet1Long() {
     OTodoResultSet result = db.query("select $a as one, $b as two let $a = 1L, $b = 1L+1");
     Assert.assertTrue(result.hasNext());
     OResult item = result.next();
@@ -1870,7 +1961,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testLet2() {
+  @Test
+  public void testLet2() {
     OTodoResultSet result = db.query("select $a as one let $a = (select 1 as a)");
     printExecutionPlan(result);
     Assert.assertTrue(result.hasNext());
@@ -1885,7 +1977,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testLet3() {
+  @Test
+  public void testLet3() {
     OTodoResultSet result = db.query("select $a[0].foo as one let $a = (select 1 as foo)");
     printExecutionPlan(result);
     Assert.assertTrue(result.hasNext());
@@ -1896,7 +1989,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testLet4() {
+  @Test
+  public void testLet4() {
     String className = "testLet4";
     db.getMetadata().getSchema().createClass(className);
 
@@ -1920,7 +2014,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testLet5() {
+  @Test
+  public void testLet5() {
     String className = "testLet5";
     db.getMetadata().getSchema().createClass(className);
 
@@ -1944,7 +2039,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testLet6() {
+  @Test
+  public void testLet6() {
     String className = "testLet6";
     db.getMetadata().getSchema().createClass(className);
 
@@ -1969,7 +2065,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testLet7() {
+  @Test
+  public void testLet7() {
     String className = "testLet7";
     db.getMetadata().getSchema().createClass(className);
 
@@ -1994,7 +2091,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testUnwind1() {
+  @Test
+  public void testUnwind1() {
     String className = "testUnwind1";
     db.getMetadata().getSchema().createClass(className);
 
@@ -2021,7 +2119,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testUnwind2() {
+  @Test
+  public void testUnwind2() {
     String className = "testUnwind2";
     db.getMetadata().getSchema().createClass(className);
 
@@ -2052,7 +2151,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testFetchFromSubclassIndexes1() {
+  @Test
+  public void testFetchFromSubclassIndexes1() {
     String parent = "testFetchFromSubclassIndexes1_parent";
     String child1 = "testFetchFromSubclassIndexes1_child1";
     String child2 = "testFetchFromSubclassIndexes1_child2";
@@ -2089,7 +2189,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testFetchFromSubclassIndexes2() {
+  @Test
+  public void testFetchFromSubclassIndexes2() {
     String parent = "testFetchFromSubclassIndexes2_parent";
     String child1 = "testFetchFromSubclassIndexes2_child1";
     String child2 = "testFetchFromSubclassIndexes2_child2";
@@ -2128,7 +2229,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testFetchFromSubclassIndexes3() {
+  @Test
+  public void testFetchFromSubclassIndexes3() {
     String parent = "testFetchFromSubclassIndexes3_parent";
     String child1 = "testFetchFromSubclassIndexes3_child1";
     String child2 = "testFetchFromSubclassIndexes3_child2";
@@ -2166,7 +2268,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testFetchFromSubclassIndexes4() {
+  @Test
+  public void testFetchFromSubclassIndexes4() {
     String parent = "testFetchFromSubclassIndexes4_parent";
     String child1 = "testFetchFromSubclassIndexes4_child1";
     String child2 = "testFetchFromSubclassIndexes4_child2";
@@ -2210,7 +2313,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testFetchFromSubSubclassIndexes() {
+  @Test
+  public void testFetchFromSubSubclassIndexes() {
     String parent = "testFetchFromSubSubclassIndexes_parent";
     String child1 = "testFetchFromSubSubclassIndexes_child1";
     String child2 = "testFetchFromSubSubclassIndexes_child2";
@@ -2261,7 +2365,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testFetchFromSubSubclassIndexesWithDiamond() {
+  @Test
+  public void testFetchFromSubSubclassIndexesWithDiamond() {
     String parent = "testFetchFromSubSubclassIndexesWithDiamond_parent";
     String child1 = "testFetchFromSubSubclassIndexesWithDiamond_child1";
     String child2 = "testFetchFromSubSubclassIndexesWithDiamond_child2";
@@ -2310,7 +2415,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testIndexPlusSort1() {
+  @Test
+  public void testIndexPlusSort1() {
     String className = "testIndexPlusSort1";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
@@ -2345,7 +2451,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testIndexPlusSort2() {
+  @Test
+  public void testIndexPlusSort2() {
     String className = "testIndexPlusSort2";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
@@ -2380,7 +2487,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testIndexPlusSort3() {
+  @Test
+  public void testIndexPlusSort3() {
     String className = "testIndexPlusSort3";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
@@ -2415,7 +2523,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testIndexPlusSort4() {
+  @Test
+  public void testIndexPlusSort4() {
     String className = "testIndexPlusSort4";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
@@ -2451,7 +2560,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testIndexPlusSort5() {
+  @Test
+  public void testIndexPlusSort5() {
     String className = "testIndexPlusSort5";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
@@ -2487,7 +2597,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testIndexPlusSort6() {
+  @Test
+  public void testIndexPlusSort6() {
     String className = "testIndexPlusSort6";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
@@ -2523,7 +2634,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testIndexPlusSort7() {
+  @Test
+  public void testIndexPlusSort7() {
     String className = "testIndexPlusSort7";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
@@ -2561,7 +2673,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testIndexPlusSort8() {
+  @Test
+  public void testIndexPlusSort8() {
     String className = "testIndexPlusSort8";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
@@ -2597,7 +2710,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testIndexPlusSort9() {
+  @Test
+  public void testIndexPlusSort9() {
     String className = "testIndexPlusSort9";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
@@ -2633,7 +2747,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testIndexPlusSort10() {
+  @Test
+  public void testIndexPlusSort10() {
     String className = "testIndexPlusSort10";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
@@ -2669,7 +2784,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testIndexPlusSort11() {
+  @Test
+  public void testIndexPlusSort11() {
     String className = "testIndexPlusSort11";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
@@ -2705,7 +2821,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testIndexPlusSort12() {
+  @Test
+  public void testIndexPlusSort12() {
     String className = "testIndexPlusSort12";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
     clazz.createProperty("name", OType.STRING);
@@ -2748,7 +2865,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testSelectFromStringParam() {
+  @Test
+  public void testSelectFromStringParam() {
     String className = "testSelectFromStringParam";
     db.getMetadata().getSchema().createClass(className);
     for (int i = 0; i < 10; i++) {
@@ -2770,7 +2888,8 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-  @Test public void testSelectFromStringNamedParam() {
+  @Test
+  public void testSelectFromStringNamedParam() {
     String className = "testSelectFromStringNamedParam";
     db.getMetadata().getSchema().createClass(className);
     for (int i = 0; i < 10; i++) {
@@ -2847,18 +2966,6 @@ public class OSelectStatementExecutionTest {
       long end = System.nanoTime();
       System.out.println("old: " + ((end - begin) / 1000000));
     }
-  }
-
-  private void printExecutionPlan(OTodoResultSet result) {
-    printExecutionPlan(null, result);
-  }
-
-  private void printExecutionPlan(String query, OTodoResultSet result) {
-    if (query != null) {
-      System.out.println(query);
-    }
-    result.getExecutionPlan().ifPresent(x -> System.out.println(x.prettyPrint(0, 3)));
-    System.out.println();
   }
 
 }
