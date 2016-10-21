@@ -791,7 +791,7 @@ public class OObjectEntitySerializer {
       Class<?> fieldClass = iFieldValue.getClass();
 
       if (fieldClass.isArray()) {
-        if (OType.BINARY.equals(iType) || (iType == null && fieldClass.getComponentType() != null && byte.class.isAssignableFrom(fieldClass.getComponentType())))
+        if (OType.BINARY.equals(iType))
           return iFieldValue;
           
         // ARRAY

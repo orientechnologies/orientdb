@@ -852,7 +852,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 
                             setDocFieldValue(fieldName,
                                     OObjectEntitySerializer.typeToStream(valueToSet,
-                                            schemaProperty != null ? schemaProperty.getType() : null, getDatabase(),
+                                            schemaProperty != null ? schemaProperty.getType() : objectOType, getDatabase(),
                                             doc),
                                     objectOType);
                         } else
