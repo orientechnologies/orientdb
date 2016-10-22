@@ -150,6 +150,12 @@ public final class OHashTableIndexEngine implements OIndexEngine {
     hashTable.put(key, value);
   }
 
+  @SuppressWarnings("unchecked")
+  @Override
+  public boolean validatedPut(Object key, OIdentifiable value, Validator<Object, OIdentifiable> validator) {
+    return hashTable.validatedPut(key, value, (Validator) validator);
+  }
+
   @Override
   public long size(ValuesTransformer transformer) {
     if (transformer == null)

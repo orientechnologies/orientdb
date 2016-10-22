@@ -131,6 +131,11 @@ public class OLuceneIndexEngineDelegate implements OLuceneIndexEngine, OFreezabl
   }
 
   @Override
+  public boolean validatedPut(Object key, OIdentifiable value, Validator<Object, OIdentifiable> validator) {
+    return delegate.validatedPut(key, value, validator);
+  }
+
+  @Override
   public Object getFirstKey() {
     return delegate.getFirstKey();
   }

@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OLocalHashTableException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OTooBigIndexKeyException;
+import com.orientechnologies.orient.core.index.OIndexEngine;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
@@ -403,49 +404,12 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
 
   @Override
   public void put(K key, V value) {
-    final OSessionStoragePerformanceStatistic statistic = performanceStatisticManager.getSessionPerformanceStatistic();
-    startOperation();
-    if (statistic != null)
-      statistic.startIndexEntryUpdateTimer();
-    try {
-      final OAtomicOperation atomicOperation;
-      try {
-        atomicOperation = startAtomicOperation(true);
-      } catch (IOException e) {
-        throw OException.wrapException(new OIndexException("Error during hash table entry put"), e);
-      }
-      acquireExclusiveLock();
-      try {
+    put(key, value, null);
+  }
 
-        checkNullSupport(key);
-
-        if (key != null) {
-          final int keySize = keySerializer.getObjectSize(key, (Object[]) keyTypes);
-          if (keySize > MAX_KEY_SIZE)
-            throw new OTooBigIndexKeyException(
-                "Key size is more than allowed, operation was canceled. Current key size " + keySize + ", allowed  " + MAX_KEY_SIZE,
-                getName());
-        }
-
-        key = keySerializer.preprocess(key, (Object[]) keyTypes);
-
-        doPut(key, value, atomicOperation);
-
-        endAtomicOperation(false, null);
-      } catch (IOException e) {
-        rollback(e);
-        throw OException.wrapException(new OIndexException("Error during index update"), e);
-      } catch (Exception e) {
-        rollback(e);
-        throw OException.wrapException(new OStorageException("Error during index update"), e);
-      } finally {
-        releaseExclusiveLock();
-      }
-    } finally {
-      if (statistic != null)
-        statistic.stopIndexEntryUpdateTimer();
-      completeOperation();
-    }
+  @Override
+  public boolean validatedPut(K key, V value, OIndexEngine.Validator<K, V> validator) {
+    return put(key, value, validator);
   }
 
   @Override
@@ -1462,7 +1426,54 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
     atomicOperationsManager.acquireExclusiveLockTillOperationComplete(this);
   }
 
-  private void doPut(K key, V value, OAtomicOperation atomicOperation) throws IOException {
+  private boolean put(K key, V value, OIndexEngine.Validator<K, V> validator) {
+    final OSessionStoragePerformanceStatistic statistic = performanceStatisticManager.getSessionPerformanceStatistic();
+    startOperation();
+    if (statistic != null)
+      statistic.startIndexEntryUpdateTimer();
+    try {
+      final OAtomicOperation atomicOperation;
+      try {
+        atomicOperation = startAtomicOperation(true);
+      } catch (IOException e) {
+        throw OException.wrapException(new OIndexException("Error during hash table entry put"), e);
+      }
+      acquireExclusiveLock();
+      try {
+
+        checkNullSupport(key);
+
+        if (key != null) {
+          final int keySize = keySerializer.getObjectSize(key, (Object[]) keyTypes);
+          if (keySize > MAX_KEY_SIZE)
+            throw new OTooBigIndexKeyException(
+                "Key size is more than allowed, operation was canceled. Current key size " + keySize + ", allowed  " + MAX_KEY_SIZE,
+                getName());
+        }
+
+        key = keySerializer.preprocess(key, (Object[]) keyTypes);
+
+        final boolean putResult = doPut(key, value, validator, atomicOperation);
+        endAtomicOperation(false, null);
+        return putResult;
+      } catch (IOException e) {
+        rollback(e);
+        throw OException.wrapException(new OIndexException("Error during index update"), e);
+      } catch (Exception e) {
+        rollback(e);
+        throw OException.wrapException(new OStorageException("Error during index update"), e);
+      } finally {
+        releaseExclusiveLock();
+      }
+    } finally {
+      if (statistic != null)
+        statistic.stopIndexEntryUpdateTimer();
+      completeOperation();
+    }
+  }
+
+  private boolean doPut(K key, V value, OIndexEngine.Validator<K, V> validator, OAtomicOperation atomicOperation)
+      throws IOException {
     int sizeDiff = 0;
 
     if (key == null) {
@@ -1479,7 +1490,18 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
       cacheEntry.acquireExclusiveLock();
       try {
         ONullBucket<V> nullBucket = new ONullBucket<V>(cacheEntry, getChanges(atomicOperation, cacheEntry), valueSerializer, isNew);
-        if (nullBucket.getValue() != null)
+
+        final V oldValue = nullBucket.getValue();
+
+        if (validator != null) {
+          final V result = validator.validate(null, oldValue, value);
+          if (result == OIndexEngine.Validator.Result.ignore())
+            return false;
+
+          value = result;
+        }
+
+        if (oldValue != null)
           sizeDiff--;
 
         nullBucket.setValue(value);
@@ -1490,6 +1512,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
       }
 
       changeSize(sizeDiff, atomicOperation);
+      return true;
     } else {
       final long hashCode = keyHashFunction.hashCode(key);
 
@@ -1507,16 +1530,25 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
             getChanges(atomicOperation, cacheEntry));
         final int index = bucket.getIndex(hashCode, key);
 
+        if (validator != null) {
+          final V oldValue = index > -1 ? bucket.getValue(index) : null;
+          final V result = validator.validate(key, oldValue, value);
+          if (result == OIndexEngine.Validator.Result.ignore())
+            return false;
+
+          value = result;
+        }
+
         if (index > -1) {
           final int updateResult = bucket.updateEntry(index, value);
           if (updateResult == 0) {
             changeSize(sizeDiff, atomicOperation);
-            return;
+            return true;
           }
 
           if (updateResult == 1) {
             changeSize(sizeDiff, atomicOperation);
-            return;
+            return true;
           }
 
           assert updateResult == -1;
@@ -1529,7 +1561,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
           sizeDiff++;
 
           changeSize(sizeDiff, atomicOperation);
-          return;
+          return true;
         }
 
         final OHashTable.BucketSplitResult splitResult = splitBucket(bucket, pageIndex, atomicOperation);
@@ -1591,9 +1623,9 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
       }
 
       changeSize(sizeDiff, atomicOperation);
-      doPut(key, value, atomicOperation);
+      doPut(key, value, null /* already validated */, atomicOperation);
+      return true;
     }
-
   }
 
   private void checkNullSupport(K key) {

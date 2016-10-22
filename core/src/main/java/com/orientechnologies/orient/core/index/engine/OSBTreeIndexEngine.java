@@ -163,6 +163,12 @@ public class OSBTreeIndexEngine implements OIndexEngine {
     sbTree.put(key, value);
   }
 
+  @SuppressWarnings("unchecked")
+  @Override
+  public boolean validatedPut(Object key, OIdentifiable value, Validator<Object, OIdentifiable> validator) {
+    return sbTree.validatedPut(key, value, (Validator) validator);
+  }
+
   @Override
   public Object getFirstKey() {
     return sbTree.firstKey();

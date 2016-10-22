@@ -20,55 +20,55 @@
 
 package com.orientechnologies.orient.core.index.sbtree.local;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
-import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * @author Andrey Lomakin
  * @since 8/7/13
  */
 public class OSBTreeBucket<K, V> extends ODurablePage {
-  private static final int            FREE_POINTER_OFFSET     = NEXT_FREE_POSITION;
-  private static final int            SIZE_OFFSET             = FREE_POINTER_OFFSET + OIntegerSerializer.INT_SIZE;
-  private static final int            IS_LEAF_OFFSET          = SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
-  private static final int            LEFT_SIBLING_OFFSET     = IS_LEAF_OFFSET + OByteSerializer.BYTE_SIZE;
-  private static final int            RIGHT_SIBLING_OFFSET    = LEFT_SIBLING_OFFSET + OLongSerializer.LONG_SIZE;
+  private static final int FREE_POINTER_OFFSET  = NEXT_FREE_POSITION;
+  private static final int SIZE_OFFSET          = FREE_POINTER_OFFSET + OIntegerSerializer.INT_SIZE;
+  private static final int IS_LEAF_OFFSET       = SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
+  private static final int LEFT_SIBLING_OFFSET  = IS_LEAF_OFFSET + OByteSerializer.BYTE_SIZE;
+  private static final int RIGHT_SIBLING_OFFSET = LEFT_SIBLING_OFFSET + OLongSerializer.LONG_SIZE;
 
-  private static final int            TREE_SIZE_OFFSET        = RIGHT_SIBLING_OFFSET + OLongSerializer.LONG_SIZE;
+  private static final int TREE_SIZE_OFFSET = RIGHT_SIBLING_OFFSET + OLongSerializer.LONG_SIZE;
 
   /**
    * KEY_SERIALIZER_OFFSET and VALUE_SERIALIZER_OFFSET are no longer used by sb-tree since 1.7.
-   * 
+   *
    * However we left them in buckets to support backward compatibility.
    */
-  private static final int            KEY_SERIALIZER_OFFSET   = TREE_SIZE_OFFSET + OLongSerializer.LONG_SIZE;
-  private static final int            VALUE_SERIALIZER_OFFSET = KEY_SERIALIZER_OFFSET + OByteSerializer.BYTE_SIZE;
+  private static final int KEY_SERIALIZER_OFFSET   = TREE_SIZE_OFFSET + OLongSerializer.LONG_SIZE;
+  private static final int VALUE_SERIALIZER_OFFSET = KEY_SERIALIZER_OFFSET + OByteSerializer.BYTE_SIZE;
 
-  private static final int            FREE_VALUES_LIST_OFFSET = VALUE_SERIALIZER_OFFSET + OByteSerializer.BYTE_SIZE;
+  private static final int FREE_VALUES_LIST_OFFSET = VALUE_SERIALIZER_OFFSET + OByteSerializer.BYTE_SIZE;
 
-  private static final int            POSITIONS_ARRAY_OFFSET  = FREE_VALUES_LIST_OFFSET + OLongSerializer.LONG_SIZE;
+  private static final int POSITIONS_ARRAY_OFFSET = FREE_VALUES_LIST_OFFSET + OLongSerializer.LONG_SIZE;
 
-  private final boolean               isLeaf;
+  private final boolean isLeaf;
 
-  private final OBinarySerializer<K>  keySerializer;
-  private final OBinarySerializer<V>  valueSerializer;
+  private final OBinarySerializer<K> keySerializer;
+  private final OBinarySerializer<V> valueSerializer;
 
-  private final OType[]               keyTypes;
+  private final OType[] keyTypes;
 
-  private final Comparator<? super K> comparator              = ODefaultComparator.INSTANCE;
+  private final Comparator<? super K> comparator = ODefaultComparator.INSTANCE;
 
   @SuppressFBWarnings("EI_EXPOSE_REP2")
   public OSBTreeBucket(OCacheEntry cacheEntry, boolean isLeaf, OBinarySerializer<K> keySerializer, OType[] keyTypes,
@@ -171,8 +171,8 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
 
     int size = size();
     if (entryIndex < size - 1) {
-      moveData(POSITIONS_ARRAY_OFFSET + (entryIndex + 1) * OIntegerSerializer.INT_SIZE, POSITIONS_ARRAY_OFFSET + entryIndex
-          * OIntegerSerializer.INT_SIZE, (size - entryIndex - 1) * OIntegerSerializer.INT_SIZE);
+      moveData(POSITIONS_ARRAY_OFFSET + (entryIndex + 1) * OIntegerSerializer.INT_SIZE,
+          POSITIONS_ARRAY_OFFSET + entryIndex * OIntegerSerializer.INT_SIZE, (size - entryIndex - 1) * OIntegerSerializer.INT_SIZE);
     }
 
     size--;
@@ -228,6 +228,33 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
 
       return new SBTreeEntry<K, V>(leftChild, rightChild, key, null);
     }
+  }
+
+  /**
+   * Obtains the value stored under the given entry index in this bucket.
+   *
+   * @param entryIndex the value entry index.
+   *
+   * @return the obtained value.
+   */
+  public OSBTreeValue<V> getValue(int entryIndex) {
+    assert isLeaf;
+
+    int entryPosition = getIntValue(entryIndex * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
+
+    // skip key
+    entryPosition += getObjectSizeInDirectMemory(keySerializer, entryPosition);
+
+    boolean isLinkValue = getByteValue(entryPosition) > 0;
+    long link = -1;
+    V value = null;
+
+    if (isLinkValue)
+      link = deserializeFromDirectMemory(OLongSerializer.INSTANCE, entryPosition + OByteSerializer.BYTE_SIZE);
+    else
+      value = deserializeFromDirectMemory(valueSerializer, entryPosition + OByteSerializer.BYTE_SIZE);
+
+    return new OSBTreeValue<V>(link >= 0, link, value);
   }
 
   public K getKey(int index) {
@@ -290,8 +317,8 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
       return false;
 
     if (index <= size - 1) {
-      moveData(POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE, POSITIONS_ARRAY_OFFSET + (index + 1)
-          * OIntegerSerializer.INT_SIZE, (size - index) * OIntegerSerializer.INT_SIZE);
+      moveData(POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE,
+          POSITIONS_ARRAY_OFFSET + (index + 1) * OIntegerSerializer.INT_SIZE, (size - index) * OIntegerSerializer.INT_SIZE);
     }
 
     freePointer -= entrySize;
@@ -397,10 +424,10 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
   public static final class SBTreeEntry<K, V> implements Comparable<SBTreeEntry<K, V>> {
     private final Comparator<? super K> comparator = ODefaultComparator.INSTANCE;
 
-    public final long                   leftChild;
-    public final long                   rightChild;
-    public final K                      key;
-    public final OSBTreeValue<V>        value;
+    public final long            leftChild;
+    public final long            rightChild;
+    public final K               key;
+    public final OSBTreeValue<V> value;
 
     public SBTreeEntry(long leftChild, long rightChild, K key, OSBTreeValue<V> value) {
       this.leftChild = leftChild;

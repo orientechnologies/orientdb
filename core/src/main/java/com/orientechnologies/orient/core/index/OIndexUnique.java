@@ -32,6 +32,28 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
  * @author Luca Garulli
  */
 public class OIndexUnique extends OIndexOneValue {
+
+  private final OIndexEngine.Validator<Object, OIdentifiable> UNIQUE_VALIDATOR = new OIndexEngine.Validator<Object, OIdentifiable>() {
+    @Override
+    public OIdentifiable validate(Object key, OIdentifiable oldValue, OIdentifiable newValue) {
+      if (oldValue != null) {
+        // CHECK IF THE ID IS THE SAME OF CURRENT: THIS IS THE UPDATE CASE
+        if (!oldValue.equals(newValue)) {
+          final Boolean mergeSameKey = metadata != null ? (Boolean) metadata.field(OIndex.MERGE_KEYS) : Boolean.FALSE;
+          if (mergeSameKey == null || !mergeSameKey)
+            throw new ORecordDuplicatedException(String
+                .format("Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s",
+                    newValue.getIdentity(), key, getName(), oldValue.getIdentity()), getName(), oldValue.getIdentity());
+        } else
+          return OIndexEngine.Validator.Result.ignore();
+      }
+
+      if (!newValue.getIdentity().isPersistent())
+        newValue.getRecord().save();
+      return newValue.getIdentity();
+    }
+  };
+
   public OIndexUnique(String name, String typeId, String algorithm, int version, OAbstractPaginatedStorage storage,
       String valueContainerAlgorithm, ODocument metadata) {
     super(name, typeId, algorithm, version, storage, valueContainerAlgorithm, metadata);
@@ -49,29 +71,10 @@ public class OIndexUnique extends OIndexOneValue {
     }
 
     try {
-
       acquireSharedLock();
       try {
-        final OIdentifiable value = (OIdentifiable) storage.getIndexValue(indexId, key);
-
-        if (value != null) {
-          // CHECK IF THE ID IS THE SAME OF CURRENT: THIS IS THE UPDATE CASE
-          if (!value.equals(iSingleValue)) {
-            final Boolean mergeSameKey = metadata != null ? (Boolean) metadata.field(OIndex.MERGE_KEYS) : Boolean.FALSE;
-            if (mergeSameKey == null || !mergeSameKey)
-              throw new ORecordDuplicatedException(String
-                  .format("Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s",
-                      iSingleValue.getIdentity(), key, getName(), value.getIdentity()), getName(), value.getIdentity());
-          } else
-            return this;
-        }
-
-        if (!iSingleValue.getIdentity().isPersistent())
-          iSingleValue.getRecord().save();
-
-        storage.putIndexValue(indexId, key, iSingleValue.getIdentity());
+        storage.validatedPutIndexValue(indexId, key, iSingleValue, UNIQUE_VALIDATOR);
         return this;
-
       } finally {
         releaseSharedLock();
       }

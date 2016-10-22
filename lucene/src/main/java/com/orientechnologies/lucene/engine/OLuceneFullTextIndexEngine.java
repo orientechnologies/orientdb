@@ -67,7 +67,7 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
     OLuceneIndexWriterFactory fc = new OLuceneIndexWriterFactory();
 
-    facetManager = new OLuceneFacetManager(storage,this, metadata);
+    facetManager = new OLuceneFacetManager(storage, this, metadata);
 
     OLogManager.instance().debug(this, "Creating Lucene index in '%s'...", directory);
 
@@ -143,6 +143,11 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
         commit();
       }
     }
+  }
+
+  @Override
+  public boolean validatedPut(Object key, OIdentifiable value, Validator<Object, OIdentifiable> validator) {
+    throw new UnsupportedOperationException("Validated put is not supported by OLuceneFullTextIndexEngine");
   }
 
   private void putInAutomaticIndex(Object key, Document doc, int i) {

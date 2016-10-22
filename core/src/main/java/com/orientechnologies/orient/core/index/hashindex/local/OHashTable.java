@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.index.hashindex.local;
 
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.orient.core.index.OIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -45,6 +46,19 @@ public interface OHashTable<K, V> {
   V get(K key);
 
   void put(K key, V value);
+
+  /**
+   * Puts the given value under the given key into this hash table. Validates the operation using the provided validator.
+   *
+   * @param key       the key to put the value under.
+   * @param value     the value to put.
+   * @param validator the operation validator.
+   *
+   * @return {@code true} if the validator allowed the put, {@code false} otherwise.
+   *
+   * @see OIndexEngine.Validator#validate(Object, Object, Object)
+   */
+  boolean validatedPut(K key, V value, OIndexEngine.Validator<K, V> validator);
 
   V remove(K key);
 
