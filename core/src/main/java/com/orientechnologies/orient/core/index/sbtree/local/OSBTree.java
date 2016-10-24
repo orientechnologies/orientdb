@@ -956,8 +956,19 @@ public class OSBTree<K, V> extends ODurableComponent {
           try {
             final ONullBucket<V> nullBucket = new ONullBucket<V>(cacheEntry, getChanges(atomicOperation, cacheEntry),
                 valueSerializer, isNew);
+            final OSBTreeValue<V> oldValue = nullBucket.getValue();
 
-            if (nullBucket.getValue() != null)
+            if (validator != null) {
+              final V oldValueValue = oldValue == null ? null : readValue(oldValue, atomicOperation);
+
+              final V result = validator.validate(null, oldValueValue, value);
+              if (result == OIndexEngine.Validator.Result.ignore())
+                return false;
+
+              value = result;
+            }
+
+            if (oldValue != null)
               sizeDiff = -1;
 
             nullBucket.setValue(treeValue);
