@@ -41,7 +41,19 @@ public class OInCondition extends OBooleanExpression {
   }
 
   @Override public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
-    throw new UnsupportedOperationException("TODO Implement IN!!!");//TODO
+    Object leftVal = left.execute(currentRecord, ctx);
+    Object rightVal = null;
+    if (rightStatement != null) {
+      throw new UnsupportedOperationException("TODO Implement IN for statements!!!");
+    } else if (rightParam != null) {
+      rightVal = rightParam.bindFromInputParams(ctx.getInputParameters());
+    } else if (rightMathExpression != null) {
+      rightVal = rightMathExpression.execute(currentRecord, ctx);
+    }
+    if (rightVal == null) {
+      return false;
+    }
+    return evaluateExpression(leftVal, rightVal);
   }
 
   @Override public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
