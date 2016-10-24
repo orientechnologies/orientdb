@@ -144,6 +144,11 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
     }
   }
 
+  @Override
+  public boolean validatedPut(Object key, OIdentifiable value, Validator<Object, OIdentifiable> validator) {
+    throw new UnsupportedOperationException("Validated put is not supported by OLuceneFullTextIndexEngine");
+  }
+
   private void putInAutomaticIndex(Object key, Document doc, int i) {
     for (String field : index.getFields()) {
 

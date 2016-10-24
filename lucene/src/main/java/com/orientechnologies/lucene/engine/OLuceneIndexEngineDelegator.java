@@ -42,7 +42,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
-import static com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE.*;
+import static com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE.FULLTEXT;
 
 /**
  * Created by Enrico Risa on 04/09/15.
@@ -130,6 +130,11 @@ public class OLuceneIndexEngineDelegator implements OLuceneIndexEngine, OFreezab
   }
 
   @Override
+  public boolean validatedPut(Object key, OIdentifiable value, Validator<Object, OIdentifiable> validator) {
+    return delegate.validatedPut(key, value, validator);
+  }
+
+  @Override
   public Object getFirstKey() {
     return delegate.getFirstKey();
   }
@@ -201,7 +206,7 @@ public class OLuceneIndexEngineDelegator implements OLuceneIndexEngine, OFreezab
     if (delegate == null) {
       if (FULLTEXT.name().equalsIgnoreCase(indexType)) {
 
-        delegate = new OLuceneFullTextIndexEngine(storage,indexName, new ODocBuilder(), new OQueryBuilderImpl(metadata));
+        delegate = new OLuceneFullTextIndexEngine(storage, indexName, new ODocBuilder(), new OQueryBuilderImpl(metadata));
       }
 
       delegate.init(indexName, indexType, indexDefinition, isAutomatic, metadata);

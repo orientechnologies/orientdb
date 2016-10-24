@@ -61,6 +61,19 @@ public interface OIndexEngine {
 
   void put(Object key, Object value);
 
+  /**
+   * Puts the given value under the given key into this index engine. Validates the operation using the provided validator.
+   *
+   * @param key       the key to put the value under.
+   * @param value     the value to put.
+   * @param validator the operation validator.
+   *
+   * @return {@code true} if the validator allowed the put, {@code false} otherwise.
+   *
+   * @see Validator#validate(Object, Object, Object)
+   */
+  boolean validatedPut(Object key, OIdentifiable value, Validator<Object, OIdentifiable> validator);
+
   Object getFirstKey();
 
   Object getLastKey();
@@ -104,5 +117,48 @@ public interface OIndexEngine {
 
   interface ValuesTransformer {
     Collection<OIdentifiable> transformFromValue(Object value);
+  }
+
+  /**
+   * Put operation validator.
+   *
+   * @param <K> the key type.
+   * @param <V> the value type.
+   */
+  interface Validator<K, V> {
+
+    /**
+     * Validates the put operation for the given key, the old value and the new value. May throw an exception to abort the current
+     * put operation with an error.
+     *
+     * @param key      the put operation key.
+     * @param oldValue the old value or {@code null} if no value is currently stored.
+     * @param newValue the new value passed to {@link #validatedPut(Object, OIdentifiable, Validator)}.
+     *
+     * @return the new value to store, may differ from the passed one, or the special {@link Result#ignore() ignore} value to
+     * silently ignore the put operation request being processed.
+     */
+    V validate(K key, V oldValue, V newValue);
+
+    /**
+     * Enums the special predefined validation results.
+     *
+     * @see Validator#validate(Object, Object, Object)
+     */
+    final class Result {
+      private static final Object IGNORE = new Object();
+
+      /**
+       * Indicates that a put request should be silently ignored by the store.
+       *
+       * @param <V> the value type.
+       *
+       * @return the ignore validation result.
+       */
+      @SuppressWarnings("unchecked")
+      public static <V> V ignore() {
+        return (V) IGNORE;
+      }
+    }
   }
 }

@@ -49,7 +49,6 @@ public class ORemoteIndexEngine implements OIndexEngine {
     return name;
   }
 
-
   @Override
   public void init(String indexName, String indexType, OIndexDefinition indexDefinition, boolean isAutomatic, ODocument metadata) {
   }
@@ -102,6 +101,11 @@ public class ORemoteIndexEngine implements OIndexEngine {
 
   @Override
   public void put(Object key, Object value) {
+  }
+
+  @Override
+  public boolean validatedPut(Object key, OIdentifiable value, Validator<Object, OIdentifiable> validator) {
+    return false;
   }
 
   @Override

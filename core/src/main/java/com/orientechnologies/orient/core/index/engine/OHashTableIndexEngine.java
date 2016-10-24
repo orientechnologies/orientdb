@@ -22,8 +22,6 @@ package com.orientechnologies.orient.core.index.engine;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.index.hashindex.local.*;
@@ -148,6 +146,12 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   @Override
   public void put(Object key, Object value) {
     hashTable.put(key, value);
+  }
+
+  @SuppressWarnings("unchecked")
+  @Override
+  public boolean validatedPut(Object key, OIdentifiable value, Validator<Object, OIdentifiable> validator) {
+    return hashTable.validatedPut(key, value, (Validator) validator);
   }
 
   @Override

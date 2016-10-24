@@ -21,8 +21,8 @@ package com.orientechnologies.orient.core.index.hashindex.local;
 
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.orient.core.index.OIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.util.Comparator;
@@ -43,6 +43,19 @@ public interface OHashTable<K, V> {
   void setValueSerializer(OBinarySerializer<V> valueSerializer);
 
   V get(K key);
+
+  /**
+   * Puts the given value under the given key into this hash table. Validates the operation using the provided validator.
+   *
+   * @param key       the key to put the value under.
+   * @param value     the value to put.
+   * @param validator the operation validator.
+   *
+   * @return {@code true} if the validator allowed the put, {@code false} otherwise.
+   *
+   * @see OIndexEngine.Validator#validate(Object, Object, Object)
+   */
+  boolean validatedPut(K key, V value, OIndexEngine.Validator<K, V> validator);
 
   void put(K key, V value);
 

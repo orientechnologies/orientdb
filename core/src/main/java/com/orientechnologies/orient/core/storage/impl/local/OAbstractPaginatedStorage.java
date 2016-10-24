@@ -45,6 +45,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.*;
 import com.orientechnologies.orient.core.exception.*;
@@ -239,7 +240,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     } catch (Exception e) {
       for (OCluster c : clusters) {
         try {
-          if( c != null )
+          if (c != null)
             c.close(false);
         } catch (IOException e1) {
           OLogManager.instance().error(this, "Cannot close cluster after exception on open");
@@ -1925,6 +1926,52 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       makeStorageDirty();
 
       engine.put(key, value);
+    } catch (IOException e) {
+      throw new OStorageException("Cannot put key " + key + " value " + value + " entry to the index");
+    }
+  }
+
+  /**
+   * Puts the given value under the given key into this storage for the index with the given index id. Validates the operation using
+   * the provided validator.
+   *
+   * @param indexId   the index id of the index to put the value into.
+   * @param key       the key to put the value under.
+   * @param value     the value to put.
+   * @param validator the operation validator.
+   *
+   * @return {@code true} if the validator allowed the put, {@code false} otherwise.
+   *
+   * @see OIndexEngine.Validator#validate(Object, Object, Object)
+   */
+  public boolean validatedPutIndexValue(int indexId, Object key, OIdentifiable value,
+      OIndexEngine.Validator<Object, OIdentifiable> validator) {
+    if (transaction.get() != null)
+      return doValidatedPutIndexValue(indexId, key, value, validator);
+
+    checkOpeness();
+
+    stateLock.acquireReadLock();
+    try {
+      checkOpeness();
+
+      checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
+
+      return doValidatedPutIndexValue(indexId, key, value, validator);
+    } finally {
+      stateLock.releaseReadLock();
+    }
+  }
+
+  private boolean doValidatedPutIndexValue(int indexId, Object key, OIdentifiable value,
+      OIndexEngine.Validator<Object, OIdentifiable> validator) {
+    try {
+      checkIndexId(indexId);
+
+      final OIndexEngine engine = indexEngines.get(indexId);
+      makeStorageDirty();
+
+      return engine.validatedPut(key, value, validator);
     } catch (IOException e) {
       throw new OStorageException("Cannot put key " + key + " value " + value + " entry to the index");
     }
