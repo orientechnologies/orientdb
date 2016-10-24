@@ -4,10 +4,9 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.sql.filter.OSQLTarget;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class OInCondition extends OBooleanExpression {
   protected OExpression            left;
@@ -17,8 +16,8 @@ public class OInCondition extends OBooleanExpression {
   protected OMathExpression        rightMathExpression;
   protected Object                 right;
 
-  private static final Object      UNSET           = new Object();
-  private Object                   inputFinalValue = UNSET;
+  private static final Object UNSET           = new Object();
+  private              Object inputFinalValue = UNSET;
 
   public OInCondition(int id) {
     super(id);
@@ -28,14 +27,58 @@ public class OInCondition extends OBooleanExpression {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
 
-  @Override
-  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+  @Override public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+    Object leftValue = left.execute(currentRecord, ctx);
+    Object rightValue = null;
+    if (rightStatement != null) {
+      rightValue = query(rightStatement.toString(), ctx);
+    } else if (rightParam != null) {
+      rightValue = rightParam.bindFromInputParams(ctx.getInputParameters());
+    } else if (rightMathExpression != null) {
+      rightValue = rightMathExpression.execute(currentRecord, ctx);
+    } else {
+      rightValue = right;
+    }
+
+    if (rightValue == null) {
+      return false;
+    } else if (rightValue instanceof Collection) {
+      return ((Collection) rightValue).contains(leftValue);
+    } else if (rightValue instanceof OIdentifiable) {
+      return rightValue.equals(leftValue);
+    }
+    if (rightValue instanceof Iterable) {
+      rightValue = ((Iterable) rightValue).iterator();
+    }
+    if (rightValue instanceof Iterator) {
+      Iterator iter = ((Iterator) rightValue);
+      while (iter.hasNext()) {
+        Object next = iter.next();
+        if (next == null && leftValue == null) {
+          return true;
+        }
+        if (next != null && next.equals(leftValue)) {
+          return true;
+        }
+      }
+    }
     return false;
+  }
+
+  private Object query(String text, OCommandContext ctx) {
+    OSQLTarget target = new OSQLTarget(text, ctx);
+    Iterable targetResult = (Iterable) target.getTargetRecords();
+    if (targetResult == null) {
+      return null;
+    }
+    return targetResult.iterator();
   }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
@@ -50,7 +93,7 @@ public class OInCondition extends OBooleanExpression {
     } else if (rightParam != null) {
       rightParam.toString(params, builder);
     } else if (rightMathExpression != null) {
-      rightMathExpression.toString(params,builder);
+      rightMathExpression.toString(params, builder);
     }
   }
 
@@ -61,8 +104,7 @@ public class OInCondition extends OBooleanExpression {
     return o.toString();
   }
 
-  @Override
-  public boolean supportsBasicCalculation() {
+  @Override public boolean supportsBasicCalculation() {
     if (!left.supportsBasicCalculation()) {
       return false;
     }
@@ -76,8 +118,7 @@ public class OInCondition extends OBooleanExpression {
     return true;
   }
 
-  @Override
-  protected int getNumberOfExternalCalculations() {
+  @Override protected int getNumberOfExternalCalculations() {
     int total = 0;
     if (operator != null && !operator.supportsBasicCalculation()) {
       total++;
@@ -91,8 +132,7 @@ public class OInCondition extends OBooleanExpression {
     return total;
   }
 
-  @Override
-  protected List<Object> getExternalCalculationConditions() {
+  @Override protected List<Object> getExternalCalculationConditions() {
     List<Object> result = new ArrayList<Object>();
 
     if (operator != null) {
