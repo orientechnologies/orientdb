@@ -27,6 +27,8 @@ import java.util.Set;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
+import com.orientechnologies.orient.client.remote.message.OConnectRequest;
+import com.orientechnologies.orient.client.remote.message.OConnectResponse;
 import com.orientechnologies.orient.client.remote.message.OCreateDatabaseRequest;
 import com.orientechnologies.orient.client.remote.message.OCreateDatabaseResponse;
 import com.orientechnologies.orient.client.remote.message.ODistributedStatusRequest;
@@ -56,8 +58,8 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OCredentialInterceptor;
 import com.orientechnologies.orient.core.security.OSecurityManager;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
 /**
  * Remote administration class of OrientDB Server instances.
@@ -107,47 +109,42 @@ public class OServerAdmin {
    * @throws IOException
    */
   public synchronized OServerAdmin connect(final String iUserName, final String iUserPassword) throws IOException {
-    networkAdminOperation(new OStorageRemoteOperation<Void>() {
-      @Override
-      public Void execute(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
-        OStorageRemoteNodeSession nodeSession = storage.getCurrentSession().getOrCreateServerSession(network.getServerURL());
-        try {
-          storage.beginRequest(network, OChannelBinaryProtocol.REQUEST_CONNECT, session);
+    final String username;
+    final String password;
 
-          storage.sendClientInfo(network, clientType, false, collectStats);
+    OCredentialInterceptor ci = OSecurityManager.instance().newCredentialInterceptor();
 
-          String username = iUserName;
-          String password = iUserPassword;
+    if (ci != null) {
+      ci.intercept(storage.getURL(), iUserName, iUserPassword);
+      username = ci.getUsername();
+      password = ci.getPassword();
+    } else {
+      username = iUserName;
+      password = iUserPassword;
+    }
+    OBinaryRequest request = new OConnectRequest(username, password);
 
-          OCredentialInterceptor ci = OSecurityManager.instance().newCredentialInterceptor();
+    OBinaryResponse<Void> response = new OConnectResponse();
 
-          if (ci != null) {
-            ci.intercept(storage.getURL(), iUserName, iUserPassword);
-            username = ci.getUsername();
-            password = ci.getPassword();
-          }
-
-          network.writeString(username);
-          network.writeString(password);
-        } finally {
-          storage.endRequest(network);
-        }
-
-        try {
-          network.beginResponse(nodeSession.getSessionId(), false);
-          int sessionId = network.readInt();
-          byte[] sessionToken = network.readBytes();
-          if (sessionToken.length == 0) {
-            sessionToken = null;
-          }
-          nodeSession.setSession(sessionId, sessionToken);
-        } finally {
-          storage.endResponse(network);
-        }
-
-        return null;
+    networkAdminOperation((network, session) -> {
+      OStorageRemoteNodeSession nodeSession = session.getOrCreateServerSession(network.getServerURL());
+      try {
+        network.beginRequest(request.getCommand(), session);
+        request.write(network, session, 0);
+      } finally {
+        network.endRequest();
       }
+      final Void res;
+      try {
+        network.beginResponse(nodeSession.getSessionId(), false);
+        res = response.read(network, session);
+      } finally {
+        storage.endResponse(network);
+      }
+      storage.connectionManager.release(network);
+      return res;
     }, "Cannot connect to the remote server/database '" + storage.getURL() + "'");
+
     return this;
   }
 

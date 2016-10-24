@@ -46,7 +46,6 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.ONullSerializer;
 import com.orientechnologies.common.util.OCommonConst;
-import com.orientechnologies.orient.client.remote.OCollectionNetworkSerializer;
 import com.orientechnologies.orient.client.remote.message.OAddClusterRequest;
 import com.orientechnologies.orient.client.remote.message.OAddClusterResponse;
 import com.orientechnologies.orient.client.remote.message.OBinaryProtocolHelper;
@@ -60,6 +59,8 @@ import com.orientechnologies.orient.client.remote.message.OCommitRequest;
 import com.orientechnologies.orient.client.remote.message.OCommitResponse;
 import com.orientechnologies.orient.client.remote.message.OCommitResponse.OCreatedRecordResponse;
 import com.orientechnologies.orient.client.remote.message.OCommitResponse.OUpdatedRecordResponse;
+import com.orientechnologies.orient.client.remote.message.OConnectRequest;
+import com.orientechnologies.orient.client.remote.message.OConnectResponse;
 import com.orientechnologies.orient.client.remote.message.OCountRecordsResponse;
 import com.orientechnologies.orient.client.remote.message.OCountRequest;
 import com.orientechnologies.orient.client.remote.message.OCountResponse;
@@ -947,28 +948,42 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   protected void connect(OClientConnection connection) throws IOException {
     setDataCommandInfo(connection, "Connect");
 
-    readConnectionData(connection);
+    OConnectRequest request = new OConnectRequest();
+    request.read(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
 
-    connection.setServerUser(server.serverLogin(channel.readString(), channel.readString(), "server.connect"));
+    connection.getData().driverName = request.getDriverName();
+    connection.getData().driverVersion = request.getDriverVersion();
+    connection.getData().protocolVersion = request.getProtocolVersion();
+    connection.getData().clientId = request.getClientId();
+    connection.getData().serializationImpl = request.getRecordFormat();
+
+    connection.setTokenBased(request.isTokenBased());
+    tokenConnection = Boolean.TRUE.equals(connection.getTokenBased());
+    connection.getData().supportsPushMessages = request.isSupportPush();
+    connection.getData().collectStats = request.isCollectStats();
+
+    connection.setServerUser(server.serverLogin(request.getUsername(), request.getPassword(), "server.connect"));
 
     if (connection.getServerUser() == null)
       throw new OSecurityAccessException("Wrong user/password to [connect] to the remote OrientDB Server instance");
 
+    byte[] token = null;
+    if (connection.getData().protocolVersion > OChannelBinaryProtocol.PROTOCOL_VERSION_26) {
+      connection.getData().serverUsername = connection.getServerUser().name;
+      connection.getData().serverUser = true;
+
+      if (Boolean.TRUE.equals(connection.getTokenBased())) {
+        token = server.getTokenHandler().getSignedBinaryToken(null, null, connection.getData());
+      } else
+        token = OCommonConst.EMPTY_BYTE_ARRAY;
+    }
+
+    OConnectResponse response = new OConnectResponse(connection.getId(), token);
+
     beginResponse();
     try {
       sendOk(connection, clientTxId);
-      channel.writeInt(connection.getId());
-      if (connection.getData().protocolVersion > OChannelBinaryProtocol.PROTOCOL_VERSION_26) {
-        connection.getData().serverUsername = connection.getServerUser().name;
-        connection.getData().serverUser = true;
-        byte[] token;
-        if (Boolean.TRUE.equals(connection.getTokenBased())) {
-          token = server.getTokenHandler().getSignedBinaryToken(null, null, connection.getData());
-        } else
-          token = OCommonConst.EMPTY_BYTE_ARRAY;
-        channel.writeBytes(token);
-      }
-
+      response.write(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
     } finally {
       endResponse(connection);
     }
