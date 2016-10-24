@@ -95,6 +95,9 @@ public class ODateSerializer implements OBinarySerializer<Date> {
 
   @Override
   public Date preprocess(Date value, Object... hints) {
+    if(value==null){
+      return null;
+    }
     final Calendar calendar = Calendar.getInstance();
     calendar.setTime(value);
     calendar.set(Calendar.HOUR_OF_DAY, 0);
