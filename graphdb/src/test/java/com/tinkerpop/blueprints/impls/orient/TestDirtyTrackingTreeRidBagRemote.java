@@ -32,10 +32,9 @@ public class TestDirtyTrackingTreeRidBagRemote {
   private OServer server;
 
   @Before
-  public void before()
-      throws ClassNotFoundException, MalformedObjectNameException, InstanceAlreadyExistsException, NotCompliantMBeanException,
-      MBeanRegistrationException, InvocationTargetException, NoSuchMethodException, InstantiationException, IOException,
-      IllegalAccessException {
+  public void before() throws ClassNotFoundException, MalformedObjectNameException, InstanceAlreadyExistsException,
+      NotCompliantMBeanException, MBeanRegistrationException, InvocationTargetException, NoSuchMethodException,
+      InstantiationException, IOException, IllegalAccessException {
     server = new OServer(false);
     server.startup(OrientGraphRemoteTest.class.getResourceAsStream("/embedded-server-config-single-run.xml"));
     server.activate();
@@ -53,43 +52,49 @@ public class TestDirtyTrackingTreeRidBagRemote {
 
   @Test
   public void test() {
+
     final int max = OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger() * 2;
     OrientGraph graph = new OrientGraph("remote:localhost:3064/" + TestDirtyTrackingTreeRidBagRemote.class.getSimpleName(), "root",
         "root");
-    graph.getRawGraph().declareIntent(new OIntentMassiveInsert());
-    graph.createEdgeType("Edge");
-    OIdentifiable oneVertex = null;
-    Map<Object, Vertex> vertices = new HashMap<Object, Vertex>();
-    for (int i = 0; i < max; i++) {
-      Vertex v = graph.addVertex("class:V");
-      v.setProperty("key", "foo" + i);
-      graph.commit();
-      vertices.put(v.getProperty("key"), v);
-      if (i == max / 2 + 1)
-        oneVertex = ((OrientVertex) v).getIdentity();
-    }
-    graph.commit();
-    // Add the edges
-    for (int i = 0; i < max; i++) {
-      String codeUCD1 = "foo" + i;
-      // Take the first vertex
-      Vertex med1 = (Vertex) vertices.get(codeUCD1);
-      // For the 2nd term
-      for (int j = 0; j < max; j++) {
-        String key = "foo" + j;
-        // Take the second vertex
-        Vertex med2 = (Vertex) vertices.get(key);
-        //        ((OrientVertex)med2).getRecord().reload();
-        OrientEdge eInteraction = graph.addEdge(null, med1, med2, "Edge");
-        assertNotNull(graph.getRawGraph().getTransaction().getRecordEntry(((OrientVertex) med2).getIdentity()));
-      }
-      // COMMIT
-      graph.commit();
-    }
-    graph.getRawGraph().getLocalCache().clear();
 
-    OrientVertex vertex = graph.getVertex(oneVertex);
-    assertEquals(new GremlinPipeline<Vertex, Long>().start(vertex).in("Edge").count(), max);
+    try {
+      graph.getRawGraph().declareIntent(new OIntentMassiveInsert());
+      graph.createEdgeType("Edge");
+      OIdentifiable oneVertex = null;
+      Map<Object, Vertex> vertices = new HashMap<Object, Vertex>();
+      for (int i = 0; i < max; i++) {
+        Vertex v = graph.addVertex("class:V");
+        v.setProperty("key", "foo" + i);
+        graph.commit();
+        vertices.put(v.getProperty("key"), v);
+        if (i == max / 2 + 1)
+          oneVertex = ((OrientVertex) v).getIdentity();
+      }
+      graph.commit();
+      // Add the edges
+      for (int i = 0; i < max; i++) {
+        String codeUCD1 = "foo" + i;
+        // Take the first vertex
+        Vertex med1 = (Vertex) vertices.get(codeUCD1);
+        // For the 2nd term
+        for (int j = 0; j < max; j++) {
+          String key = "foo" + j;
+          // Take the second vertex
+          Vertex med2 = (Vertex) vertices.get(key);
+          // ((OrientVertex)med2).getRecord().reload();
+          OrientEdge eInteraction = graph.addEdge(null, med1, med2, "Edge");
+          assertNotNull(graph.getRawGraph().getTransaction().getRecordEntry(((OrientVertex) med2).getIdentity()));
+        }
+        // COMMIT
+        graph.commit();
+      }
+      graph.getRawGraph().getLocalCache().clear();
+
+      OrientVertex vertex = graph.getVertex(oneVertex);
+      assertEquals(new GremlinPipeline<Vertex, Long>().start(vertex).in("Edge").count(), max);
+    } finally {
+      graph.shutdown();
+    }
   }
 
 }
