@@ -2,9 +2,14 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
+
 import java.util.Map;
 
-public class OSleepStatement extends OStatement {
+public class OSleepStatement extends OSimpleExecStatement {
 
   protected OInteger millis;
 
@@ -14,6 +19,25 @@ public class OSleepStatement extends OStatement {
 
   public OSleepStatement(OrientSql p, int id) {
     super(p, id);
+  }
+
+  @Override public OTodoResultSet executeSimple(OCommandContext ctx) {
+
+    OInternalResultSet result = new OInternalResultSet();
+    OResultInternal item = new OResultInternal();
+    item.setProperty("operation", "sleep");
+    try {
+      Thread.sleep(millis.getValue().intValue());
+      item.setProperty("result", "OK");
+      item.setProperty("millis", millis.getValue().intValue());
+    } catch (InterruptedException e) {
+      item.setProperty("result", "failure");
+      item.setProperty("errorType", e.getClass().getSimpleName());
+      item.setProperty("errorMessage", e.getMessage());
+    }
+    result.add(item);
+    return result;
+
   }
 
   @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
