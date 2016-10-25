@@ -13,11 +13,11 @@ import org.junit.Test;
 /**
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
-public class OGrantStatementExecutionTest {
+public class ORevokeStatementExecutionTest {
   static ODatabaseDocument db;
 
   @BeforeClass public static void beforeClass() {
-    db = new ODatabaseDocumentTx("memory:OGrantStatementExecutionTest");
+    db = new ODatabaseDocumentTx("memory:ORevokeStatementExecutionTest");
     db.create();
   }
 
@@ -31,6 +31,9 @@ public class OGrantStatementExecutionTest {
     db.command("GRANT execute on server.remove to testRole");
     testRole = db.getMetadata().getSecurity().getRole("testRole");
     Assert.assertTrue(testRole.allow(ORule.ResourceGeneric.SERVER, "remove", ORole.PERMISSION_EXECUTE));
+    db.command("REVOKE execute on server.remove from testRole");
+    testRole = db.getMetadata().getSecurity().getRole("testRole");
+    Assert.assertFalse(testRole.allow(ORule.ResourceGeneric.SERVER, "remove", ORole.PERMISSION_EXECUTE));
   }
 
 
