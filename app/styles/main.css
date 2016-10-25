@@ -688,6 +688,9 @@ ul.arrayrid > li {
   font-weight: 700;
   text-transform: uppercase;
 }
+.navbar .nav > li.user > a {
+  text-transform: none;
+}
 
 .container-notification {
   position: fixed;
