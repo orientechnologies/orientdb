@@ -85,7 +85,7 @@ public abstract class OCommandExecutorSQLSetAware extends OCommandExecutorSQLAbs
         iTarget = iTarget.substring(OCommandExecutorSQLAbstract.CLASS_PREFIX.length());
 
       if (iTarget.charAt(0) == ORID.PREFIX)
-        return getDatabase().getMetadata().getSchema().getClassByClusterId(new ORecordId(iTarget).clusterId);
+        return getDatabase().getMetadata().getSchema().getClassByClusterId(new ORecordId(iTarget).getClusterId());
 
       return getDatabase().getMetadata().getSchema().getClass(iTarget);
     }

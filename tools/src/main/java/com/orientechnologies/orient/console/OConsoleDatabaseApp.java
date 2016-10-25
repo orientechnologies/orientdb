@@ -1328,10 +1328,10 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       }
 
       message("\n\nLOW LEVEL CLUSTER INFO");
-      final OPaginatedCluster.RECORD_STATUS status = cluster.getRecordStatus(id.clusterPosition);
+      final OPaginatedCluster.RECORD_STATUS status = cluster.getRecordStatus(id.getClusterPosition());
       message("\n status: %s", status);
 
-      final OPaginatedClusterDebug debugInfo = cluster.readDebug(id.clusterPosition);
+      final OPaginatedClusterDebug debugInfo = cluster.readDebug(id.getClusterPosition());
       message("\n cluster fieldId: %d", debugInfo.fileId);
       message("\n cluster name: %s", cluster.getName());
 
@@ -1347,7 +1347,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         message(" |%30d ", page.inPageSize);
         message(" |%s", OBase64Utils.encodeBytes(page.content));
       }
-      record = cluster.readRecord(id.clusterPosition, false);
+      record = cluster.readRecord(id.getClusterPosition(), false);
     }
     if (record == null)
       throw new OSystemException("The record has been deleted");

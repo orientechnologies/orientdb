@@ -531,7 +531,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           throws IOException {
         try {
           beginRequest(network, OChannelBinaryProtocol.REQUEST_RECORD_CREATE, session);
-          network.writeShort((short) iRid.clusterId);
+          network.writeShort((short) iRid.getClusterId());
           network.writeBytes(iContent);
           network.writeByte(iRecordType);
           network.writeByte((byte) mode);
@@ -552,8 +552,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           ppos.recordVersion = network.readVersion();
           // THIS IS A COMPATIBILITY FIX TO AVOID TO FILL THE CLUSTER ID IN CASE OF ASYNC
           if (iMode == 0) {
-            iRid.clusterId = clusterId;
-            iRid.clusterPosition = ppos.clusterPosition;
+            iRid.setClusterId(clusterId);
+            iRid.setClusterPosition(ppos.clusterPosition);
           }
           readCollectionChanges(network, collectionManager);
           return ppos;
@@ -561,7 +561,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           endResponse(network);
         }
       }
-    }, iMode, iRid, realCallback, "Error on create record in cluster " + iRid.clusterId);
+    }, iMode, iRid, realCallback, "Error on create record in cluster " + iRid.getClusterId());
 
     return new OStorageOperationResult<OPhysicalPosition>(ppos);
   }

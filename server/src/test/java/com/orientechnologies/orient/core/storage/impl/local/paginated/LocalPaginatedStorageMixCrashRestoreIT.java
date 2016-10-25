@@ -237,7 +237,7 @@ public class LocalPaginatedStorageMixCrashRestoreIT {
       final ORecordId rid = new ORecordId(clusterId);
 
       for (OPhysicalPosition physicalPosition : physicalPositions) {
-        rid.clusterPosition = physicalPosition.clusterPosition;
+        rid.setClusterPosition(physicalPosition.clusterPosition);
 
         ODatabaseRecordThreadLocal.INSTANCE.set(baseDocumentTx);
         ODocument baseDocument = baseDocumentTx.load(rid);

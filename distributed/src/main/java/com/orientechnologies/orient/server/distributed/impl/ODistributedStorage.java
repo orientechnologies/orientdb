@@ -554,7 +554,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
               localResult = wrapped.createRecord(iRecordId, iContent, iRecordVersion, iRecordType, iMode, iCallback);
 
               // UPDATE RID WITH NEW POSITION
-              iRecordId.clusterPosition = localResult.getResult().clusterPosition;
+              iRecordId.setClusterPosition(localResult.getResult().clusterPosition);
 
               final OPlaceholder localPlaceholder = new OPlaceholder(iRecordId, localResult.getResult().recordVersion);
 
@@ -609,7 +609,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       // PASS THROUGH
       localDistributedDatabase.getDatabaseRapairer().repairRecord(iRecordId);
       final ORecordId lockEntireCluster = iRecordId.copy();
-      lockEntireCluster.clusterPosition = -1;
+      lockEntireCluster.setClusterPosition(-1);
       localDistributedDatabase.getDatabaseRapairer().repairRecord(lockEntireCluster);
 
       throw e;
@@ -622,7 +622,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     } catch (Exception e) {
       localDistributedDatabase.getDatabaseRapairer().repairRecord(iRecordId);
       final ORecordId lockEntireCluster = iRecordId.copy();
-      lockEntireCluster.clusterPosition = -1;
+      lockEntireCluster.setClusterPosition(-1);
       localDistributedDatabase.getDatabaseRapairer().repairRecord(lockEntireCluster);
 
       handleDistributedException("Cannot route create record operation for %s to the distributed node", e, iRecordId);
@@ -1608,7 +1608,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   public String getClusterNameByRID(final ORecordId iRid) {
-    final OCluster cluster = getClusterById(iRid.clusterId);
+    final OCluster cluster = getClusterById(iRid.getClusterId());
     return cluster != null ? cluster.getName() : "*";
   }
 
@@ -1831,7 +1831,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     // OVERWRITE CLUSTER
     clusterName = newClusterName;
     final ORecordId oldRID = iRecordId.copy();
-    iRecordId.clusterId = db.getClusterIdByName(newClusterName);
+    iRecordId.setClusterId(db.getClusterIdByName(newClusterName));
 
     OLogManager.instance().warn(this, "Reassigned local cluster '%s' to the record %s. New RID is %s", newClusterName, oldRID,
         iRecordId);

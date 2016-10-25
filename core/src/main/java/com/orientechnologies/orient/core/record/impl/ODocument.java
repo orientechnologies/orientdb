@@ -138,9 +138,9 @@ public class ODocument extends ORecordAbstract
     _recordId = (ORecordId) iRID;
 
     final ODatabaseDocumentInternal database = getDatabaseInternal();
-    if (_recordId.clusterId > -1 && database.getStorageVersions().classesAreDetectedByClusterId()) {
+    if (_recordId.getClusterId() > -1 && database.getStorageVersions().classesAreDetectedByClusterId()) {
       final OSchema schema = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot();
-      final OClass cls = schema.getClassByClusterId(_recordId.clusterId);
+      final OClass cls = schema.getClassByClusterId(_recordId.getClusterId());
       if (cls != null && !cls.getName().equals(iClassName))
         throw new IllegalArgumentException(
             "Cluster id does not correspond class name should be " + iClassName + " but found " + cls.getName());
@@ -2685,13 +2685,13 @@ public class ODocument extends ORecordAbstract
     final ODatabaseDocumentInternal database = getDatabaseIfDefinedInternal();
     if (database != null && database.getStorageVersions() != null && database.getStorageVersions()
         .classesAreDetectedByClusterId()) {
-      if (_recordId.clusterId < 0) {
+      if (_recordId.getClusterId() < 0) {
         checkForLoading();
         checkForFields(ODocumentHelper.ATTRIBUTE_CLASS);
       } else {
         final OSchema schema = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot();
         if (schema != null) {
-          OClass _clazz = schema.getClassByClusterId(_recordId.clusterId);
+          OClass _clazz = schema.getClassByClusterId(_recordId.getClusterId());
           if (_clazz != null)
             _className = _clazz.getName();
         }

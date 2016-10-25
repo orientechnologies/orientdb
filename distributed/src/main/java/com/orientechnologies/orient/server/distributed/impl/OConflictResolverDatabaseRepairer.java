@@ -117,7 +117,7 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
     if (!active)
       return;
 
-    if (rid.clusterPosition < -1)
+    if (rid.getClusterPosition() < -1)
       // SKIP TRANSACTIONAL RIDS
       return;
 
@@ -138,7 +138,7 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
     if (!active)
       return;
 
-    if (rid.clusterPosition < -1)
+    if (rid.getClusterPosition() < -1)
       // SKIP TRANSACTIONAL RIDS
       return;
 
@@ -393,7 +393,7 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
 
         final Set<String> clusterNames = new HashSet();
         for (ORecordId rid : rids)
-          clusterNames.add(db.getClusterNameById(rid.clusterId));
+          clusterNames.add(db.getClusterNameById(rid.getClusterId()));
 
         final Collection<String> involvedServers = dCfg.getServers(clusterNames);
         final Set<String> nonLocalServers = new HashSet<String>(involvedServers);
@@ -406,7 +406,7 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
         final OTxTaskResult localResult = new OTxTaskResult();
         for (ORecordId rid : rids) {
           final OStorageOperationResult<ORawBuffer> res;
-          if (rid.clusterPosition > -1)
+          if (rid.getClusterPosition() > -1)
             res = db.getStorage().readRecord(rid, null, true, false, null);
           else
             res = null;
@@ -480,7 +480,7 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
                 Map<Object, List<String>> candidates = groupedResult;
                 for (ODistributedConflictResolver conflictResolver : conflictResolvers) {
                   final ODistributedConflictResolver.OConflictResult conflictResult = conflictResolver.onConflict(databaseName,
-                      db.getClusterNameById(rid.clusterId), rid, dManager, candidates, config);
+                      db.getClusterNameById(rid.getClusterId()), rid, dManager, candidates, config);
 
                   winner = conflictResult.winner;
                   if (winner != null)

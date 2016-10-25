@@ -1130,8 +1130,8 @@ public class OObjectEntitySerializer {
           ORecordInternal.setIdentity(iRecord, (ORecordId) id);
         } else if (id instanceof Number) {
           // TREATS AS CLUSTER POSITION
-          ((ORecordId) iRecord.getIdentity()).clusterId = schemaClass.getDefaultClusterId();
-          ((ORecordId) iRecord.getIdentity()).clusterPosition = ((Number) id).longValue();
+          ((ORecordId) iRecord.getIdentity()).setClusterId(schemaClass.getDefaultClusterId());
+          ((ORecordId) iRecord.getIdentity()).setClusterPosition(((Number) id).longValue());
         } else if (id instanceof String)
           ((ORecordId) iRecord.getIdentity()).fromString((String) id);
         else if (id.getClass().equals(Object.class))

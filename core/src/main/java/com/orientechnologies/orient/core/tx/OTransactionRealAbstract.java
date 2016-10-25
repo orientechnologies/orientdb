@@ -365,8 +365,8 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
         if (recordId == null) {
           ORecordInternal.setIdentity(rec.getRecord(), new ORecordId(newRid));
         } else {
-          recordId.clusterPosition = newRid.getClusterPosition();
-          recordId.clusterId = newRid.getClusterId();
+          recordId.setClusterPosition(newRid.getClusterPosition());
+          recordId.setClusterId(newRid.getClusterId());
         }
 
         ORecordInternal.onAfterIdentityChanged(rec.getRecord());

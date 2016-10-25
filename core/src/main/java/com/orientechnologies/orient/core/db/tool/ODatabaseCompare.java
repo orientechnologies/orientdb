@@ -737,7 +737,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
             recordsCounter++;
 
             final long position = physicalPosition.clusterPosition;
-            rid.clusterPosition = position;
+            rid.setClusterPosition(position);
 
             if (rid.equals(new ORecordId(configuration1.indexMgrRecordId)) && rid
                 .equals(new ORecordId(configuration2.indexMgrRecordId)))
@@ -746,7 +746,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
                 .equals(new ORecordId(configuration2.schemaRecordId)))
               continue;
 
-            if (rid.clusterId == 0 && rid.clusterPosition == 0) {
+            if (rid.getClusterId() == 0 && rid.getClusterPosition() == 0) {
               // Skip the compare of raw structure if the storage type are different, due the fact that are different by definition.
               if (!storageType1.equals(storageType2))
                 continue;

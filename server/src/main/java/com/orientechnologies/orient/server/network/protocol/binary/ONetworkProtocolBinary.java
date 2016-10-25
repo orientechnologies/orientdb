@@ -1762,7 +1762,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     boolean loadTombstones = false;
     loadTombstones = channel.readByte() > 0;
 
-    if (rid.clusterId == 0 && rid.clusterPosition == 0) {
+    if (rid.getClusterId() == 0 && rid.getClusterPosition() == 0) {
       // @COMPATIBILITY 0.9.25
       // SEND THE DB CONFIGURATION INSTEAD SINCE IT WAS ON RECORD 0:0
       OFetchHelper.checkFetchPlanValid(fetchPlanString);
@@ -1858,7 +1858,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
     boolean ignoreCache = channel.readByte() == 1;
 
-    if (rid.clusterId == 0 && rid.clusterPosition == 0) {
+    if (rid.getClusterId() == 0 && rid.getClusterPosition() == 0) {
       // @COMPATIBILITY 0.9.25
       // SEND THE DB CONFIGURATION INSTEAD SINCE IT WAS ON RECORD 0:0
       OFetchHelper.checkFetchPlanValid(fetchPlanString);
