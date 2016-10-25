@@ -2,9 +2,14 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
+
 import java.util.Map;
 
-public class ORollbackStatement extends OStatement {
+public class ORollbackStatement extends OSimpleExecStatement {
   public ORollbackStatement(int id) {
     super(id);
   }
@@ -12,6 +17,16 @@ public class ORollbackStatement extends OStatement {
   public ORollbackStatement(OrientSql p, int id) {
     super(p, id);
   }
+
+  @Override public OTodoResultSet executeSimple(OCommandContext ctx) {
+    ctx.getDatabase().rollback();
+    OInternalResultSet result = new OInternalResultSet();
+    OResultInternal item = new OResultInternal();
+    item.setProperty("operation", "rollback");
+    result.add(item);
+    return result;
+  }
+
 
   @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("ROLLBACK");
