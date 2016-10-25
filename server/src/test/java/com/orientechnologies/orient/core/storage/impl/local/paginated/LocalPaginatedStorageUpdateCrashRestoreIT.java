@@ -55,7 +55,7 @@ public class LocalPaginatedStorageUpdateCrashRestoreIT {
     buildDir = new File(buildDirectory);
 
     if (buildDir.exists())
-      OFileUtils.deleteFolderIfEmpty(buildDir);
+      OFileUtils.deleteRecursively(buildDir);
 
     buildDir.mkdir();
 
@@ -102,7 +102,10 @@ public class LocalPaginatedStorageUpdateCrashRestoreIT {
 
   @Before
   public void beforeMethod() throws Exception {
+
+
     spawnServer();
+
     baseDocumentTx = new ODatabaseDocumentTx(
         "plocal:" + buildDir.getAbsolutePath() + "/baseLocalPaginatedStorageUpdateCrashRestore");
     if (baseDocumentTx.exists()) {

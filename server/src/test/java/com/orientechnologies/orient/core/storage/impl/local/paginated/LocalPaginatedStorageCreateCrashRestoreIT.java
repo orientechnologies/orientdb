@@ -51,7 +51,7 @@ public class LocalPaginatedStorageCreateCrashRestoreIT {
     buildDir = new File(buildDirectory);
 
     if (buildDir.exists())
-      buildDir.delete();
+      OFileUtils.deleteRecursively(buildDir);
 
     buildDir.mkdir();
 
