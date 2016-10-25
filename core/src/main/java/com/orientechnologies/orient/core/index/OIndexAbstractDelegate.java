@@ -78,6 +78,11 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
   }
 
   @Override
+  public int[] spaceUsage() {
+    return delegate.spaceUsage();
+  }
+
+  @Override
   public OIndexCursor iterateEntriesBetween(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
       boolean ascOrder) {
     return delegate.iterateEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascOrder);

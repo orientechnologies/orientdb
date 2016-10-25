@@ -55,6 +55,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.intent.OIntentMassiveRead;
 import com.orientechnologies.orient.core.iterator.OIdentifiableIterator;
@@ -120,10 +121,10 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   protected List<OIdentifiable> currentResultSet;
   protected Object              currentResult;
   protected OServerAdmin        serverAdmin;
-  private int                   lastPercentStep;
-  private String                currentDatabaseUserName;
-  private String                currentDatabaseUserPassword;
-  private int                   collectionMaxItems = 10;
+  private   int                 lastPercentStep;
+  private   String              currentDatabaseUserName;
+  private   String              currentDatabaseUserPassword;
+  private int collectionMaxItems = 10;
 
   public OConsoleDatabaseApp(final String[] args) {
     super(args);
@@ -227,7 +228,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       @ConsoleParameter(name = "url", description = "The url of the remote server or the database to connect to in the format '<mode>:<path>'") String iURL,
       @ConsoleParameter(name = "user", description = "User name") String iUserName,
       @ConsoleParameter(name = "password", description = "User password", optional = true) String iUserPassword)
-          throws IOException {
+      throws IOException {
     disconnect();
 
     if (iUserPassword == null) {
@@ -301,7 +302,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       @ConsoleParameter(name = "password", optional = true, description = "Server administrator password") String iUserPassword,
       @ConsoleParameter(name = "storage-type", optional = true, description = "The type of the storage. 'local' and 'plocal' for disk-based databases and 'memory' for in-memory database") String iStorageType,
       @ConsoleParameter(name = "db-type", optional = true, description = "The type of the database used between 'document' and 'graph'. By default is graph.") String iDatabaseType)
-          throws IOException {
+      throws IOException {
 
     if (iUserName == null)
       iUserName = OUser.ADMIN;
@@ -418,8 +419,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
           + "). Commit or rollback before starting a new one.");
       return;
     }
-    if(currentDatabase.getStorage().isRemote()){
-      message("\nWARNING - Transactions are not supported from console in remote, please use an sql script: \neg.\n\nscript sql\nbegin;\n<your commands here>\ncommit;\nend\n\n");
+    if (currentDatabase.getStorage().isRemote()) {
+      message(
+          "\nWARNING - Transactions are not supported from console in remote, please use an sql script: \neg.\n\nscript sql\nbegin;\n<your commands here>\ncommit;\nend\n\n");
       return;
     }
 
@@ -436,8 +438,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       return;
     }
 
-    if(currentDatabase.getStorage().isRemote()){
-      message("\nWARNING - Transactions are not supported from console in remote, please use an sql script: \neg.\n\nscript sql\nbegin;\n<your commands here>\ncommit;\nend\n\n");
+    if (currentDatabase.getStorage().isRemote()) {
+      message(
+          "\nWARNING - Transactions are not supported from console in remote, please use an sql script: \neg.\n\nscript sql\nbegin;\n<your commands here>\ncommit;\nend\n\n");
       return;
     }
 
@@ -458,8 +461,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       return;
     }
 
-    if(currentDatabase.getStorage().isRemote()){
-      message("\nWARNING - Transactions are not supported from console in remote, please use an sql script: \neg.\n\nscript sql\nbegin;\n<your commands here>\ncommit;\nend\n\n");
+    if (currentDatabase.getStorage().isRemote()) {
+      message(
+          "\nWARNING - Transactions are not supported from console in remote, please use an sql script: \neg.\n\nscript sql\nbegin;\n<your commands here>\ncommit;\nend\n\n");
       return;
     }
 
@@ -607,7 +611,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   @ConsoleCommand(description = "Freeze database and flush on the disk", onlineHelp = "Console-Command-Freeze-Database")
   public void freezeDatabase(
       @ConsoleParameter(name = "storage-type", description = "Storage type of server database", optional = true) String storageType)
-          throws IOException {
+      throws IOException {
     checkForDatabase();
 
     final String dbName = currentDatabase.getName();
@@ -629,7 +633,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   @ConsoleCommand(description = "Release database after freeze", onlineHelp = "Console-Command-Release-Db")
   public void releaseDatabase(
       @ConsoleParameter(name = "storage-type", description = "Storage type of server database", optional = true) String storageType)
-          throws IOException {
+      throws IOException {
     checkForDatabase();
 
     final String dbName = currentDatabase.getName();
@@ -651,7 +655,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   @ConsoleCommand(description = "Flushes all database content to the disk")
   public void flushDatabase(
       @ConsoleParameter(name = "storage-type", description = "Storage type of server database", optional = true) String storageType)
-          throws IOException {
+      throws IOException {
     freezeDatabase(storageType);
     releaseDatabase(storageType);
   }
@@ -764,6 +768,22 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     dumpResultSet(limit);
 
     message("\n\n" + currentResultSet.size() + " item(s) found. Query executed in " + elapsedSeconds + " sec(s).");
+  }
+
+  @ConsoleCommand(description = "Estimates average percent of usage of space in index")
+  public void spaceUsage(
+      @ConsoleParameter(name = "index-name", description = "Name of index usage of space of which will be estimated") String indexName) {
+    checkForDatabase();
+
+    final OIndexManager indexManager = currentDatabase.getMetadata().getIndexManager();
+    final OIndex<?> index = indexManager.getIndex(indexName);
+    if (index == null) {
+      error("Index " + indexName + " does not exist");
+    } else {
+      int[] spaceUsages = index.spaceUsage();
+      message("Leaf space is used on " + spaceUsages[0] + " percent\n");
+      message("Non leaf space is used on " + spaceUsages[1] + " percent\n");
+    }
   }
 
   @ConsoleCommand(splitInWords = false, description = "Move from current record by evaluating a predicate against current record")
@@ -879,7 +899,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   @ConsoleCommand(description = "Delete the current database", onlineHelp = "Console-Command-Drop-Database")
   public void dropDatabase(
       @ConsoleParameter(name = "storage-type", description = "Storage type of server database", optional = true) String storageType)
-          throws IOException {
+      throws IOException {
     checkForDatabase();
 
     final String dbName = currentDatabase.getName();
@@ -912,7 +932,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       @ConsoleParameter(name = "user", description = "Server administrator name") String iUserName,
       @ConsoleParameter(name = "password", description = "Server administrator password") String iUserPassword,
       @ConsoleParameter(name = "storage-type", description = "Storage type of server database", optional = true) String storageType)
-          throws IOException {
+      throws IOException {
 
     if (iDatabaseURL.startsWith(OEngineRemote.NAME)) {
       // REMOTE CONNECTION
@@ -953,7 +973,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   @ConsoleCommand(splitInWords = false, description = "Rebuild an index if it is automatic", onlineHelp = "SQL-Rebuild-Index")
   public void rebuildIndex(
       @ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText)
-          throws IOException {
+      throws IOException {
     message("\n\nRebuilding index(es)...");
 
     sqlCommand("rebuild", iCommandText, "\nRebuilt index(es). Found %d link(s) in %f sec(s).\n", true);
@@ -971,7 +991,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   @ConsoleCommand(splitInWords = false, description = "Remove a property from a class", onlineHelp = "SQL-Drop-Property")
   public void dropProperty(
       @ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText)
-          throws IOException {
+      throws IOException {
     sqlCommand("drop", iCommandText, "\nRemoved class property in %f sec(s).\n", false);
     updateDatabaseInfo();
   }
@@ -1017,8 +1037,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         throw new OException("No result set where to find the requested record. Execute a query first.");
 
       if (currentResultSet.size() <= recNumber)
-        throw new OException("The record requested is not part of current result set (0"
-            + (currentResultSet.size() > 0 ? "-" + (currentResultSet.size() - 1) : "") + ")");
+        throw new OException("The record requested is not part of current result set (0" + (currentResultSet.size() > 0 ?
+            "-" + (currentResultSet.size() - 1) :
+            "") + ")");
 
       setCurrentRecord(recNumber);
     }
@@ -1052,8 +1073,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
           content = new String(Arrays.copyOf(record.buffer, Integer.parseInt(properties.get("maxBinaryDisplay"))));
         else
           content = new String(record.buffer);
-        out.println("\nRaw record content. The size is " + record.buffer.length + " bytes, while settings force to print first "
-            + content.length() + " bytes:\n\n" + content);
+        out.println(
+            "\nRaw record content. The size is " + record.buffer.length + " bytes, while settings force to print first " + content
+                .length() + " bytes:\n\n" + content);
       }
     } else {
       OLocalPaginatedStorage storage = (OLocalPaginatedStorage) currentDatabase.getStorage();
@@ -1198,8 +1220,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       message("\nAlias................: " + cls.getShortName());
     if (cls.hasSuperClasses())
       message("\nSuper classes........: " + Arrays.toString(cls.getSuperClassesNames().toArray()));
-    message("\nDefault cluster......: " + currentDatabase.getClusterNameById(cls.getDefaultClusterId()) + " (id="
-        + cls.getDefaultClusterId() + ")");
+    message("\nDefault cluster......: " + currentDatabase.getClusterNameById(cls.getDefaultClusterId()) + " (id=" + cls
+        .getDefaultClusterId() + ")");
 
     final StringBuilder clusters = new StringBuilder();
     for (int clId : cls.getClusterIds()) {
@@ -1242,8 +1264,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
           message("\n %-30s| %-12s| %-30s| %-10s| %-9s| %-9s| %-10s| %-10s| %-9s| %-9s|", p.getName(), p.getType(),
               p.getLinkedClass() != null ? p.getLinkedClass() : p.getLinkedType(), p.isMandatory(), p.isReadonly(), p.isNotNull(),
               p.getMin() != null ? p.getMin() : "", p.getMax() != null ? p.getMax() : "",
-              p.getCollate() != null ? p.getCollate().getName() : "",
-              p.getDefaultValue() != null ? p.getDefaultValue() : "");
+              p.getCollate() != null ? p.getCollate().getName() : "", p.getDefaultValue() != null ? p.getDefaultValue() : "");
         } catch (Exception ignored) {
         }
       }
@@ -1449,8 +1470,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
           clusterId = currentDatabase.getClusterIdByName(clusterName);
           final OCluster cluster = currentDatabase.getStorage().getClusterById(clusterId);
 
-          final String conflictStrategy = cluster.getRecordConflictStrategy() != null
-              ? cluster.getRecordConflictStrategy().getName() : "";
+          final String conflictStrategy =
+              cluster.getRecordConflictStrategy() != null ? cluster.getRecordConflictStrategy().getName() : "";
 
           count = currentDatabase.countClusterElements(clusterName);
           totalElements += count;
@@ -1569,7 +1590,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       @ConsoleParameter(name = "db-password", description = "Database password") String iDatabaseUserPassword,
       @ConsoleParameter(name = "server-name", description = "Remote server's name as <address>:<port>") final String iRemoteName,
       @ConsoleParameter(name = "engine-name", description = "Remote server's engine to use between 'local' or 'memory'") final String iRemoteEngine)
-          throws IOException {
+      throws IOException {
 
     try {
       if (serverAdmin == null)
@@ -1653,8 +1674,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
                     fixedLinks++;
                     changed = true;
                     if (verbose)
-                      message("\n--- reset link " + ((OIdentifiable) fieldValue).getIdentity() + " in field '" + fieldName
-                          + "' (rid=" + doc.getIdentity() + ")");
+                      message(
+                          "\n--- reset link " + ((OIdentifiable) fieldValue).getIdentity() + " in field '" + fieldName + "' (rid="
+                              + doc.getIdentity() + ")");
                   }
                 } else if (fieldValue instanceof Iterable<?>) {
                   if (fieldValue instanceof ORecordLazyMultiValue)
@@ -1668,8 +1690,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
                       fixedLinks++;
                       changed = true;
                       if (verbose)
-                        message("\n--- reset link " + ((OIdentifiable) v).getIdentity() + " as item " + i
-                            + " in collection of field '" + fieldName + "' (rid=" + doc.getIdentity() + ")");
+                        message(
+                            "\n--- reset link " + ((OIdentifiable) v).getIdentity() + " as item " + i + " in collection of field '"
+                                + fieldName + "' (rid=" + doc.getIdentity() + ")");
                     }
                   }
                 }
@@ -1705,7 +1728,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       @ConsoleParameter(name = "username", description = "User name", optional = true) final String iUserName,
       @ConsoleParameter(name = "password", description = "User password", optional = true) final String iUserPassword,
       @ConsoleParameter(name = "detect-mapping-data", description = "Whether RID mapping data after DB import should be tried to found on the disk.", optional = true) String autoDiscoveringMappingData)
-          throws IOException {
+      throws IOException {
     try {
       final ODatabaseCompare compare;
       if (iUserName == null)
@@ -1937,8 +1960,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     out.println();
 
-    if (iPropertyName.equalsIgnoreCase("limit")
-        && (Integer.parseInt(iPropertyValue) == 0 || Integer.parseInt(iPropertyValue) < -1)) {
+    if (iPropertyName.equalsIgnoreCase("limit") && (Integer.parseInt(iPropertyValue) == 0
+        || Integer.parseInt(iPropertyValue) < -1)) {
       message("\nERROR: Limit must be > 0 or = -1 (no limit)");
     } else {
 
@@ -2062,7 +2085,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         "\n+--------------------------------------------------------------------------------------+---------------------------+");
   }
 
-  /** Should be used only by console commands */
+  /**
+   * Should be used only by console commands
+   */
   public ODatabaseDocument getCurrentDatabase() {
     return currentDatabase;
   }
@@ -2076,32 +2101,44 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     return this;
   }
 
-  /** Should be used only by console commands */
+  /**
+   * Should be used only by console commands
+   */
   public String getCurrentDatabaseName() {
     return currentDatabaseName;
   }
 
-  /** Should be used only by console commands */
+  /**
+   * Should be used only by console commands
+   */
   public String getCurrentDatabaseUserName() {
     return currentDatabaseUserName;
   }
 
-  /** Should be used only by console commands */
+  /**
+   * Should be used only by console commands
+   */
   public String getCurrentDatabaseUserPassword() {
     return currentDatabaseUserPassword;
   }
 
-  /** Should be used only by console commands */
+  /**
+   * Should be used only by console commands
+   */
   public ORecord getCurrentRecord() {
     return currentRecord;
   }
 
-  /** Should be used only by console commands */
+  /**
+   * Should be used only by console commands
+   */
   public List<OIdentifiable> getCurrentResultSet() {
     return currentResultSet;
   }
 
-  /** Should be used only by console commands */
+  /**
+   * Should be used only by console commands
+   */
   public void loadRecordInternal(String iRecordId, String iFetchPlan) {
     checkForDatabase();
 
@@ -2111,25 +2148,32 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     message("\nOK");
   }
 
-  /** Should be used only by console commands */
+  /**
+   * Should be used only by console commands
+   */
   public void reloadRecordInternal(String iRecordId, String iFetchPlan) {
     checkForDatabase();
 
-    currentRecord = currentDatabase.executeReadRecord(new ORecordId(iRecordId), null, null, iFetchPlan, true, false, false,
-        OStorage.LOCKING_STRATEGY.NONE, new ODatabaseDocumentTx.SimpleRecordReader());
+    currentRecord = currentDatabase
+        .executeReadRecord(new ORecordId(iRecordId), null, null, iFetchPlan, true, false, false, OStorage.LOCKING_STRATEGY.NONE,
+            new ODatabaseDocumentTx.SimpleRecordReader());
     displayRecord(null);
 
     message("\nOK");
   }
 
-  /** Should be used only by console commands */
+  /**
+   * Should be used only by console commands
+   */
   protected void checkForRemoteServer() {
     if (serverAdmin == null && (currentDatabase == null || !(currentDatabase.getStorage() instanceof OStorageRemoteThread)
         || currentDatabase.isClosed()))
       throw new OException("Remote server is not connected. Use 'connect remote:<host>[:<port>][/<database-name>]' to connect");
   }
 
-  /** Should be used only by console commands */
+  /**
+   * Should be used only by console commands
+   */
   protected void checkForDatabase() {
     if (currentDatabase == null)
       throw new OException("Database not selected. Use 'connect <database-name>' to connect to a database.");
@@ -2137,7 +2181,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       throw new ODatabaseException("Database '" + currentDatabaseName + "' is closed");
   }
 
-  /** Should be used only by console commands */
+  /**
+   * Should be used only by console commands
+   */
   protected void checkCurrentObject() {
     if (currentRecord == null)
       throw new OException("The is no current object selected: create a new one or load it");
@@ -2232,8 +2278,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   /**
    * Checks if the link must be fixed.
    *
-   * @param fieldValue
-   *          Field containing the OIdentifiable (RID or Record)
+   * @param fieldValue Field containing the OIdentifiable (RID or Record)
    * @return true to fix it, otherwise false
    */
   protected boolean fixLink(final Object fieldValue) {

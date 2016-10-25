@@ -23,7 +23,6 @@ package com.orientechnologies.orient.core.index;
 import java.util.Collection;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 
 /**
@@ -78,6 +77,15 @@ public interface OIndexEngine<V> {
   boolean hasRangeQuerySupport();
 
   int getVersion();
+
+  /**
+   * Average percent of usage of space in index pages.
+   * Two values are returned. First value indicates usage of space in leaf pages, second value indicates usage of space in
+   * non-leaf pages. Not all indexes and storages support this method.
+   *
+   * @return Average percent of usage of space in index pages.
+   */
+  int[] spaceUsage();
 
   interface ValuesTransformer<V> {
     Collection<OIdentifiable> transformFromValue(V value);

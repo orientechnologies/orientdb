@@ -44,17 +44,17 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
  * @since 15.07.13
  */
 public final class OHashTableIndexEngine<V> implements OIndexEngine<V> {
-  public static final int                        VERSION                    = 2;
+  public static final int VERSION = 2;
 
-  public static final String                     METADATA_FILE_EXTENSION    = ".him";
-  public static final String                     TREE_FILE_EXTENSION        = ".hit";
-  public static final String                     BUCKET_FILE_EXTENSION      = ".hib";
-  public static final String                     NULL_BUCKET_FILE_EXTENSION = ".hnb";
+  public static final String METADATA_FILE_EXTENSION    = ".him";
+  public static final String TREE_FILE_EXTENSION        = ".hit";
+  public static final String BUCKET_FILE_EXTENSION      = ".hib";
+  public static final String NULL_BUCKET_FILE_EXTENSION = ".hnb";
 
   private final OHashTable<Object, V>            hashTable;
   private final OMurmurHash3HashFunction<Object> hashFunction;
 
-  private int                                    version;
+  private int version;
 
   public OHashTableIndexEngine(String name, Boolean durableInNonTxMode, OAbstractPaginatedStorage storage, int version) {
     hashFunction = new OMurmurHash3HashFunction<Object>();
@@ -97,13 +97,19 @@ public final class OHashTableIndexEngine<V> implements OIndexEngine<V> {
       keySerializer = new OSimpleKeySerializer();
 
     hashFunction.setValueSerializer(keySerializer);
-    hashTable.create(keySerializer, (OBinarySerializer<V>) valueSerializer, indexDefinition != null ? indexDefinition.getTypes()
-        : null, indexDefinition != null && !indexDefinition.isNullValuesIgnored());
+    hashTable
+        .create(keySerializer, (OBinarySerializer<V>) valueSerializer, indexDefinition != null ? indexDefinition.getTypes() : null,
+            indexDefinition != null && !indexDefinition.isNullValuesIgnored());
   }
 
   @Override
   public void flush() {
     hashTable.flush();
+  }
+
+  @Override
+  public int[] spaceUsage() {
+    throw new UnsupportedOperationException("Unsupported operation");
   }
 
   @Override
@@ -118,8 +124,8 @@ public final class OHashTableIndexEngine<V> implements OIndexEngine<V> {
 
   @Override
   public void load(String indexName, OIndexDefinition indexDefinition, OStreamSerializer valueSerializer, boolean isAutomatic) {
-    hashTable.load(indexName, indexDefinition != null ? indexDefinition.getTypes() : null, indexDefinition != null
-        && !indexDefinition.isNullValuesIgnored());
+    hashTable.load(indexName, indexDefinition != null ? indexDefinition.getTypes() : null,
+        indexDefinition != null && !indexDefinition.isNullValuesIgnored());
     hashFunction.setValueSerializer(hashTable.getKeySerializer());
   }
 
@@ -199,7 +205,8 @@ public final class OHashTableIndexEngine<V> implements OIndexEngine<V> {
   }
 
   @Override
-  public OIndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer<V> transformer) {
+  public OIndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder,
+      ValuesTransformer<V> transformer) {
     throw new UnsupportedOperationException("iterateEntriesMinor");
   }
 
@@ -216,11 +223,11 @@ public final class OHashTableIndexEngine<V> implements OIndexEngine<V> {
   @Override
   public OIndexCursor cursor(final ValuesTransformer<V> valuesTransformer) {
     return new OIndexAbstractCursor() {
-      private int                                 nextEntriesIndex;
+      private int nextEntriesIndex;
       private OHashIndexBucket.Entry<Object, V>[] entries;
 
-      private Iterator<OIdentifiable>             currentIterator = new OEmptyIterator<OIdentifiable>();
-      private Object                              currentKey;
+      private Iterator<OIdentifiable> currentIterator = new OEmptyIterator<OIdentifiable>();
+      private Object currentKey;
 
       {
         OHashIndexBucket.Entry<Object, V> firstEntry = hashTable.firstEntry();
@@ -299,11 +306,11 @@ public final class OHashTableIndexEngine<V> implements OIndexEngine<V> {
   @Override
   public OIndexCursor descCursor(final ValuesTransformer<V> valuesTransformer) {
     return new OIndexAbstractCursor() {
-      private int                                 nextEntriesIndex;
+      private int nextEntriesIndex;
       private OHashIndexBucket.Entry<Object, V>[] entries;
 
-      private Iterator<OIdentifiable>             currentIterator = new OEmptyIterator<OIdentifiable>();
-      private Object                              currentKey;
+      private Iterator<OIdentifiable> currentIterator = new OEmptyIterator<OIdentifiable>();
+      private Object currentKey;
 
       {
         OHashIndexBucket.Entry<Object, V> lastEntry = hashTable.lastEntry();
@@ -382,7 +389,7 @@ public final class OHashTableIndexEngine<V> implements OIndexEngine<V> {
   @Override
   public OIndexKeyCursor keyCursor() {
     return new OIndexKeyCursor() {
-      private int                                 nextEntriesIndex;
+      private int nextEntriesIndex;
       private OHashIndexBucket.Entry<Object, V>[] entries;
 
       {

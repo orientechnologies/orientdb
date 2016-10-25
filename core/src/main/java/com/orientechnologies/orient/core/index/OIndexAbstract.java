@@ -67,10 +67,10 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientStartupListener, OOrientShutdownListener {
   protected static final String CONFIG_CLUSTERS = "clusters";
-  protected final OIndexEngine<T>   indexEngine;
-  private final   String            databaseName;
-  protected       String            type;
-  protected       String            valueContainerAlgorithm;
+  protected final OIndexEngine<T> indexEngine;
+  private final   String          databaseName;
+  protected       String          type;
+  protected       String          valueContainerAlgorithm;
   protected final ONewLockManager<Object> keyLockManager = new ONewLockManager<Object>(
       OGlobalConfiguration.ENVNRONMENT_CONCURRENCY_LEVEL.getValueAsInteger());
 
@@ -366,6 +366,16 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
     acquireSharedLock();
     try {
       return indexEngine.getLastKey();
+    } finally {
+      releaseSharedLock();
+    }
+  }
+
+  @Override
+  public int[] spaceUsage() {
+    acquireSharedLock();
+    try {
+      return indexEngine.spaceUsage();
     } finally {
       releaseSharedLock();
     }

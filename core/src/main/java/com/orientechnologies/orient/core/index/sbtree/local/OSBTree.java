@@ -742,6 +742,52 @@ public class OSBTree<K, V> extends ODurableComponent {
     }
   }
 
+  public int[] spaceUsage() {
+    long leafSpaceUsage = 0;
+    long leafSpaceUsageCounter = 0;
+
+    long nonLeafSpaceUsage = 0;
+    long nonLeafSpaceUsageCounter = 0;
+
+    atomicOperationsManager.acquireReadLock(this);
+    try {
+      acquireSharedLock();
+      try {
+        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
+
+        final long filledUpTo = getFilledUpTo(atomicOperation, fileId);
+        for (long pageIndex = 0; pageIndex < filledUpTo; pageIndex++) {
+          final OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false);
+          cacheEntry.acquireSharedLock();
+          try {
+            OSBTreeBucket<K, V> bucket = new OSBTreeBucket<K, V>(cacheEntry, keySerializer, keyTypes, valueSerializer,
+                getChangesTree(atomicOperation, cacheEntry));
+            if (bucket.isLeaf()) {
+              leafSpaceUsageCounter++;
+              leafSpaceUsage += bucket.spaceUsage();
+            } else {
+              nonLeafSpaceUsageCounter++;
+              nonLeafSpaceUsage += bucket.spaceUsage();
+            }
+          } finally {
+            cacheEntry.releaseSharedLock();
+            releasePage(atomicOperation, cacheEntry);
+          }
+
+        }
+
+      } finally {
+        releaseSharedLock();
+      }
+    } catch (IOException ioe) {
+      throw new OSBTreeException("Error during calculation of space usage", ioe);
+    } finally {
+      atomicOperationsManager.releaseReadLock(this);
+    }
+
+    return new int[] { (int) (leafSpaceUsage / leafSpaceUsageCounter), (int) (nonLeafSpaceUsage / nonLeafSpaceUsageCounter) };
+  }
+
   public OSBTreeCursor<K, V> iterateEntriesBetween(K keyFrom, boolean fromInclusive, K keyTo, boolean toInclusive,
       boolean ascSortOrder) {
     atomicOperationsManager.acquireReadLock(this);
@@ -1660,8 +1706,7 @@ public class OSBTree<K, V> extends ODurableComponent {
     /**
      * Any partially matched key will be used as search result.
      */
-    NONE,
-    /**
+    NONE, /**
      * The biggest partially matched key will be used as search result.
      */
     HIGHEST_BOUNDARY,

@@ -52,6 +52,11 @@ public class OLuceneIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
   }
 
   @Override
+  public int[] spaceUsage() {
+    throw new UnsupportedOperationException("Unsupported operation");
+  }
+
+  @Override
   public void flush() {
     lucene.flush();
   }

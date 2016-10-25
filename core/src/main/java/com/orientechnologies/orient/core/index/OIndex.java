@@ -312,4 +312,13 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
   Object getFirstKey();
 
   Object getLastKey();
+
+  /**
+   * Average percent of usage of space in index pages.
+   * Two values are returned. First value indicates usage of space in leaf pages, second value indicates usage of space in
+   * non-leaf pages. Not all indexes and storages support this method.
+   *
+   * @return Average percent of usage of space in index pages.
+   */
+  int[] spaceUsage();
 }

@@ -40,34 +40,34 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALCh
  * @since 8/7/13
  */
 public class OSBTreeBucket<K, V> extends ODurablePage {
-  private static final int            FREE_POINTER_OFFSET     = NEXT_FREE_POSITION;
-  private static final int            SIZE_OFFSET             = FREE_POINTER_OFFSET + OIntegerSerializer.INT_SIZE;
-  private static final int            IS_LEAF_OFFSET          = SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
-  private static final int            LEFT_SIBLING_OFFSET     = IS_LEAF_OFFSET + OByteSerializer.BYTE_SIZE;
-  private static final int            RIGHT_SIBLING_OFFSET    = LEFT_SIBLING_OFFSET + OLongSerializer.LONG_SIZE;
+  private static final int FREE_POINTER_OFFSET  = NEXT_FREE_POSITION;
+  private static final int SIZE_OFFSET          = FREE_POINTER_OFFSET + OIntegerSerializer.INT_SIZE;
+  private static final int IS_LEAF_OFFSET       = SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
+  private static final int LEFT_SIBLING_OFFSET  = IS_LEAF_OFFSET + OByteSerializer.BYTE_SIZE;
+  private static final int RIGHT_SIBLING_OFFSET = LEFT_SIBLING_OFFSET + OLongSerializer.LONG_SIZE;
 
-  private static final int            TREE_SIZE_OFFSET        = RIGHT_SIBLING_OFFSET + OLongSerializer.LONG_SIZE;
+  private static final int TREE_SIZE_OFFSET = RIGHT_SIBLING_OFFSET + OLongSerializer.LONG_SIZE;
 
   /**
    * KEY_SERIALIZER_OFFSET and VALUE_SERIALIZER_OFFSET are no longer used by sb-tree since 1.7.
-   * 
+   * <p>
    * However we left them in buckets to support backward compatibility.
    */
-  private static final int            KEY_SERIALIZER_OFFSET   = TREE_SIZE_OFFSET + OLongSerializer.LONG_SIZE;
-  private static final int            VALUE_SERIALIZER_OFFSET = KEY_SERIALIZER_OFFSET + OByteSerializer.BYTE_SIZE;
+  private static final int KEY_SERIALIZER_OFFSET   = TREE_SIZE_OFFSET + OLongSerializer.LONG_SIZE;
+  private static final int VALUE_SERIALIZER_OFFSET = KEY_SERIALIZER_OFFSET + OByteSerializer.BYTE_SIZE;
 
-  private static final int            FREE_VALUES_LIST_OFFSET = VALUE_SERIALIZER_OFFSET + OByteSerializer.BYTE_SIZE;
+  private static final int FREE_VALUES_LIST_OFFSET = VALUE_SERIALIZER_OFFSET + OByteSerializer.BYTE_SIZE;
 
-  private static final int            POSITIONS_ARRAY_OFFSET  = FREE_VALUES_LIST_OFFSET + OLongSerializer.LONG_SIZE;
+  private static final int POSITIONS_ARRAY_OFFSET = FREE_VALUES_LIST_OFFSET + OLongSerializer.LONG_SIZE;
 
-  private final boolean               isLeaf;
+  private final boolean isLeaf;
 
-  private final OBinarySerializer<K>  keySerializer;
-  private final OBinarySerializer<V>  valueSerializer;
+  private final OBinarySerializer<K> keySerializer;
+  private final OBinarySerializer<V> valueSerializer;
 
-  private final OType[]               keyTypes;
+  private final OType[] keyTypes;
 
-  private final Comparator<? super K> comparator              = ODefaultComparator.INSTANCE;
+  private final Comparator<? super K> comparator = ODefaultComparator.INSTANCE;
 
   public OSBTreeBucket(OCacheEntry cacheEntry, boolean isLeaf, OBinarySerializer<K> keySerializer, OType[] keyTypes,
       OBinarySerializer<V> valueSerializer, OWALChangesTree changesTree) throws IOException {
@@ -168,8 +168,8 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
 
     int size = size();
     if (entryIndex < size - 1) {
-      moveData(POSITIONS_ARRAY_OFFSET + (entryIndex + 1) * OIntegerSerializer.INT_SIZE, POSITIONS_ARRAY_OFFSET + entryIndex
-          * OIntegerSerializer.INT_SIZE, (size - entryIndex - 1) * OIntegerSerializer.INT_SIZE);
+      moveData(POSITIONS_ARRAY_OFFSET + (entryIndex + 1) * OIntegerSerializer.INT_SIZE,
+          POSITIONS_ARRAY_OFFSET + entryIndex * OIntegerSerializer.INT_SIZE, (size - entryIndex - 1) * OIntegerSerializer.INT_SIZE);
     }
 
     size--;
@@ -287,8 +287,8 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
       return false;
 
     if (index <= size - 1) {
-      moveData(POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE, POSITIONS_ARRAY_OFFSET + (index + 1)
-          * OIntegerSerializer.INT_SIZE, (size - index) * OIntegerSerializer.INT_SIZE);
+      moveData(POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE,
+          POSITIONS_ARRAY_OFFSET + (index + 1) * OIntegerSerializer.INT_SIZE, (size - index) * OIntegerSerializer.INT_SIZE);
     }
 
     freePointer -= entrySize;
@@ -335,6 +335,14 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
     }
 
     return true;
+  }
+
+  public int spaceUsage() {
+    int usedSpace = POSITIONS_ARRAY_OFFSET;
+    usedSpace += size() * OIntegerSerializer.INT_SIZE;
+    usedSpace += MAX_PAGE_SIZE_BYTES - getIntValue(FREE_POINTER_OFFSET);
+
+    return (usedSpace * 100) / MAX_PAGE_SIZE_BYTES;
   }
 
   public int updateValue(int index, OSBTreeValue<V> value) throws IOException {
@@ -394,10 +402,10 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
   public static final class SBTreeEntry<K, V> implements Comparable<SBTreeEntry<K, V>> {
     private final Comparator<? super K> comparator = ODefaultComparator.INSTANCE;
 
-    public final long                   leftChild;
-    public final long                   rightChild;
-    public final K                      key;
-    public final OSBTreeValue<V>        value;
+    public final long            leftChild;
+    public final long            rightChild;
+    public final K               key;
+    public final OSBTreeValue<V> value;
 
     public SBTreeEntry(long leftChild, long rightChild, K key, OSBTreeValue<V> value) {
       this.leftChild = leftChild;

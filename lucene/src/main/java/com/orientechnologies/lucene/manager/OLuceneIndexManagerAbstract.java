@@ -230,6 +230,11 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
   }
 
   @Override
+  public int[] spaceUsage() {
+    throw new UnsupportedOperationException("Unsupported operation");
+  }
+
+  @Override
   public void close() {
     try {
       closeIndex();

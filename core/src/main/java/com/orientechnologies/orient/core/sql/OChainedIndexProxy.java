@@ -290,6 +290,11 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
     return res.toString();
   }
 
+  @Override
+  public int[] spaceUsage() {
+    throw new UnsupportedOperationException("Unsupported operation exception");
+  }
+
   /**
    * {@inheritDoc}
    */

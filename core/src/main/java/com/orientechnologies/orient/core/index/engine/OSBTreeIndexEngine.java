@@ -45,17 +45,17 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
  * @since 8/30/13
  */
 public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal implements OIndexEngine<V> {
-  public static final int          VERSION                    = 1;
+  public static final int VERSION = 1;
 
-  public static final String       DATA_FILE_EXTENSION        = ".sbt";
-  public static final String       NULL_BUCKET_FILE_EXTENSION = ".nbt";
+  public static final String DATA_FILE_EXTENSION        = ".sbt";
+  public static final String NULL_BUCKET_FILE_EXTENSION = ".nbt";
 
   private final OSBTree<Object, V> sbTree;
-  private int                      version;
+  private       int                version;
 
   public OSBTreeIndexEngine(String name, Boolean durableInNonTxMode, OAbstractPaginatedStorage storage, int version) {
-    super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), OGlobalConfiguration.MVRBTREE_TIMEOUT
-        .getValueAsInteger(), true);
+    super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(),
+        OGlobalConfiguration.MVRBTREE_TIMEOUT.getValueAsInteger(), true);
 
     boolean durableInNonTx;
 
@@ -92,8 +92,9 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
       final OBinarySerializer keySerializer = determineKeySerializer(indexDefinition);
       final int keySize = determineKeySize(indexDefinition);
 
-      sbTree.create(keySerializer, (OBinarySerializer<V>) valueSerializer, indexDefinition != null ? indexDefinition.getTypes()
-          : null, keySize, indexDefinition != null && !indexDefinition.isNullValuesIgnored());
+      sbTree.create(keySerializer, (OBinarySerializer<V>) valueSerializer,
+          indexDefinition != null ? indexDefinition.getTypes() : null, keySize,
+          indexDefinition != null && !indexDefinition.isNullValuesIgnored());
     } finally {
       releaseExclusiveLock();
     }
@@ -152,8 +153,8 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
       final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) database.getStorage().getUnderlying();
 
       sbTree.load(indexName, determineKeySerializer(indexDefinition), valueSerializer,
-          indexDefinition != null ? indexDefinition.getTypes() : null, determineKeySize(indexDefinition), indexDefinition != null
-              && !indexDefinition.isNullValuesIgnored());
+          indexDefinition != null ? indexDefinition.getTypes() : null, determineKeySize(indexDefinition),
+          indexDefinition != null && !indexDefinition.isNullValuesIgnored());
     } finally {
       releaseExclusiveLock();
     }
@@ -178,7 +179,6 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
       releaseSharedLock();
     }
   }
-
 
   @Override
   public int getVersion() {
@@ -324,7 +324,18 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
   }
 
   @Override
-  public OIndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer<V> transformer) {
+  public int[] spaceUsage() {
+    acquireSharedLock();
+    try {
+      return sbTree.spaceUsage();
+    } finally {
+      releaseSharedLock();
+    }
+  }
+
+  @Override
+  public OIndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder,
+      ValuesTransformer<V> transformer) {
     acquireSharedLock();
     try {
       return new OSBTreeIndexCursor<V>(sbTree.iterateEntriesMinor(toKey, isInclusive, ascSortOrder), transformer);
@@ -377,8 +388,8 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
     private final OSBTree.OSBTreeCursor<Object, V> treeCursor;
     private final ValuesTransformer<V>             valuesTransformer;
 
-    private Iterator<OIdentifiable>                currentIterator = OEmptyIterator.IDENTIFIABLE_INSTANCE;
-    private Object                                 currentKey      = null;
+    private Iterator<OIdentifiable> currentIterator = OEmptyIterator.IDENTIFIABLE_INSTANCE;
+    private Object                  currentKey      = null;
 
     private OSBTreeIndexCursor(OSBTree.OSBTreeCursor<Object, V> treeCursor, ValuesTransformer<V> valuesTransformer) {
       this.treeCursor = treeCursor;

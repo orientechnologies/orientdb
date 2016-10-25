@@ -75,6 +75,11 @@ public class OIndexRecorder implements OIndex<OIdentifiable>, OIndexInternal<OId
   }
 
   @Override
+  public int[] spaceUsage() {
+    throw new UnsupportedOperationException("Unsupported operation");
+  }
+
+  @Override
   public String getDatabaseName() {
     return delegate.getDatabaseName();
   }

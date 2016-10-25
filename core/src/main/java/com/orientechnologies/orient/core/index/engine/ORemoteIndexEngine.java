@@ -151,6 +151,11 @@ public class ORemoteIndexEngine implements OIndexEngine {
   }
 
   @Override
+  public int[] spaceUsage() {
+    throw new UnsupportedOperationException("Unsupported operation");
+  }
+
+  @Override
   public int getVersion() {
     return -1;
   }

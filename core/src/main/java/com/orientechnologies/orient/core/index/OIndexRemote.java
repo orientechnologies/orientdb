@@ -144,6 +144,11 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     return (Long) getDatabase().command(cmd).execute(iRangeFrom, iRangeTo);
   }
 
+  @Override
+  public int[] spaceUsage() {
+    throw new UnsupportedOperationException("Unsupported operation");
+  }
+
   public OIndexRemote<T> put(final Object iKey, final OIdentifiable iValue) {
     if (iValue instanceof ORecord && !iValue.getIdentity().isValid())
       // SAVE IT BEFORE TO PUT
