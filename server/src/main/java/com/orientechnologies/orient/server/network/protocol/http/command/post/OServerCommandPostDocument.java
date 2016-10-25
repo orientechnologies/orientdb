@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -50,7 +49,7 @@ public class OServerCommandPostDocument extends OServerCommandDocumentAbstract {
       ORecordInternal.setVersion(doc, 0);
 
       // ASSURE TO MAKE THE RECORD ID INVALID
-      ((ORecordId) doc.getIdentity()).clusterPosition = ORID.CLUSTER_POS_INVALID;
+      ((ORecordId) doc.getIdentity()).setClusterPosition(ORID.CLUSTER_POS_INVALID);
 
       doc.save();
 

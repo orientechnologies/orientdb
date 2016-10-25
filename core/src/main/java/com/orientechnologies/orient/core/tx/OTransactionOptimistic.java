@@ -443,7 +443,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
           ORecordInternal.onBeforeIdentityChanged(iRecord);
           database.assignAndCheckCluster(iRecord, iClusterName);
 
-          rid.clusterPosition = newObjectCounter--;
+          rid.setClusterPosition(newObjectCounter--);
 
           ORecordInternal.onAfterIdentityChanged(iRecord);
         }

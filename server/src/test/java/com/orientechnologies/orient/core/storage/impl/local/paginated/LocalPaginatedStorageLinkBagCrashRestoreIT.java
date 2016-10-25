@@ -179,7 +179,7 @@ public class LocalPaginatedStorageLinkBagCrashRestoreIT {
       final ORecordId rid = new ORecordId(defaultClusterId);
 
       for (OPhysicalPosition physicalPosition : physicalPositions) {
-        rid.clusterPosition = physicalPosition.clusterPosition;
+        rid.setClusterPosition(physicalPosition.clusterPosition);
 
         ODatabaseRecordThreadLocal.INSTANCE.set(base_db);
         ODocument baseDocument = base_db.load(rid);

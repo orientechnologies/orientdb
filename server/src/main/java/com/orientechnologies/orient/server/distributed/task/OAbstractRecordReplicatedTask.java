@@ -66,7 +66,7 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
 
     final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     if (db != null) {
-      final OClass clazz = db.getMetadata().getSchema().getClassByClusterId(rid.clusterId);
+      final OClass clazz = db.getMetadata().getSchema().getClassByClusterId(rid.getClusterId());
       if (clazz != null) {
         final Set<OIndex<?>> indexes = clazz.getIndexes();
         if (indexes != null && !indexes.isEmpty()) {
@@ -114,7 +114,7 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
 
   @Override
   public int[] getPartitionKey() {
-    return new int[] { partitionKey > -1 ? partitionKey : rid.clusterId };
+    return new int[] { partitionKey > -1 ? partitionKey : rid.getClusterId() };
   }
 
   @Override
@@ -131,7 +131,7 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
   }
 
   public boolean checkForClusterAvailability(final String localNode, final ODistributedConfiguration cfg) {
-    final String clusterName = ODatabaseRecordThreadLocal.INSTANCE.get().getClusterNameById(rid.clusterId);
+    final String clusterName = ODatabaseRecordThreadLocal.INSTANCE.get().getClusterNameById(rid.getClusterId());
     return cfg.isServerContainingCluster(localNode, clusterName);
   }
 

@@ -57,7 +57,7 @@ public class OReadRecordTask extends OAbstractReadRecordTask {
   @Override
   public Object executeRecordTask(ODistributedRequestId requestId, final OServer iServer, ODistributedServerManager iManager,
       final ODatabaseDocumentInternal database) throws Exception {
-    if (rid.clusterPosition < 0)
+    if (rid.getClusterPosition() < 0)
       // USED TO JUST LOCK THE CLUSTER
       return null;
 

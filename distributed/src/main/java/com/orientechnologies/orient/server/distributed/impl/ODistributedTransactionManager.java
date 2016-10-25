@@ -246,7 +246,7 @@ public class ODistributedTransactionManager {
       for (ORecordOperation op : iTx.getAllRecordEntries()) {
         if (iTx.hasRecordCreation()) {
           final ORecordId lockEntireCluster = (ORecordId) op.getRecord().getIdentity().copy();
-          localDistributedDatabase.getDatabaseRapairer().repairCluster(lockEntireCluster.clusterId);
+          localDistributedDatabase.getDatabaseRapairer().repairCluster(lockEntireCluster.getClusterId());
         }
         localDistributedDatabase.getDatabaseRapairer().repairRecord((ORecordId) op.getRecord().getIdentity());
       }
@@ -263,10 +263,10 @@ public class ODistributedTransactionManager {
       switch (op.type) {
       case ORecordOperation.CREATED:
         final ORecordId newRid = rid.copy();
-        if (rid.clusterId < 1) {
+        if (rid.getClusterId() < 1) {
           final String clusterName = ((OTransactionAbstract) iTx).getClusterName(op.getRecord());
           if (clusterName != null) {
-            newRid.clusterId = ODatabaseRecordThreadLocal.INSTANCE.get().getClusterIdByName(clusterName);
+            newRid.setClusterId(ODatabaseRecordThreadLocal.INSTANCE.get().getClusterIdByName(clusterName));
             iTx.updateIdentityAfterCommit(rid, newRid);
           }
         }

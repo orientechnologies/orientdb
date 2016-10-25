@@ -34,13 +34,13 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.core.storage.OStorage;
 
 public class ORecordId implements ORID {
-  public static final ORecordId EMPTY_RECORD_ID        = new ORecordId();
-  public static final byte[]    EMPTY_RECORD_ID_STREAM = EMPTY_RECORD_ID.toStream();
-  public static final int       PERSISTENT_SIZE        = OBinaryProtocol.SIZE_SHORT + OBinaryProtocol.SIZE_LONG;
-  private static final long     serialVersionUID       = 247070594054408657L;
+  public static final  ORecordId EMPTY_RECORD_ID        = new ORecordId();
+  public static final  byte[]    EMPTY_RECORD_ID_STREAM = EMPTY_RECORD_ID.toStream();
+  public static final  int       PERSISTENT_SIZE        = OBinaryProtocol.SIZE_SHORT + OBinaryProtocol.SIZE_LONG;
+  private static final long      serialVersionUID       = 247070594054408657L;
   // INT TO AVOID JVM PENALTY, BUT IT'S STORED AS SHORT
-  public int                    clusterId              = CLUSTER_ID_INVALID;
-  public long                   clusterPosition        = CLUSTER_POS_INVALID;
+  private              int       clusterId              = CLUSTER_ID_INVALID;
+  private              long      clusterPosition        = CLUSTER_POS_INVALID;
 
   public ORecordId() {
   }
@@ -63,8 +63,7 @@ public class ORecordId implements ORID {
   /**
    * Copy constructor.
    *
-   * @param parentRid
-   *          Source object
+   * @param parentRid Source object
    */
   public ORecordId(final ORID parentRid) {
     clusterId = parentRid.getClusterId();
@@ -285,8 +284,8 @@ public class ORecordId implements ORID {
 
   @Override
   public void lock(final boolean iExclusive) {
-    ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction().lockRecord(this,
-        iExclusive ? OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK : OStorage.LOCKING_STRATEGY.SHARED_LOCK);
+    ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction()
+        .lockRecord(this, iExclusive ? OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK : OStorage.LOCKING_STRATEGY.SHARED_LOCK);
   }
 
   @Override
@@ -336,5 +335,23 @@ public class ORecordId implements ORID {
 
     if (clusterId > CLUSTER_MAX)
       throw new ODatabaseException("RecordId cannot support cluster id major than 32767. Found: " + clusterId);
+  }
+
+  private void checkClusterLimits(int clusterId) {
+    if (clusterId < -2)
+      throw new ODatabaseException("RecordId cannot support negative cluster id. Found: " + clusterId);
+
+    if (clusterId > CLUSTER_MAX)
+      throw new ODatabaseException("RecordId cannot support cluster id major than 32767. Found: " + clusterId);
+  }
+
+  public void setClusterId(int clusterId) {
+    checkClusterLimits(clusterId);
+
+    this.clusterId = clusterId;
+  }
+
+  public void setClusterPosition(long clusterPosition) {
+    this.clusterPosition = clusterPosition;
   }
 }

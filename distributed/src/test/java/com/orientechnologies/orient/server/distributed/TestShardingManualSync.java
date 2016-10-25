@@ -83,8 +83,8 @@ public class TestShardingManualSync extends AbstractServerClusterTest {
 
       // CREATE A NEW RECORD ON SERVER 0 BYPASSING REPLICATION
       final ODocument v2 = new ODocument("Client");
-      ((ORecordId) v2.getIdentity()).clusterId = v1Identity.getClusterId();
-      ((ORecordId) v2.getIdentity()).clusterPosition = v1Identity.getClusterPosition() + 1;
+      ((ORecordId) v2.getIdentity()).setClusterId(v1Identity.getClusterId());
+      ((ORecordId) v2.getIdentity()).setClusterPosition(v1Identity.getClusterPosition() + 1);
       final Object result = createRemoteRecord(0, v2,
           new String[] { serverInstance.get(0).getServerInstance().getDistributedManager().getLocalNodeName() });
 

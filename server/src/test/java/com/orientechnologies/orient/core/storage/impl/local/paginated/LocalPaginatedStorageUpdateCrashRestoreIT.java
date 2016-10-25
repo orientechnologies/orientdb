@@ -228,7 +228,7 @@ public class LocalPaginatedStorageUpdateCrashRestoreIT {
       final ORecordId rid = new ORecordId(clusterId);
 
       for (OPhysicalPosition physicalPosition : physicalPositions) {
-        rid.clusterPosition = physicalPosition.clusterPosition;
+        rid.setClusterPosition(physicalPosition.clusterPosition);
 
         baseDocumentTx.activateOnCurrentThread();
         ODocument baseDocument = baseDocumentTx.load(rid);

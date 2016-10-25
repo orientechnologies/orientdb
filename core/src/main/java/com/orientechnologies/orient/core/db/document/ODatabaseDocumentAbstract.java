@@ -1553,7 +1553,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
         throw OException.wrapException(new ODatabaseException("Error on retrieving record using temporary RID: " + rid), t);
       else
         throw OException.wrapException(new ODatabaseException(
-            "Error on retrieving record " + rid + " (cluster: " + getStorage().getPhysicalClusterNameById(rid.clusterId) + ")"), t);
+            "Error on retrieving record " + rid + " (cluster: " + getStorage().getPhysicalClusterNameById(rid.getClusterId()) + ")"), t);
     } finally {
       ORecordSerializationContext.pullContext();
       getMetadata().clearThreadLocalSchemaSnapshot();
@@ -1563,9 +1563,9 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   public int assignAndCheckCluster(ORecord record, String iClusterName) {
     ORecordId rid = (ORecordId) record.getIdentity();
     // if provided a cluster name use it.
-    if (rid.clusterId <= ORID.CLUSTER_POS_INVALID && iClusterName != null) {
-      rid.clusterId = getClusterIdByName(iClusterName);
-      if (rid.clusterId == -1)
+    if (rid.getClusterId() <= ORID.CLUSTER_POS_INVALID && iClusterName != null) {
+      rid.setClusterId(getClusterIdByName(iClusterName));
+      if (rid.getClusterId() == -1)
         throw new IllegalArgumentException("Cluster name '" + iClusterName + "' is not configured");
 
     }
@@ -1577,12 +1577,12 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
         if (schemaClass != null) {
           if (schemaClass.isAbstract())
             throw new OSchemaException("Document belongs to abstract class " + schemaClass.getName() + " and cannot be saved");
-          rid.clusterId = schemaClass.getClusterForNewInstance((ODocument) record);
+          rid.setClusterId(schemaClass.getClusterForNewInstance((ODocument) record));
         } else
-          rid.clusterId = getDefaultClusterId();
+          rid.setClusterId(getDefaultClusterId());
       } else {
-        rid.clusterId = getDefaultClusterId();
-        if (record instanceof OBlob && rid.clusterId != ORID.CLUSTER_ID_INVALID) {
+        rid.setClusterId(getDefaultClusterId());
+        if (record instanceof OBlob && rid.getClusterId() != ORID.CLUSTER_ID_INVALID) {
           // Set<Integer> blobClusters = getMetadata().getSchema().getBlobClusters();
           // if (!blobClusters.contains(rid.clusterId) && rid.clusterId != getDefaultClusterId() && rid.clusterId != 0) {
           // if (iClusterName == null)
@@ -1701,7 +1701,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
           // CHECK IF RECORD TYPE IS SUPPORTED
           Orient.instance().getRecordFactoryManager().getRecordTypeClass(recordType);
 
-          if (forceCreate || ORecordId.isNew(rid.clusterPosition)) {
+          if (forceCreate || ORecordId.isNew(rid.getClusterPosition())) {
             // CREATE
             final OStorageOperationResult<OPhysicalPosition> ppos = getStorage().createRecord(rid, content, ver, recordType, modeIndex,
                 (ORecordCallback<Long>) recordCreatedCallback);
@@ -1783,7 +1783,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     if (record == null)
       return;
 
-    checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_DELETE, getClusterNameById(rid.clusterId));
+    checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_DELETE, getClusterNameById(rid.getClusterId()));
 
     ORecordSerializationContext.pushContext();
     getMetadata().makeThreadLocalSchemaSnapshot();
@@ -1866,7 +1866,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     if (!rid.isValid())
       return false;
 
-    checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_DELETE, getClusterNameById(rid.clusterId));
+    checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_DELETE, getClusterNameById(rid.getClusterId()));
 
     getMetadata().makeThreadLocalSchemaSnapshot();
     if (record instanceof ODocument)
@@ -2695,7 +2695,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
   private void checkRecordClass(final OClass recordClass, final String iClusterName, final ORecordId rid) {
     if (getStorageVersions().classesAreDetectedByClusterId()) {
-      final OClass clusterIdClass = metadata.getImmutableSchemaSnapshot().getClassByClusterId(rid.clusterId);
+      final OClass clusterIdClass = metadata.getImmutableSchemaSnapshot().getClassByClusterId(rid.getClusterId());
       if (recordClass == null && clusterIdClass != null || clusterIdClass == null && recordClass != null
           || (recordClass != null && !recordClass.equals(clusterIdClass)))
         throw new IllegalArgumentException("Record saved into cluster '" + iClusterName + "' should be saved with class '"

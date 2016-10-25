@@ -72,7 +72,7 @@ public class RemoteProtocolCommandsTest extends DocumentDBBaseTest {
     for (int aId : clazz.getClusterIds())
       ids += aId;
 
-    assertTrue(" returned id:" + bad.clusterId + " shoud be one of:" + ids,
-        Arrays.binarySearch(clazz.getClusterIds(), bad.clusterId) >= 0);
+    assertTrue(" returned id:" + bad.getClusterId() + " shoud be one of:" + ids,
+        Arrays.binarySearch(clazz.getClusterIds(), bad.getClusterId()) >= 0);
   }
 }

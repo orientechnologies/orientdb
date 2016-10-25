@@ -301,7 +301,7 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
 
     browsedRecords = 0;
     currentClusterIdx = 0;
-    current.clusterId = clusterIds[currentClusterIdx];
+    current.setClusterId(clusterIds[currentClusterIdx]);
 
     updateClusterRange();
 
@@ -334,7 +334,7 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
 
     updateClusterRange();
 
-    current.clusterId = clusterIds[currentClusterIdx];
+    current.setClusterId(clusterIds[currentClusterIdx]);
 
     resetCurrentPosition();
     prevPosition();
@@ -404,15 +404,15 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
     else if (currentClusterIdx < 0)
       currentClusterIdx = 0;
 
-    current.clusterId = clusterIds[currentClusterIdx];
-    final long[] range = database.getStorage().getClusterDataRange(current.clusterId);
+    current.setClusterId(clusterIds[currentClusterIdx]);
+    final long[] range = database.getStorage().getClusterDataRange(current.getClusterId());
 
-    if (beginRange != null && beginRange.getClusterId() == current.clusterId && beginRange.getClusterPosition() > range[0])
+    if (beginRange != null && beginRange.getClusterId() == current.getClusterId() && beginRange.getClusterPosition() > range[0])
       firstClusterEntry = beginRange.getClusterPosition();
     else
       firstClusterEntry = range[0];
 
-    if (endRange != null && endRange.getClusterId() == current.clusterId && endRange.getClusterPosition() < range[1])
+    if (endRange != null && endRange.getClusterId() == current.getClusterId() && endRange.getClusterPosition() < range[1])
       lastClusterEntry = endRange.getClusterPosition();
     else
       lastClusterEntry = range[1];
