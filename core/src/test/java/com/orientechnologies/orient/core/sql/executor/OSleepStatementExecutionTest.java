@@ -24,10 +24,10 @@ public class OSleepStatementExecutionTest {
     db.close();
   }
 
-  @Test public void testBegin() {
+  @Test public void testBasic() {
     long begin = System.currentTimeMillis();
     OTodoResultSet result = db.command("sleep 1000");
-    Assert.assertTrue(System.currentTimeMillis() - begin > 1000);
+    Assert.assertTrue(System.currentTimeMillis() - begin >= 1000);
     printExecutionPlan(null, result);
     Assert.assertNotNull(result);
     Assert.assertTrue(result.hasNext());
