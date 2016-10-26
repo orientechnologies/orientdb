@@ -1,6 +1,6 @@
 /*
  *
- *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
  *  *
  *  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  *  you may not use this file except in compliance with the License.
@@ -14,16 +14,15 @@
  *  *  See the License for the specific language governing permissions and
  *  *  limitations under the License.
  *  *
- *  * For more information: http://orientdb.com
+ *  * For more information: http://www.orientechnologies.com
  *
  */
 package com.orientechnologies.orient.graph.stresstest;
 
-import java.util.List;
-
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.stresstest.ODatabaseIdentifier;
@@ -31,21 +30,28 @@ import com.orientechnologies.orient.stresstest.OStressTesterSettings;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
+import java.util.List;
+import java.util.Random;
+
 /**
  * CRUD implementation of the workload.
  *
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
+ * @author Luca Garulli
  */
 public class OGraphInsertWorkload extends OBaseGraphWorkload {
+  private enum STRATEGIES {
+    LAST, RANDOM, SUPERNODE
+  }
 
   static final String     INVALID_FORM_MESSAGE = "GRAPH INSERT workload must be in form of <vertices>F<connection-factor>.";
 
   private int             factor               = 80;
   private OWorkLoadResult resultVertices       = new OWorkLoadResult();
   private OWorkLoadResult resultEdges          = new OWorkLoadResult();
+  private STRATEGIES      strategy             = STRATEGIES.LAST;
 
   public OGraphInsertWorkload() {
-    connectionStrategy = OStorageRemote.CONNECTION_STRATEGY.ROUND_ROBIN_CONNECT;
+    connectionStrategy = OStorageRemote.CONNECTION_STRATEGY.ROUND_ROBIN_REQUEST;
   }
 
   @Override
@@ -57,20 +63,20 @@ public class OGraphInsertWorkload extends OBaseGraphWorkload {
   public void parseParameters(final String args) {
     final String ops = args.toUpperCase();
     char state = ' ';
-    final StringBuilder number = new StringBuilder();
+    final StringBuilder value = new StringBuilder();
 
+    boolean strategy = false;
     for (int pos = 0; pos < ops.length(); ++pos) {
       final char c = ops.charAt(pos);
 
-      if (c == ' ' || c == 'V' || c == 'F') {
-        state = assignState(state, number, c);
-      } else if (c >= '0' && c <= '9')
-        number.append(c);
-      else
-        throw new IllegalArgumentException(
-            "Character '" + c + "' is not valid on " + getName() + " workload. " + INVALID_FORM_MESSAGE);
+      if (c == ' ' || c == 'V' || c == 'F' || (c == 'S' && !strategy)) {
+        if (c == 'S')
+          strategy = true;
+        state = assignState(state, value, c);
+      } else
+        value.append(c);
     }
-    assignState(state, number, ' ');
+    assignState(state, value, ' ');
 
     if (resultVertices.total == 0)
       throw new IllegalArgumentException(INVALID_FORM_MESSAGE);
@@ -97,17 +103,34 @@ public class OGraphInsertWorkload extends OBaseGraphWorkload {
 
               if (graphContext.lastVertexEdges > factor) {
                 graphContext.lastVertexEdges = 0;
-                graphContext.lastVertexToConnect = v;
+                if (strategy == STRATEGIES.LAST)
+                  graphContext.lastVertexToConnect = v;
+                else if (strategy == STRATEGIES.RANDOM) {
+                  do {
+                    final int[] totalClusters = graph.getVertexBaseType().getClusterIds();
+                    final int randomCluster = totalClusters[new Random().nextInt(totalClusters.length)];
+                    long totClusterRecords = graph.getRawGraph().countClusterElements(randomCluster);
+                    if (totClusterRecords > 0) {
+                      final ORecordId randomRid = new ORecordId(randomCluster, new Random().nextInt((int) totClusterRecords));
+                      graphContext.lastVertexToConnect = graph.getVertex(randomRid);
+                      break;
+                    }
+
+                  } while (true);
+                } else if (strategy == STRATEGIES.SUPERNODE) {
+                  final int[] totalClusters = graph.getVertexBaseType().getClusterIds();
+                  final int firstCluster = totalClusters[0];
+                  long totClusterRecords = graph.getRawGraph().countClusterElements(firstCluster);
+                  if (totClusterRecords > 0) {
+                    final ORecordId randomRid = new ORecordId(firstCluster, 0);
+                    graphContext.lastVertexToConnect = graph.getVertex(randomRid);
+                  }
+                }
               }
             } else
               graphContext.lastVertexToConnect = v;
 
             resultVertices.current.incrementAndGet();
-
-            if (settings.operationsPerTransaction > 0 && context.currentIdx % settings.operationsPerTransaction == 0) {
-              graph.commit();
-              graph.begin();
-            }
             return null;
           }
         });
@@ -144,8 +167,9 @@ public class OGraphInsertWorkload extends OBaseGraphWorkload {
 
   @Override
   public String getPartialResult() {
-    return String.format("%d%% [Vertices: %d - Edges: %d]", ((100 * resultVertices.current.get() / resultVertices.total)),
-        resultVertices.current.get(), resultEdges.current.get());
+    return String.format("%d%% [Vertices: %d - Edges: %d (conflicts=%d)]",
+        ((100 * resultVertices.current.get() / resultVertices.total)), resultVertices.current.get(), resultEdges.current.get(),
+        resultVertices.conflicts.get());
   }
 
   @Override
@@ -180,6 +204,8 @@ public class OGraphInsertWorkload extends OBaseGraphWorkload {
       resultVertices.total = Integer.parseInt(number.toString());
     else if (state == 'F')
       factor = Integer.parseInt(number.toString());
+    else if (state == 'S')
+      strategy = STRATEGIES.valueOf(number.toString().toUpperCase());
 
     number.setLength(0);
     return c;
