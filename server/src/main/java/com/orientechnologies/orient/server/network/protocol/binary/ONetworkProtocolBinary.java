@@ -103,6 +103,8 @@ import com.orientechnologies.orient.client.remote.message.OListDatabasesReponse;
 import com.orientechnologies.orient.client.remote.message.OListDatabasesRequest;
 import com.orientechnologies.orient.client.remote.message.OLowerPhysicalPositionsRequest;
 import com.orientechnologies.orient.client.remote.message.OLowerPhysicalPositionsResponse;
+import com.orientechnologies.orient.client.remote.message.OOpenRequest;
+import com.orientechnologies.orient.client.remote.message.OOpenResponse;
 import com.orientechnologies.orient.client.remote.message.OReadRecordIfVersionIsNotLatestRequest;
 import com.orientechnologies.orient.client.remote.message.OReadRecordIfVersionIsNotLatestResponse;
 import com.orientechnologies.orient.client.remote.message.OReadRecordRequest;
@@ -876,19 +878,21 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   protected void openDatabase(OClientConnection connection) throws IOException {
     setDataCommandInfo(connection, "Open database");
 
-    readConnectionData(connection);
+    OOpenRequest request = new OOpenRequest();
+    request.read(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
+    connection.getData().driverName = request.getDriverName();
+    connection.getData().driverVersion = request.getDriverVersion();
+    connection.getData().protocolVersion = request.getProtocolVersion();
+    connection.getData().clientId = request.getClientId();
+    connection.getData().serializationImpl = request.getRecordFormat();
+    connection.setTokenBased(request.isUseToken());
+    tokenConnection = Boolean.TRUE.equals(connection.getTokenBased());
+    connection.getData().supportsPushMessages = request.isSupportsPush();
+    connection.getData().collectStats = request.isCollectStats();
 
-    final String dbURL = channel.readString();
-
-    String dbType = ODatabaseDocument.TYPE;
-    if (connection.getData().protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_32)
-      // READ DB-TYPE FROM THE CLIENT. NOT USED ANYMORE
-      dbType = channel.readString();
-
-    final String user = channel.readString();
-    final String passwd = channel.readString();
     try {
-      connection.setDatabase(server.openDatabase(dbURL, user, passwd, connection.getData()));
+      connection.setDatabase(
+          server.openDatabase(request.getDatabaseName(), request.getUserName(), request.getUserPassword(), connection.getData()));
     } catch (OException e) {
       server.getClientConnectionManager().disconnect(connection);
       throw e;
@@ -903,42 +907,40 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       getServer().getClientConnectionManager().connect(this, connection, token, server.getTokenHandler());
     }
 
-    if (connection.getDatabase().getStorage() instanceof OStorageProxy && !loadUserFromSchema(connection, user, passwd)) {
+    if (connection.getDatabase().getStorage() instanceof OStorageProxy
+        && !loadUserFromSchema(connection, request.getUserName(), request.getUserPassword())) {
       sendErrorOrDropConnection(connection, clientTxId, new OSecurityAccessException(connection.getDatabase().getName(),
           "User or password not valid for database: '" + connection.getDatabase().getName() + "'"));
     } else {
 
+      final Collection<? extends OCluster> clusters = connection.getDatabase().getStorage().getClusterInstances();
+      final byte[] tokenToSend;
+      if (Boolean.TRUE.equals(connection.getTokenBased())) {
+        tokenToSend = token;
+      } else
+        tokenToSend = OCommonConst.EMPTY_BYTE_ARRAY;
+
+      final OServerPlugin plugin = server.getPlugin("cluster");
+      byte[] distriConf = null;
+      ODocument distributedCfg = null;
+      if (plugin != null && plugin instanceof ODistributedServerManager) {
+        distributedCfg = ((ODistributedServerManager) plugin).getClusterConfiguration();
+
+        final ODistributedConfiguration dbCfg = ((ODistributedServerManager) plugin)
+            .getDatabaseConfiguration(connection.getDatabase().getName());
+        if (dbCfg != null) {
+          // ENHANCE SERVER CFG WITH DATABASE CFG
+          distributedCfg.field("database", dbCfg.getDocument(), OType.EMBEDDED);
+        }
+        distriConf = getRecordBytes(connection, distributedCfg);
+      }
+
+      OOpenResponse response = new OOpenResponse(connection.getId(), tokenToSend, clusters, distriConf, OConstants.getVersion());
+
       beginResponse();
       try {
         sendOk(connection, clientTxId);
-        channel.writeInt(connection.getId());
-        if (connection.getData().protocolVersion > OChannelBinaryProtocol.PROTOCOL_VERSION_26) {
-          if (Boolean.TRUE.equals(connection.getTokenBased())) {
-
-            channel.writeBytes(token);
-          } else
-            channel.writeBytes(OCommonConst.EMPTY_BYTE_ARRAY);
-        }
-
-        sendDatabaseInformation(connection);
-
-        final OServerPlugin plugin = server.getPlugin("cluster");
-        ODocument distributedCfg = null;
-        if (plugin != null && plugin instanceof ODistributedServerManager) {
-          distributedCfg = ((ODistributedServerManager) plugin).getClusterConfiguration();
-
-          final ODistributedConfiguration dbCfg = ((ODistributedServerManager) plugin)
-              .getDatabaseConfiguration(connection.getDatabase().getName());
-          if (dbCfg != null) {
-            // ENHANCE SERVER CFG WITH DATABASE CFG
-            distributedCfg.field("database", dbCfg.getDocument(), OType.EMBEDDED);
-          }
-        }
-
-        channel.writeBytes(distributedCfg != null ? getRecordBytes(connection, distributedCfg) : null);
-
-        if (connection.getData().protocolVersion >= 14)
-          channel.writeString(OConstants.getVersion());
+        response.write(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
       } finally {
         endResponse(connection);
       }

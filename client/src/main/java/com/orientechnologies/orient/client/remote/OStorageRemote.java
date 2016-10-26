@@ -55,7 +55,6 @@ import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.message.OAddClusterRequest;
 import com.orientechnologies.orient.client.remote.message.OAddClusterResponse;
-import com.orientechnologies.orient.client.remote.message.OBinaryProtocolHelper;
 import com.orientechnologies.orient.client.remote.message.OCeilingPhysicalPositionsRequest;
 import com.orientechnologies.orient.client.remote.message.OCeilingPhysicalPositionsResponse;
 import com.orientechnologies.orient.client.remote.message.OCleanOutRecordRequest;
@@ -92,6 +91,8 @@ import com.orientechnologies.orient.client.remote.message.OIncrementalBackupRequ
 import com.orientechnologies.orient.client.remote.message.OIncrementalBackupResponse;
 import com.orientechnologies.orient.client.remote.message.OLowerPhysicalPositionsRequest;
 import com.orientechnologies.orient.client.remote.message.OLowerPhysicalPositionsResponse;
+import com.orientechnologies.orient.client.remote.message.OOpenRequest;
+import com.orientechnologies.orient.client.remote.message.OOpenResponse;
 import com.orientechnologies.orient.client.remote.message.OReadRecordIfVersionIsNotLatestRequest;
 import com.orientechnologies.orient.client.remote.message.OReadRecordIfVersionIsNotLatestResponse;
 import com.orientechnologies.orient.client.remote.message.OReadRecordRequest;
@@ -131,6 +132,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OCredentialInterceptor;
 import com.orientechnologies.orient.core.security.OSecurityManager;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.sql.query.OLiveQuery;
 import com.orientechnologies.orient.core.storage.OCluster;
@@ -180,7 +182,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   OCluster[]                                   clusters                = OCommonConst.EMPTY_CLUSTER_ARRAY;
   private int                                  defaultClusterId;
   public OStorageRemoteAsynchEventListener     asynchEventListener;
-  private String                               recordFormat;
   public ORemoteConnectionManager              connectionManager;
   private final Set<OStorageRemoteSession>     sessions                = Collections
       .newSetFromMap(new ConcurrentHashMap<OStorageRemoteSession, Boolean>());
@@ -442,7 +443,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
         openRemoteDatabase();
 
-        final OStorageConfiguration storageConfiguration = new OStorageRemoteConfiguration(this, recordFormat);
+        final OStorageConfiguration storageConfiguration = new OStorageRemoteConfiguration(this,
+            ORecordSerializerFactory.instance().getDefaultRecordSerializer().toString());
         storageConfiguration.load(conf);
 
         configuration = storageConfiguration;
@@ -856,7 +858,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     OBinaryResponse<Object> response = new OCommandResponse(this, asynch, iCommand, database, live);
 
     return networkOperation(request, response, "Error on executing command: " + iCommand);
-    
+
   }
 
   public List<ORecordOperation> commit(final OTransaction iTx, final Runnable callback) {
@@ -1250,54 +1252,46 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   public void openRemoteDatabase(OChannelBinaryAsynchClient network) throws IOException {
+
     stateLock.acquireWriteLock();
     try {
       OStorageRemoteSession session = getCurrentSession();
       OStorageRemoteNodeSession nodeSession = session.getOrCreateServerSession(network.getServerURL());
+      OBinaryRequest request = new OOpenRequest(name, session.connectionUserName, session.connectionUserPassword);
       try {
-        network.writeByte(OChannelBinaryProtocol.REQUEST_DB_OPEN);
+        network.writeByte(request.getCommand());
         network.writeInt(nodeSession.getSessionId());
-
-        // @SINCE 1.0rc8
-        sendClientInfo(network, DRIVER_NAME, true, true);
-
-        network.writeString(name);
-        network.writeString(session.connectionUserName);
-        network.writeString(session.connectionUserPassword);
-
+        request.write(network, session, 0);
       } finally {
         endRequest(network);
       }
-
       final int sessionId;
-
+      OOpenResponse response = new OOpenResponse();
       try {
         network.beginResponse(nodeSession.getSessionId(), false);
-        sessionId = network.readInt();
-        byte[] token = network.readBytes();
-        if (token.length == 0) {
-          token = null;
-        }
-
-        nodeSession.setSession(sessionId, token);
-
-        OLogManager.instance().debug(this, "Client connected to %s with session id=%d", network.getServerURL(), sessionId);
-
-        OCluster[] cl = OBinaryProtocolHelper.readClustersArray(network);
-        updateStorageInformations(cl);
-
-        // READ CLUSTER CONFIGURATION
-        updateClusterConfiguration(network.getServerURL(), network.readBytes());
-
-        // read OrientDB release info
-        if (network.getSrvProtocolVersion() >= 14)
-          network.readString();
-
-        status = STATUS.OPEN;
-        connectionManager.release(network);
+        response.read(network, session);
       } finally {
         endResponse(network);
+        connectionManager.release(network);
       }
+      
+      sessionId = response.getSessionId();
+      byte[] token = response.getSessionToken();
+      if (token.length == 0) {
+        token = null;
+      }
+      
+      nodeSession.setSession(sessionId, token);
+      
+      OLogManager.instance().debug(this, "Client connected to %s with session id=%d", network.getServerURL(), sessionId);
+      
+      OCluster[] cl = response.getClusterIds();
+      updateStorageInformations(cl);
+      
+      // READ CLUSTER CONFIGURATION
+      updateClusterConfiguration(network.getServerURL(), response.getDistributedConfiguration());
+      
+      status = STATUS.OPEN;
     } finally {
       stateLock.releaseWriteLock();
     }
@@ -1375,26 +1369,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     }
 
     return null;
-  }
-
-  protected void sendClientInfo(final OChannelBinaryAsynchClient network, final String driverName,
-      final boolean supportsPushMessages, final boolean collectStats) throws IOException {
-    if (network.getSrvProtocolVersion() >= 7) {
-      // @COMPATIBILITY 1.0rc8
-      network.writeString(driverName).writeString(OConstants.ORIENT_VERSION)
-          .writeShort((short) OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION).writeString(clientId);
-    }
-    if (network.getSrvProtocolVersion() > OChannelBinaryProtocol.PROTOCOL_VERSION_21) {
-      network.writeString(ODatabaseDocumentTx.getDefaultSerializer().toString());
-      recordFormat = ODatabaseDocumentTx.getDefaultSerializer().toString();
-    } else
-      recordFormat = ORecordSerializerSchemaAware2CSV.NAME;
-    if (network.getSrvProtocolVersion() > OChannelBinaryProtocol.PROTOCOL_VERSION_26)
-      network.writeBoolean(true);
-    if (network.getSrvProtocolVersion() > OChannelBinaryProtocol.PROTOCOL_VERSION_33) {
-      network.writeBoolean(supportsPushMessages);
-      network.writeBoolean(collectStats);
-    }
   }
 
   /**
