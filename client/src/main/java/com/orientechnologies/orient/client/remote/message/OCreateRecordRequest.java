@@ -57,7 +57,7 @@ public class OCreateRecordRequest implements OBinaryRequest {
 
   @Override
   public void write(final OChannelBinaryAsynchClient network, final OStorageRemoteSession session, int mode) throws IOException {
-    network.writeShort((short) rid.clusterId);
+    network.writeShort((short) rid.getClusterId());
     network.writeBytes(content);
     network.writeByte(recordType);
     network.writeByte((byte) mode);
