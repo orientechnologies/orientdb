@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.id.ORID;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -13,7 +14,9 @@ import java.util.Set;
  */
 public class DistinctExecutionStep extends AbstractExecutionStep {
 
-  Set<OResult>   pastItems  = new HashSet<>();
+  Set<OResult> pastItems = new HashSet<>();
+  ORidSet      pastRids  = new ORidSet();
+
   OTodoResultSet lastResult = null;
   OResult nextValue;
 
@@ -81,12 +84,37 @@ public class DistinctExecutionStep extends AbstractExecutionStep {
         return;
       }
       nextValue = lastResult.next();
-      if (pastItems.contains(nextValue)) {
+      if (alreadyVisited(nextValue)) {
         nextValue = null;
       } else {
-        pastItems.add(nextValue);
+        markAsVisited(nextValue);
       }
     }
+  }
+
+  private void markAsVisited(OResult nextValue) {
+    if (nextValue.isElement()) {
+      ORID identity = nextValue.getElement().getIdentity();
+      int cluster = identity.getClusterId();
+      long pos = identity.getClusterPosition();
+      if (cluster >= 0 && pos >= 0) {
+        pastRids.add(identity);
+        return;
+      }
+    }
+    pastItems.add(nextValue);
+  }
+
+  private boolean alreadyVisited(OResult nextValue) {
+    if (nextValue.isElement()) {
+      ORID identity = nextValue.getElement().getIdentity();
+      int cluster = identity.getClusterId();
+      long pos = identity.getClusterPosition();
+      if (cluster >= 0 && pos >= 0) {
+        return pastRids.contains(identity);
+      }
+    }
+    return pastItems.contains(nextValue);
   }
 
   @Override public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {

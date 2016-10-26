@@ -97,7 +97,7 @@ public class ORidSetTest extends OParserTestAbstract {
     set.remove(rid);
     Assert.assertFalse(set.contains(rid));
   }
-  
+
   @Test public void testIterator() {
 
     Set<ORID> set = new ORidSet();

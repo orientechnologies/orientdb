@@ -7,7 +7,10 @@ import java.util.Iterator;
 import java.util.Set;
 
 /**
- * Created by luigidellaquila on 25/10/16.
+ * Special implementation of Java Set&lt;ORID&gt; to efficiently handle memory and performance.
+ * It does not store actual RIDs, but it only keeps track that a RID was stored, so the iterator will return new instances.
+ *
+ * @author Luigi Dell'Aquila
  */
 public class ORidSet implements Set<ORID> {
 
@@ -25,10 +28,17 @@ public class ORidSet implements Set<ORID> {
 
   protected int maxArraySize;
 
+  /**
+   * instantiates an ORidSet with a bucket size of Integer.MAX_VALUE / 10
+   */
   public ORidSet() {
     this(Integer.MAX_VALUE / 10);
   }
 
+  /**
+   *
+   * @param bucketSize 
+   */
   public ORidSet(int bucketSize) {
     maxArraySize = bucketSize;
   }
@@ -246,7 +256,8 @@ public class ORidSet implements Set<ORID> {
   }
 
   @Override public void clear() {
-    throw new UnsupportedOperationException();
+    content = new long[8][][];
+    size = 0;
   }
 
 }
