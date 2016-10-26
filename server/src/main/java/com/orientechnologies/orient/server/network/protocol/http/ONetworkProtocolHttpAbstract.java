@@ -88,7 +88,8 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
       final OContextConfiguration iConfiguration) throws IOException {
     configuration = iConfiguration;
 
-    final boolean installDefaultCommands = iConfiguration.getValueAsBoolean(OGlobalConfiguration.NETWORK_HTTP_INSTALL_DEFAULT_COMMANDS);
+    final boolean installDefaultCommands = iConfiguration
+        .getValueAsBoolean(OGlobalConfiguration.NETWORK_HTTP_INSTALL_DEFAULT_COMMANDS);
     if (installDefaultCommands)
       registerStatelessCommands(iListener);
 
@@ -328,7 +329,11 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
     if (errorReason == null) {
       errorReason = OHttpUtils.STATUS_INTERNALERROR_DESCRIPTION;
-      OLogManager.instance().error(this, "Internal server error:\n%s", errorMessage);
+      if (e instanceof NullPointerException) {
+        OLogManager.instance().error(this, "Internal server error:\n", e);
+      } else {
+        OLogManager.instance().error(this, "Internal server error:\n%s", errorMessage);
+      }
     }
 
     try {
