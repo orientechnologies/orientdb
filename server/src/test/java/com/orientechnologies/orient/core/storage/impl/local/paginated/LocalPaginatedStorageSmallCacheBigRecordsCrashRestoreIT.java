@@ -42,19 +42,6 @@ public class LocalPaginatedStorageSmallCacheBigRecordsCrashRestoreIT {
   private Process process;
 
   public void spawnServer() throws Exception {
-    String buildDirectory = System.getProperty("buildDirectory", ".");
-    buildDirectory += "/localPaginatedStorageSmallCacheBigRecordsCrashRestore";
-
-    buildDir = new File(buildDirectory);
-
-    buildDirectory = buildDir.getCanonicalPath();
-    buildDir = new File(buildDirectory);
-
-    if (buildDir.exists())
-      OFileUtils.deleteRecursively(buildDir);
-
-    buildDir.mkdir();
-
     final File mutexFile = new File(buildDir, "mutex.ct");
     final RandomAccessFile mutex = new RandomAccessFile(mutexFile, "rw");
     mutex.seek(0);
@@ -63,10 +50,10 @@ public class LocalPaginatedStorageSmallCacheBigRecordsCrashRestoreIT {
     String javaExec = System.getProperty("java.home") + "/bin/java";
     javaExec = new File(javaExec).getCanonicalPath();
 
-    System.setProperty("ORIENTDB_HOME", buildDirectory);
+    System.setProperty("ORIENTDB_HOME", buildDir.getCanonicalPath());
 
     ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-Xmx2048m", "-XX:MaxDirectMemorySize=512g", "-classpath",
-        System.getProperty("java.class.path"), "-DmutexFile=" + mutexFile.getCanonicalPath(), "-DORIENTDB_HOME=" + buildDirectory,
+        System.getProperty("java.class.path"), "-DmutexFile=" + mutexFile.getCanonicalPath(), "-DORIENTDB_HOME=" + buildDir.getCanonicalPath(),
         RemoteDBRunner.class.getName());
     processBuilder.inheritIO();
 
@@ -103,7 +90,19 @@ public class LocalPaginatedStorageSmallCacheBigRecordsCrashRestoreIT {
 
   @Before
   public void setuUp() throws Exception {
-    spawnServer();
+    String buildDirectory = System.getProperty("buildDirectory", ".");
+    buildDirectory += "/localPaginatedStorageSmallCacheBigRecordsCrashRestore";
+
+    buildDir = new File(buildDirectory);
+
+    buildDirectory = buildDir.getCanonicalPath();
+    buildDir = new File(buildDirectory);
+
+    if (buildDir.exists())
+      OFileUtils.deleteRecursively(buildDir);
+
+    buildDir.mkdir();
+
     baseDocumentTx = new ODatabaseDocumentTx(
         "plocal:" + buildDir.getAbsolutePath() + "/baseLocalPaginatedStorageSmallCacheBigRecordsCrashRestore");
     if (baseDocumentTx.exists()) {
@@ -112,6 +111,8 @@ public class LocalPaginatedStorageSmallCacheBigRecordsCrashRestoreIT {
     }
 
     baseDocumentTx.create();
+
+    spawnServer();
 
     testDocumentTx = new ODatabaseDocumentTx("remote:localhost:3500/testLocalPaginatedStorageSmallCacheBigRecordsCrashRestore");
     testDocumentTx.open("admin", "admin");

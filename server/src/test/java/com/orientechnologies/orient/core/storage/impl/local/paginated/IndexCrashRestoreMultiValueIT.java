@@ -53,21 +53,8 @@ public class IndexCrashRestoreMultiValueIT {
 
   @Before
   public void beforeMethod() throws Exception {
-    spawnServer();
-    baseDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDir.getAbsolutePath() + "/" + baseIndexName);
-    if (baseDocumentTx.exists()) {
-      baseDocumentTx.open("admin", "admin");
-      baseDocumentTx.drop();
-    }
-
-    baseDocumentTx.create();
-
-    testDocumentTx = new ODatabaseDocumentTx("remote:localhost:3500/" + testIndexName);
-    testDocumentTx.open("admin", "admin");
-  }
-
-  public void spawnServer() throws Exception {
     OLogManager.instance().installCustomFormatter();
+
     OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(1000000);
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(3);
     OGlobalConfiguration.FILE_LOCK.setValue(false);
@@ -76,25 +63,40 @@ public class IndexCrashRestoreMultiValueIT {
     buildDirectory += "/" + getClass().getSimpleName();
 
     buildDir = new File(buildDirectory);
+    buildDir = new File(buildDir.getCanonicalPath());
+
     if (buildDir.exists()) {
       OFileUtils.deleteRecursively(buildDir);
     }
 
     buildDir.mkdirs();
 
+
+    baseDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDir.getAbsolutePath() + "/" + baseIndexName);
+    if (baseDocumentTx.exists()) {
+      baseDocumentTx.open("admin", "admin");
+      baseDocumentTx.drop();
+    }
+
+    baseDocumentTx.create();
+
+    spawnServer();
+
+    testDocumentTx = new ODatabaseDocumentTx("remote:localhost:3500/" + testIndexName);
+    testDocumentTx.open("admin", "admin");
+  }
+
+  public void spawnServer() throws Exception {
     final File mutexFile = new File(buildDir, "mutex.ct");
     final RandomAccessFile mutex = new RandomAccessFile(mutexFile, "rw");
     mutex.seek(0);
     mutex.write(0);
 
-    buildDirectory = buildDir.getCanonicalPath();
-    buildDir = new File(buildDirectory);
-
     String javaExec = System.getProperty("java.home") + "/bin/java";
     javaExec = new File(javaExec).getCanonicalPath();
 
     ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-Xmx2048m", "-XX:MaxDirectMemorySize=512g", "-classpath",
-        System.getProperty("java.class.path"), "-DmutexFile=" + mutexFile.getCanonicalPath(), "-DORIENTDB_HOME=" + buildDirectory,
+        System.getProperty("java.class.path"), "-DmutexFile=" + mutexFile.getCanonicalPath(), "-DORIENTDB_HOME=" + buildDir.getCanonicalPath(),
         RemoteDBRunner.class.getName());
 
     processBuilder.inheritIO();

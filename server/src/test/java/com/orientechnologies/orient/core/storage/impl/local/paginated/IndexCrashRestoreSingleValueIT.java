@@ -42,7 +42,19 @@ public class IndexCrashRestoreSingleValueIT {
 
   @Before
   public void setuUp() throws Exception {
-    spwanServer();
+    String buildDirectory = System.getProperty("buildDirectory", ".");
+    buildDirectory += "/uniqueIndexCrashRestore";
+
+    buildDir = new File(buildDirectory);
+
+    buildDirectory = buildDir.getCanonicalPath();
+    buildDir = new File(buildDirectory);
+
+    if (buildDir.exists())
+      OFileUtils.deleteRecursively(buildDir);
+
+    buildDir.mkdir();
+
     baseDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDir.getAbsolutePath() + "/baseUniqueIndexCrashRestore");
     if (baseDocumentTx.exists()) {
       baseDocumentTx.open("admin", "admin");
@@ -51,38 +63,28 @@ public class IndexCrashRestoreSingleValueIT {
 
     baseDocumentTx.create();
 
+    spwanServer();
+
     testDocumentTx = new ODatabaseDocumentTx("remote:localhost:3500/testUniqueIndexCrashRestore");
     testDocumentTx.open("admin", "admin");
   }
 
   public void spwanServer() throws Exception {
     OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(5);
-    String buildDirectory = System.getProperty("buildDirectory", ".");
-    buildDirectory += "/uniqueIndexCrashRestore";
-
-    buildDir = new File(buildDirectory);
-    if (buildDir.exists())
-      OFileUtils.deleteRecursively(buildDir);
-
-    buildDir.mkdir();
 
     final File mutexFile = new File(buildDir, "mutex.ct");
     final RandomAccessFile mutex = new RandomAccessFile(mutexFile, "rw");
     mutex.seek(0);
     mutex.write(0);
 
-
-    buildDirectory = buildDir.getCanonicalPath();
-    buildDir = new File(buildDirectory);
-
     String javaExec = System.getProperty("java.home") + "/bin/java";
     javaExec = new File(javaExec).getCanonicalPath();
 
+    System.setProperty("ORIENTDB_HOME", buildDir.getCanonicalPath());
 
-    System.setProperty("ORIENTDB_HOME", buildDirectory);
-
-    ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-Xmx2048m", "-XX:MaxDirectMemorySize=512g", "-classpath", System.getProperty("java.class.path"),
-        "-DORIENTDB_HOME=" + buildDirectory, "-DmutexFile=" + mutexFile.getCanonicalPath(), RemoteDBRunner.class.getName());
+    ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-Xmx2048m", "-XX:MaxDirectMemorySize=512g", "-classpath",
+        System.getProperty("java.class.path"), "-DORIENTDB_HOME=" + buildDir.getCanonicalPath(), "-DmutexFile=" + mutexFile.getCanonicalPath(),
+        RemoteDBRunner.class.getName());
     processBuilder.inheritIO();
 
     serverProcess = processBuilder.start();
