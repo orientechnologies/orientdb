@@ -48,14 +48,27 @@ public class OAsynchChannelServiceThread extends OSoftThread {
   @Override
   protected void execute() throws Exception {
     try {
-      network.beginResponse(sessionId, 0, false);
       Object obj = null;
-      final byte request = network.readByte();
-      switch (request) {
-      case OChannelBinaryProtocol.REQUEST_PUSH_DISTRIB_CONFIG:
-      case OChannelBinaryProtocol.REQUEST_PUSH_LIVE_QUERY:
-        obj = network.readBytes();
-        break;
+      final byte request;
+      try {
+        network.beginResponse(sessionId, 0, false);
+        request = network.readByte();
+        switch (request) {
+        case OChannelBinaryProtocol.REQUEST_PUSH_DISTRIB_CONFIG:
+        case OChannelBinaryProtocol.REQUEST_PUSH_LIVE_QUERY:
+          obj = network.readBytes();
+          break;
+        }
+      } catch (IOException ioe) {
+        if (network != null) {
+          final OChannelBinaryAsynchClient n = network;
+          network = null;
+          n.close();
+        }
+        throw ioe;
+      } finally {
+        if (network != null)
+          network.endResponse();
       }
 
       if (remoteServerEventListener != null)
@@ -64,15 +77,6 @@ public class OAsynchChannelServiceThread extends OSoftThread {
     } catch (IOException ioe) {
       // EXCEPTION RECEIVED (THE SOCKET HAS BEEN CLOSED?) ASSURE TO UNLOCK THE READ AND EXIT THIS THREAD
       sendShutdown();
-      if (network != null) {
-        final OChannelBinaryAsynchClient n = network;
-        network = null;
-        n.close();
-      }
-
-    } finally {
-      if (network != null)
-        network.endResponse();
     }
   }
 }
