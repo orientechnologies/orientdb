@@ -1,0 +1,70 @@
+package com.orientechnologies.orient.core.sql.executor;
+
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
+
+import java.util.Iterator;
+
+/**
+ * Created by luigidellaquila on 25/10/16.
+ */
+public class ORidSetIterator implements Iterator<ORID> {
+
+  private ORidSet set;
+  int  currentCluster = -1;
+  long currentId      = -1;
+
+  ORidSetIterator(ORidSet set) {
+    this.set = set;
+    fetchNext();
+  }
+
+  @Override public boolean hasNext() {
+    return currentCluster >= 0;
+  }
+
+  @Override public ORID next() {
+    if (!hasNext()) {
+      throw new IllegalStateException();
+    }
+    ORecordId result = new ORecordId(currentCluster, currentId);
+    currentId++;
+    fetchNext();
+    return result;
+  }
+
+  private void fetchNext() {
+    if (currentCluster < 0) {
+      currentCluster = 0;
+      currentId = 0;
+    }
+
+    long currentArrayPos = currentId / 63;
+    long currentBit = currentId % 63;
+
+    while (currentCluster < set.content.length) {
+
+      while (set.content[currentCluster] != null && currentArrayPos < set.content[currentCluster].length) {
+        if (set.contains(new ORecordId(currentCluster, currentArrayPos * 63 + currentBit))) {
+          currentId = currentArrayPos * 63 + currentBit;
+          return;
+        } else {
+          currentBit++;
+          if (currentBit > 63) {
+            currentBit = 0;
+            currentArrayPos++;
+          }
+        }
+      }
+      if (set.content[currentCluster] == null) {
+        currentArrayPos = set.offset;
+      }
+      currentBit = 0;
+      currentArrayPos = 0;
+      currentCluster++;
+    }
+
+    currentCluster = -1;
+  }
+
+}
