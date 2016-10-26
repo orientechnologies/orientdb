@@ -19,3 +19,4 @@
 #
 
 com.orientechnologies.orient.graph.stresstest.OGraphInsertWorkload
+com.orientechnologies.orient.graph.stresstest.OGraphShortestPathWorkload
