@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -12,47 +11,40 @@ import java.util.Set;
  */
 public class ORidSet implements Set<ORID> {
 
-  protected long[][] content = new long[8][];
+  protected static int INITIAL_BLOCK_SIZE = 4096;
 
-  protected int  maxArraySize = Integer.MAX_VALUE / 10;
-  protected long offset       = 0;
+  /*
+   * cluster / offset / bitmask
+   * eg. inserting #12:0 you will have content[12][0][0] = 1
+   * eg. inserting #12:(63*maxArraySize + 1) you will have content[12][1][0] = 1
+   *
+   */
+  protected long[][][] content = new long[8][][];
 
-  ORidSet nextLevel;
+  long size = 0;
+
+  protected int maxArraySize;
+
+  public ORidSet() {
+    this(Integer.MAX_VALUE / 10);
+  }
+
+  public ORidSet(int bucketSize) {
+    maxArraySize = bucketSize;
+  }
 
   @Override public int size() {
-    if (true) {
-      return 0;//TODO
-    }
-    int result = 0;
-    for (long[] block : content) {
-      if (block != null) {
-        for (long b : block) {
-          for (int i = 0; i < 63; i++) {
-            if ((1L & (b << i)) > 0) {
-              result++;
-            }
-          }
-
-        }
-      }
-    }
-    return 0;
+    return size <= Integer.MAX_VALUE ? (int) size : Integer.MAX_VALUE;
   }
 
   @Override public boolean isEmpty() {
-    for (long[] block : content) {
-      if (block != null) {
-        for (long b : block) {
-          if (b != 0L) {
-            return false;
-          }
-        }
-      }
-    }
-    return true;
+    return size == 0L;
   }
 
   @Override public boolean contains(Object o) {
+    if (size == 0L) {
+      return false;
+    }
     if (!(o instanceof ORID)) {
       throw new IllegalArgumentException();
     }
@@ -65,16 +57,10 @@ public class ORidSet implements Set<ORID> {
     if (cluster < 0 || position < 0) {
       return false;
     }
-    long positionByte = position / 63;
+    long positionByte = (position / 63);
     int positionBit = (int) (position % 63);
-    if (positionByte > maxArraySize) {
-      if (nextLevel == null) {
-        return false;
-      }
-
-      return nextLevel.contains(new ORecordId(cluster, position - (((long) maxArraySize)) * 63));
-    }
-    int positionByteInt = (int) positionByte;
+    int block = (int) (positionByte / maxArraySize);
+    int blockPositionByteInt = (int) (positionByte % maxArraySize);
 
     if (content.length <= cluster) {
       return false;
@@ -82,12 +68,18 @@ public class ORidSet implements Set<ORID> {
     if (content[cluster] == null) {
       return false;
     }
-    if (content[cluster].length <= positionByteInt) {
+    if (content[cluster].length <= block) {
+      return false;
+    }
+    if (content[cluster][block] == null) {
+      return false;
+    }
+    if (content[cluster][block].length <= blockPositionByteInt) {
       return false;
     }
 
     long currentMask = 1L << positionBit;
-    long existed = content[cluster][positionByteInt] & currentMask;
+    long existed = content[cluster][block][blockPositionByteInt] & currentMask;
 
     return existed > 0L;
   }
@@ -115,36 +107,47 @@ public class ORidSet implements Set<ORID> {
     }
     long positionByte = (position / 63);
     int positionBit = (int) (position % 63);
-    if (positionByte > maxArraySize) {
-      if (nextLevel == null) {
-        nextLevel = new ORidSet();
-        nextLevel.offset = this.offset + maxArraySize;
-      }
-      return nextLevel.add(new ORecordId(cluster, position - (((long) maxArraySize)) * 63));
-    }
-    int positionByteInt = (int) positionByte;
+    int block = (int) (positionByte / maxArraySize);
+    int blockPositionByteInt = (int) (positionByte % maxArraySize);
 
     if (content.length <= cluster) {
-      long[][] oldContent = content;
-      content = new long[cluster + 1][];
+      long[][][] oldContent = content;
+      content = new long[cluster + 1][][];
       System.arraycopy(oldContent, 0, content, 0, oldContent.length);
     }
     if (content[cluster] == null) {
-      content[cluster] = createClusterArray(positionByteInt);
-    }
-    if (content[cluster].length <= positionByteInt) {
-      content[cluster] = expandClusterArray(content[cluster], positionByteInt);
+      content[cluster] = createClusterArray(block, blockPositionByteInt);
     }
 
-    long original = content[cluster][positionByteInt];
+    if (content[cluster].length <= block) {
+      content[cluster] = expandClusterBlocks(content[cluster], block, blockPositionByteInt);
+    }
+    if (content[cluster][block] == null) {
+      content[cluster][block] = expandClusterArray(new long[INITIAL_BLOCK_SIZE], blockPositionByteInt);
+    }
+    if (content[cluster][block].length <= blockPositionByteInt) {
+      content[cluster][block] = expandClusterArray(content[cluster][block], blockPositionByteInt);
+    }
+
+    long original = content[cluster][block][blockPositionByteInt];
     long currentMask = 1L << positionBit;
-    long existed = content[cluster][positionByteInt] & currentMask;
-    content[cluster][positionByteInt] = original | currentMask;
+    long existed = content[cluster][block][blockPositionByteInt] & currentMask;
+    content[cluster][block][blockPositionByteInt] = original | currentMask;
+    if (existed == 0L) {
+      size++;
+    }
     return existed == 0L;
   }
 
-  private long[] createClusterArray(int positionByteInt) {
-    int currentSize = 4096;
+  private static long[][] expandClusterBlocks(long[][] longs, int block, int blockPositionByteInt) {
+    long[][] result = new long[block + 1][];
+    System.arraycopy(longs, 0, result, 0, longs.length);
+    result[block] = expandClusterArray(new long[INITIAL_BLOCK_SIZE], blockPositionByteInt);
+    return result;
+  }
+
+  private static long[][] createClusterArray(int block, int positionByteInt) {
+    int currentSize = INITIAL_BLOCK_SIZE;
     while (currentSize <= positionByteInt) {
       currentSize *= 2;
       if (currentSize < 0) {
@@ -152,11 +155,12 @@ public class ORidSet implements Set<ORID> {
         break;
       }
     }
-    long[] result = new long[currentSize];
+    long[][] result = new long[block + 1][];
+    result[block] = new long[currentSize];
     return result;
   }
 
-  private long[] expandClusterArray(long[] original, int positionByteInt) {
+  private static long[] expandClusterArray(long[] original, int positionByteInt) {
     int currentSize = original.length;
     while (currentSize <= positionByteInt) {
       currentSize *= 2;
@@ -185,13 +189,8 @@ public class ORidSet implements Set<ORID> {
     }
     long positionByte = (position / 63);
     int positionBit = (int) (position % 63);
-    if (positionByte > maxArraySize) {
-      if (nextLevel == null) {
-        return false;
-      }
-      return nextLevel.remove(new ORecordId(cluster, position - (((long) maxArraySize)) * 63));
-    }
-    int positionByteInt = (int) positionByte;
+    int block = (int) (positionByte / maxArraySize);
+    int blockPositionByteInt = (int) (positionByte % maxArraySize);
 
     if (content.length <= cluster) {
       return false;
@@ -199,15 +198,21 @@ public class ORidSet implements Set<ORID> {
     if (content[cluster] == null) {
       return false;
     }
-    if (content[cluster].length <= positionByteInt) {
+    if (content[cluster].length <= block) {
+      return false;
+    }
+    if (content[cluster][block].length <= blockPositionByteInt) {
       return false;
     }
 
-    long original = content[cluster][positionByteInt];
+    long original = content[cluster][block][blockPositionByteInt];
     long currentMask = 1L << positionBit;
-    long existed = content[cluster][positionByteInt] & currentMask;
+    long existed = content[cluster][block][blockPositionByteInt] & currentMask;
     currentMask = ~currentMask;
-    content[cluster][positionByteInt] = original & currentMask;
+    content[cluster][block][blockPositionByteInt] = original & currentMask;
+    if (existed > 0) {
+      size--;
+    }
     return existed == 0L;
 
   }

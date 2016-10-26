@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.sql.executor.ORidSet;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -96,17 +97,7 @@ public class ORidSetTest extends OParserTestAbstract {
     set.remove(rid);
     Assert.assertFalse(set.contains(rid));
   }
-
-  @Test public void testHugeClusterPosition() {
-    ORidSet set = new ORidSet();
-    ORID rid = new ORecordId(12, 2000L * 1000 * 1000 * 1000);
-    Assert.assertFalse(set.contains(rid));
-    set.add(rid);
-    Assert.assertTrue(set.contains(rid));
-    set.remove(rid);
-    Assert.assertFalse(set.contains(rid));
-  }
-
+  
   @Test public void testIterator() {
 
     Set<ORID> set = new ORidSet();
@@ -137,45 +128,30 @@ public class ORidSetTest extends OParserTestAbstract {
 
   @Test public void testIteratorOffset() {
 
+    Set<ORID> control = new HashSet<>();
     Set<ORID> set = new ORidSet();
 
-    long offset = 20L * 1000 * 1000 * 1000;
+    long offset = (((long) Integer.MAX_VALUE)) * 63;
     long idsPerCluster = 10;
 
     int cluster = 1;
     for (long id = 0; id < idsPerCluster; id++) {
       ORecordId rid = new ORecordId(cluster, offset + id);
       set.add(rid);
-      System.out.println("added " + rid);
+      control.add(rid);
     }
     Iterator<ORID> iterator = set.iterator();
-
-    System.out.println("stating");
-    long begin = System.currentTimeMillis();
 
     for (long id = 0; id < idsPerCluster; id++) {
       Assert.assertTrue(iterator.hasNext());
       ORID next = iterator.next();
-      System.out.println("found " + next);
       Assert.assertNotNull(next);
-      //        Assert.assertEquals(new ORecordId(cluster, id), next);
+      control.remove(next);
     }
-    System.out.println("elapsed: " + (System.currentTimeMillis() - begin));
+
     Assert.assertFalse(iterator.hasNext());
+    Assert.assertTrue(control.isEmpty());
 
   }
 
-  @Test public void stressTest() {
-    for (int iter = 0; iter < 10; iter++) {
-      Set<ORID> set = new ORidSet();
-      long begin = System.currentTimeMillis();
-      for (int i = 0; i < 1000 * 1000; i++) {
-        ORID rid = new ORecordId(12, i);
-        Assert.assertFalse(set.contains(rid));
-        set.add(rid);
-        Assert.assertTrue(set.contains(rid));
-      }
-      System.out.println("elapsed: " + (System.currentTimeMillis() - begin));
-    }
-  }
 }
