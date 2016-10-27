@@ -20,11 +20,6 @@
 
 package com.orientechnologies.orient.core.metadata.sequence;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OSequenceException;
@@ -33,6 +28,11 @@ import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence.SEQUENCE_TYPE;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Matan Shukry (matanshukry@gmail.com)
@@ -129,16 +129,14 @@ public class OSequenceLibraryImpl implements OSequenceLibrary {
 
     name = name.toUpperCase();
 
-    if (sequences.containsKey(name))
-      // ALREADY EXISTENT
-      return null;
+    final OSequence seq = getSequence(name);
+
+    if (seq != null)
+      return seq;
 
     final OSequence sequence = OSequenceHelper.createSequence(iDocument);
 
-    validateSequenceNoExists(name);
-
     sequences.put(name, sequence);
-
     return sequence;
   }
 
@@ -167,7 +165,6 @@ public class OSequenceLibraryImpl implements OSequenceLibrary {
 
     name = name.toUpperCase();
 
-    validateSequenceExists(name);
     sequences.remove(name);
   }
 
