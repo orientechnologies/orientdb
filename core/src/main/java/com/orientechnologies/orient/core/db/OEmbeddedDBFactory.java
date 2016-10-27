@@ -335,4 +335,11 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
     }
   }
 
+  public String getDatabasePath(String iDatabaseName) {
+    OAbstractPaginatedStorage storage = storages.get(iDatabaseName);
+    if (storage != null && storage instanceof OLocalPaginatedStorage)
+      return ((OLocalPaginatedStorage) storage).getStoragePath();
+    return null;
+  }
+
 }
