@@ -1,4 +1,26 @@
+/*
+ *
+ *  *  Copyright 2014 OrientDB LTD (info(at)orientdb.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientdb.com
+ *
+ */
 package com.orientechnologies.orient.core.metadata.sequence;
+
+import java.util.Random;
+import java.util.concurrent.Callable;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.util.OApi;
@@ -11,9 +33,6 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
-import java.util.Random;
-import java.util.concurrent.Callable;
 
 /**
  * @author Matan Shukry (matanshukry@gmail.com)
@@ -134,7 +153,8 @@ public abstract class OSequence {
     return any;
   }
 
-  public synchronized void onUpdate(ODocument iDocument) {
+  public void onUpdate(ODocument iDocument) {
+    document = iDocument;
     this.tlDocument.set(iDocument);
   }
 
@@ -205,23 +225,39 @@ public abstract class OSequence {
     sequenceClass.createProperty(OSequence.FIELD_TYPE, OType.STRING, (OType) null, true);
   }
 
-  protected void reloadSequence() {
-    tlDocument.get().reload(null, true);
+  /*
+   * Forwards the sequence by one, and returns the new value.
+   */
+  @OApi
+  public abstract long next();
+
+  /*
+   * Returns the current sequence value. If next() was never called, returns null
+   */
+  @OApi
+  public abstract long current();
+
+  /*
+   * Resets the sequence value to it's initialized value.
+   */
+  @OApi
+  public abstract long reset();
+
+  /*
+   * Returns the sequence type
+   */
+  public abstract SEQUENCE_TYPE getSequenceType();
+
+  protected void checkForUpdateToLastversion() {
+    final ODocument tlDoc = tlDocument.get();
+    if (tlDoc != null) {
+      if (document.getVersion() > tlDoc.getVersion())
+        tlDocument.set(document);
+    }
   }
 
-  private <T> T callInTx(Callable<T> callable) throws Exception {
-    ODatabaseDocumentInternal database = getDatabase();
-    boolean startTx = !database.getTransaction().isActive();
-    if (startTx) {
-      database.begin();
-    }
-    try {
-      return callable.call();
-    } finally {
-      if (startTx) {
-        database.commit();
-      }
-    }
+  protected void reloadSequence() {
+    tlDocument.set(tlDocument.get().reload(null, true));
   }
 
   protected <T> T callRetry(final Callable<T> callable, final String method) {
@@ -261,27 +297,4 @@ public abstract class OSequence {
           .wrapException(new OSequenceException("Error in transactional processing of " + getName() + "." + method + "()"), e);
     }
   }
-
-  /*
-   * Forwards the sequence by one, and returns the new value.
-   */
-  @OApi
-  public abstract long next();
-
-  /*
-   * Returns the current sequence value. If next() was never called, returns null
-   */
-  @OApi
-  public abstract long current();
-
-  /*
-   * Resets the sequence value to it's initialized value.
-   */
-  @OApi
-  public abstract long reset();
-
-  /*
-   * Returns the sequence type
-   */
-  public abstract SEQUENCE_TYPE getSequenceType();
 }
