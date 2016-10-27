@@ -810,7 +810,7 @@ public class OEnterpriseProfiler extends OAbstractProfiler {
 
     long diskCacheUsed = 0;
     long diskCacheTotal = 0;
-    for (OStorage stg : Orient.instance().getStorages()) {
+    for (OStorage stg : server.getDatabases().getStorages()) {
       if (stg instanceof OLocalPaginatedStorage) {
         diskCacheUsed += ((OLocalPaginatedStorage) stg).getReadCache().getUsedMemory();
         diskCacheTotal += OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024;

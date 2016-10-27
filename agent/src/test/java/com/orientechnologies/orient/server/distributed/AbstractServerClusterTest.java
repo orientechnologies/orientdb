@@ -95,7 +95,7 @@ public abstract class AbstractServerClusterTest {
   }
 
   public void init(final int servers) {
-    Orient.instance().closeAllStorages();
+    ODatabaseDocumentTx.closeAll();
 
     System.setProperty(GroupProperties.PROP_WAIT_SECONDS_BEFORE_JOIN, "1");
 
@@ -290,7 +290,7 @@ public abstract class AbstractServerClusterTest {
         onAfterDatabaseCreation(graph);
       } finally {
         graph.shutdown();
-        Orient.instance().closeAllStorages();
+        ODatabaseDocumentTx.closeAll();
       }
     }
 
