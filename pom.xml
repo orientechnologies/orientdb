@@ -186,6 +186,10 @@
         <surefire.version>2.19.1</surefire.version>
         <sonatypeOssDistMgmtSnapshotsUrl>https://oss.sonatype.org/content/repositories/snapshots/
         </sonatypeOssDistMgmtSnapshotsUrl>
+
+        <license.location>ODB-ASL-LICENSE.txt</license.location>
+        <!--Override with the given url on external modules-->
+        <!--<license.location>https://github.com/orientechnologies/orientdb/raw/develop/ODB-ASL-LICENSE.txt</license.location>-->
     </properties>
 
     <build>
@@ -364,12 +368,12 @@
                     <version>3.0</version>
                     <inherited>true</inherited>
                     <configuration>
-                        <header>ODB-ASL-LICENSE.txt</header>
+                        <header>${license.location}</header>
                         <aggregate>true</aggregate>
                         <failIfMissing>true</failIfMissing>
                         <encoding>UTF-8</encoding>
                         <useDefaultExcludes>true</useDefaultExcludes>
-                        <strictCheck>false</strictCheck>
+                        <strictCheck>true</strictCheck>
                         <excludes>
                             <exclude>**/assembly/**</exclude>
                             <exclude>**/config/**</exclude>
