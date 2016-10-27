@@ -37,11 +37,11 @@ import java.util.*;
  * index search and filed - value pair that uses this index should always be placed at last position.
  */
 public class OIndexSearchResult {
-  public final Map<String, Object> fieldValuePairs = new HashMap<String, Object>(8);
+  public final Map<String, Object>            fieldValuePairs = new HashMap<String, Object>(8);
   public final OQueryOperator                 lastOperator;
   public final OSQLFilterItemField.FieldChain lastField;
   public final Object                         lastValue;
-  boolean containsNullValues;
+  boolean                                     containsNullValues;
 
   public OIndexSearchResult(final OQueryOperator lastOperator, final OSQLFilterItemField.FieldChain field, final Object value) {
     this.lastOperator = lastOperator;
@@ -60,15 +60,16 @@ public class OIndexSearchResult {
    * Combines two queries subset into one. This operation will be valid only if {@link #canBeMerged(OIndexSearchResult)} method will
    * return <code>true</code> for the same passed in parameter.
    *
-   * @param searchResult Query subset to merge.
+   * @param searchResult
+   *          Query subset to merge.
    * @return New instance that presents merged query.
    */
   public OIndexSearchResult merge(final OIndexSearchResult searchResult) {
-//    if (searchResult.lastOperator instanceof OQueryOperatorEquals) {
+    // if (searchResult.lastOperator instanceof OQueryOperatorEquals) {
     if (searchResult.lastOperator instanceof OQueryOperatorEquals) {
       return mergeFields(this, searchResult);
     }
-    if(lastOperator instanceof OQueryOperatorEquals){
+    if (lastOperator instanceof OQueryOperatorEquals) {
       return mergeFields(searchResult, this);
     }
     if (isIndexEqualityOperator(searchResult.lastOperator)) {
@@ -88,11 +89,15 @@ public class OIndexSearchResult {
   }
 
   /**
-   * @param searchResult Query subset is going to be merged with given one.
+   * @param searchResult
+   *          Query subset is going to be merged with given one.
    * @return <code>true</code> if two query subsets can be merged.
    */
   boolean canBeMerged(final OIndexSearchResult searchResult) {
     if (lastField.isLong() || searchResult.lastField.isLong()) {
+      return false;
+    }
+    if (!lastOperator.canBeMerged() || !searchResult.lastOperator.canBeMerged()) {
       return false;
     }
     return isIndexEqualityOperator(lastOperator) || isIndexEqualityOperator(searchResult.lastOperator);
@@ -167,4 +172,3 @@ public class OIndexSearchResult {
   }
 
 }
-

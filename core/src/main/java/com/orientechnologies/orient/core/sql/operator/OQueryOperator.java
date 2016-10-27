@@ -239,6 +239,10 @@ public abstract class OQueryOperator {
     return false;
   }
 
+  public boolean canBeMerged() {
+    return true;
+  }
+
   public boolean isSupportingBinaryEvaluate() {
     return false;
   }

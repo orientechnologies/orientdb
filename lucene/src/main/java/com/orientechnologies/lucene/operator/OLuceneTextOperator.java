@@ -205,4 +205,8 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
     return Collections.emptyList();
   }
 
+  @Override
+  public boolean canBeMerged() {
+    return false;
+  }
 }
