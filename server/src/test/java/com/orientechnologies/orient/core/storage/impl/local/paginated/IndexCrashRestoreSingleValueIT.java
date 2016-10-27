@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
 import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -65,6 +66,11 @@ public class IndexCrashRestoreSingleValueIT {
 
     spwanServer();
 
+    final OServerAdmin serverAdmin = new OServerAdmin("remote:localhost:3500");
+    serverAdmin.connect("root", "root");
+    serverAdmin.createDatabase("testUniqueIndexCrashRestore", "graph", "plocal");
+    serverAdmin.close();
+
     testDocumentTx = new ODatabaseDocumentTx("remote:localhost:3500/testUniqueIndexCrashRestore");
     testDocumentTx.open("admin", "admin");
   }
@@ -83,8 +89,8 @@ public class IndexCrashRestoreSingleValueIT {
     System.setProperty("ORIENTDB_HOME", buildDir.getCanonicalPath());
 
     ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-Xmx2048m", "-XX:MaxDirectMemorySize=512g", "-classpath",
-        System.getProperty("java.class.path"), "-DORIENTDB_HOME=" + buildDir.getCanonicalPath(), "-DmutexFile=" + mutexFile.getCanonicalPath(),
-        RemoteDBRunner.class.getName());
+        System.getProperty("java.class.path"), "-DORIENTDB_HOME=" + buildDir.getCanonicalPath(),
+        "-DmutexFile=" + mutexFile.getCanonicalPath(), RemoteDBRunner.class.getName());
     processBuilder.inheritIO();
 
     serverProcess = processBuilder.start();
@@ -143,7 +149,9 @@ public class IndexCrashRestoreSingleValueIT {
       }
     }
 
-    testDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDir.getAbsolutePath() + "/testUniqueIndexCrashRestore");
+    testDocumentTx = new ODatabaseDocumentTx(
+        "plocal:" + new File(new File(buildDir, "databases"), "testUniqueIndexCrashRestore").getCanonicalPath());
+
     testDocumentTx.open("admin", "admin");
     testDocumentTx.close();
 

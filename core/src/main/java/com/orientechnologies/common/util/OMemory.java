@@ -62,7 +62,7 @@ public class OMemory {
     final OperatingSystemMXBean mxBean = ManagementFactory.getOperatingSystemMXBean();
     try {
       final Method memorySize = mxBean.getClass().getDeclaredMethod("getTotalPhysicalMemorySize");
-//      memorySize.setAccessible(true);
+      memorySize.setAccessible(true);
       osMemory = (Long) memorySize.invoke(mxBean);
     } catch (NoSuchMethodException e) {
       if (!OLogManager.instance().isDebugEnabled())

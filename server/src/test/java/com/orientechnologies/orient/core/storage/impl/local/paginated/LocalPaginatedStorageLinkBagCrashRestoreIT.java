@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
 import com.orientechnologies.common.concur.lock.OOneEntryPerKeyLockManager;
 import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePoolFactory;
@@ -22,6 +23,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.*;
 import java.util.concurrent.*;
@@ -71,8 +73,8 @@ public class LocalPaginatedStorageLinkBagCrashRestoreIT {
     System.setProperty("ORIENTDB_HOME", buildDirectory);
 
     ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-XX:MaxDirectMemorySize=512g", "-classpath",
-        System.getProperty("java.class.path"),  "-DmutexFile=" + mutexFile.getCanonicalPath(),
-        "-DORIENTDB_HOME=" + buildDirectory, RemoteDBRunner.class.getName());
+        System.getProperty("java.class.path"), "-DmutexFile=" + mutexFile.getCanonicalPath(), "-DORIENTDB_HOME=" + buildDirectory,
+        RemoteDBRunner.class.getName());
     processBuilder.inheritIO();
 
     process = processBuilder.start();
@@ -92,6 +94,11 @@ public class LocalPaginatedStorageLinkBagCrashRestoreIT {
 
   @Test
   public void testDocumentCreation() throws Exception {
+
+    final OServerAdmin serverAdmin = new OServerAdmin("remote:localhost:3500");
+    serverAdmin.connect("root", "root");
+    serverAdmin.createDatabase("testLocalPaginatedStorageLinkBagCrashRestore", "graph", "plocal");
+    serverAdmin.close();
 
     ODatabaseDocumentTx base_db = new ODatabaseDocumentTx("plocal:" + buildDir + "/baseLocalPaginatedStorageLinkBagCrashRestore");
     if (base_db.exists()) {
@@ -142,14 +149,15 @@ public class LocalPaginatedStorageLinkBagCrashRestoreIT {
   }
 
   @After
-  public void afterClass() {
+  public void afterClass() throws Exception {
     ODatabaseDocumentTx base_db = new ODatabaseDocumentTx("plocal:" + buildDir + "/baseLocalPaginatedStorageLinkBagCrashRestore");
     if (base_db.exists()) {
       base_db.open("admin", "admin");
       base_db.drop();
     }
 
-    ODatabaseDocumentTx test_db = new ODatabaseDocumentTx("plocal:" + buildDir + "/testLocalPaginatedStorageLinkBagCrashRestore");
+    ODatabaseDocumentTx test_db = new ODatabaseDocumentTx("plocal:"
+        + new File(new File(buildDir, "databases"), "testLocalPaginatedStorageLinkBagCrashRestore").getCanonicalPath());
     if (test_db.exists()) {
       test_db.open("admin", "admin");
       test_db.drop();
@@ -160,11 +168,13 @@ public class LocalPaginatedStorageLinkBagCrashRestoreIT {
 
   }
 
-  private void compareDocuments(long lastTs) {
+  private void compareDocuments(long lastTs) throws IOException {
     ODatabaseDocumentTx base_db = new ODatabaseDocumentTx("plocal:" + buildDir + "/baseLocalPaginatedStorageLinkBagCrashRestore");
     base_db.open("admin", "admin");
 
-    ODatabaseDocumentTx test_db = new ODatabaseDocumentTx("plocal:" + buildDir + "/testLocalPaginatedStorageLinkBagCrashRestore");
+    ODatabaseDocumentTx test_db = new ODatabaseDocumentTx(
+        "plocal:" + new File(new File(buildDir, "databases"), "testLocalPaginatedStorageLinkBagCrashRestore").getCanonicalPath());
+
     test_db.open("admin", "admin");
 
     long minTs = Long.MAX_VALUE;

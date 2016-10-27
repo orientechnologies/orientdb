@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
 import com.orientechnologies.common.concur.lock.OOneEntryPerKeyLockManager;
 import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -122,6 +123,11 @@ public class LocalPaginatedStorageMixCrashRestoreIT {
 
     spawnServer();
 
+    final OServerAdmin serverAdmin = new OServerAdmin("remote:localhost:3500");
+    serverAdmin.connect("root", "root");
+    serverAdmin.createDatabase("testLocalPaginatedStorageMixCrashRestore", "graph", "plocal");
+    serverAdmin.close();
+
     testDocumentTx = new ODatabaseDocumentTx("remote:localhost:3500/testLocalPaginatedStorageMixCrashRestore");
     testDocumentTx.open("admin", "admin");
   }
@@ -165,7 +171,8 @@ public class LocalPaginatedStorageMixCrashRestoreIT {
     System.out.println(
         addedIds.size() + " records were added. " + updatedIds.size() + " were updated. " + deletedIds.size() + " were deleted.");
 
-    testDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDir.getAbsolutePath() + "/testLocalPaginatedStorageMixCrashRestore");
+    testDocumentTx = new ODatabaseDocumentTx(
+        "plocal:" + new File(new File(buildDir, "databases"), "testLocalPaginatedStorageMixCrashRestore").getCanonicalPath());
     testDocumentTx.open("admin", "admin");
     testDocumentTx.close();
 

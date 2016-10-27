@@ -25,6 +25,7 @@ import com.orientechnologies.common.util.OMultiKey;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.OrientDBFactory;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -42,6 +43,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
+import java.io.File;
 import java.nio.channels.UnsupportedAddressTypeException;
 import java.util.*;
 
@@ -500,14 +502,12 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
   }
 
   private class RecreateIndexesTask implements Runnable {
-    private final ODatabaseDocumentInternal newDb;
     private final OStorage                  storage;
     private final ODocument                 doc;
     private int                             ok;
     private int                             errors;
 
     public RecreateIndexesTask(OStorage storage, ODocument doc) {
-      newDb = new ODatabaseDocumentEmbedded(storage);
       this.storage = storage;
       this.doc = doc;
     }
@@ -515,7 +515,12 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
     @Override
     public void run() {
       try {
-        setUpDatabase();
+        ODatabaseDocumentEmbedded newDb = new ODatabaseDocumentEmbedded(storage);
+
+        newDb.activateOnCurrentThread();
+        newDb.resetInitialization();
+        newDb.setProperty(ODatabase.OPTIONS.SECURITY.toString(), OSecurityNull.class);
+        newDb.internalOpen("admin", "nopass", null);
 
         final Collection<ODocument> idxs = getConfiguration();
 
@@ -660,15 +665,6 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
         return Collections.emptyList();
       }
       return idxs;
-    }
-
-    private void setUpDatabase() {
-      newDb.activateOnCurrentThread();
-      newDb.resetInitialization();
-      newDb.setProperty(ODatabase.OPTIONS.SECURITY.toString(), OSecurityNull.class);
-      newDb.open("admin", "nopass");
-
-      newDb.activateOnCurrentThread();
     }
   }
 

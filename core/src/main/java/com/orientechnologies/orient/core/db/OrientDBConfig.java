@@ -19,10 +19,7 @@
  */
 package com.orientechnologies.orient.core.db;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
@@ -32,7 +29,7 @@ import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
  */
 public class OrientDBConfig {
 
-  private OrientDBConfig                parent;
+  private       OrientDBConfig          parent;
   private final OContextConfiguration   configurations;
   private final Map<ATTRIBUTES, Object> attributes;
   private final Set<ODatabaseListener>  listeners;
@@ -49,7 +46,10 @@ public class OrientDBConfig {
     this.configurations = configurations;
     this.attributes = attributes;
     parent = null;
-    this.listeners = listeners;
+    if (listeners != null)
+      this.listeners = listeners;
+    else
+      this.listeners = Collections.emptySet();
   }
 
   public static OrientDBConfig defaultConfig() {

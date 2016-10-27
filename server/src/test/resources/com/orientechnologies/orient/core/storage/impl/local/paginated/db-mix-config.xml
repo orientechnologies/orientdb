@@ -9,17 +9,9 @@
             <listener ip-address="0.0.0.0" port-range="3500" protocol="binary"/>
         </listeners>
     </network>
-    <storages>
-        <storage name="testLocalPaginatedStorageCrashRestore"
-                 path="plocal:${ORIENTDB_HOME}/testLocalPaginatedStorageMixCrashRestore"
-                 loaded-at-startup="true"/>
-    </storages>
     <users>
         <user name="root" password="root" resources="*"/>
         <user name="guest" password="guest" resources="connect,server.listDatabases"/>
     </users>
-    <properties>
-        <entry value="." name="orient.home"/>
-    </properties>
     <isAfterFirstTime>true</isAfterFirstTime>
 </orient-server>

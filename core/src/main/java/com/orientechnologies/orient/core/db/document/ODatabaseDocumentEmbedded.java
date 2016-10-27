@@ -133,8 +133,10 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract {
   }
 
   private void applyListeners(OrientDBConfig config) {
-    for (ODatabaseListener listener : config.getListeners()) {
-      registerListener(listener);
+    if (config != null) {
+      for (ODatabaseListener listener : config.getListeners()) {
+        registerListener(listener);
+      }
     }
   }
 
@@ -156,7 +158,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract {
 
   /**
    * {@inheritDoc}
-   * 
+   *
    * @param config
    */
   public void internalCreate(OrientDBConfig config) {
@@ -181,7 +183,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract {
     registerHook(new OSecurityTrackerHook(metadata.getSecurity(), this), ORecordHook.HOOK_POSITION.LAST);
 
     // WAKE UP DB LIFECYCLE LISTENER
-    for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();)
+    for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext(); )
       it.next().onCreate(getDatabaseOwner());
 
     // WAKE UP LISTENERS
