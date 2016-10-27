@@ -2,7 +2,7 @@ package com.orientechnologies.lucene;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -25,7 +25,7 @@ public class LuceneReuseTest {
     db.create();
 
     try {
-      OSchemaProxy schema = db.getMetadata().getSchema();
+      OSchema schema = db.getMetadata().getSchema();
 
       OClass cls = schema.createClass("Reuse");
       cls.createProperty("name", OType.STRING);
@@ -62,7 +62,7 @@ public class LuceneReuseTest {
     db.create();
 
     try {
-      OSchemaProxy schema = db.getMetadata().getSchema();
+      OSchema schema = db.getMetadata().getSchema();
 
       OClass cls = schema.createClass("Reuse");
       cls.createProperty("name", OType.STRING);
