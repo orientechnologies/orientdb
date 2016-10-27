@@ -1,24 +1,24 @@
 /*
- * Copyright 2010-2014 OrientDB LTD (info--at--orientdb.com)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  *  Copyright 2014 OrientDB LTD (info(at)orientdb.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientdb.com
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
-package com.orientechnologies.orient.core.metadata.sequence;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+package com.orientechnologies.orient.core.metadata.sequence;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OSequenceException;
@@ -26,6 +26,11 @@ import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence.SEQUENCE_TYPE;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Matan Shukry (matanshukry@gmail.com)
@@ -44,6 +49,7 @@ public class OSequenceLibraryImpl implements OSequenceLibrary {
   }
 
   @Override
+  @Deprecated
   public void load() {
     throw new UnsupportedOperationException("use api with database for internal");
   }
@@ -80,19 +86,24 @@ public class OSequenceLibraryImpl implements OSequenceLibrary {
 
   @Override
   public OSequence getSequence(final ODatabaseDocumentInternal database, final String iName) {
-    OSequence seq = sequences.get(iName.toUpperCase());
+    final String name = iName.toUpperCase();
+
+    OSequence seq = sequences.get(name);
     if (seq == null) {
       load(database);
-      seq = sequences.get(iName.toUpperCase());
+      seq = sequences.get(name);
     }
 
-    if (seq != null)
+    if (seq != null) {
       seq.bindOnLocalThread();
+      seq.checkForUpdateToLastversion();
+    }
 
     return seq;
   }
 
   @Override
+  @Deprecated
   public OSequence getSequence(final String iName) {
     throw new UnsupportedOperationException();
   }
@@ -118,43 +129,51 @@ public class OSequenceLibraryImpl implements OSequenceLibrary {
   }
 
   @Override
+  @Deprecated
   public void dropSequence(final String iName) {
     throw new UnsupportedOperationException();
   }
 
   @Override
   public void dropSequence(final ODatabaseDocumentInternal database, final String iName) {
-    final String seqName = iName.toUpperCase();
-    final OSequence seq = getSequence(database, seqName);
+    final OSequence seq = getSequence(database, iName);
 
     if (seq != null) {
-      seq.getDocument().delete();
-      sequences.remove(seqName);
+      database.delete(seq.getDocument().getIdentity());
+      sequences.remove(iName.toUpperCase());
     }
   }
 
   public OSequence onSequenceCreated(final ODatabaseDocumentInternal database, final ODocument iDocument) {
     init(database);
 
+    String name = OSequence.getSequenceName(iDocument);
+    if (name == null)
+      return null;
+
+    name = name.toUpperCase();
+
+    final OSequence seq = getSequence(database, name);
+
+    if (seq != null)
+      return seq;
+
     final OSequence sequence = OSequenceHelper.createSequence(iDocument);
 
-    final String name = sequence.getName().toUpperCase();
-    validateSequenceNoExists(name);
-
     sequences.put(name, sequence);
-
     return sequence;
   }
 
   public OSequence onSequenceUpdated(final ODatabaseDocumentInternal database, final ODocument iDocument) {
-    final String name = OSequence.getSequenceName(iDocument);
-    if (name == null) {
+    String name = OSequence.getSequenceName(iDocument);
+    if (name == null)
       return null;
-    }
-    final OSequence sequence = getSequence(name);
-    if (sequence == null) {
+
+    name = name.toUpperCase();
+
+    final OSequence sequence = sequences.get(name);
+    if (sequence == null)
       return null;
-    }
 
     sequence.onUpdate(iDocument);
 
@@ -162,8 +181,11 @@ public class OSequenceLibraryImpl implements OSequenceLibrary {
   }
 
   public void onSequenceDropped(final ODatabaseDocumentInternal database, final ODocument iDocument) {
-    final String name = OSequence.getSequenceName(iDocument);
-    validateSequenceExists(name);
+    String name = OSequence.getSequenceName(iDocument);
+    if (name == null)
+      return;
+
+    name = name.toUpperCase();
 
     sequences.remove(name);
   }

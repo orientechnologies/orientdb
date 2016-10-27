@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.sql.executor;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence;
@@ -38,7 +39,7 @@ public class OAlterSequenceStatementExecutionTest {
     Assert.assertNotNull(next);
     Assert.assertEquals((Object) 20, next.getProperty("increment"));
     result.close();
-    OSequence seq = db.getMetadata().getSequenceLibrary().getSequence(sequenceName);
+    OSequence seq = db.getMetadata().getSequenceLibrary().getSequence((ODatabaseDocumentInternal) db, sequenceName);
     Assert.assertNotNull(seq);
     Assert.assertEquals(20, seq.next());
   }

@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.server.distributed.sequence;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePoolFactory;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -23,9 +24,9 @@ public abstract class AbstractServerClusterSequenceTest extends AbstractServerCl
   private static final boolean                  RUN_PARALLEL_SYNC_TEST = true;
   private static final int                      SEQ_RUN_COUNT          = 20;
 
-  private static final int                      DB_COUNT               = 2;
-  private static final int                      THREAD_POOL_SIZE       = 2;
-  private static final int                      CACHE_SIZE             = 27;
+  private static final int THREAD_COUNT     = 2;
+  private static final int THREAD_POOL_SIZE = 2;
+  private static final int CACHE_SIZE       = 27;
 
   private AtomicLong                            failures               = new AtomicLong();
 
@@ -41,9 +42,9 @@ public abstract class AbstractServerClusterSequenceTest extends AbstractServerCl
   @Override
   public void executeTest() throws Exception {
     // Test two instances only;
-    Assert.assertTrue("Test must run with at least 2 dbs", DB_COUNT >= 2);
-    final ODatabaseDocumentTx[] dbs = new ODatabaseDocumentTx[DB_COUNT];
-    for (int i = 0; i < DB_COUNT; ++i) {
+    Assert.assertTrue("Test must run with at least 2 dbs", THREAD_COUNT >= 2);
+    final ODatabaseDocumentTx[] dbs = new ODatabaseDocumentTx[THREAD_COUNT];
+    for (int i = 0; i < THREAD_COUNT; ++i) {
       dbs[i] = poolFactory.get(getDatabaseURL(serverInstance.get(i)), "admin", "admin").acquire();
     }
 
@@ -112,7 +113,7 @@ public abstract class AbstractServerClusterSequenceTest extends AbstractServerCl
     // to make sure they are distinct.
     ExecutorService pool = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
     List<Callable<List<Long>>> callables = new ArrayList<Callable<List<Long>>>();
-    for (int i = 0; i < DB_COUNT; ++i) {
+    for (int i = 0; i < THREAD_COUNT; ++i) {
       final int id = i;
       callables.add(new Callable<List<Long>>() {
         @Override
@@ -130,6 +131,9 @@ public abstract class AbstractServerClusterSequenceTest extends AbstractServerCl
           for (int j = 0; j < SEQ_RUN_COUNT; ++j) {
             try {
               long value = seq.next();
+
+              OLogManager.instance().info(this, "Thread %d step %d value %d", id, j, value);
+
               res.add(value);
             } catch (OConcurrentModificationException ex) {
               failures.incrementAndGet();
@@ -146,15 +150,15 @@ public abstract class AbstractServerClusterSequenceTest extends AbstractServerCl
     pool.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
 
     // Both free and ordered are required to be unique; test it
-    final int totalValues = SEQ_RUN_COUNT * DB_COUNT;
-    Set<Long> set = new HashSet<Long>(totalValues);
-    for (int i = 0; i < DB_COUNT; ++i) {
+    final int expSize = SEQ_RUN_COUNT * THREAD_COUNT;
+    Set<Long> set = new HashSet<Long>(expSize);
+    for (int i = 0; i < THREAD_COUNT; ++i) {
       List<Long> singleResults = results.get(i).get();
       set.addAll(singleResults);
     }
-    long expectedSize = set.size() - failures.get();
+    long totalValues = set.size() - failures.get();
 
     Assert.assertEquals("Distributed sequence of type " + sequenceType + " generates duplicate values, failures=" + failures.get(),
-        totalValues, expectedSize);
+        expSize, totalValues);
   }
 }

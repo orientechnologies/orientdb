@@ -72,9 +72,11 @@ public class OCommandExecutorSQLAlterSequence extends OCommandExecutorSQLAbstrac
     }
 
     final ODatabaseDocument database = getDatabase();
-    OSequence sequence = database.getMetadata().getSequenceLibrary().getSequence(this.sequenceName);
+    OSequence sequence = database.getMetadata().getSequenceLibrary().getSequence((ODatabaseDocumentInternal) database, this.sequenceName);
 
-    return sequence.updateParams(this.params);
+    final boolean result = sequence.updateParams(this.params);
+    sequence.save();
+    return result;
   }
 
   @Override public String getSyntax() {
