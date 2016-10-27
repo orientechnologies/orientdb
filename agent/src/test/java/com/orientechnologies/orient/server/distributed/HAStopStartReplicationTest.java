@@ -1,17 +1,16 @@
 package com.orientechnologies.orient.server.distributed;
 
-import org.junit.Assert;
-import org.junit.Test;
-
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Tests stop and start of replication.
- * 
+ *
  * @author Luca Garulli
  */
 public class HAStopStartReplicationTest extends AbstractServerClusterTest {
@@ -39,7 +38,8 @@ public class HAStopStartReplicationTest extends AbstractServerClusterTest {
     db.open("admin", "admin");
     try {
       Iterable<ODocument> result = db.command(new OCommandSQL("select count(*) from Item")).execute();
-      Assert.assertEquals(100l, result.iterator().next().field("count"));
+      long count = result.iterator().next().field("count");
+      Assert.assertEquals(100l, count);
 
       db.command(new OCommandSQL("HA STOP REPLICATION usa-0")).execute();
 
@@ -48,7 +48,8 @@ public class HAStopStartReplicationTest extends AbstractServerClusterTest {
       }
 
       result = db.command(new OCommandSQL("select count(*) from Item")).execute();
-      Assert.assertEquals(200l, result.iterator().next().field("count"));
+      count = result.iterator().next().field("count");
+      Assert.assertEquals(200l, count);
 
     } finally {
       db.close();
@@ -58,7 +59,8 @@ public class HAStopStartReplicationTest extends AbstractServerClusterTest {
     db.open("admin", "admin");
     try {
       Iterable<ODocument> result = db.command(new OCommandSQL("select count(*) from Item")).execute();
-      Assert.assertEquals(100l, result.iterator().next().field("count"));
+      long count = result.iterator().next().field("count");
+      Assert.assertEquals(100l, count);
 
     } finally {
       db.close();
@@ -80,7 +82,8 @@ public class HAStopStartReplicationTest extends AbstractServerClusterTest {
       }, "Realignment error");
 
       Iterable<ODocument> result = db.command(new OCommandSQL("select count(*) from Item")).execute();
-      Assert.assertEquals(200l, result.iterator().next().field("count"));
+      long count = result.iterator().next().field("count");
+      Assert.assertEquals(200l, count);
 
     } finally {
       db.close();

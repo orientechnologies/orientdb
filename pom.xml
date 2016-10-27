@@ -20,7 +20,7 @@
     </parent>
 
 
-    <artifactId>orientdb-enterprise-container</artifactId>
+    <artifactId>orientdb-enterprise-parent</artifactId>
     <packaging>pom</packaging>
 
     <modules>
