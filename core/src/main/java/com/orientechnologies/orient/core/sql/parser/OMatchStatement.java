@@ -597,6 +597,9 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
           if (rightValue == null) {
             continue; //broken graph?, null reference
           }
+          if (rightClass != null && !matchesClass(rightValue, rightClass)) {
+            continue;
+          }
           Iterable<OIdentifiable> prevMatchedRightValues = matchContext.candidates.get(outEdge.in.alias);
 
           if (matchContext.matched.containsKey(outEdge.in.alias)) {
@@ -657,6 +660,9 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
             if (leftValue == null) {
               continue; //broken graph? null reference
             }
+            if (leftClass != null && !matchesClass(leftValue, leftClass)) {
+              continue;
+            }
             Iterable<OIdentifiable> prevMatchedRightValues = matchContext.candidates.get(inEdge.out.alias);
 
             if (matchContext.matched.containsKey(inEdge.out.alias)) {
@@ -685,7 +691,10 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
               }
             } else {// searching for neighbors
               OWhereClause where = aliasFilters.get(inEdge.out.alias);
-              if (where == null || where.matchesFilters(leftValue, iCommandContext)) {
+              String className = aliasClasses.get(inEdge.out.alias);
+              OClass oClass = getDatabase().getMetadata().getSchema().getClass(className);
+              if ((oClass == null || matchesClass(leftValue, oClass)) && (where == null || where
+                  .matchesFilters(leftValue, iCommandContext))) {
                 MatchContext childContext = matchContext.copy(inEdge.out.alias, leftValue.getIdentity());
                 childContext.currentEdgeNumber = matchContext.currentEdgeNumber + 1;
                 childContext.matchedEdges.put(inEdge, true);
@@ -962,7 +971,12 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     } else {
       StringBuilder builder = new StringBuilder();
       oWhereClause.toString(ctx.getInputParameters(), builder);
-      text = "(select from " + className + " where " + builder.toString() + ")";
+
+      synchronized (oWhereClause) { //this instance is shared...
+        replaceIdentifier(oWhereClause, "$currentMatch", "@this");
+        text = "(select from " + className + " where " + builder.toString().replaceAll("\\$currentMatch", "@this") + ")";
+        replaceIdentifier(oWhereClause, "@this", "$currentMatch");
+      }
     }
     OSQLTarget target = new OSQLTarget(text, ctx);
 
@@ -971,6 +985,19 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       return null;
     }
     return targetResult.iterator();
+  }
+
+  private void replaceIdentifier(SimpleNode node, String from, String to) {
+    if (node instanceof OIdentifier) {
+      if (from.equals(node.getValue())) {
+        ((OIdentifier) node).setValue(to);
+      }
+    } else {
+      for (int i = 0; i < node.jjtGetNumChildren(); i++) {
+        replaceIdentifier((SimpleNode) node.jjtGetChild(i), from, to);
+      }
+    }
+
   }
 
   private OSelectStatement buildSelectStatement(String className, OWhereClause oWhereClause) {
