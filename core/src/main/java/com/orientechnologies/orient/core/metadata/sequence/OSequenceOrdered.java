@@ -26,7 +26,7 @@ public class OSequenceOrdered extends OSequence {
   }
 
   @Override
-  public long next() {
+  public synchronized long next() {
     return callRetry(new Callable<Long>() {
       @Override
       public Long call() throws Exception {
@@ -41,12 +41,12 @@ public class OSequenceOrdered extends OSequence {
   }
 
   @Override
-  public long current() {
+  public synchronized long current() {
     return getValue();
   }
 
   @Override
-  public long reset() {
+  public synchronized long reset() {
     return callRetry(new Callable<Long>() {
       @Override
       public Long call() throws Exception {

@@ -86,11 +86,11 @@ public class OSequenceCached extends OSequence {
   }
 
   public int getCacheSize() {
-    return document.field(FIELD_CACHE, OType.INTEGER);
+    return getDocument().field(FIELD_CACHE, OType.INTEGER);
   }
 
   public void setCacheSize(int cacheSize) {
-    document.field(FIELD_CACHE, cacheSize);
+    getDocument().field(FIELD_CACHE, cacheSize);
   }
 
   private void allocateCache(int cacheSize) {

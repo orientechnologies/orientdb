@@ -30,14 +30,13 @@ public class OSequenceLibraryImpl implements OSequenceLibrary {
   public void load() {
     sequences.clear();
 
-    //
     final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
     if (((OMetadataInternal) db.getMetadata()).getImmutableSchemaSnapshot().existsClass(OSequence.CLASS_NAME)) {
-      List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("SELECT FROM " + OSequence.CLASS_NAME));
+      final List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("SELECT FROM " + OSequence.CLASS_NAME));
       for (ODocument document : result) {
         document.reload();
 
-        OSequence sequence = OSequenceHelper.createSequence(document);
+        final OSequence sequence = OSequenceHelper.createSequence(document);
         sequences.put(sequence.getName().toUpperCase(), sequence);
       }
     }
@@ -60,11 +59,16 @@ public class OSequenceLibraryImpl implements OSequenceLibrary {
 
   @Override
   public OSequence getSequence(String iName) {
-    final OSequence seq = sequences.get(iName.toUpperCase());
-    if (seq == null)
+    OSequence seq = sequences.get(iName.toUpperCase());
+    if (seq == null) {
       load();
+      seq = sequences.get(iName.toUpperCase());
+    }
 
-    return sequences.get(iName.toUpperCase());
+    if (seq != null)
+      seq.bindOnLocalThread();
+
+    return seq;
   }
 
   @Override
