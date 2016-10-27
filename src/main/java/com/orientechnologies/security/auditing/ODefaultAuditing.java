@@ -236,10 +236,10 @@ public class ODefaultAuditing implements OAuditingService, ODatabaseLifecycleLis
   }
 
   private File getConfigFile(String iDatabaseName) {
-    OStorage storage = Orient.instance().getStorage(iDatabaseName);
+    String storagePath = server.getDatabases().getDatabasePath(iDatabaseName);
 
-    if (storage instanceof OLocalPaginatedStorage) {
-      return new File(((OLocalPaginatedStorage) storage).getStoragePath() + File.separator + FILE_AUDITING_DB_CONFIG);
+    if (storagePath != null) {
+      return new File(storagePath + File.separator + FILE_AUDITING_DB_CONFIG);
     }
 
     return null;

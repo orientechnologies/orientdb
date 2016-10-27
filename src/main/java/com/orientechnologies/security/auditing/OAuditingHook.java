@@ -407,7 +407,7 @@ public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListe
         for (String f : doc.getDirtyFields()) {
           ODocument fieldChanges = new ODocument();
           fieldChanges.field("from", doc.getOriginalValue(f));
-          fieldChanges.field("to", doc.rawField(f));
+          fieldChanges.field("to", (Object) doc.rawField(f));
           changes.field(f, fieldChanges, OType.EMBEDDED);
         }
       }
