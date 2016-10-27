@@ -59,6 +59,7 @@ import com.orientechnologies.orient.client.remote.message.OCeilingPhysicalPositi
 import com.orientechnologies.orient.client.remote.message.OCeilingPhysicalPositionsResponse;
 import com.orientechnologies.orient.client.remote.message.OCleanOutRecordRequest;
 import com.orientechnologies.orient.client.remote.message.OCleanOutRecordResponse;
+import com.orientechnologies.orient.client.remote.message.OCloseRequest;
 import com.orientechnologies.orient.client.remote.message.OCommandRequest;
 import com.orientechnologies.orient.client.remote.message.OCommandResponse;
 import com.orientechnologies.orient.client.remote.message.OCommitRequest;
@@ -99,9 +100,10 @@ import com.orientechnologies.orient.client.remote.message.OReadRecordRequest;
 import com.orientechnologies.orient.client.remote.message.OReadRecordResponse;
 import com.orientechnologies.orient.client.remote.message.OReloadRequest;
 import com.orientechnologies.orient.client.remote.message.OReloadResponse;
+import com.orientechnologies.orient.client.remote.message.OReopenRequest;
+import com.orientechnologies.orient.client.remote.message.OReopenResponse;
 import com.orientechnologies.orient.client.remote.message.OUpdateRecordRequest;
 import com.orientechnologies.orient.client.remote.message.OUpdateRecordResponse;
-import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestAsynch;
@@ -114,7 +116,6 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentRemote;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTxInternal;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -133,7 +134,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OCredentialInterceptor;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
-import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.sql.query.OLiveQuery;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
@@ -508,7 +508,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             OChannelBinaryAsynchClient network = null;
             try {
               network = getNetwork(nodeSession.getServerURL());
-              network.beginRequest(OChannelBinaryProtocol.REQUEST_DB_CLOSE, session);
+              OBinaryRequest request = new OCloseRequest();
+              network.beginRequest(request.getCommand(), session);
+              request.write(network, session, 0);
               endRequest(network);
               connectionManager.release(network);
             } catch (OIOException ex) {
@@ -1162,10 +1164,14 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             openRemoteDatabase(network);
             return network.getServerURL();
           } else {
+            OBinaryRequest request = new OReopenRequest();
+            OReopenResponse response = new OReopenResponse();
+            
             try {
-              network.writeByte(OChannelBinaryProtocol.REQUEST_DB_REOPEN);
+              network.writeByte(request.getCommand());
               network.writeInt(nodeSession.getSessionId());
               network.writeBytes(nodeSession.getToken());
+              request.write(network, session, 0);
             } finally {
               endRequest(network);
             }
@@ -1174,13 +1180,13 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
             try {
               byte[] newToken = network.beginResponse(nodeSession.getSessionId(), true);
-              sessionId = network.readInt();
+              response.read(network, session);
               if (newToken != null && newToken.length > 0) {
-                nodeSession.setSession(sessionId, newToken);
+                nodeSession.setSession(response.getSessionId(), newToken);
               } else {
-                nodeSession.setSession(sessionId, nodeSession.getToken());
+                nodeSession.setSession(response.getSessionId(), nodeSession.getToken());
               }
-              OLogManager.instance().debug(this, "Client connected to %s with session id=%d", network.getServerURL(), sessionId);
+              OLogManager.instance().debug(this, "Client connected to %s with session id=%d", network.getServerURL(), response.getSessionId());
               return currentURL;
             } finally {
               endResponse(network);
@@ -1274,23 +1280,22 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         endResponse(network);
         connectionManager.release(network);
       }
-      
       sessionId = response.getSessionId();
       byte[] token = response.getSessionToken();
       if (token.length == 0) {
         token = null;
       }
-      
+
       nodeSession.setSession(sessionId, token);
-      
+
       OLogManager.instance().debug(this, "Client connected to %s with session id=%d", network.getServerURL(), sessionId);
-      
+
       OCluster[] cl = response.getClusterIds();
       updateStorageInformations(cl);
-      
+
       // READ CLUSTER CONFIGURATION
       updateClusterConfiguration(network.getServerURL(), response.getDistributedConfiguration());
-      
+
       status = STATUS.OPEN;
     } finally {
       stateLock.releaseWriteLock();

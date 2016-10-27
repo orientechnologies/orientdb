@@ -32,6 +32,7 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 
@@ -45,6 +46,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.client.remote.OStorageRemoteNodeSession;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
+import com.orientechnologies.orient.client.remote.message.OErrorResponse;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
@@ -374,26 +376,15 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
       return iClientTxId;
     } else if (iResult == OChannelBinaryProtocol.RESPONSE_STATUS_ERROR) {
 
-      final List<OPair<String, String>> exceptions = new ArrayList<OPair<String, String>>();
-
-      // EXCEPTION
-      while (readByte() == 1) {
-        final String excClassName = readString();
-        final String excMessage = readString();
-        exceptions.add(new OPair<String, String>(excClassName, excMessage));
-      }
-
-      byte[] serializedException = null;
-      if (srvProtocolVersion >= 19)
-        serializedException = readBytes();
-
+      OErrorResponse response = new OErrorResponse();
+      response.read(this, null);
+      byte[] serializedException = response.getResult();
       Exception previous = null;
-
       if (serializedException != null && serializedException.length > 0)
         throwSerializedException(serializedException);
 
-      for (int i = exceptions.size() - 1; i > -1; --i) {
-        previous = createException(exceptions.get(i).getKey(), exceptions.get(i).getValue(), previous);
+      for (Map.Entry<String, String> entry : response.getMessages().entrySet()) {
+        previous = createException(entry.getKey(), entry.getValue(), previous);
       }
 
       if (previous != null) {

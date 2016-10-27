@@ -46,6 +46,7 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.ONullSerializer;
 import com.orientechnologies.common.util.OCommonConst;
+import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.message.OAddClusterRequest;
 import com.orientechnologies.orient.client.remote.message.OAddClusterResponse;
 import com.orientechnologies.orient.client.remote.message.OBinaryProtocolHelper;
@@ -76,6 +77,7 @@ import com.orientechnologies.orient.client.remote.message.ODropClusterRequest;
 import com.orientechnologies.orient.client.remote.message.ODropClusterResponse;
 import com.orientechnologies.orient.client.remote.message.ODropDatabaseRequest;
 import com.orientechnologies.orient.client.remote.message.ODropDatabaseResponse;
+import com.orientechnologies.orient.client.remote.message.OErrorResponse;
 import com.orientechnologies.orient.client.remote.message.OExistsDatabaseRequest;
 import com.orientechnologies.orient.client.remote.message.OExistsDatabaseResponse;
 import com.orientechnologies.orient.client.remote.message.OFloorPhysicalPositionsRequest;
@@ -111,6 +113,7 @@ import com.orientechnologies.orient.client.remote.message.OReadRecordRequest;
 import com.orientechnologies.orient.client.remote.message.OReadRecordResponse;
 import com.orientechnologies.orient.client.remote.message.OReleaseDatabaseRequest;
 import com.orientechnologies.orient.client.remote.message.OReloadResponse;
+import com.orientechnologies.orient.client.remote.message.OReopenResponse;
 import com.orientechnologies.orient.client.remote.message.OSBTCreateTreeRequest;
 import com.orientechnologies.orient.client.remote.message.OSBTCreateTreeResponse;
 import com.orientechnologies.orient.client.remote.message.OSBTFetchEntriesMajorRequest;
@@ -741,11 +744,12 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   }
 
   private void reopenDatabase(OClientConnection connection) throws IOException {
+    OReopenResponse response = new OReopenResponse(connection.getId());
     // TODO:REASSOCIATE CONNECTION TO CLIENT.
     beginResponse();
     try {
       sendOk(connection, clientTxId);
-      channel.writeInt(connection.getId());
+      response.write(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
     } finally {
       endResponse(connection);
     }
@@ -1087,10 +1091,22 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       else
         current = t;
 
-      sendErrorDetails(current);
+      Map<String, String> messages = new HashMap<>();
+      Throwable it = current;
+      while (it != null) {
+        messages.put(current.getClass().getName(), current.getMessage());
+        it = it.getCause();
+      }
+      final OMemoryStream memoryStream = new OMemoryStream();
+      final ObjectOutputStream objectOutputStream = new ObjectOutputStream(memoryStream);
 
-      serializeExceptionObject(current);
+      objectOutputStream.writeObject(current);
+      objectOutputStream.flush();
+      final byte[] result = memoryStream.toByteArray();
+      objectOutputStream.close();
 
+      OBinaryResponse<Void> error = new OErrorResponse(messages, result);
+      error.write(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
       channel.flush();
 
       if (OLogManager.instance().isLevelEnabled(logClientExceptions)) {
