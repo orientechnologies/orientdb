@@ -99,6 +99,8 @@ import com.orientechnologies.orient.client.remote.message.OHideRecordRequest;
 import com.orientechnologies.orient.client.remote.message.OHideRecordResponse;
 import com.orientechnologies.orient.client.remote.message.OHigherPhysicalPositionsRequest;
 import com.orientechnologies.orient.client.remote.message.OHigherPhysicalPositionsResponse;
+import com.orientechnologies.orient.client.remote.message.OImportRequest;
+import com.orientechnologies.orient.client.remote.message.OImportResponse;
 import com.orientechnologies.orient.client.remote.message.OIncrementalBackupRequest;
 import com.orientechnologies.orient.client.remote.message.OIncrementalBackupResponse;
 import com.orientechnologies.orient.client.remote.message.OListDatabasesReponse;
@@ -2568,38 +2570,28 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
     if (!isConnectionAlive(connection))
       return;
-
-    String options = channel.readString();
-    String originalName = channel.readString();
-    File file = File.createTempFile(connection.getDatabase().getName() + "import", originalName);
-    FileOutputStream output = new FileOutputStream(file);
-    byte[] bytes;
-    while ((bytes = channel.readBytes()) != null) {
-      output.write(bytes);
-    }
-    output.close();
+    OImportRequest request = new OImportRequest();
+    request.read(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
+    
+    List<String> result = new ArrayList<>();
+    OLogManager.instance().info(this, "Starting database import");
+    ODatabaseImport imp = new ODatabaseImport(connection.getDatabase(), request.getImporPath(), new OCommandOutputListener() {
+      @Override
+      public void onMessage(String iText) {
+        OLogManager.instance().debug(ONetworkProtocolBinary.this, iText);
+        if (iText != null)
+          result.add(iText);
+      }
+    });
+    imp.setOptions(request.getImporPath());
+    imp.importDatabase();
+    imp.close();
+    new File(request.getImporPath()).delete();
+    OImportResponse response = new OImportResponse(result);
     beginResponse();
-    sendOk(connection, clientTxId);
     try {
-      OLogManager.instance().info(this, "Starting database import");
-      ODatabaseImport imp = new ODatabaseImport(connection.getDatabase(), file.getAbsolutePath(), new OCommandOutputListener() {
-        @Override
-        public void onMessage(String iText) {
-          try {
-            OLogManager.instance().debug(ONetworkProtocolBinary.this, iText);
-            if (iText != null)
-              channel.writeString(iText);
-          } catch (IOException e) {
-            OLogManager.instance().warn(ONetworkProtocolBinary.this, "Error sending import message \"%s\" to client", iText);
-            OLogManager.instance().debug(ONetworkProtocolBinary.this, "Error sending import message ", e);
-          }
-        }
-      });
-      imp.setOptions(options);
-      imp.importDatabase();
-      imp.close();
-      file.delete();
-      channel.writeString(null);
+      sendOk(connection, clientTxId);
+      response.write(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
     } finally {
       OLogManager.instance().info(this, "Database import finshed");
       endResponse(connection);

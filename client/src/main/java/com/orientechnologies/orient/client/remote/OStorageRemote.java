@@ -88,6 +88,8 @@ import com.orientechnologies.orient.client.remote.message.OHideRecordRequest;
 import com.orientechnologies.orient.client.remote.message.OHideRecordResponse;
 import com.orientechnologies.orient.client.remote.message.OHigherPhysicalPositionsRequest;
 import com.orientechnologies.orient.client.remote.message.OHigherPhysicalPositionsResponse;
+import com.orientechnologies.orient.client.remote.message.OImportRequest;
+import com.orientechnologies.orient.client.remote.message.OImportResponse;
 import com.orientechnologies.orient.client.remote.message.OIncrementalBackupRequest;
 import com.orientechnologies.orient.client.remote.message.OIncrementalBackupResponse;
 import com.orientechnologies.orient.client.remote.message.OLowerPhysicalPositionsRequest;
@@ -272,19 +274,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     }, errorMessage, connectionRetry);
   }
 
-  public <T> T networkOperationRetry(final OStorageRemoteOperation<T> operation, final String errorMessage, int retry) {
-    return baseNetworkOperation(new OStorageRemoteOperation<T>() {
-      @Override
-      public T execute(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
-        final T res = operation.execute(network, session);
-        connectionManager.release(network);
-        return res;
-      }
-    }, errorMessage, retry);
-  }
-
-  public <T> T networkOperationRetry(final OBinaryRequest request, final OBinaryResponse<T> response, final String errorMessage,
-      int retry) {
+  public <T> T networkOperationRetryTimeout(final OBinaryRequest request, final OBinaryResponse<T> response,
+      final String errorMessage, int retry, int timeout) {
     return baseNetworkOperation(new OStorageRemoteOperation<T>() {
       @Override
       public T execute(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
@@ -294,12 +285,17 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         } finally {
           network.endRequest();
         }
+        int prev = network.getSocketTimeout();
         final T res;
         try {
+          if (timeout > 0)
+            network.setSocketTimeout(timeout);
           beginResponse(network, session);
           res = response.read(network, session);
         } finally {
           endResponse(network);
+          if (timeout > 0)
+            network.setSocketTimeout(prev);
         }
         connectionManager.release(network);
         return res;
@@ -308,7 +304,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   public <T> T networkOperation(final OBinaryRequest request, final OBinaryResponse<T> response, final String errorMessage) {
-    return networkOperationRetry(request, response, errorMessage, connectionRetry);
+    return networkOperationRetryTimeout(request, response, errorMessage, connectionRetry, 0);
   }
 
   public <T> T baseNetworkOperation(final OStorageRemoteOperation<T> operation, final String errorMessage, int retry) {
@@ -1166,7 +1162,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           } else {
             OBinaryRequest request = new OReopenRequest();
             OReopenResponse response = new OReopenResponse();
-            
+
             try {
               network.writeByte(request.getCommand());
               network.writeInt(nodeSession.getSessionId());
@@ -1186,7 +1182,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
               } else {
                 nodeSession.setSession(response.getSessionId(), nodeSession.getToken());
               }
-              OLogManager.instance().debug(this, "Client connected to %s with session id=%d", network.getServerURL(), response.getSessionId());
+              OLogManager.instance().debug(this, "Client connected to %s with session id=%d", network.getServerURL(),
+                  response.getSessionId());
               return currentURL;
             } finally {
               endResponse(network);
@@ -1740,40 +1737,17 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
   public void importDatabase(final String options, final InputStream inputStream, final String name,
       final OCommandOutputListener listener) {
-    networkOperationRetry(new OStorageRemoteOperation<Void>() {
-      @Override
-      public Void execute(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
-        try {
-          beginRequest(network, OChannelBinaryProtocol.REQUEST_DB_IMPORT, session);
-          network.writeString(options);
-          network.writeString(name);
-          byte[] buffer = new byte[1024];
-          int size;
-          while ((size = inputStream.read(buffer)) > 0) {
-            network.writeBytes(buffer, size);
-          }
-          network.writeBytes(null);
-        } finally {
-          endRequest(network);
-        }
+    OBinaryRequest request = new OImportRequest(inputStream, options, name);
 
-        int timeout = network.getSocketTimeout();
-        try {
-          // Import messages are sent while import is running, using the request timeout instead of message timeout to avoid early
-          // reading interrupt.
-          network.setSocketTimeout(OGlobalConfiguration.NETWORK_REQUEST_TIMEOUT.getValueAsInteger());
-          beginResponse(network, session);
-          String message;
-          while ((message = network.readString()) != null) {
-            listener.onMessage(message);
-          }
-        } finally {
-          endResponse(network);
-          network.setSocketTimeout(timeout);
-        }
-        return null;
-      }
-    }, "Error sending import request", 0);
+    OImportResponse response = new OImportResponse();
+
+    networkOperationRetryTimeout(request, response, "Error sending import request", 0,
+        OGlobalConfiguration.NETWORK_REQUEST_TIMEOUT.getValueAsInteger());
+
+    for (String message : response.getMessages()) {
+      listener.onMessage(message);
+    }
+
   }
 
   public void addNewClusterToConfiguration(int clusterId, String iClusterName) {
