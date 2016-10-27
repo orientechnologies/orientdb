@@ -1417,6 +1417,36 @@ public class OMatchStatementExecutionTest {
     assertEquals(2, qResult.size());
   }
 
+  @Test
+  public void testInstanceof(){
+
+
+    List<ODocument> qResult = db
+        .command(new OCommandSQL("MATCH {class: Person, as: p, where: ($currentMatch instanceof 'Person')} return $elements limit 1")).execute();
+    assertEquals(1, qResult.size());
+
+    qResult = db
+        .command(new OCommandSQL("MATCH {class: Person, as: p, where: ($currentMatch instanceof 'V')} return $elements limit 1")).execute();
+    assertEquals(1, qResult.size());
+
+    qResult = db
+        .command(new OCommandSQL("MATCH {class: Person, as: p, where: (not ($currentMatch instanceof 'Person'))} return $elements limit 1")).execute();
+    assertEquals(0, qResult.size());
+
+    qResult = db
+        .command(new OCommandSQL("MATCH {class: Person, where: (name = 'n1')}.out(){as:p, where: ($currentMatch instanceof 'Person')} return $elements limit 1")).execute();
+    assertEquals(1, qResult.size());
+
+    qResult = db
+        .command(new OCommandSQL("MATCH {class: Person, where: (name = 'n1')}.out(){as:p, where: ($currentMatch instanceof 'Person' and '$currentMatch' <> '@this')} return $elements limit 1")).execute();
+    assertEquals(1, qResult.size());
+
+    qResult = db
+        .command(new OCommandSQL("MATCH {class: Person, where: (name = 'n1')}.out(){as:p, where: ( not ($currentMatch instanceof 'Person'))} return $elements limit 1")).execute();
+    assertEquals(0, qResult.size());
+
+  }
+
   private List<OIdentifiable> getManagedPathElements(String managerName) {
     StringBuilder query = new StringBuilder();
     query.append("  match {class:Employee, as:boss, where: (name = '" + managerName + "')}");
