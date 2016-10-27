@@ -37,8 +37,7 @@ public class LuceneReuseTest {
       db.command(new OCommandSQL("create index Reuse.surname on Reuse (surname) FULLTEXT ENGINE LUCENE")).execute();
 
       for (int i = 0; i < 10; i++) {
-        db.save(new ODocument("Reuse").field("name", "John").field("date", new Date()).field("surname", "Reese").field("age",
-            Math.random() * 10));
+        db.save(new ODocument("Reuse").field("name", "John").field("date", new Date()).field("surname", "Reese").field("age", i));
       }
       Collection<ODocument> results = db.command(new OCommandSQL("SELECT FROM Reuse WHERE name='John' and surname LUCENE 'Reese'"))
           .execute();
@@ -72,13 +71,10 @@ public class LuceneReuseTest {
 
       db.command(new OCommandSQL("create index Reuse.comp on Reuse (name,surname,date,age) UNIQUE")).execute();
       db.command(new OCommandSQL("create index Reuse.n_surname on Reuse (name,surname) FULLTEXT ENGINE LUCENE")).execute();
-
       for (int i = 0; i < 10; i++) {
-        db.save(new ODocument("Reuse").field("name", "John").field("date", new Date()).field("surname", "Reese").field("age",
-            Math.random() * 10));
+        db.save(new ODocument("Reuse").field("name", "John").field("date", new Date()).field("surname", "Reese").field("age", i));
       }
-      db.save(new ODocument("Reuse").field("name", "John").field("date", new Date()).field("surname", "Franklin").field("age",
-          Math.random() * 10));
+      db.save(new ODocument("Reuse").field("name", "John").field("date", new Date()).field("surname", "Franklin").field("age", 11));
       Collection<ODocument> results = db
           .command(new OCommandSQL("SELECT FROM Reuse WHERE name='John' and [name,surname] LUCENE 'Reese'")).execute();
 
@@ -99,3 +95,4 @@ public class LuceneReuseTest {
   }
 
 }
+
