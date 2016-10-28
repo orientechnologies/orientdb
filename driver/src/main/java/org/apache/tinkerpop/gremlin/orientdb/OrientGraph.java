@@ -1,5 +1,24 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
+import static org.apache.tinkerpop.gremlin.orientdb.StreamUtils.asStream;
+
+import java.util.*;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
+
+import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.NotImplementedException;
+import org.apache.tinkerpop.gremlin.orientdb.traversal.strategy.optimization.OrientGraphStepStrategy;
+import org.apache.tinkerpop.gremlin.process.computer.GraphComputer;
+import org.apache.tinkerpop.gremlin.process.traversal.TraversalStrategies;
+import org.apache.tinkerpop.gremlin.structure.*;
+import org.apache.tinkerpop.gremlin.structure.io.Io;
+import org.apache.tinkerpop.gremlin.structure.io.Io.Builder;
+import org.apache.tinkerpop.gremlin.structure.util.ElementHelper;
+import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
@@ -21,24 +40,6 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import org.apache.commons.configuration.Configuration;
-import org.apache.commons.lang.NotImplementedException;
-import org.apache.tinkerpop.gremlin.orientdb.traversal.strategy.optimization.OrientGraphStepStrategy;
-import org.apache.tinkerpop.gremlin.process.computer.GraphComputer;
-import org.apache.tinkerpop.gremlin.process.traversal.TraversalStrategies;
-import org.apache.tinkerpop.gremlin.structure.*;
-import org.apache.tinkerpop.gremlin.structure.io.Io;
-import org.apache.tinkerpop.gremlin.structure.io.Io.Builder;
-import org.apache.tinkerpop.gremlin.structure.util.ElementHelper;
-import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
-
-import java.util.*;
-import java.util.function.BiFunction;
-import java.util.function.Function;
-import java.util.function.Supplier;
-import java.util.stream.Stream;
-
-import static org.apache.tinkerpop.gremlin.orientdb.StreamUtils.asStream;
 
 @Graph.OptIn(Graph.OptIn.SUITE_STRUCTURE_STANDARD)
 @Graph.OptIn(Graph.OptIn.SUITE_STRUCTURE_INTEGRATE)
@@ -416,7 +417,10 @@ public final class OrientGraph implements Graph {
     }
 
     @Override
-    public Transaction tx() {
+    public OrientTransaction tx() {
+        if (!features.graph().supportsTransactions())
+            return new OrientNoTransaction(this);
+
         makeActive();
         return new OrientTransaction(this);
     }
@@ -500,7 +504,7 @@ public final class OrientGraph implements Graph {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         makeActive();
         boolean commitTx = true;
         String url = database.getURL();
