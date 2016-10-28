@@ -30,6 +30,8 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
 
+import com.orientechnologies.orient.core.record.ORecord;
+
 /**
  * ResultSet class that implements List interface for retro compatibility.
  *
@@ -41,7 +43,9 @@ import java.util.NoSuchElementException;
 public class OBasicResultSet<T> implements OResultSet<T> {
   protected List<T>       underlying;
   protected transient int limit = -1;
-
+  // Reference to temporary record for avoid garbace collection
+  private List<ORecord> temporaryRecordCache;
+  
   public OBasicResultSet() {
     underlying = Collections.synchronizedList(new ArrayList<T>());
   }
@@ -239,4 +243,8 @@ public class OBasicResultSet<T> implements OResultSet<T> {
     return underlying.isEmpty();
   }
 
+  public void setTemporaryRecordCache(List<ORecord> temporaryRecordCache) {
+    this.temporaryRecordCache = temporaryRecordCache;
+  }
+  
 }

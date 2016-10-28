@@ -327,7 +327,7 @@ public class SQLInsertTest extends DocumentDBBaseTest {
     ORID another = ((OIdentifiable) res1).getIdentity();
     final String sql = "INSERT INTO Actor2 RETURN $current.FirstName  FROM SELECT * FROM [" + doc.getIdentity().toString() + ","
         + another.toString() + "]";
-    ArrayList res3 = database.command(new OCommandSQL(sql)).execute();
+    List res3 = database.command(new OCommandSQL(sql)).execute();
     Assert.assertEquals(res3.size(), 2);
     Assert.assertTrue(((List) res3).get(0) instanceof ODocument);
     final ODocument res3doc = (ODocument) res3.get(0);
