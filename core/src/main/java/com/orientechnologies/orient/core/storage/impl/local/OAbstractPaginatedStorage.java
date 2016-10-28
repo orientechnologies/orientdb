@@ -3286,21 +3286,21 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     createClusterFromConfig(
         new OStoragePaginatedClusterConfiguration(configuration, clusters.size(), OMetadataDefault.CLUSTER_INTERNAL_NAME, null,
-            true, 20, 4, storageEncryption, encryptionKey, stgConflictStrategy, OStorageClusterConfiguration.STATUS.ONLINE));
+            true, 20, 4, storageCompression, storageEncryption, encryptionKey, stgConflictStrategy, OStorageClusterConfiguration.STATUS.ONLINE));
 
     createClusterFromConfig(
         new OStoragePaginatedClusterConfiguration(configuration, clusters.size(), OMetadataDefault.CLUSTER_INDEX_NAME, null, false,
             OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR, OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR,
-            storageEncryption, encryptionKey, stgConflictStrategy, OStorageClusterConfiguration.STATUS.ONLINE));
+            storageCompression, storageEncryption, encryptionKey, stgConflictStrategy, OStorageClusterConfiguration.STATUS.ONLINE));
 
     createClusterFromConfig(
         new OStoragePaginatedClusterConfiguration(configuration, clusters.size(), OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME, null,
-            false, 1, 1, storageEncryption, encryptionKey, stgConflictStrategy, OStorageClusterConfiguration.STATUS.ONLINE));
+            false, 1, 1, storageCompression, storageEncryption, encryptionKey, stgConflictStrategy, OStorageClusterConfiguration.STATUS.ONLINE));
 
     defaultClusterId = createClusterFromConfig(
         new OStoragePaginatedClusterConfiguration(configuration, clusters.size(), CLUSTER_DEFAULT_NAME, null, true,
             OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR, OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR,
-            storageEncryption, encryptionKey, stgConflictStrategy, OStorageClusterConfiguration.STATUS.ONLINE));
+            storageCompression,  storageEncryption, encryptionKey, stgConflictStrategy, OStorageClusterConfiguration.STATUS.ONLINE));
   }
 
   private int createClusterFromConfig(final OStorageClusterConfiguration config) throws IOException {

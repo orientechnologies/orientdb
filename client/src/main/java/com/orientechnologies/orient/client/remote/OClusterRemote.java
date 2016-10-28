@@ -28,7 +28,7 @@ import com.orientechnologies.orient.core.storage.*;
 
 /**
  * Remote cluster implementation
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OClusterRemote implements OCluster {
@@ -227,6 +227,11 @@ public class OClusterRemote implements OCluster {
   @Override
   public float recordOverflowGrowFactor() {
     throw new UnsupportedOperationException("recordOverflowGrowFactor()");
+  }
+
+  @Override
+  public String compression() {
+    throw new UnsupportedOperationException("compression()");
   }
 
   @Override

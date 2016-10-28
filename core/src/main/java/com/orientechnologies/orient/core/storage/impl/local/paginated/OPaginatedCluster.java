@@ -32,6 +32,8 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.compression.OCompression;
+import com.orientechnologies.orient.core.compression.OCompressionFactory;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
@@ -76,6 +78,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   private static final int    RECORD_POSITION_MASK     = 0xFFFF;
   private static final int    ONE_KB                   = 1024;
 
+  private volatile OCompression                          compression;
   private volatile OEncryption                           encryption;
   private final    boolean                               systemCluster;
   private          OClusterPositionMap                   clusterPositionMap;
@@ -131,7 +134,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
         config = new OStoragePaginatedClusterConfiguration(storage.getConfiguration(), id, clusterName, null, true,
             OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR, OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR,
-            cfgEncryption, cfgEncryptionKey, null, OStorageClusterConfiguration.STATUS.ONLINE);
+            cfgCompression, cfgEncryption, cfgEncryptionKey, null, OStorageClusterConfiguration.STATUS.ONLINE);
         config.name = clusterName;
 
         init((OAbstractPaginatedStorage) storage, config);
@@ -386,6 +389,16 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   }
 
   @Override
+  public String compression() {
+    acquireSharedLock();
+    try {
+      return config.compression;
+    } finally {
+      releaseSharedLock();
+    }
+  }
+
+  @Override
   public String encryption() {
     acquireSharedLock();
     try {
@@ -426,6 +439,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     if (statistic != null)
       statistic.startRecordCreationTimer();
     try {
+      content = compression.compress(content);
       content = encryption.encrypt(content);
 
       OAtomicOperation atomicOperation = startAtomicOperation(true);
@@ -656,7 +670,9 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
           fullContentPosition += OIntegerSerializer.INT_SIZE;
 
           byte[] recordContent = Arrays.copyOfRange(fullContent, fullContentPosition, fullContentPosition + readContentSize);
+
           recordContent = encryption.decrypt(recordContent);
+          recordContent = compression.uncompress(recordContent);
 
           return new ORawBuffer(recordContent, recordVersion, recordType);
         } finally {
@@ -868,6 +884,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     if (statistic != null)
       statistic.startRecordUpdateTimer();
     try {
+      content = compression.compress(content);
       content = encryption.encrypt(content);
 
       OAtomicOperation atomicOperation = startAtomicOperation(true);
@@ -1119,6 +1136,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
           throw new OPaginatedClusterException("Record with rid " + new ORecordId(id, clusterPosition) + " was not deleted", this);
         }
 
+        content = compression.compress(content);
         content = encryption.encrypt(content);
 
         int entryContentLength = getEntryContentLength(content.length);
@@ -1655,6 +1673,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     OFileUtils.checkValidName(config.getName());
 
     this.config = (OStoragePaginatedClusterConfiguration) config;
+    this.compression = OCompressionFactory.INSTANCE.getCompression(this.config.compression, null);
     this.encryption = OEncryptionFactory.INSTANCE.getEncryption(this.config.encryption, this.config.encryptionKey);
 
     if (((OStoragePaginatedClusterConfiguration) config).conflictStrategy != null)

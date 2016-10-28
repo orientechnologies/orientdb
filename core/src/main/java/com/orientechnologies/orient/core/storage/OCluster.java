@@ -131,6 +131,8 @@ public interface OCluster {
 
   float recordGrowFactor();
 
+  String compression();
+
   float recordOverflowGrowFactor();
 
   boolean isHashBased();
