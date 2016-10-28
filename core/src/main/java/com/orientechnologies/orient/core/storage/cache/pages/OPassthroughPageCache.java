@@ -51,9 +51,8 @@ public class OPassthroughPageCache implements OPageCache {
   }
 
   @Override
-  public long releasePage(OCacheEntry cacheEntry, OWriteCache writeCache) {
+  public void releasePage(OCacheEntry cacheEntry, OWriteCache writeCache) {
     readCache.release(cacheEntry, writeCache);
-    return NOT_CACHED;
   }
 
   @Override
@@ -62,7 +61,7 @@ public class OPassthroughPageCache implements OPageCache {
   }
 
   @Override
-  public OCacheEntry purgePage(long fileId, long pageIndex) {
+  public OCacheEntry purgePage(long fileId, long pageIndex, OWriteCache writeCache) {
     return null; // do nothing
   }
 

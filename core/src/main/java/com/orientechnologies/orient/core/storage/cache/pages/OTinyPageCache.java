@@ -68,6 +68,7 @@ public class OTinyPageCache implements OPageCache {
       }
 
       final int countersBase = i * 2;
+      assert counters[countersBase + 1] >= 1;
 
       if (pageIndex == entry.getPageIndex() && fileId == entry.getFileId()) { // found in cache
         ++counters[countersBase];
@@ -75,7 +76,7 @@ public class OTinyPageCache implements OPageCache {
         return entry;
       }
 
-      if (victimHits != 0 /* still no free slot found */ && counters[countersBase] == 0 /* no usages */) {
+      if (victimHits != 0 /* still no free slot found */ && counters[countersBase] <= 0 /* no usages */) {
         final long hits = counters[countersBase + 1];
         if (hits < victimHits) {
           victimIndex = i;
@@ -89,10 +90,13 @@ public class OTinyPageCache implements OPageCache {
       return null;
 
     if (victimIndex != -1) { // slot found
-      if (victimHits != 0) // slot is not free
-        readCache.release(pages[victimIndex], writeCache);
-
       final int countersBase = victimIndex * 2;
+
+      if (victimHits != 0) { // slot is not free
+        final OCacheEntry victim = pages[victimIndex];
+        for (long i = counters[countersBase]; i <= 0; ++i)
+          readCache.release(victim, writeCache);
+      }
 
       pages[victimIndex] = entry;
       counters[countersBase] = 1;
@@ -103,13 +107,14 @@ public class OTinyPageCache implements OPageCache {
   }
 
   @Override
-  public long releasePage(OCacheEntry cacheEntry, OWriteCache writeCache) {
+  public void releasePage(OCacheEntry cacheEntry, OWriteCache writeCache) {
     for (int i = 0; i < pages.length; ++i)
-      if (pages[i] == cacheEntry) // found in cache
-        return --counters[i * 2];
+      if (pages[i] == cacheEntry) { // found in cache
+        --counters[i * 2];
+        return;
+      }
 
     readCache.release(cacheEntry, writeCache); // not cached
-    return NOT_CACHED;
   }
 
   @Override
@@ -118,21 +123,24 @@ public class OTinyPageCache implements OPageCache {
       final OCacheEntry entry = pages[i];
 
       if (entry != null && fileId == entry.getFileId()) {
-        assert counters[i * 2] == 0;
+        assert counters[i * 2] <= 0;
         pages[i] = null;
-        readCache.release(entry, writeCache);
+        for (long j = counters[i * 2]; j <= 0; ++j)
+          readCache.release(entry, writeCache);
       }
     }
   }
 
   @Override
-  public OCacheEntry purgePage(long fileId, long pageIndex) {
+  public OCacheEntry purgePage(long fileId, long pageIndex, OWriteCache writeCache) {
     for (int i = 0; i < pages.length; ++i) {
       final OCacheEntry entry = pages[i];
 
       if (entry != null && pageIndex == entry.getPageIndex() && fileId == entry.getFileId()) {
-        assert counters[i * 2] == 0;
+        assert counters[i * 2] <= 0;
         pages[i] = null;
+        for (long j = counters[i * 2]; j < 0; ++j)
+          readCache.release(entry, writeCache);
         return entry;
       }
     }
@@ -146,9 +154,10 @@ public class OTinyPageCache implements OPageCache {
       final OCacheEntry entry = pages[i];
 
       if (entry != null) {
-        assert counters[i * 2] == 0;
+        assert counters[i * 2] <= 0;
         pages[i] = null;
-        readCache.release(entry, writeCache);
+        for (long j = counters[i * 2]; j <= 0; ++j)
+          readCache.release(entry, writeCache);
       }
     }
   }

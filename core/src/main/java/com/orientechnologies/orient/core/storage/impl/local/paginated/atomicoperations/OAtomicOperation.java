@@ -422,7 +422,7 @@ public class OAtomicOperation {
             continue;
           final long pageIndex = filePageChangesEntry.getKey();
 
-          OCacheEntry cacheEntry = filePageChanges.isNew ? null : pageCache.purgePage(fileId, pageIndex);
+          OCacheEntry cacheEntry = filePageChanges.isNew ? null : pageCache.purgePage(fileId, pageIndex, writeCache);
           if (cacheEntry == null) {
             cacheEntry = readCache.load(fileId, pageIndex, true, writeCache, 1);
             if (cacheEntry == null) {
@@ -522,6 +522,14 @@ public class OAtomicOperation {
     return operationUnitId.hashCode();
   }
 
+  protected OPageCache createPageCache(OReadCache readCache) {
+    if (PAGE_CACHE_SIZE > 8)
+      return new OLruPageCache(readCache, PAGE_CACHE_SIZE, Math.max(PAGE_CACHE_SIZE / 8, 4));
+    if (PAGE_CACHE_SIZE > 0)
+      return new OTinyPageCache(readCache, PAGE_CACHE_SIZE);
+    return new OPassthroughPageCache(readCache);
+  }
+
   private static class FileChanges {
     private Map<Long, FilePageChanges> pageChangesMap  = new HashMap<Long, FilePageChanges>();
     private long                       maxNewPageIndex = -2;
@@ -555,13 +563,5 @@ public class OAtomicOperation {
     }
 
     return fileId;
-  }
-
-  private static OPageCache createPageCache(OReadCache readCache) {
-    if (PAGE_CACHE_SIZE > 8)
-      return new OLruPageCache(readCache, PAGE_CACHE_SIZE, Math.max(PAGE_CACHE_SIZE / 8, 4));
-    if (PAGE_CACHE_SIZE > 0)
-      return new OTinyPageCache(readCache, PAGE_CACHE_SIZE);
-    return new OPassthroughPageCache(readCache);
   }
 }
