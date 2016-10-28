@@ -24,47 +24,200 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
+import com.orientechnologies.orient.client.remote.OFetchPlanResults;
 import com.orientechnologies.orient.client.remote.ORemoteConnectionPool;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
+import com.orientechnologies.orient.client.remote.SimpleValueFetchPlanCommandListener;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.sql.query.OBasicResultSet;
 import com.orientechnologies.orient.core.sql.query.OLiveResultListener;
+import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
 public final class OCommandResponse implements OBinaryResponse<Object> {
-  private final OStorageRemote      storage;
-  private final boolean             asynch;
-  private final OCommandRequestText iCommand;
-  private final ODatabaseDocument   database;
-  private final boolean             live;
+  private OStorageRemote         storage;
+  private boolean                asynch;
+  private OCommandResultListener listener;
+  private ODatabaseDocument      database;
+  private boolean                live;
+  private Object                 result;
+  private boolean                isRecordResultSet;
+  private OCommandRequestText    command;
+  private Map<Object, Object>    params;
 
-  public OCommandResponse(OStorageRemote storage, boolean asynch, OCommandRequestText iCommand, ODatabaseDocument database,
+  public OCommandResponse(Object result, SimpleValueFetchPlanCommandListener listener, boolean isRecordResultSet, boolean async,
+      ODatabaseDocument database, OCommandRequestText command, Map<Object, Object> params) {
+    this.result = result;
+    this.listener = listener;
+    this.isRecordResultSet = isRecordResultSet;
+    this.asynch = async;
+    this.database = database;
+    this.command = command;
+    this.params = params;
+  }
+
+  public OCommandResponse(OStorageRemote storage, boolean asynch, OCommandResultListener listener, ODatabaseDocument database,
       boolean live) {
     this.storage = storage;
     this.asynch = asynch;
-    this.iCommand = iCommand;
+    this.listener = listener;
     this.database = database;
     this.live = live;
   }
 
   public void write(OChannelBinary channel, int protocolVersion, String recordSerializer) throws IOException {
-    throw new UnsupportedOperationException();
+    if (asynch) {
+      if (params == null)
+        result = database.command(command).execute();
+      else
+        result = database.command(command).execute(params);
 
+      // FETCHPLAN HAS TO BE ASSIGNED AGAIN, because it can be changed by SQL statement
+      channel.writeByte((byte) 0); // NO MORE RECORDS
+    } else {
+      serializeValue(channel, (SimpleValueFetchPlanCommandListener) listener, result, false, isRecordResultSet, protocolVersion,
+          recordSerializer);
+      if (listener instanceof OFetchPlanResults) {
+        // SEND FETCHED RECORDS TO LOAD IN CLIENT CACHE
+        for (ORecord rec : ((OFetchPlanResults) listener).getFetchedRecordsToSend()) {
+          channel.writeByte((byte) 2); // CLIENT CACHE RECORD. IT
+          // ISN'T PART OF THE
+          // RESULT SET
+          OBinaryProtocolHelper.writeIdentifiable(channel, rec, recordSerializer);
+        }
+
+        channel.writeByte((byte) 0); // NO MORE RECORDS
+      }
+    }
+
+  }
+
+  public void serializeValue(OChannelBinary channel, final SimpleValueFetchPlanCommandListener listener, Object result,
+      boolean load, boolean isRecordResultSet, int protocolVersion, String recordSerializer) throws IOException {
+    if (result == null) {
+      // NULL VALUE
+      channel.writeByte((byte) 'n');
+    } else if (result instanceof OIdentifiable) {
+      // RECORD
+      channel.writeByte((byte) 'r');
+      if (load && result instanceof ORecordId)
+        result = ((ORecordId) result).getRecord();
+
+      if (listener != null)
+        listener.result(result);
+      OBinaryProtocolHelper.writeIdentifiable(channel, (OIdentifiable) result, recordSerializer);
+    } else if (result instanceof ODocumentWrapper) {
+      // RECORD
+      channel.writeByte((byte) 'r');
+      final ODocument doc = ((ODocumentWrapper) result).getDocument();
+      if (listener != null)
+        listener.result(doc);
+      OBinaryProtocolHelper.writeIdentifiable(channel, doc, recordSerializer);
+    } else if (!isRecordResultSet) {
+      writeSimpleValue(channel, listener, result, protocolVersion, recordSerializer);
+    } else if (OMultiValue.isMultiValue(result)) {
+      final byte collectionType = result instanceof Set ? (byte) 's' : (byte) 'l';
+      channel.writeByte(collectionType);
+      channel.writeInt(OMultiValue.getSize(result));
+      for (Object o : OMultiValue.getMultiValueIterable(result, false)) {
+        try {
+          if (load && o instanceof ORecordId)
+            o = ((ORecordId) o).getRecord();
+          if (listener != null)
+            listener.result(o);
+
+          OBinaryProtocolHelper.writeIdentifiable(channel, (OIdentifiable) o, recordSerializer);
+        } catch (Exception e) {
+          OLogManager.instance().warn(this, "Cannot serialize record: " + o);
+          OBinaryProtocolHelper.writeIdentifiable(channel, null, recordSerializer);
+          // WRITE NULL RECORD TO AVOID BREAKING PROTOCOL
+        }
+      }
+    } else if (OMultiValue.isIterable(result)) {
+      if (protocolVersion >= OChannelBinaryProtocol.PROTOCOL_VERSION_32) {
+        channel.writeByte((byte) 'i');
+        for (Object o : OMultiValue.getMultiValueIterable(result)) {
+          try {
+            if (load && o instanceof ORecordId)
+              o = ((ORecordId) o).getRecord();
+            if (listener != null)
+              listener.result(o);
+
+            channel.writeByte((byte) 1); // ONE MORE RECORD
+            OBinaryProtocolHelper.writeIdentifiable(channel, (OIdentifiable) o, recordSerializer);
+          } catch (Exception e) {
+            OLogManager.instance().warn(this, "Cannot serialize record: " + o);
+          }
+        }
+        channel.writeByte((byte) 0); // NO MORE RECORD
+      } else {
+        // OLD RELEASES: TRANSFORM IN A COLLECTION
+        final byte collectionType = result instanceof Set ? (byte) 's' : (byte) 'l';
+        channel.writeByte(collectionType);
+        channel.writeInt(OMultiValue.getSize(result));
+        for (Object o : OMultiValue.getMultiValueIterable(result)) {
+          try {
+            if (load && o instanceof ORecordId)
+              o = ((ORecordId) o).getRecord();
+            if (listener != null)
+              listener.result(o);
+
+            OBinaryProtocolHelper.writeIdentifiable(channel, (OIdentifiable) o, recordSerializer);
+          } catch (Exception e) {
+            OLogManager.instance().warn(this, "Cannot serialize record: " + o);
+          }
+        }
+      }
+
+    } else {
+      // ANY OTHER (INCLUDING LITERALS)
+      writeSimpleValue(channel, listener, result, protocolVersion, recordSerializer);
+    }
+  }
+
+  private void writeSimpleValue(OChannelBinary channel, SimpleValueFetchPlanCommandListener listener, Object result,
+      int protocolVersion, String recordSerializer) throws IOException {
+
+    if (protocolVersion >= OChannelBinaryProtocol.PROTOCOL_VERSION_35) {
+      channel.writeByte((byte) 'w');
+      ODocument document = new ODocument();
+      document.field("result", result);
+      OBinaryProtocolHelper.writeIdentifiable(channel, document, recordSerializer);
+      if (listener != null)
+        listener.linkdedBySimpleValue(document);
+    } else {
+      channel.writeByte((byte) 'a');
+      final StringBuilder value = new StringBuilder(64);
+      if (listener != null) {
+        ODocument document = new ODocument();
+        document.field("result", result);
+        listener.linkdedBySimpleValue(document);
+      }
+      ORecordSerializerStringAbstract.fieldTypeToString(value, OType.getTypeByClass(result.getClass()), result);
+      channel.writeString(value.toString());
+    }
   }
 
   @Override
@@ -88,7 +241,7 @@ public final class OCommandResponse implements OBinaryResponse<Object> {
           case 1:
             // PUT AS PART OF THE RESULT SET. INVOKE THE LISTENER
             if (addNextRecord) {
-              addNextRecord = iCommand.getResultListener().result(record);
+              addNextRecord = listener.result(record);
               database.getLocalCache().updateRecord(record);
             }
             break;
@@ -111,7 +264,7 @@ public final class OCommandResponse implements OBinaryResponse<Object> {
               if (this.storage.asynchEventListener != null)
                 this.storage.asynchEventListener.unregisterLiveListener(token);
             } else {
-              final OLiveResultListener listener = (OLiveResultListener) iCommand.getResultListener();
+              final OLiveResultListener listener = (OLiveResultListener) this.listener;
               ODatabaseDocumentInternal current = ODatabaseRecordThreadLocal.INSTANCE.get();
               final ODatabaseDocument dbCopy = current.copy();
               ORemoteConnectionPool pool = this.storage.connectionManager.getPool(network.getServerURL());
@@ -149,8 +302,8 @@ public final class OCommandResponse implements OBinaryResponse<Object> {
     } finally {
       // TODO: this is here because we allow query in end listener.
       session.commandExecuting = false;
-      if (iCommand.getResultListener() != null && !live)
-        iCommand.getResultListener().end();
+      if (listener != null && !live)
+        listener.end();
     }
     return result;
   }

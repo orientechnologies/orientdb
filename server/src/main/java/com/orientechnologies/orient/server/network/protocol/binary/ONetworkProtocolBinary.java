@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.server.network.protocol.binary;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
@@ -55,7 +54,7 @@ import com.orientechnologies.orient.client.remote.message.OCeilingPhysicalPositi
 import com.orientechnologies.orient.client.remote.message.OCleanOutRecordRequest;
 import com.orientechnologies.orient.client.remote.message.OCleanOutRecordResponse;
 import com.orientechnologies.orient.client.remote.message.OCommandRequest;
-import com.orientechnologies.orient.client.remote.message.OCommandResponseServer;
+import com.orientechnologies.orient.client.remote.message.OCommandResponse;
 import com.orientechnologies.orient.client.remote.message.OCommitRequest;
 import com.orientechnologies.orient.client.remote.message.OCommitResponse;
 import com.orientechnologies.orient.client.remote.message.OCommitResponse.OCreatedRecordResponse;
@@ -128,13 +127,13 @@ import com.orientechnologies.orient.client.remote.message.OSBTGetRequest;
 import com.orientechnologies.orient.client.remote.message.OSBTGetResponse;
 import com.orientechnologies.orient.client.remote.message.OSetGlobalConfigurationRequest;
 import com.orientechnologies.orient.client.remote.message.OSetGlobalConfigurationResponse;
+import com.orientechnologies.orient.client.remote.message.OShutdownRequest;
 import com.orientechnologies.orient.client.remote.message.OUpdateRecordRequest;
 import com.orientechnologies.orient.client.remote.message.OUpdateRecordResponse;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OCommandCache;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -1137,8 +1136,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     OLogManager.instance().info(this, "Received shutdown command from the remote client %s:%d", channel.socket.getInetAddress(),
         channel.socket.getPort());
 
-    final String user = channel.readString();
-    final String passwd = channel.readString();
+    OShutdownRequest request = new OShutdownRequest();
+    request.read(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
+    final String user = request.getRootUser();
+    final String passwd = request.getRootPassword();
 
     if (server.authenticate(user, passwd, "server.shutdown")) {
       OLogManager.instance().info(this, "Remote client %s:%d authenticated. Starting shutdown of server...",
@@ -1464,7 +1465,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
   protected void command(OClientConnection connection) throws IOException {
     setDataCommandInfo(connection, "Execute remote command");
-
+    
     OCommandRequest request = new OCommandRequest();
     request.read(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
 
@@ -1495,46 +1496,49 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
     connection.getData().commandDetail = command.getText();
 
-    beginResponse();
-    try {
-      connection.getData().command = command;
-      OAbstractCommandResultListener listener = null;
-      OLiveCommandResultListener liveListener = null;
+    connection.getData().command = command;
+    OAbstractCommandResultListener listener = null;
+    OLiveCommandResultListener liveListener = null;
 
-      OCommandResultListener cmdResultListener = command.getResultListener();
+    OCommandResultListener cmdResultListener = command.getResultListener();
 
-      if (live) {
-        liveListener = new OLiveCommandResultListener(server, connection, clientTxId, cmdResultListener);
-        listener = new OSyncCommandResultListener(null);
-        command.setResultListener(liveListener);
-      } else if (asynch) {
-        // IF COMMAND CACHE IS ENABLED, RESULT MUST BE COLLECTED
-        final OCommandCache cmdCache = connection.getDatabase().getMetadata().getCommandCache();
-        if (cmdCache.isEnabled())
-          // CREATE E COLLECTOR OF RESULT IN RAM TO CACHE THE RESULT
-          cmdResultListener = new OCommandCacheRemoteResultListener(cmdResultListener, cmdCache);
+    if (live) {
+      liveListener = new OLiveCommandResultListener(server, connection, clientTxId, cmdResultListener);
+      listener = new OSyncCommandResultListener(null);
+      command.setResultListener(liveListener);
+    } else if (asynch) {
+      // IF COMMAND CACHE IS ENABLED, RESULT MUST BE COLLECTED
+      final OCommandCache cmdCache = connection.getDatabase().getMetadata().getCommandCache();
+      if (cmdCache.isEnabled())
+        // CREATE E COLLECTOR OF RESULT IN RAM TO CACHE THE RESULT
+        cmdResultListener = new OCommandCacheRemoteResultListener(cmdResultListener, cmdCache);
 
-        listener = new OAsyncCommandResultListener(connection, this, clientTxId, cmdResultListener);
-        command.setResultListener(listener);
-      } else {
-        listener = new OSyncCommandResultListener(null);
-      }
+      listener = new OAsyncCommandResultListener(connection, this, clientTxId, cmdResultListener);
+      command.setResultListener(listener);
+    } else {
+      listener = new OSyncCommandResultListener(null);
+    }
 
-      final long serverTimeout = OGlobalConfiguration.COMMAND_TIMEOUT.getValueAsLong();
+    final long serverTimeout = OGlobalConfiguration.COMMAND_TIMEOUT.getValueAsLong();
 
-      if (serverTimeout > 0 && command.getTimeoutTime() > serverTimeout)
-        // FORCE THE SERVER'S TIMEOUT
-        command.setTimeout(serverTimeout, command.getTimeoutStrategy());
+    if (serverTimeout > 0 && command.getTimeoutTime() > serverTimeout)
+      // FORCE THE SERVER'S TIMEOUT
+      command.setTimeout(serverTimeout, command.getTimeoutStrategy());
 
-      if (!isConnectionAlive(connection))
-        return;
+    if (!isConnectionAlive(connection))
+      return;
 
-      // REQUEST CAN'T MODIFY THE RESULT, SO IT'S CACHEABLE
-      command.setCacheableResult(true);
+    // REQUEST CAN'T MODIFY THE RESULT, SO IT'S CACHEABLE
+    command.setCacheableResult(true);
 
-      // ASSIGNED THE PARSED FETCHPLAN
-      listener.setFetchPlan(connection.getDatabase().command(command).getFetchPlan());
-
+    // ASSIGNED THE PARSED FETCHPLAN
+    listener.setFetchPlan(connection.getDatabase().command(command).getFetchPlan());
+    OCommandResponse response;
+    if (asynch) {
+      // In case of async it execute the request during the write of the response
+      response = new OCommandResponse(null, listener, false, asynch, connection.getDatabase(), command, params);
+    } else {
+      // SYNCHRONOUS
       final Object result;
       if (params == null)
         result = connection.getDatabase().command(command).execute();
@@ -1543,27 +1547,14 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
       // FETCHPLAN HAS TO BE ASSIGNED AGAIN, because it can be changed by SQL statement
       listener.setFetchPlan(command.getFetchPlan());
-
-      if (asynch) {
-        // ASYNCHRONOUS
-        if (listener.isEmpty())
-          try {
-            sendOk(connection, clientTxId);
-          } catch (IOException ignored) {
-          }
-        channel.writeByte((byte) 0); // NO MORE RECORDS
-
-      } else {
-        // SYNCHRONOUS
-        sendOk(connection, clientTxId);
-
-        boolean isRecordResultSet = true;
-        if (command instanceof OCommandRequestInternal)
-          isRecordResultSet = command.isRecordResultSet();
-        OCommandResponseServer response = new OCommandResponseServer(result, listener, isRecordResultSet);
-        response.write(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
-      }
-
+      boolean isRecordResultSet = true;
+      isRecordResultSet = command.isRecordResultSet();
+      response = new OCommandResponse(result, listener, isRecordResultSet, asynch, connection.getDatabase(), command, params);
+    }
+    beginResponse();
+    try {
+      sendOk(connection, clientTxId);
+      response.write(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
     } finally {
       connection.getData().command = null;
       endResponse(connection);
@@ -1885,36 +1876,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       connection.getData().commandInfo = iCommandInfo;
   }
 
-  protected void readConnectionData(OClientConnection connection) throws IOException {
-    connection.getData().driverName = channel.readString();
-    connection.getData().driverVersion = channel.readString();
-    connection.getData().protocolVersion = channel.readShort();
-    connection.getData().clientId = channel.readString();
-    if (connection.getData().protocolVersion > OChannelBinaryProtocol.PROTOCOL_VERSION_21)
-      connection.getData().serializationImpl = channel.readString();
-    else
-      connection.getData().serializationImpl = ORecordSerializerSchemaAware2CSV.NAME;
-
-    if (connection.getTokenBased() == null) {
-      if (connection.getData().protocolVersion > OChannelBinaryProtocol.PROTOCOL_VERSION_26)
-        connection.setTokenBased(channel.readBoolean());
-      else
-        connection.setTokenBased(false);
-    } else {
-      if (connection.getData().protocolVersion > OChannelBinaryProtocol.PROTOCOL_VERSION_26)
-        if (channel.readBoolean() != connection.getTokenBased()) {
-          // throw new OException("Not supported mixed connection managment");
-        }
-    }
-    tokenConnection = Boolean.TRUE.equals(connection.getTokenBased());
-    if (connection.getData().protocolVersion > OChannelBinaryProtocol.PROTOCOL_VERSION_33) {
-      connection.getData().supportsPushMessages = channel.readBoolean();
-      connection.getData().collectStats = channel.readBoolean();
-    } else {
-      connection.getData().supportsPushMessages = true;
-      connection.getData().collectStats = true;
-    }
-  }
 
   protected void sendOk(OClientConnection connection, final int iClientTxId) throws IOException {
     channel.writeByte(OChannelBinaryProtocol.RESPONSE_STATUS_OK);
@@ -1936,16 +1897,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     }
     OLogManager.instance().error(this, "Error executing request", e);
     OServerPluginHelper.invokeHandlerCallbackOnClientError(server, connection, e);
-  }
-
-  protected void sendResponse(OClientConnection connection, final ODocument iResponse) throws IOException {
-    beginResponse();
-    try {
-      sendOk(connection, clientTxId);
-      channel.writeBytes(iResponse != null ? iResponse.toStream() : null);
-    } finally {
-      endResponse(connection);
-    }
   }
 
   protected void freezeDatabase(OClientConnection connection) throws IOException {
@@ -2006,43 +1957,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
   public static String getRecordSerializerName(OClientConnection connection) {
     return connection.getData().serializationImpl;
-  }
-
-  private void sendErrorDetails(Throwable current) throws IOException {
-    while (current != null) {
-      // MORE DETAILS ARE COMING AS EXCEPTION
-      channel.writeByte((byte) 1);
-
-      channel.writeString(current.getClass().getName());
-      channel.writeString(current.getMessage());
-
-      current = current.getCause();
-    }
-    channel.writeByte((byte) 0);
-  }
-
-  private void serializeExceptionObject(Throwable original) throws IOException {
-    try {
-      final ODistributedServerManager srvMgr = server.getDistributedManager();
-      if (srvMgr != null)
-        original = srvMgr.convertException(original);
-
-      final OMemoryStream memoryStream = new OMemoryStream();
-      final ObjectOutputStream objectOutputStream = new ObjectOutputStream(memoryStream);
-
-      objectOutputStream.writeObject(original);
-      objectOutputStream.flush();
-
-      final byte[] result = memoryStream.toByteArray();
-      objectOutputStream.close();
-
-      channel.writeBytes(result);
-    } catch (Exception e) {
-      OLogManager.instance().warn(this, "Cannot serialize an exception object", e);
-
-      // Write empty stream for binary compatibility
-      channel.writeBytes(OCommonConst.EMPTY_BYTE_ARRAY);
-    }
   }
 
   /**
@@ -2289,11 +2203,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     return true;
   }
 
-  private void sendDatabaseInformation(OClientConnection connection) throws IOException {
-    final Collection<? extends OCluster> clusters = connection.getDatabase().getStorage().getClusterInstances();
-    OBinaryProtocolHelper.writeClustersArray(channel, clusters.toArray(new OCluster[clusters.size()]),
-        connection.getData().protocolVersion);
-  }
 
   private void listDatabases(OClientConnection connection) throws IOException {
     checkServerAccess("server.listDatabases", connection);

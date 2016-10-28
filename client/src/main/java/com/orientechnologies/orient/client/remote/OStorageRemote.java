@@ -853,7 +853,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     final boolean asynch = iCommand instanceof OCommandRequestAsynch && ((OCommandRequestAsynch) iCommand).isAsynchronous();
 
     OBinaryRequest request = new OCommandRequest(asynch, iCommand, live);
-    OBinaryResponse<Object> response = new OCommandResponse(this, asynch, iCommand, database, live);
+    OBinaryResponse<Object> response = new OCommandResponse(this, asynch, iCommand.getResultListener(), database, live);
 
     return networkOperation(request, response, "Error on executing command: " + iCommand);
 

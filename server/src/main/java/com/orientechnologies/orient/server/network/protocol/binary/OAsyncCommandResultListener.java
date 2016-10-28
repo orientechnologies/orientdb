@@ -52,8 +52,8 @@ public class OAsyncCommandResultListener extends OAbstractCommandResultListener 
   private final Set<ORID>              alreadySent = new HashSet<ORID>();
   private final OClientConnection      connection;
 
-  public OAsyncCommandResultListener(OClientConnection connection, final ONetworkProtocolBinary iNetworkProtocolBinary, final int txId,
-      final OCommandResultListener wrappedResultListener) {
+  public OAsyncCommandResultListener(OClientConnection connection, final ONetworkProtocolBinary iNetworkProtocolBinary,
+      final int txId, final OCommandResultListener wrappedResultListener) {
     super(wrappedResultListener);
     this.protocol = iNetworkProtocolBinary;
     this.txId = txId;
@@ -62,11 +62,7 @@ public class OAsyncCommandResultListener extends OAbstractCommandResultListener 
 
   @Override
   public boolean result(final Object iRecord) {
-    if (empty.compareAndSet(true, false))
-      try {
-        protocol.sendOk(connection, txId);
-      } catch (IOException ignored) {
-      }
+    empty.compareAndSet(true, false);
 
     try {
       fetchRecord(iRecord, new ORemoteFetchListener() {
@@ -118,24 +114,24 @@ public class OAsyncCommandResultListener extends OAbstractCommandResultListener 
           }
         }
       }
-      
+
       @Override
       public void parseLinked(ODocument iRootRecord, OIdentifiable iLinked, Object iUserObject, String iFieldName,
           OFetchContext iContext) throws OFetchException {
         if (iLinked instanceof ORecord)
           sendRecord((ORecord) iLinked);
       }
-      
+
       @Override
       public void parseLinkedCollectionValue(ODocument iRootRecord, OIdentifiable iLinked, Object iUserObject, String iFieldName,
           OFetchContext iContext) throws OFetchException {
         if (iLinked instanceof ORecord)
-          sendRecord((ORecord) iLinked);      
+          sendRecord((ORecord) iLinked);
       }
-      
+
     };
     final OFetchContext context = new ORemoteFetchContext();
     OFetchHelper.fetch(doc, doc, OFetchHelper.buildFetchPlan(""), listener, context, "");
   }
-  
+
 }

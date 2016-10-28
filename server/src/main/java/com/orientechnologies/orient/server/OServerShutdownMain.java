@@ -22,8 +22,9 @@ package com.orientechnologies.orient.server;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClientSynch;
+import com.orientechnologies.orient.client.remote.OBinaryRequest;
+import com.orientechnologies.orient.client.remote.message.OShutdownRequest;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
@@ -41,9 +42,9 @@ public class OServerShutdownMain {
   public int[]                      networkPort;
   public OChannelBinaryAsynchClient channel;
 
-  private OContextConfiguration contextConfig;
-  private String                rootUser;
-  private String                rootPassword;
+  private OContextConfiguration     contextConfig;
+  private String                    rootUser;
+  private String                    rootPassword;
 
   public OServerShutdownMain(final String iServerAddress, final String iServerPorts, final String iRootUser,
       final String iRootPassword) {
@@ -71,10 +72,10 @@ public class OServerShutdownMain {
       throw new ONetworkProtocolException(
           "Cannot connect to server host '" + networkAddress + "', ports: " + Arrays.toString(networkPort));
 
-    channel.writeByte(OChannelBinaryProtocol.REQUEST_SHUTDOWN);
+    OBinaryRequest request = new OShutdownRequest(rootUser, rootPassword);
+    channel.writeByte(request.getCommand());
     channel.writeInt(0);
-    channel.writeString(rootUser);
-    channel.writeString(rootPassword);
+    request.write(channel, null, 0);
     channel.flush();
 
     channel.beginResponse(0, false);
