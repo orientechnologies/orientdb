@@ -90,6 +90,7 @@ import com.orientechnologies.orient.core.security.OCredentialInterceptor;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
+import com.orientechnologies.orient.core.sql.query.OBasicResultSet;
 import com.orientechnologies.orient.core.sql.query.OLiveQuery;
 import com.orientechnologies.orient.core.sql.query.OLiveResultListener;
 import com.orientechnologies.orient.core.storage.OCluster;
@@ -1170,6 +1171,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           try {
             beginResponse(network, session);
 
+            // Collection of prefetched temporary record (nested projection record), to refer for avoid garbage collection.
+            List<ORecord> temporaryResults = new ArrayList<ORecord>();
+
             boolean addNextRecord = true;
 
             if (asynch) {
@@ -1191,12 +1195,14 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
                   break;
 
                 case 2:
+                  if (record.getIdentity().getClusterId() == -2)
+                    temporaryResults.add(record);
                   // PUT IN THE CLIENT LOCAL CACHE
                   database.getLocalCache().updateRecord(record);
                 }
               }
             } else {
-              result = readSynchResult(network, database);
+              result = readSynchResult(network, database, temporaryResults);
               if (live) {
                 final ODocument doc = ((List<ODocument>) result).get(0);
                 final Integer token = doc.field("token");
@@ -1236,6 +1242,11 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
                 }
               }
             }
+            if (!temporaryResults.isEmpty()) {
+              if (result instanceof OBasicResultSet<?>) {
+                ((OBasicResultSet<?>) result).setTemporaryRecordCache(temporaryResults);
+              }
+            }
             return result;
           } finally {
             endResponse(network);
@@ -1250,7 +1261,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     }, "Error on executing command: " + iCommand);
   }
 
-  protected Object readSynchResult(final OChannelBinaryAsynchClient network, final ODatabaseDocument database) throws IOException {
+  protected Object readSynchResult(final OChannelBinaryAsynchClient network, final ODatabaseDocument database,
+      List<ORecord> temporaryResults) throws IOException {
 
     final Object result;
 
@@ -1271,7 +1283,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       final int tot = network.readInt();
       final Collection<OIdentifiable> coll;
 
-      coll = type == 's' ? new HashSet<OIdentifiable>(tot) : new ArrayList<OIdentifiable>(tot);
+      coll = type == 's' ? new HashSet<OIdentifiable>(tot) : new OBasicResultSet<OIdentifiable>(tot);
       for (int i = 0; i < tot; ++i) {
         final OIdentifiable resultItem = OChannelBinaryProtocol.readIdentifiable(network);
         if (resultItem instanceof ORecord)
@@ -1282,7 +1294,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       result = coll;
       break;
     case 'i':
-      coll = new ArrayList<OIdentifiable>();
+      coll = new OBasicResultSet<OIdentifiable>();
       byte status;
       while ((status = network.readByte()) > 0) {
         final OIdentifiable record = OChannelBinaryProtocol.readIdentifiable(network);
@@ -1312,9 +1324,12 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       byte status;
       while ((status = network.readByte()) > 0) {
         final ORecord record = (ORecord) OChannelBinaryProtocol.readIdentifiable(network);
-        if (record != null && status == 2)
+        if (record != null && status == 2) {
           // PUT IN THE CLIENT LOCAL CACHE
           database.getLocalCache().updateRecord(record);
+          if (record.getIdentity().getClusterId() == -2)
+            temporaryResults.add(record);
+        }
       }
     }
 
