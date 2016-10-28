@@ -3850,13 +3850,7 @@ OAlterClassStatement AlterClassStatement():
 		(
 			<STRICTMODE> { jjtThis.property = com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES.STRICTMODE; }
 			(
-				(
-					<TRUE> { jjtThis.booleanValue = true; }
-				)
-				|
-				(
-					<FALSE> { jjtThis.booleanValue = false; }
-				)
+				jjtThis.expression = Expression()
 			)
 		)
 		|
@@ -3890,13 +3884,7 @@ OAlterClassStatement AlterClassStatement():
 		(
 			<ABSTRACT> { jjtThis.property = com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES.ABSTRACT; }
 			(
-				(
-					<TRUE> { jjtThis.booleanValue = true; }
-				)
-				|
-				(
-					<FALSE> { jjtThis.booleanValue = false; }
-				)
+				jjtThis.expression = Expression()
 			)
 		)
 		|

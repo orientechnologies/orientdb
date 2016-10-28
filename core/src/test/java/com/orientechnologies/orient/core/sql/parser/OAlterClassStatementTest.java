@@ -57,6 +57,8 @@ public class OAlterClassStatementTest extends OParserTestAbstract {
     checkRightSyntax("ALTER CLASS Foo STRICTMODE true");
     checkRightSyntax("ALTER CLASS Foo strictmode true");
     checkRightSyntax("ALTER CLASS Foo STRICTMODE false");
+    checkRightSyntax("ALTER CLASS Foo STRICTMODE TRUE");
+    checkRightSyntax("ALTER CLASS Foo STRICTMODE FALSE");
 
     checkRightSyntax("ALTER CLASS Foo ADDCLUSTER bar");
     checkRightSyntax("ALTER CLASS Foo addcluster bar");

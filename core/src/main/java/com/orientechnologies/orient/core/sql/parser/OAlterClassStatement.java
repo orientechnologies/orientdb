@@ -23,7 +23,8 @@ public class OAlterClassStatement extends OStatement {
   protected Boolean           add;
   protected Boolean           remove;
   protected ONumber           numberValue;
-  protected Boolean           booleanValue;
+  public    OExpression       expression;
+
   public    OIdentifier       customKey;
   public    OExpression       customValue;
 
@@ -99,7 +100,7 @@ public class OAlterClassStatement extends OStatement {
       break;
     case STRICTMODE:
     case ABSTRACT:
-      builder.append(booleanValue.booleanValue());
+      expression.toString(params, builder);
       break;
     case CUSTOM:
       customKey.toString(params, builder);
