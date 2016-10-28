@@ -144,6 +144,20 @@ public class OCSVExtractorTest extends OETLBaseTest {
   }
 
   @Test
+  public void testFloatOnDifferentLines() {
+    String cfgJson = "{source: { content: { value: 'firstNumber\n10.0\n10.78'}  }, extractor : { csv: {} }, loader: { test: {} } }";
+    process(cfgJson);
+    List<ODocument> res = getResult();
+
+    assertThat(res).hasSize(2);
+
+    ODocument doc = res.get(0);
+    assertEquals(10f, doc.field("firstNumber"));
+    doc = res.get(1);
+    assertEquals(10.78f, doc.field("firstNumber"));
+  }
+
+  @Test
   public void testDouble() {
     Double minDouble = 540282346638528870000000000000000000000.0d;
 
@@ -419,9 +433,9 @@ public class OCSVExtractorTest extends OETLBaseTest {
   }
 
   @Test
-  public void testCsvParsingFormat  () {
+  public void testCsvParsingFormat() {
 
-//    CSVFormat format = CSVFormat.valueOf("MySQL");
+    //    CSVFormat format = CSVFormat.valueOf("MySQL");
 
     String cfgJson = "{source: { content: { value: 'name,date,datetime\nfrank,2008-04-30,2015-03-30 11:00'} }, extractor : { csv : { \"predefinedFormat\": \"Default\",'columns':['name:string','date:date','datetime:datetime']} }, loader : { test: {} } }";
     process(cfgJson);
