@@ -24,11 +24,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOpera
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OUpdatePageRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -58,6 +54,14 @@ public class OSBTreeBonsaiWALTest extends OSBTreeBonsaiLocalTest {
   private OLocalPaginatedStorage actualStorage;
 
   private OAtomicOperationsManager actualAtomicOperationsManager;
+
+  @BeforeClass
+  public static void beforeClass() {
+  }
+
+  @AfterClass
+  public static void afterClass() throws Exception {
+  }
 
   @Before
   public void beforeMethod() throws IOException {
@@ -349,7 +353,7 @@ public class OSBTreeBonsaiWALTest extends OSBTreeBonsaiLocalTest {
     while (bytesRead >= 0) {
       fileTwo.readFully(actualContent, 0, bytesRead);
 
-      Assert.assertEquals(expectedContent, actualContent);
+      Assert.assertArrayEquals(expectedContent, actualContent);
 
       expectedContent = new byte[OClusterPage.PAGE_SIZE];
       actualContent = new byte[OClusterPage.PAGE_SIZE];

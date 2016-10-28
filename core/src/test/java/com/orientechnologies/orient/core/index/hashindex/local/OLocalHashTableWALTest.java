@@ -342,7 +342,7 @@ public class OLocalHashTableWALTest extends OLocalHashTableBase {
     while (bytesRead >= 0) {
       fileTwo.readFully(actualContent, 0, bytesRead);
 
-      Assert.assertEquals(expectedContent, actualContent);
+      Assert.assertArrayEquals(expectedContent, actualContent);
 
       expectedContent = new byte[OClusterPage.PAGE_SIZE];
       actualContent = new byte[OClusterPage.PAGE_SIZE];
