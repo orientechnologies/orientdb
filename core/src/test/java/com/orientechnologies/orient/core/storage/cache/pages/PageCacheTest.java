@@ -69,7 +69,7 @@ public class PageCacheTest {
         return new int[][] { { 6, 0, 0, 0 }, { 6, 1, 0, 0 }, { 6, 2, 0, 0 }, { 6, 3, 0, 0 }, { 6, 4, 0, 0 }, { 6, 5, 0, 0 },
             { 6, 6, 0, 0 }, { 6, 6, 1, 0 }, { 6, 7, 1, 0 }, { 6, 7, 2, 0 }, { 6, 8, 2, 0 }, { 6, 8, 3, 0 }, { 6, 8, 4, 0 },
             { 6, 9, 4, 0 }, { 6, 11, 4, 0 }, { 6, 12, 4, 0 }, { 6, 12, 5, 0 }, { 6, 13, 5, 0 }, { 6, 13, 6, 0 }, { 6, 14, 6, 0 },
-            { 6, 16, 16, 2 } };
+            { 7, 16, 17, 3 } };
       }
     }, new Case() {
       @Override
@@ -82,7 +82,7 @@ public class PageCacheTest {
         return new int[][] { { 6, 0, 0, 0 }, { 6, 1, 0, 0 }, { 6, 1, 0, 0 }, { 6, 2, 0, 0 }, { 6, 2, 0, 0 }, { 6, 2, 0, 0 },
             { 6, 3, 0, 0 }, { 6, 3, 0, 0 }, { 6, 4, 0, 0 }, { 6, 4, 0, 0 }, { 6, 5, 1, 0 }, { 6, 5, 1, 0 }, { 6, 5, 1, 0 },
             { 6, 6, 3, 0 }, { 6, 8, 3, 0 }, { 6, 9, 3, 0 }, { 6, 9, 4, 0 }, { 6, 10, 4, 0 }, { 6, 10, 5, 0 }, { 6, 11, 5, 0 },
-            { 6, 12, 12, 2 } };
+            { 7, 12, 13, 3 } };
       }
 
     }, new Case() {
@@ -96,7 +96,7 @@ public class PageCacheTest {
         return new int[][] { { 6, 0, 0, 0 }, { 6, 1, 0, 0 }, { 6, 1, 0, 0 }, { 6, 2, 0, 0 }, { 6, 2, 0, 0 }, { 6, 2, 0, 0 },
             { 6, 3, 0, 0 }, { 6, 3, 0, 0 }, { 6, 3, 0, 0 }, { 6, 3, 0, 0 }, { 6, 3, 0, 0 }, { 6, 3, 0, 0 }, { 6, 3, 0, 0 },
             { 6, 4, 0, 0 }, { 6, 4, 0, 0 }, { 6, 5, 0, 0 }, { 6, 5, 1, 0 }, { 6, 6, 1, 0 }, { 6, 6, 1, 0 }, { 6, 7, 2, 0 },
-            { 6, 8, 8, 2 } };
+            { 7, 8, 9, 3 } };
       }
     } };
   }
@@ -146,6 +146,7 @@ public class PageCacheTest {
     OCacheEntry page3;
     OCacheEntry page4;
     OCacheEntry page5;
+    OCacheEntry page6;
 
     verifyStep(vectors, 0);
 
@@ -204,6 +205,7 @@ public class PageCacheTest {
     atomicOperation.releasePage(page1);
     verifyStep(vectors, 18);
 
+    page6 = atomicOperation.addPage(0);
     page5 = atomicOperation.loadPage(0, 5, false, 1);
     verifyStep(vectors, 19);
 
@@ -211,6 +213,8 @@ public class PageCacheTest {
     atomicOperation.getChanges(0, 0).setByteValue(page0.getCachePointer().getSharedBuffer(), (byte) 0, 0);
     // not cached at this point for tiny and lru
     atomicOperation.getChanges(0, 1).setByteValue(page0.getCachePointer().getSharedBuffer(), (byte) 0, 0);
+    // completely new page, not cached
+    atomicOperation.getChanges(0, 6).setByteValue(page0.getCachePointer().getSharedBuffer(), (byte) 0, 0);
 
     atomicOperation.releasePage(page0);
     atomicOperation.releasePage(page0);
@@ -220,6 +224,7 @@ public class PageCacheTest {
     atomicOperation.releasePage(page3);
     atomicOperation.releasePage(page5);
     atomicOperation.releasePage(page5);
+    atomicOperation.releasePage(page6);
 
     atomicOperation.commitChanges(writeAheadLog);
     verifyStep(vectors, 20);
