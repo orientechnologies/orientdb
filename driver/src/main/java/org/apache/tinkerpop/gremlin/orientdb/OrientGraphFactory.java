@@ -6,7 +6,7 @@ import org.apache.tinkerpop.gremlin.structure.Graph;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 
 public final class OrientGraphFactory {
@@ -83,10 +83,10 @@ public final class OrientGraphFactory {
             db.commit();
 
         OSchema schema = db.getMetadata().getSchema();
-        if (!schema.existsClass(OImmutableClass.VERTEX_CLASS_NAME))
-            schema.createClass(OImmutableClass.VERTEX_CLASS_NAME).setOverSize(2);
-        if (!schema.existsClass(OImmutableClass.EDGE_CLASS_NAME))
-            schema.createClass(OImmutableClass.EDGE_CLASS_NAME);
+        if (!schema.existsClass(OClass.VERTEX_CLASS_NAME))
+            schema.createClass(OClass.VERTEX_CLASS_NAME).setOverSize(2);
+        if (!schema.existsClass(OClass.EDGE_CLASS_NAME))
+            schema.createClass(OClass.EDGE_CLASS_NAME);
 
         if (txActive) {
             // REOPEN IT AGAIN

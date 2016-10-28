@@ -1,7 +1,7 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import org.apache.tinkerpop.gremlin.structure.Direction;
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Graph;
@@ -295,8 +295,8 @@ public class OrientGraphTest {
         graph.createVertexClass(vertexLabel);
         graph.createEdgeClass(edgeLabel);
 
-        graph.database().browseClass(OImmutableClass.VERTEX_CLASS_NAME + "_" + vertexLabel);
-        graph.database().browseClass(OImmutableClass.EDGE_CLASS_NAME + "_" + edgeLabel);
+        graph.database().browseClass(OClass.VERTEX_CLASS_NAME + "_" + vertexLabel);
+        graph.database().browseClass(OClass.EDGE_CLASS_NAME + "_" + edgeLabel);
     }
 
     @Test
