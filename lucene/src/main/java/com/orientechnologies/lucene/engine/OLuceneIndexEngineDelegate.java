@@ -66,7 +66,8 @@ public class OLuceneIndexEngineDelegate implements OLuceneIndexEngine, OFreezabl
 
   @Override
   public void flush() {
-    delegate.flush();
+    if (delegate != null)
+      delegate.flush();
   }
 
   @Override
@@ -78,7 +79,8 @@ public class OLuceneIndexEngineDelegate implements OLuceneIndexEngine, OFreezabl
 
   @Override
   public void delete() {
-    delegate.delete();
+    if (delegate != null)
+      delegate.delete();
   }
 
   @Override
@@ -108,8 +110,8 @@ public class OLuceneIndexEngineDelegate implements OLuceneIndexEngine, OFreezabl
 
   @Override
   public void clear() {
-
-    delegate.clear();
+    if (delegate != null)
+      delegate.clear();
   }
 
   @Override
@@ -277,12 +279,14 @@ public class OLuceneIndexEngineDelegate implements OLuceneIndexEngine, OFreezabl
   @Override
   public void freeze(boolean throwException) {
 
-    delegate.freeze(throwException);
+    if (delegate != null)
+      delegate.freeze(throwException);
   }
 
   @Override
   public void release() {
-    delegate.release();
+    if (delegate != null)
+      delegate.release();
   }
 
   @Override
