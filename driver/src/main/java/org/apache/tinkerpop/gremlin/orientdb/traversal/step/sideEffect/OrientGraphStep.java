@@ -204,10 +204,10 @@ public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E> imple
                     : StringFactory.stepString(this, this.returnClass.getSimpleName().toLowerCase(), Arrays.toString(this.ids), this.hasContainers);
     }
 
-    private <E extends Element> Iterator<E> iteratorList(final Iterator<E> iterator) {
-        final List<E> list = new ArrayList<>();
+	private <X extends Element> Iterator<X> iteratorList(final Iterator<X> iterator) {
+		final List<X> list = new ArrayList<>();
         while (iterator.hasNext()) {
-            final E e = iterator.next();
+			final X e = iterator.next();
             if (HasContainer.testAll(e, this.hasContainers))
                 list.add(e);
         }
