@@ -77,8 +77,9 @@ public class OLruPageCache implements OPageCache {
     else {
       for (final Iterator<Record> i = pages.values().iterator(); i.hasNext(); ) {
         final Record r = i.next();
-        if (r.usages == 0) {
-          readCache.release(r.cacheEntry, writeCache);
+        if (r.usages <= 0) {
+          for (long j = r.usages; j <= 0; ++j)
+            readCache.release(r.cacheEntry, writeCache);
           i.remove();
 
           if (pages.size() < maximumSize) {
@@ -93,14 +94,13 @@ public class OLruPageCache implements OPageCache {
   }
 
   @Override
-  public long releasePage(OCacheEntry cacheEntry, OWriteCache writeCache) {
+  public void releasePage(OCacheEntry cacheEntry, OWriteCache writeCache) {
     final Key key = new Key(cacheEntry.getFileId(), cacheEntry.getPageIndex());
     final Record record = pages.get(key);
-    if (record == null) {
+    if (record == null)
       readCache.release(cacheEntry, writeCache);
-      return NOT_CACHED;
-    } else
-      return --record.usages;
+    else
+      --record.usages;
   }
 
   @Override
@@ -108,8 +108,9 @@ public class OLruPageCache implements OPageCache {
     for (final Iterator<Record> i = pages.values().iterator(); i.hasNext(); ) {
       final Record r = i.next();
       if (fileId == r.cacheEntry.getFileId()) {
-        assert r.usages == 0;
-        readCache.release(r.cacheEntry, writeCache);
+        assert r.usages <= 0;
+        for (long j = r.usages; j <= 0; ++j)
+          readCache.release(r.cacheEntry, writeCache);
         i.remove();
         break;
       }
@@ -117,18 +118,26 @@ public class OLruPageCache implements OPageCache {
   }
 
   @Override
-  public OCacheEntry purgePage(long fileId, long pageIndex) {
+  public OCacheEntry purgePage(long fileId, long pageIndex, OWriteCache writeCache) {
     final Key key = new Key(fileId, pageIndex);
     final Record record = pages.remove(key);
-    assert record == null || record.usages == 0;
-    return record == null ? null : record.cacheEntry;
+    assert record == null || record.usages <= 0;
+
+    if (record != null) {
+      for (long j = record.usages; j < 0; ++j)
+        readCache.release(record.cacheEntry, writeCache);
+      return record.cacheEntry;
+    }
+
+    return null;
   }
 
   @Override
   public void reset(OWriteCache writeCache) {
     for (Record r : pages.values()) {
-      assert r.usages == 0;
-      readCache.release(r.cacheEntry, writeCache);
+      assert r.usages <= 0;
+      for (long j = r.usages; j <= 0; ++j)
+        readCache.release(r.cacheEntry, writeCache);
     }
     pages.clear();
   }

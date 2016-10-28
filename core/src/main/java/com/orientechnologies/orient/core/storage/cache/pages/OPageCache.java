@@ -35,11 +35,6 @@ import java.io.IOException;
 public interface OPageCache {
 
   /**
-   * Indicates that a page is not cached by a page cache instance, returned by {@link #releasePage(OCacheEntry, OWriteCache)}.
-   */
-  long NOT_CACHED = -1;
-
-  /**
    * Loads the page.
    *
    * @param fileId           the page's file id to load from.
@@ -63,12 +58,9 @@ public interface OPageCache {
    * @param cacheEntry the page to release.
    * @param writeCache the underlying write cache instance.
    *
-   * @return the number of references to the page in a context of this page cache or {@link #NOT_CACHED} if the page is not cached
-   * by this page cache.
-   *
    * @see OReadCache#release(OCacheEntry, OWriteCache)
    */
-  long releasePage(OCacheEntry cacheEntry, OWriteCache writeCache);
+  void releasePage(OCacheEntry cacheEntry, OWriteCache writeCache);
 
   /**
    * Releases the pages associated with the given file.
@@ -82,12 +74,13 @@ public interface OPageCache {
    * Purges the page from this page cache, but not from the underlying {@link OReadCache read cache}. On return, there are no
    * references to the purged page in a context of this page cache, but the page is still present in the underlying read cache.
    *
-   * @param fileId    the page's file id.
-   * @param pageIndex the page's index in the file.
+   * @param fileId     the page's file id.
+   * @param pageIndex  the page's index in the file.
+   * @param writeCache the underlying write cache instance.
    *
    * @return the purged page or {@code null} if the page is not cached by this page cache.
    */
-  OCacheEntry purgePage(long fileId, long pageIndex);
+  OCacheEntry purgePage(long fileId, long pageIndex, OWriteCache writeCache);
 
   /**
    * Resets this page cache by releasing all cached pages.
