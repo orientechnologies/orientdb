@@ -84,10 +84,10 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware i
           clusterName = parserRequiredWord(false);
 
         } else if (temp.equals(KEYWORD_FROM)) {
-          from = parserRequiredWord(false, "Syntax error", " =><,\r\n");
+          from = parserRequiredWord(false, "Syntax error", " =><,\r\n", true);
 
         } else if (temp.equals("TO")) {
-          to = parserRequiredWord(false, "Syntax error", " =><,\r\n");
+          to = parserRequiredWord(false, "Syntax error", " =><,\r\n", true);
 
         } else if (temp.equals(KEYWORD_SET)) {
           fields = new ArrayList<OPair<String, Object>>();
