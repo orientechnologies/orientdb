@@ -7,6 +7,7 @@ import java.util.Map;
 public class OUpdateRemoveItem extends SimpleNode {
 
   OIdentifier left;
+  OModifier   leftModifier;
   OExpression right;
 
   public OUpdateRemoveItem(int id) {
@@ -17,14 +18,18 @@ public class OUpdateRemoveItem extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
 
-
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     left.toString(params, builder);
+    if (leftModifier != null) {
+      leftModifier.toString(params, builder);
+    }
     if (right != null) {
       builder.append(" = ");
       right.toString(params, builder);

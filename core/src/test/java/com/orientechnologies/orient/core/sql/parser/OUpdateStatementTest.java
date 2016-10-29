@@ -126,6 +126,14 @@ public class OUpdateStatementTest {
     checkRightSyntax("update foo set bar = 1 return count");
   }
 
+  @Test
+  public void testRemove() {
+    checkRightSyntax("update foo remove a");
+    checkRightSyntax("update foo remove a = 12");
+    checkRightSyntax("update foo remove a.b.c = a.b.c[0]");
+
+  }
+
   private void printTree(String s) {
     OrientSql osql = getParserFor(s);
     try {
