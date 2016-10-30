@@ -51,8 +51,8 @@ public class MatcherStepTest {
 
         assertThat(result, hasSize(3));
         assertThat(result.get(0), allOf(hasEntry("a", "marko"), hasEntry("c", "marko")));
-        assertThat(result.get(1), allOf(hasEntry("a", "josh"), hasEntry("c", "marko")));
-        assertThat(result.get(2), allOf(hasEntry("a", "peter"), hasEntry("c", "marko")));
+        assertThat(result.get(1), allOf(hasEntry("a", "peter"), hasEntry("c", "marko")));
+        assertThat(result.get(2), allOf(hasEntry("a", "josh"), hasEntry("c", "marko")));
     }
 
     @Test

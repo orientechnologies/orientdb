@@ -666,7 +666,7 @@ public final class OrientGraph implements Graph {
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Override
     public <I extends Io> I io(Builder<I> builder) {
-        return (I) Graph.super.io(builder.registry(OrientIoRegistry.getInstance()));
+        return (I) Graph.super.io(builder.onMapper(mb -> mb.addRegistry(OrientIoRegistry.getInstance())));
     }
 
     @Override

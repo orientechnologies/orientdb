@@ -3,15 +3,20 @@ package org.apache.tinkerpop.gremlin.orientdb;
 import java.io.IOException;
 import java.util.Map;
 
+import org.apache.tinkerpop.gremlin.structure.Edge;
+import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.io.AbstractIoRegistry;
+import org.apache.tinkerpop.gremlin.structure.io.graphson.AbstractObjectDeserializer;
 import org.apache.tinkerpop.gremlin.structure.io.graphson.GraphSONIo;
 import org.apache.tinkerpop.gremlin.structure.io.graphson.GraphSONTokens;
 import org.apache.tinkerpop.gremlin.structure.io.gryo.GryoIo;
+import org.apache.tinkerpop.gremlin.structure.util.detached.DetachedEdge;
+import org.apache.tinkerpop.gremlin.structure.util.detached.DetachedVertex;
 import org.apache.tinkerpop.shaded.kryo.Kryo;
 import org.apache.tinkerpop.shaded.kryo.Serializer;
 import org.apache.tinkerpop.shaded.kryo.io.Input;
 import org.apache.tinkerpop.shaded.kryo.io.Output;
-
+import org.javatuples.Pair;
 import org.apache.tinkerpop.shaded.jackson.core.JsonGenerator;
 import org.apache.tinkerpop.shaded.jackson.core.JsonParser;
 import org.apache.tinkerpop.shaded.jackson.core.JsonProcessingException;
@@ -45,12 +50,42 @@ public class OrientIoRegistry extends AbstractIoRegistry {
         serializer.addSerializer(ORidBag.class, new ORidBagJacksonSerializer());
         serializer.addDeserializer(ORidBag.class, (JsonDeserializer) new ORidBagDeserializer());
         serializer.addDeserializer(Object.class, new OObjectJacksonDeserializer());
+
+        serializer.addDeserializer(Edge.class, new EdgeJacksonDeserializer());
+        serializer.addDeserializer(Vertex.class, new VertexJacksonDeserializer());
+        serializer.addDeserializer(Map.class, (JsonDeserializer) new ORecordIdDeserializer());
+
         register(GraphSONIo.class, ORecordId.class, serializer);
         register(GraphSONIo.class, Map.class, serializer);
     }
 
     public static OrientIoRegistry getInstance() {
         return INSTANCE;
+    }
+
+    private static ORecordId newORecordId(Object obj) {
+        if (obj == null)
+            return null;
+
+        if (obj instanceof ORecordId)
+            return (ORecordId) obj;
+
+        if (obj instanceof Map) {
+            @SuppressWarnings({ "unchecked", "rawtypes" })
+            Map<String, Number> map = (Map) obj;
+            return new ORecordId(map.get(CLUSTER_ID).intValue(), map.get(CLUSTER_POSITION).longValue());
+        }
+
+        throw new IllegalArgumentException("Unable to convert unknow type to ORecordId " + obj.getClass());
+    }
+
+    private static boolean isORecord(Object result) {
+        if (!(result instanceof Map))
+            return false;
+
+        @SuppressWarnings("unchecked")
+        Map<String, Number> map = (Map<String, Number>) result;
+        return map.containsKey(CLUSTER_ID) && map.containsKey(CLUSTER_POSITION);
     }
 
     final static class OObjectJacksonDeserializer extends Vanilla {
@@ -84,14 +119,18 @@ public class OrientIoRegistry extends AbstractIoRegistry {
 
         @Override
         public void serializeWithType(ORecordId value, JsonGenerator jgen, SerializerProvider serializers, TypeSerializer typeSer) throws IOException {
-            jgen.writeStartObject();
-            if (typeSer != null)
-                jgen.writeStringField(GraphSONTokens.CLASS, ORecordId.class.getName());
+            if (typeSer != null) {
+                typeSer.writeTypePrefixForObject(value, jgen);
+            } else
+                jgen.writeStartObject();
             jgen.writeFieldName(CLUSTER_ID);
             jgen.writeNumber(value.clusterId);
             jgen.writeFieldName(CLUSTER_POSITION);
             jgen.writeNumber(value.clusterPosition);
-            jgen.writeEndObject();
+            if (typeSer != null) {
+                typeSer.writeTypeSuffixForObject(value, jgen);
+            } else
+                jgen.writeEndObject();
         }
 
     }
@@ -142,12 +181,8 @@ public class OrientIoRegistry extends AbstractIoRegistry {
         @Override
         public Object deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
             Object result = super.deserialize(p, ctxt);
-            if (result instanceof Map) {
-                @SuppressWarnings("unchecked")
-                Map<String, Number> map = (Map<String, Number>) result;
-                if (map.containsKey(CLUSTER_ID) && map.containsKey(CLUSTER_POSITION)) {
-                    return new ORecordId(map.get(CLUSTER_ID).intValue(), map.get(CLUSTER_POSITION).longValue());
-                }
+            if (isORecord(result)) {
+                return newORecordId(result);
             }
             return result;
         }
@@ -191,6 +226,40 @@ public class OrientIoRegistry extends AbstractIoRegistry {
             output.writeString(ids);
         }
 
+    }
+
+    static class EdgeJacksonDeserializer extends AbstractObjectDeserializer<Edge> {
+
+        public EdgeJacksonDeserializer() {
+            super(Edge.class);
+        }
+
+        @SuppressWarnings({ "unchecked", "rawtypes" })
+        @Override
+        public Edge createObject(final Map<String, Object> edgeData) {
+            return new DetachedEdge(
+                    newORecordId(edgeData.get(GraphSONTokens.ID)),
+                    edgeData.get(GraphSONTokens.LABEL).toString(),
+                    (Map) edgeData.get(GraphSONTokens.PROPERTIES),
+                    Pair.with(newORecordId(edgeData.get(GraphSONTokens.OUT)), edgeData.get(GraphSONTokens.OUT_LABEL).toString()),
+                    Pair.with(newORecordId(edgeData.get(GraphSONTokens.IN)), edgeData.get(GraphSONTokens.IN_LABEL).toString()));
+        }
+    }
+
+    static class VertexJacksonDeserializer extends AbstractObjectDeserializer<Vertex> {
+
+        public VertexJacksonDeserializer() {
+            super(Vertex.class);
+        }
+
+        @SuppressWarnings("unchecked")
+        @Override
+        public Vertex createObject(final Map<String, Object> vertexData) {
+            return new DetachedVertex(
+                    newORecordId(vertexData.get(GraphSONTokens.ID)),
+                    vertexData.get(GraphSONTokens.LABEL).toString(),
+                    (Map<String, Object>) vertexData.get(GraphSONTokens.PROPERTIES));
+        }
     }
 
 }
