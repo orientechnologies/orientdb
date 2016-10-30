@@ -251,11 +251,12 @@ public class OrientGraphIndexTest {
         Assert.assertFalse(orientIndexQueries.isEmpty());
 
         orientIndexQueries.forEach(orientIndexQuery -> {
-            OIndex index = orientIndexQuery.index;
-            Assert.assertEquals(2, index.getSize());
-            Assert.assertTrue(((Collection) index.get(value)).contains(e1.id()));
-            Assert.assertTrue(((Collection) index.get(value)).contains(e2.id()));
-            Assert.assertFalse(((Collection) index.get(value)).contains(e3.id()));
+            OIndex<Collection<?>> index = orientIndexQuery.index;
+            Assert.assertEquals(3, index.getSize());
+            Assert.assertEquals(2, index.get(value).size());
+            Assert.assertTrue(index.get(value).contains(e1.id()));
+            Assert.assertTrue(index.get(value).contains(e2.id()));
+            Assert.assertFalse(index.get(value).contains(e3.id()));
 
             List<Edge> result1 = traversal1.toList();
             Assert.assertEquals(2, result1.size());

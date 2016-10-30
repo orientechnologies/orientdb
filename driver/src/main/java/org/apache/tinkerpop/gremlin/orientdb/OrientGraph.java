@@ -63,8 +63,8 @@ public final class OrientGraph implements Graph {
 
     static {
         INTERNAL_CLASSES_TO_TINKERPOP_CLASSES = new HashMap<>();
-        INTERNAL_CLASSES_TO_TINKERPOP_CLASSES.put(OImmutableClass.VERTEX_CLASS_NAME, Vertex.DEFAULT_LABEL);
-        INTERNAL_CLASSES_TO_TINKERPOP_CLASSES.put(OImmutableClass.EDGE_CLASS_NAME, Edge.DEFAULT_LABEL);
+        INTERNAL_CLASSES_TO_TINKERPOP_CLASSES.put(OClass.VERTEX_CLASS_NAME, Vertex.DEFAULT_LABEL);
+        INTERNAL_CLASSES_TO_TINKERPOP_CLASSES.put(OClass.EDGE_CLASS_NAME, Edge.DEFAULT_LABEL);
     }
 
     public static String CONFIG_URL = "orient-url";
@@ -88,10 +88,7 @@ public final class OrientGraph implements Graph {
     public static OrientGraph open(final Configuration config) {
         OrientGraphFactory factory = new OrientGraphFactory(config);
         if (config.containsKey(CONFIG_POOL_SIZE))
-            if (config.containsKey(CONFIG_MAX_PARTITION_SIZE))
-            factory.setupPool(config.getInt(CONFIG_MAX_PARTITION_SIZE), config.getInt(CONFIG_POOL_SIZE));
-            else
-                factory.setupPool(config.getInt(CONFIG_POOL_SIZE));
+            factory.setupPool(config.getInt(CONFIG_MAX_PARTITION_SIZE, 64), config.getInt(CONFIG_POOL_SIZE));
 
         return factory.getNoTx();
     }
@@ -163,9 +160,9 @@ public final class OrientGraph implements Graph {
         }
     }
 
-    private <T> T executeWithConnectionCheck(Supplier<T> toExecute) {
+    private <R> R executeWithConnectionCheck(Supplier<R> toExecute) {
         try {
-            T result = toExecute.get();
+            R result = toExecute.get();
             this.connectionFailed = false;
             return result;
         } catch (OException e) {
@@ -183,7 +180,7 @@ public final class OrientGraph implements Graph {
             ElementHelper.legalPropertyKeyValueArray(keyValues);
             if (ElementHelper.getIdValue(keyValues).isPresent()) throw Vertex.Exceptions.userSuppliedIdsNotSupported();
 
-            String label = ElementHelper.getLabelValue(keyValues).orElse(OImmutableClass.VERTEX_CLASS_NAME);
+            String label = ElementHelper.getLabelValue(keyValues).orElse(OClass.VERTEX_CLASS_NAME);
             OrientVertex vertex = new OrientVertex(this, label);
             vertex.property(keyValues);
 
@@ -221,7 +218,7 @@ public final class OrientGraph implements Graph {
         return executeWithConnectionCheck(() -> {
             makeActive();
             return elements(
-                    OImmutableClass.VERTEX_CLASS_NAME,
+                    OClass.VERTEX_CLASS_NAME,
                     r -> new OrientVertex(this, getRawDocument(r)),
                     vertexIds);
         });
@@ -294,7 +291,7 @@ public final class OrientGraph implements Graph {
     private Stream<OIdentifiable> lookupInIndex(OIndex<Object> index, Object value) {
         Object fromIndex = index.get(value);
         if (fromIndex instanceof Iterable)
-            return StreamUtils.asStream(((Iterable) fromIndex).iterator());
+            return StreamUtils.asStream(((Iterable<OIdentifiable>) fromIndex).iterator());
         else
             return Stream.of((OIdentifiable) fromIndex);
     }
@@ -328,27 +325,27 @@ public final class OrientGraph implements Graph {
 
     public Set<String> getIndexedKeys(final Class<? extends Element> elementClass) {
         if (Vertex.class.isAssignableFrom(elementClass)) {
-            return getIndexedKeys(OImmutableClass.VERTEX_CLASS_NAME);
+            return getIndexedKeys(OClass.VERTEX_CLASS_NAME);
         } else if (Edge.class.isAssignableFrom(elementClass)) {
-            return getIndexedKeys(OImmutableClass.EDGE_CLASS_NAME);
+            return getIndexedKeys(OClass.EDGE_CLASS_NAME);
         } else {
             throw new IllegalArgumentException("Class is not indexable: " + elementClass);
         }
     }
 
     public Set<String> getVertexIndexedKeys(final String label) {
-        String className = labelToClassName(label, OImmutableClass.VERTEX_CLASS_NAME);
+        String className = labelToClassName(label, OClass.VERTEX_CLASS_NAME);
         OClass cls = getSchema().getClass(className);
-        if (cls != null && cls.isSubClassOf(OImmutableClass.VERTEX_CLASS_NAME)) {
+        if (cls != null && cls.isSubClassOf(OClass.VERTEX_CLASS_NAME)) {
             return getIndexedKeys(className);
         }
         return new HashSet<String>();
     }
 
     public Set<String> getEdgeIndexedKeys(final String label) {
-        String className = labelToClassName(label, OImmutableClass.EDGE_CLASS_NAME);
+        String className = labelToClassName(label, OClass.EDGE_CLASS_NAME);
         OClass cls = getSchema().getClass(className);
-        if (cls != null && cls.isSubClassOf(OImmutableClass.EDGE_CLASS_NAME)) {
+        if (cls != null && cls.isSubClassOf(OClass.EDGE_CLASS_NAME)) {
             return getIndexedKeys(className);
         }
         return new HashSet<String>();
@@ -359,7 +356,7 @@ public final class OrientGraph implements Graph {
         return executeWithConnectionCheck(() -> {
             makeActive();
             return elements(
-                    OImmutableClass.EDGE_CLASS_NAME,
+                    OClass.EDGE_CLASS_NAME,
                     r -> new OrientEdge(this, getRawDocument(r)),
                     edgeIds);
         });
@@ -532,15 +529,15 @@ public final class OrientGraph implements Graph {
 
     public String createVertexClass(final String label) {
         makeActive();
-        String className = labelToClassName(label, OImmutableClass.VERTEX_CLASS_NAME);
-        createClass(className, OImmutableClass.VERTEX_CLASS_NAME);
+        String className = labelToClassName(label, OClass.VERTEX_CLASS_NAME);
+        createClass(className, OClass.VERTEX_CLASS_NAME);
         return className;
     }
 
     public String createEdgeClass(final String label) {
         makeActive();
-        String className = labelToClassName(label, OImmutableClass.EDGE_CLASS_NAME);
-        createClass(className, OImmutableClass.EDGE_CLASS_NAME);
+        String className = labelToClassName(label, OClass.EDGE_CLASS_NAME);
+        createClass(className, OClass.EDGE_CLASS_NAME);
         return className;
     }
 
@@ -579,9 +576,9 @@ public final class OrientGraph implements Graph {
 
     protected <E> String getClassName(final Class<T> elementClass) {
         if (elementClass.isAssignableFrom(Vertex.class))
-            return OImmutableClass.VERTEX_CLASS_NAME;
+            return OClass.VERTEX_CLASS_NAME;
         else if (elementClass.isAssignableFrom(Edge.class))
-            return OImmutableClass.EDGE_CLASS_NAME;
+            return OClass.EDGE_CLASS_NAME;
         throw new IllegalArgumentException("Class '" + elementClass + "' is neither a Vertex, nor an Edge");
     }
 
@@ -605,13 +602,13 @@ public final class OrientGraph implements Graph {
     }
 
     public <E extends Element> void createVertexIndex(final String key, final String label, final Configuration configuration) {
-        String className = labelToClassName(label, OImmutableClass.VERTEX_CLASS_NAME);
+        String className = labelToClassName(label, OClass.VERTEX_CLASS_NAME);
         createVertexClass(label);
         createIndex(key, className, configuration);
     }
 
     public <E extends Element> void createEdgeIndex(final String key, final String label, final Configuration configuration) {
-        String className = labelToClassName(label, OImmutableClass.EDGE_CLASS_NAME);
+        String className = labelToClassName(label, OClass.EDGE_CLASS_NAME);
         createEdgeClass(label);
         createIndex(key, className, configuration);
     }
