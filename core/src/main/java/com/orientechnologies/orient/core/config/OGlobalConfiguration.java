@@ -486,6 +486,11 @@ public enum OGlobalConfiguration {
 
   PROFILER_MAXVALUES("profiler.maxValues", "Maximum values to store. Values are managed in a LRU", Integer.class, 200),
 
+  PROFILER_MEMORYCHECK_INTERVAL("profiler.memoryCheckInterval",
+      "Checks the memory usage every configured milliseconds. Use 0 to disable it", Long.class, 120000),
+
+  // SEQUENCES
+
   SEQUENCE_MAX_RETRY("sequence.maxRetry", "Maximum number of retries between attempt to change a sequence in concurrent mode",
       Integer.class, 100),
 
