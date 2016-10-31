@@ -1387,4 +1387,10 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     checkOpeness();
     internal.setPrefetchRecords(prefetchRecords);
   }
+  
+  public void checkForClusterPermissions(String name) {
+    checkOpeness();
+    internal.checkForClusterPermissions(name);
+  }
+  
 }

@@ -250,8 +250,6 @@ public interface OStorage extends OBackupable, OSharedContainer {
    */
   String getType();
 
-  void checkForClusterPermissions(final String iClusterName);
-
   OStorage getUnderlying();
 
   boolean isRemote();

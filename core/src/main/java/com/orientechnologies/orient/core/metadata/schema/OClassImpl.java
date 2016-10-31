@@ -1165,10 +1165,9 @@ import java.util.concurrent.Callable;
         commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
 
         database.command(commandSQL).execute();
-
-        truncateClusterInternal(clusterName, storage);
+        truncateClusterInternal(clusterName, database);
       } else
-        truncateClusterInternal(clusterName, storage);
+        truncateClusterInternal(clusterName, database);
     } finally {
       releaseSchemaReadLock();
     }
@@ -1176,14 +1175,15 @@ import java.util.concurrent.Callable;
     return this;
   }
 
-  private void truncateClusterInternal(final String clusterName, final OStorage storage) {
-    final OCluster cluster = storage.getClusterByName(clusterName);
+  private void truncateClusterInternal(final String clusterName, final ODatabaseDocumentInternal database) {
+    final OCluster cluster = database.getStorage().getClusterByName(clusterName);
 
     if (cluster == null) {
       throw new ODatabaseException("Cluster with name " + clusterName + " does not exist");
     }
 
     try {
+      database.checkForClusterPermissions(clusterName);
       cluster.truncate();
     } catch (IOException e) {
       throw OException.wrapException(new ODatabaseException("Error during truncate of cluster " + clusterName), e);
@@ -1510,8 +1510,8 @@ import java.util.concurrent.Callable;
    * @throws IOException
    */
   public void truncate() throws IOException {
-
-    getDatabase().checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_UPDATE);
+    ODatabaseDocumentInternal db = getDatabase();
+    db.checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_UPDATE);
 
     if (isSubClassOf(OSecurityShared.RESTRICTED_CLASSNAME)) {
       throw new OSecurityException(
@@ -1519,13 +1519,15 @@ import java.util.concurrent.Callable;
               + OSecurityShared.RESTRICTED_CLASSNAME + "')");
     }
 
-    final OStorage storage = getDatabase().getStorage();
+    final OStorage storage = db.getStorage();
     acquireSchemaReadLock();
     try {
 
-      for (int id : clusterIds)
-        storage.getClusterById(id).truncate();
-
+      for (int id : clusterIds) {
+        OCluster cl = storage.getClusterById(id);
+        db.checkForClusterPermissions(cl.getName());
+        cl.truncate();
+      }
       for (OIndex<?> index : getClassIndexes())
         index.clear();
 
@@ -2688,7 +2690,7 @@ import java.util.concurrent.Callable;
     if (name.toLowerCase().equals(getDatabase().getClusterNameById(defaultClusterId))) {
       // DROP THE DEFAULT CLUSTER CALLED WITH THE SAME NAME ONLY IF EMPTY
       if (getDatabase().getClusterRecordSizeById(defaultClusterId) == 0)
-        getDatabase().dropCluster(defaultClusterId, true);
+        getDatabase().getStorage().dropCluster(defaultClusterId, true);
     }
   }
 

@@ -498,11 +498,6 @@ public class PostponedEngineStartTest {
         }
 
         @Override
-        public void checkForClusterPermissions(String iClusterName) {
-
-        }
-
-        @Override
         public OStorage getUnderlying() {
           return null;
         }

@@ -124,6 +124,7 @@ public class OCommandExecutorSQLTruncateCluster extends OCommandExecutorSQLAbstr
       }
 
       try {
+        database.checkForClusterPermissions(cluster.getName());
         cluster.truncate();
       } catch (IOException ioe) {
         throw OException.wrapException(new ODatabaseException("Error during truncation of cluster with name " + clusterName), ioe);

@@ -1502,11 +1502,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   @Override
-  public void checkForClusterPermissions(final String iClusterName) {
-    wrapped.checkForClusterPermissions(iClusterName);
-  }
-
-  @Override
   public OPhysicalPosition[] higherPhysicalPositions(int currentClusterId, OPhysicalPosition entry) {
     return wrapped.higherPhysicalPositions(currentClusterId, entry);
   }

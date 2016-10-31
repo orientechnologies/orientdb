@@ -1289,7 +1289,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   public void truncate() throws IOException {
     startOperation();
     try {
-      storageLocal.checkForClusterPermissions(getName());
 
       OAtomicOperation atomicOperation = startAtomicOperation(true);
 

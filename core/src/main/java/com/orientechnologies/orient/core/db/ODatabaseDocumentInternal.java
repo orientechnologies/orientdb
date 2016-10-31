@@ -63,7 +63,7 @@ public interface ODatabaseDocumentInternal extends ODatabaseDocument, ODatabaseI
   ORecordSerializer getSerializer();
 
   void setSerializer(ORecordSerializer serializer);
-  
+
   int assignAndCheckCluster(ORecord record, String iClusterName);
 
   <RET extends ORecord> RET loadIfVersionIsNotLatest(final ORID rid, final int recordVersion, String fetchPlan, boolean ignoreCache)
@@ -102,10 +102,12 @@ public interface ODatabaseDocumentInternal extends ODatabaseDocument, ODatabaseI
   void callOnCloseListeners();
 
   void callOnDropListeners();
-  
+
   public <DB extends ODatabase> DB setCustom(final String name, final Object iValue);
 
   void setPrefetchRecords(boolean prefetchRecords);
 
   boolean isPrefetchRecords();
+
+  void checkForClusterPermissions(String name);
 }
