@@ -1554,6 +1554,25 @@ public class OCommandExecutorSQLSelectTest {
     Assert.assertEquals(results.get(1).field("name"), "c");
   }
 
+  @Test
+  public void testNotEscaped(){
+    //issue #6786
+
+    db.command(new OCommandSQL("create class testNotEscaped")).execute();
+    db.command(new OCommandSQL("insert into testNotEscaped set name = 'O\\'brien'")).execute();
+    db.command(new OCommandSQL("insert into testNotEscaped set name = 'Foo'")).execute();
+
+
+    List<ODocument> results = db.query(new OSQLSynchQuery<ODocument>("select * from testNotEscaped WHERE (NOT (name='O\\'brien'))"));
+    Assert.assertEquals(results.size(), 1);
+    Assert.assertEquals(results.get(0).field("name"), "Foo");
+
+    results = db.query(new OSQLSynchQuery<ODocument>("select * from testNotEscaped WHERE name='O\\'brien'"));
+    Assert.assertEquals(results.size(), 1);
+    Assert.assertEquals(results.get(0).field("name"), "O'brien");
+
+  }
+
   private long indexUsages(ODatabaseDocumentTx db) {
     final long oldIndexUsage;
     try {

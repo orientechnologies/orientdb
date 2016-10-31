@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.core.sql.filter;
 
-import com.orientechnologies.common.parser.OBaseParser;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -38,12 +36,7 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorNot;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Parses text in SQL format and build a tree of conditions.
@@ -132,7 +125,7 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
 
   protected Object extractConditions(final OSQLFilterCondition iParentCondition) {
     final int oldPosition = parserGetCurrentPosition();
-    parserNextWord(true, " )=><,\r\n");
+    parserNextWord(true, " )=><,\r\n", true);
     final String word = parserGetLastWord();
 
     boolean inBraces = word.length() > 0 && word.charAt(0) == OStringSerializerHelper.EMBEDDED_BEGIN;
@@ -272,14 +265,11 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
     final Object[] result = new Object[iExpectedWords];
 
     for (int i = 0; i < iExpectedWords; ++i) {
-      parserNextWord(false, " =><,\r\n");
+      parserNextWord(false, " =><,\r\n", true);
       String word = parserGetLastWord();
 
       if (word.length() == 0)
         break;
-
-
-      word = word.replaceAll("\\\\", "\\\\\\\\"); //see issue #5229
 
       final String uWord = word.toUpperCase();
 
@@ -351,7 +341,6 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
             break;
         }
 
-        word = word.replaceAll("\\\\\\\\", "\\\\"); //see issue #5229
         result[i] = OSQLHelper.parseValue(this, this, word, context);
       }
     }

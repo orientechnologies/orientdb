@@ -416,7 +416,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     assignLetClauses(iRecord);
     if (compiledFilter == null)
       return true;
-    return (Boolean) compiledFilter.evaluate(iRecord, null, iContext);
+    return Boolean.TRUE.equals(compiledFilter.evaluate(iRecord, null, iContext));
   }
 
   protected void assignLetClauses(final ORecord iRecord) {

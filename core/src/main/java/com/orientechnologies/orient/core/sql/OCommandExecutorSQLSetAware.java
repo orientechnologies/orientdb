@@ -62,7 +62,7 @@ public abstract class OCommandExecutorSQLSetAware extends OCommandExecutorSQLAbs
       }
 
       parserNextChars(false, true, "=");
-      fieldValue = parserRequiredWord(false, "Value expected", " =><,\r\n");
+      fieldValue = parserRequiredWord(false, "Value expected", " =><,\r\n", true);
 
       // INSERT TRANSFORMED FIELD VALUE
       final Object v = convertValue(iClass, fieldName, getFieldValueCountingParameters(fieldValue));

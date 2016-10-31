@@ -100,7 +100,7 @@ public class OSQLHelper {
 
     if (iValue.startsWith("'") && iValue.endsWith("'") || iValue.startsWith("\"") && iValue.endsWith("\""))
       // STRING
-      fieldValue = OIOUtils.getStringContent(iValue);
+      fieldValue = OStringSerializerHelper.decode(OIOUtils.getStringContent(iValue));
     else if (iValue.charAt(0) == OStringSerializerHelper.LIST_BEGIN
         && iValue.charAt(iValue.length() - 1) == OStringSerializerHelper.LIST_END) {
       // COLLECTION/ARRAY
@@ -130,9 +130,6 @@ public class OSQLHelper {
         Object value = parseValue(parts.get(1), iContext);
         if(VALUE_NOT_PARSED == value){
           value = new OSQLPredicate(parts.get(1)).evaluate(iContext);
-        }
-        if(value instanceof String){
-          value = OStringSerializerHelper.decode(value.toString());
         }
         map.put(key, value);
       }

@@ -101,7 +101,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract
       parserRequiredKeyword(OCommandExecutorSQLDelete.KEYWORD_DELETE);
       parserRequiredKeyword(OCommandExecutorSQLDelete.KEYWORD_FROM);
 
-      String subjectName = parserRequiredWord(false, "Syntax error", " =><,\r\n");
+      String subjectName = parserRequiredWord(false, "Syntax error", " =><,\r\n", true);
       if (subjectName == null)
         throwSyntaxErrorException("Invalid subject name. Expected cluster, class, index or sub-query");
 
