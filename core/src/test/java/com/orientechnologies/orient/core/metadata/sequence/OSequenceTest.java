@@ -25,20 +25,20 @@ public class OSequenceTest {
   private ODatabaseDocument db;
 
   @Rule
-  public ExternalResource   resource = new ExternalResource() {
-                                       @Override
-                                       protected void before() throws Throwable {
-                                         db = new ODatabaseDocumentTx("memory:" + OSequenceTest.class.getName());
-                                         db.create();
-                                       }
+  public ExternalResource resource = new ExternalResource() {
+    @Override
+    protected void before() throws Throwable {
+      db = new ODatabaseDocumentTx("memory:" + OSequenceTest.class.getName());
+      db.create();
+    }
 
-                                       @Override
-                                       protected void after() {
-                                         db.drop();
-                                       }
+    @Override
+    protected void after() {
+      db.drop();
+    }
 
-                                     };
-  private OSequenceLibrary  sequences;
+  };
+  private OSequenceLibrary sequences;
 
   @Before
   public void setUp() throws Exception {
@@ -142,6 +142,7 @@ public class OSequenceTest {
   public void shouldSequenceMTNoTx() throws Exception {
     OSequence.CreateParams params = new OSequence.CreateParams().setStart(0L);
     OSequence mtSeq = sequences.createSequence("mtSeq", OSequence.SEQUENCE_TYPE.ORDERED, params);
+    mtSeq.setMaxRetry(1000);
     final int count = 1000;
     final int threads = 2;
     final CountDownLatch latch = new CountDownLatch(count);
@@ -175,7 +176,7 @@ public class OSequenceTest {
     assertThat(errors.get()).isEqualTo(0);
     assertThat(success.get()).isEqualTo(1000);
     mtSeq.reloadSequence();
-//    assertThat(mtSeq.getDocument().getVersion()).isEqualTo(1001);
+    //    assertThat(mtSeq.getDocument().getVersion()).isEqualTo(1001);
     assertThat(mtSeq.current()).isEqualTo(1000);
   }
 
