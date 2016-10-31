@@ -4,7 +4,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManagerProxy;
-import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
 import org.apache.tinkerpop.gremlin.orientdb.OrientIndexQuery;
 import org.apache.tinkerpop.gremlin.process.traversal.Compare;
@@ -35,6 +35,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E> implements HasContainerHolder {
+
+    private static final long serialVersionUID = 8141248670294067626L;
 
     private final List<HasContainer> hasContainers = new ArrayList<>();
 
@@ -90,7 +92,8 @@ public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E> imple
 
                 indexQueryOptions.forEach(indexQuery -> {
                     OLogManager.instance().debug(this, "using " + indexQuery);
-                    Stream<? extends ElementType> indexedElements = getElementsByIndex.apply(graph, indexQuery.index, indexQuery.values);
+                    Stream<? extends ElementType> indexedElements = getElementsByIndex.apply(graph, indexQuery.index,
+                            indexQuery.values);
                     elements.addAll(indexedElements.filter(element -> HasContainer.testAll(element, this.hasContainers))
                             .collect(Collectors.<ElementType> toList()));
                 });
@@ -163,7 +166,7 @@ public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E> imple
                 Iterator<Object> values = requestedKeyValue.get().getValue1();
 
                 classLabels.forEach(classLabel -> {
-                    String className = graph.labelToClassName(classLabel, isVertexStep() ? OImmutableClass.VERTEX_CLASS_NAME : OImmutableClass.EDGE_CLASS_NAME);
+                    String className = graph.labelToClassName(classLabel, isVertexStep() ? OClass.VERTEX_CLASS_NAME : OClass.EDGE_CLASS_NAME);
                     Set<OIndex<?>> classIndexes = indexManager.getClassIndexes(className);
                     Iterator<OIndex<?>> keyIndexes = classIndexes.stream().filter(idx -> idx.getDefinition().getFields().contains(key)).iterator();
 
@@ -204,10 +207,10 @@ public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E> imple
                     : StringFactory.stepString(this, this.returnClass.getSimpleName().toLowerCase(), Arrays.toString(this.ids), this.hasContainers);
     }
 
-    private <E extends Element> Iterator<E> iteratorList(final Iterator<E> iterator) {
-        final List<E> list = new ArrayList<>();
+    private <X extends Element> Iterator<X> iteratorList(final Iterator<X> iterator) {
+        final List<X> list = new ArrayList<>();
         while (iterator.hasNext()) {
-            final E e = iterator.next();
+            final X e = iterator.next();
             if (HasContainer.testAll(e, this.hasContainers))
                 list.add(e);
         }

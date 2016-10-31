@@ -3,6 +3,7 @@
 *.iml
 target
 tests-scala/databases
+.ensime
 
 
 ### Eclipse ###

@@ -6,16 +6,13 @@ import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import org.apache.tinkerpop.gremlin.structure.Direction;
-import org.apache.tinkerpop.gremlin.structure.Edge;
-import org.apache.tinkerpop.gremlin.structure.Property;
-import org.apache.tinkerpop.gremlin.structure.Vertex;
-import org.apache.tinkerpop.gremlin.structure.VertexProperty;
+
+import org.apache.tinkerpop.gremlin.structure.*;
 import org.apache.tinkerpop.gremlin.structure.util.ElementHelper;
 import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
 
@@ -128,13 +125,14 @@ public final class OrientVertex extends OrientElement implements Vertex {
 
         ElementHelper.legalPropertyKeyValueArray(keyValues);
         if (ElementHelper.getIdValue(keyValues).isPresent()) throw Vertex.Exceptions.userSuppliedIdsNotSupported();
+        if (Graph.Hidden.isHidden(label)) throw Element.Exceptions.labelCanNotBeAHiddenKey(label);
 
         final ODocument outDocument = getRawDocument();
-        if (!outDocument.getSchemaClass().isSubClassOf(OImmutableClass.VERTEX_CLASS_NAME))
+        if (!outDocument.getSchemaClass().isSubClassOf(OClass.VERTEX_CLASS_NAME))
             throw new IllegalArgumentException("source record is not a vertex");
 
         final ODocument inDocument = ((OrientVertex) inVertex).getRawDocument();
-        if (!inDocument.getSchemaClass().isSubClassOf(OImmutableClass.VERTEX_CLASS_NAME))
+        if (!inDocument.getSchemaClass().isSubClassOf(OClass.VERTEX_CLASS_NAME))
             throw new IllegalArgumentException("destination record is not a vertex");
 
         final OrientEdge edge;
@@ -151,7 +149,7 @@ public final class OrientVertex extends OrientElement implements Vertex {
             throw new IllegalStateException("label cannot be null");
 
         // CREATE THE EDGE DOCUMENT TO STORE FIELDS TOO
-        //String className = graph.labelToClassName(label, OImmutableClass.EDGE_CLASS_NAME);
+        //String className = graph.labelToClassName(label, OClass.EDGE_CLASS_NAME);
         edge = new OrientEdge(graph, label, outDocument, inDocument, label);
         edge.property(keyValues);
 
@@ -183,7 +181,7 @@ public final class OrientVertex extends OrientElement implements Vertex {
             throw new IllegalArgumentException("Direction not valid");
 
         final String prefix = iDirection == Direction.OUT ? CONNECTION_OUT_PREFIX : CONNECTION_IN_PREFIX;
-        if (iClassName == null || iClassName.isEmpty() || iClassName.equals(OImmutableClass.EDGE_CLASS_NAME))
+        if (iClassName == null || iClassName.isEmpty() || iClassName.equals(OClass.EDGE_CLASS_NAME))
             return prefix;
 
         return prefix + iClassName;
@@ -342,7 +340,7 @@ public final class OrientVertex extends OrientElement implements Vertex {
             if (iFieldName.length() > CONNECTION_IN_PREFIX.length())
                 return iFieldName.substring(CONNECTION_IN_PREFIX.length());
         }
-        return OImmutableClass.EDGE_CLASS_NAME;
+        return OClass.EDGE_CLASS_NAME;
     }
 
 }
