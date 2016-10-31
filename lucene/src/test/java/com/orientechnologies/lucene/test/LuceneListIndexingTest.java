@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import org.assertj.core.api.Assertions;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -68,6 +69,25 @@ public class LuceneListIndexingTest extends BaseLuceneTest {
   @After
   public void deInit() {
     deInitDB();
+  }
+
+  @Test
+  public void testSearchOnList() throws Exception {
+    ODocument doc = new ODocument("City");
+    doc.field("name", "Rome");
+    doc.field("tags", new ArrayList<String>() {
+      {
+        add("Beautiful");
+        add("Touristic");
+        add("Sunny");
+      }
+    });
+    databaseDocumentTx.save(doc);
+
+    List<ODocument> res = databaseDocumentTx
+        .query(new OSQLSynchQuery<Object>("select from  City where tags lucene 'Sunny' "));
+
+    Assertions.assertThat(res).hasSize(1);
   }
 
   @Test
