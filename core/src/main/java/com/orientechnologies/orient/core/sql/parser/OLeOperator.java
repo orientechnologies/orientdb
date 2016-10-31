@@ -20,6 +20,10 @@ public class OLeOperator extends SimpleNode implements OBinaryCompareOperator {
 
   @Override
   public boolean execute(Object iLeft, Object iRight) {
+    if (iLeft == null || iRight == null) {
+      return false;//only one is null, to check if both are null please use IS NULL
+    }
+
     if (iLeft.getClass() != iRight.getClass() && iLeft instanceof Number && iRight instanceof Number) {
       Number[] couple = OType.castComparableNumber((Number) iLeft, (Number) iRight);
       iLeft = couple[0];
