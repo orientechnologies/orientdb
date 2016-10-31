@@ -91,6 +91,25 @@ public class LuceneListIndexingTest extends BaseLuceneTest {
   }
 
   @Test
+  public void testSearchOnListOnIndex() throws Exception {
+    ODocument doc = new ODocument("City");
+    doc.field("name", "Rome");
+    doc.field("tags", new ArrayList<String>() {
+      {
+        add("Beautiful");
+        add("Touristic");
+        add("Sunny");
+      }
+    });
+    databaseDocumentTx.save(doc);
+
+    List<ODocument> res = databaseDocumentTx
+        .query(new OSQLSynchQuery<Object>("select from  index:City.tags where key lucene 'Sunny' "));
+
+    Assertions.assertThat(res).hasSize(1);
+  }
+
+  @Test
   public void testIndexingList() throws Exception {
 
     OSchema schema = databaseDocumentTx.getMetadata().getSchema();
