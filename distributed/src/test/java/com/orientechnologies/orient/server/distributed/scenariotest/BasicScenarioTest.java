@@ -54,7 +54,6 @@ public class BasicScenarioTest extends AbstractScenarioTest {
     init(SERVERS);
     prepare(false);
     useTransactions = true;
-    super.executeWritesOnServers.addAll(super.serverInstance);
     execute();
   }
 
@@ -70,8 +69,8 @@ public class BasicScenarioTest extends AbstractScenarioTest {
       database.close();
     }
 
-    executeMultipleWrites(super.executeWritesOnServers, "plocal");
-    super.checkWritesAboveCluster(serverInstance, executeWritesOnServers);
+    executeMultipleWrites(super.executeTestsOnServers, "plocal");
+    super.checkWritesAboveCluster(serverInstance, executeTestsOnServers);
   }
 
   @Override

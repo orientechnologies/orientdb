@@ -61,7 +61,6 @@ public class ShutdownAndRestartNodeScenarioTest extends AbstractScenarioTest {
   public void test() throws Exception {
     init(SERVERS);
     prepare(false);
-    super.executeWritesOnServers.addAll(super.serverInstance);
     execute();
   }
 

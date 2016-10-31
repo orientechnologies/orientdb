@@ -65,8 +65,8 @@ public class FaultDuringWritingWithOperationRedirectScenarioTest extends Abstrac
     prepare(false);
 
     // execute writes only on server3
-    executeWritesOnServers = new ArrayList<ServerRun>();
-    executeWritesOnServers.add(serverInstance.get(2));
+    executeTestsOnServers = new ArrayList<ServerRun>();
+    executeTestsOnServers.add(serverInstance.get(2));
 
     execute();
   }
@@ -93,7 +93,7 @@ public class FaultDuringWritingWithOperationRedirectScenarioTest extends Abstrac
       Callable shutdownAndRestartTask = new ShutdownAndRestartServer(serverInstance.get(2), dbServerUrl1, "net-fault");
       final ExecutorService executor = Executors.newSingleThreadExecutor();
       Future f = executor.submit(shutdownAndRestartTask);
-      executeMultipleWrites(this.executeWritesOnServers,"remote");
+      executeMultipleWrites(this.executeTestsOnServers,"remote");
 
       f.get(); // waiting for task ending
 
@@ -107,7 +107,7 @@ public class FaultDuringWritingWithOperationRedirectScenarioTest extends Abstrac
 
       // check consistency on all the server:
       // all the records destined to server3 were redirected to an other server, so we must inspect consistency for all 500 records
-      checkWritesAboveCluster(serverInstance, executeWritesOnServers);
+      checkWritesAboveCluster(serverInstance, executeTestsOnServers);
 
     } catch(Exception e) {
       e.printStackTrace();

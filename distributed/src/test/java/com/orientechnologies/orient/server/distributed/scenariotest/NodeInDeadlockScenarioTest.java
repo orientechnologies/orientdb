@@ -63,9 +63,9 @@ public class NodeInDeadlockScenarioTest extends AbstractScenarioTest {
     prepare(false);
 
     // EXECUTE TESTS ONLY ON FIRST 2 NODES LEAVING NODE3 AD BACKUP ONLY REPLICA
-    executeWritesOnServers = new ArrayList<ServerRun>();
+    executeTestsOnServers = new ArrayList<ServerRun>();
     for (int i = 0; i < serverInstance.size() - 1; ++i) {
-      executeWritesOnServers.add(serverInstance.get(i));
+      executeTestsOnServers.add(serverInstance.get(i));
     }
 
     execute();
@@ -87,10 +87,10 @@ public class NodeInDeadlockScenarioTest extends AbstractScenarioTest {
 
       // writes on server1 and server2
       ODatabaseRecordThreadLocal.INSTANCE.set(null);
-      executeMultipleWrites(this.executeWritesOnServers, "remote");
+      executeMultipleWrites(this.executeTestsOnServers, "remote");
 
       // check consistency on server1 and server2
-      checkWritesAboveCluster(executeWritesOnServers, executeWritesOnServers);
+      checkWritesAboveCluster(executeTestsOnServers, executeTestsOnServers);
 
       // waiting for server3 releasing
       while (backupInProgress == true) {
@@ -98,7 +98,7 @@ public class NodeInDeadlockScenarioTest extends AbstractScenarioTest {
       }
 
       // check consistency on all the server
-      checkWritesAboveCluster(serverInstance, executeWritesOnServers);
+      checkWritesAboveCluster(serverInstance, executeTestsOnServers);
 
     } catch (Exception e) {
       e.printStackTrace();

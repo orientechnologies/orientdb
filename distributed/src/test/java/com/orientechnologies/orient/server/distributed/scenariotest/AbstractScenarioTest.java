@@ -43,7 +43,6 @@ import static org.junit.Assert.*;
 public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTest {
 
   protected final static int       SERVERS                               = 3;
-  protected List<ServerRun>        executeWritesOnServers                = new LinkedList<ServerRun>();
   protected final static ODocument MISSING_DOCUMENT                      = new ODocument();
 
   // FIXME: these should be parameters read from configuration file (or, if missing, defaulted to some values)

@@ -45,7 +45,6 @@ public class DBCreationAndUpdateOneNodeScenarioTest extends AbstractScenarioTest
   public void test() throws Exception {
     init(SERVERS);
     prepare(false);
-    super.executeWritesOnServers.addAll(super.serverInstance);
     execute();
   }
 
@@ -85,12 +84,12 @@ public class DBCreationAndUpdateOneNodeScenarioTest extends AbstractScenarioTest
     }
 
     // executing writes on server1
-    executeWritesOnServers.remove(2);
-    executeWritesOnServers.remove(1);
-    executeMultipleWrites(super.executeWritesOnServers, "plocal");
+    executeTestsOnServers.remove(2);
+    executeTestsOnServers.remove(1);
+    executeMultipleWrites(super.executeTestsOnServers, "plocal");
 
     // check consistency
-    checkWritesAboveCluster(serverInstance, executeWritesOnServers);
+    checkWritesAboveCluster(serverInstance, executeTestsOnServers);
   }
 
   @Override

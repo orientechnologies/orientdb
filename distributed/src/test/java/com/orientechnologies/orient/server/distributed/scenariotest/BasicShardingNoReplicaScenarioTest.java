@@ -58,7 +58,6 @@ public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenario
   public void test() throws Exception {
     init(SERVERS);
     prepare(false);
-    super.executeWritesOnServers.addAll(super.serverInstance);
     execute();
   }
 
@@ -100,22 +99,22 @@ public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenario
       graphNoTx.getRawGraph().close();
 
       // writes on the three clusters
-      executeMultipleWritesOnShards(executeWritesOnServers, "plocal");
+      executeMultipleWritesOnShards(executeTestsOnServers, "plocal");
 
       // check consistency (no-replica)
-      checkAvailabilityOnShardsNoReplica(serverInstance, executeWritesOnServers);
+      checkAvailabilityOnShardsNoReplica(serverInstance, executeTestsOnServers);
 
       // network fault on server3
       System.out.println("Shutdown on server3.\n");
       simulateServerFault(serverInstance.get(2), "shutdown");
       assertFalse(serverInstance.get(2).isActive());
 
-      waitForDatabaseIsOffline(executeWritesOnServers.get(2).getServerInstance().getDistributedManager().getLocalNodeName(),
+      waitForDatabaseIsOffline(executeTestsOnServers.get(2).getServerInstance().getDistributedManager().getLocalNodeName(),
           getDatabaseName(), 10000);
 
       // check consistency (no-replica)
-      executeWritesOnServers.remove(2);
-      checkAvailabilityOnShardsNoReplica(executeWritesOnServers, executeWritesOnServers);
+      executeTestsOnServers.remove(2);
+      checkAvailabilityOnShardsNoReplica(executeTestsOnServers, executeTestsOnServers);
 
       // this query doesn't return any result
       try {
@@ -166,8 +165,8 @@ public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenario
       }
 
       // check consistency (no-replica)
-      executeWritesOnServers.add(serverInstance.get(2));
-      checkAvailabilityOnShardsNoReplica(serverInstance, executeWritesOnServers);
+      executeTestsOnServers.add(serverInstance.get(2));
+      checkAvailabilityOnShardsNoReplica(serverInstance, executeTestsOnServers);
 
     } catch (Exception e) {
       e.printStackTrace();
