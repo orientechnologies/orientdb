@@ -22,8 +22,8 @@ import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.exception.OHighLevelException;
 
 /**
- * Cluster ids wer reassigned during the operation. The client should catch this exception and retry to execute the same operation.
- * 
+ * Cluster id was reassigned during the operation. The client should catch this exception and retry to execute the same operation.
+ *
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
 public class ODistributedConfigurationChangedException extends ONeedRetryException implements OHighLevelException {

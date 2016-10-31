@@ -16,11 +16,16 @@
 
 package com.orientechnologies.orient.core.schedule;
 
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.Map;
@@ -28,7 +33,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Scheduler default implementation.
- * 
+ *
  * @author Luca Garulli
  * @author henryzhao81-at-gmail.com
  * @since Mar 28, 2013
@@ -51,10 +56,39 @@ public class OSchedulerImpl implements OScheduler {
 
   @Override
   public void removeEvent(final String eventName) {
+    OLogManager.instance().debug(this, "Removing scheduled event '%s'...", eventName);
+
     final OScheduledEvent event = events.remove(eventName);
+
     if (event != null) {
       event.interrupt();
+
+      try {
+        event.getDocument().reload();
+      } catch (ORecordNotFoundException e) {
+        // ALREADY DELETED, JUST RETURN
+        return;
+      }
+
+      // RECORD EXISTS: DELETE THE EVENT RECORD
+      ODatabaseDocumentTx.executeWithRetries(new OCallable<Object, Integer>() {
+        @Override
+        public Object call(Integer iArgument) {
+          OLogManager.instance().debug(this, "Deleting scheduled event '%s' rid=%s...", event, event.getDocument().getIdentity());
+          event.getDocument().delete();
+          return null;
+        }
+      }, 10, 0, new ORecord[] { event.getDocument() });
     }
+  }
+
+  @Override
+  public void updateEvent(final OScheduledEvent event) {
+    final OScheduledEvent oldEvent = events.remove(event.getName());
+    if (oldEvent != null)
+      oldEvent.interrupt();
+    scheduleEvent(event);
+    OLogManager.instance().debug(this, "Updated scheduled event '%s' rid=%s...", event, event.getDocument().getIdentity());
   }
 
   @Override

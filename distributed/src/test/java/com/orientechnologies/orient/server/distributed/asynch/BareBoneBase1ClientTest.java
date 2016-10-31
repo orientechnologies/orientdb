@@ -12,7 +12,7 @@ public abstract class BareBoneBase1ClientTest extends TestCase {
   protected static final String CONFIG_DIR = "src/test/resources";
   protected static final String DB1_DIR    = "target/db1";
 
-  protected volatile Throwable  exceptionInThread;
+  protected volatile Throwable exceptionInThread;
 
   protected abstract void dbClient1();
 
@@ -69,7 +69,8 @@ public abstract class BareBoneBase1ClientTest extends TestCase {
     }
 
     for (BareBonesServer server : servers)
-      server.stop();
+      if (server != null)
+        server.stop();
   }
 
   protected BareBonesServer dbServer(String dbDirectory, String orientUrl, String dbConfigName) {

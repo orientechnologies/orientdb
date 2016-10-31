@@ -23,7 +23,7 @@ import java.util.Map;
 
 /**
  * Proxy implementation of the Scheduler.
- * 
+ *
  * @author Luca Garulli
  * @author henryzhao81-at-gmail.com
  * @since Mar 28, 2013
@@ -41,6 +41,11 @@ public class OSchedulerProxy extends OProxedResource<OScheduler> implements OSch
   @Override
   public void removeEvent(final String eventName) {
     delegate.removeEvent(eventName);
+  }
+
+  @Override
+  public void updateEvent(final OScheduledEvent event) {
+    delegate.updateEvent(event);
   }
 
   @Override

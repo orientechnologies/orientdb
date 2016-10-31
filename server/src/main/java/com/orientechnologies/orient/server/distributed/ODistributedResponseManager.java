@@ -254,7 +254,7 @@ public class ODistributedResponseManager {
         // WAIT FOR THE RESPONSES
         synchronousResponsesArrived.await(currentTimeout, TimeUnit.MILLISECONDS);
 
-        if (isMinimumQuorumReached() || receivedResponses >= totalExpectedResponses)
+        if (receivedResponses >= totalExpectedResponses || isMinimumQuorumReached() )
           // OK
           return true;
 
@@ -317,7 +317,7 @@ public class ODistributedResponseManager {
         }
       }
 
-      return isMinimumQuorumReached() || receivedResponses >= totalExpectedResponses;
+      return receivedResponses >= totalExpectedResponses || isMinimumQuorumReached();
 
     } finally {
       synchronousResponsesLock.unlock();

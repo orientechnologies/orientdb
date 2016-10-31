@@ -31,11 +31,10 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
  * Distributed task to drop a database on all the servers.
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- *
  */
 public class ODropDatabaseTask extends OAbstractRemoteTask {
   private static final long serialVersionUID = 1L;
-  public static final int   FACTORYID        = 23;
+  public static final  int  FACTORYID        = 23;
 
   public ODropDatabaseTask() {
   }
@@ -44,8 +43,15 @@ public class ODropDatabaseTask extends OAbstractRemoteTask {
   public Object execute(ODistributedRequestId requestId, final OServer iServer, final ODistributedServerManager iManager,
       final ODatabaseDocumentInternal database) throws Exception {
 
-    ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.IN,
-        "Dropping database %s...", database.getName());
+    if (database == null) {
+      ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.IN,
+          "Cannot drop database because not existent");
+      return true;
+    }
+
+    ODistributedServerLog
+        .warn(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.IN, "Dropping database %s...",
+            database.getName());
 
     database.drop();
 

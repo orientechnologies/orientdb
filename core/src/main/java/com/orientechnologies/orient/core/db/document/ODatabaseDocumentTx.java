@@ -1695,7 +1695,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   }
 
   @Override
-  public <RET extends ORecord> RET reload(ORecord record, String fetchPlan, boolean ignoreCache, boolean force) {
+  public <RET extends ORecord> RET reload(final ORecord record, String fetchPlan, boolean ignoreCache, boolean force) {
     checkIfActive();
 
     final ORecord loadedRecord = currentTx.reloadRecord(record.getIdentity(), record, fetchPlan, ignoreCache, force);
@@ -3394,11 +3394,16 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   }
 
   public static Object executeWithRetries(final OCallable<Object, Integer> callback, final int maxRetry) {
-    return executeWithRetries(callback, maxRetry, 0);
+    return executeWithRetries(callback, maxRetry, 0, null);
   }
 
   public static Object executeWithRetries(final OCallable<Object, Integer> callback, final int maxRetry,
       final int waitBetweenRetry) {
+    return executeWithRetries(callback, maxRetry, waitBetweenRetry, null);
+  }
+
+  public static Object executeWithRetries(final OCallable<Object, Integer> callback, final int maxRetry, final int waitBetweenRetry,
+      final ORecord[] recordToReloadOnRetry) {
     ONeedRetryException lastException = null;
     for (int retry = 0; retry < maxRetry; ++retry) {
       try {
@@ -3406,6 +3411,12 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       } catch (ONeedRetryException e) {
         // SAVE LAST EXCEPTION AND RETRY
         lastException = e;
+
+        if (recordToReloadOnRetry != null) {
+          // RELOAD THE RECORDS
+          for (ORecord r : recordToReloadOnRetry)
+            r.reload();
+        }
 
         if (waitBetweenRetry > 0)
           try {

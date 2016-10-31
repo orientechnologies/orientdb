@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.metadata.function;
 
+import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -200,6 +201,9 @@ public class OFunction extends ODocumentWrapper {
         command.parse(new OCommandScript(getLanguage(), getCode()));
         result = command.execute(iArgs);
         break;
+
+      } catch (ONeedRetryException e) {
+        continue;
       } catch (ORetryQueryException e) {
         continue;
       }

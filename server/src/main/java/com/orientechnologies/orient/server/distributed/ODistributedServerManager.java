@@ -80,8 +80,7 @@ public interface ODistributedServerManager {
     NOT_AVAILABLE,
 
     /**
-     * The database has been put in OFFLINE status. In this status the server does not receive any
-     * request.
+     * The database has been put in OFFLINE status. In this status the server does not receive any request.
      */
     OFFLINE,
 
@@ -103,6 +102,19 @@ public interface ODistributedServerManager {
      */
     BACKUP
   };
+
+  /**
+   * Checks the node status if it's one of the statuses received as argument.
+   * 
+   * @param iNodeName
+   *          Node name
+   * @param iDatabaseName
+   *          Database name
+   * @param statuses
+   *          vararg of statuses
+   * @return true if the node's status is equals to one of the passed statuses, otherwise false
+   */
+  boolean isNodeStatusEqualsTo(String iNodeName, String iDatabaseName, DB_STATUS... statuses);
 
   boolean isNodeAvailable(final String iNodeName);
 
