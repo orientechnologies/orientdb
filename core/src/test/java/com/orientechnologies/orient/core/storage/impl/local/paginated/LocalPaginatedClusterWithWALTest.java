@@ -45,6 +45,14 @@ public class LocalPaginatedClusterWithWALTest extends LocalPaginatedClusterTest 
   private String                 expectedStorageDir;
   private OLocalPaginatedStorage storage;
 
+  @BeforeClass
+  public static void beforeClass() throws IOException {
+  }
+
+  @AfterClass
+  public static void afterClass() throws IOException {
+  }
+
   @Before
   @Override
   public void beforeMethod() throws IOException {
@@ -122,6 +130,7 @@ public class LocalPaginatedClusterWithWALTest extends LocalPaginatedClusterTest 
       Assert.assertTrue(file.delete());
   }
 
+  @Test
   @Override
   public void testAddOneSmallRecord() throws IOException {
     super.testAddOneSmallRecord();
