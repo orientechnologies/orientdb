@@ -106,7 +106,7 @@ public class HARemoveNodeFromCfgTest extends AbstractServerClusterTxTest {
     waitFor(2, new OCallable<Boolean, ODatabaseDocumentTx>() {
       @Override
       public Boolean call(ODatabaseDocumentTx db) {
-        final int node2Expected = lastNodeIsUp.get() ? expected : expected - (count * writerCount * (SERVERS - 1));
+        final long node2Expected = lastNodeIsUp.get() ? expected : expected - (count * writerCount * (SERVERS - 1));
 
         final boolean ok = db.countClass("Person") >= node2Expected;
         if (!ok)
