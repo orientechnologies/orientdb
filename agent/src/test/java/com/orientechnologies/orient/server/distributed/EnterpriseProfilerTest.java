@@ -44,6 +44,7 @@ public class EnterpriseProfilerTest extends AbstractServerClusterTest {
 
     serverRun.crashServer();
 
+    serverRun.deleteNode();
     serverInstance.remove(serverRun);
 
     // wait for the first stats push from each node
