@@ -1161,7 +1161,6 @@ import java.util.concurrent.Callable;
         commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
 
         database.command(commandSQL).execute();
-
         truncateClusterInternal(clusterName, storage);
       } else
         truncateClusterInternal(clusterName, storage);
@@ -1180,6 +1179,7 @@ import java.util.concurrent.Callable;
     }
 
     try {
+      storage.checkForClusterPermissions(clusterName);
       cluster.truncate();
     } catch (IOException e) {
       throw OException.wrapException(new ODatabaseException("Error during truncate of cluster " + clusterName), e);
@@ -1516,9 +1516,11 @@ import java.util.concurrent.Callable;
     acquireSchemaReadLock();
     try {
 
-      for (int id : clusterIds)
-        storage.getClusterById(id).truncate();
-
+      for (int id : clusterIds) {
+        OCluster cl = storage.getClusterById(id);
+        storage.checkForClusterPermissions(cl.getName());
+        cl.truncate();
+      }
       for (OIndex<?> index : getClassIndexes())
         index.clear();
 
@@ -2700,7 +2702,7 @@ import java.util.concurrent.Callable;
     if (name.toLowerCase().equals(getDatabase().getClusterNameById(defaultClusterId))) {
       // DROP THE DEFAULT CLUSTER CALLED WITH THE SAME NAME ONLY IF EMPTY
       if (getDatabase().getClusterRecordSizeById(defaultClusterId) == 0)
-        getDatabase().dropCluster(defaultClusterId, true);
+        getDatabase().getStorage().dropCluster(defaultClusterId, true);
     }
   }
 

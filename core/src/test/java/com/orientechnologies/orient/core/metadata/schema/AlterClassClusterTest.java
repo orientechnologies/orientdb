@@ -1,15 +1,15 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
+import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;
-
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.OSchemaException;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OSchemaException;
 
 public class AlterClassClusterTest {
 
@@ -57,5 +57,17 @@ public class AlterClassClusterTest {
     clazz.addClusterId(id);
   }
 
-}
+  @Test
+  public void testSetAbstractRestrictedClass() {
+    OSchema oSchema = db.getMetadata().getSchema();
+    OClass oRestricted = oSchema.getClass("ORestricted");
+    OClass v = oSchema.getClass("V");
+    v.addSuperClass(oRestricted);
 
+    OClass ovt = oSchema.createClass("Some", v);
+    ovt.setAbstract(true);
+
+    assertTrue(ovt.isAbstract());
+  }
+
+}

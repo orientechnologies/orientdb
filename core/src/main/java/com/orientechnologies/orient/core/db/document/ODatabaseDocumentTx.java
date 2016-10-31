@@ -1373,6 +1373,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     if (schema.getBlobClusters().contains(clusterId))
       schema.removeBlobCluster(iClusterName);
     getLocalCache().freeCluster(clusterId);
+    storage.checkForClusterPermissions(iClusterName);
     return storage.dropCluster(iClusterName, iTruncate);
   }
 
@@ -1389,7 +1390,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     getLocalCache().freeCluster(iClusterId);
     if (schema.getBlobClusters().contains(iClusterId))
       schema.removeBlobCluster(getClusterNameById(iClusterId));
-
+    
+    storage.checkForClusterPermissions(getClusterNameById(iClusterId));
     return storage.dropCluster(iClusterId, iTruncate);
   }
 
