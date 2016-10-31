@@ -87,9 +87,6 @@ public class WWConflictAndNodeInDeadlockScenarioTest extends AbstractScenarioTes
     init(SERVERS);
     prepare(false);
 
-    // execute writes only on server3
-    executeWritesOnServers.addAll(serverInstance);
-
     execute();
   }
 

@@ -71,7 +71,6 @@ public class MultipleDBAlignmentOnNodesJoining extends AbstractScenarioTest {
     writerCount = 1;
     maxRetries = 10;
     init(SERVERS);
-    super.executeWritesOnServers.addAll(super.serverInstance);
     prepare(true, true);
     execute();
   }

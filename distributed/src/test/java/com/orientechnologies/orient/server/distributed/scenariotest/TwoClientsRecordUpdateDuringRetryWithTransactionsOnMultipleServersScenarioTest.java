@@ -70,7 +70,6 @@ public class TwoClientsRecordUpdateDuringRetryWithTransactionsOnMultipleServersS
     maxRetries = 10;
     init(2);
     prepare(false);
-    executeWritesOnServers.addAll(serverInstance);
     execute();
   }
 

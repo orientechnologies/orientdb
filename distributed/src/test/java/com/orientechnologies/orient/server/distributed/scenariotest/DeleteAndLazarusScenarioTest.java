@@ -26,6 +26,9 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ServerRun;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
+import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 import static junit.framework.TestCase.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -54,10 +57,6 @@ public class DeleteAndLazarusScenarioTest extends AbstractScenarioTest {
     maxRetries = 10;
     init(SERVERS);
     prepare(false);
-
-    // execute writes only on server3
-    executeWritesOnServers.addAll(serverInstance);
-
     execute();
   }
 

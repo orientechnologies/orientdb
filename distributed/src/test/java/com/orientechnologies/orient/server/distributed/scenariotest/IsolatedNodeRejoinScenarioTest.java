@@ -26,6 +26,7 @@ import com.orientechnologies.orient.server.distributed.ServerRun;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.assertFalse;
@@ -54,8 +55,9 @@ public class IsolatedNodeRejoinScenarioTest extends AbstractScenarioTest {
     prepare(false);
 
     // execute writes only on server1 and server2
-    executeWritesOnServers.add(serverInstance.get(0));
-    executeWritesOnServers.add(serverInstance.get(1));
+    executeTestsOnServers = new ArrayList<ServerRun>();
+    executeTestsOnServers.add(serverInstance.get(0));
+    executeTestsOnServers.add(serverInstance.get(1));
 
     execute();
   }
@@ -88,7 +90,7 @@ public class IsolatedNodeRejoinScenarioTest extends AbstractScenarioTest {
     assertFalse(serverInstance.get(2).isActive());
 
     // execute writes on server1 and server2
-    executeMultipleWrites(super.executeWritesOnServers, "plocal");
+    executeMultipleWrites(super.executeTestsOnServers, "plocal");
 
     // server3 joins the cluster
     System.out.println("Restart server3.\n");
@@ -102,7 +104,7 @@ public class IsolatedNodeRejoinScenarioTest extends AbstractScenarioTest {
     waitForMultipleInsertsInClassPropagation(1000L, "Person", 5000L);
 
     // check consistency
-    super.checkWritesAboveCluster(serverInstance, executeWritesOnServers);
+    super.checkWritesAboveCluster(serverInstance, executeTestsOnServers);
   }
 
   @Override

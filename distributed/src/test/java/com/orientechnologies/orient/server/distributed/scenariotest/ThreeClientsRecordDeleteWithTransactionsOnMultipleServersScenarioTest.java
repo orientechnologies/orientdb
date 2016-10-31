@@ -58,7 +58,6 @@ public class ThreeClientsRecordDeleteWithTransactionsOnMultipleServersScenarioTe
     maxRetries = 10;
     init(SERVERS);
     prepare(false);
-    executeWritesOnServers.addAll(serverInstance);
     execute();
   }
 
