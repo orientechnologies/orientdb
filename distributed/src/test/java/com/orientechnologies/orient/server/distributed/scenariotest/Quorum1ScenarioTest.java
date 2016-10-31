@@ -77,7 +77,8 @@ public class Quorum1ScenarioTest extends AbstractScenarioTest {
     OHazelcastPlugin manager = (OHazelcastPlugin) server.getServerInstance().getDistributedManager();
     ODistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration(getDatabaseName());
     cfg = databaseConfiguration.getDocument();
-    cfg.field("writeQuorum", 1);
+    cfg.field("writeQuorum", 2);
+//    cfg.field("executionMode", "asynchronous");
     cfg.field("autoDeploy", true);
     cfg.field("version", (Integer) cfg.field("version") + 1);
     manager.updateCachedDatabaseConfiguration(getDatabaseName(), cfg, true, true);
