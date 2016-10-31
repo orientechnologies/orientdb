@@ -57,7 +57,7 @@ public class LocalPaginatedStorageUpdateCrashRestoreIT {
 
     System.setProperty("ORIENTDB_HOME", buildDir.getCanonicalPath());
 
-    ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-Xmx2048m", "-XX:MaxDirectMemorySize=512g", "-classpath",
+    ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-Xmx4096m", "-XX:MaxDirectMemorySize=512g", "-classpath",
         System.getProperty("java.class.path"), "-DORIENTDB_HOME=" + buildDir.getCanonicalPath(),
         "-DmutexFile=" + mutexFile.getCanonicalPath(), RemoteDBRunner.class.getName());
     processBuilder.inheritIO();

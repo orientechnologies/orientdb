@@ -72,7 +72,7 @@ public class LocalPaginatedStorageLinkBagCrashRestoreIT {
 
     System.setProperty("ORIENTDB_HOME", buildDirectory);
 
-    ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-XX:MaxDirectMemorySize=512g", "-classpath",
+    ProcessBuilder processBuilder = new ProcessBuilder(javaExec,  "-Xmx4096m", "-XX:MaxDirectMemorySize=512g", "-classpath",
         System.getProperty("java.class.path"), "-DmutexFile=" + mutexFile.getCanonicalPath(), "-DORIENTDB_HOME=" + buildDirectory,
         RemoteDBRunner.class.getName());
     processBuilder.inheritIO();
