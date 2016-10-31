@@ -27,7 +27,7 @@ import java.util.*;
  * <P>
  * Cron expressions are comprised of 6 required fields and one optional field separated by white space. The fields respectively are
  * described as follows:
- * 
+ * <p>
  * <table cellspacing="8">
  * <tr>
  * <th align="left">Field Name</th>
@@ -139,7 +139,7 @@ import java.util.*;
  * after the 5th". A value of "1C" in the day-of-week field means "the first day included by the calendar on or after Sunday".-->
  * <P>
  * The legal characters and the names of months and days of the week are not case sensitive.
- * 
+ * <p>
  * <p>
  * <b>NOTES:</b>
  * <ul>
@@ -151,30 +151,29 @@ import java.util.*;
  * CronExpression chooses. An example would be "0 0 14-6 ? * FRI-MON".</li>
  * </ul>
  * </p>
- * 
- * 
+ *
  * @author Sharada Jambula, James House
  * @author Contributions from Mads Henderson
  * @author Refactoring from CronTrigger to CronExpression by Aaron Craven
  */
 public final class OCronExpression implements Serializable, Cloneable {
 
-  private static final long                   serialVersionUID = 12423409423L;
+  private static final long serialVersionUID = 12423409423L;
 
-  protected static final int                  SECOND           = 0;
-  protected static final int                  MINUTE           = 1;
-  protected static final int                  HOUR             = 2;
-  protected static final int                  DAY_OF_MONTH     = 3;
-  protected static final int                  MONTH            = 4;
-  protected static final int                  DAY_OF_WEEK      = 5;
-  protected static final int                  YEAR             = 6;
-  protected static final int                  ALL_SPEC_INT     = 99;                              // '*'
-  protected static final int                  NO_SPEC_INT      = 98;                              // '?'
-  protected static final Integer              ALL_SPEC         = ALL_SPEC_INT;
-  protected static final Integer              NO_SPEC          = NO_SPEC_INT;
+  protected static final int     SECOND       = 0;
+  protected static final int     MINUTE       = 1;
+  protected static final int     HOUR         = 2;
+  protected static final int     DAY_OF_MONTH = 3;
+  protected static final int     MONTH        = 4;
+  protected static final int     DAY_OF_WEEK  = 5;
+  protected static final int     YEAR         = 6;
+  protected static final int     ALL_SPEC_INT = 99;                              // '*'
+  protected static final int     NO_SPEC_INT  = 98;                              // '?'
+  protected static final Integer ALL_SPEC     = ALL_SPEC_INT;
+  protected static final Integer NO_SPEC      = NO_SPEC_INT;
 
-  protected static final Map<String, Integer> monthMap         = new HashMap<String, Integer>(20);
-  protected static final Map<String, Integer> dayMap           = new HashMap<String, Integer>(60);
+  protected static final Map<String, Integer> monthMap = new HashMap<String, Integer>(20);
+  protected static final Map<String, Integer> dayMap   = new HashMap<String, Integer>(60);
 
   static {
     monthMap.put("JAN", 0);
@@ -199,8 +198,8 @@ public final class OCronExpression implements Serializable, Cloneable {
     dayMap.put("SAT", 7);
   }
 
-  private final String                 cronExpression;
-  private TimeZone                     timeZone         = null;
+  private final String cronExpression;
+  private TimeZone timeZone = null;
   protected transient TreeSet<Integer> seconds;
   protected transient TreeSet<Integer> minutes;
   protected transient TreeSet<Integer> hours;
@@ -209,14 +208,14 @@ public final class OCronExpression implements Serializable, Cloneable {
   protected transient TreeSet<Integer> daysOfWeek;
   protected transient TreeSet<Integer> years;
 
-  protected transient boolean          lastdayOfWeek    = false;
-  protected transient int              nthdayOfWeek     = 0;
-  protected transient boolean          lastdayOfMonth   = false;
-  protected transient boolean          nearestWeekday   = false;
-  protected transient int              lastdayOffset    = 0;
-  protected transient boolean          expressionParsed = false;
+  protected transient boolean lastdayOfWeek    = false;
+  protected transient int     nthdayOfWeek     = 0;
+  protected transient boolean lastdayOfMonth   = false;
+  protected transient boolean nearestWeekday   = false;
+  protected transient int     lastdayOffset    = 0;
+  protected transient boolean expressionParsed = false;
 
-  public static final int              MAX_YEAR         = Calendar.getInstance().get(Calendar.YEAR) + 100;
+  public static final int MAX_YEAR = Calendar.getInstance().get(Calendar.YEAR) + 100;
 
   private class ValueSet {
     public int value;
@@ -225,11 +224,9 @@ public final class OCronExpression implements Serializable, Cloneable {
 
   /**
    * Constructs a new <CODE>CronExpression</CODE> based on the specified parameter.
-   * 
-   * @param cronExpression
-   *          String representation of the cron expression the new object should represent
-   * @throws java.text.ParseException
-   *           if the string expression cannot be parsed into a valid <CODE>CronExpression</CODE>
+   *
+   * @param cronExpression String representation of the cron expression the new object should represent
+   * @throws java.text.ParseException if the string expression cannot be parsed into a valid <CODE>CronExpression</CODE>
    */
   public OCronExpression(String cronExpression) throws ParseException {
     if (cronExpression == null) {
@@ -243,9 +240,8 @@ public final class OCronExpression implements Serializable, Cloneable {
 
   /**
    * Constructs a new {@code CronExpression} as a copy of an existing instance.
-   * 
-   * @param expression
-   *          The existing cron expression to be copied
+   *
+   * @param expression The existing cron expression to be copied
    */
   public OCronExpression(OCronExpression expression) {
     /*
@@ -266,9 +262,8 @@ public final class OCronExpression implements Serializable, Cloneable {
   /**
    * Indicates whether the given date satisfies the cron expression. Note that milliseconds are ignored, so two Dates falling on
    * different milliseconds of the same second will always have the same result here.
-   * 
-   * @param date
-   *          the date to evaluate
+   *
+   * @param date the date to evaluate
    * @return a boolean indicating whether the given date satisfies the cron expression
    */
   public boolean isSatisfiedBy(Date date) {
@@ -286,9 +281,8 @@ public final class OCronExpression implements Serializable, Cloneable {
 
   /**
    * Returns the next date/time <I>after</I> the given date/time which satisfies the cron expression.
-   * 
-   * @param date
-   *          the date/time at which to begin the search for the next valid date/time
+   *
+   * @param date the date/time at which to begin the search for the next valid date/time
    * @return the next valid date/time
    */
   public Date getNextValidTimeAfter(Date date) {
@@ -297,9 +291,8 @@ public final class OCronExpression implements Serializable, Cloneable {
 
   /**
    * Returns the next date/time <I>after</I> the given date/time which does <I>not</I> satisfy the expression
-   * 
-   * @param date
-   *          the date/time at which to begin the search for the next invalid date/time
+   *
+   * @param date the date/time at which to begin the search for the next invalid date/time
    * @return the next valid date/time
    */
   public Date getNextInvalidTimeAfter(Date date) {
@@ -354,7 +347,7 @@ public final class OCronExpression implements Serializable, Cloneable {
 
   /**
    * Returns the string representation of the <CODE>CronExpression</CODE>
-   * 
+   *
    * @return a string representation of the <CODE>CronExpression</CODE>
    */
   @Override
@@ -364,9 +357,8 @@ public final class OCronExpression implements Serializable, Cloneable {
 
   /**
    * Indicates whether the specified cron expression can be parsed into a valid cron expression
-   * 
-   * @param cronExpression
-   *          the expression to evaluate
+   *
+   * @param cronExpression the expression to evaluate
    * @return a boolean indicating whether the given expression is a valid cron expression
    */
   public static boolean isValidExpression(String cronExpression) {
@@ -391,7 +383,7 @@ public final class OCronExpression implements Serializable, Cloneable {
   //
   ////////////////////////////////////////////////////////////////////////////
 
-  protected void buildExpression(String expression) throws ParseException {
+  protected synchronized void buildExpression(String expression) throws ParseException {
     expressionParsed = true;
 
     try {
@@ -1097,7 +1089,7 @@ public final class OCronExpression implements Serializable, Cloneable {
   //
   ////////////////////////////////////////////////////////////////////////////
 
-  public Date getTimeAfter(Date afterTime) {
+  public synchronized Date getTimeAfter(Date afterTime) {
 
     // Computation is based on Gregorian year only.
     Calendar cl = new java.util.GregorianCalendar(getTimeZone());
@@ -1500,11 +1492,9 @@ public final class OCronExpression implements Serializable, Cloneable {
 
   /**
    * Advance the calendar to the particular hour paying particular attention to daylight saving problems.
-   * 
-   * @param cal
-   *          the calendar to operate on
-   * @param hour
-   *          the hour to set
+   *
+   * @param cal  the calendar to operate on
+   * @param hour the hour to set
    */
   protected void setCalendarHour(Calendar cal, int hour) {
     cal.set(java.util.Calendar.HOUR_OF_DAY, hour);

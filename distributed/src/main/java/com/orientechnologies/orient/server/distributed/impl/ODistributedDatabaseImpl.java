@@ -675,7 +675,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     // SEND THE SHUTDOWN TO ALL THE WORKER THREADS
     for (ODistributedWorker workerThread : workerThreads) {
       if (workerThread != null)
-        workerThread.shutdown();
+        workerThread.sendShutdown();
     }
 
     // WAIT A BIT FOR PROPER SHUTDOWN

@@ -794,6 +794,16 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   }
 
   @Override
+  public boolean isNodeStatusEqualsTo(final String iNodeName, final String iDatabaseName, final DB_STATUS... statuses) {
+    final DB_STATUS s = getDatabaseStatus(iNodeName, iDatabaseName);
+    for (DB_STATUS st : statuses) {
+      if (s == st)
+        return true;
+    }
+    return false;
+  }
+
+  @Override
   public boolean isNodeAvailable(final String iNodeName) {
     if (iNodeName == null)
       return false;

@@ -33,8 +33,13 @@ import java.util.Set;
 
 /**
  * Keeps synchronized the scheduled events in memory.
+<<<<<<< HEAD
  * 
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
+=======
+ *
+ * @author Luca Garulli
+>>>>>>> 1b627a8... HA: fixed issues with distributed scheduler events
  * @author henryzhao81-at-gmail.com
  * @since Mar 28, 2013
  */
@@ -85,7 +90,7 @@ public class OSchedulerTrigger extends ODocumentHookAbstract {
   public RESULT onRecordBeforeUpdate(final ODocument iDocument) {
     try {
       final String schedulerName = iDocument.field(OScheduledEvent.PROP_NAME);
-      final OScheduledEvent event = database.getMetadata().getScheduler().getEvent(schedulerName);
+      OScheduledEvent event = database.getMetadata().getScheduler().getEvent(schedulerName);
 
       if (event != null) {
         // UPDATED EVENT
@@ -96,12 +101,11 @@ public class OSchedulerTrigger extends ODocumentHookAbstract {
 
         if (dirtyFields.contains(OScheduledEvent.PROP_RULE)) {
           // RULE CHANGED, STOP CURRENT EVENT AND RESCHEDULE IT
-          database.getMetadata().getScheduler().removeEvent(event.getName());
-          database.getMetadata().getScheduler().scheduleEvent(new OScheduledEvent(iDocument));
+          database.getMetadata().getScheduler().updateEvent(new OScheduledEvent(iDocument));
+        } else {
+          iDocument.field(OScheduledEvent.PROP_STATUS, STATUS.STOPPED.name());
+          event.fromStream(iDocument);
         }
-
-        iDocument.field(OScheduledEvent.PROP_STATUS, STATUS.STOPPED.name());
-        event.fromStream(iDocument);
 
         return RESULT.RECORD_CHANGED;
       }
@@ -113,12 +117,8 @@ public class OSchedulerTrigger extends ODocumentHookAbstract {
   }
 
   @Override
-  public RESULT onRecordBeforeDelete(final ODocument iDocument) {
+  public void onRecordAfterDelete(final ODocument iDocument) {
     final String eventName = iDocument.field(OScheduledEvent.PROP_NAME);
-    OScheduledEvent scheduler = database.getMetadata().getScheduler().getEvent(eventName);
-    if (scheduler != null) {
-      database.getMetadata().getScheduler().removeEvent(eventName);
-    }
-    return RESULT.RECORD_CHANGED;
+    database.getMetadata().getScheduler().removeEvent(eventName);
   }
 }

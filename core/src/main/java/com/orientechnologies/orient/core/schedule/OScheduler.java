@@ -20,8 +20,13 @@ import java.util.Map;
 
 /**
  * Scheduler interface.
+<<<<<<< HEAD
  * 
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
+=======
+ *
+ * @author Luca Garulli
+>>>>>>> 1b627a8... HA: fixed issues with distributed scheduler events
  * @author henryzhao81-at-gmail.com
  * @since Mar 28, 2013
  */
@@ -37,24 +42,27 @@ public interface OScheduler {
 
   /**
    * Removes a scheduled event.
-   * 
-   * @param eventName
-   *          Event's name
+   *
+   * @param eventName Event's name
    */
   void removeEvent(String eventName);
 
   /**
+   * Updates a scheduled event.
+   */
+  void updateEvent(OScheduledEvent event);
+
+  /**
    * Returns all the scheduled events.
-   * 
+   *
    * @return
    */
   Map<String, OScheduledEvent> getEvents();
 
   /**
    * Returns a scheduled event by name.
-   * 
-   * @param eventName
-   *          Event's name
+   *
+   * @param eventName Event's name
    */
   OScheduledEvent getEvent(String eventName);
 

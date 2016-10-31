@@ -20,6 +20,7 @@
 
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.common.concur.ONeedRetryException;
 import junit.framework.Assert;
 
 import org.junit.Test;
@@ -116,6 +117,8 @@ public class ServerClusterSchemaTest extends AbstractServerClusterTest {
             g.commit();
 
             Assert.assertTrue(false);
+          } catch (ONeedRetryException e) {
+            // EXPECTED
           } catch (OValidationException e) {
             // EXPECTED
           }
