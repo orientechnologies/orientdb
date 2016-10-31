@@ -279,9 +279,6 @@ public enum OGlobalConfiguration {
       "This setting is used only for debug purposes. It creates a stack trace of methods, when an atomic operation is started",
       Boolean.class, false),
 
-  TX_PAGE_CACHE_SIZE("tx.pageCacheSize",
-      "The size of a per-transaction page cache in pages, 12 by default, 0 to disable the cache.", Integer.class, 12),
-
   // INDEX
   INDEX_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD("index.embeddedToSbtreeBonsaiThreshold",
       "Amount of values, after which the index implementation will use an sbtree as a values container. Set to -1, to disable and force using an sbtree",

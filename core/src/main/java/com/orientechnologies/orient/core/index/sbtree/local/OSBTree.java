@@ -820,7 +820,6 @@ public class OSBTree<K, V> extends ODurableComponent {
       throw new OSBTreeException("Null keys are not supported.", this);
   }
 
-  @SuppressWarnings("unchecked")
   private boolean put(K key, V value, OIndexEngine.Validator<K, V> validator) {
     final OSessionStoragePerformanceStatistic statistic = performanceStatisticManager.getSessionPerformanceStatistic();
     startOperation();
@@ -870,13 +869,13 @@ public class OSBTree<K, V> extends ODurableComponent {
 
             boolean doReleasePage = true;
             try {
-              final Object result = validator.validate(key, oldValue, value);
-              if (result == OIndexEngine.Validator.IGNORE)
+              final V result = validator.validate(key, oldValue, value);
+              if (result == OIndexEngine.Validator.Result.ignore())
                 return false;
               else
                 doReleasePage = false;
 
-              value = (V) result;
+              value = result;
             } finally {
               if (doReleasePage) {
                 keyBucketCacheEntry.releaseExclusiveLock();
@@ -962,11 +961,11 @@ public class OSBTree<K, V> extends ODurableComponent {
             if (validator != null) {
               final V oldValueValue = oldValue == null ? null : readValue(oldValue, atomicOperation);
 
-              final Object result = validator.validate(null, oldValueValue, value);
-              if (result == OIndexEngine.Validator.IGNORE)
+              final V result = validator.validate(null, oldValueValue, value);
+              if (result == OIndexEngine.Validator.Result.ignore())
                 return false;
 
-              value = (V) result;
+              value = result;
             }
 
             if (oldValue != null)

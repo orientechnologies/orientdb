@@ -254,9 +254,9 @@ public class ODurablePage {
 
       buffer.position(to);
       buffer.put(rb);
-
-      cacheEntry.markDirty();
     }
+
+    cacheEntry.markDirty();
   }
 
   public OWALChanges getChanges() {

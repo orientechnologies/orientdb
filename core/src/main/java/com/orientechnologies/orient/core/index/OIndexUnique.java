@@ -35,7 +35,7 @@ public class OIndexUnique extends OIndexOneValue {
 
   private final OIndexEngine.Validator<Object, OIdentifiable> UNIQUE_VALIDATOR = new OIndexEngine.Validator<Object, OIdentifiable>() {
     @Override
-    public Object validate(Object key, OIdentifiable oldValue, OIdentifiable newValue) {
+    public OIdentifiable validate(Object key, OIdentifiable oldValue, OIdentifiable newValue) {
       if (oldValue != null) {
         // CHECK IF THE ID IS THE SAME OF CURRENT: THIS IS THE UPDATE CASE
         if (!oldValue.equals(newValue)) {
@@ -45,7 +45,7 @@ public class OIndexUnique extends OIndexOneValue {
                 .format("Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s",
                     newValue.getIdentity(), key, getName(), oldValue.getIdentity()), getName(), oldValue.getIdentity());
         } else
-          return OIndexEngine.Validator.IGNORE;
+          return OIndexEngine.Validator.Result.ignore();
       }
 
       if (!newValue.getIdentity().isPersistent())

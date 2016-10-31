@@ -34,6 +34,7 @@ import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.OOrientShutdownListener;
 import com.orientechnologies.orient.core.OOrientStartupListener;
+import com.orientechnologies.orient.core.OUncompletedCommit;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandManager;
@@ -1469,6 +1470,152 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private TreeMap<String, OTransactionIndexChanges> getSortedIndexEntries(OTransaction clientTx) {
     assert clientTx instanceof OTransactionOptimistic;
     return new TreeMap<String, OTransactionIndexChanges>(((OTransactionOptimistic) clientTx).getIndexEntries());
+  }
+
+  @Override
+  public OUncompletedCommit<List<ORecordOperation>> initiateCommit(OTransaction clientTx, Runnable callback) {
+    boolean success = false;
+    checkOpeness();
+    checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
+    final ODatabaseDocumentInternal databaseRecord = (ODatabaseDocumentInternal) clientTx.getDatabase();
+    final OIndexManagerProxy indexManager = databaseRecord.getMetadata().getIndexManager();
+    final TreeMap<String, OTransactionIndexChanges> indexesToCommit = getSortedIndexEntries(clientTx);
+
+    ((OMetadataInternal) databaseRecord.getMetadata()).makeThreadLocalSchemaSnapshot();
+    final Iterable<ORecordOperation> entries = (Iterable<ORecordOperation>) clientTx.getAllRecordEntries();
+    final Set<ORecordOperation> newRecords = new TreeSet<ORecordOperation>(new Comparator<ORecordOperation>() {
+      @Override
+      public int compare(ORecordOperation o1, ORecordOperation o2) {
+        long diff = (o1.getRecord().getIdentity().getClusterPosition() - o2.getRecord().getIdentity().getClusterPosition());
+        // convert long to int comparation
+        if (diff == 0)
+          return 0;
+        else if (diff < 0)
+          return -1;
+        else
+          return 1;
+      }
+    });
+    final TreeMap<Integer, OCluster> clustersToLock = new TreeMap<Integer, OCluster>();
+    final Map<ORecordOperation, Integer> clusterOverrides = new IdentityHashMap<ORecordOperation, Integer>();
+
+    for (ORecordOperation txEntry : entries) {
+      if (txEntry.type == ORecordOperation.CREATED || txEntry.type == ORecordOperation.UPDATED) {
+        final ORecord record = txEntry.getRecord();
+        if (record instanceof ODocument)
+          ((ODocument) record).validate();
+      }
+
+      if (txEntry.type == ORecordOperation.UPDATED || txEntry.type == ORecordOperation.DELETED) {
+        final int clusterId = txEntry.getRecord().getIdentity().getClusterId();
+        clustersToLock.put(clusterId, getClusterById(clusterId));
+      } else if (txEntry.type == ORecordOperation.CREATED) {
+        newRecords.add(txEntry);
+
+        final ORecord record = txEntry.getRecord();
+        final ORID rid = record.getIdentity();
+
+        int clusterId = rid.getClusterId();
+
+        if (record.isDirty() && clusterId == ORID.CLUSTER_ID_INVALID && record instanceof ODocument) {
+          // TRY TO FIX CLUSTER ID TO THE DEFAULT CLUSTER ID DEFINED IN SCHEMA CLASS
+
+          final OImmutableClass class_ = ODocumentInternal.getImmutableSchemaClass(((ODocument) record));
+          if (class_ != null) {
+            clusterId = class_.getClusterForNewInstance((ODocument) record);
+            clusterOverrides.put(txEntry, clusterId);
+          }
+        }
+
+        clustersToLock.put(clusterId, getClusterById(clusterId));
+      }
+    }
+
+    final List<ORecordOperation> result = new ArrayList<ORecordOperation>();
+
+    stateLock.acquireReadLock();
+    try {
+      try {
+        try {
+          checkOpeness();
+
+          makeStorageDirty();
+          startStorageTx(clientTx);
+
+          for (OCluster cluster : clustersToLock.values())
+            cluster.acquireAtomicExclusiveLock();
+
+          for (Map.Entry<String, OTransactionIndexChanges> entry : indexesToCommit.entrySet()) {
+            final String indexName = entry.getKey();
+            final OTransactionIndexChanges changes = entry.getValue();
+
+            final OIndexInternal<?> index = changes.resolveAssociatedIndex(indexName, indexManager);
+            if (index == null)
+              throw new OTransactionException("Cannot find index '" + indexName + "' while committing transaction");
+
+            boolean fullyLocked = false;
+            for (Object key : changes.changesPerKey.keySet())
+              if (index.acquireAtomicExclusiveLock(key)) {
+                fullyLocked = true;
+                break;
+              }
+            if (!fullyLocked && !changes.nullKeyChanges.entries.isEmpty())
+              index.acquireAtomicExclusiveLock(null);
+          }
+
+          Map<ORecordOperation, OPhysicalPosition> positions = new IdentityHashMap<ORecordOperation, OPhysicalPosition>();
+          for (ORecordOperation txEntry : newRecords) {
+            ORecord rec = txEntry.getRecord();
+
+            if (rec.isDirty()) {
+              ORecordId rid = (ORecordId) rec.getIdentity().copy();
+              ORecordId oldRID = rid.copy();
+
+              final Integer clusterOverride = clusterOverrides.get(txEntry);
+              final int clusterId = clusterOverride == null ? rid.getClusterId() : clusterOverride;
+
+              final OCluster cluster = getClusterById(clusterId);
+              OPhysicalPosition ppos = cluster.allocatePosition(ORecordInternal.getRecordType(rec));
+              positions.put(txEntry, ppos);
+              rid.setClusterId(cluster.getId());
+
+              if (rid.getClusterPosition() > -1 && rid.getClusterPosition() != ppos.clusterPosition)
+                throw new OTransactionException(
+                    "New record allocated #" + rid.getClusterId() + ":" + ppos.clusterPosition + " but the expected was " + rid);
+
+              rid.setClusterPosition(ppos.clusterPosition);
+
+              clientTx.updateIdentityAfterCommit(oldRID, rid);
+            }
+          }
+
+          for (ORecordOperation txEntry : entries) {
+            commitEntry(txEntry, positions.get(txEntry));
+            result.add(txEntry);
+          }
+
+          commitIndexes(indexesToCommit);
+
+          final OUncompletedCommit<List<ORecordOperation>> uncompletedCommit = new UncompletedCommit(clientTx, entries, result,
+              atomicOperationsManager.initiateCommit());
+          success = true;
+          return uncompletedCommit;
+        } catch (IOException ioe) {
+          makeRollback(clientTx, ioe);
+        } catch (RuntimeException e) {
+          makeRollback(clientTx, e);
+        }
+      } finally {
+        if (!success)
+          ((OMetadataInternal) databaseRecord.getMetadata()).clearThreadLocalSchemaSnapshot();
+      }
+    } finally {
+      stateLock.releaseReadLock();
+    }
+
+    // not reachable
+    assert false;
+    return null;
   }
 
   public int loadIndexEngine(String name) {
@@ -4195,6 +4342,98 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       if (!index.isUnique())
         atomicOperationsManager
             .acquireExclusiveLockTillOperationComplete(atomicOperation, OIndexRIDContainerSBTree.generateLockName(indexName));
+    }
+  }
+
+  private class UncompletedCommit implements OUncompletedCommit<List<ORecordOperation>> {
+    private final OTransaction                         clientTx;
+    private final Iterable<ORecordOperation>           entries;
+    private final List<ORecordOperation>               result;
+    private final OUncompletedCommit<OAtomicOperation> nestedCommit;
+
+    public UncompletedCommit(OTransaction clientTx, Iterable<ORecordOperation> entries, List<ORecordOperation> result,
+        OUncompletedCommit<OAtomicOperation> nestedCommit) {
+      this.clientTx = clientTx;
+      this.entries = entries;
+      this.result = result;
+      this.nestedCommit = nestedCommit;
+    }
+
+    @Override
+    public List<ORecordOperation> complete() {
+      checkOpeness();
+
+      stateLock.acquireReadLock();
+      try {
+        try {
+          try {
+            checkOpeness();
+
+            nestedCommit.complete();
+
+            OTransactionAbstract.updateCacheFromEntries(clientTx, entries, true);
+          } catch (RuntimeException e) {
+            makeRollback(clientTx, e);
+          } finally {
+            transaction.set(null);
+          }
+        } finally {
+          ((OMetadataInternal) clientTx.getDatabase().getMetadata()).clearThreadLocalSchemaSnapshot();
+        }
+      } finally {
+        stateLock.releaseReadLock();
+      }
+
+      return result;
+    }
+
+    @Override
+    public void rollback() {
+      checkOpeness();
+      stateLock.acquireReadLock();
+      try {
+        try {
+          try {
+            checkOpeness();
+
+            if (transaction.get() == null)
+              return;
+
+            if (writeAheadLog == null)
+              throw new OStorageException("WAL mode is not active. Transactions are not supported in given mode");
+
+            if (transaction.get().getClientTx().getId() != clientTx.getId())
+              throw new OStorageException(
+                  "Passed in and active transaction are different transactions. Passed in transaction cannot be rolled back.");
+
+            makeStorageDirty();
+
+            nestedCommit.rollback();
+            assert atomicOperationsManager.getCurrentOperation() == null;
+
+            OTransactionAbstract.updateCacheFromEntries(clientTx, clientTx.getAllRecordEntries(), false);
+          } catch (IOException e) {
+            throw OException.wrapException(new OStorageException("Error during transaction rollback"), e);
+          } finally {
+            transaction.set(null);
+          }
+        } finally {
+          ((OMetadataInternal) clientTx.getDatabase().getMetadata()).clearThreadLocalSchemaSnapshot();
+        }
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    }
+
+    private void makeRollback(OTransaction clientTx, Exception e) {
+      OLogManager.instance()
+          .debug(this, "Error during transaction commit completion, transaction will be rolled back (tx-id=%d)", e,
+              clientTx.getId());
+      rollback();
+      if (e instanceof OException)
+        throw ((OException) e);
+      else
+        throw OException.wrapException(new OStorageException("Error during transaction commit completion"), e);
     }
   }
 
