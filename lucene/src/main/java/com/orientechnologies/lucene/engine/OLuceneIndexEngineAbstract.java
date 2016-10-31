@@ -247,9 +247,10 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
         closeIndex();
       }
 
-      if (directory instanceof FSDirectory) {
-        final Path path = ((FSDirectory) this.directory).getDirectory();
-        OFileUtils.deleteRecursively(path.toFile());
+      final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) storage.getUnderlying();
+      if (storageLocalAbstract instanceof OLocalPaginatedStorage) {
+        OLocalPaginatedStorage localAbstract = (OLocalPaginatedStorage) storageLocalAbstract;
+        deleteIndexFolder(indexName(), localAbstract);
       }
 
     } catch (IOException e) {
@@ -267,20 +268,23 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
       if (indexWriter != null) {
         closeIndex();
       }
-      ODatabaseDocumentInternal database = getDatabase();
-      final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) database.getStorage().getUnderlying();
-      if (storageLocalAbstract instanceof OLocalPaginatedStorage) {
 
+      final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) storage.getUnderlying();
+      if (storageLocalAbstract instanceof OLocalPaginatedStorage) {
         OLocalPaginatedStorage localAbstract = (OLocalPaginatedStorage) storageLocalAbstract;
 
-        File f = new File(getIndexPath(localAbstract, indexName));
-        OFileUtils.deleteRecursively(f);
-        f = new File(getIndexBasePath(localAbstract));
-        OFileUtils.deleteFolderIfEmpty(f);
+        deleteIndexFolder(indexName, localAbstract);
       }
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error on deleting Lucene index", e);
     }
+  }
+
+  private void deleteIndexFolder(String indexName, OLocalPaginatedStorage localAbstract) {
+    File f = new File(getIndexPath(localAbstract, indexName));
+    OFileUtils.deleteRecursively(f);
+    f = new File(getIndexBasePath(localAbstract));
+    OFileUtils.deleteFolderIfEmpty(f);
   }
 
   protected void closeIndex() throws IOException {
