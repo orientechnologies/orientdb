@@ -22,6 +22,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
+import com.orientechnologies.orient.server.distributed.ServerRun;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
@@ -30,6 +31,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -46,7 +48,7 @@ import static org.junit.Assert.*;
  * - restart server3
  * - check availability no-replica (you can retry records of all the shards)
  * - this test checks also the full restore of database that doesn't overwrite the client_asia
- *   cluster because owned only by asia server
+ * cluster because owned only by asia server
  *
  * @author Gabriele Ponzi
  * @email <gabriele.ponzi--at--gmail.com>
@@ -58,6 +60,9 @@ public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenario
   public void test() throws Exception {
     init(SERVERS);
     prepare(false);
+
+    executeTestsOnServers = new ArrayList<ServerRun>(serverInstance);
+
     execute();
   }
 
@@ -137,7 +142,7 @@ public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenario
       }
 
       // restarting server3
-      serverInstance.get(0).startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
+      serverInstance.get(2).startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
       System.out.println("Server 3 restarted.");
       assertTrue(serverInstance.get(2).isActive());
 
