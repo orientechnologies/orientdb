@@ -667,12 +667,12 @@ public class OImmutableClass implements OClass {
   }
 
   @Override
-  public void getClassIndexes(Collection<OIndex<?>> indexes) {
+  public void getClassIndexes(final Collection<OIndex<?>> indexes) {
     getDatabase().getMetadata().getIndexManager().getClassIndexes(name, indexes);
   }
 
   @Override
-  public void getIndexes(Collection<OIndex<?>> indexes) {
+  public void getIndexes(final Collection<OIndex<?>> indexes) {
     initSuperClasses();
 
     getClassIndexes(indexes);
@@ -683,7 +683,7 @@ public class OImmutableClass implements OClass {
 
   @Override
   public Set<OIndex<?>> getIndexes() {
-    Set<OIndex<?>> indexes = new HashSet<OIndex<?>>();
+    final Set<OIndex<?>> indexes = new HashSet<OIndex<?>>();
     getIndexes(indexes);
     return indexes;
   }

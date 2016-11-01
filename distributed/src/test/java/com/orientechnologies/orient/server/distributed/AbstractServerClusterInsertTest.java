@@ -440,6 +440,12 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
     if (indexName == null)
       return;
 
+    try {
+      Thread.sleep(2000);
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+
     final Map<String, Long> result = new HashMap<String, Long>();
 
     for (ServerRun server : serverInstance) {
@@ -511,6 +517,27 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
         database = poolFactory.get(getDatabaseURL(server), "admin", "admin").acquire();
         try {
           final int total = (int) database.countClass(className);
+
+          if (total != expected) {
+            // ERROR: CHECK WHAT'S MISSING
+            for (int s = 0; s < executeTestsOnServers.size(); ++s) {
+              ServerRun srv = executeTestsOnServers.get(s);
+              final int srvId = Integer.parseInt(srv.serverId);
+
+              for (int threadId = srvId * writerCount; threadId < (srvId + 1) * writerCount; ++threadId) {
+
+                for (int i = 0; i < count; ++i) {
+                  final String key = "Billy" + srvId + "-" + threadId + "-" + i;
+
+                  final List<?> qResult = database
+                      .query(new OSQLSynchQuery<OIdentifiable>("select from index:" + indexName + " where key='" + key + "'"));
+
+                  if (qResult.isEmpty())
+                    System.out.println("Missing record with key: " + key + " on server: " + server);
+                }
+              }
+            }
+          }
 
           Assert.assertEquals("Server " + server.getServerId() + " count is not what was expected", expected, total);
 
