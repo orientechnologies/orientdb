@@ -434,6 +434,9 @@ public enum OGlobalConfiguration {
 
   PROFILER_MAXVALUES("profiler.maxValues", "Maximum values to store. Values are managed in a LRU", Integer.class, 200),
 
+  PROFILER_MEMORYCHECK_INTERVAL("profiler.memoryCheckInterval",
+            "Checks the memory usage every configured milliseconds. Use 0 to disable it", Long.class, 120000),
+
   // LOG
   LOG_CONSOLE_LEVEL("log.console.level", "Console logging level", String.class, "info", new OConfigurationChangeCallback() {
     public void change(final Object iCurrentValue, final Object iNewValue) {
