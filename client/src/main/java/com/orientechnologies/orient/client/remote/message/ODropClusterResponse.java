@@ -26,7 +26,7 @@ import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
-public final class ODropClusterResponse implements OBinaryResponse<Boolean> {
+public final class ODropClusterResponse implements OBinaryResponse {
 
   private boolean result;
 
@@ -38,9 +38,8 @@ public final class ODropClusterResponse implements OBinaryResponse<Boolean> {
   }
 
   @Override
-  public Boolean read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+  public void read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
     result = network.readByte() != 0;
-    return result;
   }
 
   public void write(OChannelBinary channel, int protocolVersion, String recordSerializer) throws IOException {

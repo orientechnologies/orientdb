@@ -10,7 +10,7 @@ import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
-public class OGetGlobalConfigurationsResponse implements OBinaryResponse<Map<String, String>> {
+public class OGetGlobalConfigurationsResponse implements OBinaryResponse {
   private Map<String, String> configs;
 
   public OGetGlobalConfigurationsResponse() {
@@ -31,12 +31,11 @@ public class OGetGlobalConfigurationsResponse implements OBinaryResponse<Map<Str
   }
 
   @Override
-  public Map<String, String> read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+  public void read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
     configs = new HashMap<String, String>();
     final int num = network.readShort();
     for (int i = 0; i < num; ++i)
       configs.put(network.readString(), network.readString());
-    return configs;
   }
 
   public Map<String, String> getConfigs() {

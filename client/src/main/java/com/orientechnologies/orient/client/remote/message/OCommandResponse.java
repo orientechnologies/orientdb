@@ -56,19 +56,18 @@ import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
-public final class OCommandResponse implements OBinaryResponse<Object> {
-  private OStorageRemote         storage;
-  private boolean                asynch;
-  private OCommandResultListener listener;
-  private ODatabaseDocument      database;
-  private boolean                live;
-  private Object                 result;
-  private boolean                isRecordResultSet;
-  private OCommandRequestText    command;
-  private Map<Object, Object>    params;
+public final class OCommandResponse implements OBinaryResponse {
+  private boolean                   asynch;
+  private OCommandResultListener    listener;
+  private ODatabaseDocumentInternal database;
+  private boolean                   live;
+  private Object                    result;
+  private boolean                   isRecordResultSet;
+  private OCommandRequestText       command;
+  private Map<Object, Object>       params;
 
   public OCommandResponse(Object result, SimpleValueFetchPlanCommandListener listener, boolean isRecordResultSet, boolean async,
-      ODatabaseDocument database, OCommandRequestText command, Map<Object, Object> params) {
+      ODatabaseDocumentInternal database, OCommandRequestText command, Map<Object, Object> params) {
     this.result = result;
     this.listener = listener;
     this.isRecordResultSet = isRecordResultSet;
@@ -78,9 +77,7 @@ public final class OCommandResponse implements OBinaryResponse<Object> {
     this.params = params;
   }
 
-  public OCommandResponse(OStorageRemote storage, boolean asynch, OCommandResultListener listener, ODatabaseDocument database,
-      boolean live) {
-    this.storage = storage;
+  public OCommandResponse(boolean asynch, OCommandResultListener listener, ODatabaseDocumentInternal database, boolean live) {
     this.asynch = asynch;
     this.listener = listener;
     this.database = database;
@@ -221,8 +218,7 @@ public final class OCommandResponse implements OBinaryResponse<Object> {
   }
 
   @Override
-  public Object read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
-    Object result = null;
+  public void read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
     try {
       // Collection of prefetched temporary record (nested projection record), to refer for avoid garbage collection.
       List<ORecord> temporaryResults = new ArrayList<ORecord>();
@@ -260,15 +256,15 @@ public final class OCommandResponse implements OBinaryResponse<Object> {
           final Integer token = doc.field("token");
           final Boolean unsubscribe = doc.field("unsubscribe");
           if (token != null) {
+            OStorageRemote storage = (OStorageRemote) database.getStorage();
             if (Boolean.TRUE.equals(unsubscribe)) {
-              if (this.storage.asynchEventListener != null)
-                this.storage.asynchEventListener.unregisterLiveListener(token);
+              if (storage.asynchEventListener != null)
+                storage.asynchEventListener.unregisterLiveListener(token);
             } else {
               final OLiveResultListener listener = (OLiveResultListener) this.listener;
-              ODatabaseDocumentInternal current = ODatabaseRecordThreadLocal.INSTANCE.get();
-              final ODatabaseDocument dbCopy = current.copy();
-              ORemoteConnectionPool pool = this.storage.connectionManager.getPool(network.getServerURL());
-              this.storage.asynchEventListener.registerLiveListener(pool, token, new OLiveResultListener() {
+              final ODatabaseDocument dbCopy = database.copy();
+              ORemoteConnectionPool pool = storage.connectionManager.getPool(network.getServerURL());
+              storage.asynchEventListener.registerLiveListener(pool, token, new OLiveResultListener() {
 
                 @Override
                 public void onUnsubscribe(int iLiveToken) {
@@ -305,7 +301,6 @@ public final class OCommandResponse implements OBinaryResponse<Object> {
       if (listener != null && !live)
         listener.end();
     }
-    return result;
   }
 
   protected Object readSynchResult(final OChannelBinaryAsynchClient network, final ODatabaseDocument database,
@@ -380,6 +375,10 @@ public final class OCommandResponse implements OBinaryResponse<Object> {
       }
     }
 
+    return result;
+  }
+
+  public Object getResult() {
     return result;
   }
 }

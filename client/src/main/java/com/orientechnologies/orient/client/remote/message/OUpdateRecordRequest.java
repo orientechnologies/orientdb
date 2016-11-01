@@ -22,13 +22,13 @@ package com.orientechnologies.orient.client.remote.message;
 import java.io.IOException;
 
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
-import com.orientechnologies.orient.client.remote.OBinaryRequest;
+import com.orientechnologies.orient.client.remote.OBinaryAsyncRequest;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
-public class OUpdateRecordRequest implements OBinaryRequest {
+public class OUpdateRecordRequest implements OBinaryAsyncRequest<OUpdateRecordResponse> {
   private ORecordId rid;
   private byte[]    content;
   private int       version;
@@ -63,7 +63,7 @@ public class OUpdateRecordRequest implements OBinaryRequest {
   }
 
   @Override
-  public void write(final OChannelBinaryAsynchClient network, final OStorageRemoteSession session, int mode) throws IOException {
+  public void write(final OChannelBinaryAsynchClient network, final OStorageRemoteSession session) throws IOException {
     network.writeRID(rid);
     network.writeBoolean(updateContent);
     network.writeBytes(content);
@@ -94,6 +94,16 @@ public class OUpdateRecordRequest implements OBinaryRequest {
 
   public boolean isUpdateContent() {
     return updateContent;
+  }
+
+  public void setMode(byte mode) {
+    this.mode = mode;
+  }
+
+
+  @Override
+  public OUpdateRecordResponse createResponse() {
+    return new OUpdateRecordResponse();
   }
 
 }

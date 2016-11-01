@@ -26,7 +26,7 @@ import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
-public class OGetClusterDataRangeResponse implements OBinaryResponse<long[]> {
+public class OGetClusterDataRangeResponse implements OBinaryResponse {
   private long[] pos;
 
   public OGetClusterDataRangeResponse() {
@@ -37,9 +37,8 @@ public class OGetClusterDataRangeResponse implements OBinaryResponse<long[]> {
   }
 
   @Override
-  public long[] read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+  public void read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
     pos = new long[] { network.readLong(), network.readLong() };
-    return pos;
   }
 
   public void write(OChannelBinary channel, int protocolVersion, String recordSerializer) throws IOException {

@@ -10,7 +10,7 @@ import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
-public class OErrorResponse implements OBinaryResponse<Void> {
+public class OErrorResponse implements OBinaryResponse {
   private Map<String, String> messages;
   private byte[]              result;
 
@@ -23,7 +23,7 @@ public class OErrorResponse implements OBinaryResponse<Void> {
   }
 
   @Override
-  public Void read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+  public void read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
     messages = new HashMap<>();
     while (network.readByte() == 1) {
       String key = network.readString();
@@ -31,7 +31,6 @@ public class OErrorResponse implements OBinaryResponse<Void> {
       messages.put(key, value);
     }
     result = network.readBytes();
-    return null;
   }
 
   @Override

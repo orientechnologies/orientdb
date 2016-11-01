@@ -28,7 +28,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
-public final class OReadRecordRequest implements OBinaryRequest {
+public final class OReadRecordRequest implements OBinaryRequest<OReadRecordResponse> {
   private boolean   ignoreCache;
   private ORecordId rid;
   private String    fetchPlan;
@@ -45,7 +45,7 @@ public final class OReadRecordRequest implements OBinaryRequest {
   }
 
   @Override
-  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session, int mode) throws IOException {
+  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
     network.writeRID(rid);
     network.writeString(fetchPlan != null ? fetchPlan : "");
     network.writeByte((byte) (ignoreCache ? 1 : 0));
@@ -78,6 +78,11 @@ public final class OReadRecordRequest implements OBinaryRequest {
 
   public boolean isLoadTumbstone() {
     return loadTumbstone;
+  }
+  
+  @Override
+  public OReadRecordResponse createResponse() {
+    return new OReadRecordResponse();
   }
 
 }

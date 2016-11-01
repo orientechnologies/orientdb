@@ -30,7 +30,7 @@ import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollecti
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
-public class OCreateRecordResponse implements OBinaryResponse<Long> {
+public class OCreateRecordResponse implements OBinaryResponse {
 
   private ORecordId                           identity;
   private int                                 version;
@@ -54,13 +54,12 @@ public class OCreateRecordResponse implements OBinaryResponse<Long> {
   }
 
   @Override
-  public Long read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+  public void read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
     short clusterId = network.readShort();
     long posistion = network.readLong();
     identity = new ORecordId(clusterId, posistion);
     version = network.readVersion();
     changedIds = OBinaryProtocolHelper.readCollectionChanges(network);
-    return posistion;
   }
 
   public ORecordId getIdentity() {

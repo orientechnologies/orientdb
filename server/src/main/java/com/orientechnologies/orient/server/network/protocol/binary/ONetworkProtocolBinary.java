@@ -1106,7 +1106,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       final byte[] result = memoryStream.toByteArray();
       objectOutputStream.close();
 
-      OBinaryResponse<Void> error = new OErrorResponse(messages, result);
+      OBinaryResponse error = new OErrorResponse(messages, result);
       error.write(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
       channel.flush();
 

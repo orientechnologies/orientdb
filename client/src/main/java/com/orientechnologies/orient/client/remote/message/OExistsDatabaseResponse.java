@@ -7,7 +7,7 @@ import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
-public class OExistsDatabaseResponse implements OBinaryResponse<Boolean> {
+public class OExistsDatabaseResponse implements OBinaryResponse {
   private boolean exists;
 
   public OExistsDatabaseResponse() {
@@ -23,9 +23,8 @@ public class OExistsDatabaseResponse implements OBinaryResponse<Boolean> {
   }
 
   @Override
-  public Boolean read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+  public void read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
     exists = network.readBoolean();
-    return exists;
   }
 
   public boolean isExists() {

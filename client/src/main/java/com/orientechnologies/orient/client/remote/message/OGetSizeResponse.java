@@ -26,7 +26,7 @@ import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
-public class OGetSizeResponse implements OBinaryResponse<Long> {
+public class OGetSizeResponse implements OBinaryResponse {
   private long size;
 
   public OGetSizeResponse() {
@@ -41,9 +41,8 @@ public class OGetSizeResponse implements OBinaryResponse<Long> {
   }
 
   @Override
-  public Long read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+  public void read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
     size = network.readLong();
-    return size;
   }
 
   public long getSize() {

@@ -28,7 +28,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
-public class OGetRecordMetadataResponse implements OBinaryResponse<ORecordMetadata> {
+public class OGetRecordMetadataResponse implements OBinaryResponse {
 
   private ORecordMetadata metadata;
 
@@ -40,11 +40,10 @@ public class OGetRecordMetadataResponse implements OBinaryResponse<ORecordMetada
   }
 
   @Override
-  public ORecordMetadata read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+  public void read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
     ORecordId recordId = network.readRID();
     int version = network.readVersion();
     metadata = new ORecordMetadata(recordId, version);
-    return metadata;
   }
 
   public void write(OChannelBinary channel, int protocolVersion, String recordSerializer) throws IOException {

@@ -27,7 +27,7 @@ import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
-public class ODropClusterRequest implements OBinaryRequest {
+public class ODropClusterRequest implements OBinaryRequest<ODropClusterResponse> {
   private int clusterId;
 
   public ODropClusterRequest(int iClusterId) {
@@ -38,7 +38,7 @@ public class ODropClusterRequest implements OBinaryRequest {
   }
 
   @Override
-  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session, int mode) throws IOException {
+  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
     network.writeShort((short) clusterId);
   }
 
@@ -53,5 +53,10 @@ public class ODropClusterRequest implements OBinaryRequest {
 
   public int getClusterId() {
     return clusterId;
+  }
+
+  @Override
+  public ODropClusterResponse createResponse() {
+    return new ODropClusterResponse();
   }
 }

@@ -8,7 +8,7 @@ import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
-public class OReleaseDatabaseRequest implements OBinaryRequest {
+public class OReleaseDatabaseRequest implements OBinaryRequest<OReleaseDatabaseResponse> {
   private String name;
   private String storageType;
 
@@ -21,7 +21,7 @@ public class OReleaseDatabaseRequest implements OBinaryRequest {
   }
 
   @Override
-  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session, int mode) throws IOException {
+  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
     network.writeString(name);
     network.writeString(storageType);
   }
@@ -43,5 +43,10 @@ public class OReleaseDatabaseRequest implements OBinaryRequest {
 
   public String getStorageType() {
     return storageType;
+  }
+
+  @Override
+  public OReleaseDatabaseResponse createResponse() {
+    return new OReleaseDatabaseResponse();
   }
 }

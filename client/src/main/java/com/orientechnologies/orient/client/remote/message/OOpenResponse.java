@@ -10,7 +10,7 @@ import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
-public class OOpenResponse implements OBinaryResponse<Void> {
+public class OOpenResponse implements OBinaryResponse {
   private int        sessionId;
   private byte[]     sessionToken;
   private OCluster[] clusterIds;
@@ -41,13 +41,12 @@ public class OOpenResponse implements OBinaryResponse<Void> {
   }
 
   @Override
-  public Void read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+  public void read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
     sessionId = network.readInt();
     sessionToken = network.readBytes();
     clusterIds = OBinaryProtocolHelper.readClustersArray(network);
     distributedConfiguration = network.readBytes();
     serverVersion = network.readString();
-    return null;
   }
 
   public int getSessionId() {

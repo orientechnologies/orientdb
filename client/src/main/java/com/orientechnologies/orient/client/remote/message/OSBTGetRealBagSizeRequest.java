@@ -35,7 +35,7 @@ import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag.C
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
-public class OSBTGetRealBagSizeRequest implements OBinaryRequest {
+public class OSBTGetRealBagSizeRequest implements OBinaryRequest<OSBTGetRealBagSizeResponse> {
 
   private OBonsaiCollectionPointer         collectionPointer;
   private Map<OIdentifiable, Change>       changes;
@@ -52,7 +52,7 @@ public class OSBTGetRealBagSizeRequest implements OBinaryRequest {
   }
 
   @Override
-  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session, int mode) throws IOException {
+  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
     OCollectionNetworkSerializer.INSTANCE.writeCollectionPointer(network, collectionPointer);
     final OSBTreeRidBag.ChangeSerializationHelper changeSerializer = OSBTreeRidBag.ChangeSerializationHelper.INSTANCE;
     final byte[] stream = new byte[OIntegerSerializer.INT_SIZE + changeSerializer.getChangesSerializedSize(changes.size())];
@@ -78,6 +78,11 @@ public class OSBTGetRealBagSizeRequest implements OBinaryRequest {
 
   public OBonsaiCollectionPointer getCollectionPointer() {
     return collectionPointer;
+  }
+
+  @Override
+  public OSBTGetRealBagSizeResponse createResponse() {
+    return new OSBTGetRealBagSizeResponse();
   }
 
 }

@@ -26,7 +26,7 @@ import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
-public final class OCountResponse implements OBinaryResponse<Long> {
+public final class OCountResponse implements OBinaryResponse {
 
   private long count;
 
@@ -38,9 +38,8 @@ public final class OCountResponse implements OBinaryResponse<Long> {
   }
 
   @Override
-  public Long read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+  public void read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
     count = network.readLong();
-    return count;
   }
 
   public void write(OChannelBinary channel, int protocolVersion, String recordSerializer) throws IOException {

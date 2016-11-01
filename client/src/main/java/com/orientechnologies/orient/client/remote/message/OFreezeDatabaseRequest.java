@@ -8,7 +8,7 @@ import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
-public class OFreezeDatabaseRequest implements OBinaryRequest {
+public class OFreezeDatabaseRequest implements OBinaryRequest<OFreezeDatabaseResponse> {
   private String name;
   private String type;
 
@@ -23,7 +23,7 @@ public class OFreezeDatabaseRequest implements OBinaryRequest {
   }
 
   @Override
-  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session, int mode) throws IOException {
+  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
     network.writeString(name);
     network.writeString(type);
 
@@ -47,6 +47,11 @@ public class OFreezeDatabaseRequest implements OBinaryRequest {
 
   public String getType() {
     return type;
+  }
+
+  @Override
+  public OFreezeDatabaseResponse createResponse() {
+    return new OFreezeDatabaseResponse();
   }
 
 }

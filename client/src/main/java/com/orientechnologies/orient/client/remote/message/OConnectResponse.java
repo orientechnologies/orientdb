@@ -8,7 +8,7 @@ import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
-public class OConnectResponse implements OBinaryResponse<Void> {
+public class OConnectResponse implements OBinaryResponse {
   private int    sessionId;
   private byte[] sessionToken;
 
@@ -28,10 +28,9 @@ public class OConnectResponse implements OBinaryResponse<Void> {
   }
 
   @Override
-  public Void read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+  public void read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
     sessionId = network.readInt();
     sessionToken = network.readBytes();
     session.getServerSession(network.getServerURL()).setSession(sessionId, sessionToken);
-    return null;
   }
 }

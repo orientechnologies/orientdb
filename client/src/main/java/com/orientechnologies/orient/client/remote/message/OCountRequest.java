@@ -27,7 +27,7 @@ import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
-public final class OCountRequest implements OBinaryRequest {
+public final class OCountRequest implements OBinaryRequest<OCountResponse> {
   private int[]   clusterIds;
   private boolean countTombstones;
 
@@ -40,7 +40,7 @@ public final class OCountRequest implements OBinaryRequest {
   }
 
   @Override
-  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session, int mode) throws IOException {
+  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
     network.writeShort((short) clusterIds.length);
     for (int iClusterId : clusterIds)
       network.writeShort((short) iClusterId);
@@ -68,6 +68,11 @@ public final class OCountRequest implements OBinaryRequest {
 
   public boolean isCountTombstones() {
     return countTombstones;
+  }
+
+  @Override
+  public OCountResponse createResponse() {
+    return new OCountResponse();
   }
 
 }

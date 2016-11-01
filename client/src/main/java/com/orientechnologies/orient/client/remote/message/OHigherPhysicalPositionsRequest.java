@@ -28,7 +28,7 @@ import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
-public class OHigherPhysicalPositionsRequest implements OBinaryRequest {
+public class OHigherPhysicalPositionsRequest implements OBinaryRequest<OHigherPhysicalPositionsResponse> {
   private int               clusterId;
   private OPhysicalPosition clusterPosition;
 
@@ -41,7 +41,7 @@ public class OHigherPhysicalPositionsRequest implements OBinaryRequest {
   }
 
   @Override
-  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session, int mode) throws IOException {
+  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
     network.writeInt(clusterId);
     network.writeLong(clusterPosition.clusterPosition);
 
@@ -63,6 +63,11 @@ public class OHigherPhysicalPositionsRequest implements OBinaryRequest {
 
   public OPhysicalPosition getClusterPosition() {
     return clusterPosition;
+  }
+
+  @Override
+  public OHigherPhysicalPositionsResponse createResponse() {
+    return new OHigherPhysicalPositionsResponse();
   }
 
 }

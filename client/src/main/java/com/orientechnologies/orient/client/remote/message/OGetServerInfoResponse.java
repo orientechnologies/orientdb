@@ -7,7 +7,7 @@ import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
-public class OGetServerInfoResponse implements OBinaryResponse<String> {
+public class OGetServerInfoResponse implements OBinaryResponse {
   private String result;
 
   public OGetServerInfoResponse(String result) {
@@ -23,9 +23,8 @@ public class OGetServerInfoResponse implements OBinaryResponse<String> {
   }
 
   @Override
-  public String read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+  public void read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
     result = network.readString();
-    return result;
   }
 
   public String getResult() {

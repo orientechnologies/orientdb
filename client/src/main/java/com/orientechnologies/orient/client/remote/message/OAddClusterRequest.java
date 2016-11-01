@@ -27,7 +27,7 @@ import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
-public final class OAddClusterRequest implements OBinaryRequest {
+public final class OAddClusterRequest implements OBinaryRequest<OAddClusterResponse> {
   private int    requestedId = -1;
   private String clusterName;
 
@@ -40,7 +40,7 @@ public final class OAddClusterRequest implements OBinaryRequest {
   }
 
   @Override
-  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session, int mode) throws IOException {
+  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
     network.writeString(clusterName);
     network.writeShort((short) requestedId);
   }
@@ -49,7 +49,7 @@ public final class OAddClusterRequest implements OBinaryRequest {
     String type = "";
     if (protocolVersion < 24)
       type = channel.readString();
-    
+
     this.clusterName = channel.readString();
 
     if (protocolVersion < 24 || type.equalsIgnoreCase("PHYSICAL"))
@@ -76,4 +76,9 @@ public final class OAddClusterRequest implements OBinaryRequest {
     return requestedId;
   }
 
+  @Override
+  public OAddClusterResponse createResponse() {
+    return new OAddClusterResponse();
+  }
+  
 }

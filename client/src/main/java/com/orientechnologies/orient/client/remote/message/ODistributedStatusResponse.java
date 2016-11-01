@@ -28,7 +28,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
-public class ODistributedStatusResponse implements OBinaryResponse<ODocument> {
+public class ODistributedStatusResponse implements OBinaryResponse {
 
   private ODocument clusterConfig;
 
@@ -40,9 +40,8 @@ public class ODistributedStatusResponse implements OBinaryResponse<ODocument> {
   }
 
   @Override
-  public ODocument read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+  public void read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
     clusterConfig = new ODocument(network.readBytes());
-    return clusterConfig;
   }
 
   public void write(OChannelBinary channel, int protocolVersion, String recordSerializer) throws IOException {

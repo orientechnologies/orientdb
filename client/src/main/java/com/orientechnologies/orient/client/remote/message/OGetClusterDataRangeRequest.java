@@ -27,7 +27,7 @@ import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
-public class OGetClusterDataRangeRequest implements OBinaryRequest {
+public class OGetClusterDataRangeRequest implements OBinaryRequest<OGetClusterDataRangeResponse> {
   private int clusterId;
 
   public OGetClusterDataRangeRequest(int iClusterId) {
@@ -38,7 +38,7 @@ public class OGetClusterDataRangeRequest implements OBinaryRequest {
   }
 
   @Override
-  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session, int mode) throws IOException {
+  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
     network.writeShort((short) clusterId);
   }
 
@@ -53,6 +53,11 @@ public class OGetClusterDataRangeRequest implements OBinaryRequest {
 
   public int getClusterId() {
     return clusterId;
+  }
+
+  @Override
+  public OGetClusterDataRangeResponse createResponse() {
+    return new OGetClusterDataRangeResponse();
   }
 
 }

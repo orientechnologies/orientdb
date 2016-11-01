@@ -8,7 +8,7 @@ import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
-public class OShutdownRequest implements OBinaryRequest {
+public class OShutdownRequest implements OBinaryRequest<Void> {
   private String rootUser;
   private String rootPassword;
 
@@ -22,7 +22,7 @@ public class OShutdownRequest implements OBinaryRequest {
   }
 
   @Override
-  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session, int mode) throws IOException {
+  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
     network.writeString(rootUser);
     network.writeString(rootPassword);
   }
@@ -46,4 +46,9 @@ public class OShutdownRequest implements OBinaryRequest {
     return rootUser;
   }
 
+  @Override
+  public Void createResponse() {
+    return null;
+  }
+  
 }

@@ -33,12 +33,13 @@ import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
-public class OReadRecordIfVersionIsNotLatestResponse implements OBinaryResponse<OStorageOperationResult<ORawBuffer>> {
+public class OReadRecordIfVersionIsNotLatestResponse implements OBinaryResponse {
 
   private byte         recordType;
   private int          version;
   private byte[]       record;
   private Set<ORecord> recordsToSend;
+  private ORawBuffer   result;
 
   public OReadRecordIfVersionIsNotLatestResponse() {
   }
@@ -75,11 +76,10 @@ public class OReadRecordIfVersionIsNotLatestResponse implements OBinaryResponse<
   }
 
   @Override
-  public OStorageOperationResult<ORawBuffer> read(OChannelBinaryAsynchClient network, OStorageRemoteSession session)
-      throws IOException {
+  public void read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
 
     if (network.readByte() == 0)
-      return new OStorageOperationResult<ORawBuffer>(null);
+      return;
 
     byte type = network.readByte();
     int recVersion = network.readVersion();
@@ -96,6 +96,11 @@ public class OReadRecordIfVersionIsNotLatestResponse implements OBinaryResponse<
         // PUT IN THE CLIENT LOCAL CACHE
         database.getLocalCache().updateRecord(record);
     }
-    return new OStorageOperationResult<ORawBuffer>(buffer);
+    result = buffer;
   }
+
+  public ORawBuffer getResult() {
+    return result;
+  }
+
 }

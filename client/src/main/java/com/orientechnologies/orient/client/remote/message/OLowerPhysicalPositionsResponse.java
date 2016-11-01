@@ -27,7 +27,7 @@ import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
-public class OLowerPhysicalPositionsResponse implements OBinaryResponse<OPhysicalPosition[]> {
+public class OLowerPhysicalPositionsResponse implements OBinaryResponse {
 
   private OPhysicalPosition[] previousPositions;
 
@@ -39,9 +39,8 @@ public class OLowerPhysicalPositionsResponse implements OBinaryResponse<OPhysica
   }
 
   @Override
-  public OPhysicalPosition[] read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+  public void read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
     this.previousPositions = OBinaryProtocolHelper.readPhysicalPositions(network);
-    return this.previousPositions;
   }
 
   public void write(OChannelBinary channel, int protocolVersion, String recordSerializer) throws IOException {

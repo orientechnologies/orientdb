@@ -35,7 +35,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
-public final class OCommitRequest implements OBinaryRequest {
+public final class OCommitRequest implements OBinaryRequest<OCommitResponse> {
   public class ORecordOperationRequest {
     private byte    type;
     private byte    recordType;
@@ -109,7 +109,7 @@ public final class OCommitRequest implements OBinaryRequest {
   }
 
   @Override
-  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session, int mode) throws IOException {
+  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
 
     network.writeInt(txId);
     network.writeBoolean(usingLong);
@@ -142,7 +142,7 @@ public final class OCommitRequest implements OBinaryRequest {
       iNetwork.writeBytes(txEntry.record);
       iNetwork.writeBoolean(txEntry.contentChanged);
       break;
-      
+
     case ORecordOperation.DELETED:
       iNetwork.writeVersion(txEntry.version);
       break;
@@ -204,6 +204,11 @@ public final class OCommitRequest implements OBinaryRequest {
 
   public boolean isUsingLong() {
     return usingLong;
+  }
+
+  @Override
+  public OCommitResponse createResponse() {
+    return new OCommitResponse();
   }
 
 }

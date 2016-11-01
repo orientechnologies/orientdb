@@ -8,13 +8,13 @@ import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
-public class OGetServerInfoRequest implements OBinaryRequest {
+public class OGetServerInfoRequest implements OBinaryRequest<OGetServerInfoResponse> {
 
   public OGetServerInfoRequest() {
   }
 
   @Override
-  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session, int mode) throws IOException {
+  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
 
   }
 
@@ -27,4 +27,10 @@ public class OGetServerInfoRequest implements OBinaryRequest {
   public byte getCommand() {
     return OChannelBinaryProtocol.REQUEST_SERVER_INFO;
   }
+
+  @Override
+  public OGetServerInfoResponse createResponse() {
+    return new OGetServerInfoResponse();
+  }
+
 }

@@ -81,11 +81,11 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
     final byte[] keyStream = new byte[keySerializer.getObjectSize(key)];
     keySerializer.serialize(key, keyStream, 0);
     final OBonsaiCollectionPointer collectionPointer = getCollectionPointer();
-    OBinaryRequest request = new OSBTGetRequest(collectionPointer, keyStream);
+    OSBTGetRequest request = new OSBTGetRequest(collectionPointer, keyStream);
 
-    OBinaryResponse<byte[]> response = new OSBTGetResponse();
+    OSBTGetResponse response = storage.networkOperation(request, "Cannot get by key from sb-tree bonsai");
 
-    byte[] stream = storage.networkOperation(request, response, "Cannot get by key from sb-tree bonsai");
+    byte[] stream = response.getStream();
     final byte serializerId = OByteSerializer.INSTANCE.deserializeLiteral(stream, 0);
     final OBinarySerializer<V> serializer = (OBinarySerializer<V>) OBinarySerializerFactory.getInstance()
         .getObjectSerializer(serializerId);
@@ -160,10 +160,11 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
     final byte[] keyStream = new byte[keySerializer.getObjectSize(key)];
     keySerializer.serialize(key, keyStream, 0);
     final OStorageRemote storage = (OStorageRemote) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying();
-    OBinaryRequest request = new OSBTFetchEntriesMajorRequest(inclusive, keyStream, getCollectionPointer());
-    OBinaryResponse<List<Map.Entry<K, V>>> response = new OSBTFetchEntriesMajorResponse<K, V>(keySerializer, valueSerializer);
+    OSBTFetchEntriesMajorRequest<K, V> request = new OSBTFetchEntriesMajorRequest<K, V>(inclusive, keyStream,
+        getCollectionPointer(), keySerializer, valueSerializer);
+    OSBTFetchEntriesMajorResponse<K, V> response = storage.networkOperation(request, "Cannot get first key from sb-tree bonsai");
 
-    return storage.networkOperation(request, response, "Cannot get first key from sb-tree bonsai");
+    return response.getList();
   }
 
   @Override
@@ -176,10 +177,10 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
   public K firstKey() {
     final OStorageRemote storage = (OStorageRemote) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying();
     final OBonsaiCollectionPointer collectionPointer = getCollectionPointer();
-    OBinaryRequest request = new OSBTFirstKeyRequest(collectionPointer);
-    OBinaryResponse<byte[]> response = new OSBTFirstKeyResponse();
+    OSBTFirstKeyRequest request = new OSBTFirstKeyRequest(collectionPointer);
+    OSBTFirstKeyResponse response = storage.networkOperation(request, "Cannot get first key from sb-tree bonsai");
 
-    byte[] stream = storage.networkOperation(request, response, "Cannot get first key from sb-tree bonsai");
+    byte[] stream = response.getStream();
     final byte serializerId = OByteSerializer.INSTANCE.deserializeLiteral(stream, 0);
     final OBinarySerializer<K> serializer = (OBinarySerializer<K>) OBinarySerializerFactory.getInstance()
         .getObjectSerializer(serializerId);
@@ -203,10 +204,10 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
   public int getRealBagSize(final Map<K, OSBTreeRidBag.Change> changes) {
     final OStorageRemote storage = (OStorageRemote) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying();
     final OBonsaiCollectionPointer collectionPointer = getCollectionPointer();
-    OBinaryRequest request = new OSBTGetRealBagSizeRequest((OBinarySerializer<OIdentifiable>) keySerializer, collectionPointer,
-        (Map<OIdentifiable, Change>) changes);
-    OBinaryResponse<Integer> response = new OSBTGetRealBagSizeResponse();
-    return storage.networkOperation(request, response, "Cannot get by real bag size sb-tree bonsai");
+    OSBTGetRealBagSizeRequest request = new OSBTGetRealBagSizeRequest((OBinarySerializer<OIdentifiable>) keySerializer,
+        collectionPointer, (Map<OIdentifiable, Change>) changes);
+    OSBTGetRealBagSizeResponse response = storage.networkOperation(request, "Cannot get by real bag size sb-tree bonsai");
+    return response.getRealSize();
   }
 
   @Override

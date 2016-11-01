@@ -8,7 +8,7 @@ import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
-public class OCreateDatabaseRequest implements OBinaryRequest {
+public class OCreateDatabaseRequest implements OBinaryRequest<OCreateDatabaseResponse> {
   private String databaseName;
   private String databaseType;
   private String storageMode;
@@ -25,7 +25,7 @@ public class OCreateDatabaseRequest implements OBinaryRequest {
   }
 
   @Override
-  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session, int mode) throws IOException {
+  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
     network.writeString(databaseName);
     network.writeString(databaseType);
     network.writeString(storageMode);
@@ -60,6 +60,11 @@ public class OCreateDatabaseRequest implements OBinaryRequest {
 
   public String getStorageMode() {
     return storageMode;
+  }
+
+  @Override
+  public OCreateDatabaseResponse createResponse() {
+    return new OCreateDatabaseResponse();
   }
 
 }

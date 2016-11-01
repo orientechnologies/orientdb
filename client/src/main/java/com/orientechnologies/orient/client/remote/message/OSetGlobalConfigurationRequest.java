@@ -8,7 +8,7 @@ import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
-public class OSetGlobalConfigurationRequest implements OBinaryRequest {
+public class OSetGlobalConfigurationRequest implements OBinaryRequest<OSetGlobalConfigurationResponse> {
   private String key;
   private String value;
 
@@ -21,7 +21,7 @@ public class OSetGlobalConfigurationRequest implements OBinaryRequest {
   }
 
   @Override
-  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session, int mode) throws IOException {
+  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
     network.writeString(key);
     network.writeString(value);
   }
@@ -44,4 +44,8 @@ public class OSetGlobalConfigurationRequest implements OBinaryRequest {
   public String getValue() {
     return value;
   }
+
+  public OSetGlobalConfigurationResponse createResponse() {
+    return new OSetGlobalConfigurationResponse();
+  };
 }

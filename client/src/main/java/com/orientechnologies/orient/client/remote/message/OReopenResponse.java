@@ -7,7 +7,7 @@ import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
-public class OReopenResponse implements OBinaryResponse<Void> {
+public class OReopenResponse implements OBinaryResponse {
   private int sessionId;
 
   public OReopenResponse() {
@@ -23,9 +23,8 @@ public class OReopenResponse implements OBinaryResponse<Void> {
   }
 
   @Override
-  public Void read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+  public void read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
     sessionId = network.readInt();
-    return null;
   }
 
   public int getSessionId() {

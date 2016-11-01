@@ -26,7 +26,7 @@ import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
-public class OSBTGetResponse implements OBinaryResponse<byte[]> {
+public class OSBTGetResponse implements OBinaryResponse {
   private byte[] stream;
 
   public OSBTGetResponse() {
@@ -37,9 +37,8 @@ public class OSBTGetResponse implements OBinaryResponse<byte[]> {
   }
 
   @Override
-  public byte[] read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+  public void read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
     stream = network.readBytes();
-    return stream;
   }
 
   public void write(OChannelBinary channel, int protocolVersion, String recordSerializer) throws IOException {

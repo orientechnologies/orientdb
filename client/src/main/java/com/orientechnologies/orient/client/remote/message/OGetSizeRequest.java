@@ -27,9 +27,9 @@ import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
-public class OGetSizeRequest implements OBinaryRequest {
+public class OGetSizeRequest implements OBinaryRequest<OGetSizeResponse> {
   @Override
-  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session, int mode) throws IOException {
+  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
   }
 
   public void read(OChannelBinary channel, int protocolVersion, String serializerName) throws IOException {
@@ -40,4 +40,10 @@ public class OGetSizeRequest implements OBinaryRequest {
   public byte getCommand() {
     return OChannelBinaryProtocol.REQUEST_DB_SIZE;
   }
+
+  @Override
+  public OGetSizeResponse createResponse() {
+    return new OGetSizeResponse();
+  }
+
 }

@@ -27,7 +27,7 @@ import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
-public class OSBTCreateTreeRequest implements OBinaryRequest {
+public class OSBTCreateTreeRequest implements OBinaryRequest<OSBTCreateTreeResponse> {
   private int clusterId;
 
   public OSBTCreateTreeRequest(int clusterId) {
@@ -38,7 +38,7 @@ public class OSBTCreateTreeRequest implements OBinaryRequest {
   }
 
   @Override
-  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session, int mode) throws IOException {
+  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
     network.writeInt(clusterId);
   }
 
@@ -53,6 +53,11 @@ public class OSBTCreateTreeRequest implements OBinaryRequest {
 
   public int getClusterId() {
     return clusterId;
+  }
+
+  @Override
+  public OSBTCreateTreeResponse createResponse() {
+    return new OSBTCreateTreeResponse();
   }
 
 }

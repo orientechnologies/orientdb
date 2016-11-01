@@ -21,6 +21,7 @@ package com.orientechnologies.orient.client.remote.message;
 
 import java.io.IOException;
 
+import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OCollectionNetworkSerializer;
@@ -29,23 +30,28 @@ import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollecti
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
-public class OSBTFetchEntriesMajorRequest implements OBinaryRequest {
+public class OSBTFetchEntriesMajorRequest<K, V> implements OBinaryRequest<OSBTFetchEntriesMajorResponse<K, V>> {
   private boolean                  inclusive;
   private byte[]                   keyStream;
   private OBonsaiCollectionPointer pointer;
   private int                      pageSize;
+  private OBinarySerializer<K>     keySerializer;
+  private OBinarySerializer<V>     valueSerializer;
 
-  public OSBTFetchEntriesMajorRequest(boolean inclusive, byte[] keyStream, OBonsaiCollectionPointer pointer) {
+  public OSBTFetchEntriesMajorRequest(boolean inclusive, byte[] keyStream, OBonsaiCollectionPointer pointer,
+      OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer) {
     this.inclusive = inclusive;
     this.keyStream = keyStream;
     this.pointer = pointer;
+    this.keySerializer = keySerializer;
+    this.valueSerializer = valueSerializer;
   }
 
   public OSBTFetchEntriesMajorRequest() {
   }
 
   @Override
-  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session, int mode) throws IOException {
+  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
     OCollectionNetworkSerializer.INSTANCE.writeCollectionPointer(network, pointer);
     network.writeBytes(keyStream);
     network.writeBoolean(inclusive);
@@ -81,6 +87,11 @@ public class OSBTFetchEntriesMajorRequest implements OBinaryRequest {
 
   public int getPageSize() {
     return pageSize;
+  }
+
+  @Override
+  public OSBTFetchEntriesMajorResponse<K, V> createResponse() {
+    return new OSBTFetchEntriesMajorResponse<>(keySerializer, valueSerializer);
   }
 
 }

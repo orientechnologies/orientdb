@@ -28,7 +28,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
-public class OReadRecordIfVersionIsNotLatestRequest implements OBinaryRequest {
+public class OReadRecordIfVersionIsNotLatestRequest implements OBinaryRequest<OReadRecordIfVersionIsNotLatestResponse> {
   private ORecordId rid;
   private int       recordVersion;
   private String    fetchPlan;
@@ -45,7 +45,7 @@ public class OReadRecordIfVersionIsNotLatestRequest implements OBinaryRequest {
   }
 
   @Override
-  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session, int mode) throws IOException {
+  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
     network.writeRID(rid);
     network.writeVersion(recordVersion);
     network.writeString(fetchPlan != null ? fetchPlan : "");
@@ -78,6 +78,11 @@ public class OReadRecordIfVersionIsNotLatestRequest implements OBinaryRequest {
 
   public boolean isIgnoreCache() {
     return ignoreCache;
+  }
+
+  @Override
+  public OReadRecordIfVersionIsNotLatestResponse createResponse() {
+    return new OReadRecordIfVersionIsNotLatestResponse();
   }
 
 }

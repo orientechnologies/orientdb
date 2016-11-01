@@ -12,7 +12,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
-public class OOpenRequest implements OBinaryRequest {
+public class OOpenRequest implements OBinaryRequest<OOpenResponse> {
   private String  driverName      = OStorageRemote.DRIVER_NAME;
   private String  driverVersion   = OConstants.ORIENT_VERSION;
   private short   protocolVersion = OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION;
@@ -37,7 +37,7 @@ public class OOpenRequest implements OBinaryRequest {
   }
 
   @Override
-  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session, int mode) throws IOException {
+  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
     network.writeString(driverName);
     network.writeString(driverVersion);
     network.writeShort((short) protocolVersion);
@@ -125,6 +125,11 @@ public class OOpenRequest implements OBinaryRequest {
 
   public boolean isUseToken() {
     return useToken;
+  }
+
+  @Override
+  public OOpenResponse createResponse() {
+    return new OOpenResponse();
   }
 
 }

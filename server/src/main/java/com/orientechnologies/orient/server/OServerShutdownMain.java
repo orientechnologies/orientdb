@@ -72,10 +72,10 @@ public class OServerShutdownMain {
       throw new ONetworkProtocolException(
           "Cannot connect to server host '" + networkAddress + "', ports: " + Arrays.toString(networkPort));
 
-    OBinaryRequest request = new OShutdownRequest(rootUser, rootPassword);
+    OShutdownRequest request = new OShutdownRequest(rootUser, rootPassword);
     channel.writeByte(request.getCommand());
     channel.writeInt(0);
-    request.write(channel, null, 0);
+    request.write(channel, null);
     channel.flush();
 
     channel.beginResponse(0, false);

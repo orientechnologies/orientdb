@@ -32,7 +32,7 @@ import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollecti
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
-public final class OCommitResponse implements OBinaryResponse<Void> {
+public final class OCommitResponse implements OBinaryResponse {
   public static class OCreatedRecordResponse {
     private final ORecordId currentRid;
     private final ORecordId createdRid;
@@ -86,7 +86,7 @@ public final class OCommitResponse implements OBinaryResponse<Void> {
   }
 
   @Override
-  public Void read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+  public void read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
 
     final int createdRecords = network.readInt();
     created = new ArrayList<>(createdRecords);
@@ -109,7 +109,6 @@ public final class OCommitResponse implements OBinaryResponse<Void> {
 
     collectionChanges = OBinaryProtocolHelper.readCollectionChanges(network);
 
-    return null;
   }
 
   @Override

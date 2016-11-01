@@ -25,18 +25,21 @@ import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
-public final class OCommandRequest implements OBinaryRequest {
-  private boolean             asynch;
-  private OCommandRequestText query;
-  private boolean             live;
+public final class OCommandRequest implements OBinaryRequest<OCommandResponse> {
+  private ODatabaseDocumentInternal database;
+  private boolean                   asynch;
+  private OCommandRequestText       query;
+  private boolean                   live;
 
-  public OCommandRequest(boolean asynch, OCommandRequestText iCommand, boolean live) {
+  public OCommandRequest(ODatabaseDocumentInternal database, boolean asynch, OCommandRequestText iCommand, boolean live) {
+    this.database = database;
     this.asynch = asynch;
     this.query = iCommand;
     this.live = live;
@@ -46,7 +49,7 @@ public final class OCommandRequest implements OBinaryRequest {
   }
 
   @Override
-  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session, int mode) throws IOException {
+  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
     if (live) {
       network.writeByte((byte) 'l');
     } else {
@@ -82,6 +85,11 @@ public final class OCommandRequest implements OBinaryRequest {
 
   public boolean isLive() {
     return live;
+  }
+
+  @Override
+  public OCommandResponse createResponse() {
+    return new OCommandResponse(asynch, this.query.getResultListener(), database, live);
   }
 
 }

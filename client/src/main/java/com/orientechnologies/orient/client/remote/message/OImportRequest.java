@@ -11,7 +11,7 @@ import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
-public class OImportRequest implements OBinaryRequest {
+public class OImportRequest implements OBinaryRequest<OImportResponse> {
   private InputStream inputStream;
   private String      options;
   private String      name;
@@ -27,7 +27,7 @@ public class OImportRequest implements OBinaryRequest {
   }
 
   @Override
-  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session, int mode) throws IOException {
+  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
     network.writeString(options);
     network.writeString(name);
     byte[] buffer = new byte[1024];
@@ -71,4 +71,10 @@ public class OImportRequest implements OBinaryRequest {
   public String getOptions() {
     return options;
   }
+
+  @Override
+  public OImportResponse createResponse() {
+    return new OImportResponse();
+  }
+
 }

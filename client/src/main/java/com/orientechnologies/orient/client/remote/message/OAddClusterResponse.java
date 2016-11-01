@@ -24,7 +24,7 @@ import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
-public final class OAddClusterResponse implements OBinaryResponse<Integer> {
+public final class OAddClusterResponse implements OBinaryResponse {
   private int clusterId;
 
   public OAddClusterResponse() {
@@ -39,9 +39,8 @@ public final class OAddClusterResponse implements OBinaryResponse<Integer> {
   }
 
   @Override
-  public Integer read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+  public void read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
     this.clusterId = network.readShort();
-    return clusterId;
   }
 
   public int getClusterId() {

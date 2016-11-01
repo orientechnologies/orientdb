@@ -26,7 +26,7 @@ import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
-public class OSBTGetRealBagSizeResponse implements OBinaryResponse<Integer> {
+public class OSBTGetRealBagSizeResponse implements OBinaryResponse {
 
   private int realSize;
 
@@ -38,9 +38,8 @@ public class OSBTGetRealBagSizeResponse implements OBinaryResponse<Integer> {
   }
 
   @Override
-  public Integer read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+  public void read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
     realSize = network.readInt();
-    return realSize;
   }
 
   public void write(OChannelBinary channel, int protocolVersion, String recordSerializer) throws IOException {

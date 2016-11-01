@@ -29,7 +29,7 @@ import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollecti
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
-public class OSBTFirstKeyRequest implements OBinaryRequest {
+public class OSBTFirstKeyRequest implements OBinaryRequest<OSBTFirstKeyResponse> {
   private OBonsaiCollectionPointer collectionPointer;
 
   public OSBTFirstKeyRequest(OBonsaiCollectionPointer collectionPointer) {
@@ -40,7 +40,7 @@ public class OSBTFirstKeyRequest implements OBinaryRequest {
   }
 
   @Override
-  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session, int mode) throws IOException {
+  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
     OCollectionNetworkSerializer.INSTANCE.writeCollectionPointer(network, collectionPointer);
   }
 
@@ -55,6 +55,11 @@ public class OSBTFirstKeyRequest implements OBinaryRequest {
 
   public OBonsaiCollectionPointer getCollectionPointer() {
     return collectionPointer;
+  }
+
+  @Override
+  public OSBTFirstKeyResponse createResponse() {
+    return new OSBTFirstKeyResponse();
   }
 
 }

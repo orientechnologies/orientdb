@@ -9,7 +9,7 @@ import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
-public class OImportResponse implements OBinaryResponse<Void> {
+public class OImportResponse implements OBinaryResponse {
   private List<String> messages = new ArrayList<>();
 
   public OImportResponse(List<String> messages) {
@@ -28,12 +28,11 @@ public class OImportResponse implements OBinaryResponse<Void> {
   }
 
   @Override
-  public Void read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+  public void read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
     String message;
     while ((message = network.readString()) != null) {
       messages.add(message);
     }
-    return null;
   }
 
   public List<String> getMessages() {

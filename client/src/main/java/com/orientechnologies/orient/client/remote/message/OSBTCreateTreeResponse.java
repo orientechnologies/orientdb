@@ -28,7 +28,7 @@ import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
-public class OSBTCreateTreeResponse implements OBinaryResponse<OBonsaiCollectionPointer> {
+public class OSBTCreateTreeResponse implements OBinaryResponse {
 
   private OBonsaiCollectionPointer collenctionPointer;
 
@@ -40,9 +40,8 @@ public class OSBTCreateTreeResponse implements OBinaryResponse<OBonsaiCollection
   }
 
   @Override
-  public OBonsaiCollectionPointer read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+  public void read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
     collenctionPointer = OCollectionNetworkSerializer.INSTANCE.readCollectionPointer(network);
-    return collenctionPointer;
   }
 
   public void write(OChannelBinary channel, int protocolVersion, String recordSerializer) throws IOException {

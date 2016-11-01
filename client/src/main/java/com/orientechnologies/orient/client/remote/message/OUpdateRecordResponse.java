@@ -29,7 +29,7 @@ import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
-public class OUpdateRecordResponse implements OBinaryResponse<Integer> {
+public class OUpdateRecordResponse implements OBinaryResponse {
 
   private int                                 version;
   private Map<UUID, OBonsaiCollectionPointer> changes;
@@ -49,10 +49,9 @@ public class OUpdateRecordResponse implements OBinaryResponse<Integer> {
   }
 
   @Override
-  public Integer read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+  public void read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
     version = network.readVersion();
     changes = OBinaryProtocolHelper.readCollectionChanges(network);
-    return version;
   }
 
   public int getVersion() {

@@ -62,14 +62,14 @@ public class OStorageRemoteAsyncOperationTest {
   @Test
   public void testSyncCall() {
     final CallStatus status = new CallStatus();
-    storage.asyncNetworkOperation(new OBinaryRequest() {
+    storage.asyncNetworkOperation(new OBinaryAsyncRequest<OBinaryResponse>() {
       @Override
       public byte getCommand() {
         return 0;
       }
 
       @Override
-      public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session, int mode) throws IOException {
+      public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
         assertNull(status.status);
         status.status = "write";
       }
@@ -79,18 +79,31 @@ public class OStorageRemoteAsyncOperationTest {
 
       }
 
-    }, new OBinaryResponse<Object>() {
       @Override
-      public Object read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
-        assertEquals(status.status, "write");
-        status.status = "read";
-        return null;
+      public byte getMode() {
+        // TODO Auto-generated method stub
+        return 0;
       }
 
       @Override
-      public void write(OChannelBinary channel, int protocolVersion, String recordSerializer) throws IOException {
+      public void setMode(byte mode) {
       }
 
+      @Override
+      public OBinaryResponse createResponse() {
+        return new OBinaryResponse() {
+          @Override
+          public void read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+            assertEquals(status.status, "write");
+            status.status = "read";
+          }
+
+          @Override
+          public void write(OChannelBinary channel, int protocolVersion, String recordSerializer) throws IOException {
+          }
+
+        };
+      }
     }, 0, new ORecordId(-1, -1), null, "");
 
     assertEquals(status.status, "read");
@@ -99,7 +112,7 @@ public class OStorageRemoteAsyncOperationTest {
   @Test
   public void testNoReadCall() {
     final CallStatus status = new CallStatus();
-    storage.asyncNetworkOperation(new OBinaryRequest() {
+    storage.asyncNetworkOperation(new OBinaryAsyncRequest<OBinaryResponse>() {
       @Override
       public byte getCommand() {
         // TODO Auto-generated method stub
@@ -107,7 +120,7 @@ public class OStorageRemoteAsyncOperationTest {
       }
 
       @Override
-      public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session, int mode) throws IOException {
+      public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
         assertNull(status.status);
         status.status = "write";
       }
@@ -118,17 +131,31 @@ public class OStorageRemoteAsyncOperationTest {
 
       }
 
-    }, new OBinaryResponse<Object>() {
       @Override
-      public Object read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
-        fail();
-        return null;
+      public byte getMode() {
+        // TODO Auto-generated method stub
+        return 0;
       }
 
       @Override
-      public void write(OChannelBinary channel, int protocolVersion, String recordSerializer) throws IOException {
+      public void setMode(byte mode) {
         // TODO Auto-generated method stub
 
+      }
+
+      @Override
+      public OBinaryResponse createResponse() {
+
+        return new OBinaryResponse() {
+          @Override
+          public void read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+            fail();
+          }
+
+          @Override
+          public void write(OChannelBinary channel, int protocolVersion, String recordSerializer) throws IOException {
+          }
+        };
       }
 
     }, 1, new ORecordId(-1, -1), null, "");
@@ -142,8 +169,7 @@ public class OStorageRemoteAsyncOperationTest {
     final CountDownLatch callBackWait = new CountDownLatch(1);
     final CountDownLatch readDone = new CountDownLatch(1);
     final CountDownLatch callBackDone = new CountDownLatch(1);
-    final Object res = new Object();
-    storage.asyncNetworkOperation(new OBinaryRequest() {
+    storage.asyncNetworkOperation(new OBinaryAsyncRequest<OBinaryResponse>() {
       @Override
       public byte getCommand() {
         // TODO Auto-generated method stub
@@ -151,7 +177,7 @@ public class OStorageRemoteAsyncOperationTest {
       }
 
       @Override
-      public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session, int mode) throws IOException {
+      public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
         assertNull(status.status);
         status.status = "write";
       }
@@ -161,24 +187,40 @@ public class OStorageRemoteAsyncOperationTest {
 
       }
 
-    }, new OBinaryResponse<Object>() {
       @Override
-      public Object read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
-        try {
-          if (callBackWait.await(10, TimeUnit.MILLISECONDS))
-            readDone.countDown();
-        } catch (InterruptedException e) {
-          e.printStackTrace();
-        }
-        return res;
+      public byte getMode() {
+        // TODO Auto-generated method stub
+        return 0;
       }
 
       @Override
-      public void write(OChannelBinary channel, int protocolVersion, String recordSerializer) throws IOException {
+      public void setMode(byte mode) {
+        // TODO Auto-generated method stub
+
       }
-    }, 1, new ORecordId(-1, -1), new ORecordCallback<OBinaryResponse<Object>>() {
+
       @Override
-      public void call(ORecordId iRID, OBinaryResponse<Object> iParameter) {
+      public OBinaryResponse createResponse() {
+        return new OBinaryResponse() {
+          @Override
+          public void read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+            try {
+              if (callBackWait.await(10, TimeUnit.MILLISECONDS))
+                readDone.countDown();
+            } catch (InterruptedException e) {
+              e.printStackTrace();
+            }
+          }
+
+          @Override
+          public void write(OChannelBinary channel, int protocolVersion, String recordSerializer) throws IOException {
+          }
+        };
+      }
+
+    }, 1, new ORecordId(-1, -1), new ORecordCallback<OBinaryResponse>() {
+      @Override
+      public void call(ORecordId iRID, OBinaryResponse iParameter) {
         callBackDone.countDown();
       }
     }, "");

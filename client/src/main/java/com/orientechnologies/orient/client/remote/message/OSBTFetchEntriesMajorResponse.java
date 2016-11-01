@@ -34,7 +34,7 @@ import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
-public class OSBTFetchEntriesMajorResponse<K, V> implements OBinaryResponse<List<Entry<K, V>>> {
+public class OSBTFetchEntriesMajorResponse<K, V> implements OBinaryResponse {
   private final OBinarySerializer<K> keySerializer;
   private final OBinarySerializer<V> valueSerializer;
   private List<Map.Entry<K, V>>      list;
@@ -52,8 +52,7 @@ public class OSBTFetchEntriesMajorResponse<K, V> implements OBinaryResponse<List
   }
 
   @Override
-  public List<Entry<K, V>> read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
-    List<Map.Entry<K, V>> list = null;
+  public void read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
     byte[] stream = network.readBytes();
     int offset = 0;
     final int count = OIntegerSerializer.INSTANCE.deserializeLiteral(stream, 0);
@@ -66,7 +65,6 @@ public class OSBTFetchEntriesMajorResponse<K, V> implements OBinaryResponse<List
       offset += valueSerializer.getObjectSize(stream, offset);
       list.add(new OSBTreeBonsaiRemote.TreeEntry<K, V>(resultKey, resultValue));
     }
-    return list;
   }
 
   public void write(OChannelBinary channel, int protocolVersion, String recordSerializer) throws IOException {
@@ -87,6 +85,10 @@ public class OSBTFetchEntriesMajorResponse<K, V> implements OBinaryResponse<List
 
     channel.writeBytes(stream);
 
+  }
+
+  public List<Map.Entry<K, V>> getList() {
+    return list;
   }
 
 }

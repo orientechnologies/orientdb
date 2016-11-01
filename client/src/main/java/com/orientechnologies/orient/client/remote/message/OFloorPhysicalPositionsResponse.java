@@ -27,28 +27,27 @@ import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
-public class OFloorPhysicalPositionsResponse implements OBinaryResponse<OPhysicalPosition[]> {
-  private OPhysicalPosition[] previousPositions;
+public class OFloorPhysicalPositionsResponse implements OBinaryResponse {
+  private OPhysicalPosition[] positions;
 
   public OFloorPhysicalPositionsResponse() {
   }
 
   public OFloorPhysicalPositionsResponse(OPhysicalPosition[] previousPositions) {
-    this.previousPositions = previousPositions;
+    this.positions = previousPositions;
   }
 
   @Override
-  public OPhysicalPosition[] read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
-    this.previousPositions = OBinaryProtocolHelper.readPhysicalPositions(network);
-    return this.previousPositions;
+  public void read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+    this.positions = OBinaryProtocolHelper.readPhysicalPositions(network);
   }
 
   public void write(OChannelBinary channel, int protocolVersion, String recordSerializer) throws IOException {
-    OBinaryProtocolHelper.writePhysicalPositions(channel, previousPositions);
+    OBinaryProtocolHelper.writePhysicalPositions(channel, positions);
   }
 
-  public OPhysicalPosition[] getPreviousPositions() {
-    return previousPositions;
+  public OPhysicalPosition[] getPositions() {
+    return positions;
   }
 
 }

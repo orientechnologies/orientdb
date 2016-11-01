@@ -122,27 +122,25 @@ public class OServerAdmin {
       username = iUserName;
       password = iUserPassword;
     }
-    OBinaryRequest request = new OConnectRequest(username, password);
-
-    OBinaryResponse<Void> response = new OConnectResponse();
+    OConnectRequest request = new OConnectRequest(username, password);
 
     networkAdminOperation((network, session) -> {
       OStorageRemoteNodeSession nodeSession = session.getOrCreateServerSession(network.getServerURL());
       try {
         network.beginRequest(request.getCommand(), session);
-        request.write(network, session, 0);
+        request.write(network, session);
       } finally {
         network.endRequest();
       }
-      final Void res;
+      OConnectResponse response = request.createResponse();
       try {
         network.beginResponse(nodeSession.getSessionId(), false);
-        res = response.read(network, session);
+        response.read(network, session);
       } finally {
         storage.endResponse(network);
       }
       storage.connectionManager.release(network);
-      return res;
+      return null;
     }, "Cannot connect to the remote server/database '" + storage.getURL() + "'");
 
     return this;
@@ -154,12 +152,9 @@ public class OServerAdmin {
    * @throws IOException
    */
   public synchronized Map<String, String> listDatabases() throws IOException {
-
-    OBinaryRequest request = new OListDatabasesRequest();
-    OBinaryResponse<Map<String, String>> response = new OListDatabasesReponse();
-
-    return networkAdminOperation(request, response, "Cannot retrieve the configuration list");
-
+    OListDatabasesRequest request = new OListDatabasesRequest();
+    OListDatabasesReponse response = networkAdminOperation(request, "Cannot retrieve the configuration list");
+    return response.getDatabases();
   }
 
   /**
@@ -168,11 +163,10 @@ public class OServerAdmin {
    * @throws IOException
    */
   public synchronized ODocument getServerInfo() throws IOException {
-    OBinaryRequest request = new OGetServerInfoRequest();
-    OBinaryResponse<String> response = new OGetServerInfoResponse();
-    String result = networkAdminOperation(request, response, "Cannot retrieve server information");
+    OGetServerInfoRequest request = new OGetServerInfoRequest();
+    OGetServerInfoResponse response = networkAdminOperation(request, "Cannot retrieve server information");
     ODocument res = new ODocument();
-    res.fromJSON(result);
+    res.fromJSON(response.getResult());
     return res;
   }
 
@@ -233,10 +227,8 @@ public class OServerAdmin {
       else
         storageMode = iStorageMode;
 
-      OBinaryRequest request = new OCreateDatabaseRequest(iDatabaseName, iDatabaseName, storageMode, backupPath);
-      OBinaryResponse<Void> response = new OCreateDatabaseResponse();
-
-      networkAdminOperation(request, response, "Cannot create the remote storage: " + storage.getName());
+      OCreateDatabaseRequest request = new OCreateDatabaseRequest(iDatabaseName, iDatabaseName, storageMode, backupPath);
+      OCreateDatabaseResponse response = networkAdminOperation(request, "Cannot create the remote storage: " + storage.getName());
 
     }
 
@@ -261,10 +253,10 @@ public class OServerAdmin {
    * @throws IOException
    */
   public synchronized boolean existsDatabase(final String iDatabaseName, final String storageType) throws IOException {
-    OBinaryRequest request = new OExistsDatabaseRequest(iDatabaseName, storageType);
-    OBinaryResponse<Boolean> response = new OExistsDatabaseResponse();
-
-    return networkAdminOperation(request, response, "Error on checking existence of the remote storage: " + storage.getName());
+    OExistsDatabaseRequest request = new OExistsDatabaseRequest(iDatabaseName, storageType);
+    OExistsDatabaseResponse response = networkAdminOperation(request,
+        "Error on checking existence of the remote storage: " + storage.getName());
+    return response.isExists();
 
   }
 
@@ -302,9 +294,8 @@ public class OServerAdmin {
    */
   public synchronized OServerAdmin dropDatabase(final String iDatabaseName, final String storageType) throws IOException {
 
-    OBinaryRequest request = new ODropDatabaseRequest(iDatabaseName, storageType);
-    OBinaryResponse<Void> response = new ODropDatabaseResponse();
-    networkAdminOperation(request, response, "Cannot delete the remote storage: " + storage.getName());
+    ODropDatabaseRequest request = new ODropDatabaseRequest(iDatabaseName, storageType);
+    ODropDatabaseResponse response = networkAdminOperation(request, "Cannot delete the remote storage: " + storage.getName());
 
     final Set<OStorage> underlyingStorages = new HashSet<OStorage>();
 
@@ -344,10 +335,8 @@ public class OServerAdmin {
    */
   public synchronized OServerAdmin freezeDatabase(final String storageType) throws IOException {
 
-    OBinaryRequest request = new OFreezeDatabaseRequest(storage.getName(), storageType);
-    OBinaryResponse<Void> response = new OFreezeDatabaseResponse();
-
-    networkAdminOperation(request, response, "Cannot freeze the remote storage: " + storage.getName());
+    OFreezeDatabaseRequest request = new OFreezeDatabaseRequest(storage.getName(), storageType);
+    OFreezeDatabaseResponse response = networkAdminOperation(request, "Cannot freeze the remote storage: " + storage.getName());
 
     return this;
   }
@@ -362,11 +351,8 @@ public class OServerAdmin {
    */
   public synchronized OServerAdmin releaseDatabase(final String storageType) throws IOException {
 
-    OBinaryRequest request = new OReleaseDatabaseRequest(storage.getName(), storageType);
-
-    OBinaryResponse<Void> response = new OReleaseDatabaseResponse();
-
-    networkAdminOperation(request, response, "Cannot release the remote storage: " + storage.getName());
+    OReleaseDatabaseRequest request = new OReleaseDatabaseRequest(storage.getName(), storageType);
+    OReleaseDatabaseResponse response = networkAdminOperation(request, "Cannot release the remote storage: " + storage.getName());
 
     return this;
   }
@@ -378,43 +364,37 @@ public class OServerAdmin {
    */
   public ODocument clusterStatus() {
 
-    OBinaryRequest request = new ODistributedStatusRequest();
+    ODistributedStatusRequest request = new ODistributedStatusRequest();
 
-    OBinaryResponse<ODocument> responseOperation = new ODistributedStatusResponse();
+    ODistributedStatusResponse response = storage.networkOperation(request, "Error on executing Cluster status ");
 
-    ODocument response = storage.networkOperation(request, responseOperation, "Error on executing Cluster status ");
-
-    OLogManager.instance().debug(this, "Cluster status %s", response.toJSON("prettyPrint"));
-    return response;
+    OLogManager.instance().debug(this, "Cluster status %s", response.getClusterConfig().toJSON("prettyPrint"));
+    return response.getClusterConfig();
   }
 
   public synchronized Map<String, String> getGlobalConfigurations() throws IOException {
 
-    OBinaryRequest request = new OGetGlobalConfigurationsRequest();
+    OGetGlobalConfigurationsRequest request = new OGetGlobalConfigurationsRequest();
 
-    OBinaryResponse<Map<String, String>> response = new OGetGlobalConfigurationsResponse();
-
-    return networkAdminOperation(request, response, "Cannot retrieve the configuration list");
+    OGetGlobalConfigurationsResponse response = networkAdminOperation(request, "Cannot retrieve the configuration list");
+    return response.getConfigs();
 
   }
 
   public synchronized String getGlobalConfiguration(final OGlobalConfiguration config) throws IOException {
 
-    OBinaryRequest request = new OGetGlobalConfigurationRequest(config.getKey());
+    OGetGlobalConfigurationRequest request = new OGetGlobalConfigurationRequest(config.getKey());
 
-    OBinaryResponse<String> response = new OGetGlobalConfigurationResponse();
+    OGetGlobalConfigurationResponse response = networkAdminOperation(request, "Cannot retrieve the configuration value: " + config.getKey());
 
-    return networkAdminOperation(request, response, "Cannot retrieve the configuration value: " + config.getKey());
+    return response.getValue();
   }
 
   public synchronized OServerAdmin setGlobalConfiguration(final OGlobalConfiguration config, final Object iValue)
       throws IOException {
 
-    OBinaryRequest request = new OSetGlobalConfigurationRequest(config.getKey(), iValue != null ? iValue.toString() : "");
-
-    OBinaryResponse<Void> response = new OSetGlobalConfigurationResponse();
-
-    networkAdminOperation(request, response, "Cannot set the configuration value: " + config.getKey());
+    OSetGlobalConfigurationRequest request = new OSetGlobalConfigurationRequest(config.getKey(), iValue != null ? iValue.toString() : "");
+    OSetGlobalConfigurationResponse response = networkAdminOperation(request,  "Cannot set the configuration value: " + config.getKey());
     return this;
   }
 
@@ -452,26 +432,25 @@ public class OServerAdmin {
     return retry;
   }
 
-  protected <T> T networkAdminOperation(final OBinaryRequest request, final OBinaryResponse<T> response,
-      final String errorMessage) {
+  protected <T extends OBinaryResponse> T networkAdminOperation(final OBinaryRequest<T> request, final String errorMessage) {
     return networkAdminOperation(new OStorageRemoteOperation<T>() {
       @Override
       public T execute(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
         try {
           network.beginRequest(request.getCommand(), session);
-          request.write(network, session, 0);
+          request.write(network, session);
         } finally {
           network.endRequest();
         }
-        final T res;
+        T response = request.createResponse();
         try {
           storage.beginResponse(network, session);
-          res = response.read(network, session);
+          response.read(network, session);
         } finally {
           storage.endResponse(network);
         }
         storage.connectionManager.release(network);
-        return res;
+        return response;
       }
     }, errorMessage);
   }

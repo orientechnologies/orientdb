@@ -28,14 +28,14 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
-public class ODistributedStatusRequest implements OBinaryRequest {
+public class ODistributedStatusRequest implements OBinaryRequest<ODistributedStatusResponse> {
   private ODocument status;
 
   public ODistributedStatusRequest() {
   }
 
   @Override
-  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session, int mode) throws IOException {
+  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
     network.writeBytes(new ODocument().field("operation", "status").toStream());
   }
 
@@ -50,5 +50,10 @@ public class ODistributedStatusRequest implements OBinaryRequest {
   @Override
   public byte getCommand() {
     return OChannelBinaryProtocol.REQUEST_CLUSTER;
+  }
+
+  @Override
+  public ODistributedStatusResponse createResponse() {
+    return new ODistributedStatusResponse();
   }
 }

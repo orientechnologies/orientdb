@@ -12,7 +12,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
-public class OConnectRequest implements OBinaryRequest {
+public class OConnectRequest implements OBinaryRequest<OConnectResponse> {
   private String  username;
   private String  password;
   private String  driverName      = OStorageRemote.DRIVER_NAME;
@@ -33,7 +33,7 @@ public class OConnectRequest implements OBinaryRequest {
   }
 
   @Override
-  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session, int mode) throws IOException {
+  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
     network.writeString(driverName);
     network.writeString(driverVersion);
     network.writeShort(protocolVersion);
@@ -118,6 +118,11 @@ public class OConnectRequest implements OBinaryRequest {
 
   public boolean isTokenBased() {
     return tokenBased;
+  }
+
+  @Override
+  public OConnectResponse createResponse() {
+    return new OConnectResponse();
   }
 
 }

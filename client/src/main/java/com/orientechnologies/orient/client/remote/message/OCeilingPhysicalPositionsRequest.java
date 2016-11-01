@@ -28,7 +28,7 @@ import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
-public class OCeilingPhysicalPositionsRequest implements OBinaryRequest {
+public class OCeilingPhysicalPositionsRequest implements OBinaryRequest<OCeilingPhysicalPositionsResponse> {
   private int               clusterId;
   private OPhysicalPosition physicalPosition;
 
@@ -41,7 +41,7 @@ public class OCeilingPhysicalPositionsRequest implements OBinaryRequest {
   }
 
   @Override
-  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session, int mode) throws IOException {
+  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
     network.writeInt(clusterId);
     network.writeLong(physicalPosition.clusterPosition);
   }
@@ -59,10 +59,14 @@ public class OCeilingPhysicalPositionsRequest implements OBinaryRequest {
   public byte getCommand() {
     return OChannelBinaryProtocol.REQUEST_POSITIONS_CEILING;
   }
-  
+
   public int getClusterId() {
     return clusterId;
   }
-  
-  
+
+  @Override
+  public OCeilingPhysicalPositionsResponse createResponse() {
+    return new OCeilingPhysicalPositionsResponse();
+  }
+
 }

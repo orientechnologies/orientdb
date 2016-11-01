@@ -8,12 +8,14 @@ import java.io.IOException;
 /**
  * Created by tglman on 07/06/16.
  */
-public interface OBinaryRequest {
+public interface OBinaryRequest<T> {
 
-  void write(final OChannelBinaryAsynchClient network, OStorageRemoteSession session, int mode) throws IOException;
+  void write(final OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException;
 
   void read(OChannelBinary channel, int protocolVersion, String serializerName) throws IOException;
 
   byte getCommand();
+
+  T createResponse();
 
 }
