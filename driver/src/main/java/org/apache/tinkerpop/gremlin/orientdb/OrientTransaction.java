@@ -9,7 +9,7 @@ public class OrientTransaction extends AbstractThreadLocalTransaction {
     public OrientTransaction(OrientGraph graph) {
         super(graph);
         this.graph = graph;
-        graph.begin();
+        doOpen();
     }
 
     @Override
