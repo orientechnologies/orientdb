@@ -51,8 +51,8 @@ public class OrientGraphProvider extends AbstractGraphProvider {
         if (IGNORED_TESTS.containsKey(test) && IGNORED_TESTS.get(test).contains(testMethodName))
             throw new AssumptionViolatedException("We allow mixed ids");
 
-        if (testMethodName.contains("graphson-v2"))
-            throw new AssumptionViolatedException("graphson-v2 support not implemented");
+        if (testMethodName.contains("graphson-v2-embedded"))
+            throw new AssumptionViolatedException("graphson-v2-embedded support not implemented");
 
         HashMap<String, Object> configs = new HashMap<String, Object>();
         configs.put(Graph.GRAPH, OrientGraph.class.getName());
