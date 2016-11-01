@@ -137,7 +137,7 @@ public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenario
       }
 
       // restarting server3
-      serverInstance.get(2).startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
+      serverInstance.get(0).startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
       System.out.println("Server 3 restarted.");
       assertTrue(serverInstance.get(2).isActive());
 

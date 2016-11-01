@@ -78,10 +78,14 @@ public class OIndexRecorder implements OIndex<OIdentifiable>, OIndexInternal<OId
   }
 
   @Override
+  public String toString() {
+    return delegate.toString();
+  }
+
+  @Override
   public OIndex<OIdentifiable> create(String name, OIndexDefinition indexDefinition, String clusterIndexName,
       Set<String> clustersToIndex, boolean rebuild, OProgressListener progressListener) {
     throw new UnsupportedOperationException("Not allowed operation.");
-
   }
 
   @Override

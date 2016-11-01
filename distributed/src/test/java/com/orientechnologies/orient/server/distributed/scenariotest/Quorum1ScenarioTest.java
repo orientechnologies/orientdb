@@ -41,14 +41,14 @@ import static org.junit.Assert.fail;
  * - check consistency
  *
  * @author Gabriele Ponzi
- * @email  <gabriele.ponzi--at--gmail.com>
+ * @email <gabriele.ponzi--at--gmail.com>
  */
 
 public class Quorum1ScenarioTest extends AbstractScenarioTest {
 
   @Test
   public void test() throws Exception {
-
+    useTransactions = false;
     maxRetries = 10;
     init(SERVERS);
     prepare(false);
@@ -73,35 +73,21 @@ public class Quorum1ScenarioTest extends AbstractScenarioTest {
     System.out.print("\nChanging configuration (writeQuorum=1, autoDeploy=false)...");
 
     ODocument cfg = null;
-    ServerRun server = serverInstance.get(2);
+    ServerRun server = serverInstance.get(0);
     OHazelcastPlugin manager = (OHazelcastPlugin) server.getServerInstance().getDistributedManager();
     ODistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration(getDatabaseName());
     cfg = databaseConfiguration.getDocument();
-    cfg.field("writeQuorum", 2);
-//    cfg.field("executionMode", "asynchronous");
+    cfg.field("writeQuorum", 1);
     cfg.field("autoDeploy", true);
     cfg.field("version", (Integer) cfg.field("version") + 1);
     manager.updateCachedDatabaseConfiguration(getDatabaseName(), cfg, true, true);
     System.out.println("\nConfiguration updated.");
 
-    // isolating server3
-    System.out.println("Network fault on server3.\n");
-//    simulateServerFault(serverInstance.get(2), "net-fault");
-//    assertFalse(serverInstance.get(2).isActive());
-
     // execute writes on server1 and server2
     executeMultipleWrites(super.executeTestsOnServers, "plocal");
 
-//    // server3 joins the cluster
-//    System.out.println("Restart server3.\n");
-//    try {
-//      serverInstance.get(2).startServer(getDistributedServerConfiguration(server));
-//    } catch (Exception e) {
-//      fail();
-//    }
-
     // waiting for propagation
-    waitForMultipleInsertsInClassPropagation(1000L, "Person", 5000L);
+    waitForMultipleInsertsInClassPropagation(executeTestsOnServers.size() * writerCount * count, "Person", 5000L);
 
     // check consistency
     super.checkWritesAboveCluster(serverInstance, executeTestsOnServers);
@@ -110,13 +96,14 @@ public class Quorum1ScenarioTest extends AbstractScenarioTest {
   @Override
   protected void onBeforeChecks() throws InterruptedException {
     // // WAIT UNTIL THE END
+    final long e = count * writerCount * executeTestsOnServers.size();
+
     waitFor(0, new OCallable<Boolean, ODatabaseDocumentTx>() {
       @Override
       public Boolean call(ODatabaseDocumentTx db) {
-        final boolean ok = db.countClass("Person") >= 1000L;
+        final boolean ok = db.countClass("Person") >= e;
         if (!ok)
-          System.out.println(
-              "FOUND " + db.countClass("Person") + " people on server 0 instead of expected " + 1000L);
+          System.out.println("FOUND " + db.countClass("Person") + " people on server 0 instead of expected " + e);
         return ok;
       }
     }, 10000);
@@ -124,10 +111,9 @@ public class Quorum1ScenarioTest extends AbstractScenarioTest {
     waitFor(1, new OCallable<Boolean, ODatabaseDocumentTx>() {
       @Override
       public Boolean call(ODatabaseDocumentTx db) {
-        final boolean ok = db.countClass("Person") >= 1000L;
+        final boolean ok = db.countClass("Person") >= e;
         if (!ok)
-          System.out.println(
-              "FOUND " + db.countClass("Person") + " people on server 1 instead of expected " + 1000L);
+          System.out.println("FOUND " + db.countClass("Person") + " people on server 1 instead of expected " + e);
         return ok;
       }
     }, 10000);
