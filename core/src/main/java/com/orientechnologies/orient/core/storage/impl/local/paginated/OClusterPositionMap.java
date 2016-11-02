@@ -223,7 +223,7 @@ public class OClusterPositionMap extends ODurableComponent {
         } catch (Exception e) {
           endAtomicOperation(true, e);
           throw OException.wrapException(new OClusterPositionMapException(
-              "Error during creation of mapping between logical adn physical record position", this), e);
+              "Error during creation of mapping between logical and physical record position", this), e);
         } finally {
           cacheEntry.releaseExclusiveLock();
           releasePage(atomicOperation, cacheEntry);
@@ -272,7 +272,7 @@ public class OClusterPositionMap extends ODurableComponent {
         } catch (Exception e) {
           endAtomicOperation(true, e);
           throw OException.wrapException(new OClusterPositionMapException(
-              "Error during creation of mapping between logical adn physical record position", this), e);
+              "Error during creation of mapping between logical and physical record position", this), e);
         } finally {
           cacheEntry.releaseExclusiveLock();
           releasePage(atomicOperation, cacheEntry);
@@ -314,11 +314,11 @@ public class OClusterPositionMap extends ODurableComponent {
       } catch (IOException e) {
         endAtomicOperation(true, e);
         throw OException.wrapException(
-            new OClusterPositionMapException("Error of update of mapping between logical adn physical record position", this), e);
+            new OClusterPositionMapException("Error of update of mapping between logical and physical record position", this), e);
       } catch (RuntimeException e) {
         endAtomicOperation(true, e);
         throw OException.wrapException(
-            new OClusterPositionMapException("Error of update of mapping between logical adn physical record position", this), e);
+            new OClusterPositionMapException("Error of update of mapping between logical and physical record position", this), e);
       } finally {
         releaseExclusiveLock();
       }
@@ -356,12 +356,12 @@ public class OClusterPositionMap extends ODurableComponent {
       } catch (IOException e) {
         endAtomicOperation(true, e);
         throw OException.wrapException(
-            new OClusterPositionMapException("Error of resurrecting mapping between logical adn physical record position", this),
+            new OClusterPositionMapException("Error of resurrecting mapping between logical and physical record position", this),
             e);
       } catch (RuntimeException e) {
         endAtomicOperation(true, e);
         throw OException.wrapException(
-            new OClusterPositionMapException("Error of resurrecting mapping between logical adn physical record position", this),
+            new OClusterPositionMapException("Error of resurrecting mapping between logical and physical record position", this),
             e);
       } finally {
         releaseExclusiveLock();
