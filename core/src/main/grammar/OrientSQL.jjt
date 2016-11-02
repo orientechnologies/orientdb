@@ -1142,7 +1142,7 @@ OTraverseStatement TraverseStatement():
     	<FROM>
     	jjtThis.target = FromClause()
     	[ <MAXDEPTH> jjtThis.maxDepth = Integer() ]
-    	[ <WHILE> jjtThis.whereClause = WhereClause() ]
+    	[ <WHILE> jjtThis.whileClause = WhereClause() ]
         [ jjtThis.limit = Limit() ]
         [ <STRATEGY>
             (

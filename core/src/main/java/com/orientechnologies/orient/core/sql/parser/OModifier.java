@@ -111,6 +111,9 @@ public class OModifier extends SimpleNode {
       }
       return result;
     }
+    if(iResult instanceof OIdentifiable){
+      iResult = Collections.singleton(iResult);
+    }
     if (iResult instanceof Iterable) {
       iResult = ((Iterable) iResult).iterator();
     }

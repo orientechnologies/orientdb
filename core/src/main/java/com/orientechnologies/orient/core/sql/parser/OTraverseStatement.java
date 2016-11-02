@@ -2,7 +2,16 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
+import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
+import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
+import com.orientechnologies.orient.core.sql.executor.OTraverseExecutionPlanner;
+
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -17,7 +26,9 @@ public class OTraverseStatement extends OStatement {
 
   protected OFromClause target;
 
-  protected OWhereClause whereClause;
+  protected OWhereClause whileClause;
+
+  protected OSkip skip;
 
   protected OLimit limit;
 
@@ -32,6 +43,51 @@ public class OTraverseStatement extends OStatement {
   public OTraverseStatement(OrientSql p, int id) {
     super(p, id);
   }
+
+
+  public void validate() throws OCommandSQLParsingException {
+//    for(OTraverseProjectionItem projection:projections) {
+//
+//        projection. validate();
+//        if (projection.isExpand() && groupBy != null) {
+//          throw new OCommandSQLParsingException("expand() cannot be used together with GROUP BY");
+//        }
+//
+//    }
+    if(target.getItem().getStatement()!=null){
+      target.getItem().getStatement().validate();
+    }
+  }
+
+  @Override public OTodoResultSet execute(ODatabase db, Object[] args) {
+    OBasicCommandContext ctx = new OBasicCommandContext();
+    ctx.setDatabase(db);
+    Map<Object, Object> params = new HashMap<>();
+    if (args != null) {
+      for (int i = 0; i < args.length; i++) {
+        params.put(i, args[i]);
+      }
+    }
+    ctx.setInputParameters(params);
+    OInternalExecutionPlan executionPlan = createExecutionPlan(ctx);
+
+    return new OLocalResultSet(executionPlan);
+  }
+
+  @Override public OTodoResultSet execute(ODatabase db, Map params) {
+    OBasicCommandContext ctx = new OBasicCommandContext();
+    ctx.setDatabase(db);
+    ctx.setInputParameters(params);
+    OInternalExecutionPlan executionPlan = createExecutionPlan(ctx);
+
+    return new OLocalResultSet(executionPlan);
+  }
+
+  public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx) {
+    OTraverseExecutionPlanner planner = new OTraverseExecutionPlanner(this);
+    return planner.createExecutionPlan(ctx);
+  }
+
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("TRAVERSE ");
@@ -54,9 +110,9 @@ public class OTraverseStatement extends OStatement {
       maxDepth.toString(params, builder);
     }
 
-    if (whereClause != null) {
+    if (whileClause != null) {
       builder.append(" WHILE ");
-      whereClause.toString(params, builder);
+      whileClause.toString(params, builder);
     }
 
     if (limit != null) {
@@ -82,7 +138,7 @@ public class OTraverseStatement extends OStatement {
     OTraverseStatement result = new OTraverseStatement(-1);
     result.projections = projections == null ? null : projections.stream().map(x -> x.copy()).collect(Collectors.toList());
     result.target = target == null ? null : target.copy();
-    result.whereClause = whereClause == null ? null : whereClause.copy();
+    result.whileClause = whileClause == null ? null : whileClause.copy();
     result.limit = limit == null ? null : limit.copy();
     result.strategy = strategy;
     result.maxDepth = maxDepth == null ? null : maxDepth.copy();
@@ -101,7 +157,7 @@ public class OTraverseStatement extends OStatement {
       return false;
     if (target != null ? !target.equals(that.target) : that.target != null)
       return false;
-    if (whereClause != null ? !whereClause.equals(that.whereClause) : that.whereClause != null)
+    if (whileClause != null ? !whileClause.equals(that.whileClause) : that.whileClause != null)
       return false;
     if (limit != null ? !limit.equals(that.limit) : that.limit != null)
       return false;
@@ -116,11 +172,71 @@ public class OTraverseStatement extends OStatement {
   @Override public int hashCode() {
     int result = projections != null ? projections.hashCode() : 0;
     result = 31 * result + (target != null ? target.hashCode() : 0);
-    result = 31 * result + (whereClause != null ? whereClause.hashCode() : 0);
+    result = 31 * result + (whileClause != null ? whileClause.hashCode() : 0);
     result = 31 * result + (limit != null ? limit.hashCode() : 0);
     result = 31 * result + (strategy != null ? strategy.hashCode() : 0);
     result = 31 * result + (maxDepth != null ? maxDepth.hashCode() : 0);
     return result;
+  }
+
+  @Override public boolean isIdempotent() {
+    return true;
+  }
+
+  public List<OTraverseProjectionItem> getProjections() {
+    return projections;
+  }
+
+  public void setProjections(List<OTraverseProjectionItem> projections) {
+    this.projections = projections;
+  }
+
+  public OFromClause getTarget() {
+    return target;
+  }
+
+  public void setTarget(OFromClause target) {
+    this.target = target;
+  }
+
+  public OWhereClause getWhileClause() {
+    return whileClause;
+  }
+
+  public void setWhileClause(OWhereClause whileClause) {
+    this.whileClause = whileClause;
+  }
+
+  public OLimit getLimit() {
+    return limit;
+  }
+
+  public void setLimit(OLimit limit) {
+    this.limit = limit;
+  }
+
+  public Strategy getStrategy() {
+    return strategy;
+  }
+
+  public void setStrategy(Strategy strategy) {
+    this.strategy = strategy;
+  }
+
+  public OInteger getMaxDepth() {
+    return maxDepth;
+  }
+
+  public void setMaxDepth(OInteger maxDepth) {
+    this.maxDepth = maxDepth;
+  }
+
+  public OSkip getSkip() {
+    return skip;
+  }
+
+  public void setSkip(OSkip skip) {
+    this.skip = skip;
   }
 }
 /* JavaCC - OriginalChecksum=47399a3a3d5a423768bbdc70ee957464 (do not edit this line) */

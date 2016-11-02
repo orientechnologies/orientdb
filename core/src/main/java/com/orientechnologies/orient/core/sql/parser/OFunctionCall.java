@@ -110,8 +110,9 @@ public class OFunctionCall extends SimpleNode {
       } else {
         throw new OCommandExecutionException("Invalid value for $current: " + current);
       }
+    } else {
+      throw new OCommandExecutionException("Funciton not found: " + name);
     }
-    throw new UnsupportedOperationException("finish OFunctionCall implementation!");
   }
 
   public static ODatabaseDocumentInternal getDatabase() {
@@ -372,7 +373,7 @@ public class OFunctionCall extends SimpleNode {
   public OMethodCall toMethod() {
     OMethodCall result = new OMethodCall(-1);
     result.methodName = name.copy();
-    result.params = params.stream().map(x->x.copy()).collect(Collectors.toList());
+    result.params = params.stream().map(x -> x.copy()).collect(Collectors.toList());
     return result;
   }
 }

@@ -1546,7 +1546,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
       case WHILE:
         jj_consume_token(WHILE);
-        jjtn000.whereClause = WhereClause();
+        jjtn000.whileClause = WhereClause();
         break;
       default:
         jj_la1[44] = jj_gen;
