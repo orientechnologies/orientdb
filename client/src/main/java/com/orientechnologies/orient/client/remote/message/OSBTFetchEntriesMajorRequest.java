@@ -22,8 +22,10 @@ package com.orientechnologies.orient.client.remote.message;
 import java.io.IOException;
 
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
+import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OCollectionNetworkSerializer;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
@@ -73,6 +75,11 @@ public class OSBTFetchEntriesMajorRequest<K, V> implements OBinaryRequest<OSBTFe
     return OChannelBinaryProtocol.REQUEST_SBTREE_BONSAI_GET_ENTRIES_MAJOR;
   }
 
+  @Override
+  public String getDescription() {
+    return "SB-Tree bonsai get values major";
+  }
+
   public byte[] getKeyStream() {
     return keyStream;
   }
@@ -92,6 +99,11 @@ public class OSBTFetchEntriesMajorRequest<K, V> implements OBinaryRequest<OSBTFe
   @Override
   public OSBTFetchEntriesMajorResponse<K, V> createResponse() {
     return new OSBTFetchEntriesMajorResponse<>(keySerializer, valueSerializer);
+  }
+
+  @Override
+  public OBinaryResponse execute(OBinaryRequestExecutor executor) {
+    return executor.executeSBTFetchEntriesMajor(this);
   }
 
 }

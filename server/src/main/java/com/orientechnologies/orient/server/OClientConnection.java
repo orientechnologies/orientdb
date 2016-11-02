@@ -31,6 +31,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OSystemException;
+import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
@@ -54,12 +55,14 @@ public class OClientConnection {
   private byte[]                             tokenBytes;
   private OToken                             token;
   private boolean                            disconnectOnAfter;
+  private OBinaryRequestExecutor             executor;
 
   public OClientConnection(final int id, final ONetworkProtocol protocol) throws IOException {
     this.id = id;
     this.protocol = protocol;
     this.protocols.add(protocol);
     this.since = System.currentTimeMillis();
+    this.executor = new OConnectionBinaryExecutor(this, protocol.getServer());
   }
 
   public void close() {
@@ -157,12 +160,12 @@ public class OClientConnection {
       if (!protocols.contains(protocol))
         throw new OTokenSecurityException("No valid session found, provide a token");
     } else {
-      //IF the byte from the network are the same of the one i have a don't check them
+      // IF the byte from the network are the same of the one i have a don't check them
       if (tokenBytes != null && tokenBytes.length > 0) {
         if (tokenBytes.equals(tokenFromNetwork)) // SAME SESSION AND TOKEN DO
           return;
       }
-      
+
       OToken token = null;
       try {
         if (tokenFromNetwork != null)
@@ -170,7 +173,7 @@ public class OClientConnection {
       } catch (Exception e) {
         throw OException.wrapException(new OSystemException("Error on token parse"), e);
       }
-      
+
       if (token == null || !token.getIsVerified()) {
         cleanSession();
         protocol.getServer().getClientConnectionManager().disconnect(this);
@@ -199,7 +202,7 @@ public class OClientConnection {
     }
     database = null;
     protocols.clear();
-    
+
   }
 
   public void endOperation() {
@@ -312,12 +315,16 @@ public class OClientConnection {
     data.commandDetail = "-";
     stats.lastCommandReceived = System.currentTimeMillis();
   }
-  
+
   public void setDisconnectOnAfter(boolean disconnectOnAfter) {
     this.disconnectOnAfter = disconnectOnAfter;
   }
-  
+
   public boolean isDisconnectOnAfter() {
     return disconnectOnAfter;
+  }
+
+  public OBinaryRequestExecutor getExecutor() {
+    return executor;
   }
 }

@@ -21,8 +21,10 @@ package com.orientechnologies.orient.client.remote.message;
 
 import java.io.IOException;
 
+import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
+import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
@@ -51,6 +53,11 @@ public class OIncrementalBackupRequest implements OBinaryRequest<OIncrementalBac
     return OChannelBinaryProtocol.REQUEST_INCREMENTAL_BACKUP;
   }
 
+  @Override
+  public String getDescription() {
+    return "Incremental Backup";
+  }
+
   public String getBackupDirectory() {
     return backupDirectory;
   }
@@ -58,6 +65,11 @@ public class OIncrementalBackupRequest implements OBinaryRequest<OIncrementalBac
   @Override
   public OIncrementalBackupResponse createResponse() {
     return new OIncrementalBackupResponse();
+  }
+
+  @Override
+  public OBinaryResponse execute(OBinaryRequestExecutor executor) {
+    return executor.executeIncrementalBackup(this);
   }
 
 }

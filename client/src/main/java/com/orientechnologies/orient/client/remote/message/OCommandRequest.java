@@ -21,8 +21,10 @@ package com.orientechnologies.orient.client.remote.message;
 
 import java.io.IOException;
 
+import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
+import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -74,6 +76,11 @@ public final class OCommandRequest implements OBinaryRequest<OCommandResponse> {
   public byte getCommand() {
     return OChannelBinaryProtocol.REQUEST_COMMAND;
   }
+  
+  @Override
+  public String getDescription() {
+    return "Execute remote command";
+  }
 
   public OCommandRequestText getQuery() {
     return query;
@@ -90,6 +97,11 @@ public final class OCommandRequest implements OBinaryRequest<OCommandResponse> {
   @Override
   public OCommandResponse createResponse() {
     return new OCommandResponse(asynch, this.query.getResultListener(), database, live);
+  }
+
+  @Override
+  public OBinaryResponse execute(OBinaryRequestExecutor executor) {
+    return executor.executeCommand(this);
   }
 
 }

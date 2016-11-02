@@ -82,7 +82,7 @@ public class OLiveCommandResultListenerTest {
 
   @Test
   public void testSimpleMessageSend() throws IOException {
-    OLiveCommandResultListener listener = new OLiveCommandResultListener(server, connection, 20, new TestResultListener());
+    OLiveCommandResultListener listener = new OLiveCommandResultListener(server, connection, new TestResultListener());
     ORecordOperation op = new ORecordOperation(new ODocument(), ORecordOperation.CREATED);
     listener.onLiveResult(10, op);
     Mockito.verify(channelBinary, VerificationModeFactory.atLeastOnce()).writeBytes(Mockito.any(byte[].class));
@@ -91,7 +91,7 @@ public class OLiveCommandResultListenerTest {
   @Test
   public void testNetworkError() throws IOException {
     Mockito.when(channelBinary.writeInt(Mockito.anyInt())).thenThrow(new IOException("Mock Exception"));
-    OLiveCommandResultListener listener = new OLiveCommandResultListener(server, connection, 20, new TestResultListener());
+    OLiveCommandResultListener listener = new OLiveCommandResultListener(server, connection, new TestResultListener());
     OLiveQueryHook.subscribe(10, rawListener, db);
     assertTrue(OLiveQueryHook.getOpsReference(db).getQueueThread().hasToken(10));
     ORecordOperation op = new ORecordOperation(new ODocument(), ORecordOperation.CREATED);

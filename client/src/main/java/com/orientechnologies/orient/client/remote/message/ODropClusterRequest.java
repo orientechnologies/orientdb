@@ -21,8 +21,10 @@ package com.orientechnologies.orient.client.remote.message;
 
 import java.io.IOException;
 
+import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
+import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
@@ -51,6 +53,11 @@ public class ODropClusterRequest implements OBinaryRequest<ODropClusterResponse>
     return OChannelBinaryProtocol.REQUEST_DATACLUSTER_DROP;
   }
 
+  @Override
+  public String getDescription() {
+    return "Drop Cluster";
+  }
+
   public int getClusterId() {
     return clusterId;
   }
@@ -59,4 +66,10 @@ public class ODropClusterRequest implements OBinaryRequest<ODropClusterResponse>
   public ODropClusterResponse createResponse() {
     return new ODropClusterResponse();
   }
+
+  @Override
+  public OBinaryResponse execute(OBinaryRequestExecutor executor) {
+    return executor.executeDropCluster(this);
+  }
+
 }

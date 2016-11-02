@@ -21,8 +21,10 @@ package com.orientechnologies.orient.client.remote.message;
 
 import java.io.IOException;
 
+import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryAsyncRequest;
+import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
@@ -44,6 +46,11 @@ public class OCleanOutRecordRequest implements OBinaryAsyncRequest<OCleanOutReco
   @Override
   public byte getCommand() {
     return OChannelBinaryProtocol.REQUEST_RECORD_CLEAN_OUT;
+  }
+
+  @Override
+  public String getDescription() {
+    return "Clean out record";
   }
 
   public void read(OChannelBinary channel, int protocolVersion, String serializerName) throws IOException {
@@ -78,6 +85,11 @@ public class OCleanOutRecordRequest implements OBinaryAsyncRequest<OCleanOutReco
   @Override
   public OCleanOutRecordResponse createResponse() {
     return new OCleanOutRecordResponse();
+  }
+
+  @Override
+  public OBinaryResponse execute(OBinaryRequestExecutor executor) {
+    return executor.executeCleanOutRecord(this);
   }
 
 }

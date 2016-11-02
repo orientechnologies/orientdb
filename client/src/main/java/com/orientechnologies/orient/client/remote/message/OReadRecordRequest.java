@@ -21,8 +21,10 @@ package com.orientechnologies.orient.client.remote.message;
 
 import java.io.IOException;
 
+import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
+import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
@@ -64,6 +66,11 @@ public final class OReadRecordRequest implements OBinaryRequest<OReadRecordRespo
     return OChannelBinaryProtocol.REQUEST_RECORD_LOAD;
   }
 
+  @Override
+  public String getDescription() {
+    return "Load record";
+  }
+
   public ORecordId getRid() {
     return rid;
   }
@@ -79,10 +86,15 @@ public final class OReadRecordRequest implements OBinaryRequest<OReadRecordRespo
   public boolean isLoadTumbstone() {
     return loadTumbstone;
   }
-  
+
   @Override
   public OReadRecordResponse createResponse() {
     return new OReadRecordResponse();
+  }
+
+  @Override
+  public OBinaryResponse execute(OBinaryRequestExecutor executor) {
+    return executor.executeReadRecord(this);
   }
 
 }

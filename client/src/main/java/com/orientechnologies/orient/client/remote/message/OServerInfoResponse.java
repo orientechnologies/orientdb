@@ -7,14 +7,14 @@ import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
-public class OGetServerInfoResponse implements OBinaryResponse {
+public class OServerInfoResponse implements OBinaryResponse {
   private String result;
 
-  public OGetServerInfoResponse(String result) {
+  public OServerInfoResponse(String result) {
     this.result = result;
   }
 
-  public OGetServerInfoResponse() {
+  public OServerInfoResponse() {
   }
 
   @Override

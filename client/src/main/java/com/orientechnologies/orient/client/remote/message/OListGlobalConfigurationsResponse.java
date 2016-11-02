@@ -10,13 +10,13 @@ import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
-public class OGetGlobalConfigurationsResponse implements OBinaryResponse {
+public class OListGlobalConfigurationsResponse implements OBinaryResponse {
   private Map<String, String> configs;
 
-  public OGetGlobalConfigurationsResponse() {
+  public OListGlobalConfigurationsResponse() {
   }
 
-  public OGetGlobalConfigurationsResponse(Map<String, String> configs) {
+  public OListGlobalConfigurationsResponse(Map<String, String> configs) {
     super();
     this.configs = configs;
   }

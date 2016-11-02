@@ -24,8 +24,10 @@ import java.util.Map;
 
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
+import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OCollectionNetworkSerializer;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -72,6 +74,11 @@ public class OSBTGetRealBagSizeRequest implements OBinaryRequest<OSBTGetRealBagS
     return OChannelBinaryProtocol.REQUEST_RIDBAG_GET_SIZE;
   }
 
+  @Override
+  public String getDescription() {
+    return "RidBag get size";
+  }
+
   public Map<OIdentifiable, Change> getChanges() {
     return changes;
   }
@@ -83,6 +90,11 @@ public class OSBTGetRealBagSizeRequest implements OBinaryRequest<OSBTGetRealBagS
   @Override
   public OSBTGetRealBagSizeResponse createResponse() {
     return new OSBTGetRealBagSizeResponse();
+  }
+
+  @Override
+  public OBinaryResponse execute(OBinaryRequestExecutor executor) {
+    return executor.executeSBTGetRealSize(this);
   }
 
 }

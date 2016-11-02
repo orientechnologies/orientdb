@@ -29,6 +29,9 @@ public class OClientConnectionTest {
   private ONetworkProtocolBinary    protocol;
 
   @Mock
+  private ONetworkProtocolBinary    protocol1;
+
+  @Mock
   private OClientConnectionManager  manager;
 
   @Mock
@@ -50,7 +53,7 @@ public class OClientConnectionTest {
 
   @Test
   public void testValidToken() throws IOException {
-    OClientConnection conn = new OClientConnection(1, null);
+    OClientConnection conn = new OClientConnection(1, protocol);
     OTokenHandler handler = new OTokenHandlerImpl(null);
     byte[] tokenBytes = handler.getSignedBinaryToken(db, db.getUser(), conn.getData());
 
@@ -62,7 +65,7 @@ public class OClientConnectionTest {
 
   @Test(expected = OTokenSecurityException.class)
   public void testExpiredToken() throws IOException, InterruptedException {
-    OClientConnection conn = new OClientConnection(1, null);
+    OClientConnection conn = new OClientConnection(1, protocol);
     long sessionTimeout = OGlobalConfiguration.NETWORK_TOKEN_EXPIRE_TIMEOUT.getValueAsLong();
     OGlobalConfiguration.NETWORK_TOKEN_EXPIRE_TIMEOUT.setValue(0);
     OTokenHandler handler = new OTokenHandlerImpl(null);
@@ -75,7 +78,7 @@ public class OClientConnectionTest {
 
   @Test(expected = OTokenSecurityException.class)
   public void testWrongToken() throws IOException {
-    OClientConnection conn = new OClientConnection(1, null);
+    OClientConnection conn = new OClientConnection(1, protocol);
     OTokenHandler handler = new OTokenHandlerImpl(null);
     byte[] tokenBytes = new byte[120];
     conn.validateSession(tokenBytes, handler, protocol);
@@ -84,7 +87,7 @@ public class OClientConnectionTest {
 
   @Test
   public void testAlreadyAuthenticatedOnConnection() throws IOException {
-    OClientConnection conn = new OClientConnection(1, null);
+    OClientConnection conn = new OClientConnection(1, protocol);
     OTokenHandler handler = new OTokenHandlerImpl(null);
     byte[] tokenBytes = handler.getSignedBinaryToken(db, db.getUser(), conn.getData());
     conn.validateSession(tokenBytes, handler, protocol);
@@ -101,15 +104,15 @@ public class OClientConnectionTest {
 
   @Test(expected = OTokenSecurityException.class)
   public void testNotAlreadyAuthenticated() throws IOException {
-    OClientConnection conn = new OClientConnection(1, null);
+    OClientConnection conn = new OClientConnection(1, protocol);
     OTokenHandler handler = new OTokenHandlerImpl(null);
     // second validation don't need token
-    conn.validateSession(null, handler, protocol);
+    conn.validateSession(null, handler, protocol1);
   }
 
   @Test(expected = OTokenSecurityException.class)
   public void testAlreadyAuthenticatedButNotOnSpecificConnection() throws IOException {
-    OClientConnection conn = new OClientConnection(1, null);
+    OClientConnection conn = new OClientConnection(1, protocol);
     OTokenHandler handler = new OTokenHandlerImpl(null);
     byte[] tokenBytes = handler.getSignedBinaryToken(db, db.getUser(), conn.getData());
     conn.validateSession(tokenBytes, handler, protocol);

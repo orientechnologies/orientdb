@@ -21,8 +21,10 @@ package com.orientechnologies.orient.client.remote.message;
 
 import java.io.IOException;
 
+import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
+import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
@@ -64,6 +66,11 @@ public class OReadRecordIfVersionIsNotLatestRequest implements OBinaryRequest<OR
     return OChannelBinaryProtocol.REQUEST_RECORD_LOAD_IF_VERSION_NOT_LATEST;
   }
 
+  @Override
+  public String getDescription() {
+    return "Load record if version is not latest";
+  }
+
   public ORecordId getRid() {
     return rid;
   }
@@ -83,6 +90,11 @@ public class OReadRecordIfVersionIsNotLatestRequest implements OBinaryRequest<OR
   @Override
   public OReadRecordIfVersionIsNotLatestResponse createResponse() {
     return new OReadRecordIfVersionIsNotLatestResponse();
+  }
+
+  @Override
+  public OBinaryResponse execute(OBinaryRequestExecutor executor) {
+    return executor.executeReadRecordIfNotLastest(this);
   }
 
 }

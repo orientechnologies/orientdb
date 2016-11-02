@@ -2,8 +2,10 @@ package com.orientechnologies.orient.client.remote.message;
 
 import java.io.IOException;
 
+import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
+import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
@@ -41,6 +43,21 @@ public class OFreezeDatabaseRequest implements OBinaryRequest<OFreezeDatabaseRes
     return OChannelBinaryProtocol.REQUEST_DB_FREEZE;
   }
 
+  @Override
+  public String requiredServerRole() {
+    return "database.freeze";
+  }
+
+  @Override
+  public boolean requireServerUser() {
+    return true;
+  }
+
+  @Override
+  public String getDescription() {
+    return "Freeze Database";
+  }
+
   public String getName() {
     return name;
   }
@@ -52,6 +69,11 @@ public class OFreezeDatabaseRequest implements OBinaryRequest<OFreezeDatabaseRes
   @Override
   public OFreezeDatabaseResponse createResponse() {
     return new OFreezeDatabaseResponse();
+  }
+
+  @Override
+  public OBinaryResponse execute(OBinaryRequestExecutor executor) {
+    return executor.executeFreezeDatabase(this);
   }
 
 }

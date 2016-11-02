@@ -2,8 +2,10 @@ package com.orientechnologies.orient.client.remote.message;
 
 import java.io.IOException;
 
+import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
+import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
@@ -42,8 +44,23 @@ public class OCreateDatabaseRequest implements OBinaryRequest<OCreateDatabaseRes
   }
 
   @Override
+  public String requiredServerRole() {
+    return "database.create";
+  }
+
+  @Override
+  public boolean requireServerUser() {
+    return true;
+  }
+
+  @Override
   public byte getCommand() {
     return OChannelBinaryProtocol.REQUEST_DB_CREATE;
+  }
+
+  @Override
+  public String getDescription() {
+    return "Create database";
   }
 
   public String getBackupPath() {
@@ -65,6 +82,11 @@ public class OCreateDatabaseRequest implements OBinaryRequest<OCreateDatabaseRes
   @Override
   public OCreateDatabaseResponse createResponse() {
     return new OCreateDatabaseResponse();
+  }
+
+  @Override
+  public OBinaryResponse execute(OBinaryRequestExecutor ex) {
+    return ex.executeCreateDatabase(this);
   }
 
 }

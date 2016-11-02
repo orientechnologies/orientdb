@@ -21,8 +21,10 @@ package com.orientechnologies.orient.client.remote.message;
 
 import java.io.IOException;
 
+import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
+import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
@@ -51,6 +53,11 @@ public class OSBTCreateTreeRequest implements OBinaryRequest<OSBTCreateTreeRespo
     return OChannelBinaryProtocol.REQUEST_CREATE_SBTREE_BONSAI;
   }
 
+  @Override
+  public String getDescription() {
+    return "Create SB-Tree bonsai instance";
+  }
+
   public int getClusterId() {
     return clusterId;
   }
@@ -58,6 +65,11 @@ public class OSBTCreateTreeRequest implements OBinaryRequest<OSBTCreateTreeRespo
   @Override
   public OSBTCreateTreeResponse createResponse() {
     return new OSBTCreateTreeResponse();
+  }
+
+  @Override
+  public OBinaryResponse execute(OBinaryRequestExecutor executor) {
+    return executor.executeSBTreeCreate(this);
   }
 
 }

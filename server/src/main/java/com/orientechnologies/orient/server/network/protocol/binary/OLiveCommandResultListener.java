@@ -62,12 +62,12 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
   private final Set<ORID>     alreadySent = new HashSet<ORID>();
   private OClientSessions     session;
 
-  public OLiveCommandResultListener(OServer server, final OClientConnection connection, final int sessionId,
+  public OLiveCommandResultListener(OServer server, final OClientConnection connection,
       OCommandResultListener wrappedResultListener) {
     super(wrappedResultListener);
     this.connection = connection;
     session = server.getClientConnectionManager().getSession(connection);
-    this.sessionId = sessionId;
+    this.sessionId = connection.getId();
   }
 
   @Override

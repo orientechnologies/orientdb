@@ -2,8 +2,10 @@ package com.orientechnologies.orient.client.remote.message;
 
 import java.io.IOException;
 
+import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
+import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.OConstants;
@@ -83,6 +85,11 @@ public class OOpenRequest implements OBinaryRequest<OOpenResponse> {
     return OChannelBinaryProtocol.REQUEST_DB_OPEN;
   }
 
+  @Override
+  public String getDescription() {
+    return "Open Database";
+  }
+
   public String getDatabaseName() {
     return databaseName;
   }
@@ -130,6 +137,11 @@ public class OOpenRequest implements OBinaryRequest<OOpenResponse> {
   @Override
   public OOpenResponse createResponse() {
     return new OOpenResponse();
+  }
+
+  @Override
+  public OBinaryResponse execute(OBinaryRequestExecutor executor) {
+    throw new UnsupportedOperationException();
   }
 
 }

@@ -41,10 +41,10 @@ import com.orientechnologies.orient.client.remote.message.OFreezeDatabaseRequest
 import com.orientechnologies.orient.client.remote.message.OFreezeDatabaseResponse;
 import com.orientechnologies.orient.client.remote.message.OGetGlobalConfigurationRequest;
 import com.orientechnologies.orient.client.remote.message.OGetGlobalConfigurationResponse;
-import com.orientechnologies.orient.client.remote.message.OGetGlobalConfigurationsRequest;
-import com.orientechnologies.orient.client.remote.message.OGetGlobalConfigurationsResponse;
-import com.orientechnologies.orient.client.remote.message.OGetServerInfoRequest;
-import com.orientechnologies.orient.client.remote.message.OGetServerInfoResponse;
+import com.orientechnologies.orient.client.remote.message.OListGlobalConfigurationsRequest;
+import com.orientechnologies.orient.client.remote.message.OListGlobalConfigurationsResponse;
+import com.orientechnologies.orient.client.remote.message.OServerInfoRequest;
+import com.orientechnologies.orient.client.remote.message.OServerInfoResponse;
 import com.orientechnologies.orient.client.remote.message.OListDatabasesReponse;
 import com.orientechnologies.orient.client.remote.message.OListDatabasesRequest;
 import com.orientechnologies.orient.client.remote.message.OReleaseDatabaseRequest;
@@ -163,8 +163,8 @@ public class OServerAdmin {
    * @throws IOException
    */
   public synchronized ODocument getServerInfo() throws IOException {
-    OGetServerInfoRequest request = new OGetServerInfoRequest();
-    OGetServerInfoResponse response = networkAdminOperation(request, "Cannot retrieve server information");
+    OServerInfoRequest request = new OServerInfoRequest();
+    OServerInfoResponse response = networkAdminOperation(request, "Cannot retrieve server information");
     ODocument res = new ODocument();
     res.fromJSON(response.getResult());
     return res;
@@ -374,9 +374,9 @@ public class OServerAdmin {
 
   public synchronized Map<String, String> getGlobalConfigurations() throws IOException {
 
-    OGetGlobalConfigurationsRequest request = new OGetGlobalConfigurationsRequest();
+    OListGlobalConfigurationsRequest request = new OListGlobalConfigurationsRequest();
 
-    OGetGlobalConfigurationsResponse response = networkAdminOperation(request, "Cannot retrieve the configuration list");
+    OListGlobalConfigurationsResponse response = networkAdminOperation(request, "Cannot retrieve the configuration list");
     return response.getConfigs();
 
   }

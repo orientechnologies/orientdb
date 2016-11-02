@@ -21,8 +21,10 @@ package com.orientechnologies.orient.client.remote.message;
 
 import java.io.IOException;
 
+import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryAsyncRequest;
+import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
@@ -44,6 +46,11 @@ public final class OHideRecordRequest implements OBinaryAsyncRequest<OHideRecord
     return OChannelBinaryProtocol.REQUEST_RECORD_HIDE;
   }
 
+  @Override
+  public String getDescription() {
+    return "Hide Record";
+  }
+
   public void read(OChannelBinary channel, int protocolVersion, String serializerName) throws IOException {
     recordId = channel.readRID();
     mode = channel.readByte();
@@ -62,13 +69,18 @@ public final class OHideRecordRequest implements OBinaryAsyncRequest<OHideRecord
   public void setMode(byte mode) {
     this.mode = mode;
   }
-  
+
   public byte getMode() {
     return mode;
   }
 
   public OHideRecordResponse createResponse() {
     return new OHideRecordResponse();
-  };
+  }
+
+  @Override
+  public OBinaryResponse execute(OBinaryRequestExecutor executor) {
+    return executor.executeHideRecord(this);
+  }
 
 }

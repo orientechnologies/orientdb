@@ -5,8 +5,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
+import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
@@ -60,6 +62,11 @@ public class OImportRequest implements OBinaryRequest<OImportResponse> {
     return OChannelBinaryProtocol.REQUEST_DB_IMPORT;
   }
 
+  @Override
+  public String getDescription() {
+    return "Import Database";
+  }
+
   public String getImporPath() {
     return imporPath;
   }
@@ -75,6 +82,11 @@ public class OImportRequest implements OBinaryRequest<OImportResponse> {
   @Override
   public OImportResponse createResponse() {
     return new OImportResponse();
+  }
+
+  @Override
+  public OBinaryResponse execute(OBinaryRequestExecutor executor) {
+    return executor.executeImport(this);
   }
 
 }

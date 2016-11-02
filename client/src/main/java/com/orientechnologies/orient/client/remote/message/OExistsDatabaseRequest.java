@@ -2,8 +2,10 @@ package com.orientechnologies.orient.client.remote.message;
 
 import java.io.IOException;
 
+import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
+import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
@@ -37,6 +39,21 @@ public class OExistsDatabaseRequest implements OBinaryRequest<OExistsDatabaseRes
     return OChannelBinaryProtocol.REQUEST_DB_EXIST;
   }
 
+  @Override
+  public boolean requireServerUser() {
+    return true;
+  }
+
+  @Override
+  public String requiredServerRole() {
+    return "database.exists";
+  }
+
+  @Override
+  public String getDescription() {
+    return "Exists Database";
+  }
+
   public String getDatabaseName() {
     return databaseName;
   }
@@ -48,6 +65,11 @@ public class OExistsDatabaseRequest implements OBinaryRequest<OExistsDatabaseRes
   @Override
   public OExistsDatabaseResponse createResponse() {
     return new OExistsDatabaseResponse();
+  }
+
+  @Override
+  public OBinaryResponse execute(OBinaryRequestExecutor ex) {
+    return ex.executeExistDatabase(this);
   }
 
 }

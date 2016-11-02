@@ -2,8 +2,10 @@ package com.orientechnologies.orient.client.remote.message;
 
 import java.io.IOException;
 
+import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
+import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
@@ -37,6 +39,11 @@ public class OSetGlobalConfigurationRequest implements OBinaryRequest<OSetGlobal
     return OChannelBinaryProtocol.REQUEST_CONFIG_SET;
   }
 
+  @Override
+  public String getDescription() {
+    return "Set config";
+  }
+
   public String getKey() {
     return key;
   }
@@ -48,4 +55,10 @@ public class OSetGlobalConfigurationRequest implements OBinaryRequest<OSetGlobal
   public OSetGlobalConfigurationResponse createResponse() {
     return new OSetGlobalConfigurationResponse();
   };
+
+  @Override
+  public OBinaryResponse execute(OBinaryRequestExecutor executor) {
+    return executor.executeSetGlobalConfig(this);
+  }
+
 }

@@ -2,8 +2,10 @@ package com.orientechnologies.orient.client.remote.message;
 
 import java.io.IOException;
 
+import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
+import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.OConstants;
@@ -79,6 +81,11 @@ public class OConnectRequest implements OBinaryRequest<OConnectResponse> {
   public byte getCommand() {
     return OChannelBinaryProtocol.REQUEST_CONNECT;
   }
+  @Override
+  public String getDescription() {
+    return "Connect";
+  }
+  
 
   public String getClientId() {
     return clientId;
@@ -125,4 +132,9 @@ public class OConnectRequest implements OBinaryRequest<OConnectResponse> {
     return new OConnectResponse();
   }
 
+  @Override
+  public OBinaryResponse execute(OBinaryRequestExecutor executor) {
+    throw new UnsupportedOperationException();
+  }
+  
 }

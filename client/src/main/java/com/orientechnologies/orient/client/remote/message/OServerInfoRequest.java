@@ -2,15 +2,17 @@ package com.orientechnologies.orient.client.remote.message;
 
 import java.io.IOException;
 
+import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
+import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
-public class OGetServerInfoRequest implements OBinaryRequest<OGetServerInfoResponse> {
+public class OServerInfoRequest implements OBinaryRequest<OServerInfoResponse> {
 
-  public OGetServerInfoRequest() {
+  public OServerInfoRequest() {
   }
 
   @Override
@@ -29,8 +31,28 @@ public class OGetServerInfoRequest implements OBinaryRequest<OGetServerInfoRespo
   }
 
   @Override
-  public OGetServerInfoResponse createResponse() {
-    return new OGetServerInfoResponse();
+  public String requiredServerRole() {
+    return "server.info";
+  }
+
+  @Override
+  public boolean requireServerUser() {
+    return true;
+  }
+
+  @Override
+  public String getDescription() {
+    return "Server Info";
+  }
+
+  @Override
+  public OServerInfoResponse createResponse() {
+    return new OServerInfoResponse();
+  }
+
+  @Override
+  public OBinaryResponse execute(OBinaryRequestExecutor ex) {
+    return ex.executeServerInfo(this);
   }
 
 }

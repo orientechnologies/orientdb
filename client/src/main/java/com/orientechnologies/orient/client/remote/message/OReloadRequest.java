@@ -21,8 +21,10 @@ package com.orientechnologies.orient.client.remote.message;
 
 import java.io.IOException;
 
+import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
+import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
@@ -39,9 +41,19 @@ public class OReloadRequest implements OBinaryRequest<OReloadResponse> {
   public byte getCommand() {
     return OChannelBinaryProtocol.REQUEST_DB_RELOAD;
   }
-  
+
+  @Override
+  public String getDescription() {
+    return "Reload database information";
+  }
+
   @Override
   public OReloadResponse createResponse() {
     return new OReloadResponse();
+  }
+
+  @Override
+  public OBinaryResponse execute(OBinaryRequestExecutor ex) {
+    return ex.executeDBReload(this);
   }
 }

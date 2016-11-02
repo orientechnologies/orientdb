@@ -24,8 +24,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
+import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OTransactionException;
@@ -190,6 +192,11 @@ public final class OCommitRequest implements OBinaryRequest<OCommitResponse> {
     return OChannelBinaryProtocol.REQUEST_TX_COMMIT;
   }
 
+  @Override
+  public String getDescription() {
+    return "Transaction commit";
+  }
+
   public ODocument getIndexChanges() {
     return indexChanges;
   }
@@ -211,4 +218,8 @@ public final class OCommitRequest implements OBinaryRequest<OCommitResponse> {
     return new OCommitResponse();
   }
 
+  @Override
+  public OBinaryResponse execute(OBinaryRequestExecutor executor) {
+    return executor.executeCommit(this);
+  }
 }

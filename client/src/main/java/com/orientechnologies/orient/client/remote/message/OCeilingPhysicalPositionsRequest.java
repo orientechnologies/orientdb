@@ -21,8 +21,10 @@ package com.orientechnologies.orient.client.remote.message;
 
 import java.io.IOException;
 
+import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
+import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
@@ -56,6 +58,11 @@ public class OCeilingPhysicalPositionsRequest implements OBinaryRequest<OCeiling
   }
 
   @Override
+  public String getDescription() {
+    return "Retrieve ceiling positions";
+  }
+  
+  @Override
   public byte getCommand() {
     return OChannelBinaryProtocol.REQUEST_POSITIONS_CEILING;
   }
@@ -67,6 +74,11 @@ public class OCeilingPhysicalPositionsRequest implements OBinaryRequest<OCeiling
   @Override
   public OCeilingPhysicalPositionsResponse createResponse() {
     return new OCeilingPhysicalPositionsResponse();
+  }
+
+  @Override
+  public OBinaryResponse execute(OBinaryRequestExecutor executor) {
+    return executor.executeCeilingPosition(this);
   }
 
 }

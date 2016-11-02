@@ -21,8 +21,10 @@ package com.orientechnologies.orient.client.remote.message;
 
 import java.io.IOException;
 
+import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
+import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OCollectionNetworkSerializer;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
@@ -53,6 +55,11 @@ public class OSBTFirstKeyRequest implements OBinaryRequest<OSBTFirstKeyResponse>
     return OChannelBinaryProtocol.REQUEST_SBTREE_BONSAI_FIRST_KEY;
   }
 
+  @Override
+  public String getDescription() {
+    return "SB-Tree bonsai get first key";
+  }
+
   public OBonsaiCollectionPointer getCollectionPointer() {
     return collectionPointer;
   }
@@ -60,6 +67,11 @@ public class OSBTFirstKeyRequest implements OBinaryRequest<OSBTFirstKeyResponse>
   @Override
   public OSBTFirstKeyResponse createResponse() {
     return new OSBTFirstKeyResponse();
+  }
+
+  @Override
+  public OBinaryResponse execute(OBinaryRequestExecutor executor) {
+    return executor.executeSBTFirstKey(this);
   }
 
 }

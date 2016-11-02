@@ -21,8 +21,10 @@ package com.orientechnologies.orient.client.remote.message;
 
 import java.io.IOException;
 
+import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
+import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OCollectionNetworkSerializer;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
@@ -57,6 +59,11 @@ public class OSBTGetRequest implements OBinaryRequest<OSBTGetResponse> {
     return OChannelBinaryProtocol.REQUEST_SBTREE_BONSAI_GET;
   }
 
+  @Override
+  public String getDescription() {
+    return "SB-Tree bonsai get";
+  }
+
   public OBonsaiCollectionPointer getCollectionPointer() {
     return collectionPointer;
   }
@@ -68,6 +75,11 @@ public class OSBTGetRequest implements OBinaryRequest<OSBTGetResponse> {
   @Override
   public OSBTGetResponse createResponse() {
     return new OSBTGetResponse();
+  }
+
+  @Override
+  public OBinaryResponse execute(OBinaryRequestExecutor executor) {
+    return executor.executeSBTGet(this);
   }
 
 }

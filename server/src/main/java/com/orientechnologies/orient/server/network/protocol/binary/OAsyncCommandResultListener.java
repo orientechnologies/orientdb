@@ -52,11 +52,10 @@ public class OAsyncCommandResultListener extends OAbstractCommandResultListener 
   private final Set<ORID>              alreadySent = new HashSet<ORID>();
   private final OClientConnection      connection;
 
-  public OAsyncCommandResultListener(OClientConnection connection, final ONetworkProtocolBinary iNetworkProtocolBinary,
-      final int txId, final OCommandResultListener wrappedResultListener) {
+  public OAsyncCommandResultListener(OClientConnection connection, final OCommandResultListener wrappedResultListener) {
     super(wrappedResultListener);
-    this.protocol = iNetworkProtocolBinary;
-    this.txId = txId;
+    this.protocol = (ONetworkProtocolBinary) connection.getProtocol();
+    this.txId = connection.getId();
     this.connection = connection;
   }
 

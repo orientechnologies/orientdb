@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.client.remote;
 
+import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
@@ -81,12 +82,21 @@ public class OStorageRemoteAsyncOperationTest {
 
       @Override
       public byte getMode() {
-        // TODO Auto-generated method stub
         return 0;
       }
 
       @Override
       public void setMode(byte mode) {
+      }
+
+      @Override
+      public String getDescription() {
+        return null;
+      }
+
+      @Override
+      public OBinaryResponse execute(OBinaryRequestExecutor executor) {
+        return null;
       }
 
       @Override
@@ -127,20 +137,26 @@ public class OStorageRemoteAsyncOperationTest {
 
       @Override
       public void read(OChannelBinary channel, int protocolVersion, String serializerName) throws IOException {
-        // TODO Auto-generated method stub
-
       }
 
       @Override
       public byte getMode() {
-        // TODO Auto-generated method stub
         return 0;
       }
 
       @Override
       public void setMode(byte mode) {
-        // TODO Auto-generated method stub
 
+      }
+
+      @Override
+      public String getDescription() {
+        return null;
+      }
+
+      @Override
+      public OBinaryResponse execute(OBinaryRequestExecutor executor) {
+        return null;
       }
 
       @Override
@@ -189,14 +205,21 @@ public class OStorageRemoteAsyncOperationTest {
 
       @Override
       public byte getMode() {
-        // TODO Auto-generated method stub
         return 0;
       }
 
       @Override
       public void setMode(byte mode) {
-        // TODO Auto-generated method stub
+      }
 
+      @Override
+      public String getDescription() {
+        return null;
+      }
+
+      @Override
+      public OBinaryResponse execute(OBinaryRequestExecutor executor) {
+        return null;
       }
 
       @Override

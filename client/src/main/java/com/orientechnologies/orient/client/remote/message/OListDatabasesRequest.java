@@ -2,8 +2,10 @@ package com.orientechnologies.orient.client.remote.message;
 
 import java.io.IOException;
 
+import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
+import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
@@ -23,8 +25,28 @@ public class OListDatabasesRequest implements OBinaryRequest<OListDatabasesRepon
   }
 
   @Override
+  public String requiredServerRole() {
+    return "server.listDatabases";
+  }
+
+  @Override
+  public boolean requireServerUser() {
+    return true;
+  }
+
+  @Override
+  public String getDescription() {
+    return "List Databases";
+  }
+
+  @Override
   public OListDatabasesReponse createResponse() {
     return new OListDatabasesReponse();
+  }
+
+  @Override
+  public OBinaryResponse execute(OBinaryRequestExecutor executor) {
+    return executor.executeListDatabases(this);
   }
 
 }

@@ -2,8 +2,10 @@ package com.orientechnologies.orient.client.remote.message;
 
 import java.io.IOException;
 
+import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
+import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
@@ -41,12 +43,33 @@ public class ODropDatabaseRequest implements OBinaryRequest<ODropDatabaseRespons
   }
 
   @Override
+  public boolean requireServerUser() {
+    return true;
+  }
+
+  @Override
+  public String requiredServerRole() {
+    return "database.drop";
+  }
+
+  @Override
   public byte getCommand() {
     return OChannelBinaryProtocol.REQUEST_DB_DROP;
+  }
+
+  @Override
+  public String getDescription() {
+    return "Drop Database";
   }
 
   @Override
   public ODropDatabaseResponse createResponse() {
     return new ODropDatabaseResponse();
   }
+
+  @Override
+  public OBinaryResponse execute(OBinaryRequestExecutor ex) {
+    return ex.executeDropDatabase(this);
+  }
+
 }

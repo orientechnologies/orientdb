@@ -21,8 +21,10 @@ package com.orientechnologies.orient.client.remote.message;
 
 import java.io.IOException;
 
+import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
+import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
@@ -61,6 +63,11 @@ public final class OCountRequest implements OBinaryRequest<OCountResponse> {
   public byte getCommand() {
     return OChannelBinaryProtocol.REQUEST_DATACLUSTER_COUNT;
   }
+  
+  @Override
+  public String getDescription() {
+    return "Count cluster elements";
+  }
 
   public int[] getClusterIds() {
     return clusterIds;
@@ -75,4 +82,10 @@ public final class OCountRequest implements OBinaryRequest<OCountResponse> {
     return new OCountResponse();
   }
 
+  @Override
+  public OBinaryResponse execute(OBinaryRequestExecutor executor) {
+    return executor.executeCountCluster(this);
+  }
+  
+  
 }

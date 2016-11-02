@@ -29,6 +29,7 @@ import java.util.List;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
+import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
@@ -89,8 +90,9 @@ public class OServerInfo {
       }
       json.beginObject(2);
       writeField(json, 2, "connectionId", c.getId());
-      writeField(json, 2, "remoteAddress", c.getProtocol().getChannel() != null ? c.getProtocol().getChannel().toString() : "Disconnected");
-      writeField(json, 2, "db", lastDatabase!= null ? lastDatabase : "-");
+      writeField(json, 2, "remoteAddress",
+          c.getProtocol().getChannel() != null ? c.getProtocol().getChannel().toString() : "Disconnected");
+      writeField(json, 2, "db", lastDatabase != null ? lastDatabase : "-");
       writeField(json, 2, "user", lastUser != null ? lastUser : "-");
       writeField(json, 2, "totalRequests", stats.totalRequests);
       writeField(json, 2, "commandInfo", data.commandInfo);
@@ -179,8 +181,8 @@ public class OServerInfo {
     json.endCollection(1, false);
   }
 
-  private static void writeField(final OJSONWriter json, final int iLevel, final String iAttributeName, final Object iAttributeValue)
-      throws IOException {
+  private static void writeField(final OJSONWriter json, final int iLevel, final String iAttributeName,
+      final Object iAttributeValue) throws IOException {
     json.writeAttribute(iLevel, true, iAttributeName, iAttributeValue != null ? iAttributeValue.toString() : "-");
   }
 }

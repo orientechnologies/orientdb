@@ -21,8 +21,10 @@ package com.orientechnologies.orient.client.remote.message;
 
 import java.io.IOException;
 
+import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
+import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
@@ -56,6 +58,11 @@ public class OFloorPhysicalPositionsRequest implements OBinaryRequest<OFloorPhys
     return OChannelBinaryProtocol.REQUEST_POSITIONS_FLOOR;
   }
 
+  @Override
+  public String getDescription() {
+    return "Retrieve floor positions";
+  }
+
   public int getClusterId() {
     return clusterId;
   }
@@ -66,6 +73,11 @@ public class OFloorPhysicalPositionsRequest implements OBinaryRequest<OFloorPhys
 
   public OFloorPhysicalPositionsResponse createResponse() {
     return new OFloorPhysicalPositionsResponse();
-  };
+  }
+
+  @Override
+  public OBinaryResponse execute(OBinaryRequestExecutor executor) {
+    return executor.executeFloorPosition(this);
+  }
 
 }

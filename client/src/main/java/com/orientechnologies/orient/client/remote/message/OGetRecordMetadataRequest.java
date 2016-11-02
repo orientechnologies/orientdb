@@ -21,8 +21,10 @@ package com.orientechnologies.orient.client.remote.message;
 
 import java.io.IOException;
 
+import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
+import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
@@ -51,13 +53,24 @@ public class OGetRecordMetadataRequest implements OBinaryRequest<OGetRecordMetad
   public OGetRecordMetadataResponse createResponse() {
     return new OGetRecordMetadataResponse();
   }
-  
+
   @Override
   public byte getCommand() {
     return OChannelBinaryProtocol.REQUEST_RECORD_METADATA;
   }
 
+  @Override
+  public String getDescription() {
+    return "Record metadata";
+  }
+
   public ORID getRid() {
     return rid;
   }
+
+  @Override
+  public OBinaryResponse execute(OBinaryRequestExecutor executor) {
+    return executor.executeGetRecordMetadata(this);
+  }
+
 }

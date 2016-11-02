@@ -1,14 +1,15 @@
 package com.orientechnologies.orient.client.remote;
 
+import java.io.IOException;
+
+import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
-
-import java.io.IOException;
 
 /**
  * Created by tglman on 07/06/16.
  */
-public interface OBinaryRequest<T> {
+public interface OBinaryRequest<T extends OBinaryResponse> {
 
   void write(final OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException;
 
@@ -17,5 +18,17 @@ public interface OBinaryRequest<T> {
   byte getCommand();
 
   T createResponse();
+
+  OBinaryResponse execute(OBinaryRequestExecutor executor);
+
+  String getDescription();
+
+  default boolean requireServerUser() {
+    return false;
+  }
+
+  default String requiredServerRole() {
+    return "";
+  }
 
 }

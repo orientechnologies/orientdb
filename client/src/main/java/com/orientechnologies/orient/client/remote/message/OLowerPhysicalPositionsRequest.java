@@ -21,8 +21,10 @@ package com.orientechnologies.orient.client.remote.message;
 
 import java.io.IOException;
 
+import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
+import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
@@ -56,6 +58,11 @@ public class OLowerPhysicalPositionsRequest implements OBinaryRequest<OLowerPhys
     return OChannelBinaryProtocol.REQUEST_POSITIONS_LOWER;
   }
 
+  @Override
+  public String getDescription() {
+    return "Retrieve lower positions";
+  }
+
   public int getiClusterId() {
     return iClusterId;
   }
@@ -63,10 +70,15 @@ public class OLowerPhysicalPositionsRequest implements OBinaryRequest<OLowerPhys
   public OPhysicalPosition getPhysicalPosition() {
     return physicalPosition;
   }
-  
+
   @Override
   public OLowerPhysicalPositionsResponse createResponse() {
     return new OLowerPhysicalPositionsResponse();
+  }
+
+  @Override
+  public OBinaryResponse execute(OBinaryRequestExecutor executor) {
+    return executor.executeLowerPosition(this);
   }
 
 }

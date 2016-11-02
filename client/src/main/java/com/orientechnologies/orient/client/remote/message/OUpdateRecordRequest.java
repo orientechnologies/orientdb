@@ -21,8 +21,10 @@ package com.orientechnologies.orient.client.remote.message;
 
 import java.io.IOException;
 
+import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryAsyncRequest;
+import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
@@ -50,6 +52,11 @@ public class OUpdateRecordRequest implements OBinaryAsyncRequest<OUpdateRecordRe
   @Override
   public byte getCommand() {
     return OChannelBinaryProtocol.REQUEST_RECORD_UPDATE;
+  }
+
+  @Override
+  public String getDescription() {
+    return "Update Record";
   }
 
   public void read(OChannelBinary channel, int protocolVersion, String serializerName) throws IOException {
@@ -100,10 +107,14 @@ public class OUpdateRecordRequest implements OBinaryAsyncRequest<OUpdateRecordRe
     this.mode = mode;
   }
 
-
   @Override
   public OUpdateRecordResponse createResponse() {
     return new OUpdateRecordResponse();
+  }
+
+  @Override
+  public OBinaryResponse execute(OBinaryRequestExecutor executor) {
+    return executor.executeUpdateRecord(this);
   }
 
 }

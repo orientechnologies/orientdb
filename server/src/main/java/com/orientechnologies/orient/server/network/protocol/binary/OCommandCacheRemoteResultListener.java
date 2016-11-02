@@ -7,11 +7,11 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OConcurrentResultSet;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
 
-final class OCommandCacheRemoteResultListener extends OAbstractCommandResultListener {
+public final class OCommandCacheRemoteResultListener extends OAbstractCommandResultListener {
   private final OCommandCache cmdCache;
   private OResultSet          collector = new OConcurrentResultSet<ORecord>();
 
-  OCommandCacheRemoteResultListener(OCommandResultListener wrappedResultListener, OCommandCache cmdCache) {
+  public OCommandCacheRemoteResultListener(OCommandResultListener wrappedResultListener, OCommandCache cmdCache) {
     super(wrappedResultListener);
     this.cmdCache = cmdCache;
   }

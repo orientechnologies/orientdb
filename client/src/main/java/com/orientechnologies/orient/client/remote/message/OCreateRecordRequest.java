@@ -21,9 +21,11 @@ package com.orientechnologies.orient.client.remote.message;
 
 import java.io.IOException;
 
+import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryAsyncRequest;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
+import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -48,12 +50,16 @@ public class OCreateRecordRequest implements OBinaryAsyncRequest<OCreateRecordRe
     return OChannelBinaryProtocol.REQUEST_RECORD_CREATE;
   }
 
+  @Override
+  public String getDescription() {
+    return "Create Record";
+  }
+
   public OCreateRecordRequest(byte[] iContent, ORecordId iRid, byte iRecordType) {
     this.content = iContent;
     this.rid = iRid;
     this.recordType = iRecordType;
   }
-
 
   @Override
   public void write(final OChannelBinaryAsynchClient network, final OStorageRemoteSession session) throws IOException {
@@ -92,6 +98,11 @@ public class OCreateRecordRequest implements OBinaryAsyncRequest<OCreateRecordRe
   @Override
   public OCreateRecordResponse createResponse() {
     return new OCreateRecordResponse();
+  }
+
+  @Override
+  public OBinaryResponse execute(OBinaryRequestExecutor executor) {
+    return executor.executeCreateRecord(this);
   }
 
 }
