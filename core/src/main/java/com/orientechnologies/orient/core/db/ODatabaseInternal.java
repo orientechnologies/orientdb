@@ -20,7 +20,6 @@
 
 package com.orientechnologies.orient.core.db;
 
-import com.orientechnologies.orient.core.OUncompletedCommit;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -86,9 +85,4 @@ public interface ODatabaseInternal<T> extends ODatabase<T> {
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
   <DB extends ODatabase> DB open(final OToken iToken);
-
-  OUncompletedCommit<Void> initiateCommit();
-
-  OUncompletedCommit<Void> initiateCommit(boolean force);
-
 }

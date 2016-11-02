@@ -27,7 +27,6 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
-import com.orientechnologies.orient.core.OUncompletedCommit;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
@@ -483,19 +482,6 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     return operation;
   }
 
-  public OUncompletedCommit<OAtomicOperation> initiateCommit() throws IOException {
-    final OAtomicOperation operation = currentOperation.get();
-    assert operation != null;
-
-    final int counter = operation.decrementCounter();
-    assert counter >= 0;
-
-    if (counter > 0)
-      return new OUncompletedCommit.NoOperation<OAtomicOperation>(operation);
-
-    return new UncompletedCommit(operation, operation.initiateCommit(useWal() ? writeAheadLog : null));
-  }
-
   /**
    * Acquires exclusive lock with the given lock name in the given atomic operation.
    *
@@ -664,65 +650,5 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
 
     final OStorageTransaction storageTransaction = storage.getStorageTransaction();
     return storageTransaction == null || storageTransaction.getClientTx().isUsingLog();
-  }
-
-  private class UncompletedCommit implements OUncompletedCommit<OAtomicOperation> {
-    private final OAtomicOperation         operation;
-    private final OUncompletedCommit<Void> nestedCommit;
-
-    public UncompletedCommit(OAtomicOperation operation, OUncompletedCommit<Void> nestedCommit) {
-      this.operation = operation;
-      this.nestedCommit = nestedCommit;
-    }
-
-    @Override
-    public OAtomicOperation complete() {
-      nestedCommit.complete();
-
-      try {
-        if (useWal())
-          writeAheadLog
-              .logAtomicOperationEndRecord(operation.getOperationUnitId(), false, operation.getStartLSN(), operation.getMetadata());
-      } catch (IOException e) {
-        throw OException.wrapException(new OStorageException("Error while completing an uncompleted commit."), e);
-      }
-
-      currentOperation.set(null);
-
-      if (trackAtomicOperations)
-        activeAtomicOperations.remove(operation.getOperationUnitId());
-
-      for (String lockObject : operation.lockedObjects())
-        lockManager.releaseLock(this, lockObject, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
-
-      atomicOperationsCount.decrement();
-
-      return operation;
-    }
-
-    @Override
-    public void rollback() {
-      operation.rollback(null);
-
-      nestedCommit.rollback();
-
-      try {
-        if (useWal())
-          writeAheadLog
-              .logAtomicOperationEndRecord(operation.getOperationUnitId(), true, operation.getStartLSN(), operation.getMetadata());
-      } catch (IOException e) {
-        throw OException.wrapException(new OStorageException("Error while rollbacking an uncompleted commit."), e);
-      }
-
-      currentOperation.set(null);
-
-      if (trackAtomicOperations)
-        activeAtomicOperations.remove(operation.getOperationUnitId());
-
-      for (String lockObject : operation.lockedObjects())
-        lockManager.releaseLock(this, lockObject, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
-
-      atomicOperationsCount.decrement();
-    }
   }
 }

@@ -23,7 +23,6 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCommonConst;
-import com.orientechnologies.orient.core.OUncompletedCommit;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
@@ -597,17 +596,6 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   }
 
   @Override
-  public OUncompletedCommit<Void> initiateCommit() {
-    return initiateCommit(false);
-  }
-
-  @Override
-  public OUncompletedCommit<Void> initiateCommit(boolean force) {
-    final OUncompletedCommit<Void> nestedCommit = underlying.initiateCommit(force);
-    return new UncompletedCommit(getTransaction().amountOfNestedTxs() == 0, nestedCommit);
-  }
-
-  @Override
   public ODatabasePojoAbstract<Object> rollback() {
     return rollback(false);
   }
@@ -899,61 +887,4 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   public Set<Integer> getBlobClusterIds() {
     return getUnderlying().getBlobClusterIds();
   }
-
-  private class UncompletedCommit implements OUncompletedCommit<Void> {
-    private final boolean                  topLevel;
-    private final OUncompletedCommit<Void> nestedCommit;
-
-    public UncompletedCommit(boolean topLevel, OUncompletedCommit<Void> nestedCommit) {
-      this.topLevel = topLevel;
-      this.nestedCommit = nestedCommit;
-    }
-
-    @Override
-    public Void complete() {
-      nestedCommit.complete();
-
-      if (!topLevel)
-        return null;
-
-      if (getTransaction().getAllRecordEntries() != null) {
-        // UPDATE ID & VERSION FOR ALL THE RECORDS
-        Object pojo = null;
-        for (ORecordOperation entry : getTransaction().getAllRecordEntries()) {
-          switch (entry.type) {
-          case ORecordOperation.CREATED:
-          case ORecordOperation.UPDATED:
-            break;
-
-          case ORecordOperation.DELETED:
-            final ORecord rec = entry.getRecord();
-            if (rec instanceof ODocument)
-              unregisterPojo(pojo, (ODocument) rec);
-            break;
-          }
-        }
-      }
-
-      return null;
-    }
-
-    @Override
-    public void rollback() {
-      nestedCommit.rollback();
-
-      if (!topLevel)
-        return;
-
-      // COPY ALL TX ENTRIES
-      final List<ORecordOperation> newEntries;
-      if (getTransaction().getAllRecordEntries() != null) {
-        newEntries = new ArrayList<ORecordOperation>();
-        for (ORecordOperation entry : getTransaction().getAllRecordEntries())
-          if (entry.type == ORecordOperation.CREATED)
-            newEntries.add(entry);
-      } else
-        newEntries = null;
-    }
-  }
-
 }

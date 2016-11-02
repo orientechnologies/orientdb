@@ -128,6 +128,13 @@ public interface OIndexEngine {
   interface Validator<K, V> {
 
     /**
+     * Indicates that a put request should be silently ignored by the store.
+     *
+     * @see #validate(Object, Object, Object)
+     */
+    Object IGNORE = new Object();
+
+    /**
      * Validates the put operation for the given key, the old value and the new value. May throw an exception to abort the current
      * put operation with an error.
      *
@@ -135,30 +142,9 @@ public interface OIndexEngine {
      * @param oldValue the old value or {@code null} if no value is currently stored.
      * @param newValue the new value passed to {@link #validatedPut(Object, OIdentifiable, Validator)}.
      *
-     * @return the new value to store, may differ from the passed one, or the special {@link Result#ignore() ignore} value to
-     * silently ignore the put operation request being processed.
+     * @return the new value to store, may differ from the passed one, or the special {@link #IGNORE} value to silently ignore the
+     * put operation request being processed.
      */
-    V validate(K key, V oldValue, V newValue);
-
-    /**
-     * Enums the special predefined validation results.
-     *
-     * @see Validator#validate(Object, Object, Object)
-     */
-    final class Result {
-      private static final Object IGNORE = new Object();
-
-      /**
-       * Indicates that a put request should be silently ignored by the store.
-       *
-       * @param <V> the value type.
-       *
-       * @return the ignore validation result.
-       */
-      @SuppressWarnings("unchecked")
-      public static <V> V ignore() {
-        return (V) IGNORE;
-      }
-    }
+    Object validate(K key, V oldValue, V newValue);
   }
 }

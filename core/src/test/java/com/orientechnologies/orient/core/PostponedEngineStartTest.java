@@ -306,11 +306,6 @@ public class PostponedEngineStartTest {
         }
 
         @Override
-        public OUncompletedCommit<List<ORecordOperation>> initiateCommit(OTransaction iTx, Runnable callback) {
-          return null;
-        }
-
-        @Override
         public void rollback(OTransaction iTx) {
 
         }
