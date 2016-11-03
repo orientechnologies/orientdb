@@ -19,7 +19,6 @@
 
 package com.orientechnologies.orient.core.storage;
 
-import com.orientechnologies.orient.core.OUncompletedCommit;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -150,11 +149,6 @@ public class StorageNamingTests {
 
     @Override
     public List<ORecordOperation> commit(OTransaction iTx, Runnable callback) {
-      return null;
-    }
-
-    @Override
-    public OUncompletedCommit<List<ORecordOperation>> initiateCommit(OTransaction iTx, Runnable callback) {
       return null;
     }
 

@@ -17,7 +17,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
 
-import com.orientechnologies.orient.core.OUncompletedCommit;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -473,18 +472,6 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   @Override
   public <DB extends ODatabase> DB open(OToken iToken) {
     throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public OUncompletedCommit<Void> initiateCommit() {
-    checkOpeness();
-    return internal.initiateCommit();
-  }
-
-  @Override
-  public OUncompletedCommit<Void> initiateCommit(boolean force) {
-    checkOpeness();
-    return internal.initiateCommit(force);
   }
 
   @Override

@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.core.tx;
 
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.orient.core.OUncompletedCommit;
 import com.orientechnologies.orient.core.db.ODatabase.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.LatestVersionRecordReader;
@@ -79,16 +78,6 @@ public class OTransactionNoTx extends OTransactionAbstract {
   }
 
   public void rollback() {
-  }
-
-  @Override
-  public OUncompletedCommit<Void> initiateCommit() {
-    return OUncompletedCommit.NO_OPERATION;
-  }
-
-  @Override
-  public OUncompletedCommit<Void> initiateCommit(boolean force) {
-    return OUncompletedCommit.NO_OPERATION;
   }
 
   @Deprecated
