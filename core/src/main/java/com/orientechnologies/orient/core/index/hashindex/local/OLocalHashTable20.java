@@ -427,6 +427,7 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
         final long pageIndex = getPageIndex(bucketPointer);
         final int fileLevel = getFileLevel(bucketPointer);
         final V removed;
+        final boolean found;
 
         final OCacheEntry cacheEntry = loadPageEntry(pageIndex, fileLevel, atomicOperation);
         cacheEntry.acquireExclusiveLock();
@@ -434,30 +435,32 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
           final OHashIndexBucket<K, V> bucket = new OHashIndexBucket<K, V>(cacheEntry, keySerializer, valueSerializer, keyTypes,
               getChanges(atomicOperation, cacheEntry));
           final int positionIndex = bucket.getIndex(hashCode, key);
-          if (positionIndex < 0) {
-            endAtomicOperation(false, null);
-            return null;
-          }
+          found = positionIndex >= 0;
 
-          removed = bucket.deleteEntry(positionIndex).value;
-          sizeDiff--;
+          if (found) {
+            removed = bucket.deleteEntry(positionIndex).value;
+            sizeDiff--;
 
-          mergeBucketsAfterDeletion(nodePath, bucket, atomicOperation);
+            mergeBucketsAfterDeletion(nodePath, bucket, atomicOperation);
+          } else
+            removed = null;
         } finally {
           cacheEntry.releaseExclusiveLock();
           releasePage(atomicOperation, cacheEntry);
         }
 
-        if (nodePath.parent != null) {
-          final int hashMapSize = 1 << nodePath.nodeLocalDepth;
+        if (found) {
+          if (nodePath.parent != null) {
+            final int hashMapSize = 1 << nodePath.nodeLocalDepth;
 
-          final boolean allMapsContainSameBucket = checkAllMapsContainSameBucket(directory.getNode(nodePath.nodeIndex),
-              hashMapSize);
-          if (allMapsContainSameBucket)
-            mergeNodeToParent(nodePath);
+            final boolean allMapsContainSameBucket = checkAllMapsContainSameBucket(directory.getNode(nodePath.nodeIndex),
+                hashMapSize);
+            if (allMapsContainSameBucket)
+              mergeNodeToParent(nodePath);
+          }
+
+          changeSize(sizeDiff, atomicOperation);
         }
-
-        changeSize(sizeDiff, atomicOperation);
 
         endAtomicOperation(false, null);
         return removed;

@@ -774,6 +774,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
         int removedContentSize = 0;
 
         do {
+          boolean cacheEntryReleased = false;
           OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false);
           cacheEntry.acquireExclusiveLock();
           int initialFreePageIndex;
@@ -783,7 +784,13 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
             if (localPage.isDeleted(recordPosition)) {
               if (removedContentSize == 0) {
-                endAtomicOperation(false, null);
+                cacheEntryReleased = true;
+                try {
+                  cacheEntry.releaseExclusiveLock();
+                  releasePage(atomicOperation, cacheEntry);
+                } finally {
+                  endAtomicOperation(false, null);
+                }
                 return false;
               } else
                 throw new OPaginatedClusterException("Content of record " + new ORecordId(id, clusterPosition) + " was broken",
@@ -806,8 +813,10 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
             removedContentSize += localPage.getFreeSpace() - initialFreeSpace;
             nextPagePointer = OLongSerializer.INSTANCE.deserializeNative(content, content.length - OLongSerializer.LONG_SIZE);
           } finally {
-            cacheEntry.releaseExclusiveLock();
-            releasePage(atomicOperation, cacheEntry);
+            if (!cacheEntryReleased) {
+              cacheEntry.releaseExclusiveLock();
+              releasePage(atomicOperation, cacheEntry);
+            }
           }
 
           updateFreePagesIndex(initialFreePageIndex, pageIndex, atomicOperation);
