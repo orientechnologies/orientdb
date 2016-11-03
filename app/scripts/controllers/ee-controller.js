@@ -242,7 +242,7 @@ ee.controller('ClusterController', function ($scope, Cluster, Notification, $roo
 
         $scope.clusterStats = data.clusterStats;
 
-        $rootScope.$broadcast("db-status", data.databasesStatus);
+        $scope.$broadcast("db-status", data.databasesStatus);
 
       }).catch(function (error) {
         Notification.push({content: error.data, error: true, autoHide: true});
@@ -1137,291 +1137,391 @@ ee.controller('ClusterDBController', function ($scope, Cluster, $rootScope, $tim
 
 });
 
-ee.controller('ClusterSingleDBController', function ($scope, $rootScope, $modal, $q, Cluster, Notification, Database, HaCommand) {
+ee.controller('ClusterSingleDBController', function ($scope, $rootScope, $modal, $q, Cluster, $timeout, Notification, Database, HaCommand) {
 
 
-  $scope.links = {
-    "ownership": Database.getOWikiFor("Distributed-Architecture.html#cluster-ownership"),
-    "role": Database.getOWikiFor("Distributed-Architecture.html"),
-    "configuration": Database.getOWikiFor("Distributed-Configuration.html#default-distributed-db-configjson")
-  }
+    $scope.links = {
+      "ownership": Database.getOWikiFor("Distributed-Architecture.html#cluster-ownership"),
+      "role": Database.getOWikiFor("Distributed-Architecture.html"),
+      "configuration": Database.getOWikiFor("Distributed-Configuration.html#default-distributed-db-configjson")
+    }
 
-  $scope.roles = ["master", "replica"];
-
-
-  $scope.quorums = ['majority', 'all'];
+    $scope.roles = ["master", "replica"];
 
 
-  $rootScope.$on('db-status', function (evt, statuses) {
-    $scope.servers.forEach(function (s) {
-      if (statuses[$scope.name][s.name]) {
-        s.status = statuses[$scope.name][s.name];
-      }
-    })
-  })
-  $scope.$on('db-chosen', function (evt, db) {
+    $scope.constantQuorum = ['majority', 'all'];
+    $scope.quorums = $scope.constantQuorum.concat(['localDataCenter']);
 
 
-    var servers = angular.copy(db.servers);
-    var statuses = angular.copy(db.statuses);
-
-    Cluster.database(db.name).then(function (data) {
-      $scope.config = data;
-      $scope.name = db.name;
-
-
-      //
-      var uniqueServers = [];
-      Object.keys($scope.config.clusters).forEach(function (c) {
-
-        if ($scope.config.clusters[c].servers) {
-          $scope.config.clusters[c].servers.forEach(function (s) {
-            if (uniqueServers.indexOf(s) == -1) {
-              uniqueServers.push(s);
-            }
-          })
-        }
-      })
-
-      uniqueServers = uniqueServers.filter(function (f) {
-        var found = false;
-        servers.forEach(function (s) {
-          if (s.name === f) {
-            found = true;
-          }
-        })
-        return f != "<NEW_NODE>" && !found;
-      })
-      uniqueServers.forEach(function (s) {
-
-        var status = "OFFLINE";
-
-        if (statuses[$scope.name][s.name]) {
-          status = statuses[$scope.name][s.name];
-        }
-        servers.push({name: s, status: status});
-      })
-
-      servers.forEach(function (s, idx, arr) {
+    $scope.$on('db-status', function (evt, statuses) {
+      $scope.servers.forEach(function (s) {
         if (statuses[$scope.name][s.name]) {
           s.status = statuses[$scope.name][s.name];
         }
-        $scope.quorums.push((idx + 1).toString());
       })
+    })
+    $scope.$on('db-chosen', function (evt, db) {
 
-      $scope.calculatedRoles = {};
-      if ($scope.config.servers) {
-        Object.keys($scope.config.servers).forEach(function (k) {
-          if (k === "*") {
-            servers.forEach(function (s) {
-              $scope.calculatedRoles[s.name] = $scope.config.servers[k];
-            });
-          } else {
-            $scope.calculatedRoles[k] = $scope.config.servers[k];
+
+      var servers = angular.copy(db.servers);
+      var statuses = angular.copy(db.statuses);
+
+
+      Cluster.database(db.name).then(function (data) {
+        $scope.config = data;
+        $scope.name = db.name;
+
+        $scope.quorums = $scope.constantQuorum.concat(['localDataCenter']);
+
+        $scope.serverTags = {};
+        $scope.dcQuorums = {};
+
+        $scope.dcQuorums = {};
+        if (data.dataCenters) {
+          Object.keys(data.dataCenters).forEach(function (k) {
+            $scope.dcQuorums[k] = $scope.constantQuorum.concat(data.dataCenters[k].servers.map(function (s, idx, arr) {
+              return (idx + 1).toString();
+            }));
+            $scope.serverTags[k] = data.dataCenters[k].servers.map(function (n) {
+              return {name: n}
+            })
+          });
+        }
+
+        var uniqueServers = [];
+        Object.keys($scope.config.clusters).forEach(function (c) {
+
+          if ($scope.config.clusters[c].servers) {
+            $scope.config.clusters[c].servers.forEach(function (s) {
+              if (uniqueServers.indexOf(s) == -1) {
+                uniqueServers.push(s);
+              }
+            })
           }
         })
+
+        uniqueServers = uniqueServers.filter(function (f) {
+          var found = false;
+          servers.forEach(function (s) {
+            if (s.name === f) {
+              found = true;
+            }
+          })
+          return f != "<NEW_NODE>" && !found;
+        })
+        uniqueServers.forEach(function (s) {
+
+          var status = "OFFLINE";
+
+          if (statuses[$scope.name][s.name]) {
+            status = statuses[$scope.name][s.name];
+          }
+          servers.push({name: s, status: status});
+        })
+
+        servers.forEach(function (s, idx, arr) {
+          if (statuses[$scope.name][s.name]) {
+            s.status = statuses[$scope.name][s.name];
+          }
+          $scope.quorums.push((idx + 1).toString());
+        })
+
+
+        $scope.calculatedRoles = {};
+        if ($scope.config.servers) {
+          Object.keys($scope.config.servers).forEach(function (k) {
+            if (k === "*") {
+              servers.forEach(function (s) {
+                $scope.calculatedRoles[s.name] = $scope.config.servers[k];
+              });
+            } else {
+              $scope.calculatedRoles[k] = $scope.config.servers[k];
+            }
+          })
+        }
+        $scope.servers = servers;
+
+      })
+
+      $scope.serverAdded = function (dc, s) {
+        if (!$scope.config.dataCenters) {
+          $scope.config.dataCenters = {};
+        }
+        if (!$scope.config.dataCenters[dc]) {
+          $scope.config.dataCenters[dc] = {};
+        }
+        if (!$scope.config.dataCenters[dc].servers) {
+          $scope.config.dataCenters[dc].servers = [];
+        }
+        $scope.config.dataCenters[dc].servers.push(s.name);
+        var len = $scope.dcQuorums[dc].length - $scope.constantQuorum.length;
+        $scope.dcQuorums[dc].push((len + 1).toString());
       }
-      $scope.servers = servers;
+      $scope.serverRemoved = function (dc, s) {
+        var idx = $scope.config.dataCenters[dc].servers.indexOf(s.name);
+        $scope.config.dataCenters[dc].servers.splice(idx, 1);
+        $scope.dcQuorums[dc].pop();
+      }
+      $scope.loadServers = function () {
+        var deferred = $q.defer();
+        $timeout(function () {
+          deferred.resolve($scope.servers);
+        }, 10)
+        return deferred.promise;
+      }
+
+      $scope.isClusterInNode = function (cluster, node) {
+        var tmp = $scope.config.clusters[cluster];
+        if (!tmp.servers)return false;
+        return tmp.servers.indexOf(node) != -1;
+      }
+
+      $scope.getOwnership = function (cluster, node) {
+        var tmp = $scope.config.clusters[cluster];
+        if (!tmp.servers)return "";
+
+        if (tmp.owner && tmp.owner != "") {
+          return tmp.owner === node ? "X" : "o";
+        }
+        return (tmp.servers.indexOf(node) == 0) ? "X" : "o";
+      }
+
 
     })
 
-
-    $scope.isClusterInNode = function (cluster, node) {
-      var tmp = $scope.config.clusters[cluster];
-      if (!tmp.servers)return false;
-      return tmp.servers.indexOf(node) != -1;
+    $scope.syncDatabaseTooltip = {
+      title: "Sync database"
     }
-
-    $scope.getOwnership = function (cluster, node) {
-      var tmp = $scope.config.clusters[cluster];
-      if (!tmp.servers)return "";
-
-      if (tmp.owner && tmp.owner != "") {
-        return tmp.owner === node ? "X" : "o";
-      }
-      return (tmp.servers.indexOf(node) == 0) ? "X" : "o";
+    $scope.syncClusterTooltip = {
+      title: "Sync cluster"
     }
 
 
-  })
-
-  $scope.syncDatabaseTooltip = {
-    title: "Sync database"
-  }
-
-  $scope.syncDatabase = function (node) {
+    $scope.syncDatabase = function (node) {
 
 
-    var syncClusterLink = Database.getOWikiFor("SQL-HA-Sync-Database.html");
-    var confirmMessage = S("Database <b>{{database}}</b> will be re-synchronized for node <b>{{node}}</b>. OrientDB will select the best server to provide the database. Are you sure? <a class='btn btn-trasparent btn-help' target='_blank' href='{{link}}'> <i class='fa fa-question-circle'></i></a>").template({
-      database: $scope.name,
-      node: node.name,
-      link: syncClusterLink
-    }).s
+      var syncClusterLink = Database.getOWikiFor("SQL-HA-Sync-Database.html");
+      var confirmMessage = S("Database <b>{{database}}</b> will be re-synchronized for node <b>{{node}}</b>. OrientDB will select the best server to provide the database. Are you sure? <a class='btn btn-trasparent btn-help' target='_blank' href='{{link}}'> <i class='fa fa-question-circle'></i></a>").template({
+        database: $scope.name,
+        node: node.name,
+        link: syncClusterLink
+      }).s
 
-    Utilities.confirm($scope, $modal, $q, {
-      title: 'Confirm Required!',
-      body: confirmMessage,
-      success: function () {
-        HaCommand.syncDatabase(node.name, $scope.name).then(function (res) {
-          var msg = S("Database {{database}} synchronized correctly ").template({
-            database: $scope.name
-          }).s;
-          Notification.push({content: msg, autoHide: true});
-        }).catch(function (err) {
-          Notification.push({content: err, error: true, autoHide: true});
-        })
-      }
-    });
-  }
-  $scope.syncCluster = function (cluster, node) {
-
-
-    var syncClusterLink = Database.getOWikiFor("SQL-HA-Sync-Cluster.html");
-    var confirmMessage = S("Cluster <b>{{cluster}}</b> of database <b>{{database}}</b> will be re-synchronized for node <b>{{node}}</b>. OrientDB will select the best server to provide the cluster. Are you sure? <a class='btn btn-trasparent btn-help' target='_blank' href='{{link}}'> <i class='fa fa-question-circle'></i></a>").template({
-      cluster: cluster,
-      database: $scope.name,
-      node: node,
-      link: syncClusterLink
-    }).s
-
-    Utilities.confirm($scope, $modal, $q, {
-      title: 'Confirm Required!',
-      body: confirmMessage,
-      success: function () {
-        HaCommand.syncCluster(node, $scope.name, cluster).then(function (res) {
-          var msg = S("Cluster {{cluster}} synchronized correctly ").template({
-            cluster: cluster
-          }).s;
-          Notification.push({content: res.result, autoHide: true});
-        }).catch(function (err) {
-          Notification.push({content: err, error: true, autoHide: true});
-        })
-      }
-    });
-  }
-  $scope.saveConfig = function () {
-
-    Object.keys($scope.calculatedRoles).forEach(function (k) {
-      var r = $scope.calculatedRoles[k];
-      var oldRole = $scope.config.servers[k];
-      if (oldRole) {
-        delete $scope.config.servers[k];
-      }
-      if ($scope.config.servers["*"] != r) {
-        $scope.config.servers[k] = r;
-      }
-    })
-
-    var config = Object.assign({}, $scope.config);
-
-    try {
-      var val = parseInt(config.writeQuorum);
-      if (!isNaN(val)) {
-        config.writeQuorum = val;
-      }
-    } catch (e) {
+      Utilities.confirm($scope, $modal, $q, {
+        title: 'Confirm Required!',
+        body: confirmMessage,
+        success: function () {
+          HaCommand.syncDatabase(node.name, $scope.name).then(function (res) {
+            var msg = S("Database {{database}} synchronized correctly ").template({
+              database: $scope.name
+            }).s;
+            Notification.push({content: msg, autoHide: true});
+          }).catch(function (err) {
+            Notification.push({content: err, error: true, autoHide: true});
+          })
+        }
+      });
     }
-    Cluster.saveDBConfig({name: $scope.name, config: config}).then(function () {
-      Notification.push({content: "Distributed Configuration correctly saved.", autoHide: true});
-    }).catch(function (err) {
-      Notification.push({content: err.data, error: true, autoHide: true});
-    })
-
-  }
-
-  $scope.startReplicationTooltip = {
-    title: "Start Replication"
-  }
-
-  $scope.startReplication = function (node) {
+    $scope.syncCluster = function (cluster, node) {
 
 
-    var syncClusterLink = Database.getOWikiFor("SQL-HA-Start-Replication.html");
-    var confirmMessage = S("The replication of database <b>{{database}}</b> will start against node <b>{{node}}</b>. Are you sure? <a class='btn btn-trasparent btn-help' target='_blank' href='{{link}}'> <i class='fa fa-question-circle'></i></a>").template({
-      database: $scope.name,
-      node: node.name,
-      link: syncClusterLink
-    }).s
+      var syncClusterLink = Database.getOWikiFor("SQL-HA-Sync-Cluster.html");
+      var confirmMessage = S("Cluster <b>{{cluster}}</b> of database <b>{{database}}</b> will be re-synchronized for node <b>{{node}}</b>. OrientDB will select the best server to provide the cluster. Are you sure? <a class='btn btn-trasparent btn-help' target='_blank' href='{{link}}'> <i class='fa fa-question-circle'></i></a>").template({
+        cluster: cluster,
+        database: $scope.name,
+        node: node,
+        link: syncClusterLink
+      }).s
 
-    Utilities.confirm($scope, $modal, $q, {
-      title: 'Confirm Required!',
-      body: confirmMessage,
-      success: function () {
-        HaCommand.startReplication(node.name, $scope.name).then(function (res) {
-          var msg = S("Replication of database {{database}} started correctly against node {{node}}").template({
-            database: $scope.name,
-            node: node.name
-          }).s;
-          Notification.push({content: msg, autoHide: true});
-        }).catch(function (err) {
-          Notification.push({content: err, error: true, autoHide: true});
-        })
+      Utilities.confirm($scope, $modal, $q, {
+        title: 'Confirm Required!',
+        body: confirmMessage,
+        success: function () {
+          HaCommand.syncCluster(node, $scope.name, cluster).then(function (res) {
+            var msg = S("Cluster {{cluster}} synchronized correctly ").template({
+              cluster: cluster
+            }).s;
+            Notification.push({content: res.result, autoHide: true});
+          }).catch(function (err) {
+            Notification.push({content: err, error: true, autoHide: true});
+          })
+        }
+      });
+    }
+
+    $scope.addDataCenter = function () {
+      if (!$scope.config.dataCenters) {
+        $scope.config.dataCenters = {}
       }
-    });
-  }
-  $scope.stopReplicationTooltip = {
-    title: "Stop Replication"
-  }
+      var modalScope = $scope.$new(true);
+      modalScope.currentModel = "New_DataCenter_Name";
+      var modalPromise = $modal({template: 'views/server/distributed/DCNameModal.html', scope: modalScope, show: false});
+      modalScope.onInput = function (name) {
 
-
-  $scope.stopReplication = function (node) {
-
-    var syncClusterLink = Database.getOWikiFor("SQL-HA-Stop-Replication.html");
-    var confirmMessage = S("The replication of database <b>{{database}}</b> will be interrupted against node <b>{{node}}</b>. Are you sure? <a class='btn btn-trasparent btn-help' target='_blank' href='{{link}}'> <i class='fa fa-question-circle'></i></a>").template({
-      database: $scope.name,
-      node: node.name,
-      link: syncClusterLink
-    }).s
-
-    Utilities.confirm($scope, $modal, $q, {
-      title: 'Confirm Required!',
-      body: confirmMessage,
-      success: function () {
-        HaCommand.stopReplication(node.name, $scope.name).then(function (res) {
-          var msg = S("Replication of database {{database}} stopped correctly against node {{node}}").template({
-            database: $scope.name,
-            node: node.name
-          }).s;
-          Notification.push({content: msg, autoHide: true});
-        }).catch(function (err) {
-          Notification.push({content: err, error: true, autoHide: true});
-        })
+        if (name) {
+          $scope.serverTags[name] = [];
+          $scope.config.dataCenters[name] = {
+            writeQuorum: "majority",
+            servers: []
+          }
+        }
       }
-    });
-  }
+      modalPromise.$promise.then(modalPromise.show);
+    }
 
-  $scope.removeServerTooltip = {
-    title: "Remove server"
-  }
-  $scope.removeServer = function (s) {
+    $scope.removeDataCenterTooltip = {
+      title: "Remove Data Center"
+    }
 
-    var removeServerLink = Database.getOWikiFor("SQL-HA-Remove-Server.html");
+    $scope.renameDataCenter = function (k) {
 
-    var confirmMessage = S("Node <b>{{name}}</b> will be removed from the distributed configuration for database <b>{{database}}</b>. Are you sure? <a class='btn btn-trasparent btn-help' target='_blank' href='{{link}}'> <i class='fa fa-question-circle'></i></a>").template({
-      name: s.name,
-      database: $scope.name,
-      link: removeServerLink
-    }).s
+      var modalScope = $scope.$new(true);
+      modalScope.currentModel = k;
+      var modalPromise = $modal({
+        template: 'views/server/distributed/DCNameModal.html',
+        scope: modalScope,
+        show: false
+      });
+      modalScope.onInput = function (name) {
+        if (name != k) {
+          var tags = angular.copy($scope.serverTags[k]);
+          delete $scope.serverTags[k];
+          $scope.serverTags[name] = tags;
+          var cfg = angular.copy($scope.config.dataCenters[k]);
+          $scope.removeDataCenter(k);
+          $scope.config.dataCenters[name] = cfg;
+        }
 
-    Utilities.confirm($scope, $modal, $q, {
-      title: 'Confirm Required!',
-      body: confirmMessage,
-      success: function () {
-        HaCommand.removeNode($scope.name, s.name).then(function (res) {
-          var msg = S("Node {{name}} removed correctly from the distributed configuration for database {{database}}").template({
-            name: s.name,
-            database: $scope.name
-          }).s;
-          Notification.push({content: msg, autoHide: true});
-        }).catch(function (err) {
-          Notification.push({content: err, error: true, autoHide: true});
-        })
       }
-    });
+      modalPromise.$promise.then(modalPromise.show);
+    }
+    $scope.removeDataCenter = function (k) {
 
+      delete $scope.config.dataCenters[k];
+    }
+    $scope.saveConfig = function () {
+
+      Object.keys($scope.calculatedRoles).forEach(function (k) {
+        var r = $scope.calculatedRoles[k];
+        var oldRole = $scope.config.servers[k];
+        if (oldRole) {
+          delete $scope.config.servers[k];
+        }
+        if ($scope.config.servers["*"] != r) {
+          $scope.config.servers[k] = r;
+        }
+      })
+
+      var config = Object.assign({}, $scope.config);
+
+      try {
+        var val = parseInt(config.writeQuorum);
+        if (!isNaN(val)) {
+          config.writeQuorum = val;
+        }
+      } catch (e) {
+      }
+      Cluster.saveDBConfig({name: $scope.name, config: config}).then(function () {
+        Notification.push({content: "Distributed Configuration correctly saved.", autoHide: true});
+      }).catch(function (err) {
+        Notification.push({content: err.data, error: true, autoHide: true});
+      })
+
+    }
+
+    $scope.startReplicationTooltip = {
+      title: "Start Replication"
+    }
+
+    $scope.startReplication = function (node) {
+
+
+      var syncClusterLink = Database.getOWikiFor("SQL-HA-Start-Replication.html");
+      var confirmMessage = S("The replication of database <b>{{database}}</b> will start against node <b>{{node}}</b>. Are you sure? <a class='btn btn-trasparent btn-help' target='_blank' href='{{link}}'> <i class='fa fa-question-circle'></i></a>").template({
+        database: $scope.name,
+        node: node.name,
+        link: syncClusterLink
+      }).s
+
+      Utilities.confirm($scope, $modal, $q, {
+        title: 'Confirm Required!',
+        body: confirmMessage,
+        success: function () {
+          HaCommand.startReplication(node.name, $scope.name).then(function (res) {
+            var msg = S("Replication of database {{database}} started correctly against node {{node}}").template({
+              database: $scope.name,
+              node: node.name
+            }).s;
+            Notification.push({content: msg, autoHide: true});
+          }).catch(function (err) {
+            Notification.push({content: err, error: true, autoHide: true});
+          })
+        }
+      });
+    }
+    $scope.stopReplicationTooltip = {
+      title: "Stop Replication"
+    }
+
+
+    $scope.stopReplication = function (node) {
+
+      var syncClusterLink = Database.getOWikiFor("SQL-HA-Stop-Replication.html");
+      var confirmMessage = S("The replication of database <b>{{database}}</b> will be interrupted against node <b>{{node}}</b>. Are you sure? <a class='btn btn-trasparent btn-help' target='_blank' href='{{link}}'> <i class='fa fa-question-circle'></i></a>").template({
+        database: $scope.name,
+        node: node.name,
+        link: syncClusterLink
+      }).s
+
+      Utilities.confirm($scope, $modal, $q, {
+        title: 'Confirm Required!',
+        body: confirmMessage,
+        success: function () {
+          HaCommand.stopReplication(node.name, $scope.name).then(function (res) {
+            var msg = S("Replication of database {{database}} stopped correctly against node {{node}}").template({
+              database: $scope.name,
+              node: node.name
+            }).s;
+            Notification.push({content: msg, autoHide: true});
+          }).catch(function (err) {
+            Notification.push({content: err, error: true, autoHide: true});
+          })
+        }
+      });
+    }
+
+    $scope.removeServerTooltip = {
+      title: "Remove server"
+    }
+    $scope.removeServer = function (s) {
+
+      var removeServerLink = Database.getOWikiFor("SQL-HA-Remove-Server.html");
+
+      var confirmMessage = S("Node <b>{{name}}</b> will be removed from the distributed configuration for database <b>{{database}}</b>. Are you sure? <a class='btn btn-trasparent btn-help' target='_blank' href='{{link}}'> <i class='fa fa-question-circle'></i></a>").template({
+        name: s.name,
+        database: $scope.name,
+        link: removeServerLink
+      }).s
+
+      Utilities.confirm($scope, $modal, $q, {
+        title: 'Confirm Required!',
+        body: confirmMessage,
+        success: function () {
+          HaCommand.removeNode($scope.name, s.name).then(function (res) {
+            var msg = S("Node {{name}} removed correctly from the distributed configuration for database {{database}}").template({
+              name: s.name,
+              database: $scope.name
+            }).s;
+            Notification.push({content: msg, autoHide: true});
+          }).catch(function (err) {
+            Notification.push({content: err, error: true, autoHide: true});
+          })
+        }
+      });
+
+    }
   }
-})
+)
 
 ee.controller('EventsController', function ($scope, Plugins, $modal, Cluster, Profiler, Notification, AgentService) {
 

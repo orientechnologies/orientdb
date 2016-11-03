@@ -16,6 +16,14 @@
              bs-tooltip>
             <i class="fa fa-question-circle"></i>
           </a>
+          <div class="panel-node-actions">
+            <div class="btn-toolbar">
+              <div class="btn-group pull-right">
+                <button class="btn btn-sm btn-primary" ng-click="saveConfig()"><i class="fa fa-save"></i> Save Config
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="panel-body">
 
@@ -183,10 +191,89 @@
                   </table>
                 </div>
               </div>
-              <div class="btn-toolbar">
-                <div class="btn-group pull-right">
-                  <button class="btn btn-sm btn-primary" ng-click="saveConfig()"><i class="fa fa-save"></i> Save Config
-                  </button>
+            </form>
+          </div>
+          <div class="col-md-6">
+            <form class="form-horizontal">
+              <div class="form-group">
+                <div class="panel panel-default">
+                  <div class="panel-heading">
+                    <b>Data Centers</b>
+                    <a href="{{ links['dataCenters'] }}" class="btn btn-trasparent btn-help"
+                       data-placement="right"
+                       data-title="Help"
+                       target="_blank"
+                       data-trigger="hover"
+                       data-animation="am-flip-x"
+                       bs-tooltip>
+                      <i class="fa fa-question-circle"></i>
+                    </a>
+                    <div class="panel-node-actions">
+                      <div class="btn-toolbar">
+                        <div class="btn-group pull-right">
+                          <button class="btn btn-sm btn-success" ng-click="addDataCenter()"><i
+                            class="fa fa-plus-circle"></i>
+                            Add DataCenter
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="panel-body">
+                  </div>
+
+                  <table class=" table table-striped  table-hover table-condensed ">
+                    <thead>
+                    <tr>
+                      <th>Data Center</th>
+                      <th>Write Quorum</th>
+                      <th>Servers
+                      </th>
+                      <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr ng-repeat="(k,v) in config.dataCenters">
+                      <td>
+                        {{k}} <a href="javascript:void(0)" ng-click="renameDataCenter(k)"><span
+                        class="fa fa-edit "></span></a>
+                      </td>
+                      <td>
+                        <ui-select tagging ng-model="v.writeQuorum" theme="selectize" title="Choose write quorum">
+                          <ui-select-match placeholder="Select write quorum...">{{$select.selected}}</ui-select-match>
+                          <ui-select-choices repeat="q in dcQuorums[k] | filter: $select.search">
+                            <div ng-bind-html="q | highlight: $select.search"></div>
+                          </ui-select-choices>
+                        </ui-select>
+                      </td>
+                      <td>
+
+                        <tags-input ng-model="serverTags[k]" placeholder="Add Server" add-from-autocomplete-only="true"
+                                    display-property="name" on-tag-added="serverAdded(k,$tag)"
+                                    on-tag-removed="serverRemoved(k,$tag)">
+                          <auto-complete min-length="0"
+                                         debounce-delay="0"
+                                         max-results-to-show="10" source="loadServers()"></auto-complete>
+                        </tags-input>
+
+                      </td>
+
+                      <td>
+                        <div class="btn-toolbar">
+                          <div class="btn-group">
+                            <button class="btn btn-xs btn-danger" ng-click="removeDataCenter(k)"
+                                    data-trigger="hover" data-placement="top"
+                                    data-container="body"
+                                    bs-tooltip="removeDataCenterTooltip"
+                            ><span
+                              class="fa fa-remove pointer"></span>
+                            </button>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </form>
@@ -236,7 +323,9 @@
               <div class="col-md-8">
                 <div class="btn-toolbar pull-right">
                   <div class="btn-group">
-                    <button class="btn btn-sm btn-default" ng-click="syncCluster(key,s.name)">
+                    <button class="btn btn-sm btn-default" data-trigger="hover" data-placement="top"
+                            data-container="body"
+                            bs-tooltip="syncClusterTooltip" ng-click="syncCluster(key,s.name)">
                       <i class="fa fa-refresh"></i>
                     </button>
                   </div>
