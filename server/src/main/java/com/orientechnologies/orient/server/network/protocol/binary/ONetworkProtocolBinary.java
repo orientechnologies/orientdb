@@ -19,21 +19,13 @@
  */
 package com.orientechnologies.orient.server.network.protocol.binary;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.UUID;
 import java.util.logging.Level;
 
 import com.orientechnologies.common.concur.lock.OInterruptedException;
@@ -41,153 +33,74 @@ import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.serialization.types.OBinarySerializer;
-import com.orientechnologies.common.serialization.types.OByteSerializer;
-import com.orientechnologies.common.serialization.types.ONullSerializer;
-import com.orientechnologies.common.util.OCommonConst;
-import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.message.OAddClusterRequest;
-import com.orientechnologies.orient.client.remote.message.OAddClusterResponse;
 import com.orientechnologies.orient.client.remote.message.OCeilingPhysicalPositionsRequest;
-import com.orientechnologies.orient.client.remote.message.OCeilingPhysicalPositionsResponse;
 import com.orientechnologies.orient.client.remote.message.OCleanOutRecordRequest;
-import com.orientechnologies.orient.client.remote.message.OCleanOutRecordResponse;
 import com.orientechnologies.orient.client.remote.message.OCloseRequest;
 import com.orientechnologies.orient.client.remote.message.OCommandRequest;
-import com.orientechnologies.orient.client.remote.message.OCommandResponse;
 import com.orientechnologies.orient.client.remote.message.OCommitRequest;
-import com.orientechnologies.orient.client.remote.message.OCommitResponse;
-import com.orientechnologies.orient.client.remote.message.OCommitResponse.OCreatedRecordResponse;
-import com.orientechnologies.orient.client.remote.message.OCommitResponse.OUpdatedRecordResponse;
 import com.orientechnologies.orient.client.remote.message.OConnectRequest;
-import com.orientechnologies.orient.client.remote.message.OConnectResponse;
 import com.orientechnologies.orient.client.remote.message.OCountRecordsRequest;
-import com.orientechnologies.orient.client.remote.message.OCountRecordsResponse;
 import com.orientechnologies.orient.client.remote.message.OCountRequest;
-import com.orientechnologies.orient.client.remote.message.OCountResponse;
 import com.orientechnologies.orient.client.remote.message.OCreateDatabaseRequest;
-import com.orientechnologies.orient.client.remote.message.OCreateDatabaseResponse;
 import com.orientechnologies.orient.client.remote.message.OCreateRecordRequest;
-import com.orientechnologies.orient.client.remote.message.OCreateRecordResponse;
 import com.orientechnologies.orient.client.remote.message.ODeleteRecordRequest;
-import com.orientechnologies.orient.client.remote.message.ODeleteRecordResponse;
 import com.orientechnologies.orient.client.remote.message.ODistributedStatusRequest;
-import com.orientechnologies.orient.client.remote.message.ODistributedStatusResponse;
 import com.orientechnologies.orient.client.remote.message.ODropClusterRequest;
-import com.orientechnologies.orient.client.remote.message.ODropClusterResponse;
 import com.orientechnologies.orient.client.remote.message.ODropDatabaseRequest;
-import com.orientechnologies.orient.client.remote.message.ODropDatabaseResponse;
 import com.orientechnologies.orient.client.remote.message.OErrorResponse;
 import com.orientechnologies.orient.client.remote.message.OExistsDatabaseRequest;
-import com.orientechnologies.orient.client.remote.message.OExistsDatabaseResponse;
 import com.orientechnologies.orient.client.remote.message.OFloorPhysicalPositionsRequest;
-import com.orientechnologies.orient.client.remote.message.OFloorPhysicalPositionsResponse;
 import com.orientechnologies.orient.client.remote.message.OFreezeDatabaseRequest;
-import com.orientechnologies.orient.client.remote.message.OFreezeDatabaseResponse;
 import com.orientechnologies.orient.client.remote.message.OGetClusterDataRangeRequest;
-import com.orientechnologies.orient.client.remote.message.OGetClusterDataRangeResponse;
 import com.orientechnologies.orient.client.remote.message.OGetGlobalConfigurationRequest;
-import com.orientechnologies.orient.client.remote.message.OGetGlobalConfigurationResponse;
-import com.orientechnologies.orient.client.remote.message.OListGlobalConfigurationsRequest;
-import com.orientechnologies.orient.client.remote.message.OListGlobalConfigurationsResponse;
 import com.orientechnologies.orient.client.remote.message.OGetRecordMetadataRequest;
-import com.orientechnologies.orient.client.remote.message.OGetRecordMetadataResponse;
 import com.orientechnologies.orient.client.remote.message.OGetSizeRequest;
-import com.orientechnologies.orient.client.remote.message.OServerInfoRequest;
-import com.orientechnologies.orient.client.remote.message.OServerInfoResponse;
-import com.orientechnologies.orient.client.remote.message.OGetSizeResponse;
 import com.orientechnologies.orient.client.remote.message.OHideRecordRequest;
-import com.orientechnologies.orient.client.remote.message.OHideRecordResponse;
 import com.orientechnologies.orient.client.remote.message.OHigherPhysicalPositionsRequest;
-import com.orientechnologies.orient.client.remote.message.OHigherPhysicalPositionsResponse;
 import com.orientechnologies.orient.client.remote.message.OImportRequest;
-import com.orientechnologies.orient.client.remote.message.OImportResponse;
 import com.orientechnologies.orient.client.remote.message.OIncrementalBackupRequest;
-import com.orientechnologies.orient.client.remote.message.OIncrementalBackupResponse;
-import com.orientechnologies.orient.client.remote.message.OListDatabasesReponse;
 import com.orientechnologies.orient.client.remote.message.OListDatabasesRequest;
+import com.orientechnologies.orient.client.remote.message.OListGlobalConfigurationsRequest;
 import com.orientechnologies.orient.client.remote.message.OLowerPhysicalPositionsRequest;
-import com.orientechnologies.orient.client.remote.message.OLowerPhysicalPositionsResponse;
 import com.orientechnologies.orient.client.remote.message.OOpenRequest;
-import com.orientechnologies.orient.client.remote.message.OOpenResponse;
 import com.orientechnologies.orient.client.remote.message.OReadRecordIfVersionIsNotLatestRequest;
-import com.orientechnologies.orient.client.remote.message.OReadRecordIfVersionIsNotLatestResponse;
 import com.orientechnologies.orient.client.remote.message.OReadRecordRequest;
-import com.orientechnologies.orient.client.remote.message.OReadRecordResponse;
 import com.orientechnologies.orient.client.remote.message.OReleaseDatabaseRequest;
 import com.orientechnologies.orient.client.remote.message.OReloadRequest;
-import com.orientechnologies.orient.client.remote.message.OReloadResponse;
 import com.orientechnologies.orient.client.remote.message.OReopenRequest;
-import com.orientechnologies.orient.client.remote.message.OReopenResponse;
 import com.orientechnologies.orient.client.remote.message.OSBTCreateTreeRequest;
-import com.orientechnologies.orient.client.remote.message.OSBTCreateTreeResponse;
 import com.orientechnologies.orient.client.remote.message.OSBTFetchEntriesMajorRequest;
-import com.orientechnologies.orient.client.remote.message.OSBTFetchEntriesMajorResponse;
 import com.orientechnologies.orient.client.remote.message.OSBTFirstKeyRequest;
-import com.orientechnologies.orient.client.remote.message.OSBTFirstKeyResponse;
 import com.orientechnologies.orient.client.remote.message.OSBTGetRealBagSizeRequest;
-import com.orientechnologies.orient.client.remote.message.OSBTGetRealBagSizeResponse;
 import com.orientechnologies.orient.client.remote.message.OSBTGetRequest;
-import com.orientechnologies.orient.client.remote.message.OSBTGetResponse;
+import com.orientechnologies.orient.client.remote.message.OServerInfoRequest;
 import com.orientechnologies.orient.client.remote.message.OSetGlobalConfigurationRequest;
-import com.orientechnologies.orient.client.remote.message.OSetGlobalConfigurationResponse;
 import com.orientechnologies.orient.client.remote.message.OShutdownRequest;
 import com.orientechnologies.orient.client.remote.message.OUpdateRecordRequest;
-import com.orientechnologies.orient.client.remote.message.OUpdateRecordResponse;
-import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.cache.OCommandCache;
-import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.command.OCommandRequestText;
-import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.OrientDBFactory.DatabaseType;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
-import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
-import com.orientechnologies.orient.core.exception.OTransactionAbortedException;
-import com.orientechnologies.orient.core.fetch.OFetchContext;
-import com.orientechnologies.orient.core.fetch.OFetchHelper;
-import com.orientechnologies.orient.core.fetch.OFetchListener;
-import com.orientechnologies.orient.core.fetch.OFetchPlan;
-import com.orientechnologies.orient.core.fetch.remote.ORemoteFetchContext;
-import com.orientechnologies.orient.core.fetch.remote.ORemoteFetchListener;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.sbtree.OTreeInternal;
-import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
-import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.ORecordMetadata;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineClusterException;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryServer;
@@ -195,9 +108,6 @@ import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolEx
 import com.orientechnologies.orient.enterprise.channel.binary.OTokenSecurityException;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.OServerInfo;
-import com.orientechnologies.orient.server.ShutdownHelper;
-import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
@@ -206,9 +116,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
-import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
-import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
 
 public class ONetworkProtocolBinary extends ONetworkProtocol {
   protected final Level    logClientExceptions;
@@ -291,32 +199,38 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       clientTxId = channel.readInt();
       // GET THE CONNECTION IF EXIST
       OClientConnection connection = server.getClientConnectionManager().getConnection(clientTxId, this);
-      if (isHandshaking(requestType)) {
-        handshakeRequest(connection, requestType, clientTxId);
-      } else if (isDistributed(requestType)) {
+      if (isDistributed(requestType)) {
         distributedRequest(connection, requestType, clientTxId);
       } else
         sessionRequest(connection, requestType, clientTxId);
-    } catch (Exception e) {
+    } catch (IOException e) {
       // if an exception arrive to this point we need to kill the current socket.
       sendShutdown();
       throw e;
     }
   }
 
-  private void handshakeRequest(OClientConnection connection, int requestType, int clientTxId) throws IOException {
+  public boolean shouldReadToken(OClientConnection connection, int requestType) {
+    if (connection == null) {
+      return !isHandshaking(requestType) || requestType == OChannelBinaryProtocol.REQUEST_DB_REOPEN;
+    } else {
+      return Boolean.TRUE.equals(connection.getTokenBased());
+    }
+  }
+
+  private void sessionRequest(OClientConnection connection, int requestType, int clientTxId) {
     long timer = 0;
+
+    timer = Orient.instance().getProfiler().startChrono();
+    OLogManager.instance().debug(this, "Request id:" + clientTxId + " type:" + requestType);
+
     try {
+      OBinaryRequest<? extends OBinaryResponse> request = createRequest(requestType);
+      if (request != null) {
+        byte[] tokenBytes = null;
 
-      timer = Orient.instance().getProfiler().startChrono();
-      OLogManager.instance().debug(this, "Request id:" + clientTxId + " type:" + requestType);
-
-      try {
-
-        OBinaryRequest<? extends OBinaryResponse> request = createRequest(requestType);
-        if (request != null) {
-          byte[] tokenBytes = null;
-          if (requestType == OChannelBinaryProtocol.REQUEST_DB_REOPEN) {
+        try {
+          if (shouldReadToken(connection, requestType)) {
             tokenBytes = channel.readBytes();
           }
           int protocolVersion = OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION;
@@ -326,14 +240,57 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
             serializationImpl = connection.getData().serializationImpl;
           }
           request.read(channel, protocolVersion, serializationImpl);
-          connection = onBeforeHandshakeRequest(connection, tokenBytes);
+        } catch (IOException e) {
+          OLogManager.instance().debug(this, "I/O Error on client clientId=%d reqType=%d", clientTxId, requestType, e);
+          sendShutdown();
+          return;
+        }
+        OBinaryResponse response;
+        try {
+          if (isHandshaking(requestType))
+            connection = onBeforeHandshakeRequest(connection, tokenBytes);
+          else
+            connection = onBeforeOperationalRequest(connection, tokenBytes);
           connection.getData().commandInfo = request.getDescription();
-          connection.setProtocol(this);
+          connection.setProtocol(this); // This is need for the request command
           if (request.requireServerUser()) {
             checkServerAccess(request.requiredServerRole(), connection);
           }
-          OBinaryResponse response = request.execute(connection.getExecutor());
-          if (response != null) {
+          response = request.execute(connection.getExecutor());
+        } catch (RuntimeException t) {
+
+          // This should be moved in the execution of the command that manipulate data
+          if (connection != null && connection.getDatabase() != null) {
+            final OSBTreeCollectionManager collectionManager = connection.getDatabase().getSbTreeCollectionManager();
+            if (collectionManager != null)
+              collectionManager.clearChangedIds();
+          }
+          
+          // TODO: Replace this with build error response
+          try {
+            okSent = true;
+            sendError(connection, clientTxId, t);
+          } catch (IOException e) {
+            OLogManager.instance().debug(this, "I/O Error on client clientId=%d reqType=%d", clientTxId, requestType, e);
+            sendShutdown();
+
+          }
+          return;
+        } finally {
+
+          // resetting transaction state. Commands are stateless and connection should be cleared
+          // otherwise reused connection (connections pool) may lead to unpredicted errors
+          if (connection != null && connection.getDatabase() != null
+              && connection.getDatabase().activateOnCurrentThread().getTransaction() != null) {
+            connection.getDatabase().activateOnCurrentThread();
+            connection.getDatabase().getTransaction().rollback();
+          }
+
+          requests++;
+          afterOperationRequest(connection);
+        }
+        if (response != null) {
+          try {
             beginResponse();
             try {
               sendOk(connection, clientTxId);
@@ -341,40 +298,30 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
             } finally {
               endResponse(connection);
             }
+          } catch (IOException e) {
+            OLogManager.instance().debug(this, "I/O Error on client clientId=%d reqType=%d", clientTxId, requestType, e);
+            sendShutdown();
           }
-
-        } else {
-          OLogManager.instance().error(this, "Request not supported. Code: " + requestType);
-          channel.clearInput();
-          sendErrorOrDropConnection(connection, clientTxId,
-              new ONetworkProtocolException("Request not supported. Code: " + requestType));
 
         }
         tokenConnection = Boolean.TRUE.equals(connection.getTokenBased());
-
-      } finally {
-        requests++;
-        afterOperationRequest(connection);
+      } else {
+        OLogManager.instance().error(this, "Request not supported. Code: " + requestType);
+        handleConnectionError(connection, new ONetworkProtocolException("Request not supported. Code: " + requestType));
+        sendShutdown();
       }
 
-    } catch (IOException e) {
-      OLogManager.instance().debug(this, "I/O Error on client clientId=%d reqType=%d", clientTxId, requestType, e);
-      sendShutdown();
-    } catch (OException e) {
-      sendErrorOrDropConnection(connection, clientTxId, e);
-    } catch (RuntimeException e) {
-      sendErrorOrDropConnection(connection, clientTxId, e);
-    } catch (Throwable t) {
-      sendErrorOrDropConnection(connection, clientTxId, t);
     } finally {
+
       Orient.instance().getProfiler().stopChrono("server.network.requests", "Total received requests", timer,
           "server.network.requests");
 
       OSerializationThreadLocal.INSTANCE.get().clear();
     }
+
   }
 
-  private void distributedRequest(OClientConnection connection, int requestType, int clientTxId) throws IOException {
+  private void distributedRequest(OClientConnection connection, int requestType, int clientTxId) {
     long timer = 0;
     try {
 
@@ -409,73 +356,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
   }
 
-  private void sessionRequest(OClientConnection connection, int requestType, int clientTxId) throws IOException {
-    long timer = 0;
-    try {
-
-      timer = Orient.instance().getProfiler().startChrono();
-      OLogManager.instance().debug(this, "Request id:" + clientTxId + " type:" + requestType);
-
-      try {
-        connection.setProtocol(this); // This is need for the request command
-        OBinaryRequest<? extends OBinaryResponse> request = createRequest(requestType);
-        if (request != null) {
-          byte[] tokenBytes = null;
-          if (connection != null && Boolean.TRUE.equals(connection.getTokenBased()) && !isHandshaking(requestType)) {
-            tokenBytes = channel.readBytes();
-          }
-          connection.getData().commandInfo = request.getDescription();
-          request.read(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
-          connection = onBeforeOperationalRequest(connection, tokenBytes);
-          if (request.requireServerUser()) {
-            checkServerAccess(request.requiredServerRole(), connection);
-          }
-          OBinaryResponse response = request.execute(connection.getExecutor());
-          if (response != null) {
-            beginResponse();
-            try {
-              sendOk(connection, clientTxId);
-              response.write(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
-            } finally {
-              endResponse(connection);
-            }
-          }
-
-        } else {
-          OLogManager.instance().error(this, "Request not supported. Code: " + requestType);
-          channel.clearInput();
-          sendErrorOrDropConnection(connection, clientTxId,
-              new ONetworkProtocolException("Request not supported. Code: " + requestType));
-
-        }
-      } catch (RuntimeException e) {
-        // This should be moved in the execution of the command that manipulate data
-        if (connection != null && connection.getDatabase() != null) {
-          final OSBTreeCollectionManager collectionManager = connection.getDatabase().getSbTreeCollectionManager();
-          if (collectionManager != null)
-            collectionManager.clearChangedIds();
-        }
-
-        throw e;
-      } finally {
-        requests++;
-        afterOperationRequest(connection);
-      }
-
-    } catch (IOException e) {
-      OLogManager.instance().debug(this, "I/O Error on client clientId=%d reqType=%d", clientTxId, requestType, e);
-      sendShutdown();
-    } catch (Throwable t) {
-      sendErrorOrDropConnection(connection, clientTxId, t);
-    } finally {
-      Orient.instance().getProfiler().stopChrono("server.network.requests", "Total received requests", timer,
-          "server.network.requests");
-
-      OSerializationThreadLocal.INSTANCE.get().clear();
-    }
-  }
-
-  private OClientConnection onBeforeHandshakeRequest(OClientConnection connection, byte[] tokenBytes) throws IOException {
+  private OClientConnection onBeforeHandshakeRequest(OClientConnection connection, byte[] tokenBytes) {
     try {
       if (requestType != OChannelBinaryProtocol.REQUEST_DB_REOPEN) {
         if (clientTxId >= 0 && connection == null
@@ -506,11 +387,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         server.getClientConnectionManager().disconnect(connection);
       ODatabaseRecordThreadLocal.INSTANCE.remove();
       throw e;
-    } catch (IOException e) {
-      if (connection != null)
-        server.getClientConnectionManager().disconnect(connection);
-      ODatabaseRecordThreadLocal.INSTANCE.remove();
-      throw e;
     }
 
     connection.statsUpdate();
@@ -519,7 +395,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     return connection;
   }
 
-  private OClientConnection onBeforeOperationalRequest(OClientConnection connection, byte[] tokenBytes) throws IOException {
+  private OClientConnection onBeforeOperationalRequest(OClientConnection connection, byte[] tokenBytes) {
     try {
       if (connection == null && requestType == OChannelBinaryProtocol.REQUEST_DB_CLOSE)
         return null;
@@ -558,11 +434,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         server.getClientConnectionManager().disconnect(connection);
       ODatabaseRecordThreadLocal.INSTANCE.remove();
       throw e;
-    } catch (IOException e) {
-      if (connection != null)
-        server.getClientConnectionManager().disconnect(connection);
-      ODatabaseRecordThreadLocal.INSTANCE.remove();
-      throw e;
     }
     return connection;
   }
@@ -580,42 +451,50 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     }
   }
 
-  protected void afterOperationRequest(OClientConnection connection) throws IOException {
+  protected void afterOperationRequest(OClientConnection connection) {
     OServerPluginHelper.invokeHandlerCallbackOnAfterClientRequest(server, connection, (byte) requestType);
 
     if (connection != null) {
+      setDataCommandInfo(connection, "Listening");
       connection.endOperation();
       if (connection.isDisconnectOnAfter()) {
         server.getClientConnectionManager().disconnect(connection);
       }
     }
-    setDataCommandInfo(connection, "Listening");
   }
 
   private OBinaryRequest<? extends OBinaryResponse> createRequest(int requestType) {
     OBinaryRequest<? extends OBinaryResponse> request = null;
     switch (requestType) {
+
     case OChannelBinaryProtocol.REQUEST_DB_REOPEN:
       request = new OReopenRequest();
       break;
+
     case OChannelBinaryProtocol.REQUEST_SHUTDOWN:
       request = new OShutdownRequest();
       break;
+
     case OChannelBinaryProtocol.REQUEST_DB_OPEN:
       request = new OOpenRequest();
       break;
+
     case OChannelBinaryProtocol.REQUEST_CONNECT:
       request = new OConnectRequest();
       break;
+
     case OChannelBinaryProtocol.REQUEST_DB_LIST:
       request = new OListDatabasesRequest();
       break;
+
     case OChannelBinaryProtocol.REQUEST_SERVER_INFO:
       request = new OServerInfoRequest();
       break;
+
     case OChannelBinaryProtocol.REQUEST_DB_RELOAD:
       request = new OReloadRequest();
       break;
+
     case OChannelBinaryProtocol.REQUEST_DB_CREATE:
       request = new OCreateDatabaseRequest();
       break;
@@ -905,13 +784,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   }
 
   protected void endResponse(OClientConnection connection) throws IOException {
-    // resetting transaction state. Commands are stateless and connection should be cleared
-    // otherwise reused connection (connections pool) may lead to unpredicted errors
-    if (connection != null && connection.getDatabase() != null
-        && connection.getDatabase().activateOnCurrentThread().getTransaction() != null) {
-      connection.getDatabase().activateOnCurrentThread();
-      connection.getDatabase().getTransaction().rollback();
-    }
     channel.flush();
     channel.releaseWriteLock();
   }
@@ -945,36 +817,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
   public static String getRecordSerializerName(OClientConnection connection) {
     return connection.getData().serializationImpl;
-  }
-
-  /**
-   * Due to protocol thread is daemon, shutdown should be executed in separate thread to guarantee its complete execution.
-   * <p/>
-   * This method never returns normally.
-   */
-  private void runShutdownInNonDaemonThread() {
-    Thread shutdownThread = new Thread("OrientDB server shutdown thread") {
-      public void run() {
-        server.shutdown();
-        ShutdownHelper.shutdown(1);
-      }
-    };
-    shutdownThread.setDaemon(false);
-    shutdownThread.start();
-    try {
-      shutdownThread.join();
-    } catch (InterruptedException ignored) {
-      Thread.currentThread().interrupt();
-    }
-  }
-
-  private boolean isConnectionAlive(OClientConnection connection) {
-    if (connection == null || connection.getDatabase() == null) {
-      // CONNECTION/DATABASE CLOSED, KILL IT
-      server.getClientConnectionManager().kill(connection);
-      return false;
-    }
-    return true;
   }
 
   @Override
@@ -1018,22 +860,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     return "binary";
   }
 
-  public void fillRecord(OClientConnection connection, final ORecordId rid, final byte[] buffer, final int version,
-      final ORecord record) {
-    String dbSerializerName = "";
-    if (connection.getDatabase() != null)
-      dbSerializerName = connection.getDatabase().getSerializer().toString();
-
-    String name = getRecordSerializerName(connection);
-    if (ORecordInternal.getRecordType(record) == ODocument.RECORD_TYPE && !dbSerializerName.equals(name)) {
-      ORecordInternal.fill(record, rid, version, null, true);
-      ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(name);
-      ser.fromStream(buffer, record, null);
-      record.setDirty();
-    } else
-      ORecordInternal.fill(record, rid, version, buffer, true);
-  }
-
   protected void sendErrorOrDropConnection(OClientConnection connection, final int iClientTxId, final Throwable t)
       throws IOException {
     if (okSent || requestType == OChannelBinaryProtocol.REQUEST_DB_CLOSE) {
@@ -1042,12 +868,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     } else {
       okSent = true;
       sendError(connection, iClientTxId, t);
-    }
-  }
-
-  protected void checkStorageExistence(final String iDatabaseName) {
-    if (server.existsDatabase(iDatabaseName)) {
-      throw new ODatabaseException("Database named '" + iDatabaseName + "' already exists");
     }
   }
 

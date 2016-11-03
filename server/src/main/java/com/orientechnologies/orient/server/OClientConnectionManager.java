@@ -124,7 +124,7 @@ public class OClientConnectionManager {
    * @return new connection
    * @throws IOException
    */
-  public OClientConnection connect(final ONetworkProtocol iProtocol) throws IOException {
+  public OClientConnection connect(final ONetworkProtocol iProtocol) {
 
     final OClientConnection connection;
 
@@ -167,8 +167,7 @@ public class OClientConnectionManager {
     return connection;
   }
 
-  public OClientConnection reConnect(final ONetworkProtocol iProtocol, final byte[] tokenBytes, final OToken token)
-      throws IOException {
+  public OClientConnection reConnect(final ONetworkProtocol iProtocol, final byte[] tokenBytes, final OToken token) {
 
     final OClientConnection connection;
     connection = new OClientConnection(connectionSerial.incrementAndGet(), iProtocol);

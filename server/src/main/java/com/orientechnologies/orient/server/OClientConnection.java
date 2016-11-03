@@ -57,7 +57,7 @@ public class OClientConnection {
   private boolean                            disconnectOnAfter;
   private OBinaryRequestExecutor             executor;
 
-  public OClientConnection(final int id, final ONetworkProtocol protocol) throws IOException {
+  public OClientConnection(final int id, final ONetworkProtocol protocol) {
     this.id = id;
     this.protocol = protocol;
     this.protocols.add(protocol);
