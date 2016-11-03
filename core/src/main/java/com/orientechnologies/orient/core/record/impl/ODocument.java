@@ -271,7 +271,7 @@ import java.util.stream.Collectors;
     if (_status == ORecordElement.STATUS.LOADED && _source != null && ODatabaseRecordThreadLocal.INSTANCE.isDefined()
         && !ODatabaseRecordThreadLocal.INSTANCE.get().isClosed()) {
       // DESERIALIZE FIELD NAMES ONLY (SUPPORTED ONLY BY BINARY SERIALIZER)
-      final String[] fieldNames = _recordFormat.getFieldNames(_source);
+      final String[] fieldNames = _recordFormat.getFieldNames(this, _source);
       if (fieldNames != null) {
         Set<String> result = new HashSet<String>();
         for (String s : fieldNames) {
@@ -1043,32 +1043,6 @@ import java.util.stream.Collectors;
         names.add(entry.getKey());
     }
     return names.toArray(new String[names.size()]);
-  }
-
-  public Set<String> getPropertyNames() {
-    checkForLoading();
-
-    if (_status == ORecordElement.STATUS.LOADED && _source != null && ODatabaseRecordThreadLocal.INSTANCE.isDefined()
-        && !ODatabaseRecordThreadLocal.INSTANCE.get().isClosed()) {
-      // DESERIALIZE FIELD NAMES ONLY (SUPPORTED ONLY BY BINARY SERIALIZER)
-      final String[] fieldNames = _recordFormat.getFieldNames(this,_source);
-      if (fieldNames != null) {
-        return arrayToSet(fieldNames);
-      }
-    }
-
-    checkForFields();
-
-    if (_fields == null || _fields.size() == 0)
-      return Collections.EMPTY_SET;
-    final List<String> names = new ArrayList<String>(_fields.size());
-    for (Entry<String, ODocumentEntry> entry : _fields.entrySet()) {
-      if (entry.getValue().exist())
-        names.add(entry.getKey());
-    }
-    Set<String> result = new HashSet<>();
-    result.addAll(names);
-    return result;
   }
 
   private Set<String> arrayToSet(String[] fieldNames) {
