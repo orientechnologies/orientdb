@@ -694,13 +694,12 @@ public class OSBTree<K, V> extends ODurableComponent {
           try {
             ONullBucket<V> nullBucket = new ONullBucket<V>(nullCacheEntry, valueSerializer, false);
             OSBTreeValue<V> treeValue = nullBucket.getValue();
-            if (treeValue == null) {
-              endAtomicOperation(false, null);
-              return null;
-            }
 
-            removedValue = readValue(treeValue, atomicOperation);
-            nullBucket.removeValue();
+            if (treeValue != null) {
+              removedValue = readValue(treeValue, atomicOperation);
+              nullBucket.removeValue();
+            } else
+              removedValue = null;
           } finally {
             nullCacheEntry.releaseExclusiveLock();
             releasePage(atomicOperation, nullCacheEntry);
@@ -708,7 +707,6 @@ public class OSBTree<K, V> extends ODurableComponent {
 
           if (removedValue != null)
             setSize(size() - 1, atomicOperation);
-
         }
 
         endAtomicOperation(false, null);

@@ -437,34 +437,37 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
 
           final long pageIndex = getPageIndex(bucketPointer);
           final V removed;
+          final boolean found;
 
           final OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false);
           cacheEntry.acquireExclusiveLock();
           try {
             final OHashIndexBucket<K, V> bucket = new OHashIndexBucket<K, V>(cacheEntry, keySerializer, valueSerializer, keyTypes);
             final int positionIndex = bucket.getIndex(hashCode, key);
-            if (positionIndex < 0) {
-              endAtomicOperation(false, null);
-              return null;
-            }
+            found = positionIndex >= 0;
 
-            removed = bucket.deleteEntry(positionIndex).value;
-            sizeDiff--;
+            if (found) {
+              removed = bucket.deleteEntry(positionIndex).value;
+              sizeDiff--;
+            } else
+              removed = null;
           } finally {
             cacheEntry.releaseExclusiveLock();
             releasePage(atomicOperation, cacheEntry);
           }
 
-          if (nodePath.parent != null) {
-            final int hashMapSize = 1 << nodePath.nodeLocalDepth;
+          if (found) {
+            if (nodePath.parent != null) {
+              final int hashMapSize = 1 << nodePath.nodeLocalDepth;
 
-            final boolean allMapsContainSameBucket = checkAllMapsContainSameBucket(directory.getNode(nodePath.nodeIndex),
-                hashMapSize);
-            if (allMapsContainSameBucket)
-              mergeNodeToParent(nodePath);
+              final boolean allMapsContainSameBucket = checkAllMapsContainSameBucket(directory.getNode(nodePath.nodeIndex),
+                  hashMapSize);
+              if (allMapsContainSameBucket)
+                mergeNodeToParent(nodePath);
+            }
+
+            changeSize(sizeDiff, atomicOperation);
           }
-
-          changeSize(sizeDiff, atomicOperation);
 
           endAtomicOperation(false, null);
           return removed;
