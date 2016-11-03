@@ -23,6 +23,8 @@ public class OUpdateExecutionPlanner {
   protected boolean                 returnAfter  = false;
   protected boolean                 returnCount  = false;
 
+  protected boolean updateEdge = false;
+
   protected OProjection returnProjection;
 
   public OStorage.LOCKING_STRATEGY lockRecord = null;
@@ -31,6 +33,9 @@ public class OUpdateExecutionPlanner {
   public OTimeout timeout;
 
   public OUpdateExecutionPlanner(OUpdateStatement oUpdateStatement) {
+    if (oUpdateStatement instanceof OUpdateEdgeStatement) {
+      updateEdge = true;
+    }
     this.target = oUpdateStatement.getTarget().copy();
     this.whereClause = oUpdateStatement.getWhereClause() == null ? null : oUpdateStatement.getWhereClause().copy();
     this.operations = oUpdateStatement.getOperations() == null ?
@@ -51,6 +56,9 @@ public class OUpdateExecutionPlanner {
     OUpdateExecutionPlan result = new OUpdateExecutionPlan(ctx);
 
     handleTarget(result, ctx, this.target, this.whereClause, this.timeout);
+    if(updateEdge){
+      result.chain(new CheckRecordTypeStep(ctx, "E"));
+    }
     handleUpsert(result, ctx, this.target, this.whereClause, this.upsert);
     handleTimeout(result, ctx, this.timeout);
     convertToModifiableResult(result, ctx);
@@ -141,6 +149,9 @@ public class OUpdateExecutionPlanner {
         switch (op.getType()) {
         case OUpdateOperations.TYPE_SET:
           plan.chain(new UpdateSetStep(op.getUpdateItems(), ctx));
+          if(updateEdge){
+            plan.chain(new UpdateEdgePointersStep( ctx));
+          }
           break;
         case OUpdateOperations.TYPE_REMOVE:
           plan.chain(new UpdateRemoveStep(op.getUpdateRemoveItems(), ctx));
