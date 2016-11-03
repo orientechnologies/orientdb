@@ -63,7 +63,7 @@ import java.util.zip.ZipOutputStream;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 28.03.13
  */
-public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements OFreezableStorageComponent {
+public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
   private static String[]                                    ALL_FILE_EXTENSIONS = { ".ocf", ".pls", ".pcl", ".oda", ".odh", ".otx",
       ".ocs", ".oef", ".oem", ".oet", ".fl", ODiskWriteAheadLog.WAL_SEGMENT_EXTENSION, ODiskWriteAheadLog.MASTER_RECORD_EXTENSION,

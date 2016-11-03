@@ -32,6 +32,11 @@ public class OCloseRequest implements OBinaryRequest<OBinaryResponse> {
   }
   
   @Override
+  public boolean requireDatabaseSession() {
+    return false;
+  }
+  
+  @Override
   public OBinaryResponse createResponse() {
     return null;
   }

@@ -48,6 +48,11 @@ public class ODropDatabaseRequest implements OBinaryRequest<ODropDatabaseRespons
   }
 
   @Override
+  public boolean requireDatabaseSession() {
+    return false;
+  }
+
+  @Override
   public String requiredServerRole() {
     return "database.drop";
   }

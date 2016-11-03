@@ -214,7 +214,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     if (connection == null) {
       return !isHandshaking(requestType) || requestType == OChannelBinaryProtocol.REQUEST_DB_REOPEN;
     } else {
-      return Boolean.TRUE.equals(connection.getTokenBased());
+      return Boolean.TRUE.equals(connection.getTokenBased()) && !isHandshaking(requestType);
     }
   }
 
@@ -251,21 +251,28 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
             connection = onBeforeHandshakeRequest(connection, tokenBytes);
           else
             connection = onBeforeOperationalRequest(connection, tokenBytes);
+
           connection.getData().commandInfo = request.getDescription();
           connection.setProtocol(this); // This is need for the request command
+
           if (request.requireServerUser()) {
             checkServerAccess(request.requiredServerRole(), connection);
           }
+
+          if (request.requireDatabaseSession()) {
+            if (connection == null || connection.getDatabase() == null)
+              throw new ODatabaseException("Required database session");
+          }
+
           response = request.execute(connection.getExecutor());
         } catch (RuntimeException t) {
-
           // This should be moved in the execution of the command that manipulate data
           if (connection != null && connection.getDatabase() != null) {
             final OSBTreeCollectionManager collectionManager = connection.getDatabase().getSbTreeCollectionManager();
             if (collectionManager != null)
               collectionManager.clearChangedIds();
           }
-          
+
           // TODO: Replace this with build error response
           try {
             okSent = true;
@@ -756,7 +763,13 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       objectOutputStream.close();
 
       OBinaryResponse error = new OErrorResponse(messages, result);
-      error.write(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
+      int protocolVersion = OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION;
+      String serializationImpl = ORecordSerializerFactory.instance().getDefaultRecordSerializer().toString();
+      if (connection != null) {
+        protocolVersion = connection.getData().protocolVersion;
+        serializationImpl = connection.getData().serializationImpl;
+      }
+      error.write(channel, protocolVersion, serializationImpl);
       channel.flush();
 
       if (OLogManager.instance().isLevelEnabled(logClientExceptions)) {

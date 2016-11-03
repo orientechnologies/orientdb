@@ -54,7 +54,12 @@ public class OSetGlobalConfigurationRequest implements OBinaryRequest<OSetGlobal
 
   public OSetGlobalConfigurationResponse createResponse() {
     return new OSetGlobalConfigurationResponse();
-  };
+  }
+
+  @Override
+  public boolean requireDatabaseSession() {
+    return false;
+  }
 
   @Override
   public OBinaryResponse execute(OBinaryRequestExecutor executor) {

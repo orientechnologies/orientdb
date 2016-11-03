@@ -45,6 +45,11 @@ public class OExistsDatabaseRequest implements OBinaryRequest<OExistsDatabaseRes
   }
 
   @Override
+  public boolean requireDatabaseSession() {
+    return false;
+  }
+
+  @Override
   public String requiredServerRole() {
     return "database.exists";
   }

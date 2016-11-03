@@ -627,10 +627,8 @@ public class OServer {
   /**
    * Authenticate a server user.
    *
-   * @param iUserName
-   *          Username to authenticate
-   * @param iPassword
-   *          Password in clear
+   * @param iUserName Username to authenticate
+   * @param iPassword Password in clear
    * @return true if authentication is ok, otherwise false
    */
   public boolean authenticate(final String iUserName, final String iPassword, final String iResourceToCheck) {
@@ -667,8 +665,7 @@ public class OServer {
   /**
    * Checks if a server user is allowed to operate with a resource.
    *
-   * @param iUserName
-   *          Username to authenticate
+   * @param iUserName Username to authenticate
    * @return true if authentication is ok, otherwise false
    */
   public boolean isAllowed(final String iUserName, final String iResourceToCheck) {
@@ -829,7 +826,9 @@ public class OServer {
   }
 
   public ODatabaseDocumentInternal openDatabase(final String iDbUrl, final OToken iToken) {
-    return databases.openNoAutheticate(iDbUrl, iToken.getUserName(), OSecurityServerUser.class);
+    ODatabaseDocumentInternal database = databases.openNoAutheticate(iDbUrl, null, OSecurityServerUser.class);
+    database.setUser(iToken.getUser(database));
+    return database;
   }
 
   public ODatabaseDocumentInternal openDatabase(final String iDbUrl, final String user, final String password) {

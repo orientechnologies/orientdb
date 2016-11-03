@@ -86,6 +86,7 @@ import com.orientechnologies.orient.client.remote.message.OReadRecordIfVersionIs
 import com.orientechnologies.orient.client.remote.message.OReadRecordRequest;
 import com.orientechnologies.orient.client.remote.message.OReadRecordResponse;
 import com.orientechnologies.orient.client.remote.message.OReleaseDatabaseRequest;
+import com.orientechnologies.orient.client.remote.message.OReleaseDatabaseResponse;
 import com.orientechnologies.orient.client.remote.message.OReloadRequest;
 import com.orientechnologies.orient.client.remote.message.OReloadResponse;
 import com.orientechnologies.orient.client.remote.message.OReopenRequest;
@@ -159,6 +160,7 @@ import com.orientechnologies.orient.server.network.protocol.binary.OAbstractComm
 import com.orientechnologies.orient.server.network.protocol.binary.OAsyncCommandResultListener;
 import com.orientechnologies.orient.server.network.protocol.binary.OCommandCacheRemoteResultListener;
 import com.orientechnologies.orient.server.network.protocol.binary.OLiveCommandResultListener;
+import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 import com.orientechnologies.orient.server.network.protocol.binary.OSyncCommandResultListener;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
@@ -180,9 +182,10 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   public OListDatabasesReponse executeListDatabases(OListDatabasesRequest request) {
 
     Set<String> dbs = server.listDatabases();
+    String listener = server.getListenerByProtocol(ONetworkProtocolBinary.class).getInboundAddr().toString();
     Map<String, String> toSend = new HashMap<String, String>();
     for (String dbName : dbs) {
-      toSend.put(dbName, dbName);
+      toSend.put(dbName, "remote:" + listener + "/" + dbName);
     }
     return new OListDatabasesReponse(toSend);
   }
@@ -501,8 +504,12 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     int result;
     ODatabaseDocumentInternal database = connection.getDatabase();
     try {
-      database.delete(request.getRid(), request.getVersion());
-      result = 1;
+      ORecord record = database.load(request.getRid());
+      if (record != null) {
+        database.delete(request.getRid(), request.getVersion());
+        result = 1;
+      } else
+        result = 0;
     } catch (ORecordNotFoundException e) {
       // MAINTAIN COHERENT THE BEHAVIOR FOR ALL THE STORAGE TYPES
       if (e.getCause() instanceof OOfflineClusterException)
@@ -757,7 +764,7 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     OLogManager.instance().info(this, "Realising database '%s'", connection.getDatabase().getURL());
 
     connection.getDatabase().release();
-    return new ODeleteRecordResponse();
+    return new OReleaseDatabaseResponse();
 
   }
 

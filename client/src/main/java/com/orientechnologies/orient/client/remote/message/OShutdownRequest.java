@@ -59,6 +59,11 @@ public class OShutdownRequest implements OBinaryRequest<OBinaryResponse> {
   }
 
   @Override
+  public boolean requireDatabaseSession() {
+    return false;
+  }
+
+  @Override
   public OBinaryResponse execute(OBinaryRequestExecutor executor) {
     return executor.executeShutdown(this);
   }

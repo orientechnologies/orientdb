@@ -67,6 +67,11 @@ public class OFreezeDatabaseRequest implements OBinaryRequest<OFreezeDatabaseRes
   }
 
   @Override
+  public boolean requireDatabaseSession() {
+    return false;
+  }
+
+  @Override
   public OFreezeDatabaseResponse createResponse() {
     return new OFreezeDatabaseResponse();
   }

@@ -63,6 +63,11 @@ public class OReleaseDatabaseRequest implements OBinaryRequest<OReleaseDatabaseR
   }
 
   @Override
+  public boolean requireDatabaseSession() {
+    return false;
+  }
+
+  @Override
   public OReleaseDatabaseResponse createResponse() {
     return new OReleaseDatabaseResponse();
   }

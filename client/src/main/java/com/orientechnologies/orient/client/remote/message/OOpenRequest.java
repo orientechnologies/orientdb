@@ -135,6 +135,11 @@ public class OOpenRequest implements OBinaryRequest<OOpenResponse> {
   }
 
   @Override
+  public boolean requireDatabaseSession() {
+    return false;
+  }
+
+  @Override
   public OOpenResponse createResponse() {
     return new OOpenResponse();
   }

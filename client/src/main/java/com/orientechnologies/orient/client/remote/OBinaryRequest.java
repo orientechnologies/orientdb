@@ -27,6 +27,10 @@ public interface OBinaryRequest<T extends OBinaryResponse> {
     return false;
   }
 
+  default boolean requireDatabaseSession() {
+    return true;
+  }
+
   default String requiredServerRole() {
     return "";
   }

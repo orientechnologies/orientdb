@@ -232,9 +232,9 @@ public class OClientConnection {
       final String type = token.getDatabaseType();
       if (db != null && type != null) {
         if (data.serverUser) {
-          setDatabase(server.openDatabase(type + ":" + db, token.getUserName(), null, data, true));
+          setDatabase(server.openDatabase(db, token.getUserName(), null, data, true));
         } else
-          setDatabase((ODatabaseDocumentInternal) server.openDatabase(type + ":" + db, token));
+          setDatabase(server.openDatabase(db, token));
       }
     }
   }

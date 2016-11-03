@@ -128,6 +128,11 @@ public class OConnectRequest implements OBinaryRequest<OConnectResponse> {
   }
 
   @Override
+  public boolean requireDatabaseSession() {
+    return false;
+  }
+
+  @Override
   public OConnectResponse createResponse() {
     return new OConnectResponse();
   }

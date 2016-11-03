@@ -38,6 +38,11 @@ public class OListGlobalConfigurationsRequest implements OBinaryRequest<OListGlo
   public String getDescription() {
     return "List Config";
   }
+  
+  @Override
+  public boolean requireDatabaseSession() {
+    return false;
+  }
 
   @Override
   public OListGlobalConfigurationsResponse createResponse() {

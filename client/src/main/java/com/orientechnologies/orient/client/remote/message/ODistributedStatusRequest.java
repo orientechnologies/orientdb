@@ -60,6 +60,11 @@ public class ODistributedStatusRequest implements OBinaryRequest<ODistributedSta
   }
 
   @Override
+  public boolean requireDatabaseSession() {
+    return false;
+  }
+
+  @Override
   public ODistributedStatusResponse createResponse() {
     return new ODistributedStatusResponse();
   }

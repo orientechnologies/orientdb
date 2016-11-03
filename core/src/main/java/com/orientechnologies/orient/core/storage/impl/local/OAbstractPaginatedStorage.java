@@ -99,8 +99,8 @@ import java.util.zip.ZipOutputStream;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 28.03.13
  */
-public abstract class OAbstractPaginatedStorage extends OStorageAbstract
-    implements OLowDiskSpaceListener, OFullCheckpointRequestListener, OIdentifiableStorage, OBackgroundExceptionListener {
+public abstract class OAbstractPaginatedStorage extends OStorageAbstract implements OLowDiskSpaceListener,
+    OFullCheckpointRequestListener, OIdentifiableStorage, OBackgroundExceptionListener, OFreezableStorageComponent {
   private static final int RECORD_LOCK_TIMEOUT         = OGlobalConfiguration.STORAGE_RECORD_LOCK_TIMEOUT.getValueAsInteger();
   private static final int WAL_RESTORE_REPORT_INTERVAL = 30 * 1000; // milliseconds
 

@@ -158,17 +158,22 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
           return superUser;
       }
 
+      List<OSecurityAuthenticator> active = new ArrayList<>();
       synchronized (authenticatorsList) {
         // Walk through the list of OSecurityAuthenticators.
         for (OSecurityAuthenticator sa : authenticatorsList) {
           if (sa.isEnabled()) {
-            String principal = sa.authenticate(username, password);
-
-            if (principal != null)
-              return principal;
+            active.add(sa);
           }
         }
       }
+      for (OSecurityAuthenticator sa : active) {
+        String principal = sa.authenticate(username, password);
+
+        if (principal != null)
+          return principal;
+      }
+      
     } catch (Exception ex) {
       OLogManager.instance().error(this, "ODefaultServerSecurity.authenticate() Exception: %s", ex.getMessage());
     }
