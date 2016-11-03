@@ -210,11 +210,11 @@ public class PageCacheTest {
     verifyStep(vectors, 19);
 
     // cached at this point for tiny and lru
-    atomicOperation.getChanges(0, 0).setByteValue(page0.getCachePointer().getSharedBuffer(), (byte) 0, 0);
+    page0.getChanges().setByteValue(page0.getCachePointer().getSharedBuffer(), (byte) 0, 0);
     // not cached at this point for tiny and lru
-    atomicOperation.getChanges(0, 1).setByteValue(page0.getCachePointer().getSharedBuffer(), (byte) 0, 0);
+    page1.getChanges().setByteValue(page0.getCachePointer().getSharedBuffer(), (byte) 0, 0);
     // completely new page, not cached
-    atomicOperation.getChanges(0, 6).setByteValue(page0.getCachePointer().getSharedBuffer(), (byte) 0, 0);
+    page6.getChanges().setByteValue(page0.getCachePointer().getSharedBuffer(), (byte) 0, 0);
 
     atomicOperation.releasePage(page0);
     atomicOperation.releasePage(page0);
@@ -263,7 +263,7 @@ public class PageCacheTest {
     public OCacheEntry load(long fileId, long pageIndex, boolean checkPinnedPages, OWriteCache writeCache, int pageCount)
         throws IOException {
       final OCachePointer[] pointers = writeCache.load(fileId, pageIndex, pageCount, false, null);
-      return pointers == null || pointers.length == 0 ? null : new OCacheEntry(fileId, pageIndex, pointers[0], false);
+      return pointers == null || pointers.length == 0 ? null : new OCacheEntryImpl(fileId, pageIndex, pointers[0], false);
     }
 
     @Override
@@ -274,7 +274,7 @@ public class PageCacheTest {
     @Override
     public OCacheEntry allocateNewPage(long fileId, OWriteCache writeCache) throws IOException {
       final OCachePointer[] pointers = writeCache.load(fileId, writeCache.getFilledUpTo(fileId), 1, true, null);
-      return new OCacheEntry(fileId, pointers[0].getPageIndex(), pointers[0], false);
+      return new OCacheEntryImpl(fileId, pointers[0].getPageIndex(), pointers[0], false);
     }
 
     @Override
