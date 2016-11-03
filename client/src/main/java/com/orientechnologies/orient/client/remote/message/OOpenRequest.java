@@ -141,7 +141,7 @@ public class OOpenRequest implements OBinaryRequest<OOpenResponse> {
 
   @Override
   public OBinaryResponse execute(OBinaryRequestExecutor executor) {
-    throw new UnsupportedOperationException();
+    return executor.executeDatabaseOpen(this);
   }
 
 }

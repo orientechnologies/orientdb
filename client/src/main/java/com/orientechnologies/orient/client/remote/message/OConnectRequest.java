@@ -81,11 +81,11 @@ public class OConnectRequest implements OBinaryRequest<OConnectResponse> {
   public byte getCommand() {
     return OChannelBinaryProtocol.REQUEST_CONNECT;
   }
+
   @Override
   public String getDescription() {
     return "Connect";
   }
-  
 
   public String getClientId() {
     return clientId;
@@ -134,7 +134,7 @@ public class OConnectRequest implements OBinaryRequest<OConnectResponse> {
 
   @Override
   public OBinaryResponse execute(OBinaryRequestExecutor executor) {
-    throw new UnsupportedOperationException();
+    return executor.executeConnect(this);
   }
-  
+
 }

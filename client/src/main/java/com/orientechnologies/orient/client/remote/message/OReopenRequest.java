@@ -38,6 +38,6 @@ public class OReopenRequest implements OBinaryRequest<OReopenResponse> {
 
   @Override
   public OBinaryResponse execute(OBinaryRequestExecutor executor) {
-    throw new UnsupportedOperationException();
+    return executor.executeReopen(this);
   }
 }

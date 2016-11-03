@@ -60,7 +60,7 @@ public class OShutdownRequest implements OBinaryRequest<OBinaryResponse> {
 
   @Override
   public OBinaryResponse execute(OBinaryRequestExecutor executor) {
-    throw new UnsupportedOperationException();
+    return executor.executeShutdown(this);
   }
 
 }

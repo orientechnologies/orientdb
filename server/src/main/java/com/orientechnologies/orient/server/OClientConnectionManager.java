@@ -145,7 +145,7 @@ public class OClientConnectionManager {
    * @throws IOException
    */
   public OClientConnection connect(final ONetworkProtocol iProtocol, final OClientConnection connection, final byte[] tokenBytes,
-      final OTokenHandler handler) throws IOException {
+      final OTokenHandler handler) {
 
     final OToken token;
     try {

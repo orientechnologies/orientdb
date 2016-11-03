@@ -7,6 +7,7 @@ import com.orientechnologies.orient.client.remote.message.OCleanOutRecordRequest
 import com.orientechnologies.orient.client.remote.message.OCloseRequest;
 import com.orientechnologies.orient.client.remote.message.OCommandRequest;
 import com.orientechnologies.orient.client.remote.message.OCommitRequest;
+import com.orientechnologies.orient.client.remote.message.OConnectRequest;
 import com.orientechnologies.orient.client.remote.message.OCountRecordsRequest;
 import com.orientechnologies.orient.client.remote.message.OCountRequest;
 import com.orientechnologies.orient.client.remote.message.OCreateDatabaseRequest;
@@ -29,10 +30,12 @@ import com.orientechnologies.orient.client.remote.message.OIncrementalBackupRequ
 import com.orientechnologies.orient.client.remote.message.OListDatabasesRequest;
 import com.orientechnologies.orient.client.remote.message.OListGlobalConfigurationsRequest;
 import com.orientechnologies.orient.client.remote.message.OLowerPhysicalPositionsRequest;
+import com.orientechnologies.orient.client.remote.message.OOpenRequest;
 import com.orientechnologies.orient.client.remote.message.OReadRecordIfVersionIsNotLatestRequest;
 import com.orientechnologies.orient.client.remote.message.OReadRecordRequest;
 import com.orientechnologies.orient.client.remote.message.OReleaseDatabaseRequest;
 import com.orientechnologies.orient.client.remote.message.OReloadRequest;
+import com.orientechnologies.orient.client.remote.message.OReopenRequest;
 import com.orientechnologies.orient.client.remote.message.OSBTCreateTreeRequest;
 import com.orientechnologies.orient.client.remote.message.OSBTFetchEntriesMajorRequest;
 import com.orientechnologies.orient.client.remote.message.OSBTFirstKeyRequest;
@@ -40,6 +43,7 @@ import com.orientechnologies.orient.client.remote.message.OSBTGetRealBagSizeRequ
 import com.orientechnologies.orient.client.remote.message.OSBTGetRequest;
 import com.orientechnologies.orient.client.remote.message.OServerInfoRequest;
 import com.orientechnologies.orient.client.remote.message.OSetGlobalConfigurationRequest;
+import com.orientechnologies.orient.client.remote.message.OShutdownRequest;
 import com.orientechnologies.orient.client.remote.message.OUpdateRecordRequest;
 
 public interface OBinaryRequestExecutor {
@@ -123,5 +127,13 @@ public interface OBinaryRequestExecutor {
   OBinaryResponse executeImport(OImportRequest request);
 
   OBinaryResponse executeSetGlobalConfig(OSetGlobalConfigurationRequest request);
+
+  OBinaryResponse executeConnect(OConnectRequest request);
+
+  OBinaryResponse executeDatabaseOpen(OOpenRequest request);
+
+  OBinaryResponse executeShutdown(OShutdownRequest request);
+
+  OBinaryResponse executeReopen(OReopenRequest request);
 
 }
