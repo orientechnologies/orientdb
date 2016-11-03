@@ -81,7 +81,7 @@ public class OTruncateClassStatement extends ODDLStatement {
         for (OClass subclass : subclasses) {
           subclass.truncate();
           result = new OResultInternal();
-          result.setProperty("operation", "drop class");
+          result.setProperty("operation", "truncate class");
           result.setProperty("className", className.getStringValue());
           rs.add(result);
           invalidateCommandCache(subclass, db);

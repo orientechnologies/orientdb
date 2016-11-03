@@ -2,9 +2,21 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentAbstract;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
+import com.orientechnologies.orient.core.storage.OStorage;
+
+import java.io.IOException;
 import java.util.Map;
 
-public class OTruncateClusterStatement extends OStatement {
+public class OTruncateClusterStatement extends ODDLStatement {
 
   public OIdentifier clusterName;
   public OInteger    clusterNumber;
@@ -16,6 +28,53 @@ public class OTruncateClusterStatement extends OStatement {
 
   public OTruncateClusterStatement(OrientSql p, int id) {
     super(p, id);
+  }
+
+  @Override public OTodoResultSet executeDDL(OCommandContext ctx) {
+    ODatabaseDocumentAbstract database = (ODatabaseDocumentAbstract) ctx.getDatabase();
+    OInternalResultSet rs = new OInternalResultSet();
+
+    Integer clusterId = null;
+    if (clusterNumber != null) {
+      clusterId = clusterNumber.getValue().intValue();
+    } else {
+      clusterId = database.getClusterIdByName(clusterName.getStringValue());
+    }
+
+    if (clusterId < 0) {
+      throw new ODatabaseException("Cluster with name " + clusterName + " does not exist");
+    }
+
+    final OSchema schema = database.getMetadata().getSchema();
+    final OClass clazz = schema.getClassByClusterId(clusterId);
+    if (clazz == null) {
+      final OStorage storage = database.getStorage();
+      final com.orientechnologies.orient.core.storage.OCluster cluster = storage.getClusterById(clusterId);
+
+      if (cluster == null) {
+        throw new ODatabaseException("Cluster with name " + clusterName + " does not exist");
+      }
+
+      try {
+        database.checkForClusterPermissions(cluster.getName());
+        cluster.truncate();
+      } catch (IOException ioe) {
+        throw OException.wrapException(new ODatabaseException("Error during truncation of cluster with name " + clusterName), ioe);
+      }
+    } else {
+      String name = database.getClusterNameById(clusterId);
+      clazz.truncateCluster(name);
+    }
+
+    OResultInternal result = new OResultInternal();
+    result.setProperty("operation", "truncate cluster");
+    if (clusterName != null) {
+      result.setProperty("clusterName", clusterName.getStringValue());
+    }
+    result.setProperty("clusterId", clusterId);
+
+    rs.add(result);
+    return rs;
   }
 
   /**
