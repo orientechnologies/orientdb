@@ -1451,6 +1451,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
     }
   }
 
+  @SuppressWarnings("unchecked")
   private boolean doPut(K key, V value, OIndexEngine.Validator<K, V> validator, OAtomicOperation atomicOperation)
       throws IOException {
     int sizeDiff = 0;
@@ -1473,11 +1474,11 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
         final V oldValue = nullBucket.getValue();
 
         if (validator != null) {
-          final V result = validator.validate(null, oldValue, value);
-          if (result == OIndexEngine.Validator.Result.ignore())
+          final Object result = validator.validate(null, oldValue, value);
+          if (result == OIndexEngine.Validator.IGNORE)
             return false;
 
-          value = result;
+          value = (V) result;
         }
 
         if (oldValue != null)
@@ -1510,11 +1511,11 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
 
         if (validator != null) {
           final V oldValue = index > -1 ? bucket.getValue(index) : null;
-          final V result = validator.validate(key, oldValue, value);
-          if (result == OIndexEngine.Validator.Result.ignore())
+          final Object result = validator.validate(key, oldValue, value);
+          if (result == OIndexEngine.Validator.IGNORE)
             return false;
 
-          value = result;
+          value = (V) result;
         }
 
         if (index > -1) {
