@@ -306,3 +306,93 @@ graph.directive('c3Gauge', function ($http, $compile, $timeout, $rootScope) {
     link: linker
   }
 });
+
+
+graph.directive('c3DataCenter', function ($http, $compile, $timeout, $rootScope, $location) {
+  var linker = function ($scope, $element, $attrs) {
+
+
+    function getColor(dc, s) {
+
+
+      var colors = dc.servers.filter(function (ser) {
+        return ser.name === s;
+      }).map(function (s) {
+        switch (s.status) {
+          case "ONLINE" :
+            return "#5cb85c"
+            break
+          case "SYNCHRONIZING" :
+            return "#f0ad4e"
+            break
+          default:
+            return "#d9534f";
+        }
+      });
+      return colors.length > 0 ? colors[0] : "#d9534f";
+    };
+
+
+    function changeIfMyServer(dc, s, status) {
+      var found = false;
+      dc.servers.forEach(function (ser) {
+
+        if (ser.name === s) {
+          found = true;
+          ser.status = status;
+        }
+      })
+      return found;
+    }
+
+    var data = $scope.dc.servers.map(function (s) {
+      return [s.name, 50];
+    });
+    var chart = c3.generate({
+      bindto: $element[0],
+      tooltip: {
+        show: false
+      },
+      data: {
+        columns: data,
+        onclick: function (d, element) {
+          $location.path("/dashboard/general/" + d.id);
+        },
+        type: 'donut',
+        color: function (color, d) {
+          return getColor($scope.dc, d.id ? d.id : d);
+        }
+      },
+      donut: {
+        title: $scope.dc.name,
+        label: {
+          show: false
+        }
+      }
+    });
+
+    $scope.$on('server-status-change', function (evt, s) {
+
+
+      if (changeIfMyServer($scope.dc, s.name, s.status)) {
+        chart.unload({
+          ids: [s.name]
+        });
+        chart.load({
+          columns: [
+            [s.name, 50]
+          ],
+        });
+      }
+
+    })
+
+  }
+  return {
+    restrict: 'A',
+    scope: {
+      dc: '=dc',
+    },
+    link: linker
+  }
+});

@@ -467,6 +467,138 @@ ee.controller('ClusterOverviewController', function ($scope, $rootScope, ChartHe
 });
 
 
+ee.controller('DataCentersOverviewController', function ($scope, $rootScope, Cluster, ChartHelper) {
+
+
+  $scope.dcEnabled = true;
+  Cluster.stats().then(initDatabases).catch(function (error) {
+    Notification.push({content: error.data, error: true, autoHide: true});
+    $scope.polling = false;
+  })
+
+
+  function initDatabases(data) {
+    if (!$scope.databases) {
+      $scope.databases = {};
+      data.members.forEach(function (s) {
+        s.databases.forEach(function (db, idx) {
+          if (!$scope.databases[db]) {
+            $scope.databases[db] = [];
+          }
+          $scope.databases[db].push(s);
+          if (idx == 0) {
+            $scope.selectedDb = db;
+          }
+        })
+      })
+      $scope.statuses = data.databasesStatus || {};
+    }
+  }
+
+  $scope.$on('db-status', function (evt, statuses) {
+
+
+    $scope.dataCenters.forEach(function (dc) {
+      dc.servers.forEach(function (s) {
+        if (statuses[$scope.selectedDb][s.name]) {
+          if (s.status !== statuses[$scope.selectedDb][s.name]) {
+            s.status = statuses[$scope.selectedDb][s.name];
+            $scope.$broadcast('server-status-change', s)
+          }
+        }
+      })
+    })
+  })
+
+
+  $scope.$on('server-status-change', function (evt, s) {
+
+    if (s.status === 'ONLINE') {
+      $scope.onLineServers++;
+      $scope.syncServers--;
+    } else if (s.status === 'SYNCHRONIZING') {
+      $scope.syncServers++;
+      $scope.offLineServers--;
+    } else {
+      $scope.onLineServers--;
+      $scope.offLineServers++;
+    }
+  })
+  $scope.$watch('selectedDb', function (db) {
+
+    if (db) {
+      Cluster.database(db).then(function (data) {
+        $scope.config = data;
+        if (!data.dataCenters || Object.keys(data.dataCenters).length == 0) {
+          $scope.dcEnabled = false;
+          return;
+        }
+
+        $scope.dcCount = Object.keys(data.dataCenters).length;
+
+        var servers = $scope.databases[db];
+        var statuses = $scope.statuses;
+        var uniqueServers = [];
+        Object.keys($scope.config.clusters).forEach(function (c) {
+
+          if ($scope.config.clusters[c].servers) {
+            $scope.config.clusters[c].servers.forEach(function (s) {
+              if (uniqueServers.indexOf(s) == -1) {
+                uniqueServers.push(s);
+              }
+            })
+          }
+        })
+
+        uniqueServers = uniqueServers.filter(function (f) {
+          var found = false;
+          servers.forEach(function (s) {
+            if (s.name === f) {
+              found = true;
+            }
+          })
+          return f != "<NEW_NODE>" && !found;
+        })
+        uniqueServers.forEach(function (s) {
+
+          var status = "OFFLINE";
+
+          if (statuses[db][s.name]) {
+            status = statuses[db][s.name];
+          }
+          servers.push({name: s, status: status});
+        })
+        servers.forEach(function (s, idx, arr) {
+          if (statuses[db][s.name]) {
+            s.status = statuses[db][s.name];
+          }
+        })
+        $scope.onLineServers = 0;
+        $scope.offLineServers = 0;
+        $scope.syncServers = 0;
+        servers.forEach(function (s, idx, arr) {
+          if (s.status === "ONLINE") {
+            $scope.onLineServers++;
+          } else if (s.status === "SYNCHRONIZING") {
+            $scop.syncServers++;
+          } else {
+            $scope.offLineServers++;
+          }
+        })
+
+        $scope.dataCenters = Object.keys(data.dataCenters).map(function (dc) {
+          return {
+            name: dc,
+            servers: servers.filter(function (s) {
+              return (data.dataCenters[dc].servers.indexOf(s.name) != -1);
+            })
+          }
+        })
+      });
+    }
+  })
+})
+
 ee.controller("ProfilerController", ['$scope', 'Profiler', 'Cluster', 'Spinner', 'Notification', 'CommandCache', 'Database', 'scroller', 'AgentService', function ($scope, Profiler, Cluster, Spinner, Notification, CommandCache, Database, scroller, AgentService) {
 
 
@@ -842,7 +974,7 @@ ee.controller("AuditingController", ['$scope', 'Auditing', 'Cluster', 'Spinner',
       }
     }
     var db = DatabaseApi.get({database: $scope.db}, function (data) {
-      console.log(data);
+
       //modalScope.classes = Database.listClasses();
     })
     db.$promise.then(function (data) {

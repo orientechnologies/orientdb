@@ -13,6 +13,7 @@ body {
 #timeline {
   height: 300px;
 }
+
 .header {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.07);
   border: none;
@@ -688,6 +689,7 @@ ul.arrayrid > li {
   font-weight: 700;
   text-transform: uppercase;
 }
+
 .navbar .nav > li.user > a {
   text-transform: none;
 }
@@ -875,9 +877,11 @@ ul.arrayrid > li {
   right: 2px;
   position: absolute;
 }
+
 .btn-disabled {
   cursor: not-allowed;
 }
+
 .circle-container {
   position: absolute;
   top: 40%;
@@ -1243,8 +1247,21 @@ span.badge-edge {
   text-align: center;
 }
 
-
-
 [ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak, .ng-hide:not(.ng-hide-animate) {
   display: none !important;
+}
+
+.btn-circle {
+  width: 30px;
+  height: 30px;
+  padding: 6px 0;
+  border-radius: 15px;
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.428571429;
+}
+
+.dc-db-selection {
+  margin-top: 35px;
+  margin-bottom: 10px;
 }
