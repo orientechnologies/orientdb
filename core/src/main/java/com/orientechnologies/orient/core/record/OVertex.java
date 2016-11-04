@@ -38,5 +38,4 @@ public interface OVertex extends OElement{
   public OEdge addEdge(OVertex to, String type);
   public OEdge addEdge(OVertex to, OClass type);
 
-  public void delete();
 }

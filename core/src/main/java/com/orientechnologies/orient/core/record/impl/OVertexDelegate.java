@@ -24,16 +24,21 @@ import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.*;
+import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 import java.util.*;
@@ -171,16 +176,14 @@ public class OVertexDelegate implements OVertex {
     return addEdge(to, "E");
   }
 
-  private ODatabase getDatabase() {
-    return ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-  }
 
-  @Override public void delete() {
+  @Override public OVertexDelegate delete() {
     Iterable<OEdge> allEdges = this.getEdges(ODirection.BOTH);
     for (OEdge edge : allEdges) {
       edge.delete();
     }
     element.delete();
+    return this;
   }
 
   protected void detachOutgointEdge(OEdge edge) {
@@ -253,10 +256,6 @@ public class OVertexDelegate implements OVertex {
 
   @Override public Optional<OClass> getSchemaType() {
     return Optional.ofNullable(element.getSchemaClass());
-  }
-
-  @Override public ORID getIdentity() {
-    return element.getIdentity();
   }
 
   @Override public <T extends ORecord> T getRecord() {
@@ -503,5 +502,129 @@ public class OVertexDelegate implements OVertex {
 
   @Override public int hashCode() {
     return element.hashCode();
+  }
+
+  @Override public STATUS getInternalStatus() {
+    return element.getInternalStatus();
+  }
+
+  @Override public void setInternalStatus(STATUS iStatus) {
+    element.setInternalStatus(iStatus);
+  }
+
+  @Override public <RET> RET setDirty() {
+    element.setDirty();
+    return (RET)this;
+  }
+
+  @Override public void setDirtyNoChanged() {
+    element.setDirtyNoChanged();
+  }
+
+  @Override public ORecordElement getOwner() {
+    return element.getOwner();
+  }
+
+  @Override public byte[] toStream() throws OSerializationException {
+    return element.toStream();
+  }
+
+  @Override public OSerializableStream fromStream(byte[] iStream) throws OSerializationException {
+    return element.fromStream(iStream);
+  }
+
+  @Override public boolean detach() {
+    return element.detach();
+  }
+
+  @Override public <RET extends ORecord> RET reset() {
+    element.reset();
+    return (RET) this;
+  }
+
+  @Override public <RET extends ORecord> RET unload() {
+    element.unload();
+    return (RET) this;
+  }
+
+  @Override public <RET extends ORecord> RET clear() {
+    element.clear();
+    return (RET) this;
+  }
+
+  @Override public <RET extends ORecord> RET copy() {
+    return (RET) new OVertexDelegate(element.copy());
+  }
+
+  @Override public ORID getIdentity() {
+    return element.getIdentity();
+  }
+
+  @Override public int getVersion() {
+    return element.getVersion();
+  }
+
+  @Override public ODatabaseDocument getDatabase() {
+    return element.getDatabase();
+  }
+
+  @Override public boolean isDirty() {
+    return element.isDirty();
+  }
+
+  @Override public <RET extends ORecord> RET load() throws ORecordNotFoundException {
+    ORecord newItem = element.load();
+    if(newItem==null){
+      return null;
+    }
+    return (RET) new OVertexDelegate((ODocument) newItem);
+  }
+
+  @Override public <RET extends ORecord> RET reload() throws ORecordNotFoundException {
+    element.reload();
+    return (RET) this;
+  }
+
+  @Override public <RET extends ORecord> RET reload(String fetchPlan, boolean ignoreCache, boolean force)
+      throws ORecordNotFoundException {
+    element.reload(fetchPlan, ignoreCache, force);
+    return (RET) this;
+  }
+
+  @Override public <RET extends ORecord> RET save() {
+    element.save();
+    return (RET) this;
+  }
+
+  @Override public <RET extends ORecord> RET save(String iCluster) {
+    element.save(iCluster);
+    return (RET) this;
+  }
+
+  @Override public <RET extends ORecord> RET save(boolean forceCreate) {
+    element.save(forceCreate);
+    return (RET) this;
+  }
+
+  @Override public <RET extends ORecord> RET save(String iCluster, boolean forceCreate) {
+    element.save(iCluster, forceCreate);
+    return (RET) this;
+  }
+
+  @Override public <RET extends ORecord> RET fromJSON(String iJson) {
+    element.fromJSON(iJson);
+    return (RET) this;
+  }
+
+  @Override public String toJSON() {
+    return element.toJSON();
+  }
+
+  @Override public String toJSON(String iFormat) {
+    return element.toJSON(iFormat);
+  }
+
+  @Override public int getSize() {
+    return element.getSize();
   }
 }

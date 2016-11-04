@@ -21,13 +21,19 @@ package com.orientechnologies.orient.core.record.impl;
 
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.OVertex;
+import com.orientechnologies.orient.core.serialization.OSerializableStream;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 import java.util.Optional;
@@ -100,12 +106,13 @@ public class OEdgeDelegate implements OEdge {
     return null;
   }
 
-  public void delete() {
+  public OEdge delete() {
     ((OVertexDelegate) getFrom()).detachOutgointEdge(this);
     ((OVertexDelegate) getTo()).detachIncomingEdge(this);
     if (element != null) {
       element.delete();
     }
+    return this;
   }
 
   @Override public <RET> RET getProperty(String name) {
@@ -114,20 +121,21 @@ public class OEdgeDelegate implements OEdge {
 
   @Override public void setProperty(String name, Object value) {
     if (element == null) {
-      //promote to regular edge
-      ODatabase db = getDatabase();
-      OVertexDelegate from = (OVertexDelegate) getFrom();
-      OVertexDelegate to = (OVertexDelegate) getTo();
-      from.detachOutgointEdge(this);
-      to.detachIncomingEdge(this);
-      this.element = db.newEdge(from, to, lightweightEdgeType).getRecord();
-      this.lightweightEdgeType = null;
+      promoteToRegularEdge();
     }
     element.setProperty(name, value);
   }
 
-  private ODatabase getDatabase() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get();
+  private void promoteToRegularEdge() {
+    ODatabase db = getDatabase();
+    OVertexDelegate from = (OVertexDelegate) getFrom();
+    OVertexDelegate to = (OVertexDelegate) getTo();
+    from.detachOutgointEdge(this);
+    to.detachIncomingEdge(this);
+    this.element = db.newEdge(from, to, lightweightEdgeType).getRecord();
+    this.lightweightEdgeType = null;
+    this.vOut = null;
+    this.vIn = null;
   }
 
   @Override public Optional<OVertex> asVertex() {
@@ -222,5 +230,192 @@ public class OEdgeDelegate implements OEdge {
     }
 
     return element.hashCode();
+  }
+
+  @Override public STATUS getInternalStatus() {
+    if (element == null) {
+      return STATUS.LOADED;
+    }
+    return element.getInternalStatus();
+  }
+
+  @Override public void setInternalStatus(STATUS iStatus) {
+    if (element != null)
+      element.setInternalStatus(iStatus);
+  }
+
+  @Override public <RET> RET setDirty() {
+    if (element != null)
+      element.setDirty();
+    return (RET) this;
+  }
+
+  @Override public void setDirtyNoChanged() {
+    if (element != null)
+      element.setDirtyNoChanged();
+  }
+
+  @Override public ORecordElement getOwner() {
+    if (element != null)
+      return element.getOwner();
+    return null;
+  }
+
+  @Override public byte[] toStream() throws OSerializationException {
+    if (element != null)
+      return element.toStream();
+    return null;
+  }
+
+  @Override public OSerializableStream fromStream(byte[] iStream) throws OSerializationException {
+    if (element != null)
+      return element.fromStream(iStream);
+    return null;
+  }
+
+  @Override public boolean detach() {
+    if (element != null)
+      return element.detach();
+    return true;
+  }
+
+  @Override public <RET extends ORecord> RET reset() {
+    if (element != null)
+      element.reset();
+    return (RET) this;
+  }
+
+  @Override public OEdge unload() {
+    if (element != null)
+      element.unload();
+    return this;
+  }
+
+  @Override public OEdge clear() {
+    if (element != null)
+      element.clear();
+    return this;
+  }
+
+  @Override public OEdge copy() {
+    if (element != null) {
+      return new OEdgeDelegate(element.copy());
+    } else {
+      return new OEdgeDelegate(vOut, vIn, lightweightEdgeType);
+
+    }
+  }
+
+  @Override public int getVersion() {
+    if (element != null)
+      return element.getVersion();
+    return 1;
+  }
+
+  @Override public ODatabaseDocument getDatabase() {
+    if (element != null) {
+      return element.getDatabase();
+    } else {
+      return ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    }
+  }
+
+  @Override public boolean isDirty() {
+    if (element != null)
+      return element.isDirty();
+    return false;
+  }
+
+  @Override public <RET extends ORecord> RET load() throws ORecordNotFoundException {
+    ORecord newItem = element.load();
+    if (newItem == null) {
+      return null;
+    }
+    return (RET) new OVertexDelegate((ODocument) newItem);
+  }
+
+  @Override public <RET extends ORecord> RET reload() throws ORecordNotFoundException {
+    if (element != null)
+      element.reload();
+    return (RET) this;
+  }
+
+  @Override public <RET extends ORecord> RET reload(String fetchPlan, boolean ignoreCache, boolean force)
+      throws ORecordNotFoundException {
+    if (element != null)
+      element.reload(fetchPlan, ignoreCache, force);
+    return (RET) this;
+  }
+
+  @Override public <RET extends ORecord> RET save() {
+    if (element != null) {
+      element.save();
+    } else {
+      vIn.save();
+      vOut.save();
+    }
+    return (RET) this;
+  }
+
+  @Override public <RET extends ORecord> RET save(String iCluster) {
+    if (element != null) {
+      element.save(iCluster);
+    } else {
+      vIn.save();
+      vOut.save();
+    }
+    return (RET) this;
+  }
+
+  @Override public <RET extends ORecord> RET save(boolean forceCreate) {
+    if (element != null) {
+      element.save(forceCreate);
+    } else {
+      vIn.save();
+      vOut.save();
+    }
+    return (RET) this;
+  }
+
+  @Override public <RET extends ORecord> RET save(String iCluster, boolean forceCreate) {
+    if (element != null) {
+      element.save(iCluster, forceCreate);
+    } else {
+      vIn.save();
+      vOut.save();
+    }
+    return (RET) this;
+  }
+
+  @Override public <RET extends ORecord> RET fromJSON(String iJson) {
+    if (element == null) {
+      promoteToRegularEdge();
+    }
+    element.fromJSON(iJson);
+    return (RET) this;
+  }
+
+  @Override public String toJSON() {
+    if (element != null) {
+      return element.toJSON();
+    } else {
+      return "{'out':'" + vOut.getIdentity() + "', 'in':'" + vIn.getIdentity() + "', '@class':'" + OStringSerializerHelper
+          .encode(lightweightEdgeType.getName()) + "'}";
+    }
+  }
+
+  @Override public String toJSON(String iFormat) {
+    if (element != null) {
+      return element.toJSON(iFormat);
+    } else {
+      return "{'out':'" + vOut.getIdentity() + "', 'in':'" + vIn.getIdentity() + "', '@class':'" + OStringSerializerHelper
+          .encode(lightweightEdgeType.getName()) + "'}";
+    }
+  }
+
+  @Override public int getSize() {
+    if (element != null)
+      return element.getSize();
+    return 0;
   }
 }

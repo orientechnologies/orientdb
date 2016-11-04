@@ -49,7 +49,7 @@ import java.util.*;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com) (http://orientdb.com)
  */
 
-@SuppressWarnings("unchecked") public class OrientVertex extends OrientElement implements OrientExtendedVertex, OVertex {
+@SuppressWarnings("unchecked") public class OrientVertex extends OrientElement implements OrientExtendedVertex {
   public static final String CONNECTION_OUT_PREFIX = OrientBaseGraph.CONNECTION_OUT + "_";
   public static final String CONNECTION_IN_PREFIX  = OrientBaseGraph.CONNECTION_IN + "_";
 
@@ -876,30 +876,6 @@ import java.util.*;
     return "Vertex";
   }
 
-  @Override public Set<String> getPropertyNames() {
-    return getPropertyKeys();
-  }
-
-  @Override public Optional<OVertex> asVertex() {
-    return Optional.of(this);
-  }
-
-  @Override public Optional<OEdge> asEdge() {
-    return Optional.empty();
-  }
-
-  @Override public boolean isDocument() {
-    return true;
-  }
-
-  @Override public boolean isVertex() {
-    return true;
-  }
-
-  @Override public boolean isEdge() {
-    return false;
-  }
-
   /**
    * (Blueprints Extension) Returns the Vertex type as OrientVertexType object.
    */
@@ -1195,69 +1171,6 @@ import java.util.*;
     }
     return null;
   }
-
-  @Override public Iterable<OEdge> getEdges(ODirection direction) {
-    if (direction == null) {
-      throw new IllegalArgumentException("Null direction is not allowed, use ODirection.BOTH to have all the directions");
-    }
-    return (Iterable) getEdges(decodeODirection(direction));
-  }
-
-  @Override public Iterable<OEdge> getEdges(ODirection direction, String... type) {
-    if (direction == null) {
-      throw new IllegalArgumentException("Null direction is not allowed, use ODirection.BOTH to have all the directions");
-    }
-    return (Iterable) getEdges(decodeODirection(direction), type);
-  }
-
-  @Override public Iterable<OEdge> getEdges(ODirection direction, OClass... type) {
-    if (direction == null) {
-      throw new IllegalArgumentException("Null direction is not allowed, use ODirection.BOTH to have all the directions");
-    }
-    return (Iterable) getEdges(decodeODirection(direction), toClassNames(type));
-  }
-
-  @Override public Iterable<OVertex> getVertices(ODirection direction) {
-    if (direction == null) {
-      throw new IllegalArgumentException("Null direction is not allowed, use ODirection.BOTH to have all the directions");
-    }
-    return (Iterable) getVertices(decodeODirection(direction));
-  }
-
-  @Override public Iterable<OVertex> getVertices(ODirection direction, String... type) {
-    if (direction == null) {
-      throw new IllegalArgumentException("Null direction is not allowed, use ODirection.BOTH to have all the directions");
-    }
-    return (Iterable) getVertices(decodeODirection(direction), type);
-  }
-
-  @Override public Iterable<OVertex> getVertices(ODirection direction, OClass... type) {
-    if (direction == null) {
-      throw new IllegalArgumentException("Null direction is not allowed, use ODirection.BOTH to have all the directions");
-    }
-    return (Iterable) getVertices(decodeODirection(direction), toClassNames(type));
-  }
-
-  @Override public OEdge addEdge(OVertex to) {
-    return (OEdge) addEdge("E", (Vertex)to);
-  }
-
-  @Override public OEdge addEdge(OVertex to, String type) {
-    return (OEdge) addEdge(type, (Vertex)to);
-  }
-
-  @Override public OEdge addEdge(OVertex to, OClass type) {
-    return (OEdge) addEdge(type.getName(), (Vertex)to);
-  }
-
-  @Override public void delete() {
-    remove();
-  }
-
-  @Override public Optional<OClass> getSchemaType() {
-    return Optional.ofNullable(getType());
-  }
-
 
   private String[] toClassNames(OClass[] type) {
     if (type == null) {
