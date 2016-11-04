@@ -15,11 +15,6 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -32,7 +27,13 @@ import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Graph related command operator executor factory. It's auto-discovered.
@@ -66,10 +67,8 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
   /**
    * Returns a Transactional OrientGraph implementation from the current database in thread local.
    *
-   * @param autoStartTx
-   *          Whether returned graph will start transaction before each operation till commit automatically or user should do it
-   *          explicitly be calling {@link OrientGraph#getRawGraph()} method {@link ODatabaseDocumentTx#begin()}.
-   *
+   * @param autoStartTx Whether returned graph will start transaction before each operation till commit automatically or user should do it
+   *                    explicitly be calling {@link OrientGraph#getRawGraph()} method {@link ODatabaseDocumentTx#begin()}.
    * @return Transactional OrientGraph implementation from the current database in thread local.
    */
   public static OrientGraph getGraph(final boolean autoStartTx, OModifiableBoolean shouldBeShutDown) {
@@ -97,7 +96,7 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
     ODatabaseRecordThreadLocal.INSTANCE.set(database);
     shouldBeShutDown.setValue(true);
 
-    final OrientGraph g = new OrientGraph(database, false);
+    final OrientGraph g = (OrientGraph) OrientGraphFactory.getTxGraphImplFactory().getGraph(database, false);
     if (autoStartTx && autoTxStartRequired(database))
       g.begin();
     return g;
@@ -128,12 +127,12 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
     // Set it again on ThreadLocal because the getRawGraph() may have set a closed db in the thread-local
     shouldBeShutDown.setValue(true);
     ODatabaseRecordThreadLocal.INSTANCE.set(database);
-    return new OrientGraphNoTx(database);
+    return (OrientGraphNoTx) OrientGraphFactory.getNoTxGraphImplFactory().getGraph((ODatabaseDocumentTx) database);
   }
 
   /**
    * @return any graph if available, otherwise a Non Transactional OrientGraph implementation from the current database in thread
-   *         local.
+   * local.
    */
   public static OrientBaseGraph getAnyGraph(final OModifiableBoolean shouldBeShutDown) {
     final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.get();
@@ -156,7 +155,7 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
     // Set it again on ThreadLocal because the getRawGraph() may have set a closed db in the thread-local
     shouldBeShutDown.setValue(true);
     ODatabaseRecordThreadLocal.INSTANCE.set(database);
-    return new OrientGraphNoTx(database);
+    return OrientGraphFactory.getNoTxGraphImplFactory().getGraph((ODatabaseDocumentTx) database);
   }
 
   public static <T> T runInTx(final OrientGraph graph, final GraphCallBack<T> callBack) {

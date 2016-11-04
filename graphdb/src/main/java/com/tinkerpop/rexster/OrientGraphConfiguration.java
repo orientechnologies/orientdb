@@ -21,7 +21,7 @@
 package com.tinkerpop.rexster;
 
 import com.tinkerpop.blueprints.Graph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.rexster.config.GraphConfiguration;
 import com.tinkerpop.rexster.config.GraphConfigurationContext;
 import com.tinkerpop.rexster.config.GraphConfigurationException;
@@ -83,7 +83,7 @@ public class OrientGraphConfiguration implements GraphConfiguration {
 
       // calling the open method opens the connection to graphdb. looks like the
       // implementation of shutdown will call the orientdb close method.
-      return new OrientGraph(graphFile, username, password);
+      return OrientGraphFactory.getTxGraphImplFactory().getGraph(graphFile, username, password);
 
     } catch (Exception ex) {
       throw new GraphConfigurationException(ex);

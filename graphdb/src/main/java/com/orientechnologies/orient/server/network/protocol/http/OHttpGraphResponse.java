@@ -21,7 +21,6 @@ package com.orientechnologies.orient.server.network.protocol.http;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -29,6 +28,7 @@ import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
@@ -63,7 +63,8 @@ public class OHttpGraphResponse extends OHttpResponse {
     if (accept != null && accept.contains("text/csv"))
       throw new IllegalArgumentException("Graph mode cannot accept '" + accept + "'");
 
-    final OrientGraphNoTx graph = new OrientGraphNoTx(ODatabaseRecordThreadLocal.INSTANCE.get());
+    final OrientGraphNoTx graph = (OrientGraphNoTx) OrientGraphFactory.getNoTxGraphImplFactory()
+        .getGraph(ODatabaseRecordThreadLocal.INSTANCE.get());
 
     // DIVIDE VERTICES FROM EDGES
     final Set<OrientVertex> vertices = new HashSet<OrientVertex>();
@@ -76,7 +77,7 @@ public class OHttpGraphResponse extends OHttpResponse {
         // IGNORE IT
         continue;
 
-      entry = ((OIdentifiable)entry).getRecord();
+      entry = ((OIdentifiable) entry).getRecord();
 
       if (entry == null || !(entry instanceof OIdentifiable))
         // IGNORE IT
@@ -84,9 +85,9 @@ public class OHttpGraphResponse extends OHttpResponse {
 
       if (entry instanceof ODocument) {
         OClass schemaClass = ((ODocument) entry).getSchemaClass();
-        if (schemaClass!=null && schemaClass.isVertexType())
+        if (schemaClass != null && schemaClass.isVertexType())
           vertices.add(graph.getVertex(entry));
-        else if (schemaClass!=null && schemaClass.isEdgeType())
+        else if (schemaClass != null && schemaClass.isEdgeType())
           edges.add(graph.getEdge(entry));
         else
           // IGNORE IT

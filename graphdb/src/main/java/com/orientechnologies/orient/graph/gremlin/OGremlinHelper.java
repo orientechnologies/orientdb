@@ -24,11 +24,11 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.gremlin.groovy.jsr223.GremlinGroovyScriptEngine;
 import com.tinkerpop.gremlin.groovy.jsr223.GremlinGroovyScriptEngineFactory;
 import com.tinkerpop.gremlin.java.GremlinPipeline;
@@ -40,21 +40,15 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 
 public class OGremlinHelper {
-  private static final String                     PARAM_OUTPUT = "output";
+  private static final String PARAM_OUTPUT = "output";
   private static GremlinGroovyScriptEngineFactory factory;
-  private static OGremlinHelper                   instance     = new OGremlinHelper();
+  private static OGremlinHelper instance = new OGremlinHelper();
 
-  private int                                     maxPool      = 50;
+  private int maxPool = 50;
 
   public interface OGremlinCallback {
     boolean call(ScriptEngine iEngine, OrientBaseGraph iGraph);
@@ -63,14 +57,14 @@ public class OGremlinHelper {
   public OGremlinHelper() {
     try {
       factory = new GremlinGroovyScriptEngineFactory();
-    }catch( java.lang.NoClassDefFoundError e ){
+    } catch (java.lang.NoClassDefFoundError e) {
       OLogManager.instance().warn(this, "GREMLIN language not available (not in classpath)");
     }
     OCommandManager.instance().registerRequester("gremlin", OCommandGremlin.class);
     OCommandManager.instance().registerExecutor(OCommandGremlin.class, OCommandGremlinExecutor.class);
   }
 
-  public static boolean isGremlinAvailable(){
+  public static boolean isGremlinAvailable() {
     return factory != null;
   }
 
@@ -278,8 +272,8 @@ public class OGremlinHelper {
           // 4. Impossible to clone
           // ***************************************************************************************************************************************
         } catch (Throwable e2) {
-          OLogManager.instance().error(null, "[GremlinHelper] error on cloning object %s, previous %s", e2, objectToClone,
-              previousClone);
+          OLogManager.instance()
+              .error(null, "[GremlinHelper] error on cloning object %s, previous %s", e2, objectToClone, previousClone);
           return null;
         }
       }
@@ -326,7 +320,7 @@ public class OGremlinHelper {
   }
 
   public OrientGraph acquireGraph(final ODatabaseDocumentInternal database) {
-    return new OrientGraph(database);
+    return (OrientGraph) OrientGraphFactory.getTxGraphImplFactory().getGraph(database);
   }
 
   public void releaseGraph(final OrientBaseGraph graph) {

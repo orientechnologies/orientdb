@@ -9,7 +9,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -35,13 +35,14 @@ public class OInternalGraphImporter {
     ODatabaseDocumentInternal db = new ODatabaseDocumentTx(dbURL);
     ODatabaseHelper.deleteDatabase(db, db.getType());
 
-    OrientBaseGraph g = new OrientGraphNoTx(dbURL);
+    OrientBaseGraph g = OrientGraphFactory.getNoTxGraphImplFactory().getGraph(dbURL);
 
     System.out.println("Importing graph from file '" + inputFile + "' into database: " + g + "...");
 
     final long startTime = System.currentTimeMillis();
 
-    OConsoleDatabaseApp console = new OGremlinConsole(new String[] { "import database " + inputFile }).setCurrentDatabase(g.getRawGraph());
+    OConsoleDatabaseApp console = new OGremlinConsole(new String[] { "import database " + inputFile })
+        .setCurrentDatabase(g.getRawGraph());
     console.run();
 
     System.out.println("Imported in " + (System.currentTimeMillis() - startTime) + "ms. Vertexes: " + g.countVertices());

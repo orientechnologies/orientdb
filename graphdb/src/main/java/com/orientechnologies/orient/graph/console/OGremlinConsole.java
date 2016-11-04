@@ -40,12 +40,12 @@ import com.orientechnologies.orient.graph.gremlin.OGremlinHelper;
 import com.tinkerpop.blueprints.impls.orient.OBonsaiTreeRepair;
 import com.tinkerpop.blueprints.impls.orient.OGraphRepair;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.util.io.graphml.GraphMLWriter;
 
 /**
  * Gremlin specialized console.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  * 
  */
@@ -114,20 +114,20 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
 
     final List<String> items = OStringSerializerHelper.smartSplit(text, ' ');
     final String fileName = items.size() <= 0 || (items.get(1)).charAt(0) == '-' ? null : items.get(1);
-    final String optionsAsString = fileName != null ? text.substring((items.get(0)).length() + (items.get(1)).length() + 1).trim()
-        : text;
+    final String optionsAsString =
+        fileName != null ? text.substring((items.get(0)).length() + (items.get(1)).length() + 1).trim() : text;
 
     final Map<String, List<String>> options = parseOptions(optionsAsString);
 
     final String format = options.containsKey("-format") ? options.get("-format").get(0) : null;
 
-    if ((format != null && format.equalsIgnoreCase("graphml"))
-        || (fileName != null && (fileName.endsWith(".graphml") || fileName.endsWith(".xml")))) {
+    if ((format != null && format.equalsIgnoreCase("graphml")) || (fileName != null && (fileName.endsWith(".graphml") || fileName
+        .endsWith(".xml")))) {
       // GRAPHML
       message("\nImporting GRAPHML database from " + fileName + " with options (" + optionsAsString + ")...");
 
       try {
-        final OrientGraph g = new OrientGraph(currentDatabase);
+        final OrientGraph g = (OrientGraph) OrientGraphFactory.getTxGraphImplFactory().getGraph(currentDatabase);
         g.setUseLog(false);
         g.setWarnOnForceClosingTx(false);
 
@@ -168,7 +168,7 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
       message("\nImporting GRAPHSON database from " + fileName + " with options (" + optionsAsString + ")...");
 
       try {
-        final OrientGraph g = new OrientGraph(currentDatabase);
+        final OrientGraph g = (OrientGraph) OrientGraphFactory.getTxGraphImplFactory().getGraph(currentDatabase);
         g.setUseLog(false);
         g.setWarnOnForceClosingTx(false);
 
@@ -224,7 +224,7 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
       message("\nExporting database in GRAPHML format to " + iText + "...");
 
       try {
-        final OrientGraph g = new OrientGraph(currentDatabase);
+        final OrientGraph g = (OrientGraph) OrientGraphFactory.getTxGraphImplFactory().getGraph(currentDatabase);
         g.setUseLog(false);
         g.setWarnOnForceClosingTx(false);
 
@@ -257,7 +257,7 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
     if (fix_graph) {
       // REPAIR GRAPH
       final Map<String, List<String>> options = parseOptions(iOptions);
-      new OGraphRepair().repair(new OrientGraphNoTx(currentDatabase), this, options);
+      new OGraphRepair().repair(OrientGraphFactory.getNoTxGraphImplFactory().getGraph(currentDatabase), this, options);
     }
 
     final boolean fix_links = iOptions == null || iOptions.contains("--fix-links");
