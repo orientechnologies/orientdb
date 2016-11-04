@@ -52,7 +52,7 @@ public class MatchMultiEdgeTraverser extends MatchEdgeTraverser {
         if (whileCond != null) {
           Object current = o;
           if (current instanceof OResult) {
-            current = ((OResult) current).getElement();
+            current = ((OResult) current).getElement().orElse(null);
           }
           MatchEdgeTraverser subtraverser = new MatchEdgeTraverser(null, sub);
           subtraverser.executeTraversal(iCommandContext, sub, (OIdentifiable) current, 0).forEach(x -> rightSide.add(x));

@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.core.sql.executor;
 
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
@@ -68,9 +67,9 @@ public interface OTodoResultSet extends Spliterator<OResult>, Iterator<OResult> 
     return StreamSupport.stream(new Spliterator<OElement>() {
       @Override public boolean tryAdvance(Consumer<? super OElement> action) {
         while (hasNext()) {
-          OIdentifiable elem = next().getElement();
-          if (elem instanceof OElement) {
-            action.accept((OElement) elem);
+          OResult elem = next();
+          if (elem.isElement()) {
+            action.accept(elem.getElement().get());
             return true;
           }
         }
@@ -95,9 +94,9 @@ public interface OTodoResultSet extends Spliterator<OResult>, Iterator<OResult> 
     return StreamSupport.stream(new Spliterator<OVertex>() {
       @Override public boolean tryAdvance(Consumer<? super OVertex> action) {
         while (hasNext()) {
-          OElement elem = (OElement) next().getElement();
-          if (elem != null && elem.isVertex()) {
-            action.accept((OVertex) elem);
+          OResult elem = next();
+          if (elem.isVertex()) {
+            action.accept(elem.getVertex().get());
             return true;
           }
         }
@@ -122,9 +121,9 @@ public interface OTodoResultSet extends Spliterator<OResult>, Iterator<OResult> 
     return StreamSupport.stream(new Spliterator<OEdge>() {
       @Override public boolean tryAdvance(Consumer<? super OEdge> action) {
         while (hasNext()) {
-          OElement elem = (OElement) next().getElement();
-          if (elem != null && elem.isEdge()) {
-            action.accept((OEdge) elem);
+          OResult nextElem = next();
+          if (nextElem != null && nextElem.isEdge()) {
+            action.accept(nextElem.getEdge().get());
             return true;
           }
         }

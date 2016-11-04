@@ -32,7 +32,7 @@ public class SetDocumentClassStep extends AbstractExecutionStep {
       @Override public OResult next() {
         OResult result = upstream.next();
         if (result.isElement()) {
-          OIdentifiable element = result.getElement().getRecord();
+          OIdentifiable element = result.getElement().get().getRecord();
           if (element instanceof ODocument) {
             ODocument doc = (ODocument) element;
             doc.setClassName(targetClass);

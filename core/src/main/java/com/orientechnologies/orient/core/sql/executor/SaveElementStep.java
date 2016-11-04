@@ -34,9 +34,9 @@ public class SaveElementStep extends AbstractExecutionStep {
         OResult result = upstream.next();
         if (result.isElement()) {
           if (cluster == null) {
-            ctx.getDatabase().save(result.getElement());
+            ctx.getDatabase().save(result.getElement().orElse(null));
           } else {
-            ctx.getDatabase().save(result.getElement(), cluster.getStringValue());
+            ctx.getDatabase().save(result.getElement().orElse(null), cluster.getStringValue());
           }
         }
         return result;

@@ -104,7 +104,7 @@ public class OFunctionCall extends SimpleNode {
       if (current instanceof OIdentifiable) {
         return function.execute(targetObjects, (OIdentifiable) current, null, paramValues.toArray(), ctx);
       } else if (current instanceof OResult) {
-        return function.execute(targetObjects, ((OResult) current).getElement(), null, paramValues.toArray(), ctx);
+        return function.execute(targetObjects, ((OResult) current).getElement().orElse(null), null, paramValues.toArray(), ctx);
       } else if (current == null) {
         return function.execute(targetObjects, null, null, paramValues.toArray(), ctx);
       } else {

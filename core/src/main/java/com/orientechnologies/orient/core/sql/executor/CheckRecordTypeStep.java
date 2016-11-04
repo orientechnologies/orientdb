@@ -4,7 +4,7 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.OElement;
 
 import java.util.Map;
 import java.util.Optional;
@@ -33,12 +33,13 @@ public class CheckRecordTypeStep extends AbstractExecutionStep {
         if (!result.isElement()) {
           throw new OCommandExecutionException("record " + result + " is not an instance of " + clazz);
         }
-        ODocument doc = result.getElement().getRecord();
+        OElement doc = result.getElement().get();
         if (doc == null) {
           throw new OCommandExecutionException("record " + result + " is not an instance of " + clazz);
         }
-        OClass schema = doc.getSchemaClass();
-        if (schema == null || !schema.isSubClassOf(clazz)) {
+        Optional<OClass> schema = doc.getSchemaType();
+
+        if (!schema.isPresent() || !schema.get().isSubClassOf(clazz)) {
           throw new OCommandExecutionException("record " + result + " is not an instance of " + clazz);
         }
         return result;

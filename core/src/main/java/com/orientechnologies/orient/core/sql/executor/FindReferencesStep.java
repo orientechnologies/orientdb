@@ -158,7 +158,7 @@ public class FindReferencesStep extends AbstractExecutionStep {
       while (nextSlot.hasNext()) {
         OResult nextRes = nextSlot.next();
         if (nextRes.isElement()) {
-          ridsToFind.add(nextRes.getElement().getIdentity());
+          ridsToFind.add(nextRes.getElement().get().getIdentity());
         }
       }
       nextSlot = prevStep.syncPull(ctx, nRecords);

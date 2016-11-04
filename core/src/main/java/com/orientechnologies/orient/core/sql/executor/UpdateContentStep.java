@@ -34,13 +34,13 @@ public class UpdateContentStep extends AbstractExecutionStep {
       @Override public OResult next() {
         OResult result = upstream.next();
         if (result instanceof OResultInternal) {
-          if (!(result.getElement() instanceof ODocument)) {
-            ((OResultInternal) result).setElement(result.getElement().getRecord());
+          if (!(result.getElement().get() instanceof ODocument)) {
+            ((OResultInternal) result).setElement(result.getElement().get().getRecord());
           }
-          if (!(result.getElement() instanceof ODocument)) {
+          if (!(result.getElement().get() instanceof ODocument)) {
             return result;
           }
-          handleContent((ODocument) result.getElement(), ctx);
+          handleContent((ODocument) result.getElement().get(), ctx);
         }
         return result;
       }

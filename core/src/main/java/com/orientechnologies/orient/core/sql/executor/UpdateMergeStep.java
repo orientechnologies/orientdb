@@ -29,13 +29,13 @@ public class UpdateMergeStep extends AbstractExecutionStep {
       @Override public OResult next() {
         OResult result = upstream.next();
         if (result instanceof OResultInternal) {
-          if (!(result.getElement() instanceof ODocument)) {
-            ((OResultInternal) result).setElement(result.getElement().getRecord());
+          if (!(result.getElement().orElse(null) instanceof ODocument)) {
+            ((OResultInternal) result).setElement(result.getElement().get().getRecord());
           }
-          if (!(result.getElement() instanceof ODocument)) {
+          if (!(result.getElement().orElse(null) instanceof ODocument)) {
             return result;
           }
-          handleMerge((ODocument) result.getElement(), ctx);
+          handleMerge((ODocument) result.getElement().orElse(null), ctx);
         }
         return result;
       }

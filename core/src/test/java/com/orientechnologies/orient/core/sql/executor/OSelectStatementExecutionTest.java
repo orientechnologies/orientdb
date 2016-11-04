@@ -151,9 +151,9 @@ public class OSelectStatementExecutionTest {
       Assert.assertNotNull(item);
       Assert.assertTrue(("" + item.getProperty("name")).startsWith("name"));
       if (lastItem != null) {
-        Assert.assertTrue(lastItem.getIdentity().compareTo(item.getElement().getIdentity()) < 0);
+        Assert.assertTrue(lastItem.getIdentity().compareTo(item.getElement().get().getIdentity()) < 0);
       }
-      lastItem = item.getElement();
+      lastItem = item.getElement().get();
     }
     Assert.assertFalse(result.hasNext());
 
@@ -179,9 +179,9 @@ public class OSelectStatementExecutionTest {
       Assert.assertNotNull(item);
       Assert.assertTrue(("" + item.getProperty("name")).startsWith("name"));
       if (lastItem != null) {
-        Assert.assertTrue(lastItem.getIdentity().compareTo(item.getElement().getIdentity()) > 0);
+        Assert.assertTrue(lastItem.getIdentity().compareTo(item.getElement().get().getIdentity()) > 0);
       }
-      lastItem = item.getElement();
+      lastItem = item.getElement().get();
     }
     Assert.assertFalse(result.hasNext());
 
@@ -449,7 +449,7 @@ public class OSelectStatementExecutionTest {
       Assert.assertNotNull(name);
       Assert.assertTrue(name.startsWith("name"));
       Assert.assertNull(surname);
-      Assert.assertNull(item.getElement());
+      Assert.assertFalse(item.getElement().isPresent());
     }
     Assert.assertFalse(result.hasNext());
     result.close();

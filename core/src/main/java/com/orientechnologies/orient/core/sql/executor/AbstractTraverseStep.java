@@ -59,7 +59,7 @@ public abstract class AbstractTraverseStep extends AbstractExecutionStep {
         localFetched++;
         OResult result = results.remove(0);
         if (result.isElement()) {
-          traversed.add(result.getElement().getIdentity());
+          traversed.add(result.getElement().get().getIdentity());
         }
         return result;
       }

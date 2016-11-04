@@ -57,7 +57,7 @@ public class OptionalMatchEdgeTraverser extends MatchEdgeTraverser {
     if (elem == EMPTY_OPTIONAL) {
       return true;
     }
-    if (elem instanceof OResult && EMPTY_OPTIONAL == ((OResult) elem).getElement()) {
+    if (elem instanceof OResult && EMPTY_OPTIONAL == ((OResult) elem).getElement().orElse(null)) {
       return true;
     }
 

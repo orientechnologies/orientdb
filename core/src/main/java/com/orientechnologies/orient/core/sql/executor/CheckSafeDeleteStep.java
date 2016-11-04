@@ -32,7 +32,7 @@ public class CheckSafeDeleteStep extends AbstractExecutionStep {
       @Override public OResult next() {
         OResult result = upstream.next();
         if (result.isElement()) {
-          OIdentifiable elem = result.getElement();
+          OIdentifiable elem = result.getElement().get();
           ORecord record = elem.getRecord();
           if (record instanceof ODocument) {
             ODocument doc = (ODocument) record;

@@ -229,7 +229,7 @@ public class OCreateLinkStatement extends OSimpleExecStatement {
     }
     List<ODocument> result = new ArrayList<>();
     while (rs.hasNext()) {
-      result.add((ODocument) rs.next().getElement());
+      result.add((ODocument) rs.next().getElement().orElse(null));
     }
     return result;
   }

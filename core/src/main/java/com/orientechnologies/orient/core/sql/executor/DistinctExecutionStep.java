@@ -94,7 +94,7 @@ public class DistinctExecutionStep extends AbstractExecutionStep {
 
   private void markAsVisited(OResult nextValue) {
     if (nextValue.isElement()) {
-      ORID identity = nextValue.getElement().getIdentity();
+      ORID identity = nextValue.getElement().get().getIdentity();
       int cluster = identity.getClusterId();
       long pos = identity.getClusterPosition();
       if (cluster >= 0 && pos >= 0) {
@@ -107,7 +107,7 @@ public class DistinctExecutionStep extends AbstractExecutionStep {
 
   private boolean alreadyVisited(OResult nextValue) {
     if (nextValue.isElement()) {
-      ORID identity = nextValue.getElement().getIdentity();
+      ORID identity = nextValue.getElement().get().getIdentity();
       int cluster = identity.getClusterId();
       long pos = identity.getClusterPosition();
       if (cluster >= 0 && pos >= 0) {

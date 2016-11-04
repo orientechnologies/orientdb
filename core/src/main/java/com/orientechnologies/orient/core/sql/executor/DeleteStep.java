@@ -26,7 +26,7 @@ public class DeleteStep extends AbstractExecutionStep {
       @Override public OResult next() {
         OResult result = upstream.next();
         if (result.isElement()) {
-          ctx.getDatabase().delete(result.getElement());
+          ctx.getDatabase().delete(result.getElement().get());
         }
         return result;
       }

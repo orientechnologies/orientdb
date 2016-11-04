@@ -1,12 +1,10 @@
 package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by luigidellaquila on 06/07/16.
@@ -16,6 +14,9 @@ public class OResultInternal implements OResult {
   protected OIdentifiable element;
 
   public void setProperty(String name, Object value) {
+    if (value instanceof Optional) {
+      value = ((Optional) value).orElse(null);
+    }
     content.put(name, value);
   }
 
@@ -46,13 +47,19 @@ public class OResultInternal implements OResult {
     return this.element != null;
   }
 
-  public OIdentifiable getElement() {
-    return element;
+  public Optional<OElement> getElement() {
+    if (element == null || element instanceof OElement) {
+      return Optional.ofNullable((OElement) element);
+    }
+    if (element instanceof OIdentifiable) {
+      return Optional.ofNullable(element.getRecord());
+    }
+    return Optional.empty();
   }
 
-  @Override public OIdentifiable toElement() {
+  @Override public OElement toElement() {
     if (isElement()) {
-      return getElement();
+      return getElement().get();
     }
     ODocument doc = new ODocument();
     for (String s : getPropertyNames()) {
@@ -68,12 +75,18 @@ public class OResultInternal implements OResult {
   }
 
   public void setElement(OIdentifiable element) {
-    this.element = element;
+    if(element instanceof OElement) {
+      this.element = element;
+    }else if(element instanceof OIdentifiable){
+      this.element = element.getRecord();
+    }else{
+      this.element = element;
+    }
   }
 
   @Override public String toString() {
-    if (getElement() != null) {
-      return getElement().toString();
+    if (element != null) {
+      return element.toString();
     }
     return "{\n" +
         content.entrySet().stream().map(x -> x.getKey() + ": \n" + x.getValue()).reduce("", (a, b) -> a + b + "\n\n") + "}\n";
@@ -87,13 +100,13 @@ public class OResultInternal implements OResult {
       return false;
     }
     OResultInternal resultObj = (OResultInternal) obj;
-    if (getElement() != null) {
-      if (resultObj.getElement() == null) {
+    if (element != null) {
+      if (!resultObj.getElement().isPresent()) {
         return false;
       }
-      return getElement().equals(resultObj.getElement());
+      return element.equals(resultObj.getElement().get());
     } else {
-      if (resultObj.getElement() != null) {
+      if (resultObj.getElement().isPresent()) {
         return false;
       }
       return this.content.equals(resultObj.content);
@@ -101,8 +114,8 @@ public class OResultInternal implements OResult {
   }
 
   @Override public int hashCode() {
-    if (getElement() != null) {
-      return getElement().hashCode();
+    if (element != null) {
+      return element.hashCode();
     }
     return content.hashCode();
   }

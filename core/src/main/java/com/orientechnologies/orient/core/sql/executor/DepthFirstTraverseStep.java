@@ -21,9 +21,9 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
     OTodoResultSet nextN = getPrev().get().syncPull(ctx, nRecords);
     while (nextN.hasNext()) {
       OResult item = toTraverseResult(nextN.next());
-      if (item != null && item.isElement() && !traversed.contains(item.getElement().getIdentity())) {
+      if (item != null && item.isElement() && !traversed.contains(item.getElement().get().getIdentity())) {
         tryAddEntryPoint(item, ctx);
-        traversed.add(item.getElement().getIdentity());
+        traversed.add(item.getElement().get().getIdentity());
       }
     }
   }
@@ -32,9 +32,9 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
     OTraverseResult res = null;
     if (item instanceof OTraverseResult) {
       res = (OTraverseResult) item;
-    } else if (item.isElement() && item.getElement().getIdentity().isPersistent()) {
+    } else if (item.isElement() && item.getElement().get().getIdentity().isPersistent()) {
       res = new OTraverseResult();
-      res.setElement(item.getElement());
+      res.setElement(item.getElement().get());
       res.depth = 0;
     } else {
       return null;
@@ -84,7 +84,7 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
     if (!nextStep.isElement()) {
       return;
     }
-    if (this.traversed.contains(nextStep.getElement().getIdentity())) {
+    if (this.traversed.contains(nextStep.getElement().get().getIdentity())) {
       return;
     }
     if (nextStep instanceof OTraverseResult) {
@@ -92,7 +92,7 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
       tryAddEntryPoint(nextStep, ctx);
     } else {
       OTraverseResult res = new OTraverseResult();
-      res.setElement(nextStep.getElement());
+      res.setElement(nextStep.getElement().get());
       res.depth = depth;
       tryAddEntryPoint(res, ctx);
     }
@@ -102,7 +102,7 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
     if (whileClause == null || whileClause.matchesFilters(res, ctx)) {
       this.entryPoints.add(0, res);
     }
-    traversed.add(res.getElement().getIdentity());
+    traversed.add(res.getElement().get().getIdentity());
   }
 
 }

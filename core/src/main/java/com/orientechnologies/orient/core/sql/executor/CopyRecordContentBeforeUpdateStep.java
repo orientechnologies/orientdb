@@ -28,7 +28,7 @@ public class CopyRecordContentBeforeUpdateStep extends AbstractExecutionStep {
         OResult result = lastFetched.next();
         if (result instanceof OUpdatableResult) {
           OResultInternal prevValue = new OResultInternal();
-          ORecord rec = result.getElement().getRecord();
+          ORecord rec = result.getElement().get().getRecord();
           prevValue.setProperty("@rid", rec.getIdentity());
           prevValue.setProperty("@version", rec.getVersion());
           if (rec instanceof ODocument) {

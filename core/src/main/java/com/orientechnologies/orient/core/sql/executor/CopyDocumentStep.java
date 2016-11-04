@@ -29,7 +29,7 @@ public class CopyDocumentStep extends AbstractExecutionStep {
         OResult toCopy = upstream.next();
         ORecord resultDoc = null;
         if (toCopy.isElement()) {
-          ORecord docToCopy = toCopy.getElement().getRecord();
+          ORecord docToCopy = toCopy.getElement().get().getRecord();
           if (docToCopy instanceof ODocument) {
             resultDoc = ((ODocument) docToCopy).copy();
             resultDoc.getIdentity().reset();

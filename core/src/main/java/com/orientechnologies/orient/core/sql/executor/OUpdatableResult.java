@@ -1,8 +1,9 @@
 package com.orientechnologies.orient.core.sql.executor;
 
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -28,11 +29,11 @@ public class OUpdatableResult extends OResultInternal {
     return true;
   }
 
-  @Override public OIdentifiable getElement() {
-    return element;
+  @Override public Optional<OElement> getElement() {
+    return Optional.of(element);
   }
 
-  @Override public OIdentifiable toElement() {
+  @Override public OElement toElement() {
     return element;
   }
 

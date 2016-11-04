@@ -17,7 +17,6 @@ package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
@@ -110,8 +109,9 @@ import java.util.Map;
     OTodoResultSet result1 = database.query("select from ( traverse * from Movie ) where @class = 'Movie'");
     Assert.assertTrue(result1.hasNext());
     while (result1.hasNext()) {
-      ODocument d = (ODocument) result1.next().getElement();
-      Assert.assertEquals(d.getClassName(), "Movie");
+      OResult d = result1.next();
+
+      Assert.assertEquals(d.getElement().get().getSchemaType().get().getName(), "Movie");
     }
   }
 
@@ -120,8 +120,8 @@ import java.util.Map;
         .query("select from ( traverse out() from " + tomCruise.getIdentity() + ") where @class = 'Movie'");
     Assert.assertTrue(result1.hasNext());
     while (result1.hasNext()) {
-      ODocument d = ((OIdentifiable) result1.next().getElement()).getRecord();
-      Assert.assertEquals(d.getClassName(), "Movie");
+      OResult d = result1.next();
+      Assert.assertEquals(d.getElement().get().getSchemaType().get().getName(), "Movie");
     }
   }
 
@@ -135,7 +135,7 @@ import java.util.Map;
     Assert.assertTrue(result2.hasNext());
     int size2 = 0;
     while (result2.hasNext()) {
-      ODocument d = result2.next().getElement().getRecord();
+      ODocument d = result2.next().getElement().get().getRecord();
       Assert.assertEquals(d.getClassName(), "Movie");
       size2++;
     }
@@ -145,7 +145,7 @@ import java.util.Map;
     Assert.assertTrue(result3.hasNext());
     int size3 = 0;
     while (result3.hasNext()) {
-      ODocument d = result3.next().getElement().getRecord();
+      ODocument d = result3.next().getElement().get().getRecord();
       Assert.assertEquals(d.getClassName(), "Movie");
       size3++;
     }

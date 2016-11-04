@@ -22,7 +22,7 @@ public class BreadthFirstTraverseStep extends AbstractTraverseStep {
     while (nextN.hasNext()) {
       while (nextN.hasNext()) {
         OResult item = toTraverseResult(nextN.next());
-        if (item != null && item.isElement() && !traversed.contains(item.getElement().getIdentity())) {
+        if (item != null && item.isElement() && !traversed.contains(item.getElement().get().getIdentity())) {
           tryAddEntryPoint(item, ctx);
 
         }
@@ -35,9 +35,9 @@ public class BreadthFirstTraverseStep extends AbstractTraverseStep {
     OTraverseResult res = null;
     if (item instanceof OTraverseResult) {
       res = (OTraverseResult) item;
-    } else if (item.isElement() && item.getElement().getIdentity().isPersistent()) {
+    } else if (item.isElement() && item.getElement().get().getIdentity().isPersistent()) {
       res = new OTraverseResult();
-      res.setElement(item.getElement());
+      res.setElement(item.getElement().get());
       res.depth = 0;
     } else {
       return null;
@@ -88,7 +88,7 @@ public class BreadthFirstTraverseStep extends AbstractTraverseStep {
     if (!nextStep.isElement()) {
       return;
     }
-    if (this.traversed.contains(nextStep.getElement().getIdentity())) {
+    if (this.traversed.contains(nextStep.getElement().get().getIdentity())) {
       return;
     }
     if (nextStep instanceof OTraverseResult) {
@@ -96,7 +96,7 @@ public class BreadthFirstTraverseStep extends AbstractTraverseStep {
       tryAddEntryPoint(nextStep, ctx);
     } else {
       OTraverseResult res = new OTraverseResult();
-      res.setElement(nextStep.getElement());
+      res.setElement(nextStep.getElement().get());
       res.depth = depth;
       tryAddEntryPoint(res, ctx);
     }
@@ -106,6 +106,6 @@ public class BreadthFirstTraverseStep extends AbstractTraverseStep {
     if (whileClause == null || whileClause.matchesFilters(res, ctx)) {
       this.entryPoints.add(res);
     }
-    traversed.add(res.getElement().getIdentity());
+    traversed.add(res.getElement().get().getIdentity());
   }
 }

@@ -286,7 +286,7 @@ public class OSQLEngine {
     } else if (iCurrent instanceof OIdentifiable) {
       return iCallable.call((OIdentifiable) iCurrent);
     } else if(iCurrent instanceof OResult){
-      return iCallable.call(((OResult) iCurrent).getElement());
+      return iCallable.call(((OResult) iCurrent).getElement().orElse(null));
     }
 
     return null;

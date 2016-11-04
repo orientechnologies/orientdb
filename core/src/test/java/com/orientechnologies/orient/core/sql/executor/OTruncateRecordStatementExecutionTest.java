@@ -38,7 +38,7 @@ public class OTruncateRecordStatementExecutionTest {
 
     final OTodoResultSet resultset = database.query("select from truncateRecord where sex = 'female' and salary = 2100");
 
-    OTodoResultSet records = database.command("truncate record [" + resultset.next().getElement().getIdentity() + "]");
+    OTodoResultSet records = database.command("truncate record [" + resultset.next().getElement().get().getIdentity() + "]");
 
     resultset.close();
 

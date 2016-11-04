@@ -62,11 +62,11 @@ public class OUpdateEdgeStatementExecutionTest {
     Assert.assertTrue(edges.hasNext());
     OResult edge = edges.next();
     Assert.assertFalse(edges.hasNext());
-    Assert.assertEquals(((ODocument) edge.getElement().getRecord()).getClassName(), "E1");
+    Assert.assertEquals(((ODocument) edge.getElement().get().getRecord()).getClassName(), "E1");
     edges.close();
 
     database.command(
-        "update edge E1 set out = " + v3.getIdentity() + ", in = " + v4.getIdentity() + " where @rid = " + edge.getElement()
+        "update edge E1 set out = " + v3.getIdentity() + ", in = " + v4.getIdentity() + " where @rid = " + edge.getElement().get()
             .getIdentity());
 
     OTodoResultSet result = database.query("select expand(out('E1')) from " + v3.getIdentity());
@@ -104,7 +104,7 @@ public class OUpdateEdgeStatementExecutionTest {
         .command("create edge E from " + v1.getIdentity() + " to " + v2.getIdentity());
     OResult edge = edges.next();
 
-    database.command("UPDATE EDGE " + edge.getElement().getIdentity() + " SET in = " + v3.getIdentity());
+    database.command("UPDATE EDGE " + edge.getElement().get().getIdentity() + " SET in = " + v3.getIdentity());
 
     Iterable<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select expand(out()) from " + v1.getIdentity()))
         .execute();

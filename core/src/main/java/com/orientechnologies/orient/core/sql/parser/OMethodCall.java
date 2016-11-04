@@ -87,7 +87,7 @@ public class OMethodCall extends SimpleNode {
       if (function instanceof OSQLFunctionFiltered) {
         Object current = ctx.getVariable("$current");
         if(current instanceof OResult){
-          current = ((OResult) current).getElement();
+          current = ((OResult) current).getElement().orElse(null);
         }
         return ((OSQLFunctionFiltered) function)
             .execute(targetObjects, (OIdentifiable) current, null, paramValues.toArray(), iPossibleResults,
@@ -97,7 +97,7 @@ public class OMethodCall extends SimpleNode {
         if(current instanceof OIdentifiable) {
           return function.execute(targetObjects, (OIdentifiable) current, null, paramValues.toArray(), ctx);
         }else if(current instanceof OResult){
-          return function.execute(targetObjects,((OResult) current).getElement(), null, paramValues.toArray(), ctx);
+          return function.execute(targetObjects,((OResult) current).getElement().orElse(null), null, paramValues.toArray(), ctx);
         } else {
           return function.execute(targetObjects, null, null, paramValues.toArray(), ctx);
         }
@@ -108,7 +108,7 @@ public class OMethodCall extends SimpleNode {
     if (method != null) {
       Object val = ctx.getVariable("$current");
       if (val instanceof OResult) {
-        val = ((OResult) val).getElement();
+        val = ((OResult) val).getElement().orElse(null);
       }
       return method.execute(targetObjects, (OIdentifiable) val, ctx, targetObjects, paramValues.toArray());
     }

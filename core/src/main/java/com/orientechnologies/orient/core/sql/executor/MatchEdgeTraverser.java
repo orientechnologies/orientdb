@@ -54,10 +54,10 @@ public class MatchEdgeTraverser {
 
   protected boolean equals(Object prevValue, OIdentifiable nextElement) {
     if (prevValue instanceof OResult) {
-      prevValue = ((OResult) prevValue).getElement();
+      prevValue = ((OResult) prevValue).getElement().orElse(null);
     }
     if (nextElement instanceof OResult) {
-      nextElement = ((OResult) nextElement).getElement();
+      nextElement = ((OResult) nextElement).getElement().orElse(null);
     }
     return prevValue != null && prevValue.equals(nextElement);
   }
@@ -83,7 +83,7 @@ public class MatchEdgeTraverser {
     if (downstream == null) {
       Object startingElem = sourceRecord.getProperty(getStartingPointAlias());
       if (startingElem instanceof OResult) {
-        startingElem = ((OResult) startingElem).getElement();
+        startingElem = ((OResult) startingElem).getElement().orElse(null);
       }
       downstream = executeTraversal(ctx, this.item, (OIdentifiable) startingElem, 0).iterator();
     }

@@ -31,7 +31,7 @@ public class UpdateEdgePointersStep extends AbstractExecutionStep {
       @Override public OResult next() {
         OResult result = upstream.next();
         if (result instanceof OResultInternal) {
-          handleUpdateEdge(result.getElement().getRecord());
+          handleUpdateEdge(result.getElement().get().getRecord());
         }
         return result;
       }

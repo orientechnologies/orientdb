@@ -232,7 +232,7 @@ public class OMatchStatementExecutionNewTest {
       OResult item = qResult.next();
       Assert.assertTrue(item.getPropertyNames().size() == 1);
       OResult personId = item.getProperty("person");
-      ODocument person = personId.getElement().getRecord();
+      ODocument person = personId.getElement().get().getRecord();
       String name = person.field("name");
       Assert.assertTrue(name.startsWith("n"));
     }
@@ -247,7 +247,7 @@ public class OMatchStatementExecutionNewTest {
       Assert.assertTrue(item.getPropertyNames().size() == 1);
       OResult personId = item.getProperty("person");
 
-      ODocument person = personId.getElement().getRecord();
+      ODocument person = personId.getElement().get().getRecord();
       String name = person.field("name");
       Assert.assertTrue(name.equals("n1") || name.equals("n2"));
     }
@@ -294,7 +294,7 @@ public class OMatchStatementExecutionNewTest {
       Assert.assertTrue(item.getPropertyNames().size() == 1);
       OResult personId = item.getProperty("person");
 
-      ODocument person = personId.getElement().getRecord();
+      ODocument person = personId.getElement().get().getRecord();
       String name = person.field("name");
       Assert.assertTrue(name.equals("n1") || name.equals("n2"));
     }
@@ -505,6 +505,7 @@ public class OMatchStatementExecutionNewTest {
     OTodoResultSet qResult = db.query(
         "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend').out('Friend'){as:friend} return $matches)");
 
+    printExecutionPlan(qResult);
     Assert.assertTrue(qResult.hasNext());
     OResult item = qResult.next();
     Assert.assertEquals("n4", item.getProperty("name"));
@@ -706,7 +707,7 @@ public class OMatchStatementExecutionNewTest {
     OResult item = qResult.next();
     Assert.assertFalse(qResult.hasNext());
     qResult.close();
-    return item.getElement().getRecord();
+    return item.getElement().get().getRecord();
   }
 
   private ODocument getManagerArrows(String personName) {
@@ -726,25 +727,25 @@ public class OMatchStatementExecutionNewTest {
     OResult item = qResult.next();
     Assert.assertFalse(qResult.hasNext());
     qResult.close();
-    return item.getElement().getRecord();
+    return item.getElement().get().getRecord();
   }
 
   @Test public void testManager2() {
     // the manager of a person is the manager of the department that person belongs to.
     // if that department does not have a direct manager, climb up the hierarchy until you find one
 
-    Assert.assertEquals("c", getManager2("p10").field("name"));
-    Assert.assertEquals("c", getManager2("p12").field("name"));
-    Assert.assertEquals("b", getManager2("p6").field("name"));
-    Assert.assertEquals("b", getManager2("p11").field("name"));
+    Assert.assertEquals("c", getManager2("p10").getProperty("name"));
+    Assert.assertEquals("c", getManager2("p12").getProperty("name"));
+    Assert.assertEquals("b", getManager2("p6").getProperty("name"));
+    Assert.assertEquals("b", getManager2("p11").getProperty("name"));
 
-    Assert.assertEquals("c", getManager2Arrows("p10").field("name"));
-    Assert.assertEquals("c", getManager2Arrows("p12").field("name"));
-    Assert.assertEquals("b", getManager2Arrows("p6").field("name"));
-    Assert.assertEquals("b", getManager2Arrows("p11").field("name"));
+    Assert.assertEquals("c", getManager2Arrows("p10").getProperty("name"));
+    Assert.assertEquals("c", getManager2Arrows("p12").getProperty("name"));
+    Assert.assertEquals("b", getManager2Arrows("p6").getProperty("name"));
+    Assert.assertEquals("b", getManager2Arrows("p11").getProperty("name"));
   }
 
-  private ODocument getManager2(String personName) {
+  private OResult getManager2(String personName) {
     StringBuilder query = new StringBuilder();
     query.append("select expand(manager) from (");
     query.append("  match {class:Employee, where: (name = '" + personName + "')}");
@@ -763,10 +764,10 @@ public class OMatchStatementExecutionNewTest {
     OResult item = qResult.next();
     Assert.assertFalse(qResult.hasNext());
     qResult.close();
-    return item.getElement().getRecord();
+    return item;
   }
 
-  private ODocument getManager2Arrows(String personName) {
+  private OResult getManager2Arrows(String personName) {
     StringBuilder query = new StringBuilder();
     query.append("select expand(manager) from (");
     query.append("  match {class:Employee, where: (name = '" + personName + "')}");
@@ -783,7 +784,7 @@ public class OMatchStatementExecutionNewTest {
     OResult item = qResult.next();
     Assert.assertFalse(qResult.hasNext());
     qResult.close();
-    return item.getElement().getRecord();
+    return item;
   }
 
   @Test public void testManaged() {
@@ -1393,7 +1394,9 @@ public class OMatchStatementExecutionNewTest {
       query.append("{class:DiamondV, as: one, where: (uid = 0)}.out('DiamondE').out('DiamondE'){as: two} ");
       query.append("return one, two");
 
+
       OTodoResultSet result = db.query(query.toString());
+      printExecutionPlan(result);
       Assert.assertTrue(result.hasNext());
       OResult doc = result.next();
       Assert.assertFalse(result.hasNext());
