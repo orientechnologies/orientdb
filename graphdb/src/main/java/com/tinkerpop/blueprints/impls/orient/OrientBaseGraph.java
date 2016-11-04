@@ -73,11 +73,11 @@ import java.util.logging.Level;
  * @author Luca Garulli (http://www.orientechnologies.com)
  */
 public abstract class OrientBaseGraph extends OrientConfigurableGraph implements OrientExtendedGraph, OStorageRecoverListener {
-  public static final String                                  CONNECTION_OUT      = "out";
-  public static final String                                  CONNECTION_IN       = "in";
-  public static final String                                  CLASS_PREFIX        = "class:";
-  public static final String                                  CLUSTER_PREFIX      = "cluster:";
-  public static final String                                  ADMIN               = "admin";
+  public static final     String                              CONNECTION_OUT      = "out";
+  public static final     String                              CONNECTION_IN       = "in";
+  public static final     String                              CLASS_PREFIX        = "class:";
+  public static final     String                              CLUSTER_PREFIX      = "cluster:";
+  public static final     String                              ADMIN               = "admin";
   private static volatile ThreadLocal<OrientBaseGraph>        activeGraph         = new ThreadLocal<OrientBaseGraph>();
   private static volatile ThreadLocal<Deque<OrientBaseGraph>> initializationStack = new InitializationStackThreadLocal();
 
@@ -100,16 +100,15 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   }
 
   private final OPartitionedDatabasePool pool;
-  protected ODatabaseDocumentTx          database;
-  private String                         url;
-  private String                         username;
-  private String                         password;
+  protected     ODatabaseDocumentTx      database;
+  private       String                   url;
+  private       String                   username;
+  private       String                   password;
 
   /**
    * Constructs a new object using an existent database instance.
    *
-   * @param iDatabase
-   *          Underlying database object to attach
+   * @param iDatabase Underlying database object to attach
    */
   public OrientBaseGraph(final ODatabaseDocumentTx iDatabase, final String iUserName, final String iUserPassword,
       final Settings iConfiguration) {
@@ -238,8 +237,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * </tr>
    * </table>
    *
-   * @param configuration
-   *          of graph
+   * @param configuration of graph
    */
   public OrientBaseGraph(final Configuration configuration) {
     this(configuration.getString("blueprints.orientdb.url", null), configuration.getString("blueprints.orientdb.username", null),
@@ -303,7 +301,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     if (iLabels != null)
       // ENCODE LABELS
       for (int i = 0; i < iLabels.length; ++i)
-      iLabels[i] = encodeClassName(iLabels[i]);
+        iLabels[i] = encodeClassName(iLabels[i]);
   }
 
   /**
@@ -371,8 +369,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   /**
    * (Blueprints Extension) Configure the Graph instance.
    *
-   * @param iSetting
-   *          Settings object containing all the settings
+   * @param iSetting Settings object containing all the settings
    */
   public OrientBaseGraph configure(final Settings iSetting) {
     makeActive();
@@ -424,10 +421,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   /**
    * Returns an index by name and class
    *
-   * @param indexName
-   *          Index name
-   * @param indexClass
-   *          Class as one or subclass of Vertex.class and Edge.class
+   * @param indexName  Index name
+   * @param indexClass Class as one or subclass of Vertex.class and Edge.class
    * @return Index instance
    */
   @SuppressWarnings("unchecked")
@@ -462,8 +457,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   /**
    * Drops an index by name.
    *
-   * @param indexName
-   *          Index name
+   * @param indexName Index name
    */
   public void dropIndex(final String indexName) {
     makeActive();
@@ -498,8 +492,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   /**
    * Creates a new unconnected vertex with no fields in the Graph.
    *
-   * @param id
-   *          Optional, can contains the Vertex's class name by prefixing with "class:"
+   * @param id Optional, can contains the Vertex's class name by prefixing with "class:"
    * @return The new OrientVertex created
    */
   @Override
@@ -532,10 +525,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   /**
    * (Blueprints Extension) Creates a new unconnected vertex in the Graph setting the initial field values.
    *
-   * @param id
-   *          Optional, can contains the Vertex's class name by prefixing with "class:"
-   * @param prop
-   *          Fields must be a odd pairs of key/value or a single object as Map containing entries as key/value pairs
+   * @param id   Optional, can contains the Vertex's class name by prefixing with "class:"
+   * @param prop Fields must be a odd pairs of key/value or a single object as Map containing entries as key/value pairs
    * @return The new OrientVertex created
    */
   public OrientVertex addVertex(Object id, final Object... prop) {
@@ -569,7 +560,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     setCurrentGraphInThreadLocal();
     autoStartTransaction();
 
-    final OrientVertex vertex = new OrientVertex(this, className, fields);
+    final OrientVertex vertex = getVertexInstance( className, fields);
     vertex.setPropertiesInternal(prop);
 
     // SAVE IT
@@ -583,10 +574,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   /**
    * (Blueprints Extension) Creates a new unconnected vertex with no fields of specific class in a cluster in the Graph.
    *
-   * @param iClassName
-   *          Vertex class name
-   * @param iClusterName
-   *          Vertex cluster name
+   * @param iClassName   Vertex class name
+   * @param iClusterName Vertex cluster name
    * @return New vertex created
    */
   public OrientVertex addVertex(final String iClassName, final String iClusterName) {
@@ -595,7 +584,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     setCurrentGraphInThreadLocal();
     autoStartTransaction();
 
-    final OrientVertex vertex = new OrientVertex(this, iClassName);
+    final OrientVertex vertex = getVertexInstance(iClassName);
 
     // SAVE IT
     if (iClusterName != null)
@@ -609,10 +598,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * (Blueprints Extension) Creates a temporary vertex setting the initial field values. The vertex is not saved and the transaction
    * is not started.
    *
-   * @param iClassName
-   *          Vertex's class name
-   * @param prop
-   *          Fields must be a odd pairs of key/value or a single object as Map containing entries as key/value pairs
+   * @param iClassName Vertex's class name
+   * @param prop       Fields must be a odd pairs of key/value or a single object as Map containing entries as key/value pairs
    * @return added vertex
    */
   public OrientVertex addTemporaryVertex(final String iClassName, final Object... prop) {
@@ -621,7 +608,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     setCurrentGraphInThreadLocal();
     autoStartTransaction();
 
-    final OrientVertex vertex = new OrientVertex(this, iClassName);
+    final OrientVertex vertex = getVertexInstance(iClassName);
     vertex.setPropertiesInternal(prop);
     return vertex;
   }
@@ -629,14 +616,10 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   /**
    * Creates an edge between a source Vertex and a destination Vertex setting label as Edge's label.
    *
-   * @param id
-   *          Optional, can contains the Edge's class name by prefixing with "class:"
-   * @param outVertex
-   *          Source vertex
-   * @param inVertex
-   *          Destination vertex
-   * @param label
-   *          Edge's label
+   * @param id        Optional, can contains the Edge's class name by prefixing with "class:"
+   * @param outVertex Source vertex
+   * @param inVertex  Destination vertex
+   * @param label     Edge's label
    * @return
    */
   @Override
@@ -678,8 +661,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   /**
    * Returns a vertex by an ID.
    *
-   * @param id
-   *          Can by a String, ODocument or an OIdentifiable object.
+   * @param id Can by a String, ODocument or an OIdentifiable object.
    */
   public OrientVertex getVertex(final Object id) {
     makeActive();
@@ -690,7 +672,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     if (id instanceof OrientVertex)
       return (OrientVertex) id;
     else if (id instanceof ODocument)
-      return new OrientVertex(this, (OIdentifiable) id);
+      return getVertexInstance((OIdentifiable) id);
 
     setCurrentGraphInThreadLocal();
 
@@ -719,7 +701,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     if (cls != null && cls.isEdgeType())
       throw new IllegalArgumentException("Cannot retrieve a vertex with the RID " + rid + " because it is an edge");
 
-    return new OrientVertex(this, rec);
+    return getVertexInstance(rec);
   }
 
   @Override
@@ -732,8 +714,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   /**
    * Removes a vertex from the Graph. All the edges connected to the Vertex are automatically removed.
    *
-   * @param vertex
-   *          Vertex to remove
+   * @param vertex Vertex to remove
    */
   public void removeVertex(final Vertex vertex) {
     makeActive();
@@ -755,8 +736,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   /**
    * Get all the Vertices in Graph specifying if consider or not sub-classes of V.
    *
-   * @param iPolymorphic
-   *          If true then get all the vertices of any sub-class
+   * @param iPolymorphic If true then get all the vertices of any sub-class
    * @return Vertices as Iterable
    */
   public Iterable<Vertex> getVertices(final boolean iPolymorphic) {
@@ -768,8 +748,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   /**
    * Get all the Vertices in Graph of a specific vertex class and all sub-classes.
    *
-   * @param iClassName
-   *          Vertex class name to filter
+   * @param iClassName Vertex class name to filter
    * @return Vertices as Iterable
    */
   public Iterable<Vertex> getVerticesOfClass(final String iClassName) {
@@ -781,10 +760,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   /**
    * Get all the Vertices in Graph of a specific vertex class and all sub-classes only if iPolymorphic is true.
    *
-   * @param iClassName
-   *          Vertex class name to filter
-   * @param iPolymorphic
-   *          If true consider also Vertex iClassName sub-classes
+   * @param iClassName   Vertex class name to filter
+   * @param iPolymorphic If true consider also Vertex iClassName sub-classes
    * @return Vertices as Iterable
    */
   public Iterable<Vertex> getVerticesOfClass(final String iClassName, final boolean iPolymorphic) {
@@ -805,10 +782,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * Iterable<Vertex> resultset = getVertices("name", "Jay");
    * </code>
    *
-   * @param iKey
-   *          Field name
-   * @param iValue
-   *          Field value
+   * @param iKey   Field name
+   * @param iValue Field value
    * @return Vertices as Iterable
    */
   public Iterable<Vertex> getVertices(final String iKey, Object iValue) {
@@ -862,10 +837,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * Vertex v = getVertexByKey("V.name", "name", "Jay");
    * </code>
    *
-   * @param iKey
-   *          Name of the indexed property
-   * @param iValue
-   *          Field value
+   * @param iKey   Name of the indexed property
+   * @param iValue Field value
    * @return Vertex instance if found, otherwise null
    * @see #getVertices(String, Object)
    */
@@ -896,10 +869,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * Iterable<Vertex> resultset = getVertices("Person",new String[] {"name","surname"},new Object[] { "Sherlock" ,"Holmes"});
    * </code>
    *
-   * @param iKey
-   *          Fields name
-   * @param iValue
-   *          Fields value
+   * @param iKey   Fields name
+   * @param iValue Fields value
    * @return Vertices as Iterable
    */
   public Iterable<Vertex> getVertices(final String label, final String[] iKey, Object[] iValue) {
@@ -947,8 +918,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   /**
    * Get all the Edges in Graph specifying if consider or not sub-classes of E.
    *
-   * @param iPolymorphic
-   *          If true then get all the edge of any sub-class
+   * @param iPolymorphic If true then get all the edge of any sub-class
    * @return Edges as Iterable
    */
   public Iterable<Edge> getEdges(final boolean iPolymorphic) {
@@ -960,8 +930,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   /**
    * Get all the Edges in Graph of a specific edge class and all sub-classes.
    *
-   * @param iClassName
-   *          Edge class name to filter
+   * @param iClassName Edge class name to filter
    * @return Edges as Iterable
    */
   public Iterable<Edge> getEdgesOfClass(final String iClassName) {
@@ -973,10 +942,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   /**
    * Get all the Edges in Graph of a specific edges class and all sub-classes only if iPolymorphic is true.
    *
-   * @param iClassName
-   *          Edge class name to filter
-   * @param iPolymorphic
-   *          If true consider also iClassName Edge sub-classes
+   * @param iClassName   Edge class name to filter
+   * @param iPolymorphic If true consider also iClassName Edge sub-classes
    * @return Edges as Iterable
    */
   public Iterable<Edge> getEdgesOfClass(final String iClassName, final boolean iPolymorphic) {
@@ -997,10 +964,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * Iterable<Edges> resultset = getEdges("name", "Jay");
    * </code>
    *
-   * @param iKey
-   *          Field name
-   * @param iValue
-   *          Field value
+   * @param iKey   Field name
+   * @param iValue Field value
    * @return Edges as Iterable
    */
   public Iterable<Edge> getEdges(final String iKey, Object iValue) {
@@ -1038,8 +1003,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   /**
    * Returns a edge by an ID.
    *
-   * @param id
-   *          Can by a String, ODocument or an OIdentifiable object.
+   * @param id Can by a String, ODocument or an OIdentifiable object.
    */
   public OrientEdge getEdge(final Object id) {
     makeActive();
@@ -1064,7 +1028,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
         // DUMMY EDGE: CREATE IT IN MEMORY
         final String from = str.substring(0, pos);
         final String to = str.substring(pos + 2);
-        return new OrientEdge(this, new ORecordId(from), new ORecordId(to));
+        return getEdgeInstance(new ORecordId(from), new ORecordId(to), null);
       }
 
       try {
@@ -1096,8 +1060,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   /**
    * Removes an edge from the Graph.
    *
-   * @param edge
-   *          Edge to remove
+   * @param edge Edge to remove
    */
   public void removeEdge(final Edge edge) {
     makeActive();
@@ -1108,8 +1071,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   /**
    * Reuses the underlying database avoiding to create and open it every time.
    *
-   * @param iDatabase
-   *          Underlying database object
+   * @param iDatabase Underlying database object
    */
   public OrientBaseGraph reuse(final ODatabaseDocumentTx iDatabase) {
     ODatabaseRecordThreadLocal.INSTANCE.set(iDatabase);
@@ -1236,8 +1198,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   /**
    * Returns the persistent class for type iTypeName as OrientVertexType instance.
    *
-   * @param iTypeName
-   *          Vertex class name
+   * @param iTypeName Vertex class name
    */
   public OrientVertexType getVertexType(final String iTypeName) {
     makeActive();
@@ -1254,8 +1215,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   /**
    * Creates a new Vertex persistent class.
    *
-   * @param iClassName
-   *          Vertex class name
+   * @param iClassName Vertex class name
    * @return OrientVertexType instance representing the persistent class
    */
   public OrientVertexType createVertexType(final String iClassName) {
@@ -1267,11 +1227,9 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   /**
    * Creates a new Vertex persistent class.
    *
-   * @param iClassName
-   *          Vertex class name
-   * @param clusters
-   *          The number of clusters to create for the new class. By default the MINIMUMCLUSTERS database setting is used. In v2.2
-   *          and later, the number of clusters are proportioned to the amount of cores found on the machine
+   * @param iClassName Vertex class name
+   * @param clusters   The number of clusters to create for the new class. By default the MINIMUMCLUSTERS database setting is used. In v2.2
+   *                   and later, the number of clusters are proportioned to the amount of cores found on the machine
    * @return OrientVertexType instance representing the persistent class
    */
   public OrientVertexType createVertexType(final String iClassName, final int clusters) {
@@ -1282,10 +1240,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   /**
    * Creates a new Vertex persistent class specifying the super class.
    *
-   * @param iClassName
-   *          Vertex class name
-   * @param iSuperClassName
-   *          Vertex class name to extend
+   * @param iClassName      Vertex class name
+   * @param iSuperClassName Vertex class name to extend
    * @return OrientVertexType instance representing the persistent class
    */
   public OrientVertexType createVertexType(final String iClassName, final String iSuperClassName) {
@@ -1296,13 +1252,10 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   /**
    * Creates a new Vertex persistent class specifying the super class.
    *
-   * @param iClassName
-   *          Vertex class name
-   * @param iSuperClassName
-   *          Vertex class name to extend
-   * @param clusters
-   *          The number of clusters to create for the new class. By default the MINIMUMCLUSTERS database setting is used. In v2.2
-   *          and later, the number of clusters are proportioned to the amount of cores found on the machine
+   * @param iClassName      Vertex class name
+   * @param iSuperClassName Vertex class name to extend
+   * @param clusters        The number of clusters to create for the new class. By default the MINIMUMCLUSTERS database setting is used. In v2.2
+   *                        and later, the number of clusters are proportioned to the amount of cores found on the machine
    * @return OrientVertexType instance representing the persistent class
    */
   public OrientVertexType createVertexType(final String iClassName, final String iSuperClassName, final int clusters) {
@@ -1313,10 +1266,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   /**
    * Creates a new Vertex persistent class specifying the super class.
    *
-   * @param iClassName
-   *          Vertex class name
-   * @param iSuperClass
-   *          OClass Vertex to extend
+   * @param iClassName  Vertex class name
+   * @param iSuperClass OClass Vertex to extend
    * @return OrientVertexType instance representing the persistent class
    */
   public OrientVertexType createVertexType(final String iClassName, final OClass iSuperClass) {
@@ -1334,10 +1285,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   /**
    * Creates a new Vertex persistent class specifying the super class.
    *
-   * @param iClassName
-   *          Vertex class name
-   * @param iSuperClass
-   *          OClass Vertex to extend
+   * @param iClassName  Vertex class name
+   * @param iSuperClass OClass Vertex to extend
    * @return OrientVertexType instance representing the persistent class
    */
   public OrientVertexType createVertexType(final String iClassName, final OClass iSuperClass, final int clusters) {
@@ -1355,8 +1304,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   /**
    * Drop a vertex class.
    *
-   * @param iTypeName
-   *          Vertex class name
+   * @param iTypeName Vertex class name
    */
   public void dropVertexType(final String iTypeName) {
     makeActive();
@@ -1388,8 +1336,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   /**
    * Returns the persistent class for type iTypeName as OrientEdgeType instance.
    *
-   * @param iTypeName
-   *          Edge class name
+   * @param iTypeName Edge class name
    */
   public OrientEdgeType getEdgeType(final String iTypeName) {
     makeActive();
@@ -1405,8 +1352,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   /**
    * Creates a new Edge persistent class.
    *
-   * @param iClassName
-   *          Edge class name
+   * @param iClassName Edge class name
    * @return OrientEdgeType instance representing the persistent class
    */
   public OrientEdgeType createEdgeType(final String iClassName) {
@@ -1417,11 +1363,9 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   /**
    * Creates a new Edge persistent class.
    *
-   * @param iClassName
-   *          Edge class name
-   * @param clusters
-   *          The number of clusters to create for the new class. By default the MINIMUMCLUSTERS database setting is used. In v2.2
-   *          and later, the number of clusters are proportioned to the amount of cores found on the machine
+   * @param iClassName Edge class name
+   * @param clusters   The number of clusters to create for the new class. By default the MINIMUMCLUSTERS database setting is used. In v2.2
+   *                   and later, the number of clusters are proportioned to the amount of cores found on the machine
    * @return OrientEdgeType instance representing the persistent class
    */
   public OrientEdgeType createEdgeType(final String iClassName, final int clusters) {
@@ -1432,10 +1376,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   /**
    * Creates a new Edge persistent class specifying the super class.
    *
-   * @param iClassName
-   *          Edge class name
-   * @param iSuperClassName
-   *          Edge class name to extend
+   * @param iClassName      Edge class name
+   * @param iSuperClassName Edge class name to extend
    * @return OrientEdgeType instance representing the persistent class
    */
   public OrientEdgeType createEdgeType(final String iClassName, final String iSuperClassName) {
@@ -1446,13 +1388,10 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   /**
    * Creates a new Edge persistent class specifying the super class.
    *
-   * @param iClassName
-   *          Edge class name
-   * @param iSuperClassName
-   *          Edge class name to extend
-   * @param clusters
-   *          The number of clusters to create for the new class. By default the MINIMUMCLUSTERS database setting is used. In v2.2
-   *          and later, the number of clusters are proportioned to the amount of cores found on the machine
+   * @param iClassName      Edge class name
+   * @param iSuperClassName Edge class name to extend
+   * @param clusters        The number of clusters to create for the new class. By default the MINIMUMCLUSTERS database setting is used. In v2.2
+   *                        and later, the number of clusters are proportioned to the amount of cores found on the machine
    * @return OrientEdgeType instance representing the persistent class
    */
   public OrientEdgeType createEdgeType(final String iClassName, final String iSuperClassName, final int clusters) {
@@ -1463,13 +1402,10 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   /**
    * Creates a new Edge persistent class specifying the super class.
    *
-   * @param iClassName
-   *          Edge class name
-   * @param iSuperClass
-   *          OClass Edge to extend
-   * @param clusters
-   *          The number of clusters to create for the new class. By default the MINIMUMCLUSTERS database setting is used. In v2.2
-   *          and later, the number of clusters are proportioned to the amount of cores found on the machine
+   * @param iClassName  Edge class name
+   * @param iSuperClass OClass Edge to extend
+   * @param clusters    The number of clusters to create for the new class. By default the MINIMUMCLUSTERS database setting is used. In v2.2
+   *                    and later, the number of clusters are proportioned to the amount of cores found on the machine
    * @return OrientEdgeType instance representing the persistent class
    */
   public OrientEdgeType createEdgeType(final String iClassName, final OClass iSuperClass, final int clusters) {
@@ -1487,10 +1423,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   /**
    * Creates a new Edge persistent class specifying the super class.
    *
-   * @param iClassName
-   *          Edge class name
-   * @param iSuperClass
-   *          OClass Edge to extend
+   * @param iClassName  Edge class name
+   * @param iSuperClass OClass Edge to extend
    * @return OrientEdgeType instance representing the persistent class
    */
   public OrientEdgeType createEdgeType(final String iClassName, final OClass iSuperClass) {
@@ -1508,8 +1442,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   /**
    * Drops an edge class.
    *
-   * @param iTypeName
-   *          Edge class name
+   * @param iTypeName Edge class name
    */
   public void dropEdgeType(final String iTypeName) {
     makeActive();
@@ -1529,8 +1462,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   /**
    * Detaches a Graph Element to be used offline. All the changes will be committed on further @attach call.
    *
-   * @param iElement
-   *          Graph element to detach
+   * @param iElement Graph element to detach
    * @return The detached element
    * @see #attach(OrientElement)
    */
@@ -1544,8 +1476,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   /**
    * Attaches a previously detached Graph Element to the current Graph. All the pending changes will be committed.
    *
-   * @param iElement
-   *          Graph element to attach
+   * @param iElement Graph element to attach
    * @return The attached element
    * @see #detach(OrientElement)
    */
@@ -1558,8 +1489,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   /**
    * Returns a graph element, vertex or edge, starting from an ID.
    *
-   * @param id
-   *          Can by a String, ODocument or an OIdentifiable object.
+   * @param id Can by a String, ODocument or an OIdentifiable object.
    * @return OrientElement subclass such as OrientVertex or OrientEdge
    */
   public OrientElement getElement(final Object id) {
@@ -1588,12 +1518,9 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     if (doc != null) {
       final OImmutableClass schemaClass = ODocumentInternal.getImmutableSchemaClass(doc);
       if (schemaClass != null && schemaClass.isEdgeType())
-        return new OrientEdge(this, doc);
+        return getEdge(doc);
       else
-        return new OrientVertex(this, doc);
-      // else
-      // throw new IllegalArgumentException("Type error. The class " + schemaClass + " does not extend class neither '"
-      // + OrientVertexType.CLASS_NAME + "' nor '" + OrientEdgeType.CLASS_NAME + "'");
+        return getVertexInstance(doc);
     }
 
     return null;
@@ -1602,10 +1529,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   /**
    * Drops the index against a field name.
    *
-   * @param key
-   *          Field name
-   * @param elementClass
-   *          Element class as instances of Vertex and Edge
+   * @param key          Field name
+   * @param elementClass Element class as instances of Vertex and Edge
    */
   public <T extends Element> void dropKeyIndex(final String key, final Class<T> elementClass) {
     makeActive();
@@ -1627,19 +1552,15 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   /**
    * Creates an automatic indexing structure for indexing provided key for element class.
    *
-   * @param key
-   *          the key to create the index for
-   * @param elementClass
-   *          the element class that the index is for
-   * @param indexParameters
-   *          a collection of parameters for the underlying index implementation:
-   *          <ul>
-   *          <li>"type" is the index type between the supported types (UNIQUE, NOTUNIQUE, FULLTEXT). The default type is NOT_UNIQUE
-   *          <li>"class" is the class to index when it's a custom type derived by Vertex (V) or Edge (E)
-   *          <li>"keytype" to use a key type different by OType.STRING,</li></li>
-   *          </ul>
-   * @param <T>
-   *          the element class specification
+   * @param key             the key to create the index for
+   * @param elementClass    the element class that the index is for
+   * @param indexParameters a collection of parameters for the underlying index implementation:
+   *                        <ul>
+   *                        <li>"type" is the index type between the supported types (UNIQUE, NOTUNIQUE, FULLTEXT). The default type is NOT_UNIQUE
+   *                        <li>"class" is the class to index when it's a custom type derived by Vertex (V) or Edge (E)
+   *                        <li>"keytype" to use a key type different by OType.STRING,</li></li>
+   *                        </ul>
+   * @param <T>             the element class specification
    */
   @SuppressWarnings({ "rawtypes" })
   @Override
@@ -1693,8 +1614,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
         OPropertyIndexDefinition indexDefinition = new OPropertyIndexDefinition(className, key, keyType);
         if (collate != null)
           indexDefinition.setCollate(collate);
-        db.getMetadata().getIndexManager().createIndex(className + "." + key, indexType, indexDefinition,
-            cls.getPolymorphicClusterIds(), null, metadata);
+        db.getMetadata().getIndexManager()
+            .createIndex(className + "." + key, indexType, indexDefinition, cls.getPolymorphicClusterIds(), null, metadata);
         return null;
 
       }
@@ -1704,8 +1625,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   /**
    * Returns the indexed properties.
    *
-   * @param elementClass
-   *          the element class that the index is for
+   * @param elementClass the element class that the index is for
    * @return Set of String containing the indexed properties
    */
   @Override
@@ -1718,10 +1638,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   /**
    * Returns the indexed properties.
    *
-   * @param elementClass
-   *          the element class that the index is for
-   * @param includeClassNames
-   *          If true includes also the class name as prefix of fields
+   * @param elementClass      the element class that the index is for
+   * @param includeClassNames If true includes also the class name as prefix of fields
    * @return Set of String containing the indexed properties
    */
   public <T extends Element> Set<String> getIndexedKeys(final Class<T> elementClass, final boolean includeClassNames) {
@@ -1776,8 +1694,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   /**
    * Executes commands against the graph. Commands are executed outside transaction.
    *
-   * @param iCommand
-   *          Command request between SQL, GREMLIN and SCRIPT commands
+   * @param iCommand Command request between SQL, GREMLIN and SCRIPT commands
    */
   public OCommandRequest command(final OCommandRequest iCommand) {
     makeActive();
@@ -2064,10 +1981,10 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
 
       if (iVertexToRemove != null) {
         // SEARCH SEQUENTIALLY (SLOWER)
-        for (Iterator<OIdentifiable> it = bag.rawIterator(); it.hasNext();) {
+        for (Iterator<OIdentifiable> it = bag.rawIterator(); it.hasNext(); ) {
           final ODocument curr = getDocument(it.next(), forceReload);
 
-          if(curr == null)
+          if (curr == null)
             // EDGE REMOVED
             continue;
 
@@ -2101,7 +2018,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       } else {
 
         // DELETE ALL THE EDGES
-        for (Iterator<OIdentifiable> it = bag.rawIterator(); it.hasNext();) {
+        for (Iterator<OIdentifiable> it = bag.rawIterator(); it.hasNext(); ) {
           OIdentifiable edge = it.next();
 
           if (iAlsoInverse)
@@ -2120,10 +2037,10 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
 
       if (iVertexToRemove != null) {
         // SEARCH SEQUENTIALLY (SLOWER)
-        for (Iterator<OIdentifiable> it = col.iterator(); it.hasNext();) {
+        for (Iterator<OIdentifiable> it = col.iterator(); it.hasNext(); ) {
           final ODocument curr = getDocument(it.next(), forceReload);
 
-          if(curr == null)
+          if (curr == null)
             // EDGE REMOVED
             continue;
 
@@ -2190,8 +2107,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
 
     } else if (immutableClass.isEdgeType()) {
       // EDGE, REMOVE THE EDGE
-      final OIdentifiable otherVertex = OrientEdge.getConnection(r,
-          OrientVertex.getConnectionDirection(inverseFieldName, useVertexFieldsForEdgeLabels));
+      final OIdentifiable otherVertex = OrientEdge
+          .getConnection(r, OrientVertex.getConnectionDirection(inverseFieldName, useVertexFieldsForEdgeLabels));
 
       if (otherVertex != null) {
         if (iVertexToRemove == null || otherVertex.equals(iVertexToRemove)) {
@@ -2220,7 +2137,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   }
 
   private static ODocument getDocument(final OIdentifiable id, final boolean forceReload) {
-    if(id == null )
+    if (id == null)
       return null;
 
     final ODocument doc = id.getRecord();
@@ -2249,5 +2166,26 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
           doc.delete();
       }
     }
+  }
+
+  protected OrientVertex getVertexInstance(final OIdentifiable id) {
+    return new OrientVertex(this, id);
+  }
+
+  protected OrientVertex getVertexInstance(final String className, final Object... fields) {
+    return new OrientVertex(this, className, fields);
+  }
+
+
+  protected OrientEdge getEdgeInstance(final OIdentifiable id) {
+    return new OrientEdge(this, id);
+  }
+
+  protected OrientEdge getEdgeInstance(final String className, final Object... fields) {
+    return new OrientEdge(this, className, fields);
+  }
+
+  protected OrientEdge getEdgeInstance(final OIdentifiable from, final OIdentifiable to, final String label) {
+    return new OrientEdge(this, from, to, label);
   }
 }

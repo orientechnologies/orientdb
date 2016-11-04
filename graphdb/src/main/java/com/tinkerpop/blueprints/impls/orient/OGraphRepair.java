@@ -251,7 +251,7 @@ public class OGraphRepair {
               + " (estimated remaining time " + remaining + " secs)\n");
         }
 
-        final OrientVertex v = new OrientVertex(graph, vertex);
+        final OrientVertex v = graph.getVertex(vertex);
 
         boolean modifiedVertex = false;
 

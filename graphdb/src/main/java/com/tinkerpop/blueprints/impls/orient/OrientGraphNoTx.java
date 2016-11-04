@@ -207,16 +207,16 @@ public class OrientGraphNoTx extends OrientBaseGraph {
           to = inDocument;
           if (edge == null) {
             if (settings.isKeepInMemoryReferences())
-              edge = new OrientEdge(graph, from.getIdentity(), to.getIdentity(), label);
+              edge = graph.getEdgeInstance(from.getIdentity(), to.getIdentity(), label);
             else
-              edge = new OrientEdge(graph, from, to, label);
+              edge = graph.getEdgeInstance( from, to, label);
           }
           edgeRecord = null;
         } else {
           lightWeightEdge = false;
           if (edge == null) {
             // CREATE THE EDGE DOCUMENT TO STORE FIELDS TOO
-            edge = new OrientEdge(graph, label, fields);
+            edge = graph.getEdgeInstance(label, fields);
             edgeRecord = edge.getRecord();
 
             if (settings.isKeepInMemoryReferences())
