@@ -20,14 +20,6 @@
 
 package com.tinkerpop.blueprints.impls.orient;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
-import java.util.*;
-import java.util.logging.Level;
-
-import org.apache.commons.configuration.Configuration;
-
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
@@ -41,10 +33,10 @@ import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
+import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
-import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTxInternal;
@@ -69,6 +61,13 @@ import com.tinkerpop.blueprints.*;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
 import com.tinkerpop.blueprints.util.wrappers.partition.PartitionVertex;
+import org.apache.commons.configuration.Configuration;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.util.*;
+import java.util.logging.Level;
 
 /**
  * A Blueprints implementation of the graph database OrientDB (http://orientdb.com)
@@ -102,11 +101,11 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     });
   }
 
-  private final OPartitionedDatabasePool pool;
-  protected ODatabaseDocumentInternal    database;
-  private String                         url;
-  private String                         username;
-  private String                         password;
+  private final OPartitionedDatabasePool  pool;
+  protected     ODatabaseDocumentInternal database;
+  private       String                    url;
+  private       String                    username;
+  private       String                    password;
 
   /**
    * Constructs a new object using an existent database instance.
@@ -564,7 +563,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     setCurrentGraphInThreadLocal();
     autoStartTransaction();
 
-    final OrientVertex vertex = getVertexInstance( className, fields);
+    final OrientVertex vertex = getVertexInstance(className, fields);
     vertex.setPropertiesInternal(prop);
 
     // SAVE IT
@@ -2183,7 +2182,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   protected OrientVertex getVertexInstance(final String className, final Object... fields) {
     return new OrientVertex(this, className, fields);
   }
-
 
   protected OrientEdge getEdgeInstance(final OIdentifiable id) {
     return new OrientEdge(this, id);
