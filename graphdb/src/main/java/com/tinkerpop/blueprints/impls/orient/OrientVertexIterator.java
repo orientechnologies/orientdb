@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.graph.sql.OGraphCommandExecutorSQLFactory;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Vertex;
 
@@ -63,21 +64,27 @@ public class OrientVertexIterator extends OLazyWrapperIterator<Vertex> {
 
     final ODocument value = (ODocument) rec;
 
-    final OrientVertex v;
-    OImmutableClass immutableClass = ODocumentInternal.getImmutableSchemaClass(value);
-    if (immutableClass.isVertexType()) {
-      // DIRECT VERTEX
-      v = new OrientVertex(vertex.getGraph(), value);
-    } else if (immutableClass.isEdgeType()) {
-      // EDGE
-      if (vertex.settings.isUseVertexFieldsForEdgeLabels() || OrientEdge.isLabeled(OrientEdge.getRecordLabel(value), iLabels))
-        v = new OrientVertex(vertex.getGraph(), OrientEdge.getConnection(value, connection.getKey().opposite()));
-      else
-        v = null;
-    } else
-      throw new IllegalStateException("Invalid content found between connections: " + value);
+    final OImmutableClass immutableClass = ODocumentInternal.getImmutableSchemaClass(value);
 
-    return v;
+    return OGraphCommandExecutorSQLFactory.runWithAnyGraph(new OGraphCommandExecutorSQLFactory.GraphCallBack<Vertex>() {
+      @Override
+      public Vertex call(OrientBaseGraph graph) {
+        final OrientVertex v;
+        if (immutableClass.isVertexType()) {
+          // DIRECT VERTEX
+          v = graph.getVertex(value);
+        } else if (immutableClass.isEdgeType()) {
+          // EDGE
+          if (vertex.settings.isUseVertexFieldsForEdgeLabels() || OrientEdge.isLabeled(OrientEdge.getRecordLabel(value), iLabels))
+            v = graph.getVertex(OrientEdge.getConnection(value, connection.getKey().opposite()));
+          else
+            v = null;
+        } else
+          throw new IllegalStateException("Invalid content found between connections: " + value);
+
+        return v;
+      }
+    });
   }
 
   @Override

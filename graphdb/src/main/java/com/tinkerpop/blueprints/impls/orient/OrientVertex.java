@@ -293,9 +293,9 @@ import java.util.*;
 
       // DIRECT VERTEX, CREATE A DUMMY EDGE BETWEEN VERTICES
       if (connection.getKey() == Direction.OUT)
-        toAdd = new OrientEdge(graph, doc, fieldRecord, connection.getValue());
+        toAdd = graph.getEdgeInstance(doc, fieldRecord, connection.getValue());
       else
-        toAdd = new OrientEdge(graph, fieldRecord, doc, connection.getValue());
+        toAdd = graph.getEdgeInstance( fieldRecord, doc, connection.getValue());
 
     } else if (immutableClass.isEdgeType()) {
       // EDGE
@@ -306,7 +306,7 @@ import java.util.*;
           return null;
       }
 
-      toAdd = new OrientEdge(graph, fieldRecord);
+      toAdd = graph.getEdge(fieldRecord);
     } else
       throw new IllegalStateException("Invalid content found in " + fieldName + " field: " + fieldRecord);
 
@@ -1113,7 +1113,7 @@ import java.util.*;
           if (((Collection<Object>) field).contains(iToVertex)) {
             // ALREADY EXISTS, FORCE THE EDGE-DOCUMENT TO AVOID
             // MULTIPLE DYN-EDGES AGAINST THE SAME VERTICES
-            new OrientEdge(graph, iFromVertex, iToVertex, label).convertToDocument();
+            graph.getEdgeInstance(iFromVertex, iToVertex, label).convertToDocument();
             return false;
           }
 
@@ -1123,7 +1123,7 @@ import java.util.*;
           if (((Collection<Object>) field).contains(iFromVertex)) {
             // ALREADY EXISTS, FORCE THE EDGE-DOCUMENT TO AVOID
             // MULTIPLE DYN-EDGES AGAINST THE SAME VERTICES
-            new OrientEdge(graph, iFromVertex, iToVertex, label).convertToDocument();
+            graph.getEdgeInstance( iFromVertex, iToVertex, label).convertToDocument();
             return false;
           }
 
@@ -1153,7 +1153,7 @@ import java.util.*;
     OImmutableClass immutableClass = ODocumentInternal.getImmutableSchemaClass(fieldRecord);
     if (immutableClass.isVertexType()) {
       // DIRECT VERTEX
-      toAdd = new OrientVertex(graph, fieldRecord);
+      toAdd = graph.getVertex(fieldRecord);
     } else if (immutableClass.isEdgeType()) {
       // EDGE
       if (settings.isUseVertexFieldsForEdgeLabels() || OrientEdge.isLabeled(OrientEdge.getRecordLabel(fieldRecord), iLabels)) {
@@ -1170,7 +1170,7 @@ import java.util.*;
           }
         }
 
-        toAdd = new OrientVertex(graph, vertexDoc);
+        toAdd = graph.getVertex(vertexDoc);
       } else
         toAdd = null;
     } else

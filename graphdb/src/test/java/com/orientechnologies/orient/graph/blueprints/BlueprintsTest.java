@@ -1,21 +1,20 @@
 package com.orientechnologies.orient.graph.blueprints;
 
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.*;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.Vertex;
-
 public class BlueprintsTest {
-  private static String      DB_URL = "memory:" + BlueprintsTest.class.getSimpleName();
+  private static String DB_URL = "memory:" + BlueprintsTest.class.getSimpleName();
   private static OrientGraph graph;
 
   public BlueprintsTest() {
@@ -145,15 +144,14 @@ public class BlueprintsTest {
 
   @Test
   public void testInvalidVertexRID() {
-    OrientVertex v = new OrientVertex(graph, new ORecordId("9:9999"));
+    OrientVertex v = graph.getVertex(new ORecordId("9:9999"));
     System.out.println(v);
   }
 
   @Test
   public void testInvalidEdgeRID() {
     try {
-      OrientEdge e = graph.addEdge(null, new OrientVertex(graph, new ORecordId("9:9999")), new OrientVertex(graph, new ORecordId(
-          "9:99999")), "E");
+      OrientEdge e = graph.addEdge(null, new OrientVertex(graph,new ORecordId("9:9999")), new OrientVertex(graph,new ORecordId("9:99999")), "E");
       Assert.assertTrue(false);
     } catch (IllegalArgumentException e) {
       Assert.assertTrue(true);

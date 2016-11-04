@@ -106,10 +106,10 @@ public class OrientEdgeIterator extends OLazyWrapperIterator<OrientEdge> {
     if (immutableSchema.isVertexType()) {
       // DIRECT VERTEX, CREATE DUMMY EDGE
       if (connection.getKey() == Direction.OUT)
-        edge = new OrientEdge(this.sourceVertex.getGraph(), this.sourceVertex.getIdentity(), rec.getIdentity(),
+        edge = this.sourceVertex.getGraph().getEdgeInstance( this.sourceVertex.getIdentity(), rec.getIdentity(),
             connection.getValue());
       else
-        edge = new OrientEdge(this.sourceVertex.getGraph(), rec.getIdentity(), this.sourceVertex.getIdentity(),
+        edge = this.sourceVertex.getGraph().getEdgeInstance( rec.getIdentity(), this.sourceVertex.getIdentity(),
             connection.getValue());
     } else if (immutableSchema.isEdgeType()) {
       // EDGE

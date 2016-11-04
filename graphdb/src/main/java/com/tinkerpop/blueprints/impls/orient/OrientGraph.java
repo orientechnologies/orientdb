@@ -340,14 +340,14 @@ public class OrientGraph extends OrientTransactionalGraph {
       to = inDocument;
       if (edge == null) {
         if (settings.isKeepInMemoryReferences())
-          edge = new OrientEdge(this, from.getIdentity(), to.getIdentity(), label);
+          edge = getEdgeInstance( from.getIdentity(), to.getIdentity(), label);
         else
-          edge = new OrientEdge(this, from, to, label);
+          edge = getEdgeInstance( from, to, label);
       }
     } else {
       if (edge == null) {
         // CREATE THE EDGE DOCUMENT TO STORE FIELDS TOO
-        edge = new OrientEdge(this, label, fields);
+        edge = getEdgeInstance(label, fields);
 
         if (settings.isKeepInMemoryReferences())
           edge.getRecord().fields(OrientBaseGraph.CONNECTION_OUT, currentVertex.rawElement.getIdentity(),

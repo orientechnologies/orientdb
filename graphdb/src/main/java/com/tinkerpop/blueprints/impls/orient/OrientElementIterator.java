@@ -74,9 +74,9 @@ class OrientElementIterator<T extends Element> implements Iterator<T> {
             "Cannot determine the graph element type because the document class is null. Probably this is a projection, use the EXPAND() function");
 
       if (currentDocument.getIdentity().getClusterId() != -2 && immutableClass.isEdgeType() )
-        currentElement = new OrientEdge(graph, currentDocument);
+        currentElement = graph.getEdge(currentDocument);
       else
-        currentElement = new OrientVertex(graph, currentDocument);
+        currentElement = graph.getVertex(currentDocument);
     }
 
     return (T) currentElement;
