@@ -18,10 +18,13 @@ package com.orientechnologies.lucene;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngineDelegator;
+import com.orientechnologies.lucene.index.OLuceneAllIndex;
 import com.orientechnologies.lucene.index.OLuceneFullTextIndex;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.OIndexEngine;
 import com.orientechnologies.orient.core.index.OIndexFactory;
@@ -33,26 +36,31 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import static com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE.*;
+
 public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleListener {
 
-  public static final String LUCENE_ALGORITHM = "LUCENE";
+  public static final String LUCENE_ALGORITHM     = "LUCENE";
+  public static final String LUCENE_ALL_ALGORITHM = "LUCENE_ALL";
 
   private static final Set<String> TYPES;
   private static final Set<String> ALGORITHMS;
 
   static {
     final Set<String> types = new HashSet<String>();
-    types.add(OClass.INDEX_TYPE.FULLTEXT.toString());
+    types.add(FULLTEXT.toString());
     TYPES = Collections.unmodifiableSet(types);
   }
 
   static {
     final Set<String> algorithms = new HashSet<String>();
     algorithms.add(LUCENE_ALGORITHM);
+    algorithms.add(LUCENE_ALL_ALGORITHM);
     ALGORITHMS = Collections.unmodifiableSet(algorithms);
   }
 
@@ -90,10 +98,13 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
     if (metadata == null)
       metadata = new ODocument().field("analyzer", StandardAnalyzer.class.getName());
 
-    if (OClass.INDEX_TYPE.FULLTEXT.toString().equals(indexType)) {
-      return new OLuceneFullTextIndex(name, indexType, LUCENE_ALGORITHM, version, pagStorage, valueContainerAlgorithm, metadata);
-    }
+    if (FULLTEXT.toString().equalsIgnoreCase(indexType)) {
 
+      OLuceneFullTextIndex index = new OLuceneFullTextIndex(name, indexType, algorithm, version, pagStorage,
+          valueContainerAlgorithm, metadata);
+
+      return index;
+    }
     throw new OConfigurationException("Unsupported type : " + algorithm);
   }
 
@@ -101,7 +112,7 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
   public OIndexEngine createIndexEngine(String algorithm, String name, Boolean durableInNonTxMode, OStorage storage, int version,
       Map<String, String> engineProperties) {
 
-    return new OLuceneIndexEngineDelegator(name, durableInNonTxMode, storage, version);
+    return new OLuceneIndexEngineDelegator(name,algorithm, durableInNonTxMode, storage, version);
 
   }
 

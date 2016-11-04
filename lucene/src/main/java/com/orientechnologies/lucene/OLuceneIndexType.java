@@ -50,9 +50,8 @@ import java.util.Map;
  */
 public class OLuceneIndexType {
 
-  public static Field createField(String fieldName, Object value, Field.Store store/*,Field.Index index*/) {
+  public static Field createField(String fieldName, Object value, Field.Store store /*,Field.Index index*/) {
 
-    store = Field.Store.YES;
     if (value instanceof Number) {
       Number number = (Number) value;
       if (value instanceof Long)

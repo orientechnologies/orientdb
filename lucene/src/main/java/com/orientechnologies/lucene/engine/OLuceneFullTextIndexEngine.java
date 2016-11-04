@@ -30,7 +30,11 @@ import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.index.OIndexEngineException;
+import com.orientechnologies.orient.core.index.OIndexException;
+import com.orientechnologies.orient.core.index.OIndexKeyCursor;
 import com.orientechnologies.orient.core.sql.parser.ParseException;
 import com.orientechnologies.orient.core.storage.OStorage;
 import org.apache.lucene.document.Document;
@@ -42,18 +46,24 @@ import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.store.Directory;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
-  protected OLuceneFacetManager facetManager;
-  private   DocBuilder          builder;
-  private   OQueryBuilder       queryBuilder;
+  private final DocBuilder          builder;
+  private final OQueryBuilder       queryBuilder;
+  protected     OLuceneFacetManager facetManager;
 
   public OLuceneFullTextIndexEngine(OStorage storage, String idxName, DocBuilder builder, OQueryBuilder queryBuilder) {
     super(storage, idxName);
     this.builder = builder;
     this.queryBuilder = queryBuilder;
+
   }
 
   @Override
@@ -149,59 +159,6 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
     throw new UnsupportedOperationException("Validated put is not supported by OLuceneFullTextIndexEngine");
   }
 
-  private void putInAutomaticIndex(Object key, Document doc, int i) {
-    for (String field : index.getFields()) {
-
-      Object val = null;
-      if (key instanceof OCompositeKey) {
-        val = ((OCompositeKey) key).getKeys().get(i);
-        i++;
-      } else {
-        val = key;
-      }
-      if (val != null) {
-        if (facetManager.supportsFacets() && facetManager.isFacetField(field)) {
-          doc.add(facetManager.buildFacetField(field, val));
-        } else {
-
-          //          if (isToStore(field).equals(Field.Store.YES)) {
-          //            doc.add(OLuceneIndexType.createField(field + STORED, val, Field.Store.YES));
-          //          }
-
-          doc.add(OLuceneIndexType.createField(field, val, Field.Store.YES));
-        }
-      }
-
-    }
-  }
-
-  private Document putInManualindex(Object key, OIdentifiable oIdentifiable) {
-    Document doc = new Document();
-    doc.add(OLuceneIndexType.createField(RID, oIdentifiable.getIdentity().toString(), Field.Store.YES));
-
-    if (key instanceof OCompositeKey) {
-
-      List<Object> keys = ((OCompositeKey) key).getKeys();
-
-      int k = 0;
-      for (Object o : keys) {
-        doc.add(OLuceneIndexType.createField("k" + k, o, Field.Store.NO));
-        k++;
-      }
-    } else if (key instanceof Collection) {
-      Collection<Object> keys = (Collection<Object>) key;
-
-      int k = 0;
-      for (Object o : keys) {
-        doc.add(OLuceneIndexType.createField("k" + k, o, Field.Store.NO));
-        k++;
-      }
-    } else {
-      doc.add(OLuceneIndexType.createField("k0", key, Field.Store.NO));
-    }
-    return doc;
-  }
-
   @Override
   public Object getFirstKey() {
     return null;
@@ -269,6 +226,33 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
     return builder.build(index, key, value, collectionFields, metadata);
   }
 
+  private Document putInManualindex(Object key, OIdentifiable oIdentifiable) {
+    Document doc = new Document();
+    doc.add(OLuceneIndexType.createField(RID, oIdentifiable.getIdentity().toString(), Field.Store.YES));
+
+    if (key instanceof OCompositeKey) {
+
+      List<Object> keys = ((OCompositeKey) key).getKeys();
+
+      int k = 0;
+      for (Object o : keys) {
+        doc.add(OLuceneIndexType.createField("k" + k, o, Field.Store.NO));
+        k++;
+      }
+    } else if (key instanceof Collection) {
+      Collection<Object> keys = (Collection<Object>) key;
+
+      int k = 0;
+      for (Object o : keys) {
+        doc.add(OLuceneIndexType.createField("k" + k, o, Field.Store.NO));
+        k++;
+      }
+    } else {
+      doc.add(OLuceneIndexType.createField("k0", key, Field.Store.NO));
+    }
+    return doc;
+  }
+
   @Override
   public Query buildQuery(Object query) {
 
@@ -282,6 +266,7 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
   @Override
   public Object getInTx(Object key, OLuceneTxChanges changes) {
+
     try {
       Query q = queryBuilder.query(index, key, queryAnalyzer());
       OCommandContext context = null;

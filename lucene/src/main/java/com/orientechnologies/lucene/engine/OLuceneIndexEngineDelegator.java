@@ -42,25 +42,45 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
-import static com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE.FULLTEXT;
+import static com.orientechnologies.lucene.OLuceneIndexFactory.*;
+import static com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE.*;
 
 /**
  * Created by Enrico Risa on 04/09/15.
  */
 public class OLuceneIndexEngineDelegator implements OLuceneIndexEngine, OFreezableStorageComponent {
 
+  private final String             algorithm;
   private final Boolean            durableInNonTxMode;
   private final OStorage           storage;
   private final int                version;
   private final String             indexName;
   private       OLuceneIndexEngine delegate;
 
-  public OLuceneIndexEngineDelegator(String name, Boolean durableInNonTxMode, OStorage storage, int version) {
+  public OLuceneIndexEngineDelegator(String name, String algorithm, Boolean durableInNonTxMode, OStorage storage, int version) {
 
     this.indexName = name;
+    this.algorithm = algorithm;
     this.durableInNonTxMode = durableInNonTxMode;
     this.storage = storage;
     this.version = version;
+  }
+
+  @Override
+  public void init(String indexName, String indexType, OIndexDefinition indexDefinition, boolean isAutomatic, ODocument metadata) {
+
+    if (delegate == null) {
+      if (FULLTEXT.name().equalsIgnoreCase(indexType)) {
+
+        if (LUCENE_ALGORITHM.equalsIgnoreCase(algorithm)) {
+          delegate = new OLuceneFullTextIndexEngine(storage, indexName, new ODocBuilder(), new OQueryBuilderImpl(metadata));
+        } else if (LUCENE_ALL_ALGORITHM.equalsIgnoreCase(algorithm)) {
+          delegate = new OLuceneFullTextAllIndexEngine(storage, indexName);
+        }
+      }
+
+      delegate.init(indexName, indexType, indexDefinition, isAutomatic, metadata);
+    }
   }
 
   @Override
@@ -77,6 +97,7 @@ public class OLuceneIndexEngineDelegator implements OLuceneIndexEngine, OFreezab
 
   @Override
   public void delete() {
+
     delegate.delete();
   }
 
@@ -197,20 +218,13 @@ public class OLuceneIndexEngineDelegator implements OLuceneIndexEngine, OFreezab
   }
 
   @Override
-  public String getIndexNameByKey(final Object key) {
-    return delegate.getIndexNameByKey(key);
+  public boolean acquireAtomicExclusiveLock(Object key) {
+    return delegate.acquireAtomicExclusiveLock(key);
   }
 
   @Override
-  public void init(String indexName, String indexType, OIndexDefinition indexDefinition, boolean isAutomatic, ODocument metadata) {
-    if (delegate == null) {
-      if (FULLTEXT.name().equalsIgnoreCase(indexType)) {
-
-        delegate = new OLuceneFullTextIndexEngine(storage, indexName, new ODocBuilder(), new OQueryBuilderImpl(metadata));
-      }
-
-      delegate.init(indexName, indexType, indexDefinition, isAutomatic, metadata);
-    }
+  public String getIndexNameByKey(final Object key) {
+    return delegate.getIndexNameByKey(key);
   }
 
   @Override
@@ -282,10 +296,5 @@ public class OLuceneIndexEngineDelegator implements OLuceneIndexEngine, OFreezab
   @Override
   public void release() {
     delegate.release();
-  }
-
-  @Override
-  public boolean acquireAtomicExclusiveLock(Object key) {
-    return delegate.acquireAtomicExclusiveLock(key);
   }
 }

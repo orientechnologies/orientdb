@@ -57,6 +57,15 @@ public class OLucenePerFieldAnalyzerWrapper extends DelegatingAnalyzerWrapper {
     return this;
   }
 
+  public OLucenePerFieldAnalyzerWrapper add(OLucenePerFieldAnalyzerWrapper analyzer) {
+    fieldAnalyzers.putAll(analyzer.getAnalyzers());
+    return this;
+  }
+
+  protected Map<String, Analyzer> getAnalyzers() {
+    return fieldAnalyzers;
+  }
+
   public OLucenePerFieldAnalyzerWrapper remove(String field) {
     fieldAnalyzers.remove(field);
     return this;

@@ -1,6 +1,7 @@
 package com.orientechnologies.lucene.functions;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.lucene.OLuceneIndexFactory;
 import com.orientechnologies.lucene.collections.OLuceneResultSet;
 import com.orientechnologies.lucene.index.OLuceneFullTextIndex;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -21,7 +22,7 @@ import java.util.Collection;
  */
 public class OLuceneSearchFunction extends OSQLFunctionAbstract implements OIndexableSQLFunction {
 
-  public static final String NAME = "lucene_match";
+  public static final String NAME = "LUCENE_MATCH";
 
   public OLuceneSearchFunction() {
     super(NAME, 1, 1);
@@ -30,8 +31,7 @@ public class OLuceneSearchFunction extends OSQLFunctionAbstract implements OInde
   @Override
   public Iterable<OIdentifiable> searchFromTarget(OFromClause target, OBinaryCompareOperator operator, Object rightValue,
       OCommandContext ctx, OExpression... args) {
-
-    OIndex oIndex = searchForIndex(target, args);
+    OIndex oIndex = searchForIndex();
 
     if (oIndex != null) {
 
@@ -52,13 +52,13 @@ public class OLuceneSearchFunction extends OSQLFunctionAbstract implements OInde
   @Override
   public boolean canExecuteWithoutIndex(OFromClause target, OBinaryCompareOperator operator, Object rightValue, OCommandContext ctx,
       OExpression... args) {
-    return false;
+    return true;
   }
 
   @Override
   public boolean allowsIndexedExecution(OFromClause target, OBinaryCompareOperator operator, Object rightValue, OCommandContext ctx,
       OExpression... args) {
-    return false;
+    return true;
   }
 
   @Override
@@ -67,38 +67,16 @@ public class OLuceneSearchFunction extends OSQLFunctionAbstract implements OInde
     return false;
   }
 
-  @Override
-  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iParams,
-      OCommandContext iContext) {
-
-    //        OLogManager.instance().info(this, "ithis :: " + iThis);
-    OLogManager.instance().info(this, "currentRecord :: " + iCurrentRecord);
-    //    OLogManager.instance().info(this, "currentRes :: " + iCurrentResult);
-    //    OLogManager.instance().info(this, "params :: " + iParams);
-    //    OLogManager.instance().info(this, "ctx :: " + iContext);
-
-    return iCurrentResult;
-  }
-
-  @Override
-  public String getSyntax() {
-    OLogManager.instance().info(this, "syntax");
-    return null;
-  }
-
-  protected OIndex searchForIndex(OFromClause target, OExpression[] args) {
+  protected OIndex searchForIndex() {
 
     // TODO Check if target is a class otherwise exception
-
-    String fieldName = args[0].toString();
-
-    OLogManager.instance().info(this, "query:: " + fieldName);
 
     Collection<? extends OIndex<?>> indexes = getDb().getMetadata().getIndexManager().getIndexes();
     OLogManager.instance().info(this, "iindexes:: " + indexes.size());
     for (OIndex<?> index : indexes) {
       if (index.getInternal() instanceof OLuceneFullTextIndex) {
-        return index;
+        if (index.getAlgorithm().equalsIgnoreCase(OLuceneIndexFactory.LUCENE_ALL_ALGORITHM))
+          return index;
       }
     }
     return null;
@@ -106,6 +84,25 @@ public class OLuceneSearchFunction extends OSQLFunctionAbstract implements OInde
 
   protected ODatabaseDocumentInternal getDb() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
+  }
+
+  @Override
+  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iParams,
+      OCommandContext iContext) {
+
+    OIndex index = searchForIndex();
+    if (index != null) {
+
+      return index.get(iParams[0]);
+    }
+    return null;
+
+  }
+
+  @Override
+  public String getSyntax() {
+    OLogManager.instance().info(this, "syntax");
+    return null;
   }
 
 }

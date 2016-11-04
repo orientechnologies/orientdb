@@ -88,6 +88,7 @@ public class OLuceneResultSet extends OLuceneAbstractResultSet {
         e.printStackTrace();
       }
       index++;
+
       return res;
     }
 

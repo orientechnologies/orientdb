@@ -18,7 +18,6 @@
 
 package com.orientechnologies.lucene.builder;
 
-import com.orientechnologies.lucene.OLuceneIndexType;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
@@ -30,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static com.orientechnologies.lucene.OLuceneIndexType.*;
 import static com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract.*;
 
 /**
@@ -43,7 +43,7 @@ public class ODocBuilder implements DocBuilder {
     Document doc = new Document();
 
     if (value != null) {
-      doc.add(OLuceneIndexType.createField(RID, value.getIdentity().toString(), Field.Store.YES));
+      doc.add(createField(RID, value.getIdentity().toString(), Field.Store.YES));
     }
     List<Object> formattedKey = formatKeys(definition, key);
 
@@ -52,10 +52,11 @@ public class ODocBuilder implements DocBuilder {
       Object val = formattedKey.get(i);
       i++;
       if (val != null) {
-        doc.add(OLuceneIndexType.createField(field, val, Field.Store.YES));
+        doc.add(createField(field, val, Field.Store.YES));
+        //for cross class index
+        doc.add(createField(definition.getClassName() + "." + field, val, Field.Store.YES));
+        doc.add(createField("_CLASS", definition.getClassName(), Field.Store.YES));
 
-        //for single uber index
-//        doc.add(OLuceneIndexType.createField(definition.getClassName() + "." + field, val, Field.Store.YES));
       }
     }
 

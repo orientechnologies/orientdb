@@ -22,8 +22,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory;
 import com.orientechnologies.lucene.analyzer.OLucenePerFieldAnalyzerWrapper;
-import com.orientechnologies.lucene.builder.DocBuilder;
-import com.orientechnologies.lucene.builder.OQueryBuilder;
 import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.orient.core.OOrientListener;
 import com.orientechnologies.orient.core.Orient;
@@ -50,8 +48,6 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.SearcherManager;
 import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.NIOFSDirectory;
-import org.apache.lucene.store.RAMDirectory;
 
 import java.io.File;
 import java.io.IOException;
@@ -71,21 +67,18 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
   protected AtomicBoolean closed = new AtomicBoolean(true);
   protected SearcherManager                       searcherManager;
   protected ControlledRealTimeReopenThread        nrt;
-  private   DocBuilder                            builder;
-  private   OQueryBuilder                         queryBuilder;
   private   Map<String, OLuceneClassIndexContext> oindexes;
   private   long                                  reopenToken;
+  private   Directory                             directory;
 
   private Analyzer    indexAnalyzer;
   private Analyzer    queryAnalyzer;
   private IndexWriter indexWriter;
 
-  public OLuceneStorage(String name, DocBuilder builder, OQueryBuilder queryBuilder, ODocument metadata) {
+  public OLuceneStorage(String name, ODocument metadata) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(),
         OGlobalConfiguration.MVRBTREE_TIMEOUT.getValueAsInteger(), true);
     this.name = name;
-    this.builder = builder;
-    this.queryBuilder = queryBuilder;
     this.metadata = metadata;
 
     indexAnalyzer = new OLucenePerFieldAnalyzerWrapper(new StandardAnalyzer());
@@ -94,7 +87,7 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
     oindexes = new HashMap<String, OLuceneClassIndexContext>();
     try {
 
-      reOpen();
+      reOpen(metadata);
 
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error on initializing Lucene index", e);
@@ -116,44 +109,29 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
 
   }
 
-  private void reOpen() throws IOException {
+  private void reOpen(ODocument metadata) throws IOException {
 
-    if (indexWriter != null) {
-      OLogManager.instance().info(this, "index storage is open don't reopen");
+    OLuceneDirectoryFactory directoryFactory = new OLuceneDirectoryFactory();
 
-      return;
-    }
-    ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
 
-    final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) database.getStorage().getUnderlying();
-    Directory dir = null;
-    if (storageLocalAbstract instanceof OLocalPaginatedStorage) {
-      String pathname = getIndexPath((OLocalPaginatedStorage) storageLocalAbstract);
-
-      OLogManager.instance().info(this, "Opening NIOFS Lucene db=%s, path=%s", database.getName(), pathname);
-
-      dir = NIOFSDirectory.open(new File(pathname).toPath());
-    } else {
-
-      OLogManager.instance().info(this, "Opening RAM Lucene index db=%s", database.getName());
-      dir = new RAMDirectory();
-
-    }
-
-    indexWriter = createIndexWriter(dir);
-
+    directory = directoryFactory.createDirectory(database, name, metadata);
+    indexWriter = createIndexWriter(directory);
     searcherManager = new SearcherManager(indexWriter, true, true, null);
 
     if (nrt != null) {
       nrt.close();
     }
 
+    reopenToken = 0;
+
     nrt = new ControlledRealTimeReopenThread(indexWriter, searcherManager, 60.00, 0.1);
     nrt.setDaemon(true);
     nrt.start();
-    flush();
 
-    OLogManager.instance().info(this, "REOPEN DONE");
+    closed.set(false);
+
+    flush();
   }
 
   public void commit() {
