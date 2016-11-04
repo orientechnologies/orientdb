@@ -10,9 +10,9 @@
             <b>Database</b>
           </label>
           <div class="col-md-6">
-            <select class="form-control" ng-model="selectedDb">
-              <option ng-repeat="(k,v) in databases" value="{{k}}"> {{k}}</option>
+            <select class="form-control" ng-model="selectedDb" ng-options="key as key for (key,v) in databases">
             </select>
+
           </div>
           <div class="col-md-4">
 

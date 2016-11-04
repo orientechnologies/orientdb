@@ -3,7 +3,7 @@
     <div class="col-md-12">
       <div class="panel panel-default">
         <div class="panel-heading">
-          <b> Health </b></div>
+        </div>
         <div class="panel-body">
           <div class="row">
             <div class="col-md-2">
@@ -13,17 +13,19 @@
                     <b>Database</b>
                   </label>
                   <div class="col-md-8">
-                    <select class="form-control" ng-model="selectedDb">
-                      <option ng-repeat="(k,v) in databases" value="{{k}}"> {{k}}</option>
+                    <select class="form-control" ng-model="selectedDb" ng-options="key as key for (key,v) in databases">
                     </select>
                   </div>
                 </div>
               </form>
             </div>
-            <div class="col-md-10" ng-hide="dcEnabled">
-              <h3>Data Centers not available for db {{k}}</h3>
-            </div>
+
             <div class="col-md-10 studio-well-tips">
+              <div class="row" ng-hide="dcEnabled">
+                <div class="col-md-12">
+                  <h3>Data Centers not available for db {{selectedDb}}</h3>
+                </div>
+              </div>
               <div class="row">
                 <div class="col-md-3" ng-show="dcEnabled">
                   <h3>Data Centers <span class="label label-default">{{dcCount}}</span></h3>

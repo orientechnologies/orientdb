@@ -348,44 +348,48 @@ graph.directive('c3DataCenter', function ($http, $compile, $timeout, $rootScope,
     var data = $scope.dc.servers.map(function (s) {
       return [s.name, 50];
     });
-    var chart = c3.generate({
-      bindto: $element[0],
-      tooltip: {
-        show: false
-      },
-      data: {
-        columns: data,
-        onclick: function (d, element) {
-          $location.path("/dashboard/general/" + d.id);
-        },
-        type: 'donut',
-        color: function (color, d) {
-          return getColor($scope.dc, d.id ? d.id : d);
-        }
-      },
-      donut: {
-        title: $scope.dc.name,
-        label: {
+    $timeout(function () {
+
+
+      var chart = c3.generate({
+        bindto: $element[0],
+        tooltip: {
           show: false
+        },
+        data: {
+          columns: data,
+          onclick: function (d, element) {
+            $location.path("/dashboard/general/" + d.id);
+          },
+          type: 'donut',
+          color: function (color, d) {
+            return getColor($scope.dc, d.id ? d.id : d);
+          }
+        },
+        donut: {
+          title: $scope.dc.name,
+          label: {
+            show: false
+          }
         }
-      }
-    });
+      });
 
-    $scope.$on('server-status-change', function (evt, s) {
+      $scope.$on('server-status-change', function (evt, s) {
 
 
-      if (changeIfMyServer($scope.dc, s.name, s.status)) {
-        chart.unload({
-          ids: [s.name]
-        });
-        chart.load({
-          columns: [
-            [s.name, 50]
-          ],
-        });
-      }
+        if (changeIfMyServer($scope.dc, s.name, s.status)) {
+          chart.unload({
+            ids: [s.name]
+          });
+          chart.load({
+            columns: [
+              [s.name, 50]
+            ],
+          });
+        }
 
-    })
+      })
+    }, 0);
 
   }
   return {

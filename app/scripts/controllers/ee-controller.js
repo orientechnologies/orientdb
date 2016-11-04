@@ -498,16 +498,18 @@ ee.controller('DataCentersOverviewController', function ($scope, $rootScope, Clu
   $scope.$on('db-status', function (evt, statuses) {
 
 
-    $scope.dataCenters.forEach(function (dc) {
-      dc.servers.forEach(function (s) {
-        if (statuses[$scope.selectedDb][s.name]) {
-          if (s.status !== statuses[$scope.selectedDb][s.name]) {
-            s.status = statuses[$scope.selectedDb][s.name];
-            $scope.$broadcast('server-status-change', s)
+    if ($scope.dataCenters) {
+      $scope.dataCenters.forEach(function (dc) {
+        dc.servers.forEach(function (s) {
+          if (statuses[$scope.selectedDb][s.name]) {
+            if (s.status !== statuses[$scope.selectedDb][s.name]) {
+              s.status = statuses[$scope.selectedDb][s.name];
+              $scope.$broadcast('server-status-change', s)
+            }
           }
-        }
+        })
       })
-    })
+    }
   })
 
 
@@ -528,11 +530,13 @@ ee.controller('DataCentersOverviewController', function ($scope, $rootScope, Clu
 
     if (db) {
       Cluster.database(db).then(function (data) {
+
         $scope.config = data;
         if (!data.dataCenters || Object.keys(data.dataCenters).length == 0) {
           $scope.dcEnabled = false;
           return;
         }
+        $scope.dcEnabled = true;
 
         $scope.dcCount = Object.keys(data.dataCenters).length;
 
