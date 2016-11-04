@@ -22,14 +22,12 @@ package com.orientechnologies.orient.graph.script;
 import com.orientechnologies.orient.core.command.script.OScriptOrientWrapper;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 
 /**
  * Blueprints Graph wrapper class to use from scripts.
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * 
  */
 public class OScriptGraphOrientWrapper extends OScriptOrientWrapper {
 
@@ -39,11 +37,11 @@ public class OScriptGraphOrientWrapper extends OScriptOrientWrapper {
 
   public OScriptGraphWrapper getGraphNoTx() {
     final ODatabaseDocumentTx threadDatabase = (ODatabaseDocumentTx) ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner();
-    return new OScriptGraphWrapper(new OrientGraphNoTx(threadDatabase));
+    return new OScriptGraphWrapper(OrientGraphFactory.getNoTxGraphImplFactory().getGraph(threadDatabase));
   }
 
   public OScriptGraphWrapper getGraph() {
     final ODatabaseDocumentTx threadDatabase = (ODatabaseDocumentTx) ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner();
-    return new OScriptGraphWrapper(new OrientGraph(threadDatabase));
+    return new OScriptGraphWrapper(OrientGraphFactory.getTxGraphImplFactory().getGraph(threadDatabase));
   }
 }

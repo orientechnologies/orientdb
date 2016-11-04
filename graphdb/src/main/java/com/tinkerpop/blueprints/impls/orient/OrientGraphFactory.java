@@ -1,3 +1,22 @@
+/*
+ *
+ *  *  Copyright 2014 OrientDB LTD (info(at)orientdb.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientdb.com
+ *
+ */
 package com.tinkerpop.blueprints.impls.orient;
 
 import com.orientechnologies.orient.client.remote.OStorageRemote;
@@ -10,14 +29,97 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/**
+ * Orient Graph factory. It supports also a pool of instances that are recycled.
+ *
+ * @author Luca Garulli
+ */
 public class OrientGraphFactory extends OrientConfigurableGraph {
-  protected final String url;
-  protected final String user;
-  protected final String password;
-  protected final Map<String, Object> properties = new HashMap<String, Object>();
-  protected volatile OPartitionedDatabasePool pool;
-  protected          OIntent                  intent;
-  protected AtomicBoolean used = new AtomicBoolean(false);
+  private final String url;
+  private final String user;
+  private final String password;
+  private final Map<String, Object> properties = new HashMap<String, Object>();
+  private OIntent intent;
+  private AtomicBoolean used = new AtomicBoolean(false);
+  private volatile OPartitionedDatabasePool pool;
+
+  public interface OrientGraphImplFactory {
+    OrientBaseGraph getGraph(String url);
+
+    OrientBaseGraph getGraph(String url, String user, String password);
+
+    OrientBaseGraph getGraph(ODatabaseDocumentTx database);
+
+    OrientBaseGraph getGraph(ODatabaseDocumentTx database, String user, String password, Settings settings);
+
+    OrientBaseGraph getGraph(OPartitionedDatabasePool pool, Settings settings);
+
+    OrientBaseGraph getGraph(ODatabaseDocumentTx database, boolean autoCreateTx);
+  }
+
+  private static OrientGraphImplFactory graphTxImplFactory = new OrientGraphImplFactory() {
+    @Override
+    public OrientBaseGraph getGraph(final String url) {
+      return new OrientGraph(url);
+    }
+
+    @Override
+    public OrientBaseGraph getGraph(final String url, final String user, final String password) {
+      return new OrientGraph(url, user, password);
+    }
+
+    @Override
+    public OrientBaseGraph getGraph(final ODatabaseDocumentTx database) {
+      return new OrientGraph(database);
+    }
+
+    @Override
+    public OrientBaseGraph getGraph(final ODatabaseDocumentTx database, final String user, final String password,
+        final Settings settings) {
+      return new OrientGraph(database, user, password, settings);
+    }
+
+    @Override
+    public OrientBaseGraph getGraph(final OPartitionedDatabasePool pool, final Settings settings) {
+      return new OrientGraph(pool, settings);
+    }
+
+    public OrientBaseGraph getGraph(final ODatabaseDocumentTx database, final boolean autoCreateTx){
+      return new OrientGraph(database, autoCreateTx);
+    }
+  };
+
+  private static OrientGraphImplFactory graphNoTxImplFactory = new OrientGraphImplFactory() {
+    @Override
+    public OrientBaseGraph getGraph(final String url) {
+      return new OrientGraphNoTx(url);
+    }
+
+    @Override
+    public OrientBaseGraph getGraph(final String url, final String user, final String password) {
+      return new OrientGraphNoTx(url, user, password);
+    }
+
+    @Override
+    public OrientBaseGraph getGraph(final ODatabaseDocumentTx database) {
+      return new OrientGraphNoTx(database);
+    }
+
+    @Override
+    public OrientBaseGraph getGraph(final ODatabaseDocumentTx database, final String user, final String password,
+        final Settings settings) {
+      return new OrientGraphNoTx(database, user, password, settings);
+    }
+
+    @Override
+    public OrientBaseGraph getGraph(final OPartitionedDatabasePool pool, final Settings settings) {
+      return new OrientGraphNoTx(pool, settings);
+    }
+
+    public OrientBaseGraph getGraph(final ODatabaseDocumentTx database, final boolean autoCreateTx){
+      return new OrientGraphNoTx(database);
+    }
+  };
 
   /**
    * Creates a factory that use default admin credentials and pool with maximum amount of connections equal to amount of CPU cores.
@@ -113,10 +215,10 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
   public OrientGraph getTx() {
     final OrientGraph g;
     if (pool == null) {
-      g = new OrientGraph(getDatabase(), user, password, settings);
+      g = (OrientGraph) getTxGraphImplFactory().getGraph(getDatabase(), user, password, settings);
     } else {
       // USE THE POOL
-      g = new OrientGraph(pool, settings);
+      g = (OrientGraph) getTxGraphImplFactory().getGraph(pool, settings);
     }
 
     initGraph(g);
@@ -132,14 +234,30 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
   public OrientGraphNoTx getNoTx() {
     final OrientGraphNoTx g;
     if (pool == null) {
-      g = new OrientGraphNoTx(getDatabase(), user, password, settings);
+      g = (OrientGraphNoTx) getNoTxGraphImplFactory().getGraph(getDatabase(), user, password, settings);
     } else {
       // USE THE POOL
-      g = new OrientGraphNoTx(pool, settings);
+      g = (OrientGraphNoTx) getNoTxGraphImplFactory().getGraph(pool, settings);
     }
 
     initGraph(g);
     return g;
+  }
+
+  public static OrientGraphImplFactory getTxGraphImplFactory() {
+    return graphTxImplFactory;
+  }
+
+  public static void setTxGraphImplFactory(final OrientGraphImplFactory factory) {
+    graphTxImplFactory = factory;
+  }
+
+  public static OrientGraphImplFactory getNoTxGraphImplFactory() {
+    return graphNoTxImplFactory;
+  }
+
+  public static void setNoTxGraphImplFactory(final OrientGraphImplFactory factory) {
+    graphNoTxImplFactory = factory;
   }
 
   /**

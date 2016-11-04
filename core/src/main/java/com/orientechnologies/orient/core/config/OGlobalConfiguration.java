@@ -723,7 +723,7 @@ public enum OGlobalConfiguration {
    */
   DISTRIBUTED_AUTO_REMOVE_OFFLINE_SERVERS("distributed.autoRemoveOfflineServers",
       "This is the amount of time (in ms) the server has to be OFFLINE, before it is automatically removed from the distributed configuration. -1 = never, 0 = immediately, >0 the actual time to wait",
-      Long.class, -1, true),
+      Long.class, 0, true),
 
   /**
    * @Since 2.2.0
