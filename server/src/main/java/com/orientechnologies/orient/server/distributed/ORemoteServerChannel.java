@@ -19,10 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import java.io.IOException;
-import java.util.Date;
-import java.util.concurrent.Executors;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.orient.client.binary.OChannelBinarySynchClient;
@@ -30,6 +26,10 @@ import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+
+import java.io.IOException;
+import java.util.Date;
+import java.util.concurrent.Executors;
 
 /**
  * Remote server channel.
@@ -219,7 +219,7 @@ public class ORemoteServerChannel {
         @Override
         public void run() {
           try {
-            manager.removeServer(server);
+            manager.removeServer(server, true);
           } catch (Throwable e) {
             ODistributedServerLog.warn(this, manager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.OUT,
                 "Error on removing server '%s' from the cluster", server);

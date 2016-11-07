@@ -95,7 +95,7 @@ public class OCommandExecutorSQLHARemoveServer extends OCommandExecutorSQLAbstra
 
     final String databaseName = database.getName();
 
-    return dManager.removeNodeFromConfiguration(serverName, databaseName);
+    return dManager.removeNodeFromConfiguration(serverName, databaseName, false);
   }
 
   @Override
