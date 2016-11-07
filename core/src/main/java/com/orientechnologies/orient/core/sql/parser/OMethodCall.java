@@ -78,6 +78,10 @@ public class OMethodCall extends SimpleNode {
         paramValues.add(expr.execute((OIdentifiable) val, ctx));
       } else if (val instanceof OResult) {
         paramValues.add(expr.execute((OResult) val, ctx));
+      } else if (targetObjects instanceof OIdentifiable) {
+        paramValues.add(expr.execute((OIdentifiable) targetObjects, ctx));
+      } else if (targetObjects instanceof OResult) {
+        paramValues.add(expr.execute((OResult) targetObjects, ctx));
       } else {
         throw new OCommandExecutionException("Invalild value for $current: " + val);
       }

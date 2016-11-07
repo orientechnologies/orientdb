@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -155,7 +156,17 @@ public class OMatchExecutionPlanner {
 
   private void addStepsFor(OSelectExecutionPlan plan, EdgeTraversal edge, OCommandContext context, boolean first) {
     if (first) {
-      plan.chain(new MatchFirstStep(context, edge.out ? edge.edge.out : edge.edge.in));
+      PatternNode patternNode = edge.out ? edge.edge.out : edge.edge.in;
+      String clazz = this.aliasClasses.get(patternNode.alias);
+      OWhereClause where = aliasFilters.get(patternNode.alias);
+      OSelectStatement select = new OSelectStatement(-1);
+      select.setTarget(new OFromClause(-1));
+      select.getTarget().setItem(new OFromItem(-1));
+      select.getTarget().getItem().setIdentifier(new OIdentifier(clazz));
+      select.setWhereClause(where==null?null:where.copy());
+      OBasicCommandContext subContxt = new OBasicCommandContext();
+      subContxt.setParentWithoutOverridingChild(context);
+      plan.chain(new MatchFirstStep(context, patternNode, select.createExecutionPlan(subContxt)));
     }
     if(edge.edge.in.isOptionalNode()){
       foundOptional = true;

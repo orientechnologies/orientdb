@@ -37,33 +37,29 @@ import java.util.concurrent.atomic.AtomicLong;
  * of contexts. If a variable is not found on current object the search is applied recursively on child contexts.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- *
  */
 public class OBasicCommandContext implements OCommandContext {
-  public static final String                                                         EXECUTION_BEGUN       = "EXECUTION_BEGUN";
-  public static final String                                                         TIMEOUT_MS            = "TIMEOUT_MS";
-  public static final String                                                         TIMEOUT_STRATEGY      = "TIMEOUT_STARTEGY";
-  public static final String                                                         INVALID_COMPARE_COUNT = "INVALID_COMPARE_COUNT";
-
+  public static final String EXECUTION_BEGUN       = "EXECUTION_BEGUN";
+  public static final String TIMEOUT_MS            = "TIMEOUT_MS";
+  public static final String TIMEOUT_STRATEGY      = "TIMEOUT_STARTEGY";
+  public static final String INVALID_COMPARE_COUNT = "INVALID_COMPARE_COUNT";
 
   protected ODatabase database;
-  protected Object[] args;
+  protected Object[]  args;
 
-  protected boolean                                                                  recordMetrics         = false;
-  protected OCommandContext                                                          parent;
-  protected OCommandContext                                                          child;
-  protected Map<String, Object>                                                      variables;
+  protected boolean recordMetrics = false;
+  protected OCommandContext     parent;
+  protected OCommandContext     child;
+  protected Map<String, Object> variables;
 
-  protected Map<Object, Object>                                                      inputParameters;
+  protected Map<Object, Object> inputParameters;
 
   // MANAGES THE TIMEOUT
   private long                                                                       executionStartedOn;
   private long                                                                       timeoutMs;
   private com.orientechnologies.orient.core.command.OCommandContext.TIMEOUT_STRATEGY timeoutStrategy;
-  protected AtomicLong                                                               resultsProcessed      = new AtomicLong(0);
-  protected Set<Object>                                                              uniqueResult          = new HashSet<Object>();
-
-
+  protected AtomicLong  resultsProcessed = new AtomicLong(0);
+  protected Set<Object> uniqueResult     = new HashSet<Object>();
 
   public OBasicCommandContext() {
   }
@@ -146,7 +142,7 @@ public class OBasicCommandContext implements OCommandContext {
     if (this.variables != null && variables.containsKey(varName)) {
       return variables.get(varName);
     }
-    if (parent!=null && parent instanceof OBasicCommandContext) {
+    if (parent != null && parent instanceof OBasicCommandContext) {
       return ((OBasicCommandContext) parent).getVariableFromParentHierarchy(varName);
     }
     return null;
@@ -171,8 +167,7 @@ public class OBasicCommandContext implements OCommandContext {
     return this;
   }
 
-  @Override
-  public OCommandContext incrementVariable(String iName) {
+  @Override public OCommandContext incrementVariable(String iName) {
     if (iName != null) {
       if (iName.startsWith("$"))
         iName = iName.substring(1);
@@ -266,9 +261,7 @@ public class OBasicCommandContext implements OCommandContext {
     return this;
   }
 
-
-  @Override
-  public String toString() {
+  @Override public String toString() {
     return getVariables().toString();
   }
 
@@ -281,8 +274,7 @@ public class OBasicCommandContext implements OCommandContext {
     return this;
   }
 
-  @Override
-  public void beginExecution(final long iTimeout, final TIMEOUT_STRATEGY iStrategy) {
+  @Override public void beginExecution(final long iTimeout, final TIMEOUT_STRATEGY iStrategy) {
     if (iTimeout > 0) {
       executionStartedOn = System.currentTimeMillis();
       timeoutMs = iTimeout;
@@ -308,8 +300,7 @@ public class OBasicCommandContext implements OCommandContext {
     return true;
   }
 
-  @Override
-  public OCommandContext copy() {
+  @Override public OCommandContext copy() {
     final OBasicCommandContext copy = new OBasicCommandContext();
     copy.init();
 
@@ -322,8 +313,7 @@ public class OBasicCommandContext implements OCommandContext {
     return copy;
   }
 
-  @Override
-  public void merge(final OCommandContext iContext) {
+  @Override public void merge(final OCommandContext iContext) {
     // TODO: SOME VALUES NEED TO BE MERGED
   }
 
@@ -356,19 +346,26 @@ public class OBasicCommandContext implements OCommandContext {
 
   /**
    * adds an item to the unique result set
+   *
    * @param o the result item to add
    * @return true if the element is successfully added (it was not present yet), false otherwise (it was already present)
    */
   public synchronized boolean addToUniqueResult(Object o) {
     Object toAdd = o;
-    if(o instanceof ODocument && ((ODocument) o).getIdentity().isNew()){
+    if (o instanceof ODocument && ((ODocument) o).getIdentity().isNew()) {
       toAdd = new ODocumentEqualityWrapper((ODocument) o);
     }
     return this.uniqueResult.add(toAdd);
   }
 
   public ODatabase getDatabase() {
-    return database;
+    if (database != null) {
+      return database;
+    }
+    if (parent != null) {
+      return parent.getDatabase();
+    }
+    return null;
   }
 
   public void setDatabase(ODatabase database) {
