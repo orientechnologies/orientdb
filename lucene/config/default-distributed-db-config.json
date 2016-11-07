@@ -6,6 +6,7 @@
   "writeQuorum": 2,
   "failureAvailableNodesLessQuorum": false,
   "readYourWrites": true,
+  "newNodeStrategy": "static",
   "servers": {
     "*": "master"
   },
