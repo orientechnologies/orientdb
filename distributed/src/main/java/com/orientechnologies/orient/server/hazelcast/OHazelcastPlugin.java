@@ -1161,7 +1161,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     final ODistributedConfiguration cfg = getDatabaseConfiguration(databaseName);
 
-    if (!removeOnlyDynamicServers) {
+    if (removeOnlyDynamicServers) {
       // CHECK THE SERVER IS NOT REGISTERED STATICALLY
       final String dc = cfg.getDataCenterOfServer(nodeLeftName);
       if (dc != null) {
