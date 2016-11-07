@@ -148,7 +148,7 @@ public interface ODistributedServerManager {
 
   boolean checkNodeStatus(NODE_STATUS string);
 
-  void removeServer(String nodeLeftName);
+  void removeServer(String nodeLeftName, boolean removeOnlyDynamicServers);
 
   DB_STATUS getDatabaseStatus(String iNode, String iDatabaseName);
 
