@@ -2246,6 +2246,7 @@ public class ODocument extends ORecordAbstract
       _fields = _ordered ? new LinkedHashMap<String, ODocumentEntry>() : new HashMap<String, ODocumentEntry>();
 
     ODocumentEntry entry = getOrCreate(iFieldName);
+    removeCollectionChangeListener(entry, entry.value);
     entry.value = iFieldValue;
     entry.type = iFieldType;
     addCollectionChangeListener(entry);
