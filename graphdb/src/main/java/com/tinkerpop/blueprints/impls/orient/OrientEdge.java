@@ -404,13 +404,14 @@ public class OrientEdge extends OrientElement implements Edge {
    * Returns a string representation of the edge.
    */
   public String toString() {
-    setCurrentGraphInThreadLocal();
+    if (setCurrentGraphInThreadLocal() != null) {
+      if (getLabel() == null)
+        return StringFactory.E + StringFactory.L_BRACKET + getId() + StringFactory.R_BRACKET + StringFactory.L_BRACKET + getVertex(
+            Direction.OUT).getId() + StringFactory.ARROW + getVertex(Direction.IN).getId() + StringFactory.R_BRACKET;
 
-    if (getLabel() == null)
-      return StringFactory.E + StringFactory.L_BRACKET + getId() + StringFactory.R_BRACKET + StringFactory.L_BRACKET + getVertex(
-          Direction.OUT).getId() + StringFactory.ARROW + getVertex(Direction.IN).getId() + StringFactory.R_BRACKET;
-
-    return StringFactory.edgeString(this);
+      return StringFactory.edgeString(this);
+    } else
+      return StringFactory.E + StringFactory.L_BRACKET + getId();
   }
 
   /**
