@@ -97,6 +97,11 @@ public class RepositoryServiceImpl implements RepositoryService {
   @Transactional
   @Override
   public Issue openIssue(Repository repository, IssueDTO issue) {
+
+    String org = repository.getOrganization().getName();
+    if (securityManager.isCurrentClient(org) && !securityManager.isCurrentSupport(org)) {
+      return createPrivateIssue(repository, issue);
+    }
     if (Boolean.TRUE.equals(issue.getConfidential())) {
       return createPrivateIssue(repository, issue);
     } else {
