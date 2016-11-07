@@ -386,7 +386,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
       if (!dManager.isNodeAvailable(nodeName, getName())) {
 
-        ODistributedServerLog.warn(this, dManager.getLocalNodeName(), nodeName, ODistributedServerLog.DIRECTION.OUT,
+        ODistributedServerLog.debug(this, dManager.getLocalNodeName(), nodeName, ODistributedServerLog.DIRECTION.OUT,
             "Node '%s' is involved in the command '%s' against database '%s', but the node is not active. Excluding it", nodeName,
             iCommand, wrapped.getName());
 
