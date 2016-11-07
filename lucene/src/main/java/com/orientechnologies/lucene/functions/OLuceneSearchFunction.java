@@ -31,6 +31,7 @@ public class OLuceneSearchFunction extends OSQLFunctionAbstract implements OInde
   @Override
   public Iterable<OIdentifiable> searchFromTarget(OFromClause target, OBinaryCompareOperator operator, Object rightValue,
       OCommandContext ctx, OExpression... args) {
+
     OIndex oIndex = searchForIndex();
 
     if (oIndex != null) {

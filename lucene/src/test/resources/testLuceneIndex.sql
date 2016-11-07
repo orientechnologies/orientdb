@@ -16,6 +16,7 @@ create vertex Author set name="Bob Dylan"
 create vertex Author set name="Grateful Dead"
 create vertex Author set name="Lennon McCartney"
 create vertex Author set name="Chuck Berry"
+create vertex Author set name="Jack Mountain"
 
 
 create vertex Song set title="BELIEVE IT OR NOT", author="Hunter"

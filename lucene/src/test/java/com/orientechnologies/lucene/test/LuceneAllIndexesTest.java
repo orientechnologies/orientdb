@@ -56,21 +56,35 @@ public class LuceneAllIndexesTest extends BaseLuceneTest {
         "create index Author.name on Author(name) FULLTEXT ENGINE LUCENE METADATA {\"analyzer\":\"" + StandardAnalyzer.class
             .getName() + "\"}")).execute();
 
-    db.command(new OCommandSQL(
-        "create index songDbAllIndexes FULLTEXT ENGINE LUCENE_ALL")).execute();
-
     String query = "select LUCENE_MATCH('(Song.title:mountain Author.name:Chuck)') ";
-    //    String query = "select from Song where LUCENE_MATCH(+Song.title:mountain Song.author:Fabbio) ";
 
     List<ODocument> docs = db.query(new OSQLSynchQuery<ODocument>(query));
 
     assertThat(docs).hasSize(1);
 
+    printDocs(docs);
+
+
+    //still not working and don't know if should work in the future, seems dangerous
+    query = "select LUCENE_MATCH('(*:mountain)') ";
+
+    docs = db.query(new OSQLSynchQuery<ODocument>(query));
+
+    assertThat(docs).hasSize(1);
+
+    printDocs(docs);
+
+  }
+
+  private void printDocs(List<ODocument> docs) {
+
+    System.out.println("_______________");
     docs.get(0)
         .<Set<OIdentifiable>>field("LUCENE_MATCH")
         .stream()
         .map(orid -> orid.<ODocument>getRecord())
         .forEach(d -> System.out.println(d.toJSON()));
+
   }
 
 }

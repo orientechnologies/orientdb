@@ -132,7 +132,8 @@ public class OLuceneFullTextAllIndexEngine implements OLuceneIndexEngine {
       IndexReader indexReader = new MultiReader(fullTextsIndexes.toArray(new IndexReader[] {}));
       IndexSearcher searcher = new IndexSearcher(indexReader);
 
-      Query query = new QueryParser("UNDEFINED", globalAnalyzer).parse(key.toString());
+      Query query = new QueryParser("UNDEFINED", globalAnalyzer)
+          .parse(key.toString());
 
       QueryContext ctx = new QueryContext(null, searcher, query);
       return new OLuceneResultSet(this, ctx);
