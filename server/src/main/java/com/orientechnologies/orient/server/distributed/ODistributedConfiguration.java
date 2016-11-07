@@ -49,6 +49,7 @@ public class ODistributedConfiguration {
   public static final  Integer DEFAULT_READ_QUORUM  = 1;
   public static final  String  DEFAULT_WRITE_QUORUM = QUORUM_MAJORITY;
 
+  private static final String NEW_NODE_STRATEGY          = "newNodeStrategy";
   private static final String READ_YOUR_WRITES           = "readYourWrites";
   private static final String EXECUTION_MODE             = "executionMode";
   private static final String EXECUTION_MODE_SYNCHRONOUS = "synchronous";
@@ -58,6 +59,10 @@ public class ODistributedConfiguration {
 
   public enum ROLES {
     MASTER, REPLICA
+  }
+
+  public enum NEW_NODE_STRATEGIES {
+    DYNAMIC, STATIC
   }
 
   public ODistributedConfiguration(final ODocument iConfiguration) {
@@ -85,6 +90,21 @@ public class ODistributedConfiguration {
   public boolean hasDataCenterConfiguration() {
     synchronized (configuration) {
       return configuration.field(DCS) != null;
+    }
+  }
+
+  /**
+   * Returns the new node strategy between "dynamic" and "static". If static, the node is registered under the "server" tag.
+   *
+   * @return NEW_NODE_STRATEGIES enum
+   */
+  public NEW_NODE_STRATEGIES getNewNodeStrategy() {
+    synchronized (configuration) {
+      final String value = configuration.field(NEW_NODE_STRATEGY);
+      if (value != null)
+        return NEW_NODE_STRATEGIES.valueOf(value.toUpperCase());
+
+      return NEW_NODE_STRATEGIES.STATIC;
     }
   }
 
@@ -528,6 +548,22 @@ public class ODistributedConfiguration {
   }
 
   /**
+   * Sets the server role between MASTER (default) and REPLICA.
+   */
+  public void setServerRole(final String iServerName, final ROLES role) {
+    synchronized (configuration) {
+      ODocument servers = configuration.field(SERVERS);
+      if (servers == null) {
+        servers = new ODocument();
+        configuration.field(SERVERS, servers);
+      }
+
+      servers.field(iServerName, role);
+      incrementVersion();
+    }
+  }
+
+  /**
    * Returns the registered servers.
    */
   public Set<String> getRegisteredServers() {
@@ -555,7 +591,7 @@ public class ODistributedConfiguration {
   public List<String> addNewNodeInServerList(final String iNode) {
     synchronized (configuration) {
       final List<String> changedPartitions = new ArrayList<String>();
-      // NOT FOUND: ADD THE NODE IN CONFIGURATION. LOOK FOR $newNode TAG
+      // ADD THE NODE IN CONFIGURATION. LOOK FOR $newNode TAG
       for (String clusterName : getClusterNames()) {
         final List<String> partitions = getClusterConfiguration(clusterName).field(SERVERS);
         if (partitions != null) {
@@ -568,7 +604,13 @@ public class ODistributedConfiguration {
       }
 
       if (!changedPartitions.isEmpty()) {
-        incrementVersion();
+        if (getNewNodeStrategy() == NEW_NODE_STRATEGIES.STATIC) {
+          // REGISTER THE SERVER AS STATIC AND INCREMENT VERSION
+          setServerRole(iNode, getServerRole("*"));
+        } else
+          // INCREMENT VERSION
+          incrementVersion();
+
         return changedPartitions;
       }
     }
