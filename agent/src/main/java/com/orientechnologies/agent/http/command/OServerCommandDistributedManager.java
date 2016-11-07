@@ -100,7 +100,7 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
       if (server.getDistributedManager() == null)
         throw new OConfigurationException("Cannot stop the server: local server is not distributed");
 
-      server.getDistributedManager().removeServer(parts[2]);
+      server.getDistributedManager().removeServer(parts[2], false);
 
       iResponse.send(OHttpUtils.STATUS_OK_CODE, null, null, OHttpUtils.STATUS_OK_DESCRIPTION, null);
 
