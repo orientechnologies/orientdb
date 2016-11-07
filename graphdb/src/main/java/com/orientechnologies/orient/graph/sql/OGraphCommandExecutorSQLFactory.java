@@ -155,7 +155,7 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
     // Set it again on ThreadLocal because the getRawGraph() may have set a closed db in the thread-local
     shouldBeShutDown.setValue(true);
     ODatabaseRecordThreadLocal.INSTANCE.set(database);
-    return OrientGraphFactory.getNoTxGraphImplFactory().getGraph((ODatabaseDocumentTx) database);
+    return OrientGraphFactory.getNoTxGraphImplFactory().getGraph(database);
   }
 
   public static <T> T runInTx(final OrientGraph graph, final GraphCallBack<T> callBack) {
