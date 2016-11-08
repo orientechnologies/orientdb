@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.record;
 
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 
 import java.util.Optional;
 import java.util.Set;
@@ -49,6 +50,20 @@ public interface OElement extends ORecord{
    * @param value the property value
    */
   public void setProperty(String name, Object value);
+
+  /**
+   * Sets a property value
+   * @param name the property name
+   * @param value the property value
+   * @param fieldType Forced type (not auto-determined)
+   */
+  public void setProperty(String name, Object value, OType... fieldType);
+
+  /**
+   * Remove a property
+   * @param name the property name
+   */
+  public <RET> RET removeProperty(String name);
 
   /**
    * Returns an instance of OVertex representing current element

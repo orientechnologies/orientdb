@@ -470,7 +470,7 @@ import java.util.stream.Collectors;
     }
   }
 
-  public Object removeProperty(final String iFieldName) {
+  public <RET> RET removeProperty(final String iFieldName) {
     checkForLoading();
     checkForFields();
 
@@ -502,7 +502,7 @@ import java.util.stream.Collectors;
     if (oldValue instanceof ORidBag)
       ((ORidBag) oldValue).setOwner(null);
     setDirty();
-    return oldValue;
+    return (RET) oldValue;
   }
 
   protected static void validateField(ODocument iRecord, OImmutableProperty p) throws OValidationException {

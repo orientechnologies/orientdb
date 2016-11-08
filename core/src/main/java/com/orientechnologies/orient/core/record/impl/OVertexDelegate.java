@@ -234,6 +234,16 @@ public class OVertexDelegate implements OVertex {
     element.setProperty(name, value);
   }
 
+  @Override
+  public void setProperty(String name, Object value, OType... fieldType) {
+    element.setProperty(name,value,fieldType);
+  }
+
+  @Override
+  public <RET> RET removeProperty(String name) {
+    return element.removeProperty(name);
+  }
+
   @Override public Optional<OVertex> asVertex() {
     return Optional.of(this);
   }

@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -126,6 +127,14 @@ public class OEdgeDelegate implements OEdge {
     element.setProperty(name, value);
   }
 
+  @Override
+  public void setProperty(String name, Object value, OType... fieldType) {
+    if (element == null) {
+      promoteToRegularEdge();
+    }
+    element.setProperty(name, value,fieldType);
+  }
+
   private void promoteToRegularEdge() {
     ODatabase db = getDatabase();
     OVertexDelegate from = (OVertexDelegate) getFrom();
@@ -136,6 +145,11 @@ public class OEdgeDelegate implements OEdge {
     this.lightweightEdgeType = null;
     this.vOut = null;
     this.vIn = null;
+  }
+
+  @Override
+  public <RET> RET removeProperty(String name) {
+    return element.removeProperty(name);
   }
 
   @Override public Optional<OVertex> asVertex() {
