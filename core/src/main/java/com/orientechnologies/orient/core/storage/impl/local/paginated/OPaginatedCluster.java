@@ -1899,23 +1899,31 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
       if (freePageIndex < FREE_LIST_SIZE) {
         OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false);
-        cacheEntry.acquireSharedLock();
-        int realFreePageIndex;
-        try {
-          OClusterPage localPage = new OClusterPage(cacheEntry, false);
-          realFreePageIndex = calculateFreePageIndex(localPage);
-        } finally {
-          cacheEntry.releaseSharedLock();
-          releasePage(atomicOperation, cacheEntry);
-        }
 
-        if (realFreePageIndex != freePageIndex) {
-          OLogManager.instance()
-              .warn(this, "Page in file %s with index %d was placed in wrong free list, this error will be fixed automatically",
-                  getFullName(), pageIndex);
+        //free list is broken automatically fix it
+        if (cacheEntry == null) {
+          updateFreePagesList(freePageIndex, -1, atomicOperation);
 
-          updateFreePagesIndex(freePageIndex, pageIndex, atomicOperation);
           continue;
+        } else {
+          cacheEntry.acquireSharedLock();
+          int realFreePageIndex;
+          try {
+            OClusterPage localPage = new OClusterPage(cacheEntry, false);
+            realFreePageIndex = calculateFreePageIndex(localPage);
+          } finally {
+            cacheEntry.releaseSharedLock();
+            releasePage(atomicOperation, cacheEntry);
+          }
+
+          if (realFreePageIndex != freePageIndex) {
+            OLogManager.instance()
+                .warn(this, "Page in file %s with index %d was placed in wrong free list, this error will be fixed automatically",
+                    getFullName(), pageIndex);
+
+            updateFreePagesIndex(freePageIndex, pageIndex, atomicOperation);
+            continue;
+          }
         }
       }
 
