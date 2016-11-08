@@ -22,7 +22,7 @@ import java.util.Collection;
  */
 public class OLuceneSearchFunction extends OSQLFunctionAbstract implements OIndexableSQLFunction {
 
-  public static final String NAME = "LUCENE_MATCH";
+  public static final String NAME = "SEARCH";
 
   public OLuceneSearchFunction() {
     super(NAME, 1, 1);
@@ -73,11 +73,11 @@ public class OLuceneSearchFunction extends OSQLFunctionAbstract implements OInde
     // TODO Check if target is a class otherwise exception
 
     Collection<? extends OIndex<?>> indexes = getDb().getMetadata().getIndexManager().getIndexes();
-    OLogManager.instance().info(this, "iindexes:: " + indexes.size());
     for (OIndex<?> index : indexes) {
       if (index.getInternal() instanceof OLuceneFullTextIndex) {
-        if (index.getAlgorithm().equalsIgnoreCase(OLuceneIndexFactory.LUCENE_ALL_ALGORITHM))
+        if (index.getAlgorithm().equalsIgnoreCase(OLuceneIndexFactory.LUCENE_ALL_ALGORITHM)) {
           return index;
+        }
       }
     }
     return null;

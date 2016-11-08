@@ -1,5 +1,6 @@
 package com.orientechnologies.lucene.engine;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.lucene.OLuceneIndexFactory;
 import com.orientechnologies.lucene.analyzer.OLucenePerFieldAnalyzerWrapper;
@@ -23,20 +24,20 @@ import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.MultiReader;
+import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
-import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import static java.util.stream.Collectors.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by frank on 03/11/2016.
@@ -111,38 +112,53 @@ public class OLuceneFullTextAllIndexEngine implements OLuceneIndexEngine {
   @Override
   public Object get(Object key) {
 
-    Collection<? extends OIndex<?>> indexes = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getIndexManager().getIndexes();
+    Collection<? extends OIndex> indexes = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getIndexManager().getIndexes();
 
     OLucenePerFieldAnalyzerWrapper globalAnalyzer = new OLucenePerFieldAnalyzerWrapper(new StandardAnalyzer());
-    try {
-      List<IndexReader> fullTextsIndexes = indexes.stream()
-          .filter(index -> index.getAlgorithm().equalsIgnoreCase(OLuceneIndexFactory.LUCENE_ALGORITHM))
-          .map(index -> (OLuceneFullTextIndex) index.getInternal())
-          .peek(index -> globalAnalyzer.add((OLucenePerFieldAnalyzerWrapper) index.queryAnalyzer()))
-          .map(index -> {
-            try {
-              return index.searcher().getIndexReader();
-            } catch (IOException e) {
-              e.printStackTrace();
-            }
-            return null;
-          })
-          .collect(toList());
 
-      IndexReader indexReader = new MultiReader(fullTextsIndexes.toArray(new IndexReader[] {}));
+    List<String> fields = new ArrayList<>();
+
+    List<IndexReader> readers = new ArrayList<>();
+
+    try {
+      for (OIndex index : indexes) {
+        if (index.getAlgorithm().equalsIgnoreCase(OLuceneIndexFactory.LUCENE_ALGORITHM)) {
+
+          final OIndexDefinition definition = index.getDefinition();
+          final String className = definition.getClassName();
+
+          fields.addAll(definition.getFields().stream().map(f -> className + "." + f).collect(Collectors.toList()));
+
+          OLuceneFullTextIndex fullTextIndex = (OLuceneFullTextIndex) index.getInternal();
+
+          globalAnalyzer.add((OLucenePerFieldAnalyzerWrapper) fullTextIndex.queryAnalyzer());
+
+          try {
+            readers.add(fullTextIndex.searcher().getIndexReader());
+          } catch (IOException e) {
+            OLogManager.instance().error(this, "unable to get IndexReader for index " + index.getName(), e);
+          }
+
+        }
+
+      }
+
+      IndexReader indexReader = new MultiReader(readers.toArray(new IndexReader[] {}));
+
       IndexSearcher searcher = new IndexSearcher(indexReader);
 
-      Query query = new QueryParser("UNDEFINED", globalAnalyzer)
-          .parse(key.toString());
+      MultiFieldQueryParser parser = new MultiFieldQueryParser(fields.toArray(new String[] {}), globalAnalyzer);
+
+      Query query = parser.parse(key.toString());
 
       QueryContext ctx = new QueryContext(null, searcher, query);
       return new OLuceneResultSet(this, ctx);
-
     } catch (IOException e) {
-      e.printStackTrace();
+      OLogManager.instance().error(this, "unable to create multireader", e);
     } catch (ParseException e) {
-      e.printStackTrace();
+      OLogManager.instance().error(this, "unable to parse query", e);
     }
+
     return null;
   }
 

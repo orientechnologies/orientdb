@@ -18,17 +18,20 @@
 
 package com.orientechnologies.lucene.test;
 
+import com.orientechnologies.lucene.functions.OLuceneSearchFunction;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.InputStream;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -38,9 +41,8 @@ import static org.assertj.core.api.Assertions.*;
 
 public class LuceneAllIndexesTest extends BaseLuceneTest {
 
-  @Test
-  public void loadAndTest() {
-
+  @Before
+  public void setUp() throws Exception {
     InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql");
 
     db.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
@@ -51,40 +53,58 @@ public class LuceneAllIndexesTest extends BaseLuceneTest {
     db.command(new OCommandSQL(
         "create index Song.author on Song (author) FULLTEXT ENGINE LUCENE METADATA {\"analyzer\":\"" + StandardAnalyzer.class
             .getName() + "\"}")).execute();
-
     db.command(new OCommandSQL(
         "create index Author.name on Author(name) FULLTEXT ENGINE LUCENE METADATA {\"analyzer\":\"" + StandardAnalyzer.class
             .getName() + "\"}")).execute();
 
-    String query = "select LUCENE_MATCH('(Song.title:mountain Author.name:Chuck)') ";
+  }
+
+  @Test
+  public void shouldSearchTermAcrossAllSubIndexes() throws Exception {
+
+    String query = "select SEARCH('(mountain)') ";
 
     List<ODocument> docs = db.query(new OSQLSynchQuery<ODocument>(query));
 
     assertThat(docs).hasSize(1);
 
-    printDocs(docs);
+    List<ODocument> results = fetchDocs(docs);
 
+    for (ODocument doc : results) {
+      if (doc.getClassName().equals("Song"))
+        assertThat(doc.<String>field("title")).containsIgnoringCase("mountain");
+      if (doc.getClassName().equals("Author"))
+        assertThat(doc.<String>field("name")).containsIgnoringCase("mountain");
 
-    //still not working and don't know if should work in the future, seems dangerous
-    query = "select LUCENE_MATCH('(*:mountain)') ";
-
-    docs = db.query(new OSQLSynchQuery<ODocument>(query));
-
-    assertThat(docs).hasSize(1);
-
-    printDocs(docs);
+    }
 
   }
 
-  private void printDocs(List<ODocument> docs) {
-
-    System.out.println("_______________");
-    docs.get(0)
-        .<Set<OIdentifiable>>field("LUCENE_MATCH")
+  private List<ODocument> fetchDocs(List<ODocument> docs) {
+    return docs.get(0)
+        .<Set<OIdentifiable>>field(OLuceneSearchFunction.NAME)
         .stream()
         .map(orid -> orid.<ODocument>getRecord())
-        .forEach(d -> System.out.println(d.toJSON()));
+        .collect(Collectors.toList());
+  }
 
+  @Test
+  public void shouldSearchAcrossAllSubIndexesWithStrictQuery() {
+
+    String query = "select SEARCH('(Song.title:mountain Author.name:Chuck)') ";
+    List<ODocument> docs = db.query(new OSQLSynchQuery<ODocument>(query));
+
+    assertThat(docs).hasSize(1);
+
+    List<ODocument> results = fetchDocs(docs);
+
+    for (ODocument doc : results) {
+      if (doc.getClassName().equals("Song"))
+        assertThat(doc.<String>field("title")).containsIgnoringCase("mountain");
+      if (doc.getClassName().equals("Author"))
+        assertThat(doc.<String>field("name")).containsIgnoringCase("chuck");
+
+    }
   }
 
 }

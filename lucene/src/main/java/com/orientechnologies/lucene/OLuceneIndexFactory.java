@@ -173,7 +173,7 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
   private void createCrossClassSearchIndex(ODatabaseInternal db) {
     if (!db.getMetadata().getIndexManager().existsIndex("CrossClassSearchIndex")) {
 
-      OLogManager.instance().info(this, "creating cross class index");
+      OLogManager.instance().debug(this, "creating cross class index");
 
       db.command(new OCommandSQL(
           "create index CrossClassSearchIndex FULLTEXT ENGINE LUCENE_ALL")).execute();

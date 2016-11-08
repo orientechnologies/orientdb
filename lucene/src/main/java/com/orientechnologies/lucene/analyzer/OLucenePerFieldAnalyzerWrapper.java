@@ -39,6 +39,7 @@ public class OLucenePerFieldAnalyzerWrapper extends DelegatingAnalyzerWrapper {
     this.fieldAnalyzers.putAll(fieldAnalyzers);
 
     this.fieldAnalyzers.put(RID, new KeywordAnalyzer());
+    this.fieldAnalyzers.put("_CLASS", new KeywordAnalyzer());
   }
 
   @Override
