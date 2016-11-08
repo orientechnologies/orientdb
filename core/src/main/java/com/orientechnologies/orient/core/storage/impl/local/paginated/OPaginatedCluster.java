@@ -1662,7 +1662,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     return recordConflictStrategy;
   }
 
-
   private void setRecordConflictStrategy(final String stringValue) {
     recordConflictStrategy = Orient.instance().getRecordConflictStrategy().getStrategy(stringValue);
     config.conflictStrategy = stringValue;
@@ -1918,23 +1917,31 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
       if (freePageIndex < FREE_LIST_SIZE) {
         OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false);
-        cacheEntry.acquireSharedLock();
-        int realFreePageIndex;
-        try {
-          OClusterPage localPage = new OClusterPage(cacheEntry, false, getChanges(atomicOperation, cacheEntry));
-          realFreePageIndex = calculateFreePageIndex(localPage);
-        } finally {
-          cacheEntry.releaseSharedLock();
-          releasePage(atomicOperation, cacheEntry);
-        }
 
-        if (realFreePageIndex != freePageIndex) {
-          OLogManager.instance()
-              .warn(this, "Page in file %s with index %d was placed in wrong free list, this error will be fixed automatically",
-                  getFullName(), pageIndex);
+        //free list may be corrupted automatically fix it
+        if (cacheEntry == null) {
+          updateFreePagesList(freePageIndex, -1, atomicOperation);
+          freePageIndex = FREE_LIST_SIZE;
+          pageIndex = getFilledUpTo(atomicOperation, fileId);
+        } else {
+          cacheEntry.acquireSharedLock();
+          int realFreePageIndex;
+          try {
+            OClusterPage localPage = new OClusterPage(cacheEntry, false, getChanges(atomicOperation, cacheEntry));
+            realFreePageIndex = calculateFreePageIndex(localPage);
+          } finally {
+            cacheEntry.releaseSharedLock();
+            releasePage(atomicOperation, cacheEntry);
+          }
 
-          updateFreePagesIndex(freePageIndex, pageIndex, atomicOperation);
-          continue;
+          if (realFreePageIndex != freePageIndex) {
+            OLogManager.instance()
+                .warn(this, "Page in file %s with index %d was placed in wrong free list, this error will be fixed automatically",
+                    getFullName(), pageIndex);
+
+            updateFreePagesIndex(freePageIndex, pageIndex, atomicOperation);
+            continue;
+          }
         }
       }
 
