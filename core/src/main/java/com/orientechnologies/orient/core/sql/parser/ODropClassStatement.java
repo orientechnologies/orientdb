@@ -7,7 +7,8 @@ import java.util.Map;
 public class ODropClassStatement extends OStatement {
 
   public OIdentifier name;
-  public boolean     unsafe = false;
+  public boolean unsafe   = false;
+  public boolean ifExists = false;
 
   public ODropClassStatement(int id) {
     super(id);
@@ -20,7 +21,10 @@ public class ODropClassStatement extends OStatement {
   @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("DROP CLASS ");
     name.toString(params, builder);
-    if(unsafe){
+    if (ifExists) {
+      builder.append(" IF EXISTS");
+    }
+    if (unsafe) {
       builder.append(" UNSAFE");
     }
   }
