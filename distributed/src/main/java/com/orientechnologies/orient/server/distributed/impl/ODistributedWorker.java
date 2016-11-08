@@ -323,8 +323,7 @@ public class ODistributedWorker extends Thread {
       }
     }
 
-    if (running)
-      sendResponseBack(iRequest, responsePayload);
+    sendResponseBack(iRequest, responsePayload);
   }
 
   protected String getLocalNodeName() {

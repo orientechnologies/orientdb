@@ -3,7 +3,7 @@
   "readQuorum": 1,
   "writeQuorum": "majority",
   "readYourWrites": true,
-  "newNodeStrategy": "static",
+  "newNodeStrategy": "dynamic",
   "servers": {
     "*": "master"
   },

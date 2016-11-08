@@ -101,7 +101,7 @@ public class DistributedLifecycleListenerTest extends AbstractServerClusterTest 
     }
     Assert.assertEquals(SERVERS - 1, nodeLeft.get());
 
-    Assert.assertEquals(6, changeStatus.size());
+    Assert.assertEquals(8, changeStatus.size());
 //    Assert.assertEquals("europe-0." + getDatabaseName(), changeStatus.get(0).getKey());
 //    Assert.assertEquals(ODistributedServerManager.DB_STATUS.BACKUP, changeStatus.get(0).getValue());
 //    Assert.assertEquals("europe-0." + getDatabaseName(), changeStatus.get(1).getKey());
