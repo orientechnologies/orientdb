@@ -306,11 +306,11 @@ public class OrientGraphTest {
 
         OrientGraph graph = factory.getNoTx();
 
-      Assert.assertEquals(1, Orient.instance().getStorages().stream().filter(s -> s.getName().equalsIgnoreCase("_dropDB")).count());
+        Assert.assertEquals(1, Orient.instance().getStorages().stream().filter(s -> s.getName().equalsIgnoreCase("_dropDB")).count());
 
         graph.drop();
 
-      Assert.assertEquals(0, Orient.instance().getStorages().stream().filter(s -> s.getName().equalsIgnoreCase("_dropDB")).count());
+        Assert.assertEquals(0, Orient.instance().getStorages().stream().filter(s -> s.getName().equalsIgnoreCase("_dropDB")).count());
 
     }
 }
