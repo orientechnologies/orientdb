@@ -43,7 +43,11 @@ public class MatchFirstStep extends AbstractExecutionStep {
     init(ctx);
     return new OTodoResultSet() {
 
+      int currentCount = 0;
       @Override public boolean hasNext() {
+        if(currentCount>=nRecords){
+          return false;
+        }
         if (iterator != null) {
           return iterator.hasNext();
         } else {
@@ -52,7 +56,9 @@ public class MatchFirstStep extends AbstractExecutionStep {
       }
 
       @Override public OResult next() {
-
+        if(currentCount>=nRecords){
+          throw new IllegalStateException();
+        }
         OResultInternal result = new OResultInternal();
         if (iterator != null) {
           result.setProperty(getAlias(), iterator.next());
@@ -60,6 +66,7 @@ public class MatchFirstStep extends AbstractExecutionStep {
           result.setProperty(getAlias(), subResultSet.next());
         }
         ctx.setVariable("$matched", result);
+        currentCount++;
         return result;
       }
 

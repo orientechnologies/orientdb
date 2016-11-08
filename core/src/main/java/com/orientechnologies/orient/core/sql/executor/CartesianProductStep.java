@@ -49,6 +49,7 @@ public class CartesianProductStep extends AbstractExecutionStep {
         }
         OResultInternal result = nextRecord;
         fetchNextRecord();
+        currentCount++;
         return result;
       }
 
