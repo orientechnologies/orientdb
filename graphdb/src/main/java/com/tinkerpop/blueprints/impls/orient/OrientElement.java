@@ -334,7 +334,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
   }
 
   public int hashCode() {
-    return ((rawElement == null) ? 0 : rawElement.hashCode());
+    return ((rawElement == null) ? toString().hashCode() : rawElement.hashCode());
   }
 
   /**
