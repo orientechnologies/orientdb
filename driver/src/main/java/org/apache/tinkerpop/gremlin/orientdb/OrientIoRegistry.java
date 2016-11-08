@@ -1,8 +1,8 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
-import java.io.IOException;
-import java.util.Map;
-
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.id.ORecordId;
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.io.AbstractIoRegistry;
@@ -12,11 +12,6 @@ import org.apache.tinkerpop.gremlin.structure.io.graphson.GraphSONTokens;
 import org.apache.tinkerpop.gremlin.structure.io.gryo.GryoIo;
 import org.apache.tinkerpop.gremlin.structure.util.detached.DetachedEdge;
 import org.apache.tinkerpop.gremlin.structure.util.detached.DetachedVertex;
-import org.apache.tinkerpop.shaded.kryo.Kryo;
-import org.apache.tinkerpop.shaded.kryo.Serializer;
-import org.apache.tinkerpop.shaded.kryo.io.Input;
-import org.apache.tinkerpop.shaded.kryo.io.Output;
-import org.javatuples.Pair;
 import org.apache.tinkerpop.shaded.jackson.core.JsonGenerator;
 import org.apache.tinkerpop.shaded.jackson.core.JsonParser;
 import org.apache.tinkerpop.shaded.jackson.core.JsonProcessingException;
@@ -28,9 +23,14 @@ import org.apache.tinkerpop.shaded.jackson.databind.deser.std.UntypedObjectDeser
 import org.apache.tinkerpop.shaded.jackson.databind.jsontype.TypeDeserializer;
 import org.apache.tinkerpop.shaded.jackson.databind.jsontype.TypeSerializer;
 import org.apache.tinkerpop.shaded.jackson.databind.module.SimpleModule;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
-import com.orientechnologies.orient.core.id.ORecordId;
+import org.apache.tinkerpop.shaded.kryo.Kryo;
+import org.apache.tinkerpop.shaded.kryo.Serializer;
+import org.apache.tinkerpop.shaded.kryo.io.Input;
+import org.apache.tinkerpop.shaded.kryo.io.Output;
+import org.javatuples.Pair;
+
+import java.io.IOException;
+import java.util.Map;
 
 @SuppressWarnings("serial")
 public class OrientIoRegistry extends AbstractIoRegistry {
@@ -124,9 +124,9 @@ public class OrientIoRegistry extends AbstractIoRegistry {
             } else
                 jgen.writeStartObject();
             jgen.writeFieldName(CLUSTER_ID);
-            jgen.writeNumber(value.clusterId);
+            jgen.writeNumber(value.getClusterId());
             jgen.writeFieldName(CLUSTER_POSITION);
-            jgen.writeNumber(value.clusterPosition);
+            jgen.writeNumber(value.getClusterPosition());
             if (typeSer != null) {
                 typeSer.writeTypeSuffixForObject(value, jgen);
             } else
