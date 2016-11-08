@@ -555,7 +555,7 @@ public class ODistributedConfiguration {
       ODocument servers = configuration.field(SERVERS);
       if (servers == null) {
         servers = new ODocument();
-        configuration.field(SERVERS, servers);
+        configuration.field(SERVERS, servers, OType.EMBEDDED);
       }
 
       servers.field(iServerName, role);
