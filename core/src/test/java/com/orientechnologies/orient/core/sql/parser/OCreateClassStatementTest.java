@@ -19,4 +19,18 @@ public class OCreateClassStatementTest extends OParserTestAbstract {
     checkWrongSyntax("CREATE CLASS Foo CLUSTERS 1,2 ");
   }
 
+  @Test
+  public void testIfNotExists() {
+    checkRightSyntax("CREATE CLASS If");
+    checkRightSyntax("CREATE CLASS If if not exists");
+    checkRightSyntax("CREATE CLASS foo if not exists");
+    checkRightSyntax("create class Foo if not exists extends bar, baz cluster 12, 13, 14 clusters 5 abstract");
+
+    checkWrongSyntax("CREATE CLASS If Not  ");
+    checkWrongSyntax("CREATE CLASS If Not exists ");
+
+    checkWrongSyntax("CREATE CLASS foo if exists");
+
+  }
+
 }

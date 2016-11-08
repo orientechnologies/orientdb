@@ -356,6 +356,8 @@ TOKEN:
 	|
 	< SYNC: ( "S" | "s") ( "Y" | "y") ( "N" | "n") ( "C" | "c") >
 	|
+	< EXISTS: ( "E" | "e") ( "X" | "x") ( "I" | "i") ( "S" | "s") ( "T" | "t") ( "S" | "s") >
+	|
 	< THIS: "@" ( ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "s" | "S" ) ) >
 	|
 	< RECORD_ATTRIBUTE: <RID_ATTR> | <CLASS_ATTR> | <VERSION_ATTR> | <SIZE_ATTR> | <TYPE_ATTR> | <RAW_ATTR> | <RID_ID_ATTR> | <RID_POS_ATTR> | <FIELDS_ATTR> >
@@ -812,6 +814,8 @@ OIdentifier Identifier():
     token = <SERVER>
     |
     token = <SYNC>
+    |
+    token = <EXISTS>
     |
     quotedToken = <QUOTED_IDENTIFIER>
 ) {
@@ -3763,6 +3767,7 @@ OCreateClassStatement CreateClassStatement():
 	<CREATE> <CLASS>
 	(
 		jjtThis.name = Identifier()
+		[ <IF> <NOT> <EXISTS> {jjtThis.ifNotExists = true;} ]
 		[
 			<EXTENDS> lastIdentifier = Identifier() { jjtThis.superclasses = new ArrayList<OIdentifier>(); jjtThis.superclasses.add(lastIdentifier); }
 			 (

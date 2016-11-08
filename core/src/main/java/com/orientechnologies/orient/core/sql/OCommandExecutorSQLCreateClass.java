@@ -47,11 +47,15 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
   public static final String KEYWORD_ABSTRACT = "ABSTRACT";
   public static final String KEYWORD_CLUSTER  = "CLUSTER";
   public static final String KEYWORD_CLUSTERS = "CLUSTERS";
+  public static final String KEYWORD_IF = "IF";
+  public static final String KEYWORD_NOT = "NOT";
+  public static final String KEYWORD_EXISTS = "EXISTS";
 
   private String       className;
   private List<OClass> superClasses = new ArrayList<OClass>();
   private int[]        clusterIds;
   private Integer      clusters     = null;
+  private boolean      ifNotExists = false;
 
   public OCommandExecutorSQLCreateClass parse(final OCommandRequest iRequest) {
     final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
@@ -156,9 +160,25 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
                 parserText, oldPos);
 
           clusters = Integer.parseInt(word.toString());
-        } else if (k.equals(KEYWORD_ABSTRACT))
+        } else if (k.equals(KEYWORD_ABSTRACT)) {
           clusterIds = new int[] { -1 };
-        else
+        } else if (k.equals(KEYWORD_IF)) {
+          oldPos = pos;
+          pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false, " =><()");
+          if(!word.toString().equalsIgnoreCase(KEYWORD_NOT)){
+            throw new OCommandSQLParsingException(
+                "Syntax error after IF for class " + className + ". Expected NOT. Use " + getSyntax(),
+                parserText, oldPos);
+          }
+          oldPos = pos;
+          pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false, " =><()");
+          if(!word.toString().equalsIgnoreCase(KEYWORD_EXISTS)){
+            throw new OCommandSQLParsingException(
+                "Syntax error after IF NOT for class " + className + ". Expected EXISTS. Use " + getSyntax(),
+                parserText, oldPos);
+          }
+          ifNotExists = true;
+        }else
           throw new OCommandSQLParsingException("Invalid keyword: " + k);
 
         oldPos = pos;
@@ -196,17 +216,19 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
 
     final ODatabaseDocument database = getDatabase();
 
-    if (clusters != null)
-      database.getMetadata().getSchema().createClass(className, clusters, superClasses.toArray(new OClass[0]));
-    else
-      database.getMetadata().getSchema().createClass(className, clusterIds, superClasses.toArray(new OClass[0]));
-
+    boolean alreadyExists = database.getMetadata().getSchema().existsClass(className);
+    if(!alreadyExists || !ifNotExists) {
+      if (clusters != null)
+        database.getMetadata().getSchema().createClass(className, clusters, superClasses.toArray(new OClass[0]));
+      else
+        database.getMetadata().getSchema().createClass(className, clusterIds, superClasses.toArray(new OClass[0]));
+    }
     return database.getMetadata().getSchema().getClasses().size();
   }
 
   @Override
   public String getSyntax() {
-    return "CREATE CLASS <class> [EXTENDS <super-class> [,<super-class2>*] ] [CLUSTER <clusterId>*] [CLUSTERS <total-cluster-number>] [ABSTRACT]";
+    return "CREATE CLASS <class> [IF NOT EXISTS] [EXTENDS <super-class> [,<super-class2>*] ] [CLUSTER <clusterId>*] [CLUSTERS <total-cluster-number>] [ABSTRACT]";
   }
 
   @Override

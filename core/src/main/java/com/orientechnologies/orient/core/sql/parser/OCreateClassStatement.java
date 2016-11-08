@@ -11,6 +11,8 @@ public class OCreateClassStatement extends OStatement {
    */
   public OIdentifier name;
 
+  boolean ifNotExists = false;
+
   /**
    * Direct superclasses for this class
    */
@@ -40,6 +42,9 @@ public class OCreateClassStatement extends OStatement {
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("CREATE CLASS ");
     name.toString(params, builder);
+    if(ifNotExists){
+      builder.append(" IF NOT EXISTS");
+    }
     if (superclasses != null && superclasses.size() > 0) {
       builder.append(" EXTENDS ");
       boolean first = true;
