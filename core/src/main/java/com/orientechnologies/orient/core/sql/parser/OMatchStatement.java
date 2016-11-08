@@ -377,6 +377,10 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     }
     executionPlan.rootAlias = smallestAlias;
     Iterable<OIdentifiable> allCandidates = matchContext.candidates.get(smallestAlias);
+    if(allCandidates == null){
+      OSelectStatement select = buildSelectStatement(aliasClasses.get(smallestAlias), aliasFilters.get(smallestAlias));
+      allCandidates = (Iterable) getDatabase().query(new OSQLSynchQuery<Object>(select.toString()));
+    }
 
     if (!processContextFromCandidates(pattern, executionPlan, matchContext, aliasClasses, aliasFilters, iCommandContext, request,
         allCandidates, smallestAlias, 0)) {

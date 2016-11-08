@@ -4,6 +4,7 @@ import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.tinkerpop.blueprints.Vertex;
@@ -1444,6 +1445,34 @@ public class OMatchStatementExecutionTest {
     qResult = db
         .command(new OCommandSQL("MATCH {class: Person, where: (name = 'n1')}.out(){as:p, where: ( not ($currentMatch instanceof 'Person'))} return $elements limit 1")).execute();
     assertEquals(0, qResult.size());
+
+  }
+
+
+  @Test
+  public void testBigEntryPoint(){
+    //issue #6890
+
+    OSchemaProxy schema = db.getMetadata().getSchema();
+    schema.createClass("testBigEntryPoint1");
+    schema.createClass("testBigEntryPoint2");
+
+    for(int i=0;i<1000;i++){
+      ODocument doc = db.newInstance("testBigEntryPoint1");
+      doc.field("a", i);
+      doc.save();
+
+    }
+
+    ODocument doc = db.newInstance("testBigEntryPoint2");
+    doc.field("b", "b");
+    doc.save();
+
+    List<ODocument> qResult = db
+        .command(new OCommandSQL("MATCH {class: testBigEntryPoint1, as: a}, {class: testBigEntryPoint2, as: b} return $elements limit 1")).execute();
+    assertEquals(1, qResult.size());
+
+
 
   }
 
