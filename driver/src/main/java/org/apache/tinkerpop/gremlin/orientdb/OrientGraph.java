@@ -1,24 +1,5 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
-import static org.apache.tinkerpop.gremlin.orientdb.StreamUtils.asStream;
-
-import java.util.*;
-import java.util.function.BiFunction;
-import java.util.function.Function;
-import java.util.function.Supplier;
-import java.util.stream.Stream;
-
-import org.apache.commons.configuration.Configuration;
-import org.apache.commons.lang.NotImplementedException;
-import org.apache.tinkerpop.gremlin.orientdb.traversal.strategy.optimization.OrientGraphStepStrategy;
-import org.apache.tinkerpop.gremlin.process.computer.GraphComputer;
-import org.apache.tinkerpop.gremlin.process.traversal.TraversalStrategies;
-import org.apache.tinkerpop.gremlin.structure.*;
-import org.apache.tinkerpop.gremlin.structure.io.Io;
-import org.apache.tinkerpop.gremlin.structure.io.Io.Builder;
-import org.apache.tinkerpop.gremlin.structure.util.ElementHelper;
-import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
@@ -33,13 +14,34 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.index.OPropertyIndexDefinition;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
-import com.orientechnologies.orient.core.metadata.schema.*;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.NotImplementedException;
+import org.apache.tinkerpop.gremlin.orientdb.traversal.strategy.optimization.OrientGraphStepStrategy;
+import org.apache.tinkerpop.gremlin.process.computer.GraphComputer;
+import org.apache.tinkerpop.gremlin.process.traversal.TraversalStrategies;
+import org.apache.tinkerpop.gremlin.structure.*;
+import org.apache.tinkerpop.gremlin.structure.io.Io;
+import org.apache.tinkerpop.gremlin.structure.io.Io.Builder;
+import org.apache.tinkerpop.gremlin.structure.util.ElementHelper;
+import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
+
+import java.util.*;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
+
+import static org.apache.tinkerpop.gremlin.orientdb.StreamUtils.asStream;
 
 @Graph.OptIn(Graph.OptIn.SUITE_STRUCTURE_STANDARD)
 @Graph.OptIn(Graph.OptIn.SUITE_STRUCTURE_INTEGRATE)
@@ -557,7 +559,7 @@ public final class OrientGraph implements Graph {
 
     public void createClass(final String className, final OClass superClass) {
         makeActive();
-        OSchemaProxy schema = database.getMetadata().getSchema();
+        OSchema schema = database.getMetadata().getSchema();
         OClass cls = schema.getClass(className);
         if (cls == null) {
             try {
