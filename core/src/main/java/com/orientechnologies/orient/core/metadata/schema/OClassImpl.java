@@ -67,7 +67,8 @@ import java.util.concurrent.Callable;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-@SuppressWarnings("unchecked") public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
+@SuppressWarnings("unchecked")
+public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   private static final long serialVersionUID        = 1L;
   private static final int  NOT_EXISTENT_CLUSTER_ID = -1;
   final OSchemaShared owner;
@@ -161,7 +162,8 @@ import java.util.concurrent.Callable;
     return readableClusterIds;
   }
 
-  @Override public OClusterSelectionStrategy getClusterSelection() {
+  @Override
+  public OClusterSelectionStrategy getClusterSelection() {
     acquireSchemaReadLock();
     try {
       return clusterSelection;
@@ -170,11 +172,13 @@ import java.util.concurrent.Callable;
     }
   }
 
-  @Override public OClass setClusterSelection(final OClusterSelectionStrategy clusterSelection) {
+  @Override
+  public OClass setClusterSelection(final OClusterSelectionStrategy clusterSelection) {
     return setClusterSelection(clusterSelection.getName());
   }
 
-  @Override public OClass setClusterSelection(final String value) {
+  @Override
+  public OClass setClusterSelection(final String value) {
     getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
 
     acquireSchemaWriteLock();
@@ -201,7 +205,8 @@ import java.util.concurrent.Callable;
     }
   }
 
-  @Override public <RET extends ODocumentWrapper> RET reload() {
+  @Override
+  public <RET extends ODocumentWrapper> RET reload() {
     return (RET) owner.reload();
   }
 
@@ -297,11 +302,13 @@ import java.util.concurrent.Callable;
     }
   }
 
-  @Override public boolean hasClusterId(final int clusterId) {
+  @Override
+  public boolean hasClusterId(final int clusterId) {
     return Arrays.binarySearch(clusterIds, clusterId) >= 0;
   }
 
-  @Override public boolean hasPolymorphicClusterId(final int clusterId) {
+  @Override
+  public boolean hasPolymorphicClusterId(final int clusterId) {
     return Arrays.binarySearch(polymorphicClusterIds, clusterId) >= 0;
   }
 
@@ -332,7 +339,8 @@ import java.util.concurrent.Callable;
     }
   }
 
-  @Override public List<OClass> getSuperClasses() {
+  @Override
+  public List<OClass> getSuperClasses() {
     acquireSchemaReadLock();
     try {
       return Collections.unmodifiableList((List<? extends OClass>) superClasses);
@@ -341,7 +349,8 @@ import java.util.concurrent.Callable;
     }
   }
 
-  @Override public boolean hasSuperClasses() {
+  @Override
+  public boolean hasSuperClasses() {
     acquireSchemaReadLock();
     try {
       return !superClasses.isEmpty();
@@ -350,7 +359,8 @@ import java.util.concurrent.Callable;
     }
   }
 
-  @Override public List<String> getSuperClassesNames() {
+  @Override
+  public List<String> getSuperClassesNames() {
     acquireSchemaReadLock();
     try {
       List<String> superClassesNames = new ArrayList<String>(superClasses.size());
@@ -375,7 +385,8 @@ import java.util.concurrent.Callable;
     return setSuperClasses(classes);
   }
 
-  @Override public OClass setSuperClasses(final List<? extends OClass> classes) {
+  @Override
+  public OClass setSuperClasses(final List<? extends OClass> classes) {
     getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
     if (classes != null) {
       List<OClass> toCheck = new ArrayList<OClass>(classes);
@@ -451,7 +462,8 @@ import java.util.concurrent.Callable;
     }
   }
 
-  @Override public OClass addSuperClass(final OClass superClass) {
+  @Override
+  public OClass addSuperClass(final OClass superClass) {
     getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
     checkParametersConflict(superClass);
     acquireSchemaWriteLock();
@@ -511,7 +523,8 @@ import java.util.concurrent.Callable;
     }
   }
 
-  @Override public OClass removeSuperClass(OClass superClass) {
+  @Override
+  public OClass removeSuperClass(OClass superClass) {
     getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
     acquireSchemaWriteLock();
     try {
@@ -772,7 +785,8 @@ import java.util.concurrent.Callable;
     }
   }
 
-  @Override public Collection<OProperty> getIndexedProperties() {
+  @Override
+  public Collection<OProperty> getIndexedProperties() {
     getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_READ);
 
     acquireSchemaReadLock();
@@ -828,7 +842,8 @@ import java.util.concurrent.Callable;
     return addProperty(iPropertyName, iType, iLinkedType, null, unsafe);
   }
 
-  @Override public boolean existsProperty(String propertyName) {
+  @Override
+  public boolean existsProperty(String propertyName) {
     acquireSchemaReadLock();
     try {
       propertyName = propertyName.toLowerCase();
@@ -870,14 +885,16 @@ import java.util.concurrent.Callable;
         database.command(commandSQL).execute();
 
         OScenarioThreadLocal.executeAsDistributed(new Callable<OProperty>() {
-          @Override public OProperty call() throws Exception {
+          @Override
+          public OProperty call() throws Exception {
             dropPropertyInternal(propertyName);
             return null;
           }
         });
       } else
         OScenarioThreadLocal.executeAsDistributed(new Callable<OProperty>() {
-          @Override public OProperty call() throws Exception {
+          @Override
+          public OProperty call() throws Exception {
             dropPropertyInternal(propertyName);
             return null;
           }
@@ -888,7 +905,8 @@ import java.util.concurrent.Callable;
     }
   }
 
-  @Override public void fromStream() {
+  @Override
+  public void fromStream() {
     subclasses = null;
     superClasses.clear();
 
@@ -959,7 +977,9 @@ import java.util.concurrent.Callable;
     clusterSelection = owner.getClusterSelectionFactory().getStrategy((String) document.field("clusterSelection"));
   }
 
-  @Override @OBeforeSerialization public ODocument toStream() {
+  @Override
+  @OBeforeSerialization
+  public ODocument toStream() {
     document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
 
     try {
@@ -1002,7 +1022,8 @@ import java.util.concurrent.Callable;
     return document;
   }
 
-  @Override public int getClusterForNewInstance(final ODocument doc) {
+  @Override
+  public int getClusterForNewInstance(final ODocument doc) {
     acquireSchemaReadLock();
     try {
       return clusterSelection.getCluster(this, doc);
@@ -1109,7 +1130,8 @@ import java.util.concurrent.Callable;
     return cls;
   }
 
-  @Override public OClass addCluster(final String clusterNameOrId) {
+  @Override
+  public OClass addCluster(final String clusterNameOrId) {
     getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
 
     if (isAbstract()) {
@@ -1148,7 +1170,8 @@ import java.util.concurrent.Callable;
   /**
    * {@inheritDoc}
    */
-  @Override public OClass truncateCluster(String clusterName) {
+  @Override
+  public OClass truncateCluster(String clusterName) {
     getDatabase().checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_DELETE, name);
 
     acquireSchemaReadLock();
@@ -1345,7 +1368,8 @@ import java.util.concurrent.Callable;
     return this;
   }
 
-  @Override public float getClassOverSize() {
+  @Override
+  public float getClassOverSize() {
     acquireSchemaReadLock();
     try {
       return overSize;
@@ -1430,7 +1454,8 @@ import java.util.concurrent.Callable;
     return this;
   }
 
-  @Override public String toString() {
+  @Override
+  public String toString() {
     acquireSchemaReadLock();
     try {
       return name;
@@ -1439,7 +1464,8 @@ import java.util.concurrent.Callable;
     }
   }
 
-  @Override public boolean equals(Object obj) {
+  @Override
+  public boolean equals(Object obj) {
     acquireSchemaReadLock();
     try {
       if (this == obj)
@@ -1461,7 +1487,8 @@ import java.util.concurrent.Callable;
     }
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int sh = hashCode;
     if (sh != 0)
       return sh;
@@ -1941,7 +1968,8 @@ import java.util.concurrent.Callable;
     }
   }
 
-  @Override public void getClassIndexes(final Collection<OIndex<?>> indexes) {
+  @Override
+  public void getClassIndexes(final Collection<OIndex<?>> indexes) {
     acquireSchemaReadLock();
     try {
       final OIndexManagerProxy idxManager = getDatabase().getMetadata().getIndexManager();
@@ -1954,16 +1982,19 @@ import java.util.concurrent.Callable;
     }
   }
 
-  @Override public OIndex<?> getAutoShardingIndex() {
+  @Override
+  public OIndex<?> getAutoShardingIndex() {
     final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     return db != null ? db.getMetadata().getIndexManager().getClassAutoShardingIndex(name) : null;
   }
 
-  @Override public boolean isEdgeType() {
+  @Override
+  public boolean isEdgeType() {
     return isSubClassOf(EDGE_CLASS_NAME);
   }
 
-  @Override public boolean isVertexType() {
+  @Override
+  public boolean isVertexType() {
     return isSubClassOf(VERTEX_CLASS_NAME);
   }
 
@@ -1990,7 +2021,8 @@ import java.util.concurrent.Callable;
     }
   }
 
-  @Override public void getIndexes(final Collection<OIndex<?>> indexes) {
+  @Override
+  public void getIndexes(final Collection<OIndex<?>> indexes) {
     acquireSchemaReadLock();
     try {
       getClassIndexes(indexes);
@@ -2055,9 +2087,16 @@ import java.util.concurrent.Callable;
       // NO CHANGES
       return;
 
-    // DON'T GET THE SCHEMA LOCK BECAUSE THIS CHANGE IS USED ONLY TO WRAP THE SELECTION STRATEGY
-    checkEmbedded();
-    this.clusterSelection = iClusterSelection;
+    acquireSchemaWriteLock();
+    try {
+
+      // DON'T GET THE SCHEMA LOCK BECAUSE THIS CHANGE IS USED ONLY TO WRAP THE SELECTION STRATEGY
+      checkEmbedded();
+      this.clusterSelection = iClusterSelection;
+
+    } finally {
+      releaseSchemaWriteLock();
+    }
   }
 
   public void fireDatabaseMigration(final ODatabaseDocument database, final String propertyName, final OType type) {
@@ -2067,17 +2106,20 @@ import java.util.concurrent.Callable;
         "select from " + getEscapedName(name, strictSQL) + " where " + getEscapedName(propertyName, strictSQL) + ".type() <> \""
             + type.name() + "\"", new OCommandResultListener() {
 
-      @Override public boolean result(Object iRecord) {
+      @Override
+      public boolean result(Object iRecord) {
         final ODocument record = ((OIdentifiable) iRecord).getRecord();
         record.field(propertyName, record.field(propertyName), type);
         database.save(record);
         return true;
       }
 
-      @Override public void end() {
+      @Override
+      public void end() {
       }
 
-      @Override public Object getResult() {
+      @Override
+      public Object getResult() {
         return null;
       }
     }));
@@ -2091,7 +2133,8 @@ import java.util.concurrent.Callable;
         "select from " + getEscapedName(name, strictSQL) + " where " + getEscapedName(propertyName, strictSQL) + " is not null ",
         new OCommandResultListener() {
 
-          @Override public boolean result(Object iRecord) {
+          @Override
+          public boolean result(Object iRecord) {
             final ODocument record = ((OIdentifiable) iRecord).getRecord();
             record.setFieldType(propertyName, type);
             record.field(newPropertyName, record.field(propertyName), type);
@@ -2099,10 +2142,12 @@ import java.util.concurrent.Callable;
             return true;
           }
 
-          @Override public void end() {
+          @Override
+          public void end() {
           }
 
-          @Override public Object getResult() {
+          @Override
+          public Object getResult() {
             return null;
           }
         }));
@@ -2538,13 +2583,15 @@ import java.util.concurrent.Callable;
         database.command(commandSQL).execute();
 
         return (OProperty) OScenarioThreadLocal.executeAsDistributed(new Callable<OProperty>() {
-          @Override public OProperty call() throws Exception {
+          @Override
+          public OProperty call() throws Exception {
             return addPropertyInternal(propertyName, type, linkedType, linkedClass, unsafe);
           }
         });
       } else
         return (OProperty) OScenarioThreadLocal.executeAsDistributed(new Callable<OProperty>() {
-          @Override public OProperty call() throws Exception {
+          @Override
+          public OProperty call() throws Exception {
             return addPropertyInternal(propertyName, type, linkedType, linkedClass, unsafe);
           }
         });

@@ -650,7 +650,7 @@ public class ODistributedResponseManager {
   private String composeConflictMessage() {
     final StringBuilder msg = new StringBuilder(256);
     msg.append("Quorum " + getQuorum() + " not reached for request (" + request + "). Elapsed="
-        + ((System.nanoTime() - getSentOn()) / 1000000) + "ms");
+        + ((System.nanoTime() - getSentOn()) / 1000000) + "ms.");
     final List<ODistributedResponse> res = getConflictResponses();
     if (res.isEmpty())
       msg.append(" No server in conflict. ");
