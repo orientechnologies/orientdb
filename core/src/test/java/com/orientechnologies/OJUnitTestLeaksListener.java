@@ -20,9 +20,7 @@
 package com.orientechnologies;
 
 import com.orientechnologies.common.directmemory.OByteBufferPool;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-
 import org.junit.runner.Result;
 import org.junit.runner.notification.RunListener;
 
