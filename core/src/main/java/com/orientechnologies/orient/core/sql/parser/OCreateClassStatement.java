@@ -20,6 +20,8 @@ public class OCreateClassStatement extends ODDLStatement {
    */
   public OIdentifier name;
 
+  public boolean ifNotExists;
+
   /**
    * Direct superclasses for this class
    */
@@ -48,7 +50,13 @@ public class OCreateClassStatement extends ODDLStatement {
   @Override public OTodoResultSet executeDDL(OCommandContext ctx) {
 
     OSchema schema = ctx.getDatabase().getMetadata().getSchema();
-    checkNotExistsClass(schema, ctx);
+    if (schema.existsClass(name.getStringValue())) {
+      if(ifNotExists){
+        return new OInternalResultSet();
+      }else {
+        throw new OCommandExecutionException("Class " + name + " already exists");
+      }
+    }
     checkSuperclasses(schema, ctx);
 
     OResultInternal result = new OResultInternal();
@@ -86,11 +94,6 @@ public class OCreateClassStatement extends ODDLStatement {
         .toArray(new OClass[] {});
   }
 
-  private void checkNotExistsClass(OSchema schema, OCommandContext ctx) {
-    if (schema.existsClass(name.getStringValue())) {
-      throw new OCommandExecutionException("Class " + name + " already exists");
-    }
-  }
 
   private void checkSuperclasses(OSchema schema, OCommandContext ctx) {
     if (superclasses != null) {
@@ -105,6 +108,9 @@ public class OCreateClassStatement extends ODDLStatement {
   @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("CREATE CLASS ");
     name.toString(params, builder);
+    if(ifNotExists){
+      builder.append(" IF NOT EXISTS");
+    }
     if (superclasses != null && superclasses.size() > 0) {
       builder.append(" EXTENDS ");
       boolean first = true;
@@ -143,6 +149,7 @@ public class OCreateClassStatement extends ODDLStatement {
     result.clusters = clusters == null ? null : clusters.stream().map(x -> x.copy()).collect(Collectors.toList());
     result.totalClusterNo = totalClusterNo == null ? null : totalClusterNo.copy();
     result.abstractClass = abstractClass;
+    result.ifNotExists = ifNotExists;
     return result;
   }
 
@@ -164,6 +171,9 @@ public class OCreateClassStatement extends ODDLStatement {
       return false;
     if (totalClusterNo != null ? !totalClusterNo.equals(that.totalClusterNo) : that.totalClusterNo != null)
       return false;
+    if(ifNotExists!=that.ifNotExists){
+      return false;
+    }
 
     return true;
   }

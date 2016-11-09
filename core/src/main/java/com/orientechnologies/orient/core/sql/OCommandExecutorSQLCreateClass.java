@@ -35,23 +35,26 @@ import java.util.Map;
 
 /**
  * SQL CREATE CLASS command: Creates a new property in the target class.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
-@SuppressWarnings("unchecked")
-public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
+@SuppressWarnings("unchecked") public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract
+    implements OCommandDistributedReplicateRequest {
   public static final String KEYWORD_CREATE   = "CREATE";
   public static final String KEYWORD_CLASS    = "CLASS";
   public static final String KEYWORD_EXTENDS  = "EXTENDS";
   public static final String KEYWORD_ABSTRACT = "ABSTRACT";
   public static final String KEYWORD_CLUSTER  = "CLUSTER";
   public static final String KEYWORD_CLUSTERS = "CLUSTERS";
+  public static final String KEYWORD_IF       = "IF";
+  public static final String KEYWORD_NOT      = "NOT";
+  public static final String KEYWORD_EXISTS   = "EXISTS";
 
-  private String       className;
+  private String className;
+  private boolean      ifNotExists  = false;
   private List<OClass> superClasses = new ArrayList<OClass>();
-  private int[]        clusterIds;
-  private Integer      clusters     = null;
+  private int[] clusterIds;
+  private Integer clusters = null;
 
   public OCommandExecutorSQLCreateClass parse(final OCommandRequest iRequest) {
     final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
@@ -83,8 +86,8 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
         throw new OCommandSQLParsingException("Expected <class>", parserText, oldPos);
 
       className = word.toString();
-      if(this.preParsedStatement!=null){
-        className = ((OCreateClassStatement)preParsedStatement).name.getStringValue();
+      if (this.preParsedStatement != null) {
+        className = ((OCreateClassStatement) preParsedStatement).name.getStringValue();
       }
       if (className == null)
         throw new OCommandSQLParsingException("Expected <class>", parserText, oldPos);
@@ -156,9 +159,23 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
                 parserText, oldPos);
 
           clusters = Integer.parseInt(word.toString());
-        } else if (k.equals(KEYWORD_ABSTRACT))
+        } else if (k.equals(KEYWORD_ABSTRACT)) {
           clusterIds = new int[] { -1 };
-        else
+        } else if (k.equals(KEYWORD_IF)) {
+          oldPos = pos;
+          pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false, " =><()");
+          if (!word.toString().equalsIgnoreCase(KEYWORD_NOT)) {
+            throw new OCommandSQLParsingException(
+                "Syntax error after IF for class " + className + ". Expected NOT. Use " + getSyntax(), parserText, oldPos);
+          }
+          oldPos = pos;
+          pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false, " =><()");
+          if (!word.toString().equalsIgnoreCase(KEYWORD_EXISTS)) {
+            throw new OCommandSQLParsingException(
+                "Syntax error after IF NOT for class " + className + ". Expected EXISTS. Use " + getSyntax(), parserText, oldPos);
+          }
+          ifNotExists = true;
+        } else
           throw new OCommandSQLParsingException("Invalid keyword: " + k);
 
         oldPos = pos;
@@ -171,19 +188,17 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
         }
       }
 
-    }finally{
+    } finally {
       textRequest.setText(originalQuery);
     }
     return this;
   }
 
-  @Override
-  public long getDistributedTimeout() {
+  @Override public long getDistributedTimeout() {
     return OGlobalConfiguration.DISTRIBUTED_COMMAND_QUICK_TASK_SYNCH_TIMEOUT.getValueAsLong();
   }
 
-  @Override
-  public QUORUM_TYPE getQuorumType() {
+  @Override public QUORUM_TYPE getQuorumType() {
     return QUORUM_TYPE.ALL;
   }
 
@@ -196,26 +211,26 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
 
     final ODatabaseDocument database = getDatabase();
 
-    if (clusters != null)
-      database.getMetadata().getSchema().createClass(className, clusters, superClasses.toArray(new OClass[0]));
-    else
-      database.getMetadata().getSchema().createClass(className, clusterIds, superClasses.toArray(new OClass[0]));
+    boolean alreadyExists = database.getMetadata().getSchema().existsClass(className);
+    if (!alreadyExists || !ifNotExists) {
+      if (clusters != null)
+        database.getMetadata().getSchema().createClass(className, clusters, superClasses.toArray(new OClass[0]));
+      else
+        database.getMetadata().getSchema().createClass(className, clusterIds, superClasses.toArray(new OClass[0]));
+    }
 
     return database.getMetadata().getSchema().getClasses().size();
   }
 
-  @Override
-  public String getSyntax() {
-    return "CREATE CLASS <class> [EXTENDS <super-class> [,<super-class2>*] ] [CLUSTER <clusterId>*] [CLUSTERS <total-cluster-number>] [ABSTRACT]";
+  @Override public String getSyntax() {
+    return "CREATE CLASS <class> [IF NOT EXISTS] [EXTENDS <super-class> [,<super-class2>*] ] [CLUSTER <clusterId>*] [CLUSTERS <total-cluster-number>] [ABSTRACT]";
   }
 
-  @Override
-  public String getUndoCommand() {
+  @Override public String getUndoCommand() {
     return "drop class " + className;
   }
 
-  @Override
-  public boolean involveSchema() {
+  @Override public boolean involveSchema() {
     return true;
   }
 }

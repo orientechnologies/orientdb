@@ -67,4 +67,19 @@ public class OCreateClassStatementExecutionTest {
   }
 
 
+  @Test public void testIfNotExists() {
+    String className = "testIfNotExists";
+    OTodoResultSet result = db.command("create class " + className + " if not exists");
+    OSchema schema = db.getMetadata().getSchema();
+    OClass clazz = schema.getClass(className);
+    Assert.assertNotNull(clazz);
+    result.close();
+
+    result = db.command("create class " + className + " if not exists");
+    clazz = schema.getClass(className);
+    Assert.assertNotNull(clazz);
+    result.close();
+  }
+
+
 }
