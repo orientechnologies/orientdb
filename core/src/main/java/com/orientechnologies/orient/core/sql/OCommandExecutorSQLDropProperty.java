@@ -46,6 +46,7 @@ public class OCommandExecutorSQLDropProperty extends OCommandExecutorSQLAbstract
 
   private String className;
   private String fieldName;
+  private boolean ifExists;
   private boolean force = false;
 
   public OCommandExecutorSQLDropProperty parse(final OCommandRequest iRequest) {
@@ -88,6 +89,13 @@ public class OCommandExecutorSQLDropProperty extends OCommandExecutorSQLAbstract
         final String forceParameter = word.toString();
         if ("FORCE".equals(forceParameter)) {
           force = true;
+        } else if ("IF".equals(word.toString())) {
+          pos = nextWord(parserText, parserTextUpperCase, pos, word, false);
+          if ("EXISTS".equals(word.toString())) {
+            this.ifExists = true;
+          }else{
+            throw new OCommandSQLParsingException("Wrong query parameter, expecting EXISTS after IF", parserText, pos);
+          }
         } else {
           throw new OCommandSQLParsingException("Wrong query parameter", parserText, pos);
         }
@@ -110,6 +118,10 @@ public class OCommandExecutorSQLDropProperty extends OCommandExecutorSQLAbstract
     final OClassImpl sourceClass = (OClassImpl) database.getMetadata().getSchema().getClass(className);
     if (sourceClass == null)
       throw new OCommandExecutionException("Source class '" + className + "' not found");
+
+    if(ifExists && !sourceClass.existsProperty(fieldName)){
+      return null;
+    }
 
     final List<OIndex<?>> indexes = relatedIndexes(fieldName);
     if (!indexes.isEmpty()) {
@@ -171,6 +183,6 @@ public class OCommandExecutorSQLDropProperty extends OCommandExecutorSQLAbstract
 
   @Override
   public String getSyntax() {
-    return "DROP PROPERTY <class>.<property>";
+    return "DROP PROPERTY <class>.<property> [ IF EXISTS ] [FORCE]";
   }
 }

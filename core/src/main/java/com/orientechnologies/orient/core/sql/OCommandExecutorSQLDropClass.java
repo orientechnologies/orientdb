@@ -165,7 +165,7 @@ import java.util.Map;
   }
 
   @Override public String getSyntax() {
-    return "DROP CLASS <class> [UNSAFE]";
+    return "DROP CLASS <class> [IF EXISTS] [UNSAFE]";
   }
 
   @Override public boolean involveSchema() {

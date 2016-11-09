@@ -8,6 +8,7 @@ public class ODropPropertyStatement extends OStatement {
 
   protected OIdentifier className;
   protected OIdentifier propertyName;
+  protected boolean ifExists = false;
   protected boolean force = false;
 
   public ODropPropertyStatement(int id) {
@@ -23,6 +24,9 @@ public class ODropPropertyStatement extends OStatement {
     className.toString(params, builder);
     builder.append(".");
     propertyName.toString(params, builder);
+    if(ifExists){
+      builder.append(" IF EXISTS");
+    }
     if(force){
       builder.append(" FORCE");
     }

@@ -71,4 +71,20 @@ public class OCommandExecutorSQLDropPropertyTest {
     Assert.assertFalse(schema.getClass("Foo").existsProperty("name"));
   }
 
+  @Test public void testIfExists() {
+    OSchemaProxy schema = db.getMetadata().getSchema();
+    OClass testIfExistsClass = schema.createClass("testIfExists");
+
+    testIfExistsClass.createProperty("name", OType.STRING);
+    Assert.assertTrue(schema.getClass("testIfExists").existsProperty("name"));
+    db.command(new OCommandSQL("DROP PROPERTY testIfExists.name if exists")).execute();
+    schema.reload();
+    Assert.assertFalse(schema.getClass("testIfExists").existsProperty("name"));
+
+    db.command(new OCommandSQL("DROP PROPERTY testIfExists.name if exists")).execute();
+    schema.reload();
+    Assert.assertFalse(schema.getClass("testIfExists").existsProperty("name"));
+
+  }
+
 }
