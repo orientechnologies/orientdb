@@ -59,6 +59,9 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
 
   private String             className;
   private String             fieldName;
+
+  private boolean            ifNotExists = false;
+
   private OType              type;
   private String             linked;
 
@@ -116,6 +119,26 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
       pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
       if (pos == -1)
         throw new OCommandSQLParsingException("Missed property type", parserText, oldPos);
+      if("IF".equalsIgnoreCase(word.toString())){
+        oldPos = pos;
+        pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
+        if (pos == -1)
+          throw new OCommandSQLParsingException("Missed property type", parserText, oldPos);
+        if(!"NOT".equalsIgnoreCase(word.toString())){
+          throw new OCommandSQLParsingException("Expected NOT EXISTS after IF", parserText, oldPos);
+        }
+        oldPos = pos;
+        pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
+        if (pos == -1)
+          throw new OCommandSQLParsingException("Missed property type", parserText, oldPos);
+        if(!"EXISTS".equalsIgnoreCase(word.toString())){
+          throw new OCommandSQLParsingException("Expected EXISTS after IF NOT", parserText, oldPos);
+        }
+        this.ifNotExists = true;
+
+        oldPos = pos;
+        pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
+      }
 
       type = OType.valueOf(word.toString());
 
@@ -275,9 +298,14 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
       throw new OCommandExecutionException("Source class '" + className + "' not found");
 
     OPropertyImpl prop = (OPropertyImpl) sourceClass.getProperty(fieldName);
-    if (prop != null)
+
+    if (prop != null) {
+      if(ifNotExists){
+        return sourceClass.properties().size();
+      }
       throw new OCommandExecutionException(
           "Property '" + className + "." + fieldName + "' already exists. Remove it before to retry.");
+    }
 
     // CREATE THE PROPERTY
     OClass linkedClass = null;

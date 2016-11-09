@@ -19,18 +19,15 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
-
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
+import org.testng.annotations.Test;
+
+import static org.testng.Assert.*;
 
 /**
  * @author Michael MacFadden
@@ -542,4 +539,28 @@ public class OCommandExecutorSQLCreatePropertyTest {
     
     db.close();
   }
+
+  @Test
+  public void testIfNotExists() throws Exception {
+    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLCreatePropertyTest" + System.nanoTime());
+
+    db.create();
+
+    db.command(new OCommandSQL("CREATE class testIfNotExists")).execute();
+    db.command(new OCommandSQL("CREATE property testIfNotExists.name if not exists STRING")).execute();
+
+    OClass companyClass = db.getMetadata().getSchema().getClass("testIfNotExists");
+    OProperty property = companyClass.getProperty("name");
+    assertEquals(property.getName(), PROP_NAME);
+
+    db.command(new OCommandSQL("CREATE property testIfNotExists.name if not exists STRING")).execute();
+
+    companyClass = db.getMetadata().getSchema().getClass("testIfNotExists");
+    property = companyClass.getProperty("name");
+    assertEquals(property.getName(), PROP_NAME);
+
+
+    db.drop();
+  }
+
 }

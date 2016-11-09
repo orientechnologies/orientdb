@@ -9,6 +9,7 @@ import java.util.Map;
 public class OCreatePropertyStatement extends OStatement {
   public OIdentifier className;
   public OIdentifier propertyName;
+  boolean ifNotExists = false;
   public OIdentifier propertyType;
   public OIdentifier linkedType;
   public boolean unsafe = false;
@@ -28,6 +29,9 @@ public class OCreatePropertyStatement extends OStatement {
     className.toString(params, builder);
     builder.append(".");
     propertyName.toString(params, builder);
+    if(ifNotExists){
+      builder.append(" IF NOT EXISTS");
+    }
     builder.append(" ");
     propertyType.toString(params, builder);
     if (linkedType != null) {

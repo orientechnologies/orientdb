@@ -24,4 +24,11 @@ public class OCreatePropertyStatementTest extends OParserTestAbstract {
     checkRightSyntax("CREATE PROPERTY Foo.bar LINK Bar (MANDATORY true, READONLY false, NOTNULL true, MAX 5, MIN 3, DEFAULT 7) UNSAFE");
   }
 
+  public void testIfNotExists(){
+    checkRightSyntax("CREATE PROPERTY Foo.bar if not exists STRING");
+    checkWrongSyntax("CREATE PROPERTY Foo.bar if exists STRING");
+    checkWrongSyntax("CREATE PROPERTY Foo.bar if not exists");
+  }
+  
+
 }
