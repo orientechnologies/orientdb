@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OSequenceException;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExternalResource;
@@ -139,6 +140,7 @@ public class OSequenceTest {
   }
 
   @Test
+  @Ignore
   public void shouldSequenceMTNoTx() throws Exception {
     OSequence.CreateParams params = new OSequence.CreateParams().setStart(0L);
     OSequence mtSeq = sequences.createSequence("mtSeq", OSequence.SEQUENCE_TYPE.ORDERED, params);
@@ -181,6 +183,7 @@ public class OSequenceTest {
   }
 
   @Test
+  @Ignore
   public void shouldSequenceMTTx() throws Exception {
     OSequence.CreateParams params = new OSequence.CreateParams().setStart(0L);
     OSequence mtSeq = sequences.createSequence("mtSeq", OSequence.SEQUENCE_TYPE.ORDERED, params);
