@@ -15,7 +15,8 @@ import java.util.Map;
 public class ODropClassStatement extends ODDLStatement {
 
   public OIdentifier name;
-  public boolean unsafe = false;
+  public boolean ifExists = false;
+  public boolean unsafe   = false;
 
   public ODropClassStatement(int id) {
     super(id);
@@ -29,6 +30,9 @@ public class ODropClassStatement extends ODDLStatement {
     OSchema schema = ctx.getDatabase().getMetadata().getSchema();
     OClass clazz = schema.getClass(name.getStringValue());
     if (clazz == null) {
+      if (ifExists) {
+        return new OInternalResultSet();
+      }
       throw new OCommandExecutionException("Class " + name.getStringValue() + " does not exist");
     }
 
@@ -57,6 +61,9 @@ public class ODropClassStatement extends ODDLStatement {
   @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("DROP CLASS ");
     name.toString(params, builder);
+    if (ifExists) {
+      builder.append(" IF EXISTS");
+    }
     if (unsafe) {
       builder.append(" UNSAFE");
     }
@@ -65,6 +72,7 @@ public class ODropClassStatement extends ODDLStatement {
   @Override public ODropClassStatement copy() {
     ODropClassStatement result = new ODropClassStatement(-1);
     result.name = name == null ? null : name.copy();
+    result.ifExists = ifExists;
     result.unsafe = unsafe;
     return result;
   }
@@ -78,6 +86,8 @@ public class ODropClassStatement extends ODDLStatement {
     ODropClassStatement that = (ODropClassStatement) o;
 
     if (unsafe != that.unsafe)
+      return false;
+    if(ifExists != that.ifExists)
       return false;
     if (name != null ? !name.equals(that.name) : that.name != null)
       return false;

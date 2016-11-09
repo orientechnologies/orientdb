@@ -3955,6 +3955,7 @@ ODropClassStatement DropClassStatement():
 {
 	<DROP> <CLASS>
 	jjtThis.name = Identifier()
+	[ <IF> <EXISTS> { jjtThis.ifExists = true; } ]
 	[ <UNSAFE> { jjtThis.unsafe = true; } ]
 	{ return jjtThis; }
 }

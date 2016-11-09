@@ -44,6 +44,7 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLAbstract im
   public static final String KEYWORD_UNSAFE = "UNSAFE";
 
   private String             className;
+  private boolean            ifExists;
   private boolean            unsafe;
 
   public OCommandExecutorSQLDropClass parse(final OCommandRequest iRequest) {
@@ -57,6 +58,7 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLAbstract im
       final boolean strict = getDatabase().getStorage().getConfiguration().isStrictSql();
       if (strict) {
         this.className = ((ODropClassStatement) this.preParsedStatement).name.getStringValue();
+        this.ifExists = ((ODropClassStatement) this.preParsedStatement).ifExists;
         this.unsafe = ((ODropClassStatement) this.preParsedStatement).unsafe;
       } else {
         oldParsing((OCommandRequestText) iRequest);
@@ -162,7 +164,7 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLAbstract im
 
   @Override
   public String getSyntax() {
-    return "DROP CLASS <class> [UNSAFE]";
+    return "DROP CLASS <class> [IF EXISTS] [UNSAFE]";
   }
 
   @Override

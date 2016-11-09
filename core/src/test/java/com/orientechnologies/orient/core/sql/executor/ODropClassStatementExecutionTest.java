@@ -74,4 +74,27 @@ public class ODropClassStatementExecutionTest {
   }
 
 
+  @Test public void testIfExists() {
+    String className = "testIfExists";
+    OSchema schema = db.getMetadata().getSchema();
+    schema.createClass(className);
+
+    schema.reload();
+    Assert.assertNotNull(schema.getClass(className));
+
+    OTodoResultSet result = db.command("drop class " + className+" if exists");
+    Assert.assertTrue(result.hasNext());
+    OResult next = result.next();
+    Assert.assertEquals("drop class", next.getProperty("operation"));
+    Assert.assertFalse(result.hasNext());
+    result.close();
+    schema.reload();
+    Assert.assertNull(schema.getClass(className));
+
+    result = db.command("drop class " + className+" if exists");
+    result.close();
+    schema.reload();
+    Assert.assertNull(schema.getClass(className));
+  }
+
 }
