@@ -3960,6 +3960,10 @@ ODropClassStatement DropClassStatement():
 	{ return jjtThis; }
 }
 
+void IfNotExists():{}
+{
+    <IF> <NOT> <EXISTS>
+}
 OCreatePropertyStatement CreatePropertyStatement():
 {
 	OCreatePropertyAttributeStatement lastAttribute;
@@ -3970,6 +3974,9 @@ OCreatePropertyStatement CreatePropertyStatement():
 		jjtThis.className = Identifier()
 		<DOT>
 		jjtThis.propertyName = Identifier()
+
+		    [ LOOKAHEAD(3) IfNotExists() { jjtThis.ifNotExists = true; }]
+
 		jjtThis.propertyType = Identifier()
 		[
 			jjtThis.linkedType = Identifier()

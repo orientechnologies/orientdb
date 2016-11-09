@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 public class OCreatePropertyStatement extends ODDLStatement {
   public OIdentifier className;
   public OIdentifier propertyName;
+  boolean ifNotExists = false;
   public OIdentifier propertyType;
   public OIdentifier linkedType;
   public boolean                                 unsafe     = false;
@@ -53,6 +54,9 @@ public class OCreatePropertyStatement extends ODDLStatement {
       throw new OCommandExecutionException("Class not found: " + className.getStringValue());
     }
     if (clazz.getProperty(propertyName.getStringValue()) != null) {
+      if (ifNotExists) {
+        return;
+      }
       throw new OCommandExecutionException(
           "Property " + className.getStringValue() + "." + propertyName.getStringValue() + " already exists");
     }
@@ -83,6 +87,9 @@ public class OCreatePropertyStatement extends ODDLStatement {
     className.toString(params, builder);
     builder.append(".");
     propertyName.toString(params, builder);
+    if (ifNotExists) {
+      builder.append(" IF NOT EXISTS");
+    }
     builder.append(" ");
     propertyType.toString(params, builder);
     if (linkedType != null) {
@@ -115,6 +122,7 @@ public class OCreatePropertyStatement extends ODDLStatement {
     result.propertyType = propertyType == null ? null : propertyType.copy();
     result.linkedType = linkedType == null ? null : linkedType.copy();
     result.unsafe = unsafe;
+    result.ifNotExists = ifNotExists;
     result.attributes = attributes == null ? null : attributes.stream().map(x -> x.copy()).collect(Collectors.toList());
     return result;
   }
@@ -139,6 +147,9 @@ public class OCreatePropertyStatement extends ODDLStatement {
       return false;
     if (attributes != null ? !attributes.equals(that.attributes) : that.attributes != null)
       return false;
+    if (ifNotExists != that.ifNotExists) {
+      return false;
+    }
 
     return true;
   }

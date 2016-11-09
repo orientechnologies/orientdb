@@ -282,5 +282,26 @@ public class OCreatePropertyStatementExecutionTest {
     assertFalse(idProperty.isMandatory());
   }
 
+  @Test public void testIfNotExists() throws Exception {
+    db.command("CREATE class testIfNotExists");
+    db.command("CREATE property testIfNotExists.name if not exists STRING");
+
+    OClass clazz = db.getMetadata().getSchema().getClass("testIfNotExists");
+    OProperty nameProperty = clazz.getProperty(PROP_NAME);
+
+    assertEquals(nameProperty.getName(), PROP_NAME);
+    assertEquals(nameProperty.getFullName(), "testIfNotExists.name");
+    assertEquals(nameProperty.getType(), OType.STRING);
+
+    db.command("CREATE property testIfNotExists.name if not exists STRING");
+
+    clazz = db.getMetadata().getSchema().getClass("testIfNotExists");
+    nameProperty = clazz.getProperty(PROP_NAME);
+
+    assertEquals(nameProperty.getName(), PROP_NAME);
+    assertEquals(nameProperty.getFullName(), "testIfNotExists.name");
+    assertEquals(nameProperty.getType(), OType.STRING);
+
+  }
 
 }
