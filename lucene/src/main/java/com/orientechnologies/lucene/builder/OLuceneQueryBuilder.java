@@ -33,12 +33,12 @@ import java.util.Map;
 /**
  * Created by Enrico Risa on 02/09/15.
  */
-public class OQueryBuilderImpl implements OQueryBuilder {
+public class OLuceneQueryBuilder {
 
   private final boolean allowLeadingWildcard;
   private final boolean lowercaseExpandedTerms;
 
-  public OQueryBuilderImpl(ODocument metadata) {
+  public OLuceneQueryBuilder(ODocument metadata) {
 
     Boolean allowLeadingWildcard = false;
     if (metadata.containsField("allowLeadingWildcard")) {
@@ -54,14 +54,13 @@ public class OQueryBuilderImpl implements OQueryBuilder {
 
   }
 
-  public OQueryBuilderImpl(boolean allowLeadingWildcard, boolean lowercaseExpandedTerms) {
+  public OLuceneQueryBuilder(boolean allowLeadingWildcard, boolean lowercaseExpandedTerms) {
     this.allowLeadingWildcard = allowLeadingWildcard;
     this.lowercaseExpandedTerms = lowercaseExpandedTerms;
 
     OLogManager.instance().info(this, "allowLeadingWildcard::  " + allowLeadingWildcard);
   }
 
-  @Override
   public Query query(OIndexDefinition index, Object key, Analyzer analyzer) throws ParseException {
     String query = "";
     if (key instanceof OCompositeKey) {

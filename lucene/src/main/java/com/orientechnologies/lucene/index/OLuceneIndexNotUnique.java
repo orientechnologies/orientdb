@@ -58,6 +58,190 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
   }
 
   @Override
+  public boolean remove(final Object key, final OIdentifiable value) {
+
+    if (key != null) {
+      OTransaction transaction = getDatabase().getTransaction();
+      if (transaction.isActive()) {
+
+        transaction.addIndexEntry(this, super.getName(), OTransactionIndexChanges.OPERATION.REMOVE, encodeKey(key), value);
+        OLuceneTxChanges transactionChanges = getTransactionChanges(transaction);
+        try {
+          transactionChanges.remove(key, value);
+        } catch (IOException e) {
+          OLogManager.instance().error(this, "Error while removing", e);
+        }
+        return true;
+      } else {
+        return storage.callIndexEngine(false, false, indexId, engine -> {
+          OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
+          return indexEngine.remove(key, value);
+        });
+      }
+    }
+    return true;
+  }
+
+  @Override
+  public boolean remove(Object key) {
+    return super.remove(key);
+  }
+
+  @Override
+  protected OBinarySerializer determineValueSerializer() {
+    return storage.getComponentsFactory().binarySerializerFactory.getObjectSerializer(OStreamSerializerSBTreeIndexRIDContainer.ID);
+  }
+
+  @Override
+  public Object getCollatingValue(Object key) {
+    return key;
+  }
+
+  @Override
+  protected void commitSnapshot(final Map<Object, Object> snapshot) {
+
+    storage.callIndexEngine(false, false, indexId, new OIndexEngineCallback<Object>() {
+      @Override
+      public Boolean callEngine(OIndexEngine engine) {
+        OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
+
+        for (Map.Entry<Object, Object> snapshotEntry : snapshot.entrySet()) {
+          Object key = snapshotEntry.getKey();
+          OLuceneTxOperations operations = (OLuceneTxOperations) snapshotEntry.getValue();
+
+          for (OIdentifiable oIdentifiable : operations.removed) {
+            indexEngine.remove(decodeKey(key), oIdentifiable);
+          }
+
+        }
+        for (Map.Entry<Object, Object> snapshotEntry : snapshot.entrySet()) {
+          Object key = snapshotEntry.getKey();
+          OLuceneTxOperations operations = (OLuceneTxOperations) snapshotEntry.getValue();
+
+          indexEngine.put(decodeKey(key), operations.added);
+
+        }
+        OTransaction transaction = getDatabase().getTransaction();
+        resetTransactionChanges(transaction);
+        return null;
+      }
+    });
+
+  }
+
+  protected Object decodeKey(Object key) {
+    return key;
+  }
+
+  private void resetTransactionChanges(OTransaction transaction) {
+    transaction.setCustomData(getName(), null);
+  }
+
+  @Override
+  protected void putInSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot) {
+    key = getCollatingValue(key);
+
+    OLuceneTxOperations operations = (OLuceneTxOperations) snapshot.get(key);
+
+    if (operations == null) {
+      operations = new OLuceneTxOperations();
+      snapshot.put(key, operations);
+    }
+    operations.added.add(value.getIdentity());
+    snapshot.put(key, operations);
+  }
+
+  @Override
+  protected void removeFromSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot) {
+    key = getCollatingValue(key);
+
+    OLuceneTxOperations operations = (OLuceneTxOperations) snapshot.get(key);
+    if (operations == null) {
+      operations = new OLuceneTxOperations();
+      snapshot.put(key, operations);
+    }
+    operations.removed.add(value.getIdentity());
+    snapshot.put(key, operations);
+  }
+
+  @Override
+  protected void clearSnapshot(IndexTxSnapshot indexTxSnapshot) {
+    indexTxSnapshot.clear = true;
+    indexTxSnapshot.indexSnapshot.clear();
+  }
+
+  @Override
+  protected void onIndexEngineChange(int indexId) {
+
+    storage.callIndexEngine(false, false, indexId, engine -> {
+      OLuceneIndexEngine oIndexEngine = (OLuceneIndexEngine) engine;
+      oIndexEngine.init(getName(), getType(), getDefinition(), isAutomatic(), getMetadata());
+      return null;
+    });
+  }
+
+  @Override
+  public OLuceneIndexNotUnique create(String name, OIndexDefinition indexDefinition, String clusterIndexName,
+      Set<String> clustersToIndex, boolean rebuild, OProgressListener progressListener) {
+    return (OLuceneIndexNotUnique) super.create(indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener,
+        determineValueSerializer());
+  }
+
+  @Override
+  public Set<OIdentifiable> get(final Object key) {
+
+    final OTransaction transaction = getDatabase().getTransaction();
+    if (transaction.isActive()) {
+      return storage.callIndexEngine(false, false, indexId, engine -> {
+        OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
+        return (Set<OIdentifiable>) indexEngine.getInTx(key, getTransactionChanges(transaction));
+      });
+    } else {
+      return (Set<OIdentifiable>) storage.getIndexValue(indexId, key);
+    }
+  }
+
+  @Override
+  public OLuceneIndexNotUnique put(final Object key, final OIdentifiable singleValue) {
+
+    if (key != null) {
+      OTransaction transaction = getDatabase().getTransaction();
+      if (transaction.isActive()) {
+        OLuceneTxChanges transactionChanges = getTransactionChanges(transaction);
+        transaction.addIndexEntry(this, super.getName(), OTransactionIndexChanges.OPERATION.PUT, encodeKey(key), singleValue);
+
+        Document luceneDoc = storage.callIndexEngine(false, false, indexId, engine -> {
+          OLuceneIndexEngine oIndexEngine = (OLuceneIndexEngine) engine;
+          return oIndexEngine.buildDocument(key, singleValue);
+        });
+
+        try {
+          transactionChanges.put(key, singleValue, luceneDoc);
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+
+      } else {
+
+        storage.updateIndexEntry(indexId, key, () -> Arrays.asList(singleValue));
+      }
+    }
+    return this;
+
+  }
+
+  @Override
+  public long getSize() {
+    return storage.callIndexEngine(false, false, indexId,
+        engine -> ((OLuceneIndexEngine) engine).sizeInTx(getTransactionChanges(getDatabase().getTransaction())));
+  }
+
+  @Override
+  public long getKeySize() {
+    return 0;
+  }
+
+  @Override
   public OIndexCursor iterateEntries(Collection<?> keys, boolean ascSortOrder) {
     return null;
   }
@@ -93,206 +277,6 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
     return false;
   }
 
-  @Override
-  protected void onIndexEngineChange(int indexId) {
-
-    storage.callIndexEngine(false, false, indexId, engine -> {
-      OLuceneIndexEngine oIndexEngine = (OLuceneIndexEngine) engine;
-      oIndexEngine.init(getName(), getType(), getDefinition(), isAutomatic(), getMetadata());
-      return null;
-    });
-  }
-
-  protected Object encodeKey(Object key) {
-    return key;
-  }
-
-  protected Object decodeKey(Object key) {
-    return key;
-  }
-
-  @Override
-  public OLuceneIndexNotUnique put(final Object key, final OIdentifiable singleValue) {
-
-    if (key != null) {
-      OTransaction transaction = getDatabase().getTransaction();
-      if (transaction.isActive()) {
-        OLuceneTxChanges transactionChanges = getTransactionChanges(transaction);
-        transaction.addIndexEntry(this, super.getName(), OTransactionIndexChanges.OPERATION.PUT, encodeKey(key), singleValue);
-
-        Document luceneDoc = storage.callIndexEngine(false, false, indexId, engine -> {
-          OLuceneIndexEngine oIndexEngine = (OLuceneIndexEngine) engine;
-          return oIndexEngine.buildDocument(key, singleValue);
-        });
-
-        try {
-          transactionChanges.put(key, singleValue, luceneDoc);
-        } catch (IOException e) {
-          e.printStackTrace();
-        }
-
-      } else {
-
-        storage.updateIndexEntry(indexId, key, () -> Arrays.asList(singleValue));
-      }
-    }
-    return this;
-
-  }
-
-  @Override
-  public boolean remove(final Object key, final OIdentifiable value) {
-
-    if (key != null) {
-      OTransaction transaction = getDatabase().getTransaction();
-      if (transaction.isActive()) {
-
-        transaction.addIndexEntry(this, super.getName(), OTransactionIndexChanges.OPERATION.REMOVE, encodeKey(key), value);
-        OLuceneTxChanges transactionChanges = getTransactionChanges(transaction);
-        try {
-          transactionChanges.remove(key, value);
-        } catch (IOException e) {
-          OLogManager.instance().error(this, "Error while removing", e);
-        }
-        return true;
-      } else {
-        return storage.callIndexEngine(false, false, indexId, engine -> {
-          OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
-          return indexEngine.remove(key, value);
-        });
-      }
-    }
-    return true;
-  }
-
-  @Override
-  public long getSize() {
-    return storage.callIndexEngine(false, false, indexId, engine -> {
-      OTransaction transaction = getDatabase().getTransaction();
-      OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
-      return indexEngine.sizeInTx(getTransactionChanges(transaction));
-    });
-  }
-
-  @Override
-  public long getKeySize() {
-    return 0;
-  }
-
-  @Override
-  public OLuceneIndexNotUnique create(String name, OIndexDefinition indexDefinition, String clusterIndexName,
-      Set<String> clustersToIndex, boolean rebuild, OProgressListener progressListener) {
-    return (OLuceneIndexNotUnique) super.create(indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener,
-        determineValueSerializer());
-  }
-
-  @Override
-  public Set<OIdentifiable> get(final Object key) {
-
-    final OTransaction transaction = getDatabase().getTransaction();
-    if (transaction.isActive()) {
-      return storage.callIndexEngine(false, false, indexId, engine -> {
-        OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
-        return (Set<OIdentifiable>) indexEngine.getInTx(key, getTransactionChanges(transaction));
-      });
-    } else {
-      return (Set<OIdentifiable>) storage.getIndexValue(indexId, key);
-    }
-  }
-
-  @Override
-  protected void commitSnapshot(final Map<Object, Object> snapshot) {
-
-    storage.callIndexEngine(false, false, indexId, new OIndexEngineCallback<Object>() {
-      @Override
-      public Boolean callEngine(OIndexEngine engine) {
-        OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
-
-        for (Map.Entry<Object, Object> snapshotEntry : snapshot.entrySet()) {
-          Object key = snapshotEntry.getKey();
-          OLuceneTxOperations operations = (OLuceneTxOperations) snapshotEntry.getValue();
-
-          for (OIdentifiable oIdentifiable : operations.removed) {
-            indexEngine.remove(decodeKey(key), oIdentifiable);
-          }
-
-        }
-        for (Map.Entry<Object, Object> snapshotEntry : snapshot.entrySet()) {
-          Object key = snapshotEntry.getKey();
-          OLuceneTxOperations operations = (OLuceneTxOperations) snapshotEntry.getValue();
-
-          indexEngine.put(decodeKey(key), operations.added);
-
-        }
-        OTransaction transaction = getDatabase().getTransaction();
-        resetTransactionChanges(transaction);
-        return null;
-      }
-    });
-
-  }
-
-  @Override
-  public boolean remove(Object key) {
-    return super.remove(key);
-  }
-
-  @Override
-  protected OBinarySerializer determineValueSerializer() {
-    return storage.getComponentsFactory().binarySerializerFactory.getObjectSerializer(OStreamSerializerSBTreeIndexRIDContainer.ID);
-  }
-
-  @Override
-  protected void removeFromSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot) {
-    key = getCollatingValue(key);
-
-    OLuceneTxOperations operations = (OLuceneTxOperations) snapshot.get(key);
-    if (operations == null) {
-      operations = new OLuceneTxOperations();
-      snapshot.put(key, operations);
-    }
-    operations.removed.add(value.getIdentity());
-    snapshot.put(key, operations);
-  }
-
-  @Override
-  protected void putInSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot) {
-    key = getCollatingValue(key);
-
-    OLuceneTxOperations operations = (OLuceneTxOperations) snapshot.get(key);
-
-    if (operations == null) {
-      operations = new OLuceneTxOperations();
-      snapshot.put(key, operations);
-    }
-    operations.added.add(value.getIdentity());
-    snapshot.put(key, operations);
-  }
-
-  @Override
-  protected void clearSnapshot(IndexTxSnapshot indexTxSnapshot) {
-    indexTxSnapshot.clear = true;
-    indexTxSnapshot.indexSnapshot.clear();
-  }
-
-  @Override
-  public Object getCollatingValue(Object key) {
-    return key;
-  }
-
-  @Override
-  public IndexSearcher searcher() throws IOException {
-    return storage.callIndexEngine(false, false, indexId, engine -> {
-      OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
-      try {
-        return indexEngine.searcher();
-      } catch (IOException e) {
-        throw OException.wrapException(new OIndexException("Cannot get searcher from index " + getName()), e);
-      }
-    });
-
-  }
-
   public OLuceneTxChanges getTransactionChanges(OTransaction transaction) {
 
     OLuceneTxChanges changes = (OLuceneTxChanges) transaction.getCustomData(getName());
@@ -311,8 +295,21 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
     return changes;
   }
 
-  private void resetTransactionChanges(OTransaction transaction) {
-    transaction.setCustomData(getName(), null);
+  protected Object encodeKey(Object key) {
+    return key;
+  }
+
+  @Override
+  public IndexSearcher searcher() throws IOException {
+    return storage.callIndexEngine(false, false, indexId, engine -> {
+      OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
+      try {
+        return indexEngine.searcher();
+      } catch (IOException e) {
+        throw OException.wrapException(new OIndexException("Cannot get searcher from index " + getName()), e);
+      }
+    });
+
   }
 
   @Override

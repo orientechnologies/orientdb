@@ -32,7 +32,7 @@ import java.io.IOException;
 /**
  * Created by Enrico Risa on 08/01/15.
  */
-public class QueryContext {
+public class OLuceneQueryContext {
 
   public final    OCommandContext context;
   public final    Query           query;
@@ -48,11 +48,11 @@ public class QueryContext {
   private   String           facetField;
   private   String           drillDownQuery;
 
-  public QueryContext(OCommandContext context, IndexSearcher searcher, Query query) {
+  public OLuceneQueryContext(OCommandContext context, IndexSearcher searcher, Query query) {
     this(context, searcher, query, null);
   }
 
-  public QueryContext(OCommandContext context, IndexSearcher searcher, Query query, Sort sort) {
+  public OLuceneQueryContext(OCommandContext context, IndexSearcher searcher, Query query, Sort sort) {
     this.context = context;
     this.searcher = searcher;
     this.query = query;
@@ -69,12 +69,12 @@ public class QueryContext {
       cfg = QueryContextCFG.FILTER;
   }
 
-  public QueryContext setFacet(boolean facet) {
+  public OLuceneQueryContext setFacet(boolean facet) {
     this.facet = facet;
     return this;
   }
 
-  public QueryContext setReader(TaxonomyReader reader) {
+  public OLuceneQueryContext setReader(TaxonomyReader reader) {
     this.reader = reader;
     return this;
   }
@@ -112,7 +112,7 @@ public class QueryContext {
     return changes != null;
   }
 
-  public QueryContext setChanges(OLuceneTxChanges changes) {
+  public OLuceneQueryContext setChanges(OLuceneTxChanges changes) {
     this.changes = changes;
     return this;
   }

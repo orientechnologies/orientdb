@@ -21,7 +21,7 @@ package com.orientechnologies.lucene.collections;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract;
-import com.orientechnologies.lucene.query.QueryContext;
+import com.orientechnologies.lucene.query.OLuceneQueryContext;
 import com.orientechnologies.lucene.tx.OLuceneTxChangesAbstract;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
@@ -40,7 +40,7 @@ public class OLuceneTxResultSet extends OLuceneAbstractResultSet {
   private final String indexName;
   protected int deletedMatchCount = 0;
 
-  public OLuceneTxResultSet(OLuceneIndexEngine manager, QueryContext queryContext) {
+  public OLuceneTxResultSet(OLuceneIndexEngine manager, OLuceneQueryContext queryContext) {
     super(manager, queryContext);
 
     deletedMatchCount = calculateDeletedMatch();
@@ -63,10 +63,10 @@ public class OLuceneTxResultSet extends OLuceneAbstractResultSet {
 
   private class OLuceneResultSetIteratorTx implements Iterator<OIdentifiable> {
 
-    ScoreDoc[] array;
-    private int index;
-    private int localIndex;
-    private int totalHits;
+    private ScoreDoc[] array;
+    private int        index;
+    private int        localIndex;
+    private int        totalHits;
 
     public OLuceneResultSetIteratorTx() {
       totalHits = topDocs.totalHits;
@@ -95,6 +95,15 @@ public class OLuceneTxResultSet extends OLuceneAbstractResultSet {
       return res;
     }
 
+    protected ScoreDoc fetchNext() {
+      if (localIndex == array.length) {
+        localIndex = 0;
+        fetchMoreResult();
+      }
+      final ScoreDoc score = array[localIndex++];
+      return score;
+    }
+
     private Document toDocument(ScoreDoc score) {
       Document ret = null;
 
@@ -116,31 +125,6 @@ public class OLuceneTxResultSet extends OLuceneAbstractResultSet {
 
     private boolean isToSkip(OContextualRecordId res, Document doc) {
       return isDeleted(res, doc) || isUpdatedDiskMatch(res, doc);
-    }
-
-    private boolean isUpdatedDiskMatch(OIdentifiable value, Document doc) {
-      return isUpdated(value) && !isTempMatch(doc);
-    }
-
-    private boolean isTempMatch(Document doc) {
-      return doc.get(OLuceneTxChangesAbstract.TMP) != null;
-    }
-
-    private boolean isUpdated(OIdentifiable value) {
-      return queryContext.changes().isUpdated(null, null, value);
-    }
-
-    private boolean isDeleted(OIdentifiable value, Document doc) {
-      return queryContext.changes().isDeleted(doc, null, value);
-    }
-
-    protected ScoreDoc fetchNext() {
-      if (localIndex == array.length) {
-        localIndex = 0;
-        fetchMoreResult();
-      }
-      final ScoreDoc score = array[localIndex++];
-      return score;
     }
 
     private void fetchMoreResult() {
@@ -168,6 +152,22 @@ public class OLuceneTxResultSet extends OLuceneAbstractResultSet {
         OLogManager.instance().error(this, "Error on fetching document by query '%s' to Lucene index", e, query);
       }
 
+    }
+
+    private boolean isDeleted(OIdentifiable value, Document doc) {
+      return queryContext.changes().isDeleted(doc, null, value);
+    }
+
+    private boolean isUpdatedDiskMatch(OIdentifiable value, Document doc) {
+      return isUpdated(value) && !isTempMatch(doc);
+    }
+
+    private boolean isUpdated(OIdentifiable value) {
+      return queryContext.changes().isUpdated(null, null, value);
+    }
+
+    private boolean isTempMatch(Document doc) {
+      return doc.get(OLuceneTxChangesAbstract.TMP) != null;
     }
 
     @Override

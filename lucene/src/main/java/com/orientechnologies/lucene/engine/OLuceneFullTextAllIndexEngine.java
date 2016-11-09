@@ -6,7 +6,7 @@ import com.orientechnologies.lucene.OLuceneIndexFactory;
 import com.orientechnologies.lucene.analyzer.OLucenePerFieldAnalyzerWrapper;
 import com.orientechnologies.lucene.collections.OLuceneResultSet;
 import com.orientechnologies.lucene.index.OLuceneFullTextIndex;
-import com.orientechnologies.lucene.query.QueryContext;
+import com.orientechnologies.lucene.query.OLuceneQueryContext;
 import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -151,7 +151,7 @@ public class OLuceneFullTextAllIndexEngine implements OLuceneIndexEngine {
 
       Query query = parser.parse(key.toString());
 
-      QueryContext ctx = new QueryContext(null, searcher, query);
+      OLuceneQueryContext ctx = new OLuceneQueryContext(null, searcher, query);
       return new OLuceneResultSet(this, ctx);
     } catch (IOException e) {
       OLogManager.instance().error(this, "unable to create multireader", e);
@@ -251,7 +251,7 @@ public class OLuceneFullTextAllIndexEngine implements OLuceneIndexEngine {
   }
 
   @Override
-  public void onRecordAddedToResultSet(QueryContext queryContext, OContextualRecordId recordId, Document ret, ScoreDoc score) {
+  public void onRecordAddedToResultSet(OLuceneQueryContext queryContext, OContextualRecordId recordId, Document ret, ScoreDoc score) {
 
     recordId.setContext(new HashMap<String, Object>() {
       {

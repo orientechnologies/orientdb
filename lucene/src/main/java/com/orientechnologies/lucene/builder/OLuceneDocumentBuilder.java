@@ -35,9 +35,8 @@ import static com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract.*;
 /**
  * Created by Enrico Risa on 02/09/15.
  */
-public class ODocBuilder implements DocBuilder {
+public class OLuceneDocumentBuilder {
 
-  @Override
   public Document build(OIndexDefinition definition, Object key, OIdentifiable value, Map<String, Boolean> fieldsToStore,
       ODocument metadata) {
     Document doc = new Document();

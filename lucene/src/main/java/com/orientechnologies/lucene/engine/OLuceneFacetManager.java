@@ -20,7 +20,7 @@ package com.orientechnologies.lucene.engine;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.lucene.query.QueryContext;
+import com.orientechnologies.lucene.query.OLuceneQueryContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndexEngineException;
@@ -164,7 +164,7 @@ public class OLuceneFacetManager {
     }
   }
 
-  public void addFacetContext(QueryContext queryContext, Object key) throws IOException {
+  public void addFacetContext(OLuceneQueryContext queryContext, Object key) throws IOException {
     queryContext.setFacet(true);
     queryContext.setFacetField(facetField);
     queryContext.setFacetConfig(config);

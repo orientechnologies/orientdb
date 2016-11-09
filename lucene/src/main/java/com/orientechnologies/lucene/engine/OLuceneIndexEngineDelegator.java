@@ -19,9 +19,9 @@
 package com.orientechnologies.lucene.engine;
 
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
-import com.orientechnologies.lucene.builder.ODocBuilder;
-import com.orientechnologies.lucene.builder.OQueryBuilderImpl;
-import com.orientechnologies.lucene.query.QueryContext;
+import com.orientechnologies.lucene.builder.OLuceneDocumentBuilder;
+import com.orientechnologies.lucene.builder.OLuceneQueryBuilder;
+import com.orientechnologies.lucene.query.OLuceneQueryContext;
 import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
@@ -73,7 +73,7 @@ public class OLuceneIndexEngineDelegator implements OLuceneIndexEngine, OFreezab
       if (FULLTEXT.name().equalsIgnoreCase(indexType)) {
 
         if (LUCENE_ALGORITHM.equalsIgnoreCase(algorithm)) {
-          delegate = new OLuceneFullTextIndexEngine(storage, indexName, new ODocBuilder(), new OQueryBuilderImpl(metadata));
+          delegate = new OLuceneFullTextIndexEngine(storage, indexName, new OLuceneDocumentBuilder(), new OLuceneQueryBuilder(metadata));
         } else if (LUCENE_ALL_ALGORITHM.equalsIgnoreCase(algorithm)) {
           delegate = new OLuceneFullTextAllIndexEngine(storage, indexName);
         }
@@ -233,7 +233,7 @@ public class OLuceneIndexEngineDelegator implements OLuceneIndexEngine, OFreezab
   }
 
   @Override
-  public void onRecordAddedToResultSet(QueryContext queryContext, OContextualRecordId recordId, Document ret, ScoreDoc score) {
+  public void onRecordAddedToResultSet(OLuceneQueryContext queryContext, OContextualRecordId recordId, Document ret, ScoreDoc score) {
     delegate.onRecordAddedToResultSet(queryContext, recordId, ret, score);
   }
 

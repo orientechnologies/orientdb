@@ -21,7 +21,7 @@ package com.orientechnologies.lucene.collections;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract;
-import com.orientechnologies.lucene.query.QueryContext;
+import com.orientechnologies.lucene.query.OLuceneQueryContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import org.apache.lucene.document.Document;
@@ -36,7 +36,7 @@ import java.util.Iterator;
  */
 public class OLuceneResultSet extends OLuceneAbstractResultSet {
 
-  public OLuceneResultSet(OLuceneIndexEngine engine, QueryContext queryContext) {
+  public OLuceneResultSet(OLuceneIndexEngine engine, OLuceneQueryContext queryContext) {
     super(engine, queryContext);
   }
 
@@ -52,10 +52,10 @@ public class OLuceneResultSet extends OLuceneAbstractResultSet {
 
   private class OLuceneResultSetIterator implements Iterator<OIdentifiable> {
 
-    ScoreDoc[] array;
-    private int index;
-    private int localIndex;
-    private int totalHits;
+    private ScoreDoc[] array;
+    private int        index;
+    private int        localIndex;
+    private int        totalHits;
 
     public OLuceneResultSetIterator() {
       totalHits = topDocs.totalHits;
@@ -85,6 +85,7 @@ public class OLuceneResultSet extends OLuceneAbstractResultSet {
         res = new OContextualRecordId(rId);
         engine.onRecordAddedToResultSet(queryContext, res, ret, score);
       } catch (IOException e) {
+        //TODO handle in a proper way
         e.printStackTrace();
       }
       index++;

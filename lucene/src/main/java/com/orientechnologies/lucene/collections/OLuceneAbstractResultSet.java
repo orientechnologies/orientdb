@@ -21,7 +21,7 @@ package com.orientechnologies.lucene.collections;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract;
-import com.orientechnologies.lucene.query.QueryContext;
+import com.orientechnologies.lucene.query.OLuceneQueryContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import org.apache.lucene.search.Query;
@@ -37,13 +37,13 @@ import java.util.Set;
 public abstract class OLuceneAbstractResultSet implements Set<OIdentifiable> {
 
   protected static Integer PAGE_SIZE = 10000;
-  protected final String             indexName;
-  protected       TopDocs            topDocs;
-  protected       Query              query;
-  protected       OLuceneIndexEngine engine;
-  protected       QueryContext       queryContext;
+  protected final String              indexName;
+  protected final Query               query;
+  protected final OLuceneIndexEngine  engine;
+  protected final OLuceneQueryContext queryContext;
+  protected       TopDocs             topDocs;
 
-  public OLuceneAbstractResultSet(OLuceneIndexEngine engine, QueryContext queryContext) {
+  public OLuceneAbstractResultSet(OLuceneIndexEngine engine, OLuceneQueryContext queryContext) {
     this.engine = engine;
     this.queryContext = queryContext;
     this.query = enhanceQuery(queryContext.query);
@@ -90,12 +90,12 @@ public abstract class OLuceneAbstractResultSet implements Set<OIdentifiable> {
   }
 
   @Override
-  public <T> T[] toArray(T[] a) {
+  public Object[] toArray() {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public Object[] toArray() {
+  public <T> T[] toArray(T[] a) {
     throw new UnsupportedOperationException();
   }
 

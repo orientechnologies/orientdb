@@ -22,7 +22,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.lucene.OLuceneIndexType;
 import com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory;
-import com.orientechnologies.lucene.query.QueryContext;
+import com.orientechnologies.lucene.query.OLuceneQueryContext;
 import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.lucene.tx.OLuceneTxChangesMultiRid;
 import com.orientechnologies.lucene.tx.OLuceneTxChangesSingleRid;
@@ -50,13 +50,11 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.search.*;
 import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.RAMDirectory;
 import org.apache.lucene.util.Version;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -405,7 +403,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
     return name;
   }
 
-  public abstract void onRecordAddedToResultSet(QueryContext queryContext, OContextualRecordId recordId, Document ret,
+  public abstract void onRecordAddedToResultSet(OLuceneQueryContext queryContext, OContextualRecordId recordId, Document ret,
       ScoreDoc score);
 
   @Override

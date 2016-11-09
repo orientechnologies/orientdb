@@ -62,7 +62,7 @@ public class LuceneAllIndexesTest extends BaseLuceneTest {
   @Test
   public void shouldSearchTermAcrossAllSubIndexes() throws Exception {
 
-    String query = "select SEARCH('(mountain)') ";
+    String query = "select SEARCH('mountain') ";
 
     List<ODocument> docs = db.query(new OSQLSynchQuery<ODocument>(query));
 
@@ -91,7 +91,7 @@ public class LuceneAllIndexesTest extends BaseLuceneTest {
   @Test
   public void shouldSearchAcrossAllSubIndexesWithStrictQuery() {
 
-    String query = "select SEARCH('(Song.title:mountain Author.name:Chuck)') ";
+    String query = "select SEARCH('Song.title:mountain Author.name:Chuck') ";
     List<ODocument> docs = db.query(new OSQLSynchQuery<ODocument>(query));
 
     assertThat(docs).hasSize(1);

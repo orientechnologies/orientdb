@@ -20,12 +20,12 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.OLuceneIndexType;
-import com.orientechnologies.lucene.builder.DocBuilder;
-import com.orientechnologies.lucene.builder.OQueryBuilder;
+import com.orientechnologies.lucene.builder.OLuceneDocumentBuilder;
+import com.orientechnologies.lucene.builder.OLuceneQueryBuilder;
 import com.orientechnologies.lucene.collections.OLuceneCompositeKey;
 import com.orientechnologies.lucene.collections.OLuceneResultSet;
 import com.orientechnologies.lucene.collections.OLuceneResultSetFactory;
-import com.orientechnologies.lucene.query.QueryContext;
+import com.orientechnologies.lucene.query.OLuceneQueryContext;
 import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -55,11 +55,12 @@ import java.util.Set;
 
 public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
-  private final DocBuilder          builder;
-  private final OQueryBuilder       queryBuilder;
-  protected     OLuceneFacetManager facetManager;
+  private final OLuceneDocumentBuilder builder;
+  private final OLuceneQueryBuilder    queryBuilder;
+  protected     OLuceneFacetManager    facetManager;
 
-  public OLuceneFullTextIndexEngine(OStorage storage, String idxName, DocBuilder builder, OQueryBuilder queryBuilder) {
+  public OLuceneFullTextIndexEngine(OStorage storage, String idxName, OLuceneDocumentBuilder builder,
+      OLuceneQueryBuilder queryBuilder) {
     super(storage, idxName);
     this.builder = builder;
     this.queryBuilder = queryBuilder;
@@ -99,7 +100,7 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
   }
 
   @Override
-  public void onRecordAddedToResultSet(QueryContext queryContext, OContextualRecordId recordId, Document ret,
+  public void onRecordAddedToResultSet(OLuceneQueryContext queryContext, OContextualRecordId recordId, Document ret,
       final ScoreDoc score) {
     recordId.setContext(new HashMap<String, Object>() {
       {
@@ -179,7 +180,7 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
     try {
       IndexSearcher searcher = searcher();
-      QueryContext queryContext = new QueryContext(context, searcher, query).setChanges(changes);
+      OLuceneQueryContext queryContext = new OLuceneQueryContext(context, searcher, query).setChanges(changes);
       if (facetManager.supportsFacets()) {
         facetManager.addFacetContext(queryContext, key);
       }

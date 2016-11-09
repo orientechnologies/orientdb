@@ -18,7 +18,7 @@
 
 package com.orientechnologies.lucene.engine;
 
-import com.orientechnologies.lucene.query.QueryContext;
+import com.orientechnologies.lucene.query.OLuceneQueryContext;
 import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
@@ -39,7 +39,7 @@ public interface OLuceneIndexEngine extends OIndexEngine, OFreezableStorageCompo
 
   String indexName();
 
-  void onRecordAddedToResultSet(QueryContext queryContext, OContextualRecordId recordId, Document ret, ScoreDoc score);
+  void onRecordAddedToResultSet(OLuceneQueryContext queryContext, OContextualRecordId recordId, Document ret, ScoreDoc score);
 
   Document buildDocument(Object key, OIdentifiable value);
 
