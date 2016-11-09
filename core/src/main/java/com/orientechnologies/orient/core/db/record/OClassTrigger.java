@@ -16,14 +16,6 @@
 
 package com.orientechnologies.orient.core.db.record;
 
-import java.lang.reflect.Method;
-
-import javax.script.Bindings;
-import javax.script.Invocable;
-import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
-import javax.script.ScriptException;
-
 import com.orientechnologies.common.concur.resource.OPartitionedObjectPool;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
@@ -37,6 +29,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
+import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
@@ -47,15 +40,18 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
+import javax.script.*;
+import java.lang.reflect.Method;
+
 /**
  * Author : henryzhao81@gmail.com Feb 19, 2013
- * 
+ *
  * Create a class OTriggered which contains 8 additional class attributes, which link to OFunction - beforeCreate - afterCreate -
  * beforeRead - afterRead - beforeUpdate - afterUpdate - beforeDelete - afterDelete
  */
-public class OClassTrigger extends ODocumentHookAbstract {
-  public static final String CLASSNAME          = "OTriggered";
-  public static final String METHOD_SEPARATOR   = ".";
+public class OClassTrigger extends ODocumentHookAbstract implements ORecordHook.Scoped {
+  public static final String CLASSNAME        = "OTriggered";
+  public static final String METHOD_SEPARATOR = ".";
 
   // Class Level Trigger (class custom attribute)
   public static final String ONBEFORE_CREATED   = "onBeforeCreate";
@@ -76,8 +72,15 @@ public class OClassTrigger extends ODocumentHookAbstract {
   public static final String ONAFTER_DELETE     = "onAfterDelete";
   public static final String PROP_AFTER_DELETE  = ONAFTER_DELETE;
 
+  private static final SCOPE[] SCOPES = { SCOPE.CREATE, SCOPE.READ, SCOPE.UPDATE, SCOPE.DELETE };
+
   public OClassTrigger(ODatabaseDocument database) {
     super(database);
+  }
+
+  @Override
+  public SCOPE[] getScopes() {
+    return SCOPES;
   }
 
   public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
@@ -224,8 +227,9 @@ public class OClassTrigger extends ODocumentHookAbstract {
       } else {
         final Object funcProp = iDocument.field(attr);
         if (funcProp != null) {
-          final String funcName = funcProp instanceof ODocument ? (String) ((ODocument) funcProp).field("name") : funcProp
-              .toString();
+          final String funcName = funcProp instanceof ODocument ?
+              (String) ((ODocument) funcProp).field("name") :
+              funcProp.toString();
           func = database.getMetadata().getFunctionLibrary().getFunction(funcName);
         }
       }
@@ -277,8 +281,8 @@ public class OClassTrigger extends ODocumentHookAbstract {
 
     final OScriptManager scriptManager = Orient.instance().getScriptManager();
 
-    final OPartitionedObjectPool.PoolEntry<ScriptEngine> entry = scriptManager.acquireDatabaseEngine(database.getName(),
-        func.getLanguage());
+    final OPartitionedObjectPool.PoolEntry<ScriptEngine> entry = scriptManager
+        .acquireDatabaseEngine(database.getName(), func.getLanguage());
     final ScriptEngine scriptEngine = entry.object;
     try {
       final Bindings binding = scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE);
@@ -304,8 +308,8 @@ public class OClassTrigger extends ODocumentHookAbstract {
           result = (String) invocableEngine.invokeFunction(func.getName(), EMPTY);
         }
       } catch (ScriptException e) {
-        throw OException.wrapException(
-            new OCommandScriptException("Error on execution of the script", func.getName(), e.getColumnNumber()), e);
+        throw OException
+            .wrapException(new OCommandScriptException("Error on execution of the script", func.getName(), e.getColumnNumber()), e);
       } catch (NoSuchMethodException e) {
         throw OException.wrapException(new OCommandScriptException("Error on execution of the script", func.getName(), 0), e);
       } catch (OCommandScriptException e) {

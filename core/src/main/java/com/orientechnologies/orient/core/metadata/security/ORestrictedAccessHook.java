@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
+import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
@@ -33,13 +34,20 @@ import java.util.Set;
 /**
  * Checks the access against restricted resources. Restricted resources are those documents of classes that implement ORestricted
  * abstract class.
- * 
+ *
  * @author Luca Garulli
  */
-public class ORestrictedAccessHook extends ODocumentHookAbstract {
+public class ORestrictedAccessHook extends ODocumentHookAbstract implements ORecordHook.Scoped {
+
+  private static final SCOPE[] SCOPES = { SCOPE.CREATE, SCOPE.READ, SCOPE.UPDATE, SCOPE.DELETE };
 
   public ORestrictedAccessHook(ODatabaseDocument database) {
     super(database);
+  }
+
+  @Override
+  public SCOPE[] getScopes() {
+    return SCOPES;
   }
 
   public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
@@ -68,8 +76,9 @@ public class ORestrictedAccessHook extends ODocumentHookAbstract {
         if (!roles.isEmpty())
           identity = roles.iterator().next().getIdentity();
       } else
-        throw new OConfigurationException("Wrong custom field '" + OSecurityShared.ONCREATE_IDENTITY_TYPE + "' in class '"
-            + cls.getName() + "' with value '" + identityType + "'. Supported ones are: 'user', 'role'");
+        throw new OConfigurationException(
+            "Wrong custom field '" + OSecurityShared.ONCREATE_IDENTITY_TYPE + "' in class '" + cls.getName() + "' with value '"
+                + identityType + "'. Supported ones are: 'user', 'role'");
 
       if (identity != null) {
         for (String f : fields)
@@ -123,9 +132,7 @@ public class ORestrictedAccessHook extends ODocumentHookAbstract {
       if (doc == null)
         return false;
 
-      return database
-          .getMetadata()
-          .getSecurity()
+      return database.getMetadata().getSecurity()
           .isAllowed((Set<OIdentifiable>) doc.field(ORestrictedOperation.ALLOW_ALL.getFieldName()),
               (Set<OIdentifiable>) doc.field(iAllowOperation.getFieldName()));
     }

@@ -1,12 +1,12 @@
 package com.orientechnologies.orient.core.metadata.security;
 
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
+import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-
-import com.orientechnologies.orient.core.Orient;
 
 import java.lang.ref.WeakReference;
 
@@ -14,12 +14,19 @@ import java.lang.ref.WeakReference;
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 04/11/14
  */
-public class OSecurityTrackerHook extends ODocumentHookAbstract {
+public class OSecurityTrackerHook extends ODocumentHookAbstract implements ORecordHook.Scoped {
+  private static final SCOPE[] SCOPES = { SCOPE.CREATE, SCOPE.UPDATE, SCOPE.DELETE };
+
   private final WeakReference<OSecurity> security;
 
   public OSecurityTrackerHook(OSecurity security, ODatabaseDocument database) {
     super(database);
     this.security = new WeakReference<OSecurity>(security);
+  }
+
+  @Override
+  public SCOPE[] getScopes() {
+    return SCOPES;
   }
 
   @Override
@@ -65,12 +72,12 @@ public class OSecurityTrackerHook extends ODocumentHookAbstract {
     final String className = immutableClass.getName();
 
     if (className.equalsIgnoreCase(OUser.CLASS_NAME) || className.equalsIgnoreCase(ORole.CLASS_NAME)) {
-    	
+
       final OSecurity scr = security.get();
       if (scr != null)
         scr.incrementVersion();
 
-      if(Orient.instance().getSecurity() != null && database != null)
+      if (Orient.instance().getSecurity() != null && database != null)
         Orient.instance().getSecurity().securityRecordChange(database.getURL(), doc);
     }
   }

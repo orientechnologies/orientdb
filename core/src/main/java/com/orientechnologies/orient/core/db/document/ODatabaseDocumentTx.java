@@ -142,6 +142,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
   protected ODatabaseSessionMetadata sessionMetadata;
 
+  private final ORecordHook[][] hooksByScope = new ORecordHook[ORecordHook.SCOPE.values().length][];
+
   /**
    * Creates a new connection to the database.
    *
@@ -217,6 +219,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
    *
    * @param iUserName     Username to login
    * @param iUserPassword Password associated to the user
+   *
    * @return Current database instance.
    */
   @Override
@@ -307,6 +310,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
    * Opens a database using an authentication token received as an argument.
    *
    * @param iToken Authentication token
+   *
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
   public <DB extends ODatabase> DB open(final OToken iToken) {
@@ -1049,6 +1053,9 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
           hooks.put(e.getKey(), e.getValue());
       }
     }
+
+    compileHooks();
+
     return (DB) this;
   }
 
@@ -1067,6 +1074,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     if (iHookImpl != null) {
       iHookImpl.onUnregister();
       hooks.remove(iHookImpl);
+
+      compileHooks();
     }
     return (DB) this;
   }
@@ -1091,11 +1100,16 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
    *
    * @param type Hook type. Define when hook is called.
    * @param id   Record received in the callback
+   *
    * @return True if the input record is changed, otherwise false
    */
   public ORecordHook.RESULT callbackHooks(final ORecordHook.TYPE type, final OIdentifiable id) {
     if (id == null || hooks.isEmpty() || id.getIdentity().getClusterId() == 0)
       return ORecordHook.RESULT.RECORD_NOT_CHANGED;
+
+    final ORecordHook.SCOPE scope = ORecordHook.SCOPE.typeToScope(type);
+    final int scopeOrdinal = scope.ordinal();
+
     ORID identity = id.getIdentity().copy();
     if (!pushInHook(identity))
       return ORecordHook.RESULT.RECORD_NOT_CHANGED;
@@ -1108,7 +1122,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       final OScenarioThreadLocal.RUN_MODE runMode = OScenarioThreadLocal.INSTANCE.getRunMode();
 
       boolean recordChanged = false;
-      for (ORecordHook hook : hooks.keySet()) {
+      for (ORecordHook hook : hooksByScope[scopeOrdinal]) {
         switch (runMode) {
         case DEFAULT: // NON_DISTRIBUTED OR PROXIED DB
           if (getStorage().isDistributed()
@@ -1389,7 +1403,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     getLocalCache().freeCluster(iClusterId);
     if (schema.getBlobClusters().contains(iClusterId))
       schema.removeBlobCluster(getClusterNameById(iClusterId));
-    
+
     storage.checkForClusterPermissions(getClusterNameById(iClusterId));
     return storage.dropCluster(iClusterId, iTruncate);
   }
@@ -2411,6 +2425,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
    * Creates a document with specific class.
    *
    * @param iClassName the name of class that should be used as a class of created document.
+   *
    * @return new instance of document.
    */
   @Override
@@ -2480,7 +2495,9 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
    * {@link ODocument#validate()} is called.
    *
    * @param iRecord Record to save.
+   *
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+   *
    * @throws OConcurrentModificationException if the version of the document is different by the version contained in the database.
    * @throws OValidationException             if the document breaks some validation constraints defined in the schema
    * @see #setMVCC(boolean), {@link #isMVCC()}
@@ -2503,10 +2520,13 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
    * {@link ODocument#validate()} is called.
    *
    * @param iRecord                Record to save.
-   * @param iForceCreate           Flag that indicates that record should be created. If record with current rid already exists, exception is thrown
+   * @param iForceCreate           Flag that indicates that record should be created. If record with current rid already exists,
+   *                               exception is thrown
    * @param iRecordCreatedCallback callback that is called after creation of new record
    * @param iRecordUpdatedCallback callback that is called after record update
+   *
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+   *
    * @throws OConcurrentModificationException if the version of the document is different by the version contained in the database.
    * @throws OValidationException             if the document breaks some validation constraints defined in the schema
    * @see #setMVCC(boolean), {@link #isMVCC()}
@@ -2531,7 +2551,9 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
    *
    * @param iRecord      Record to save
    * @param iClusterName Cluster name where to save the record
+   *
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+   *
    * @throws OConcurrentModificationException if the version of the document is different by the version contained in the database.
    * @throws OValidationException             if the document breaks some validation constraints defined in the schema
    * @see #setMVCC(boolean), {@link #isMVCC()}, ODocument#validate()
@@ -2556,10 +2578,13 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
    * @param iRecord                Record to save
    * @param iClusterName           Cluster name where to save the record
    * @param iMode                  Mode of save: synchronous (default) or asynchronous
-   * @param iForceCreate           Flag that indicates that record should be created. If record with current rid already exists, exception is thrown
+   * @param iForceCreate           Flag that indicates that record should be created. If record with current rid already exists,
+   *                               exception is thrown
    * @param iRecordCreatedCallback callback that is called after creation of new record
    * @param iRecordUpdatedCallback callback that is called after record update
+   *
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+   *
    * @throws OConcurrentModificationException if the version of the document is different by the version contained in the database.
    * @throws OValidationException             if the document breaks some validation constraints defined in the schema
    * @see #setMVCC(boolean), {@link #isMVCC()}, ODocument#validate()
@@ -2611,7 +2636,9 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
    * {@link OConcurrentModificationException} exception is thrown.
    *
    * @param record record to delete
+   *
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+   *
    * @see #setMVCC(boolean), {@link #isMVCC()}
    */
   public ODatabaseDocumentTx delete(final ORecord record) {
@@ -2896,6 +2923,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       h.onUnregister();
 
     hooks.clear();
+    compileHooks();
 
     close();
 
@@ -3238,6 +3266,24 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
   public Set<Integer> getBlobClusterIds() {
     return getMetadata().getSchema().getBlobClusters();
+  }
+
+  private void compileHooks() {
+    final List<ORecordHook>[] intermediateHooksByScope = new List[ORecordHook.SCOPE.values().length];
+    for (ORecordHook.SCOPE scope : ORecordHook.SCOPE.values())
+      intermediateHooksByScope[scope.ordinal()] = new ArrayList<ORecordHook>();
+
+    for (ORecordHook hook : hooks.keySet())
+      for (ORecordHook.SCOPE scope : hook instanceof ORecordHook.Scoped ?
+          ((ORecordHook.Scoped) hook).getScopes() :
+          ORecordHook.SCOPE.values())
+        intermediateHooksByScope[scope.ordinal()].add(hook);
+
+    for (ORecordHook.SCOPE scope : ORecordHook.SCOPE.values()) {
+      final int ordinal = scope.ordinal();
+      final List<ORecordHook> scopeHooks = intermediateHooksByScope[ordinal];
+      hooksByScope[ordinal] = scopeHooks.toArray(new ORecordHook[scopeHooks.size()]);
+    }
   }
 
   public static Object executeWithRetries(final OCallable<Object, Integer> callback, final int maxRetry) {

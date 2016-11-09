@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.metadata.function;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
+import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -29,15 +30,22 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 
 /**
  * Update the in-memory function library.
- * 
+ *
  * @author Luca Garulli
  */
-public class OFunctionTrigger extends ODocumentHookAbstract {
+public class OFunctionTrigger extends ODocumentHookAbstract implements ORecordHook.Scoped {
 
   public static final String CLASSNAME = "OFunction";
 
+  private static final SCOPE[] SCOPES = { SCOPE.CREATE, SCOPE.UPDATE, SCOPE.DELETE };
+
   public OFunctionTrigger(ODatabaseDocument database) {
     super(database);
+  }
+
+  @Override
+  public SCOPE[] getScopes() {
+    return SCOPES;
   }
 
   public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {

@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
+import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -31,10 +32,18 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * @author Matan Shukry (matanshukry@gmail.com)
  * @since 3/2/2015
  */
-public class OSequenceTrigger extends ODocumentHookAbstract {
+public class OSequenceTrigger extends ODocumentHookAbstract implements ORecordHook.Scoped {
+
+  private static final SCOPE[] SCOPES = { SCOPE.CREATE, SCOPE.UPDATE, SCOPE.DELETE };
+
   public OSequenceTrigger(ODatabaseDocument database) {
     super(database);
     setIncludeClasses(OSequence.CLASS_NAME);
+  }
+
+  @Override
+  public SCOPE[] getScopes() {
+    return SCOPES;
   }
 
   @Override

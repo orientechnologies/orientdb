@@ -23,7 +23,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -31,15 +31,20 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 
 /**
  * Encrypt the password using the SHA-256 algorithm.
- * 
+ *
  * @author Luca Garulli
  */
-public class OUserTrigger extends ODocumentHookAbstract {
-  private OClass userClass;
-  private OClass roleClass;
+public class OUserTrigger extends ODocumentHookAbstract implements ORecordHook.Scoped {
+
+  private static final SCOPE[] SCOPES = { SCOPE.CREATE, SCOPE.UPDATE };
 
   public OUserTrigger(ODatabaseDocument database) {
     super(database);
+  }
+
+  @Override
+  public SCOPE[] getScopes() {
+    return SCOPES;
   }
 
   @Override
@@ -81,8 +86,7 @@ public class OUserTrigger extends ODocumentHookAbstract {
     if (password == null)
       throw new OSecurityException("User '" + iDocument.field("name") + "' has no password");
 
-    if(Orient.instance().getSecurity() != null)
-    {
+    if (Orient.instance().getSecurity() != null) {
       Orient.instance().getSecurity().validatePassword(password);
     }
 

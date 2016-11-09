@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.query.OQuery;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;

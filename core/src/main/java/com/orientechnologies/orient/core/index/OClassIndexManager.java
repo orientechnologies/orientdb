@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.exception.OConcurrentModificationExcept
 import com.orientechnologies.orient.core.exception.OFastConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
+import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
@@ -48,7 +49,11 @@ import static com.orientechnologies.orient.core.hook.ORecordHook.TYPE.BEFORE_UPD
  *
  * @author Andrey Lomakin, Artem Orobets
  */
-public class OClassIndexManager extends ODocumentHookAbstract implements OOrientStartupListener, OOrientShutdownListener {
+public class OClassIndexManager extends ODocumentHookAbstract
+    implements ORecordHook.Scoped, OOrientStartupListener, OOrientShutdownListener {
+
+  private static final SCOPE[] SCOPES = { SCOPE.CREATE, SCOPE.UPDATE, SCOPE.DELETE };
+
   private Deque<List<Lock[]>> lockedKeys = new ArrayDeque<List<Lock[]>>();
 
   public OClassIndexManager(ODatabaseDocument database) {
@@ -56,6 +61,11 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
 
     Orient.instance().registerWeakOrientStartupListener(this);
     Orient.instance().registerWeakOrientShutdownListener(this);
+  }
+
+  @Override
+  public SCOPE[] getScopes() {
+    return SCOPES;
   }
 
   @Override

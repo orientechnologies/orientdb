@@ -21,6 +21,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
+import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -39,10 +40,17 @@ import java.util.Set;
  * @since Mar 28, 2013
  */
 
-public class OSchedulerTrigger extends ODocumentHookAbstract {
+public class OSchedulerTrigger extends ODocumentHookAbstract implements ORecordHook.Scoped {
+
+  private static final SCOPE[] SCOPES = { SCOPE.CREATE, SCOPE.UPDATE, SCOPE.DELETE };
 
   public OSchedulerTrigger(ODatabaseDocument database) {
     super(database);
+  }
+
+  @Override
+  public SCOPE[] getScopes() {
+    return SCOPES;
   }
 
   public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
