@@ -21,6 +21,7 @@ public class ODropPropertyStatement extends ODDLStatement {
 
   protected OIdentifier className;
   protected OIdentifier propertyName;
+  protected boolean ifExists = false;
   protected boolean force = false;
 
   public ODropPropertyStatement(int id) {
@@ -39,6 +40,9 @@ public class ODropPropertyStatement extends ODDLStatement {
       throw new OCommandExecutionException("Source class '" + className + "' not found");
 
     if (sourceClass.getProperty(propertyName.getStringValue()) == null) {
+      if(ifExists){
+        return rs;
+      }
       throw new OCommandExecutionException("Property '" + propertyName + "' not found on class " + className);
     }
     final List<OIndex<?>> indexes = relatedIndexes(propertyName.getStringValue(), database);
@@ -96,7 +100,10 @@ public class ODropPropertyStatement extends ODDLStatement {
     className.toString(params, builder);
     builder.append(".");
     propertyName.toString(params, builder);
-    if (force) {
+    if(ifExists){
+      builder.append(" IF EXISTS");
+    }
+    if(force){
       builder.append(" FORCE");
     }
   }
@@ -106,6 +113,7 @@ public class ODropPropertyStatement extends ODDLStatement {
     result.className = className == null ? null : className.copy();
     result.propertyName = propertyName == null ? null : propertyName.copy();
     result.force = force;
+    result.ifExists = ifExists;
     return result;
   }
 
@@ -119,6 +127,9 @@ public class ODropPropertyStatement extends ODDLStatement {
 
     if (force != that.force)
       return false;
+    if(ifExists!=that.ifExists){
+      return false;
+    }
     if (className != null ? !className.equals(that.className) : that.className != null)
       return false;
     if (propertyName != null ? !propertyName.equals(that.propertyName) : that.propertyName != null)

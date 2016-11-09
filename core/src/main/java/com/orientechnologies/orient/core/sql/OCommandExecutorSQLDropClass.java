@@ -162,8 +162,7 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLAbstract im
     return true;
   }
 
-  @Override
-  public String getSyntax() {
+  @Override public String getSyntax() {
     return "DROP CLASS <class> [IF EXISTS] [UNSAFE]";
   }
 

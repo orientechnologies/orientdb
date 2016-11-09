@@ -4041,6 +4041,7 @@ ODropPropertyStatement DropPropertyStatement():
 	jjtThis.className = Identifier()
 	<DOT>
 	jjtThis.propertyName = Identifier()
+	[ <IF> <EXISTS> { jjtThis.ifExists = true; } ]
 	[ <FORCE> { jjtThis.force = true; }]
 	{ return jjtThis; }
 }
