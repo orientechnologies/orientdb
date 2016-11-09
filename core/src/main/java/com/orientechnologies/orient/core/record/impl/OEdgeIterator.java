@@ -91,14 +91,14 @@ public class OEdgeIterator extends OLazyWrapperIterator<OEdge> {
     if (value.isVertex()) {
       // DIRECT VERTEX, CREATE DUMMY EDGE
       ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+      OClass clazz = null;
+      if (db != null && connection.getValue() != null) {
+        clazz = db.getMetadata().getSchema().getClass(connection.getValue());
+      }
       if (connection.getKey() == ODirection.OUT) {
-        OClass clazz = null;
-        if (db != null && connection.getValue() != null) {
-          clazz = db.getMetadata().getSchema().getClass(connection.getValue());
-        }
         edge = new OEdgeDelegate(this.sourceVertex, value.asVertex().get(), clazz);
       } else {
-        edge = new OEdgeDelegate(value.asVertex().get(), this.sourceVertex, null);
+        edge = new OEdgeDelegate(value.asVertex().get(), this.sourceVertex, clazz);
       }
     } else if (value.isEdge()) {
       // EDGE

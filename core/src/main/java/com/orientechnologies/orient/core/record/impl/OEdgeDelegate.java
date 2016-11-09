@@ -61,9 +61,9 @@ public class OEdgeDelegate implements OEdge {
   }
 
   @Override public OVertex getFrom() {
-    if (vIn != null)
+    if (vOut != null)
       // LIGHTWEIGHT EDGE
-      return vIn;
+      return vOut;
 
     final ODocument doc = getRecord();
     if (doc == null)

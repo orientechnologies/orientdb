@@ -556,6 +556,12 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
             throw new IllegalArgumentException("source vertex is invalid (rid=" + currentVertex.getIdentity() + ")");
         }
 
+        if (inDocument == null) {
+          inDocument = inVertex.getRecord();
+          if (inDocument == null)
+            throw new IllegalArgumentException("source vertex is invalid (rid=" + inVertex.getIdentity() + ")");
+        }
+
         if (!ODocumentInternal.getImmutableSchemaClass(outDocument).isVertexType())
           throw new IllegalArgumentException("source record is not a vertex");
 
@@ -598,17 +604,17 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
           }
         }
 
-        edge.setProperty("out", currentVertex);
-        edge.setProperty("in", inDocument);
+        edge.setProperty("out", currentVertex.getRecord());
+        edge.setProperty("in", inDocument.getRecord());
 
         if (!outDocumentModified) {
           // OUT-VERTEX ---> IN-VERTEX/EDGE
-          OVertexDelegate.createLink(outDocument, to, outFieldName);
+          OVertexDelegate.createLink(outDocument, to.getRecord(), outFieldName);
 
         }
 
         // IN-VERTEX ---> OUT-VERTEX/EDGE
-        OVertexDelegate.createLink(inDocument, from, inFieldName);
+        OVertexDelegate.createLink(inDocument, from.getRecord(), inFieldName);
 
         // OK
         break;
