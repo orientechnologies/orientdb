@@ -205,7 +205,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public OBinarySerializerFactory getSerializerFactory() {
-    checkOpeness();
+    checkOpenness();
     return internal.getSerializerFactory();
   }
 
@@ -227,19 +227,19 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   @Override
   public <RET extends ORecord> RET loadIfVersionIsNotLatest(ORID rid, int recordVersion, String fetchPlan, boolean ignoreCache)
       throws ORecordNotFoundException {
-    checkOpeness();
+    checkOpenness();
     return (RET) internal.loadIfVersionIsNotLatest(rid, recordVersion, fetchPlan, ignoreCache);
   }
 
   @Override
   public void reloadUser() {
-    checkOpeness();
+    checkOpenness();
     internal.reloadUser();
   }
 
   @Override
   public ORecordHook.RESULT callbackHooks(ORecordHook.TYPE type, OIdentifiable id) {
-    checkOpeness();
+    checkOpenness();
     return internal.callbackHooks(type, id);
   }
 
@@ -247,7 +247,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   public <RET extends ORecord> RET executeReadRecord(ORecordId rid, ORecord iRecord, int recordVersion, String fetchPlan,
       boolean ignoreCache, boolean iUpdateCache, boolean loadTombstones, OStorage.LOCKING_STRATEGY lockingStrategy,
       RecordReader recordReader) {
-    checkOpeness();
+    checkOpenness();
     return internal.executeReadRecord(rid, iRecord, recordVersion, fetchPlan, ignoreCache, iUpdateCache, loadTombstones,
         lockingStrategy, recordReader);
   }
@@ -256,58 +256,58 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   public <RET extends ORecord> RET executeSaveRecord(ORecord record, String clusterName, int ver, OPERATION_MODE mode,
       boolean forceCreate, ORecordCallback<? extends Number> recordCreatedCallback,
       ORecordCallback<Integer> recordUpdatedCallback) {
-    checkOpeness();
+    checkOpenness();
     return internal.executeSaveRecord(record, clusterName, ver, mode, forceCreate, recordCreatedCallback, recordUpdatedCallback);
   }
 
   @Override
   public void executeDeleteRecord(OIdentifiable record, int iVersion, boolean iRequired, OPERATION_MODE iMode,
       boolean prohibitTombstones) {
-    checkOpeness();
+    checkOpenness();
     internal.executeDeleteRecord(record, iVersion, iRequired, iMode, prohibitTombstones);
   }
 
   @Override
   public <RET extends ORecord> RET executeSaveEmptyRecord(ORecord record, String clusterName) {
-    checkOpeness();
+    checkOpenness();
     return internal.executeSaveEmptyRecord(record, clusterName);
   }
 
   @Override
   public void setDefaultTransactionMode() {
-    checkOpeness();
+    checkOpenness();
     internal.setDefaultTransactionMode();
   }
 
   @Override
   public OMetadataInternal getMetadata() {
-    checkOpeness();
+    checkOpenness();
     return internal.getMetadata();
   }
 
   @Override
   public <DB extends ODatabase<?>> DB registerHook(ORecordHook iHookImpl) {
-    checkOpeness();
+    checkOpenness();
     internal.registerHook(iHookImpl);
     return (DB) this;
   }
 
   @Override
   public <DB extends ODatabase<?>> DB registerHook(ORecordHook iHookImpl, ORecordHook.HOOK_POSITION iPosition) {
-    checkOpeness();
+    checkOpenness();
     internal.registerHook(iHookImpl, iPosition);
     return (DB) this;
   }
 
   @Override
   public Map<ORecordHook, ORecordHook.HOOK_POSITION> getHooks() {
-    checkOpeness();
+    checkOpenness();
     return internal.getHooks();
   }
 
   @Override
   public <DB extends ODatabase<?>> DB unregisterHook(ORecordHook iHookImpl) {
-    checkOpeness();
+    checkOpenness();
     internal.unregisterHook(iHookImpl);
     return (DB) this;
   }
@@ -359,19 +359,19 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public String incrementalBackup(String path) {
-    checkOpeness();
+    checkOpenness();
     return internal.incrementalBackup(path);
   }
 
   @Override
   public ODatabaseDocumentTx copy() {
-    checkOpeness();
+    checkOpenness();
     return new ODatabaseDocumentTx(this.internal.copy(), this.baseUrl);
   }
 
   @Override
   public Set<ORecord> executeReadRecords(Set<ORecordId> iRids, boolean ignoreCache) {
-    checkOpeness();
+    checkOpenness();
     return internal.executeReadRecords(iRids, ignoreCache);
   }
 
@@ -380,20 +380,20 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     internal.checkIfActive();
   }
 
-  protected void checkOpeness() {
+  protected void checkOpenness() {
     if (internal == null)
       throw new ODatabaseException("Database '" + getURL() + "' is closed");
   }
 
   @Override
   public void callOnOpenListeners() {
-    checkOpeness();
+    checkOpenness();
     internal.callOnOpenListeners();
   }
 
   @Override
   public void callOnCloseListeners() {
-    checkOpeness();
+    checkOpenness();
     internal.callOnCloseListeners();
   }
 
@@ -451,7 +451,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public void setInternal(ATTRIBUTES attribute, Object iValue) {
-    checkOpeness();
+    checkOpenness();
     internal.setInternal(attribute, iValue);
   }
 
@@ -467,31 +467,31 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public ORecordIteratorClass<ODocument> browseClass(String iClassName) {
-    checkOpeness();
+    checkOpenness();
     return internal.browseClass(iClassName);
   }
 
   @Override
   public ORecordIteratorClass<ODocument> browseClass(String iClassName, boolean iPolymorphic) {
-    checkOpeness();
+    checkOpenness();
     return internal.browseClass(iClassName, iPolymorphic);
   }
 
   @Override
   public void freeze() {
-    checkOpeness();
+    checkOpenness();
     internal.freeze();
   }
 
   @Override
   public void release() {
-    checkOpeness();
+    checkOpenness();
     internal.release();
   }
 
   @Override
   public void freeze(boolean throwException) {
-    checkOpeness();
+    checkOpenness();
     internal.freeze(throwException);
   }
 
@@ -658,13 +658,13 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public ODocument newInstance() {
-    checkOpeness();
+    checkOpenness();
     return internal.newInstance();
   }
 
   @Override
   public ODictionary<ORecord> getDictionary() {
-    checkOpeness();
+    checkOpenness();
     return internal.getDictionary();
   }
 
@@ -677,268 +677,268 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public <RET extends ORecord> RET load(ORecord iObject) {
-    checkOpeness();
+    checkOpenness();
     return internal.load(iObject);
   }
 
   @Override
   public <RET extends ORecord> RET load(ORecord iObject, String iFetchPlan) {
-    checkOpeness();
+    checkOpenness();
     return internal.load(iObject, iFetchPlan);
   }
 
   @Override
   public <RET extends ORecord> RET load(ORecord iObject, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone,
       OStorage.LOCKING_STRATEGY iLockingStrategy) {
-    checkOpeness();
+    checkOpenness();
     return internal.load(iObject, iFetchPlan, iIgnoreCache, loadTombstone, iLockingStrategy);
   }
 
   @Override
   public <RET extends ORecord> RET load(ORecord iObject, String iFetchPlan, boolean iIgnoreCache, boolean iUpdateCache,
       boolean loadTombstone, OStorage.LOCKING_STRATEGY iLockingStrategy) {
-    checkOpeness();
+    checkOpenness();
     return internal.load(iObject, iFetchPlan, iIgnoreCache, iUpdateCache, loadTombstone, iLockingStrategy);
   }
 
   @Override
   public <RET extends ORecord> RET load(ORecord iObject, String iFetchPlan, boolean iIgnoreCache) {
-    checkOpeness();
+    checkOpenness();
     return internal.load(iObject, iFetchPlan, iIgnoreCache);
   }
 
   @Override
   public <RET extends ORecord> RET reload(ORecord iObject, String iFetchPlan, boolean iIgnoreCache) {
-    checkOpeness();
+    checkOpenness();
     return internal.reload(iObject, iFetchPlan, iIgnoreCache);
   }
 
   @Override
   public <RET extends ORecord> RET reload(ORecord iObject, String iFetchPlan, boolean iIgnoreCache, boolean force) {
-    checkOpeness();
+    checkOpenness();
     return internal.reload(iObject, iFetchPlan, iIgnoreCache, force);
   }
 
   @Override
   public <RET extends ORecord> RET load(ORID recordId) {
-    checkOpeness();
+    checkOpenness();
     return internal.load(recordId);
   }
 
   @Override
   public <RET extends ORecord> RET load(ORID iRecordId, String iFetchPlan) {
-    checkOpeness();
+    checkOpenness();
     return internal.load(iRecordId, iFetchPlan);
   }
 
   @Override
   public <RET extends ORecord> RET load(ORID iRecordId, String iFetchPlan, boolean iIgnoreCache) {
-    checkOpeness();
+    checkOpenness();
     return internal.load(iRecordId, iFetchPlan, iIgnoreCache);
   }
 
   @Override
   public <RET extends ORecord> RET load(ORID iRecordId, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone,
       OStorage.LOCKING_STRATEGY iLockingStrategy) {
-    checkOpeness();
+    checkOpenness();
     return internal.load(iRecordId, iFetchPlan, iIgnoreCache, loadTombstone, iLockingStrategy);
   }
 
   @Override
   public <RET extends ORecord> RET load(ORID iRecordId, String iFetchPlan, boolean iIgnoreCache, boolean iUpdateCache,
       boolean loadTombstone, OStorage.LOCKING_STRATEGY iLockingStrategy) {
-    checkOpeness();
+    checkOpenness();
     return internal.load(iRecordId, iFetchPlan, iIgnoreCache, iUpdateCache, loadTombstone, iLockingStrategy);
   }
 
   @Override
   public <RET extends ORecord> RET save(ORecord iObject) {
-    checkOpeness();
+    checkOpenness();
     return internal.save(iObject);
   }
 
   @Override
   public <RET extends ORecord> RET save(ORecord iObject, OPERATION_MODE iMode, boolean iForceCreate,
       ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<Integer> iRecordUpdatedCallback) {
-    checkOpeness();
+    checkOpenness();
     return internal.save(iObject, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
   }
 
   @Override
   public <RET extends ORecord> RET save(ORecord iObject, String iClusterName) {
-    checkOpeness();
+    checkOpenness();
     return internal.save(iObject, iClusterName);
   }
 
   @Override
   public <RET extends ORecord> RET save(ORecord iObject, String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
       ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<Integer> iRecordUpdatedCallback) {
-    checkOpeness();
+    checkOpenness();
     return internal.save(iObject, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
   }
 
   @Override
   public ODatabase<ORecord> delete(ORecord iObject) {
-    checkOpeness();
+    checkOpenness();
     internal.delete(iObject);
     return this;
   }
 
   @Override
   public ODatabase<ORecord> delete(ORID iRID) {
-    checkOpeness();
+    checkOpenness();
     internal.delete(iRID);
     return this;
   }
 
   @Override
   public ODatabase<ORecord> delete(ORID iRID, int iVersion) {
-    checkOpeness();
+    checkOpenness();
     internal.delete(iRID, iVersion);
     return this;
   }
 
   @Override
   public boolean hide(ORID rid) {
-    checkOpeness();
+    checkOpenness();
     return internal.hide(rid);
   }
 
   @Override
   public ODatabase<ORecord> cleanOutRecord(ORID rid, int version) {
-    checkOpeness();
+    checkOpenness();
     internal.cleanOutRecord(rid, version);
     return this;
   }
 
   @Override
   public OTransaction getTransaction() {
-    checkOpeness();
+    checkOpenness();
     return internal.getTransaction();
   }
 
   @Override
   public ODatabase<ORecord> begin() {
-    checkOpeness();
+    checkOpenness();
     internal.begin();
     return this;
   }
 
   @Override
   public ODatabase<ORecord> begin(OTransaction.TXTYPE iStatus) {
-    checkOpeness();
+    checkOpenness();
     internal.begin(iStatus);
     return this;
   }
 
   @Override
   public ODatabase<ORecord> begin(OTransaction iTx) throws OTransactionException {
-    checkOpeness();
+    checkOpenness();
     internal.begin(iTx);
     return this;
   }
 
   @Override
   public ODatabase<ORecord> commit() throws OTransactionException {
-    checkOpeness();
+    checkOpenness();
     internal.commit();
     return this;
   }
 
   @Override
   public ODatabase<ORecord> commit(boolean force) throws OTransactionException {
-    checkOpeness();
+    checkOpenness();
     internal.commit(force);
     return this;
   }
 
   @Override
   public ODatabase<ORecord> rollback() throws OTransactionException {
-    checkOpeness();
+    checkOpenness();
     internal.rollback();
     return this;
   }
 
   @Override
   public ODatabase<ORecord> rollback(boolean force) throws OTransactionException {
-    checkOpeness();
+    checkOpenness();
     internal.rollback(force);
     return this;
   }
 
   @Override
   public <RET extends List<?>> RET query(OQuery<?> iCommand, Object... iArgs) {
-    checkOpeness();
+    checkOpenness();
     return internal.query(iCommand, iArgs);
   }
 
   @Override
   public <RET extends OCommandRequest> RET command(OCommandRequest iCommand) {
-    checkOpeness();
+    checkOpenness();
     return internal.command(iCommand);
   }
 
   @Override
   public ORecordIteratorCluster<ODocument> browseCluster(String iClusterName) {
-    checkOpeness();
+    checkOpenness();
     return internal.browseCluster(iClusterName);
   }
 
   @Override
   public ORecordIteratorCluster<ODocument> browseCluster(String iClusterName, long startClusterPosition, long endClusterPosition,
       boolean loadTombstones) {
-    checkOpeness();
+    checkOpenness();
     return internal.browseCluster(iClusterName, startClusterPosition, endClusterPosition, loadTombstones);
   }
 
   @Override
   public <REC extends ORecord> ORecordIteratorCluster<REC> browseCluster(String iClusterName, Class<REC> iRecordClass) {
-    checkOpeness();
+    checkOpenness();
     return internal.browseCluster(iClusterName, iRecordClass);
   }
 
   @Override
   public <REC extends ORecord> ORecordIteratorCluster<REC> browseCluster(String iClusterName, Class<REC> iRecordClass,
       long startClusterPosition, long endClusterPosition) {
-    checkOpeness();
+    checkOpenness();
     return internal.browseCluster(iClusterName, iRecordClass, startClusterPosition, endClusterPosition);
   }
 
   @Override
   public <REC extends ORecord> ORecordIteratorCluster<REC> browseCluster(String iClusterName, Class<REC> iRecordClass,
       long startClusterPosition, long endClusterPosition, boolean loadTombstones) {
-    checkOpeness();
+    checkOpenness();
     return internal.browseCluster(iClusterName, iRecordClass, startClusterPosition, endClusterPosition, loadTombstones);
   }
 
   @Override
   public <RET extends ORecord> RET getRecord(OIdentifiable iIdentifiable) {
-    checkOpeness();
+    checkOpenness();
     return internal.getRecord(iIdentifiable);
   }
 
   @Override
   public byte getRecordType() {
-    checkOpeness();
+    checkOpenness();
     return internal.getRecordType();
   }
 
   @Override
   public boolean isRetainRecords() {
-    checkOpeness();
+    checkOpenness();
     return internal.isRetainRecords();
   }
 
   @Override
   public ODatabaseDocument setRetainRecords(boolean iValue) {
-    checkOpeness();
+    checkOpenness();
     return internal.setRetainRecords(iValue);
   }
 
   @Override
   public <DB extends ODatabaseDocument> DB checkSecurity(ORule.ResourceGeneric resourceGeneric, String resourceSpecific,
       int iOperation) {
-    checkOpeness();
+    checkOpenness();
     internal.checkSecurity(resourceGeneric, resourceSpecific, iOperation);
     return (DB) this;
   }
@@ -946,7 +946,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   @Override
   public <DB extends ODatabaseDocument> DB checkSecurity(ORule.ResourceGeneric iResourceGeneric, int iOperation,
       Object iResourceSpecific) {
-    checkOpeness();
+    checkOpenness();
     internal.checkSecurity(iResourceGeneric, iOperation, iResourceSpecific);
     return (DB) this;
   }
@@ -954,41 +954,41 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   @Override
   public <DB extends ODatabaseDocument> DB checkSecurity(ORule.ResourceGeneric iResourceGeneric, int iOperation,
       Object... iResourcesSpecific) {
-    checkOpeness();
+    checkOpenness();
     internal.checkSecurity(iResourceGeneric, iOperation, iResourcesSpecific);
     return (DB) this;
   }
 
   @Override
   public boolean isValidationEnabled() {
-    checkOpeness();
+    checkOpenness();
     return internal.isValidationEnabled();
   }
 
   @Override
   public <DB extends ODatabaseDocument> DB setValidationEnabled(boolean iEnabled) {
-    checkOpeness();
+    checkOpenness();
     internal.setValidationEnabled(iEnabled);
     return (DB) this;
   }
 
   @Override
   public <DB extends ODatabaseDocument> DB checkSecurity(String iResource, int iOperation) {
-    checkOpeness();
+    checkOpenness();
     internal.checkSecurity(iResource, iOperation);
     return (DB) this;
   }
 
   @Override
   public <DB extends ODatabaseDocument> DB checkSecurity(String iResourceGeneric, int iOperation, Object iResourceSpecific) {
-    checkOpeness();
+    checkOpenness();
     internal.checkSecurity(iResourceGeneric, iOperation, iResourceSpecific);
     return (DB) this;
   }
 
   @Override
   public <DB extends ODatabaseDocument> DB checkSecurity(String iResourceGeneric, int iOperation, Object... iResourcesSpecific) {
-    checkOpeness();
+    checkOpenness();
     internal.checkSecurity(iResourceGeneric, iOperation, iResourcesSpecific);
     return (DB) this;
   }
@@ -1125,13 +1125,13 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public void reload() {
-    checkOpeness();
+    checkOpenness();
     internal.reload();
   }
 
   @Override
   public void drop() {
-    checkOpeness();
+    checkOpenness();
     this.internal.callOnDropListeners();
     ODatabaseRecordThreadLocal.INSTANCE.remove();
     factory.drop(this.getName(), null, null);
@@ -1141,7 +1141,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public OContextConfiguration getConfiguration() {
-    checkOpeness();
+    checkOpenness();
     return internal.getConfiguration();
   }
 
@@ -1184,14 +1184,14 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public <DB extends ODatabase> DB setStatus(STATUS iStatus) {
-    checkOpeness();
+    checkOpenness();
     internal.setStatus(iStatus);
     return (DB) this;
   }
 
   @Override
   public long getSize() {
-    checkOpeness();
+    checkOpenness();
     return internal.getSize();
   }
 
@@ -1207,55 +1207,55 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public OLocalRecordCache getLocalCache() {
-    checkOpeness();
+    checkOpenness();
     return internal.getLocalCache();
   }
 
   @Override
   public int getDefaultClusterId() {
-    checkOpeness();
+    checkOpenness();
     return internal.getDefaultClusterId();
   }
 
   @Override
   public int getClusters() {
-    checkOpeness();
+    checkOpenness();
     return internal.getClusters();
   }
 
   @Override
   public boolean existsCluster(String iClusterName) {
-    checkOpeness();
+    checkOpenness();
     return internal.existsCluster(iClusterName);
   }
 
   @Override
   public Collection<String> getClusterNames() {
-    checkOpeness();
+    checkOpenness();
     return internal.getClusterNames();
   }
 
   @Override
   public int getClusterIdByName(String iClusterName) {
-    checkOpeness();
+    checkOpenness();
     return internal.getClusterIdByName(iClusterName);
   }
 
   @Override
   public String getClusterNameById(int iClusterId) {
-    checkOpeness();
+    checkOpenness();
     return internal.getClusterNameById(iClusterId);
   }
 
   @Override
   public long getClusterRecordSizeByName(String iClusterName) {
-    checkOpeness();
+    checkOpenness();
     return internal.getClusterRecordSizeByName(iClusterName);
   }
 
   @Override
   public long getClusterRecordSizeById(int iClusterId) {
-    checkOpeness();
+    checkOpenness();
     return internal.getClusterRecordSizeById(iClusterId);
   }
 
@@ -1266,73 +1266,73 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public void truncateCluster(String clusterName) {
-    checkOpeness();
+    checkOpenness();
     internal.truncateCluster(clusterName);
   }
 
   @Override
   public long countClusterElements(int iCurrentClusterId) {
-    checkOpeness();
+    checkOpenness();
     return internal.countClusterElements(iCurrentClusterId);
   }
 
   @Override
   public long countClusterElements(int iCurrentClusterId, boolean countTombstones) {
-    checkOpeness();
+    checkOpenness();
     return internal.countClusterElements(iCurrentClusterId, countTombstones);
   }
 
   @Override
   public long countClusterElements(int[] iClusterIds) {
-    checkOpeness();
+    checkOpenness();
     return internal.countClusterElements(iClusterIds);
   }
 
   @Override
   public long countClusterElements(int[] iClusterIds, boolean countTombstones) {
-    checkOpeness();
+    checkOpenness();
     return internal.countClusterElements(iClusterIds, countTombstones);
   }
 
   @Override
   public long countClusterElements(String iClusterName) {
-    checkOpeness();
+    checkOpenness();
     return internal.countClusterElements(iClusterName);
   }
 
   @Override
   public int addCluster(String iClusterName, Object... iParameters) {
-    checkOpeness();
+    checkOpenness();
     return internal.addCluster(iClusterName, iParameters);
   }
 
   @Override
   public int addBlobCluster(String iClusterName, Object... iParameters) {
-    checkOpeness();
+    checkOpenness();
     return internal.addBlobCluster(iClusterName, iParameters);
   }
 
   @Override
   public Set<Integer> getBlobClusterIds() {
-    checkOpeness();
+    checkOpenness();
     return internal.getBlobClusterIds();
   }
 
   @Override
   public int addCluster(String iClusterName, int iRequestedId, Object... iParameters) {
-    checkOpeness();
+    checkOpenness();
     return internal.addCluster(iClusterName, iRequestedId, iParameters);
   }
 
   @Override
   public boolean dropCluster(String iClusterName, boolean iTruncate) {
-    checkOpeness();
+    checkOpenness();
     return internal.dropCluster(iClusterName, iTruncate);
   }
 
   @Override
   public boolean dropCluster(int iClusterId, boolean iTruncate) {
-    checkOpeness();
+    checkOpenness();
     return internal.dropCluster(iClusterId, iTruncate);
   }
 
@@ -1354,7 +1354,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public Iterator<Map.Entry<String, Object>> getProperties() {
-    checkOpeness();
+    checkOpenness();
     return internal.getProperties();
   }
 
@@ -1387,45 +1387,45 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public void unregisterListener(ODatabaseListener iListener) {
-    checkOpeness();
+    checkOpenness();
     internal.unregisterListener(iListener);
   }
 
   @Override
   public ORecordMetadata getRecordMetadata(ORID rid) {
-    checkOpeness();
+    checkOpenness();
     return internal.getRecordMetadata(rid);
   }
 
   @Override
   public ODocument newInstance(String iClassName) {
-    checkOpeness();
+    checkOpenness();
     return internal.newInstance(iClassName);
   }
 
   @Override
   public long countClass(String iClassName) {
-    checkOpeness();
+    checkOpenness();
     return internal.countClass(iClassName);
   }
 
   @Override
   public long countClass(String iClassName, boolean iPolymorphic) {
-    checkOpeness();
+    checkOpenness();
     return internal.countClass(iClassName, iPolymorphic);
   }
 
   @Override
   public List<String> backup(OutputStream out, Map<String, Object> options, Callable<Object> callable,
       OCommandOutputListener iListener, int compressionLevel, int bufferSize) throws IOException {
-    checkOpeness();
+    checkOpenness();
     return internal.backup(out, options, callable, iListener, compressionLevel, bufferSize);
   }
 
   @Override
   public void restore(InputStream in, Map<String, Object> options, Callable<Object> callable, OCommandOutputListener iListener)
       throws IOException {
-    checkOpeness();
+    checkOpenness();
     internal.restore(in, options, callable, iListener);
   }
 
@@ -1439,13 +1439,13 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public OTodoResultSet query(String query, Object... args) {
-    checkOpeness();
+    checkOpenness();
     return internal.query(query, args);
   }
 
   @Override
   public OTodoResultSet query(String query, Map args) throws OCommandSQLParsingException, OCommandExecutionException {
-    checkOpeness();
+    checkOpenness();
     return internal.query(query, args);
   }
 
@@ -1491,12 +1491,12 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public OTodoResultSet command(String query, Object... args) throws OCommandSQLParsingException, OCommandExecutionException {
-    checkOpeness();
+    checkOpenness();
     return internal.command(query, args);
   }
 
   public OTodoResultSet command(String query, Map args) throws OCommandSQLParsingException, OCommandExecutionException {
-    checkOpeness();
+    checkOpenness();
     return internal.command(query, args);
   }
 
@@ -1507,23 +1507,23 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public void callOnDropListeners() {
-    checkOpeness();
+    checkOpenness();
     internal.callOnDropListeners();
   }
 
   @Override
   public boolean isPrefetchRecords() {
-    checkOpeness();
+    checkOpenness();
     return internal.isPrefetchRecords();
   }
 
   public void setPrefetchRecords(boolean prefetchRecords) {
-    checkOpeness();
+    checkOpenness();
     internal.setPrefetchRecords(prefetchRecords);
   }
   
   public void checkForClusterPermissions(String name) {
-    checkOpeness();
+    checkOpenness();
     internal.checkForClusterPermissions(name);
   }
   

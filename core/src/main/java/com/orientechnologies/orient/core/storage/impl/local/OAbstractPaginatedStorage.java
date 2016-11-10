@@ -438,12 +438,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   }
 
   public boolean check(final boolean verbose, final OCommandOutputListener listener) {
-    checkOpeness();
+    checkOpenness();
     stateLock.acquireReadLock();
     try {
       final long lockId = atomicOperationsManager.freezeAtomicOperations(null, null);
       try {
-        checkOpeness();
+        checkOpenness();
         final long start = System.currentTimeMillis();
 
         OPageDataVerificationError[] pageErrors = writeCache.checkStoredPages(verbose ? listener : null);
@@ -463,12 +463,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   }
 
   public int addCluster(String clusterName, boolean forceListBased, final Object... parameters) {
-    checkOpeness();
+    checkOpenness();
     checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
 
     stateLock.acquireWriteLock();
     try {
-      checkOpeness();
+      checkOpenness();
 
       makeStorageDirty();
       return doAddCluster(clusterName, parameters);
@@ -481,11 +481,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   }
 
   public int addCluster(String clusterName, int requestedId, boolean forceListBased, Object... parameters) {
-    checkOpeness();
+    checkOpenness();
     checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
     stateLock.acquireWriteLock();
     try {
-      checkOpeness();
+      checkOpenness();
 
       if (requestedId < 0) {
         throw new OConfigurationException("Cluster id must be positive!");
@@ -507,13 +507,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   }
 
   public boolean dropCluster(final int clusterId, final boolean iTruncate) {
-    checkOpeness();
+    checkOpenness();
     checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
 
     stateLock.acquireWriteLock();
     try {
 
-      checkOpeness();
+      checkOpenness();
       if (clusterId < 0 || clusterId >= clusters.size())
         throw new IllegalArgumentException(
             "Cluster id '" + clusterId + "' is outside the of range of configured clusters (0-" + (clusters.size() - 1)
@@ -549,10 +549,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   }
 
   public boolean setClusterStatus(final int clusterId, final OStorageClusterConfiguration.STATUS iStatus) {
-    checkOpeness();
+    checkOpenness();
     stateLock.acquireWriteLock();
     try {
-      checkOpeness();
+      checkOpenness();
       if (clusterId < 0 || clusterId >= clusters.size())
         throw new IllegalArgumentException(
             "Cluster id '" + clusterId + "' is outside the of range of configured clusters (0-" + (clusters.size() - 1)
@@ -616,10 +616,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       throw new OStorageException("Cluster Id " + clusterId + " is invalid in database '" + name + "'");
 
     // COUNT PHYSICAL CLUSTER IF ANY
-    checkOpeness();
+    checkOpenness();
     stateLock.acquireReadLock();
     try {
-      checkOpeness();
+      checkOpenness();
 
       final OCluster cluster = clusters.get(clusterId);
       if (cluster == null)
@@ -638,10 +638,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     if (iClusterId == -1)
       return new long[] { ORID.CLUSTER_POS_INVALID, ORID.CLUSTER_POS_INVALID };
 
-    checkOpeness();
+    checkOpenness();
     stateLock.acquireReadLock();
     try {
-      checkOpeness();
+      checkOpenness();
 
       return clusters.get(iClusterId) != null ?
           new long[] { clusters.get(iClusterId).getFirstPosition(), clusters.get(iClusterId).getLastPosition() } :
@@ -864,13 +864,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
   @Override
   public long count(int[] iClusterIds, boolean countTombstones) {
-    checkOpeness();
+    checkOpenness();
 
     long tot = 0;
 
     stateLock.acquireReadLock();
     try {
-      checkOpeness();
+      checkOpenness();
 
       for (int iClusterId : iClusterIds) {
         if (iClusterId >= clusters.size())
@@ -892,7 +892,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
   public OStorageOperationResult<OPhysicalPosition> createRecord(final ORecordId rid, final byte[] content, final int recordVersion,
       final byte recordType, final int mode, final ORecordCallback<Long> callback) {
-    checkOpeness();
+    checkOpenness();
     checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
 
     final OPhysicalPosition ppos = new OPhysicalPosition(recordType);
@@ -904,7 +904,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
     stateLock.acquireReadLock();
     try {
-      checkOpeness();
+      checkOpenness();
       return doCreateRecord(rid, content, recordVersion, recordType, callback, cluster, ppos, null);
     } finally {
       stateLock.releaseReadLock();
@@ -916,12 +916,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     if (rid.isNew())
       throw new OStorageException("Passed record with id " + rid + " is new and cannot be stored.");
 
-    checkOpeness();
+    checkOpenness();
 
     stateLock.acquireReadLock();
     try {
       final OCluster cluster = getClusterById(rid.getClusterId());
-      checkOpeness();
+      checkOpenness();
 
       final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(rid.getClusterPosition()));
       if (ppos == null)
@@ -940,7 +940,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   @Override
   public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRid, final String iFetchPlan, boolean iIgnoreCache,
       boolean prefetchRecords, ORecordCallback<ORawBuffer> iCallback) {
-    checkOpeness();
+    checkOpenness();
     final OCluster cluster;
     try {
       cluster = getClusterById(iRid.getClusterId());
@@ -954,14 +954,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   @Override
   public OStorageOperationResult<ORawBuffer> readRecordIfVersionIsNotLatest(final ORecordId rid, final String fetchPlan,
       final boolean ignoreCache, final int recordVersion) throws ORecordNotFoundException {
-    checkOpeness();
+    checkOpenness();
     return new OStorageOperationResult<ORawBuffer>(readRecordIfNotLatest(getClusterById(rid.getClusterId()), rid, recordVersion));
   }
 
   @Override
   public OStorageOperationResult<Integer> updateRecord(final ORecordId rid, final boolean updateContent, final byte[] content,
       final int version, final byte recordType, final int mode, final ORecordCallback<Integer> callback) {
-    checkOpeness();
+    checkOpenness();
     checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
 
     final OCluster cluster = getClusterById(rid.getClusterId());
@@ -975,7 +975,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       // GET THE SHARED LOCK AND GET AN EXCLUSIVE LOCK AGAINST THE RECORD
       final Lock lock = recordVersionManager.acquireExclusiveLock(rid);
       try {
-        checkOpeness();
+        checkOpenness();
 
         // UPDATE IT
         return doUpdateRecord(rid, updateContent, content, version, recordType, callback, cluster);
@@ -990,7 +990,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   @Override
   public OStorageOperationResult<Integer> recyclePosition(final ORecordId rid, final byte[] content, final int version,
       final byte recordType) {
-    checkOpeness();
+    checkOpenness();
     checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
 
     final OCluster cluster = getClusterById(rid.getClusterId());
@@ -1003,7 +1003,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       // GET THE SHARED LOCK AND GET AN EXCLUSIVE LOCK AGAINST THE RECORD
       final Lock lock = recordVersionManager.acquireExclusiveLock(rid);
       try {
-        checkOpeness();
+        checkOpenness();
 
         // RECYCLING IT
         return doRecycleRecord(rid, content, version, cluster, recordType);
@@ -1031,7 +1031,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   @Override
   public OStorageOperationResult<Boolean> deleteRecord(final ORecordId rid, final int version, final int mode,
       ORecordCallback<Boolean> callback) {
-    checkOpeness();
+    checkOpenness();
     checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
 
     final OCluster cluster = getClusterById(rid.getClusterId());
@@ -1042,7 +1042,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
     stateLock.acquireReadLock();
     try {
-      checkOpeness();
+      checkOpenness();
       return doDeleteRecord(rid, version, cluster);
     } finally {
       stateLock.releaseReadLock();
@@ -1051,7 +1051,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
   @Override
   public OStorageOperationResult<Boolean> hideRecord(final ORecordId rid, final int mode, ORecordCallback<Boolean> callback) {
-    checkOpeness();
+    checkOpenness();
     checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
 
     final OCluster cluster = getClusterById(rid.getClusterId());
@@ -1064,7 +1064,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     try {
       final Lock lock = recordVersionManager.acquireExclusiveLock(rid);
       try {
-        checkOpeness();
+        checkOpenness();
 
         return doHideMethod(rid, cluster);
       } finally {
@@ -1115,10 +1115,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   }
 
   public Set<String> getClusterNames() {
-    checkOpeness();
+    checkOpenness();
     stateLock.acquireReadLock();
     try {
-      checkOpeness();
+      checkOpenness();
 
       return new HashSet<String>(clusterMap.keySet());
     } finally {
@@ -1128,7 +1128,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   }
 
   public int getClusterIdByName(final String clusterName) {
-    checkOpeness();
+    checkOpenness();
 
     if (clusterName == null)
       throw new IllegalArgumentException("Cluster name is null");
@@ -1141,7 +1141,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
     stateLock.acquireReadLock();
     try {
-      checkOpeness();
+      checkOpenness();
 
       // SEARCH IT BETWEEN PHYSICAL CLUSTERS
 
@@ -1157,7 +1157,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   }
 
   public List<ORecordOperation> commit(final OTransaction clientTx, Runnable callback) {
-    checkOpeness();
+    checkOpenness();
     checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
 
     txBegun.incrementAndGet();
@@ -1218,7 +1218,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       try {
         try {
 
-          checkOpeness();
+          checkOpenness();
 
           lockIndexKeys(indexManager, indexesToCommit, indexKeyLockList);
 
@@ -1340,11 +1340,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   }
 
   public int loadIndexEngine(String name) {
-    checkOpeness();
+    checkOpenness();
 
     stateLock.acquireReadLock();
     try {
-      checkOpeness();
+      checkOpenness();
 
       final OIndexEngine engine = indexEngineNameMap.get(name.toLowerCase(configuration.getLocaleInstance()));
       if (engine == null)
@@ -1362,11 +1362,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   public int loadExternalIndexEngine(String engineName, String algorithm, String indexType, OIndexDefinition indexDefinition,
       OBinarySerializer valueSerializer, boolean isAutomatic, Boolean durableInNonTxMode, int version,
       Map<String, String> engineProperties) {
-    checkOpeness();
+    checkOpenness();
 
     stateLock.acquireWriteLock();
     try {
-      checkOpeness();
+      checkOpenness();
 
       checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
 
@@ -1412,11 +1412,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       final OIndexDefinition indexDefinition, final OBinarySerializer valueSerializer, final boolean isAutomatic,
       final Boolean durableInNonTxMode, final int version, final Map<String, String> engineProperties,
       final Set<String> clustersToIndex, final ODocument metadata) {
-    checkOpeness();
+    checkOpenness();
 
     stateLock.acquireWriteLock();
     try {
-      checkOpeness();
+      checkOpenness();
 
       checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
 
@@ -1502,11 +1502,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   }
 
   public void deleteIndexEngine(int indexId) {
-    checkOpeness();
+    checkOpenness();
 
     stateLock.acquireWriteLock();
     try {
-      checkOpeness();
+      checkOpenness();
 
       checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
 
@@ -1539,11 +1539,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     if (transaction.get() != null)
       return doIndexContainsKey(indexId, key);
 
-    checkOpeness();
+    checkOpenness();
 
     stateLock.acquireReadLock();
     try {
-      checkOpeness();
+      checkOpenness();
 
       return doIndexContainsKey(indexId, key);
     } finally {
@@ -1564,11 +1564,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       return doRemoveKeyFromIndex(indexId, key);
     }
 
-    checkOpeness();
+    checkOpenness();
 
     stateLock.acquireReadLock();
     try {
-      checkOpeness();
+      checkOpenness();
 
       checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
 
@@ -1597,11 +1597,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       return;
     }
 
-    checkOpeness();
+    checkOpenness();
 
     stateLock.acquireReadLock();
     try {
-      checkOpeness();
+      checkOpenness();
 
       checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
 
@@ -1629,11 +1629,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     if (transaction.get() != null)
       return doGetIndexValue(indexId, key);
 
-    checkOpeness();
+    checkOpenness();
 
     stateLock.acquireReadLock();
     try {
-      checkOpeness();
+      checkOpenness();
       return doGetIndexValue(indexId, key);
     } finally {
       stateLock.releaseReadLock();
@@ -1659,11 +1659,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       return;
     }
 
-    checkOpeness();
+    checkOpenness();
 
     stateLock.acquireReadLock();
     try {
-      checkOpeness();
+      checkOpenness();
       checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
 
       doUpdateIndexEntry(indexId, key, valueCreator);
@@ -1676,7 +1676,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     if (transaction.get() != null)
       return doCallIndexEngine(atomicOperation, readOperation, indexId, callback);
 
-    checkOpeness();
+    checkOpenness();
 
     stateLock.acquireReadLock();
     try {
@@ -1757,11 +1757,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       return;
     }
 
-    checkOpeness();
+    checkOpenness();
 
     stateLock.acquireReadLock();
     try {
-      checkOpeness();
+      checkOpenness();
 
       checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
 
@@ -1802,11 +1802,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     if (transaction.get() != null)
       return doValidatedPutIndexValue(indexId, key, value, validator);
 
-    checkOpeness();
+    checkOpenness();
 
     stateLock.acquireReadLock();
     try {
-      checkOpeness();
+      checkOpenness();
 
       checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
 
@@ -1834,11 +1834,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     if (transaction.get() != null)
       return doGetIndexFirstKey(indexId);
 
-    checkOpeness();
+    checkOpenness();
 
     stateLock.acquireReadLock();
     try {
-      checkOpeness();
+      checkOpenness();
       return doGetIndexFirstKey(indexId);
     } finally {
       stateLock.releaseReadLock();
@@ -1857,11 +1857,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     if (transaction.get() != null)
       return doGetIndexFirstKey(indexId);
 
-    checkOpeness();
+    checkOpenness();
 
     stateLock.acquireReadLock();
     try {
-      checkOpeness();
+      checkOpenness();
       return doGetIndexLastKey(indexId);
     } finally {
       stateLock.releaseReadLock();
@@ -1881,11 +1881,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     if (transaction.get() != null)
       return doIterateIndexEntriesBetween(indexId, rangeFrom, fromInclusive, rangeTo, toInclusive, ascSortOrder, transformer);
 
-    checkOpeness();
+    checkOpenness();
 
     stateLock.acquireReadLock();
     try {
-      checkOpeness();
+      checkOpenness();
       return doIterateIndexEntriesBetween(indexId, rangeFrom, fromInclusive, rangeTo, toInclusive, ascSortOrder, transformer);
     } finally {
       stateLock.releaseReadLock();
@@ -1906,11 +1906,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     if (transaction.get() != null)
       return doIterateIndexEntriesMajor(indexId, fromKey, isInclusive, ascSortOrder, transformer);
 
-    checkOpeness();
+    checkOpenness();
 
     stateLock.acquireReadLock();
     try {
-      checkOpeness();
+      checkOpenness();
       return doIterateIndexEntriesMajor(indexId, fromKey, isInclusive, ascSortOrder, transformer);
     } finally {
       stateLock.releaseReadLock();
@@ -1932,11 +1932,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     if (transaction.get() != null)
       return doIterateIndexEntriesMinor(indexId, toKey, isInclusive, ascSortOrder, transformer);
 
-    checkOpeness();
+    checkOpenness();
 
     stateLock.acquireReadLock();
     try {
-      checkOpeness();
+      checkOpenness();
       return doIterateIndexEntriesMinor(indexId, toKey, isInclusive, ascSortOrder, transformer);
     } finally {
       stateLock.releaseReadLock();
@@ -1956,11 +1956,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     if (transaction.get() != null)
       return doGetIndexCursor(indexId, valuesTransformer);
 
-    checkOpeness();
+    checkOpenness();
 
     stateLock.acquireReadLock();
     try {
-      checkOpeness();
+      checkOpenness();
       return doGetIndexCursor(indexId, valuesTransformer);
     } finally {
       stateLock.releaseReadLock();
@@ -1979,11 +1979,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     if (transaction.get() != null)
       return doGetIndexDescCursor(indexId, valuesTransformer);
 
-    checkOpeness();
+    checkOpenness();
 
     stateLock.acquireReadLock();
     try {
-      checkOpeness();
+      checkOpenness();
       return doGetIndexDescCursor(indexId, valuesTransformer);
     } finally {
       stateLock.releaseReadLock();
@@ -2002,11 +2002,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     if (transaction.get() != null)
       return doGetIndexKeyCursor(indexId);
 
-    checkOpeness();
+    checkOpenness();
 
     stateLock.acquireReadLock();
     try {
-      checkOpeness();
+      checkOpenness();
       return doGetIndexKeyCursor(indexId);
     } finally {
       stateLock.releaseReadLock();
@@ -2025,11 +2025,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     if (transaction.get() != null)
       return doGetIndexSize(indexId, transformer);
 
-    checkOpeness();
+    checkOpenness();
 
     stateLock.acquireReadLock();
     try {
-      checkOpeness();
+      checkOpenness();
       return doGetIndexSize(indexId, transformer);
     } finally {
       stateLock.releaseReadLock();
@@ -2048,11 +2048,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     if (transaction.get() != null)
       return doHasRangeQuerySupport(indexId);
 
-    checkOpeness();
+    checkOpenness();
 
     stateLock.acquireReadLock();
     try {
-      checkOpeness();
+      checkOpenness();
       return doHasRangeQuerySupport(indexId);
     } finally {
       stateLock.releaseReadLock();
@@ -2080,11 +2080,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   }
 
   public void rollback(final OTransaction clientTx) {
-    checkOpeness();
+    checkOpenness();
     stateLock.acquireReadLock();
     try {
       try {
-        checkOpeness();
+        checkOpenness();
 
         if (transaction.get() == null)
           return;
@@ -2119,14 +2119,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   }
 
   public void synch() {
-    checkOpeness();
+    checkOpenness();
 
     stateLock.acquireReadLock();
     try {
       final long timer = Orient.instance().getProfiler().startChrono();
       final long lockId = atomicOperationsManager.freezeAtomicOperations(null, null);
       try {
-        checkOpeness();
+        checkOpenness();
 
         for (OIndexEngine indexEngine : indexEngines)
           try {
@@ -2161,11 +2161,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   }
 
   public String getPhysicalClusterNameById(final int iClusterId) {
-    checkOpeness();
+    checkOpenness();
 
     stateLock.acquireReadLock();
     try {
-      checkOpeness();
+      checkOpenness();
 
       if (iClusterId < 0 || iClusterId >= clusters.size())
         return null;
@@ -2185,10 +2185,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   }
 
   public OCluster getClusterById(int iClusterId) {
-    checkOpeness();
+    checkOpenness();
     stateLock.acquireReadLock();
     try {
-      checkOpeness();
+      checkOpenness();
 
       if (iClusterId == ORID.CLUSTER_ID_INVALID)
         // GET THE DEFAULT CLUSTER
@@ -2208,11 +2208,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
   @Override
   public OCluster getClusterByName(final String clusterName) {
-    checkOpeness();
+    checkOpenness();
 
     stateLock.acquireReadLock();
     try {
-      checkOpeness();
+      checkOpenness();
       final OCluster cluster = clusterMap.get(clusterName.toLowerCase(configuration.getLocaleInstance()));
 
       if (cluster == null)
@@ -2240,10 +2240,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   }
 
   public int getClusters() {
-    checkOpeness();
+    checkOpenness();
     stateLock.acquireReadLock();
     try {
-      checkOpeness();
+      checkOpenness();
       return clusterMap.size();
     } finally {
       stateLock.releaseReadLock();
@@ -2252,10 +2252,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   }
 
   public Set<OCluster> getClusterInstances() {
-    checkOpeness();
+    checkOpenness();
     stateLock.acquireReadLock();
     try {
-      checkOpeness();
+      checkOpenness();
       final Set<OCluster> result = new HashSet<OCluster>();
 
       // ADD ALL THE CLUSTERS
@@ -2286,10 +2286,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   }
 
   public void freeze(final boolean throwException) {
-    checkOpeness();
+    checkOpenness();
     stateLock.acquireReadLock();
     try {
-      checkOpeness();
+      checkOpenness();
 
       final long freezeId;
 
@@ -2487,11 +2487,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     if (currentClusterId == -1)
       return new OPhysicalPosition[0];
 
-    checkOpeness();
+    checkOpenness();
 
     stateLock.acquireReadLock();
     try {
-      checkOpeness();
+      checkOpenness();
 
       final OCluster cluster = getClusterById(currentClusterId);
       return cluster.higherPositions(physicalPosition);
@@ -2508,11 +2508,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     if (clusterId == -1)
       return new OPhysicalPosition[0];
 
-    checkOpeness();
+    checkOpenness();
 
     stateLock.acquireReadLock();
     try {
-      checkOpeness();
+      checkOpenness();
 
       final OCluster cluster = getClusterById(clusterId);
       return cluster.ceilingPositions(physicalPosition);
@@ -2530,11 +2530,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     if (currentClusterId == -1)
       return new OPhysicalPosition[0];
 
-    checkOpeness();
+    checkOpenness();
 
     stateLock.acquireReadLock();
     try {
-      checkOpeness();
+      checkOpenness();
 
       final OCluster cluster = getClusterById(currentClusterId);
 
@@ -2552,11 +2552,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     if (clusterId == -1)
       return new OPhysicalPosition[0];
 
-    checkOpeness();
+    checkOpenness();
 
     stateLock.acquireReadLock();
     try {
-      checkOpeness();
+      checkOpenness();
 
       final OCluster cluster = getClusterById(clusterId);
 
@@ -2624,7 +2624,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   /**
    * Checks if the storage is open. If it's closed an exception is raised.
    */
-  protected void checkOpeness() {
+  protected void checkOpenness() {
     if (status != STATUS.OPEN)
       throw new OStorageException("Storage " + name + " is not opened.");
   }
@@ -2698,7 +2698,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
   private ORawBuffer readRecordIfNotLatest(final OCluster cluster, final ORecordId rid, final int recordVersion)
       throws ORecordNotFoundException {
-    checkOpeness();
+    checkOpenness();
 
     if (!rid.isPersistent())
       throw new ORecordNotFoundException(rid,
@@ -2711,7 +2711,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     stateLock.acquireReadLock();
     try {
       ORawBuffer buff;
-      checkOpeness();
+      checkOpenness();
 
       buff = doReadRecordIfNotLatest(cluster, rid, recordVersion);
       return buff;
@@ -2721,7 +2721,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   }
 
   private ORawBuffer readRecord(final OCluster clusterSegment, final ORecordId rid, boolean prefetchRecords) {
-    checkOpeness();
+    checkOpenness();
 
     if (!rid.isPersistent())
       throw new ORecordNotFoundException(rid,
@@ -2735,7 +2735,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
     stateLock.acquireReadLock();
     try {
-      checkOpeness();
+      checkOpenness();
       return doReadRecord(clusterSegment, rid, prefetchRecords);
     } finally {
       stateLock.releaseReadLock();
@@ -2748,7 +2748,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
    * @param iRids Set of rids to load in one shot
    */
   public Collection<OPair<ORecordId, ORawBuffer>> readRecords(final Collection<ORecordId> iRids) {
-    checkOpeness();
+    checkOpenness();
 
     final List<OPair<ORecordId, ORawBuffer>> records = new ArrayList<OPair<ORecordId, ORawBuffer>>();
 

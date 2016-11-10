@@ -111,7 +111,7 @@ public class ODatabaseDocumentTxPooled extends ODatabaseDocumentTx implements OD
     if (isClosed())
       return;
 
-    checkOpeness();
+    checkOpenness();
 
     if (ownerPool != null && ownerPool.getConnectionsInCurrentThread(getURL(), userName) > 1) {
       ownerPool.release(this);
@@ -146,11 +146,11 @@ public class ODatabaseDocumentTxPooled extends ODatabaseDocumentTx implements OD
   }
 
 //  @Override
-  protected void checkOpeness() {
+  protected void checkOpenness() {
     if (ownerPool == null)
       throw new ODatabaseException(
           "Database instance has been released to the pool. Get another database instance from the pool with the right username and password");
 
-//    super.checkOpeness();
+//    super.checkOpenness();
   }
 }

@@ -414,7 +414,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
    * {@inheritDoc}
    */
   public OMetadataDefault getMetadata() {
-    checkOpeness();
+    checkOpenness();
     return metadata;
   }
 
@@ -472,7 +472,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
    */
   public <DB extends ODatabaseDocument> DB checkSecurity(final ORule.ResourceGeneric iResourceGeneric, final int iOperation,
       final Object iResourceSpecific) {
-    checkOpeness();
+    checkOpenness();
     if (user != null) {
       try {
         if (iResourceSpecific != null)
@@ -617,7 +617,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
    * {@inheritDoc}
    */
   public ODictionary<ORecord> getDictionary() {
-    checkOpeness();
+    checkOpenness();
     return metadata.getIndexManager().getDictionary();
   }
 
@@ -625,7 +625,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
    * {@inheritDoc}
    */
   public <DB extends ODatabase<?>> DB registerHook(final ORecordHook iHookImpl, final ORecordHook.HOOK_POSITION iPosition) {
-    checkOpeness();
+    checkOpenness();
     checkIfActive();
 
     final Map<ORecordHook, ORecordHook.HOOK_POSITION> tmp = new LinkedHashMap<ORecordHook, ORecordHook.HOOK_POSITION>(hooks);
@@ -1324,7 +1324,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
    * Deletes the record without checking the version.
    */
   public ODatabaseDocument delete(final ORID iRecord) {
-    checkOpeness();
+    checkOpenness();
     checkIfActive();
 
     final ORecord rec = iRecord.getRecord();
@@ -1335,7 +1335,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
   @Override
   public boolean hide(ORID rid) {
-    checkOpeness();
+    checkOpenness();
     checkIfActive();
 
     if (currentTx.isActive())
@@ -1350,7 +1350,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   }
 
   public ODatabaseDocument begin(final OTransaction iTx) {
-    checkOpeness();
+    checkOpenness();
     checkIfActive();
 
     if (currentTx.isActive() && iTx.equals(currentTx)) {
@@ -1391,7 +1391,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
    * @Internal
    */
   public Set<ORecord> executeReadRecords(final Set<ORecordId> iRids, final boolean ignoreCache) {
-    checkOpeness();
+    checkOpenness();
     checkIfActive();
 
     getMetadata().makeThreadLocalSchemaSnapshot();
@@ -1462,7 +1462,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   public <RET extends ORecord> RET executeReadRecord(final ORecordId rid, ORecord iRecord, final int recordVersion,
       final String fetchPlan, final boolean ignoreCache, final boolean iUpdateCache, final boolean loadTombstones,
       final OStorage.LOCKING_STRATEGY lockingStrategy, RecordReader recordReader) {
-    checkOpeness();
+    checkOpenness();
     checkIfActive();
 
     getMetadata().makeThreadLocalSchemaSnapshot();
@@ -1647,7 +1647,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   public <RET extends ORecord> RET executeSaveRecord(final ORecord record, String clusterName, final int ver,
       final OPERATION_MODE mode, boolean forceCreate, final ORecordCallback<? extends Number> recordCreatedCallback,
       ORecordCallback<Integer> recordUpdatedCallback) {
-    checkOpeness();
+    checkOpenness();
     checkIfActive();
     if (!record.isDirty())
       return (RET) record;
@@ -1776,7 +1776,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
    */
   public void executeDeleteRecord(OIdentifiable record, final int iVersion, final boolean iRequired, final OPERATION_MODE iMode,
       boolean prohibitTombstones) {
-    checkOpeness();
+    checkOpenness();
     checkIfActive();
 
     final ORecordId rid = (ORecordId) record.getIdentity();
@@ -1863,7 +1863,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
    * @Internal
    */
   public boolean executeHideRecord(OIdentifiable record, final OPERATION_MODE iMode) {
-    checkOpeness();
+    checkOpenness();
     checkIfActive();
 
     final ORecordId rid = (ORecordId) record.getIdentity();
@@ -1902,7 +1902,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   }
 
   public ODatabaseDocumentAbstract begin(final OTransaction.TXTYPE iType) {
-    checkOpeness();
+    checkOpenness();
     checkIfActive();
 
     if (currentTx.isActive()) {
@@ -1953,7 +1953,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
    */
   @Override
   public void freeze(final boolean throwException) {
-    checkOpeness();
+    checkOpenness();
     if (!(getStorage() instanceof OFreezableStorageComponent)) {
       OLogManager.instance().error(this,
           "Only local paginated storage supports freeze. If you are using remote client please use OServerAdmin instead");
@@ -1977,7 +1977,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
    */
   @Override
   public void freeze() {
-    checkOpeness();
+    checkOpenness();
     if (!(getStorage() instanceof OFreezableStorageComponent)) {
       OLogManager.instance().error(this,
           "Only local paginated storage supports freeze. " + "If you use remote client please use OServerAdmin instead");
@@ -2001,7 +2001,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
    */
   @Override
   public void release() {
-    checkOpeness();
+    checkOpenness();
     if (!(getStorage() instanceof OFreezableStorageComponent)) {
       OLogManager.instance().error(this,
           "Only local paginated storage supports release. If you are using remote client please use OServerAdmin instead");
@@ -2344,7 +2344,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   public <RET extends ORecord> RET save(final ORecord iRecord, String iClusterName, final OPERATION_MODE iMode,
       boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback,
       ORecordCallback<Integer> iRecordUpdatedCallback) {
-    checkOpeness();
+    checkOpenness();
 
     if (!(iRecord instanceof ODocument)) {
       assignAndCheckCluster(iRecord, iClusterName);
@@ -2391,7 +2391,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
    * @see #setMVCC(boolean), {@link #isMVCC()}
    */
   public ODatabaseDocumentAbstract delete(final ORecord record) {
-    checkOpeness();
+    checkOpenness();
     if (record == null)
       throw new ODatabaseException("Cannot delete null document");
 
@@ -2476,7 +2476,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
   @Override
   public ODatabaseDocument commit(boolean force) throws OTransactionException {
-    checkOpeness();
+    checkOpenness();
     checkIfActive();
 
     if (!currentTx.isActive())
@@ -2554,7 +2554,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
   @Override
   public ODatabaseDocument rollback(boolean force) throws OTransactionException {
-    checkOpeness();
+    checkOpenness();
     if (currentTx.isActive()) {
 
       if (!force && currentTx.amountOfNestedTxs() > 1) {
@@ -2604,14 +2604,14 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   @Override
   public List<String> backup(final OutputStream out, final Map<String, Object> options, final Callable<Object> callable,
       final OCommandOutputListener iListener, final int compressionLevel, final int bufferSize) throws IOException {
-    checkOpeness();
+    checkOpenness();
     return getStorage().backup(out, options, callable, iListener, compressionLevel, bufferSize);
   }
 
   @Override
   public void restore(final InputStream in, final Map<String, Object> options, final Callable<Object> callable,
       final OCommandOutputListener iListener) throws IOException {
-    checkOpeness();
+    checkOpenness();
 
     getStorage().restore(in, options, callable, iListener);
 
@@ -2661,7 +2661,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
   @Override
   public String incrementalBackup(final String path) {
-    checkOpeness();
+    checkOpenness();
     checkIfActive();
 
     return getStorage().incrementalBackup(path);
@@ -2732,7 +2732,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     return db == this;
   }
 
-  protected void checkOpeness() {
+  protected void checkOpenness() {
     if (status == STATUS.CLOSED)
       throw new ODatabaseException("Database '" + getURL() + "' is closed");
   }
