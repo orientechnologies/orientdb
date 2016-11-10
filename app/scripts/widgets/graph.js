@@ -369,7 +369,9 @@ graph.directive('c3DataCenter', function ($http, $compile, $timeout, $rootScope,
         donut: {
           title: $scope.dc.name,
           label: {
-            show: false
+            format: function (value, ratio, id) {
+              return id;
+            }
           }
         }
       });

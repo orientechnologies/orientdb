@@ -671,6 +671,8 @@ schemaModule.controller("PropertyController", ['$scope', '$routeParams', '$locat
     var linkedType = prop['linkedType'] != null ? prop['linkedType'] : '';
     var linkedClass = prop['linkedClass'] != null ? prop['linkedClass'] : '';
     var sql = 'CREATE PROPERTY ' + $scope.classInject + '.' + propName + ' ' + propType + ' ' + linkedType + ' ' + linkedClass;
+
+    console.log(sql);
     Spinner.startSpinnerPopup();
     var allCommand = $q.when();
 
@@ -720,16 +722,14 @@ schemaModule.controller("PropertyController", ['$scope', '$routeParams', '$locat
       }
       var i = 1;
       for (entry in prop) {
-
-
         var val = prop[entry];
-
         if (propType === "DATE" || propType === "DATETIME") {
-
-
           if (entry === 'min' || entry === 'max') {
             val = "'" + val + "'";
           }
+        }
+        if (entry === 'name') {
+          val = "\"" + val + "\"";
         }
         var sql = 'ALTER PROPERTY ' + $scope.classInject + '.' + propName + ' ' + entry + ' ' + val;
         addCommandToExecute(sql, i, len);
@@ -806,7 +806,7 @@ schemaModule.controller("NewClassController", ['$scope', '$routeParams', '$locat
     var supercl = $scope.property['superclass'] != null ? ' extends ' + $scope.property['superclass'] : '';
     var arrSuper = $scope.property['superClasses'];
     var superClasses = (arrSuper != null && arrSuper.length > 0) ? ' extends ' + $filter('formatArray')($scope.property['superClasses']) : ''
-    sql = sql + superClasses+ abstract;
+    sql = sql + superClasses + abstract;
 
 
     CommandApi.queryText({
