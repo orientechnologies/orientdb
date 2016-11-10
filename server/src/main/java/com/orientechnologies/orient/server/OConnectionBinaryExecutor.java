@@ -75,7 +75,7 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   }
 
   @Override
-  public OListDatabasesReponse executeListDatabases(OListDatabasesRequest request) {
+  public OListDatabasesResponse executeListDatabases(OListDatabasesRequest request) {
 
     Set<String> dbs = server.listDatabases();
     String listener = server.getListenerByProtocol(ONetworkProtocolBinary.class).getInboundAddr().toString();
@@ -83,7 +83,7 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     for (String dbName : dbs) {
       toSend.put(dbName, "remote:" + listener + "/" + dbName);
     }
-    return new OListDatabasesReponse(toSend);
+    return new OListDatabasesResponse(toSend);
   }
 
   @Override

@@ -45,7 +45,7 @@ import com.orientechnologies.orient.client.remote.message.OListGlobalConfigurati
 import com.orientechnologies.orient.client.remote.message.OListGlobalConfigurationsResponse;
 import com.orientechnologies.orient.client.remote.message.OServerInfoRequest;
 import com.orientechnologies.orient.client.remote.message.OServerInfoResponse;
-import com.orientechnologies.orient.client.remote.message.OListDatabasesReponse;
+import com.orientechnologies.orient.client.remote.message.OListDatabasesResponse;
 import com.orientechnologies.orient.client.remote.message.OListDatabasesRequest;
 import com.orientechnologies.orient.client.remote.message.OReleaseDatabaseRequest;
 import com.orientechnologies.orient.client.remote.message.OReleaseDatabaseResponse;
@@ -153,7 +153,7 @@ public class OServerAdmin {
    */
   public synchronized Map<String, String> listDatabases() throws IOException {
     OListDatabasesRequest request = new OListDatabasesRequest();
-    OListDatabasesReponse response = networkAdminOperation(request, "Cannot retrieve the configuration list");
+    OListDatabasesResponse response = networkAdminOperation(request, "Cannot retrieve the configuration list");
     return response.getDatabases();
   }
 

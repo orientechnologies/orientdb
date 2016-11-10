@@ -10,7 +10,7 @@ import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
-public class OListDatabasesRequest implements OBinaryRequest<OListDatabasesReponse> {
+public class OListDatabasesRequest implements OBinaryRequest<OListDatabasesResponse> {
   @Override
   public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
   }
@@ -45,8 +45,8 @@ public class OListDatabasesRequest implements OBinaryRequest<OListDatabasesRepon
   }
 
   @Override
-  public OListDatabasesReponse createResponse() {
-    return new OListDatabasesReponse();
+  public OListDatabasesResponse createResponse() {
+    return new OListDatabasesResponse();
   }
 
   @Override
