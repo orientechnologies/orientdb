@@ -2095,7 +2095,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       this.clusterSelection = iClusterSelection;
 
     } finally {
-      releaseSchemaWriteLock();
+      releaseSchemaWriteLock(false);
     }
   }
 
