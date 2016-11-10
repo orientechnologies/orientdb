@@ -609,12 +609,12 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
         if (!outDocumentModified) {
           // OUT-VERTEX ---> IN-VERTEX/EDGE
-          OVertexDelegate.createLink(outDocument, to.getRecord(), outFieldName);
+          OVertexDelegate.createLink(outDocument, edge.getRecord(), outFieldName);
 
         }
 
         // IN-VERTEX ---> OUT-VERTEX/EDGE
-        OVertexDelegate.createLink(inDocument, from.getRecord(), inFieldName);
+        OVertexDelegate.createLink(inDocument, edge.getRecord(), inFieldName);
 
         // OK
         break;

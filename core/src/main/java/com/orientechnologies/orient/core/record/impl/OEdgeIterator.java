@@ -83,7 +83,7 @@ public class OEdgeIterator extends OLazyWrapperIterator<OEdge> {
       return null;
     }
 
-    final OElement value = (OElement)rec;
+    final OElement value = (OElement)record;
 
 
 

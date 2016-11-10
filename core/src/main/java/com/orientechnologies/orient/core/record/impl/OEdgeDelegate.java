@@ -187,6 +187,7 @@ public class OEdgeDelegate implements OEdge {
   }
 
   @Override public <T extends ORecord> T getRecord() {
+
     if (element == null) {
       return null;
     }

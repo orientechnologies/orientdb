@@ -195,7 +195,7 @@ public class OVertexDelegate implements OVertex {
   }
 
   protected void detachEdge(OEdge edge, String fieldPrefix) {
-    String className = edge.getClass().getName();
+    String className = edge.getSchemaType().get().getName();
 
     if (className.equalsIgnoreCase("e")) {
       className = "";
@@ -203,9 +203,9 @@ public class OVertexDelegate implements OVertex {
     String edgeField = fieldPrefix + className;
     Object edgeProp = getProperty(edgeField);
     if (edgeProp instanceof Collection) {
-      ((Collection) edgeProp).remove(edge);
+      ((Collection) edgeProp).remove(edge.getRecord());
     } else if (edgeProp instanceof ORidBag) {
-      ((ORidBag) edgeProp).remove(edge);
+      ((ORidBag) edgeProp).remove(edge.getRecord());
     }
   }
 
