@@ -42,6 +42,7 @@ public class OAsynchChannelServiceThread extends OSoftThread {
     sessionId = Integer.MIN_VALUE;
     remoteServerEventListener = iRemoteServerEventListener;
     network = iChannel;
+    setDumpExceptions(false);
     start();
   }
 

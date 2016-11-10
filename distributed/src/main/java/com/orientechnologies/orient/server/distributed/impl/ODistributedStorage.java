@@ -400,12 +400,21 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
         nodes.clear();
         nodes.add(nodeName);
 
-        final ODistributedResponse response = dManager
-            .sendRequest(getName(), involvedClusters, nodes, task, dManager.getNextMessageIdCounter(), EXECUTION_MODE.RESPONSE,
-                null, null);
+        try {
+          final ODistributedResponse response = dManager
+              .sendRequest(getName(), involvedClusters, nodes, task, dManager.getNextMessageIdCounter(), EXECUTION_MODE.RESPONSE,
+                  null, null);
 
-        if (response != null)
-          results.put(nodeName, response.getPayload());
+          if (response != null) {
+            if (!(response.getPayload() instanceof ODistributedOperationException))
+              // IGNORE ODistributedOperationException EXCEPTION ON SINGLE NODE
+              results.put(nodeName, response.getPayload());
+          }
+
+        } catch (Exception e) {
+          ODistributedServerLog.debug(this, dManager.getLocalNodeName(), nodeName, ODistributedServerLog.DIRECTION.OUT,
+              "Error on execution of command '%s' against server '%s', database '%s'", iCommand, nodeName, wrapped.getName());
+        }
       }
     }
 
