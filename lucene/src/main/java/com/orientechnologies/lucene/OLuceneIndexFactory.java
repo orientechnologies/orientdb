@@ -17,7 +17,8 @@
 package com.orientechnologies.lucene;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.lucene.engine.OLuceneIndexEngineDelegator;
+import com.orientechnologies.lucene.engine.OLuceneFullTextAllIndexEngine;
+import com.orientechnologies.lucene.engine.OLuceneFullTextIndexEngine;
 import com.orientechnologies.lucene.index.OLuceneFullTextIndex;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
@@ -106,10 +107,14 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
   }
 
   @Override
-  public OIndexEngine createIndexEngine(String algorithm, String name, Boolean durableInNonTxMode, OStorage storage, int version,
+  public OIndexEngine createIndexEngine(String algorithm, String indexName, Boolean durableInNonTxMode, OStorage storage,
+      int version,
       Map<String, String> engineProperties) {
 
-    return new OLuceneIndexEngineDelegator(name, algorithm, durableInNonTxMode, storage, version);
+    if (LUCENE_ALL_ALGORITHM.equalsIgnoreCase(algorithm)) {
+      return new OLuceneFullTextAllIndexEngine(storage, indexName);
+    }
+    return new OLuceneFullTextIndexEngine(storage, indexName);
 
   }
 

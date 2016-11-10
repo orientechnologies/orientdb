@@ -28,7 +28,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -71,6 +70,8 @@ public class LuceneExportImportTest extends BaseLuceneTest {
         public void onMessage(String s) {
         }
       }).exportDatabase();
+
+      System.out.println("reload db");
       db.drop();
       db.create();
       GZIPInputStream stream = new GZIPInputStream(new FileInputStream(file + ".gz"));
@@ -91,9 +92,8 @@ public class LuceneExportImportTest extends BaseLuceneTest {
 
     Assert.assertNotNull(index);
     Assert.assertEquals(index.getType(), "FULLTEXT");
-    //    Assert.assertEquals(index.getAlgorithm(), "LUCENE");
+    Assert.assertEquals(index.getAlgorithm(), "LUCENE");
 
-    query = db.query(new OSQLSynchQuery<Object>("select from City where name lucene 'Rome'"));
     Assert.assertEquals(query.size(), 1);
   }
 

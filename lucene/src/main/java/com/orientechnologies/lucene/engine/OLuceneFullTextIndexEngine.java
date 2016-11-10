@@ -32,9 +32,11 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexEngineException;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexKeyCursor;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.parser.ParseException;
 import com.orientechnologies.orient.core.storage.OStorage;
 import org.apache.lucene.document.Document;
@@ -55,22 +57,25 @@ import java.util.Set;
 
 public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
-  private final OLuceneDocumentBuilder builder;
-  private final OLuceneQueryBuilder    queryBuilder;
-  protected     OLuceneFacetManager    facetManager;
+  protected OLuceneFacetManager    facetManager;
+  private   OLuceneDocumentBuilder builder;
+  private   OLuceneQueryBuilder    queryBuilder;
 
-  public OLuceneFullTextIndexEngine(OStorage storage, String idxName, OLuceneDocumentBuilder builder,
-      OLuceneQueryBuilder queryBuilder) {
+  public OLuceneFullTextIndexEngine(OStorage storage, String idxName) {
     super(storage, idxName);
-    this.builder = builder;
-    this.queryBuilder = queryBuilder;
 
   }
 
   @Override
   public IndexWriter openIndexWriter(Directory directory) throws IOException {
-
     return createIndexWriter(directory);
+  }
+
+  @Override
+  public void init(String indexName, String indexType, OIndexDefinition indexDefinition, boolean isAutomatic, ODocument metadata) {
+    super.init(indexName, indexType, indexDefinition, isAutomatic, metadata);
+    queryBuilder = new OLuceneQueryBuilder(metadata);
+    builder = new OLuceneDocumentBuilder();
   }
 
   @Override
