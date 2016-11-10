@@ -189,9 +189,11 @@ public class OScriptManager {
       // CREATE A NEW DATABASE SCRIPT MANAGER
       dbManager = new ODatabaseScriptManager(this, databaseName);
       final ODatabaseScriptManager prev = dbManagers.putIfAbsent(databaseName, dbManager);
-      if (prev != null)
+      if (prev != null) {
+        dbManager.close();
         // GET PREVIOUS ONE
         dbManager = prev;
+      }
     }
 
     return dbManager.acquireEngine(language);
@@ -201,21 +203,19 @@ public class OScriptManager {
    * Acquires a database engine from the pool. Once finished using it, the instance MUST be returned in the pool by calling the
    * method
    *
-   * @param iLanguage
-   *          Script language
-   * @param iDatabaseName
-   *          Database name
-   * @param poolEntry
-   *          Pool entry to free
+   * @param iLanguage Script language
+   * @param iDatabaseName Database name
+   * @param poolEntry Pool entry to free
    * @see #acquireDatabaseEngine(String, String)
    */
   public void releaseDatabaseEngine(final String iLanguage, final String iDatabaseName,
       final OPartitionedObjectPool.PoolEntry<ScriptEngine> poolEntry) {
     final ODatabaseScriptManager dbManager = dbManagers.get(iDatabaseName);
-    if (dbManager == null)
-      throw new IllegalArgumentException("Script pool for database '" + iDatabaseName + "' is not configured");
+    // We check if there is still a valid pool because it could be removed by the function reload
+    if (dbManager != null) {
+      dbManager.releaseEngine(iLanguage, poolEntry);
+    }
 
-    dbManager.releaseEngine(iLanguage, poolEntry);
   }
 
   public Iterable<String> getSupportedLanguages() {
