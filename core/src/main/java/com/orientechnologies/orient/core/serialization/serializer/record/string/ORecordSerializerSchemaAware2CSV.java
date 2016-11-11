@@ -104,9 +104,9 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
     final int posFirstValue = iContent.indexOf(OStringSerializerHelper.ENTRY_SEPARATOR);
     pos = iContent.indexOf(OStringSerializerHelper.CLASS_SEPARATOR);
     if (pos > -1 && (pos < posFirstValue || posFirstValue == -1)) {
-      if ((record.getIdentity().getClusterId() < 0 || database == null || !database.getStorageVersions()
-          .classesAreDetectedByClusterId()))
-        record.setClassNameIfExists(iContent.substring(0, pos));
+      if ((record.getIdentity().getClusterId() < 0 || database == null
+          || !database.getStorageVersions().classesAreDetectedByClusterId()))
+        ODocumentInternal.fillClassNameIfNeeded(((ODocument) iRecord), iContent.substring(0, pos));
       iContent = iContent.substring(pos + 1);
     } else
       record.setClassNameIfExists(null);
@@ -246,8 +246,12 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
                 type = getType(fieldValue);
             }
           }
-
-          record.field(fieldName, fieldFromStream(iRecord, type, linkedClass, linkedType, fieldName, fieldValue), type);
+          final Object value = fieldFromStream(iRecord, type, linkedClass, linkedType, fieldName, fieldValue);
+          if ("@class".equals(fieldName)) {
+            ODocumentInternal.fillClassNameIfNeeded(((ODocument) iRecord), value.toString());
+          } else {
+            record.field(fieldName, value, type);
+          }
 
           if (uncertainType)
             record.setFieldType(fieldName, null);
