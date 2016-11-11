@@ -48,6 +48,9 @@ public interface OEdge extends OElement {
     if (labels == null) {
       return false;
     }
+    if(labels.length ==0){
+      return true;
+    }
     String type = "E";
     Optional<OClass> typeClass = getSchemaType();
     if (typeClass.isPresent()) {
@@ -58,6 +61,7 @@ public interface OEdge extends OElement {
         return true;
       }
     }
+
     return false;
   }
 }
