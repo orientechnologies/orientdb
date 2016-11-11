@@ -1149,12 +1149,12 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         "Removing server '%s' from all the databases (removeOnlyDynamicServers=%s)...", nodeLeftName, removeOnlyDynamicServers);
 
     for (String dbName : getManagedDatabases()) {
-      removeNodeFromConfiguration(nodeLeftName, dbName, removeOnlyDynamicServers);
+      removeNodeFromConfiguration(nodeLeftName, dbName, removeOnlyDynamicServers, false);
     }
   }
 
   public boolean removeNodeFromConfiguration(final String nodeLeftName, final String databaseName,
-      final boolean removeOnlyDynamicServers) {
+      final boolean removeOnlyDynamicServers, final boolean statusOffline) {
     ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
         "Removing server '%s' from database configuration '%s' (removeOnlyDynamicServers=%s)...", nodeLeftName, databaseName,
         removeOnlyDynamicServers);
@@ -1187,8 +1187,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       // SERVER REMOVED CORRECTLY
       updateCachedDatabaseConfiguration(databaseName, cfg.getDocument(), true, true);
 
-    setDatabaseStatus(nodeLeftName, databaseName, DB_STATUS.OFFLINE);
-    // configurationMap.put(CONFIG_DBSTATUS_PREFIX + nodeLeftName + "." + databaseName, DB_STATUS.OFFLINE);
+    setDatabaseStatus(nodeLeftName, databaseName, statusOffline ? DB_STATUS.OFFLINE : DB_STATUS.NOT_AVAILABLE);
 
     return found;
   }
