@@ -35,9 +35,13 @@ public abstract class OrientConsole extends OConsoleApplication implements OTabl
   @Override
   protected void onException(Throwable e) {
     Throwable current = e;
-    while (current != null) {
-      err.print("\nError: " + current.toString() + "\n");
-      current = current.getCause();
+    if (!debugMode) {
+      while (current != null) {
+        err.print("\nError: " + current.toString() + "\n");
+        current = current.getCause();
+      }
+    } else {
+      e.printStackTrace(this.err);
     }
   }
 

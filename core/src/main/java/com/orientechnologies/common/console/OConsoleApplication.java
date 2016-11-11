@@ -52,6 +52,7 @@ public class OConsoleApplication {
   protected boolean                 interactiveMode;
   protected String[]                args;
   protected TreeMap<Method, Object> methods;
+  protected boolean                 debugMode;
 
   protected enum RESULT {
     OK, ERROR, EXIT
@@ -59,6 +60,8 @@ public class OConsoleApplication {
 
   public OConsoleApplication(String[] iArgs) {
     this.args = iArgs;
+
+    debugMode = Boolean.valueOf(System.getProperty("debugMode"));
   }
 
   public static String getCorrectMethodName(Method m) {
