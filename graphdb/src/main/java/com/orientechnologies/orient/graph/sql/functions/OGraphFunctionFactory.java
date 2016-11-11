@@ -36,6 +36,7 @@ public class OGraphFunctionFactory implements OSQLFunctionFactory {
   static {
     register(OSQLFunctionGremlin.NAME, OSQLFunctionGremlin.class);
     register(OSQLFunctionDijkstra.NAME, new OSQLFunctionDijkstra());
+    register(OSQLFunctionAstar.NAME, new OSQLFunctionAstar());
     register(OSQLFunctionShortestPath.NAME, new OSQLFunctionShortestPath());
 
     register(OSQLFunctionLabel.NAME, new OSQLFunctionLabel());
