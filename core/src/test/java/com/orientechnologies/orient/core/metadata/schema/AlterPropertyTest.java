@@ -122,4 +122,18 @@ public class AlterPropertyTest {
 
   }
 
+  @Test
+  public void testAlterPropertyWithDot() {
+
+    OSchema schema = db.getMetadata().getSchema();
+    db.command(new OCommandSQL("create class testAlterPropertyWithDot")).execute();
+    db.command(new OCommandSQL("create property testAlterPropertyWithDot.`a.b` STRING")).execute();
+    schema.reload();
+    Assert.assertNotNull(schema.getClass("testAlterPropertyWithDot").getProperty("a.b"));
+    db.command(new OCommandSQL("alter property testAlterPropertyWithDot.`a.b` name c")).execute();
+    schema.reload();
+    Assert.assertNull(schema.getClass("testAlterPropertyWithDot").getProperty("a.b"));
+    Assert.assertNotNull(schema.getClass("testAlterPropertyWithDot").getProperty("c"));
+  }
+
 }
