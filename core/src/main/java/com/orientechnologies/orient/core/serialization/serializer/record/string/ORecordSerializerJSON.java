@@ -216,7 +216,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
               iRecord = localRecord;
           }
         } else if (fieldName.equals(ODocumentHelper.ATTRIBUTE_CLASS) && iRecord instanceof ODocument) {
-          ((ODocument) iRecord).setClassNameIfExists("null".equals(fieldValueAsString) ? null : fieldValueAsString);
+          ODocumentInternal.fillClassNameIfNeeded(((ODocument) iRecord),
+              "null".equals(fieldValueAsString) ? null : fieldValueAsString);
         }
       }
 

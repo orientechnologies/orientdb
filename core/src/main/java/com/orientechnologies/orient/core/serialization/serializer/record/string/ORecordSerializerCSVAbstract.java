@@ -675,9 +675,11 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
           // EMBEDDED RECORD, EXTRACT THE CLASS NAME IF DIFFERENT BY THE PASSED (SUB-CLASS OR IT WAS PASSED NULL)
           iLinkedClass = OStringSerializerHelper.getRecordClassName(item, iLinkedClass);
 
-          if (iLinkedClass != null)
-            objectToAdd = fromString(item, new ODocument(iLinkedClass.getName()), null);
-          else
+          if (iLinkedClass != null) {
+            ODocument doc = new ODocument();
+            objectToAdd = fromString(item, doc, null);
+            ODocumentInternal.fillClassNameIfNeeded(doc, iLinkedClass.getName());
+          } else
             // EMBEDDED OBJECT
             objectToAdd = fieldTypeFromStream(iDocument, OType.EMBEDDED, item);
         }
