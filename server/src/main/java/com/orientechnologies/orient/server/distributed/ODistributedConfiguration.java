@@ -603,7 +603,7 @@ public class ODistributedConfiguration {
         }
       }
 
-      if (!changedPartitions.isEmpty()) {
+      if (!changedPartitions.isEmpty() && !getRegisteredServers().contains(iNode)) {
         if (getNewNodeStrategy() == NEW_NODE_STRATEGIES.STATIC) {
           // REGISTER THE SERVER AS STATIC AND INCREMENT VERSION
           setServerRole(iNode, getServerRole("*"));
