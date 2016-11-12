@@ -75,7 +75,7 @@ public class HARemoveNodeFromCfgTest extends AbstractServerClusterTxTest {
         .getAllConfiguredServers().contains(removedServer));
 
     Assert.assertEquals(serverInstance.get(0).getServerInstance().getDistributedManager().getConfigurationMap()
-        .get("dbstatus." + removedServer + "." + getDatabaseName()), ODistributedServerManager.DB_STATUS.OFFLINE);
+        .get("dbstatus." + removedServer + "." + getDatabaseName()), ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
 
     serverInstance.get(SERVERS - 1).startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
     if (serverInstance.get(SERVERS - 1).server.getPluginByClass(OHazelcastPlugin.class) != null)
