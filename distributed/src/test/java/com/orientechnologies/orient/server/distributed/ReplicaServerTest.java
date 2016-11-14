@@ -20,15 +20,11 @@
 
 package com.orientechnologies.orient.server.distributed;
 
-import junit.framework.Assert;
-
+import com.tinkerpop.blueprints.impls.orient.*;
+import org.junit.Assert;
 import org.junit.Test;
 
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
+import java.util.Set;
 
 /**
  * Start 3 servers with only "europe" as master and the others as REPLICA
@@ -49,6 +45,9 @@ public class ReplicaServerTest extends AbstractServerClusterTest {
 
   @Override
   protected void executeTest() throws Exception {
+    // CHECK REPLICA SERVERS HAVE NO CLUSTER OWNED
+    checkReplicasDontOwnAnyClusters();
+
     for (int s = 0; s < SERVERS; ++s) {
       OrientGraphFactory factory = new OrientGraphFactory("plocal:target/server" + s + "/databases/" + getDatabaseName());
       OrientGraphNoTx g = factory.getNoTx();
@@ -104,6 +103,25 @@ public class ReplicaServerTest extends AbstractServerClusterTest {
       } finally {
         g.shutdown();
       }
+    }
+
+    serverInstance.get(1).shutdownServer();
+
+    checkReplicasDontOwnAnyClusters();
+
+    serverInstance.get(2).shutdownServer();
+
+    checkReplicasDontOwnAnyClusters();
+  }
+
+  private void checkReplicasDontOwnAnyClusters() {
+    final ODistributedServerManager dMgr = serverInstance.get(0).getServerInstance().getDistributedManager();
+    final ODistributedConfiguration dCfg = dMgr.getDatabaseConfiguration(getDatabaseName());
+
+    for (int s = 1; s < SERVERS; ++s) {
+      final Set<String> clusters = dCfg
+          .getClustersOwnedByServer(serverInstance.get(s).getServerInstance().getDistributedManager().getLocalNodeName());
+      Assert.assertTrue(clusters.isEmpty());
     }
   }
 

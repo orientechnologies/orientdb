@@ -48,11 +48,19 @@ public class ODefaultClusterOwnershipAssignmentStrategy implements OClusterOwner
   public boolean assignClusterOwnershipOfClass(final ODatabaseInternal iDatabase, final ODistributedConfiguration cfg,
       final OClass iClass, final Set<String> availableNodes, final Set<String> clustersToReassign, final boolean rebalance) {
 
+    // FILTER OUT NON MASTER SERVER
+    for (Iterator<String> it = availableNodes.iterator(); it.hasNext(); ) {
+      final String node = it.next();
+      if (cfg.getServerRole(node) != ODistributedConfiguration.ROLES.MASTER)
+        it.remove();
+    }
+
     if (availableNodes.isEmpty())
       return false;
 
     if (!(iClass.getClusterSelection() instanceof OLocalClusterWrapperStrategy))
-      ((OClassImpl) iClass).setClusterSelectionInternal(new OLocalClusterWrapperStrategy(manager, iDatabase.getName(), iClass, iClass.getClusterSelection()));
+      ((OClassImpl) iClass).setClusterSelectionInternal(
+          new OLocalClusterWrapperStrategy(manager, iDatabase.getName(), iClass, iClass.getClusterSelection()));
 
     if (iClass.isAbstract())
       return false;
@@ -63,7 +71,7 @@ public class ODefaultClusterOwnershipAssignmentStrategy implements OClusterOwner
     final Set<String> clusterNames = new HashSet<String>(clusterIds.length);
     for (int clusterId : clusterIds) {
       final String clusterName = iDatabase.getClusterNameById(clusterId);
-      if( clusterName != null ) {
+      if (clusterName != null) {
         clusterNames.add(clusterName);
         if (clustersToReassign.remove(clusterName))
           // MOVE THE CLUSTER TO THE REASSIGNMENT FOR THIS CLASS
@@ -100,7 +108,7 @@ public class ODefaultClusterOwnershipAssignmentStrategy implements OClusterOwner
       if (ownedClusters.isEmpty()) {
         // CREATE A NEW CLUSTER WHERE LOCAL NODE IS THE MASTER
         String newClusterName;
-        for (int i = 0;; ++i) {
+        for (int i = 0; ; ++i) {
           newClusterName = iClass.getName().toLowerCase() + "_" + i;
           if (!allClusterNames.contains(newClusterName))
             break;
@@ -155,7 +163,7 @@ public class ODefaultClusterOwnershipAssignmentStrategy implements OClusterOwner
       final List<String> ownedClusters = cfg.getOwnedClustersByServer(clusterNames, server);
 
       // FILTER ALL THE CLUSTERS WITH A STATIC OWNER CFG
-      for (Iterator<String> it = ownedClusters.iterator(); it.hasNext();) {
+      for (Iterator<String> it = ownedClusters.iterator(); it.hasNext(); ) {
         final String cluster = it.next();
         if (cfg.getConfiguredClusterOwner(cluster) != null)
           it.remove();
