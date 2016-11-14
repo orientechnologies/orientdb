@@ -8,7 +8,9 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.Map;
 
 public class OMatchPathItem extends SimpleNode {
   protected OMethodCall  method;
@@ -49,71 +51,16 @@ public class OMatchPathItem extends SimpleNode {
     }
   }
 
-  protected Iterable<OIdentifiable> executeTraversal(OMatchStatement.MatchContext matchContext, OCommandContext iCommandContext,
-      OIdentifiable startingPoint, int depth) {
-
-    OWhereClause filter = null;
-    OWhereClause whileCondition = null;
-    Integer maxDepth = null;
-    OClass oClass = null;
-    if (this.filter != null) {
-      filter = this.filter.getFilter();
-      whileCondition = this.filter.getWhileCondition();
-      maxDepth = this.filter.getMaxDepth();
-      String className = this.filter.getClassName(iCommandContext);
-      oClass = getDatabase().getMetadata().getSchema().getClass(className);
-    }
-
-    Set<OIdentifiable> result = new HashSet<OIdentifiable>();
-
-    if (whileCondition == null && maxDepth == null) {// in this case starting point is not returned and only one level depth is
-      // evaluated
-      Iterable<OIdentifiable> queryResult = traversePatternEdge(matchContext, startingPoint, iCommandContext);
-
-      if (this.filter == null || this.filter.getFilter() == null) {
-        return queryResult;
+  protected Iterable<OIdentifiable> executeTraversal(final OMatchStatement.MatchContext matchContext,
+      final OCommandContext iCommandContext, final OIdentifiable startingPoint, int depth) {
+    return new Iterable<OIdentifiable>() {
+      @Override public Iterator<OIdentifiable> iterator() {
+        return new OMatchPathItemIterator(OMatchPathItem.this, matchContext, iCommandContext, startingPoint);
       }
-
-
-      for (OIdentifiable origin : queryResult) {
-        Object previousMatch = iCommandContext.getVariable("$currentMatch");
-        iCommandContext.setVariable("$currentMatch", origin);
-        if ((oClass==null || matchesClass(origin, oClass)) && (filter == null || filter.matchesFilters(origin, iCommandContext))) {
-          result.add(origin);
-        }
-        iCommandContext.setVariable("$currentMatch", previousMatch);
-      }
-    } else {// in this case also zero level (starting point) is considered and traversal depth is given by the while condition
-      iCommandContext.setVariable("$depth", depth);
-      Object previousMatch = iCommandContext.getVariable("$currentMatch");
-      iCommandContext.setVariable("$currentMatch", startingPoint);
-      if ((oClass==null || matchesClass(startingPoint, oClass)) && (filter == null || filter.matchesFilters(startingPoint, iCommandContext))) {
-        result.add(startingPoint);
-      }
-
-      if ((maxDepth == null || depth < maxDepth) && (whileCondition == null || whileCondition
-          .matchesFilters(startingPoint, iCommandContext))) {
-
-        Iterable<OIdentifiable> queryResult = traversePatternEdge(matchContext, startingPoint, iCommandContext);
-
-        for (OIdentifiable origin : queryResult) {
-          // TODO consider break strategies (eg. re-traverse nodes)
-          Iterable<OIdentifiable> subResult = executeTraversal(matchContext, iCommandContext, origin, depth + 1);
-          if (subResult instanceof Collection) {
-            result.addAll((Collection<? extends OIdentifiable>) subResult);
-          } else {
-            for (OIdentifiable i : subResult) {
-              result.add(i);
-            }
-          }
-        }
-      }
-      iCommandContext.setVariable("$currentMatch", previousMatch);
-    }
-    return result;
+    };
   }
 
-  private boolean matchesClass(OIdentifiable identifiable, OClass oClass) {
+  protected boolean matchesClass(OIdentifiable identifiable, OClass oClass) {
     if (identifiable == null) {
       return false;
     }
@@ -126,7 +73,6 @@ public class OMatchPathItem extends SimpleNode {
     }
     return false;
   }
-
 
   protected Iterable<OIdentifiable> traversePatternEdge(OMatchStatement.MatchContext matchContext, OIdentifiable startingPoint,
       OCommandContext iCommandContext) {
