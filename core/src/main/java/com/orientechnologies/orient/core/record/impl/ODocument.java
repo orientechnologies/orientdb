@@ -348,6 +348,9 @@ import java.util.stream.Collectors;
     if (iPropetyName == null)
       throw new IllegalArgumentException("Field is null");
 
+    if (iPropetyName.isEmpty())
+      throw new IllegalArgumentException("Field name is empty");
+
     if (ODocumentHelper.ATTRIBUTE_CLASS.equals(iPropetyName)) {
       setClassName(iPropertyValue.toString());
       return;

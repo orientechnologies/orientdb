@@ -343,8 +343,8 @@ public class ODocumentTest {
     assertEquals(doc.getProperty("theMap.foo"), "bar");
     assertEquals(doc.eval("theMap.foo"), "valueInTheMap");
 
-    doc.setProperty("", "foo");
-    assertEquals(doc.getProperty(""), "foo");
+//    doc.setProperty("", "foo");
+//    assertEquals(doc.getProperty(""), "foo");
 
     doc.setProperty(",", "comma");
     assertEquals(doc.getProperty(","), "comma");
