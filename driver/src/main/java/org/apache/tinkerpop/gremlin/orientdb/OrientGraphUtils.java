@@ -1,5 +1,8 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
+import com.orientechnologies.orient.core.record.ODirection;
+import org.apache.tinkerpop.gremlin.structure.Direction;
+
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
@@ -36,4 +39,16 @@ public class OrientGraphUtils {
         }
     }
 
+    public static ODirection mapDirection(Direction direction) {
+
+        switch (direction) {
+        case OUT:
+            return ODirection.OUT;
+        case IN:
+            return ODirection.IN;
+        case BOTH:
+            return ODirection.BOTH;
+        }
+        throw new IllegalArgumentException(String.format("Cannot get direction for argument %s", direction));
+    }
 }

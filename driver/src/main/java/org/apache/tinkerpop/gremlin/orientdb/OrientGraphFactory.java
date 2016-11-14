@@ -26,7 +26,7 @@ public final class OrientGraphFactory {
         this.url = url;
         this.user = user;
         this.password = password;
-        this.labelAsClassName = false;
+        this.labelAsClassName = true;
     }
 
     public OrientGraphFactory(Configuration config) {

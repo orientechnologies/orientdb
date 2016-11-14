@@ -1,11 +1,10 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
+import com.orientechnologies.orient.core.record.OElement;
 import org.apache.tinkerpop.gremlin.structure.Element;
 import org.apache.tinkerpop.gremlin.structure.Property;
 import org.apache.tinkerpop.gremlin.structure.util.ElementHelper;
 import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
-
-import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.NoSuchElementException;
 
@@ -42,8 +41,8 @@ public class OrientProperty<V> implements Property<V> {
 
     @Override
     public void remove() {
-        ODocument doc = element.getRawDocument();
-        doc.removeField(key);
+        OElement doc = element.getRawElement();
+        doc.removeProperty(key);
         doc.save();
         this.value = null;
     }

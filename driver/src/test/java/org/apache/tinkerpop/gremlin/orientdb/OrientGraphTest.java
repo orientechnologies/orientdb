@@ -1,14 +1,7 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import org.apache.tinkerpop.gremlin.structure.Direction;
-import org.apache.tinkerpop.gremlin.structure.Edge;
-import org.apache.tinkerpop.gremlin.structure.Graph;
-import org.apache.tinkerpop.gremlin.structure.Property;
-import org.apache.tinkerpop.gremlin.structure.Transaction;
-import org.apache.tinkerpop.gremlin.structure.Vertex;
-import org.apache.tinkerpop.gremlin.structure.VertexProperty;
+import org.apache.tinkerpop.gremlin.structure.*;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -20,14 +13,8 @@ import static java.util.stream.Collectors.toMap;
 import static org.apache.tinkerpop.gremlin.structure.Transaction.CLOSE_BEHAVIOR.COMMIT;
 import static org.apache.tinkerpop.gremlin.structure.Transaction.CLOSE_BEHAVIOR.ROLLBACK;
 import static org.apache.tinkerpop.gremlin.structure.VertexProperty.Cardinality.single;
-import static org.hamcrest.Matchers.hasEntry;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.not;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.hamcrest.Matchers.*;
+import static org.junit.Assert.*;
 
 public class OrientGraphTest {
 
@@ -295,8 +282,8 @@ public class OrientGraphTest {
         graph.createVertexClass(vertexLabel);
         graph.createEdgeClass(edgeLabel);
 
-        graph.database().browseClass(OClass.VERTEX_CLASS_NAME + "_" + vertexLabel);
-        graph.database().browseClass(OClass.EDGE_CLASS_NAME + "_" + edgeLabel);
+        graph.database().browseClass(vertexLabel);
+        graph.database().browseClass(edgeLabel);
     }
 
     @Test

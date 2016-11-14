@@ -1,24 +1,14 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
-import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordElement;
-import com.orientechnologies.orient.core.db.record.ORecordLazyList;
-import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.OEdge;
+import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-
 import org.apache.tinkerpop.gremlin.structure.*;
 import org.apache.tinkerpop.gremlin.structure.util.ElementHelper;
 import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,50 +19,31 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 import static org.apache.tinkerpop.gremlin.orientdb.StreamUtils.asStream;
 
 public final class OrientVertex extends OrientElement implements Vertex {
-    public static final String CONNECTION_OUT_PREFIX = OrientGraphUtils.CONNECTION_OUT + "_";
-    public static final String CONNECTION_IN_PREFIX = OrientGraphUtils.CONNECTION_IN + "_";
+
     private static final List<String> INTERNAL_FIELDS = Arrays.asList("@rid", "@class");
 
-    public OrientVertex(final OrientGraph graph, final OIdentifiable rawElement) {
+    public OrientVertex(final OrientGraph graph, final OVertex rawElement) {
         super(graph, rawElement);
+    }
+
+    public OrientVertex(OrientGraph graph, OIdentifiable identifiable) {
+        this(graph, new ODocument(identifiable.getIdentity()).asVertex()
+                .orElseThrow(() -> new IllegalArgumentException(String.format("Cannot get a Vertex for identity %s", identifiable))));
     }
 
     public OrientVertex(OrientGraph graph, String label) {
         this(graph, createRawElement(graph, label));
     }
 
-    protected static ODocument createRawElement(OrientGraph graph, String label) {
-        String className = graph.createVertexClass(label);
-        return new ODocument(className);
+    protected static OVertex createRawElement(OrientGraph graph, String label) {
+        graph.createVertexClass(label);
+        return graph.getRawDatabase().newVertex(label);
     }
 
     public Iterator<Vertex> vertices(final Direction direction, final String... labels) {
-        final ODocument doc = getRawDocument();
-
-        final List<Stream<Vertex>> streamVertices = new ArrayList<>();
-
-        for (String fieldName : doc.fieldNames()) {
-            final OPair<Direction, String> connection = getConnection(direction, fieldName, labels);
-            if (connection == null)
-                // SKIP THIS FIELD
-                continue;
-
-            final Object fieldValue = doc.field(fieldName);
-            if (fieldValue == null)
-                continue;
-
-            if (fieldValue instanceof ORidBag)
-                streamVertices.add(asStream(((ORidBag) fieldValue).rawIterator())
-                        .map(oIdentifiable -> new OrientEdge(graph, oIdentifiable.getRecord()))
-                        .map(edge -> edge.vertices(direction.opposite()))
-                        .flatMap(vertices -> asStream(vertices)));
-            else
-                throw new IllegalStateException("Invalid content found in " + fieldName + " field: " + fieldValue);
-        }
-
-        return streamVertices.stream()
-                .flatMap(vertices -> vertices)
-                .iterator();
+        Stream<Vertex> vertexStream = asStream(
+                getRawElement().getVertices(OrientGraphUtils.mapDirection(direction), labels).iterator()).map(v -> new OrientVertex(graph, v));
+        return vertexStream.iterator();
 
     }
 
@@ -84,6 +55,11 @@ public final class OrientVertex extends OrientElement implements Vertex {
                 .filter(p -> !p.key().startsWith("in_"))
                 .filter(p -> !p.key().startsWith("_meta_"))
                 .map(p -> (VertexProperty<V>) new OrientVertexProperty<>(p.key(), p.value(), (OrientVertex) p.element())).iterator();
+    }
+
+    @Override
+    public OVertex getRawElement() {
+        return rawElement.asVertex().orElseThrow(() -> new IllegalArgumentException(String.format("Cannot get a Vertex for element %s", rawElement)));
     }
 
     @Override
@@ -127,220 +103,29 @@ public final class OrientVertex extends OrientElement implements Vertex {
         if (ElementHelper.getIdValue(keyValues).isPresent()) throw Vertex.Exceptions.userSuppliedIdsNotSupported();
         if (Graph.Hidden.isHidden(label)) throw Element.Exceptions.labelCanNotBeAHiddenKey(label);
 
-        final ODocument outDocument = getRawDocument();
-        if (!outDocument.getSchemaClass().isSubClassOf(OClass.VERTEX_CLASS_NAME))
-            throw new IllegalArgumentException("source record is not a vertex");
+        graph.createEdgeClass(label);
 
-        final ODocument inDocument = ((OrientVertex) inVertex).getRawDocument();
-        if (!inDocument.getSchemaClass().isSubClassOf(OClass.VERTEX_CLASS_NAME))
-            throw new IllegalArgumentException("destination record is not a vertex");
-
-        final OrientEdge edge;
-
-        label = OrientGraphUtils.encodeClassName(label);
-
-        final String outFieldName = getConnectionFieldName(Direction.OUT, label);
-        final String inFieldName = getConnectionFieldName(Direction.IN, label);
-
-        // since the label for the edge can potentially get re-assigned
-        // before being pushed into the OrientEdge, the null check has to go
-        // here.
-        if (label == null)
-            throw new IllegalStateException("label cannot be null");
-
-        // CREATE THE EDGE DOCUMENT TO STORE FIELDS TOO
-        //String className = graph.labelToClassName(label, OClass.EDGE_CLASS_NAME);
-        edge = new OrientEdge(graph, label, outDocument, inDocument, label);
+        OEdge oEdge = getRawElement().addEdge(((OrientVertex) inVertex).getRawElement(), label);
+        final OrientEdge edge = new OrientEdge(graph, oEdge);
         edge.property(keyValues);
 
-        edge.getRawDocument().fields(OrientGraphUtils.CONNECTION_OUT, rawElement, OrientGraphUtils.CONNECTION_IN, inDocument);
-
-        createLink(outDocument, edge.getRawElement(), outFieldName);
-        createLink(inDocument, edge.getRawElement(), inFieldName);
-
         edge.save();
-        inDocument.save();
-        outDocument.save();
         return edge;
     }
 
     public void remove() {
-        ODocument doc = getRawDocument();
-        if (doc.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED)
-            doc.load();
-
-        Iterator<Edge> allEdges = edges(Direction.BOTH, "E");
-        while (allEdges.hasNext())
-            allEdges.next().remove();
-
-        doc.getDatabase().delete(doc.getIdentity());
-    }
-
-    public static String getConnectionFieldName(final Direction iDirection, final String iClassName) {
-        if (iDirection == null || iDirection == Direction.BOTH)
-            throw new IllegalArgumentException("Direction not valid");
-
-        final String prefix = iDirection == Direction.OUT ? CONNECTION_OUT_PREFIX : CONNECTION_IN_PREFIX;
-        if (iClassName == null || iClassName.isEmpty() || iClassName.equals(OClass.EDGE_CLASS_NAME))
-            return prefix;
-
-        return prefix + iClassName;
-    }
-
-    // this ugly code was copied from the TP2 implementation
-    @SuppressWarnings("unchecked")
-    public Object createLink(final ODocument iFromVertex, final OIdentifiable iTo, final String iFieldName) {
-        final Object out;
-        OType outType = iFromVertex.fieldType(iFieldName);
-        Object found = iFromVertex.field(iFieldName);
-
-        final OClass linkClass = ODocumentInternal.getImmutableSchemaClass(iFromVertex);
-        if (linkClass == null)
-            throw new IllegalArgumentException("Class not found in source vertex: " + iFromVertex);
-
-        final OProperty prop = linkClass.getProperty(iFieldName);
-        final OType propType = prop != null && prop.getType() != OType.ANY ? prop.getType() : null;
-
-        if (found == null) {
-            if (propType == null || propType == OType.LINKBAG) {
-                final ORidBag bag = new ORidBag();
-                bag.add(iTo);
-                out = bag;
-                outType = OType.LINKBAG;
-            } else
-                throw new IllegalStateException("Type of field provided in schema '" + prop.getType() + "' can not be used for link creation.");
-        } else if (found instanceof OIdentifiable) {
-            if (prop != null && propType == OType.LINK)
-                throw new IllegalStateException("Type of field provided in schema '" + prop.getType() + "' can not be used for creation to hold several links.");
-            if (prop != null && "true".equalsIgnoreCase(prop.getCustom("ordered"))) {
-                final Collection<OIdentifiable> coll = new ORecordLazyList(iFromVertex);
-                coll.add((OIdentifiable) found);
-                coll.add(iTo);
-                out = coll;
-                outType = OType.LINKLIST;
-            } else {
-                final ORidBag bag = new ORidBag();
-                bag.add((OIdentifiable) found);
-                bag.add(iTo);
-                out = bag;
-                outType = OType.LINKBAG;
-            }
-        } else if (found instanceof ORidBag) {
-            // ADD THE LINK TO THE COLLECTION
-            out = null;
-            ((ORidBag) found).add(iTo);
-        } else if (found instanceof Collection<?>) {
-            // USE THE FOUND COLLECTION
-            out = null;
-            ((Collection<OIdentifiable>) found).add(iTo);
-        } else
-            throw new IllegalStateException("Relationship content is invalid on field " + iFieldName + ". Found: " + found);
-
-        if (out != null)
-            // OVERWRITE IT
-            iFromVertex.field(iFieldName, out, outType);
-
-        return out;
+        getRawElement().delete();
     }
 
     public Iterator<Edge> edges(final Direction direction, String... edgeLabels) {
-        final ODocument doc = getRawDocument();
 
-        final List<List<OIdentifiable>> streamVertices = new ArrayList<>();
+        // It should not collect but instead iterating through the relations.
+        // But necessary in order to avoid loop in EdgeTest#shouldNotHaveAConcurrentModificationExceptionWhenIteratingAndRemovingAddingEdges
+        Stream<Edge> edgeStream = asStream(
+                getRawElement().getEdges(OrientGraphUtils.mapDirection(direction), edgeLabels).iterator())
+                        .map(e -> new OrientEdge(graph, e));
 
-        for (String fieldName : doc.fieldNames()) {
-            final OPair<Direction, String> connection = getConnection(direction, fieldName, edgeLabels);
-            if (connection == null)
-                // SKIP THIS FIELD
-                continue;
-
-            final Object fieldValue = doc.field(fieldName);
-            if (fieldValue == null)
-                continue;
-
-            if (fieldValue instanceof ORidBag)
-                streamVertices.add(asStream(((ORidBag) fieldValue).iterator()).collect(Collectors.toList()));
-            else
-                throw new IllegalStateException("Invalid content found in " + fieldName + " field: " + fieldValue);
-        }
-
-        return streamVertices.stream()
-                .flatMap(edges -> edges.stream())
-                .filter(oId -> oId != null)
-                .map(oIdentifiable -> new OrientEdge(graph, oIdentifiable.getRecord()))
-                .map(edge -> (Edge) edge)
-                .iterator();
-    }
-
-    /**
-     * Determines if a field is a connections or not.
-     *
-     * @param iDirection
-     *            Direction to check
-     * @param iFieldName
-     *            Field name
-     * @param iClassNames
-     *            Optional array of class names
-     * @return The found direction if any
-     */
-    protected OPair<Direction, String> getConnection(final Direction iDirection, final String iFieldName, String... iClassNames) {
-        if (iClassNames != null && iClassNames.length == 1 && iClassNames[0].equalsIgnoreCase("E"))
-            // DEFAULT CLASS, TREAT IT AS NO CLASS/LABEL
-            iClassNames = null;
-
-        if (iDirection == Direction.OUT || iDirection == Direction.BOTH) {
-            // FIELDS THAT STARTS WITH "out_"
-            if (iFieldName.startsWith(CONNECTION_OUT_PREFIX)) {
-                if (iClassNames == null || iClassNames.length == 0)
-                    return new OPair<Direction, String>(Direction.OUT, getConnectionClass(Direction.OUT, iFieldName));
-
-                // CHECK AGAINST ALL THE CLASS NAMES
-                for (String clsName : iClassNames) {
-                    clsName = OrientGraphUtils.encodeClassName(clsName);
-
-                    if (iFieldName.equals(CONNECTION_OUT_PREFIX + clsName))
-                        return new OPair<Direction, String>(Direction.OUT, clsName);
-                }
-            }
-        }
-
-        if (iDirection == Direction.IN || iDirection == Direction.BOTH) {
-            // FIELDS THAT STARTS WITH "in_"
-            if (iFieldName.startsWith(CONNECTION_IN_PREFIX)) {
-                if (iClassNames == null || iClassNames.length == 0)
-                    return new OPair<Direction, String>(Direction.IN, getConnectionClass(Direction.IN, iFieldName));
-
-                // CHECK AGAINST ALL THE CLASS NAMES
-                for (String clsName : iClassNames) {
-
-                    if (iFieldName.equals(CONNECTION_IN_PREFIX + clsName))
-                        return new OPair<Direction, String>(Direction.IN, clsName);
-                }
-            }
-        }
-
-        // NOT FOUND
-        return null;
-    }
-
-    /**
-     * Used to extract the class name from the vertex's field.
-     *
-     * @param iDirection
-     *            Direction of connection
-     * @param iFieldName
-     *            Full field name
-     * @return Class of the connection if any
-     */
-    public String getConnectionClass(final Direction iDirection, final String iFieldName) {
-        if (iDirection == Direction.OUT) {
-            if (iFieldName.length() > CONNECTION_OUT_PREFIX.length())
-                return iFieldName.substring(CONNECTION_OUT_PREFIX.length());
-        } else if (iDirection == Direction.IN) {
-            if (iFieldName.length() > CONNECTION_IN_PREFIX.length())
-                return iFieldName.substring(CONNECTION_IN_PREFIX.length());
-        }
-        return OClass.EDGE_CLASS_NAME;
+        return edgeStream.collect(Collectors.toList()).iterator();
     }
 
 }

@@ -1,20 +1,16 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.stream.Stream;
-
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.apache.tinkerpop.gremlin.structure.Property;
 import org.apache.tinkerpop.gremlin.structure.T;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.VertexProperty;
 
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import java.util.*;
+import java.util.stream.Stream;
 
 public class OrientVertexProperty<V> extends OrientProperty<V> implements VertexProperty<V> {
 
@@ -63,22 +59,22 @@ public class OrientVertexProperty<V> extends OrientProperty<V> implements Vertex
     }
 
     private boolean hasMetadataDocument() {
-        return element.getRawDocument().field(metadataKey()) != null;
+        return element.getRawElement().getProperty(metadataKey()) != null;
     }
 
     public void removeMetadata(String key) {
         ODocument metadata = getMetadataDocument();
         metadata.removeField(key);
         if (metadata.fields() == 0)
-            element.getRawDocument().removeField(metadataKey());
+            element.getRawElement().removeProperty(metadataKey());
     }
 
     ODocument getMetadataDocument() {
-        ODocument metadata = element.getRawDocument().field(metadataKey());
+        ODocument metadata = element.getRawElement().getProperty(metadataKey());
         if (metadata == null) {
             metadata = new ODocument();
-            ODocument vertexDocument = element.getRawDocument();
-            vertexDocument.field(metadataKey(), metadata, OType.EMBEDDED);
+            OElement vertexDocument = element.getRawElement();
+            vertexDocument.setProperty(metadataKey(), metadata, OType.EMBEDDED);
             vertexDocument.save();
             metadata.save();
         }
@@ -88,8 +84,7 @@ public class OrientVertexProperty<V> extends OrientProperty<V> implements Vertex
     @Override
     public void remove() {
         super.remove();
-
-        element.getRawDocument().removeField(metadataKey());
+        element.getRawElement().removeProperty(metadataKey());
     }
 
     private String metadataKey() {

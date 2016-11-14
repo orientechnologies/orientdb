@@ -18,6 +18,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
@@ -54,6 +55,7 @@ import static org.apache.tinkerpop.gremlin.orientdb.StreamUtils.asStream;
 @Graph.OptIn(Graph.OptIn.SUITE_GROOVY_ENVIRONMENT)
 @Graph.OptIn(Graph.OptIn.SUITE_GROOVY_ENVIRONMENT_INTEGRATE)
 @Graph.OptIn(Graph.OptIn.SUITE_GROOVY_ENVIRONMENT_PERFORMANCE)
+@Graph.OptIn("org.apache.tinkerpop.gremlin.orientdb.gremlintest.suite.OrientDBDebugSuite")
 public final class OrientGraph implements Graph {
     static {
         TraversalStrategies.GlobalCache.registerStrategies(
@@ -222,7 +224,7 @@ public final class OrientGraph implements Graph {
             makeActive();
             return elements(
                     OClass.VERTEX_CLASS_NAME,
-                    r -> new OrientVertex(this, getRawDocument(r)),
+                    r -> new OrientVertex(this, getRawDocument(r).asVertex().orElseThrow(() -> new IllegalArgumentException(String.format("Cannot get a Vertex from document %s", r)))),
                     vertexIds);
         });
     }
@@ -231,7 +233,7 @@ public final class OrientGraph implements Graph {
      * Convert a label to orientdb class name
      */
     public String labelToClassName(String label, String prefix) {
-        if (configuration.getBoolean(CONFIG_LABEL_AS_CLASSNAME, false)) {
+        if (configuration.getBoolean(CONFIG_LABEL_AS_CLASSNAME, true)) {
             return label;
         }
         return label.equals(prefix) ? prefix : prefix + "_" + label;
@@ -244,7 +246,7 @@ public final class OrientGraph implements Graph {
         if (INTERNAL_CLASSES_TO_TINKERPOP_CLASSES.containsKey(className)) {
             return INTERNAL_CLASSES_TO_TINKERPOP_CLASSES.get(className);
         }
-        if (configuration.getBoolean(CONFIG_LABEL_AS_CLASSNAME, false)) {
+        if (configuration.getBoolean(CONFIG_LABEL_AS_CLASSNAME, true)) {
             return className;
         }
         return className.substring(2);
@@ -360,7 +362,7 @@ public final class OrientGraph implements Graph {
             makeActive();
             return elements(
                     OClass.EDGE_CLASS_NAME,
-                    r -> new OrientEdge(this, getRawDocument(r)),
+                    r -> new OrientEdge(this, getRawDocument(r).asEdge().orElseThrow(() -> new IllegalArgumentException(String.format("Cannot get an Edge from document %s", r)))),
                     edgeIds);
         });
     }
@@ -402,7 +404,7 @@ public final class OrientGraph implements Graph {
         throw new IllegalArgumentException("Orient IDs have to be a String or ORecordId - you provided a " + id.getClass());
     }
 
-    protected ODocument getRawDocument(ORecord record) {
+    protected OElement getRawDocument(ORecord record) {
         if (record == null) throw new NoSuchElementException();
         if (record instanceof OIdentifiable)
             record = record.getRecord();

@@ -1,13 +1,10 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import org.apache.tinkerpop.gremlin.structure.*;
 import org.apache.tinkerpop.gremlin.structure.util.ElementHelper;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -15,12 +12,14 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 public abstract class OrientElement implements Element {
 
-    protected OIdentifiable rawElement;
+    protected OElement rawElement;
     protected OrientGraph graph;
 
-    public OrientElement(final OrientGraph graph, final OIdentifiable rawElement) {
+    public OrientElement(final OrientGraph graph, final OElement rawElement) {
         if (rawElement == null)
             throw new IllegalArgumentException("rawElement must not be null!");
         this.graph = checkNotNull(graph);
@@ -32,7 +31,7 @@ public abstract class OrientElement implements Element {
     }
 
     public String label() {
-        String internalClassName = getRawDocument().getClassName();
+        String internalClassName = getRawElement().getSchemaType().get().getName();
         // User labels on edges/vertices are prepended with E_ or V_ . The user
         // should not see that.
         return graph.classNameToLabel(internalClassName);
@@ -54,8 +53,8 @@ public abstract class OrientElement implements Element {
         if (Graph.Hidden.isHidden(key))
             throw Property.Exceptions.propertyKeyCanNotBeAHiddenKey(key);
 
-        ODocument doc = getRawDocument();
-        doc.field(key, value);
+        OElement doc = getRawElement();
+        doc.setProperty(key, value);
 
         // when setting multiple properties at once, it makes sense to only save
         // them in the end
@@ -76,7 +75,7 @@ public abstract class OrientElement implements Element {
             if (!keyValues[i].equals(T.id) && !keyValues[i].equals(T.label))
                 property((String) keyValues[i], keyValues[i + 1], false);
         }
-        getRawDocument().save();
+        getRawElement().save();
     }
 
     public <V> Iterator<? extends Property<V>> properties(final String... propertyKeys) {
@@ -97,23 +96,20 @@ public abstract class OrientElement implements Element {
         return propertyStream.iterator();
     }
 
-    public void save() {
-        ((ODocument) rawElement).save();
+    @Override
+    public void remove() {
+        rawElement.delete();
     }
 
-    public ODocument getRawDocument() {
-        if (!(rawElement instanceof ODocument))
-            rawElement = new ODocument(rawElement.getIdentity());
-        return (ODocument) rawElement;
+    public void save() {
+        rawElement.save();
     }
 
     public OrientGraph getGraph() {
         return graph;
     }
 
-    public OIdentifiable getRawElement() {
-        return rawElement;
-    }
+    public abstract OElement getRawElement();
 
     @Override
     public final int hashCode() {
