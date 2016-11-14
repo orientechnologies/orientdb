@@ -40,8 +40,7 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
   /**
    * Constructs a new object using an existent database instance.
    *
-   * @param iDatabase
-   *          Underlying database object to attach
+   * @param iDatabase Underlying database object to attach
    */
   protected OrientTransactionalGraph(final ODatabaseDocumentTx iDatabase) {
     this(iDatabase, true, null, null);
@@ -125,7 +124,7 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
   public OrientTransactionalGraph setUseLog(final boolean useLog) {
     makeActive();
 
-    settings.setUseLog( useLog );
+    settings.setUseLog(useLog);
     return this;
   }
 
@@ -133,7 +132,16 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
   public void setAutoStartTx(boolean autoStartTx) {
     makeActive();
 
-    final boolean showWarning = !autoStartTx && isAutoStartTx() && getDatabase() != null && getDatabase().getTransaction().isActive();
+    final boolean showWarning;
+    if (!autoStartTx && isAutoStartTx() && getDatabase() != null && getDatabase().getTransaction().isActive()) {
+      if (getDatabase().getTransaction().getEntryCount() > 0) {
+        getDatabase().getTransaction().rollback();
+        showWarning = false;
+      } else
+        showWarning = true;
+    } else
+      showWarning = false;
+    
     super.setAutoStartTx(autoStartTx);
 
     if (showWarning)
@@ -145,8 +153,7 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
   /**
    * Closes a transaction.
    *
-   * @param conclusion
-   *          Can be SUCCESS for commit and FAILURE to rollback.
+   * @param conclusion Can be SUCCESS for commit and FAILURE to rollback.
    */
   @SuppressWarnings("deprecation")
   @Override
