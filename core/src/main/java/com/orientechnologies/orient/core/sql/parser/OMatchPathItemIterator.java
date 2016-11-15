@@ -30,39 +30,27 @@ public class OMatchPathItemIterator implements Iterator<OIdentifiable> {
     this.stack.add(new Iterator() {
       boolean executed = false;
 
-      @Override public boolean hasNext() {
+      @Override
+      public boolean hasNext() {
         return !executed;
       }
 
-      @Override public Object next() {
+      @Override
+      public Object next() {
         if (executed) {
           throw new IllegalStateException();
         }
         executed = true;
         return startingPoint;
       }
+
+      @Override
+      public void remove() {
+
+      }
     });
 
     loadNext();
-  }
-
-  @Override public boolean hasNext() {
-    while (stack.size() > 0 && nextElement == null) {
-      loadNext();
-    }
-    return nextElement != null;
-  }
-
-  @Override public OIdentifiable next() {
-    if (nextElement == null) {
-      throw new IllegalStateException();
-    }
-    OIdentifiable result = nextElement;
-    nextElement = null;
-    while (stack.size() > 0 && nextElement == null) {
-      loadNext();
-    }
-    return result;
   }
 
   protected void loadNext() {
@@ -123,6 +111,25 @@ public class OMatchPathItemIterator implements Iterator<OIdentifiable> {
       stack.add(0, item.traversePatternEdge(matchContext, startingPoint, ctx).iterator());
     }
     ctx.setVariable("$depth", oldDepth);
+  }  @Override
+  public boolean hasNext() {
+    while (stack.size() > 0 && nextElement == null) {
+      loadNext();
+    }
+    return nextElement != null;
+  }
+
+  private Integer maxDepth(OMatchFilter filter) {
+    if (filter == null) {
+      return 1;
+    }
+    if (filter.getMaxDepth() != null) {
+      return filter.getMaxDepth();
+    }
+    if (filter.getWhileCondition() == null) {
+      return 1;
+    }
+    return null;
   }
 
   private boolean matchesClass(OClass oClass, OIdentifiable startingPoint) {
@@ -138,19 +145,26 @@ public class OMatchPathItemIterator implements Iterator<OIdentifiable> {
       return false;
     }
     return clazz.isSubClassOf(oClass);
+  }  @Override
+  public OIdentifiable next() {
+    if (nextElement == null) {
+      throw new IllegalStateException();
+    }
+    OIdentifiable result = nextElement;
+    nextElement = null;
+    while (stack.size() > 0 && nextElement == null) {
+      loadNext();
+    }
+    return result;
   }
 
-  private Integer maxDepth(OMatchFilter filter) {
-    if (filter == null) {
-      return 1;
-    }
-    if (filter.getMaxDepth() != null) {
-      return filter.getMaxDepth();
-    }
-    if (filter.getWhileCondition() == null) {
-      return 1;
-    }
-    return null;
+
+
+  @Override
+  public void remove() {
+
   }
+
+
 
 }
