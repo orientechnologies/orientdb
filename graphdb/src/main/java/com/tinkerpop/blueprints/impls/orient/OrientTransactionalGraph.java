@@ -136,7 +136,7 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
 
     final boolean showWarning;
     if (!autoStartTx && isAutoStartTx() && getDatabase() != null && getDatabase().getTransaction().isActive()) {
-      if (getDatabase().getTransaction().getEntryCount() > 0) {
+      if (getDatabase().getTransaction().getEntryCount() == 0) {
         getDatabase().getTransaction().rollback();
         showWarning = false;
       } else
