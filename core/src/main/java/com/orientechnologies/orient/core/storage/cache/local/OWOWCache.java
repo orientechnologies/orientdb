@@ -392,9 +392,15 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         } else
           fileId = -fileId;
 
+        long externalId = composeFileId(id, fileId);
+        while (files.get(externalId) != null) {
+          ++fileCounter;
+          fileId = fileCounter;
+          externalId = composeFileId(id, fileId);
+        }
+
         openFile(fileClassic);
 
-        final long externalId = composeFileId(id, fileId);
         files.add(externalId, fileClassic);
 
         nameIdMap.put(fileName, fileId);
