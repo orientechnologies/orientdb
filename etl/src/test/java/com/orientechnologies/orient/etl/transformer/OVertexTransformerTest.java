@@ -52,9 +52,8 @@ public class OVertexTransformerTest extends OETLBaseTest {
     assertEquals("V", 1, graph.countVertices());
     assertEquals("person", 1, graph.countVertices("Person"));
 
-    for (ODocument doc : graph.getRawGraph().browseCluster("custom")) {
-      System.out.println(doc.toJSON());
-    }
+    assertThat(graph.getRawGraph().countClusterElements("custom")).isEqualTo(1);
+
   }
 
   @Test
