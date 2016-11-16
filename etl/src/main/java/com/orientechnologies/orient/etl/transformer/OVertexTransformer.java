@@ -76,7 +76,7 @@ public class OVertexTransformer extends OAbstractTransformer {
       try {
 
         v.getRecord().setClassName(vertexClass);
-        v.save(clusterName);
+//        v.save(clusterName);
       } catch (ORecordDuplicatedException e) {
         if (skipDuplicates) {
           return null;

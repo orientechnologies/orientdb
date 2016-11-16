@@ -33,6 +33,8 @@ public abstract class OAbstractTransformer extends OAbstractETLPipelineComponent
       return null;
 
     if (!skip(input)) {
+      pipeline.getDocumentDatabase();
+      pipeline.getGraphDatabase();
       context.setVariable("input", input);
       final Object result = executeTransform(input);
       if (output == null) {

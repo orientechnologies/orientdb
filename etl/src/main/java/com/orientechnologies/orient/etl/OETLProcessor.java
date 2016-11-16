@@ -40,7 +40,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.TimerTask;
-import java.util.concurrent.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -49,6 +55,10 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Luca Garulli (l.garulli-at-orientechnologies.com)
  */
 public class OETLProcessor {
+  public enum LOG_LEVELS {
+    NONE, ERROR, INFO, DEBUG
+  }
+
   protected final OETLComponentFactory factory = new OETLComponentFactory();
   protected final OETLProcessorStats   stats   = new OETLProcessorStats();
   protected List<OBlock>       beginBlocks;
@@ -91,6 +101,28 @@ public class OETLProcessor {
     endBlocks = iEndBlocks;
     context = iContext;
     init();
+  }
+
+  protected void init() {
+    final String cfgLog = (String) context.getVariable("log");
+    if (cfgLog != null)
+      logLevel = LOG_LEVELS.valueOf(cfgLog.toUpperCase());
+
+    final Boolean cfgHaltOnError = (Boolean) context.getVariable("haltOnError");
+    if (cfgHaltOnError != null)
+      haltOnError = cfgHaltOnError;
+
+    final Object parallelSetting = context.getVariable("parallel");
+    if (parallelSetting != null)
+      parallel = (Boolean) parallelSetting;
+
+    if (parallel) {
+      final int cores = Runtime.getRuntime().availableProcessors();
+
+      if (cores >= 2)
+        workers = cores - 1;
+    }
+
   }
 
   public OETLProcessor() {
@@ -150,31 +182,13 @@ public class OETLProcessor {
     return context;
   }
 
-  protected void init() {
-    final String cfgLog = (String) context.getVariable("log");
-    if (cfgLog != null)
-      logLevel = LOG_LEVELS.valueOf(cfgLog.toUpperCase());
-
-    final Boolean cfgHaltOnError = (Boolean) context.getVariable("haltOnError");
-    if (cfgHaltOnError != null)
-      haltOnError = cfgHaltOnError;
-
-    final Object parallelSetting = context.getVariable("parallel");
-    if (parallelSetting != null)
-      parallel = (Boolean) parallelSetting;
-
-    if (parallel) {
-      final int cores = Runtime.getRuntime().availableProcessors();
-
-      if (cores >= 2)
-        workers = cores - 1;
-    }
-
-  }
-
   public OETLProcessor parse(final ODocument cfg, final OCommandContext iContext) {
-    return parse(cfg.<Collection<ODocument>>field("begin"), cfg.<ODocument>field("source"), cfg.<ODocument>field("extractor"),
-        cfg.<Collection<ODocument>>field("transformers"), cfg.<ODocument>field("loader"), cfg.<Collection<ODocument>>field("end"),
+    return parse(cfg.<Collection<ODocument>>field("begin"),
+        cfg.<ODocument>field("source"),
+        cfg.<ODocument>field("extractor"),
+        cfg.<Collection<ODocument>>field("transformers"),
+        cfg.<ODocument>field("loader"),
+        cfg.<Collection<ODocument>>field("end"),
         iContext);
   }
 
@@ -190,8 +204,12 @@ public class OETLProcessor {
    * @param iContext      Execution Context
    * @return Current OETProcessor instance
    **/
-  public OETLProcessor parse(final Collection<ODocument> iBeginBlocks, final ODocument iSource, final ODocument iExtractor,
-      final Collection<ODocument> iTransformers, final ODocument iLoader, final Collection<ODocument> iEndBlocks,
+  public OETLProcessor parse(final Collection<ODocument> iBeginBlocks,
+      final ODocument iSource,
+      final ODocument iExtractor,
+      final Collection<ODocument> iTransformers,
+      final ODocument iLoader,
+      final Collection<ODocument> iEndBlocks,
       final OCommandContext iContext) {
     if (iExtractor == null)
       throw new IllegalArgumentException("No Extractor configured");
@@ -205,6 +223,8 @@ public class OETLProcessor {
       configureSource(iSource, iContext);
 
       configureExtractors(iExtractor, iContext);
+
+      copySkipDuplicatestoLoaderConf(iTransformers, iLoader);
 
       configureLoader(iLoader, iContext);
 
@@ -225,6 +245,21 @@ public class OETLProcessor {
       throw OException.wrapException(new OConfigurationException("Error on creating ETL processor"), e);
     }
     return this;
+  }
+
+  private void copySkipDuplicatestoLoaderConf(Collection<ODocument> iTransformers, ODocument iLoader) {
+    if (iTransformers != null) {
+      for (ODocument transformer : iTransformers) {
+        if (transformer.containsField("vertex")) {
+          ODocument vertexConf = transformer.field("vertex");
+          if (vertexConf.containsField("skipDuplicates")) {
+            ODocument loaderConf = iLoader.field(iLoader.fieldNames()[0]);
+            loaderConf.field("skipDuplicates", vertexConf.field("skipDuplicates"));
+          }
+        }
+      }
+    }
+
   }
 
   private void configureEndBlocks(Collection<ODocument> iEndBlocks, OCommandContext iContext)
@@ -557,10 +592,6 @@ public class OETLProcessor {
             "Class '" + iClassName + "' declared as 'input' of ETL Component '" + iComponent.getName() + "' was not found.");
       }
     return inClass;
-  }
-
-  public enum LOG_LEVELS {
-    NONE, ERROR, INFO, DEBUG
   }
 
   private static final class OETLPipelineWorker implements Callable<Boolean> {

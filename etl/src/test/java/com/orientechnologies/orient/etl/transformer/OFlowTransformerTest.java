@@ -24,7 +24,7 @@ import org.junit.Test;
 
 import java.util.Iterator;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 /**
  * Tests ETL Flow Transformer.
@@ -33,12 +33,15 @@ import static org.junit.Assert.assertEquals;
  */
 public class OFlowTransformerTest extends OETLBaseTest {
   @Test
-  public void testSkip() {
-    process("{source: { content: { value: 'name,surname\nJay,Miner\nJay,Test' } }, extractor : { csv: {} },"
-        + " transformers: [{vertex: {class:'V'}}, {flow:{operation:'skip',if: 'name <> \'Jay\''}},{field:{fieldName:'name', value:'3'}}"
+  public void testSkipOnCondition() {
+
+    process("{source: { content: { value: 'name,surname\nJay,Miner\nSkipMe,Test' } }, extractor : { csv: {} },"
+        + " transformers: [{vertex: {class:'V'}}, "
+        + "{flow:{operation:'skip',if: 'name <> \'Jay\''}},"
+        + "{field:{fieldName:'name', value:'3'}}"
         + "], loader: { orientdb: { dbURL: 'memory:OETLBaseTest', dbType:'graph' } } }");
 
-    assertEquals(2, graph.countVertices("V"));
+    assertEquals(1, graph.countVertices("V"));
 
     Iterator<Vertex> it = graph.getVertices().iterator();
 
@@ -46,27 +49,29 @@ public class OFlowTransformerTest extends OETLBaseTest {
     Object value1 = v1.getProperty("name");
     assertEquals("3", value1);
 
-    Vertex v2 = it.next();
-    Object value2 = v2.getProperty("name");
-    assertEquals("3", value2);
   }
 
   @Test
   public void testSkipNever() {
-    process("{source: { content: { value: 'name,surname\nJay,Miner\nTest,Test' } }, extractor : { csv: {} },"
-        + " transformers: [{vertex: {class:'V'}}, {flow:{operation:'skip',if: 'name = \'Jay\''}},{field:{fieldName:'name', value:'3'}}"
-        + "], loader: { orientdb: { dbURL: 'memory:OETLBaseTest', dbType:'graph'} } }");
+    process("{source: { content: { value: 'name,surname\nJay,Miner\nTest,Test' } }, "
+        + "extractor : { csv: {} },"
+        + " transformers: ["
+        + "{vertex: {class:'V'}}, "
+        + "{flow:{operation:'skip',if: 'name = \'Jay\''}},"
+        + "{field:{fieldName:'name', value:'3'}}"
+        + "], "
+        + "loader: "
+        + "{ orientdb: { dbURL: 'memory:OETLBaseTest', dbType:'graph'} } }");
 
-    assertEquals(2, graph.countVertices("V"));
+    assertEquals(1, graph.countVertices("V"));
 
     Iterator<Vertex> it = graph.getVertices().iterator();
 
     Vertex v1 = it.next();
     Object value1 = v1.getProperty("name");
-    assertEquals("Jay", value1);
+    assertEquals("3", value1);
+    Object value2 = v1.getProperty("surname");
+    assertEquals("Test", value2);
 
-    Vertex v2 = it.next();
-    Object value2 = v2.getProperty("name");
-    assertEquals("3", value2);
   }
 }
