@@ -174,7 +174,7 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal, T> 
   }
 
   public long countClusterElements(final int iClusterId) {
-    checkOpeness();
+    checkOpenness();
     return underlying.countClusterElements(iClusterId);
   }
 
@@ -183,54 +183,54 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal, T> 
    */
   @Override
   public void truncateCluster(String clusterName) {
-    checkOpeness();
+    checkOpenness();
     underlying.truncateCluster(clusterName);
   }
 
   public long countClusterElements(final int[] iClusterIds) {
-    checkOpeness();
+    checkOpenness();
     return underlying.countClusterElements(iClusterIds);
   }
 
   public long countClusterElements(final String iClusterName) {
-    checkOpeness();
+    checkOpenness();
     return underlying.countClusterElements(iClusterName);
   }
 
   @Override
   public long countClusterElements(int iClusterId, boolean countTombstones) {
-    checkOpeness();
+    checkOpenness();
     return underlying.countClusterElements(iClusterId, countTombstones);
   }
 
   @Override
   public long countClusterElements(int[] iClusterIds, boolean countTombstones) {
-    checkOpeness();
+    checkOpenness();
     return underlying.countClusterElements(iClusterIds, countTombstones);
   }
 
   public int getClusters() {
-    checkOpeness();
+    checkOpenness();
     return underlying.getClusters();
   }
 
   public boolean existsCluster(String iClusterName) {
-    checkOpeness();
+    checkOpenness();
     return underlying.existsCluster(iClusterName);
   }
 
   public Collection<String> getClusterNames() {
-    checkOpeness();
+    checkOpenness();
     return underlying.getClusterNames();
   }
 
   public int getClusterIdByName(final String iClusterName) {
-    checkOpeness();
+    checkOpenness();
     return underlying.getClusterIdByName(iClusterName);
   }
 
   public String getClusterNameById(final int iClusterId) {
-    checkOpeness();
+    checkOpenness();
     return underlying.getClusterNameById(iClusterId);
   }
 
@@ -243,12 +243,12 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal, T> 
   }
 
   public int addCluster(String iClusterName, int iRequestedId, Object... iParameters) {
-    checkOpeness();
+    checkOpenness();
     return underlying.addCluster(iClusterName, iRequestedId, iParameters);
   }
 
   public int addCluster(final String iClusterName, final Object... iParameters) {
-    checkOpeness();
+    checkOpenness();
     return underlying.addCluster(iClusterName, iParameters);
   }
 
@@ -263,7 +263,7 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal, T> 
   }
 
   public int getDefaultClusterId() {
-    checkOpeness();
+    checkOpenness();
     return underlying.getDefaultClusterId();
   }
 
@@ -353,7 +353,7 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal, T> 
     underlying.release();
   }
 
-  protected void checkOpeness() {
+  protected void checkOpenness() {
     if (isClosed())
       throw new ODatabaseException("Database '" + getURL() + "' is closed");
   }

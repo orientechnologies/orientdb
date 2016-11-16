@@ -110,7 +110,7 @@ public class SQLFindReferencesTest extends DocumentDBBaseTest {
   }
 
   @BeforeClass
-  public void createTestEnviroment() {
+  public void createTestEnvironment() {
     createSchema();
     populateDatabase();
   }
@@ -190,7 +190,7 @@ public class SQLFindReferencesTest extends DocumentDBBaseTest {
   }
 
   @AfterClass
-  public void deleteTestEnviroment() {
+  public void deleteTestEnvironment() {
 		database.open("admin", "admin");
 
     carID.reset();

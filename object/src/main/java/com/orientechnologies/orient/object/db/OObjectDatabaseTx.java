@@ -136,7 +136,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 
   @Override
   public OMetadataObject getMetadata() {
-    checkOpeness();
+    checkOpenness();
     if (metadata == null)
       metadata = new OMetadataObject((OMetadataInternal) underlying.getMetadata());
     return metadata;
@@ -221,14 +221,14 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   }
 
   public <RET> OObjectIteratorClass<RET> browseClass(final String iClassName, final boolean iPolymorphic) {
-    checkOpeness();
+    checkOpenness();
     checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_READ, iClassName);
 
     return new OObjectIteratorClass<RET>(this, getUnderlying(), iClassName, iPolymorphic);
   }
 
   public <RET> OObjectIteratorCluster<RET> browseCluster(final String iClusterName) {
-    checkOpeness();
+    checkOpenness();
     checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_READ, iClusterName);
 
     return (OObjectIteratorCluster<RET>) new OObjectIteratorCluster<Object>(this, getUnderlying(),
@@ -253,7 +253,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 
   @Override
   public <RET> RET reload(Object iObject, String iFetchPlan, boolean iIgnoreCache, boolean force) {
-    checkOpeness();
+    checkOpenness();
     if (iObject == null)
       return null;
 
@@ -336,7 +336,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   @Deprecated
   public <RET> RET load(Object iPojo, String iFetchPlan, boolean iIgnoreCache, final boolean iUpdateCache, boolean loadTombstone,
       OStorage.LOCKING_STRATEGY iLockingStrategy) {
-    checkOpeness();
+    checkOpenness();
     if (iPojo == null)
       return null;
 
@@ -376,7 +376,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   @Deprecated
   public <RET> RET load(ORID iRecordId, String iFetchPlan, boolean iIgnoreCache, final boolean iUpdateCache, boolean loadTombstone,
       OStorage.LOCKING_STRATEGY iLockingStrategy) {
-    checkOpeness();
+    checkOpenness();
     if (iRecordId == null)
       return null;
 
@@ -438,7 +438,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
    */
   public <RET> RET save(final Object iPojo, final String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
       final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<Integer> iRecordUpdatedCallback) {
-    checkOpeness();
+    checkOpenness();
     if (iPojo == null)
       return (RET) iPojo;
     else if (OMultiValue.isMultiValue(iPojo)) {
@@ -477,7 +477,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   }
 
   public ODatabaseObject delete(final Object iPojo) {
-    checkOpeness();
+    checkOpenness();
 
     if (iPojo == null)
       return this;
@@ -502,7 +502,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 
   @Override
   public ODatabaseObject delete(final ORID iRID) {
-    checkOpeness();
+    checkOpenness();
 
     if (iRID == null)
       return this;
@@ -540,22 +540,22 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   }
 
   public long countClass(final String iClassName) {
-    checkOpeness();
+    checkOpenness();
     return underlying.countClass(iClassName);
   }
 
   public long countClass(final String iClassName, final boolean iPolymorphic) {
-    checkOpeness();
+    checkOpenness();
     return underlying.countClass(iClassName, iPolymorphic);
   }
 
   public long countClass(final Class<?> iClass) {
-    checkOpeness();
+    checkOpenness();
     return underlying.countClass(iClass.getSimpleName());
   }
 
   public ODictionary<Object> getDictionary() {
-    checkOpeness();
+    checkOpenness();
     if (dictionary == null)
       dictionary = new ODictionaryWrapper(this, underlying.getDictionary().getIndex());
 
@@ -637,7 +637,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
    */
   @Override
   public int getVersion(final Object iPojo) {
-    checkOpeness();
+    checkOpenness();
     final ODocument record = getRecordByUserObject(iPojo, false);
     if (record != null)
       return record.getVersion();
@@ -652,7 +652,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
    */
   @Override
   public ORID getIdentity(final Object iPojo) {
-    checkOpeness();
+    checkOpenness();
     if (iPojo instanceof OIdentifiable)
       return ((OIdentifiable) iPojo).getIdentity();
     final ODocument record = getRecordByUserObject(iPojo, false);
@@ -678,7 +678,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   }
 
   public Object newInstance() {
-    checkOpeness();
+    checkOpenness();
     return new ODocument();
   }
 
@@ -856,7 +856,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   }
 
   private boolean deleteRecord(ORID iRID, final int iVersion, boolean prohibitTombstones) {
-    checkOpeness();
+    checkOpenness();
 
     if (iRID == null)
       return true;

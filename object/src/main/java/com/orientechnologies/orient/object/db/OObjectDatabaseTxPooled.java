@@ -100,7 +100,7 @@ public class OObjectDatabaseTxPooled extends OObjectDatabaseTx implements ODatab
     if (isClosed())
       return;
 
-    checkOpeness();
+    checkOpenness();
     if (ownerPool.getConnectionsInCurrentThread(getURL(), userName) > 1) {
       ownerPool.release(this);
       return;
@@ -136,12 +136,12 @@ public class OObjectDatabaseTxPooled extends OObjectDatabaseTx implements ODatab
   }
 
   @Override
-  protected void checkOpeness() {
+  protected void checkOpenness() {
     if (ownerPool == null)
       throw new ODatabaseException(
           "Database instance has been released to the pool. Get another database instance from the pool with the right username and password");
 
-    super.checkOpeness();
+    super.checkOpenness();
   }
 
   public boolean isUnderlyingOpen() {

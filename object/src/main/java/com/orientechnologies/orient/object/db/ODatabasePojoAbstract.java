@@ -217,7 +217,7 @@ import java.util.Map.Entry;
   }
 
   @Override public <RET extends List<?>> RET query(OQuery<?> iCommand, Object... iArgs) {
-    checkOpeness();
+    checkOpenness();
 
     convertParameters(iArgs);
 
@@ -391,7 +391,7 @@ import java.util.Map.Entry;
     Object pojo = records2Objects.get(record);
 
     if (pojo == null && iCreate) {
-      checkOpeness();
+      checkOpenness();
 
       try {
         if (iRecord.getRecord().getInternalStatus() == ORecordElement.STATUS.NOT_LOADED)
@@ -411,7 +411,7 @@ import java.util.Map.Entry;
   }
 
   public void attach(final Object iPojo) {
-    checkOpeness();
+    checkOpenness();
 
     final ODocument record = objects2Records.get(iPojo);
     if (record != null)
@@ -424,7 +424,7 @@ import java.util.Map.Entry;
   }
 
   public <RET> RET detach(final Object iPojo) {
-    checkOpeness();
+    checkOpenness();
 
     for (Field field : iPojo.getClass().getDeclaredFields()) {
       final Object value = OObjectSerializerHelper.getFieldValue(iPojo, field.getName());

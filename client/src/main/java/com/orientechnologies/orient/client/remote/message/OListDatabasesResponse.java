@@ -10,14 +10,14 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
-public class OListDatabasesReponse implements OBinaryResponse{
+public class OListDatabasesResponse implements OBinaryResponse{
   private Map<String, String> databases;
 
-  public OListDatabasesReponse(Map<String, String> databases) {
+  public OListDatabasesResponse(Map<String, String> databases) {
     this.databases = databases;
   }
 
-  public OListDatabasesReponse() {
+  public OListDatabasesResponse() {
   }
 
   @Override
