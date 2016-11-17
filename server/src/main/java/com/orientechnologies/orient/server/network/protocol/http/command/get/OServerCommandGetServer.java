@@ -44,7 +44,7 @@ public class OServerCommandGetServer extends OServerCommandGetConnections {
 
     final String result = OServerInfo.getServerInfo(server);
 
-    iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, result, null);
+    iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, result, null);
 
     return false;
   }

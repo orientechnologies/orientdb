@@ -167,7 +167,7 @@ public class OHttpGraphResponse extends OHttpResponse {
       json.endObject();
       json.endObject();
 
-      send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, buffer.toString(), null);
+      send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, buffer.toString(), null);
     } finally {
       graph.shutdown();
     }

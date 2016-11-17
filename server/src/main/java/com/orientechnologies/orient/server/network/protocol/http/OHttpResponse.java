@@ -256,7 +256,7 @@ public class OHttpResponse {
     final Iterator<Object> it = OMultiValue.getMultiValueIterator(iRecords);
 
     if (accept != null && accept.contains("text/csv")) {
-      sendStream(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, "data.csv", new OCallable<Void, OChunkedResponse>() {
+      sendStream(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, "data.csv", new OCallable<Void, OChunkedResponse>() {
 
         @Override
         public Void call(final OChunkedResponse iArgument) {
@@ -329,7 +329,7 @@ public class OHttpResponse {
 
       final String sendFormat = iFormat;
       if (streaming ) {
-        sendStream(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, null, new OCallable<Void, OChunkedResponse>() {
+        sendStream(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, null, new OCallable<Void, OChunkedResponse>() {
           @Override
           public Void call(OChunkedResponse iArgument) {
             try {
@@ -345,7 +345,7 @@ public class OHttpResponse {
       } else {
         final StringWriter buffer = new StringWriter();
         writeRecordsOnStream(iFetchPlan, iFormat, iAdditionalProperties, it, buffer);
-        send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, buffer.toString(), null);
+        send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, buffer.toString(), null);
       }
     }
   }
@@ -441,7 +441,7 @@ public class OHttpResponse {
 
     final String format = iFetchPlan != null ? iFormat + ",fetchPlan:" + iFetchPlan : iFormat;
     if (iRecord != null) {
-      send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, iRecord.toJSON(format),
+      send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, iRecord.toJSON(format),
           OHttpUtils.HEADER_ETAG + iRecord.getVersion());
     }
   }

@@ -54,7 +54,7 @@ public class OServerCommandPostImportDatabase extends OHttpMultipartRequestComma
           importer.setOption(option.getKey(), option.getValue());
         importer.importDatabase();
 
-        iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON,
+        iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON,
             "{\"responseText\": \"Database imported Correctly, see server log for more informations.\"}", null);
       } catch (Exception e) {
         iResponse.send(OHttpUtils.STATUS_INTERNALERROR_CODE,
@@ -80,7 +80,7 @@ public class OServerCommandPostImportDatabase extends OHttpMultipartRequestComma
           importer.setOption(option.getKey(), option.getValue());
         importer.importDatabase();
 
-        iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON,
+        iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON,
             "{\"responseText\": \"Database imported Correctly, see server log for more informations.\"}", null);
       } catch (Exception e) {
         iResponse.send(OHttpUtils.STATUS_INTERNALERROR_CODE,
