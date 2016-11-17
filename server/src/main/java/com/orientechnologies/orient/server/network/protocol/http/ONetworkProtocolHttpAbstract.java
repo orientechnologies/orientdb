@@ -332,6 +332,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
       if (e instanceof NullPointerException) {
         OLogManager.instance().error(this, "Internal server error:\n", e);
       } else {
+        OLogManager.instance().debug(this, "Internal server error:\n", e);
         OLogManager.instance().error(this, "Internal server error:\n%s", errorMessage);
       }
     }
