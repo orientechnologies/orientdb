@@ -192,6 +192,7 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
    * the smallest number of iterations possible and then increment result value by 1.
    *
    * @param value Integer the most significant power of 2 should be found.
+   *
    * @return The most significant power of 2.
    */
   private int closestPowerOfTwo(int value) {
@@ -214,6 +215,7 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
    * Position of returned buffer is always zero.
    *
    * @param clear Whether returned buffer should be filled with zeros before return.
+   *
    * @return Direct memory buffer instance.
    */
   public ByteBuffer acquireDirect(boolean clear) {
@@ -472,6 +474,37 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
     }
   }
 
+  /**
+   * Logs all known tracking information about the given buffer. {@link OGlobalConfiguration#DIRECT_MEMORY_TRACK_MODE} must be on,
+   * otherwise this method does nothing.
+   *
+   * @param prefix the log message prefix
+   * @param buffer the buffer to print information about
+   */
+  @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
+  public void logTrackedBufferInfo(String prefix, ByteBuffer buffer) {
+    if (TRACK) {
+      synchronized (this) {
+        final TrackedBufferKey trackedBufferKey = new TrackedBufferKey(buffer);
+        final TrackedBufferReference reference = trackedBuffers.get(trackedBufferKey);
+
+        final StringBuilder builder = new StringBuilder();
+        builder.append("DIRECT-TRACK: ").append(prefix).append(String.format(" buffer `%X` ", id(buffer)));
+
+        if (reference == null)
+          builder.append("untracked");
+        else
+          builder.append("allocated from: ").append('\n').append(getStackTraceAsString(reference.stackTrace)).append('\n');
+
+        final Exception release = trackedReleases.get(trackedBufferKey);
+        if (release != null)
+          builder.append("released from: ").append('\n').append(getStackTraceAsString(release)).append('\n');
+
+        OLogManager.instance().error(this, builder.toString());
+      }
+    }
+  }
+
   private static final class BufferHolder {
     private volatile ByteBuffer buffer;
     private final CountDownLatch latch = new CountDownLatch(1);
@@ -612,6 +645,12 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
         builder.append(stringWriter.toString());
       }
     }
+  }
+
+  private static String getStackTraceAsString(Throwable throwable) {
+    final StringWriter writer = new StringWriter();
+    throwable.printStackTrace(new PrintWriter(writer));
+    return writer.toString();
   }
 
   private static class TrackedBufferReference extends WeakReference<ByteBuffer> {
