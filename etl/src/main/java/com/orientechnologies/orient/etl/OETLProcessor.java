@@ -52,6 +52,9 @@ import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.*;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com) (l.garulli-at-orientdb.com)
  */
 public class OETLProcessor {
+  public enum LOG_LEVELS {
+    NONE, ERROR, INFO, DEBUG
+  }
   protected final OETLComponentFactory factory;
   protected final OETLProcessorStats   stats;
   private final   ExecutorService      executor;
@@ -100,20 +103,6 @@ public class OETLProcessor {
     configRunBehaviour(context);
   }
 
-  public static void main(final String[] args) {
-
-    System.out.println("OrientDB etl v." + OConstants.getVersion() + " " + OConstants.ORIENT_URL);
-    if (args.length == 0) {
-      System.out.println("Syntax error, missing configuration file.");
-      System.out.println("Use: oetl.sh <json-file>");
-      System.exit(1);
-    }
-
-    final OETLProcessor processor = new OETLProcessorConfigurator().parseConfigAndParameters(args);
-
-    processor.execute();
-  }
-
   protected void configRunBehaviour(OCommandContext context) {
     final String cfgLog = (String) context.getVariable("log");
     if (cfgLog != null)
@@ -134,6 +123,20 @@ public class OETLProcessor {
         workers = cores - 1;
     }
 
+  }
+
+  public static void main(final String[] args) {
+
+    System.out.println("OrientDB etl v." + OConstants.getVersion() + " " + OConstants.ORIENT_URL);
+    if (args.length == 0) {
+      System.out.println("Syntax error, missing configuration file.");
+      System.out.println("Use: oetl.sh <json-file>");
+      System.exit(1);
+    }
+
+    final OETLProcessor processor = new OETLProcessorConfigurator().parseConfigAndParameters(args);
+
+    processor.execute();
   }
 
   public void out(final LOG_LEVELS iLogLevel, final String iText, final Object... iArgs) {
@@ -383,10 +386,6 @@ public class OETLProcessor {
 
   public OETLComponentFactory getFactory() {
     return factory;
-  }
-
-  public enum LOG_LEVELS {
-    NONE, ERROR, INFO, DEBUG
   }
 
   public class OETLProcessorStats {
