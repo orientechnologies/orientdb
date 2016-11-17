@@ -38,24 +38,36 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODiskW
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
-  private final AtomicBoolean backupInProgress = new AtomicBoolean(false);
-
-  public static final String IBU_EXTENSION                 = ".ibu";
-  public static final String CONF_ENTRY_NAME               = "database.ocf";
-  public static final String INCREMENTAL_BACKUP_DATEFORMAT = "yyyy-MM-dd-HH-mm-ss";
+  public static final String        IBU_EXTENSION                 = ".ibu";
+  public static final String        CONF_ENTRY_NAME               = "database.ocf";
+  public static final String        INCREMENTAL_BACKUP_DATEFORMAT = "yyyy-MM-dd-HH-mm-ss";
+  private final       AtomicBoolean backupInProgress              = new AtomicBoolean(false);
 
   public OEnterpriseLocalPaginatedStorage(String name, String filePath, String mode, int id, OReadCache readCache,
       OClosableLinkedContainer<Long, OFileClassic> files) throws IOException {
@@ -231,8 +243,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
   private OLogSequenceNumber incrementalBackup(final OutputStream stream, final OLogSequenceNumber fromLsn) throws IOException {
     OLogSequenceNumber lastLsn;
 
-    checkOpeness();
-
+    checkOpenness();
     if (!backupInProgress.compareAndSet(false, true)) {
       throw new OBackupInProgressException(
           "You are trying to start incremental backup but it is in progress now, please wait till it will be finished", getName(),
@@ -241,8 +252,8 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
 
     stateLock.acquireReadLock();
     try {
-      checkOpeness();
 
+      checkOpenness();
       final long freezeId;
 
       if (!isWriteAllowedDuringIncrementalBackup())
