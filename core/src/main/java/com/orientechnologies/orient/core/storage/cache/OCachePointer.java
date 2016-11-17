@@ -19,15 +19,14 @@
  */
 package com.orientechnologies.orient.core.storage.cache;
 
-import java.nio.ByteBuffer;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+
+import java.nio.ByteBuffer;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -247,8 +246,25 @@ public class OCachePointer {
   protected void finalize() throws Throwable {
     super.finalize();
 
-    if (referrersCount.get() > 0 && buffer != null)
+    boolean needInfo = false;
+
+    if (getReaders(readersWritersReferrer.get()) != 0) {
+      needInfo = true;
+      OLogManager.instance().error(this, "OCachePointer.finalize: readers != 0");
+    }
+    if (getWriters(readersWritersReferrer.get()) != 0) {
+      needInfo = true;
+      OLogManager.instance().error(this, "OCachePointer.finalize: writers != 0");
+    }
+
+    if (needInfo && buffer != null)
+      bufferPool.logTrackedBufferInfo("finalizing", buffer);
+
+    if (referrersCount.get() > 0 && buffer != null) {
+      if (!needInfo) // not logged yet
+        bufferPool.logTrackedBufferInfo("finalizing", buffer);
       bufferPool.release(buffer);
+    }
   }
 
   @Override
