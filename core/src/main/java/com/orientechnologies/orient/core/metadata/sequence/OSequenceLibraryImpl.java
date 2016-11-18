@@ -57,7 +57,9 @@ public class OSequenceLibraryImpl implements OSequenceLibrary {
         document.reload();
 
         final OSequence sequence = OSequenceHelper.createSequence(document);
-        sequences.put(sequence.getName().toUpperCase(), sequence);
+        if (sequence != null) {
+          sequences.put(sequence.getName().toUpperCase(), sequence);
+        }
       }
     }
   }

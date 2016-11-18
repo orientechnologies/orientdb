@@ -46,6 +46,9 @@ public class OSequenceHelper {
 
   public static OSequence createSequence(ODocument document) {
     SEQUENCE_TYPE sequenceType = OSequence.getSequenceType(document);
-    return createSequence(sequenceType, null, document);
+    if (sequenceType != null)
+     return createSequence(sequenceType, null, document);
+
+    return null;
   }
 }

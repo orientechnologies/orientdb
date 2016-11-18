@@ -213,7 +213,10 @@ public abstract class OSequence {
 
   public static SEQUENCE_TYPE getSequenceType(final ODocument document) {
     String sequenceTypeStr = document.field(FIELD_TYPE);
-    return SEQUENCE_TYPE.valueOf(sequenceTypeStr);
+    if (sequenceTypeStr != null)
+     return SEQUENCE_TYPE.valueOf(sequenceTypeStr);
+
+    return null;
   }
 
   public static void initClass(OClassImpl sequenceClass) {
