@@ -145,10 +145,6 @@ public class ODefaultClusterOwnershipAssignmentStrategy implements OClusterOwner
 
   protected Map<String, String> reassignClusters(final ODistributedConfiguration cfg, final Set<String> availableNodes,
       final Set<String> clustersOfClassToReassign, final Set<String> clusterNames, final boolean rebalance) {
-    int targetClustersPerNode = clusterNames.size() / availableNodes.size();
-    if (targetClustersPerNode == 0 || clusterNames.size() % availableNodes.size() > 0)
-      targetClustersPerNode += 1;
-
     // ORDER OWNERSHIP BY SIZE
     final List<OPair<String, List<String>>> nodeOwners = new ArrayList<OPair<String, List<String>>>(availableNodes.size());
     for (String server : availableNodes) {
@@ -174,9 +170,17 @@ public class ODefaultClusterOwnershipAssignmentStrategy implements OClusterOwner
 
     final Map<String, String> clusterToAssignOwnership = new HashMap<String, String>();
 
+    int currentServerIndex = 0;
     for (OPair<String, List<String>> owner : nodeOwners) {
       final String server = owner.getKey();
       final List<String> ownedClusters = owner.getValue();
+
+      // AT EVERY ITERATION COMPUTE THE BEST NUMBER OF CLUSTER TO ASSIGN TO THE CURRENT NODE
+      int targetClustersPerNode =
+          (clusterNames.size() - clustersOfClassToReassign.size()) / (availableNodes.size() - currentServerIndex);
+      if (targetClustersPerNode == 0
+          || (clusterNames.size() - clustersOfClassToReassign.size()) % (availableNodes.size() - currentServerIndex) > 0)
+        targetClustersPerNode = 1;
 
       if (rebalance && ownedClusters.size() > targetClustersPerNode) {
         // REMOVE CLUSTERS IF THERE IS NO STATIC CFG OF THE OWNER
@@ -209,6 +213,8 @@ public class ODefaultClusterOwnershipAssignmentStrategy implements OClusterOwner
             break;
         }
       }
+
+      currentServerIndex++;
     }
     return clusterToAssignOwnership;
 

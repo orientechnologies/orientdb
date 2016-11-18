@@ -836,6 +836,19 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     return iNodes.size();
   }
 
+  /**
+   * Returns the nodes with the requested status.
+   */
+  public int getNodesWithStatus(final Collection<String> iNodes, final String databaseName, final DB_STATUS... statuses) {
+    for (Iterator<String> it = iNodes.iterator(); it.hasNext(); ) {
+      final String node = it.next();
+
+      if (!isNodeStatusEqualsTo(node, databaseName, statuses))
+        it.remove();
+    }
+    return iNodes.size();
+  }
+
   @Override
   public String toString() {
     return nodeName;

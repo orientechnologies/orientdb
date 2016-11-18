@@ -1106,7 +1106,13 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     for (Map.Entry<String, Object> entry : configurationMap.entrySet()) {
       if (entry.getKey().startsWith(CONFIG_DATABASE_PREFIX)) {
         final String databaseName = entry.getKey().substring(CONFIG_DATABASE_PREFIX.length());
-        installDatabase(iStartup, databaseName, (ODocument) entry.getValue(), false, true);
+        try {
+          installDatabase(iStartup, databaseName, (ODocument) entry.getValue(), false, true);
+        } catch (Exception e) {
+          ODistributedServerLog
+              .error(this, getLocalNodeName(), null, DIRECTION.IN, "Error on installing database '%s' on local node", databaseName);
+          setDatabaseStatus(getLocalNodeName(), databaseName, DB_STATUS.NOT_AVAILABLE);
+        }
       }
     }
   }
