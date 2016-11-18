@@ -320,7 +320,7 @@ var OrientGraph = (function () {
       self.edges[id].forEach(function (e1) {
         var l1 = e1.label.replace("in_", "").replace("out_", "");
         if (l1 == "") l1 = "E";
-        if (e1.source == e.source && e1.target == e.target && l == l1) {
+        if (e1.source == e.source && e1.target == e.target && l == l1 && e.edge["@rid"] === e1.edge["@rid"]) {
           found = true;
         }
       })
