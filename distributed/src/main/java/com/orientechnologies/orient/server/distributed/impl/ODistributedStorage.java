@@ -61,6 +61,7 @@ import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.impl.task.*;
 import com.orientechnologies.orient.server.distributed.task.*;
+import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.orientechnologies.orient.server.security.OSecurityServerUser;
 
 import java.io.File;
@@ -1354,10 +1355,22 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
         cmd.append("`");
 
         // EXECUTE THIS OUTSIDE LOCK TO AVOID DEADLOCKS
-        OCommandSQL commandSQL = new OCommandSQL(cmd.toString());
-        commandSQL.addExcludedNode(getNodeId());
+        Object result = null;
+        try {
+          result = ((OHazelcastPlugin) dManager)
+              .executeInDistributedDatabaseLock(getName(), 0, new OCallable<Object, ODistributedConfiguration>() {
+                @Override
+                public Object call(ODistributedConfiguration iArgument) {
+                  final OCommandSQL commandSQL = new OCommandSQL(cmd.toString());
+                  commandSQL.addExcludedNode(getNodeId());
+                  return command(commandSQL);
+                }
+              });
+        } catch (Exception e) {
+          // RETRY
+          continue;
+        }
 
-        final Object result = command(commandSQL);
         if (result != null && ((Integer) result).intValue() != clId) {
           ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
               "Error on creating cluster '%s' on distributed nodes: ids are different (local=%d and remote=%d). Retrying %d/%d...",
@@ -1370,9 +1383,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
           cmd.append("drop cluster ");
           cmd.append(iClusterName);
 
-          commandSQL = new OCommandSQL(cmd.toString());
+          final OCommandSQL commandSQL = new OCommandSQL(cmd.toString());
           commandSQL.addExcludedNode(getNodeId());
-
           command(commandSQL);
 
           try {

@@ -107,12 +107,18 @@ public class ODistributedWorker extends Thread {
         Thread.currentThread().interrupt();
         break;
       } catch (Throwable e) {
-        if (e.getCause() instanceof InterruptedException)
-          Thread.currentThread().interrupt();
-        else
-          ODistributedServerLog.error(this, localNodeName, reqId != null ? manager.getNodeNameById(reqId.getNodeId()) : "?",
-              ODistributedServerLog.DIRECTION.IN, "Error on executing distributed request %s: (%s) worker=%d", e,
-              message != null ? message.getId() : -1, message != null ? message.getTask() : "-", id);
+        try {
+          if (e.getCause() instanceof InterruptedException)
+            Thread.currentThread().interrupt();
+          else
+            ODistributedServerLog.error(this, localNodeName, reqId != null ? manager.getNodeNameById(reqId.getNodeId()) : "?",
+                ODistributedServerLog.DIRECTION.IN, "Error on executing distributed request %s: (%s) worker=%d", e,
+                message != null ? message.getId() : -1, message != null ? message.getTask() : "-", id);
+        } catch (Throwable t) {
+          ODistributedServerLog.error(this, localNodeName, "?", ODistributedServerLog.DIRECTION.IN,
+              "Error on executing distributed request %s: (%s) worker=%d", e, message != null ? message.getId() : -1,
+              message != null ? message.getTask() : "-", id);
+        }
       }
     }
 
