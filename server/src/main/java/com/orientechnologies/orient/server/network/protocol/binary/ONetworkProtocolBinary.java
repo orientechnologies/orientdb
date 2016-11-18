@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OCommandCache;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
@@ -1437,16 +1438,17 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       command.setCacheableResult(true);
 
       // ASSIGNED THE PARSED FETCHPLAN
-      listener.setFetchPlan(connection.getDatabase().command(command).getFetchPlan());
+      final OCommandRequest commandImpl = connection.getDatabase().command(command);
+      listener.setFetchPlan(commandImpl.getFetchPlan());
 
       final Object result;
       if (params == null)
-        result = connection.getDatabase().command(command).execute();
+        result = commandImpl.execute();
       else
-        result = connection.getDatabase().command(command).execute(params);
+        result = commandImpl.execute(params);
 
       // FETCHPLAN HAS TO BE ASSIGNED AGAIN, because it can be changed by SQL statement
-      listener.setFetchPlan(command.getFetchPlan());
+      listener.setFetchPlan(commandImpl.getFetchPlan());
 
       if (asynch) {
         // ASYNCHRONOUS
