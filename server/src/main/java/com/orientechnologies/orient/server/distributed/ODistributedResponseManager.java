@@ -533,7 +533,10 @@ public class ODistributedResponseManager {
         final List<String> missingNodes = getMissingNodes();
 
         final int expectingNodes = missingNodes.size();
-        dManager.getAvailableNodes(missingNodes, getDatabaseName());
+
+        // EXCLUDE THE SERVERS OFFLINE OR IN SYNCHRONIZATION
+        dManager.getNodesWithStatus(missingNodes, getDatabaseName(), ODistributedServerManager.DB_STATUS.ONLINE,
+            ODistributedServerManager.DB_STATUS.BACKUP);
         final int unreacheableServersDuringRequest = expectingNodes - missingNodes.size();
 
         if (responseGroups.get(0).size() + unreacheableServersDuringRequest >= quorum) {
