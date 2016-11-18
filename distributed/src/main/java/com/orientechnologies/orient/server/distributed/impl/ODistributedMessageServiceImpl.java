@@ -24,10 +24,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.server.distributed.ODistributedMessageService;
-import com.orientechnologies.orient.server.distributed.ODistributedResponse;
-import com.orientechnologies.orient.server.distributed.ODistributedResponseManager;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
@@ -39,21 +36,20 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * Hazelcast implementation of distributed peer. There is one instance per database. Each node creates own instance to talk with
  * each others.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public class ODistributedMessageServiceImpl implements ODistributedMessageService {
 
   private final OHazelcastPlugin                                     manager;
   private final ConcurrentHashMap<Long, ODistributedResponseManager> responsesByRequestIds;
   private final TimerTask                                            asynchMessageManager;
-  private Map<String, ODistributedDatabaseImpl>                      databases           = new ConcurrentHashMap<String, ODistributedDatabaseImpl>();
-  private Thread                                                     responseThread;
-  private long[]                                                     responseTimeMetrics = new long[10];
-  private volatile boolean                                           running             = true;
-  private Map<String, OProfilerEntry>                                latencies           = new HashMap<String, OProfilerEntry>();
-  private Map<String, AtomicLong>                                    messagesStats       = new HashMap<String, AtomicLong>();
+  private Map<String, ODistributedDatabaseImpl> databases = new ConcurrentHashMap<String, ODistributedDatabaseImpl>();
+  private Thread responseThread;
+  private          long[]                      responseTimeMetrics = new long[10];
+  private volatile boolean                     running             = true;
+  private          Map<String, OProfilerEntry> latencies           = new HashMap<String, OProfilerEntry>();
+  private          Map<String, AtomicLong>     messagesStats       = new HashMap<String, AtomicLong>();
 
   public ODistributedMessageServiceImpl(final OHazelcastPlugin manager) {
     this.manager = manager;
@@ -89,8 +85,10 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
     }
 
     // SHUTDOWN ALL DATABASES
-    for (Entry<String, ODistributedDatabaseImpl> m : databases.entrySet())
+    for (Entry<String, ODistributedDatabaseImpl> m : databases.entrySet()) {
+      manager.setDatabaseStatus(manager.getLocalNodeName(), m.getKey(), ODistributedServerManager.DB_STATUS.OFFLINE);
       m.getValue().shutdown();
+    }
     databases.clear();
 
     asynchMessageManager.cancel();
@@ -129,6 +127,8 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
   }
 
   public ODistributedDatabaseImpl unregisterDatabase(final String iDatabaseName) {
+    manager.setDatabaseStatus(manager.getLocalNodeName(), iDatabaseName, ODistributedServerManager.DB_STATUS.OFFLINE);
+
     final ODistributedDatabaseImpl db = databases.remove(iDatabaseName);
     if (db != null) {
       db.shutdown();
@@ -162,8 +162,9 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
 
       }
     } finally {
-      Orient.instance().getProfiler().updateCounter("distributed.node.msgReceived",
-          "Number of replication messages received in current node", +1, "distributed.node.msgReceived");
+      Orient.instance().getProfiler()
+          .updateCounter("distributed.node.msgReceived", "Number of replication messages received in current node", +1,
+              "distributed.node.msgReceived");
 
       Orient.instance().getProfiler().updateCounter("distributed.node." + response.getExecutorNodeName() + ".msgReceived",
           "Number of replication messages received in current node from a node", +1, "distributed.node.*.msgReceived");
@@ -222,7 +223,7 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
 
     final long timeout = OGlobalConfiguration.DISTRIBUTED_ASYNCH_RESPONSES_TIMEOUT.getValueAsLong();
 
-    for (Iterator<Entry<Long, ODistributedResponseManager>> it = responsesByRequestIds.entrySet().iterator(); it.hasNext();) {
+    for (Iterator<Entry<Long, ODistributedResponseManager>> it = responsesByRequestIds.entrySet().iterator(); it.hasNext(); ) {
       final Entry<Long, ODistributedResponseManager> item = it.next();
 
       final ODistributedResponseManager resp = item.getValue();
@@ -237,11 +238,12 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
             "%d missed response(s) for message %d by nodes %s after %dms when timeout is %dms", missingNodes.size(),
             resp.getMessageId(), missingNodes, timeElapsed, timeout);
 
-        Orient.instance().getProfiler().updateCounter("distributed.db." + resp.getDatabaseName() + ".timeouts",
-            "Number of messages in timeouts", +1, "distributed.db.*.timeouts");
+        Orient.instance().getProfiler()
+            .updateCounter("distributed.db." + resp.getDatabaseName() + ".timeouts", "Number of messages in timeouts", +1,
+                "distributed.db.*.timeouts");
 
-        Orient.instance().getProfiler().updateCounter("distributed.node.timeouts", "Number of messages in timeouts", +1,
-            "distributed.node.timeouts");
+        Orient.instance().getProfiler()
+            .updateCounter("distributed.node.timeouts", "Number of messages in timeouts", +1, "distributed.node.timeouts");
 
         resp.timeout();
         it.remove();
