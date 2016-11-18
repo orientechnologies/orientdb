@@ -682,47 +682,62 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   public void shutdown() {
-    if (repairer != null)
-      repairer.shutdown();
+    try {
+      if (repairer != null)
+        repairer.shutdown();
 
-    // SEND THE SHUTDOWN TO ALL THE WORKER THREADS
-    for (ODistributedWorker workerThread : workerThreads) {
-      if (workerThread != null)
-        workerThread.sendShutdown();
-    }
+      // SEND THE SHUTDOWN TO ALL THE WORKER THREADS
+      for (ODistributedWorker workerThread : workerThreads) {
+        if (workerThread != null)
+          workerThread.sendShutdown();
+      }
 
-    // WAIT A BIT FOR PROPER SHUTDOWN
-    for (ODistributedWorker workerThread : workerThreads) {
-      if (workerThread != null) {
-        try {
-          workerThread.join(2000);
-        } catch (InterruptedException e) {
+      // WAIT A BIT FOR PROPER SHUTDOWN
+      for (ODistributedWorker workerThread : workerThreads) {
+        if (workerThread != null) {
+          try {
+            workerThread.join(2000);
+          } catch (InterruptedException e) {
+          }
         }
       }
-    }
-    workerThreads.clear();
+      workerThreads.clear();
 
-    for (String server : lastLSN.keySet()) {
-      try {
-        saveLSNTable(server);
-      } catch (IOException e) {
-        // IGNORE IT
+      for (String server : lastLSN.keySet()) {
+        try {
+          saveLSNTable(server);
+        } catch (IOException e) {
+          // IGNORE IT
+        }
       }
+      lastLSN.clear();
+
+      ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE,
+          "Shutting down distributed database manager '%s'. Pending objects: txs=%d locks=%d", databaseName,
+          activeTxContexts.size(), lockManager.size());
+
+      lockManager.clear();
+      activeTxContexts.clear();
+
+      Orient.instance().getProfiler().unregisterHookValue("distributed.db." + databaseName + ".msgSent");
+      Orient.instance().getProfiler().unregisterHookValue("distributed.db." + databaseName + ".msgReceived");
+      Orient.instance().getProfiler().unregisterHookValue("distributed.db." + databaseName + ".activeContexts");
+      Orient.instance().getProfiler().unregisterHookValue("distributed.db." + databaseName + ".workerThreads");
+      Orient.instance().getProfiler().unregisterHookValue("distributed.db." + databaseName + ".recordLocks");
+
+    } finally {
+
+      final ODistributedServerManager.DB_STATUS serverStatus = manager.getDatabaseStatus(manager.getLocalNodeName(), databaseName);
+      if (serverStatus == ODistributedServerManager.DB_STATUS.ONLINE
+          || serverStatus == ODistributedServerManager.DB_STATUS.SYNCHRONIZING) {
+        try {
+          manager.setDatabaseStatus(manager.getLocalNodeName(), databaseName, ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
+        } catch (Throwable e) {
+          // IGNORE IT
+        }
+      }
+
     }
-    lastLSN.clear();
-
-    ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE,
-        "Shutting down distributed database manager '%s'. Pending objects: txs=%d locks=%d", databaseName, activeTxContexts.size(),
-        lockManager.size());
-
-    lockManager.clear();
-    activeTxContexts.clear();
-
-    Orient.instance().getProfiler().unregisterHookValue("distributed.db." + databaseName + ".msgSent");
-    Orient.instance().getProfiler().unregisterHookValue("distributed.db." + databaseName + ".msgReceived");
-    Orient.instance().getProfiler().unregisterHookValue("distributed.db." + databaseName + ".activeContexts");
-    Orient.instance().getProfiler().unregisterHookValue("distributed.db." + databaseName + ".workerThreads");
-    Orient.instance().getProfiler().unregisterHookValue("distributed.db." + databaseName + ".recordLocks");
   }
 
   protected void checkForServerOnline(final ODistributedRequest iRequest) throws ODistributedException {

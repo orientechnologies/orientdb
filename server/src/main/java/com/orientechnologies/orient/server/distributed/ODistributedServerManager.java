@@ -154,6 +154,8 @@ public interface ODistributedServerManager {
 
   void setDatabaseStatus(String iNode, String iDatabaseName, DB_STATUS iStatus);
 
+  int getNodesWithStatus(Collection<String> iNodes, String databaseName, DB_STATUS... statuses);
+
   ODistributedMessageService getMessageService();
 
   ODistributedStrategy getDistributedStrategy();
