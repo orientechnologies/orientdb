@@ -607,7 +607,20 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   @ConsoleCommand(splitInWords = false, description = "Create a new edge into the database", onlineHelp = "SQL-Create-Edge")
   public void createEdge(
       @ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
-    sqlCommand("create", iCommandText, "\nCreated edge '%s' in %f sec(s).\n", true);
+
+    String command  = "create " + iCommandText;
+    resetResultSet();
+    final long start = System.currentTimeMillis();
+    final Object result = new OCommandSQL(command).setProgressListener(this).execute();
+    float elapsedSeconds = getElapsedSecs(start);
+
+    setResultset((List<OIdentifiable>) result);
+
+    int displayLimit = Integer.parseInt(properties.get("limit"));
+
+    dumpResultSet(displayLimit);
+
+    message("\nCreated '%s' edges in %f sec(s).\n",((List<OIdentifiable>) result).size(),elapsedSeconds);
   }
 
   @ConsoleCommand(description = "Switches on storage profiling for upcoming set of commands")
