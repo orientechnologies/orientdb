@@ -4,6 +4,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexException;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.CharArraySet;
@@ -56,9 +57,9 @@ public class OLuceneAnalyzerFactory {
       final String analyzerStopwords = analyzerName + "_stopwords";
 
       if (metadata.containsField(analyzerName) && metadata.containsField(analyzerStopwords)) {
-        final Collection<String> stopwords = metadata.field(analyzerStopwords);
-        analyzer.add(field, buildAnalyzer(metadata.field(analyzerName), stopwords));
-        analyzer.add(prefix + field, buildAnalyzer(metadata.field(analyzerName), stopwords));
+        final Collection<String> stopWords = metadata.field(analyzerStopwords, OType.EMBEDDEDLIST);
+        analyzer.add(field, buildAnalyzer(metadata.field(analyzerName), stopWords));
+        analyzer.add(prefix + field, buildAnalyzer(metadata.field(analyzerName), stopWords));
       } else if (metadata.containsField(analyzerName)) {
         analyzer.add(field, buildAnalyzer(metadata.field(analyzerName)));
         analyzer.add(prefix + field, buildAnalyzer(metadata.field(analyzerName)));

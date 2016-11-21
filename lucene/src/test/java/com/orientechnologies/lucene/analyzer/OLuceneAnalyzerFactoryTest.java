@@ -43,7 +43,7 @@ public class OLuceneAnalyzerFactoryTest {
 
     indexDef = Mockito.mock(OIndexDefinition.class);
 
-    when(indexDef.getFields()).thenReturn(asList("title", "author", "lyrics", "genre", "description"));
+    when(indexDef.getFields()).thenReturn(asList("name","title", "author", "lyrics", "genre", "description"));
     when(indexDef.getClassName()).thenReturn("Song");
 
   }

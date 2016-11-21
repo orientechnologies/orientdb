@@ -87,7 +87,7 @@ public class OLuceneQueryBuilder {
       queryParser = new QueryParser("", analyzer);
 
     } else {
-      String[] fields = null;
+      String[] fields;
       if (index.isAutomatic()) {
         fields = index.getFields().toArray(new String[index.getFields().size()]);
       } else {
