@@ -337,8 +337,8 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
   }
 
   /**
-   * Parses the field type char returning the closer type. Default is STRING. b=binary if iValue.lenght() >= 4 b=byte if
-   * iValue.lenght() <= 3 s=short, l=long f=float d=double a=date t=datetime
+   * Parses the field type char returning the closer type. Default is STRING. b=binary if iValue.length() >= 4 b=byte if
+   * iValue.length() <= 3 s=short, l=long f=float d=double a=date t=datetime
    * 
    * @param iValue
    *          Value to parse

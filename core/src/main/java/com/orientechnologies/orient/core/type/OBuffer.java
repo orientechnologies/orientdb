@@ -42,10 +42,10 @@ public class OBuffer implements Externalizable {
   }
 
   public void readExternal(final ObjectInput iInput) throws IOException, ClassNotFoundException {
-    final int bufferLenght = iInput.readInt();
-    if (bufferLenght > 0) {
-      buffer = new byte[bufferLenght];
-      for (int pos = 0, bytesReaded = 0; pos < bufferLenght; pos += bytesReaded) {
+    final int bufferLength = iInput.readInt();
+    if (bufferLength > 0) {
+      buffer = new byte[bufferLength];
+      for (int pos = 0, bytesReaded = 0; pos < bufferLength; pos += bytesReaded) {
         bytesReaded = iInput.read(buffer, pos, buffer.length - pos);
       }
     } else
@@ -53,9 +53,9 @@ public class OBuffer implements Externalizable {
   }
 
   public void writeExternal(final ObjectOutput iOutput) throws IOException {
-    final int bufferLenght = buffer != null ? buffer.length : 0;
-    iOutput.writeInt(bufferLenght);
-    if (bufferLenght > 0)
+    final int bufferLength = buffer != null ? buffer.length : 0;
+    iOutput.writeInt(bufferLength);
+    if (bufferLength > 0)
       iOutput.write(buffer);
   }
 

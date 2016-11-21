@@ -173,13 +173,13 @@ public class OBinaryProtocol {
     return OBinaryProtocol.bytes2string(iInput, 0, iInput.length);
   }
 
-  public static String bytes2string(final byte[] input, final int iBeginOffset, final int iLenght) {
-    final char[] output = new char[iLenght];
+  public static String bytes2string(final byte[] input, final int iBeginOffset, final int iLength) {
+    final char[] output = new char[iLength];
     // index input[]
     int i = iBeginOffset;
     // index output[]
     int j = 0;
-    while (i < iLenght + iBeginOffset) {
+    while (i < iLength + iBeginOffset) {
       // get next byte unsigned
       int b = input[i++] & 0xff;
       // classify based on the high order 3 bits

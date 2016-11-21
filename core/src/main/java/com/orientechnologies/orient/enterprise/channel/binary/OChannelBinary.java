@@ -163,7 +163,7 @@ public abstract class OChannelBinary extends OChannel {
     updateMetricReceivedBytes(OBinaryProtocol.SIZE_INT + len);
 
     if (debug)
-      OLogManager.instance().info(this, "%s - Read chunk lenght: %d", socket.getRemoteSocketAddress(), len);
+      OLogManager.instance().info(this, "%s - Read chunk length: %d", socket.getRemoteSocketAddress(), len);
 
     if (len < 0)
       return null;
