@@ -44,7 +44,7 @@ public class OLuceneAnalyzerFactoryTest {
 
     indexDef = Mockito.mock(OIndexDefinition.class);
 
-    when(indexDef.getFields()).thenReturn(asList("title", "author", "lyrics", "genre", "description"));
+    when(indexDef.getFields()).thenReturn(asList("name", "title", "author", "lyrics", "genre", "description"));
     when(indexDef.getClassName()).thenReturn("Song");
 
   }
@@ -56,7 +56,11 @@ public class OLuceneAnalyzerFactoryTest {
         .createAnalyzer(indexDef, INDEX, metadata);
     //default analyzer for indexing
     assertThat(analyzer.getWrappedAnalyzer("undefined")).isInstanceOf(StandardAnalyzer.class);
+    //default analyzer for indexing
+    assertThat(analyzer.getWrappedAnalyzer("name")).isInstanceOf(StandardAnalyzer.class);
+    StandardAnalyzer name = (StandardAnalyzer) analyzer.getWrappedAnalyzer("name");
 
+    assertThat(name.getStopwordSet()).isEmpty();
   }
 
   @Test

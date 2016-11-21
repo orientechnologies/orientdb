@@ -11,6 +11,7 @@
   "index": "org.apache.lucene.analysis.core.KeywordAnalyzer",
   "query": "org.apache.lucene.analysis.standard.StandardAnalyzer",
   "name_index": "org.apache.lucene.analysis.standard.StandardAnalyzer",
+  "name_index_stopwords": [],
   "name_query": "org.apache.lucene.analysis.core.KeywordAnalyzer",
   "lyrics_index": "org.apache.lucene.analysis.en.EnglishAnalyzer",
   "title_index": "org.apache.lucene.analysis.en.EnglishAnalyzer",
