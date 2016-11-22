@@ -161,6 +161,9 @@ public abstract class AbstractServerClusterTest {
   }
 
   protected void startServers() throws Exception {
+
+    Hazelcast.shutdownAll();
+
     if (startupNodesInSequence) {
       for (final ServerRun server : serverInstance) {
         banner("STARTING SERVER -> " + server.getServerId() + "...");
@@ -318,6 +321,8 @@ public abstract class AbstractServerClusterTest {
   protected void deleteServers() {
     for (ServerRun s : serverInstance)
       s.deleteNode();
+
+    Hazelcast.shutdownAll();
   }
 
   protected String getDistributedServerConfiguration(final ServerRun server) {
