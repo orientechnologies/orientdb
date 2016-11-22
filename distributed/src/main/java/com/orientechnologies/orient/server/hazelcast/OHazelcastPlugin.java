@@ -420,7 +420,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       // HZ IS ALREADY DOWN, IGNORE IT
     }
 
-    super.shutdown();
+    try {
+      super.shutdown();
+    } catch (HazelcastInstanceNotActiveException e) {
+      // HZ IS ALREADY DOWN, IGNORE IT
+    }
 
     if (membershipListenerRegistration != null) {
       try {
@@ -754,6 +758,14 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   }
 
   protected void registerNode(final Member member, final String joinedNodeName) {
+    if (activeNodes.containsKey(joinedNodeName))
+      // ALREADY REGISTERED: SKIP IT
+      return;
+
+    if (joinedNodeName.startsWith("ext:"))
+      // NODE HAS NOT IS YET
+      return;
+
     // NOTIFY NODE IS GOING TO BE ADDED. EVERYBODY IS OK?
     for (ODistributedLifecycleListener l : listeners) {
       if (!l.onNodeJoining(joinedNodeName)) {
@@ -777,8 +789,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     ODistributedServerLog.info(this, nodeName, getNodeName(member), DIRECTION.IN,
         "Added node configuration id=%s name=%s, now %d nodes are configured", member, getNodeName(member), activeNodes.size());
-
-    // installNewDatabasesFromCluster(false);
 
     // NOTIFY NODE WAS ADDED SUCCESSFULLY
     for (ODistributedLifecycleListener l : listeners)
@@ -943,6 +953,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       // REMOVE THE NODE FROM AUTO REMOVAL
       autoRemovalOfServers.remove(addedNodeName);
 
+      // TRY TO REGISTER THE NODE. THIS IS DONE HERE BECAUSE IT'S THE ONLY METHOD CALLED IN CASE OF MERGE AFTER SPLIT-BRAIN CASE
+      registerNode(iEvent.getMember(), addedNodeName);
+
     } catch (HazelcastInstanceNotActiveException e) {
       OLogManager.instance().error(this, "Hazelcast is not running");
     } catch (RetryableHazelcastException e) {
@@ -953,6 +966,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   @Override
   public void onCreate(final ODatabaseInternal iDatabase) {
     if (!isRelatedToLocalServer(iDatabase))
+      return;
+
+    if (status != NODE_STATUS.ONLINE)
       return;
 
     final ODatabaseDocumentInternal currDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
@@ -1035,7 +1051,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       final Set<String> servers = dCfg.getAllConfiguredServers();
       servers.remove(nodeName);
 
-      if (!servers.isEmpty())
+      if (!servers.isEmpty() && messageService.getDatabase(dbName) != null)
         sendRequest(dbName, null, servers, new ODropDatabaseTask(), getNextMessageIdCounter(),
             ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
     }
@@ -1081,7 +1097,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     if (currStatus == null || currStatus != iStatus) {
       configurationMap.put(key, iStatus);
       invokeOnDatabaseStatusChange(iNode, iDatabaseName, iStatus);
-
     }
   }
 
