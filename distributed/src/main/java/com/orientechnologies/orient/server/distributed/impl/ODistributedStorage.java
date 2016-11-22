@@ -1845,7 +1845,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
       dbCfg = ((OLocalClusterWrapperStrategy) clSel).readConfiguration();
 
-      newClusterName = getPhysicalClusterNameById(clSel.getCluster(cls, null));
+      newClusterName = getPhysicalClusterNameById(clSel.getCluster(cls, (ODocument) iRecordId.getRecord()));
 
       OLogManager.instance().info(this,
           "Local node '" + localNodeName + "' is not the owner for cluster '" + clusterName + "' (it is '" + ownerNode
