@@ -40,7 +40,7 @@ import java.util.Set;
  * @since 05.06.13
  */
 public class OCompressionFactory {
-  public static final OCompressionFactory                  INSTANCE           = new OCompressionFactory();
+  public static final OCompressionFactory INSTANCE = new OCompressionFactory();
 
   private final Map<String, OCompression>                  compressions       = new HashMap<String, OCompression>();
   private final Map<String, Class<? extends OCompression>> compressionClasses = new HashMap<String, Class<? extends OCompression>>();
@@ -57,6 +57,9 @@ public class OCompressionFactory {
   }
 
   public OCompression getCompression(final String name, final String iOptions) {
+    if (name.length() == 0)
+      return ONothingCompression.INSTANCE;
+
     OCompression compression = compressions.get(name);
     if (compression == null) {
 
@@ -83,8 +86,7 @@ public class OCompressionFactory {
   /**
    * Registers a stateful implementations, a new instance will be created for each storage.
    *
-   * @param compression
-   *          Compression instance
+   * @param compression Compression instance
    */
   public void register(final OCompression compression) {
     try {
@@ -105,8 +107,7 @@ public class OCompressionFactory {
   /**
    * Registers a stateless implementations, the same instance will be shared on all the storages.
    *
-   * @param compression
-   *          Compression class
+   * @param compression Compression class
    */
   public void register(final Class<? extends OCompression> compression) {
     try {
