@@ -25,7 +25,9 @@ import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
+import com.orientechnologies.orient.core.storage.OStorage;
 
+import java.util.Iterator;
 import java.util.UUID;
 
 /**
@@ -46,38 +48,82 @@ public abstract class OSBTreeCollectionManagerAbstract implements OCloseable, OS
     return FILE_NAME_PREFIX + clusterId + DEFAULT_EXTENSION;
   }
 
-  protected final int      evictionThreshold;
-  protected final int      cacheMaxSize;
-  protected final int      shift;
-  protected final int      mask;
-  protected final Object[] locks;
-  private final ConcurrentLinkedHashMap<OBonsaiCollectionPointer, SBTreeBonsaiContainer> treeCache = new ConcurrentLinkedHashMap.Builder<OBonsaiCollectionPointer, SBTreeBonsaiContainer>()
+  private static final ConcurrentLinkedHashMap<CacheKey, SBTreeBonsaiContainer> GLOBAL_TREE_CACHE = new ConcurrentLinkedHashMap.Builder<CacheKey, SBTreeBonsaiContainer>()
       .maximumWeightedCapacity(Long.MAX_VALUE).build();
 
-  public OSBTreeCollectionManagerAbstract() {
-    this(OGlobalConfiguration.SBTREEBONSAI_LINKBAG_CACHE_EVICTION_SIZE.getValueAsInteger(),
-        OGlobalConfiguration.SBTREEBONSAI_LINKBAG_CACHE_SIZE.getValueAsInteger());
+  private static final int GLOBAL_EVICTION_THRESHOLD = OGlobalConfiguration.SBTREEBONSAI_LINKBAG_CACHE_EVICTION_SIZE
+      .getValueAsInteger();
+  private static final int GLOBAL_CACHE_MAX_SIZE     = OGlobalConfiguration.SBTREEBONSAI_LINKBAG_CACHE_SIZE.getValueAsInteger();
+
+  private static final Object[] GLOBAL_LOCKS;
+  private static final int      GLOBAL_SHIFT;
+  private static final int      GLOBAL_MASK;
+
+  static {
+    final int concurrencyLevel = Runtime.getRuntime().availableProcessors() * 8;
+    int size = 1;
+
+    int shifted = 0;
+    while (size < concurrencyLevel) {
+      size <<= 1;
+      shifted++;
+    }
+
+    GLOBAL_SHIFT = 32 - shifted;
+    GLOBAL_MASK = size - 1;
+
+    final Object[] locks = new Object[size];
+    for (int i = 0; i < locks.length; i++)
+      locks[i] = new Object();
+
+    GLOBAL_LOCKS = locks;
   }
 
-  public OSBTreeCollectionManagerAbstract(int evictionThreshold, int cacheMaxSize) {
+  protected final int                                                      evictionThreshold;
+  protected final int                                                      cacheMaxSize;
+  protected final int                                                      shift;
+  protected final int                                                      mask;
+  protected final Object[]                                                 locks;
+  private final   ConcurrentLinkedHashMap<CacheKey, SBTreeBonsaiContainer> treeCache;
+  private final   OStorage                                                 storage;
+
+  public OSBTreeCollectionManagerAbstract(OStorage storage) {
+    this(GLOBAL_TREE_CACHE, storage, GLOBAL_EVICTION_THRESHOLD, GLOBAL_CACHE_MAX_SIZE, GLOBAL_LOCKS);
+  }
+
+  // for testing purposes
+  /* internal */ OSBTreeCollectionManagerAbstract(OStorage storage, int evictionThreshold, int cacheMaxSize) {
+    this(new ConcurrentLinkedHashMap.Builder<CacheKey, SBTreeBonsaiContainer>().maximumWeightedCapacity(Long.MAX_VALUE).build(),
+        storage, evictionThreshold, cacheMaxSize, null);
+  }
+
+  private OSBTreeCollectionManagerAbstract(ConcurrentLinkedHashMap<CacheKey, SBTreeBonsaiContainer> treeCache, OStorage storage,
+      int evictionThreshold, int cacheMaxSize, Object[] locks) {
+    this.treeCache = treeCache;
+    this.storage = storage;
+
     this.evictionThreshold = evictionThreshold;
     this.cacheMaxSize = cacheMaxSize;
 
-    final int concurrencyLevel = Runtime.getRuntime().availableProcessors() * 4;
-    int cL = 1;
+    if (locks == null) {
+      final int concurrencyLevel = Runtime.getRuntime().availableProcessors() * 8;
+      int size = 1;
 
-    int sh = 0;
-    while (cL < concurrencyLevel) {
-      cL <<= 1;
-      sh++;
-    }
+      int shifted = 0;
+      while (size < concurrencyLevel) {
+        size <<= 1;
+        shifted++;
+      }
 
-    shift = 32 - sh;
-    mask = cL - 1;
+      shift = 32 - shifted;
+      mask = size - 1;
 
-    final Object[] locks = new Object[cL];
-    for (int i = 0; i < locks.length; i++) {
-      locks[i] = new Object();
+      locks = new Object[size];
+      for (int i = 0; i < locks.length; i++)
+        locks[i] = new Object();
+    } else {
+      shift = GLOBAL_SHIFT;
+      mask = GLOBAL_MASK;
     }
 
     this.locks = locks;
@@ -96,11 +142,14 @@ public abstract class OSBTreeCollectionManagerAbstract implements OCloseable, OS
 
   @Override
   public OSBTreeBonsai<OIdentifiable, Integer> loadSBTree(OBonsaiCollectionPointer collectionPointer) {
-    final Object lock = treesSubsetLock(collectionPointer);
+    final CacheKey cacheKey = new CacheKey(storage, collectionPointer);
+    final Object lock = treesSubsetLock(cacheKey);
 
-    OSBTreeBonsai<OIdentifiable, Integer> tree;
+    final OSBTreeBonsai<OIdentifiable, Integer> tree;
+
+    //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (lock) {
-      SBTreeBonsaiContainer container = treeCache.get(collectionPointer);
+      SBTreeBonsaiContainer container = treeCache.get(cacheKey);
       if (container != null) {
         container.usagesCounter++;
         tree = container.tree;
@@ -112,7 +161,7 @@ public abstract class OSBTreeCollectionManagerAbstract implements OCloseable, OS
           container = new SBTreeBonsaiContainer(tree);
           container.usagesCounter++;
 
-          treeCache.put(collectionPointer, container);
+          treeCache.put(cacheKey, container);
         }
       }
 
@@ -125,9 +174,11 @@ public abstract class OSBTreeCollectionManagerAbstract implements OCloseable, OS
 
   @Override
   public void releaseSBTree(OBonsaiCollectionPointer collectionPointer) {
-    final Object lock = treesSubsetLock(collectionPointer);
+    final CacheKey cacheKey = new CacheKey(storage, collectionPointer);
+    final Object lock = treesSubsetLock(cacheKey);
+    //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (lock) {
-      SBTreeBonsaiContainer container = treeCache.getQuietly(collectionPointer);
+      SBTreeBonsaiContainer container = treeCache.getQuietly(cacheKey);
       assert container != null;
       container.usagesCounter--;
       assert container.usagesCounter >= 0;
@@ -138,15 +189,17 @@ public abstract class OSBTreeCollectionManagerAbstract implements OCloseable, OS
 
   @Override
   public void delete(OBonsaiCollectionPointer collectionPointer) {
-    final Object lock = treesSubsetLock(collectionPointer);
+    final CacheKey cacheKey = new CacheKey(storage, collectionPointer);
+    final Object lock = treesSubsetLock(cacheKey);
+    //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (lock) {
-      SBTreeBonsaiContainer container = treeCache.getQuietly(collectionPointer);
+      SBTreeBonsaiContainer container = treeCache.getQuietly(cacheKey);
       assert container != null;
 
       if (container.usagesCounter != 0)
         throw new IllegalStateException("Cannot delete SBTreeBonsai instance because it is used in other thread.");
 
-      treeCache.remove(collectionPointer);
+      treeCache.remove(cacheKey);
     }
   }
 
@@ -154,23 +207,28 @@ public abstract class OSBTreeCollectionManagerAbstract implements OCloseable, OS
     if (treeCache.size() <= cacheMaxSize)
       return;
 
-    for (OBonsaiCollectionPointer collectionPointer : treeCache.ascendingKeySetWithLimit(evictionThreshold)) {
-      final Object treeLock = treesSubsetLock(collectionPointer);
+    for (CacheKey cacheKey : treeCache.ascendingKeySetWithLimit(evictionThreshold)) {
+      final Object treeLock = treesSubsetLock(cacheKey);
+      //noinspection SynchronizationOnLocalVariableOrMethodParameter
       synchronized (treeLock) {
-        SBTreeBonsaiContainer container = treeCache.getQuietly(collectionPointer);
+        SBTreeBonsaiContainer container = treeCache.getQuietly(cacheKey);
         if (container != null && container.usagesCounter == 0)
-          treeCache.remove(collectionPointer);
+          treeCache.remove(cacheKey);
       }
     }
   }
 
   @Override
   public void close() {
-    treeCache.clear();
+    clear();
   }
 
   public void clear() {
-    treeCache.clear();
+    for (Iterator<CacheKey> i = treeCache.keySet().iterator(); i.hasNext(); ) {
+      final CacheKey cacheKey = i.next();
+      if (cacheKey.storage == storage)
+        i.remove();
+    }
   }
 
   protected abstract OSBTreeBonsai<OIdentifiable, Integer> createTree(int clusterId);
@@ -181,8 +239,8 @@ public abstract class OSBTreeCollectionManagerAbstract implements OCloseable, OS
     return treeCache.size();
   }
 
-  private Object treesSubsetLock(OBonsaiCollectionPointer collectionPointer) {
-    final int hashCode = collectionPointer.hashCode();
+  private Object treesSubsetLock(CacheKey cacheKey) {
+    final int hashCode = cacheKey.hashCode();
     final int index = (hashCode >>> shift) & mask;
 
     return locks[index];
@@ -194,6 +252,28 @@ public abstract class OSBTreeCollectionManagerAbstract implements OCloseable, OS
 
     private SBTreeBonsaiContainer(OSBTreeBonsai<OIdentifiable, Integer> tree) {
       this.tree = tree;
+    }
+  }
+
+  private static final class CacheKey {
+    private final OStorage                 storage;
+    private final OBonsaiCollectionPointer pointer;
+
+    public CacheKey(OStorage storage, OBonsaiCollectionPointer pointer) {
+      this.storage = storage;
+      this.pointer = pointer;
+    }
+
+    @Override
+    public int hashCode() {
+      return storage.hashCode() ^ pointer.hashCode();
+    }
+
+    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass") // it's a private class used in a private context
+    @Override
+    public boolean equals(Object obj) {
+      final CacheKey other = (CacheKey) obj;
+      return this.storage == other.storage && this.pointer.equals(other.pointer);
     }
   }
 }

@@ -20,11 +20,6 @@
 
 package com.orientechnologies.orient.client.remote;
 
-import java.lang.ref.WeakReference;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -40,6 +35,12 @@ import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollecti
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManagerAbstract;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
+import com.orientechnologies.orient.core.storage.OStorage;
+
+import java.lang.ref.WeakReference;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * @author Artem Orobets (enisher-at-gmail.com)
@@ -47,21 +48,22 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OL
 public class OSBTreeCollectionManagerRemote extends OSBTreeCollectionManagerAbstract
     implements OOrientStartupListener, OOrientShutdownListener {
 
-  private final OCollectionNetworkSerializer                      networkSerializer;
-  private boolean                                                 remoteCreationAllowed = false;
+  private final OCollectionNetworkSerializer networkSerializer;
+  private boolean remoteCreationAllowed = false;
 
-  private volatile ThreadLocal<Map<UUID, WeakReference<ORidBag>>> pendingCollections    = new PendingCollectionsThreadLocal();
+  private volatile ThreadLocal<Map<UUID, WeakReference<ORidBag>>> pendingCollections = new PendingCollectionsThreadLocal();
 
-  public OSBTreeCollectionManagerRemote() {
-    super();
+  public OSBTreeCollectionManagerRemote(OStorage storage) {
+    super(storage);
     networkSerializer = new OCollectionNetworkSerializer();
 
     Orient.instance().registerWeakOrientStartupListener(this);
     Orient.instance().registerWeakOrientShutdownListener(this);
   }
 
-  public OSBTreeCollectionManagerRemote(OCollectionNetworkSerializer networkSerializer) {
-    super();
+  // for testing purposes
+  /* internal */ OSBTreeCollectionManagerRemote(OStorage storage, OCollectionNetworkSerializer networkSerializer) {
+    super(storage);
     this.networkSerializer = networkSerializer;
 
     Orient.instance().registerWeakOrientStartupListener(this);
