@@ -27,6 +27,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.server.distributed.*;
@@ -136,16 +137,14 @@ public class ODistributedWorker extends Thread {
           // OK
           break;
 
+        } catch (OStorageException e) {
+          // WAIT FOR A WHILE, THEN RETRY
+          if (!dbNotAvailable(retry))
+            return;
         } catch (OConfigurationException e) {
           // WAIT FOR A WHILE, THEN RETRY
-          try {
-            ODistributedServerLog.info(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
-                "Database '%s' not present, waiting for it (retry=%d/%d)...", databaseName, retry, 100);
-            Thread.sleep(300);
-          } catch (InterruptedException e1) {
-            Thread.currentThread().interrupt();
+          if (!dbNotAvailable(retry))
             return;
-          }
         }
       }
 
@@ -161,6 +160,18 @@ public class ODistributedWorker extends Thread {
       database.close();
       manager.getServerInstance().openDatabase(database, "internal", "internal", null, true);
     }
+  }
+
+  protected boolean dbNotAvailable(int retry) {
+    try {
+      ODistributedServerLog.info(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
+          "Database '%s' not present, waiting for it (retry=%d/%d)...", databaseName, retry, 100);
+      Thread.sleep(300);
+    } catch (InterruptedException e1) {
+      Thread.currentThread().interrupt();
+      return false;
+    }
+    return true;
   }
 
   public void shutdown() {
