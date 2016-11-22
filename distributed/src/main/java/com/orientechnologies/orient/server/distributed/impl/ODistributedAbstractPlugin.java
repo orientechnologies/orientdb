@@ -244,7 +244,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     if (!isRelatedToLocalServer(iDatabase))
       return;
 
-    if (!serverInstance.isActive())
+    if (status != NODE_STATUS.ONLINE && status != NODE_STATUS.STARTING)
       return;
 
     final ODatabaseDocumentInternal currDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
@@ -698,6 +698,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   @Override
   public void onCreateClass(final ODatabaseInternal iDatabase, final OClass iClass) {
     if (OScenarioThreadLocal.INSTANCE.isRunModeDistributed())
+      return;
+
+    if (status != NODE_STATUS.ONLINE && status != NODE_STATUS.STARTING)
       return;
 
     // RUN ONLY IN NON-DISTRIBUTED MODE
