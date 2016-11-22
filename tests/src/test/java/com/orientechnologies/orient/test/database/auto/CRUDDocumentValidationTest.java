@@ -129,7 +129,6 @@ public class CRUDDocumentValidationTest extends DocumentDBBaseTest {
     database.command(new OCommandSQL("INSERT INTO MyTestClass (keyField,dateTimeField,stringField) VALUES (\"K1\",null,null)"))
         .execute();
     database.reload();
-    database.getStorage().reload();
     database.getMetadata().reload();
     database.close();
     database.open("admin", "admin");
