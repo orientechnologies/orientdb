@@ -32,8 +32,9 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object> implements EntryAddedListener<String, Object>,
-    EntryRemovedListener<String, Object>, MapClearedListener, EntryUpdatedListener<String, Object> {
+public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object>
+    implements EntryAddedListener<String, Object>, EntryRemovedListener<String, Object>, MapClearedListener,
+    EntryUpdatedListener<String, Object> {
   private final IMap<String, Object> hzMap;
   private final String               membershipListenerRegistration;
 
@@ -68,7 +69,11 @@ public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object> 
 
   @Override
   public Object put(final String key, final Object value) {
-    hzMap.put(key, value);
+    try {
+      hzMap.put(key, value);
+    } catch (HazelcastInstanceNotActiveException e) {
+      // IGNORE IT
+    }
     return super.put(key, value);
   }
 
@@ -78,13 +83,21 @@ public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object> 
 
   @Override
   public Object remove(final Object key) {
-    hzMap.remove(key);
+    try {
+      hzMap.remove(key);
+    } catch (HazelcastInstanceNotActiveException e) {
+      // IGNORE IT
+    }
     return super.remove(key);
   }
 
   @Override
   public boolean remove(final Object key, final Object value) {
-    hzMap.remove(key, value);
+    try {
+      hzMap.remove(key, value);
+    } catch (HazelcastInstanceNotActiveException e) {
+      // IGNORE IT
+    }
     return super.remove(key, value);
   }
 
