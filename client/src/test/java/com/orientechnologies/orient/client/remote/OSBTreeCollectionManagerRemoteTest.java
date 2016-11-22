@@ -1,16 +1,5 @@
 package com.orientechnologies.orient.client.remote;
 
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.*;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-
-import org.mockito.Matchers;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -19,6 +8,17 @@ import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollecti
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import org.mockito.Matchers;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
 
 /**
  * @author Artem Orobets (enisher-at-gmail.com)
@@ -30,13 +30,13 @@ public class OSBTreeCollectionManagerRemoteTest {
   private static final int                  EXPECTED_CLUSTER_ID   = 3;
 
   @Mock
-  private OCollectionNetworkSerializer      networkSerializerMock;
+  private OCollectionNetworkSerializer networkSerializerMock;
   @Mock
-  private ODatabaseDocumentInternal         dbMock;
+  private ODatabaseDocumentInternal    dbMock;
   @Mock
-  private OStorageRemote                    storageMock;
+  private OStorageRemote               storageMock;
   @Mock
-  private OChannelBinaryAsynchClient        clientMock;
+  private OChannelBinaryAsynchClient   clientMock;
 
   @BeforeMethod
   public void setUp() throws Exception {
@@ -45,15 +45,16 @@ public class OSBTreeCollectionManagerRemoteTest {
 
   @Test(enabled = false)
   public void testCreateTree() throws Exception {
-    OSBTreeCollectionManagerRemote remoteManager = new OSBTreeCollectionManagerRemote(networkSerializerMock);
+    OSBTreeCollectionManagerRemote remoteManager = new OSBTreeCollectionManagerRemote(storageMock, networkSerializerMock);
     ODatabaseRecordThreadLocal.INSTANCE.set(dbMock);
 
     when(dbMock.getStorage()).thenReturn(storageMock);
     when(storageMock.getUnderlying()).thenReturn(storageMock);
-    when(storageMock.beginRequest(Mockito.any(OChannelBinaryAsynchClient.class), eq(OChannelBinaryProtocol.REQUEST_CREATE_SBTREE_BONSAI),
-        Mockito.any(OStorageRemoteSession.class))).thenReturn(clientMock);
-    when(networkSerializerMock.readCollectionPointer(Mockito.<OChannelBinaryAsynchClient> any())).thenReturn(
-        new OBonsaiCollectionPointer(EXPECTED_FILE_ID, EXPECTED_ROOT_POINTER));
+    when(storageMock
+        .beginRequest(Mockito.any(OChannelBinaryAsynchClient.class), eq(OChannelBinaryProtocol.REQUEST_CREATE_SBTREE_BONSAI),
+            Mockito.any(OStorageRemoteSession.class))).thenReturn(clientMock);
+    when(networkSerializerMock.readCollectionPointer(Mockito.<OChannelBinaryAsynchClient>any()))
+        .thenReturn(new OBonsaiCollectionPointer(EXPECTED_FILE_ID, EXPECTED_ROOT_POINTER));
 
     OSBTreeBonsaiRemote<OIdentifiable, Integer> tree = remoteManager.createTree(EXPECTED_CLUSTER_ID);
 
@@ -65,8 +66,9 @@ public class OSBTreeCollectionManagerRemoteTest {
     verifyNoMoreInteractions(dbMock);
 
     verify(storageMock).getUnderlying();
-    verify(storageMock).beginRequest(Mockito.any(OChannelBinaryAsynchClient.class),eq(OChannelBinaryProtocol.REQUEST_CREATE_SBTREE_BONSAI),
-        Mockito.any(OStorageRemoteSession.class));
+    verify(storageMock)
+        .beginRequest(Mockito.any(OChannelBinaryAsynchClient.class), eq(OChannelBinaryProtocol.REQUEST_CREATE_SBTREE_BONSAI),
+            Mockito.any(OStorageRemoteSession.class));
     verify(clientMock).writeInt(eq(EXPECTED_CLUSTER_ID));
     verify(storageMock).endRequest(Matchers.same(clientMock));
     verify(storageMock).beginResponse(Matchers.same(clientMock), Mockito.any(OStorageRemoteSession.class));
@@ -77,10 +79,10 @@ public class OSBTreeCollectionManagerRemoteTest {
 
   @Test
   public void testLoadTree() throws Exception {
-    OSBTreeCollectionManagerRemote remoteManager = new OSBTreeCollectionManagerRemote(networkSerializerMock);
+    OSBTreeCollectionManagerRemote remoteManager = new OSBTreeCollectionManagerRemote(storageMock, networkSerializerMock);
 
-    OSBTreeBonsai<OIdentifiable, Integer> tree = remoteManager.loadTree(new OBonsaiCollectionPointer(EXPECTED_FILE_ID,
-        EXPECTED_ROOT_POINTER));
+    OSBTreeBonsai<OIdentifiable, Integer> tree = remoteManager
+        .loadTree(new OBonsaiCollectionPointer(EXPECTED_FILE_ID, EXPECTED_ROOT_POINTER));
 
     assertNotNull(tree);
     assertEquals(tree.getFileId(), EXPECTED_FILE_ID);

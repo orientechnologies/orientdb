@@ -100,7 +100,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
   private CONNECTION_STRATEGY                  connectionStrategy      = CONNECTION_STRATEGY.STICKY;
 
-  private final OSBTreeCollectionManagerRemote sbTreeCollectionManager = new OSBTreeCollectionManagerRemote();
+  private final OSBTreeCollectionManagerRemote sbTreeCollectionManager = new OSBTreeCollectionManagerRemote(this);
   protected final List<String>                 serverURLs              = new ArrayList<String>();
   protected final Map<String, OCluster>        clusterMap              = new ConcurrentHashMap<String, OCluster>();
   private final ExecutorService                asynchExecutor;

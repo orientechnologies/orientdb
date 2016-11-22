@@ -20,10 +20,6 @@
 
 package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.OOrientShutdownListener;
 import com.orientechnologies.orient.core.OOrientStartupListener;
@@ -36,23 +32,31 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OL
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 /**
  * @author Artem Orobets (enisher-at-gmail.com)
  */
-public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbstract implements OOrientStartupListener,
-    OOrientShutdownListener {
-  private final OAbstractPaginatedStorage                           storage;
+public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbstract
+    implements OOrientStartupListener, OOrientShutdownListener {
+  private final OAbstractPaginatedStorage storage;
   private volatile ThreadLocal<Map<UUID, OBonsaiCollectionPointer>> collectionPointerChanges = new CollectionPointerChangesThreadLocal();
 
   public OSBTreeCollectionManagerShared(OAbstractPaginatedStorage storage) {
+    super(storage);
+
     this.storage = storage;
 
     Orient.instance().registerWeakOrientStartupListener(this);
     Orient.instance().registerWeakOrientShutdownListener(this);
   }
 
-  public OSBTreeCollectionManagerShared(int evictionThreshold, int cacheMaxSize, OAbstractPaginatedStorage storage) {
-    super(evictionThreshold, cacheMaxSize);
+  // for testing purposes
+  /* internal */ OSBTreeCollectionManagerShared(int evictionThreshold, int cacheMaxSize, OAbstractPaginatedStorage storage) {
+    super(storage, evictionThreshold, cacheMaxSize);
+
     this.storage = storage;
 
     Orient.instance().registerWeakOrientStartupListener(this);
@@ -102,8 +106,8 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
       fileName = atomicOperation.fileNameById(collectionPointer.getFileId());
     }
 
-    OSBTreeBonsaiLocal<OIdentifiable, Integer> tree = new OSBTreeBonsaiLocal<OIdentifiable, Integer>(fileName.substring(0,
-        fileName.length() - DEFAULT_EXTENSION.length()), DEFAULT_EXTENSION, storage);
+    OSBTreeBonsaiLocal<OIdentifiable, Integer> tree = new OSBTreeBonsaiLocal<OIdentifiable, Integer>(
+        fileName.substring(0, fileName.length() - DEFAULT_EXTENSION.length()), DEFAULT_EXTENSION, storage);
 
     if (tree.load(collectionPointer.getRootPointer()))
       return tree;
@@ -113,8 +117,9 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
 
   /**
    * Change UUID to null to prevent its serialization to disk.
-   * 
+   *
    * @param collection
+   *
    * @return
    */
   @Override
