@@ -37,7 +37,6 @@ public class IndexTxTest extends DocumentDBBaseTest {
 
     final OSchema schema = database.getMetadata().getSchema();
     schema.reload();
-    database.getStorage().reload();
 
     schema.getClass("IndexTxTestClass").truncate();
   }

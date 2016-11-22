@@ -81,7 +81,6 @@ public class PolymorphicQueryTest extends DocumentDBBaseTest {
 
     final OSchema schema = database.getMetadata().getSchema();
     schema.reload();
-    database.getStorage().reload();
 
     database.command(new OCommandSQL("delete from IndexInSubclassesTestBase")).execute();
     database.command(new OCommandSQL("delete from IndexInSubclassesTestChild1")).execute();

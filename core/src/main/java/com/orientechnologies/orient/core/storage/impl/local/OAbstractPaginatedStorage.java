@@ -58,7 +58,6 @@ import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.index.engine.OHashTableIndexEngine;
 import com.orientechnologies.orient.core.index.engine.OSBTreeIndexEngine;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
-import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
@@ -832,10 +831,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * @param lsn                LSN from which we should find changed records
    * @param stream             Stream which will contain found records
    * @param excludedClusterIds Array of cluster ids to exclude from the export
-   *
    * @return Last LSN processed during examination of changed records, or <code>null</code> if it was impossible to find changed
    * records: write ahead log is absent, record with start LSN was not found in WAL, etc.
-   *
    * @see OGlobalConfiguration#STORAGE_TRACK_CHANGED_RECORDS_IN_WAL
    */
   public OLogSequenceNumber recordsChangedAfterLSN(final OLogSequenceNumber lsn, final OutputStream stream,
@@ -1924,9 +1921,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * @param key       the key to put the value under.
    * @param value     the value to put.
    * @param validator the operation validator.
-   *
    * @return {@code true} if the validator allowed the put, {@code false} otherwise.
-   *
    * @see OIndexEngine.Validator#validate(Object, Object, Object)
    */
   public boolean validatedPutIndexValue(int indexId, Object key, OIdentifiable value,
@@ -2490,6 +2485,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public void reload() {
+    close();
+    open(null, null, null);
   }
 
   public String getMode() {
@@ -3325,9 +3322,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * Register the cluster internally.
    *
    * @param cluster OCluster implementation
-   *
    * @return The id (physical position into the array) of the new cluster just created. First is 0.
-   *
    * @throws IOException
    */
   private int registerCluster(final OCluster cluster) throws IOException {
