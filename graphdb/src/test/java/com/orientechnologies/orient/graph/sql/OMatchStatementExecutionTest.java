@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.Vertex;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -1475,6 +1476,39 @@ public class OMatchStatementExecutionTest {
 
 
   }
+
+  @Test
+  public void testMatched1(){
+    //issue #6931
+    db.command(new OCommandSQL("CREATE CLASS testMatched1_Foo EXTENDS V")).execute();
+    db.command(new OCommandSQL("CREATE CLASS testMatched1_Bar EXTENDS V")).execute();
+    db.command(new OCommandSQL("CREATE CLASS testMatched1_Baz EXTENDS V")).execute();
+    db.command(new OCommandSQL("CREATE CLASS testMatched1_Far EXTENDS V")).execute();
+    db.command(new OCommandSQL("CREATE CLASS testMatched1_Foo_Bar EXTENDS E")).execute();
+    db.command(new OCommandSQL("CREATE CLASS testMatched1_Bar_Baz EXTENDS E")).execute();
+    db.command(new OCommandSQL("CREATE CLASS testMatched1_Foo_Far EXTENDS E")).execute();
+
+    db.command(new OCommandSQL("CREATE VERTEX testMatched1_Foo SET name = 'foo'")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX testMatched1_Bar SET name = 'bar'")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX testMatched1_Baz SET name = 'baz'")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX testMatched1_Far SET name = 'far'")).execute();
+
+    db.command(new OCommandSQL("CREATE EDGE testMatched1_Foo_Bar FROM (SELECT FROM testMatched1_Foo) TO (SELECT FROM testMatched1_Bar)")).execute();
+    db.command(new OCommandSQL("CREATE EDGE testMatched1_Bar_Baz FROM (SELECT FROM testMatched1_Bar) TO (SELECT FROM testMatched1_Baz)")).execute();
+    db.command(new OCommandSQL("CREATE EDGE testMatched1_Foo_Far FROM (SELECT FROM testMatched1_Foo) TO (SELECT FROM testMatched1_Far)")).execute();
+
+    List result = db.query(new OSQLSynchQuery(
+        "MATCH \n" + "{class: testMatched1_Foo, as: foo}.out('testMatched1_Foo_Bar') {as: bar}, \n" + "{class: testMatched1_Bar,as: bar}.out('testMatched1_Bar_Baz') {as: baz}, \n"
+            + "{class: testMatched1_Foo,as: foo}.out('testMatched1_Foo_Far') {where: ($matched.baz IS null),as: far}\n" + "RETURN $matches"));
+    assertTrue(result.isEmpty());
+
+    result = db.query(new OSQLSynchQuery(
+        "MATCH \n" + "{class: testMatched1_Foo, as: foo}.out('testMatched1_Foo_Bar') {as: bar}, \n" + "{class: testMatched1_Bar,as: bar}.out('testMatched1_Bar_Baz') {as: baz}, \n"
+            + "{class: testMatched1_Foo,as: foo}.out('testMatched1_Foo_Far') {where: ($matched.baz IS not null),as: far}\n" + "RETURN $matches"));
+    assertEquals(1, result.size());
+  }
+
+
 
   private List<OIdentifiable> getManagedPathElements(String managerName) {
     StringBuilder query = new StringBuilder();
