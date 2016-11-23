@@ -2792,6 +2792,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   }
 
   protected void updateDatabaseInfo() {
+    currentDatabase.getStorage().reload();
     currentDatabase.getMetadata().getSchema().reload();
     currentDatabase.getMetadata().getIndexManager().reload();
     currentDatabase.getMetadata().getSchema().onPostIndexManagement();

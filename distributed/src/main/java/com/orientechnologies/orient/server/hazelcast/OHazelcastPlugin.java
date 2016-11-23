@@ -794,6 +794,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     for (ODistributedLifecycleListener l : listeners)
       l.onNodeJoined(joinedNodeName);
 
+    // FORCE THE ALIGNMENT FOR ALL THE ONLINE DATABASES AFTER THE JOIN
+    for (String db : messageService.getDatabases())
+      if (getDatabaseStatus(joinedNodeName, db) == DB_STATUS.ONLINE)
+        setDatabaseStatus(joinedNodeName, db, DB_STATUS.NOT_AVAILABLE);
+
     dumpServersStatus();
   }
 
