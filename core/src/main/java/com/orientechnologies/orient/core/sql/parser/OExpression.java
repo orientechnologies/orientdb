@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
 
+import java.util.List;
 import java.util.Map;
 
 public class OExpression extends SimpleNode {
@@ -177,6 +178,18 @@ public class OExpression extends SimpleNode {
     if (value instanceof OMathExpression) {
       return ((OMathExpression) value).executeIndexedFunction(target, context, operator, right);
     }
+    return null;
+  }
+
+  /**
+   * if the condition involved the current pattern (MATCH statement, eg. $matched.something = foo),
+   * returns the name of involved pattern aliases ("something" in this case)
+   *
+   * @return a list of pattern aliases involved in this condition. Null it does not involve the pattern
+   */
+  List<String> getMatchPatternInvolvedAliases() {
+    if (value instanceof OMathExpression)
+      return ((OMathExpression)value).getMatchPatternInvolvedAliases();
     return null;
   }
 }

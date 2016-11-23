@@ -89,5 +89,9 @@ public class ONotBlock extends OBooleanExpression {
     }
     return super.flatten();
   }
+
+  @Override public List<String> getMatchPatternInvolvedAliases() {
+    return sub.getMatchPatternInvolvedAliases();
+  }
 }
 /* JavaCC - OriginalChecksum=1926313b3f854235aaa20811c22d583b (do not edit this line) */

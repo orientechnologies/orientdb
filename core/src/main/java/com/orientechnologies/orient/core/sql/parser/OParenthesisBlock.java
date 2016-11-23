@@ -55,5 +55,9 @@ public class OParenthesisBlock extends OBooleanExpression {
   @Override public List<OAndBlock> flatten() {
     return subElement.flatten();
   }
+
+  @Override public List<String> getMatchPatternInvolvedAliases() {
+    return subElement.getMatchPatternInvolvedAliases();
+  }
 }
 /* JavaCC - OriginalChecksum=9a16b6cf7d051382acb94c45067631a9 (do not edit this line) */

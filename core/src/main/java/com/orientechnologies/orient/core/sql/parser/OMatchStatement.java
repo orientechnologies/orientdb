@@ -282,10 +282,18 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     Set<PatternNode> traversedNodes = new HashSet<PatternNode>();
     List<PatternNode> nextNodes = new ArrayList<PatternNode>();
 
+    //pattern to direction (true -> out)
+    Map<PatternEdge, Boolean> lateEvaluatedEdges = new IdentityHashMap<PatternEdge, Boolean>();
+
+    //    do {
     while (result.size() < pattern.getNumOfEdges()) {
       for (OPair<Long, String> rootPair : rootWeights) {
         PatternNode root = pattern.get(rootPair.getValue());
         if (root.isOptionalNode()) {
+          continue;
+        }
+        OWhereClause filter = aliasFilters.get(root.alias);
+        if (filter != null && filter.baseExpression != null && filter.baseExpression.getMatchPatternInvolvedAliases() != null) {
           continue;
         }
         if (!traversedNodes.contains(root)) {
@@ -296,6 +304,59 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
 
       if (nextNodes.isEmpty()) {
         break;
+      }
+      //first evaluation, no $matched.xx nodes
+      while (!nextNodes.isEmpty()) {
+        PatternNode node = nextNodes.remove(0);
+        traversedNodes.add(node);
+        for (PatternEdge edge : node.out) {
+          if (!traversedEdges.contains(edge)) {
+            OWhereClause nextNodeFilter = aliasFilters.get(edge.in.alias);
+            if (nextNodeFilter != null && nextNodeFilter.baseExpression != null
+                && nextNodeFilter.baseExpression.getMatchPatternInvolvedAliases() != null) {
+              //late processing
+              lateEvaluatedEdges.put(edge, true);
+            } else {
+              result.add(new EdgeTraversal(edge, true));
+              traversedEdges.add(edge);
+              if (!traversedNodes.contains(edge.in) && !nextNodes.contains(edge.in)) {
+                nextNodes.add(edge.in);
+              }
+            }
+          }
+        }
+        for (PatternEdge edge : node.in) {
+          OWhereClause nextNodeFilter = aliasFilters.get(edge.out.alias);
+          if (nextNodeFilter != null && nextNodeFilter.baseExpression != null
+              && nextNodeFilter.baseExpression.getMatchPatternInvolvedAliases() != null) {
+            //late processing
+            lateEvaluatedEdges.put(edge, false);
+          } else {
+            if (!traversedEdges.contains(edge) && edge.item.isBidirectional()) {
+              result.add(new EdgeTraversal(edge, false));
+              traversedEdges.add(edge);
+              if (!traversedNodes.contains(edge.out) && !nextNodes.contains(edge.out)) {
+                nextNodes.add(edge.out);
+              }
+            }
+          }
+        }
+      }
+
+      //second traverse, restart from $matched.xx
+
+      for (Map.Entry<PatternEdge, Boolean> edgeEntry : lateEvaluatedEdges.entrySet()) {
+        PatternEdge edge = edgeEntry.getKey();
+        boolean directionOut = edgeEntry.getValue();
+
+        PatternNode nextNode = directionOut ? edge.in : edge.out;
+        if (!traversedEdges.contains(edge) && edge.item.isBidirectional()) {
+          result.add(new EdgeTraversal(edge, directionOut));
+          traversedEdges.add(edge);
+          if (!traversedNodes.contains(nextNode) && !nextNodes.contains(nextNode)) {
+            nextNodes.add(nextNode);
+          }
+        }
       }
       while (!nextNodes.isEmpty()) {
         PatternNode node = nextNodes.remove(0);
@@ -310,6 +371,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
           }
         }
         for (PatternEdge edge : node.in) {
+          OWhereClause nextNodeFilter = aliasFilters.get(edge.out.alias);
           if (!traversedEdges.contains(edge) && edge.item.isBidirectional()) {
             result.add(new EdgeTraversal(edge, false));
             traversedEdges.add(edge);
@@ -321,7 +383,38 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       }
     }
 
+    //    } while (lateEvaluatedEdges.size() > 0 && nextNodes.add(startingNode(lateEvaluatedEdges.get(0))));
+
+    checkConsistency(result);
     return result;
+  }
+
+  /**
+   * checks if this traversal is consistent, ie. if it can actually be calculated
+   *
+   * @param traversal
+   */
+  private void checkConsistency(List<EdgeTraversal> traversal) {
+    //    Set<String>
+    for (EdgeTraversal edge : traversal) {
+      PatternNode from = edge.out ? edge.edge.out : edge.edge.in;
+      PatternNode to = edge.out ? edge.edge.in : edge.edge.out;
+      //TODO
+    }
+  }
+
+  private boolean hasConditionOnPattern(EdgeTraversal node) {
+    PatternNode terminalNode;
+    if (node.out) {
+      terminalNode = node.edge.in;
+    } else {
+      terminalNode = node.edge.out;
+    }
+    OWhereClause filter = aliasFilters.get(terminalNode.alias);
+    if (filter == null) {
+      return false;
+    }
+    return filter.toString().contains("$matched.");
   }
 
   protected Object getResult(OSQLAsynchQuery<ODocument> request) {
@@ -377,7 +470,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     }
     executionPlan.rootAlias = smallestAlias;
     Iterable<OIdentifiable> allCandidates = matchContext.candidates.get(smallestAlias);
-    if(allCandidates == null){
+    if (allCandidates == null) {
       OSelectStatement select = buildSelectStatement(aliasClasses.get(smallestAlias), aliasFilters.get(smallestAlias));
       allCandidates = (Iterable) getDatabase().query(new OSQLSynchQuery<Object>(select.toString()));
     }
@@ -945,6 +1038,10 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       long upperBound;
       OWhereClause filter = aliasFilters.get(alias);
       if (filter != null) {
+        if (filter.toString().contains(
+            "$matched.")) {//skip root nodes that have a condition on $matched, because they have to be calculated as downstream
+          continue;
+        }
         upperBound = filter.estimate(oClass, this.threshold, ctx);
       } else {
         upperBound = oClass.count();

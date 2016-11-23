@@ -12,7 +12,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public class OBinaryCondition extends OBooleanExpression {
+public class OBinaryCondition extends OBooleanExpression{
   protected OExpression            left;
   protected OBinaryCompareOperator operator;
   protected OExpression            right;
@@ -25,13 +25,14 @@ public class OBinaryCondition extends OBooleanExpression {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
 
-  @Override
-  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+  @Override public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
     return operator.execute(left.execute(currentRecord, ctx), right.execute(currentRecord, ctx));
   }
 
@@ -51,8 +52,7 @@ public class OBinaryCondition extends OBooleanExpression {
 
   }
 
-  @Override
-  protected int getNumberOfExternalCalculations() {
+  @Override protected int getNumberOfExternalCalculations() {
     int total = 0;
     if (!operator.supportsBasicCalculation()) {
       total++;
@@ -66,8 +66,7 @@ public class OBinaryCondition extends OBooleanExpression {
     return total;
   }
 
-  @Override
-  protected List<Object> getExternalCalculationConditions() {
+  @Override protected List<Object> getExternalCalculationConditions() {
     List<Object> result = new ArrayList<Object>();
     if (!operator.supportsBasicCalculation()) {
       result.add(this);
@@ -101,6 +100,22 @@ public class OBinaryCondition extends OBooleanExpression {
       return Collections.singletonList(this);
     }
     return null;
+  }
+
+  @Override public List<String> getMatchPatternInvolvedAliases() {
+    List<String> leftX = left.getMatchPatternInvolvedAliases();
+    List<String> rightX = right.getMatchPatternInvolvedAliases();
+    if (leftX == null) {
+      return rightX;
+    }
+    if (rightX == null) {
+      return leftX;
+    }
+
+    List<String> result = new ArrayList<String>();
+    result.addAll(leftX);
+    result.addAll(rightX);
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=99ed1dd2812eb730de8e1931b1764da5 (do not edit this line) */

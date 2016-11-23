@@ -49,6 +49,10 @@ public class OIsNotDefinedCondition extends OBooleanExpression {
     builder.append(" is not defined");
   }
 
+  @Override public List<String> getMatchPatternInvolvedAliases() {
+    return expression.getMatchPatternInvolvedAliases();
+  }
+
 
 }
 /* JavaCC - OriginalChecksum=1c766d6caf5ccae19c1c291396bb56f2 (do not edit this line) */

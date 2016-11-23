@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class OIndexMatchCondition extends OBooleanExpression {
+public class OIndexMatchCondition extends OBooleanExpression{
 
   protected OBinaryCompareOperator  operator;
   protected Boolean           between;
@@ -86,6 +86,10 @@ public class OIndexMatchCondition extends OBooleanExpression {
     List<Object> result = new ArrayList<Object>();
     result.add(this);
     return result;
+  }
+
+  @Override public List<String> getMatchPatternInvolvedAliases() {
+    return null;
   }
 
 }

@@ -9,7 +9,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public class OIsNullCondition extends OBooleanExpression {
+public class OIsNullCondition extends OBooleanExpression{
 
   protected OExpression expression;
 
@@ -61,6 +61,10 @@ public class OIsNullCondition extends OBooleanExpression {
       return Collections.EMPTY_LIST;
     }
     return (List) Collections.singletonList(expression);
+  }
+
+  @Override public List<String> getMatchPatternInvolvedAliases() {
+    return expression.getMatchPatternInvolvedAliases();
   }
 
 }

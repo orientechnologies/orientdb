@@ -5,6 +5,7 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
+import java.util.List;
 import java.util.Map;
 
 public class OParenthesisExpression extends OMathExpression {
@@ -20,16 +21,18 @@ public class OParenthesisExpression extends OMathExpression {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
 
   @Override public Object execute(OIdentifiable iCurrentRecord, OCommandContext ctx) {
-    if(expression!=null){
+    if (expression != null) {
       return expression.execute(iCurrentRecord, ctx);
     }
-    if(statement!=null){
+    if (statement != null) {
       throw new UnsupportedOperationException("Execution of select in parentheses is not supported");
     }
     return super.execute(iCurrentRecord, ctx);
@@ -45,18 +48,20 @@ public class OParenthesisExpression extends OMathExpression {
     builder.append(")");
   }
 
-  @Override
-  protected boolean supportsBasicCalculation() {
+  @Override protected boolean supportsBasicCalculation() {
     if (expression != null) {
       return expression.supportsBasicCalculation();
     }
     return true;
   }
 
-  @Override
-  public boolean isEarlyCalculated() {
+  @Override public boolean isEarlyCalculated() {
     // TODO implement query execution and early calculation;
     return expression != null && expression.isEarlyCalculated();
+  }
+
+  public List<String> getMatchPatternInvolvedAliases() {
+    return expression.getMatchPatternInvolvedAliases();//TODO also check the statement...?
   }
 }
 /* JavaCC - OriginalChecksum=4656e5faf4f54dc3fc45a06d8e375c35 (do not edit this line) */

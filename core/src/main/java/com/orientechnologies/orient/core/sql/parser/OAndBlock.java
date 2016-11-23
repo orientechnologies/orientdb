@@ -22,8 +22,7 @@ public class OAndBlock extends OBooleanExpression {
     super(p, id);
   }
 
-  @Override
-  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+  @Override public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
 
     if (getSubBlocks() == null) {
       return true;
@@ -64,8 +63,7 @@ public class OAndBlock extends OBooleanExpression {
     }
   }
 
-  @Override
-  protected boolean supportsBasicCalculation() {
+  @Override protected boolean supportsBasicCalculation() {
     for (OBooleanExpression expr : subBlocks) {
       if (!expr.supportsBasicCalculation()) {
         return false;
@@ -74,8 +72,7 @@ public class OAndBlock extends OBooleanExpression {
     return true;
   }
 
-  @Override
-  protected int getNumberOfExternalCalculations() {
+  @Override protected int getNumberOfExternalCalculations() {
     int result = 0;
     for (OBooleanExpression expr : subBlocks) {
       result += expr.getNumberOfExternalCalculations();
@@ -83,8 +80,7 @@ public class OAndBlock extends OBooleanExpression {
     return result;
   }
 
-  @Override
-  protected List<Object> getExternalCalculationConditions() {
+  @Override protected List<Object> getExternalCalculationConditions() {
     List<Object> result = new ArrayList<Object>();
     for (OBooleanExpression expr : subBlocks) {
       result.addAll(expr.getExternalCalculationConditions());
@@ -118,7 +114,7 @@ public class OAndBlock extends OBooleanExpression {
           result.add(subAndItem);
         } else {
           ;
-          for(OAndBlock oldResultItem:oldResult) {
+          for (OAndBlock oldResultItem : oldResult) {
             OAndBlock block = new OAndBlock(-1);
             block.subBlocks.addAll(oldResultItem.subBlocks);
             for (OBooleanExpression resultItem : subAndItem.subBlocks) {
@@ -134,12 +130,23 @@ public class OAndBlock extends OBooleanExpression {
   }
 
   protected OAndBlock encapsulateInAndBlock(OBooleanExpression item) {
-    if(item instanceof OAndBlock){
-      return (OAndBlock)item;
+    if (item instanceof OAndBlock) {
+      return (OAndBlock) item;
     }
     OAndBlock result = new OAndBlock(-1);
     result.subBlocks.add(item);
     return result;
+  }
+
+  @Override public List<String> getMatchPatternInvolvedAliases() {
+    List<String> result = new ArrayList<String>();
+    for (OBooleanExpression exp : subBlocks) {
+      List<String> x = exp.getMatchPatternInvolvedAliases();
+      if (x != null) {
+        result.addAll(x);
+      }
+    }
+    return result.size() == 0 ? null : result;
   }
 
 }

@@ -66,5 +66,20 @@ public class OContainsTextCondition extends OBooleanExpression {
     }
     return result;
   }
+
+  @Override public List<String> getMatchPatternInvolvedAliases() {
+    List<String> leftX = left == null ? null : left.getMatchPatternInvolvedAliases();
+    List<String> rightX = right == null ? null : right.getMatchPatternInvolvedAliases();
+
+    List<String> result = new ArrayList<String>();
+    if (leftX != null) {
+      result.addAll(leftX);
+    }
+    if (rightX != null) {
+      result.addAll(rightX);
+    }
+
+    return result.size() == 0 ? null : result;
+  }
 }
 /* JavaCC - OriginalChecksum=b588492ba2cbd0f932055f1f64bbbecd (do not edit this line) */

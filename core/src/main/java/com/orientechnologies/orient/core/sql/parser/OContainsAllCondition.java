@@ -15,7 +15,7 @@ public class OContainsAllCondition extends OBooleanExpression {
 
   protected OExpression right;
 
-  protected OOrBlock    rightBlock;
+  protected OOrBlock rightBlock;
 
   public OContainsAllCondition(int id) {
     super(id);
@@ -25,16 +25,16 @@ public class OContainsAllCondition extends OBooleanExpression {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
 
-  @Override
-  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+  @Override public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
     return false;// TODO
   }
-
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     left.toString(params, builder);
@@ -64,8 +64,7 @@ public class OContainsAllCondition extends OBooleanExpression {
     this.right = right;
   }
 
-  @Override
-  public boolean supportsBasicCalculation() {
+  @Override public boolean supportsBasicCalculation() {
     if (left != null && !left.supportsBasicCalculation()) {
       return false;
     }
@@ -78,8 +77,7 @@ public class OContainsAllCondition extends OBooleanExpression {
     return true;
   }
 
-  @Override
-  protected int getNumberOfExternalCalculations() {
+  @Override protected int getNumberOfExternalCalculations() {
     int total = 0;
     if (left != null && !left.supportsBasicCalculation()) {
       total++;
@@ -93,8 +91,7 @@ public class OContainsAllCondition extends OBooleanExpression {
     return total;
   }
 
-  @Override
-  protected List<Object> getExternalCalculationConditions() {
+  @Override protected List<Object> getExternalCalculationConditions() {
     List<Object> result = new ArrayList<Object>();
     if (left != null && !left.supportsBasicCalculation()) {
       result.add(left);
@@ -106,6 +103,25 @@ public class OContainsAllCondition extends OBooleanExpression {
       result.addAll(rightBlock.getExternalCalculationConditions());
     }
     return result;
+  }
+
+  @Override public List<String> getMatchPatternInvolvedAliases() {
+    List<String> leftX = left == null ? null : left.getMatchPatternInvolvedAliases();
+    List<String> rightX = right == null ? null : right.getMatchPatternInvolvedAliases();
+    List<String> rightBlockX = rightBlock == null ? null : rightBlock.getMatchPatternInvolvedAliases();
+
+    List<String> result = new ArrayList<String>();
+    if (leftX != null) {
+      result.addAll(leftX);
+    }
+    if (rightX != null) {
+      result.addAll(rightX);
+    }
+    if (rightBlockX != null) {
+      result.addAll(rightBlockX);
+    }
+
+    return result.size() == 0 ? null : result;
   }
 }
 /* JavaCC - OriginalChecksum=ab7b4e192a01cda09a82d5b80ef4ec60 (do not edit this line) */

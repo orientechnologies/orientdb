@@ -147,5 +147,21 @@ public class OInCondition extends OBooleanExpression {
     return result;
   }
 
+  @Override public List<String> getMatchPatternInvolvedAliases() {
+    List<String> leftX = left == null ? null : left.getMatchPatternInvolvedAliases();
+
+    List<String> conditionX = rightMathExpression == null ? null : rightMathExpression.getMatchPatternInvolvedAliases();
+
+    List<String> result = new ArrayList<String>();
+    if (leftX != null) {
+      result.addAll(leftX);
+    }
+    if (conditionX != null) {
+      result.addAll(conditionX);
+    }
+
+    return result.size() == 0 ? null : result;
+  }
+
 }
 /* JavaCC - OriginalChecksum=00df7cb1877c0a12d24205c1700653c7 (do not edit this line) */

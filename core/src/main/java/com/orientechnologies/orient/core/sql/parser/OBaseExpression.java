@@ -6,6 +6,8 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 public class OBaseExpression extends OMathExpression {
@@ -115,6 +117,15 @@ public class OBaseExpression extends OMathExpression {
       return true;
     }
     return false;
+  }
+
+  public List<String> getMatchPatternInvolvedAliases() {
+    if (this.identifier != null && this.identifier.toString().equals("$matched")) {
+      if (modifier != null && modifier.suffix != null && modifier.suffix.identifier != null) {
+        return Collections.singletonList(modifier.suffix.identifier.toString());
+      }
+    }
+    return null;
   }
 }
 /* JavaCC - OriginalChecksum=71b3e2d1b65c923dc7cfe11f9f449d2b (do not edit this line) */

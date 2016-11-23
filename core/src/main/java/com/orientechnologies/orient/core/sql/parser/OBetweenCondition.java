@@ -6,11 +6,12 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public class OBetweenCondition extends OBooleanExpression {
+public class OBetweenCondition extends OBooleanExpression{
 
   protected OExpression first;
   protected OExpression second;
@@ -24,13 +25,14 @@ public class OBetweenCondition extends OBooleanExpression {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
 
-  @Override
-  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+  @Override public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
     Object firstValue = first.execute(currentRecord, ctx);
     if (firstValue == null) {
       return false;
@@ -54,7 +56,6 @@ public class OBetweenCondition extends OBooleanExpression {
 
     return leftResult >= 0 && rightResult <= 0;
   }
-
 
   public OExpression getFirst() {
     return first;
@@ -88,20 +89,37 @@ public class OBetweenCondition extends OBooleanExpression {
     third.toString(params, builder);
   }
 
-  @Override
-  public boolean supportsBasicCalculation() {
+  @Override public boolean supportsBasicCalculation() {
     return true;
   }
 
-  @Override
-  protected int getNumberOfExternalCalculations() {
+  @Override protected int getNumberOfExternalCalculations() {
     return 0;
   }
 
-  @Override
-  protected List<Object> getExternalCalculationConditions() {
+  @Override protected List<Object> getExternalCalculationConditions() {
     return Collections.EMPTY_LIST;
   }
 
+  @Override public List<String> getMatchPatternInvolvedAliases() {
+    List<String> result = new ArrayList<String>();
+    List<String> x = first.getMatchPatternInvolvedAliases();
+    if (x != null) {
+      result.addAll(x);
+    }
+    x = second.getMatchPatternInvolvedAliases();
+    if (x != null) {
+      result.addAll(x);
+    }
+    x = third.getMatchPatternInvolvedAliases();
+    if (x != null) {
+      result.addAll(x);
+    }
+
+    if (result.size() == 0) {
+      return null;
+    }
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=f94f4779c4a6c6d09539446045ceca89 (do not edit this line) */

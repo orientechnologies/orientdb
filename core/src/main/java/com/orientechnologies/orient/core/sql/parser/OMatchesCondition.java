@@ -63,5 +63,9 @@ public class OMatchesCondition extends OBooleanExpression {
     return Collections.EMPTY_LIST;
   }
 
+  @Override public List<String> getMatchPatternInvolvedAliases() {
+    return expression.getMatchPatternInvolvedAliases();
+  }
+
 }
 /* JavaCC - OriginalChecksum=68712f476e2e633c2bbfc34cb6c39356 (do not edit this line) */

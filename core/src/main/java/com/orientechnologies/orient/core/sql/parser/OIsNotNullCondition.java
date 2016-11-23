@@ -28,7 +28,7 @@ public class OIsNotNullCondition extends OBooleanExpression {
 
   @Override
   public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
-    return false;
+    return expression.execute(currentRecord, ctx) != null;
   }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
@@ -55,6 +55,10 @@ public class OIsNotNullCondition extends OBooleanExpression {
       return (List) Collections.singletonList(expression);
     }
     return Collections.EMPTY_LIST;
+  }
+
+  @Override public List<String> getMatchPatternInvolvedAliases() {
+    return expression.getMatchPatternInvolvedAliases();
   }
 
 }

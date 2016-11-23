@@ -9,7 +9,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public class OIsDefinedCondition extends OBooleanExpression {
+public class OIsDefinedCondition extends OBooleanExpression implements OSimpleBooleanExpression {
 
   protected OExpression expression;
 
@@ -51,5 +51,8 @@ public class OIsDefinedCondition extends OBooleanExpression {
     return Collections.EMPTY_LIST;
   }
 
+  @Override public List<String> getMatchPatternInvolvedAliases() {
+    return expression.getMatchPatternInvolvedAliases();
+  }
 }
 /* JavaCC - OriginalChecksum=075954b212c8cb44c8538bf5dea047d3 (do not edit this line) */

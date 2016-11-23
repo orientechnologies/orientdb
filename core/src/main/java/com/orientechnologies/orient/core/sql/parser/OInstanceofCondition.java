@@ -13,7 +13,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public class OInstanceofCondition extends OBooleanExpression {
+public class OInstanceofCondition extends OBooleanExpression{
 
   protected OExpression left;
   protected OIdentifier right;
@@ -93,5 +93,8 @@ public class OInstanceofCondition extends OBooleanExpression {
     return Collections.EMPTY_LIST;
   }
 
+  @Override public List<String> getMatchPatternInvolvedAliases() {
+    return left == null ? null : left.getMatchPatternInvolvedAliases();
+  }
 }
 /* JavaCC - OriginalChecksum=0b5eb529744f307228faa6b26f0592dc (do not edit this line) */
