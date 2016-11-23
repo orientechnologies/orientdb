@@ -19,12 +19,6 @@
  */
 package com.orientechnologies.orient.core.sql.query;
 
-import com.orientechnologies.orient.core.command.OCommandRequestAsynch;
-import com.orientechnologies.orient.core.command.OCommandResultListener;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -34,6 +28,12 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import com.orientechnologies.orient.core.command.OCommandRequestAsynch;
+import com.orientechnologies.orient.core.command.OCommandResultListener;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 /**
  * SQL asynchronous query. When executed the caller does not wait for the execution, rather the listener will be called for each
@@ -275,7 +275,11 @@ public class OSQLNonBlockingQuery<T extends Object> extends OSQLQuery<T> impleme
         public void run() {
           db.activateOnCurrentThread();
           try {
-            OSQLNonBlockingQuery.super.execute(iArgs);
+            OSQLAsynchQuery<T> query = new OSQLAsynchQuery<T>(OSQLNonBlockingQuery.this.getText(),
+                OSQLNonBlockingQuery.this.getResultListener());
+            query.setFetchPlan(OSQLNonBlockingQuery.this.getFetchPlan());
+            query.setLimit(OSQLNonBlockingQuery.this.getLimit());
+            query.execute(iArgs);
           } catch (RuntimeException e) {
             if (getResultListener() != null) {
               getResultListener().end();
