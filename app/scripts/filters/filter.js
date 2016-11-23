@@ -31,7 +31,12 @@ filterModule.filter('sizeFormat', function () {
   };
 });
 filterModule.filter('nograph', function () {
-  return function (input) {
+  return function (input, headerType) {
+
+
+    if (headerType && !headerType[input].array) {
+      return input;
+    }
     if (input.startsWith("in_")) {
       return input.replace("in_", "");
     }

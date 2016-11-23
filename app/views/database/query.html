@@ -110,7 +110,7 @@
                 ng-click="sort(header)"
                 ng-repeat="header in item.headers">
               <div>
-                {{header | nograph}}
+                {{header | nograph:item.headersType}}
               </div>
             </th>
           </tr>
@@ -151,7 +151,8 @@
           <tr>
             <td colspan="{{item.headers.length}}">
               <div class=" btn-group pull-right ng-scope">
-                <button ng-repeat="count in counts" ng-click="changeItemByPage(count)" ng-class="{ 'active' : count === itemByPage}" type="button"
+                <button ng-repeat="count in counts" ng-click="changeItemByPage(count)"
+                        ng-class="{ 'active' : count === itemByPage}" type="button"
                         class="btn btn-default ng-scope"><span>{{count}}</span></button>
               </div>
             </td>
@@ -173,8 +174,8 @@
     <div class="row vertical-align">
       <div class="col-md-9">
         {{item.notification}}. Limit: {{item.limit}} <a class="btn btn-trasparent btn-sm queryConfigStyle"
-                                                   href="javascript:void(0)" ng-click="changeLimit()"
-                                                   onclick="document.getElementById('configQueryButton').click()">
+                                                        href="javascript:void(0)" ng-click="changeLimit()"
+                                                        onclick="document.getElementById('configQueryButton').click()">
         (change it)</a>
 
       </div>

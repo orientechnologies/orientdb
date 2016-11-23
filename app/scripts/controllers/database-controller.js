@@ -276,6 +276,32 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$route', '$l
           $scope.alerts.push({content: "No records found."});
         }
 
+        var headersType = {};
+        $scope.headers.forEach(function (e) {
+          var type = typeof "";
+          var array = false;
+          if (data.result && data.result.length > 0) {
+            var i = 0;
+            do {
+              if (data.result[i][e] !== undefined && data.result[i][e] != null) {
+                type = typeof data.result[i][e];
+                if (type === 'object') {
+                  array = Array.isArray(data.result[i][e]);
+                }
+
+                break;
+              }
+              i++;
+            } while (i < data.result.length);
+          }
+          headersType[e] = {type: type, array: array};
+        });
+
+
+        function isRel(field,relType,types){
+            return field.startsWith(relType) && types[field].array;
+        }
+        $scope.headersType = headersType;
         $scope.rawData = JSON.stringify(data);
         $scope.resultTotal = data.result;
         $scope.results = data.result.slice(0, $scope.countPage);
@@ -288,9 +314,10 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$route', '$l
           "d": {"name": "OUT", span: 0}
         };
         $scope.headers.forEach(function (n) {
-          if (n.startsWith("in_")) {
+
+          if (isRel(n,"in_",$scope.headersType)) {
             item.subHeaders["c"].span++;
-          } else if (n.startsWith("out_")) {
+          } else if (isRel(n,"out_",$scope.headersType)) {
             item.subHeaders["d"].span++;
           } else if (n.startsWith('@')) {
             item.subHeaders["a"].span++;
@@ -299,11 +326,15 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$route', '$l
           }
         });
         $scope.headers.sort(function (a, b) {
-          var aI = a.startsWith("in_") ? 2 : (a.startsWith("out_") ? 3 : ((a.startsWith("@") ? 0 : 1)));
-          var bI = b.startsWith("in_") ? 2 : (b.startsWith("out_") ? 3 : ((b.startsWith("@") ? 0 : 1)));
+          var aI = isRel(a,"in_",$scope.headersType) ? 2 : (isRel(a,"out_",$scope.headersType) ? 3 : ((a.startsWith("@") ? 0 : 1)));
+          var bI = isRel(b,"in_",$scope.headersType) ? 2 : (isRel(b,"out_",$scope.headersType) ? 3 : ((b.startsWith("@") ? 0 : 1)));
           return aI - bI;
         });
+
         item.headers = $scope.headers;
+
+
+        item.headersType = $scope.headersType;
 
         item.rawData = $scope.rawData;
         item.resultTotal = $scope.resultTotal;
