@@ -4,8 +4,10 @@ import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.Vertex;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -1359,6 +1361,151 @@ public class OMatchStatementExecutionTest {
     assertEquals(1, qResult.size());
     assertEquals("n2", qResult.get(0).field("name"));
 
+  }
+
+  @Test
+  public void testAliasesWithSubquery() throws Exception {
+    List<ODocument> qResult = db
+        .command(new OCommandSQL("select from ( match {class:Person, as:A} return A.name as namexx ) limit 1")).execute();
+    assertEquals(1, qResult.size());
+    assertNotNull(qResult.get(0).field("namexx"));
+    assertTrue(qResult.get(0).field("namexx").toString().startsWith("n"));
+  }
+
+
+  @Test
+  public void testEvalInReturn(){
+    //issue #6606
+    db.command(new OCommandSQL("CREATE CLASS testEvalInReturn EXTENDS V")).execute();
+    db.command(new OCommandSQL("CREATE PROPERTY testEvalInReturn.name String")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX testEvalInReturn SET name = 'foo'")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX testEvalInReturn SET name = 'bar'")).execute();
+
+    List<ODocument> qResult = db
+        .command(new OCommandSQL("MATCH {class: testEvalInReturn, as: p} RETURN if(eval(\"p.name = 'foo'\"), 1, 2) AS b")).execute();
+
+    assertEquals(2, qResult.size());
+    int sum = 0;
+    for (ODocument doc : qResult) {
+      sum += ((Number) doc.field("b")).intValue();
+    }
+    assertEquals(3, sum);
+
+    //check that it still removes duplicates (standard behavior for MATCH)
+    qResult = db
+        .command(new OCommandSQL("MATCH {class: testEvalInReturn, as: p} RETURN if(eval(\"p.name = 'foo'\"), 'foo', 'foo') AS b")).execute();
+
+    assertEquals(1, qResult.size());
+  }
+
+  @Test
+  public void testCheckClassAsCondition(){
+
+    db.command(new OCommandSQL("CREATE CLASS testCheckClassAsCondition EXTENDS V")).execute();
+    db.command(new OCommandSQL("CREATE CLASS testCheckClassAsCondition1 EXTENDS V")).execute();
+    db.command(new OCommandSQL("CREATE CLASS testCheckClassAsCondition2 EXTENDS V")).execute();
+
+    db.command(new OCommandSQL("CREATE VERTEX testCheckClassAsCondition SET name = 'foo'")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX testCheckClassAsCondition1 SET name = 'bar'")).execute();
+    for(int i=0;i<5;i++) {
+      db.command(new OCommandSQL("CREATE VERTEX testCheckClassAsCondition2 SET name = 'baz'")).execute();
+    }
+    db.command(new OCommandSQL("CREATE EDGE E FROM (select from testCheckClassAsCondition where name = 'foo') to (select from testCheckClassAsCondition1)")).execute();
+    db.command(new OCommandSQL("CREATE EDGE E FROM (select from testCheckClassAsCondition where name = 'foo') to (select from testCheckClassAsCondition2)")).execute();
+
+    List<ODocument> qResult = db
+        .command(new OCommandSQL("MATCH {class: testCheckClassAsCondition, as: p} -E- {class: testCheckClassAsCondition1, as: q} RETURN $elements")).execute();
+
+    assertEquals(2, qResult.size());
+  }
+
+  @Test
+  public void testInstanceof(){
+
+
+    List<ODocument> qResult = db
+        .command(new OCommandSQL("MATCH {class: Person, as: p, where: ($currentMatch instanceof 'Person')} return $elements limit 1")).execute();
+    assertEquals(1, qResult.size());
+
+    qResult = db
+        .command(new OCommandSQL("MATCH {class: Person, as: p, where: ($currentMatch instanceof 'V')} return $elements limit 1")).execute();
+    assertEquals(1, qResult.size());
+
+    qResult = db
+        .command(new OCommandSQL("MATCH {class: Person, as: p, where: (not ($currentMatch instanceof 'Person'))} return $elements limit 1")).execute();
+    assertEquals(0, qResult.size());
+
+    qResult = db
+        .command(new OCommandSQL("MATCH {class: Person, where: (name = 'n1')}.out(){as:p, where: ($currentMatch instanceof 'Person')} return $elements limit 1")).execute();
+    assertEquals(1, qResult.size());
+
+    qResult = db
+        .command(new OCommandSQL("MATCH {class: Person, where: (name = 'n1')}.out(){as:p, where: ($currentMatch instanceof 'Person' and '$currentMatch' <> '@this')} return $elements limit 1")).execute();
+    assertEquals(1, qResult.size());
+
+    qResult = db
+        .command(new OCommandSQL("MATCH {class: Person, where: (name = 'n1')}.out(){as:p, where: ( not ($currentMatch instanceof 'Person'))} return $elements limit 1")).execute();
+    assertEquals(0, qResult.size());
+
+  }
+
+
+  @Test
+  public void testBigEntryPoint(){
+    //issue #6890
+
+    OSchema schema = db.getMetadata().getSchema();
+    schema.createClass("testBigEntryPoint1");
+    schema.createClass("testBigEntryPoint2");
+
+    for(int i=0;i<1000;i++){
+      ODocument doc = db.newInstance("testBigEntryPoint1");
+      doc.field("a", i);
+      doc.save();
+
+    }
+
+    ODocument doc = db.newInstance("testBigEntryPoint2");
+    doc.field("b", "b");
+    doc.save();
+
+    List<ODocument> qResult = db
+        .command(new OCommandSQL("MATCH {class: testBigEntryPoint1, as: a}, {class: testBigEntryPoint2, as: b} return $elements limit 1")).execute();
+    assertEquals(1, qResult.size());
+
+
+
+  }
+
+  @Test
+  public void testMatched1(){
+    //issue #6931
+    db.command(new OCommandSQL("CREATE CLASS testMatched1_Foo EXTENDS V")).execute();
+    db.command(new OCommandSQL("CREATE CLASS testMatched1_Bar EXTENDS V")).execute();
+    db.command(new OCommandSQL("CREATE CLASS testMatched1_Baz EXTENDS V")).execute();
+    db.command(new OCommandSQL("CREATE CLASS testMatched1_Far EXTENDS V")).execute();
+    db.command(new OCommandSQL("CREATE CLASS testMatched1_Foo_Bar EXTENDS E")).execute();
+    db.command(new OCommandSQL("CREATE CLASS testMatched1_Bar_Baz EXTENDS E")).execute();
+    db.command(new OCommandSQL("CREATE CLASS testMatched1_Foo_Far EXTENDS E")).execute();
+
+    db.command(new OCommandSQL("CREATE VERTEX testMatched1_Foo SET name = 'foo'")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX testMatched1_Bar SET name = 'bar'")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX testMatched1_Baz SET name = 'baz'")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX testMatched1_Far SET name = 'far'")).execute();
+
+    db.command(new OCommandSQL("CREATE EDGE testMatched1_Foo_Bar FROM (SELECT FROM testMatched1_Foo) TO (SELECT FROM testMatched1_Bar)")).execute();
+    db.command(new OCommandSQL("CREATE EDGE testMatched1_Bar_Baz FROM (SELECT FROM testMatched1_Bar) TO (SELECT FROM testMatched1_Baz)")).execute();
+    db.command(new OCommandSQL("CREATE EDGE testMatched1_Foo_Far FROM (SELECT FROM testMatched1_Foo) TO (SELECT FROM testMatched1_Far)")).execute();
+
+    List result = db.query(new OSQLSynchQuery(
+        "MATCH \n" + "{class: testMatched1_Foo, as: foo}.out('testMatched1_Foo_Bar') {as: bar}, \n" + "{class: testMatched1_Bar,as: bar}.out('testMatched1_Bar_Baz') {as: baz}, \n"
+            + "{class: testMatched1_Foo,as: foo}.out('testMatched1_Foo_Far') {where: ($matched.baz IS null),as: far}\n" + "RETURN $matches"));
+    assertTrue(result.isEmpty());
+
+    result = db.query(new OSQLSynchQuery(
+        "MATCH \n" + "{class: testMatched1_Foo, as: foo}.out('testMatched1_Foo_Bar') {as: bar}, \n" + "{class: testMatched1_Bar,as: bar}.out('testMatched1_Bar_Baz') {as: baz}, \n"
+            + "{class: testMatched1_Foo,as: foo}.out('testMatched1_Foo_Far') {where: ($matched.baz IS not null),as: far}\n" + "RETURN $matches"));
+    assertEquals(1, result.size());
   }
 
   private List<OIdentifiable> getManagedPathElements(String managerName) {

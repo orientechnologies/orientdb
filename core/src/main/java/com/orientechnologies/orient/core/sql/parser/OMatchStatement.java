@@ -1087,6 +1087,12 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     OSchema schema = getDatabase().getMetadata().getSchema();
     OClass class1 = schema.getClass(className1);
     OClass class2 = schema.getClass(className2);
+    if(class1==null){
+      throw new OCommandExecutionException("Class "+className1+" not found in the schema");
+    }
+    if(class2==null){
+      throw new OCommandExecutionException("Class "+className2+" not found in the schema");
+    }
     if (class1.isSubClassOf(class2)) {
       return class1.getName();
     }
@@ -1171,11 +1177,17 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     }
     builder.append(" RETURN ");
     first = true;
+    int i = 0;
     for (OExpression expr : this.returnItems) {
       if (!first) {
         builder.append(", ");
       }
       expr.toString(params, builder);
+      if (returnAliases != null && i < returnAliases.size() && returnAliases.get(i) != null) {
+        builder.append(" AS ");
+        returnAliases.get(i).toString(params, builder);
+      }
+      i++;
       first = false;
     }
     if (limit != null) {
