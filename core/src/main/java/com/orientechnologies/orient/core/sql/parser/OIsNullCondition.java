@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class OIsNullCondition extends OBooleanExpression {
+public class OIsNullCondition extends OBooleanExpression{
 
   protected OExpression expression;
 
@@ -107,5 +107,10 @@ public class OIsNullCondition extends OBooleanExpression {
   @Override public int hashCode() {
     return expression != null ? expression.hashCode() : 0;
   }
+
+  @Override public List<String> getMatchPatternInvolvedAliases() {
+    return expression.getMatchPatternInvolvedAliases();
+  }
+
 }
 /* JavaCC - OriginalChecksum=29ebbc506a98f90953af91a66a03aa1e (do not edit this line) */

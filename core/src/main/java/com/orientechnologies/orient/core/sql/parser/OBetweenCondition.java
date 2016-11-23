@@ -7,12 +7,13 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class OBetweenCondition extends OBooleanExpression {
+public class OBetweenCondition extends OBooleanExpression{
 
   protected OExpression first;
   protected OExpression second;
@@ -180,6 +181,27 @@ public class OBetweenCondition extends OBooleanExpression {
     int result = first != null ? first.hashCode() : 0;
     result = 31 * result + (second != null ? second.hashCode() : 0);
     result = 31 * result + (third != null ? third.hashCode() : 0);
+    return result;
+  }
+
+  @Override public List<String> getMatchPatternInvolvedAliases() {
+    List<String> result = new ArrayList<String>();
+    List<String> x = first.getMatchPatternInvolvedAliases();
+    if (x != null) {
+      result.addAll(x);
+    }
+    x = second.getMatchPatternInvolvedAliases();
+    if (x != null) {
+      result.addAll(x);
+    }
+    x = third.getMatchPatternInvolvedAliases();
+    if (x != null) {
+      result.addAll(x);
+    }
+
+    if (result.size() == 0) {
+      return null;
+    }
     return result;
   }
 }

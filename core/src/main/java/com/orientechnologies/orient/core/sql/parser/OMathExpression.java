@@ -175,6 +175,7 @@ public class OMathExpression extends SimpleNode {
     return nextValue;
   }
 
+
   public Object execute(OResult iCurrentRecord, OCommandContext ctx) {
     if (childExpressions.size() == 0) {
       return null;
@@ -521,5 +522,20 @@ public class OMathExpression extends SimpleNode {
     result = 31 * result + (operators != null ? operators.hashCode() : 0);
     return result;
   }
+
+  public List<String> getMatchPatternInvolvedAliases() {
+    List<String> result = new ArrayList<String>();
+    for (OMathExpression exp : childExpressions) {
+      List<String> x = exp.getMatchPatternInvolvedAliases();
+      if (x != null) {
+        result.addAll(x);
+      }
+    }
+    if (result.size() == 0) {
+      return null;
+    }
+    return result;
+  }
+
 }
 /* JavaCC - OriginalChecksum=c255bea24e12493e1005ba2a4d1dbb9d (do not edit this line) */

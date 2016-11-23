@@ -25,7 +25,6 @@ public class OAndBlock extends OBooleanExpression {
   }
 
   @Override public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
-
     if (getSubBlocks() == null) {
       return true;
     }
@@ -36,11 +35,9 @@ public class OAndBlock extends OBooleanExpression {
       }
     }
     return true;
-
   }
 
   @Override public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
-
     if (getSubBlocks() == null) {
       return true;
     }
@@ -51,7 +48,6 @@ public class OAndBlock extends OBooleanExpression {
       }
     }
     return true;
-
   }
 
   public List<OBooleanExpression> getSubBlocks() {
@@ -210,11 +206,22 @@ public class OAndBlock extends OBooleanExpression {
 
   @Override public boolean refersToParent() {
     for (OBooleanExpression exp : subBlocks) {
-      if(exp.refersToParent()){
+      if (exp.refersToParent()) {
         return true;
       }
     }
     return false;
+  }
+
+  @Override public List<String> getMatchPatternInvolvedAliases() {
+    List<String> result = new ArrayList<String>();
+    for (OBooleanExpression exp : subBlocks) {
+      List<String> x = exp.getMatchPatternInvolvedAliases();
+      if (x != null) {
+        result.addAll(x);
+      }
+    }
+    return result.size() == 0 ? null : result;
   }
 
 }

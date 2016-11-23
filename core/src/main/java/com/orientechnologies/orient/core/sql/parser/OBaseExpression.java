@@ -9,6 +9,8 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.core.sql.executor.AggregationContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -326,6 +328,15 @@ public class OBaseExpression extends OMathExpression {
 
   public OModifier getModifier() {
     return modifier;
+  }
+
+  public List<String> getMatchPatternInvolvedAliases() {
+    if (this.identifier != null && this.identifier.toString().equals("$matched")) {
+      if (modifier != null && modifier.suffix != null && modifier.suffix.identifier != null) {
+        return Collections.singletonList(modifier.suffix.identifier.toString());
+      }
+    }
+    return null;
   }
 }
 

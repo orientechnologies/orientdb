@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class OIndexMatchCondition extends OBooleanExpression {
+public class OIndexMatchCondition extends OBooleanExpression{
 
   protected OBinaryCompareOperator operator;
   protected Boolean                between;
@@ -183,5 +183,10 @@ public class OIndexMatchCondition extends OBooleanExpression {
     result = 31 * result + (rightExpressions != null ? rightExpressions.hashCode() : 0);
     return result;
   }
+
+  @Override public List<String> getMatchPatternInvolvedAliases() {
+    return null;
+  }
+
 }
 /* JavaCC - OriginalChecksum=702e9ab959e87b043b519844a7d31224 (do not edit this line) */

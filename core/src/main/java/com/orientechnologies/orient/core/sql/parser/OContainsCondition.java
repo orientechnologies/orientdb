@@ -84,6 +84,7 @@ public class OContainsCondition extends OBooleanExpression {
     return execute(leftValue, rightValue);
   }
 
+
   @Override public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
     Object leftValue = left.execute(currentRecord, ctx);
     Object rightValue = right.execute(currentRecord, ctx);
@@ -216,5 +217,25 @@ public class OContainsCondition extends OBooleanExpression {
     result = 31 * result + (condition != null ? condition.hashCode() : 0);
     return result;
   }
+
+  @Override public List<String> getMatchPatternInvolvedAliases() {
+    List<String> leftX = left == null ? null : left.getMatchPatternInvolvedAliases();
+    List<String> rightX = right == null ? null : right.getMatchPatternInvolvedAliases();
+    List<String> conditionX = condition == null ? null : condition.getMatchPatternInvolvedAliases();
+
+    List<String> result = new ArrayList<String>();
+    if (leftX != null) {
+      result.addAll(leftX);
+    }
+    if (rightX != null) {
+      result.addAll(rightX);
+    }
+    if (conditionX != null) {
+      result.addAll(conditionX);
+    }
+
+    return result.size() == 0 ? null : result;
+  }
+
 }
 /* JavaCC - OriginalChecksum=bad1118296ea74860e88d66bfe9fa222 (do not edit this line) */

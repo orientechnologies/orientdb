@@ -30,6 +30,7 @@ public class OIsNotNullCondition extends OBooleanExpression {
     return visitor.visit(this, data);
   }
 
+
   @Override public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
     return expression.execute(currentRecord, ctx) != null;
   }
@@ -99,5 +100,10 @@ public class OIsNotNullCondition extends OBooleanExpression {
   @Override public int hashCode() {
     return expression != null ? expression.hashCode() : 0;
   }
+
+  @Override public List<String> getMatchPatternInvolvedAliases() {
+    return expression.getMatchPatternInvolvedAliases();
+  }
+
 }
 /* JavaCC - OriginalChecksum=a292fa8a629abb7f6fe72a627fc91361 (do not edit this line) */

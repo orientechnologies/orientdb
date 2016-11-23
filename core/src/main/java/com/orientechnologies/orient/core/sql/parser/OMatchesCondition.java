@@ -117,5 +117,10 @@ public class OMatchesCondition extends OBooleanExpression {
     result = 31 * result + (rightParam != null ? rightParam.hashCode() : 0);
     return result;
   }
+
+  @Override public List<String> getMatchPatternInvolvedAliases() {
+    return expression.getMatchPatternInvolvedAliases();
+  }
+
 }
 /* JavaCC - OriginalChecksum=68712f476e2e633c2bbfc34cb6c39356 (do not edit this line) */

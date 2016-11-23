@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class OInstanceofCondition extends OBooleanExpression {
+public class OInstanceofCondition extends OBooleanExpression{
 
   protected OExpression left;
   protected OIdentifier right;
@@ -117,6 +117,10 @@ public class OInstanceofCondition extends OBooleanExpression {
     result = 31 * result + (right != null ? right.hashCode() : 0);
     result = 31 * result + (rightString != null ? rightString.hashCode() : 0);
     return result;
+  }
+
+  @Override public List<String> getMatchPatternInvolvedAliases() {
+    return left == null ? null : left.getMatchPatternInvolvedAliases();
   }
 }
 /* JavaCC - OriginalChecksum=0b5eb529744f307228faa6b26f0592dc (do not edit this line) */

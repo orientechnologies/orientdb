@@ -201,5 +201,17 @@ public class OOrBlock extends OBooleanExpression {
     }
     return false;
   }
+
+  @Override public List<String> getMatchPatternInvolvedAliases() {
+    List<String> result = new ArrayList<String>();
+    for (OBooleanExpression exp : subBlocks) {
+      List<String> x = exp.getMatchPatternInvolvedAliases();
+      if (x != null) {
+        result.addAll(x);
+      }
+    }
+    return result.size() == 0 ? null : result;
+  }
+
 }
 /* JavaCC - OriginalChecksum=98d3077303a598705894dbb7bd4e1573 (do not edit this line) */

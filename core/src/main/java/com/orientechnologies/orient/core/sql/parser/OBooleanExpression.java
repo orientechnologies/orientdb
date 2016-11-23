@@ -18,6 +18,7 @@ public abstract class OBooleanExpression extends SimpleNode {
       return true;
     }
 
+
     @Override public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
       return true;
     }
@@ -34,12 +35,17 @@ public abstract class OBooleanExpression extends SimpleNode {
       return Collections.EMPTY_LIST;
     }
 
+
     @Override public boolean needsAliases(Set<String> aliases) {
       return false;
     }
 
     @Override public OBooleanExpression copy() {
       return TRUE;
+
+    }
+    @Override public List<String> getMatchPatternInvolvedAliases() {
+      return null;
     }
 
     @Override public String toString() {
@@ -85,12 +91,16 @@ public abstract class OBooleanExpression extends SimpleNode {
       return Collections.EMPTY_LIST;
     }
 
+
     @Override public boolean needsAliases(Set<String> aliases) {
       return false;
     }
 
     @Override public OBooleanExpression copy() {
       return FALSE;
+    }
+    @Override public List<String> getMatchPatternInvolvedAliases() {
+      return null;
     }
 
     @Override public String toString() {
@@ -132,6 +142,7 @@ public abstract class OBooleanExpression extends SimpleNode {
 
   public abstract boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx);
 
+
   public abstract boolean evaluate(OResult currentRecord, OCommandContext ctx);
 
   /**
@@ -167,6 +178,7 @@ public abstract class OBooleanExpression extends SimpleNode {
     return result;
   }
 
+
   public abstract boolean needsAliases(Set<String> aliases);
 
   public abstract OBooleanExpression copy();
@@ -190,5 +202,8 @@ public abstract class OBooleanExpression extends SimpleNode {
   public Optional<OUpdateItem> transformToUpdateItem() {
     return Optional.empty();
   }
+
+
+  public abstract List<String> getMatchPatternInvolvedAliases();
 
 }

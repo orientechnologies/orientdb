@@ -90,6 +90,11 @@ public class OIsNotDefinedCondition extends OBooleanExpression {
     return true;
   }
 
+  @Override public List<String> getMatchPatternInvolvedAliases() {
+    return expression.getMatchPatternInvolvedAliases();
+  }
+
+
   @Override public int hashCode() {
     return expression != null ? expression.hashCode() : 0;
   }

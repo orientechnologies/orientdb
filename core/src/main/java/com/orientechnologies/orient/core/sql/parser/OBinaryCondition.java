@@ -10,7 +10,7 @@ import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.util.*;
 
-public class OBinaryCondition extends OBooleanExpression {
+public class OBinaryCondition extends OBooleanExpression{
   protected OExpression            left;
   protected OBinaryCompareOperator operator;
   protected OExpression            right;
@@ -242,5 +242,20 @@ public class OBinaryCondition extends OBooleanExpression {
     return result;
   }
 
+  @Override public List<String> getMatchPatternInvolvedAliases() {
+    List<String> leftX = left.getMatchPatternInvolvedAliases();
+    List<String> rightX = right.getMatchPatternInvolvedAliases();
+    if (leftX == null) {
+      return rightX;
+    }
+    if (rightX == null) {
+      return leftX;
+    }
+
+    List<String> result = new ArrayList<String>();
+    result.addAll(leftX);
+    result.addAll(rightX);
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=99ed1dd2812eb730de8e1931b1764da5 (do not edit this line) */

@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class OIsDefinedCondition extends OBooleanExpression {
+public class OIsDefinedCondition extends OBooleanExpression implements OSimpleBooleanExpression {
 
   protected OExpression expression;
 
@@ -92,6 +92,10 @@ public class OIsDefinedCondition extends OBooleanExpression {
 
   @Override public int hashCode() {
     return expression != null ? expression.hashCode() : 0;
+  }
+
+  @Override public List<String> getMatchPatternInvolvedAliases() {
+    return expression.getMatchPatternInvolvedAliases();
   }
 }
 /* JavaCC - OriginalChecksum=075954b212c8cb44c8538bf5dea047d3 (do not edit this line) */

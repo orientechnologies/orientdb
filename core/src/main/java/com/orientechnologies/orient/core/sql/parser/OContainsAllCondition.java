@@ -180,5 +180,24 @@ public class OContainsAllCondition extends OBooleanExpression {
     result = 31 * result + (rightBlock != null ? rightBlock.hashCode() : 0);
     return result;
   }
+
+  @Override public List<String> getMatchPatternInvolvedAliases() {
+    List<String> leftX = left == null ? null : left.getMatchPatternInvolvedAliases();
+    List<String> rightX = right == null ? null : right.getMatchPatternInvolvedAliases();
+    List<String> rightBlockX = rightBlock == null ? null : rightBlock.getMatchPatternInvolvedAliases();
+
+    List<String> result = new ArrayList<String>();
+    if (leftX != null) {
+      result.addAll(leftX);
+    }
+    if (rightX != null) {
+      result.addAll(rightX);
+    }
+    if (rightBlockX != null) {
+      result.addAll(rightBlockX);
+    }
+
+    return result.size() == 0 ? null : result;
+  }
 }
 /* JavaCC - OriginalChecksum=ab7b4e192a01cda09a82d5b80ef4ec60 (do not edit this line) */

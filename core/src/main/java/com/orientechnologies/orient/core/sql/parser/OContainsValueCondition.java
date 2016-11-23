@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -144,6 +145,25 @@ public class OContainsValueCondition extends OBooleanExpression {
     result = 31 * result + (condition != null ? condition.hashCode() : 0);
     result = 31 * result + (expression != null ? expression.hashCode() : 0);
     return result;
+  }
+
+  @Override public List<String> getMatchPatternInvolvedAliases() {
+    List<String> leftX = left == null ? null : left.getMatchPatternInvolvedAliases();
+    List<String> expressionX = expression == null ? null : expression.getMatchPatternInvolvedAliases();
+    List<String> conditionX = condition == null ? null : condition.getMatchPatternInvolvedAliases();
+
+    List<String> result = new ArrayList<String>();
+    if (leftX != null) {
+      result.addAll(leftX);
+    }
+    if (expressionX != null) {
+      result.addAll(expressionX);
+    }
+    if (conditionX != null) {
+      result.addAll(conditionX);
+    }
+
+    return result.size() == 0 ? null : result;
   }
 }
 /* JavaCC - OriginalChecksum=6fda752f10c8d8731f43efa706e39459 (do not edit this line) */

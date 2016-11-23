@@ -94,5 +94,9 @@ public class OParenthesisBlock extends OBooleanExpression {
   @Override public int hashCode() {
     return subElement != null ? subElement.hashCode() : 0;
   }
+
+  @Override public List<String> getMatchPatternInvolvedAliases() {
+    return subElement.getMatchPatternInvolvedAliases();
+  }
 }
 /* JavaCC - OriginalChecksum=9a16b6cf7d051382acb94c45067631a9 (do not edit this line) */

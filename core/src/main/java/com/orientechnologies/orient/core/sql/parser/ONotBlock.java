@@ -139,5 +139,9 @@ public class ONotBlock extends OBooleanExpression {
     result = 31 * result + (negate ? 1 : 0);
     return result;
   }
+
+  @Override public List<String> getMatchPatternInvolvedAliases() {
+    return sub.getMatchPatternInvolvedAliases();
+  }
 }
 /* JavaCC - OriginalChecksum=1926313b3f854235aaa20811c22d583b (do not edit this line) */

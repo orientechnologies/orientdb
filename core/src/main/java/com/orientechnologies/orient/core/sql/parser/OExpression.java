@@ -9,6 +9,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.sql.executor.AggregationContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -32,7 +33,6 @@ public class OExpression extends SimpleNode {
   }
 
   public OExpression(OIdentifier identifier) {
-
     mathExpression = new OBaseExpression(identifier);
   }
 
@@ -286,14 +286,15 @@ public class OExpression extends SimpleNode {
 
   /**
    * tests if current expression is an indexed function AND that function can be used on this target
-   * @param target the query target
-   * @param context the execution context
+   *
+   * @param target   the query target
+   * @param context  the execution context
    * @param operator
    * @param right
    * @return true if current expression involves an indexed function AND that function can be used on this target, false otherwise
    */
-  public boolean allowsIndexedFunctionExecutionOnTarget(OFromClause target, OCommandContext context, OBinaryCompareOperator operator,
-      Object right){
+  public boolean allowsIndexedFunctionExecutionOnTarget(OFromClause target, OCommandContext context,
+      OBinaryCompareOperator operator, Object right) {
     if (mathExpression != null) {
       return mathExpression.allowsIndexedFunctionExecutionOnTarget(target, context, operator, right);
     }
@@ -304,12 +305,13 @@ public class OExpression extends SimpleNode {
    * tests if current expression is an indexed function AND the function has also to be executed after the index search.
    * In some cases, the index search is accurate, so this condition can be excluded from further evaluation. In other cases
    * the result from the index is a superset of the expected result, so the function has to be executed anyway for further filtering
-   * @param target the query target
+   *
+   * @param target  the query target
    * @param context the execution context
    * @return true if current expression involves an indexed function AND the function has also to be executed after the index search.
    */
-  public boolean executeIndexedFunctionAfterIndexSearch(OFromClause target, OCommandContext context, OBinaryCompareOperator operator,
-      Object right){
+  public boolean executeIndexedFunctionAfterIndexSearch(OFromClause target, OCommandContext context,
+      OBinaryCompareOperator operator, Object right) {
     if (mathExpression != null) {
       return mathExpression.executeIndexedFunctionAfterIndexSearch(target, context, operator, right);
     }
@@ -461,6 +463,18 @@ public class OExpression extends SimpleNode {
 
   public OMathExpression getMathExpression() {
     return mathExpression;
+  }
+
+  /**
+   * if the condition involved the current pattern (MATCH statement, eg. $matched.something = foo),
+   * returns the name of involved pattern aliases ("something" in this case)
+   *
+   * @return a list of pattern aliases involved in this condition. Null it does not involve the pattern
+   */
+  List<String> getMatchPatternInvolvedAliases() {
+    if (mathExpression != null)
+      return mathExpression.getMatchPatternInvolvedAliases();
+    return null;
   }
 }
 /* JavaCC - OriginalChecksum=9c860224b121acdc89522ae97010be01 (do not edit this line) */

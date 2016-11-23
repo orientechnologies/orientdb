@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -21,6 +22,7 @@ public class OParenthesisExpression extends OMathExpression {
   public OParenthesisExpression(OrientSql p, int id) {
     super(p, id);
   }
+
 
   public OParenthesisExpression(OExpression exp) {
     super(-1);
@@ -161,6 +163,10 @@ public class OParenthesisExpression extends OMathExpression {
     result = 31 * result + (expression != null ? expression.hashCode() : 0);
     result = 31 * result + (statement != null ? statement.hashCode() : 0);
     return result;
+  }
+
+  public List<String> getMatchPatternInvolvedAliases() {
+    return expression.getMatchPatternInvolvedAliases();//TODO also check the statement...?
   }
 }
 /* JavaCC - OriginalChecksum=4656e5faf4f54dc3fc45a06d8e375c35 (do not edit this line) */
