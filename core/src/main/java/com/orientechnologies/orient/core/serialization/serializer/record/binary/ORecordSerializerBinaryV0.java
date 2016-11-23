@@ -227,8 +227,11 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     for (Entry<String, ODocumentEntry> entry : fields) {
       if (!entry.getValue().exist())
         continue;
-      if (entry.getValue().property == null && props != null)
-        entry.getValue().property = props.get(entry.getKey());
+      if (entry.getValue().property == null && props != null) {
+        OProperty prop = props.get(entry.getKey());
+        if (prop != null && entry.getValue().type == prop.getType())
+          entry.getValue().property = prop;
+      }
 
       if (entry.getValue().property != null) {
         OVarIntSerializer.write(bytes, (entry.getValue().property.getId() + 1) * -1);
