@@ -1,5 +1,5 @@
 #!groovy
-node("openjdk-8-slave") {
+node("master") {
     stage 'Source checkout'
 
     checkout scm
