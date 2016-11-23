@@ -1163,7 +1163,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     final OIndexManagerProxy indexManager = databaseRecord.getMetadata().getIndexManager();
     final TreeMap<String, OTransactionIndexChanges> indexesToCommit = getSortedIndexEntries(clientTx);
 
-    ((OMetadataInternal) databaseRecord.getMetadata()).makeThreadLocalSchemaSnapshot();
+    databaseRecord.getMetadata().makeThreadLocalSchemaSnapshot();
 
     final Iterable<ORecordOperation> entries = (Iterable<ORecordOperation>) clientTx.getAllRecordEntries();
     final TreeMap<Integer, OCluster> clustersToLock = new TreeMap<>();
@@ -1282,7 +1282,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           transaction.set(null);
         }
       } finally {
-        ((OMetadataInternal) databaseRecord.getMetadata()).clearThreadLocalSchemaSnapshot();
+        databaseRecord.getMetadata().clearThreadLocalSchemaSnapshot();
       }
     } finally {
       stateLock.releaseReadLock();
