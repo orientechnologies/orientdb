@@ -31,12 +31,13 @@ import java.nio.file.Path;
 import java.util.Locale;
 
 public class OFileUtils {
-  public static final int      KILOBYTE = 1024;
-  public static final int      MEGABYTE = 1048576;
-  public static final int      GIGABYTE = 1073741824;
-  public static final long     TERABYTE = 1099511627776L;
+  public static final int  KILOBYTE = 1024;
+  public static final int  MEGABYTE = 1048576;
+  public static final int  GIGABYTE = 1073741824;
+  public static final long TERABYTE = 1099511627776L;
 
   private static final boolean useOldFileAPI;
+
   static {
     boolean oldAPI = false;
 
@@ -60,8 +61,10 @@ public class OFileUtils {
 
     boolean number = true;
     for (int i = size.length() - 1; i >= 0; --i) {
-      if (!Character.isDigit(size.charAt(i))) {
-        number = false;
+      final char c = size.charAt(i);
+      if (!Character.isDigit(c)) {
+        if (i > 0 || (c != '-' && c != '+'))
+          number = false;
         break;
       }
     }
