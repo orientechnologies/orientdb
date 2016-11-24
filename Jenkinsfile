@@ -32,7 +32,7 @@ node("master") {
 
 
         stage('Run CI tests on java8') {
-            timeout(time: 180, unit: 'MINUTES') {
+            timeout(time: 360, unit: 'MINUTES') {
                 docker.image("${mvnJdk8Image}")
                         .inside("${env.VOLUMES}") {
                     sh "${mvnHome}/bin/mvn  --batch-mode -V -U -e -Dmaven.test.failure.ignore=true  -Dstorage.diskCache.bufferSize=4096 -Dorientdb.test.env=ci clean package -Dsurefire.useFile=false"
