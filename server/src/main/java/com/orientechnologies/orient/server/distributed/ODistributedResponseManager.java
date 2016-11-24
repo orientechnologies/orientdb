@@ -532,18 +532,14 @@ public class ODistributedResponseManager {
         // CHECK FOR OFFLINE SERVERS
         final List<String> missingNodes = getMissingNodes();
 
-        final int expectingNodes = missingNodes.size();
-        final String missingNodesAsString = missingNodes.toString();
+        // EXCLUDE THE SERVERS OFFLINE OR IN BACKUP
+        dManager.getNodesWithStatus(missingNodes, getDatabaseName(), ODistributedServerManager.DB_STATUS.OFFLINE,
+            ODistributedServerManager.DB_STATUS.SYNCHRONIZING, ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
 
-        // EXCLUDE THE SERVERS OFFLINE OR IN SYNCHRONIZATION
-        dManager.getNodesWithStatus(missingNodes, getDatabaseName(), ODistributedServerManager.DB_STATUS.ONLINE,
-            ODistributedServerManager.DB_STATUS.BACKUP);
-        final int unreacheableServersDuringRequest = expectingNodes - missingNodes.size();
-
-        if (responseGroups.get(0).size() + unreacheableServersDuringRequest >= quorum) {
-          ODistributedServerLog.info(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
+        if (responseGroups.get(0).size() + missingNodes.size() >= quorum) {
+          ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
               "%d server(s) (%s) became unreachable during the request, decreasing the quorum (%d) and accept the request: %s",
-              unreacheableServersDuringRequest, missingNodesAsString, quorum, request);
+              missingNodes.size(), missingNodes, quorum, request);
           return true;
         }
       }
@@ -723,7 +719,7 @@ public class ODistributedResponseManager {
                   dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
 
           ODistributedServerLog.warn(this, dManager.getLocalNodeName(), targetNode, DIRECTION.OUT,
-              "Received response from undo message (%s) for request (%s) to server %s: result", undoTask, request, targetNode,
+              "Received response from undo message (%s) for request (%s) to server %s: %s", undoTask, request, targetNode,
               result);
         }
       }

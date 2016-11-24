@@ -181,4 +181,23 @@ public abstract class OAbstract2pcTask extends OAbstractReplicatedTask {
   public void setLastLSN(final OLogSequenceNumber lastLSN) {
     this.lastLSN = lastLSN;
   }
+
+  @Override
+  public String toString() {
+    final StringBuilder buffer = new StringBuilder();
+
+    buffer.append("tx[");
+    buffer.append(tasks.size());
+    buffer.append("]{");
+
+    for (int i = 0; i < tasks.size(); ++i) {
+      final OAbstractRecordReplicatedTask task = tasks.get(i);
+      if (i > 0)
+        buffer.append(',');
+      buffer.append(task);
+    }
+
+    buffer.append("}");
+    return buffer.toString();
+  }
 }

@@ -50,8 +50,8 @@ import java.util.Map;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class OSQLCommandTask extends OAbstractCommandTask {
-  private static final long                                 serialVersionUID = 1L;
-  public static final int                                   FACTORYID        = 5;
+  private static final long serialVersionUID = 1L;
+  public static final  int  FACTORYID        = 5;
 
   protected String                                          text;
   protected Map<Object, Object>                             params;
@@ -59,7 +59,6 @@ public class OSQLCommandTask extends OAbstractCommandTask {
   protected Collection<String>                              clusters;
   protected OCommandDistributedReplicateRequest.QUORUM_TYPE quorumType;
   protected long                                            timeout;
-
   protected boolean                                         idempotent;
 
   public OSQLCommandTask() {
@@ -74,6 +73,7 @@ public class OSQLCommandTask extends OAbstractCommandTask {
 
     final OCommandExecutor executor = OCommandManager.instance().getExecutor(iCommand);
     executor.parse(iCommand);
+
     quorumType = ((OCommandDistributedReplicateRequest) executor).getQuorumType();
     timeout = executor.getDistributedTimeout();
     idempotent = executor.isIdempotent();
@@ -83,8 +83,9 @@ public class OSQLCommandTask extends OAbstractCommandTask {
       final ODatabaseDocumentInternal database) throws Exception {
 
     if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "Execute command=%s db=%s",
-          text.toString(), database.getName());
+      ODistributedServerLog
+          .debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "Execute command=%s db=%s", text.toString(),
+              database.getName());
 
     Object res;
 
@@ -95,8 +96,9 @@ public class OSQLCommandTask extends OAbstractCommandTask {
         OCommandExecutor executor = OCommandManager.instance().getExecutor((OCommandRequestInternal) cmd);
         executor.parse(cmd);
 
-        final OCommandExecutor exec = executor instanceof OCommandExecutorSQLDelegate
-            ? ((OCommandExecutorSQLDelegate) executor).getDelegate() : executor;
+        final OCommandExecutor exec = executor instanceof OCommandExecutorSQLDelegate ?
+            ((OCommandExecutorSQLDelegate) executor).getDelegate() :
+            executor;
 
         if (exec instanceof OCommandExecutorSQLSelect && clusters.size() > 0) {
           // REWRITE THE TARGET TO USE CLUSTERS
@@ -187,7 +189,7 @@ public class OSQLCommandTask extends OAbstractCommandTask {
     if (executor instanceof OCommandDistributedReplicateRequest) {
       final String undoCommand = ((OCommandDistributedReplicateRequest) executor).getUndoCommand();
       if (undoCommand != null) {
-        final OSQLCommandTask undoTask = new OSQLCommandTask((OCommandRequestText) cmd, clusters);
+        final OSQLCommandTask undoTask = new OSQLCommandTask(new OCommandSQL(undoCommand), clusters);
         undoTask.setResultStrategy(resultStrategy);
         return undoTask;
       }
@@ -205,5 +207,4 @@ public class OSQLCommandTask extends OAbstractCommandTask {
   public int getFactoryId() {
     return FACTORYID;
   }
-
 }
