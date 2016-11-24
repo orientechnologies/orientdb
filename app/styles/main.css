@@ -1265,3 +1265,23 @@ span.badge-edge {
   margin-top: 35px;
   margin-bottom: 10px;
 }
+
+.graph-info {
+  padding-right: 30px;
+}
+.graph-info .label {
+  margin-right: 5px;
+}
+
+.graph-info .label .badge {
+  background-color: white;
+  color: #337ab7;
+}
+
+.graph-info .label {
+  padding: 7px
+}
+
+.graph-info h4 {
+  margin-top: 3px;
+}

@@ -324,6 +324,7 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
   $scope.history = History.histories();
 
 
+  $scope.physics = true;
   $scope.config = BrowseConfig;
   $scope.fullscreen = false;
   $scope.additionalClass = '';
@@ -376,6 +377,26 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
 
   });
 
+  $scope.$watch("linkDistance", function (data) {
+    if (data) {
+      $scope.graph.changeLinkDistance(data);
+    }
+  });
+
+  $scope.$watch("physics", function (newVal, oldVal) {
+
+
+    if (newVal != undefined && oldVal != undefined && newVal !== oldVal) {
+
+      if (newVal) {
+        $scope.releasePhysics();
+      } else {
+        $scope.freezePhysics();
+      }
+    }
+
+
+  });
   $scope.$watch("fullscreen", function (val) {
     if (val) {
       $scope.additionalClass = 'panel-graph-fullscreen';
@@ -482,6 +503,7 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
     if (data) {
       $scope.tmpGraphOptions.config = data.config;
       $scope.graphOptions = $scope.tmpGraphOptions;
+      $scope.linkDistance = data.config.linkDistance;
     }
     //
   })
@@ -502,6 +524,12 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
     $scope.graph.resetZoom();
   }
 
+  $scope.freezePhysics = function () {
+    $scope.graph.freezePhysics();
+  }
+  $scope.releasePhysics = function () {
+    $scope.graph.releasePhysics();
+  }
   $scope.download = function () {
 
     var html = d3.select(".graph-container svg")
@@ -522,10 +550,17 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
   $scope.queryText = Graph.query;
 
 
+  $scope.nodesLen = Graph.data.vertices.length;
+  $scope.edgesLen = Graph.data.edges.length;
   $scope.tmpGraphOptions = {
     data: Graph.data,
     onLoad: function (graph) {
       $scope.graph = graph;
+
+      $scope.graph.on('data/changed', function (graph) {
+        $scope.nodesLen = graph.nodes.length;
+        $scope.edgesLen = graph.links.length;
+      })
       $scope.graph.on('node/click', function (v) {
 
         var q = "SELECT outE().@class.asSet() as out, inE().@class.asSet() as in from " + v.source["@rid"];
@@ -539,6 +574,36 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
           verbose: false
         }, function (data) {
           v.relationships = data.result[0];
+
+          var query = "";
+          var projection = "{{direction}}('{{label}}').size() as `{{direction}}_{{label}}`"
+          var q = "SELECT {{projection}} from " + v.source["@rid"];
+
+          data.result[0].out.forEach(function (out) {
+            query += S(projection).template({direction: "out", label: out}).s + ",";
+          })
+          data.result[0].in.forEach(function (in_) {
+            query += S(projection).template({direction: "in", label: in_}).s + ",";
+          })
+
+
+          if (query !== "") {
+            var pos = query.lastIndexOf(',');
+            query = query.substring(0, pos);
+            query = S(q).template({projection: query}).s;
+            CommandApi.queryText({
+              database: $routeParams.database,
+              contentType: 'JSON',
+              language: 'sql',
+              text: query,
+              limit: -1,
+              shallow: false,
+              verbose: false
+            }, function (data) {
+              v.relCardinality = data.result[0];
+            });
+          }
+
         })
         if (Aside.isOpen()) {
           $timeout(function () {
@@ -725,11 +790,20 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
 
             var acts = [];
             if (v.relationships && v.relationships.out) {
+
+
               v.relationships.out.forEach(function (elem) {
                 var name = elem.replace("out_", "");
+                name = (name != "" ? name : "E");
+                var nameLabel = name;
+                var nameLabel = (name != "" ? name : "E");
+                if (v.relCardinality && v.relCardinality["out_" + name]) {
+                  nameLabel += " (" + v.relCardinality["out_" + name] + ")"
+                }
                 acts.push(
                   {
-                    name: (name != "" ? name : "E"),
+                    name: nameLabel,
+                    label: name,
                     onClick: function (v, label) {
 
                       if (v['@rid'].startsWith("#-")) {
@@ -855,13 +929,18 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
 
             var acts = [];
             if (v.relationships || v.relationships.in) {
-              //var outgoings = Database.getEdge(v.source, 'in_');
+
               v.relationships.in.forEach(function (elem) {
                 var name = elem.replace("in_", "");
-
+                name = (name != "" ? name : "E");
+                var nameLabel = name;
+                if (v.relCardinality && v.relCardinality["in_" + name]) {
+                  nameLabel += " (" + v.relCardinality["in_" + name] + ")"
+                }
                 acts.push(
                   {
-                    name: (name != "" ? name : "E"),
+                    name: nameLabel,
+                    label: name,
                     onClick: function (v, label) {
                       if (label == "E") {
                         label = "";
@@ -882,18 +961,7 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
                       }).then(function (data) {
                         $scope.graph.data(data.graph).redraw();
                       })
-                      //CommandApi.queryText({
-                      //  database: $routeParams.database,
-                      //  contentType: 'JSON',
-                      //  language: 'sql',
-                      //  text: queryText,
-                      //  limit: -1,
-                      //  shallow: false,
-                      //  verbose: false
-                      //}, function (data) {
-                      //
-                      //  $scope.graph.data(data.result).redraw();
-                      //})
+
                     }
                   }
                 )

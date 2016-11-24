@@ -2,7 +2,7 @@
   <div class="col-md-12">
     <div class="admin-header">
       <div class="row">
-        <div class="col-md-4 admin-title">
+        <div class="col-md-6 admin-title">
           <h2>
 
             <button class="btn btn-xs btn-warning btn-trasparent" ng-click="toggleProperties()"><i class="fa "
@@ -20,7 +20,8 @@
             </a>
           </h2>
         </div>
-        <div class="col-md-8 admin-actions">
+        <div class="col-md-6 admin-actions">
+
           <div class="btn-toolbar pull-right">
             <div class="btn-group">
               <button href="javascript:void(0)"
@@ -48,6 +49,7 @@
 
               </button>
             </div>
+
 
             <!--<div class="btn-group">-->
             <!--<button href="javascript:void(0)"-->
@@ -142,6 +144,14 @@
               </ul>
             </div>
           </div>
+          <div class="pull-right graph-info">
+            <h4>
+                <span class="label label-primary"> Nodes
+                 <span class="badge">{{nodesLen}}</span> </span>
+              <span class="label label-primary"> Edges
+                 <span class="badge">{{edgesLen}}</span> </span>
+            </h4>
+          </div>
         </div>
       </div>
 
@@ -198,6 +208,16 @@
                           <fieldset>
 
                             <div class="form-group">
+                              <label>Physics</label>
+                              <input bs-switch type="checkbox" ng-model="physics"
+                                     class="btn btn-primary btn-sm">
+                              </input>
+                            </div>
+                            <div class="form-group">
+                              <label>Link Distance</label>
+                              <input type="text" class="form-control input-sm" ng-model="linkDistance"/>
+                            </div>
+                            <div class="form-group">
                               <label>Limit</label>
                               <input type="text" class="form-control input-sm" ng-model="config.limit"/>
                             </div>
@@ -222,6 +242,7 @@
                   </div>
                 </div>
               </div>
+
             </div>
           </div>
         </div>

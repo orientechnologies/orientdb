@@ -270,6 +270,18 @@ var OrientGraph = (function () {
 
     }
 
+    this.releasePhysicsInternal = function () {
+      this.svgContainer.selectAll("g.vertex").classed("fixed", function (v) {
+        return v.fixed = false
+      })
+    }
+
+    this.freezePhysicsInternal = function () {
+      this.svgContainer.selectAll("g.vertex").classed("fixed", function (v) {
+        return v.fixed = true
+      })
+      this.force.stop();
+    }
 
     this.resetZoomInternal = function () {
       var b = graphBounds();
@@ -354,17 +366,9 @@ var OrientGraph = (function () {
       self.nodes.splice(0, self.nodes.length)
       self.links.splice(0, self.links.length)
     }
-    this.init = function () {
+    this.simulate = function () {
 
       var self = this;
-      this.force.nodes(this.nodes)
-        .links(this.links)
-        .size([this.config.width, this.config.height])
-        .linkDistance(this.config.linkDistance)
-        .linkStrength(0.1)
-        .charge(this.config.charge)
-        .friction(this.config.friction)
-
 
       var mst = 100
       var mas = 60
@@ -378,7 +382,7 @@ var OrientGraph = (function () {
       this.force.tick = function () {
 
         var startTick = now()
-        step = mst
+        var step = mst
         while (step-- && (now() - startTick < mtct)) {
           if (tick()) {
             mst = 2
@@ -391,6 +395,19 @@ var OrientGraph = (function () {
         }
         return false;
       }
+    }
+
+    this.init = function () {
+
+      var self = this;
+      this.force.nodes(this.nodes)
+        .links(this.links)
+        .size([this.config.width, this.config.height])
+        .linkDistance(this.config.linkDistance)
+        .linkStrength(0.1)
+        .charge(this.config.charge)
+        .friction(this.config.friction)
+      this.simulate();
 
       this.svgContainer = this.viewport.append('svg');
 
@@ -1260,6 +1277,10 @@ var OrientGraph = (function () {
       if (this.changer[prop])
         this.changer[prop](clazz, prop, val);
     }
+    this.changeLinkDistance = function (distance) {
+      this.force.linkDistance(distance);
+      this.config.linkDistance = distance;
+    }
     this.getClazzConfigVal = function (clazz, prop, obj) {
       if (!clazz || !prop) return null;
 
@@ -1339,7 +1360,7 @@ var OrientGraph = (function () {
       self.circle.attr('transform', function (d) {
         return 'translate(' + d.x + ',' + d.y + ')';
       });
-      refreshSelected();
+      // refreshSelected();
     }
 
     this.isVertex = function (elem) {
@@ -1768,15 +1789,16 @@ var OrientGraph = (function () {
               })
               .style("fill-opacity", 1e-6)
               .on("click", function (d) {
-                d.onClick(graph.selected, d.name);
+                d.onClick(graph.selected, d.label);
               });
 
+            var bboxWidth = d3.select(txt.node().parentNode).node().parentNode.getBBox();
             var bbox = txt.node().getBBox();
             var padding = 2;
             nodeEnter.insert("rect", "text")
               .attr("x", bbox.x - padding)
               .attr("y", bbox.y - padding)
-              .attr("width", bbox.width + (padding * 2))
+              .attr("width", bboxWidth.width + (padding * 2))
               .attr("height", bbox.height + (padding * 2))
               .attr("class", "tree-text-container");
             var nodeUpdate = n.transition()
@@ -2199,8 +2221,13 @@ var OrientGraph = (function () {
       var center = {x: this.config.width / 2, y: this.config.height / 2}
       this.update(this.nodes, center, radius)
 
+      this.simulate();
+
       this.force.start();
 
+      if (this.topics['data/changed']) {
+        this.topics['data/changed'](this);
+      }
     },
     startEdge: function () {
       this.startEdgeCreation();
@@ -2217,6 +2244,12 @@ var OrientGraph = (function () {
     },
     resetZoom: function () {
       this.resetZoomInternal();
+    },
+    freezePhysics: function () {
+      this.freezePhysicsInternal();
+    },
+    releasePhysics: function () {
+      this.releasePhysicsInternal();
     }
   }
   return graph;
