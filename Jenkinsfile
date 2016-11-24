@@ -1,25 +1,30 @@
 #!groovy
 node("master") {
-    stage 'Source checkout'
 
-    checkout scm
-    stash name: 'source', excludes: 'target/', includes: '**'
+    stage('Source checkout') {
 
-    stage 'Run tests on Java8'
-    docker.image("orientdb/mvn-zulu-jdk-8:20161124")
-            .inside("${env.VOLUMES}") {
+        checkout scm
+//        stash name: 'source', excludes: 'target/', includes: '**'
+    }
 
-        sh "rm -rf *"
-        unstash 'source'
+    stage('Run tests on Java8') {
+        docker.image("orientdb/mvn-zulu-jdk-8:20161124")
+                .inside("${env.VOLUMES}") {
 
-        def mvnHome = tool 'mvn'
-        sh "${mvnHome}/bin/mvn  --batch-mode -V -U  clean install  -Dmaven.test.failure.ignore=true -Dsurefire.useFile=false"
-        step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml'])
+            try {
 
-        dir('distribution') {
-            stash name: 'orientdb-tgz', includes: 'target/orientdb-community-*.tar.gz'
+//            sh "rm -rf *"
+//            unstash 'source'
+
+                def mvnHome = tool 'mvn'
+                sh "${mvnHome}/bin/mvn  --batch-mode -V -U  clean install  -Dmaven.test.failure.ignore=true -Dsurefire.useFile=false"
+                step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml'])
+                slackSend color: 'good', message: """TEST::: ${env.JOB_NAME} build ${env.BUILD_NUMBER} """
+            } catch (e) {
+
+                slackSend color: 'bad', message: """TEST::: ${env.JOB_NAME} build ${env.BUILD_NUMBER} """
+            }
         }
-
 
     }
 }
