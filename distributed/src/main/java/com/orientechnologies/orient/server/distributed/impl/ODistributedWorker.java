@@ -386,7 +386,7 @@ public class ODistributedWorker extends Thread {
       for (int retry = 0; running; ++retry) {
         if (mgr != null && mgr.isOffline()) {
           // NODE NOT ONLINE YET, REFUSE THE CONNECTION
-          OLogManager.instance().info(this,
+          ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE,
               "Node is not online yet (status=%s), blocking the command until it is online (retry=%d, queue=%d worker=%d)",
               mgr.getNodeStatus(), retry + 1, localQueue.size(), id);
 

@@ -294,6 +294,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
             result = exec.mergeResults(results);
           }
 
+          if (result instanceof Throwable && results.containsKey(localNodeName))
+            undoCommandOnLocalServer(iCommand);
+
         } else {
           final OAbstractCommandTask task = iCommand instanceof OCommandScript ?
               new OScriptTask(iCommand) :
@@ -338,6 +341,10 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
                     localResult, null);
 
             result = dResponse.getPayload();
+
+            if (executedLocally && result instanceof Throwable)
+              undoCommandOnLocalServer(iCommand);
+
           } else
             result = localResult;
         }
@@ -375,6 +382,27 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       // UNREACHABLE
       return null;
     }
+  }
+
+  protected void undoCommandOnLocalServer(final OCommandRequestText iCommand) {
+    // UNDO LOCALLY
+    OScenarioThreadLocal.executeAsDistributed(new Callable() {
+      @Override
+      public Object call() throws Exception {
+        final OCommandExecutor executor = OCommandManager.instance().getExecutor(iCommand);
+
+        // COPY THE CONTEXT FROM THE REQUEST
+        executor.setContext(iCommand.getContext());
+        executor.setProgressListener(iCommand.getProgressListener());
+        executor.parse(iCommand);
+
+        final String undoCommand = ((OCommandDistributedReplicateRequest) executor).getUndoCommand();
+        if (undoCommand != null) {
+          wrapped.command(new OCommandSQL(undoCommand));
+        }
+        return null;
+      }
+    });
   }
 
   protected Map<String, Object> executeOnServers(final OCommandRequestText iCommand, final OCommandExecutor exec,
