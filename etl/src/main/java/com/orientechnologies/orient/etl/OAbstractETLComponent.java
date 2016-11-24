@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS;
-import sun.security.x509.GeneralName;
 
 import static com.orientechnologies.common.parser.OSystemVariableResolver.*;
 
@@ -69,16 +68,16 @@ public abstract class OAbstractETLComponent implements OETLComponent {
   public void end() {
   }
 
+  @Override
+  public void setProcessor(OETLProcessor processor) {
+    this.processor = processor;
+  }
+
   protected String getCommonConfigurationParameters() {
     return "{log:{optional:true,description:'Can be any of [NONE, ERROR, INFO, DEBUG]. Default is INFO'}},"
         + "{if:{optional:true,description:'Conditional expression. If true, the block is executed, otherwise is skipped'}},"
         + "{output:{optional:true,description:'Variable name to store the transformer output. If null, the output will be passed to the pipeline as input for the next component.'}}";
 
-  }
-
-  @Override
-  public void setProcessor(OETLProcessor processor) {
-    this.processor = processor;
   }
 
   @Override
