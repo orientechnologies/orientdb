@@ -10,7 +10,7 @@ node("master") {
 
     try {
         stage('Run tests on Java8') {
-            docker.image(${mvnJdk8Image})
+            docker.image("${mvnJdk8Image}")
                     .inside("${env.VOLUMES}") {
 
                 sh "${mvnHome}/bin/mvn  --batch-mode -V -U  clean install  -Dmaven.test.failure.ignore=true -Dsurefire.useFile=false"
@@ -25,7 +25,7 @@ node("master") {
             parallel(
                     ci: {
                         timeout(time: 180, unit: 'MINUTES') {
-                            docker.image(${mvnJdk8Image})
+                            docker.image("${mvnJdk8Image}")
                                     .inside("${env.VOLUMES}") {
                                 sh "${mvnHome}/bin/mvn  --batch-mode -V -U -e -Dmaven.test.failure.ignore=true  -Dstorage.diskCache.bufferSize=4096 -Dorientdb.test.env=ci clean package -Dsurefire.useFile=false"
                                 step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml'])
@@ -34,7 +34,7 @@ node("master") {
                     },
                     crash: {
                         timeout(time: 60, unit: 'MINUTES') {
-                            docker.image(${mvnJdk8Image})
+                            docker.image("${mvnJdk8Image}")
                                     .inside("${env.VOLUMES}") {
                                 dir('server') {
                                     sh "${mvnHome}/bin/mvn   --batch-mode -V -U -e -Dmaven.test.failure.ignore=true  clean test-compile failsafe:integration-test -Dsurefire.useFile=false"
