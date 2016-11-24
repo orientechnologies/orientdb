@@ -194,8 +194,9 @@ public class OrientJdbcResultSetMetaDataTest extends OrientJdbcBaseTest {
     ResultSet rs = stmt.executeQuery("SELECT  isActive, is_active FROM Writer");
 
     while (rs.next()) {
+      assertThat(rs.getBoolean(1)).isTrue();
+      assertThat(rs.getBoolean(2)).isTrue();
 
-      System.out.println("bool:: " + rs.getBoolean(1) + " - " + rs.getBoolean(2));
     }
   }
 }
