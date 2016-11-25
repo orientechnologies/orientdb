@@ -57,5 +57,4 @@ public class OSQLFunctionStandardDeviation extends OSQLFunctionVariance {
 
     return result;
   }
-
 }

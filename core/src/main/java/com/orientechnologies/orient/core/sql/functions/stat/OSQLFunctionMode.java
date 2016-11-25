@@ -97,7 +97,10 @@ public class OSQLFunctionMode extends OSQLFunctionAbstract {
       return dMaxElems;
     }
 
-    return resultsToMerge.get(0);
+    if (!resultsToMerge.isEmpty())
+      return resultsToMerge.get(0);
+
+    return null;
   }
 
   private int evaluate(Object value, int times, Map<Object, Integer> iSeen, List<Object> iMaxElems, int iMax) {
