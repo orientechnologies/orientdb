@@ -86,7 +86,11 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
 
     // SHUTDOWN ALL DATABASES
     for (Entry<String, ODistributedDatabaseImpl> m : databases.entrySet()) {
-      manager.setDatabaseStatus(manager.getLocalNodeName(), m.getKey(), ODistributedServerManager.DB_STATUS.OFFLINE);
+      try {
+        manager.setDatabaseStatus(manager.getLocalNodeName(), m.getKey(), ODistributedServerManager.DB_STATUS.OFFLINE);
+      } catch (Throwable t) {
+        // IGNORE IT
+      }
       m.getValue().shutdown();
     }
     databases.clear();
