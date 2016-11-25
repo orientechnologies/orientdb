@@ -657,13 +657,16 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
             }
           });
 
-    } catch (ONeedRetryException e) {
+    } catch (ODistributedRecordLockedException e) {
       // PASS THROUGH
+      throw e;
+    } catch (ONeedRetryException e) {
       localDistributedDatabase.getDatabaseRapairer().repairRecord(iRecordId);
       final ORecordId lockEntireCluster = iRecordId.copy();
       lockEntireCluster.setClusterPosition(-1);
       localDistributedDatabase.getDatabaseRapairer().repairRecord(lockEntireCluster);
 
+      // PASS THROUGH
       throw e;
     } catch (HazelcastInstanceNotActiveException e) {
       throw new OOfflineNodeException("Hazelcast instance is not available");

@@ -17,6 +17,7 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -147,7 +148,15 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
       ODocument person = new ODocument("Person")
           .fields("id", uid, "name", "Billy" + uniqueId, "surname", "Mayes" + uniqueId, "birthday", new Date(), "children",
               uniqueId);
-      database.save(person);
+      for (int retry = 0; retry < 10; ++retry) {
+        try {
+          database.save(person);
+          break;
+        } catch (OException e) {
+          // RETRY
+          System.out.print("RETRY " + retry + " ON CREATE RECORD");
+        }
+      }
 
       if (!useTransactions)
         Assert.assertTrue(person.getIdentity().isPersistent());
