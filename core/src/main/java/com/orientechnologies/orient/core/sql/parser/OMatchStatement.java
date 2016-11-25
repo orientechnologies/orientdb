@@ -688,7 +688,11 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       return false;
     }
     if (record instanceof ODocument) {
-      return ((ODocument) record).getSchemaClass().isSubClassOf(oClass);
+      OClass schemaClass = ((ODocument) record).getSchemaClass();
+      if(schemaClass == null){
+        return false;
+      }
+      return schemaClass.isSubClassOf(oClass);
     }
     return false;
   }
