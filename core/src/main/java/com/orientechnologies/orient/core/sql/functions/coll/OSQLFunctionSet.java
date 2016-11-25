@@ -95,7 +95,10 @@ public class OSQLFunctionSet extends OSQLFunctionMultiValueAbstract<Set<Object>>
       return result;
     }
 
-    return resultsToMerge.get(0);
+    if (!resultsToMerge.isEmpty())
+      return resultsToMerge.get(0);
+
+    return null;
   }
 
   protected Set<Object> prepareResult(Set<Object> res) {

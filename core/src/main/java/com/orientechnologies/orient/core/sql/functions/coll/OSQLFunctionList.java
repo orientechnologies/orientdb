@@ -23,19 +23,12 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * This operator add an item in a list. The list accepts duplicates.
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * 
  */
 public class OSQLFunctionList extends OSQLFunctionMultiValueAbstract<List<Object>> {
   public static final String NAME = "list";
@@ -92,7 +85,10 @@ public class OSQLFunctionList extends OSQLFunctionMultiValueAbstract<List<Object
       return result;
     }
 
-    return resultsToMerge.get(0);
+    if (!resultsToMerge.isEmpty())
+      return resultsToMerge.get(0);
+
+    return null;
   }
 
   protected List<Object> prepareResult(List<Object> res) {
@@ -100,7 +96,7 @@ public class OSQLFunctionList extends OSQLFunctionMultiValueAbstract<List<Object
       final Map<String, Object> doc = new HashMap<String, Object>();
       doc.put("node", getDistributedStorageId());
       doc.put("context", res);
-      return Collections.<Object> singletonList(doc);
+      return Collections.<Object>singletonList(doc);
     } else {
       return res;
     }

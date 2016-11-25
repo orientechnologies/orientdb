@@ -19,47 +19,47 @@
  */
 package com.orientechnologies.orient.core.sql.functions.stat;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 /**
  * Compute the variance estimation for a given field.
- * 
+ * <p>
  * This class uses the Weldford's algorithm (presented in Donald Knuth's Art of Computer Programming) to avoid multiple distribution
  * values' passes. When executed in distributed mode it uses the Chan at al. pairwise variance algorithm to merge the results.
- * 
+ * <p>
  * <p>
  * <b>References</b>
  * </p>
- *
+ * <p>
  * <ul>
- * 
+ * <p>
  * <li>Cook, John D. <a href="http://www.johndcook.com/standard_deviation.html">Accurately computing running variance</a>.</li>
- *
+ * <p>
  * <li>Knuth, Donald E. (1998) <i>The Art of Computer Programming, Volume 2: Seminumerical Algorithms, 3rd Edition.</i></li>
- *
+ * <p>
  * <li>Welford, B. P. (1962) Note on a method for calculating corrected sums of squares and products. <i>Technometrics</i></li>
- * 
+ * <p>
  * <li>Chan, Tony F.; Golub, Gene H.; LeVeque, Randall J. (1979), <a
  * href="http://cpsc.yale.edu/sites/default/files/files/tr222.pdf">Parallel Algorithm</a>.</li>
- *
+ * <p>
  * </ul>
- * 
+ *
  * @author Fabrizio Fortino
  */
 public class OSQLFunctionVariance extends OSQLFunctionAbstract {
 
   public static final String NAME = "variance";
 
-  private long               n;
-  private double             mean;
-  private double             m2;
+  private long   n;
+  private double mean;
+  private double m2;
 
   public OSQLFunctionVariance() {
     super(NAME, 1, 1);
@@ -130,8 +130,10 @@ public class OSQLFunctionVariance extends OSQLFunctionAbstract {
       return var;
     }
 
-    return resultsToMerge.get(0);
+    if (!resultsToMerge.isEmpty())
+      return resultsToMerge.get(0);
 
+    return null;
   }
 
   @Override

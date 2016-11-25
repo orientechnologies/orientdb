@@ -129,7 +129,10 @@ public class OSQLFunctionSymmetricDifference extends OSQLFunctionMultiValueAbstr
       return result;
     }
 
-    return resultsToMerge.get(0);
+    if (!resultsToMerge.isEmpty())
+      return resultsToMerge.get(0);
+
+    return null;
   }
 
   @SuppressWarnings("unchecked")

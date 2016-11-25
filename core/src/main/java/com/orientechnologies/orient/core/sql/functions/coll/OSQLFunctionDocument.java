@@ -118,6 +118,9 @@ public class OSQLFunctionDocument extends OSQLFunctionMultiValueAbstract<ODocume
       return result;
     }
 
-    return resultsToMerge.get(0);
+    if (!resultsToMerge.isEmpty())
+      return resultsToMerge.get(0);
+
+    return null;
   }
 }
