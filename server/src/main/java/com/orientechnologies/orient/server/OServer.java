@@ -821,13 +821,16 @@ public class OServer {
 
   @SuppressWarnings("unchecked")
   public <RET extends OServerPlugin> RET getPluginByClass(final Class<RET> iPluginClass) {
+    if (startupLatch == null)
+      throw new ODatabaseException("Error on plugin lookup: the server did not start correctly");
+
     try {
       startupLatch.await();
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     }
     if (!running)
-      throw new ODatabaseException("Error on plugin lookup the server didn't start correcty.");
+      throw new ODatabaseException("Error on plugin lookup the server did not start correctly.");
 
     for (OServerPluginInfo h : getPlugins())
       if (h.getInstance() != null && h.getInstance().getClass().equals(iPluginClass))
