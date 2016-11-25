@@ -74,10 +74,12 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   protected final List<ODistributedWorker>                                            workerThreads    = new ArrayList<ODistributedWorker>();
   private String localNodeName;
 
-  private Map<String, OLogSequenceNumber> lastLSN               = new ConcurrentHashMap<String, OLogSequenceNumber>();
-  private long                            lastLSNWrittenOnDisk  = 0l;
-  private AtomicLong                      totalSentRequests     = new AtomicLong();
-  private AtomicLong                      totalReceivedRequests = new AtomicLong();
+  private          Map<String, OLogSequenceNumber> lastLSN               = new ConcurrentHashMap<String, OLogSequenceNumber>();
+  private          long                            lastLSNWrittenOnDisk  = 0l;
+  private          AtomicLong                      totalSentRequests     = new AtomicLong();
+  private          AtomicLong                      totalReceivedRequests = new AtomicLong();
+  private          TimerTask                       txTimeoutTask         = null;
+  private volatile boolean                         running               = true;
 
   private class ODistributedLock {
     final ODistributedRequestId reqId;
@@ -186,8 +188,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
     // if (ODistributedServerLog.isDebugEnabled())
     ODistributedServerLog
-        .debug(this, localNodeName, null, DIRECTION.NONE, "Request %s on database '%s' partitionKeys=%s", request, databaseName,
-            Arrays.toString(partitionKeys));
+        .debug(this, localNodeName, null, DIRECTION.NONE, "Request %s on database '%s' partitionKeys=%s task=%s", request,
+            databaseName, Arrays.toString(partitionKeys), task);
 
     if (partitionKeys.length > 1 || partitionKeys[0] == -1) {
 
@@ -682,7 +684,12 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   public void shutdown() {
+    running = false;
+
     try {
+      if (txTimeoutTask != null)
+        txTimeoutTask.cancel();
+
       if (repairer != null)
         repairer.shutdown();
 
@@ -896,50 +903,59 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   private void startTxTimeoutTimerTask() {
-    Orient.instance().scheduleTask(new TimerTask() {
-                                     @Override
-                                     public void run() {
-                                       try {
-                                         final long now = System.currentTimeMillis();
-                                         final long timeout = OGlobalConfiguration.DISTRIBUTED_TX_EXPIRE_TIMEOUT.getValueAsLong();
+    txTimeoutTask = new TimerTask() {
+      @Override
+      public void run() {
+        try {
+          final long now = System.currentTimeMillis();
+          final long timeout = OGlobalConfiguration.DISTRIBUTED_TX_EXPIRE_TIMEOUT.getValueAsLong();
 
-                                         ODatabaseDocumentInternal database = null;
+          ODatabaseDocumentInternal database = null;
 
-                                         for (final Iterator<ODistributedTxContextImpl> it = activeTxContexts.values().iterator(); it.hasNext(); ) {
-                                           final ODistributedTxContextImpl ctx = it.next();
-                                           if (ctx != null) {
-                                             final long started = ctx.getStartedOn();
-                                             final long elapsed = now - started;
-                                             if (elapsed > timeout) {
-                                               // TRANSACTION EXPIRED, ROLLBACK IT
+          for (final Iterator<ODistributedTxContextImpl> it = activeTxContexts.values().iterator(); it.hasNext(); ) {
+            if (!isRunning())
+              break;
 
-                                               if (database == null)
-                                                 // GET THE DATABASE THE FIRST TIME
-                                                 database = getDatabaseInstance();
+            final ODistributedTxContextImpl ctx = it.next();
+            if (ctx != null) {
+              final long started = ctx.getStartedOn();
+              final long elapsed = now - started;
+              if (elapsed > timeout) {
+                // TRANSACTION EXPIRED, ROLLBACK IT
 
-                                               ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE,
-                                                   "Distributed transaction %s on database '%s' is expired after %dms", ctx.getReqId(), databaseName, elapsed);
+                if (database == null)
+                  // GET THE DATABASE THE FIRST TIME
+                  database = getDatabaseInstance();
 
-                                               try {
-                                                 ctx.rollback(database);
-                                                 ctx.destroy();
-                                               } catch (Throwable t) {
-                                                 ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE,
-                                                     "Error on rolling back distributed transaction %s on database '%s'", ctx.getReqId(), databaseName);
-                                               } finally {
-                                                 it.remove();
-                                               }
-                                             }
-                                           }
-                                         }
-                                       } catch (Throwable t) {
-                                         // CATCH EVERYTHING TO AVOID THE TIMER IS CANCELED
-                                         ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE,
-                                             "Error on checking for expired distributed transaction on database '%s'", databaseName);
-                                       }
-                                     }
-                                   }, OGlobalConfiguration.DISTRIBUTED_TX_EXPIRE_TIMEOUT.getValueAsLong(),
+                ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE,
+                    "Distributed transaction %s on database '%s' is expired after %dms", ctx.getReqId(), databaseName, elapsed);
+
+                try {
+                  ctx.rollback(database);
+                  ctx.destroy();
+                } catch (Throwable t) {
+                  ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE,
+                      "Error on rolling back distributed transaction %s on database '%s'", ctx.getReqId(), databaseName);
+                } finally {
+                  it.remove();
+                }
+              }
+            }
+          }
+        } catch (Throwable t) {
+          // CATCH EVERYTHING TO AVOID THE TIMER IS CANCELED
+          ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE,
+              "Error on checking for expired distributed transaction on database '%s'", databaseName);
+        }
+      }
+    };
+
+    Orient.instance().scheduleTask(txTimeoutTask, OGlobalConfiguration.DISTRIBUTED_TX_EXPIRE_TIMEOUT.getValueAsLong(),
         OGlobalConfiguration.DISTRIBUTED_TX_EXPIRE_TIMEOUT.getValueAsLong() / 2);
+  }
+
+  private boolean isRunning() {
+    return true;
   }
 
   @Override

@@ -416,7 +416,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
 
   protected void recreateIndexNode2() {
     // RE-CREATE INDEX ON NODE 1
-    ServerRun server = serverInstance.get(2);
+    ServerRun server = serverInstance.get(1);
     ODatabaseDocumentTx database = poolFactory.get(getDatabaseURL(server), "admin", "admin").acquire();
     try {
       Object result = database.command(new OCommandSQL("create index Person.name on Person (name) unique")).execute();
