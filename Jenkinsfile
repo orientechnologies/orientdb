@@ -1,7 +1,7 @@
 #!groovy
 node("master") {
     def mvnHome = tool 'mvn'
-    def mvnJdk8Image = "orientdb/mvn-zulu-jdk-8:20161124"
+    def mvnJdk8Image = "orientdb/mvn-gradle-zulu-jdk-8:20161125"
     def mvnIBMJdkImage = "orientdb/jenkins-slave-ibm-jdk-8:20161027"
 
     stage('Source checkout') {
