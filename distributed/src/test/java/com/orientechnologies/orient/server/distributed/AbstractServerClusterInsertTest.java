@@ -141,20 +141,30 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
       return null;
     }
 
-    protected ODocument createRecord(ODatabaseDocumentTx database, int i, final String uid) {
+    protected ODocument createRecord(ODatabaseDocumentTx database, int i, final String uid) throws InterruptedException {
       checkClusterStrategy(database);
 
       final String uniqueId = serverId + "-" + threadId + "-" + i;
       ODocument person = new ODocument("Person")
           .fields("id", uid, "name", "Billy" + uniqueId, "surname", "Mayes" + uniqueId, "birthday", new Date(), "children",
               uniqueId);
-      for (int retry = 0; retry < 10; ++retry) {
+
+      for (int retry = 0; retry < 5; ++retry) {
         try {
           database.save(person);
           break;
-        } catch (OException e) {
+        } catch (ONeedRetryException e) {
           // RETRY
-          System.out.print("RETRY " + retry + " ON CREATE RECORD");
+          System.out.println("EXCEPTION " + e.getCause() + " RETRY " + retry + " ON CREATE RECORD");
+          Thread.sleep(1000);
+        } catch (OException e) {
+          if (e.getCause() instanceof ONeedRetryException) {
+            // RETRY
+            System.out.println("EXCEPTION " + e.getCause() + " RETRY " + retry + " ON CREATE RECORD");
+            Thread.sleep(1000);
+          }
+          else
+            throw e;
         }
       }
 
