@@ -1,0 +1,34 @@
+#!groovy
+node("master") {
+    def mvnHome = tool 'mvn'
+    def mvnJdk8Image = "orientdb/mvn-gradle-zulu-jdk-8:20161125"
+
+    stage('Source checkout') {
+
+        checkout scm
+    }
+
+    try {
+
+        stage('Run distributed test on Java8') {
+
+            timeout(time: 60, unit: 'MINUTES') {
+                docker.image($ { mvnJdk8Image })
+                        .inside("${env.VOLUMES}") {
+                    dir('distributed') {
+                        sh "${mvnHome}/bin/mvn  --batch-mode -V -U -e -Dmaven.test.failure.ignore=true  clean package  -Dsurefire.useFile=false"
+                        step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml'])
+                    }
+                }
+            }
+
+        }
+
+        slackSend(color: 'good', message: "SUCCESSFUL: Job '${env.JOB_NAME}-${env.BRANCH_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
+
+    } catch (e) {
+        slackSend(color: 'bad', message: "FAILED: Job '${env.JOB_NAME}-${env.BRANCH_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
+    }
+
+}
+
