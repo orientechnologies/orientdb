@@ -68,7 +68,7 @@ public class OServerCommandPostUploadSingleFile extends OHttpMultipartRequestCom
         writer.endObject();
         writer.flush();
         if (ok) {
-          iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, buffer.toString(), null);
+          iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, buffer.toString(), null);
         }
       } finally {
         if (database != null)

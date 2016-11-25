@@ -54,7 +54,7 @@ public class OServerCommandGetDocumentByClass extends OServerCommandAuthenticate
       rec = db.load(new ORecordId(rid), fetchPlan);
 
       if (rec == null)
-        iResponse.send(OHttpUtils.STATUS_NOTFOUND_CODE, "Not Found", OHttpUtils.CONTENT_JSON, "Record with id '" + rid
+        iResponse.send(OHttpUtils.STATUS_NOTFOUND_CODE, OHttpUtils.STATUS_NOTFOUND_DESCRIPTION, OHttpUtils.CONTENT_JSON, "Record with id '" + rid
             + "' was not found.", null);
       else if (iRequest.httpMethod.equals("HEAD"))
         // JUST SEND HTTP CODE 200

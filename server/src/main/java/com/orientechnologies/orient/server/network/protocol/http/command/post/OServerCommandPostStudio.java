@@ -140,7 +140,7 @@ import java.util.Map.Entry;
          if (fields.get("max") != null)
            prop.setMax(fields.get("max"));
 
-         iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Property " + fields.get("name")
+         iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, "Property " + fields.get("name")
              + " created successfully", null);
 
        } catch (Exception e) {
@@ -152,7 +152,7 @@ import java.util.Map.Entry;
 
        cls.dropProperty(className);
 
-       iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Property " + fields.get("name")
+       iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, "Property " + fields.get("name")
            + " deleted successfully.", null);
      }
    }
@@ -179,7 +179,7 @@ import java.util.Map.Entry;
          if (alias != null)
            cls.setShortName(alias);
 
-         iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Class '" + rid
+         iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, "Class '" + rid
              + "' created successfully with id=" + db.getMetadata().getSchema().getClasses().size(), null);
 
        } catch (Exception e) {
@@ -191,7 +191,7 @@ import java.util.Map.Entry;
 
        db.getMetadata().getSchema().dropClass(rid);
 
-       iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Class '" + rid + "' deleted successfully.",
+       iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, "Class '" + rid + "' deleted successfully.",
            null);
      }
    }
@@ -203,7 +203,7 @@ import java.util.Map.Entry;
 
        int clusterId = db.addCluster(fields.get("name"));
 
-       iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Cluster " + fields.get("name")
+       iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, "Cluster " + fields.get("name")
            + "' created successfully with id=" + clusterId, null);
 
      } else if ("del".equals(operation)) {
@@ -211,7 +211,7 @@ import java.util.Map.Entry;
 
        db.dropCluster(rid, false);
 
-       iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Cluster " + fields.get("name")
+       iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, "Cluster " + fields.get("name")
            + "' deleted successfully", null);
      }
    }
@@ -257,7 +257,7 @@ import java.util.Map.Entry;
        }
 
        doc.save();
-       iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + rid + " updated successfully.",
+       iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + rid + " updated successfully.",
            null);
      } else if ("add".equals(operation)) {
        iRequest.data.commandInfo = "Studio create document";
@@ -280,7 +280,7 @@ import java.util.Map.Entry;
        final ODocument doc = new ODocument(new ORecordId(rid));
        doc.load();
        doc.delete();
-       iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + rid + " deleted successfully.",
+       iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + rid + " deleted successfully.",
            null);
 
      } else
@@ -306,7 +306,7 @@ import java.util.Map.Entry;
 
          cls.createIndex(fields.get("name"), indexType, fieldNames);
 
-         iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Index " + fields.get("name")
+         iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, "Index " + fields.get("name")
              + " created successfully", null);
 
        } catch (Exception e) {
@@ -326,7 +326,7 @@ import java.util.Map.Entry;
 
          db.getMetadata().getIndexManager().dropIndex(index.getName());
 
-         iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Index " + className
+         iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, "Index " + className
              + " deleted successfully.", null);
        } catch (Exception e) {
          iResponse.send(OHttpUtils.STATUS_INTERNALERROR_CODE, "Error on deletion index '" + className + "' for class " + rid + ": "

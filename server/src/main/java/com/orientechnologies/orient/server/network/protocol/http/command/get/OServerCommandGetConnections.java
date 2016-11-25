@@ -56,7 +56,7 @@ public class OServerCommandGetConnections extends OServerCommandAuthenticatedSer
 
       json.endObject();
 
-      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, jsonBuffer.toString(), null);
+      iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, jsonBuffer.toString(), null);
 
     } finally {
     }

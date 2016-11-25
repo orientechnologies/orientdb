@@ -289,7 +289,7 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
       json.endObject();
       json.flush();
 
-      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, buffer.toString(), null);
+      iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, buffer.toString(), null);
     } finally {
       if (db != null)
         db.close();

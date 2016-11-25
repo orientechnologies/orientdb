@@ -25,7 +25,7 @@ public class OServerCommandGetPing extends OServerCommandAbstract
 	@Override
 	public boolean execute(final OHttpRequest iRequest, final OHttpResponse iResponse) throws Exception
 	{
-		iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "pong", null);
+		iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, "pong", null);
 		
 		return false; // Is not a chained command.
 	}

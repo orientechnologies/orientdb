@@ -46,7 +46,7 @@ public class OServerCommandDeleteClass extends OServerCommandAuthenticatedDbAbst
 
        db.getMetadata().getSchema().dropClass(urlParts[2]);
 
-       iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, null, null);
+       iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, null, null);
 
      } finally {
        if (db != null)
