@@ -105,22 +105,20 @@ App.config(function ($routeProvider, $httpProvider, $translateProvider, $transla
       templateUrl: 'views/database/createRecord.html',
       controller: 'CreateController',
       resolve: DatabaseResolve
-    }).
-    when('/database/:database/browse/editclass/:clazz', {
-      templateUrl: 'views/database/editclass.html',
-      controller: 'ClassEditController',
-      resolve: DatabaseResolve
-    })
+    }).when('/database/:database/browse/editclass/:clazz', {
+    templateUrl: 'views/database/editclass.html',
+    controller: 'ClassEditController',
+    resolve: DatabaseResolve
+  })
     .when('/database/:database/schema/create/:clazz', {
       templateUrl: 'views/database/createRecord.html',
       controller: 'CreateController',
       resolve: DatabaseResolve
-    }).
-    when('/database/:database/schema/editclass/:clazz', {
-      templateUrl: 'views/database/editclass.html',
-      controller: 'ClassEditController',
-      resolve: DatabaseResolve
-    })
+    }).when('/database/:database/schema/editclass/:clazz', {
+    templateUrl: 'views/database/editclass.html',
+    controller: 'ClassEditController',
+    resolve: DatabaseResolve
+  })
     .when('/database/:database/db', {
       templateUrl: 'views/database/configuration.html',
       controller: 'ConfigurationController',
@@ -144,17 +142,17 @@ App.config(function ($routeProvider, $httpProvider, $translateProvider, $transla
     .when('/dashboard', {
       templateUrl: 'views/server/dashboard.html',
       controller: 'ServerDashboardController',
-      resolve : AgentResolve
+      resolve: AgentResolve
     })
     .when('/dashboard/:tab', {
       templateUrl: 'views/server/dashboard.html',
       controller: 'ServerDashboardController',
-      resolve : AgentResolve
+      resolve: AgentResolve
     })
     .when('/dashboard/:tab/:server', {
       templateUrl: 'views/server/dashboard.html',
       controller: 'ServerDashboardController',
-      resolve : AgentResolve
+      resolve: AgentResolve
     })
     .when('/server', {
       templateUrl: 'views/server/info.html',
@@ -225,13 +223,42 @@ App.run(function ($rootScope, $interval, DatabaseApi, Notification, Spinner, $te
 
   })
 
-  $interval(function () {
+  var counter = 0;
+  var limit = 10;
+  var serverDown = false;
+
+
+  $rootScope.$on('server:check', function () {
+    checkServer();
+  })
+
+
+  function checkServer() {
     DatabaseApi.listDatabases().then(function (data) {
       $rootScope.$broadcast("server:up");
+      counter = 0;
+      serverDown = false;
     }, function error(data) {
       $rootScope.$broadcast("server:down");
+      $rootScope.$broadcast("server:retry", limit - counter);
+      counter = 0;
+      serverDown = true;
     })
-  }, 10000);
+  }
+
+
+  $interval(function () {
+
+    if (counter === limit) {
+      checkServer();
+    } else {
+      if (serverDown) {
+        $rootScope.$broadcast("server:retry", limit - counter);
+      }
+      counter++;
+    }
+
+  }, 1000);
 
   $templateCache.put('popover/popover.tpl.html', '<div class="popover"><div class="arrow"></div><h3 class="popover-title" ng-bind="title" ng-show="title"></h3><div class="popover-content" ng-bind-html="content"></div></div>');
 })

@@ -51,13 +51,21 @@ ctrl.controller("ServerController", ['$scope', '$routeParams', 'ServerApi', 'Dat
 ctrl.controller("ServerStatusController", ['$scope', '$rootScope', function ($scope, $rootScope) {
 
   $scope.isDown = false;
+  $scope.counter = 10;
   $scope.serverclass = 'hide';
   $rootScope.$on('server:down', function () {
     $scope.isDown = true;
   })
+  $rootScope.$on('server:retry', function (evt, val) {
+    $scope.counter = val;
+  })
   $rootScope.$on('server:up', function () {
     $scope.isDown = false;
   })
+
+  $scope.retry = function () {
+    $rootScope.$broadcast("server:check");
+  }
 }]);
 
 ctrl.controller('MultipleServerController', function ($scope, $rootScope, $location, $routeParams, $timeout, Cluster, Profiler, $q, AgentService) {
