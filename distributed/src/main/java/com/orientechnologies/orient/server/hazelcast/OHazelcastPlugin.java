@@ -1224,7 +1224,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       return;
 
     ODistributedServerLog
-        .debug(this, nodeName, nodeLeftName, DIRECTION.NONE, "Distributed server is '%s' unreachable", nodeLeftName);
+        .debug(this, nodeName, nodeLeftName, DIRECTION.NONE, "Distributed server '%s' is unreachable", nodeLeftName);
 
     try {
       // REMOVE INTRA SERVER CONNECTION
