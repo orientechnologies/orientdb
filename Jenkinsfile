@@ -61,7 +61,7 @@ node("master") {
 
         stage('Run crash tests on java8') {
 
-            timeout(time: 60, unit: 'MINUTES') {
+            timeout(time: 180, unit: 'MINUTES') {
                 docker.image("${mvnJdk8Image}")
                         .inside("${env.VOLUMES}") {
                     dir('server') {
@@ -74,7 +74,7 @@ node("master") {
 
         stage('Run distributed test on Java8') {
 
-            timeout(time: 60, unit: 'MINUTES') {
+            timeout(time: 180, unit: 'MINUTES') {
                 docker.image($ { mvnJdk8Image })
                         .inside("${env.VOLUMES}") {
                     dir('distributed') {
