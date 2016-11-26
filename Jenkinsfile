@@ -2,6 +2,7 @@
 node("master") {
     def mvnHome = tool 'mvn'
     def mvnJdk8Image = "orientdb/mvn-gradle-zulu-jdk-8:20161125"
+    def mvnJdk7Image = "orientdb/jenkins-slave-zulu-jdk-7"
     def mvnIBMJdkImage = "orientdb/jenkins-slave-ibm-jdk-8:20161027"
 
     stage('Source checkout') {
