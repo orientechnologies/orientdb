@@ -15,10 +15,8 @@ node("master") {
             timeout(time: 60, unit: 'MINUTES') {
                 docker.image("${mvnJdk8Image}")
                         .inside("${env.VOLUMES}") {
-                    dir('distributed') {
-                        sh "${mvnHome}/bin/mvn  --batch-mode -V -U -e -Dmaven.test.failure.ignore=true  clean test -Dsurefire.useFile=false"
+                        sh "${mvnHome}/bin/mvn  -f distributed/pom.xml  --batch-mode -V -U -e -Dmaven.test.failure.ignore=true  clean test -Dsurefire.useFile=false"
                         step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml'])
-                    }
                 }
             }
 
