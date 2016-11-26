@@ -12,7 +12,7 @@ node("master") {
 
         stage('Run distributed test on Java8') {
 
-            timeout(time: 60, unit: 'MINUTES') {
+            timeout(time: 250, unit: 'MINUTES') {
                 docker.image("${mvnJdk8Image}")
                         .inside("${env.VOLUMES}") {
                         sh "${mvnHome}/bin/mvn  -f distributed/pom.xml  --batch-mode -V -U -e -Dmaven.test.failure.ignore=true  clean test -Dsurefire.useFile=false -DskipTests=false"
