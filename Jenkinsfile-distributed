@@ -15,6 +15,8 @@ node("master") {
             timeout(time: 250, unit: 'MINUTES') {
                 docker.image("${mvnJdk8Image}")
                         .inside("${env.VOLUMES}") {
+
+                        sh "${mvnHome}/bin/mvn   --batch-mode -V -U -e -Dmaven.test.failure.ignore=true  clean install -Dsurefire.useFile=false -DskipTests=true"
                         sh "${mvnHome}/bin/mvn  -f distributed/pom.xml  --batch-mode -V -U -e -Dmaven.test.failure.ignore=true  clean test -Dsurefire.useFile=false -DskipTests=false"
                         step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml'])
                 }
@@ -26,6 +28,8 @@ node("master") {
 
     } catch (e) {
         slackSend(color: 'bad', message: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
+        currentBuild.result = 'FAILURE'
+
     }
 
 }
