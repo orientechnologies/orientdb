@@ -53,7 +53,7 @@ node("master") {
 
         stage('Run crash tests on java8') {
 
-            timeout(time: 60, unit: 'MINUTES') {
+            timeout(time: 180, unit: 'MINUTES') {
                 docker.image("${mvnJdk8Image}")
                         .inside("${env.VOLUMES}") {
                     dir('server') {
@@ -66,12 +66,12 @@ node("master") {
 
         stage('Run distributed test on Java8') {
 
-            timeout(time: 60, unit: 'MINUTES') {
+            timeout(time: 180, unit: 'MINUTES') {
                 docker.image($ { mvnJdk8Image })
                         .inside("${env.VOLUMES}") {
                     dir('distributed') {
                         try {
-                            sh "${mvnHome}/bin/mvn  --batch-mode -V -U -e -Dmaven.test.failure.ignore=true  clean package  -Dsurefire.useFile=false"
+                            sh "${mvnHome}/bin/mvn  --batch-mode -V -U -e -Dmaven.test.failure.ignore=true  clean package  -Dsurefire.useFile=false -DskipTests=true"
                             step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml'])
                         } catch (e) {
                             slackSend(color: 'bad', message: "FAILED Distributed tests: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
