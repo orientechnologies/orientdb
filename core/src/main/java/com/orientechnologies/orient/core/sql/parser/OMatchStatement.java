@@ -435,22 +435,8 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     for (EdgeTraversal edge : traversal) {
       PatternNode from = edge.out ? edge.edge.out : edge.edge.in;
       PatternNode to = edge.out ? edge.edge.in : edge.edge.out;
-      //TODO
-    }
-  }
 
-  private boolean hasConditionOnPattern(EdgeTraversal node) {
-    PatternNode terminalNode;
-    if (node.out) {
-      terminalNode = node.edge.in;
-    } else {
-      terminalNode = node.edge.out;
     }
-    OWhereClause filter = aliasFilters.get(terminalNode.alias);
-    if (filter == null) {
-      return false;
-    }
-    return filter.toString().contains("$matched.");
   }
 
   protected Object getResult(OSQLAsynchQuery<ODocument> request) {
@@ -727,7 +713,11 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       return false;
     }
     if (record instanceof ODocument) {
-      return ((ODocument) record).getSchemaClass().isSubClassOf(oClass);
+      OClass schemaClass = ((ODocument) record).getSchemaClass();
+      if (schemaClass == null) {
+        return false;
+      }
+      return schemaClass.isSubClassOf(oClass);
     }
     return false;
   }
@@ -1074,8 +1064,9 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       long upperBound;
       OWhereClause filter = aliasFilters.get(alias);
       if (filter != null) {
-        if (filter.toString().contains(
-            "$matched.")) {//skip root nodes that have a condition on $matched, because they have to be calculated as downstream
+        List<String> aliasesOnPattern = filter.baseExpression.getMatchPatternInvolvedAliases();
+        if (aliasesOnPattern != null && aliasesOnPattern.size() > 0) {
+          //skip root nodes that have a condition on $matched, because they have to be calculated as downstream
           continue;
         }
         upperBound = filter.estimate(oClass, this.threshold, ctx);
@@ -1136,11 +1127,11 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     OSchema schema = getDatabase().getMetadata().getSchema();
     OClass class1 = schema.getClass(className1);
     OClass class2 = schema.getClass(className2);
-    if(class1==null){
-      throw new OCommandExecutionException("Class "+className1+" not found in the schema");
+    if (class1 == null) {
+      throw new OCommandExecutionException("Class " + className1 + " not found in the schema");
     }
-    if(class2==null){
-      throw new OCommandExecutionException("Class "+className2+" not found in the schema");
+    if (class2 == null) {
+      throw new OCommandExecutionException("Class " + className2 + " not found in the schema");
     }
     if (class1.isSubClassOf(class2)) {
       return class1.getName();
