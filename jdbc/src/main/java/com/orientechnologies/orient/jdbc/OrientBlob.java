@@ -61,7 +61,7 @@ public class OrientBlob implements Blob {
         this.binaryDataChunks.add(binaryDataChunk.toStream());
       }
     }
-    this.length = calculateLenght();
+    this.length = calculateLength();
   }
 
   /*
@@ -73,7 +73,7 @@ public class OrientBlob implements Blob {
     return this.length;
   }
 
-  private long calculateLenght() {
+  private long calculateLength() {
     long length = 0;
     for (byte[] binaryDataChunk : binaryDataChunks) {
       length += binaryDataChunk.length;

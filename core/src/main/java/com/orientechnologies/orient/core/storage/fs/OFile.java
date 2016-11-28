@@ -61,7 +61,7 @@ public interface OFile {
 
   boolean synch() throws IOException;
 
-  void read(long iOffset, byte[] iDestBuffer, int iLenght) throws IOException;
+  void read(long iOffset, byte[] iDestBuffer, int iLength) throws IOException;
 
   short readShort(long iLogicalPosition) throws IOException;
 

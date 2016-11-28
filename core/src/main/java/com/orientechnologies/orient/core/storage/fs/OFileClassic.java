@@ -261,8 +261,8 @@ public class OFileClassic implements OFile, OClosableItem {
   }
 
   @Override
-  public void read(long iOffset, byte[] iDestBuffer, int iLenght) throws IOException {
-    read(iOffset, iDestBuffer, iLenght, 0);
+  public void read(long iOffset, byte[] iDestBuffer, int iLength) throws IOException {
+    read(iOffset, iDestBuffer, iLength, 0);
   }
 
   @Override
@@ -565,17 +565,17 @@ public class OFileClassic implements OFile, OClosableItem {
     channel.write(iBuffer, iOffset);
   }
 
-  private ByteBuffer getBuffer(final int iLenght) {
-    return ByteBuffer.allocate(iLenght);
+  private ByteBuffer getBuffer(final int iLength) {
+    return ByteBuffer.allocate(iLength);
   }
 
-  private ByteBuffer getWriteBuffer(final int iLenght) {
+  private ByteBuffer getWriteBuffer(final int iLength) {
     setDirty();
-    if (iLenght <= OBinaryProtocol.SIZE_LONG)
+    if (iLength <= OBinaryProtocol.SIZE_LONG)
       // RECYCLE WRITE BYTE BUFFER SINCE WRITES ARE SYNCHRONIZED
       return (ByteBuffer) internalWriteBuffer.rewind();
 
-    return getBuffer(iLenght);
+    return getBuffer(iLength);
   }
 
   private void setVersion(int version) throws IOException {

@@ -23,7 +23,7 @@ import java.security.NoSuchAlgorithmException;
  */
 public class OrientTokenHandler extends OServerPluginAbstract implements OTokenHandler, OServerPlugin {
   public static final String SIGN_KEY_PAR             = "oAuth2Key";
-  public static final String SESSION_LENGHT_PAR       = "sessionLength";
+  public static final String SESSION_LENGTH_PAR       = "sessionLength";
   public static final String ENCRYPTION_ALGORITHM_PAR = "encryptionAlgorithm";
 
   public OrientTokenHandler() {
@@ -40,7 +40,7 @@ public class OrientTokenHandler extends OServerPluginAbstract implements OTokenH
           return;
       } else if (param.name.equalsIgnoreCase(SIGN_KEY_PAR)) {
         key = param.value;
-      } else if (param.name.equalsIgnoreCase(SESSION_LENGHT_PAR)) {
+      } else if (param.name.equalsIgnoreCase(SESSION_LENGTH_PAR)) {
         baseSession = Long.parseLong(param.value);
       } else if (param.name.equalsIgnoreCase(ENCRYPTION_ALGORITHM_PAR)) {
         algorithm = param.value;
