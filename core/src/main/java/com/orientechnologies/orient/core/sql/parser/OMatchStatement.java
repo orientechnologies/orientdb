@@ -431,11 +431,27 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
    * @param traversal
    */
   private void checkConsistency(List<EdgeTraversal> traversal) {
-    //    Set<String>
+    Set<String> matchAliases = new HashSet<String>();
     for (EdgeTraversal edge : traversal) {
       PatternNode from = edge.out ? edge.edge.out : edge.edge.in;
       PatternNode to = edge.out ? edge.edge.in : edge.edge.out;
 
+      String fromAlias = from.alias;
+      OWhereClause fromFilter = aliasFilters.get(fromAlias);
+      if (fromFilter != null && fromFilter.baseExpression != null) {
+        List<String> matchPatternAliases = fromFilter.baseExpression.getMatchPatternInvolvedAliases();
+        if (matchPatternAliases != null) {
+          for (String s : matchPatternAliases) {
+            matchAliases.add(s);
+          }
+        }
+      }
+
+      String toAlias = to.alias;
+      if (matchAliases.contains(toAlias)) {
+        throw new OCommandExecutionException("This query contains MATCH conditions that cannot be evaluated: " + toAlias
+            + " (probably a circular dependency on a $matched condition");
+      }
     }
   }
 
@@ -1039,6 +1055,9 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       }
     }
 
+    if (lowerValue == null) {
+      throw new OCommandExecutionException("Cannot calculate this pattern (maybe a circular dependency on $matched conditions)");
+    }
     return lowerValue.getKey();
   }
 
