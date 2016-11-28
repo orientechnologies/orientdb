@@ -403,20 +403,6 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     }
   }
 
-  private boolean hasConditionOnPattern(EdgeTraversal node) {
-    PatternNode terminalNode;
-    if (node.out) {
-      terminalNode = node.edge.in;
-    } else {
-      terminalNode = node.edge.out;
-    }
-    OWhereClause filter = aliasFilters.get(terminalNode.alias);
-    if (filter == null) {
-      return false;
-    }
-    return filter.toString().contains("$matched.");
-  }
-
   protected Object getResult(OSQLAsynchQuery<ODocument> request) {
     if (request instanceof OSQLSynchQuery)
       return ((OSQLSynchQuery<ODocument>) request).getResult();
@@ -689,7 +675,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     }
     if (record instanceof ODocument) {
       OClass schemaClass = ((ODocument) record).getSchemaClass();
-      if(schemaClass == null){
+      if (schemaClass == null) {
         return false;
       }
       return schemaClass.isSubClassOf(oClass);
@@ -1042,8 +1028,9 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       long upperBound;
       OWhereClause filter = aliasFilters.get(alias);
       if (filter != null) {
-        if (filter.toString().contains(
-            "$matched.")) {//skip root nodes that have a condition on $matched, because they have to be calculated as downstream
+        List<String> aliasesOnPattern = filter.baseExpression.getMatchPatternInvolvedAliases();
+        if (aliasesOnPattern != null && aliasesOnPattern.size() > 0) {
+          //skip root nodes that have a condition on $matched, because they have to be calculated as downstream
           continue;
         }
         upperBound = filter.estimate(oClass, this.threshold, ctx);
@@ -1104,11 +1091,11 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     OSchema schema = getDatabase().getMetadata().getSchema();
     OClass class1 = schema.getClass(className1);
     OClass class2 = schema.getClass(className2);
-    if(class1==null){
-      throw new OCommandExecutionException("Class "+className1+" not found in the schema");
+    if (class1 == null) {
+      throw new OCommandExecutionException("Class " + className1 + " not found in the schema");
     }
-    if(class2==null){
-      throw new OCommandExecutionException("Class "+className2+" not found in the schema");
+    if (class2 == null) {
+      throw new OCommandExecutionException("Class " + className2 + " not found in the schema");
     }
     if (class1.isSubClassOf(class2)) {
       return class1.getName();
