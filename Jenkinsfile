@@ -77,7 +77,7 @@ node("master") {
 
             try {
                 timeout(time: 180, unit: 'MINUTES') {
-                    docker.image($ { mvnJdk8Image })
+                    docker.image("${mvnJdk8Image}")
                             .inside("${env.VOLUMES}") {
                         dir('distributed') {
                             sh "${mvnHome}/bin/mvn  --batch-mode -V -U -e -Dmaven.test.failure.ignore=true  clean package  -Dsurefire.useFile=false -DskipTests=true"
