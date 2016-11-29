@@ -1058,6 +1058,16 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
     modalScope.confirmSave = function (doc) {
       if (v.edge) {
         v.edge = doc;
+        $scope.doc = v.edge;
+        var title = $scope.doc['@class'] + "-" + $scope.doc['@rid'] + "- Version " + $scope.doc['@version'];
+        Aside.show({
+          scope: $scope,
+          title: title,
+          template: 'views/database/graph/asideEdge.html',
+          show: true,
+          absolute: false,
+          fullscreen: $scope.fullscreen
+        });
       } else if (v.source) {
         v.source = doc;
         $scope.doc = v.source;
