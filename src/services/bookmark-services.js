@@ -1,4 +1,4 @@
-import {API, STUDIO_VERSION} from '../constants';
+import {API} from '../constants';
 let bookmark = angular.module('bookmarks.services', []);
 
 

@@ -1,3 +1,9 @@
+import '../views/database/editclass.html';
+import '../views/database/newProperty.html';
+import '../views/database/newIndex.html';
+
+import Utilities from '../util/library';
+
 let schemaModule = angular.module('schema.controller', ['database.services']);
 schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'ClassAlterApi', '$modal', '$q', '$route', '$window', 'Spinner', 'Notification', '$popover', 'GraphConfig', 'DocumentApi', function ($scope, $routeParams, $location, Database, CommandApi, ClassAlterApi, $modal, $q, $route, $window, Spinner, Notification, $popover, GraphConfig, DocumentApi) {
 
@@ -216,7 +222,7 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
   $scope.clonedProperty = angular.copy($scope.property);
   $scope.propertyNames = new Array;
 
-  for (inn in $scope.property) {
+  for (let inn in $scope.property) {
     $scope.propertyNames.push($scope.property[inn]['name'])
   }
   $scope.createNewRecord = function (className) {
@@ -312,7 +318,7 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
   $scope.listTypes = ['BINARY', 'BOOLEAN', 'BYTE', 'EMBEDDED', 'EMBEDDEDLIST', 'EMBEDDEDMAP', 'EMBEDDEDSET', 'DECIMAL', 'FLOAT', 'DATE', 'DATETIME', 'DOUBLE', 'INTEGER', 'LINK', 'LINKLIST', 'LINKMAP', 'LINKSET', 'LONG', 'SHORT', 'STRING'];
   $scope.collateTypes = ['Case Insensitive', 'default'];
   $scope.modificato = function (result, prop) {
-    var key = result['name'];
+    let key = result['name'];
     if ($scope.modificati[result['name']] == undefined) {
       $scope.modificati[result['name']] = new Array(prop);
     }
@@ -333,7 +339,7 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
     $scope.indexes.push(newIndex);
   }
   $scope.newIndex = function () {
-    modalScope = $scope.$new(true);
+    let modalScope = $scope.$new(true);
     modalScope.db = $scope.database;
     modalScope.classInject = clazz;
     modalScope.parentScope = $scope;
@@ -346,8 +352,8 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
     $window.location.reload();
   }
   $scope.newProperty = function () {
-    modalScope = $scope.$new(true);
-    modalScope.db = database;
+    let modalScope = $scope.$new(true);
+    modalScope.db = $scope.database;
     modalScope.classInject = clazz;
     modalScope.parentScope = $scope;
     var modalPromise = $modal({
@@ -366,7 +372,7 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
   $scope.saveProperty = function (properties) {
 
 
-    for (result in properties) {
+    for (let result in properties) {
 
       var keyName = properties[result]['name'];
       var arrayToUpdate = $scope.modificati[keyName];
@@ -556,7 +562,7 @@ schemaModule.controller("IndexController", ['$scope', '$routeParams', '$route', 
 
   $scope.propertyNames = new Array;
 
-  for (inn in $scope.property) {
+  for (let inn in $scope.property) {
     $scope.propertyNames.push($scope.property[inn]['name'])
   }
   $scope.namesProp = $scope.propertyNames;
@@ -572,7 +578,7 @@ schemaModule.controller("IndexController", ['$scope', '$routeParams', '$route', 
     var first = true;
     $scope.nameIndexToShow = $scope.classInject + '.';
 
-    for (entry in $scope.prop2add) {
+    for (let entry in $scope.prop2add) {
       if (first) {
         $scope.nameIndexToShow = $scope.nameIndexToShow + $scope.prop2add[entry];
         first = !first
@@ -592,7 +598,7 @@ schemaModule.controller("IndexController", ['$scope', '$routeParams', '$route', 
       return;
     var proppps = '';
     var first = true
-    for (entry in $scope.prop2add) {
+    for (let entry in $scope.prop2add) {
       if (first) {
         proppps = proppps + $scope.prop2add[entry];
         first = !first

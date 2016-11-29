@@ -1,51 +1,52 @@
 <div class="modal">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" ng-click="$hide()" aria-hidden="true">×
-                </button>
-                <h3>Drop database {{name}} ? </h3>
-            </div>
-            <div class="modal-body edge">
-                <form id="signin" name="newDB" class="form-horizontal" novalidate="">
-                    <fieldset>
-                        <div class="form-group">
-                            <label class="control-label col-md-2">Server User</label>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" ng-click="$hide()" aria-hidden="true">×
+        </button>
+        <h3>Drop database {{name}} ? </h3>
+      </div>
+      <div class="modal-body edge">
+        <form id="signin" name="newDB" class="form-horizontal" novalidate="">
+          <fieldset>
+            <div class="form-group">
+              <label class="control-label col-md-2">Server User</label>
 
-                            <div class="col-md-10">
-                                <input id="user" class="form-control" type="text" required ng-model="username"
-                                       value=""/>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="control-label col-md-2">Password</label>
-
-                            <div class="col-md-10">
-                                <input id="password" type="password" class="form-control" required ng-model="password"
-                                       value=""/>
-                            </div>
-
-                        </div>
-                    </fieldset>
-                </form>
-                <div class="progress progress-striped active" ng-show="creating">
-                    <div class="progress-bar" role="progressbar" aria-valuenow="100" aria-valuemin="0"
-                         aria-valuemax="100" style="width: 100%">
-                        <span class="progress-value">Deleting database {{ name }}</span>
-                    </div>
-                </div>
-                <div class="alert alert-danger" ng-show="error">
-                    <button type="button" class="close" ng-click="error = null">×</button>
-                    {{error}}
-                </div>
+              <div class="col-md-10">
+                <input id="user" class="form-control" type="text" required ng-model="username"
+                       value=""/>
+              </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn" ng-click="$hide()">Close</button>
-                <button class="btn btn-primary" ng-disabled="!sso && newDB.$invalid" ng-click="delete()">Drop database
-                </button>
+            <div class="form-group">
+              <label class="control-label col-md-2">Password</label>
+
+              <div class="col-md-10">
+                <input id="password" type="password" class="form-control" required ng-model="password"
+                       value=""/>
+              </div>
+
             </div>
+          </fieldset>
+        </form>
+        <div class="progress progress-striped active" ng-show="creating">
+          <div class="progress-bar" role="progressbar" aria-valuenow="100" aria-valuemin="0"
+               aria-valuemax="100" style="width: 100%">
+            <span class="progress-value">Deleting database {{ name }}</span>
+          </div>
         </div>
+        <div class="alert alert-danger" ng-show="error">
+          <button type="button" class="close" ng-click="error = null">×</button>
+          {{error}}
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn" ng-click="$hide()">Close</button>
+        <button class="btn btn-primary" ng-disabled="!sso && newDB.$invalid" ng-click="delete(username,password)">Drop
+          database
+        </button>
+      </div>
     </div>
+  </div>
 </div>
 
 

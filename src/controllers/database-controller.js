@@ -10,6 +10,8 @@ import '../views/database/browseConfig.html';
 import '../views/database/bookmark.html';
 import '../views/hints/query-hint.html';
 import BookmarkAside from  '../views/database/context/bookmarksAside.html';
+import  '../views/database/bookmarkEdit.html';
+
 import '../views/database/query.html';
 let dbModule = angular.module('database.controller', [DatabaseService, BookmarkService, HistoryService, BrowseConfig]);
 dbModule.controller("BrowseController", ['$scope', '$routeParams', '$route', '$location', 'Database', 'CommandApi', 'localStorageService', 'Spinner', '$modal', '$q', '$window', 'Bookmarks', 'Notification', 'Aside', 'BrowseConfig', '$timeout', 'GraphConfig', 'BatchApi', 'DocumentApi', 'History', function ($scope, $routeParams, $route, $location, Database, CommandApi, localStorageService, Spinner, $modal, $q, $window, Bookmarks, Notification, Aside, BrowseConfig, $timeout, GraphConfig, BatchApi, DocumentApi, History) {
@@ -70,6 +72,7 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$route', '$l
       })
     });
   }
+
   Aside.show({
     scope: $scope,
     title: "Bookmarks",

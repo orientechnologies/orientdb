@@ -1,4 +1,6 @@
-import databaseServices from '../services/database-services'
+import databaseServices from '../services/database-services';
+import {STUDIO_VERSION} from '../constants';
+import '../views/server/about.html';
 
 let HeaderController = angular.module('header.controller', [databaseServices]).controller("HeaderController", ['$scope', '$rootScope', '$routeParams', '$http', '$location', '$modal', '$q', 'Database', 'Aside', 'Profiler', function ($scope, $rootScope, $routeParams, $http, $location, $modal, $q, Database, Aside, Profiler) {
   $scope.database = Database;

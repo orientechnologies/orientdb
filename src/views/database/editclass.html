@@ -131,7 +131,6 @@
                          ng-show="result['type'] == 'DATE'">
 
 
-
                   <input type="text" bs-datepicker ng-model="result['min']"
                          ng-change="modificato(result,'min')" orientdatetime
                          ng-show="result['type'] == 'DATETIME'">
@@ -240,7 +239,7 @@
 
               </thead>
               <tbody>
-              <tr ng-repeat="index in indexes track by $index|  orderBy:'name'">
+              <tr ng-repeat="index in indexes | orderBy:'name'  track by $index">
                 <td>
                   {{index.name}}
                 </td>

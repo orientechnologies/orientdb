@@ -42,7 +42,7 @@ LoginModule.controller("LoginController", ['$scope', '$rootScope', '$routeParams
   }
   $scope.createNew = function () {
 
-    var modalScope = $scope.$new(true);
+    var modalScope = $scope.$new(false);
     modalScope.name = null;
     modalScope.creating = false;
     modalScope.stype = "plocal";
@@ -55,22 +55,21 @@ LoginModule.controller("LoginController", ['$scope', '$rootScope', '$routeParams
     modalScope.types = ['document', 'graph']
     modalScope.stypes = ['plocal', 'memory']
     var modalPromise = $modal({templateUrl: 'views/database/newDatabase.html', scope: modalScope, show: false});
-    modalScope.createNew = function () {
+    modalScope.createNew = function (name, type, stype, username, password, lightweight) {
       modalScope.creating = true;
+      DatabaseApi.createDatabase(name, type, stype, username, password, function (data) {
 
-      DatabaseApi.createDatabase(modalPromise.$scope.name, modalPromise.$scope.type, modalPromise.$scope.stype, modalPromise.$scope.username, modalPromise.$scope.password, function (data) {
-
-        $scope.databases.push(modalPromise.$scope.name);
-        $scope.database = modalPromise.$scope.name;
+        $scope.databases.push(name);
+        $scope.database = name;
 
         modalScope.creating = false;
         modalPromise.hide();
-        var noti = "Database " + modalPromise.$scope.name + " created.";
+        var noti = "Database " + name + " created.";
         $scope.username = 'admin';
         $scope.password = 'admin';
         $scope.connect(function () {
-          if (!modalPromise.$scope.lightweight) {
-            DatabaseAlterApi.changeCustomProperty(modalPromise.$scope.name, {
+          if (lightweight) {
+            DatabaseAlterApi.changeCustomProperty(name, {
               name: "useLightweightEdges",
               value: false
             });
@@ -129,20 +128,22 @@ LoginModule.controller("LoginController", ['$scope', '$rootScope', '$routeParams
   $scope.deleteDb = function () {
     var modalScope = $scope.$new(true);
     modalScope.name = $scope.database;
+
+    let dbName = $scope.database;
     modalScope.sso = $scope.sso;
     var modalPromise = $modal({template: 'views/database/deleteDatabase.html', scope: modalScope, show: false});
-    modalScope.delete = function () {
+    modalScope.delete = function (username, password) {
       modalScope.creating = true;
-      DatabaseApi.deleteDatabase(modalPromise.$scope.name, modalPromise.$scope.username, modalPromise.$scope.password).then(function (data) {
-        var noti = "Database " + modalPromise.$scope.name + " dropped.";
-        var idx = $scope.databases.indexOf(modalPromise.$scope.name);
+      DatabaseApi.deleteDatabase(dbName, username, password).then(function (data) {
+        var noti = "Database " + dbName + " dropped.";
+        var idx = $scope.databases.indexOf(dbName);
         $scope.databases.splice(idx, 1);
         if ($scope.databases.length > 0) {
           $scope.database = $scope.databases[0];
         }
         var timeline = localStorageService.get("Timeline");
         if (timeline) {
-          delete timeline[modalPromise.$scope.name];
+          delete timeline[dbName];
           localStorageService.add("Timeline", timeline);
         }
         Notification.push({content: noti});

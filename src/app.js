@@ -24,10 +24,7 @@ import  'angular-strap/dist/angular-strap.tpl';
 import  'bootstrap';
 import  'bootstrap/dist/css/bootstrap.css';
 import  'font-awesome/css/font-awesome.css';
-import  'codemirror/theme/ambiance.css';
-import  'codemirror/lib/codemirror.css';
-import  'codemirror/addon/hint/show-hint.css';
-import  'codemirror/addon/dialog/dialog.css';
+
 import  'spectrum-colorpicker/spectrum.css'
 
 

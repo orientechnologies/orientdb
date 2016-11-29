@@ -1,6 +1,3 @@
-
-
-
 import OrientGraph from '../widgets/orientdb-graphviz';
 
 let graph = angular.module('graph', []);
@@ -142,14 +139,13 @@ graph.directive('aside', function ($http, $compile) {
 
 
       if (s) {
-        $http.get(scope.model.tpl).then(function (response) {
-          var el = angular.element($compile(response.data)(scope.model.scope));
-          element.empty();
-          element.append(el);
-          scope.model.loading = false;
-        });
-
-
+        let tpl = `
+          <div ng-include="'${scope.model.tpl}'"></div>
+        `
+        var el = angular.element($compile(tpl)(scope.model.scope));
+        element.empty();
+        element.append(el);
+        scope.model.loading = false;
       }
     })
 

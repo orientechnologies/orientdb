@@ -2,6 +2,25 @@
 /**
  * Binds a CodeMirror widget to a <textarea> element.
  */
+
+
+import 'codemirror';
+import 'codemirror/addon/hint/show-hint';
+import 'codemirror/mode/sql/sql';
+import 'codemirror/mode/javascript/javascript';
+import 'codemirror/mode/xml/xml';
+import 'codemirror/addon/hint/javascript-hint';
+import 'codemirror/addon/dialog/dialog';
+import 'codemirror/addon/search/search';
+import 'codemirror/addon/search/searchcursor';
+import 'codemirror/addon/comment/comment';
+import '../util/orientdb-hint';
+import  'codemirror/theme/ambiance.css';
+import  'codemirror/lib/codemirror.css';
+import  'codemirror/addon/hint/show-hint.css';
+import  'codemirror/addon/dialog/dialog.css';
+
+
 let CodeMirror = angular.module('ui.codemirror', []).constant('uiCodemirrorConfig', {}).directive('uiCodemirror', [
   'uiCodemirrorConfig',
   function (uiCodemirrorConfig) {
