@@ -359,6 +359,8 @@ TOKEN:
 	|
 	< EXISTS: ( "E" | "e" ) ( "X" | "x" ) ( "i" | "I" ) ( "s" | "S" ) ( "t" | "T" ) ( "s" | "S" ) >
 	|
+	< FOREACH: ( "F" | "f" ) ( "O" | "o" ) ( "R" | "r" ) ( "E" | "e" ) ( "A" | "a" ) ( "C" | "c" ) ( "H" | "h" ) >
+	|
 	< THIS: "@" ( ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "s" | "S" ) ) >
 	|
 	< RECORD_ATTRIBUTE: <RID_ATTR> | <CLASS_ATTR> | <VERSION_ATTR> | <SIZE_ATTR> | <TYPE_ATTR> | <RAW_ATTR> | <RID_ID_ATTR> | <RID_POS_ATTR> | <FIELDS_ATTR> >
@@ -620,6 +622,8 @@ List<OStatement> parseScript() :
         last = StatementSemicolon() {result.add(last);}
         |
         last = IfStatement() {result.add(last);}
+        |
+        last = ForEachBlock() {result.add(last);}
         |
         <SEMICOLON>
     )*
@@ -4656,4 +4660,28 @@ OHaSyncClusterStatement HaSyncClusterStatement():
         ]
     )
     { return jjtThis; }
+}
+
+OForEachBlock ForEachBlock():
+{
+    OStatement lastStatement;
+}
+{
+    <FOREACH> <LPAREN>
+    jjtThis.loopVariable = Identifier()
+    <IN>
+    jjtThis.loopValues = Expression()
+    <RPAREN>
+    <LBRACE>
+    (
+        LOOKAHEAD(StatementSemicolon())
+        lastStatement = StatementSemicolon() {jjtThis.statements.add(lastStatement); }
+        |
+        lastStatement = IfStatement() {jjtThis.statements.add(lastStatement); }
+        |
+        lastStatement = ForEachBlock() {jjtThis.statements.add(lastStatement); }
+        |
+        <SEMICOLON>
+    )*
+    <LBRACE>
 }

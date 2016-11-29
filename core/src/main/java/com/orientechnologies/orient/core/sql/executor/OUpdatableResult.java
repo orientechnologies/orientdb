@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.record.OElement;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.Optional;
 import java.util.Set;
@@ -11,9 +10,9 @@ import java.util.Set;
  */
 public class OUpdatableResult extends OResultInternal {
   protected OResultInternal previousValue = null;
-  private final ODocument element;
+  private final OElement element;
 
-  public OUpdatableResult(ODocument element) {
+  public OUpdatableResult(OElement element) {
     this.element = element;
   }
 

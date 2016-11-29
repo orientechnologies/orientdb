@@ -115,11 +115,17 @@ public class ORecordInternal {
     ((ORecordAbstract) record)._recordFormat = serializer;
   }
 
-  public static ODirtyManager getDirtyManager(final ORecord record) {
+  public static ODirtyManager getDirtyManager(ORecord record) {
+    if(!(record instanceof ORecordAbstract)){
+      record = record.getRecord();
+    }
     return ((ORecordAbstract) record).getDirtyManager();
   }
 
-  public static void setDirtyManager(final ORecord record, final ODirtyManager dirtyManager) {
+  public static void setDirtyManager(ORecord record, final ODirtyManager dirtyManager) {
+    if(!(record instanceof ORecordAbstract)){
+      record = record.getRecord();
+    }
     ((ORecordAbstract) record).setDirtyManager(dirtyManager);
   }
 

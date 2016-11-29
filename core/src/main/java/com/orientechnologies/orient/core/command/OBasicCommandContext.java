@@ -162,9 +162,26 @@ public class OBasicCommandContext implements OCommandContext {
       Object nested = getVariable(iName.substring(0, pos));
       if (nested != null && nested instanceof OCommandContext)
         ((OCommandContext) nested).setVariable(iName.substring(pos + 1), iValue);
-    } else
-      variables.put(iName, iValue);
+    } else {
+      if (variables.containsKey(iName)) {
+        variables.put(iName, iValue);//this is a local existing variable, so it's bound to current contex
+      } else if (parent != null && parent instanceof OBasicCommandContext && ((OBasicCommandContext) parent).hasVariable(iName)) {
+        parent.setVariable(iName, iValue);// it is an existing variable in parent context, so it's bound to parent context
+      } else {
+        variables.put(iName, iValue); //it's a new variable, so it's created in this context
+      }
+    }
     return this;
+  }
+
+  boolean hasVariable(String iName) {
+    if (variables != null && variables.containsKey(iName)) {
+      return true;
+    }
+    if (parent != null && parent instanceof OBasicCommandContext) {
+      return ((OBasicCommandContext) parent).hasVariable(iName);
+    }
+    return false;
   }
 
   @Override public OCommandContext incrementVariable(String iName) {

@@ -2,6 +2,9 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+
 import java.util.Map;
 
 public class OBatch extends SimpleNode {
@@ -23,6 +26,19 @@ public class OBatch extends SimpleNode {
    **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
+  }
+
+  public Integer evaluate(OCommandContext ctx) {
+    if (this.num != null) {
+      return num.getValue().intValue();
+    } else if (inputParam != null) {
+      Object obj = inputParam.bindFromInputParams(ctx.getInputParameters());
+      if (obj == null || !(obj instanceof Number)) {
+        throw new OCommandExecutionException("" + obj + " is not a number (BATCH)");
+      }
+      return ((Number) obj).intValue();
+    }
+    return -1;
   }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {

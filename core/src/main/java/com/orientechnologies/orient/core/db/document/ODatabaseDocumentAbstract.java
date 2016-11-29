@@ -2101,8 +2101,15 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
         if (!ODocumentInternal.getImmutableSchemaClass(outDocument).isVertexType())
           throw new IllegalArgumentException("source record is not a vertex");
 
-        if (!ODocumentInternal.getImmutableSchemaClass(outDocument).isVertexType())
+        if (inDocument == null) {
+          inDocument = inVertex.getRecord();
+          if (inDocument == null)
+            throw new IllegalArgumentException("destination vertex is invalid (rid=" + inVertex.getIdentity() + ")");
+        }
+
+        if (!ODocumentInternal.getImmutableSchemaClass(inDocument).isVertexType())
           throw new IllegalArgumentException("destination record is not a vertex");
+
 
         OVertex to = inVertex;
         OVertex from = currentVertex;
@@ -2145,12 +2152,12 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
         if (!outDocumentModified) {
           // OUT-VERTEX ---> IN-VERTEX/EDGE
-          OVertexDelegate.createLink(outDocument, to, outFieldName);
+          OVertexDelegate.createLink(outDocument, edge, outFieldName);
 
         }
 
         // IN-VERTEX ---> OUT-VERTEX/EDGE
-        OVertexDelegate.createLink(inDocument, from, inFieldName);
+        OVertexDelegate.createLink(inDocument, edge, inFieldName);
 
         // OK
         break;
@@ -2341,11 +2348,16 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
    * @see #setMVCC(boolean), {@link #isMVCC()}, ODocument#validate()
    */
   @Override
-  public <RET extends ORecord> RET save(final ORecord iRecord, String iClusterName, final OPERATION_MODE iMode,
+  public <RET extends ORecord> RET save(ORecord iRecord, String iClusterName, final OPERATION_MODE iMode,
       boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback,
       ORecordCallback<Integer> iRecordUpdatedCallback) {
     checkOpenness();
-
+    if(iRecord instanceof OVertexDelegate){
+      iRecord = iRecord.getRecord();
+    }
+    if(iRecord instanceof OEdgeDelegate){
+      iRecord = iRecord.getRecord();
+    }
     if (!(iRecord instanceof ODocument)) {
       assignAndCheckCluster(iRecord, iClusterName);
       return (RET) currentTx.saveRecord(iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);

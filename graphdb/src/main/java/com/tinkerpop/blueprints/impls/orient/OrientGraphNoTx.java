@@ -26,7 +26,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
@@ -167,7 +166,7 @@ public class OrientGraphNoTx extends OrientBaseGraph {
             throw new IllegalArgumentException("destination vertex is invalid (rid=" + inVertex.getIdentity() + ")");
         }
 
-        if (!ODocumentInternal.getImmutableSchemaClass(outDocument).isVertexType())
+        if (!ODocumentInternal.getImmutableSchemaClass(inDocument).isVertexType())
           throw new IllegalArgumentException("destination record is not a vertex");
 
         OIdentifiable to;

@@ -27,7 +27,9 @@ public interface OResult {
   }
 
   default Optional<OVertex> getVertex() {
-    return getElement().filter(x -> x instanceof OVertex).map(OVertex.class::cast);
+    System.out.println(getElement());
+    Optional<OVertex> result = getElement().flatMap(x -> x.asVertex());
+    return result;
   }
 
   default boolean isEdge() {
@@ -35,7 +37,8 @@ public interface OResult {
   }
 
   default Optional<OEdge> getEdge() {
-    return getElement().filter(x -> x instanceof OEdge).map(OEdge.class::cast);
+
+    return getElement().flatMap(x -> x.asEdge());
   }
 
   default boolean isBlob() {

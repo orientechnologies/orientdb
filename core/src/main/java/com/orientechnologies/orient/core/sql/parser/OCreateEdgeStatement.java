@@ -2,11 +2,17 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.sql.executor.OCreateEdgeExecutionPlanner;
+import com.orientechnologies.orient.core.sql.executor.OInsertExecutionPlan;
+import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
+
+import java.util.HashMap;
 import java.util.Map;
 
 public class OCreateEdgeStatement extends OStatement {
-
-  private static final Object unset           = new Object();
 
   protected OIdentifier       targetClass;
   protected OIdentifier       targetClusterName;
@@ -26,6 +32,35 @@ public class OCreateEdgeStatement extends OStatement {
 
   public OCreateEdgeStatement(OrientSql p, int id) {
     super(p, id);
+  }
+
+  @Override public OTodoResultSet execute(ODatabase db, Object[] args) {
+    OBasicCommandContext ctx = new OBasicCommandContext();
+    ctx.setDatabase(db);
+    Map<Object, Object> params = new HashMap<>();
+    if (args != null) {
+      for (int i = 0; i < args.length; i++) {
+        params.put(i, args[i]);
+      }
+    }
+    ctx.setInputParameters(params);
+    OInsertExecutionPlan executionPlan = createExecutionPlan(ctx);
+    executionPlan.executeInternal();
+    return new OLocalResultSet(executionPlan);
+  }
+
+  @Override public OTodoResultSet execute(ODatabase db, Map params) {
+    OBasicCommandContext ctx = new OBasicCommandContext();
+    ctx.setDatabase(db);
+    ctx.setInputParameters(params);
+    OInsertExecutionPlan executionPlan = createExecutionPlan(ctx);
+    executionPlan.executeInternal();
+    return new OLocalResultSet(executionPlan);
+  }
+
+  public OInsertExecutionPlan createExecutionPlan(OCommandContext ctx) {
+    OCreateEdgeExecutionPlanner planner = new OCreateEdgeExecutionPlanner(this);
+    return planner.createExecutionPlan(ctx);
   }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
@@ -121,6 +156,70 @@ public class OCreateEdgeStatement extends OStatement {
     result = 31 * result + (wait != null ? wait.hashCode() : 0);
     result = 31 * result + (batch != null ? batch.hashCode() : 0);
     return result;
+  }
+
+  public OIdentifier getTargetClass() {
+    return targetClass;
+  }
+
+  public void setTargetClass(OIdentifier targetClass) {
+    this.targetClass = targetClass;
+  }
+
+  public OIdentifier getTargetClusterName() {
+    return targetClusterName;
+  }
+
+  public void setTargetClusterName(OIdentifier targetClusterName) {
+    this.targetClusterName = targetClusterName;
+  }
+
+  public OExpression getLeftExpression() {
+    return leftExpression;
+  }
+
+  public void setLeftExpression(OExpression leftExpression) {
+    this.leftExpression = leftExpression;
+  }
+
+  public OExpression getRightExpression() {
+    return rightExpression;
+  }
+
+  public void setRightExpression(OExpression rightExpression) {
+    this.rightExpression = rightExpression;
+  }
+
+  public OInsertBody getBody() {
+    return body;
+  }
+
+  public void setBody(OInsertBody body) {
+    this.body = body;
+  }
+
+  public Number getRetry() {
+    return retry;
+  }
+
+  public void setRetry(Number retry) {
+    this.retry = retry;
+  }
+
+  public Number getWait() {
+    return wait;
+  }
+
+  public void setWait(Number wait) {
+    this.wait = wait;
+  }
+
+  public OBatch getBatch() {
+    return batch;
+  }
+
+  public void setBatch(OBatch batch) {
+    this.batch = batch;
   }
 }
 /* JavaCC - OriginalChecksum=2d3dc5693940ffa520146f8f7f505128 (do not edit this line) */

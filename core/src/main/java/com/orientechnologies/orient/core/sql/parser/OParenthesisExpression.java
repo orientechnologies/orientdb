@@ -4,8 +4,10 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -22,7 +24,6 @@ public class OParenthesisExpression extends OMathExpression {
   public OParenthesisExpression(OrientSql p, int id) {
     super(p, id);
   }
-
 
   public OParenthesisExpression(OExpression exp) {
     super(-1);
@@ -51,7 +52,15 @@ public class OParenthesisExpression extends OMathExpression {
       return expression.execute(iCurrentRecord, ctx);
     }
     if (statement != null) {
-      throw new UnsupportedOperationException("Execution of select in parentheses is not supported");
+      OInternalExecutionPlan execPlan = statement.createExecutionPlan(ctx);
+      OLocalResultSet rs = new OLocalResultSet(execPlan);
+      List<OResult> result = new ArrayList<>();
+      while(rs.hasNext()){
+        result.add(rs.next());
+      }
+//      List<OResult> result = rs.stream().collect(Collectors.toList());//TODO streamed...
+      rs.close();
+      return result;
     }
     return super.execute(iCurrentRecord, ctx);
   }
