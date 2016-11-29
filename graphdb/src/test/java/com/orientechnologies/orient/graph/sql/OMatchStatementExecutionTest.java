@@ -4,6 +4,7 @@ import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -1506,6 +1507,31 @@ public class OMatchStatementExecutionTest {
         "MATCH \n" + "{class: testMatched1_Foo, as: foo}.out('testMatched1_Foo_Bar') {as: bar}, \n" + "{class: testMatched1_Bar,as: bar}.out('testMatched1_Bar_Baz') {as: baz}, \n"
             + "{class: testMatched1_Foo,as: foo}.out('testMatched1_Foo_Far') {where: ($matched.baz IS not null),as: far}\n" + "RETURN $matches"));
     assertEquals(1, result.size());
+
+
+    result = db.query(new OSQLSynchQuery(
+        "MATCH \n" + "{class: testMatched1_Foo, as: foo}.out('testMatched1_Foo_Bar') {as: bar}, \n" + "{class: testMatched1_Bar,as: bar}.out('testMatched1_Bar_Baz') {as: baz}, \n"
+            + "{class: testMatched1_Foo,as: foo}.out('testMatched1_Foo_Far') {where: (name != '$matched.baz'),as: far}\n" + "RETURN $matches"));
+    assertEquals(1, result.size());
+
+    //test that "$matched" in a string does not affect the optimization and execution planning
+    result = db.query(new OSQLSynchQuery(
+        "MATCH \n" + "{class: testMatched1_Foo, as: foo, where: (name != '$matched.baz')}.out('testMatched1_Foo_Bar') {as: bar, where: (name != '$matched.foo')}, \n" + "{class: testMatched1_Bar,as: bar}.out('testMatched1_Bar_Baz') {as: baz, where: (name != '$matched.far')}, \n"
+            + "{class: testMatched1_Foo,as: foo}.out('testMatched1_Foo_Far') {where: (name != '$matched.baz'),as: far}\n" + "RETURN $matches"));
+    assertEquals(1, result.size());
+
+    //test that cyclic $matched conditions throw an execution exception (not supported in current executor, it will be in 3.0 probably)
+    try {
+      result = db.query(new OSQLSynchQuery("MATCH \n" + "{class: testMatched1_Foo, as: foo, where: (name != $matched.baz.name)}.out('testMatched1_Foo_Bar') {as: bar, where: (name != $matched.foo.name)}, \n"
+          + "{class: testMatched1_Bar,as: bar}.out('testMatched1_Bar_Baz') {as: baz, where: (name != $matched.far.name)}, \n" + "{class: testMatched1_Foo,as: foo}.out('testMatched1_Foo_Far') {where: (name != $matched.baz.name),as: far}\n"
+          + "RETURN $matches"));
+      fail();
+    }catch(OCommandExecutionException x){
+
+    }
+
+
+
   }
 
 
