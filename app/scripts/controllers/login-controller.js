@@ -60,8 +60,8 @@ login.controller("LoginController", ['$scope', '$rootScope', '$routeParams', '$l
         modalScope.creating = false;
         modalPromise.hide();
         var noti = "Database " + modalPromise.$scope.name + " created.";
-        $scope.username = 'admin';
-        $scope.password = 'admin';
+        $scope.username = modalPromise.$scope.username;
+        $scope.password =  modalPromise.$scope.password;
         $scope.connect(function () {
           if (!modalPromise.$scope.lightweight) {
             DatabaseAlterApi.changeCustomProperty(modalPromise.$scope.name, {
