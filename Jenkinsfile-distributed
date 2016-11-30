@@ -16,8 +16,8 @@ node("master") {
                 docker.image("${mvnJdk8Image}")
                         .inside("${env.VOLUMES}") {
 
-                        sh "${mvnHome}/bin/mvn   --batch-mode -V -U -e -Dmaven.test.failure.ignore=true  clean install -Dsurefire.useFile=false -DskipTests=true"
-                        sh "${mvnHome}/bin/mvn  -f distributed/pom.xml  --batch-mode -V -U -e -Dmaven.test.failure.ignore=true  clean test -Dsurefire.useFile=false -DskipTests=false"
+                        sh "${mvnHome}/bin/mvn   --batch-mode -V -U -e -Dmaven.test.failure.ignore=true  clean package -Dsurefire.useFile=false -DskipTests=true"
+                        sh "${mvnHome}/bin/mvn  -f distributed/pom.xml  --batch-mode -V -e -Dmaven.test.failure.ignore=true  clean test -Dsurefire.useFile=false -DskipTests=false"
 
                 }
             }
