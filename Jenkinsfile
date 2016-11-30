@@ -15,6 +15,16 @@ node("master") {
                 try {
                     sh "${mvnHome}/bin/mvn  --batch-mode -V clean install  -Dmaven.test.failure.ignore=true -Dsurefire.useFile=false"
                     sh "${mvnHome}/bin/mvn  --batch-mode -V deploy -DskipTests"
+
+
+                    build job: 'orientdb-spatial-multibranch/${env.BRANCH_NAME}', wait: false
+                    build job: 'orientdb-enterprise-multibranch/${env.BRANCH_NAME}', wait: false
+                    build job: 'orientdb-security-multibranch/${env.BRANCH_NAME}', wait: false
+                    build job: 'orientdb-neo4j-importer-multibranch/${env.BRANCH_NAME}', wait: false
+                    build job: 'orientdb-teleporter-multibranch/${env.BRANCH_NAME}', wait: false
+                    build job: 'spring-data-orientdb-multibranch/${env.BRANCH_NAME}', wait: false
+
+
                 } finally {
                     junit allowEmptyResults: true, testResults: '**/target/surefire-reports/TEST-*.xml'
 
