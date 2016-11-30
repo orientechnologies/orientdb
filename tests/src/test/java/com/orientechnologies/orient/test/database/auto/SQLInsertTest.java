@@ -584,8 +584,6 @@ public class SQLInsertTest extends DocumentDBBaseTest {
 
   public void testInsertQuotedString(){
     database.getMetadata().getSchema().createClass("testInsertQuotedString");
-    database.getMetadata().getSchema().createClass("testInsertJson1x1");
-    database.getMetadata().getSchema().createClass("testInsertJson1x2");
     String stm = "INSERT INTO `testInsertQuotedString` (name) VALUES ( \"\\\"foo\\\"\")";
     database.command(new OCommandSQL(stm)).execute();
     List<ODocument> result = database.query(new OSQLSynchQuery<Object>("SELECT FROM testInsertQuotedString"));
@@ -596,8 +594,6 @@ public class SQLInsertTest extends DocumentDBBaseTest {
 
   public void testInsertQuotedString2(){
     database.getMetadata().getSchema().createClass("testInsertQuotedString2");
-    database.getMetadata().getSchema().createClass("testInsertJson1x1");
-    database.getMetadata().getSchema().createClass("testInsertJson1x2");
     String stm = "INSERT INTO `testInsertQuotedString2` (name) VALUES (?)";
     database.command(new OCommandSQL(stm)).execute("\"foo\"");
     List<ODocument> result = database.query(new OSQLSynchQuery<Object>("SELECT FROM testInsertQuotedString2"));
