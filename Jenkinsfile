@@ -22,19 +22,19 @@ node("master") {
             }
         }
 
-        stage("Run downstream projects") {
-            try {
-
-                build job: 'orientdb-spatial-multibranch/${env.BRANCH_NAME}', wait: false
-                build job: 'orientdb-enterprise-multibranch/${env.BRANCH_NAME}', wait: false
-                build job: 'orientdb-security-multibranch/${env.BRANCH_NAME}', wait: false
-                build job: 'orientdb-neo4j-importer-multibranch/${env.BRANCH_NAME}', wait: false
-                build job: 'orientdb-teleporter-multibranch/${env.BRANCH_NAME}', wait: false
-                build job: 'spring-data-orientdb-multibranch/${env.BRANCH_NAME}', wait: false
-            } catch (e) {
-                e.printStackTrace()
-            }
-        }
+//        stage("Run downstream projects") {
+//            try {
+//
+//                build job: 'orientdb-spatial-multibranch/${env.BRANCH_NAME}', wait: false
+//                build job: 'orientdb-enterprise-multibranch/${env.BRANCH_NAME}', wait: false
+//                build job: 'orientdb-security-multibranch/${env.BRANCH_NAME}', wait: false
+//                build job: 'orientdb-neo4j-importer-multibranch/${env.BRANCH_NAME}', wait: false
+//                build job: 'orientdb-teleporter-multibranch/${env.BRANCH_NAME}', wait: false
+//                build job: 'spring-data-orientdb-multibranch/${env.BRANCH_NAME}', wait: false
+//            } catch (e) {
+//                e.printStackTrace()
+//            }
+//        }
 
         stage('Run tests on IBM Java8') {
             docker.image("${mvnIBMJdkImage}")
