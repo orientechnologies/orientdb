@@ -18,15 +18,17 @@
 
 package com.orientechnologies.lucene.test;
 
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.tinkerpop.blueprints.Parameter;
+import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 
 /**
  * Created by enricorisa on 03/09/14.
@@ -73,6 +75,29 @@ public class GraphEmbeddedTest extends BaseLuceneTest {
       Assert.assertNotNull(v);
     }
     Assert.assertEquals(size, 1);
+  }
+
+  @Test
+  public void testGetVericesFilterClass() {
+
+    graph.createVertexType("One");
+    graph.createVertexType("Two");
+    graph.createKeyIndex("name", Vertex.class, new Parameter("type", "NOTUNIQUE"));
+
+    graph.getRawGraph().begin();
+    graph.addVertex("class:One", new Object[] { "name", "Same" });
+    graph.addVertex("class:Two", new Object[] { "name", "Same" });
+
+    graph.commit();
+
+    Iterable<Vertex> vertexes = graph.getVertices("One", new String[] { "name" }, new Object[] { "Same" });
+
+    int size = 0;
+    for (Vertex v : vertexes) {
+      size++;
+      Assert.assertNotNull(v);
+    }
+    Assert.assertEquals(1, size);
   }
 
 }
