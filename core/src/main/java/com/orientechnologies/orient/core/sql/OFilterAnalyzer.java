@@ -25,10 +25,7 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
-import com.orientechnologies.orient.core.sql.operator.OIndexReuseType;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorBetween;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorIn;
+import com.orientechnologies.orient.core.sql.operator.*;
 
 import java.util.*;
 
@@ -82,7 +79,7 @@ public class OFilterAnalyzer {
 
     List<List<OIndexSearchResult>> result = new ArrayList<List<OIndexSearchResult>>();
     List<OIndexSearchResult> sub = analyzeCondition(condition, iSchemaClass, iContext);
-//    analyzeFilterBranch(iSchemaClass, condition, sub, iContext);
+    //    analyzeFilterBranch(iSchemaClass, condition, sub, iContext);
     result.add(sub);
     return result;
   }
@@ -222,17 +219,28 @@ public class OFilterAnalyzer {
 
     final Object origValue = iCondition.getLeft() == iItem ? iCondition.getRight() : iCondition.getLeft();
 
-    if (iCondition.getOperator() instanceof OQueryOperatorBetween || iCondition.getOperator() instanceof OQueryOperatorIn) {
-      return new OIndexSearchResult(iCondition.getOperator(), item.getFieldChain(), origValue);
+    OQueryOperator operator = iCondition.getOperator();
+
+    if (iCondition.getRight() == iItem) {
+      if (operator instanceof OQueryOperatorIn) {
+        operator = new OQueryOperatorContains();
+      } else if (operator instanceof OQueryOperatorContains) {
+        operator = new OQueryOperatorIn();
+      }
+    }
+
+    if (iCondition.getOperator() instanceof OQueryOperatorBetween || operator instanceof OQueryOperatorIn) {
+
+      return new OIndexSearchResult(operator, item.getFieldChain(), origValue);
     }
 
     final Object value = OSQLHelper.getValue(origValue);
-    return new OIndexSearchResult(iCondition.getOperator(), item.getFieldChain(), value);
+    return new OIndexSearchResult(operator, item.getFieldChain(), value);
   }
 
   private boolean checkIndexExistence(final OClass iSchemaClass, final OIndexSearchResult result) {
-    return iSchemaClass.areIndexed(result.fields())
-        && (!result.lastField.isLong() || checkIndexChainExistence(iSchemaClass, result));
+    return iSchemaClass.areIndexed(result.fields()) && (!result.lastField.isLong() || checkIndexChainExistence(iSchemaClass,
+        result));
   }
 
   private boolean checkIndexChainExistence(OClass iSchemaClass, OIndexSearchResult result) {

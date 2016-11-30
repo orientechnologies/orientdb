@@ -20,6 +20,7 @@ package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.testng.annotations.Test;
 
 import java.util.List;
@@ -67,6 +68,33 @@ public class OCommandExecutorSQLSelectTestIndex {
 
       List<ODocument> results = databaseDocumentTx.command(new OCommandSQL("SELECT * FROM Derived WHERE uuid='abcdef'")).execute();
       assertEquals(results.size(), 1);
+
+    } finally {
+      databaseDocumentTx.drop();
+    }
+  }
+
+  public void testListContainsField(){
+    ODatabaseDocumentTx databaseDocumentTx = new ODatabaseDocumentTx("memory:OCommandExecutorSQLSelectTestIndex_testListContainsField");
+    databaseDocumentTx.create();
+    try {
+      databaseDocumentTx.command(new OCommandSQL("CREATE CLASS Foo")).execute();
+      databaseDocumentTx.command(new OCommandSQL("CREATE PROPERTY Foo.name String")).execute();
+      databaseDocumentTx.command(new OCommandSQL("INSERT INTO Foo SET name = 'foo'")).execute();
+
+      List<?> result = databaseDocumentTx.query(new OSQLSynchQuery<Object>("SELECT * FROM Foo WHERE ['foo', 'bar'] CONTAINS name"));
+      assertEquals(result.size(), 1);
+
+      result = databaseDocumentTx.query(new OSQLSynchQuery<Object>("SELECT * FROM Foo WHERE name IN ['foo', 'bar']"));
+      assertEquals(result.size(), 1);
+
+      databaseDocumentTx.command(new OCommandSQL("CREATE INDEX Foo.name UNIQUE_HASH_INDEX")).execute();
+
+      result = databaseDocumentTx.query(new OSQLSynchQuery<Object>("SELECT * FROM Foo WHERE ['foo', 'bar'] CONTAINS name"));
+      assertEquals(result.size(), 1);
+
+      result = databaseDocumentTx.query(new OSQLSynchQuery<Object>("SELECT * FROM Foo WHERE name IN ['foo', 'bar']"));
+      assertEquals(result.size(), 1);
 
     } finally {
       databaseDocumentTx.drop();
