@@ -69,10 +69,8 @@ node("master") {
                 timeout(time: 180, unit: 'MINUTES') {
                     docker.image("${mvnJdk8Image}")
                             .inside("${env.VOLUMES}") {
-                        dir('server') {
-                            sh "${mvnHome}/bin/mvn   --batch-mode -V -U -e -Dmaven.test.failure.ignore=true  clean test-compile failsafe:integration-test -Dsurefire.useFile=false"
-                            junit allowEmptyResults: true, testResults: '**/target/surefire-reports/TEST-*.xml'
-                        }
+                        sh "${mvnHome}/bin/mvn -f ./server/pom.xml  --batch-mode -V -U -e -Dmaven.test.failure.ignore=true  clean test-compile failsafe:integration-test -Dsurefire.useFile=false"
+                        junit allowEmptyResults: true, testResults: '**/target/surefire-reports/TEST-*.xml'
                     }
                 }
             } catch (e) {
@@ -88,11 +86,9 @@ node("master") {
                 timeout(time: 180, unit: 'MINUTES') {
                     docker.image("${mvnJdk8Image}")
                             .inside("${env.VOLUMES}") {
-                        dir('distributed') {
-                            sh "${mvnHome}/bin/mvn  --batch-mode -V -U -e -Dmaven.test.failure.ignore=true  clean package  -Dsurefire.useFile=false -DskipTests=true"
-                            junit allowEmptyResults: true, testResults: '**/target/surefire-reports/TEST-*.xml'
+                        sh "${mvnHome}/bin/mvn  -f ./distributed/pom.xml  --batch-mode -V -U -e -Dmaven.test.failure.ignore=true  clean package -Dsecurity.userPasswordSaltIterations=1  -Dsurefire.useFile=false -DskipTests=true"
+                        junit allowEmptyResults: true, testResults: '**/target/surefire-reports/TEST-*.xml'
 
-                        }
                     }
                 }
             } catch (e) {
