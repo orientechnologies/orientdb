@@ -381,7 +381,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware
       // TRANSFORM FIELD VALUES
       final Map<String, Object> fields = new LinkedHashMap<String, Object>();
       for (int i = 0; i < values.size(); ++i)
-        fields.put(fieldNames.get(i), OSQLHelper.parseValue(this, OStringSerializerHelper.decode(values.get(i).trim()), context));
+        fields.put(fieldNames.get(i), OSQLHelper.parseValue(this, values.get(i).trim(), context));
 
       newRecords.add(fields);
       blockStart = blockEnd;

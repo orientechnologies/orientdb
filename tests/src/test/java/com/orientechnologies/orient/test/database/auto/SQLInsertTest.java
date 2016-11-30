@@ -582,6 +582,47 @@ public class SQLInsertTest extends DocumentDBBaseTest {
     Assert.assertEquals(((BigDecimal)o).intValue(), 5);
   }
 
+  public void testInsertQuotedString(){
+    database.getMetadata().getSchema().createClass("testInsertQuotedString");
+    database.getMetadata().getSchema().createClass("testInsertJson1x1");
+    database.getMetadata().getSchema().createClass("testInsertJson1x2");
+    String stm = "INSERT INTO `testInsertQuotedString` (name) VALUES ( \"\\\"foo\\\"\")";
+    database.command(new OCommandSQL(stm)).execute();
+    List<ODocument> result = database.query(new OSQLSynchQuery<Object>("SELECT FROM testInsertQuotedString"));
+    Assert.assertEquals(result.size(), 1);
+    Assert.assertEquals(result.get(0).field("name"), "\"foo\"");
+
+  }
+
+  public void testInsertQuotedString2(){
+    database.getMetadata().getSchema().createClass("testInsertQuotedString2");
+    database.getMetadata().getSchema().createClass("testInsertJson1x1");
+    database.getMetadata().getSchema().createClass("testInsertJson1x2");
+    String stm = "INSERT INTO `testInsertQuotedString2` (name) VALUES (?)";
+    database.command(new OCommandSQL(stm)).execute("\"foo\"");
+    List<ODocument> result = database.query(new OSQLSynchQuery<Object>("SELECT FROM testInsertQuotedString2"));
+    Assert.assertEquals(result.size(), 1);
+    Assert.assertEquals(result.get(0).field("name"), "\"foo\"");
+
+  }
+
+  public void testInsertJson1(){
+    database.getMetadata().getSchema().createClass("testInsertJson1");
+    database.getMetadata().getSchema().createClass("testInsertJson1x1");
+    database.getMetadata().getSchema().createClass("testInsertJson1x2");
+    String stm = "INSERT INTO `testInsertJson1` (deals) VALUES ( [{\"goods\":[{ \"GoodsDescription\":\" \\\" coma-->,<-- coma  \\\" \", \"@class\":\"testInsertJson1x1\",\"@type\":\"d\"}],\n"
+        + "\"@class\":\"testInsertJson1x2\",\"@type\":\"d\"}])";
+    database.command(new OCommandSQL(stm)).execute();
+    List<ODocument> result = database.query(new OSQLSynchQuery<Object>("SELECT FROM testInsertJson1"));
+    Assert.assertEquals(result.size(), 1);
+    Collection deals = result.get(0).field("deals");
+    ODocument values = (ODocument) deals.iterator().next();
+    Collection<ODocument> goods = (Collection<ODocument>) values.field("goods");
+    ODocument item = goods.iterator().next();
+
+    Assert.assertEquals(item.field("GoodsDescription"), " \" coma-->,<-- coma  \" ");
+
+  }
   private List<Long> getValidPositions(int clusterId) {
     final List<Long> positions = new ArrayList<Long>();
 
