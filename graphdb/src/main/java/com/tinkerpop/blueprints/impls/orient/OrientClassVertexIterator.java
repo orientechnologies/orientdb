@@ -40,7 +40,7 @@ public class OrientClassVertexIterator implements Iterator<Vertex> {
 
   @Override
   public void remove() {
-
+    iterator.remove();
   }
 
 }
