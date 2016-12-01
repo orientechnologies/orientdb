@@ -146,7 +146,7 @@ public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenario
       System.out.println("Server 3 restarted.");
       assertTrue(serverInstance.get(2).isActive());
 
-      waitForDatabaseIsOnline(serverInstance.get(2).getServerInstance().getDistributedManager().getLocalNodeName(),
+      waitForDatabaseIsOnline(0, serverInstance.get(2).getServerInstance().getDistributedManager().getLocalNodeName(),
           getDatabaseName(), 10000);
 
       // checking server3 status by querying a record inserted on it

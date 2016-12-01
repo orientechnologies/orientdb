@@ -42,4 +42,7 @@
             <interface>127.0.0.1</interface>
         </interfaces>
 	</network>
+	<map name="default">
+		<merge-policy>com.orientechnologies.orient.server.hazelcast.OHazelcastMergeStrategy</merge-policy>
+	</map>
 </hazelcast>

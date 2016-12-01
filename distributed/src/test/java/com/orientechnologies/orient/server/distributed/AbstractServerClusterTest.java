@@ -375,6 +375,30 @@ public abstract class AbstractServerClusterTest {
     }
   }
 
+  protected void assertDatabaseStatusEquals(final int fromServerId, final String serverName, final String dbName,
+      final ODistributedServerManager.DB_STATUS status) {
+    Assert.assertEquals(serverInstance.get(fromServerId).getServerInstance().getDistributedManager().getDatabaseStatus(serverName, dbName),
+        status);
+  }
+
+  protected void waitForDatabaseStatus(final int serverId, final String serverName, final String dbName,
+      final ODistributedServerManager.DB_STATUS status, final long timeout) {
+    final long startTime = System.currentTimeMillis();
+    while (serverInstance.get(serverId).getServerInstance().getDistributedManager().getDatabaseStatus(serverName, dbName) != status) {
+
+      if (timeout > 0 && System.currentTimeMillis() - startTime > timeout) {
+        OLogManager.instance().error(this, "TIMEOUT on wait-for condition (timeout=" + timeout + ")");
+        break;
+      }
+
+      try {
+        Thread.sleep(1000);
+      } catch (InterruptedException e) {
+        // IGNORE IT
+      }
+    }
+  }
+
   protected void waitForDatabaseIsOffline(final String serverName, final String dbName, final long timeout) {
     final long startTime = System.currentTimeMillis();
     while (serverInstance.get(0).getServerInstance().getDistributedManager().isNodeOnline(serverName, dbName)) {
@@ -390,12 +414,11 @@ public abstract class AbstractServerClusterTest {
         // IGNORE IT
       }
     }
-
   }
 
-  protected void waitForDatabaseIsOnline(final String serverName, final String dbName, final long timeout) {
+  protected void waitForDatabaseIsOnline(final int fromServerId, final String serverName, final String dbName, final long timeout) {
     final long startTime = System.currentTimeMillis();
-    while (!serverInstance.get(0).getServerInstance().getDistributedManager().isNodeOnline(serverName, dbName)) {
+    while (!serverInstance.get(fromServerId).getServerInstance().getDistributedManager().isNodeOnline(serverName, dbName)) {
 
       if (timeout > 0 && System.currentTimeMillis() - startTime > timeout) {
         OLogManager.instance().error(this, "TIMEOUT on wait-for condition (timeout=" + timeout + ")");
@@ -520,5 +543,12 @@ public abstract class AbstractServerClusterTest {
 
     return dManager.sendRequest(getDatabaseName(), clusterNames, Arrays.asList(servers), new OFixCreateRecordTask(rid, -1),
         dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
+  }
+
+  protected List<ServerRun> createServerList(final int... serverIds) {
+    final List<ServerRun> result = new ArrayList<ServerRun>(serverIds.length);
+    for (int s : serverIds)
+      result.add(serverInstance.get(s));
+    return result;
   }
 }
