@@ -2,7 +2,7 @@
   <div class="col-md-12">
     <div class="admin-header">
       <div class="row">
-        <div class="col-md-6 admin-title">
+        <div class="col-md-4 admin-title">
           <h2>
 
             <button class="btn btn-xs btn-warning btn-trasparent" ng-click="toggleProperties()"><i class="fa "
@@ -20,7 +20,7 @@
             </a>
           </h2>
         </div>
-        <div class="col-md-6 admin-actions">
+        <div class="col-md-8 admin-actions">
 
           <div class="btn-toolbar pull-right">
             <div class="btn-group">
@@ -171,7 +171,7 @@
                 <div class="query-info">
                   <div class="container-fluid">
                     <div class="row vertical-align">
-                      <div class="col-md-8  info">
+                      <div class="col-md-10  info">
                         <div class="query-hint-mobile">
                           <a class="btn btn-trasparent ng-scope" tabindex="1" data-trigger="focus"
                              data-placement="bottom-left" data-animation="am-flip-x" data-container="body"
@@ -203,27 +203,20 @@
                         </div>
 
                       </div>
-                      <div class="col-md-4 command">
-                        <form class="form-inline pull-right">
-                          <fieldset>
+                      <div class="col-md-2 command">
 
-                            <div class="form-group">
-                              <label>Physics</label>
-                              <input bs-switch type="checkbox" ng-model="physics"
-                                     class="btn btn-primary btn-sm">
-                              </input>
-                            </div>
-                            <div class="form-group">
-                              <label>Link Distance</label>
-                              <input type="text" class="form-control input-sm" ng-model="linkDistance"/>
-                            </div>
-                            <div class="form-group">
-                              <label>Limit</label>
-                              <input type="text" class="form-control input-sm" ng-model="config.limit"/>
-                            </div>
-
-                          </fieldset>
-                        </form>
+                        <a
+                          id="configQueryButton"
+                          class="btn btn-trasparent btn-sm pull-right"
+                          data-placement="bottom-right"
+                          data-title="Graph configuration"
+                          data-template-url="views/database/graphConfig.html"
+                          bs-popover
+                          data-toggle="dropdown"
+                          href="javascript:void(0)">
+                          <i class="fa fa-wrench"></i>
+                          <b class="caret"></b>
+                        </a>
                       </div>
                     </div>
                   </div>

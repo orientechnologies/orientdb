@@ -6,6 +6,8 @@ import '../views/database/newField.html';
 import '../views/database/editDocument.html';
 import '../views/document/addLink.html';
 import '../views/document/modalConnection.html';
+import '../views/database/newFieldPopOver.html';
+
 
 let DocController = angular.module('document.controller', []);
 DocController.controller("DocumentEditController", ['$scope', '$injector', '$routeParams', '$location', '$modal', '$q', 'DocumentApi', 'Database', 'Notification', function ($scope, $injector, $routeParams, $location, $modal, $q, DocumentApi, Database, Notification) {

@@ -12,19 +12,24 @@ import 'angular-translate';
 import 'angular-translate-loader-partial';
 import 'ng-tags-input';
 import 'angular-bootstrap-switch';
+import 'bootstrap-switch';
 import 'angular-smart-table';
 import 'ng-table';
 
 import 'd3';
 import 'spectrum-colorpicker';
+
 import 'angular-spectrum-colorpicker';
 
 
 import  'angular-strap/dist/angular-strap.tpl';
 import  'bootstrap';
 
+
 // Vendor Style
 import  'bootstrap/dist/css/bootstrap.css';
+import  'bootstrap/dist/css/bootstrap-theme.min.css';
+import  'bootstrap-switch/dist/css/bootstrap3/bootstrap-switch.min.css';
 import  'font-awesome/css/font-awesome.css';
 
 import  'spectrum-colorpicker/spectrum.css';
@@ -32,6 +37,12 @@ import  'ui-select/dist/select.min.css';
 import 'ng-tags-input/build/ng-tags-input.min.css';
 import 'ng-tags-input/build/ng-tags-input.bootstrap.min.css';
 
+
+// Bundled Vendor
+
+import './vendor/jquery.fonticonpicker/jquery.fonticonpicker.css';
+import './vendor/jquery.fonticonpicker/jquery.fonticonpicker.inverted.css';
+import './vendor/jquery.fonticonpicker/jquery.fonticonpicker.min';
 
 // CONFIG
 import routing from './app.config'
@@ -74,6 +85,9 @@ import './styles/layout.css'
 import './styles/responsive.css'
 import './styles/animation.css'
 import './styles/graph.css'
+import './styles/fontello-codes.css'
+import './styles/fontello-embedded.css'
+import './styles/fontello.css'
 
 
 var deps = [HeaderController,

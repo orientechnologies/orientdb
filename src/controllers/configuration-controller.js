@@ -6,6 +6,15 @@
  * To change this template use File | Settings | File Templates.
  */
 
+import '../views/database/configuration.html';
+import  '../views/database/config/structure.html';
+import  '../views/database/config/boolenaCustom.html';
+import  '../views/database/config/clusterSelection.html';
+import  '../views/database/config/conflictStrategy.html';
+import  '../views/database/config/configuration.html';
+import  '../views/database/config/import-export.html';
+import  '../views/database/config/default.html';
+
 let configModule = angular.module('configuration.controller', []);
 configModule.controller("ConfigurationController", ['$scope', '$routeParams', '$location', 'DatabaseApi', 'Database', function ($scope, $routeParams, $location, DatabaseApi, Database) {
 

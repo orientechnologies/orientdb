@@ -3,11 +3,19 @@ import GraphServices from  '../services/graph-services';
 import BrowseConfig from '../services/browse-services';
 
 
+import Utilities from '../util/library';
+
 import {BaseEditController} from './document-controller';
 
 import '../views/vertex/addLabel.html';
 import '../views/database/editVertex.html';
 import '../views/database/modalNew.html';
+import '../views/database/modalEdit.html';
+import '../views/database/modalNewEdge.html';
+import '../views/database/graph/asideEmpty.html';
+import '../views/database/graph/asideEdge.html';
+import '../views/database/graph/asideVertex.html';
+import '../views/database/graphConfig.html';
 
 let GraphModule = angular.module('vertex.controller', [GraphServices, Icons, BrowseConfig]);
 GraphModule.controller("VertexCreateController", ['$scope', '$routeParams', '$location', 'DocumentApi', 'Database', 'Notification', function ($scope, $routeParams, $location, DocumentApi, Database, Notification) {

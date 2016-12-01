@@ -1,5 +1,8 @@
 let IconServices = angular.module('icon.services', []);
 
+import Config from '../config/config.json';
+
+
 IconServices.factory('Icon', function ($http, $q, $timeout) {
 
 
@@ -9,14 +12,15 @@ IconServices.factory('Icon', function ($http, $q, $timeout) {
       var self = this;
       var deferred = $q.defer();
       if (!this.iconset) {
-        $http.get('config/config.json').success(function (data) {
-          self.iconset = data['glyphs'];
-          var newData = data['glyphs'].map(function (d) {
-            d.css = 'icon-' + d.css;
-            return d;
-          });
-          deferred.resolve(newData);
+
+
+        this.iconset = Config['glyphs'];
+        var newData = Config['glyphs'].map(function (d) {
+          d.css = 'icon-' + d.css;
+          return d;
         });
+        deferred.resolve(newData);
+
       } else {
         $timeout(function () {
           deferred.resolve(self.iconset);

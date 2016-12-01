@@ -37,11 +37,15 @@ module.exports = {
         loader: "style-loader!css-loader"
       },
       {
-        test: /\.(eot|svg|ttf|gif|json|woff(2)?)(\?v=\d+\.\d+\.\d+)?/,
+        test: /\.(eot|svg|ttf|gif|woff(2)?)(\?v=\d+\.\d+\.\d+)?/,
         loader: 'url-loader'
       },
       {
-        test: /\.(jpg|svg|gif|png|json)$/,
+        test: /\.json$/,
+        loader: 'json-loader'
+      },
+      {
+        test: /\.(jpg|svg|gif|png)$/,
         loader: "file-loader"
       },
       {

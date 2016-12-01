@@ -1,6 +1,7 @@
 import 'angular-route'
 
 import {DatabaseResolve, InstantDatabaseResolve, AgentResolve} from './resolvers';
+import Translations  from './translations/en-US/hint.json';
 
 import LoginTpl from './views/login.html';
 import './views/header.html';
@@ -15,7 +16,7 @@ import './views/database/browse.html';
 import './views/database/security.html';
 import './views/database/graph/graph.html';
 
-function routing($routeProvider, $httpProvider, $translateProvider, $translatePartialLoaderProvider) {
+function routing($routeProvider, $httpProvider, $translateProvider) {
   $routeProvider
     .when('/', {
       templateUrl: LoginTpl,
@@ -139,12 +140,8 @@ function routing($routeProvider, $httpProvider, $translateProvider, $translatePa
       redirectTo: '/'
     });
 
-  $translateProvider.useLoader('$translatePartialLoader', {
-    urlTemplate: 'translations/{lang}/{part}.json'
-  });
 
-  $translatePartialLoaderProvider.addPart('hint');
-
+  $translateProvider.translations('en-US',Translations);
   $translateProvider.preferredLanguage('en-US');
   $httpProvider.interceptors.push(function ($q, Notification, $rootScope) {
     return {

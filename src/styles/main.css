@@ -1285,3 +1285,7 @@ span.badge-edge {
 .graph-info h4 {
   margin-top: 3px;
 }
+
+.config-graph-popover {
+  width: 250px;
+}
