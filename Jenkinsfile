@@ -87,7 +87,7 @@ node("master") {
                     timeout(time: 180, unit: 'MINUTES') {
                         docker.image("${mvnJdk8Image}")
                                 .inside("${env.VOLUMES}") {
-                            sh "${mvnHome}/bin/mvn  -f ./distributed/pom.xml  --batch-mode -V -U -e -Dmaven.test.failure.ignore=true  clean package -Dsecurity.userPasswordSaltIterations=1  -Dsurefire.useFile=false -DskipTests=true"
+                            sh "${mvnHome}/bin/mvn  -f ./distributed/pom.xml  --batch-mode -V -U -e -Dmaven.test.failure.ignore=true  clean package -Dsecurity.userPasswordSaltIterations=1  -Dsurefire.useFile=false -DskipTests=flalse"
                             junit allowEmptyResults: true, testResults: '**/target/surefire-reports/TEST-*.xml'
 
                         }
