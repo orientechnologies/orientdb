@@ -71,7 +71,7 @@ node("master") {
             stage('Run crash tests on java8') {
 
                 try {
-                    timeout(time: 180, unit: 'MINUTES') {
+                    timeout(time: 240, unit: 'MINUTES') {
                         docker.image("${mvnJdk8Image}")
                                 .inside("${env.VOLUMES}") {
                             sh "${mvnHome}/bin/mvn -f ./server/pom.xml  --batch-mode -V -U -e -Dmaven.test.failure.ignore=true  clean test-compile failsafe:integration-test -Dsurefire.useFile=false"
