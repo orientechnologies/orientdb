@@ -22,10 +22,15 @@ import 'angular-spectrum-colorpicker';
 
 import  'angular-strap/dist/angular-strap.tpl';
 import  'bootstrap';
+
+// Vendor Style
 import  'bootstrap/dist/css/bootstrap.css';
 import  'font-awesome/css/font-awesome.css';
 
-import  'spectrum-colorpicker/spectrum.css'
+import  'spectrum-colorpicker/spectrum.css';
+import  'ui-select/dist/select.min.css';
+import 'ng-tags-input/build/ng-tags-input.min.css';
+import 'ng-tags-input/build/ng-tags-input.bootstrap.min.css';
 
 
 // CONFIG
@@ -55,7 +60,6 @@ import CodeMirrorUI from './directives/ui-codemirror';
 import BootstrapTabSet from './directives/tabset';
 import Rendering from './directives/widget';
 import StudioGraph from './directives/graph';
-
 
 
 // FILTERS

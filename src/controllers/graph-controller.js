@@ -6,6 +6,7 @@ import BrowseConfig from '../services/browse-services';
 import {BaseEditController} from './document-controller';
 
 import '../views/vertex/addLabel.html';
+import '../views/database/editVertex.html';
 import '../views/database/modalNew.html';
 
 let GraphModule = angular.module('vertex.controller', [GraphServices, Icons, BrowseConfig]);

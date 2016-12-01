@@ -155,9 +155,15 @@ Widget.directive('docwidget', function ($compile, $http, Database, CommandApi, D
   var linker = function (scope, element, attrs) {
 
     var url = attrs.docwidget ? attrs.docwidget : "views/widget/form.html"
-    $http.get(url).then(function (response) {
-      compileForm(response, scope, element, attrs);
-    });
+
+
+    let tpl = `
+          <div ng-include="'${url}'"></div>
+        `
+    compileForm(tpl, scope, element, attrs);
+    // $http.get(url).then(function (response) {
+    //   compileForm(response, scope, element, attrs);
+    // });
   }
   return {
     // A = attribute, E = Element, C = Class and M = HTML Comment

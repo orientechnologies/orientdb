@@ -1,6 +1,9 @@
 import '../views/database/editclass.html';
 import '../views/database/newProperty.html';
 import '../views/database/newIndex.html';
+import '../views/database/newClass.html';
+import '../views/database/index/indexMain.html';
+
 
 import Utilities from '../util/library';
 
@@ -92,7 +95,7 @@ schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$locatio
     var modalScope = $scope.$new(true);
     modalScope.what = 'class';
     modalScope.tmpName = cls.name;
-    var modalPromise = $modal({template: 'views/database/changeNameModal.html', scope: modalScope, show: false});
+    var modalPromise = $modal({templateUrl: 'views/database/changeNameModal.html', scope: modalScope, show: false});
 
     modalScope.rename = function (name) {
       if (name != cls.name) {
@@ -160,8 +163,8 @@ schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$locatio
     $location.path("/database/" + $scope.database.getName() + "/schema/indexes");
   }
   $scope.createNewClass = function () {
-    modalScope = $scope.$new(true);
-    modalScope.db = database;
+    let modalScope = $scope.$new(true);
+    modalScope.db = $scope.database;
 
     modalScope.parentScope = $scope;
     var modalPromise = $modal({template: 'views/database/newClass.html', scope: modalScope, show: false});

@@ -29,7 +29,7 @@ Utilities.confirm = function ($scope, $modal, $q, params) {
 
 
     var modalPromise = $modal({
-      template: 'views/modal/yesno.html',
+      templateUrl: 'views/modal/yesno.html',
       persist: true,
       show: false,
       scope: modalScope,

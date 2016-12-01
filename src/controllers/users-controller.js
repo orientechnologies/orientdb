@@ -64,11 +64,11 @@ UserModule.controller("UsersController", ['$scope', '$routeParams', '$location',
 
       }, {
         total: $scope.usersResult.length, // length of data
-        getData: function ($defer, params) {
+        getData: function (params) {
           var orderedData = params.sorting() ?
             $filter('orderBy')($scope.usersResult, params.orderBy()) :
             $scope.usersResult;
-          $defer.resolve(orderedData.slice((params.page() - 1) * params.count(), params.page() * params.count()));
+          return orderedData.slice((params.page() - 1) * params.count(), params.page() * params.count());
         }
       });
     });
@@ -105,7 +105,7 @@ UserModule.controller("UsersController", ['$scope', '$routeParams', '$location',
     modalScope.loadRoles = $scope.loadRoles;
     modalScope.title = "New User"
     modalScope.saveButton = "Add User"
-    var modalPromise = $modal({template: 'views/database/users/newUser.html', scope: modalScope, show: false});
+    var modalPromise = $modal({templateUrl: 'views/database/users/newUser.html', scope: modalScope, show: false});
     modalScope.save = function () {
       if (modalPromise.$scope.roles) {
         modalPromise.$scope.user.roles = [];
@@ -174,7 +174,7 @@ UserModule.controller("UsersController", ['$scope', '$routeParams', '$location',
     modalScope.loadRoles = $scope.loadRoles;
     modalScope.title = "Edit User"
     modalScope.saveButton = "Save User"
-    var modalPromise = $modal({template: 'views/database/users/newUser.html', scope: modalScope, show: false});
+    var modalPromise = $modal({templateUrl: 'views/database/users/newUser.html', scope: modalScope, show: false});
     modalScope.save = function () {
       if (modalPromise.$scope.roles) {
         modalPromise.$scope.user.roles = [];
@@ -324,13 +324,15 @@ UserModule.controller("RolesController", ['$scope', '$routeParams', '$location',
   }
   $scope.addRule = function () {
     var modalScope = $scope.$new(true);
-    var modalPromise = $modal({template: 'views/database/users/newRule.html', scope: modalScope, show: false});
-    modalScope.save = function () {
-      if (!$scope.selectedRole['rules'][modalPromise.$scope.name]) {
+    var modalPromise = $modal({templateUrl: 'views/database/users/newRule.html', scope: modalScope, show: false});
+    modalScope.save = function (name) {
+
+
+      if (!$scope.selectedRole['rules'][name]) {
 
 
         var params = {
-          resource: modalPromise.$scope.name,
+          resource: name,
           role: $scope.selectedRole.name
         }
 
@@ -344,7 +346,7 @@ UserModule.controller("RolesController", ['$scope', '$routeParams', '$location',
           limit: $scope.limit,
           shallow: false
         }, function (data) {
-          $scope.selectedRole['rules'][modalPromise.$scope.name] = 0;
+          $scope.selectedRole['rules'][name] = 0;
           $scope.rules = Object.keys($scope.selectedRole['rules']).sort();
           Notification.push({content: S("Resource '{{resource}}' added correctly to '{{role}}'").template(params).s});
         })
@@ -358,8 +360,9 @@ UserModule.controller("RolesController", ['$scope', '$routeParams', '$location',
     modalScope.user = DocumentApi.createNewDoc("ORole");
     modalScope.roles = $scope.usersResult;
     modalScope.select2Options = $scope.select2Options;
-    var modalPromise = $modal({template: 'views/database/users/newRole.html', scope: modalScope, show: false});
+    var modalPromise = $modal({templateUrl: 'views/database/users/newRole.html', scope: modalScope, show: false});
     modalScope.save = function () {
+
 
       DocumentApi.createDocument($scope.database.getName(), modalPromise.$scope.user["@rid"], modalPromise.$scope.user).then(function (data) {
         $scope.usersResult.push(data);
@@ -421,7 +424,7 @@ UserModule.controller("RolesController", ['$scope', '$routeParams', '$location',
       DecToBin = '0'.concat(DecToBin);
     }
     var matrix = new Array;
-    for (z in DecToBin) {
+    for (let z in DecToBin) {
       if (z != 'contains')
         matrix.push(DecToBin[z] == '1')
     }

@@ -1,3 +1,12 @@
+import '../views/database/createRecord.html';
+import '../views/database/record.html';
+import '../views/widget/form.html';
+import '../views/database/edit.html';
+import '../views/database/newField.html';
+import '../views/database/editDocument.html';
+import '../views/document/addLink.html';
+import '../views/document/modalConnection.html';
+
 let DocController = angular.module('document.controller', []);
 DocController.controller("DocumentEditController", ['$scope', '$injector', '$routeParams', '$location', '$modal', '$q', 'DocumentApi', 'Database', 'Notification', function ($scope, $injector, $routeParams, $location, $modal, $q, DocumentApi, Database, Notification) {
 
@@ -14,7 +23,7 @@ DocController.controller("DocumentEditController", ['$scope', '$injector', '$rou
     modalScope.db = $scope.database;
     modalScope.rid = rid;
     var modalPromise = $modal({
-      template: 'views/document/modalEdit.html',
+      templateUrl: 'views/document/modalEdit.html',
       persist: true,
       show: false,
       modalClass: 'editEdge',
@@ -56,12 +65,12 @@ DocController.controller("DocumentEditController", ['$scope', '$injector', '$rou
   $scope.showModalConnection = function (label) {
     var modalScope = $scope.$new(true);
     modalScope.type = Database.listPropertyForClass($scope.doc['@class'], label);
-    modalScope.db = database;
+    modalScope.db = $scope.database;
     modalScope.originRid = $scope.rid;
     modalScope.container = $scope;
     modalScope.label = label
     var modalPromise = $modal({
-      template: 'views/document/modalConnection.html',
+      templateUrl: 'views/document/modalConnection.html',
       persist: true,
       show: true,
       scope: modalScope,
@@ -441,7 +450,7 @@ function BaseEditController($scope, $routeParams, $route, $location, $modal, $q,
       modalScope.addField = $scope.addField;
       modalScope.types = Database.getSupportedTypes();
       var modalPromise = $modal({
-        template: 'views/database/newField.html',
+        templateUrl: 'views/database/newField.html',
         persist: true,
         show: true,
         scope: modalScope
