@@ -38,8 +38,10 @@ public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object>
   private final IMap<String, Object> hzMap;
   private final String               membershipListenerRegistration;
 
+  public static final String ORIENTDB_MAP = "orientdb";
+
   public OHazelcastDistributedMap(final HazelcastInstance hz) {
-    hzMap = hz.getMap("orientdb");
+    hzMap = hz.getMap(ORIENTDB_MAP);
     membershipListenerRegistration = hzMap.addEntryListener(this, true);
 
     super.putAll(hzMap);

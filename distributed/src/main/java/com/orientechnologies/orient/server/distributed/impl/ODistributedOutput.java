@@ -568,7 +568,10 @@ public class ODistributedOutput {
         }
     }
 
+    final Set<String> registeredServers = cfg.getRegisteredServers();
+
     for (String server : allServers) {
+      table.setColumnMetadata(server, "CFG", registeredServers.contains(server) ? "static" : "dynamic");
       table.setColumnMetadata(server, "ROLE", cfg.getServerRole(server).toString());
       table.setColumnMetadata(server, "STATUS", manager.getDatabaseStatus(server, databaseName).toString());
       if (cfg.hasDataCenterConfiguration())

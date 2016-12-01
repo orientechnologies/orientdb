@@ -18,6 +18,11 @@ package com.orientechnologies.orient.server.distributed;
 import java.io.File;
 import java.io.IOException;
 
+import com.hazelcast.cluster.impl.ClusterServiceImpl;
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.instance.HazelcastInstanceImpl;
+import com.hazelcast.instance.HazelcastInstanceProxy;
+import com.hazelcast.instance.Node;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -78,6 +83,40 @@ public class ServerRun {
       ((OHazelcastPlugin) server.getDistributedManager()).getHazelcastInstance().getLifecycleService().terminate();
       server.shutdown();
     }
+  }
+
+  public void disconnectFrom(final ServerRun... serverIds) {
+    final Node currentNode = getHazelcastNode(((OHazelcastPlugin) server.getDistributedManager()).getHazelcastInstance());
+    for (ServerRun s : serverIds) {
+      final Node otherNode = getHazelcastNode(((OHazelcastPlugin) s.server.getDistributedManager()).getHazelcastInstance());
+      currentNode.clusterService.removeAddress(otherNode.address);
+      otherNode.clusterService.removeAddress(currentNode.address);
+    }
+  }
+
+  public void rejoin(final ServerRun... serverIds) {
+    final Node currentNode = getHazelcastNode(((OHazelcastPlugin) server.getDistributedManager()).getHazelcastInstance());
+    for (ServerRun s : serverIds) {
+      final Node otherNode = getHazelcastNode(((OHazelcastPlugin) s.server.getDistributedManager()).getHazelcastInstance());
+
+      final ClusterServiceImpl clusterService = currentNode.getClusterService();
+      clusterService.merge(otherNode.address);
+    }
+  }
+
+  public static Node getHazelcastNode(final HazelcastInstance hz) {
+    HazelcastInstanceImpl impl = getHazelcastInstanceImpl(hz);
+    return impl != null ? impl.node : null;
+  }
+
+  public static HazelcastInstanceImpl getHazelcastInstanceImpl(final HazelcastInstance hz) {
+    HazelcastInstanceImpl impl = null;
+    if (hz instanceof HazelcastInstanceProxy) {
+      impl = ((HazelcastInstanceProxy) hz).getOriginal();
+    } else if (hz instanceof HazelcastInstanceImpl) {
+      impl = (HazelcastInstanceImpl) hz;
+    }
+    return impl;
   }
 
   protected OrientBaseGraph createDatabase(final String iName) {
@@ -145,8 +184,12 @@ public class ServerRun {
   public void terminateServer() {
     if (server != null) {
       try {
-        if (((OHazelcastPlugin) server.getDistributedManager()).getHazelcastInstance().getLifecycleService().isRunning())
-          ((OHazelcastPlugin) server.getDistributedManager()).getHazelcastInstance().getLifecycleService().terminate();
+        HazelcastInstance hz = ((OHazelcastPlugin) server.getDistributedManager()).getHazelcastInstance();
+        final Node node = getHazelcastNode(hz);
+        node.getConnectionManager().shutdown();
+        node.shutdown(true);
+        hz.getLifecycleService().terminate();
+
       } catch (Exception e) {
       }
       server.shutdown();

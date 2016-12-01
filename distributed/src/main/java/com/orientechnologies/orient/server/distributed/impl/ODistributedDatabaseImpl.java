@@ -814,7 +814,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
     if (checkNodesAreOnline && quorum > allAvailableNodes)
       throw new ODistributedException(
-          "Quorum (" + quorum + ") cannot be reached because it is major than available nodes (" + allAvailableNodes + ")");
+          "Quorum (" + quorum + ") cannot be reached on server '"+localNodeName+"' because it is major than available nodes (" + allAvailableNodes + ")");
 
     return quorum;
   }

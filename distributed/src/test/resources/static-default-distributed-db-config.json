@@ -1,0 +1,17 @@
+{
+  "autoDeploy": true,
+  "readQuorum": 1,
+  "writeQuorum": "majority",
+  "readYourWrites": true,
+  "newNodeStrategy": "static",
+  "servers": {
+    "*": "master"
+  },
+  "clusters": {
+    "internal": {
+    },
+    "*": {
+      "servers": ["<NEW_NODE>"]
+    }
+  }
+}
