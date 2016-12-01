@@ -38,4 +38,9 @@ public class OrientClassVertexIterator implements Iterator<Vertex> {
     return cur;
   }
 
+  @Override
+  public void remove() {
+
+  }
+
 }
