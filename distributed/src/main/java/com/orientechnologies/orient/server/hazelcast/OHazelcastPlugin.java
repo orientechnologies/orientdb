@@ -155,7 +155,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       activeNodesNamesByUuid.put(nodeUuid, localNodeName);
       activeNodesUuidByName.put(localNodeName, nodeUuid);
 
-      configurationMap = new OHazelcastDistributedMap(hazelcastInstance);
+      configurationMap = new OHazelcastDistributedMap(this, hazelcastInstance);
 
       OServer.registerServerInstance(localNodeName, serverInstance);
 

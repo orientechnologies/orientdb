@@ -20,6 +20,7 @@
 
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import org.junit.Assert;
 import org.junit.Test;
@@ -59,6 +60,7 @@ public class DistributedLifecycleListenerTest extends AbstractServerClusterTest 
 
   @Override
   public void onDatabaseChangeStatus(String iNode, String iDatabaseName, ODistributedServerManager.DB_STATUS iNewStatus) {
+    OLogManager.instance().info(this, "CHANGE OF STATUS node=%s db=%s status-%s", iNode, iDatabaseName, iNewStatus);
     changeStatus.add(new OPair<String, ODistributedServerManager.DB_STATUS>(iNode + "." + iDatabaseName, iNewStatus));
   }
 
@@ -102,9 +104,9 @@ public class DistributedLifecycleListenerTest extends AbstractServerClusterTest 
     Assert.assertEquals(SERVERS - 1, nodeLeft.get());
 
     Assert.assertEquals(8, changeStatus.size());
-//    Assert.assertEquals("europe-0." + getDatabaseName(), changeStatus.get(0).getKey());
-//    Assert.assertEquals(ODistributedServerManager.DB_STATUS.BACKUP, changeStatus.get(0).getValue());
-//    Assert.assertEquals("europe-0." + getDatabaseName(), changeStatus.get(1).getKey());
-//    Assert.assertEquals(ODistributedServerManager.DB_STATUS.ONLINE, changeStatus.get(1).getValue());
+    // Assert.assertEquals("europe-0." + getDatabaseName(), changeStatus.get(0).getKey());
+    // Assert.assertEquals(ODistributedServerManager.DB_STATUS.BACKUP, changeStatus.get(0).getValue());
+    // Assert.assertEquals("europe-0." + getDatabaseName(), changeStatus.get(1).getKey());
+    // Assert.assertEquals(ODistributedServerManager.DB_STATUS.ONLINE, changeStatus.get(1).getValue());
   }
 }

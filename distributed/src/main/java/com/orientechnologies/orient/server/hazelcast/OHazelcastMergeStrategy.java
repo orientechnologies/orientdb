@@ -28,35 +28,27 @@ import com.orientechnologies.common.log.OLogManager;
 import java.io.IOException;
 
 /**
- * Strategy used by Hazelcast after a merge of two networks.
+ * Strategy used by Hazelcast after a merge of two networks. The local network (the bigger) always wins.
  *
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
 public class OHazelcastMergeStrategy implements MapMergePolicy {
   public OHazelcastMergeStrategy() {
-    OLogManager.instance().info(this, "Installed OrientDB Hazelcast Merge Strategy");
+    OLogManager.instance().debug(this, "Installed OrientDB Hazelcast Merge Strategy");
   }
 
   @Override
   public Object merge(final String mapName, final EntryView mergingEntry, final EntryView existingEntry) {
-    OLogManager.instance().debug(this, "Merge Strategy map=" + mapName + " key=" + mergingEntry.getKey() + ": "
-        + mergingEntry.getValue() + "/" + existingEntry.getValue());
-
     if (existingEntry.getValue() == null) {
       // NOT PRESENT, USE THE NEW VALUE
-      OLogManager.instance().debug(this, "Merge Strategy return mergingEntry=" + mergingEntry.getValue());
+      OLogManager.instance().debug(this, "Merge Strategy map=" + mapName + " key=" + mergingEntry.getKey() + ": "
+          + mergingEntry.getValue() + "/" + existingEntry.getValue() + " returning " + mergingEntry.getValue());
+
       return mergingEntry.getValue();
     }
 
-    // if (mergingEntry.getKey().toString().startsWith(OHazelcastPlugin.CONFIG_DBSTATUS_PREFIX)) {
-    // final String key = mergingEntry.getKey().toString();
-    //
-    // final String dbNode = key.substring(OHazelcastPlugin.CONFIG_DBSTATUS_PREFIX.length());
-    // final String nodeName = dbNode.substring(0, dbNode.indexOf("."));
-    // final String databaseName = dbNode.substring(dbNode.indexOf(".") + 1);
-    // }
-    //
-    OLogManager.instance().debug(this, "Merge Strategy return existingEntry=" + existingEntry.getValue());
+    OLogManager.instance().debug(this, "Merge Strategy map=" + mapName + " key=" + mergingEntry.getKey() + ": "
+        + mergingEntry.getValue() + "/" + existingEntry.getValue() + " returning " + existingEntry.getValue());
 
     return existingEntry.getValue();
   }
