@@ -9,6 +9,7 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.document.OQueryLifecycleListener;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OSelectExecutionPlanner;
@@ -239,7 +240,12 @@ public class OSelectStatement extends OStatement {
     ctx.setInputParameters(params);
     OInternalExecutionPlan executionPlan = createExecutionPlan(ctx);
 
-    return new OLocalResultSet(executionPlan);
+    OLocalResultSet result = new OLocalResultSet(executionPlan);
+    if(db instanceof OQueryLifecycleListener){
+      ((OQueryLifecycleListener) db).queryStarted(result);
+      result.addLifecycleListener((OQueryLifecycleListener)db);
+    }
+    return result;
   }
 
   @Override public OTodoResultSet execute(ODatabase db, Map params) {
@@ -248,7 +254,12 @@ public class OSelectStatement extends OStatement {
     ctx.setInputParameters(params);
     OInternalExecutionPlan executionPlan = createExecutionPlan(ctx);
 
-    return new OLocalResultSet(executionPlan);
+    OLocalResultSet result = new OLocalResultSet(executionPlan);
+    if(db instanceof OQueryLifecycleListener){
+      ((OQueryLifecycleListener) db).queryStarted(result);
+      result.addLifecycleListener((OQueryLifecycleListener)db);
+    }
+    return result;
   }
 
   public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx) {

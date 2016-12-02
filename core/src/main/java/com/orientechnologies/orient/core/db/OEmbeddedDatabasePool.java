@@ -36,6 +36,7 @@ public class OEmbeddedDatabasePool extends ODatabaseDocumentEmbedded {
 
   @Override
   public void close() {
+    closeActiveQueries();
     super.setStatus(STATUS.CLOSED);
     pool.release(this);
   }
