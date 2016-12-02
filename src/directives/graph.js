@@ -106,7 +106,6 @@ graph.directive('ngOGraph', function () {
     var opts = angular.extend({}, scope.$eval(attrs.ngOGraph));
 
     scope.$watch(attrs.ngOGraph, function (data) {
-
       if (data) {
         loadGraph();
       }

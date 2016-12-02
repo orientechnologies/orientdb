@@ -494,16 +494,31 @@ GraphModule.controller("GraphController", ['$scope', '$routeParams', '$location'
       $document.scrollTo(0, 0, 0);
     }
   };
+
+  var config = {
+    height: 500,
+    width: 1200,
+    classes: {},
+    node: {
+      r: 30
+    }
+  }
   if (Database.hasClass(GraphConfig.CLAZZ)) {
 
     GraphConfig.get().then(function (data) {
       if (!data) {
         var newCfg = DocumentApi.createNewDoc(GraphConfig.CLAZZ);
+        newCfg.config = config;
         GraphConfig.set(newCfg).then(function (data) {
           $scope.gConfig = data;
         })
       } else {
+
+        if (!data.config) {
+          data.config = config;
+        }
         $scope.gConfig = data;
+
       }
 
     });
@@ -511,6 +526,7 @@ GraphModule.controller("GraphController", ['$scope', '$routeParams', '$location'
 
     GraphConfig.init().then(function () {
       var newCfg = DocumentApi.createNewDoc(GraphConfig.CLAZZ);
+      newCfg.config = config;
       GraphConfig.set(newCfg).then(function (data) {
         $scope.gConfig = data;
       })
@@ -524,17 +540,6 @@ GraphModule.controller("GraphController", ['$scope', '$routeParams', '$location'
       $scope.linkDistance = data.config.linkDistance;
     }
   })
-
-
-  var config = {
-    height: 500,
-    width: 1200,
-    classes: {},
-    node: {
-      r: 30
-    }
-
-  }
 
 
   $scope.resetZoom = function () {
@@ -1134,6 +1139,7 @@ GraphModule.controller("GraphController", ['$scope', '$routeParams', '$location'
       language: $scope.language,
       limit: $scope.config.limit
     }).then(function (data) {
+
       $scope.graph.data(data.graph).redraw();
       $scope.history = History.push(queryBuffer);
       $scope.currentIndex = -1;

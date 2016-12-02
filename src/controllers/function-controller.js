@@ -1,3 +1,8 @@
+import '../views/database/functions.html';
+import '../views/database/function/functionAside.html';
+
+import Utilities from '../util/library';
+
 let functionModule = angular.module('function.controller', ['database.services']);
 functionModule.controller("FunctionController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'FunctionApi', 'DocumentApi', '$modal', '$q', '$route', 'Spinner', 'Notification', 'Aside', '$rootScope', 'DatabaseApi', function ($scope, $routeParams, $location, Database, CommandApi, FunctionApi, DocumentApi, $modal, $q, $route, Spinner, Notification, Aside, $rootScope, DatabaseApi) {
 
@@ -68,7 +73,7 @@ functionModule.controller("FunctionController", ['$scope', '$routeParams', '$loc
       shallow: false
     }, function (data) {
       if (data.result) {
-        for (i in data.result) {
+        for (let i in data.result) {
           $scope.functions.push(data.result[i]);
           $scope.functionsrid.push(data.result[i]['name'])
         }

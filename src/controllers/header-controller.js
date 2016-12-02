@@ -75,7 +75,7 @@ let HeaderController = angular.module('header.controller', [databaseServices]).c
     var modalScope = $scope.$new(true);
     modalScope.oVersion = Database.getMetadata()["server"].version;
     modalScope.version = STUDIO_VERSION;
-    var modalPromise = $modal({template: 'views/server/about.html', show: false, scope: modalScope});
+    var modalPromise = $modal({templateUrl: 'views/server/about.html', show: false, scope: modalScope});
     modalPromise.$promise.then(modalPromise.show);
 
   }
