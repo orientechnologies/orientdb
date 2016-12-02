@@ -39,24 +39,24 @@ public class OHazelcastMergeStrategy implements MapMergePolicy {
 
   @Override
   public Object merge(final String mapName, final EntryView mergingEntry, final EntryView existingEntry) {
-    OLogManager.instance().info(this, "Merge Strategy map=" + mapName + " key=" + mergingEntry.getKey() + ": "
+    OLogManager.instance().debug(this, "Merge Strategy map=" + mapName + " key=" + mergingEntry.getKey() + ": "
         + mergingEntry.getValue() + "/" + existingEntry.getValue());
 
     if (existingEntry.getValue() == null) {
       // NOT PRESENT, USE THE NEW VALUE
-      OLogManager.instance().info(this, "Merge Strategy return mergingEntry=" + existingEntry.getValue());
+      OLogManager.instance().debug(this, "Merge Strategy return mergingEntry=" + mergingEntry.getValue());
       return mergingEntry.getValue();
     }
 
-    if (mergingEntry.getKey().toString().startsWith(OHazelcastPlugin.CONFIG_DBSTATUS_PREFIX)) {
-      final String key = mergingEntry.getKey().toString();
-
-      final String dbNode = key.substring(OHazelcastPlugin.CONFIG_DBSTATUS_PREFIX.length());
-      final String nodeName = dbNode.substring(0, dbNode.indexOf("."));
-      final String databaseName = dbNode.substring(dbNode.indexOf(".") + 1);
-    }
-
-    OLogManager.instance().info(this, "Merge Strategy return existingEntry=" + existingEntry.getValue());
+    // if (mergingEntry.getKey().toString().startsWith(OHazelcastPlugin.CONFIG_DBSTATUS_PREFIX)) {
+    // final String key = mergingEntry.getKey().toString();
+    //
+    // final String dbNode = key.substring(OHazelcastPlugin.CONFIG_DBSTATUS_PREFIX.length());
+    // final String nodeName = dbNode.substring(0, dbNode.indexOf("."));
+    // final String databaseName = dbNode.substring(dbNode.indexOf(".") + 1);
+    // }
+    //
+    OLogManager.instance().debug(this, "Merge Strategy return existingEntry=" + existingEntry.getValue());
 
     return existingEntry.getValue();
   }

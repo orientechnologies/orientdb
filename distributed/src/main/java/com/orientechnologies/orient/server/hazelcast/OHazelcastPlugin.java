@@ -63,7 +63,8 @@ import java.util.concurrent.locks.Lock;
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
-public class OHazelcastPlugin extends ODistributedAbstractPlugin implements MembershipListener, EntryListener<String, Object> {
+public class OHazelcastPlugin extends ODistributedAbstractPlugin
+    implements MembershipListener, EntryListener<String, Object>, LifecycleListener {
 
   public static final String           CONFIG_DATABASE_PREFIX = "database.";
 
@@ -144,6 +145,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       hazelcastInstance = configureHazelcast();
 
       nodeUuid = hazelcastInstance.getCluster().getLocalMember().getUuid();
+
+      final LifecycleService lifecycleService = hazelcastInstance.getLifecycleService();
+      lifecycleService.addLifecycleListener(this);
 
       OLogManager.instance().info(this, "Starting distributed server '%s' (hzID=%s)...", localNodeName, nodeUuid);
 
@@ -399,15 +403,16 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     try {
       final Set<String> databases = new HashSet<String>();
 
-      for (Map.Entry<String, Object> entry : configurationMap.entrySet()) {
-        if (entry.getKey().toString().startsWith(CONFIG_DBSTATUS_PREFIX)) {
+      if (hazelcastInstance.getLifecycleService().isRunning())
+        for (Map.Entry<String, Object> entry : configurationMap.entrySet()) {
+          if (entry.getKey().toString().startsWith(CONFIG_DBSTATUS_PREFIX)) {
 
-          final String nodeDb = entry.getKey().toString().substring(CONFIG_DBSTATUS_PREFIX.length());
+            final String nodeDb = entry.getKey().toString().substring(CONFIG_DBSTATUS_PREFIX.length());
 
-          if (nodeDb.startsWith(nodeName))
-            databases.add(entry.getKey());
+            if (nodeDb.startsWith(nodeName))
+              databases.add(entry.getKey());
+          }
         }
-      }
 
       // PUT DATABASES AS NOT_AVAILABLE
       for (String k : databases)
@@ -581,8 +586,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     }
 
     hazelcastConfig.getMapConfig(CONFIG_REGISTEREDNODES).setBackupCount(6);
-    hazelcastConfig.getMapConfig(OHazelcastDistributedMap.ORIENTDB_MAP)
-        .setMergePolicy(OHazelcastMergeStrategy.class.getName());
+    hazelcastConfig.getMapConfig(OHazelcastDistributedMap.ORIENTDB_MAP).setMergePolicy(OHazelcastMergeStrategy.class.getName());
 
     return Hazelcast.newHazelcastInstance(hazelcastConfig);
   }
@@ -963,6 +967,16 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       OLogManager.instance().error(this, "Hazelcast is not running");
     } catch (RetryableHazelcastException e) {
       OLogManager.instance().error(this, "Hazelcast is not running");
+    }
+  }
+
+  @Override
+  public void stateChanged(final LifecycleEvent event) {
+    final LifecycleEvent.LifecycleState state = event.getState();
+    if (state == LifecycleEvent.LifecycleState.MERGED) {
+      ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Server merged the existent cluster");
+
+      configurationMap.clearLocalCache();
     }
   }
 

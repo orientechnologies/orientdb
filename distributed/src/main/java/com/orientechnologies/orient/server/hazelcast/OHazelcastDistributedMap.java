@@ -25,6 +25,7 @@ import com.hazelcast.map.listener.EntryRemovedListener;
 import com.hazelcast.map.listener.EntryUpdatedListener;
 import com.hazelcast.map.listener.MapClearedListener;
 
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -54,6 +55,11 @@ public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object>
   @Override
   public Object get(final Object key) {
     return hzMap.get(key);
+  }
+
+  @Override
+  public Set<Entry<String, Object>> entrySet() {
+    return hzMap.entrySet();
   }
 
   public Object getLocalCachedValue(final Object key) {
@@ -126,5 +132,9 @@ public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object>
   public void destroy() {
     clear();
     hzMap.removeEntryListener(membershipListenerRegistration);
+  }
+
+  public void clearLocalCache() {
+    super.clear();
   }
 }

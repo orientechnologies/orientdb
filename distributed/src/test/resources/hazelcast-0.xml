@@ -24,6 +24,11 @@
         <property name="hazelcast.operation.generic.thread.count">1</property>
         <property name="hazelcast.client.event.thread.count">1</property>
         <property name="hazelcast.event.thread.count">1</property>
+        <property name="hazelcast.heartbeat.interval.seconds">5</property>
+        <property name="hazelcast.max.no.heartbeat.seconds">30</property>
+        <property name="hazelcast.icmp.enabled">true</property>
+        <property name="hazelcast.icmp.timeout">5000</property>
+        <property name="hazelcast.icmp.ttl">3</property>
     </properties>
     <network>
         <port auto-increment="false">2434</port>
@@ -42,8 +47,4 @@
             <interface>127.0.0.1</interface>
         </interfaces>
     </network>
-    <map name="default">
-        <merge-policy>com.orientechnologies.orient.server.hazelcast.OHazelcastMergeStrategy</merge-policy>
-    </map>
-
 </hazelcast>
