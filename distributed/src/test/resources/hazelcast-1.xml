@@ -9,40 +9,42 @@
 	the specific language governing permissions and ~ limitations under the License. -->
 
 <hazelcast
-	xsi:schemaLocation="http://www.hazelcast.com/schema/config hazelcast-config-3.3.xsd"
-	xmlns="http://www.hazelcast.com/schema/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-	<group>
-		<name>orientdb</name>
-		<password>orientdb</password>
-	</group>
-	<properties>
-		<property name="hazelcast.mancenter.enabled">false</property>
-		<property name="hazelcast.memcache.enabled">false</property>
-		<property name="hazelcast.rest.enabled">false</property>
-		<property name="hazelcast.wait.seconds.before.join">2</property>
-		<property name="hazelcast.operation.thread.count">1</property>
-		<property name="hazelcast.operation.generic.thread.count">1</property>
-		<property name="hazelcast.client.event.thread.count">1</property>
-		<property name="hazelcast.event.thread.count">1</property>
-	</properties>
-	<network>
-		<port auto-increment="false">2435</port>
-		<join>
+        xsi:schemaLocation="http://www.hazelcast.com/schema/config hazelcast-config-3.3.xsd"
+        xmlns="http://www.hazelcast.com/schema/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <group>
+        <name>orientdb</name>
+        <password>orientdb</password>
+    </group>
+    <properties>
+        <property name="hazelcast.mancenter.enabled">false</property>
+        <property name="hazelcast.memcache.enabled">false</property>
+        <property name="hazelcast.rest.enabled">false</property>
+        <property name="hazelcast.wait.seconds.before.join">2</property>
+        <property name="hazelcast.operation.thread.count">1</property>
+        <property name="hazelcast.operation.generic.thread.count">1</property>
+        <property name="hazelcast.client.event.thread.count">1</property>
+        <property name="hazelcast.event.thread.count">1</property>
+        <property name="hazelcast.heartbeat.interval.seconds">5</property>
+        <property name="hazelcast.max.no.heartbeat.seconds">30</property>
+        <property name="hazelcast.icmp.enabled">true</property>
+        <property name="hazelcast.icmp.timeout">5000</property>
+        <property name="hazelcast.icmp.ttl">3</property>
+    </properties>
+    <network>
+        <port auto-increment="false">2435</port>
+        <join>
             <multicast enabled="false">
                 <multicast-group>224.2.2.3</multicast-group>
                 <multicast-port>2434</multicast-port>
-				<multicast-timeout-seconds>1</multicast-timeout-seconds>
+                <multicast-timeout-seconds>1</multicast-timeout-seconds>
             </multicast>
             <tcp-ip enabled="true" connection-timeout-seconds="3">
-				<member>127.0.0.1:2434</member>
+                <member>127.0.0.1:2434</member>
                 <member>127.0.0.1:2436</member>
-			</tcp-ip>
+            </tcp-ip>
         </join>
         <interfaces enabled="true">
             <interface>127.0.0.1</interface>
         </interfaces>
-	</network>
-	<map name="default">
-		<merge-policy>com.orientechnologies.orient.server.hazelcast.OHazelcastMergeStrategy</merge-policy>
-	</map>
+    </network>
 </hazelcast>

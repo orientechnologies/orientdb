@@ -87,6 +87,7 @@ public class SplitBraiNetworkTest extends AbstractHARemoveNode {
     serverInstance.get(2).rejoin(serverInstance.get(0), serverInstance.get(1));
 
     Thread.sleep(10000);
+
     for (ServerRun s : serverInstance) {
       OLogManager.instance().info(this, "MAP SERVER %s", s.getServerId());
       for (Map.Entry<String, Object> entry : s.server.getDistributedManager().getConfigurationMap()
