@@ -480,7 +480,7 @@ GraphModule.controller("GraphController", ['$scope', '$routeParams', '$location'
     onLoad: function (_cm) {
       $scope.cm = _cm;
       if ($routeParams.q) {
-        $scope.queryText = $routeParams.q;
+        $scope.queryText = decodeURIComponent($routeParams.q);
       }
       $scope.cm.on("change", function () { /* script */
         var wrap = $scope.cm.getWrapperElement();
@@ -717,7 +717,7 @@ GraphModule.controller("GraphController", ['$scope', '$routeParams', '$location'
 
       if ($routeParams.q) {
         if (!$scope.queryText) {
-          $scope.queryText = $routeParams.q;
+          $scope.queryText = decodeURIComponent($routeParams.q);
         }
         $scope.query();
       }

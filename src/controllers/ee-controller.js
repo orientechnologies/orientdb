@@ -1,3 +1,31 @@
+import '../views/server/general/metrics/chronos.html';
+import '../views/server/general/metrics/counters.html';
+import '../views/server/general/metrics/sizes.html';
+import '../views/server/general/metrics/stats.html';
+import '../views/server/general/metrics/texts.html';
+import '../views/server/general/db.html';
+import '../views/server/general/warnings.html';
+import '../views/server/general/log.html';
+import '../views/server/general/plugins.html';
+import '../views/server/general/config.html';
+import '../views/server/general/configuration.html';
+import '../views/server/stats/distributed.html';
+import '../views/server/distributed/overview.html';
+import '../views/server/stats/backup.html';
+import '../views/server/backup/singleBackup.html';
+import '../views/server/stats/profiler.html';
+import '../views/server/profiler/query.html';
+import '../views/server/profiler/cache.html';
+import '../views/server/stats/security.html';
+import '../views/server/stats/auditing.html';
+import '../views/server/stats/auditing/log.html';
+import '../views/server/stats/auditing/config.html';
+import '../views/server/stats/auditing/newClass.html';
+import '../views/server/stats/teleporter.html';
+import '../views/server/stats/events.html';
+
+import {POLLING} from '../constants';
+
 import EEServices from '../services/ee-services';
 
 let ee = angular.module('ee.controller', [EEServices]);
@@ -605,7 +633,7 @@ ee.controller('DataCentersOverviewController', function ($scope, $rootScope, Clu
   })
 })
 
-ee.controller("ProfilerController", ['$scope', 'Profiler', 'Cluster', 'Spinner', 'Notification', 'CommandCache', 'Database', 'scroller', 'AgentService', function ($scope, Profiler, Cluster, Spinner, Notification, CommandCache, Database, scroller, AgentService) {
+ee.controller("ProfilerController", ['$scope', 'Profiler', 'Cluster', 'Spinner', 'Notification', 'CommandCache', 'Database', '$document', 'AgentService', function ($scope, Profiler, Cluster, Spinner, Notification, CommandCache, Database, scroller, AgentService) {
 
 
   $scope.strategies = ["INVALIDATE_ALL", "PER_CLUSTER"];
@@ -742,7 +770,7 @@ ee.controller("ProfilerController", ['$scope', 'Profiler', 'Cluster', 'Spinner',
 }]);
 
 
-ee.controller("AuditingController", ['$scope', 'Auditing', 'Cluster', 'Spinner', 'Notification', '$modal', 'ngTableParams', 'AgentService', 'SecurityService', 'DatabaseApi', 'Database', function ($scope, Auditing, Cluster, Spinner, Notification, $modal, ngTableParams, AgentService, SecurityService, DatabaseApi, Database) {
+ee.controller("AuditingController", ['$scope', 'Auditing', 'Cluster', 'Spinner', 'Notification', '$modal', 'NgTableParams', 'AgentService', 'SecurityService', 'DatabaseApi', 'Database', function ($scope, Auditing, Cluster, Spinner, Notification, $modal, ngTableParams, AgentService, SecurityService, DatabaseApi, Database) {
 
 
   $scope.auditingWiki = Database.resolveWiki("Studio-Auditing.html");

@@ -17,9 +17,11 @@ module.exports = {
     new webpack.ProvidePlugin({
       $: "jquery",
       jQuery: "jquery",
+      c3: "c3",
       "window.jQuery": "jquery",
       _: "underscore",
       S: "string",
+      moment: "moment",
       "window.CodeMirror": "codemirror",
       CodeMirror: "codemirror"
 
@@ -29,7 +31,7 @@ module.exports = {
     loaders: [
       {
         test: /\.js[x]?$/,
-        exclude: /node_modules/,
+        exclude: /(node_modules|src\/vendor)/,
         loaders: ["babel-loader?" + babelPresets.map((preset) => `presets[]=${preset}`).join("&")]
       },
       {

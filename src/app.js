@@ -17,6 +17,7 @@ import 'angular-smart-table';
 import 'ng-table';
 
 import 'd3';
+import 'c3';
 import 'spectrum-colorpicker';
 
 import 'angular-spectrum-colorpicker';
@@ -43,6 +44,7 @@ import 'ng-tags-input/build/ng-tags-input.bootstrap.min.css';
 import './vendor/jquery.fonticonpicker/jquery.fonticonpicker.css';
 import './vendor/jquery.fonticonpicker/jquery.fonticonpicker.inverted.css';
 import './vendor/jquery.fonticonpicker/jquery.fonticonpicker.min';
+import './vendor/jquery-cron-min';
 
 // CONFIG
 import routing from './app.config'
@@ -132,7 +134,7 @@ var deps = [HeaderController,
 var App = angular.module('OrientDBStudioApp', deps);
 
 App.config(routing);
-var POLLING = 5000;
+
 App.run(function ($rootScope, $interval, DatabaseApi, Notification, Spinner, $templateCache, Aside) {
   $rootScope.$on('$routeChangeSuccess', function (event, currentRoute, oldRoute) {
     switch (currentRoute.templateUrl) {

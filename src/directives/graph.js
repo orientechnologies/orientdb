@@ -1,4 +1,5 @@
 import OrientGraph from '../widgets/orientdb-graphviz';
+import {POLLING} from '../constants';
 
 let graph = angular.module('graph', []);
 

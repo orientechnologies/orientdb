@@ -1,3 +1,7 @@
+import {API} from '../constants';
+
+
+
 let ee = angular.module('ee.services', []);
 
 ee.factory('CommandLogApi', function ($http, $resource, DatabaseApi) {

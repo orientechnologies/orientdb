@@ -6,8 +6,21 @@
  * To change this template use File | Settings | File Templates.
  */
 
+import {POLLING} from '../constants';
+
+import '../views/server/dashboard.html';
+import '../views/server/stats/stats.html';
+import '../views/server/stats/general.html';
+import '../views/server/general/overview.html';
+import '../views/server/general/monitoring.html';
+import '../views/server/general/metrics.html';
+import '../views/server/general/conn.html';
+import '../views/server/general/threads.html';
+import '../views/widget/restartButton.html';
+
+
 let ServerModule = angular.module('server.controller', []);
-ServerModule.controller("ServerController", ['$scope', '$routeParams', 'ServerApi', 'Database', 'ngTableParams', function ($scope, $routeParams, ServerApi, Database, ngTableParams) {
+ServerModule.controller("ServerController", ['$scope', '$routeParams', 'ServerApi', 'Database', 'NgTableParams', function ($scope, $routeParams, ServerApi, Database, ngTableParams) {
 
   $scope.active = $routeParams.tab || "conn";
   $scope.database = Database;
@@ -391,7 +404,7 @@ ServerModule.controller('SingleServerController', function ($scope, $rootScope, 
 });
 
 
-ServerModule.controller("ServerDashboardController", ['$scope', '$routeParams', 'Aside', 'ServerApi', 'ngTableParams', '$q', 'Notification', 'Database', function ($scope, $routeParams, Aside, ServerApi, ngTableParams, $q, Notification, Database) {
+ServerModule.controller("ServerDashboardController", ['$scope', '$routeParams', 'Aside', 'ServerApi', 'NgTableParams', '$q', 'Notification', 'Database', function ($scope, $routeParams, Aside, ServerApi, ngTableParams, $q, Notification, Database) {
 
   $scope.version = Database.getVersion();
 
@@ -513,7 +526,7 @@ ServerModule.controller("ServerDashboardController", ['$scope', '$routeParams', 
 
 }]);
 
-ServerModule.controller('ServerConnectionController', function ($scope, $filter, ngTableParams, Cluster, AgentService, ServerApi) {
+ServerModule.controller('ServerConnectionController', function ($scope, $filter, NgTableParams, Cluster, AgentService, ServerApi) {
 
 
   $scope.init = false;
