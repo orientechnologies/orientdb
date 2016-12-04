@@ -98,7 +98,7 @@ public class DefaultValuesTrivialTest {
   }
 
   @Test
-  public void testDefaultValueConvertion() {
+  public void testDefaultValueConversion() {
     OSchema schema = database.getMetadata().getSchema();
     OClass classPerson = schema.createClass("Person");
     classPerson.createProperty("users", OType.LINKSET).setDefaultValue("[#5:1]");

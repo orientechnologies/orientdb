@@ -29,7 +29,7 @@ public class OLogSegmentTest {
     assertEquals(OWALPage.RECORDS_OFFSET, res.writeFrom);
     assertEquals(OWALPage.RECORDS_OFFSET * 2 + OWALPage.calculateSerializedSize(OWALPage.MAX_ENTRY_SIZE) + OWALPage.calculateSerializedSize(0), res.writeTo);
 
-    //it not fit becasue start from somewhere in the page
+    //it not fit because start from somewhere in the page
     res = OLogSegment.generateLogRecord(50, new byte[OWALPage.calculateRecordSize(OWALPage.MAX_ENTRY_SIZE)]);
     assertEquals(50, res.writeFrom);
     assertEquals(50 + OWALPage.RECORDS_OFFSET + OWALPage.MAX_ENTRY_SIZE + OWALPage.calculateSerializedSize(0), res.writeTo);

@@ -80,7 +80,7 @@ public class DocumentTest {
   }
 
   @Test
-  public void testConvertionOnTypeSet() {
+  public void testConversionOnTypeSet() {
     ODocument doc = new ODocument();
 
     doc.field("some", 3);
