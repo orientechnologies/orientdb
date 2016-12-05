@@ -155,7 +155,7 @@ public final class OIndexes {
 
   }
 
-  public static OIndexFactory findFactoryByAlgorithmAndType(String algorithm, String indexType) {
+  public static OIndexFactory findFactoryByAlgorithmAndType(final String algorithm, final String indexType) {
 
     for (OIndexFactory factory : getFactories()) {
       if (indexType == null || indexType.isEmpty()
@@ -163,8 +163,8 @@ public final class OIndexes {
         return factory;
       }
     }
-    throw new OIndexException(
-        "Index type: " + indexType + " is not supported. Types are " + OCollections.toString(getIndexTypes()));
+    throw new OIndexException("Index type " + indexType + " is not supported by the engine '" + algorithm + "'. Types are "
+        + OCollections.toString(getIndexTypes()));
   }
 
   public static OIndexEngine createIndexEngine(final String name, final String algorithm, final String type,
