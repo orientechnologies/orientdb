@@ -75,7 +75,10 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   private          File               masterRecordFile;
   private          OLogSequenceNumber firstMasterRecord;
   private          OLogSequenceNumber secondMasterRecord;
+
   private volatile OLogSequenceNumber flushedLsn;
+  private volatile OLogSequenceNumber writtenLsn;
+
   private volatile OLogSequenceNumber preventCutTill;
 
   private volatile long cacheOverflowCount = 0;
@@ -930,6 +933,14 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
 
   public void setFlushedLsn(OLogSequenceNumber flushedLsn) {
     this.flushedLsn = flushedLsn;
+  }
+
+  public void setWrittenLsn(OLogSequenceNumber writtenLsn) {
+    this.writtenLsn = writtenLsn;
+  }
+
+  public OLogSequenceNumber getWrittenLsn() {
+    return writtenLsn;
   }
 
   public void checkFreeSpace() {
