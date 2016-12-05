@@ -11,18 +11,48 @@ import '../views/server/general/config.html';
 import '../views/server/general/configuration.html';
 import '../views/server/stats/distributed.html';
 import '../views/server/distributed/overview.html';
+import '../views/server/distributed/dataCenters.html';
+import '../views/server/distributed/databases.html';
+import '../views/server/distributed/singleDB.html';
+import '../views/server/distributed/DCNameModal.html';
 import '../views/server/stats/backup.html';
+import '../views/server/backup/modalBackup.html';
+import '../views/server/backup/backup_error.html';
+import '../views/server/backup/backup_finished.html';
+import '../views/server/backup/backup_scheduled.html';
+import '../views/server/backup/backup_started.html';
+import '../views/server/backup/remove.html';
+import '../views/server/backup/restore.html';
+import '../views/server/backup/restore_error.html';
+import '../views/server/backup/restore_finished.html';
+import '../views/server/backup/restore_started.html';
 import '../views/server/backup/singleBackup.html';
 import '../views/server/stats/profiler.html';
 import '../views/server/profiler/query.html';
 import '../views/server/profiler/cache.html';
 import '../views/server/stats/security.html';
+import '../views/server/stats/security/authentication.html';
+import '../views/server/stats/security/defaultPwd.html';
+import '../views/server/stats/security/kerberos.html';
+import '../views/server/stats/security/ldap.html';
+import '../views/server/stats/security/newAuth.html';
+import '../views/server/stats/security/serverConfig.html';
+import '../views/server/stats/security/serverSecurity.html';
 import '../views/server/stats/auditing.html';
 import '../views/server/stats/auditing/log.html';
 import '../views/server/stats/auditing/config.html';
 import '../views/server/stats/auditing/newClass.html';
+import '../views/database/auditing/newClass.html';
 import '../views/server/stats/teleporter.html';
 import '../views/server/stats/events.html';
+import '../views/server/plugins/generic.html';
+import '../views/server/plugins/automaticBackup.html';
+import '../views/server/plugins/mail.html';
+import '../views/server/plugins/newProfile.html';
+import '../views/server/distributed/events/httpwhat.html';
+import '../views/server/distributed/events/mailwhat.html';
+import '../views/server/distributed/events/logwhen.html';
+import '../views/server/distributed/events/metricwhen.html';
 
 import {POLLING} from '../constants';
 
@@ -988,10 +1018,10 @@ ee.controller("AuditingController", ['$scope', 'Auditing', 'Cluster', 'Spinner',
     var modalScope = $scope.$new(true);
 
 
-    var modalPromise = $modal({template: 'views/database/auditing/newClass.html', scope: modalScope, show: false});
+    var modalPromise = $modal({templateUrl: 'views/database/auditing/newClass.html', scope: modalScope, show: false});
 
-    modalScope.save = function () {
-      if (modalPromise.$scope.selectedClass) {
+    modalScope.save = function (selectedClass) {
+      if (selectedClass) {
         var cfg = {
           "polymorphic": true,
           "onCreateEnabled": false,
@@ -1003,14 +1033,11 @@ ee.controller("AuditingController", ['$scope', 'Auditing', 'Cluster', 'Spinner',
           "onDeleteEnabled": false,
           "onDeleteMessage": ""
         }
-        $scope.config.classes[modalPromise.$scope.selectedClass.name] = cfg;
+        $scope.config.classes[selectedClass.name] = cfg;
 
       }
     }
-    var db = DatabaseApi.get({database: $scope.db}, function (data) {
-
-      //modalScope.classes = Database.listClasses();
-    })
+    let db = DatabaseApi.get({database: $scope.db});
     db.$promise.then(function (data) {
       modalScope.classes = data['classes'];
       modalPromise.$promise.then(modalPromise.show);
@@ -1130,7 +1157,7 @@ ee.controller('MailController', function ($scope, $modal, Database) {
 
     modalScope.newProfile = {name: ''};
 
-    var modalPromise = $modal({template: 'views/server/plugins/newProfile.html', scope: modalScope, show: false});
+    var modalPromise = $modal({templateUrl: 'views/server/plugins/newProfile.html', scope: modalScope, show: false});
 
     modalScope.createProfile = function () {
       $scope.profiles.push(modalPromise.$scope.newProfile);
@@ -1521,7 +1548,11 @@ ee.controller('ClusterSingleDBController', function ($scope, $rootScope, $modal,
       }
       var modalScope = $scope.$new(true);
       modalScope.currentModel = "New_DataCenter_Name";
-      var modalPromise = $modal({template: 'views/server/distributed/DCNameModal.html', scope: modalScope, show: false});
+      var modalPromise = $modal({
+        templateUrl: 'views/server/distributed/DCNameModal.html',
+        scope: modalScope,
+        show: false
+      });
       modalScope.onInput = function (name) {
 
         if (name) {
@@ -1544,7 +1575,7 @@ ee.controller('ClusterSingleDBController', function ($scope, $rootScope, $modal,
       var modalScope = $scope.$new(true);
       modalScope.currentModel = k;
       var modalPromise = $modal({
-        template: 'views/server/distributed/DCNameModal.html',
+        templateUrl: 'views/server/distributed/DCNameModal.html',
         scope: modalScope,
         show: false
       });
@@ -1783,7 +1814,7 @@ ee.controller('EventsController', function ($scope, Plugins, $modal, Cluster, Pr
       })
     }
     var modalPromise = $modal({
-      template: 'views/server/distributed/events/' + when.name.toLowerCase().trim() + '.html',
+      templateUrl: 'views/server/distributed/events/' + when.name.toLowerCase().trim() + '.html',
       scope: modalScope
     });
 
@@ -1805,7 +1836,7 @@ ee.controller('EventsController', function ($scope, Plugins, $modal, Cluster, Pr
 
 
     var modalPromise = $modal({
-      template: 'views/server/distributed/events/' + what.name.toLowerCase().trim() + '.html',
+      templateUrl: 'views/server/distributed/events/' + what.name.toLowerCase().trim() + '.html',
       scope: modalScope
     });
     modalPromise.$promise.then(modalPromise.show);
@@ -2305,7 +2336,7 @@ ee.controller("SingleBackupController", function ($scope, BackupService, Notific
     BackupService.unitLogs($scope.backup.uuid, evt.unitId, {op: evt.op}).then(function (data) {
       modalScope.unitLogs = data.logs;
       modalScope.restored.log = evt;
-      var modalPromise = $modal({template: 'views/server/backup/remove.html', scope: modalScope, show: false});
+      var modalPromise = $modal({templateUrl: 'views/server/backup/remove.html', scope: modalScope, show: false});
       modalPromise.$promise.then(modalPromise.show);
     })
   }
@@ -2329,7 +2360,7 @@ ee.controller("SingleBackupController", function ($scope, BackupService, Notific
       modalScope.unitLogs = data.logs;
       modalScope.restored.log = evt;
 
-      var modalPromise = $modal({template: 'views/server/backup/restore.html', scope: modalScope, show: false});
+      var modalPromise = $modal({templateUrl: 'views/server/backup/restore.html', scope: modalScope, show: false});
       modalPromise.$promise.then(modalPromise.show);
     })
 
@@ -2425,7 +2456,11 @@ ee.controller("SingleBackupController", function ($scope, BackupService, Notific
 
         var modalScope = $scope.$new(true);
         modalScope.event = calEvent;
-        var modalPromise = $modal({template: 'views/server/backup/modalBackup.html', scope: modalScope, show: false});
+        var modalPromise = $modal({
+          templateUrl: 'views/server/backup/modalBackup.html',
+          scope: modalScope,
+          show: false
+        });
 
         modalScope.restoreBackup = function (evt) {
           $scope.restore(evt._source);
@@ -2627,7 +2662,11 @@ ee.controller('ServerAuthTabController', function ($scope, SecurityService, Noti
         $scope.currentAuthenticator = a;
       }
     }
-    var modalPromise = $modal({template: 'views/server/stats/security/newAuth.html', scope: modalScope, show: false});
+    var modalPromise = $modal({
+      templateUrl: 'views/server/stats/security/newAuth.html',
+      scope: modalScope,
+      show: false
+    });
 
 
     modalPromise.$promise.then(modalPromise.show);

@@ -28,7 +28,7 @@
           <button type="button" class="btn btn-sm btn-default" ng-click="$hide()">Close</button>
           <button type="submit" class="btn btn-sm btn-primary"
                   ng-disabled="classForm.$invalid"
-                  ng-click="save();$hide();">
+                  ng-click="save(selectedClass);$hide();">
             Add Class
           </button>
         </div>

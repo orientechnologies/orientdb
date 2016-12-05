@@ -7,7 +7,7 @@ var babelPresets = ["es2015"];
 module.exports = {
   entry: "./src/app.js",
   output: {
-    path: __dirname + "./dist",
+    path: path.join(__dirname, 'dist'),
     filename: "bundle.js"
   },
   plugins: [

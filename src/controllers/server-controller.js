@@ -16,6 +16,7 @@ import '../views/server/general/monitoring.html';
 import '../views/server/general/metrics.html';
 import '../views/server/general/conn.html';
 import '../views/server/general/threads.html';
+import '../views/server/general/singleServer.html';
 import '../views/widget/restartButton.html';
 
 
@@ -612,7 +613,7 @@ ServerModule.controller("LogsController", ['$scope', '$http', '$location', '$rou
           $scope.files = ['ALL_FILES', 'LAST'];
           $scope.selectedType = undefined;
           $scope.selectedFile = 'LAST';
-          for (entry in data['files']) {
+          for (let entry in data['files']) {
             $scope.files.push(data['files'][entry]['name']);
           }
           $scope.search();

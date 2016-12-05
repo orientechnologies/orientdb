@@ -21,6 +21,7 @@ import 'c3';
 import 'spectrum-colorpicker';
 
 import 'angular-spectrum-colorpicker';
+import 'fullcalendar';
 
 
 import  'angular-strap/dist/angular-strap.tpl';
@@ -37,7 +38,8 @@ import  'spectrum-colorpicker/spectrum.css';
 import  'ui-select/dist/select.min.css';
 import 'ng-tags-input/build/ng-tags-input.min.css';
 import 'ng-tags-input/build/ng-tags-input.bootstrap.min.css';
-
+import 'c3/c3.min.css';
+import 'fullcalendar/dist/fullcalendar.min.css';
 
 // Bundled Vendor
 
@@ -82,14 +84,15 @@ import StudioFilters from './filters/filter'
 
 //  STYLES
 
-import './styles/main.css'
-import './styles/layout.css'
-import './styles/responsive.css'
-import './styles/animation.css'
-import './styles/graph.css'
-import './styles/fontello-codes.css'
-import './styles/fontello-embedded.css'
-import './styles/fontello.css'
+import './styles/main.css';
+import './styles/layout.css';
+import './styles/responsive.css';
+import './styles/animation.css';
+import './styles/graph.css';
+import './styles/fontello-codes.css';
+import './styles/fontello-embedded.css';
+import './styles/fontello.css';
+import './styles/animation.css';
 
 
 var deps = [HeaderController,
