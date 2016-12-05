@@ -1075,7 +1075,7 @@ public class OServer {
       } while (rootPassword != null);
 
     } else
-      OLogManager.instance().warn(this, "Found ORIENTDB_ROOT_PASSWORD variable, using this value as root's password", rootPassword);
+      OLogManager.instance().info(this, "Found ORIENTDB_ROOT_PASSWORD variable, using this value as root's password", rootPassword);
 
     if (!serverCfg.existsUser(OServerConfiguration.DEFAULT_ROOT_USER)) {
       addUser(OServerConfiguration.DEFAULT_ROOT_USER, rootPassword, "*");
