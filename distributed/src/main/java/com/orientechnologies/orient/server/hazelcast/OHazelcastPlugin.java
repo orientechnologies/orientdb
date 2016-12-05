@@ -393,6 +393,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   }
 
   @Override
+  public long getClusterTime() {
+    return hazelcastInstance.getCluster().getClusterTime();
+  }
+
+  @Override
   public void shutdown() {
     if (!enabled)
       return;

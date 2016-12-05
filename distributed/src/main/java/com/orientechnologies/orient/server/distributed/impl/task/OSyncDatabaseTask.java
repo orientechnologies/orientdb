@@ -34,8 +34,10 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIR
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseChunk;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
+import com.orientechnologies.orient.server.distributed.task.ODatabaseIsOldException;
 
 import java.io.*;
+import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.locks.Lock;
 
@@ -49,10 +51,15 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
   public static final String DEPLOYDB       = "deploydb.";
   public static final int    FACTORYID      = 14;
 
+  protected long             lastOperationTimestamp;
   protected long             random;
 
   public OSyncDatabaseTask() {
+  }
+
+  public OSyncDatabaseTask(final long lastOperationTimestamp) {
     random = UUID.randomUUID().getLeastSignificantBits();
+    this.lastOperationTimestamp = lastOperationTimestamp;
   }
 
   @Override
@@ -64,6 +71,16 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
         throw new ODistributedException("Database instance is null");
 
       final String databaseName = database.getName();
+
+      final ODistributedDatabase dDatabase = iManager.getMessageService().getDatabase(databaseName);
+      if (dDatabase.getLastOperationTimestamp() < lastOperationTimestamp) {
+        final String msg = String.format(
+            "Skip deploying delta database '%s' because the requesting server has a most recent database (reqLastOperation=%s currLastOperation=%s)",
+            databaseName, new Date(lastOperationTimestamp), new Date(dDatabase.getLastOperationTimestamp()));
+        ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE, msg);
+
+        throw new ODatabaseIsOldException(msg);
+      }
 
       final Lock lock = iManager.getLock("sync." + databaseName);
       if (lock.tryLock()) {
@@ -210,11 +227,13 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
   @Override
   public void toStream(final DataOutput out) throws IOException {
     out.writeLong(random);
+    out.writeLong(lastOperationTimestamp);
   }
 
   @Override
   public void fromStream(final DataInput in, final ORemoteTaskFactory factory) throws IOException {
     random = in.readLong();
+    lastOperationTimestamp = in.readLong();
   }
 
   @Override

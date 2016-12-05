@@ -236,10 +236,10 @@ public class ODistributedTransactionManager {
     } catch (OConcurrentCreateException e) {
 
       // REQUEST A REPAIR OF THE CLUSTER BECAUSE IS NOT ALIGNED
-      localDistributedDatabase.getDatabaseRapairer().repairCluster(e.getActualRid().getClusterId());
+      localDistributedDatabase.getDatabaseRepairer().repairCluster(e.getActualRid().getClusterId());
       throw e;
     } catch (OConcurrentModificationException e) {
-      localDistributedDatabase.getDatabaseRapairer().repairRecord((ORecordId) e.getRid());
+      localDistributedDatabase.getDatabaseRepairer().repairRecord((ORecordId) e.getRid());
       throw e;
 
     } catch (Exception e) {
@@ -247,9 +247,9 @@ public class ODistributedTransactionManager {
       for (ORecordOperation op : iTx.getAllRecordEntries()) {
         if (iTx.hasRecordCreation()) {
           final ORecordId lockEntireCluster = (ORecordId) op.getRecord().getIdentity().copy();
-          localDistributedDatabase.getDatabaseRapairer().repairCluster(lockEntireCluster.getClusterId());
+          localDistributedDatabase.getDatabaseRepairer().repairCluster(lockEntireCluster.getClusterId());
         }
-        localDistributedDatabase.getDatabaseRapairer().repairRecord((ORecordId) op.getRecord().getIdentity());
+        localDistributedDatabase.getDatabaseRepairer().repairRecord((ORecordId) op.getRecord().getIdentity());
       }
 
       storage.handleDistributedException("Cannot route TX operation against distributed node", e);

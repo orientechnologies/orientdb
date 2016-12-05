@@ -130,7 +130,7 @@ public class TestDistributedDatabaseRepair extends AbstractServerClusterTest {
     }
 
     serverInstance.get(0).getServerInstance().getDistributedManager().getMessageService().getDatabase(getDatabaseName())
-        .getDatabaseRapairer().repairRecord((ORecordId) product.getIdentity());
+        .getDatabaseRepairer().repairRecord((ORecordId) product.getIdentity());
 
     Thread.sleep(3000);
 
@@ -186,7 +186,7 @@ public class TestDistributedDatabaseRepair extends AbstractServerClusterTest {
     }
 
     serverInstance.get(0).getServerInstance().getDistributedManager().getMessageService().getDatabase(getDatabaseName())
-        .getDatabaseRapairer().repairRecord((ORecordId) product.getIdentity());
+        .getDatabaseRepairer().repairRecord((ORecordId) product.getIdentity());
 
     Thread.sleep(3000);
 
@@ -257,7 +257,7 @@ public class TestDistributedDatabaseRepair extends AbstractServerClusterTest {
     }
 
     serverInstance.get(0).getServerInstance().getDistributedManager().getMessageService().getDatabase(getDatabaseName())
-        .getDatabaseRapairer().repairRecord((ORecordId) product.getIdentity());
+        .getDatabaseRepairer().repairRecord((ORecordId) product.getIdentity());
 
     Thread.sleep(3000);
 

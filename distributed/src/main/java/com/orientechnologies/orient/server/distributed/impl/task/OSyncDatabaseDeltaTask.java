@@ -34,9 +34,11 @@ import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseChunk;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
+import com.orientechnologies.orient.server.distributed.task.ODatabaseIsOldException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedDatabaseDeltaSyncException;
 
 import java.io.*;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -54,15 +56,17 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
   public static final int      FACTORYID            = 13;
 
   protected OLogSequenceNumber startLSN;
+  protected long               lastOperationTimestamp;
   protected long               random;
   protected Set<String>        excludedClusterNames = new HashSet<String>();
 
   public OSyncDatabaseDeltaTask() {
   }
 
-  public OSyncDatabaseDeltaTask(final OLogSequenceNumber iFirstLSN) {
-    startLSN = iFirstLSN;
-    random = UUID.randomUUID().getLeastSignificantBits();
+  public OSyncDatabaseDeltaTask(final OLogSequenceNumber iFirstLSN, final long lastOperationTimestamp) {
+    this.startLSN = iFirstLSN;
+    this.lastOperationTimestamp = lastOperationTimestamp;
+    this.random = UUID.randomUUID().getLeastSignificantBits();
   }
 
   @Override
@@ -103,8 +107,19 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
 
     iManager.getConfigurationMap().put(DEPLOYDB + databaseName, random);
 
-    iManager.setDatabaseStatus(getNodeSource(), databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
-//    iManager.setDatabaseStatus(iManager.getLocalNodeName(), databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
+    final ODistributedDatabase dDatabase = iManager.getMessageService().getDatabase(databaseName);
+    if (dDatabase.getLastOperationTimestamp() < lastOperationTimestamp) {
+      final String msg = String.format(
+          "Skip deploying delta database '%s' because the requesting server has a most recent database (reqLastOperation=%s currLastOperation=%s)",
+          databaseName, new Date(lastOperationTimestamp), new Date(dDatabase.getLastOperationTimestamp()));
+      ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE, msg);
+
+      throw new ODatabaseIsOldException(msg);
+    }
+
+    iManager.setDatabaseStatus(
+
+        getNodeSource(), databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
 
     ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
         "Deploying database %s with delta of changes...", databaseName);
@@ -223,6 +238,7 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
   @Override
   public void toStream(final DataOutput out) throws IOException {
     startLSN.toStream(out);
+    out.writeLong(lastOperationTimestamp);
     out.writeLong(random);
     out.writeInt(excludedClusterNames.size());
     for (String clName : excludedClusterNames) {
@@ -233,6 +249,7 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
   @Override
   public void fromStream(final DataInput in, final ORemoteTaskFactory factory) throws IOException {
     startLSN = new OLogSequenceNumber(in);
+    lastOperationTimestamp = in.readLong();
     random = in.readLong();
     excludedClusterNames.clear();
     final int total = in.readInt();

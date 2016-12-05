@@ -252,4 +252,12 @@ public interface ODistributedServerManager {
   Set<String> getActiveServers();
 
   ODistributedConflictResolverFactory getConflictResolverFactory();
+
+  /**
+   * Returns the cluster-wide time in milliseconds.
+   * <p/>
+   * Cluster tries to keep a cluster-wide time which might be different than the member's own system time. Cluster-wide time is
+   * -almost- the same on all members of the cluster.
+   */
+  long getClusterTime();
 }

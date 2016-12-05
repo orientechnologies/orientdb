@@ -22,8 +22,12 @@ package com.orientechnologies.orient.server.distributed.impl;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.server.distributed.*;
+import com.orientechnologies.orient.server.distributed.ODistributedRequest;
+import com.orientechnologies.orient.server.distributed.ODistributedResponse;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.impl.task.OHeartbeatTask;
+import com.orientechnologies.orient.server.distributed.task.ODatabaseIsOldException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
@@ -126,15 +130,24 @@ public class OClusterHealthChecker extends TimerTask {
         ODistributedServerLog.info(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
             "Trying to recover current server for database '%s'...", dbName);
 
-        final boolean result = manager.installDatabase(true, dbName,
-            ((ODistributedStorage) manager.getStorage(dbName)).getDistributedConfiguration().getDocument(), false, true);
+        try {
+          final boolean result = manager.installDatabase(true, dbName,
+              ((ODistributedStorage) manager.getStorage(dbName)).getDistributedConfiguration().getDocument(), false, true);
 
-        if (result)
-          ODistributedServerLog.info(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-              "Recover complete for database '%s'...", dbName);
-        else
-          ODistributedServerLog.info(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-              "Recover cannot be completed for database '%s'...", dbName);
+          if (result)
+            ODistributedServerLog.info(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+                "Recover complete for database '%s'...", dbName);
+          else
+            ODistributedServerLog.info(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+                "Recover cannot be completed for database '%s'...", dbName);
+
+        } catch (ODatabaseIsOldException e) {
+          // CURRENT DATABASE IS NEWER, SET ALL OTHER DATABASES AS NOT_AVAILABLE TO FORCE THEM TO ASK FOR THE CURRENT DATABASE
+          manager.setDatabaseStatus(manager.getLocalNodeName(), dbName, ODistributedServerManager.DB_STATUS.ONLINE);
+          for (String s : servers) {
+            manager.setDatabaseStatus(s, dbName, ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
+          }
+        }
       }
     }
   }
@@ -186,8 +199,8 @@ public class OClusterHealthChecker extends TimerTask {
 
     if (OGlobalConfiguration.DISTRIBUTED_CHECK_HEALTH_CAN_OFFLINE_SERVER.getValueAsBoolean()) {
       ODistributedServerLog.warn(this, manager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.OUT,
-          "Server '%s' did not respond to the heartbeat message (db=%s, timeout=%dms). Setting the database as NOT_AVAILABLE", server,
-          dbName, OGlobalConfiguration.DISTRIBUTED_HEARTBEAT_TIMEOUT.getValueAsLong());
+          "Server '%s' did not respond to the heartbeat message (db=%s, timeout=%dms). Setting the database as NOT_AVAILABLE",
+          server, dbName, OGlobalConfiguration.DISTRIBUTED_HEARTBEAT_TIMEOUT.getValueAsLong());
 
       manager.setDatabaseStatus(server, dbName, ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
 

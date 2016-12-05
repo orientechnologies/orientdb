@@ -25,7 +25,7 @@ import java.util.Map;
  * Distributed test with 3 servers running and after a while the server 2 is isolated from the network (using a proxy) and then it
  * re-merges the cluster again.
  */
-public class SplitBraiNetworkTest extends AbstractHARemoveNode {
+public class SplitBrainNetworkTest extends AbstractHARemoveNode {
   final static int SERVERS = 3;
 
   @Test
@@ -70,16 +70,15 @@ public class SplitBraiNetworkTest extends AbstractHARemoveNode {
       executeMultipleTest();
     } catch (AssertionError e) {
       final String message = e.getMessage();
-      Assert.assertTrue(
-          message.contains("Server 2 count is not what was expected expected:<" + expected + "> but was:<" + currentRecords + ">"));
+      Assert.assertTrue(message,
+          message.contains("count is not what was expected expected:<" + expected + "> but was:<" + currentRecords + ">"));
     }
 
     banner("TEST WITH THE ISOLATED NODE FINISHED, REJOIN THE SERVER " + (SERVERS - 1) + "...");
 
     for (ServerRun s : serverInstance) {
       OLogManager.instance().info(this, "MAP SERVER %s", s.getServerId());
-      for (Map.Entry<String, Object> entry : s.server.getDistributedManager().getConfigurationMap()
-          .entrySet()) {
+      for (Map.Entry<String, Object> entry : s.server.getDistributedManager().getConfigurationMap().entrySet()) {
         OLogManager.instance().info(this, " %s=%s", entry.getKey(), entry.getValue());
       }
     }
@@ -90,8 +89,7 @@ public class SplitBraiNetworkTest extends AbstractHARemoveNode {
 
     for (ServerRun s : serverInstance) {
       OLogManager.instance().info(this, "MAP SERVER %s", s.getServerId());
-      for (Map.Entry<String, Object> entry : s.server.getDistributedManager().getConfigurationMap()
-          .entrySet()) {
+      for (Map.Entry<String, Object> entry : s.server.getDistributedManager().getConfigurationMap().entrySet()) {
         OLogManager.instance().info(this, " %s=%s", entry.getKey(), entry.getValue());
       }
     }

@@ -205,7 +205,7 @@ public class ODefaultClusterOwnershipAssignmentStrategy implements OClusterOwner
           while (it.hasNext()) {
             final String cluster = it.next();
 
-            final List<String> serverPerClusterList = cfg.getServers(cluster);
+            final List<String> serverPerClusterList = cfg.getConfiguredServers(cluster);
 
             if (serverPerClusterList != null && serverPerClusterList.contains(server)) {
               it.remove();

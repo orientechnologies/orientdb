@@ -1012,7 +1012,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       final String targetNode = entry.getKey();
       final OLogSequenceNumber lsn = entry.getValue();
 
-      final OSyncDatabaseDeltaTask deployTask = new OSyncDatabaseDeltaTask(lsn);
+      final OSyncDatabaseDeltaTask deployTask = new OSyncDatabaseDeltaTask(lsn, distrDatabase.getLastOperationTimestamp());
 
       final List<String> targetNodes = new ArrayList<String>(1);
       targetNodes.add(targetNode);
@@ -1132,7 +1132,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     ODistributedServerLog.warn(this, nodeName, selectedNodes.toString(), DIRECTION.OUT,
         "Requesting deploy of database '%s' on local server...", databaseName);
 
-    final OAbstractReplicatedTask deployTask = new OSyncDatabaseTask();
+    final OAbstractReplicatedTask deployTask = new OSyncDatabaseTask(distrDatabase.getLastOperationTimestamp());
 
     final Map<String, Object> results = (Map<String, Object>) sendRequest(databaseName, null, selectedNodes, deployTask,
         getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null).getPayload();
@@ -1175,9 +1175,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     final HashSet<String> clusters = new HashSet<String>();
 
     for (String clName : cfg.getClusterNames()) {
-      final List<String> servers = cfg.getServers(clName);
+      final List<String> servers = cfg.getServers(clName, null);
       if (servers != null) {
-        servers.remove(ODistributedConfiguration.NEW_NODE_TAG);
         if (servers.size() == 1 && servers.get(0).equals(getLocalNodeName()))
           clusters.add(clName);
       }

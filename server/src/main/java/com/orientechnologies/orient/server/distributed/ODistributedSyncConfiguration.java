@@ -24,12 +24,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 
 /**
  * Immutable class to store and handle information about synchronization between nodes.
@@ -37,8 +32,9 @@ import java.io.OutputStream;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class ODistributedSyncConfiguration {
-  private ODocument configuration;
-  private File      file;
+  private static final String LAST_OPERATION_TIME_STAMP = "lastOperationTimeStamp";
+  private ODocument           configuration;
+  private File                file;
 
   public ODistributedSyncConfiguration(final File file) throws IOException {
     configuration = new ODocument();
@@ -74,11 +70,35 @@ public class ODistributedSyncConfiguration {
     }
   }
 
-  public void setLSN(final String iNode, final OLogSequenceNumber iLSN) throws IOException {
+  public void setLSN(final String iNode, final OLogSequenceNumber iLSN) {
     final ODocument embedded = new ODocument();
     embedded.field("segment", iLSN.getSegment(), OType.LONG);
     embedded.field("position", iLSN.getPosition(), OType.LONG);
 
+    synchronized (configuration) {
+      configuration.field(iNode, embedded, OType.EMBEDDED);
+      incrementVersion();
+    }
+  }
+
+  public long getLastOperationTimestamp() {
+    synchronized (configuration) {
+      final Long ts = configuration.field("lastOperationTimeStamp");
+      if (ts == null)
+        return -1;
+
+      return ts;
+    }
+  }
+
+  public void setLastOperationTimestamp(final long lastOperationTimestamp) throws IOException {
+    synchronized (configuration) {
+      configuration.field(LAST_OPERATION_TIME_STAMP, lastOperationTimestamp);
+      incrementVersion();
+    }
+  }
+
+  public void save() throws IOException {
     if (!file.exists()) {
       file.getParentFile().mkdirs();
       file.createNewFile();
@@ -88,8 +108,6 @@ public class ODistributedSyncConfiguration {
     try {
 
       synchronized (configuration) {
-        configuration.field(iNode, embedded, OType.EMBEDDED);
-        incrementVersion();
         configuration.toJSON(os);
       }
     } finally {
