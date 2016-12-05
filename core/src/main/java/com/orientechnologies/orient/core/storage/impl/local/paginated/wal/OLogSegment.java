@@ -135,10 +135,12 @@ final class OLogSegment implements Comparable<OLogSegment> {
               rndFile.seek(pageIndex * OWALPage.PAGE_SIZE);
               flushPage(pageContent);
             }
+
             if (pendingLSNToFlush != null) {
-              this.writeAheadLog.setFlushedLsn(pendingLSNToFlush);
+              this.writeAheadLog.setWrittenLsn(pendingLSNToFlush);
             }
             pendingLSNToFlush = lsn;
+
             lastToFlush = false;
             pageIndex++;
             pos = OWALPage.RECORDS_OFFSET;
@@ -157,7 +159,10 @@ final class OLogSegment implements Comparable<OLogSegment> {
           rndFile.getFD().sync();
         }
       }
+
       this.writeAheadLog.setFlushedLsn(lsn);
+      this.writeAheadLog.setWrittenLsn(lsn);
+
     } finally {
       if (statistic != null)
         statistic.stopWALFlushTimer();
@@ -370,11 +375,14 @@ final class OLogSegment implements Comparable<OLogSegment> {
       logCache.add(rec);
     } finally {
       cacheLock.unlock();
+
     }
-    long flushedPos = 0;
-    if (writeAheadLog.getFlushedLsn() != null)
-      flushedPos = writeAheadLog.getFlushedLsn().getPosition();
-    long pagesInCache = (filledUpTo - flushedPos) / OWALPage.PAGE_SIZE;
+    long writtenPos = 0;
+
+    if (writeAheadLog.getWrittenLsn() != null)
+      writtenPos = writeAheadLog.getWrittenLsn().getPosition();
+
+    long pagesInCache = (filledUpTo - writtenPos) / OWALPage.PAGE_SIZE;
     if (pagesInCache > maxPagesCacheSize) {
       OLogManager.instance()
           .info(this, "Max cache limit is reached (%d vs. %d), sync flush is performed", maxPagesCacheSize, pagesInCache);
