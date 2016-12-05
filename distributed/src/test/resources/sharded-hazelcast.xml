@@ -24,6 +24,7 @@
 		<property name="hazelcast.operation.generic.thread.count">1</property>
 		<property name="hazelcast.client.event.thread.count">1</property>
 		<property name="hazelcast.event.thread.count">1</property>
+		<property name="hazelcast.merge.next.run.delay.seconds">15</property>
 	</properties>
 	<network>
 		<port auto-increment="true">2434</port>
