@@ -37,6 +37,9 @@ public class OGZIPCompression extends OAbstractCompression {
 
   public static final OGZIPCompression INSTANCE = new OGZIPCompression();
 
+  public OGZIPCompression(){
+  }
+  
   @Override
   public byte[] compress(final byte[] content, final int offset, final int length) {
     try {

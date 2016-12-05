@@ -37,6 +37,9 @@ import java.util.List;
 public class ODatabaseRepair extends ODatabaseTool {
   private boolean removeBrokenLinks = true;
 
+  public ODatabaseRepair(){
+  }
+  
   @Override
   protected void parseSetting(final String option, final List<String> items) {
     if (option.equalsIgnoreCase("-excludeAll")) {

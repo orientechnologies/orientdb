@@ -35,6 +35,9 @@ public class OTraverseContext extends OBasicCommandContext {
 
   private OTraverseAbstractProcess<?> currentProcess;
 
+  public OTraverseContext(){
+  }
+  
   public void push(final OTraverseAbstractProcess<?> iProcess) {
     memory.add(iProcess);
   }

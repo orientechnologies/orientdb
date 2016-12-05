@@ -38,6 +38,9 @@ public class OByteSerializer implements OBinarySerializer<Byte> {
   public static final byte            ID        = 2;
   public static final OByteSerializer INSTANCE  = new OByteSerializer();
 
+  public OByteSerializer(){
+  }
+  
   public int getObjectSize(Byte object, Object... hints) {
     return BYTE_SIZE;
   }

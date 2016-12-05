@@ -37,6 +37,9 @@ public class ODateSerializer implements OBinarySerializer<Date> {
   public static final byte      ID       = 4;
   public static final ODateSerializer INSTANCE = new ODateSerializer();
 
+  public ODateSerializer(){
+  }
+  
   public int getObjectSize(Date object, Object... hints) {
     return OLongSerializer.LONG_SIZE;
   }

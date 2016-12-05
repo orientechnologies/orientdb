@@ -28,6 +28,9 @@ import java.util.Map;
 public class OSerializationHelper {
   public static final OSerializationHelper INSTANCE = new OSerializationHelper();
 
+  private OSerializationHelper(){
+  }
+  
   public <K, V> byte[] serialize(Map<K, V> map, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer) {
     final int size = length(map, keySerializer, valueSerializer);
     final byte[] stream = new byte[size];

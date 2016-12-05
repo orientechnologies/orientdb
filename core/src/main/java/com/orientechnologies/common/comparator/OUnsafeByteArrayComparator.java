@@ -70,6 +70,9 @@ public class OUnsafeByteArrayComparator implements Comparator<byte[]> {
 
   }
 
+  public OUnsafeByteArrayComparator(){
+  }
+  
   public int compare(byte[] arrayOne, byte[] arrayTwo) {
     if (arrayOne.length > arrayTwo.length)
       return 1;

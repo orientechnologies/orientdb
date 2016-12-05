@@ -61,6 +61,9 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializ
       2 * OBooleanSerializer.BOOLEAN_SIZE + 2 * OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE;
   public static final OLinkSerializer    LINK_SERIALIZER       = OLinkSerializer.INSTANCE;
 
+  public OStreamSerializerSBTreeIndexRIDContainer(){
+  }
+  
   public Object fromStream(final byte[] iStream) throws IOException {
     if (iStream == null)
       return null;

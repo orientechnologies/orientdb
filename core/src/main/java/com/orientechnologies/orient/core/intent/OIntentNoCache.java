@@ -33,6 +33,9 @@ public class OIntentNoCache implements OIntent {
   private boolean previousRetainRecords;
   private boolean previousRetainObjects;
 
+  private OIntentNoCache(){
+  }
+  
   public void begin(final ODatabaseDocumentInternal iDatabase) {
     ODatabaseInternal<?> ownerDb = iDatabase.getDatabaseOwner();
 

@@ -41,7 +41,7 @@ final class OSimpleMultiValueChangeListener<K, V> implements OMultiValueChangeLi
   private final WeakReference<ODocument> oDocument;
   private final ODocumentEntry           entry;
 
-  OSimpleMultiValueChangeListener(ODocument oDocument, final ODocumentEntry entry) {
+  public OSimpleMultiValueChangeListener(ODocument oDocument, final ODocumentEntry entry) {
     this.oDocument = new WeakReference<ODocument>(oDocument);
     this.entry = entry;
   }

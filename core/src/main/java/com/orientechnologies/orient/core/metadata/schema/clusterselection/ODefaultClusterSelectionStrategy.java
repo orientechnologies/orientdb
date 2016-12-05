@@ -26,6 +26,9 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 public class ODefaultClusterSelectionStrategy implements OClusterSelectionStrategy {
   public static final String NAME = "default";
 
+  public ODefaultClusterSelectionStrategy(){
+  }
+  
   public int getCluster(final OClass iClass, final ODocument doc) {
     return iClass.getDefaultClusterId();
   }

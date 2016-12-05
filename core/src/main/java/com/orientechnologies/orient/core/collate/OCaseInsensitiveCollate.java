@@ -35,6 +35,9 @@ import java.util.Set;
 public class OCaseInsensitiveCollate extends ODefaultComparator implements OCollate {
   public static final String NAME = "ci";
 
+  public OCaseInsensitiveCollate(){
+  }
+  
   public String getName() {
     return NAME;
   }

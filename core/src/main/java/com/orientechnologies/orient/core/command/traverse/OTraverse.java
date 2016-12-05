@@ -51,6 +51,9 @@ public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OI
     DEPTH_FIRST, BREADTH_FIRST
   }
 
+  public OTraverse(){
+  }
+  
   /*
    * Executes a traverse collecting all the result in the returning List<OIdentifiable>. This could be memory expensive because for
    * large results the list could be huge. it's always better to use it as an Iterable and lazy fetch each result on next() call.

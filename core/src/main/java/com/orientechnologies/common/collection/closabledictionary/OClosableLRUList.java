@@ -15,6 +15,9 @@ class OClosableLRUList<K, V extends OClosableItem> implements Iterable<OClosable
   private OClosableEntry<K, V> head;
   private OClosableEntry<K, V> tail;
 
+  public OClosableLRUList(){
+  }
+  
   void remove(OClosableEntry<K, V> entry) {
     final OClosableEntry<K, V> next = entry.getNext();
     final OClosableEntry<K, V> prev = entry.getPrev();

@@ -31,6 +31,9 @@ import java.util.Comparator;
 public class OByteArrayComparator implements Comparator<byte[]> {
   public static final OByteArrayComparator INSTANCE = new OByteArrayComparator();
 
+  private OByteArrayComparator(){
+  }
+  
   public int compare(final byte[] arrayOne, final byte[] arrayTwo) {
     final int lenDiff = arrayOne.length - arrayTwo.length;
 

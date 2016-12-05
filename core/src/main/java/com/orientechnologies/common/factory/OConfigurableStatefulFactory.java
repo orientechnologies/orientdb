@@ -36,6 +36,9 @@ public class OConfigurableStatefulFactory<K, V> {
   protected final Map<K, Class<? extends V>> registry = new LinkedHashMap<K, Class<? extends V>>();
   protected Class<? extends V>               defaultClass;
 
+  protected OConfigurableStatefulFactory(){
+  }
+  
   public Class<? extends V> get(final K iKey) {
     return registry.get(iKey);
   }

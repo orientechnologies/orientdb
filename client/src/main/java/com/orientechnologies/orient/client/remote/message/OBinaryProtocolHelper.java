@@ -30,7 +30,10 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
 public class OBinaryProtocolHelper {
-
+	
+  private OBinaryProtocolHelper(){
+  }
+  
   public static void writeIdentifiable(OChannelBinary channel, final OIdentifiable o, String recordSerializer) throws IOException {
     if (o == null)
       channel.writeShort(OChannelBinaryProtocol.RECORD_NULL);

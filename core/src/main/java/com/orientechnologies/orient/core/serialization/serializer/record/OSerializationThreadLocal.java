@@ -30,6 +30,9 @@ import com.orientechnologies.orient.core.Orient;
 public class OSerializationThreadLocal extends ThreadLocal<Set<Integer>> {
   public static volatile OSerializationThreadLocal INSTANCE = new OSerializationThreadLocal();
 
+  private OSerializationThreadLocal(){
+  }
+  
   static {
     Orient.instance().registerListener(new OOrientListenerAbstract() {
       @Override

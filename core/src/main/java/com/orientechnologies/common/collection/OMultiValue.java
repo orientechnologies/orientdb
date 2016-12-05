@@ -39,6 +39,9 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 @SuppressWarnings("unchecked")
 public class OMultiValue {
 
+  private OMultiValue() {
+  }
+	
   /**
    * Checks if a class is a multi-value type.
    * 

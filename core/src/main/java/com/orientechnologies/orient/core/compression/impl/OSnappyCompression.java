@@ -35,6 +35,9 @@ public class OSnappyCompression extends OAbstractCompression {
 
   public static final OSnappyCompression INSTANCE = new OSnappyCompression();
 
+  public OSnappyCompression(){
+  }
+  
   @Override
   public byte[] compress(byte[] content, final int offset, final int length) {
     try {

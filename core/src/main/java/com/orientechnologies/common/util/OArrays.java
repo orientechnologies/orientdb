@@ -26,6 +26,10 @@ import com.orientechnologies.common.log.OLogManager;
 
 @SuppressWarnings("unchecked")
 public class OArrays {
+	
+  private OArrays(){
+  }
+	
   public static <T> T[] copyOf(final T[] iSource, final int iNewSize) {
     return (T[]) copyOf(iSource, iNewSize, iSource.getClass());
   }

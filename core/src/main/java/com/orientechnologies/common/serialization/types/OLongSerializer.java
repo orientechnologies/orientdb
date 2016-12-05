@@ -42,6 +42,9 @@ public class OLongSerializer implements OBinarySerializer<Long> {
   private static final OBinaryConverter CONVERTER = OBinaryConverterFactory.getConverter();
   public static final  OLongSerializer  INSTANCE  = new OLongSerializer();
 
+  public OLongSerializer(){
+  }
+  
   public int getObjectSize(final Long object, final Object... hints) {
     return LONG_SIZE;
   }

@@ -49,6 +49,9 @@ import com.orientechnologies.common.log.OLogManager;
 public class OReflectionHelper {
   private static final String CLASS_EXTENSION = ".class";
 
+  private OReflectionHelper(){
+  }
+  
   public static List<Class<?>> getClassesFor(final Collection<String> classNames, final ClassLoader classLoader)
       throws ClassNotFoundException {
     List<Class<?>> classes = new ArrayList<Class<?>>(classNames.size());

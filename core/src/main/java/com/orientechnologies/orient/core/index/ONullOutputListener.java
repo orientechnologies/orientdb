@@ -30,6 +30,9 @@ import com.orientechnologies.common.listener.OProgressListener;
 public class ONullOutputListener implements OProgressListener {
   public final static ONullOutputListener INSTANCE = new ONullOutputListener();
 
+  private ONullOutputListener(){
+  }
+  
   @Override
   public void onBegin(Object iTask, long iTotal, Object metadata) {
   }

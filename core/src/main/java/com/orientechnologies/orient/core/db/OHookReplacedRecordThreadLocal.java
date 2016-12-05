@@ -48,6 +48,9 @@ public class OHookReplacedRecordThreadLocal extends ThreadLocal<ORecord> {
     });
   }
 
+  private OHookReplacedRecordThreadLocal(){
+  }
+  
   public ORecord getIfDefined() {
     return super.get();
   }

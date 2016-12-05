@@ -37,6 +37,9 @@ import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 public class OAutoMergeRecordConflictStrategy extends OVersionRecordConflictStrategy {
   public static final String NAME = "automerge";
 
+  public OAutoMergeRecordConflictStrategy(){
+  }
+  
   @Override
   public byte[] onUpdate(OStorage storage, byte iRecordType, final ORecordId rid, final int iRecordVersion,
       final byte[] iRecordContent, final AtomicInteger iDatabaseVersion) {

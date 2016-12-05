@@ -30,6 +30,10 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  */
 @SuppressFBWarnings("EQ_COMPARETO_USE_OBJECT_EQUALS")
 public final class OAlwaysLessKey implements Comparable<Comparable<?>> {
+	
+	public OAlwaysLessKey(){
+	}
+	
 	public int compareTo(Comparable<?> o) {
 		return -1;
 	}

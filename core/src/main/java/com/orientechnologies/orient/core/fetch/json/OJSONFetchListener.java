@@ -34,6 +34,9 @@ import java.io.IOException;
  */
 public class OJSONFetchListener implements OFetchListener {
 
+  public OJSONFetchListener(){
+  }
+	
   public boolean requireFieldProcessing() {
     return true;
   }

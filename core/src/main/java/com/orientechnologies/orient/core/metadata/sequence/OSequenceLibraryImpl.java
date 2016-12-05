@@ -39,6 +39,9 @@ import java.util.concurrent.ConcurrentHashMap;
 public class OSequenceLibraryImpl implements OSequenceLibrary {
   private final Map<String, OSequence> sequences = new ConcurrentHashMap<String, OSequence>();
 
+  public OSequenceLibraryImpl(){
+  }
+  
   @Override
   public void create() {
 

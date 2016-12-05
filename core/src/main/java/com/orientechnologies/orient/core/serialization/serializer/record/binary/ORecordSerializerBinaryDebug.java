@@ -13,6 +13,9 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class ORecordSerializerBinaryDebug extends ORecordSerializerBinaryV0 {
 
+  public ORecordSerializerBinaryDebug(){
+  }
+	
   public ORecordSerializationDebug deserializeDebug(final byte[] iSource, ODatabaseDocumentInternal db) {
     ORecordSerializationDebug debugInfo = new ORecordSerializationDebug();
     OImmutableSchema schema = ((OMetadataInternal) db.getMetadata()).getImmutableSchemaSnapshot();

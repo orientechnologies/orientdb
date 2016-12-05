@@ -29,6 +29,10 @@ import java.nio.file.*;
  * @since 7/22/14
  */
 public class OFileUtilsJava7 {
+	
+	private OFileUtilsJava7(){
+	}
+	
 	public static boolean delete(File file) throws IOException {
 		if (!file.exists())
 			return true;

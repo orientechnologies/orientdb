@@ -34,6 +34,9 @@ import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 public class OClassDictionary {
   private static final OClassDictionary instance = new OClassDictionary();
 
+  private OClassDictionary(){
+  }
+  
   public static OClassDictionary instance() {
     return instance;
   }

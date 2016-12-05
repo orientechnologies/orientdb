@@ -37,6 +37,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class OVersionRecordConflictStrategy implements ORecordConflictStrategy {
   public static final String NAME = "version";
 
+  public OVersionRecordConflictStrategy(){
+  }
+  
   @Override
   public byte[] onUpdate(OStorage storage, final byte iRecordType, final ORecordId rid,
       final int iRecordVersion, final byte[] iRecordContent, final AtomicInteger iDatabaseVersion) {

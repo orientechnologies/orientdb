@@ -11,6 +11,10 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
 public class OReopenRequest implements OBinaryRequest<OReopenResponse> {
+	
+  public OReopenRequest(){
+  }
+	
   @Override
   public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
 

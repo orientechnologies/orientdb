@@ -38,6 +38,9 @@ public class ODefaultCollateFactory implements OCollateFactory {
     register(new OCaseInsensitiveCollate());
   }
 
+  private ODefaultCollateFactory(){
+  }
+  
   /**
    * @return Set of supported collate names of this factory
    */

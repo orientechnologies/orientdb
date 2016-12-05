@@ -27,6 +27,9 @@ package com.orientechnologies.common.util;
  */
 public class OCallableUtils {
 
+  private OCallableUtils(){
+  }
+	
   public static void executeIgnoringAnyExceptions(final OCallableNoParamNoReturn callback) {
     try {
       callback.call();

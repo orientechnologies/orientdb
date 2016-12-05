@@ -41,6 +41,9 @@ public class OMemoryAndLocalPaginatedEnginesInitializer {
 
   private boolean initialized = false;
 
+  private OMemoryAndLocalPaginatedEnginesInitializer(){
+  }
+  
   /**
    * Initializes common parts of memory and plocal engines if not initialized yet. Does nothing if engines already initialized.
    */

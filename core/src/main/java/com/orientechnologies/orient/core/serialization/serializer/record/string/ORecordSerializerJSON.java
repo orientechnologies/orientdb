@@ -79,6 +79,9 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
   private static final Double               MAX_FLOAT             = (double) Float.MAX_VALUE;
   private static final Double               MIN_FLOAT             = (double) Float.MIN_VALUE;
 
+  private ORecordSerializerJSON(){
+  }
+  
   private interface CollectionItemVisitor {
     void visitItem(Object item);
   }

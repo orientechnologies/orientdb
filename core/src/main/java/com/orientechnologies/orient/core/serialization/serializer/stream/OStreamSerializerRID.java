@@ -34,6 +34,9 @@ public class OStreamSerializerRID implements OStreamSerializer, OBinarySerialize
   public static final OStreamSerializerRID INSTANCE = new OStreamSerializerRID();
   public static final byte                 ID       = 16;
 
+  public OStreamSerializerRID(){
+  }
+  
   public String getName() {
     return NAME;
   }

@@ -11,6 +11,10 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
 public class OListGlobalConfigurationsRequest implements OBinaryRequest<OListGlobalConfigurationsResponse> {
+	
+  public OListGlobalConfigurationsRequest(){
+  }
+	
   @Override
   public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
   }

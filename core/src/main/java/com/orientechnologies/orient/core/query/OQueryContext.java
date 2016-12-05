@@ -25,6 +25,9 @@ public class OQueryContext {
 	protected ODocument				initialRecord;
 	protected OQuery<ODocument>	sourceQuery;
 
+	private OQueryContext(){
+	}
+	
 	public void setRecord(final ODocument iRecord) {
 		this.initialRecord = iRecord;
 	}

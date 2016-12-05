@@ -47,6 +47,9 @@ public class OComparatorFactory {
     unsafeWasDetected = unsafeDetected;
   }
 
+  private OComparatorFactory(){
+  }
+  
   /**
    * Returns {@link Comparator} instance if applicable one exist or <code>null</code> otherwise.
    * 

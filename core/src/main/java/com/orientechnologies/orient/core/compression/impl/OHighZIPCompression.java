@@ -31,6 +31,9 @@ public class OHighZIPCompression extends OZIPCompression {
   public static final OHighZIPCompression INSTANCE = new OHighZIPCompression();
   public static final String              NAME     = "high-zip";
 
+  public OHighZIPCompression(){
+  }
+  
   @Override
   public String name() {
     return NAME;

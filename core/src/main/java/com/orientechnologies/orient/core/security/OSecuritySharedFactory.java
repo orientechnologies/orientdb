@@ -30,6 +30,9 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
  */
 public class OSecuritySharedFactory implements OSecurityFactory
 {
+	public OSecuritySharedFactory(){
+	}
+	
 	public OSecurity newSecurity()
 	{
 		return new OSecurityShared();

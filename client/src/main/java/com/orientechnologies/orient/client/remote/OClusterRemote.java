@@ -35,6 +35,9 @@ public class OClusterRemote implements OCluster {
   private String name;
   private int    id;
 
+  public OClusterRemote(){
+  }
+  
   /*
    * (non-Javadoc)
    * 

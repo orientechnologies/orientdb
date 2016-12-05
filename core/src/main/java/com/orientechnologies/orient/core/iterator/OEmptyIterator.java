@@ -30,6 +30,9 @@ public class OEmptyIterator<T> implements Iterator<T> {
   public static final OEmptyIterator<Object>        ANY_INSTANCE          = new OEmptyIterator<Object>();
   public static final OEmptyIterator<OIdentifiable> IDENTIFIABLE_INSTANCE = new OEmptyIterator<OIdentifiable>();
 
+  public OEmptyIterator(){
+  }
+  
   public boolean hasNext() {
     return false;
   }

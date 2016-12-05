@@ -50,6 +50,9 @@ public class OFileUtils {
     useOldFileAPI = oldAPI;
   }
 
+  private OFileUtils(){
+  }
+  
   public static long getSizeAsNumber(final Object iSize) {
     if (iSize == null)
       throw new IllegalArgumentException("Size is null");

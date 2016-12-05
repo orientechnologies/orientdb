@@ -23,6 +23,10 @@ package com.orientechnologies.orient.core.intent;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 
 public class OIntentMassiveRead implements OIntent {
+	
+  public OIntentMassiveRead(){
+  }
+	
   public void begin(final ODatabaseDocumentInternal iDatabase) {
   }
 

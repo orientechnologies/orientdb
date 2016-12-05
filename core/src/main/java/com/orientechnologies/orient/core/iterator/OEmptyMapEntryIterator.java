@@ -25,6 +25,9 @@ import java.util.Map;
 public class OEmptyMapEntryIterator<K,V> implements Iterator<Map.Entry<K, V>> {
   public static final OEmptyMapEntryIterator INSTANCE = new OEmptyMapEntryIterator();
 
+  private OEmptyMapEntryIterator(){
+  }
+  
   public boolean hasNext() {
     return false;
   }

@@ -20,6 +20,10 @@
 package com.orientechnologies.common.io;
 
 public class OUtils {
+	
+  private OUtils(){
+  }
+	
   public static boolean equals(final Object a, final Object b) {
     if (a == b)
       return true;

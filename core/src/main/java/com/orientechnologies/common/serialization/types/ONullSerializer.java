@@ -34,6 +34,9 @@ public class ONullSerializer implements OBinarySerializer<Object> {
   public static final byte            ID       = 11;
   public static final ONullSerializer INSTANCE = new ONullSerializer();
 
+  public ONullSerializer(){
+  }
+  
   public int getObjectSize(final Object object, Object... hints) {
     return 0;
   }

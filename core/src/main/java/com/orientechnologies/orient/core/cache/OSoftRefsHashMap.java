@@ -20,6 +20,9 @@ public class OSoftRefsHashMap<K, V> extends AbstractMap<K, V> implements Seriali
   private final Map<SoftReference<V>, K> reverseLookup = new ConcurrentHashMap<SoftReference<V>, K>();
   private final ReferenceQueue<V>        refQueue      = new ReferenceQueue<V>();
 
+  public OSoftRefsHashMap(){
+  }
+  
   public V get(Object key) {
     evictStaleEntries();
     V result = null;

@@ -9,6 +9,9 @@ public class HeapDumper {
   // This is the name of the HotSpot Diagnostic MBean
   private static final String                     HOTSPOT_BEAN_NAME = "com.sun.management:type=HotSpotDiagnostic";
 
+  private HeapDumper(){
+  }
+  
   /**
    * Invoke {@code dumpHeap} operation on {@code com.sun.management:type=HotSpotDiagnostic} mbean.
    */

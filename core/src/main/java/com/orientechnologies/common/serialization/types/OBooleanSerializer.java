@@ -38,6 +38,9 @@ public class OBooleanSerializer implements OBinarySerializer<Boolean> {
   public static final byte               ID           = 1;
   public static final OBooleanSerializer INSTANCE     = new OBooleanSerializer();
 
+  public OBooleanSerializer(){
+  }
+  
   public int getObjectSize(Boolean object, Object... hints) {
     return BOOLEAN_SIZE;
   }

@@ -26,6 +26,10 @@ import java.util.Comparator;
  * Compares strings without taking into account their case.
  */
 public class OCaseInsentiveComparator implements Comparator<String> {
+	
+  public OCaseInsentiveComparator(){
+  }
+	
   public int compare(final String stringOne, final String stringTwo) {
     return stringOne.compareToIgnoreCase(stringTwo);
   }

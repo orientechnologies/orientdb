@@ -47,6 +47,9 @@ public class OStreamSerializerAnyStreamable {
   public static final OStreamSerializerAnyStreamable INSTANCE                     = new OStreamSerializerAnyStreamable();
   public static final String                         NAME                         = "at";
 
+  private OStreamSerializerAnyStreamable(){
+  }
+  
   /**
    * Re-Create any object if the class has a public constructor that accepts a String as unique parameter.
    */

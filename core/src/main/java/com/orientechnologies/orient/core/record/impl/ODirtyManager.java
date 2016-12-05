@@ -37,6 +37,9 @@ public class ODirtyManager {
   private Set<ORecord>                        newRecords;
   private Set<ORecord>                        updateRecords;
 
+  public ODirtyManager(){
+  }
+  
   public void setDirty(ORecord record) {
     ODirtyManager real = getReal();
     if (record.getIdentity().isNew() && !record.getIdentity().isTemporary()) {

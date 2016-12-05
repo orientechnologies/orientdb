@@ -68,6 +68,9 @@ public class OHashIndexFactory implements OIndexFactory {
     ALGORITHMS = Collections.unmodifiableSet(algorithms);
   }
 
+  private OHashIndexFactory(){
+  }
+  
   /**
    * Index types :
    * <ul>

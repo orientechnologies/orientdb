@@ -33,6 +33,10 @@ import java.io.FileReader;
 import java.io.IOException;
 
 public class ODatabaseHelper {
+	
+  private ODatabaseHelper(){
+  }
+  
   public static void createDatabase(ODatabase database, final String url) throws IOException {
     createDatabase(database, url, "server", "plocal");
   }

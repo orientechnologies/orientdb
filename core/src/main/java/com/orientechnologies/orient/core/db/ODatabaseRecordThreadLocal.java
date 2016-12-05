@@ -43,6 +43,9 @@ public class ODatabaseRecordThreadLocal extends ThreadLocal<ODatabaseDocumentInt
     });
   }
 
+  private ODatabaseRecordThreadLocal(){
+  }
+  
   @Override
   public ODatabaseDocumentInternal get() {
     ODatabaseDocumentInternal db = super.get();

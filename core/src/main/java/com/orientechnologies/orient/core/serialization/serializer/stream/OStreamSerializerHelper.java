@@ -36,6 +36,9 @@ public class OStreamSerializerHelper {
   public static final String SEPARATOR         = "|";
   private static final char  SHORT_FORM_PREFIX = '!';
 
+  private OStreamSerializerHelper(){
+  }
+  
   public static StringBuilder writeRecordType(final Class<?> cls, final StringBuilder iBuffer) {
     // SEARCH INTO THE SERIALIZER REGISTER IF THE IMPLEMENTATION WAS REGISTERED TO GET THE SHORT FORM (AND OPTIMIZING IN SIZE AND
     // WRITE TIMES)

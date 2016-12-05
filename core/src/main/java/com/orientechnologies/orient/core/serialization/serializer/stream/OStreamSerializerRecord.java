@@ -32,6 +32,9 @@ public class OStreamSerializerRecord implements OStreamSerializer {
   public static final String                  NAME     = "l";
   public static final OStreamSerializerRecord INSTANCE = new OStreamSerializerRecord();
 
+  private OStreamSerializerRecord(){
+  }
+  
   public String getName() {
     return NAME;
   }

@@ -44,6 +44,9 @@ public class OLogFormatter extends Formatter {
    */
   protected static final String EOL = System.getProperty("line.separator");
 
+  protected OLogFormatter(){
+  }
+  
   @Override
   public String format(final LogRecord record) {
     if (record.getThrown() == null) {
