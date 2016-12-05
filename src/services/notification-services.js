@@ -1,7 +1,7 @@
 let notification = angular.module('notification.services', []);
 import noty from 'noty';
 
-notification.factory('Notification', function ($timeout, $rootScope, $sanitize) {
+notification.factory('Notification', ["$timeout", "$rootScope", function ($timeout, $rootScope) {
 
 
   var notiService = {
@@ -65,6 +65,6 @@ notification.factory('Notification', function ($timeout, $rootScope, $sanitize) 
     notiService.startTimer();
   })
   return notiService;
-});
+}]);
 
 export default notification.name;

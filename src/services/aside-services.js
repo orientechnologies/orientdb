@@ -1,6 +1,6 @@
 let asideServices = angular.module('aside.services', []);
 
-asideServices.factory('Aside', function ($rootScope) {
+asideServices.factory('Aside', ["$rootScope", function ($rootScope) {
 
   var params = {
     cls: ""
@@ -78,6 +78,6 @@ asideServices.factory('Aside', function ($rootScope) {
       return this.params.absolute;
     }
   }
-});
+}]);
 
 export default  asideServices.name;

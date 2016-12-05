@@ -1,7 +1,8 @@
+import angular from 'angular';
 var Widget = angular.module('rendering', []);
 
 
-Widget.directive('docwidget', function ($compile, $http, Database, CommandApi, DocumentApi, $timeout) {
+Widget.directive('docwidget', ["$compile", "$http", "Database", "CommandApi", "DocumentApi", "$timeout", function ($compile, $http, Database, CommandApi, DocumentApi, $timeout) {
 
 
   var compileForm = function (response, scope, element, attrs) {
@@ -171,7 +172,7 @@ Widget.directive('docwidget', function ($compile, $http, Database, CommandApi, D
     //The link function is responsible for registering DOM listeners as well as updating the DOM.
     link: linker
   }
-});
+}]);
 
 Widget.directive('jsontext', function () {
 
@@ -290,7 +291,7 @@ Widget.directive('chartjs', function () {
     }
   };
 });
-Widget.directive('orientdate', function (Database) {
+Widget.directive('orientdate', ['Database', function (Database) {
 
 
   return {
@@ -339,8 +340,8 @@ Widget.directive('orientdate', function (Database) {
 
     }
   };
-});
-Widget.directive('orientdatetime', function (Database) {
+}]);
+Widget.directive('orientdatetime', ['Database', function (Database) {
 
 
   return {
@@ -388,8 +389,8 @@ Widget.directive('orientdatetime', function (Database) {
 
     }
   };
-});
-Widget.directive('ridrender', function (Database, $http, $compile) {
+}]);
+Widget.directive('ridrender', ["Database", "$http", "$compile", function (Database, $http, $compile) {
 
 
   return {
@@ -477,12 +478,12 @@ Widget.directive('ridrender', function (Database, $http, $compile) {
 
     }
   };
-});
+}]);
 
 
 var count = 0;
 
-Widget.directive('ridrender2', function (Database, $http, $compile) {
+Widget.directive('ridrender2', ["Database", "$http", "$compile", function (Database, $http, $compile) {
 
   return {
     restrict: 'E',
@@ -541,7 +542,7 @@ Widget.directive('ridrender2', function (Database, $http, $compile) {
       renderLimit(LIMIT);
     }
   };
-});
+}]);
 Widget.directive('dtpicker', function () {
 
 
@@ -663,7 +664,7 @@ Widget.provider("$ojson", function () {
 
   return $jsonProvider;
 });
-Widget.directive('autofill', function ($timeout) {
+Widget.directive('autofill', ["$timeout", function ($timeout) {
   return {
     require: 'ngModel',
     link: function (scope, elem, attrs, ngModel) {
@@ -680,10 +681,8 @@ Widget.directive('autofill', function ($timeout) {
       });
     }
   }
-});
-Widget.directive('select', [
-  '$timeout',
-
+}]);
+Widget.directive('select', ['$timeout',
   function ($timeout) {
     return {
       restrict: 'E',
@@ -706,7 +705,7 @@ Widget.directive('whenScrolled', function () {
   };
 });
 
-Widget.directive('fontpicker', function ($timeout) {
+Widget.directive('fontpicker', ['$timeout', function ($timeout) {
   return {
     require: 'ngModel',
     link: function (scope, elem, attrs, ngModel) {
@@ -719,9 +718,9 @@ Widget.directive('fontpicker', function ($timeout) {
     }
 
   }
-});
+}]);
 // Common directive for "focus"
-Widget.directive('focus',
+Widget.directive('focus', ['$timeout',
   function ($timeout) {
     return {
       scope: {
@@ -737,5 +736,4 @@ Widget.directive('focus',
         });
       }
     };
-  }
-);
+  }]);

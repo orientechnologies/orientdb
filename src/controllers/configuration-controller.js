@@ -14,6 +14,7 @@ import  '../views/database/config/conflictStrategy.html';
 import  '../views/database/config/configuration.html';
 import  '../views/database/config/import-export.html';
 import  '../views/database/config/default.html';
+import angular from 'angular';
 
 let configModule = angular.module('configuration.controller', []);
 configModule.controller("ConfigurationController", ['$scope', '$routeParams', '$location', 'DatabaseApi', 'Database', function ($scope, $routeParams, $location, DatabaseApi, Database) {

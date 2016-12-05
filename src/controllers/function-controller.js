@@ -2,6 +2,7 @@ import '../views/database/functions.html';
 import '../views/database/function/functionAside.html';
 
 import Utilities from '../util/library';
+import angular from 'angular';
 
 let functionModule = angular.module('function.controller', ['database.services']);
 functionModule.controller("FunctionController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'FunctionApi', 'DocumentApi', '$modal', '$q', '$route', 'Spinner', 'Notification', 'Aside', '$rootScope', 'DatabaseApi', function ($scope, $routeParams, $location, Database, CommandApi, FunctionApi, DocumentApi, $modal, $q, $route, Spinner, Notification, Aside, $rootScope, DatabaseApi) {

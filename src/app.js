@@ -95,7 +95,7 @@ import './styles/fontello.css';
 import './styles/animation.css';
 
 
-var deps = [HeaderController,
+let deps = [HeaderController,
   LoginModule,
   DatabaseController,
   DocumentController,
@@ -138,7 +138,7 @@ var App = angular.module('OrientDBStudioApp', deps);
 
 App.config(routing);
 
-App.run(function ($rootScope, $interval, DatabaseApi, Notification, Spinner, $templateCache, Aside) {
+App.run(["$rootScope", "$interval", "DatabaseApi", "Notification", "Spinner", "$templateCache", "Aside", function ($rootScope, $interval, DatabaseApi, Notification, Spinner, $templateCache, Aside) {
   $rootScope.$on('$routeChangeSuccess', function (event, currentRoute, oldRoute) {
     switch (currentRoute.templateUrl) {
       case 'views/login.html':
@@ -204,7 +204,7 @@ App.run(function ($rootScope, $interval, DatabaseApi, Notification, Spinner, $te
   }, 1000);
 
   $templateCache.put('popover/popover.tpl.html', '<div class="popover"><div class="arrow"></div><h3 class="popover-title" ng-bind="title" ng-show="title"></h3><div class="popover-content" ng-bind-html="content"></div></div>');
-})
+}])
 
 $('body').on('keyup', function (e) {
 

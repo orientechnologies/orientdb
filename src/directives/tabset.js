@@ -1,4 +1,5 @@
 'use strict';
+import angular from 'angular';
 
 var boostrapTab = angular.module('bootstrap.tabset', []);
 

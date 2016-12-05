@@ -6,6 +6,7 @@ import '../views/database/index/indexMain.html';
 
 
 import Utilities from '../util/library';
+import angular from 'angular';
 
 let schemaModule = angular.module('schema.controller', ['database.services']);
 schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'ClassAlterApi', '$modal', '$q', '$route', '$window', 'Spinner', 'Notification', '$popover', 'GraphConfig', 'DocumentApi', function ($scope, $routeParams, $location, Database, CommandApi, ClassAlterApi, $modal, $q, $route, $window, Spinner, Notification, $popover, GraphConfig, DocumentApi) {

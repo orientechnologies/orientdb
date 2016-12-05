@@ -1,5 +1,6 @@
 import  '../views/database/context/bookmarksAside.html';
 
+import angular from 'angular';
 import AsideServices from '../services/aside-services';
 
 let aside = angular.module('aside.controller', [AsideServices]);

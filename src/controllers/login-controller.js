@@ -1,8 +1,10 @@
-let LoginModule = angular.module('login.controller', ['database.services']);
-
+import angular from 'angular';
 import '../views/database/newDatabase.html';
 import '../views/database/importCloud.html';
 import '../views/database/deleteDatabase.html';
+
+let LoginModule = angular.module('login.controller', ['database.services']);
+
 
 LoginModule.controller("LoginController", ['$scope', '$rootScope', '$routeParams', '$location', '$modal', '$q', 'Database', 'DatabaseApi', 'Notification', '$http', 'Spinner', 'localStorageService', 'DatabaseAlterApi', function ($scope, $rootScope, $routeParams, $location, $modal, $q, Database, DatabaseApi, Notification, $http, Spinner, localStorageService, DatabaseAlterApi) {
 

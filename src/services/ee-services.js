@@ -1,10 +1,9 @@
 import {API} from '../constants';
 
 
-
 let ee = angular.module('ee.services', []);
 
-ee.factory('CommandLogApi', function ($http, $resource, DatabaseApi) {
+ee.factory('CommandLogApi', ["$http", "$resource", function ($http, $resource) {
 
   var current = {
     name: null,
@@ -88,10 +87,10 @@ ee.factory('CommandLogApi', function ($http, $resource, DatabaseApi) {
     })
   }
   return resource;
-});
+}]);
 
 
-ee.factory('Cluster', function ($http, $resource, $q) {
+ee.factory('Cluster', ["$http", "$resource", "$q", function ($http, $resource, $q) {
 
 
   var resource = $resource('');
@@ -229,10 +228,10 @@ ee.factory('Cluster', function ($http, $resource, $q) {
 
 
   return resource
-});
+}]);
 
 
-ee.factory('Profiler', function ($http, $resource, $q) {
+ee.factory('Profiler', ["$http", "$resource", "$q", function ($http, $resource, $q) {
 
 
   var resource = $resource('');
@@ -290,10 +289,10 @@ ee.factory('Profiler', function ($http, $resource, $q) {
     return deferred.promise;
   }
   return resource
-});
+}]);
 
 
-ee.factory('CommandCache', function ($http, $q) {
+ee.factory('CommandCache', ["$http", "$q", function ($http, $q) {
 
 
   var resource = {}
@@ -422,9 +421,9 @@ ee.factory('CommandCache', function ($http, $q) {
   }
   return resource;
 
-});
+}]);
 
-ee.factory('Auditing', function ($http, $resource, $q, CommandApi) {
+ee.factory('Auditing', ["$http", "$resource", "$q", function ($http, $resource, $q) {
 
   var resource = $resource('');
 
@@ -466,10 +465,10 @@ ee.factory('Auditing', function ($http, $resource, $q, CommandApi) {
     return deferred.promise;
   }
   return resource
-});
+}]);
 
 
-ee.factory('Plugins', function ($http, $q) {
+ee.factory('Plugins', ["$http", "$q", function ($http, $q) {
 
 
   var plugins = {}
@@ -518,9 +517,9 @@ ee.factory('Plugins', function ($http, $q) {
     return deferred.promise;
   }
   return plugins;
-})
+}])
 
-ee.factory('Teleporter', function ($http, $q) {
+ee.factory('Teleporter', ["$http", "$q", function ($http, $q) {
 
 
   var teleporter = {}
@@ -584,9 +583,9 @@ ee.factory('Teleporter', function ($http, $q) {
     return deferred.promise;
   }
   return teleporter;
-})
+}])
 
-ee.factory("AgentService", function (Profiler, $q) {
+ee.factory("AgentService", ["Profiler", "$q", function (Profiler, $q) {
   var agent = {
     active: null
   }
@@ -607,9 +606,9 @@ ee.factory("AgentService", function (Profiler, $q) {
     return deferred.promise;
   }
   return agent;
-})
+}])
 
-ee.factory("BackupService", function (Profiler, $q, $http) {
+ee.factory("BackupService", ["Profiler", "$q", "$http", function (Profiler, $q, $http) {
   var backups = {}
 
 
@@ -704,10 +703,10 @@ ee.factory("BackupService", function (Profiler, $q, $http) {
     return deferred.promise;
   }
   return backups;
-})
+}]);
 
 
-ee.factory("ThreadService", function ($q, $http) {
+ee.factory("ThreadService", ["$q", "$http", function ($q, $http) {
   var threads = {};
 
   threads.dump = function (server) {
@@ -724,7 +723,7 @@ ee.factory("ThreadService", function ($q, $http) {
     return deferred.promise;
   }
   return threads;
-})
+}]);
 ee.factory("BackupCalendar", function () {
 
   var calendar = {};
@@ -868,7 +867,7 @@ ee.factory("ChartHelper", function () {
 
 })
 
-ee.factory('HaCommand', function ($http, $resource, $q) {
+ee.factory('HaCommand', ["$http", "$resource", "$q", function ($http, $resource, $q) {
 
 
   var resource = $resource('');
@@ -973,9 +972,9 @@ ee.factory('HaCommand', function ($http, $resource, $q) {
     return deferred.promise;
   }
   return resource
-});
+}]);
 
-ee.factory("SecurityService", function (Profiler, $q, $http) {
+ee.factory("SecurityService", ["Profiler", "$q", "$http", function (Profiler, $q, $http) {
   var config = {}
 
 
@@ -1001,7 +1000,7 @@ ee.factory("SecurityService", function (Profiler, $q, $http) {
     return deferred.promise;
   }
   return config;
-})
+}])
 
 
 export default ee.name;

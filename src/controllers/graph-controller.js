@@ -16,6 +16,7 @@ import '../views/database/graph/asideEmpty.html';
 import '../views/database/graph/asideEdge.html';
 import '../views/database/graph/asideVertex.html';
 import '../views/database/graphConfig.html';
+import angular from 'angular';
 
 let GraphModule = angular.module('vertex.controller', [GraphServices, Icons, BrowseConfig]);
 GraphModule.controller("VertexCreateController", ['$scope', '$routeParams', '$location', 'DocumentApi', 'Database', 'Notification', function ($scope, $routeParams, $location, DocumentApi, Database, Notification) {

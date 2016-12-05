@@ -19,6 +19,7 @@ import  'codemirror/theme/ambiance.css';
 import  'codemirror/lib/codemirror.css';
 import  'codemirror/addon/hint/show-hint.css';
 import  'codemirror/addon/dialog/dialog.css';
+import angular from 'angular';
 
 
 let CodeMirror = angular.module('ui.codemirror', []).constant('uiCodemirrorConfig', {}).directive('uiCodemirror', [

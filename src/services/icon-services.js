@@ -3,7 +3,7 @@ let IconServices = angular.module('icon.services', []);
 import Config from '../config/config.json';
 
 
-IconServices.factory('Icon', function ($http, $q, $timeout) {
+IconServices.factory('Icon', ["$http", "$q", "$timeout", function ($http, $q, $timeout) {
 
 
   var icons = {
@@ -32,6 +32,6 @@ IconServices.factory('Icon', function ($http, $q, $timeout) {
 
 
   return icons;
-});
+}]);
 
 export default IconServices.name;

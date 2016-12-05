@@ -2,7 +2,7 @@ import {API} from '../constants';
 let bookmark = angular.module('bookmarks.services', []);
 
 
-bookmark.factory('Bookmarks', function ($resource, DocumentApi, $http, $q, Database) {
+bookmark.factory('Bookmarks', ["$resource", "DocumentApi", "$http", "$q", "Database", function ($resource, DocumentApi, $http, $q, Database) {
 
   var resource = $resource(API + 'database/:database');
   var CLAZZ = "_studio"
@@ -78,16 +78,16 @@ bookmark.factory('Bookmarks', function ($resource, DocumentApi, $http, $q, Datab
     return deferred.promise;
   }
   return resource;
-});
-bookmark.factory('History', function ($resource, localStorageService, DocumentApi, $http, $q) {
+}]);
+bookmark.factory('History', ["$resource", function ($resource) {
 
   var resource = $resource(API + 'database/:database');
   var CLAZZ = "_studio_history"
   resource.CLAZZ = CLAZZ;
 
   return resource;
-});
-bookmark.factory('GraphConfig', function ($resource, localStorageService, DocumentApi, $http, $q, Database) {
+}]);
+bookmark.factory('GraphConfig', ["$resource", "localStorageService", "DocumentApi", "$http", "$q", "Database", function ($resource, localStorageService, DocumentApi, $http, $q, Database) {
 
   var resource = $resource(API + 'database/:database');
   var CLAZZ = "_studio"
@@ -153,6 +153,6 @@ bookmark.factory('GraphConfig', function ($resource, localStorageService, Docume
     return deferred.promise;
   }
   return resource;
-});
+}]);
 
 export default bookmark.name;

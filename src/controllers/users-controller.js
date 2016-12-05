@@ -5,7 +5,7 @@ import '../views/database/users/newRule.html';
 import '../views/database/users/newUser.html';
 
 import Utilities from '../util/library';
-
+import angular from 'angular';
 
 let UserModule = angular.module('users.controller', ['database.services']);
 UserModule.controller("SecurityController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'FunctionApi', 'DocumentApi', '$modal', '$q', '$route', function ($scope, $routeParams, $location, Database, CommandApi, FunctionApi, DocumentApi, $modal, $q, $route) {

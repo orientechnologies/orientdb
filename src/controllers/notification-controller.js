@@ -1,4 +1,5 @@
 import NotificationService from '../services/notification-services';
+import angular from 'angular';
 
 let NotificationController = angular.module('notification.controller', [NotificationService]).controller("NotificationController", ['$scope', 'Notification', '$rootScope', function ($scope, Notification, $rootScope) {
   $scope.alerts = Notification.notifications;

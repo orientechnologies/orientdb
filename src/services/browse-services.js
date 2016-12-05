@@ -1,6 +1,6 @@
 let browseConfig = angular.module('browse.services', []);
 
-browseConfig.factory('BrowseConfig', function ($rootScope, Database, $location, localStorageService, $timeout) {
+browseConfig.factory('BrowseConfig', ["$rootScope", "Database", "$location", "localStorageService", "$timeout", function ($rootScope, Database, $location, localStorageService, $timeout) {
 
 
   var config = {
@@ -26,6 +26,6 @@ browseConfig.factory('BrowseConfig', function ($rootScope, Database, $location, 
 
 
   return config;
-});
+}]);
 
 export default browseConfig.name;

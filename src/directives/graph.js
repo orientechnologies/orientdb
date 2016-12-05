@@ -1,5 +1,6 @@
 import OrientGraph from '../widgets/orientdb-graphviz';
 import {POLLING} from '../constants';
+import angular from 'angular';
 
 let graph = angular.module('graph', []);
 
@@ -130,7 +131,7 @@ graph.directive('ngOGraph', function () {
     link: linker
   }
 });
-graph.directive('aside', function ($http, $compile) {
+graph.directive('aside', ["$http", "$compile", function ($http, $compile) {
 
   var linker = function (scope, element, attrs) {
 
@@ -155,10 +156,10 @@ graph.directive('aside', function ($http, $compile) {
     restrict: 'A',
     link: linker
   }
-});
+}]);
 
 
-graph.directive('serverChart', function ($http, $compile, $timeout, $rootScope) {
+graph.directive('serverChart', ["$http", "$compile", "$timeout", "$rootScope", function ($http, $compile, $timeout, $rootScope) {
 
   var linker = function (scope, element, attrs) {
 
@@ -256,10 +257,10 @@ graph.directive('serverChart', function ($http, $compile, $timeout, $rootScope) 
     },
     link: linker
   }
-});
+}]);
 
 
-graph.directive('c3Gauge', function ($http, $compile, $timeout, $rootScope) {
+graph.directive('c3Gauge', ["$http", "$compile", "$timeout", function ($http, $compile, $timeout) {
   var linker = function ($scope, $element, $attrs) {
 
 
@@ -306,10 +307,10 @@ graph.directive('c3Gauge', function ($http, $compile, $timeout, $rootScope) {
     },
     link: linker
   }
-});
+}]);
 
 
-graph.directive('c3DataCenter', function ($http, $compile, $timeout, $rootScope, $location) {
+graph.directive('c3DataCenter', ["$http", "$compile", "$timeout", "$rootScope", "$location", function ($http, $compile, $timeout, $rootScope, $location) {
   var linker = function ($scope, $element, $attrs) {
 
 
@@ -402,7 +403,7 @@ graph.directive('c3DataCenter', function ($http, $compile, $timeout, $rootScope,
     },
     link: linker
   }
-});
+}]);
 
 export default graph.name;
 

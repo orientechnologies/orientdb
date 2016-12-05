@@ -1,5 +1,5 @@
 let DatabaseResolve = {
-  current: function (Database, $q, $route, $location, Spinner) {
+  current: function (Database, $q, $route) {
     var deferred = $q.defer();
     if (!Database.getMetadata()) {
       Database.refreshMetadata($route.current.params.database, function () {
@@ -17,7 +17,7 @@ let DatabaseResolve = {
   }
 }
 let InstantDatabaseResolve = {
-  current: function (Database, $q, $route, $location, Spinner) {
+  current: function (Database, $q, $route) {
     var deferred = $q.defer();
     Database.refreshMetadata($route.current.params.database, function () {
       deferred.resolve();
@@ -49,4 +49,4 @@ let AgentResolve = {
   }
 }
 
-export { DatabaseResolve ,InstantDatabaseResolve,AgentResolve};
+export {DatabaseResolve, InstantDatabaseResolve, AgentResolve};

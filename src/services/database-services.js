@@ -2,12 +2,12 @@ import 'angular-resource';
 import {API, STUDIO_VERSION} from '../constants';
 import  Base64  from 'js-base64';
 import SpinnerService from './spinner-service';
-
+import angular from 'angular';
 
 let database = angular.module('database.services', ['ngResource', SpinnerService]);
 
 
-database.factory('Database', function (DatabaseApi, localStorageService) {
+database.factory('Database', ["DatabaseApi", "localStorageService", function (DatabaseApi, localStorageService) {
 
 
   var version = STUDIO_VERSION.indexOf("SNAPSHOT") == -1 ? STUDIO_VERSION : "last";
@@ -500,9 +500,9 @@ database.factory('Database', function (DatabaseApi, localStorageService) {
 
 
   };
-});
+}]);
 
-database.factory('DatabaseApi', function ($http, $resource, $q) {
+database.factory('DatabaseApi', ["$http", "$resource", "$q", function ($http, $resource, $q) {
 
 
   var urlWiki = "https://github.com/orientechnologies/orientdb-studio/wiki/Functions";
@@ -626,8 +626,8 @@ database.factory('DatabaseApi', function ($http, $resource, $q) {
   }
 
   return resource;
-});
-database.factory('CommandApi', function ($http, $resource, Notification, Spinner, $q) {
+}]);
+database.factory('CommandApi', ["$http", "$resource", "Notification", "Spinner", "$q", function ($http, $resource, Notification, Spinner, $q) {
 
   var resource = $resource(API + 'command/:database');
 
@@ -744,9 +744,9 @@ database.factory('CommandApi', function ($http, $resource, Notification, Spinner
     return deferred.promise;
   }
   return resource;
-});
+}]);
 
-database.factory('BatchApi', function ($http, $resource, Notification, Spinner, $q) {
+database.factory('BatchApi', ["$http", "$resource", "Notification", "Spinner", "$q", function ($http, $resource, Notification, Spinner, $q) {
 
 
   var resource = $resource(API + 'command/:database');
@@ -785,8 +785,8 @@ database.factory('BatchApi', function ($http, $resource, Notification, Spinner, 
     return deferred.promise;
   }
   return resource;
-});
-database.factory('DocumentApi', function ($http, $resource, Database, $q) {
+}]);
+database.factory('DocumentApi', ["$http", "$resource", "Database", "$q", function ($http, $resource, Database, $q) {
 
   var resource = $resource(API + 'document/:database/:document');
   resource.updateDocument = function (database, rid, doc, callback) {
@@ -864,8 +864,8 @@ database.factory('DocumentApi', function ($http, $resource, Database, $q) {
     return r;
   }
   return resource;
-});
-database.factory('ServerApi', function ($http, $resource, $q) {
+}]);
+database.factory('ServerApi', ["$http", "$resource", "$q", function ($http, $resource, $q) {
 
 
   var resource = $resource(API + 'server');
@@ -897,16 +897,10 @@ database.factory('ServerApi', function ($http, $resource, $q) {
     return deferred.promise;
   }
   return resource;
-});
-database.factory('FunctionApi', function ($http, $resource) {
+}]);
 
+database.factory('FunctionApi', ["$http", "$resource", "Notification", function ($http, $resource, Notification) {
 
-  var resource = $resource(API + 'tournaments/:id');
-  return resource;
-});
-database.factory('FunctionApi', function ($http, $resource, Notification) {
-
-//    var resource = $resource(API + 'command/:database');
 
   var resource = $resource('function/:database');
   resource.executeFunction = function (params, callback, error) {
@@ -940,9 +934,9 @@ database.factory('FunctionApi', function ($http, $resource, Notification) {
     });
   }
   return resource;
-});
+}]);
 
-database.factory('DatabaseAlterApi', function ($http, $resource, $q) {
+database.factory('DatabaseAlterApi', ["$http", "$resource", "$q", function ($http, $resource, $q) {
 
 
   var resource = $resource('function/:database');
@@ -975,8 +969,8 @@ database.factory('DatabaseAlterApi', function ($http, $resource, $q) {
     return deferred.promise;
   }
   return resource
-});
-database.factory('ClassAlterApi', function ($http, $resource, $q) {
+}]);
+database.factory('ClassAlterApi', ["$http", "$resource", "$q", function ($http, $resource, $q) {
 
 
   var resource = $resource('function/:database');
@@ -995,8 +989,8 @@ database.factory('ClassAlterApi', function ($http, $resource, $q) {
     return deferred.promise;
   }
   return resource
-});
-database.factory('PropertyAlterApi', function ($http, $resource, $q) {
+}]);
+database.factory('PropertyAlterApi', ["$http", "$resource", "$q", function ($http, $resource, $q) {
 
 
   var resource = $resource('function/:database');
@@ -1016,8 +1010,8 @@ database.factory('PropertyAlterApi', function ($http, $resource, $q) {
     return deferred.promise;
   }
   return resource
-});
-database.factory('ClusterAlterApi', function ($http, $resource, $q) {
+}]);
+database.factory('ClusterAlterApi', ["$http", "$resource", "$q", function ($http, $resource, $q) {
 
 
   var resource = $resource('');
@@ -1037,7 +1031,7 @@ database.factory('ClusterAlterApi', function ($http, $resource, $q) {
     return deferred.promise;
   }
   return resource
-});
+}]);
 
 
 export default  database.name;

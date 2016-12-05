@@ -18,6 +18,7 @@ import '../views/server/general/conn.html';
 import '../views/server/general/threads.html';
 import '../views/server/general/singleServer.html';
 import '../views/widget/restartButton.html';
+import angular from 'angular';
 
 
 let ServerModule = angular.module('server.controller', []);
@@ -82,7 +83,7 @@ ServerModule.controller("ServerStatusController", ['$scope', '$rootScope', funct
   }
 }]);
 
-ServerModule.controller('MultipleServerController', function ($scope, $rootScope, $location, $routeParams, $timeout, Cluster, Profiler, $q, AgentService) {
+ServerModule.controller('MultipleServerController', ["$scope", "$rootScope", "$location", "$routeParams", "$timeout", "Cluster", "Profiler", "$q", "AgentService", function ($scope, $rootScope, $location, $routeParams, $timeout, Cluster, Profiler, $q, AgentService) {
 
   $scope.clustered = false;
 
@@ -266,12 +267,12 @@ ServerModule.controller('MultipleServerController', function ($scope, $rootScope
     }, POLLING);
   }
   initMonitoring();
-});
-ServerModule.controller('SingleChartServerController', function ($scope, ChartHelper) {
+}]);
+ServerModule.controller('SingleChartServerController', ["$scope", "ChartHelper", function ($scope, ChartHelper) {
 
   $scope.transactionHeaders = angular.copy(ChartHelper.serverStatsHeader);
-})
-ServerModule.controller('SingleServerController', function ($scope, $rootScope, $location, $routeParams, $timeout, Profiler, $q, AgentService) {
+}])
+ServerModule.controller('SingleServerController', ["$scope", "$rootScope", "$location", "$routeParams", "$timeout", "Profiler", "$q", "AgentService", function ($scope, $rootScope, $location, $routeParams, $timeout, Profiler, $q, AgentService) {
 
 
   $scope.links = {
@@ -402,7 +403,7 @@ ServerModule.controller('SingleServerController', function ($scope, $rootScope, 
 
   initStats();
 
-});
+}]);
 
 
 ServerModule.controller("ServerDashboardController", ['$scope', '$routeParams', 'Aside', 'ServerApi', 'NgTableParams', '$q', 'Notification', 'Database', function ($scope, $routeParams, Aside, ServerApi, ngTableParams, $q, Notification, Database) {
@@ -527,7 +528,7 @@ ServerModule.controller("ServerDashboardController", ['$scope', '$routeParams', 
 
 }]);
 
-ServerModule.controller('ServerConnectionController', function ($scope, $filter, NgTableParams, Cluster, AgentService, ServerApi) {
+ServerModule.controller('ServerConnectionController', ["$scope", "$filter", "NgTableParams", "Cluster", "AgentService", "ServerApi", function ($scope, $filter, NgTableParams, Cluster, AgentService, ServerApi) {
 
 
   $scope.init = false;
@@ -575,7 +576,7 @@ ServerModule.controller('ServerConnectionController', function ($scope, $filter,
   }
 
 
-})
+}]);
 
 
 ServerModule.controller("LogsController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Spinner', 'Cluster', 'AgentService', function ($scope, $http, $location, $routeParams, CommandLogApi, Spinner, Cluster, AgentService) {

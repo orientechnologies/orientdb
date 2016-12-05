@@ -1,5 +1,5 @@
 let History = angular.module('history.services', []);
-History.factory('History', function (localStorageService, Database) {
+History.factory('History', ["localStorageService", "Database", function (localStorageService, Database) {
 
   var queries = {
 
@@ -47,6 +47,6 @@ History.factory('History', function (localStorageService, Database) {
 
 
   return queries;
-});
+}]);
 
 export default History.name;
