@@ -293,7 +293,7 @@ public class OSelectStatementExecutionTest {
   }
 
   @Test
-  public void testSelectOrderByMassiveAsc() {
+  public void   testSelectOrderByMassiveAsc() {
     String className = "testSelectOrderByMassiveAsc";
     db.getMetadata().getSchema().createClass(className);
     for (int i = 0; i < 100000; i++) {

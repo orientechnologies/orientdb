@@ -241,10 +241,6 @@ public class OSelectStatement extends OStatement {
     OInternalExecutionPlan executionPlan = createExecutionPlan(ctx);
 
     OLocalResultSet result = new OLocalResultSet(executionPlan);
-    if(db instanceof OQueryLifecycleListener){
-      ((OQueryLifecycleListener) db).queryStarted(result);
-      result.addLifecycleListener((OQueryLifecycleListener)db);
-    }
     return result;
   }
 
@@ -255,10 +251,6 @@ public class OSelectStatement extends OStatement {
     OInternalExecutionPlan executionPlan = createExecutionPlan(ctx);
 
     OLocalResultSet result = new OLocalResultSet(executionPlan);
-    if(db instanceof OQueryLifecycleListener){
-      ((OQueryLifecycleListener) db).queryStarted(result);
-      result.addLifecycleListener((OQueryLifecycleListener)db);
-    }
     return result;
   }
 

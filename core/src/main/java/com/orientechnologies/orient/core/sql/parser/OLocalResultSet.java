@@ -1,18 +1,18 @@
 package com.orientechnologies.orient.core.sql.parser;
 
-import com.orientechnologies.orient.core.db.document.OQueryLifecycleListener;
 import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * Created by luigidellaquila on 07/07/16.
  */
 public class OLocalResultSet implements OTodoResultSet {
-  List<OQueryLifecycleListener> lifecycleListeners = new ArrayList<>();
 
   private OTodoResultSet lastFetch = null;
   private final OInternalExecutionPlan executionPlan;
@@ -57,8 +57,6 @@ public class OLocalResultSet implements OTodoResultSet {
 
   @Override public void close() {
     executionPlan.close();
-    this.lifecycleListeners.forEach(x -> x.queryClosed(this));
-    this.lifecycleListeners.clear();
   }
 
   @Override public Optional<OExecutionPlan> getExecutionPlan() {
@@ -69,7 +67,4 @@ public class OLocalResultSet implements OTodoResultSet {
     return new HashMap<>();//TODO
   }
 
-  public void addLifecycleListener(OQueryLifecycleListener db) {
-    this.lifecycleListeners.add(db);
-  }
 }

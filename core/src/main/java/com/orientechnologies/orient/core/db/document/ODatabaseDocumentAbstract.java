@@ -66,7 +66,6 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
 import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorageComponent;
@@ -2921,22 +2920,6 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       });
     }
     return sharedContext;
-  }
-
-  public OTodoResultSet query(String query, Object... args) {
-    return getStorage().query(this, query, args);
-  }
-
-  public OTodoResultSet query(String query, Map args) {
-    return getStorage().query(this, query, args);
-  }
-
-  public OTodoResultSet command(String query, Object... args) {
-    return getStorage().command(this, query, args);
-  }
-
-  public OTodoResultSet command(String query, Map args) {
-    return getStorage().command(this, query, args);
   }
 
   public static Object executeWithRetries(final OCallable<Object, Integer> callback, final int maxRetry) {

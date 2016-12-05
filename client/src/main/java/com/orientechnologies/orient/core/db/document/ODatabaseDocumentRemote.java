@@ -23,29 +23,25 @@ package com.orientechnologies.orient.core.db.document;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
+import com.orientechnologies.orient.client.remote.message.ORemoteResultSet;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseListener;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.OSharedContext;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentAbstract;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.index.ClassIndexManagerRemote;
-import com.orientechnologies.orient.core.metadata.OMetadataDefault;
-import com.orientechnologies.orient.core.metadata.security.*;
+import com.orientechnologies.orient.core.metadata.security.OImmutableUser;
+import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.OToken;
+import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
+import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
 
 import java.util.Collections;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.Callable;
 
 /**
  * Created by tglman on 30/06/16.
@@ -53,8 +49,8 @@ import java.util.concurrent.Callable;
 public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
 
   protected OStorageRemoteSession sessionMetadata;
-  private OrientDBConfig          config;
-  private OStorageRemote          storage;
+  private   OrientDBConfig        config;
+  private   OStorageRemote        storage;
 
   public ODatabaseDocumentRemote(final OStorageRemote storage) {
     activateOnCurrentThread();
@@ -86,28 +82,23 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     throw new UnsupportedOperationException("Use OrientDBFactory");
   }
 
-  @Deprecated
-  public <DB extends ODatabase> DB open(final OToken iToken) {
+  @Deprecated public <DB extends ODatabase> DB open(final OToken iToken) {
     throw new UnsupportedOperationException("Deprecated Method");
   }
 
-  @Override
-  public <DB extends ODatabase> DB create() {
+  @Override public <DB extends ODatabase> DB create() {
     throw new UnsupportedOperationException("Deprecated Method");
   }
 
-  @Override
-  public <DB extends ODatabase> DB create(String incrementalBackupPath) {
+  @Override public <DB extends ODatabase> DB create(String incrementalBackupPath) {
     throw new UnsupportedOperationException("use OrientDBFactory");
   }
 
-  @Override
-  public <DB extends ODatabase> DB create(final Map<OGlobalConfiguration, Object> iInitialSettings) {
+  @Override public <DB extends ODatabase> DB create(final Map<OGlobalConfiguration, Object> iInitialSettings) {
     throw new UnsupportedOperationException("use OrientDBFactory");
   }
 
-  @Override
-  public void drop() {
+  @Override public void drop() {
     throw new UnsupportedOperationException("use OrientDBFactory");
   }
 
@@ -123,8 +114,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     return database;
   }
 
-  @Override
-  public boolean exists() {
+  @Override public boolean exists() {
     throw new UnsupportedOperationException("use OrientDBFactory");
   }
 
@@ -205,13 +195,35 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     this.sessionMetadata = sessionMetadata;
   }
 
-  @Override
-  public OStorage getStorage() {
+  @Override public OStorage getStorage() {
     return storage;
   }
 
-  @Override
-  public void replaceStorage(OStorage iNewStorage) {
+  @Override public void replaceStorage(OStorage iNewStorage) {
     throw new UnsupportedOperationException("unsupported replace of storage for remote database");
+  }
+
+  @Override public OTodoResultSet query(String query, Object[] args) {
+    return storage.query(this, query, args);
+  }
+
+  @Override public OTodoResultSet query(String query, Map args) {
+    return storage.query(this, query, args);
+  }
+
+  @Override public OTodoResultSet command(String query, Object[] args) {
+    return storage.command(this, query, args);
+  }
+
+  @Override public OTodoResultSet command(String query, Map args) {
+    return storage.command(this, query, args);
+  }
+
+  public void closeQuery(String queryId) {
+    storage.closeQuery(this, queryId);
+  }
+
+  public void fetchNextPage(ORemoteResultSet rs) {
+    storage.fetchNextPage(this, rs);
   }
 }
