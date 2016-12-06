@@ -55,7 +55,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.security.SecureRandom;
 import java.util.*;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -394,7 +393,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
   @Override
   public long getClusterTime() {
-    return hazelcastInstance.getCluster().getClusterTime();
+    try {
+      return hazelcastInstance.getCluster().getClusterTime();
+    } catch (HazelcastInstanceNotActiveException e) {
+      return -1;
+    }
   }
 
   @Override
@@ -476,7 +479,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       Member member = activeNodes.get(rNodeName);
       if (member == null) {
         // SYNC PROBLEMS? TRY TO RETRIEVE THE SERVER INFORMATION FROM THE CLUSTER MAP
-        for (Iterator<Map.Entry<String, Object>> it = getConfigurationMap().entrySet().iterator(); it.hasNext();) {
+        for (Iterator<Map.Entry<String, Object>> it = getConfigurationMap().localEntrySet().iterator(); it.hasNext();) {
           final Map.Entry<String, Object> entry = it.next();
           if (entry.getKey().startsWith(CONFIG_NODE_PREFIX)) {
             final ODocument nodeCfg = (ODocument) entry.getValue();
@@ -670,7 +673,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   }
 
   @Override
-  public ConcurrentMap<String, Object> getConfigurationMap() {
+  public OHazelcastDistributedMap getConfigurationMap() {
     return configurationMap;
   }
 

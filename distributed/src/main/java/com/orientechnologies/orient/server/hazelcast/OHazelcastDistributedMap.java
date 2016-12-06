@@ -19,15 +19,15 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
 import com.hazelcast.core.*;
 import com.hazelcast.map.listener.EntryAddedListener;
 import com.hazelcast.map.listener.EntryRemovedListener;
 import com.hazelcast.map.listener.EntryUpdatedListener;
 import com.hazelcast.map.listener.MapClearedListener;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Optimized concurrent hash map implementation on top of Hazelcast distributed map.
@@ -62,6 +62,10 @@ public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object> 
   @Override
   public Set<Entry<String, Object>> entrySet() {
     return hzMap.entrySet();
+  }
+
+  public Set<Entry<String, Object>> localEntrySet() {
+    return super.entrySet();
   }
 
   public Object getLocalCachedValue(final Object key) {

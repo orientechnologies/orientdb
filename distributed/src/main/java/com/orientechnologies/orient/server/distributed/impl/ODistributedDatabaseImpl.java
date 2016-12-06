@@ -884,7 +884,10 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       return;
 
     lastLSN.put(sourceNodeName, taskLastLSN);
-    lastOperationTimestamp = manager.getClusterTime();
+
+    final long clusterTime = manager.getClusterTime();
+    if (clusterTime > -1)
+      lastOperationTimestamp = clusterTime;
 
     if (System.currentTimeMillis() - lastLSNWrittenOnDisk > 2000) {
       saveLSNTable(sourceNodeName);

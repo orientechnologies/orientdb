@@ -205,6 +205,7 @@ public class ODistributedResponseManager {
     try {
 
       localResponse = new ODistributedResponse(request.getId(), localNodeName, localNodeName, localResult);
+      receivedCurrentNode = true;
       collectResponse(localResponse);
 
     } finally {

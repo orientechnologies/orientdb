@@ -114,7 +114,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
     switch (recordStatus) {
     case REMOVED:
       // RECYCLE THE RID AND OVERWRITE IT WITH THE NEW CONTENT
-      ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().recyclePosition(rid, new byte[]{}, version, recordType);
+      ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().recyclePosition(rid, new byte[] {}, version, recordType);
 
       // CREATE A RECORD TO CALL ALL THE HOOKS (LIKE INDEXES FOR UNIQUE CONSTRAINTS)
       final ORecord loadedRecordInstance = Orient.instance().getRecordFactoryManager().newInstance(recordType);
@@ -136,59 +136,59 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
       // GOES DOWN
 
     case NOT_EXISTENT:
-//      try {
-        ORecordId newRid;
-        do {
-          getRecord();
+      // try {
+      ORecordId newRid;
+      do {
+        getRecord();
 
-          if (clusterId > -1)
-            record.save(database.getClusterNameById(clusterId), true);
-          else if (rid.getClusterId() != -1)
-            record.save(database.getClusterNameById(rid.getClusterId()), true);
-          else
-            record.save();
+        if (clusterId > -1)
+          record.save(database.getClusterNameById(clusterId), true);
+        else if (rid.getClusterId() != -1)
+          record.save(database.getClusterNameById(rid.getClusterId()), true);
+        else
+          record.save();
 
-          newRid = (ORecordId) record.getIdentity();
-          if (newRid.getClusterPosition() >= rid.getClusterPosition())
-            break;
+        newRid = (ORecordId) record.getIdentity();
+        if (newRid.getClusterPosition() >= rid.getClusterPosition())
+          break;
 
-          // CREATE AN HOLE
-          record.delete();
-          record = null;
+        // CREATE AN HOLE
+        record.delete();
+        record = null;
 
-        } while (newRid.getClusterPosition() < rid.getClusterPosition());
+      } while (newRid.getClusterPosition() < rid.getClusterPosition());
 
-        if (!rid.equals(newRid)) {
-          ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-              "Record %s has been saved with the RID %s instead of the expected %s reqId=%s", record, newRid, rid, requestId);
+      if (!rid.equals(newRid)) {
+        ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+            "Record %s has been saved with the RID %s instead of the expected %s reqId=%s", record, newRid, rid, requestId);
 
-          // DELETE THE INVALID RECORD FIRST
-          record.delete();
+        // DELETE THE INVALID RECORD FIRST
+        record.delete();
 
-          throw new ODistributedException(
-              "Record " + rid + " has been saved with the different RID " + newRid + " on server " + iManager.getLocalNodeName());
-        }
+        throw new ODistributedException(
+            "Record " + rid + " has been saved with the different RID " + newRid + " on server " + iManager.getLocalNodeName());
+      }
 
-        ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-            "+-> assigned new rid %s/%s v.%d reqId=%s", database.getName(), rid.toString(), record.getVersion(), requestId);
+      ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+          "+-> assigned new rid %s/%s v.%d reqId=%s", database.getName(), rid.toString(), record.getVersion(), requestId);
 
-//      } catch (ORecordDuplicatedException e) {
-//        // DUPLICATED INDEX ON THE TARGET: CREATE AN EMPTY RECORD JUST TO MAINTAIN THE RID AND LET TO THE FIX OPERATION TO SORT OUT
-//        // WHAT HAPPENED
-//        ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-//            "+-> duplicated record %s (existent=%s), assigned new rid %s/%s v.%d reqId=%s", record, e.getRid(), database.getName(),
-//            rid.toString(), record.getVersion(), requestId);
-//
-//        record.clear();
-//        if (clusterId > -1)
-//          record.save(database.getClusterNameById(clusterId), true);
-//        else if (rid.getClusterId() != -1)
-//          record.save(database.getClusterNameById(rid.getClusterId()), true);
-//        else
-//          record.save();
-//
-//        throw e;
-//      }
+      // } catch (ORecordDuplicatedException e) {
+      // // DUPLICATED INDEX ON THE TARGET: CREATE AN EMPTY RECORD JUST TO MAINTAIN THE RID AND LET TO THE FIX OPERATION TO SORT OUT
+      // // WHAT HAPPENED
+      // ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+      // "+-> duplicated record %s (existent=%s), assigned new rid %s/%s v.%d reqId=%s", record, e.getRid(), database.getName(),
+      // rid.toString(), record.getVersion(), requestId);
+      //
+      // record.clear();
+      // if (clusterId > -1)
+      // record.save(database.getClusterNameById(clusterId), true);
+      // else if (rid.getClusterId() != -1)
+      // record.save(database.getClusterNameById(rid.getClusterId()), true);
+      // else
+      // record.save();
+      //
+      // throw e;
+      // }
     }
 
     // IMPROVED TRANSPORT BY AVOIDING THE RECORD CONTENT, BUT JUST RID + VERSION
@@ -219,7 +219,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
   @Override
   public ORemoteTask getFixTask(final ODistributedRequest iRequest, ORemoteTask iOriginalTask, final Object iBadResponse,
       final Object iGoodResponse, final String executorNode, final ODistributedServerManager dManager) {
-    if (iBadResponse instanceof Throwable)
+    if (iBadResponse == null || iBadResponse instanceof Throwable)
       return null;
 
     final OPlaceholder badResult = (OPlaceholder) iBadResponse;

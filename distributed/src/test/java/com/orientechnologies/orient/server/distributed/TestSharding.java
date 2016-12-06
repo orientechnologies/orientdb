@@ -15,17 +15,17 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import org.junit.Assert;
-import org.junit.Test;
-
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.*;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class TestSharding extends AbstractServerClusterTest {
 
@@ -387,7 +387,17 @@ public class TestSharding extends AbstractServerClusterTest {
         g.command(new OCommandSQL("create vertex `Client-Type` set `name-property` = 'temp2'")).execute();
         g.command(new OCommandSQL("create vertex `Client-Type` set `name-property` = 'temp3'")).execute();
 
-        g.command(new OCommandSQL("delete vertex `Client-Type`")).execute();
+        try {
+          g.command(new OCommandSQL("delete vertex `Client-Type`")).execute();
+          Assert.fail();
+        } catch (ODistributedOperationException e) {
+          Assert.assertTrue(e.getMessage().contains("because it is not idempotent and a map-reduce has been requested"));
+        }
+
+        final Iterable<OrientVertex> res = g.command(new OCommandSQL("select from `Client-Type`")).execute();
+        for (OrientVertex v : res) {
+          v.remove();
+        }
 
         Iterable<OrientVertex> countResultAfterFullDelete = g.command(new OCommandSQL("select from `Client-Type`")).execute();
         long totalAfterFullDelete = 0;
