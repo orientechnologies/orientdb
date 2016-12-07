@@ -20,11 +20,11 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.exception.OSerializationException;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 
 import java.io.*;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Immutable class to store and handle information about synchronization between nodes.
@@ -32,12 +32,17 @@ import java.io.*;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class ODistributedSyncConfiguration {
-  private static final String LAST_OPERATION_TIME_STAMP = "lastOperationTimeStamp";
-  private ODocument           configuration;
-  private File                file;
+  private final ODistributedServerManager       dManager;
+  private final Map<String, OLogSequenceNumber> lastLSN                = new ConcurrentHashMap<String, OLogSequenceNumber>();
 
-  public ODistributedSyncConfiguration(final File file) throws IOException {
-    configuration = new ODocument();
+  private ODistributedMomentum                  momentum;
+  private File                                  file;
+  private long                                  lastOperationTimestamp = -1;
+  private long                                  lastLSNWrittenOnDisk   = 0l;
+
+  public ODistributedSyncConfiguration(final ODistributedServerManager manager, final File file) throws IOException {
+    dManager = manager;
+    momentum = new ODistributedMomentum();
     this.file = file;
 
     if (!file.exists()) {
@@ -48,7 +53,7 @@ public class ODistributedSyncConfiguration {
 
     final InputStream is = new FileInputStream(file);
     try {
-      configuration.fromJSON(is);
+      momentum.fromJSON(is);
 
     } catch (OSerializationException e) {
       // CORRUPTED: RECREATE IT
@@ -60,45 +65,38 @@ public class ODistributedSyncConfiguration {
     }
   }
 
-  public OLogSequenceNumber getLSN(final String iNode) {
-    synchronized (configuration) {
-      final ODocument embedded = configuration.field(iNode);
-      if (embedded == null)
-        return null;
-
-      return new OLogSequenceNumber((Long) embedded.field("segment"), (Long) embedded.field("position"));
-    }
+  public ODistributedMomentum getMomentum() {
+    updateInternalDocument();
+    return momentum;
   }
 
-  public void setLSN(final String iNode, final OLogSequenceNumber iLSN) {
-    final ODocument embedded = new ODocument();
-    embedded.field("segment", iLSN.getSegment(), OType.LONG);
-    embedded.field("position", iLSN.getPosition(), OType.LONG);
-
-    synchronized (configuration) {
-      configuration.field(iNode, embedded, OType.EMBEDDED);
-      incrementVersion();
-    }
+  public void setMomentum(final ODistributedMomentum momentum) {
+    this.momentum = momentum;
   }
 
-  public long getLastOperationTimestamp() {
-    synchronized (configuration) {
-      final Long ts = configuration.field("lastOperationTimeStamp");
-      if (ts == null)
-        return -1;
-
-      return ts;
-    }
+  public OLogSequenceNumber getLastLSN(final String server) {
+    return lastLSN.get(server);
   }
 
-  public void setLastOperationTimestamp(final long lastOperationTimestamp) throws IOException {
-    synchronized (configuration) {
-      configuration.field(LAST_OPERATION_TIME_STAMP, lastOperationTimestamp);
-      incrementVersion();
+  public void setLastLSN(final String server, final OLogSequenceNumber lsn, final boolean updateLastOperationTimestamp)
+      throws IOException {
+    lastLSN.put(server, lsn);
+
+    if (updateLastOperationTimestamp) {
+      final long clusterTime = dManager.getClusterTime();
+      if (clusterTime > -1)
+        lastOperationTimestamp = clusterTime;
     }
+
+    if (System.currentTimeMillis() - lastLSNWrittenOnDisk > 2000)
+      save();
   }
 
   public void save() throws IOException {
+    updateInternalDocument();
+
+    lastLSNWrittenOnDisk = System.currentTimeMillis();
+
     if (!file.exists()) {
       file.getParentFile().mkdirs();
       file.createNewFile();
@@ -106,26 +104,19 @@ public class ODistributedSyncConfiguration {
 
     final OutputStream os = new FileOutputStream(file, false);
     try {
-
-      synchronized (configuration) {
-        configuration.toJSON(os);
-      }
+      momentum.toJSON(os);
     } finally {
       os.close();
     }
   }
 
-  public boolean isEmpty() {
-    synchronized (configuration) {
-      return configuration.isEmpty();
-    }
+  public long getLastOperationTimestamp() {
+    return lastOperationTimestamp;
   }
 
-  private void incrementVersion() {
-    // INCREMENT VERSION
-    Integer oldVersion = configuration.field("version");
-    if (oldVersion == null)
-      oldVersion = 0;
-    configuration.field("version", oldVersion.intValue() + 1);
+  protected void updateInternalDocument() {
+    momentum.setLastOperationTimestamp(lastOperationTimestamp);
+    for (Map.Entry<String, OLogSequenceNumber> entry : lastLSN.entrySet())
+      momentum.setLSN(entry.getKey(), entry.getValue());
   }
 }

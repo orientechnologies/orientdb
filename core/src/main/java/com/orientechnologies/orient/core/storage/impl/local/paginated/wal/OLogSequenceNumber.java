@@ -73,6 +73,8 @@ public class OLogSequenceNumber implements Comparable<OLogSequenceNumber> {
 
   @Override
   public int compareTo(final OLogSequenceNumber otherNumber) {
+    if (otherNumber == null)
+      return 1;
     if (segment > otherNumber.segment)
       return 1;
     if (segment < otherNumber.segment)
@@ -93,6 +95,6 @@ public class OLogSequenceNumber implements Comparable<OLogSequenceNumber> {
 
   @Override
   public String toString() {
-    return "OLogSequenceNumber{segment=" + segment + ", position=" + position + '}';
+    return "LSN{segment=" + segment + ", position=" + position + '}';
   }
 }

@@ -108,10 +108,10 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
     iManager.getConfigurationMap().put(DEPLOYDB + databaseName, random);
 
     final ODistributedDatabase dDatabase = iManager.getMessageService().getDatabase(databaseName);
-    if (dDatabase.getLastOperationTimestamp() < lastOperationTimestamp) {
+    if (dDatabase.getSyncConfiguration().getLastOperationTimestamp() < lastOperationTimestamp) {
       final String msg = String.format(
           "Skip deploying delta database '%s' because the requesting server has a most recent database (reqLastOperation=%s currLastOperation=%s)",
-          databaseName, new Date(lastOperationTimestamp), new Date(dDatabase.getLastOperationTimestamp()));
+          databaseName, new Date(lastOperationTimestamp), new Date(dDatabase.getSyncConfiguration().getLastOperationTimestamp()));
       ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE, msg);
 
       throw new ODatabaseIsOldException(msg);
@@ -172,7 +172,7 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
         exception.set(new ODistributedDatabaseDeltaSyncException(startLSN));
       } else
         ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-            "Delta backup of database '%s' completed. range=%s-%s", databaseName, startLSN, endLSN);
+            "Delta backup of database '%s' completed. range=%s-%s", databaseName, startLSN, endLSN.get());
 
     } catch (Exception e) {
       // UNKNOWN ERROR, DELTA NOT AVAILABLE, TRY WITH FULL BACKUP
@@ -203,7 +203,11 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
     ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
         "Deploy delta database task completed");
 
-    final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(backupFile, 0, CHUNK_MAX_SIZE, endLSN.get(), false);
+    // GET THE MOMENTUM, BUT OVERWRITE THE LAST LSN RECEIVED FROM THE DELTA
+    final ODistributedMomentum momentum = dDatabase.getSyncConfiguration().getMomentum().copy();
+    momentum.setLSN(iManager.getLocalNodeName(), endLSN.get());
+
+    final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(backupFile, 0, CHUNK_MAX_SIZE, momentum, false);
 
     ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
         "- transferring chunk #%d offset=%d size=%s...", 1, 0, OFileUtils.getSizeAsNumber(chunk.buffer.length));

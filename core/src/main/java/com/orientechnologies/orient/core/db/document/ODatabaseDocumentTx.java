@@ -3241,7 +3241,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
   public void checkIfActive() {
     final ODatabaseRecordThreadLocal tl = ODatabaseRecordThreadLocal.INSTANCE;
-    final ODatabaseDocumentInternal currentDatabase = tl != null ? tl.get() : null;
+    final ODatabaseDocumentInternal currentDatabase = tl != null ? tl.getIfDefined() : null;
     if (currentDatabase != this)
       throw new IllegalStateException(
           "The current database instance (" + toString() + ") is not active on the current thread (" + Thread.currentThread()

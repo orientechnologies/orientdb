@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -30,7 +31,7 @@ public class SplitBrainNetworkTest extends AbstractHARemoveNode {
 
   @Test
   public void test() throws Exception {
-    useTransactions = false;
+    useTransactions = true;
     count = 10;
     startupNodesInSequence = true;
     init(SERVERS);
@@ -41,6 +42,8 @@ public class SplitBrainNetworkTest extends AbstractHARemoveNode {
   @Override
   protected void onAfterExecution() throws Exception {
     banner("SIMULATE ISOLATION OF SERVER " + (SERVERS - 1) + "...");
+
+    checkRecordCount();
 
     serverInstance.get(2).disconnectFrom(serverInstance.get(0), serverInstance.get(1));
 
@@ -62,6 +65,8 @@ public class SplitBrainNetworkTest extends AbstractHARemoveNode {
 
     banner("RUN TEST WITHOUT THE OFFLINE SERVER " + (SERVERS - 1) + "...");
 
+    checkRecordCount();
+
     count = 10;
     final long currentRecords = expected;
 
@@ -71,28 +76,30 @@ public class SplitBrainNetworkTest extends AbstractHARemoveNode {
     } catch (AssertionError e) {
       final String message = e.getMessage();
       Assert.assertTrue(message,
-          message.contains("count is not what was expected expected:<" + expected + "> but was:<" + currentRecords + ">"));
+          message.contains("count is not what was expected expected:<" + expected + "> but was:<" + (currentRecords) + ">"));
     }
 
     banner("TEST WITH THE ISOLATED NODE FINISHED, REJOIN THE SERVER " + (SERVERS - 1) + "...");
 
-    for (ServerRun s : serverInstance) {
-      OLogManager.instance().info(this, "MAP SERVER %s", s.getServerId());
-      for (Map.Entry<String, Object> entry : s.server.getDistributedManager().getConfigurationMap().entrySet()) {
-        OLogManager.instance().info(this, " %s=%s", entry.getKey(), entry.getValue());
-      }
-    }
+    // dumpDistributedMap();
 
+    // FORCE THE REJOIN
     serverInstance.get(2).rejoin(serverInstance.get(0), serverInstance.get(1));
 
-    Thread.sleep(10000);
+    count = 1000;
+    // CREATE NEW RECORD IN THE MEANWHILE ON SERVERS 1 AND 2
+    banner("RUNNING ONE WRITER ONLY ON SERVER 0");
+    createWriter(0, 100, getDatabaseURL(serverInstance.get(0))).call();
+    banner("RUNNING ONE WRITER ONLY ON SERVER 1");
+    createWriter(1, 101, getDatabaseURL(serverInstance.get(1))).call();
 
-    for (ServerRun s : serverInstance) {
-      OLogManager.instance().info(this, "MAP SERVER %s", s.getServerId());
-      for (Map.Entry<String, Object> entry : s.server.getDistributedManager().getConfigurationMap().entrySet()) {
-        OLogManager.instance().info(this, " %s=%s", entry.getKey(), entry.getValue());
-      }
-    }
+    expected += count * 2;
+
+    Thread.sleep(5000);
+
+    count = 10;
+
+    // dumpDistributedMap();
 
     waitForDatabaseIsOnline(0, "europe-2", getDatabaseName(), 90000);
     assertDatabaseStatusEquals(0, "europe-2", getDatabaseName(), ODistributedServerManager.DB_STATUS.ONLINE);
@@ -101,11 +108,34 @@ public class SplitBrainNetworkTest extends AbstractHARemoveNode {
 
     banner("NETWORK FOR THE ISOLATED NODE " + (SERVERS - 1) + " HAS BEEN RESTORED");
 
+    checkRecordCount();
+
     banner("RESTARTING TESTS WITH SERVER " + (SERVERS - 1) + " CONNECTED...");
 
     count = 10;
 
     executeMultipleTest();
+  }
+
+  private void dumpDistributedMap() {
+    for (ServerRun s : serverInstance) {
+      OLogManager.instance().info(this, "MAP SERVER %s", s.getServerId());
+      for (Map.Entry<String, Object> entry : s.server.getDistributedManager().getConfigurationMap().entrySet()) {
+        OLogManager.instance().info(this, " %s=%s", entry.getKey(), entry.getValue());
+      }
+    }
+  }
+
+  private void checkRecordCount() {
+    for (ServerRun s : serverInstance) {
+      final ODatabaseDocumentTx db = new ODatabaseDocumentTx(getDatabaseURL(s)).open("admin", "admin");
+      try {
+        final long found = db.countClass("Person");
+        Assert.assertEquals("Server " + s + " expected " + expected + " but found " + found, expected, found);
+      } finally {
+        db.close();
+      }
+    }
   }
 
   protected String getDatabaseURL(final ServerRun server) {

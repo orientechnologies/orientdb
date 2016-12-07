@@ -36,10 +36,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
-import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
-import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
-import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
+import com.orientechnologies.orient.server.distributed.task.*;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
 import java.io.File;
@@ -48,7 +45,9 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -57,10 +56,7 @@ import java.util.concurrent.locks.Lock;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class ODistributedDatabaseImpl implements ODistributedDatabase {
-
   public static final String                                                    DISTRIBUTED_SYNC_JSON_FILENAME = "distributed-sync.json";
-  public static final String                                                    DISTRIBUTED_STATUS_FILENAME    = "distributed-status.json";
-
   private static final String                                                   NODE_LOCK_PREFIX               = "orientdb.reqlock.";
   private static final HashSet<Integer>                                         ALL_QUEUES                     = new HashSet<Integer>();
   protected final ODistributedAbstractPlugin                                    manager;
@@ -76,13 +72,13 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   protected final List<ODistributedWorker>                                      workerThreads                  = new ArrayList<ODistributedWorker>();
   private String                                                                localNodeName;
 
-  private Map<String, OLogSequenceNumber>                                       lastLSN                        = new ConcurrentHashMap<String, OLogSequenceNumber>();
-  private long                                                                  lastOperationTimestamp         = -1;
-  private long                                                                  lastLSNWrittenOnDisk           = 0l;
   private AtomicLong                                                            totalSentRequests              = new AtomicLong();
   private AtomicLong                                                            totalReceivedRequests          = new AtomicLong();
   private TimerTask                                                             txTimeoutTask                  = null;
   private volatile boolean                                                      running                        = true;
+  private AtomicBoolean                                                         parsing                        = new AtomicBoolean(
+      true);
+  private AtomicReference<ODistributedMomentum>                                 filterByMomentum               = new AtomicReference<ODistributedMomentum>();
 
   private class ODistributedLock {
     final ODistributedRequestId reqId;
@@ -157,11 +153,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   public OLogSequenceNumber getLastLSN(final String server) {
     if (server == null)
       return null;
-    return lastLSN.get(server);
-  }
-
-  public long getLastLSNWrittenOnDisk() {
-    return lastLSNWrittenOnDisk;
+    return getSyncConfiguration().getLastLSN(server);
   }
 
   /**
@@ -169,21 +161,43 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
    * against the same record cluster.
    */
   public void processRequest(final ODistributedRequest request) {
+    if (!running)
+      // DISCARD IT
+      return;
+
+    if (!parsing.get()) {
+      // WAIT FOR PARSING REQUESTS
+      while (!parsing.get()) {
+        try {
+          Thread.sleep(300);
+        } catch (InterruptedException e) {
+          break;
+        }
+      }
+
+      if (!running)
+        // DISCARD IT
+        return;
+    }
+
     final ORemoteTask task = request.getTask();
 
     totalReceivedRequests.incrementAndGet();
 
-    // if (task instanceof OAbstractReplicatedTask) {
-    // final OLogSequenceNumber taskLastLSN = ((OAbstractReplicatedTask) task).getLastLSN();
-    // final OLogSequenceNumber lastLSN = getLastLSN(manager.getNodeNameById(request.getId().getNodeId()));
-    //
-    // if (taskLastLSN != null && lastLSN != null && taskLastLSN.compareTo(lastLSN) < 0) {
-    // // SKIP REQUEST BECAUSE CONTAINS AN OLD LSN
-    // ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE,
-    // "Skipped request %s on database '%s' because LSN %s < current LSN %s", request, databaseName, taskLastLSN, lastLSN);
-    // return;
-    // }
-    // }
+    final ODistributedMomentum lastMomentum = filterByMomentum.get();
+    if (lastMomentum != null && task instanceof OAbstractReplicatedTask) {
+      final OLogSequenceNumber taskLastLSN = ((OAbstractReplicatedTask) task).getLastLSN();
+
+      final String sourceServer = manager.getNodeNameById(request.getId().getNodeId());
+      final OLogSequenceNumber lastLSNFromMomentum = lastMomentum.getLSN(sourceServer);
+
+      if (taskLastLSN != null && lastLSNFromMomentum != null && taskLastLSN.compareTo(lastLSNFromMomentum) < 0) {
+        // SKIP REQUEST BECAUSE CONTAINS AN OLD LSN
+        ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE,
+            "Skipped request %s on database '%s' because %s < current %s", request, databaseName, taskLastLSN, lastLSNFromMomentum);
+        return;
+      }
+    }
 
     final int[] partitionKeys = task.getPartitionKey();
 
@@ -537,11 +551,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   @Override
-  public long getLastOperationTimestamp() {
-    return lastOperationTimestamp;
-  }
-
-  @Override
   public void unlockRecord(final OIdentifiable iRecord, final ODistributedRequestId requestId) {
     if (requestId == null)
       return;
@@ -617,13 +626,17 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       final String path = manager.getServerInstance().getDatabaseDirectory() + databaseName + "/" + DISTRIBUTED_SYNC_JSON_FILENAME;
       final File cfgFile = new File(path);
       try {
-        syncConfiguration = new ODistributedSyncConfiguration(cfgFile);
+        syncConfiguration = new ODistributedSyncConfiguration(manager, cfgFile);
       } catch (IOException e) {
         throw new ODistributedException("Cannot open database distributed sync configuration file: " + cfgFile);
       }
     }
 
     return syncConfiguration;
+  }
+
+  public void filterBeforeThisMomentum(final ODistributedMomentum momentum) {
+    this.filterByMomentum.set(momentum);
   }
 
   @Override
@@ -714,16 +727,12 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
       // SAVE SYNC CONFIGURATION
       try {
-        for (String server : lastLSN.keySet())
-          saveLSNTable(server);
-        getSyncConfiguration().setLastOperationTimestamp(lastOperationTimestamp);
         getSyncConfiguration().save();
       } catch (IOException e) {
         ODistributedServerLog.warn(this, localNodeName, null, DIRECTION.NONE,
             "Error on saving distributed LSN table for database '%s'", databaseName);
       }
-      lastLSN.clear();
-      lastOperationTimestamp = -1;
+      syncConfiguration = null;
 
       ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE,
           "Shutting down distributed database manager '%s'. Pending objects: txs=%d locks=%d", databaseName,
@@ -879,37 +888,18 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   @Override
-  public void setLSN(final String sourceNodeName, final OLogSequenceNumber taskLastLSN) throws IOException {
+  public void setLSN(final String sourceNodeName, final OLogSequenceNumber taskLastLSN, final boolean updateLastOperationTimestamp)
+      throws IOException {
     if (taskLastLSN == null)
       return;
 
-    lastLSN.put(sourceNodeName, taskLastLSN);
-
-    final long clusterTime = manager.getClusterTime();
-    if (clusterTime > -1)
-      lastOperationTimestamp = clusterTime;
-
-    if (System.currentTimeMillis() - lastLSNWrittenOnDisk > 2000) {
-      saveLSNTable(sourceNodeName);
-      syncConfiguration.setLastOperationTimestamp(lastOperationTimestamp);
-      syncConfiguration.save();
-    }
+    final ODistributedSyncConfiguration cfg = getSyncConfiguration();
+    cfg.setLastLSN(sourceNodeName, taskLastLSN, updateLastOperationTimestamp);
   }
 
   @Override
   public ODistributedDatabaseRepairer getDatabaseRepairer() {
     return repairer;
-  }
-
-  protected void saveLSNTable(final String sourceNodeName) {
-    final OLogSequenceNumber storedLSN = lastLSN.get(sourceNodeName);
-
-    getSyncConfiguration().setLSN(sourceNodeName, storedLSN);
-
-    ODistributedServerLog.debug(this, localNodeName, sourceNodeName, DIRECTION.NONE, "Updating LSN table to the value %s",
-        storedLSN);
-
-    lastLSNWrittenOnDisk = System.currentTimeMillis();
   }
 
   private void startTxTimeoutTimerTask() {
@@ -965,7 +955,11 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   private boolean isRunning() {
-    return true;
+    return running;
+  }
+
+  public void setParsing(final boolean parsing) {
+    this.parsing.set(parsing);
   }
 
   @Override
@@ -975,6 +969,5 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       OLogManager.instance().info(this, "- %s = %s (count=%d)", entry.getKey(), entry.getValue().reqId,
           entry.getValue().lock.getCount());
     }
-
   }
 }

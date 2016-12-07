@@ -366,8 +366,8 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
     checkIndexedEntries();
   }
 
-  protected void computeExpected(final int serverId) {
-    expected = writerCount * count * serverId + baseCount;
+  protected void computeExpected(final int servers) {
+    expected = writerCount * count * servers + baseCount;
   }
 
   protected void onBeforeChecks() throws InterruptedException {

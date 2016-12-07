@@ -256,6 +256,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       if (getMessageService().getDatabase(dbName) == null) {
         // CHECK TO PUBLISH IT TO THE CLUSTER
         final ODistributedDatabaseImpl distribDatabase = messageService.registerDatabase(dbName);
+        distribDatabase.setParsing(true);
         distribDatabase.setOnline();
       }
 
@@ -650,9 +651,10 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
             if (database != null) {
               final ODistributedDatabaseImpl ddb = getMessageService().getDatabase(database.getName());
 
-              if (ddb != null && !(result instanceof Throwable) && task instanceof OAbstractReplicatedTask)
+              if (ddb != null && !(result instanceof Throwable) && task instanceof OAbstractReplicatedTask) {
                 // UPDATE LSN WITH LAST OPERATION
-                ddb.setLSN(sourceNodeName, ((OAbstractReplicatedTask) task).getLastLSN());
+                ddb.setLSN(sourceNodeName, ((OAbstractReplicatedTask) task).getLastLSN(), true);
+              }
             }
           }
 
@@ -922,12 +924,15 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
     final ODistributedDatabaseImpl distrDatabase = messageService.registerDatabase(databaseName);
 
+    // DISCARD MESSAGES DURING THE REQUEST OF DATABASE INSTALLATION
+    distrDatabase.setParsing(false);
+
     final Boolean deploy = forceDeployment ? Boolean.TRUE : (Boolean) config.field("autoDeploy");
 
     boolean databaseInstalled;
 
     // CREATE THE DISTRIBUTED QUEUE
-    if (!distrDatabase.exists() || distrDatabase.getSyncConfiguration().isEmpty()) {
+    if (!distrDatabase.exists() || distrDatabase.getSyncConfiguration().getMomentum().isEmpty()) {
 
       if (deploy == null || !deploy) {
         // NO AUTO DEPLOY
@@ -992,7 +997,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     // CREATE A MAP OF NODE/LSN BY READING LAST LSN SAVED
     final Map<String, OLogSequenceNumber> selectedNodes = new HashMap<String, OLogSequenceNumber>(nodes.size());
     for (String node : nodes) {
-      final OLogSequenceNumber lsn = distrDatabase.getSyncConfiguration().getLSN(node);
+      final OLogSequenceNumber lsn = distrDatabase.getSyncConfiguration().getLastLSN(node);
       if (lsn != null) {
         selectedNodes.put(node, lsn);
       } else
@@ -1012,7 +1017,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       final String targetNode = entry.getKey();
       final OLogSequenceNumber lsn = entry.getValue();
 
-      final OSyncDatabaseDeltaTask deployTask = new OSyncDatabaseDeltaTask(lsn, distrDatabase.getLastOperationTimestamp());
+      final OSyncDatabaseDeltaTask deployTask = new OSyncDatabaseDeltaTask(lsn,
+          distrDatabase.getSyncConfiguration().getLastOperationTimestamp());
 
       final List<String> targetNodes = new ArrayList<String>(1);
       targetNodes.add(targetNode);
@@ -1041,8 +1047,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
             if (value instanceof ODistributedDatabaseDeltaSyncException) {
               final ODistributedDatabaseDeltaSyncException exc = (ODistributedDatabaseDeltaSyncException) value;
 
-              ODistributedServerLog.warn(this, nodeName, server, DIRECTION.IN, "Error on installing database delta for '%s' (%s)",
-                  databaseName, exc.getMessage());
+              ODistributedServerLog.warn(this, nodeName, server, DIRECTION.IN,
+                  "Error on installing database delta for '%s' (err=%s)", databaseName, exc.getMessage());
 
               ODistributedServerLog.warn(this, nodeName, server, DIRECTION.IN, "Requesting full database '%s' sync...",
                   databaseName);
@@ -1058,6 +1064,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                   value, databaseName, dbPath, value);
 
             } else if (value instanceof ODistributedDatabaseChunk) {
+              distrDatabase.filterBeforeThisMomentum(((ODistributedDatabaseChunk) value).getMomentum());
+              distrDatabase.setParsing(true);
 
               final File uniqueClustersBackupDirectory = getClusterOwnedExclusivelyByCurrentNode(dbPath, databaseName);
 
@@ -1076,8 +1084,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
           }
         }
       } catch (Exception e) {
-        ODistributedServerLog.error(this, nodeName, targetNode, DIRECTION.OUT, "Error on asking delta backup of database '%s'...",
-            databaseName);
+        ODistributedServerLog.error(this, nodeName, targetNode, DIRECTION.OUT,
+            "Error on asking delta backup of database '%s' (err=%s)", databaseName, e.getMessage());
         throw new ODistributedDatabaseDeltaSyncException(lsn, e.toString());
       }
     }
@@ -1132,7 +1140,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     ODistributedServerLog.warn(this, nodeName, selectedNodes.toString(), DIRECTION.OUT,
         "Requesting deploy of database '%s' on local server...", databaseName);
 
-    final OAbstractReplicatedTask deployTask = new OSyncDatabaseTask(distrDatabase.getLastOperationTimestamp());
+    final OAbstractReplicatedTask deployTask = new OSyncDatabaseTask(
+        distrDatabase.getSyncConfiguration().getLastOperationTimestamp());
 
     final Map<String, Object> results = (Map<String, Object>) sendRequest(databaseName, null, selectedNodes, deployTask,
         getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null).getPayload();
@@ -1150,7 +1159,15 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       else if (value instanceof Throwable) {
         ODistributedServerLog.error(this, nodeName, r.getKey(), DIRECTION.IN, "Error on installing database '%s' in %s",
             (Exception) value, databaseName, dbPath);
+
+        if (value instanceof ODistributedException)
+          throw (ODistributedException) value;
+
       } else if (value instanceof ODistributedDatabaseChunk) {
+
+        // ENABLE PARSING OF REQUESTS
+        distrDatabase.filterBeforeThisMomentum(((ODistributedDatabaseChunk) value).getMomentum());
+        distrDatabase.setParsing(true);
 
         final File uniqueClustersBackupDirectory = getClusterOwnedExclusivelyByCurrentNode(dbPath, databaseName);
 
@@ -1300,7 +1317,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     if (completedFile.exists())
       completedFile.delete();
 
-    final AtomicReference<OLogSequenceNumber> lsn = new AtomicReference<OLogSequenceNumber>();
+    final AtomicReference<ODistributedMomentum> momentum = new AtomicReference<ODistributedMomentum>();
 
     try {
       new Thread(new Runnable() {
@@ -1310,7 +1327,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
             Thread.currentThread().setName("OrientDB installDatabase node=" + nodeName + " db=" + databaseName);
             ODistributedDatabaseChunk chunk = firstChunk;
 
-            lsn.set(chunk.lsn);
+            momentum.set(chunk.getMomentum());
 
             final OutputStream fOut = new FileOutputStream(fileName, false);
             try {
@@ -1338,18 +1355,13 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
               // CREATE THE .COMPLETED FILE TO SIGNAL EOF
               new File(file.getAbsolutePath() + ".completed").createNewFile();
 
-              if (lsn.get() != null) {
+              if (momentum.get() != null) {
                 // UPDATE LSN VERSUS THE TARGET NODE
-                try {
-                  final ODistributedDatabase distrDatabase = getMessageService().getDatabase(databaseName);
+                final ODistributedDatabase distrDatabase = getMessageService().getDatabase(databaseName);
 
-                  distrDatabase.setLSN(iNode, lsn.get());
+                // OVERWRITE THE MOMENTUM FROM THE ORIGINAL SERVER
+                distrDatabase.getSyncConfiguration().setMomentum(momentum.get());
 
-                } catch (IOException e) {
-                  ODistributedServerLog.error(this, nodeName, iNode, DIRECTION.IN,
-                      "Error on updating distributed-sync.json file for database '%s'. Next request of delta of changes will contains old records too",
-                      e, databaseName);
-                }
               } else
                 ODistributedServerLog.warn(this, nodeName, iNode, DIRECTION.IN,
                     "LSN not found in database from network, database delta sync will be not available for database '%s'",

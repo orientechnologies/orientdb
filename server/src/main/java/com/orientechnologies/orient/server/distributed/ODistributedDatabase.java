@@ -92,11 +92,9 @@ public interface ODistributedDatabase {
 
   long getProcessedRequests();
 
-  void setLSN(String sourceNodeName, OLogSequenceNumber taskLastLSN) throws IOException;
+  void setLSN(String sourceNodeName, OLogSequenceNumber taskLastLSN, boolean writeLastOperation) throws IOException;
 
   ODistributedDatabaseRepairer getDatabaseRepairer();
 
   void dumpLocks();
-
-  long getLastOperationTimestamp();
 }

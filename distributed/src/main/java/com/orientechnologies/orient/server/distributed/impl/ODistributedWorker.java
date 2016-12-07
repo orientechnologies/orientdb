@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 import java.util.concurrent.ArrayBlockingQueue;
@@ -53,13 +54,13 @@ public class ODistributedWorker extends Thread {
   protected final ArrayBlockingQueue<ODistributedRequest> localQueue;
   protected final int                                     id;
 
-  protected volatile ODatabaseDocumentTx database;
-  protected volatile OUser               lastUser;
-  protected volatile boolean running = true;
+  protected volatile ODatabaseDocumentTx                  database;
+  protected volatile OUser                                lastUser;
+  protected volatile boolean                              running              = true;
 
-  private AtomicLong processedRequests = new AtomicLong(0);
+  private AtomicLong                                      processedRequests    = new AtomicLong(0);
 
-  private static final long MAX_SHUTDOWN_TIMEOUT = 5000l;
+  private static final long                               MAX_SHUTDOWN_TIMEOUT = 5000l;
 
   public ODistributedWorker(final ODistributedDatabaseImpl iDistributed, final String iDatabaseName, final int i) {
     id = i;
@@ -194,9 +195,8 @@ public class ODistributedWorker extends Thread {
               "Interrupted shutdown of distributed worker thread");
         }
 
-      ODistributedServerLog
-          .debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE, "Shutdown distributed worker '%s' completed",
-              getName());
+      ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
+          "Shutdown distributed worker '%s' completed", getName());
 
       localQueue.clear();
 
@@ -206,9 +206,8 @@ public class ODistributedWorker extends Thread {
       }
 
     } catch (Exception e) {
-      ODistributedServerLog
-          .warn(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE, "Error on shutting down distributed worker '%s'",
-              e, getName());
+      ODistributedServerLog.warn(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
+          "Error on shutting down distributed worker '%s'", e, getName());
 
     }
   }
@@ -226,9 +225,8 @@ public class ODistributedWorker extends Thread {
 
     if (ODistributedServerLog.isDebugEnabled()) {
       final String senderNodeName = manager.getNodeNameById(req.getId().getNodeId());
-      ODistributedServerLog
-          .debug(this, localNodeName, senderNodeName, DIRECTION.IN, "Processing request=(%s) sourceNode=%s worker=%d", req,
-              senderNodeName, id);
+      ODistributedServerLog.debug(this, localNodeName, senderNodeName, DIRECTION.IN,
+          "Processing request=(%s) sourceNode=%s worker=%d", req, senderNodeName, id);
     }
 
     return req;
@@ -241,7 +239,7 @@ public class ODistributedWorker extends Thread {
   }
 
   /**
-   * Execute the remote call on the local node and send back the result
+   * Executes the remote call on the local node and send back the result
    */
   protected void onMessage(final ODistributedRequest iRequest) {
     String senderNodeName = null;
@@ -270,8 +268,8 @@ public class ODistributedWorker extends Thread {
     final ORemoteTask task = iRequest.getTask();
 
     if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog
-          .debug(this, localNodeName, senderNodeName, DIRECTION.IN, "Received request: (%s) (worker=%d)", iRequest, id);
+      ODistributedServerLog.debug(this, localNodeName, senderNodeName, DIRECTION.IN, "Received request: (%s) (worker=%d)", iRequest,
+          id);
 
     // EXECUTE IT LOCALLY
     Object responsePayload = null;
@@ -279,8 +277,12 @@ public class ODistributedWorker extends Thread {
     try {
       task.setNodeSource(senderNodeName);
       waitNodeIsOnline();
-      if (task.isUsingDatabase())
+      if (task.isUsingDatabase()) {
         initDatabaseInstance();
+        if (database == null)
+          throw new ODistributedOperationException(
+              "Error on executing remote request because the database '" + databaseName + "' is not available");
+      }
 
       // keep original user in database, check the username passed in request and set new user in DB, after document saved,
       // reset to original user
@@ -288,8 +290,8 @@ public class ODistributedWorker extends Thread {
         database.activateOnCurrentThread();
         origin = database.getUser();
         try {
-          if (iRequest.getUserRID() != null && iRequest.getUserRID().isValid() && (lastUser == null || !(lastUser.getIdentity())
-              .equals(iRequest.getUserRID()))) {
+          if (iRequest.getUserRID() != null && iRequest.getUserRID().isValid()
+              && (lastUser == null || !(lastUser.getIdentity()).equals(iRequest.getUserRID()))) {
             lastUser = database.getMetadata().getSecurity().getUser(iRequest.getUserRID());
             database.setUser(lastUser);// set to new user
           } else
@@ -316,8 +318,8 @@ public class ODistributedWorker extends Thread {
         } else {
           // OPERATION EXECUTED (OK OR ERROR), NO RETRY NEEDED
           if (retry > 1)
-            ODistributedServerLog
-                .info(this, localNodeName, senderNodeName, DIRECTION.IN, "Request %s succeed after retry=%d", iRequest, retry);
+            ODistributedServerLog.info(this, localNodeName, senderNodeName, DIRECTION.IN, "Request %s succeed after retry=%d",
+                iRequest, retry);
 
           break;
         }
@@ -368,8 +370,8 @@ public class ODistributedWorker extends Thread {
       // GET THE SENDER'S RESPONSE QUEUE
       final ORemoteServerController remoteSenderServer = manager.getRemoteServer(senderNodeName);
 
-      ODistributedServerLog
-          .debug(current, localNodeName, senderNodeName, ODistributedServerLog.DIRECTION.OUT, "Sending response %s back", response);
+      ODistributedServerLog.debug(current, localNodeName, senderNodeName, ODistributedServerLog.DIRECTION.OUT,
+          "Sending response %s back", response);
 
       remoteSenderServer.sendResponse(response);
 

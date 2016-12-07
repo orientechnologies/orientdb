@@ -124,8 +124,8 @@ public abstract class AbstractServerClusterGraphTest extends AbstractServerClust
   }
 
   @Override
-  protected void computeExpected(int serverId) {
-    expected = writerCount * count * serverId + baseCount + 1;
+  protected void computeExpected(int servers) {
+    expected = writerCount * count * servers + baseCount + 1;
   }
 
   protected void onAfterExecution() {
