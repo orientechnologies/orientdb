@@ -1,6 +1,16 @@
 import 'jquery';
 import angular from 'angular';
 
+
+import {UpgradeModule} from '@angular/upgrade/static';
+import {NgModule} from '@angular/core';
+import {BrowserModule} from "@angular/platform-browser";
+import {HttpModule} from '@angular/http';
+import {platformBrowserDynamic} from '@angular/platform-browser-dynamic';
+import 'core-js';
+import 'zone.js';
+import 'ie-shim';
+import 'reflect-metadata';
 import 'angular-strap';
 import 'angular-local-storage';
 import 'angular-scroll';
@@ -40,6 +50,8 @@ import 'ng-tags-input/build/ng-tags-input.min.css';
 import 'ng-tags-input/build/ng-tags-input.bootstrap.min.css';
 import 'c3/c3.min.css';
 import 'fullcalendar/dist/fullcalendar.min.css';
+
+import GraphService from './app/core/services/graph.service';
 
 // Bundled Vendor
 
@@ -117,6 +129,7 @@ let deps = [HeaderController,
   'history.services',
   'browse.services',
   'ee.services',
+  'graph.services',
   BootstrapTabSet,
   'ngTable',
   'filters',
@@ -212,3 +225,27 @@ $('body').on('keyup', function (e) {
     $('.modal-backdrop').click()
   }
 })
+
+let AppModule = NgModule({
+  imports: [BrowserModule, UpgradeModule, HttpModule],
+  providers: [GraphService]
+}).Class({
+  constructor: function () {
+  },
+  ngDoBootstrap: () => {
+
+  }
+});
+
+platformBrowserDynamic().bootstrapModule(AppModule).then(platformRef => {
+  const upgrade = platformRef.injector.get(UpgradeModule);
+
+  angular.element(document.body).ready(function () {
+    upgrade.bootstrap(document.body, ['OrientDBStudioApp']);
+  });
+
+});
+
+
+
+

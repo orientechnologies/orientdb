@@ -141,9 +141,9 @@ function routing($routeProvider, $httpProvider, $translateProvider) {
     });
 
 
-  $translateProvider.translations('en-US',Translations);
+  $translateProvider.translations('en-US', Translations);
   $translateProvider.preferredLanguage('en-US');
-  $httpProvider.interceptors.push(function ($q, Notification, $rootScope) {
+  $httpProvider.interceptors.push(["$q", "Notification", "$rootScope", function ($q, Notification, $rootScope) {
     return {
       responseError: function (rejection) {
 
@@ -158,7 +158,7 @@ function routing($routeProvider, $httpProvider, $translateProvider) {
         return $q.reject(rejection);
       }
     };
-  });
+  }]);
 
 }
 

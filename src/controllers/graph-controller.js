@@ -1,5 +1,4 @@
 import Icons from  '../services/icon-services';
-import GraphServices from  '../services/graph-services';
 import BrowseConfig from '../services/browse-services';
 
 
@@ -18,7 +17,7 @@ import '../views/database/graph/asideVertex.html';
 import '../views/database/graphConfig.html';
 import angular from 'angular';
 
-let GraphModule = angular.module('vertex.controller', [GraphServices, Icons, BrowseConfig]);
+let GraphModule = angular.module('vertex.controller', ["graph.services", Icons, BrowseConfig]);
 GraphModule.controller("VertexCreateController", ['$scope', '$routeParams', '$location', 'DocumentApi', 'Database', 'Notification', function ($scope, $routeParams, $location, DocumentApi, Database, Notification) {
 
   var database = $routeParams.database;
@@ -335,7 +334,8 @@ GraphModule.controller("VertexModalBrowseController", ['$scope', '$routeParams',
 
 }]);
 
-GraphModule.controller("GraphController", ['$scope', '$routeParams', '$location', '$modal', '$q', 'Database', 'CommandApi', 'Spinner', 'Aside', 'DocumentApi', 'localStorageService', 'Graph', 'Icon', 'GraphConfig', 'Notification', '$rootScope', 'History', '$timeout', '$document', 'BrowseConfig', function ($scope, $routeParams, $location, $modal, $q, Database, CommandApi, Spinner, Aside, DocumentApi, localStorageService, Graph, Icon, GraphConfig, Notification, $rootScope, History, $timeout, $document, BrowseConfig) {
+GraphModule.controller("GraphController", ['$scope', '$routeParams', '$location', '$modal', '$q', 'Database', 'CommandApi', 'Spinner', 'Aside', 'DocumentApi', 'localStorageService', 'Icon', 'GraphConfig', 'Notification', '$rootScope', 'History', '$timeout', '$document', 'BrowseConfig', 'GraphService', function ($scope, $routeParams, $location, $modal, $q, Database, CommandApi, Spinner, Aside, DocumentApi, localStorageService, Icon, GraphConfig, Notification, $rootScope, History, $timeout, $document, BrowseConfig, GraphService) {
+
 
   var data = [];
   $scope.currentIndex = -1;
@@ -347,7 +347,8 @@ GraphModule.controller("GraphController", ['$scope', '$routeParams', '$location'
   $scope.config = BrowseConfig;
   $scope.fullscreen = false;
   $scope.additionalClass = '';
-  $scope.database = Database;
+  $scope.database = $routeParams.database;
+  $scope.currentUser = Database.currentUser();
   Database.setWiki("Graph-Editor.html")
   $scope.dirty = false;
   $rootScope.$on('graphConfig:changed', function (val) {
@@ -568,15 +569,15 @@ GraphModule.controller("GraphController", ['$scope', '$routeParams', '$location'
   }
   $scope.clear = function () {
     $scope.graph.clear();
-    Graph.clear()
+    GraphService.clear($scope.database, $scope.currentUser);
   }
-  $scope.queryText = Graph.query;
+  $scope.queryText = GraphService.query($scope.database, $scope.currentUser);
 
 
-  $scope.nodesLen = Graph.data.vertices.length;
-  $scope.edgesLen = Graph.data.edges.length;
+  $scope.nodesLen = GraphService.data($scope.database, $scope.currentUser).vertices.length;
+  $scope.edgesLen = GraphService.data($scope.database, $scope.currentUser).edges.length;
   $scope.tmpGraphOptions = {
-    data: Graph.data,
+    data: GraphService.data($scope.database, $scope.currentUser),
     onLoad: function (graph) {
       $scope.graph = graph;
 
@@ -1146,7 +1147,11 @@ GraphModule.controller("GraphController", ['$scope', '$routeParams', '$location'
       $scope.currentIndex = -1;
       Spinner.stopSpinner();
       $timeout(function () {
-        Graph.add(data.graph);
+        GraphService.query($scope.database, $scope.currentUser, $scope.queryText);
+        GraphService.add($scope.database, $scope.currentUser,
+          data.graph
+        )
+        ;
       }, 1000);
     }).catch(function (err) {
       Spinner.stopSpinner();
