@@ -27,9 +27,11 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.types.OModifiableInteger;
 import com.orientechnologies.common.util.OResettable;
 import com.orientechnologies.common.util.OSizeable;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBagDelegate;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag.Change;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.sbtree.OTreeInternal;
@@ -47,6 +49,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.ORidBagUpd
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 /**
@@ -870,6 +873,21 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     if (context == null) {
       ChangeSerializationHelper.INSTANCE.serializeChanges(changes, OLinkSerializer.INSTANCE, stream, offset);
     } else {
+
+      ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+      for (Entry<OIdentifiable, Change> change : this.changes.entrySet()) {
+        OIdentifiable key = change.getKey();
+        if (db != null && db.getTransaction().isActive()) {
+          if (!key.getIdentity().isPersistent()) {
+            OIdentifiable newKey = db.getTransaction().getRecord(key.getIdentity());
+            if (newKey != null) {
+              changes.remove(key);
+              changes.put(newKey, change.getValue());
+            }
+          }
+        }
+      }
+      this.collectionPointer = collectionPointer;
       context.push(new ORidBagUpdateSerializationOperation(changes, collectionPointer));
 
       // 0-length serialized list of changes

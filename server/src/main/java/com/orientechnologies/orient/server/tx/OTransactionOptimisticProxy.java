@@ -323,8 +323,6 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
         final Object value = field.getValue();
         if (value instanceof ORecordLazyList)
           ((ORecordLazyList) field.getValue()).lazyLoad(true);
-        else if (value instanceof ORidBag)
-          ((ORidBag) value).convertLinks2Records();
       }
     }
   }

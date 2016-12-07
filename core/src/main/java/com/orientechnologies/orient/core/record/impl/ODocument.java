@@ -2156,15 +2156,9 @@ public class ODocument extends ORecordAbstract
           bagsMerged = ((ORidBag) value).tryMerge((ORidBag) otherValue, iMergeSingleItemsOfMultiValueFields);
 
         if (!bagsMerged && (value != null && !value.equals(otherValue)) || (value == null && otherValue != null)) {
-          if (otherValue instanceof ORidBag)
-            // DESERIALIZE IT TO ASSURE TEMPORARY RIDS ARE TREATED CORRECTLY
-            ((ORidBag) otherValue).convertLinks2Records();
           field(f, otherValue);
         }
       } else {
-        if (otherValue instanceof ORidBag)
-          // DESERIALIZE IT TO ASSURE TEMPORARY RIDS ARE TREATED CORRECTLY
-          ((ORidBag) otherValue).convertLinks2Records();
         field(f, otherValue);
       }
     }
