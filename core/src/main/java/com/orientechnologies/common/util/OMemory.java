@@ -41,6 +41,7 @@ public class OMemory {
 
   /**
    * @param unlimitedCap the upper limit on reported memory, if JVM reports unlimited memory.
+   *
    * @return same as {@link Runtime#maxMemory()} except that {@code unlimitedCap} limit is applied if JVM reports
    * {@link Long#MAX_VALUE unlimited memory}.
    */
@@ -119,7 +120,7 @@ public class OMemory {
   /**
    * Checks the direct memory configuration and emits a warning if configuration is invalid.
    */
-  public static void checkDirectMemoryConfiguration() throws OConfigurationException {
+  public static void checkDirectMemoryConfiguration() {
     final long physicalMemory = getPhysicalMemorySize();
     final long maxDirectMemory = getConfiguredMaxDirectMemory();
 
@@ -132,7 +133,10 @@ public class OMemory {
         OLogManager.instance().warn(OMemory.class, "MaxDirectMemorySize JVM option is not set or has invalid value, "
             + "that may cause out of memory errors. Please set the -XX:MaxDirectMemorySize=<SIZE>m JVM option "
             + "when you start the JVM, where <SIZE> is the memory size of this machine in megabytes.");
-    }
+    } else if (maxDirectMemory < 64 * 1024 * 1024)
+      throw new OConfigurationException("MaxDirectMemorySize JVM option value is too low (" + maxDirectMemory + " bytes),"
+          + " OrientDB requires at least 64MB of direct memory to function properly. Please tune the value of "
+          + "-XX:MaxDirectMemorySize JVM option.");
   }
 
   /**
@@ -242,7 +246,9 @@ public class OMemory {
    * If no unit provided, it is bytes.
    *
    * @param text the text to parse.
+   *
    * @return the parsed size value.
+   *
    * @throws IllegalArgumentException if size specifier is not recognized as valid.
    */
   public static long parseVmArgsSize(String text) throws IllegalArgumentException {
