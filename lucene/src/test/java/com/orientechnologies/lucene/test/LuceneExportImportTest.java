@@ -18,6 +18,7 @@
 
 package com.orientechnologies.lucene.test;
 
+import com.orientechnologies.lucene.OLuceneIndexFactory;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
@@ -36,6 +37,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.zip.GZIPInputStream;
+
+import static com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE.*;
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * Created by Enrico Risa on 07/07/15.
@@ -64,14 +68,17 @@ public class LuceneExportImportTest extends BaseLuceneTest {
     List<?> query = db.query(new OSQLSynchQuery<Object>("select from City where name lucene 'Rome'"));
 
     Assert.assertEquals(query.size(), 1);
+
     try {
+
+      //export
       new ODatabaseExport(db, file, new OCommandOutputListener() {
         @Override
         public void onMessage(String s) {
         }
       }).exportDatabase();
 
-      System.out.println("reload db");
+      //import
       db.drop();
       db.create();
       GZIPInputStream stream = new GZIPInputStream(new FileInputStream(file + ".gz"));
@@ -84,17 +91,17 @@ public class LuceneExportImportTest extends BaseLuceneTest {
       Assert.fail(e.getMessage());
     }
 
-    long city = db.countClass("City");
-
-    Assert.assertEquals(city, 1);
-
+    assertThat(db.countClass("City")).isEqualTo(1);
     OIndex<?> index = db.getMetadata().getIndexManager().getIndex("City.name");
 
-    Assert.assertNotNull(index);
-    Assert.assertEquals(index.getType(), "FULLTEXT");
-    Assert.assertEquals(index.getAlgorithm(), "LUCENE");
+    assertThat(index.getType()).isEqualTo(FULLTEXT.toString());
 
-    Assert.assertEquals(query.size(), 1);
+    assertThat(index.getAlgorithm()).isEqualTo(OLuceneIndexFactory.LUCENE_ALGORITHM);
+
+    //redo the query
+    query = db.query(new OSQLSynchQuery<Object>("select from City where name lucene 'Rome'"));
+
+    assertThat(query).hasSize(1);
   }
 
 }
