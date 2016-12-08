@@ -1911,7 +1911,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   private List<OIndexCursor> getIndexCursors(final OClass iSchemaClass) {
 
     final ODatabaseDocument database = getDatabase();
-    database.checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_READ, iSchemaClass.getName().toLowerCase());
+
+// Leaving this in for reference, for the moment.
+// This should not be necessary as searchInClasses() does a security check and when the record iterator 
+// calls OClassImpl.readableClusters(), it too filters out clusters based on the class's security permissions.
+// This throws an unnecessary exception that potentially prevents using an index and prevents filtering later.
+//    database.checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_READ, iSchemaClass.getName().toLowerCase());
 
     // fetch all possible variants of subqueries that can be used in indexes.
     if (compiledFilter == null) {
