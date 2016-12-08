@@ -1,6 +1,6 @@
 /*
  *
- *  * Copyright 2014 Orient Technologies.
+ *  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
  *  *
  *  * Licensed under the Apache License, Version 2.0 (the "License");
  *  * you may not use this file except in compliance with the License.
@@ -19,13 +19,9 @@
 package com.orientechnologies.lucene.test;
 
 import com.orientechnologies.orient.core.command.script.OCommandScript;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -38,13 +34,21 @@ import java.util.List;
  */
 public class LuceneContextTest extends BaseLuceneTest {
 
-  @Test
-  public void testContext() {
+  @Before
+  public void init() {
     InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql");
 
-    databaseDocumentTx.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
+    db.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
 
-    List<ODocument> docs = databaseDocumentTx
+    db.command(new OCommandSQL("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE")).execute();
+    db.command(new OCommandSQL("create index Song.author on Song (author) FULLTEXT ENGINE LUCENE")).execute();
+
+  }
+
+  @Test
+  public void testContext() {
+
+    List<ODocument> docs = db
         .query(new OSQLSynchQuery<ODocument>("select *,$score from Song where [title] LUCENE \"(title:man)\""));
 
     Assert.assertEquals(docs.size(), 14);
@@ -57,34 +61,14 @@ public class LuceneContextTest extends BaseLuceneTest {
       latestScore = score;
     }
 
-    docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(
+    docs = db.query(new OSQLSynchQuery<ODocument>(
         "select *,$totalHits,$Song_title_totalHits from Song where [title] LUCENE \"(title:man)\" limit 1"));
     Assert.assertEquals(docs.size(), 1);
 
     ODocument doc = docs.iterator().next();
-    Assert.assertEquals(doc.field("$totalHits"), 14);
-    Assert.assertEquals(doc.field("$Song_title_totalHits"), 14);
+    Assert.assertEquals(doc.<Object>field("$totalHits"), 14);
+    Assert.assertEquals(doc.<Object>field("$Song_title_totalHits"), 14);
 
-  }
-
-  @Before
-  public void init() {
-    initDB();
-    OSchema schema = databaseDocumentTx.getMetadata().getSchema();
-    OClass v = schema.getClass("V");
-    OClass song = schema.createClass("Song");
-    song.setSuperClass(v);
-    song.createProperty("title", OType.STRING);
-    song.createProperty("author", OType.STRING);
-
-    databaseDocumentTx.command(new OCommandSQL("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE")).execute();
-    databaseDocumentTx.command(new OCommandSQL("create index Song.author on Song (author) FULLTEXT ENGINE LUCENE")).execute();
-
-  }
-
-  @After
-  public void deInit() {
-    deInitDB();
   }
 
 }

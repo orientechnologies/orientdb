@@ -1,6 +1,6 @@
 /*
  *
- *  * Copyright 2014 Orient Technologies.
+ *  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
  *  *
  *  * Licensed under the Apache License, Version 2.0 (the "License");
  *  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import java.util.Set;
 /**
  * Created by Enrico Risa on 09/12/14.
  */
-public class LuceneTxOperations {
+public class OLuceneTxOperations {
 
   public final Set<OIdentifiable> removed = new HashSet<OIdentifiable>();
   public final Set<OIdentifiable> added   = new HashSet<OIdentifiable>();

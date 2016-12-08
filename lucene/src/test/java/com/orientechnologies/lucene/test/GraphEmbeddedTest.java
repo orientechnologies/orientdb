@@ -1,6 +1,6 @@
 /*
  *
- *  * Copyright 2014 Orient Technologies.
+ *  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
  *  *
  *  * Licensed under the Apache License, Version 2.0 (the "License");
  *  * you may not use this file except in compliance with the License.
@@ -18,17 +18,15 @@
 
 package com.orientechnologies.lucene.test;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.tinkerpop.blueprints.Parameter;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Created by enricorisa on 03/09/14.
@@ -43,19 +41,14 @@ public class GraphEmbeddedTest extends BaseLuceneTest {
 
   @Before
   public void init() {
-    initDB();
-    graph = new OrientGraph(databaseDocumentTx, false);
+
+    graph = new OrientGraph(db, false);
     OrientVertexType type = graph.createVertexType("City");
     type.createProperty("latitude", OType.DOUBLE);
     type.createProperty("longitude", OType.DOUBLE);
     type.createProperty("name", OType.STRING);
 
-    databaseDocumentTx.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE")).execute();
-  }
-
-  @After
-  public void deInit() {
-    deInitDB();
+    db.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE")).execute();
   }
 
   @Test

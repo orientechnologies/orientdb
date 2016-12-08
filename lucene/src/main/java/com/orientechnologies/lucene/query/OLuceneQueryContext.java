@@ -33,7 +33,11 @@ import java.io.IOException;
 /**
  * Created by Enrico Risa on 08/01/15.
  */
-public class QueryContext {
+public class OLuceneQueryContext {
+
+  public enum QueryContextCFG {
+    NO_FILTER_NO_SORT, FILTER_SORT, FILTER, SORT
+  }
 
   public final    OCommandContext context;
   public final    Query           query;
@@ -49,15 +53,15 @@ public class QueryContext {
   private   String           facetField;
   private   String           drillDownQuery;
 
-  public QueryContext(OCommandContext context, IndexSearcher searcher, Query query) {
-    this(context, searcher, query, null, null);
+  public OLuceneQueryContext(OCommandContext context, IndexSearcher searcher, Query query) {
+    this(context, searcher, query, null);
   }
 
-  public QueryContext(OCommandContext context, IndexSearcher searcher, Query query, Filter filter) {
+  public OLuceneQueryContext(OCommandContext context, IndexSearcher searcher, Query query, Filter filter) {
     this(context, searcher, query, filter, null);
   }
 
-  public QueryContext(OCommandContext context, IndexSearcher searcher, Query query, Filter filter, Sort sort) {
+  public OLuceneQueryContext(OCommandContext context, IndexSearcher searcher, Query query, Filter filter, Sort sort) {
     this.context = context;
     this.searcher = searcher;
     this.query = query;
@@ -78,35 +82,30 @@ public class QueryContext {
     }
   }
 
-  public QueryContext setFacet(boolean facet) {
+  public OLuceneQueryContext setFacet(boolean facet) {
     this.facet = facet;
     return this;
   }
 
-  public QueryContext setReader(TaxonomyReader reader) {
+  public OLuceneQueryContext setReader(TaxonomyReader reader) {
     this.reader = reader;
     return this;
-  }
-
-  public void setFacetConfig(FacetsConfig facetConfig) {
-    this.facetConfig = facetConfig;
   }
 
   public FacetsConfig getFacetConfig() {
     return facetConfig;
   }
 
-  public void setFacetField(String facetField) {
-    this.facetField = facetField;
+  public void setFacetConfig(FacetsConfig facetConfig) {
+    this.facetConfig = facetConfig;
   }
 
   public String getFacetField() {
     return facetField;
   }
 
-  public void setDrillDownQuery(String drillDownQuery) {
-    this.drillDownQuery = drillDownQuery;
-    drillDown = drillDownQuery != null;
+  public void setFacetField(String facetField) {
+    this.facetField = facetField;
   }
 
   public boolean isDrillDown() {
@@ -117,11 +116,16 @@ public class QueryContext {
     return drillDownQuery;
   }
 
+  public void setDrillDownQuery(String drillDownQuery) {
+    this.drillDownQuery = drillDownQuery;
+    drillDown = drillDownQuery != null;
+  }
+
   public boolean isInTx() {
     return changes != null;
   }
 
-  public QueryContext setChanges(OLuceneTxChanges changes) {
+  public OLuceneQueryContext setChanges(OLuceneTxChanges changes) {
     this.changes = changes;
     return this;
   }
@@ -136,11 +140,5 @@ public class QueryContext {
         searcher :
         new IndexSearcher(new MultiReader(searcher.getIndexReader(), changes.searcher().getIndexReader()));
   }
-
-  public enum QueryContextCFG {
-    NO_FILTER_NO_SORT, FILTER_SORT, FILTER, SORT
-  }
-
-
 
 }

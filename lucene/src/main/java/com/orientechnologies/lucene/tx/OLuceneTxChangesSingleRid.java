@@ -45,7 +45,7 @@ public class OLuceneTxChangesSingleRid extends OLuceneTxChangesAbstract {
   public void put(Object key, OIdentifiable value, Document doc) throws IOException {
     if (deleted.remove(value.getIdentity().toString())) {
       doc.add(
-          OLuceneIndexType.createField(TMP, value.getIdentity().toString(), Field.Store.YES, Field.Index.NOT_ANALYZED_NO_NORMS));
+          OLuceneIndexType.createField(TMP, value.getIdentity().toString(), Field.Store.YES));
       updated.add(value.getIdentity().toString());
     }
     writer.addDocument(doc);

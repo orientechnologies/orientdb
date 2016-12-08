@@ -19,17 +19,16 @@
 package com.orientechnologies.lucene.test;
 
 import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.lucene.analyzer.OLucenePerFieldAnalyzerWrapper;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
+import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
@@ -42,7 +41,7 @@ import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.NIOFSDirectory;
-import org.junit.After;
+import org.assertj.core.api.Assertions;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -52,26 +51,32 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 /**
  * Created by enricorisa on 08/10/14.
  */
 public class LuceneVsLuceneTest extends BaseLuceneTest {
 
-  private IndexWriter indexWriter;
+  private IndexWriter                    indexWriter;
+  private OLucenePerFieldAnalyzerWrapper analyzer;
 
   @Before
   public void init() {
-    initDB();
-    OSchema schema = databaseDocumentTx.getMetadata().getSchema();
-    OClass v = schema.getClass("V");
-    OClass song = schema.createClass("Song");
-    song.setSuperClass(v);
-    song.createProperty("title", OType.STRING);
-    song.createProperty("author", OType.STRING);
+    InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql");
 
+    db.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
+
+    OSchema schema = db.getMetadata().getSchema();
+
+    OFileUtils.deleteRecursively(getPath().getAbsoluteFile());
     try {
       Directory dir = getDirectory();
-      Analyzer analyzer = new StandardAnalyzer();
+      analyzer = new OLucenePerFieldAnalyzerWrapper(new StandardAnalyzer());
+
+      analyzer.add("title", new StandardAnalyzer())
+          .add("Song.title", new StandardAnalyzer());
+
       IndexWriterConfig iwc = new IndexWriterConfig(analyzer);
       iwc.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
       indexWriter = new IndexWriter(dir, iwc);
@@ -79,44 +84,49 @@ public class LuceneVsLuceneTest extends BaseLuceneTest {
     } catch (IOException e) {
       e.printStackTrace();
     }
-    databaseDocumentTx.command(new OCommandSQL("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE")).execute();
+    db.command(new OCommandSQL("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE")).execute();
 
+  }
+
+  private File getPath() {
+    return new File("./target/databases/" + name.getMethodName());
   }
 
   protected Directory getDirectory() throws IOException {
     return NIOFSDirectory.open(getPath().toPath());
   }
 
-  private File getPath() {
-    return new File("./target/databases/" + getDatabaseName());
-  }
-
   @Test
   public void testLuceneVsLucene() throws IOException, ParseException {
-    InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql");
 
-    databaseDocumentTx.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
-
-    for (ODocument oDocument : databaseDocumentTx.browseClass("Song")) {
+    for (ODocument oDocument : db.browseClass("Song")) {
 
       String title = oDocument.field("title");
       if (title != null) {
         Document d = new Document();
-        d.add(new Field("title", title, Field.Store.NO, Field.Index.ANALYZED));
 
+        d.add(new TextField("title", title, Field.Store.YES));
+        d.add(new TextField("Song.title", title, Field.Store.YES));
         indexWriter.addDocument(d);
 
       }
     }
 
+    indexWriter.commit();
     indexWriter.close();
+
     IndexReader reader = DirectoryReader.open(getDirectory());
+    assertThat(reader.numDocs()).isEqualTo(Long.valueOf(db.countClass("Song")).intValue());
+
     IndexSearcher searcher = new IndexSearcher(reader);
-    Query query = new MultiFieldQueryParser(new String[] { "title" }, new StandardAnalyzer()).parse("down the");
+
+    Query query = new MultiFieldQueryParser(new String[] { "title" }, analyzer).parse("down the");
     final TopDocs docs = searcher.search(query, Integer.MAX_VALUE);
     ScoreDoc[] hits = docs.scoreDocs;
-    List<ODocument> oDocs = databaseDocumentTx
+
+    List<ODocument> oDocs = db
         .query(new OSQLSynchQuery<ODocument>("select *,$score from Song where title LUCENE \"down the\""));
+
     Assert.assertEquals(oDocs.size(), hits.length);
 
     int i = 0;
@@ -126,12 +136,6 @@ public class LuceneVsLuceneTest extends BaseLuceneTest {
     }
     reader.close();
 
-  }
-
-  @After
-  public void deInit() {
-    deInitDB();
-    OFileUtils.deleteRecursively(getPath());
   }
 
 }

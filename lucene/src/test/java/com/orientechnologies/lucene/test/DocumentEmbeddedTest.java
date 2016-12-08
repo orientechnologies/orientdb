@@ -1,6 +1,6 @@
 /*
  *
- *  * Copyright 2014 Orient Technologies.
+ *  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
  *  *
  *  * Licensed under the Apache License, Version 2.0 (the "License");
  *  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -40,16 +39,10 @@ public class DocumentEmbeddedTest extends BaseLuceneTest {
 
   @Before
   public void init() {
-    initDB();
-    OClass type = databaseDocumentTx.getMetadata().getSchema().createClass("City");
+    OClass type = db.getMetadata().getSchema().createClass("City");
     type.createProperty("name", OType.STRING);
 
-    databaseDocumentTx.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE")).execute();
-  }
-
-  @After
-  public void deInit() {
-    deInitDB();
+    db.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE")).execute();
   }
 
   @Test
@@ -58,14 +51,14 @@ public class DocumentEmbeddedTest extends BaseLuceneTest {
     ODocument doc = new ODocument("City");
 
     doc.field("name", "London");
-    databaseDocumentTx.save(doc);
+    db.save(doc);
 
     doc = new ODocument("City");
     doc.field("name", "Rome");
 
-    databaseDocumentTx.save(doc);
+    db.save(doc);
 
-    List<ODocument> results = databaseDocumentTx.command(new OCommandSQL("select from City where name lucene 'London'")).execute();
+    List<ODocument> results = db.command(new OCommandSQL("select from City where name lucene 'London'")).execute();
 
     Assert.assertEquals(results.size(), 1);
   }
@@ -75,14 +68,14 @@ public class DocumentEmbeddedTest extends BaseLuceneTest {
 
     ODocument doc = new ODocument("City");
 
-    databaseDocumentTx.begin();
+    db.begin();
     doc.field("name", "Berlin");
 
-    databaseDocumentTx.save(doc);
+    db.save(doc);
 
-    databaseDocumentTx.commit();
+    db.commit();
 
-    List<ODocument> results = databaseDocumentTx.command(new OCommandSQL("select from City where name lucene 'Berlin'")).execute();
+    List<ODocument> results = db.command(new OCommandSQL("select from City where name lucene 'Berlin'")).execute();
 
     Assert.assertEquals(results.size(), 1);
   }

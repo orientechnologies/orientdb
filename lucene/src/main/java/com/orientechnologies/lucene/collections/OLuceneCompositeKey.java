@@ -1,6 +1,6 @@
 /*
  *
- *  * Copyright 2014 Orient Technologies.
+ *  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
  *  *
  *  * Licensed under the Apache License, Version 2.0 (the "License");
  *  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import java.util.List;
  * Created by enricorisa on 02/10/14.
  */
 public class OLuceneCompositeKey extends OCompositeKey {
-  OCommandContext context;
+  private OCommandContext context;
 
   public OLuceneCompositeKey(List<?> keys) {
     super(keys);

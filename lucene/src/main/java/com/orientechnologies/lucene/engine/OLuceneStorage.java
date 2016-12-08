@@ -22,8 +22,8 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory;
 import com.orientechnologies.lucene.analyzer.OLucenePerFieldAnalyzerWrapper;
-import com.orientechnologies.lucene.builder.DocBuilder;
-import com.orientechnologies.lucene.builder.OQueryBuilder;
+import com.orientechnologies.lucene.builder.OLuceneDocumentBuilder;
+import com.orientechnologies.lucene.builder.OLuceneQueryBuilder;
 import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.orient.core.OOrientListener;
 import com.orientechnologies.orient.core.Orient;
@@ -61,8 +61,7 @@ import java.util.Map;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract.OLUCENE_BASE_DIR;
-import static com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract.RID;
+import static com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract.*;
 
 public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements OOrientListener {
 
@@ -74,15 +73,15 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
   protected TrackingIndexWriter                   mgrWriter;
   protected SearcherManager                       searcherManager;
   protected ControlledRealTimeReopenThread        nrt;
-  private   DocBuilder                            builder;
-  private   OQueryBuilder                         queryBuilder;
+  private   OLuceneDocumentBuilder                builder;
+  private   OLuceneQueryBuilder                   queryBuilder;
   private   Map<String, OLuceneClassIndexContext> oindexes;
   private   long                                  reopenToken;
 
   private Analyzer indexAnalyzer;
   private Analyzer queryAnalyzer;
 
-  public OLuceneStorage(String name, DocBuilder builder, OQueryBuilder queryBuilder, ODocument metadata) {
+  public OLuceneStorage(String name, OLuceneDocumentBuilder builder, OLuceneQueryBuilder queryBuilder, ODocument metadata) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(),
         OGlobalConfiguration.MVRBTREE_TIMEOUT.getValueAsInteger(), true);
     this.name = name;
@@ -220,6 +219,16 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
     return false;
   }
 
+  public long size() {
+
+    try {
+      return searcher().getIndexReader().numDocs();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return mgrWriter.getIndexWriter().maxDoc();
+  }
+
   public IndexSearcher searcher() throws IOException {
     try {
       nrt.waitForGeneration(reopenToken);
@@ -229,16 +238,6 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
     }
     return null;
 
-  }
-
-  public long size() {
-
-    try {
-      return searcher().getIndexReader().numDocs();
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-    return mgrWriter.getIndexWriter().maxDoc();
   }
 
   public OLuceneTxChanges buildTxChanges() throws IOException {

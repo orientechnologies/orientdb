@@ -1,6 +1,6 @@
 /*
  *
- *  * Copyright 2014 Orient Technologies.
+ *  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
  *  *
  *  * Licensed under the Apache License, Version 2.0 (the "License");
  *  * you may not use this file except in compliance with the License.
@@ -27,10 +27,9 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.testng.Assert;
 
 import java.util.List;
 
@@ -41,12 +40,11 @@ public class LuceneManualIndexTest extends BaseLuceneTest {
 
   @Before
   public void init() {
-    initDB();
-    databaseDocumentTx.command(new OCommandSQL("create index manual FULLTEXT ENGINE LUCENE STRING,STRING")).execute();
+    db.command(new OCommandSQL("create index manual FULLTEXT ENGINE LUCENE STRING,STRING")).execute();
 
-    databaseDocumentTx.command(new OCommandSQL("insert into index:manual (key,rid) values(['Enrico','London'],#5:0) ")).execute();
-    databaseDocumentTx.command(new OCommandSQL("insert into index:manual (key,rid) values(['Luca','Rome'],#5:0) ")).execute();
-    databaseDocumentTx.command(new OCommandSQL("insert into index:manual (key,rid) values(['Luigi','Rome'],#5:0) ")).execute();
+    db.command(new OCommandSQL("insert into index:manual (key,rid) values(['Enrico','London'],#5:0) ")).execute();
+    db.command(new OCommandSQL("insert into index:manual (key,rid) values(['Luca','Rome'],#5:0) ")).execute();
+    db.command(new OCommandSQL("insert into index:manual (key,rid) values(['Luigi','Rome'],#5:0) ")).execute();
 
   }
 
@@ -54,28 +52,28 @@ public class LuceneManualIndexTest extends BaseLuceneTest {
   public void shouldCreateManualIndexWithJavaApi() throws Exception {
 
     ODocument meta = new ODocument().field("analyzer", StandardAnalyzer.class.getName());
-    OIndex<?> index = databaseDocumentTx.getMetadata().getIndexManager()
+    OIndex<?> index = db.getMetadata().getIndexManager()
         .createIndex("apiManual", OClass.INDEX_TYPE.FULLTEXT.toString(),
             new OSimpleKeyIndexDefinition(1, OType.STRING, OType.STRING), null, null, meta, OLuceneIndexFactory.LUCENE_ALGORITHM);
 
-    databaseDocumentTx.command(new OCommandSQL("insert into index:apiManual (key,rid) values(['Enrico','London'],#5:0) "))
+    db.command(new OCommandSQL("insert into index:apiManual (key,rid) values(['Enrico','London'],#5:0) "))
         .execute();
-    databaseDocumentTx.command(new OCommandSQL("insert into index:apiManual (key,rid) values(['Luca','Rome'],#5:0) ")).execute();
-    databaseDocumentTx.command(new OCommandSQL("insert into index:apiManual (key,rid) values(['Luigi','Rome'],#5:0) ")).execute();
+    db.command(new OCommandSQL("insert into index:apiManual (key,rid) values(['Luca','Rome'],#5:0) ")).execute();
+    db.command(new OCommandSQL("insert into index:apiManual (key,rid) values(['Luigi','Rome'],#5:0) ")).execute();
 
     Assert.assertEquals(index.getSize(), 3);
 
-    List<ODocument> docs = databaseDocumentTx
+    List<ODocument> docs = db
         .command(new OSQLSynchQuery("select from index:apiManual where key LUCENE '(k0:Enrico)'")).execute();
     Assert.assertEquals(docs.size(), 1);
 
-    docs = databaseDocumentTx.command(new OSQLSynchQuery("select from index:apiManual where key LUCENE '(k0:Luca)'")).execute();
+    docs = db.command(new OSQLSynchQuery("select from index:apiManual where key LUCENE '(k0:Luca)'")).execute();
     Assert.assertEquals(docs.size(), 1);
 
-    docs = databaseDocumentTx.command(new OSQLSynchQuery("select from index:apiManual where key LUCENE '(k1:Rome)'")).execute();
+    docs = db.command(new OSQLSynchQuery("select from index:apiManual where key LUCENE '(k1:Rome)'")).execute();
     Assert.assertEquals(docs.size(), 2);
 
-    docs = databaseDocumentTx.command(new OSQLSynchQuery("select from index:apiManual where key LUCENE '(k1:London)'")).execute();
+    docs = db.command(new OSQLSynchQuery("select from index:apiManual where key LUCENE '(k1:London)'")).execute();
     Assert.assertEquals(docs.size(), 1);
 
   }
@@ -83,11 +81,11 @@ public class LuceneManualIndexTest extends BaseLuceneTest {
   @Test
   public void testManualIndex() {
 
-    OIndex<?> manual = databaseDocumentTx.getMetadata().getIndexManager().getIndex("manual");
+    OIndex<?> manual = db.getMetadata().getIndexManager().getIndex("manual");
 
     Assert.assertEquals(manual.getSize(), 3);
 
-    List<ODocument> docs = databaseDocumentTx.command(new OSQLSynchQuery("select from index:manual where key LUCENE 'Enrico'"))
+    List<ODocument> docs = db.command(new OSQLSynchQuery("select from index:manual where key LUCENE 'Enrico'"))
         .execute();
     Assert.assertEquals(docs.size(), 1);
   }
@@ -95,27 +93,23 @@ public class LuceneManualIndexTest extends BaseLuceneTest {
   @Test
   public void testManualIndexWitKeys() {
 
-    OIndex<?> manual = databaseDocumentTx.getMetadata().getIndexManager().getIndex("manual");
+    OIndex<?> manual = db.getMetadata().getIndexManager().getIndex("manual");
 
     Assert.assertEquals(manual.getSize(), 3);
 
-    List<ODocument> docs = databaseDocumentTx.command(new OSQLSynchQuery("select from index:manual where key LUCENE '(k0:Enrico)'"))
+    List<ODocument> docs = db.command(new OSQLSynchQuery("select from index:manual where key LUCENE '(k0:Enrico)'"))
         .execute();
     Assert.assertEquals(docs.size(), 1);
 
-    docs = databaseDocumentTx.command(new OSQLSynchQuery("select from index:manual where key LUCENE '(k0:Luca)'")).execute();
+    docs = db.command(new OSQLSynchQuery("select from index:manual where key LUCENE '(k0:Luca)'")).execute();
     Assert.assertEquals(docs.size(), 1);
 
-    docs = databaseDocumentTx.command(new OSQLSynchQuery("select from index:manual where key LUCENE '(k1:Rome)'")).execute();
+    docs = db.command(new OSQLSynchQuery("select from index:manual where key LUCENE '(k1:Rome)'")).execute();
     Assert.assertEquals(docs.size(), 2);
 
-    docs = databaseDocumentTx.command(new OSQLSynchQuery("select from index:manual where key LUCENE '(k1:London)'")).execute();
+    docs = db.command(new OSQLSynchQuery("select from index:manual where key LUCENE '(k1:London)'")).execute();
     Assert.assertEquals(docs.size(), 1);
 
   }
 
-  @After
-  public void deInit() {
-    deInitDB();
-  }
 }

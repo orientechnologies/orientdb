@@ -1,6 +1,6 @@
 /*
  *
- *  * Copyright 2014 Orient Technologies.
+ *  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
  *  *
  *  * Licensed under the Apache License, Version 2.0 (the "License");
  *  * you may not use this file except in compliance with the License.
@@ -33,12 +33,12 @@ import java.util.Map;
 /**
  * Created by Enrico Risa on 02/09/15.
  */
-public class OQueryBuilderImpl implements OQueryBuilder {
+public class OLuceneQueryBuilder {
 
   private final boolean allowLeadingWildcard;
   private final boolean lowercaseExpandedTerms;
 
-  public OQueryBuilderImpl(ODocument metadata) {
+  public OLuceneQueryBuilder(ODocument metadata) {
 
     Boolean allowLeadingWildcard = false;
     if (metadata.containsField("allowLeadingWildcard")) {
@@ -54,14 +54,13 @@ public class OQueryBuilderImpl implements OQueryBuilder {
 
   }
 
-  public OQueryBuilderImpl(boolean allowLeadingWildcard, boolean lowercaseExpandedTerms) {
+  public OLuceneQueryBuilder(boolean allowLeadingWildcard, boolean lowercaseExpandedTerms) {
     this.allowLeadingWildcard = allowLeadingWildcard;
     this.lowercaseExpandedTerms = lowercaseExpandedTerms;
 
     OLogManager.instance().info(this, "allowLeadingWildcard::  " + allowLeadingWildcard);
   }
 
-  @Override
   public Query query(OIndexDefinition index, Object key, Analyzer analyzer) throws ParseException {
     String query = "";
     if (key instanceof OCompositeKey) {
@@ -88,7 +87,7 @@ public class OQueryBuilderImpl implements OQueryBuilder {
       queryParser = new QueryParser("", analyzer);
 
     } else {
-      String[] fields = null;
+      String[] fields;
       if (index.isAutomatic()) {
         fields = index.getFields().toArray(new String[index.getFields().size()]);
       } else {

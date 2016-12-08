@@ -1,6 +1,6 @@
 /*
  *
- *  * Copyright 2014 Orient Technologies.
+ *  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
  *  *
  *  * Licensed under the Apache License, Version 2.0 (the "License");
  *  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -43,42 +42,34 @@ public class LuceneInsertUpdateSingleDocumentNoTxTest extends BaseLuceneTest {
 
   @Before
   public void init() {
-    initDB();
-    OSchema schema = databaseDocumentTx.getMetadata().getSchema();
+    OSchema schema = db.getMetadata().getSchema();
 
-    if (schema.getClass("City") == null) {
       OClass oClass = schema.createClass("City");
       oClass.createProperty("name", OType.STRING);
-    }
-    databaseDocumentTx.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE")).execute();
+    db.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE")).execute();
 
-  }
-
-  @After
-  public void deInit() {
-    deInitDB();
   }
 
   @Test
   public void testInsertUpdateTransactionWithIndex() throws Exception {
 
-    databaseDocumentTx.close();
-    databaseDocumentTx.open("admin", "admin");
-    OSchema schema = databaseDocumentTx.getMetadata().getSchema();
+    db.close();
+    db.open("admin", "admin");
+    OSchema schema = db.getMetadata().getSchema();
     schema.reload();
     ODocument doc = new ODocument("City");
     doc.field("name", "");
     ODocument doc1 = new ODocument("City");
     doc1.field("name", "");
-    doc = databaseDocumentTx.save(doc);
-    doc1 = databaseDocumentTx.save(doc1);
+    doc = db.save(doc);
+    doc1 = db.save(doc1);
 
-    doc = databaseDocumentTx.load(doc);
-    doc1 = databaseDocumentTx.load(doc1);
+    doc = db.load(doc);
+    doc1 = db.load(doc1);
     doc.field("name", "Rome");
     doc1.field("name", "Rome");
-    databaseDocumentTx.save(doc);
-    databaseDocumentTx.save(doc1);
+    db.save(doc);
+    db.save(doc1);
     OIndex idx = schema.getClass("City").getClassIndex("City.name");
     Collection<?> coll = (Collection<?>) idx.get("Rome");
     Assert.assertEquals(coll.size(), 2);

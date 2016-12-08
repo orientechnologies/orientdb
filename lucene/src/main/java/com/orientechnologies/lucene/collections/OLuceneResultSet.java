@@ -1,6 +1,6 @@
 /*
  *
- *  * Copyright 2014 Orient Technologies.
+ *  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
  *  *
  *  * Licensed under the Apache License, Version 2.0 (the "License");
  *  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ package com.orientechnologies.lucene.collections;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract;
-import com.orientechnologies.lucene.query.QueryContext;
+import com.orientechnologies.lucene.query.OLuceneQueryContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import org.apache.lucene.document.Document;
@@ -34,13 +34,11 @@ import java.util.Iterator;
 /**
  * Created by Enrico Risa on 28/10/14.
  */
-public class LuceneResultSet extends OLuceneAbstractResultSet {
+public class OLuceneResultSet extends OLuceneAbstractResultSet {
 
-  public LuceneResultSet(OLuceneIndexEngine manager, QueryContext queryContext) {
-    super(manager, queryContext);
+  public OLuceneResultSet(OLuceneIndexEngine engine, OLuceneQueryContext queryContext) {
+    super(engine, queryContext);
   }
-
-
 
   @Override
   public int size() {
@@ -54,17 +52,17 @@ public class LuceneResultSet extends OLuceneAbstractResultSet {
 
   private class OLuceneResultSetIterator implements Iterator<OIdentifiable> {
 
-    ScoreDoc[]  array;
-    private int index;
-    private int localIndex;
-    private int totalHits;
+    private ScoreDoc[] array;
+    private int        index;
+    private int        localIndex;
+    private int        totalHits;
 
     public OLuceneResultSetIterator() {
       totalHits = topDocs.totalHits;
       index = 0;
       localIndex = 0;
       array = topDocs.scoreDocs;
-      OLuceneIndexEngineAbstract.sendTotalHits(indexName,queryContext.context, topDocs.totalHits);
+      OLuceneIndexEngineAbstract.sendTotalHits(indexName, queryContext.context, topDocs.totalHits);
     }
 
     @Override
@@ -85,8 +83,9 @@ public class LuceneResultSet extends OLuceneAbstractResultSet {
         ret = queryContext.getSearcher().doc(score.doc);
         String rId = ret.get(OLuceneIndexEngineAbstract.RID);
         res = new OContextualRecordId(rId);
-        manager.onRecordAddedToResultSet(queryContext, res, ret, score);
+        engine.onRecordAddedToResultSet(queryContext, res, ret, score);
       } catch (IOException e) {
+        //TODO handle in a proper way
         e.printStackTrace();
       }
       index++;
@@ -104,11 +103,10 @@ public class LuceneResultSet extends OLuceneAbstractResultSet {
           topDocs = queryContext.getSearcher().searchAfter(array[array.length - 1], query, PAGE_SIZE);
           break;
         case FILTER_SORT:
-          topDocs = queryContext.getSearcher().searchAfter(array[array.length - 1], query, queryContext.filter, PAGE_SIZE,
-              queryContext.sort);
+          topDocs = queryContext.getSearcher().searchAfter(array[array.length - 1], query, PAGE_SIZE, queryContext.sort);
           break;
         case FILTER:
-          topDocs = queryContext.getSearcher().searchAfter(array[array.length - 1], query, queryContext.filter, PAGE_SIZE);
+          topDocs = queryContext.getSearcher().searchAfter(array[array.length - 1], query, PAGE_SIZE);
           break;
         case SORT:
           topDocs = queryContext.getSearcher().searchAfter(array[array.length - 1], query, PAGE_SIZE, queryContext.sort);

@@ -1,5 +1,23 @@
 
+
+create class Song extends V
+create property Song.title STRING
+create property Song.author STRING
+create property Song.lyrics STRING
+create property Song.description STRING
+
+create class Author extends V
+create property Author.name STRING
+
 begin
+
+
+create vertex Author set name="Bob Dylan"
+create vertex Author set name="Grateful Dead"
+create vertex Author set name="Lennon McCartney"
+create vertex Author set name="Chuck Berry"
+create vertex Author set name="Jack Mountain"
+
 
 create vertex Song set title="BELIEVE IT OR NOT", author="Hunter"
 

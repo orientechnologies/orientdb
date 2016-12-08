@@ -1,6 +1,6 @@
 /*
  *
- *  * Copyright 2014 Orient Technologies.
+ *  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
  *  *
  *  * Licensed under the Apache License, Version 2.0 (the "License");
  *  * you may not use this file except in compliance with the License.
@@ -23,14 +23,15 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Collection;
+
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * Created by enricorisa on 28/06/14.
@@ -44,42 +45,38 @@ public class LuceneInsertDeleteTest extends BaseLuceneTest {
 
   @Before
   public void init() {
-    initDB();
 
-    OSchema schema = databaseDocumentTx.getMetadata().getSchema();
+    OSchema schema = db.getMetadata().getSchema();
     OClass oClass = schema.createClass("City");
 
     oClass.createProperty("name", OType.STRING);
-    databaseDocumentTx.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE")).execute();
-  }
-
-  @After
-  public void deInit() {
-    deInitDB();
+    db.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE")).execute();
   }
 
   @Test
   public void testInsertUpdateWithIndex() throws Exception {
 
-    databaseDocumentTx.getMetadata().reload();
-    OSchema schema = databaseDocumentTx.getMetadata().getSchema();
+    db.getMetadata().reload();
+    OSchema schema = db.getMetadata().getSchema();
 
     ODocument doc = new ODocument("City");
     doc.field("name", "Rome");
-    databaseDocumentTx.save(doc);
+    db.save(doc);
 
     OIndex idx = schema.getClass("City").getClassIndex("City.name");
     Collection<?> coll = (Collection<?>) idx.get("Rome");
-    Assert.assertEquals(coll.size(), 1);
-    Assert.assertEquals(idx.getSize(), 1);
-    OIdentifiable next = (OIdentifiable) coll.iterator().next();
-    doc = databaseDocumentTx.load(next.getRecord());
 
-    databaseDocumentTx.delete(doc);
+    assertThat(coll).hasSize(1);
+    assertThat(idx.getSize()).isEqualTo(1);
+
+    OIdentifiable next = (OIdentifiable) coll.iterator().next();
+    doc = db.load(next.<ORecord>getRecord());
+
+    db.delete(doc);
 
     coll = (Collection<?>) idx.get("Rome");
-    Assert.assertEquals(coll.size(), 0);
-    Assert.assertEquals(idx.getSize(), 0);
+    assertThat(coll).hasSize(0);
+    assertThat(idx.getSize()).isEqualTo(0);
 
   }
 }

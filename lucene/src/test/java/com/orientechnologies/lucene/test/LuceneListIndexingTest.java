@@ -1,6 +1,6 @@
 /*
  *
- *  * Copyright 2014 Orient Technologies.
+ *  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
  *  *
  *  * Licensed under the Apache License, Version 2.0 (the "License");
  *  * you may not use this file except in compliance with the License.
@@ -26,17 +26,17 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.assertj.core.api.Assertions;
-import org.junit.After;
-import org.junit.Assert;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * Created by enricorisa on 28/06/14.
@@ -44,76 +44,36 @@ import java.util.Set;
 
 public class LuceneListIndexingTest extends BaseLuceneTest {
 
+  public LuceneListIndexingTest() {
+    super();
+  }
+
   @Before
   public void init() {
+    //    System.¢setProperty("orientdb.test.env","ci");
 
-    initDB();
-
-    OSchema schema = databaseDocumentTx.getMetadata().getSchema();
-    OClass oClass = schema.createClass("City");
+    OSchema schema = db.getMetadata().getSchema();
 
     OClass person = schema.createClass("Person");
 
     person.createProperty("name", OType.STRING);
     person.createProperty("tags", OType.EMBEDDEDLIST, OType.STRING);
-
-    oClass.createProperty("name", OType.STRING);
-    oClass.createProperty("tags", OType.EMBEDDEDLIST, OType.STRING);
-
-    databaseDocumentTx.command(new OCommandSQL("create index City.tags on City (tags) FULLTEXT ENGINE LUCENE")).execute();
-
-    databaseDocumentTx.command(new OCommandSQL("create index Person.name_tags on Person (name,tags) FULLTEXT ENGINE LUCENE"))
+    db.command(new OCommandSQL("create index Person.name_tags on Person (name,tags) FULLTEXT ENGINE LUCENE"))
         .execute();
-  }
 
-  @After
-  public void deInit() {
-    deInitDB();
-  }
+    OClass city = schema.createClass("City");
+    city.createProperty("name", OType.STRING);
+    city.createProperty("tags", OType.EMBEDDEDLIST, OType.STRING);
+    db.command(new OCommandSQL("create index City.tags on City (tags) FULLTEXT ENGINE LUCENE")).execute();
 
-  @Test
-  public void testSearchOnList() throws Exception {
-    ODocument doc = new ODocument("City");
-    doc.field("name", "Rome");
-    doc.field("tags", new ArrayList<String>() {
-      {
-        add("Beautiful");
-        add("Touristic");
-        add("Sunny");
-      }
-    });
-    databaseDocumentTx.save(doc);
-
-    List<ODocument> res = databaseDocumentTx
-        .query(new OSQLSynchQuery<Object>("select from  City where tags lucene 'Sunny' "));
-
-    Assertions.assertThat(res).hasSize(1);
-  }
-
-  @Test
-  public void testSearchOnListOnIndex() throws Exception {
-    ODocument doc = new ODocument("City");
-    doc.field("name", "Rome");
-    doc.field("tags", new ArrayList<String>() {
-      {
-        add("Beautiful");
-        add("Touristic");
-        add("Sunny");
-      }
-    });
-    databaseDocumentTx.save(doc);
-
-    List<ODocument> res = databaseDocumentTx
-        .query(new OSQLSynchQuery<Object>("select from  index:City.tags where key lucene 'Sunny' "));
-
-    Assertions.assertThat(res).hasSize(1);
   }
 
   @Test
   public void testIndexingList() throws Exception {
 
-    OSchema schema = databaseDocumentTx.getMetadata().getSchema();
+    OSchema schema = db.getMetadata().getSchema();
 
+    //Rome
     ODocument doc = new ODocument("City");
     doc.field("name", "Rome");
     doc.field("tags", new ArrayList<String>() {
@@ -123,14 +83,18 @@ public class LuceneListIndexingTest extends BaseLuceneTest {
         add("Sunny");
       }
     });
-    databaseDocumentTx.save(doc);
-    OIndex idx = schema.getClass("City").getClassIndex("City.tags");
-    Collection<?> coll = (Collection<?>) idx.get("Sunny");
-    Assert.assertEquals(coll.size(), 1);
 
-    doc = databaseDocumentTx.load((ORID) coll.iterator().next());
-    Assert.assertEquals(doc.field("name"), "Rome");
+    db.save(doc);
 
+    OIndex tagsIndex = schema.getClass("City").getClassIndex("City.tags");
+    Collection<?> coll = (Collection<?>) tagsIndex.get("Sunny");
+    assertThat(coll).hasSize(1);
+
+    doc = db.load((ORID) coll.iterator().next());
+
+    assertThat(doc.<String>field("name")).isEqualTo("Rome");
+
+    //London
     doc = new ODocument("City");
     doc.field("name", "London");
     doc.field("tags", new ArrayList<String>() {
@@ -140,33 +104,34 @@ public class LuceneListIndexingTest extends BaseLuceneTest {
         add("Sunny");
       }
     });
-    databaseDocumentTx.save(doc);
+    db.save(doc);
 
-    coll = (Collection<?>) idx.get("Sunny");
-    Assert.assertEquals(coll.size(), 2);
+    coll = (Collection<?>) tagsIndex.get("Sunny");
+    assertThat(coll).hasSize(2);
 
+    //modify london: it is rainy
     List<String> tags = doc.field("tags");
 
     tags.remove("Sunny");
     tags.add("Rainy");
 
-    databaseDocumentTx.save(doc);
+    db.save(doc);
 
-    coll = (Collection<?>) idx.get("Sunny");
-    Assert.assertEquals(coll.size(), 1);
+    coll = (Collection<?>) tagsIndex.get("Rainy");
+    assertThat(coll).hasSize(1);
 
-    coll = (Collection<?>) idx.get("Rainy");
-    Assert.assertEquals(coll.size(), 1);
+    coll = (Collection<?>) tagsIndex.get("Beautiful");
+    assertThat(coll).hasSize(2);
 
-    coll = (Collection<?>) idx.get("Beautiful");
-    Assert.assertEquals(coll.size(), 2);
+    coll = (Collection<?>) tagsIndex.get("Sunny");
+    assertThat(coll).hasSize(1);
 
   }
 
   @Test
   public void testCompositeIndexList() {
 
-    OSchema schema = databaseDocumentTx.getMetadata().getSchema();
+    OSchema schema = db.getMetadata().getSchema();
 
     ODocument doc = new ODocument("Person");
     doc.field("name", "Enrico");
@@ -177,12 +142,12 @@ public class LuceneListIndexingTest extends BaseLuceneTest {
         add("Geek");
       }
     });
-    Set<?> set;
-    databaseDocumentTx.save(doc);
+
+    db.save(doc);
     OIndex idx = schema.getClass("Person").getClassIndex("Person.name_tags");
     Collection<?> coll = (Collection<?>) idx.get("Enrico");
-    set = new HashSet(coll);
-    Assert.assertEquals(set.size(), 1);
+
+    assertThat(coll).hasSize(3);
 
     doc = new ODocument("Person");
     doc.field("name", "Jared");
@@ -192,52 +157,70 @@ public class LuceneListIndexingTest extends BaseLuceneTest {
         add("Tall");
       }
     });
-    databaseDocumentTx.save(doc);
+    db.save(doc);
 
     coll = (Collection<?>) idx.get("Jared");
 
-    set = new HashSet(coll);
-    Assert.assertEquals(set.size(), 1);
+    assertThat(coll).hasSize(2);
 
     List<String> tags = doc.field("tags");
 
     tags.remove("Funny");
     tags.add("Geek");
 
-    databaseDocumentTx.save(doc);
+    db.save(doc);
 
     coll = (Collection<?>) idx.get("Funny");
-    set = new HashSet(coll);
-    Assert.assertEquals(set.size(), 1);
+    assertThat(coll).hasSize(1);
 
     coll = (Collection<?>) idx.get("Geek");
-    set = new HashSet(coll);
-    Assert.assertEquals(set.size(), 2);
+    assertThat(coll).hasSize(2);
 
-    List<?> query = databaseDocumentTx.query(new OSQLSynchQuery<Object>("select from Person where [name,tags] lucene 'Enrico'"));
+    List<?> query = db.query(new OSQLSynchQuery<Object>("select from Person where [name,tags] lucene 'Enrico'"));
 
-    Assert.assertEquals(query.size(), 1);
+    assertThat(query).hasSize(1);
 
-    query = databaseDocumentTx
+    query = db
         .query(new OSQLSynchQuery<Object>("select from (select from Person where [name,tags] lucene 'Enrico')"));
 
-    Assert.assertEquals(query.size(), 1);
+    assertThat(query).hasSize(1);
 
-    query = databaseDocumentTx.query(new OSQLSynchQuery<Object>("select from Person where [name,tags] lucene 'Jared'"));
+    query = db.query(new OSQLSynchQuery<Object>("select from Person where [name,tags] lucene 'Jared'"));
 
-    Assert.assertEquals(query.size(), 1);
+    assertThat(query).hasSize(1);
 
-    query = databaseDocumentTx.query(new OSQLSynchQuery<Object>("select from Person where [name,tags] lucene 'Funny'"));
+    query = db.query(new OSQLSynchQuery<Object>("select from Person where [name,tags] lucene 'Funny'"));
 
-    Assert.assertEquals(query.size(), 1);
+    assertThat(query).hasSize(1);
 
-    query = databaseDocumentTx.query(new OSQLSynchQuery<Object>("select from Person where [name,tags] lucene 'Geek'"));
+    query = db.query(new OSQLSynchQuery<Object>("select from Person where [name,tags] lucene 'Geek'"));
 
-    Assert.assertEquals(query.size(), 2);
+    assertThat(query).hasSize(2);
 
-    query = databaseDocumentTx
+    query = db
         .query(new OSQLSynchQuery<Object>("select from Person where [name,tags] lucene '(name:Enrico AND tags:Geek)'"));
 
-    Assert.assertEquals(query.size(), 1);
+    assertThat(query).hasSize(1);
+  }
+
+  @Test
+  public void rname() throws Exception {
+
+    final OrientGraphNoTx graph = new OrientGraphNoTx(db);
+    final OrientVertexType c1 = graph.createVertexType("C1");
+    c1.createProperty("p1", OType.STRING);
+
+    final ODocument metadata = new ODocument();
+    metadata.field("default", "org.apache.lucene.analysis.en.EnglishAnalyzer");
+    c1.createIndex("p1", "FULLTEXT", null, metadata, "LUCENE", new String[] { "p1" });
+
+    final OrientVertex result = graph.addVertex("class:C1");
+    result.setProperty("p1", "testing");
+    graph.commit();
+
+    final Iterable search = db.command(new OSQLSynchQuery<ODocument>("SELECT from C1 WHERE p1 LUCENE \"tested\"")).execute();
+
+    assertThat(search).hasSize(1);
+
   }
 }

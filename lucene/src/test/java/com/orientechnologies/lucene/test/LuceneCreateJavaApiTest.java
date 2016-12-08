@@ -1,6 +1,6 @@
 /*
  *
- *  * Copyright 2014 Orient Technologies.
+ *  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
  *  *
  *  * Licensed under the Apache License, Version 2.0 (the "License");
  *  * you may not use this file except in compliance with the License.
@@ -38,8 +38,7 @@ public class LuceneCreateJavaApiTest extends BaseLuceneTest {
 
   @Before
   public void init() {
-    initDB();
-    OSchema schema = databaseDocumentTx.getMetadata().getSchema();
+    OSchema schema = db.getMetadata().getSchema();
     OClass v = schema.getClass("V");
     OClass song = schema.createClass("Song");
     song.setSuperClass(v);
@@ -48,14 +47,10 @@ public class LuceneCreateJavaApiTest extends BaseLuceneTest {
     song.createProperty("description", OType.STRING);
   }
 
-  @After
-  public void deInit() {
-    deInitDB();
-  }
 
   @Test
   public void testCreateIndex() {
-    OSchema schema = databaseDocumentTx.getMetadata().getSchema();
+    OSchema schema = db.getMetadata().getSchema();
 
     OClass song = schema.getClass("Song");
 
@@ -67,13 +62,13 @@ public class LuceneCreateJavaApiTest extends BaseLuceneTest {
 
     assertThat(lucene.getMetadata().containsField("analyzer")).isTrue();
 
-    assertThat(lucene.getMetadata().field("analyzer")).isEqualTo(StandardAnalyzer.class.getName());
+    assertThat(lucene.getMetadata().<Object>field("analyzer")).isEqualTo(StandardAnalyzer.class.getName());
 
   }
 
   @Test
   public void testCreateIndexCompositeWithDefaultAnalyzer() {
-    OSchema schema = databaseDocumentTx.getMetadata().getSchema();
+    OSchema schema = db.getMetadata().getSchema();
 
     OClass song = schema.getClass("Song");
 
@@ -84,7 +79,7 @@ public class LuceneCreateJavaApiTest extends BaseLuceneTest {
 
     assertThat(lucene.getMetadata().containsField("analyzer")).isTrue();
 
-    assertThat(lucene.getMetadata().field("analyzer")).isEqualTo(StandardAnalyzer.class.getName());
+    assertThat(lucene.getMetadata().<Object>field("analyzer")).isEqualTo(StandardAnalyzer.class.getName());
 
   }
 

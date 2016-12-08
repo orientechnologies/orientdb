@@ -19,24 +19,24 @@
 package com.orientechnologies.lucene.collections;
 
 import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
-import com.orientechnologies.lucene.query.QueryContext;
+import com.orientechnologies.lucene.query.OLuceneQueryContext;
 
 /**
  * Created by Enrico Risa on 16/09/15.
  */
-public class LuceneResultSetFactory {
+public class OLuceneResultSetFactory {
 
-  public static LuceneResultSetFactory INSTANCE = new LuceneResultSetFactory();
+  public static OLuceneResultSetFactory INSTANCE = new OLuceneResultSetFactory();
 
-  protected LuceneResultSetFactory() {
+  protected OLuceneResultSetFactory() {
   }
 
-  public OLuceneAbstractResultSet create(OLuceneIndexEngine manager, QueryContext queryContext) {
+  public OLuceneAbstractResultSet create(OLuceneIndexEngine manager, OLuceneQueryContext queryContext) {
 
     if (queryContext.isInTx()) {
       return new OLuceneTxResultSet(manager, queryContext);
     } else {
-      return new LuceneResultSet(manager, queryContext);
+      return new OLuceneResultSet(manager, queryContext);
 
     }
 

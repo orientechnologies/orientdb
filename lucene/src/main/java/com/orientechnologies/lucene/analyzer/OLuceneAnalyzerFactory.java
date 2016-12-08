@@ -18,12 +18,19 @@ import java.util.Collection;
  */
 public class OLuceneAnalyzerFactory {
 
-  public Analyzer createAnalyzer(OIndexDefinition index, AnalyzerKind kind, ODocument metadata) {
-    String defaultAnalyzerFQN = metadata.field("default");
+  public enum AnalyzerKind {
+    INDEX, QUERY;
 
-    String prefix = "";
-    if (metadata.containsField("prefix_with_class_name") && metadata.<Boolean>field("prefix_with_class_name"))
-      prefix = index.getClassName() + ".";
+    @Override
+    public String toString() {
+      return name().toLowerCase();
+    }
+  }
+
+  public Analyzer createAnalyzer(OIndexDefinition index, AnalyzerKind kind, ODocument metadata) {
+    final String defaultAnalyzerFQN = metadata.field("default");
+
+    final String prefix = index.getClassName() + ".";
 
     //preset default analyzer for all fields
     OLucenePerFieldAnalyzerWrapper analyzer;
@@ -34,9 +41,10 @@ public class OLuceneAnalyzerFactory {
     }
 
     //default analyzer for requested kind
-    String specializedAnalyzerFQN = metadata.field(kind.toString());
+    final String specializedAnalyzerFQN = metadata.field(kind.toString());
     if (specializedAnalyzerFQN != null) {
       for (String field : index.getFields()) {
+        analyzer.add(field, buildAnalyzer(specializedAnalyzerFQN));
         analyzer.add(prefix + field, buildAnalyzer(specializedAnalyzerFQN));
       }
     }
@@ -44,14 +52,16 @@ public class OLuceneAnalyzerFactory {
     //specialized for each field
     for (String field : index.getFields()) {
 
-      String analyzerName = field + "_" + kind.toString();
+      final String analyzerName = field + "_" + kind.toString();
 
-      String analyzerStopwords = analyzerName + "_stopwords";
+      final String analyzerStopwords = analyzerName + "_stopwords";
 
       if (metadata.containsField(analyzerName) && metadata.containsField(analyzerStopwords)) {
-        Collection<String> stopwords = metadata.field(analyzerStopwords, OType.EMBEDDEDLIST);
-        analyzer.add(prefix + field, buildAnalyzer(metadata.<String>field(analyzerName), stopwords));
+        final Collection<String> stopWords = metadata.field(analyzerStopwords, OType.EMBEDDEDLIST);
+        analyzer.add(field, buildAnalyzer(metadata.<String>field(analyzerName), stopWords));
+        analyzer.add(prefix + field, buildAnalyzer(metadata.<String>field(analyzerName), stopWords));
       } else if (metadata.containsField(analyzerName)) {
+        analyzer.add(field, buildAnalyzer(metadata.<String>field(analyzerName)));
         analyzer.add(prefix + field, buildAnalyzer(metadata.<String>field(analyzerName)));
       }
     }
@@ -103,15 +113,6 @@ public class OLuceneAnalyzerFactory {
       OLogManager.instance().error(this, "Error on getting analyzer for Lucene index", e);
     }
     return new StandardAnalyzer();
-  }
-
-  public enum AnalyzerKind {
-    INDEX, QUERY;
-
-    @Override
-    public String toString() {
-      return name().toLowerCase();
-    }
   }
 
 }
