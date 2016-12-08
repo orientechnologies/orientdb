@@ -16,6 +16,7 @@
 
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
+import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -29,21 +30,14 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 /**
- * It checks the consistency in the cluster with the following scenario:
- * - 3 servers (writeQuorum=majority)
- * - record r1 (version x) is present in full replica on all the servers
- * - server3 is isolated (simulated by: shutdown + opening plocal db)
- * - update of r1 on server3 succeeds, so we have r1* on server3
- * - server3 joins the cluster (restart)
- * - shutdown server1 (so quorum for CRUD operation on r1 will not be reached)
- * - delete request for r1 on server3:
- *    - quorum not reached because r1* on server3 is not consistent with r1 on server2 (different values and versions)
- *    - delete operation is aborted on server2 and is rolled back on server3 (resurrection)
- * - restart server1 (so quorum for CRUD operation on r1 will be reached)
- * - check consistency: r1 is still present on server1 and server2, and r1* is present on server3.
- * - delete request for r1 on server1:
- *    - quorum reached
- *    - check consistency: r1 is not present on server1 and server2, and r1* is not present on server3.
+ * It checks the consistency in the cluster with the following scenario: - 3 servers (writeQuorum=majority) - record r1 (version x)
+ * is present in full replica on all the servers - server3 is isolated (simulated by: shutdown + opening plocal db) - update of r1
+ * on server3 succeeds, so we have r1* on server3 - server3 joins the cluster (restart) - shutdown server1 (so quorum for CRUD
+ * operation on r1 will not be reached) - delete request for r1 on server3: - quorum not reached because r1* on server3 is not
+ * consistent with r1 on server2 (different values and versions) - delete operation is aborted on server2 and is rolled back on
+ * server3 (resurrection) - restart server1 (so quorum for CRUD operation on r1 will be reached) - check consistency: r1 is still
+ * present on server1 and server2, and r1* is present on server3. - delete request for r1 on server1: - quorum reached - check
+ * consistency: r1 is not present on server1 and server2, and r1* is not present on server3.
  *
  * @author Gabriele Ponzi
  * @email <gabriele.ponzi--at--gmail.com>
@@ -151,6 +145,8 @@ public class DeleteAndLazarusScenarioTest extends AbstractScenarioTest {
       r1onServer3 = retrieveRecord(getPlocalDatabaseURL(serverInstance.get(2)), "R001");
     } catch (Exception e) {
       e.printStackTrace();
+    } finally {
+      dbServer3.close();
     }
 
     // r1 was not modified both on server1 and server2
@@ -179,11 +175,13 @@ public class DeleteAndLazarusScenarioTest extends AbstractScenarioTest {
     assertFalse(serverInstance.get(0).isActive());
 
     // delete request on server3 for r1*
+    dbServer3 = poolFactory.get(getDatabaseURL(serverInstance.get(2)), "admin", "admin").acquire();
     try {
-      dbServer3 = poolFactory.get(getDatabaseURL(serverInstance.get(2)), "admin", "admin").acquire();
       dbServer3.command(new OCommandSQL("delete from Person where @rid=#27:0")).execute();
     } catch (Exception e) {
       System.out.println(e.getMessage());
+    } finally {
+      dbServer3.close();
     }
 
     // restarting server1
@@ -214,22 +212,37 @@ public class DeleteAndLazarusScenarioTest extends AbstractScenarioTest {
     assertEquals("Vader", r1onServer3.field("lastName"));
 
     // delete request on server1 for r1
+    dbServer1 = poolFactory.get(getRemoteDatabaseURL(serverInstance.get(0)), "admin", "admin").acquire();
     try {
-      dbServer1 = poolFactory.get(getRemoteDatabaseURL(serverInstance.get(0)), "admin", "admin").acquire();
       Integer result = dbServer1.command(new OCommandSQL("delete from " + r1Rid)).execute();
     } catch (Exception e) {
       e.printStackTrace();
+    } finally {
+      dbServer1.close();
     }
 
     // r1 is no more present neither on server1, server2 nor server3
-    r1onServer1 = retrieveRecord(getDatabaseURL(serverInstance.get(0)), "R001", true);
-    r1onServer2 = retrieveRecord(getDatabaseURL(serverInstance.get(1)), "R001", true);
-    r1onServer3 = retrieveRecord(getDatabaseURL(serverInstance.get(2)), "R001", true);
-
-    assertEquals(MISSING_DOCUMENT, r1onServer1);
-    assertEquals(MISSING_DOCUMENT, r1onServer2);
-    assertEquals(MISSING_DOCUMENT, r1onServer3);
-
+    r1onServer1 = retrieveRecord(getDatabaseURL(serverInstance.get(0)), "R001", true, new OCallable<ODocument, ODocument>() {
+      @Override
+      public ODocument call(ODocument doc) {
+        assertEquals(MISSING_DOCUMENT, doc);
+        return null;
+      }
+    });
+    r1onServer2 = retrieveRecord(getDatabaseURL(serverInstance.get(1)), "R001", true, new OCallable<ODocument, ODocument>() {
+      @Override
+      public ODocument call(ODocument doc) {
+        assertEquals(MISSING_DOCUMENT, doc);
+        return null;
+      }
+    });
+    r1onServer3 = retrieveRecord(getDatabaseURL(serverInstance.get(2)), "R001", true, new OCallable<ODocument, ODocument>() {
+      @Override
+      public ODocument call(ODocument doc) {
+        assertEquals(MISSING_DOCUMENT, doc);
+        return null;
+      }
+    });
   }
 
   @Override

@@ -36,7 +36,7 @@ public class HARemoveNodeFromCfgTest extends AbstractServerClusterTxTest {
     OGlobalConfiguration.DISTRIBUTED_AUTO_REMOVE_OFFLINE_SERVERS.setValue(100);
     try {
 
-      useTransactions = false;
+      useTransactions = true;
       count = 10;
       init(SERVERS);
       prepare(false);

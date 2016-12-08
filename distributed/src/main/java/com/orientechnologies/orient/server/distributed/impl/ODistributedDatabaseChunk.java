@@ -19,11 +19,11 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
-import com.orientechnologies.orient.core.serialization.OStreamable;
-import com.orientechnologies.orient.server.distributed.ODistributedMomentum;
-
 import java.io.*;
 import java.util.zip.GZIPInputStream;
+
+import com.orientechnologies.orient.core.serialization.OStreamable;
+import com.orientechnologies.orient.server.distributed.ODistributedMomentum;
 
 public class ODistributedDatabaseChunk implements OStreamable {
   public String                filePath;
@@ -119,8 +119,9 @@ public class ODistributedDatabaseChunk implements OStreamable {
 
     momentum = new ODistributedMomentum();
     final boolean momentumPresent = in.readBoolean();
-    if (momentumPresent)
+    if (momentumPresent) {
       momentum.fromStream(in);
+    }
 
     gzipCompressed = in.readBoolean();
     last = in.readBoolean();

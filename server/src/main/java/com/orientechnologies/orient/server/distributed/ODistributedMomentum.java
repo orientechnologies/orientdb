@@ -25,6 +25,9 @@ import com.orientechnologies.orient.core.serialization.OStreamable;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * Represents a specific momentum in distributed environment.
@@ -33,6 +36,7 @@ import java.io.*;
  */
 public class ODistributedMomentum implements OStreamable {
   private static final String LAST_OPERATION_TIME_STAMP = "lastOperationTimeStamp";
+  private static final String VERSION                   = "version";
   private ODocument           configuration;
 
   public ODistributedMomentum() {
@@ -104,7 +108,7 @@ public class ODistributedMomentum implements OStreamable {
     Integer oldVersion = configuration.field("version");
     if (oldVersion == null)
       oldVersion = 0;
-    configuration.field("version", oldVersion.intValue() + 1);
+    configuration.field(VERSION, oldVersion.intValue() + 1);
   }
 
   @Override
@@ -137,5 +141,16 @@ public class ODistributedMomentum implements OStreamable {
     synchronized (configuration) {
       return configuration.toString();
     }
+  }
+
+  public Collection<String> getServers() {
+    final List<String> result = new ArrayList<String>();
+    synchronized (configuration) {
+      for (String s : configuration.fieldNames()) {
+        if (!LAST_OPERATION_TIME_STAMP.equals(s) && !VERSION.equals(s))
+          result.add(s);
+      }
+    }
+    return result;
   }
 }

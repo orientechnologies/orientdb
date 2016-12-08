@@ -42,6 +42,7 @@ import com.orientechnologies.orient.core.replication.OAsyncReplicationOk;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
@@ -50,6 +51,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECU
 import com.orientechnologies.orient.server.distributed.impl.task.*;
 import com.orientechnologies.orient.server.distributed.task.*;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -114,6 +116,15 @@ public class ODistributedTransactionManager {
             return storage.commit(iTx, callback);
           }
         });
+
+        try {
+          localDistributedDatabase.getSyncConfiguration().setLastLSN(localNodeName,
+              ((OLocalPaginatedStorage) storage.getUnderlying()).getLSN(), true);
+        } catch (IOException e) {
+          ODistributedServerLog.debug(this, dManager != null ? dManager.getLocalNodeName() : "?", null,
+              ODistributedServerLog.DIRECTION.NONE, "Error on updating local LSN configuration for database '%s'",
+              storage.getName());
+        }
 
         // REMOVE THE TX OBJECT FROM DATABASE TO AVOID UND OPERATIONS ARE "LOST IN TRANSACTION"
         database.setDefaultTransactionMode();

@@ -37,6 +37,7 @@ import com.orientechnologies.orient.server.distributed.task.ODatabaseIsOldExcept
 import java.io.*;
 import java.util.Date;
 import java.util.UUID;
+import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 
@@ -100,7 +101,7 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
           ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT, "Deploying database %s...",
               databaseName);
 
-          final AtomicReference<ODistributedMomentum> endLSN = new AtomicReference<ODistributedMomentum>();
+          final AtomicReference<ODistributedMomentum> momentum = new AtomicReference<ODistributedMomentum>();
 
           File backupFile = ((ODistributedStorage) database.getStorage()).getLastValidBackup();
 
@@ -126,8 +127,6 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
                 "Creating backup of database '%s' (compressionRate=%d) in directory: %s...", databaseName, compressionRate,
                 backupFile.getAbsolutePath());
 
-            endLSN.set(dDatabase.getSyncConfiguration().getMomentum());
-
             new Thread(new Runnable() {
               @Override
               public void run() {
@@ -136,21 +135,26 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
                 try {
 
                   database.activateOnCurrentThread();
-                  database.backup(fileOutputStream, null, null,
-                      ODistributedServerLog.isDebugEnabled() ? new OCommandOutputListener() {
-                        @Override
-                        public void onMessage(String iText) {
-                          if (iText.startsWith("\n"))
-                            iText = iText.substring(1);
+                  database.backup(fileOutputStream, null, new Callable<Object>() {
+                    @Override
+                    public Object call() throws Exception {
+                      momentum.set(dDatabase.getSyncConfiguration().getMomentum().copy());
+                      return null;
+                    }
+                  }, ODistributedServerLog.isDebugEnabled() ? new OCommandOutputListener() {
+                    @Override
+                    public void onMessage(String iText) {
+                      if (iText.startsWith("\n"))
+                        iText = iText.substring(1);
 
-                          OLogManager.instance().info(this, iText);
-                        }
-                      } : null, OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger(), CHUNK_MAX_SIZE);
+                      OLogManager.instance().info(this, iText);
+                    }
+                  } : null, OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger(), CHUNK_MAX_SIZE);
 
                   ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
                       "Backup of database '%s' completed. lastOperationId=%s...", databaseName, requestId);
 
-                } catch (IOException e) {
+                } catch (Throwable e) {
                   OLogManager.instance().error(this, "Cannot execute backup of database '%s' for deploy database", e, databaseName);
                 } finally {
                   try {
@@ -171,15 +175,20 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
             ((ODistributedStorage) database.getStorage()).setLastValidBackup(backupFile);
 
           } else {
+            momentum.set(dDatabase.getSyncConfiguration().getMomentum().copy());
             ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
                 "Reusing last backup of database '%s' in directory: %s...", databaseName, backupFile.getAbsolutePath());
           }
 
-          final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(backupFile, 0, CHUNK_MAX_SIZE, endLSN.get(), false);
+          for (int retry = 0; momentum.get() == null && retry < 10; ++retry)
+            Thread.sleep(300);
+
+          final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(backupFile, 0, CHUNK_MAX_SIZE, momentum.get(),
+              false);
 
           ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
               "- transferring chunk #%d offset=%d size=%s lsn=%s...", 1, 0, OFileUtils.getSizeAsNumber(chunk.buffer.length),
-              endLSN.get());
+              momentum.get());
 
           if (chunk.last)
             // NO MORE CHUNKS: SET THE NODE ONLINE (SYNCHRONIZING ENDED)

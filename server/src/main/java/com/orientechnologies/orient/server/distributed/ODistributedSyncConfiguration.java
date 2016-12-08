@@ -50,28 +50,12 @@ public class ODistributedSyncConfiguration {
       file.createNewFile();
       return;
     }
-
-    final InputStream is = new FileInputStream(file);
-    try {
-      momentum.fromJSON(is);
-
-    } catch (OSerializationException e) {
-      // CORRUPTED: RECREATE IT
-      file.getParentFile().mkdirs();
-      file.createNewFile();
-
-    } finally {
-      is.close();
-    }
+    load();
   }
 
   public ODistributedMomentum getMomentum() {
     updateInternalDocument();
     return momentum;
-  }
-
-  public void setMomentum(final ODistributedMomentum momentum) {
-    this.momentum = momentum;
   }
 
   public OLogSequenceNumber getLastLSN(final String server) {
@@ -90,6 +74,29 @@ public class ODistributedSyncConfiguration {
 
     if (System.currentTimeMillis() - lastLSNWrittenOnDisk > 2000)
       save();
+  }
+
+  public void load() throws IOException {
+    final InputStream is = new FileInputStream(file);
+    try {
+      synchronized (momentum) {
+        momentum.fromJSON(is);
+
+        lastOperationTimestamp = momentum.getLastOperationTimestamp();
+        lastLSN.clear();
+        for (String server : momentum.getServers()) {
+          lastLSN.put(server, momentum.getLSN(server));
+        }
+      }
+
+    } catch (OSerializationException e) {
+      // CORRUPTED: RECREATE IT
+      file.getParentFile().mkdirs();
+      file.createNewFile();
+
+    } finally {
+      is.close();
+    }
   }
 
   public void save() throws IOException {

@@ -674,7 +674,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
             ddb.setOnline();
 
             try {
-              ddb.getSyncConfiguration().setLastLSN(nodeName, ((OLocalPaginatedStorage) stg.getUnderlying()).getLSN(), false);
+              ddb.getSyncConfiguration().setLastLSN(nodeName, ((OLocalPaginatedStorage) stg.getUnderlying()).getLSN(), true);
             } catch (IOException e) {
               ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE,
                   "Error on saving distributed LSN for database '%s' (err=%s).", databaseName, e.getMessage());

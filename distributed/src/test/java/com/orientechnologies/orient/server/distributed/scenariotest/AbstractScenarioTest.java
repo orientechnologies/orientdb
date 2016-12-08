@@ -358,7 +358,7 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
     }, String.format("Expected value %s for field %s on record %s on all servers.", expectedFieldValue, fieldName, recordId));
   }
 
-  protected ODocument retrieveRecord(String dbUrl, String uniqueId, boolean returnsMissingDocument) {
+  protected ODocument retrieveRecord(String dbUrl, String uniqueId, boolean returnsMissingDocument, OCallable<ODocument,ODocument> assertion) {
     ODatabaseDocumentTx dbServer = poolFactory.get(dbUrl, "admin", "admin").acquire();
     // dbServer.getLocalCache().invalidate();
     ODatabaseRecordThreadLocal.INSTANCE.set(dbServer);
@@ -379,6 +379,10 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
       // } catch (ORecordNotFoundException e) {
       //// e.printStackTrace();
       // }
+
+      if (assertion != null)
+        assertion.call(doc);
+
       return doc;
     } finally {
       ODatabaseRecordThreadLocal.INSTANCE.set(null);
@@ -402,11 +406,11 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
   }
 
   protected ODocument retrieveRecordOrReturnMissing(String dbUrl, String uniqueId) {
-    return retrieveRecord(dbUrl, uniqueId, true);
+    return retrieveRecord(dbUrl, uniqueId, true, null);
   }
 
   protected ODocument retrieveRecord(String dbUrl, String uniqueId) {
-    return retrieveRecord(dbUrl, uniqueId, false);
+    return retrieveRecord(dbUrl, uniqueId, false, null);
   }
 
   @Override

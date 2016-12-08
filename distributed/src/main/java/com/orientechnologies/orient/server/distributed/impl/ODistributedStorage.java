@@ -644,6 +644,15 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
               } else
                 unlockCallback.call(null);
 
+              try {
+                localDistributedDatabase.getSyncConfiguration().setLastLSN(localNodeName,
+                    ((OLocalPaginatedStorage) getUnderlying()).getLSN(), true);
+              } catch (IOException e) {
+                ODistributedServerLog.debug(this, dManager != null ? dManager.getLocalNodeName() : "?", null,
+                    ODistributedServerLog.DIRECTION.NONE, "Error on updating local LSN configuration for database '%s'",
+                    wrapped.getName());
+              }
+
               return localResult;
             }
           });
@@ -902,6 +911,16 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
                 asynchronousExecution(new OAsynchDistributedOperation(getName(), Collections.singleton(clusterName), nodes, task,
                     dManager.getNextMessageIdCounter(), localResultPayload, unlockCallback, null));
               }
+
+              try {
+                localDistributedDatabase.getSyncConfiguration().setLastLSN(localNodeName,
+                    ((OLocalPaginatedStorage) getUnderlying()).getLSN(), true);
+              } catch (IOException e) {
+                ODistributedServerLog.debug(this, dManager != null ? dManager.getLocalNodeName() : "?", null,
+                    ODistributedServerLog.DIRECTION.NONE, "Error on updating local LSN configuration for database '%s'",
+                    wrapped.getName());
+              }
+
               return localResult;
             }
           });
@@ -1057,6 +1076,16 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
                       dManager.getNextMessageIdCounter(), localResultPayload, unlockCallback, null));
 
               }
+
+              try {
+                localDistributedDatabase.getSyncConfiguration().setLastLSN(localNodeName,
+                    ((OLocalPaginatedStorage) getUnderlying()).getLSN(), true);
+              } catch (IOException e) {
+                ODistributedServerLog.debug(this, dManager != null ? dManager.getLocalNodeName() : "?", null,
+                    ODistributedServerLog.DIRECTION.NONE, "Error on updating local LSN configuration for database '%s'",
+                    wrapped.getName());
+              }
+
               return localResult;
             }
           });

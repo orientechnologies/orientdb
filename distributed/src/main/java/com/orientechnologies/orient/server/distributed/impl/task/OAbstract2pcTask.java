@@ -173,11 +173,6 @@ public abstract class OAbstract2pcTask extends OAbstractReplicatedTask {
     this.localUndoTasks = undoTasks;
   }
 
-  @Override
-  public OLogSequenceNumber getLastLSN() {
-    return lastLSN;
-  }
-
   public void setLastLSN(final OLogSequenceNumber lastLSN) {
     this.lastLSN = lastLSN;
   }

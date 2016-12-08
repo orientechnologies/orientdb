@@ -183,10 +183,6 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
     this.lockRecords = lockRecords;
   }
 
-  public OLogSequenceNumber getLastLSN() {
-    return lastLSN;
-  }
-
   public void setLastLSN(final OLogSequenceNumber lastLSN) {
     this.lastLSN = lastLSN;
   }

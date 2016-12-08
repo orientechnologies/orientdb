@@ -51,6 +51,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPositionMap;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.OServer;
@@ -76,6 +77,8 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
+
+import static com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl.DISTRIBUTED_SYNC_JSON_FILENAME;
 
 /**
  * Abstract plugin to manage the distributed environment.
@@ -1008,7 +1011,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     if (selectedNodes.isEmpty()) {
       // FORCE FULL DATABASE SYNC
       ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE,
-          "No LSN found for delta sync for database %s. Asking for full database sync...", databaseName);
+          "No LSN found for delta sync for database '%s'. Asking for full database sync...", databaseName);
       throw new ODistributedDatabaseDeltaSyncException("Requested database delta sync but no LSN was found");
     }
 
@@ -1355,18 +1358,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
               // CREATE THE .COMPLETED FILE TO SIGNAL EOF
               new File(file.getAbsolutePath() + ".completed").createNewFile();
 
-              if (momentum.get() != null) {
-                // UPDATE LSN VERSUS THE TARGET NODE
-                final ODistributedDatabase distrDatabase = getMessageService().getDatabase(databaseName);
-
-                // OVERWRITE THE MOMENTUM FROM THE ORIGINAL SERVER
-                distrDatabase.getSyncConfiguration().setMomentum(momentum.get());
-
-              } else
-                ODistributedServerLog.warn(this, nodeName, iNode, DIRECTION.IN,
-                    "LSN not found in database from network, database delta sync will be not available for database '%s'",
-                    databaseName);
-
               ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Database copied correctly, size=%s",
                   OFileUtils.getSizeAsString(fileSize));
 
@@ -1394,7 +1385,17 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
     final ODatabaseDocumentTx db = installDatabaseOnLocalNode(databaseName, dbPath, iNode, fileName, delta,
         uniqueClustersBackupDirectory);
+
     if (db != null) {
+      // OVERWRITE THE MOMENTUM FROM THE ORIGINAL SERVER AND ADD LAST LOCAL LSN
+      try {
+        distrDatabase.getSyncConfiguration().load();
+        distrDatabase.getSyncConfiguration().setLastLSN(localNodeName, ((OLocalPaginatedStorage) db.getStorage()).getLSN(), true);
+      } catch (IOException e) {
+        ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE, "Error on loading %s file for database '%s'", e,
+            DISTRIBUTED_SYNC_JSON_FILENAME, databaseName);
+      }
+
       try {
         executeInDistributedDatabaseLock(databaseName, 0, new OCallable<Void, ODistributedConfiguration>() {
 
