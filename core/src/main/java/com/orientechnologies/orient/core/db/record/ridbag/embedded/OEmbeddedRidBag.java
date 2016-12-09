@@ -412,7 +412,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
       if (entry instanceof OIdentifiable) {
         OIdentifiable link = (OIdentifiable) entry;
         final ORID rid = link.getIdentity();
-        if (db != null && db.getTransaction().isActive()) {
+        if (db != null && !db.isClosed() && db.getTransaction().isActive()) {
           if (!link.getIdentity().isPersistent()) {
             link = db.getTransaction().getRecord(link.getIdentity());
             entries[i] = link;
