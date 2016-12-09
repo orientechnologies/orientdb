@@ -37,8 +37,10 @@ public class OStatementCache {
    * @param statement an SQL statement
    * @return true if the corresponding executor is present in the cache
    */
-  public synchronized boolean contains(String statement) {
-    return map.containsKey(statement);
+  public boolean contains(String statement) {
+    synchronized (map) {
+      return map.containsKey(statement);
+    }
   }
 
   /**
@@ -66,12 +68,21 @@ public class OStatementCache {
    * @param statement an SQL statement
    * @return the corresponding executor, taking it from the internal cache, if it exists
    */
-  public synchronized OStatement get(String statement) {
-    OStatement result = map.remove(statement);
+  public OStatement get(String statement) {
+    OStatement result;
+    synchronized (map) {
+      //LRU
+      result = map.remove(statement);
+      if (result != null) {
+        map.put(statement, result);
+      }
+    }
     if (result == null) {
       result = parse(statement);
+      synchronized (map) {
+        map.put(statement, result);
+      }
     }
-    map.put(statement, result);
     return result;
   }
 
