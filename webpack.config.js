@@ -12,7 +12,7 @@ var newPath = path.resolve(__dirname, './src/app');
 module.exports = {
   entry: "./src/app.js",
   output: {
-    path: path.join(__dirname, 'dist'),
+    path: path.join(__dirname, 'dist/www'),
     filename: "bundle.js"
   },
   plugins: [

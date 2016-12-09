@@ -53,7 +53,7 @@
     "zone.js": "^0.7.2"
   },
   "scripts": {
-    "build": "NODE_ENV=production webpack -p --progress --profile --colors",
+    "build": "NODE_ENV=production webpack  --progress --profile --colors",
     "watch": "webpack-dev-server --hot --inline --progress --colors --watch-poll"
   },
   "devDependencies": {

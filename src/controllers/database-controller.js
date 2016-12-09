@@ -470,7 +470,7 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$route', '$l
 
 
 }]);
-dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$location', 'Database', 'CommandApi', 'localStorageService', 'Spinner', 'NgTableParams', '$document', '$ojson', 'Graph', 'ngTableEventsChannel', function ($scope, $routeParams, $filter, $location, Database, CommandApi, localStorageService, Spinner, ngTableParams, $document, $ojson, Graph, ngTableEventsChannel) {
+dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$location', 'Database', 'CommandApi', 'localStorageService', 'Spinner', 'NgTableParams', '$document', '$ojson', 'ngTableEventsChannel', function ($scope, $routeParams, $filter, $location, Database, CommandApi, localStorageService, Spinner, ngTableParams, $document, $ojson, ngTableEventsChannel) {
 
 
   $scope.itemByPage = 10;

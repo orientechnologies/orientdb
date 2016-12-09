@@ -44,7 +44,7 @@ angular.module('graph.services', []).factory(
   `GraphService`,
   downgradeInjectable(GraphService));
 
-export default GraphService;
+export  {GraphService};
 
 
 

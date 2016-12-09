@@ -1,8 +1,9 @@
-import {DBService} from './core/services';
+import {DBService, GraphService} from './core/services';
 
 
 const APP_SERVICES = [
-  DBService
+  DBService,
+  GraphService
 ]
 
 export const APP_RESOLVER_PROVIDERS = [
