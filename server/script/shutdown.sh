@@ -32,7 +32,6 @@ PRGDIR=`dirname "$PRG"`
 
 # Only set ORIENTDB_HOME if not already set
 [ -f "$ORIENTDB_HOME"/bin/server.sh ] || ORIENTDB_HOME=`cd "$PRGDIR/.." ; pwd`
-export ORIENTDB_HOME
 cd "$ORIENTDB_HOME/bin"
 
 if [ ! -f "${CONFIG_FILE}" ]
@@ -46,15 +45,15 @@ if [ -f "${JAVA_HOME}/bin/java" ]; then
 else
    JAVA=java
 fi
-export JAVA
 
 LOG_FILE=$ORIENTDB_HOME/config/orientdb-server-log.properties
-LOG_LEVEL=warning
-WWW_PATH=$ORIENTDB_HOME/www
 JAVA_OPTS=-Djava.awt.headless=true
 # It's better to set MaxDirectMemorySize, since no one sure OServerShutdownMain will refer inside it
 ORIENTDB_SETTINGS="-XX:MaxDirectMemorySize=512g"
-ORIENTDB_PID=$ORIENTDB_HOME/bin/orient.pid
+
+if [ -z "$ORIENTDB_PID" ] ; then
+    ORIENTDB_PID=$ORIENTDB_HOME/bin/orient.pid
+fi
 
 PARAMS=$*
 
