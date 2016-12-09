@@ -35,7 +35,7 @@ public class HALocalGraphTest extends AbstractServerClusterTxTest {
 
   protected final static int    SERVERS                 = 3;
   protected static final int    CONCURRENCY_LEVEL       = 4;
-  protected static final int    TOTAL_CYCLES_PER_THREAD = 10000;
+  protected static final int    TOTAL_CYCLES_PER_THREAD = 20000;
 
   protected OrientGraphFactory  graphReadFactory;
   protected ExecutorService     executorService;
@@ -106,7 +106,7 @@ public class HALocalGraphTest extends AbstractServerClusterTxTest {
             }
         }
       };
-      Orient.instance().scheduleTask(task, 2000, 200);
+      Orient.instance().scheduleTask(task, 2000, 100);
     }
   }
 

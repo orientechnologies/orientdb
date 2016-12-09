@@ -1390,7 +1390,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       // OVERWRITE THE MOMENTUM FROM THE ORIGINAL SERVER AND ADD LAST LOCAL LSN
       try {
         distrDatabase.getSyncConfiguration().load();
-        distrDatabase.getSyncConfiguration().setLastLSN(localNodeName, ((OLocalPaginatedStorage) db.getStorage()).getLSN(), true);
+        distrDatabase.getSyncConfiguration().setLastLSN(localNodeName, ((OLocalPaginatedStorage) db.getStorage().getUnderlying()).getLSN(), true);
       } catch (IOException e) {
         ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE, "Error on loading %s file for database '%s'", e,
             DISTRIBUTED_SYNC_JSON_FILENAME, databaseName);
