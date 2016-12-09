@@ -46,7 +46,7 @@ PRGDIR=`dirname "$PRG"`
 
 # Only set ORIENTDB_HOME if not already set
 [ -f "$ORIENTDB_HOME"/bin/server.sh ] || ORIENTDB_HOME=`cd "$PRGDIR/.." ; pwd`
-export ORIENTDB_HOME
+
 cd "$ORIENTDB_HOME/bin"
 
 if [ ! -f "${CONFIG_FILE}" ]
@@ -58,7 +58,6 @@ fi
 if [ `uname -m` != "armv6l" ]; then
   JAVA_OPTS="$JAVA_OPTS -server "
 fi
-export JAVA_OPTS
 
 # Set JavaHome if it exists
 if [ -f "${JAVA_HOME}/bin/java" ]; then 
@@ -66,13 +65,18 @@ if [ -f "${JAVA_HOME}/bin/java" ]; then
 else
    JAVA=java
 fi
-export JAVA
 
+if [ -z "$ORIENTDB_LOG_CONF" ] ; then
+    ORIENTDB_LOG_CONF=$ORIENTDB_HOME/config/orientdb-server-log.properties
+fi
 
+if [ -z "$ORIENTDB_WWW_PATH" ] ; then
+    ORIENTDB_WWW_PATH=$ORIENTDB_HOME/www
+fi
 
-LOG_FILE=$ORIENTDB_HOME/config/orientdb-server-log.properties
-WWW_PATH=$ORIENTDB_HOME/www
+if [ -z "$ORIENTDB_PID" ] ; then
 ORIENTDB_PID=$ORIENTDB_HOME/bin/orient.pid
+fi
 
 if [ -f "$ORIENTDB_PID" ]; then
     echo "removing old pid file $ORIENTDB_PID"
@@ -107,10 +111,14 @@ fi
 
 echo $$ > $ORIENTDB_PID
 
-exec "$JAVA" $JAVA_OPTS $ORIENTDB_OPTS_MEMORY $JAVA_OPTS_SCRIPT $ORIENTDB_SETTINGS $DEBUG_OPTS \
-    -Djava.util.logging.config.file="$LOG_FILE" \
+exec "$JAVA" $JAVA_OPTS \
+    $ORIENTDB_OPTS_MEMORY \
+    $JAVA_OPTS_SCRIPT \
+    $ORIENTDB_SETTINGS \
+    $DEBUG_OPTS \
+    -Djava.util.logging.config.file="$ORIENTDB_LOG_CONF" \
     -Dorientdb.config.file="$CONFIG_FILE" \
-    -Dorientdb.www.path="$WWW_PATH" \
+    -Dorientdb.www.path="$ORIENTDB_WWW_PATH" \
     -Dorientdb.build.number="@BUILD@" \
     -cp "$ORIENTDB_HOME/lib/orientdb-server-@VERSION@.jar:$ORIENTDB_HOME/lib/*:$ORIENTDB_HOME/plugins/*" \
     $ARGS com.orientechnologies.orient.server.OServerMain
