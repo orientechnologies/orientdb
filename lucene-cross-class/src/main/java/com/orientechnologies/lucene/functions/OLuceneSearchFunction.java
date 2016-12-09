@@ -53,24 +53,6 @@ public class OLuceneSearchFunction extends OSQLFunctionAbstract implements OInde
     return 1L;
   }
 
-  @Override
-  public boolean canExecuteWithoutIndex(OFromClause target, OBinaryCompareOperator operator, Object rightValue, OCommandContext ctx,
-      OExpression... args) {
-    return true;
-  }
-
-  @Override
-  public boolean allowsIndexedExecution(OFromClause target, OBinaryCompareOperator operator, Object rightValue, OCommandContext ctx,
-      OExpression... args) {
-    return true;
-  }
-
-  @Override
-  public boolean shouldExecuteAfterSearch(OFromClause target, OBinaryCompareOperator operator, Object rightValue,
-      OCommandContext ctx, OExpression... args) {
-    return false;
-  }
-
   protected OIndex searchForIndex() {
 
     Collection<? extends OIndex<?>> indexes = getDb().getMetadata().getIndexManager().getIndexes();

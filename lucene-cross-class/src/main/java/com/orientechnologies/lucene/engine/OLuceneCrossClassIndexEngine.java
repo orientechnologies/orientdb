@@ -2,7 +2,6 @@ package com.orientechnologies.lucene.engine;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
-import com.orientechnologies.lucene.OLuceneIndexFactory;
 import com.orientechnologies.lucene.analyzer.OLucenePerFieldAnalyzerWrapper;
 import com.orientechnologies.lucene.collections.OLuceneResultSet;
 import com.orientechnologies.lucene.index.OLuceneFullTextIndex;
@@ -15,6 +14,7 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexKeyCursor;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -37,9 +37,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
-import static com.orientechnologies.lucene.OLuceneIndexFactory.LUCENE_ALGORITHM;
+import static com.orientechnologies.lucene.OLuceneIndexFactory.*;
 
 /**
  * Created by frank on 03/11/2016.
@@ -72,6 +71,7 @@ public class OLuceneCrossClassIndexEngine implements OLuceneIndexEngine {
   public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
       OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, Map<String, String> engineProperties,
       ODocument metadata) {
+
 
   }
 
@@ -118,22 +118,22 @@ public class OLuceneCrossClassIndexEngine implements OLuceneIndexEngine {
 
     OLucenePerFieldAnalyzerWrapper globalAnalyzer = new OLucenePerFieldAnalyzerWrapper(new StandardAnalyzer());
 
-    List<String> fields = new ArrayList<>();
+    List<String> fields = new ArrayList<String>();
 
-    List<IndexReader> readers = new ArrayList<>();
+    List<IndexReader> readers = new ArrayList<IndexReader>();
 
     try {
       for (OIndex index : indexes) {
-        if (index.getAlgorithm().equalsIgnoreCase(LUCENE_ALGORITHM)) {
+        if (index.getAlgorithm().equalsIgnoreCase(LUCENE_ALGORITHM) &&
+            index.getType().equalsIgnoreCase(OClass.INDEX_TYPE.FULLTEXT.toString())) {
 
           final OIndexDefinition definition = index.getDefinition();
           final String className = definition.getClassName();
 
-          fields.addAll(
-              definition.getFields().stream()
-                  .map(f -> className + "." + f)
-                  .collect(Collectors.toList())
-          );
+          for (String field : definition.getFields()) {
+
+            fields.add(className + "." + field);
+          }
 
           OLuceneFullTextIndex fullTextIndex = (OLuceneFullTextIndex) index.getInternal();
 
@@ -258,7 +258,7 @@ public class OLuceneCrossClassIndexEngine implements OLuceneIndexEngine {
 
   @Override
   public void onRecordAddedToResultSet(OLuceneQueryContext queryContext, OContextualRecordId recordId, Document ret,
-      ScoreDoc score) {
+      final ScoreDoc score) {
 
     recordId.setContext(new HashMap<String, Object>() {
       {

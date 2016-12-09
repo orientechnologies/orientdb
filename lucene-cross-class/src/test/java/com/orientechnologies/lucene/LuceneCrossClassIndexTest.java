@@ -16,9 +16,10 @@
  *  
  */
 
-package com.orientechnologies.lucene.test;
+package com.orientechnologies.lucene;
 
 import com.orientechnologies.lucene.functions.OLuceneSearchFunction;
+import com.orientechnologies.lucene.test.BaseLuceneTest;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -29,9 +30,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -81,11 +82,16 @@ public class LuceneCrossClassIndexTest extends BaseLuceneTest {
   }
 
   private List<ODocument> fetchDocs(List<ODocument> docs) {
-    return docs.get(0)
-        .<Set<OIdentifiable>>field(OLuceneSearchFunction.NAME)
-        .stream()
-        .map(orid -> orid.<ODocument>getRecord())
-        .collect(Collectors.toList());
+
+    List<ODocument> mappedDocs = new ArrayList<ODocument>();
+    Set<OIdentifiable> identifiables = docs.get(0).<Set<OIdentifiable>>field(OLuceneSearchFunction.NAME);
+    if (identifiables != null) {
+      for (OIdentifiable oid : identifiables) {
+        docs.add(oid.<ODocument>getRecord());
+
+      }
+    }
+    return mappedDocs;
   }
 
   @Test

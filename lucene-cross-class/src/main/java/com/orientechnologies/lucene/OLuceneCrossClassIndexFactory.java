@@ -20,12 +20,15 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.engine.OLuceneCrossClassIndexEngine;
 import com.orientechnologies.lucene.index.OLuceneFullTextIndex;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexEngine;
 import com.orientechnologies.orient.core.index.OIndexFactory;
 import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.index.OIndexManagerProxy;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -85,21 +88,23 @@ public class OLuceneCrossClassIndexFactory implements OIndexFactory, ODatabaseLi
   }
 
   @Override
-  public OIndexInternal<?> createIndex(String name, OStorage storage, String indexType, String algorithm,
+  public OIndexInternal<?> createIndex(String name, ODatabaseDocumentInternal database, String indexType, String algorithm,
       String valueContainerAlgorithm, ODocument metadata, int version) throws OConfigurationException {
 
-    OAbstractPaginatedStorage pagStorage = (OAbstractPaginatedStorage) storage.getUnderlying();
+    OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) database.getStorage().getUnderlying();
 
-    if (metadata == null)
+    if (metadata == null) {
       metadata = new ODocument().field("analyzer", StandardAnalyzer.class.getName());
+    }
 
     if (FULLTEXT.toString().equalsIgnoreCase(indexType)) {
 
-      OLuceneFullTextIndex index = new OLuceneFullTextIndex(name, indexType, algorithm, version, pagStorage,
+      OLuceneFullTextIndex index = new OLuceneFullTextIndex(name, indexType, algorithm, version, storage,
           valueContainerAlgorithm, metadata);
 
       return index;
     }
+
     throw new OConfigurationException("Unsupported type : " + algorithm);
   }
 
@@ -122,7 +127,7 @@ public class OLuceneCrossClassIndexFactory implements OIndexFactory, ODatabaseLi
 
   @Override
   public void onCreate(ODatabaseInternal db) {
-    OLogManager.instance().debug(this, "onCreate");
+    OLogManager.instance().info(this, "onCreate:: create crossClassIndex");
 
     createCrossClassSearchIndex(db);
 
@@ -130,9 +135,6 @@ public class OLuceneCrossClassIndexFactory implements OIndexFactory, ODatabaseLi
 
   @Override
   public void onOpen(ODatabaseInternal db) {
-    OLogManager.instance().debug(this, "onOpen");
-
-    createCrossClassSearchIndex(db);
   }
 
   @Override
@@ -148,12 +150,12 @@ public class OLuceneCrossClassIndexFactory implements OIndexFactory, ODatabaseLi
 
       OLogManager.instance().debug(this, "Dropping Lucene indexes...");
 
-      db.getMetadata()
-          .getIndexManager()
-          .getIndexes().stream()
-          .filter(idx -> idx.getInternal() instanceof OLuceneCrossClassIndexEngine)
-          .peek(idx -> OLogManager.instance().debug(this, "deleting index " + idx.getName()))
-          .forEach(idx -> idx.delete());
+      for (OIndex<?> idx : db.getMetadata().getIndexManager().getIndexes()) {
+        if (idx instanceof OLuceneCrossClassIndexEngine) {
+          OLogManager.instance().debug(this, "deleting index " + idx.getName());
+          idx.delete();
+        }
+      }
 
     } catch (Exception e) {
       OLogManager.instance().warn(this, "Error on dropping Lucene indexes", e);
@@ -173,9 +175,10 @@ public class OLuceneCrossClassIndexFactory implements OIndexFactory, ODatabaseLi
   }
 
   private void createCrossClassSearchIndex(ODatabaseInternal db) {
-    if (!db.getMetadata().getIndexManager().existsIndex("CrossClassSearchIndex")) {
+    OIndexManagerProxy indexManager = db.getMetadata().getIndexManager();
+    if (!indexManager.existsIndex("CrossClassSearchIndex")) {
 
-      OLogManager.instance().debug(this, "creating cross class index");
+      OLogManager.instance().info(this, "index is no present:: creating cross class index");
 
       db.command(new OCommandSQL(
           "CREATE INDEX CrossClassSearchIndex FULLTEXT ENGINE LUCENE_CROSS_CLASS")).execute();
