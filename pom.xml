@@ -16,7 +16,9 @@
 
     <modules>
         <module>agent</module>
+        <module>lucene-cross-class</module>
         <module>distribution</module>
+        <!--<module>lucene-performance</module>-->
     </modules>
 
 </project>
