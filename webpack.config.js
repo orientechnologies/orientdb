@@ -4,6 +4,11 @@ const path = require('path');
 var babelPresets = ["es2015"];
 
 
+var oldPath = path.resolve(__dirname, './src/views');
+
+var newPath = path.resolve(__dirname, './src/app');
+
+
 module.exports = {
   entry: "./src/app.js",
   output: {
@@ -52,8 +57,14 @@ module.exports = {
       },
       {
         test: /\.html$/,
-        loader: 'ngtemplate-loader?relativeTo=' + (path.resolve(__dirname, './src')) + '/!html-loader'
-      }
+        loader: 'raw-loader',
+        exclude: [/src\/views/]
+      },
+      {
+        test: /\.html$/,
+        loader: 'ngtemplate-loader?relativeTo=' + (path.resolve(__dirname, './src')) + '/!html-loader',
+        exclude: [/src\/app/]
+      },
     ]
   },
   devtool: "source-map",

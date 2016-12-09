@@ -22,6 +22,8 @@
     "angular-strap": "2.3.9",
     "angular-translate": "^2.11.0",
     "angular-translate-loader-partial": "^2.11.0",
+    "babel-polyfill": "^6.16.0",
+    "babel-preset-angular2": "0.0.2",
     "bootstrap-switch": "^3.3.2",
     "c3": "^0.4.11",
     "codemirror": "^5.16.0",

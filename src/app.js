@@ -7,7 +7,10 @@ import {NgModule} from '@angular/core';
 import {BrowserModule} from "@angular/platform-browser";
 import {HttpModule} from '@angular/http';
 import {platformBrowserDynamic} from '@angular/platform-browser-dynamic';
+
+
 import 'core-js';
+import 'babel-polyfill';
 import 'zone.js';
 import 'ie-shim';
 import 'reflect-metadata';
@@ -51,7 +54,9 @@ import 'ng-tags-input/build/ng-tags-input.bootstrap.min.css';
 import 'c3/c3.min.css';
 import 'fullcalendar/dist/fullcalendar.min.css';
 
-import GraphService from './app/core/services/graph.service';
+
+import {APP_DECLARATIONS} from './app/app.declarations';
+import {APP_RESOLVER_PROVIDERS} from './app/app.resolver';
 
 // Bundled Vendor
 
@@ -136,6 +141,7 @@ let deps = [HeaderController,
   'rendering',
   'graph',
   'duScroll',
+  'dbconfig.components',
   'ui.select',
   'ngRoute',
   'ngAnimate',
@@ -226,9 +232,12 @@ $('body').on('keyup', function (e) {
   }
 })
 
+
 let AppModule = NgModule({
   imports: [BrowserModule, UpgradeModule, HttpModule],
-  providers: [GraphService]
+  providers: [...APP_RESOLVER_PROVIDERS],
+  declarations: [...APP_DECLARATIONS],
+  entryComponents: [...APP_DECLARATIONS]
 }).Class({
   constructor: function () {
   },
