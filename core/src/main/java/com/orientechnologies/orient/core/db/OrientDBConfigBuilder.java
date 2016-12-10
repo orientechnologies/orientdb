@@ -35,6 +35,9 @@ public class OrientDBConfigBuilder {
   private Map<ATTRIBUTES, Object> attributes     = new HashMap<>();
   private Set<ODatabaseListener>  listeners      = new HashSet<>();
 
+  public OrientDBConfigBuilder(){
+  }
+  
   public OrientDBConfigBuilder fromGlobalMap(Map<OGlobalConfiguration, Object> values) {
     for (Map.Entry<OGlobalConfiguration, Object> entry : values.entrySet()) {
       addConfig(entry.getKey(), entry.getValue());

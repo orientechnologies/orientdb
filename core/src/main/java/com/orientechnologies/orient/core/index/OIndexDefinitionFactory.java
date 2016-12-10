@@ -44,6 +44,9 @@ import java.util.regex.Pattern;
 public class OIndexDefinitionFactory {
   private static final Pattern FILED_NAME_PATTERN = Pattern.compile("\\s+");
 
+  private OIndexDefinitionFactory(){
+  }
+  
   /**
    * Creates an instance of {@link OIndexDefinition} for automatic index.
    *

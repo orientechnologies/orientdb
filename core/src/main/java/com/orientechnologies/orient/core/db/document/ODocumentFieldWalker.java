@@ -45,6 +45,10 @@ import java.util.*;
  * Fields will be visited till method {@link ODocumentFieldVisitor#goFurther(OType, OType, Object, Object)} returns true.
  */
 public class ODocumentFieldWalker {
+	
+  public ODocumentFieldWalker(){
+  }
+	
   public void walkDocument(ODocument document, ODocumentFieldVisitor fieldWalker) {
     final Set<ODocument> walked = Collections.newSetFromMap(new IdentityHashMap<ODocument, Boolean>());
     walkDocument(document, fieldWalker, walked);

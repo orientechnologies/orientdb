@@ -65,6 +65,9 @@ public class OUnsafeBinaryConverter implements OBinaryConverter {
     BYTE_ARRAY_OFFSET = theUnsafe.arrayBaseOffset(byte[].class);
   }
 
+  public OUnsafeBinaryConverter(){
+  }
+  
   public void putShort(byte[] buffer, int index, short value, ByteOrder byteOrder) {
     if (!useOnlyAlignedAccess) {
       if (!byteOrder.equals(ByteOrder.nativeOrder()))

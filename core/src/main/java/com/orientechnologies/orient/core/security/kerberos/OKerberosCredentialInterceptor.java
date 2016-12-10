@@ -58,6 +58,9 @@ public class OKerberosCredentialInterceptor implements OCredentialInterceptor {
   public String getUsername() { return this.principal; }
   public String getPassword() { return this.serviceTicket; }
   
+  private OKerberosCredentialInterceptor(){
+  }
+  
   public void intercept(final String url, final String principal, final String spn) throws OSecurityException
   {
     // While the principal can be determined from the ticket cache, if a client keytab is used instead,

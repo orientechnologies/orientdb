@@ -59,6 +59,9 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
   public static final ORecordSerializerSchemaAware2CSV INSTANCE         = new ORecordSerializerSchemaAware2CSV();
   private static final long                            serialVersionUID = 1L;
 
+  public ORecordSerializerSchemaAware2CSV(){
+  }
+  
   @Override
   public String toString() {
     return NAME;

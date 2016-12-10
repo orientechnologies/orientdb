@@ -28,6 +28,9 @@ public class OStreamSerializerInteger implements OStreamSerializer {
 
 	public static final OStreamSerializerInteger	INSTANCE	= new OStreamSerializerInteger();
 
+	private OStreamSerializerInteger(){
+	}
+	
 	public String getName() {
 		return NAME;
 	}

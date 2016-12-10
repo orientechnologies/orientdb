@@ -36,6 +36,9 @@ public class ODecimalSerializer implements OBinarySerializer<BigDecimal> {
   public static final ODecimalSerializer INSTANCE = new ODecimalSerializer();
   public static final byte               ID       = 18;
 
+  public ODecimalSerializer(){
+  }
+  
   public int getObjectSize(BigDecimal object, Object... hints) {
     return OIntegerSerializer.INT_SIZE + OBinaryTypeSerializer.INSTANCE.getObjectSize(object.unscaledValue().toByteArray());
   }

@@ -36,6 +36,10 @@ public class OCommandExecutorUtility {
      java8MethodIsArray = Class.forName("jdk.nashorn.api.scripting.JSObject").getDeclaredMethod("isArray",null);
    } catch(Exception e) {}
   }
+  
+  private OCommandExecutorUtility(){
+  }
+  
   /**
    * Manages cross compiler compatibility issues.
    * 

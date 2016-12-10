@@ -30,6 +30,9 @@ import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 public class ORecordSerializerRaw implements ORecordSerializer {
   public static final String NAME = "ORecordDocumentRaw";
 
+  public ORecordSerializerRaw(){
+  }
+  
   public ORecord fromStream(final byte[] iSource) {
     return new ORecordBytes(iSource);
   }

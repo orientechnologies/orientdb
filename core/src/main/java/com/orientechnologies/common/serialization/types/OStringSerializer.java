@@ -34,6 +34,9 @@ public class OStringSerializer implements OBinarySerializer<String> {
   public static final OStringSerializer INSTANCE = new OStringSerializer();
   public static final byte              ID       = 13;
 
+  public OStringSerializer(){
+  }
+  
   public int getObjectSize(final String object, Object... hints) {
     return object.length() * 2 + OIntegerSerializer.INT_SIZE;
   }

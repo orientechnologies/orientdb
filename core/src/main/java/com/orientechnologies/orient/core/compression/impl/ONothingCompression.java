@@ -29,6 +29,9 @@ public class ONothingCompression extends OAbstractCompression {
 
   public static final ONothingCompression INSTANCE = new ONothingCompression();
 
+  public ONothingCompression(){
+  }
+  
   @Override
   public byte[] compress(final byte[] content, final int offset, final int length) {
     if (offset == 0 && length == content.length)

@@ -29,6 +29,10 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * 
  */
 public class ORemoteFetchContext implements OFetchContext {
+	
+  public ORemoteFetchContext(){
+  }
+	
   public void onBeforeStandardField(Object iFieldValue, String iFieldName, Object iUserObject, OType fieldType) {
   }
 

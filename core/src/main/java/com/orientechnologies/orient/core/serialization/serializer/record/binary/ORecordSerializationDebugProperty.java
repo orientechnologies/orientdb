@@ -13,4 +13,6 @@ public class ORecordSerializationDebugProperty {
   public Object           value;
   public int              valuePos;
 
+  public ORecordSerializationDebugProperty(){
+  }
 }

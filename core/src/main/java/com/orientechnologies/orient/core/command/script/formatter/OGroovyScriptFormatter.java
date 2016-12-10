@@ -27,6 +27,10 @@ import com.orientechnologies.orient.core.metadata.function.OFunction;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OGroovyScriptFormatter implements OScriptFormatter {
+	
+	public OGroovyScriptFormatter(){
+	}
+	
     public String getFunctionDefinition(final OFunction f) {
 
         final StringBuilder fCode = new StringBuilder(1024);

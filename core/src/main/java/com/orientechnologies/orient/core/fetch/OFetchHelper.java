@@ -48,6 +48,9 @@ public class OFetchHelper {
   public static final String     DEFAULT           = "*:0";
   public static final OFetchPlan DEFAULT_FETCHPLAN = new OFetchPlan(DEFAULT);
 
+  private OFetchHelper(){
+  }
+  
   public static OFetchPlan buildFetchPlan(final String iFetchPlan) {
     if (iFetchPlan == null)
       return null;

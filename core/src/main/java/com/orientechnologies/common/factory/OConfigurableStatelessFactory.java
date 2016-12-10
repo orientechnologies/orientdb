@@ -33,6 +33,9 @@ public class OConfigurableStatelessFactory<K, V> {
   private final Map<K, V> registry = new HashMap<K, V>();
   private V               defaultImplementation;
 
+  protected OConfigurableStatelessFactory(){
+  }
+  
   public V getImplementation(final K iKey) {
     if (iKey == null)
       return defaultImplementation;

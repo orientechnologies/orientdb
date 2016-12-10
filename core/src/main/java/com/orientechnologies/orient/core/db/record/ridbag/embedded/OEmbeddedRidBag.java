@@ -56,6 +56,9 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
     TOMBSTONE
   }
 
+  public OEmbeddedRidBag(){
+  }
+  
   private final class EntriesIterator implements Iterator<OIdentifiable>, OResettable, OSizeable {
     private final boolean convertToRecord;
     private int currentIndex = -1;

@@ -25,6 +25,9 @@ import java.nio.ByteOrder;
 public class OSafeBinaryConverter implements OBinaryConverter {
   public static final OSafeBinaryConverter INSTANCE = new OSafeBinaryConverter();
 
+  public OSafeBinaryConverter(){
+  }
+  
   public void putShort(byte[] buffer, int index, short value, ByteOrder byteOrder) {
     if (byteOrder.equals(ByteOrder.BIG_ENDIAN))
       short2BytesBigEndian(value, buffer, index);

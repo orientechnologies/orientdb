@@ -32,6 +32,9 @@ public class OStringParser {
   public static final String WHITE_SPACE = " ";
   public static final String COMMON_JUMP = " \r\n";
 
+  private OStringParser(){
+  }
+  
   public static String[] getWords(String iRecord, final String iSeparatorChars) {
     return getWords(iRecord, iSeparatorChars, false);
   }

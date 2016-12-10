@@ -28,6 +28,10 @@ import com.orientechnologies.common.log.OLogManager;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com) (luca.garulli--at--assetdata.it)
  */
 public class OVariableParser {
+
+  private OVariableParser(){
+  }
+	
   public static Object resolveVariables(final String iText, final String iBegin, final String iEnd,
       final OVariableParserListener iListener) {
     return resolveVariables(iText, iBegin, iEnd, iListener, null);

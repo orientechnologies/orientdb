@@ -33,6 +33,9 @@ import static java.util.logging.Level.SEVERE;
  */
 public class OAnsiLogFormatter extends OLogFormatter {
 
+  public OAnsiLogFormatter(){
+  }
+	
   @Override
   protected String customFormatMessage(final LogRecord iRecord) {
     final Level level = iRecord.getLevel();

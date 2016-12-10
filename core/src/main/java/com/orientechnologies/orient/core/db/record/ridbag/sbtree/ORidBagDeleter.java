@@ -14,6 +14,9 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  */
 public final class ORidBagDeleter implements ODocumentFieldVisitor {
 
+  private ORidBagDeleter(){
+  }
+	
   public static void deleteAllRidBags(ODocument document) {
     final ODocumentFieldWalker documentFieldWalker = new ODocumentFieldWalker();
     final ORidBagDeleter ridBagDeleter = new ORidBagDeleter();

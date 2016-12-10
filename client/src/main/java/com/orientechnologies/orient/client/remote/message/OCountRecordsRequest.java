@@ -31,6 +31,9 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProt
 
 public class OCountRecordsRequest implements OBinaryRequest<OCountRecordsResponse> {
 
+  public OCountRecordsRequest(){
+  }
+	
   @Override
   public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
   }

@@ -11,7 +11,7 @@ import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 public class ODocumentEqualityWrapper {
   private final ODocument internal;
 
-  ODocumentEqualityWrapper(ODocument internal) {
+  public ODocumentEqualityWrapper(ODocument internal) {
 
     this.internal = internal;
   }

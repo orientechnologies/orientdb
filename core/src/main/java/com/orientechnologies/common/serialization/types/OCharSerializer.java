@@ -40,6 +40,9 @@ public class OCharSerializer implements OBinarySerializer<Character> {
   private static final OBinaryConverter BINARY_CONVERTER = OBinaryConverterFactory.getConverter();
   public static final  OCharSerializer  INSTANCE         = new OCharSerializer();
 
+  public OCharSerializer(){
+  }
+  
   public int getObjectSize(final Character object, Object... hints) {
     return CHAR_SIZE;
   }

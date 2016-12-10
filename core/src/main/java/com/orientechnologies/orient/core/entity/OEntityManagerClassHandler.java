@@ -32,6 +32,9 @@ public class OEntityManagerClassHandler {
 
   private Map<String, Class<?>> entityClasses = new HashMap<String, Class<?>>();
 
+  public OEntityManagerClassHandler(){
+  }
+  
   /**
    * Returns the Java class by its name
    * 

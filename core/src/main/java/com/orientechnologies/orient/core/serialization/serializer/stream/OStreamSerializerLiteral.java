@@ -30,6 +30,9 @@ public class OStreamSerializerLiteral implements OStreamSerializer {
 
 	public static final OStreamSerializerLiteral	INSTANCE	= new OStreamSerializerLiteral();
 
+	private OStreamSerializerLiteral(){
+	}
+	
 	public String getName() {
 		return NAME;
 	}

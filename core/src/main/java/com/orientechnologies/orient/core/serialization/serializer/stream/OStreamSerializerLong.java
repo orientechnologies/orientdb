@@ -28,6 +28,9 @@ public class OStreamSerializerLong implements OStreamSerializer {
 
 	public static final OStreamSerializerLong	INSTANCE	= new OStreamSerializerLong();
 
+	private OStreamSerializerLong(){
+	}
+	
 	public String getName() {
 		return NAME;
 	}

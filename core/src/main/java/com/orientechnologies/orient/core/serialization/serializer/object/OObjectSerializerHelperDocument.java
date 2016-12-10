@@ -38,6 +38,9 @@ public class OObjectSerializerHelperDocument implements OObjectSerializerHelperI
   private final Set<String>              classes             = new HashSet<String>();
   private       HashMap<Class<?>, Field> boundDocumentFields = new HashMap<Class<?>, Field>();
 
+  public OObjectSerializerHelperDocument(){
+  }
+  
   public ODocument toStream(Object iPojo, ODocument iRecord, OEntityManager iEntityManager, OClass schemaClass, OUserObject2RecordHandler iObj2RecHandler, ODatabaseObject db, boolean iSaveOnlyDirty) {
     return null;
   }

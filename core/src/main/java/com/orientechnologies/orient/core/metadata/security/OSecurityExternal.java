@@ -32,6 +32,9 @@ import com.orientechnologies.orient.core.Orient;
  */
 public class OSecurityExternal extends OSecurityShared
 {
+	public OSecurityExternal(){
+	}
+	
 	@Override
 	public OUser authenticate(final String iUsername, final String iUserPassword)
 	{

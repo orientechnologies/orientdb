@@ -42,6 +42,9 @@ public class OFloatSerializer implements OBinarySerializer<Float> {
   private static final OBinaryConverter CONVERTER  = OBinaryConverterFactory.getConverter();
   public static final  OFloatSerializer INSTANCE   = new OFloatSerializer();
 
+  public OFloatSerializer(){
+  }
+  
   public int getObjectSize(Float object, Object... hints) {
     return FLOAT_SIZE;
   }

@@ -42,6 +42,9 @@ public class OIntegerSerializer implements OBinarySerializer<Integer> {
   private static final OBinaryConverter   CONVERTER = OBinaryConverterFactory.getConverter();
   public static final  OIntegerSerializer INSTANCE  = new OIntegerSerializer();
 
+  public OIntegerSerializer(){
+  }
+  
   public int getObjectSize(Integer object, Object... hints) {
     return INT_SIZE;
   }

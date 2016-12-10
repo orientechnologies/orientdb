@@ -34,6 +34,9 @@ public class OObjectSerializerHelperManager {
 
 	private OObjectSerializerHelperInterface						serializerHelper	= new OObjectSerializerHelperDocument();
 
+	private OObjectSerializerHelperManager(){
+	}
+	
 	public static OObjectSerializerHelperManager getInstance() {
 		return instance;
 	}

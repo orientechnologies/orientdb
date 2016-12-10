@@ -33,6 +33,9 @@ import java.util.List;
 public class OMultiValueChangeTimeLine<K, V> {
 	private final List<OMultiValueChangeEvent<K, V>> multiValueChangeEvents = new ArrayList<OMultiValueChangeEvent<K, V>>();
 
+	public OMultiValueChangeTimeLine(){
+	}
+	
 	/**
 	 * @return <code>List</code> of all operations that were performed on collection starting from
 	 * the time when it was loaded from DB.

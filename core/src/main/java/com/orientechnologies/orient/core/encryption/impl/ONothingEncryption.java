@@ -32,6 +32,9 @@ public class ONothingEncryption implements OEncryption {
 
   public static final ONothingEncryption INSTANCE = new ONothingEncryption();
 
+  private ONothingEncryption(){
+  }
+  
   @Override
   public byte[] encrypt(final byte[] content) {
     return content;

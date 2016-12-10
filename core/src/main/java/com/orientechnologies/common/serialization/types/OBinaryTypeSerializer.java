@@ -39,6 +39,9 @@ public class OBinaryTypeSerializer implements OBinarySerializer<byte[]> {
   public static final  byte                  ID        = 17;
   private static final OBinaryConverter      CONVERTER = OBinaryConverterFactory.getConverter();
 
+  public OBinaryTypeSerializer(){
+  }
+  
   public int getObjectSize(int length) {
     return length + OIntegerSerializer.INT_SIZE;
   }

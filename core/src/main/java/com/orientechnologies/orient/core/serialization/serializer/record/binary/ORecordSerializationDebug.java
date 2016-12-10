@@ -10,4 +10,7 @@ public class ORecordSerializationDebug {
   public RuntimeException                             readingException;
   public int                                          failPosition;
 
+  public ORecordSerializationDebug(){
+  }
+  
 }

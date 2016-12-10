@@ -8,6 +8,10 @@ import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
 public class OReleaseDatabaseResponse implements OBinaryResponse {
+	
+  public OReleaseDatabaseResponse(){
+  }
+	
   @Override
   public void write(OChannelBinary channel, int protocolVersion, String recordSerializer) throws IOException {
 

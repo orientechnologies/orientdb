@@ -31,6 +31,10 @@ import com.orientechnologies.orient.core.record.ORecord;
  * 
  */
 public class ORecordMultiValueHelper {
+	
+	private ORecordMultiValueHelper(){
+	}
+	
 	public enum MULTIVALUE_CONTENT_TYPE {
 		EMPTY, ALL_RECORDS, ALL_RIDS, HYBRID
 	}

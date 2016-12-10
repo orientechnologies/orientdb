@@ -34,6 +34,10 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunctionFactory;
  * 
  */
 public class ODatabaseFunctionFactory implements OSQLFunctionFactory {
+	
+  private ODatabaseFunctionFactory(){
+  }
+	
   @Override
   public boolean hasFunction(final String iName) {
     final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();

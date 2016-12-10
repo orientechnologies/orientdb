@@ -33,6 +33,9 @@ public class OMurmurHash3HashFunction<V> implements OHashFunction<V> {
 
   private OBinarySerializer<V> valueSerializer;
 
+  public OMurmurHash3HashFunction(){
+  }
+  
   public OBinarySerializer<V> getValueSerializer() {
     return valueSerializer;
   }

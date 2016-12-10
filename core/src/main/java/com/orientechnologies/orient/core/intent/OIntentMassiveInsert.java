@@ -43,6 +43,9 @@ public class OIntentMassiveInsert implements OIntent {
   private boolean                                     disableHooks      = true;
   private boolean                                     enableCache       = true;
 
+  public OIntentMassiveInsert(){
+  }
+  
   public void begin(final ODatabaseDocumentInternal iDatabase) {
     if (disableSecurity) {
       // DISABLE CHECK OF SECURITY

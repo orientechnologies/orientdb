@@ -43,6 +43,9 @@ public class OExecutionThreadLocal extends ThreadLocal<OExecutionThreadLocal.OEx
 
   public static volatile OExecutionThreadLocal INSTANCE = new OExecutionThreadLocal();
 
+  private OExecutionThreadLocal(){
+  }
+  
   public static boolean isInterruptCurrentOperation() {
     final Thread t = Thread.currentThread();
     if (t instanceof OSoftThread)

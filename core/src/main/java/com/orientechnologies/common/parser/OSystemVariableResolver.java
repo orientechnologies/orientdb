@@ -36,6 +36,9 @@ public class OSystemVariableResolver implements OVariableParserListener {
 
   private static OSystemVariableResolver instance  = new OSystemVariableResolver();
 
+  private OSystemVariableResolver(){
+  }
+  
   public static String resolveSystemVariables(final String iPath) {
     return resolveSystemVariables(iPath, null);
   }

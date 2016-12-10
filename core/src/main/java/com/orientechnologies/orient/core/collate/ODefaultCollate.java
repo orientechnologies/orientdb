@@ -30,6 +30,9 @@ import com.orientechnologies.common.comparator.ODefaultComparator;
 public class ODefaultCollate extends ODefaultComparator implements OCollate {
   public static final String NAME = "default";
 
+  public ODefaultCollate(){
+  }
+  
   public String getName() {
     return NAME;
   }

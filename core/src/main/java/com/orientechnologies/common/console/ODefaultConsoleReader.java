@@ -32,6 +32,9 @@ import java.io.InputStreamReader;
 public class ODefaultConsoleReader implements OConsoleReader {
   final BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 
+  public ODefaultConsoleReader(){
+  }
+  
   private static class EraserThread extends OSoftThread {
     @Override
     protected void execute() throws Exception {

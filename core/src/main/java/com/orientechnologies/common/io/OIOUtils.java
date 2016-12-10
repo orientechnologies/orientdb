@@ -39,6 +39,9 @@ public class OIOUtils {
   public static final long   WEEK     = DAY * 7;
   public static final String UTF8_BOM = "\uFEFF";
 
+  private OIOUtils(){
+  }
+  
   public static long getTimeAsMillisecs(final Object iSize) {
     if (iSize == null)
       throw new IllegalArgumentException("Time is null");

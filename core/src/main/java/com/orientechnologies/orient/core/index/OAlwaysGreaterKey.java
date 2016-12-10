@@ -30,6 +30,10 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  */
 @SuppressFBWarnings("EQ_COMPARETO_USE_OBJECT_EQUALS")
 public final class OAlwaysGreaterKey implements Comparable<Comparable<?>>{
+	
+	public OAlwaysGreaterKey(){
+	}
+	
 	public int compareTo(Comparable<?> o) {
 		return 1;
 	}

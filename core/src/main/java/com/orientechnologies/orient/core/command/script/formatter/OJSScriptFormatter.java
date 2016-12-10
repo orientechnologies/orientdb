@@ -28,6 +28,10 @@ import com.orientechnologies.orient.core.metadata.function.OFunction;
  * 
  */
 public class OJSScriptFormatter implements OScriptFormatter {
+	
+  public OJSScriptFormatter(){
+  }
+	
   public String getFunctionDefinition(final OFunction f) {
 
     final StringBuilder fCode = new StringBuilder(1024);

@@ -28,6 +28,9 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 
 public class ORecordInternal {
 
+  private ORecordInternal(){
+  }
+	
   /**
    * Internal only. Fills in one shot the record.
    */

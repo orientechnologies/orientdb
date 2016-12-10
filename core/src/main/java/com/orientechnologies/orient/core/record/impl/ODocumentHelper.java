@@ -70,6 +70,9 @@ public class ODocumentHelper {
   public static final String ATTRIBUTE_FIELDS  = "@fields";
   public static final String ATTRIBUTE_RAW     = "@raw";
 
+  private ODocumentHelper(){
+  }
+  
   public static interface ODbRelatedCall<T> {
     T call(ODatabaseDocumentInternal database);
   }

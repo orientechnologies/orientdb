@@ -47,6 +47,9 @@ public class OLinkSerializer implements OBinarySerializer<OIdentifiable> {
   public static final  int             RID_SIZE         = OShortSerializer.SHORT_SIZE + CLUSTER_POS_SIZE;
   public static final  OLinkSerializer INSTANCE         = new OLinkSerializer();
 
+  public OLinkSerializer(){
+  }
+  
   public int getObjectSize(final OIdentifiable rid, Object... hints) {
     return RID_SIZE;
   }

@@ -21,6 +21,9 @@ public class ORemoteConnectionPushListener implements ORemoteServerEventListener
       .synchronizedSet(Collections.newSetFromMap(new WeakHashMap<ORemoteServerEventListener, Boolean>()));
   private ConcurrentMap<ORemoteServerEventListener, Set<OChannelBinaryAsynchClient>> conns     = new ConcurrentHashMap<ORemoteServerEventListener, Set<OChannelBinaryAsynchClient>>();
 
+  public ORemoteConnectionPushListener(){
+  }
+  
   public void addListener(final ORemoteConnectionPool pool, final OChannelBinaryAsynchClient connection, final OStorageRemoteAsynchEventListener listener) {
     this.listeners.add(listener);
     Set<OChannelBinaryAsynchClient> ans = conns.get(listener);

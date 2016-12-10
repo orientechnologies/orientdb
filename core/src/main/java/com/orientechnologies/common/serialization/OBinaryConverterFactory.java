@@ -42,6 +42,9 @@ public class OBinaryConverterFactory {
     unsafeWasDetected = unsafeDetected;
   }
 
+  private OBinaryConverterFactory(){
+  }
+  
   public static OBinaryConverter getConverter() {
     boolean useUnsafe = OGlobalConfiguration.MEMORY_USE_UNSAFE.getValueAsBoolean();
 

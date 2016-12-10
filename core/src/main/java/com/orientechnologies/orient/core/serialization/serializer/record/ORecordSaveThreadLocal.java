@@ -48,6 +48,9 @@ public class ORecordSaveThreadLocal extends ThreadLocal<ORecord> {
     });
   }
 
+  private ORecordSaveThreadLocal(){
+  }
+  
   public static ORecord getLast() {
     return INSTANCE.get();
   }

@@ -32,6 +32,9 @@ public class OUUIDSerializer implements OBinarySerializer<UUID> {
   public static final OUUIDSerializer INSTANCE  = new OUUIDSerializer();
   public static final int             UUID_SIZE = 2 * OLongSerializer.LONG_SIZE;
 
+  public OUUIDSerializer(){
+  }
+  
   @Override
   public int getObjectSize(UUID object, Object... hints) {
     return UUID_SIZE;

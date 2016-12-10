@@ -63,6 +63,9 @@ public class ODefaultIndexFactory implements OIndexFactory {
     ALGORITHMS = Collections.unmodifiableSet(algorithms);
   }
 
+  private ODefaultIndexFactory(){
+  }
+  
   public static boolean isMultiValueIndex(final String indexType) {
     switch (OClass.INDEX_TYPE.valueOf(indexType)) {
     case UNIQUE:

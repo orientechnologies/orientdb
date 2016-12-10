@@ -9,6 +9,10 @@ import com.orientechnologies.orient.core.storage.OStorage;
  * @Internal
  */
 public final class LatestVersionRecordReader implements RecordReader {
+	
+  public LatestVersionRecordReader(){
+  }
+	
   @Override
   public ORawBuffer readRecord(OStorage storage, ORecordId rid, String fetchPlan, boolean ignoreCache, final int recordVersion)
       throws ORecordNotFoundException {

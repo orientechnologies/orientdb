@@ -41,6 +41,9 @@ public class OStreamSerializerAnyRecord implements OStreamSerializer {
   public static final String                     NAME     = "ar";
   public static final OStreamSerializerAnyRecord INSTANCE = new OStreamSerializerAnyRecord();
 
+  private OStreamSerializerAnyRecord(){
+  }
+  
   /**
    * Re-Create any object if the class has a public constructor that accepts a String as unique parameter.
    */
