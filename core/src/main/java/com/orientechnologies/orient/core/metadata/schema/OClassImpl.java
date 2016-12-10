@@ -1815,7 +1815,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
     final OPropertyImpl prop;
 
-    // This check are doubled becouse used by sql commands
+    // This check are doubled because used by sql commands
     if (linkedType != null)
       OPropertyImpl.checkLinkTypeSupport(type);
 

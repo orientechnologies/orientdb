@@ -99,7 +99,7 @@ public class ODocumentFieldConversionTest {
   }
 
   @Test
-  public void testLiteralToSchemaConvertionInteger() {
+  public void testLiteralToSchemaConversionInteger() {
     ODatabaseRecordThreadLocal.INSTANCE.set(db);
     ODocument doc = new ODocument(clazz);
     doc.field("integer", 2L);
@@ -139,7 +139,7 @@ public class ODocumentFieldConversionTest {
   }
 
   @Test
-  public void testLiteralToSchemaConvertionString() {
+  public void testLiteralToSchemaConversionString() {
     ODatabaseRecordThreadLocal.INSTANCE.set(db);
     ODocument doc = new ODocument(clazz);
 
@@ -170,7 +170,7 @@ public class ODocumentFieldConversionTest {
   }
 
   @Test
-  public void testLiteralToSchemaConvertionFloat() {
+  public void testLiteralToSchemaConversionFloat() {
     ODatabaseRecordThreadLocal.INSTANCE.set(db);
     ODocument doc = new ODocument(clazz);
 
@@ -210,7 +210,7 @@ public class ODocumentFieldConversionTest {
   }
 
   @Test
-  public void testLiteralToSchemaConvertionDouble() {
+  public void testLiteralToSchemaConversionDouble() {
     ODatabaseRecordThreadLocal.INSTANCE.set(db);
     ODocument doc = new ODocument(clazz);
 
@@ -251,7 +251,7 @@ public class ODocumentFieldConversionTest {
   }
 
   @Test
-  public void testLiteralToSchemaConvertionLong() {
+  public void testLiteralToSchemaConversionLong() {
     ODatabaseRecordThreadLocal.INSTANCE.set(db);
     ODocument doc = new ODocument(clazz);
 
@@ -292,7 +292,7 @@ public class ODocumentFieldConversionTest {
   }
 
   @Test
-  public void testLiteralToSchemaConvertionBoolean() {
+  public void testLiteralToSchemaConversionBoolean() {
     ODatabaseRecordThreadLocal.INSTANCE.set(db);
     ODocument doc = new ODocument(clazz);
 
@@ -323,7 +323,7 @@ public class ODocumentFieldConversionTest {
   }
 
   @Test
-  public void testLiteralToSchemaConvertionDecimal() {
+  public void testLiteralToSchemaConversionDecimal() {
     ODatabaseRecordThreadLocal.INSTANCE.set(db);
     ODocument doc = new ODocument(clazz);
 

@@ -105,7 +105,7 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
   }
 
   /**
-   * @return iterator that just returns the elements without convertion.
+   * @return iterator that just returns the elements without conversion.
    */
   public Iterator<OIdentifiable> rawIterator() {
     lazyLoad(false);
