@@ -20,7 +20,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.engine.OLuceneCrossClassIndexEngine;
 import com.orientechnologies.lucene.index.OLuceneFullTextIndex;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -88,10 +87,10 @@ public class OLuceneCrossClassIndexFactory implements OIndexFactory, ODatabaseLi
   }
 
   @Override
-  public OIndexInternal<?> createIndex(String name, ODatabaseDocumentInternal database, String indexType, String algorithm,
+  public OIndexInternal<?> createIndex(String name, OStorage storage, String indexType, String algorithm,
       String valueContainerAlgorithm, ODocument metadata, int version) throws OConfigurationException {
 
-    OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) database.getStorage().getUnderlying();
+    OAbstractPaginatedStorage paginated = (OAbstractPaginatedStorage) storage.getUnderlying();
 
     if (metadata == null) {
       metadata = new ODocument().field("analyzer", StandardAnalyzer.class.getName());
@@ -99,7 +98,7 @@ public class OLuceneCrossClassIndexFactory implements OIndexFactory, ODatabaseLi
 
     if (FULLTEXT.toString().equalsIgnoreCase(indexType)) {
 
-      OLuceneFullTextIndex index = new OLuceneFullTextIndex(name, indexType, algorithm, version, storage,
+      OLuceneFullTextIndex index = new OLuceneFullTextIndex(name, indexType, algorithm, version, paginated,
           valueContainerAlgorithm, metadata);
 
       return index;
