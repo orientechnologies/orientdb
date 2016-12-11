@@ -26,6 +26,9 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
  */
 public class OHttpMultipartHelper {
 
+  private OHttpMultipartHelper(){
+  }
+	
   protected static boolean isMultipartPartHeader(StringBuilder header) {
     final String linePart = header.toString();
     return ((linePart.equals(OHttpUtils.MULTIPART_CONTENT_CHARSET)) || (linePart.equals(OHttpUtils.MULTIPART_CONTENT_FILENAME))

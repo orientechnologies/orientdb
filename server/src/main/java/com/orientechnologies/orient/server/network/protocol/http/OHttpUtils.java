@@ -108,6 +108,9 @@ public class OHttpUtils {
   public static final int    STATUS_NOTIMPL_CODE                 = 501;
   public static final String STATUS_NOTIMPL_DESCRIPTION          = "Not Implemented";
 
+  private OHttpUtils(){
+  }
+  
   protected static Map<String, String> getParameters(final String iURL) {
     int begin = iURL.indexOf("?");
     if (begin > -1) {

@@ -26,6 +26,9 @@ import com.orientechnologies.orient.server.OServer;
 
 public class OServerPluginHelper {
 
+  protected OServerPluginHelper(){
+  }
+	
   public static void invokeHandlerCallbackOnClientConnection(final OServer iServer, final OClientConnection connection) {
     final Collection<OServerPluginInfo> plugins = iServer.getPlugins();
     if (plugins != null)

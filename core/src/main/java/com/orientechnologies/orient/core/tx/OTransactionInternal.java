@@ -23,6 +23,9 @@ package com.orientechnologies.orient.core.tx;
  * Internal class to manage Transactions.
  */
 public class OTransactionInternal {
+  private OTransactionInternal(){
+  }
+	
   public static void setStatus(final OTransactionAbstract iTx, final OTransaction.TXSTATUS iStatus) {
     iTx.status = iStatus;
   }

@@ -36,6 +36,9 @@ public class OByteBufferUtils {
   private static final int SIZE_OF_BYTE_IN_BITS = 8;
   private static final int MASK                 = 0x000000FF;
 
+  private OByteBufferUtils(){
+  }
+  
   /**
    * Merge short value from two byte buffer. First byte of short will be extracted from first byte buffer and second from second
    * one.

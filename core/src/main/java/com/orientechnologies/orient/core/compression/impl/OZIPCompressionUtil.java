@@ -45,6 +45,9 @@ import java.util.zip.ZipOutputStream;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OZIPCompressionUtil {
+  private OZIPCompressionUtil(){
+  }
+  
   public static List<String> compressDirectory(final String sourceFolderName, final OutputStream output,
       final String[] iSkipFileExtensions, final OCommandOutputListener iOutput, int compressionLevel) throws IOException {
 

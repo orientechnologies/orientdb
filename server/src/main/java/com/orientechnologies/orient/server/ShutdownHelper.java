@@ -24,6 +24,9 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
  * Executes a JVM shutdown if the settings allow it.
  */
 public class ShutdownHelper {
+  private ShutdownHelper(){
+  }
+	
   public static void shutdown(final int code) {
     boolean allowed = OGlobalConfiguration.ENVIRONMENT_ALLOW_JVM_SHUTDOWN.getValueAsBoolean();
     if (allowed) {

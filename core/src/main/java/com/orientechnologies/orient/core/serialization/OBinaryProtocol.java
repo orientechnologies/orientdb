@@ -36,6 +36,9 @@ public class OBinaryProtocol {
   public static final int SIZE_INT   = 4;
   public static final int SIZE_LONG  = 8;
 
+  private OBinaryProtocol(){
+  }
+  
   public static byte[] char2bytes(final char value, final byte[] b, final int iBeginOffset) {
     b[iBeginOffset] = (byte) ((value >>> 8) & 0xFF);
     b[iBeginOffset + 1] = (byte) ((value >>> 0) & 0xFF);

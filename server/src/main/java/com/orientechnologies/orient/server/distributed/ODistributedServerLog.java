@@ -34,6 +34,9 @@ public class ODistributedServerLog {
     NONE, IN, OUT, BOTH
   }
 
+  private ODistributedServerLog(){
+  }
+  
   public static boolean isDebugEnabled() {
     return OLogManager.instance().isDebugEnabled();
   }

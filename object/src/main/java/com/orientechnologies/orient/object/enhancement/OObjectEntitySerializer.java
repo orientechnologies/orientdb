@@ -112,6 +112,9 @@ public class OObjectEntitySerializer {
     public final HashMap<Class<?>, Class<?>>             enclosingClasses    = new HashMap<Class<?>, Class<?>>();
   }
 
+  private OObjectEntitySerializer(){
+  }
+  
   protected static OObjectEntitySerializedSchema getCurrentSerializedSchema() {
     OStorage storage = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage();
     OObjectEntitySerializedSchema serializedShchema = storage.getResource(SIMPLE_NAME,

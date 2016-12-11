@@ -28,6 +28,9 @@ import java.util.List;
  * Set of utility methods to work with collections.
  */
 public class OCollections {
+  private OCollections(){
+  }
+	
   /**
    * This method is used to find item in collection using passed in comparator. Only 0 value (requested object is found) returned by
    * comparator is taken into account the rest is ignored.

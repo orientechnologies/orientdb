@@ -28,7 +28,9 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 
 public class OClassLoaderHelper {
-
+  private OClassLoaderHelper(){
+  }
+  
   /**
    * Switch to the OrientDb classloader before lookups on ServiceRegistry for implementation of the given Class. Useful under OSGI
    * and generally under applications where jars are loaded by another class loader

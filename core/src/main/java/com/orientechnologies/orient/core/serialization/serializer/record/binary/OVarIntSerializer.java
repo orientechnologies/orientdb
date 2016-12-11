@@ -24,6 +24,9 @@ import com.orientechnologies.orient.core.serialization.serializer.record.binary.
 
 public class OVarIntSerializer {
 
+  private OVarIntSerializer(){
+  }
+	
   public static int write(BytesContainer bytes, long value) {
     value = signedToUnsigned(value);
     int pos = bytes.offset;

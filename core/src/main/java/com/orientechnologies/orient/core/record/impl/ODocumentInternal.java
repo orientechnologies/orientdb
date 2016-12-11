@@ -32,6 +32,9 @@ import java.util.Set;
 
 public class ODocumentInternal {
 
+  private ODocumentInternal(){
+  }
+	
   public static void convertAllMultiValuesToTrackedVersions(ODocument document) {
     document.convertAllMultiValuesToTrackedVersions();
   }

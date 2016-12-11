@@ -35,6 +35,9 @@ public class ORecordMultiValueHelper {
 		EMPTY, ALL_RECORDS, ALL_RIDS, HYBRID
 	}
 
+	private ORecordMultiValueHelper(){
+	}
+	
 	public static MULTIVALUE_CONTENT_TYPE updateContentType(final MULTIVALUE_CONTENT_TYPE iPreviousStatus, final Object iValue) {
 		if (iPreviousStatus == MULTIVALUE_CONTENT_TYPE.HYBRID) {
 			// DO NOTHING

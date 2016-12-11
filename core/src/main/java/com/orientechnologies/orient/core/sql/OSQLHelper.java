@@ -66,6 +66,9 @@ public class OSQLHelper {
 
   private static ClassLoader orientClassLoader = OSQLFilterItemAbstract.class.getClassLoader();
 
+  private OSQLHelper(){
+  }
+  
   public static Object parseDefaultValue(ODocument iRecord, final String iWord) {
     final Object v = OSQLHelper.parseValue(iWord, null);
 

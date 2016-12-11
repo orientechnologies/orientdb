@@ -132,6 +132,9 @@ public class OObjectSerializerHelper {
     }
   }
 
+  private OObjectSerializerHelper(){
+  }
+  
   public static void register() {
     OObjectSerializerHelperManager.getInstance().registerHelper(OObjectSerializerManager.getInstance());
   }

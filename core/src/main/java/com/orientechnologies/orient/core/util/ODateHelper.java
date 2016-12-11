@@ -33,6 +33,9 @@ public class ODateHelper {
   public static final String DEF_DATE_FORMAT     = "yyyy-MM-dd";
   public static final String DEF_DATETIME_FORMAT = "yyyy-MM-dd HH:mm:ss:SSS";
 
+  private ODateHelper(){
+  }
+  
   public static Calendar getDatabaseCalendar() {
     return Calendar.getInstance(getDatabaseTimeZone());
   }

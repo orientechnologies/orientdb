@@ -10,6 +10,9 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
  */
 public class OLazyCollectionUtil {
 
+  private OLazyCollectionUtil(){
+  }
+	
     /**
      * Gets the current thread database as a ODatabasePojoAbstract, wrapping it where necessary.
      */

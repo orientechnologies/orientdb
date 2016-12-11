@@ -23,6 +23,9 @@ public class OQueryHelper {
 	protected static final String	WILDCARD_ANYCHAR	= "?";
 	protected static final String	WILDCARD_ANY			= "%";
 
+	private OQueryHelper(){
+	}
+	
 	public static boolean like(final String currentValue, String iValue) {
 		if (currentValue == null || currentValue.length() == 0 || iValue == null || iValue.length() == 0)
 			// EMPTY/NULL PARAMETERS

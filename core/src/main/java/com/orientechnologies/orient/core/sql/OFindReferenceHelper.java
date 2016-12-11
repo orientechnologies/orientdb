@@ -55,6 +55,9 @@ import java.util.Set;
  */
 public class OFindReferenceHelper {
 
+  private OFindReferenceHelper(){
+  }
+	
   public static List<ODocument> findReferences(final Set<ORID> iRecordIds, final String classList) {
     final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
 
