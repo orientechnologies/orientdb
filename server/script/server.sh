@@ -94,10 +94,10 @@ for var in "$@"; do
     fi
 done
 
-# ORIENTDB memory options, default to 512 of heap.
+# ORIENTDB memory options, default to 2GB of heap.
 
 if [ -z "$ORIENTDB_OPTS_MEMORY" ] ; then
-    ORIENTDB_OPTS_MEMORY="-Xms512m -Xmx512m"
+    ORIENTDB_OPTS_MEMORY="-Xms2G -Xmx2G"
 fi
 
 if [ -z "$JAVA_OPTS_SCRIPT" ] ; then
