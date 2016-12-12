@@ -990,4 +990,15 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     return result;
   }
 
+  @Override public OBinaryResponse closeQuery(OCloseQueryRequest oQueryRequest) {
+    String queryId = oQueryRequest.getQueryId();
+    ODatabaseDocumentInternal db = connection.getDatabase();
+    OLocalResultSetLifecycleDecorator query = db.getActiveQuery(queryId);
+    if (query != null) {
+      query.close();
+    } else {
+      throw new ODatabaseException("Cannot close query: " + oQueryRequest.getQueryId());
+    }
+    return new OCloseQueryResponse();
+  }
 }

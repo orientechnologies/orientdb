@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+import com.orientechnologies.orient.core.sql.parser.OLocalResultSetLifecycleDecorator;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 
@@ -110,4 +111,8 @@ public interface ODatabaseDocumentInternal extends ODatabaseDocument, ODatabaseI
   boolean isPrefetchRecords();
 
   void checkForClusterPermissions(String name);
+
+  default OLocalResultSetLifecycleDecorator getActiveQuery(String id){
+    throw new UnsupportedOperationException();
+  }
 }

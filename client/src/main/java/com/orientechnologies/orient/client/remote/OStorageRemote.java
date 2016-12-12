@@ -798,8 +798,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   public void closeQuery(ODatabaseDocumentRemote oDatabaseDocumentRemote, String queryId) {
-    //TODO implement this!
-    throw new UnsupportedOperationException();
+    OCloseQueryRequest request = new OCloseQueryRequest(queryId);
+    OCloseQueryResponse response = networkOperation(request, "Error closing query: "+queryId);
   }
 
   public void fetchNextPage(ODatabaseDocumentRemote oDatabaseDocumentRemote, ORemoteResultSet rs) {

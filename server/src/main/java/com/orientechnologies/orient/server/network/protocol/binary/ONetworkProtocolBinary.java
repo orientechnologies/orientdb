@@ -545,6 +545,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       request = new OQueryRequest();
       break;
 
+    case OChannelBinaryProtocol.REQUEST_CLOSE_QUERY:
+      request = new OCloseQueryRequest();
+      break;
+
     case OChannelBinaryProtocol.REQUEST_TX_COMMIT:
       request = new OCommitRequest();
       break;

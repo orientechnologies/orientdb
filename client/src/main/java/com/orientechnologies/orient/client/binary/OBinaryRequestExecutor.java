@@ -94,4 +94,6 @@ public interface OBinaryRequestExecutor {
   OBinaryResponse executeReopen(OReopenRequest request);
 
   OBinaryResponse executeQuery(OQueryRequest oQueryRequest);
+
+  OBinaryResponse closeQuery(OCloseQueryRequest oQueryRequest);
 }
