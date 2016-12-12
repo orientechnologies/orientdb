@@ -141,4 +141,39 @@ public class OrientJdbcResultSetTest extends OrientJdbcBaseTest {
     assertThat(rs.getLong("uuid")).isEqualTo(1234567);
 
   }
+
+  @Test
+  public void shouldSelectWithDistinct() throws Exception {
+
+    Statement stmt = conn.createStatement();
+
+    assertThat(stmt.execute("SELECT DISTINCT(published) as pub FROM Item ")).isTrue();
+
+    ResultSet rs = stmt.getResultSet();
+    assertThat(rs).isNotNull();
+
+    assertThat(rs.getFetchSize()).isEqualTo(2);
+
+    assertThat(rs.getBoolean(1)).isEqualTo(true);
+    assertThat(rs.getBoolean("pub")).isEqualTo(true);
+
+  }
+
+  @Test
+  public void shouldSelectWithSum() throws Exception {
+
+    Statement stmt = conn.createStatement();
+
+    assertThat(stmt.execute("SELECT sum(score) as totalScore FROM Item ")).isTrue();
+
+    ResultSet rs = stmt.getResultSet();
+    assertThat(rs).isNotNull();
+
+    assertThat(rs.getFetchSize()).isEqualTo(1);
+
+    assertThat(rs.getLong(1)).isEqualTo(3438);
+    assertThat(rs.getLong("totalScore")).isEqualTo(3438);
+
+  }
+
 }
