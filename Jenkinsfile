@@ -1,6 +1,6 @@
 #!groovy
 node("master") {
-    lock("$env.BRANCH_NAME}") {
+    lock("${env.BRANCH_NAME}") {
         def mvnHome = tool 'mvn'
         def mvnJdk8Image = "orientdb/mvn-gradle-zulu-jdk-8"
         def mvnJdk7Image = "orientdb/jenkins-slave-zulu-jdk-7"
