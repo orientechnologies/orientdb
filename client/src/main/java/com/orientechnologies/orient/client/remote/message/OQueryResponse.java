@@ -36,7 +36,6 @@ public class OQueryResponse implements OBinaryResponse {
 
   private OTodoResultSet result;
 
-
   public OQueryResponse() {
   }
 
@@ -171,8 +170,9 @@ public class OQueryResponse implements OBinaryResponse {
     OBinaryProtocolHelper.writeIdentifiable(channel, doc, serializer);
   }
 
-  private OResult readProjection(OChannelBinary channel) {
-    return null;//TODO
+  private OResult readProjection(OChannelBinary channel) throws IOException {
+    OResultSerializerNetwork ser = new OResultSerializerNetwork();
+    return ser.fromStream(channel);
   }
 
   private void writeProjection(OResult item, OChannelBinary channel) throws IOException {

@@ -620,4 +620,10 @@ public class OResultSerializerNetwork {
     this.serialize(item, bytes);
     channel.writeBytes(bytes.fitBytes());
   }
+
+  public OResult fromStream(OChannelBinary channel) throws IOException {
+    BytesContainer bytes = new BytesContainer();
+    bytes.bytes = channel.readBytes();
+    return this.deserialize(bytes);
+  }
 }
