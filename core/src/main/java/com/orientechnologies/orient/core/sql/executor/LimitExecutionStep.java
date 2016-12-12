@@ -19,6 +19,9 @@ public class LimitExecutionStep extends AbstractExecutionStep {
 
   @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     int limitVal = limit.getValue(ctx);
+    if (limitVal == -1) {
+      return getPrev().get().syncPull(ctx, nRecords);
+    }
     if (limitVal <= loaded) {
       return new OInternalResultSet();
     }
