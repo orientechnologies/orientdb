@@ -10,7 +10,6 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.storage.OStorageAbstract;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -22,7 +21,10 @@ import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -92,15 +94,7 @@ final class OLogSegment implements Comparable<OLogSegment> {
    *
    * @see #rndFile
    */
-  private final ScheduledExecutorService closer = Executors.newScheduledThreadPool(1, new ThreadFactory() {
-    @Override
-    public Thread newThread(Runnable r) {
-      final Thread thread = new Thread(OStorageAbstract.storageThreadGroup, r);
-      thread.setDaemon(true);
-      thread.setName("WAL Closer Task (" + writeAheadLog.getStorage().getName() + ")");
-      return thread;
-    }
-  });
+  private final ScheduledExecutorService closer;
 
   private final long                         order;
   private final int                          maxPagesCacheSize;
@@ -108,15 +102,8 @@ final class OLogSegment implements Comparable<OLogSegment> {
   protected final  Lock             cacheLock = new ReentrantLock();
   private volatile List<OLogRecord> logCache  = new ArrayList<OLogRecord>();
 
-  private final ScheduledExecutorService commitExecutor = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
-    @Override
-    public Thread newThread(Runnable r) {
-      final Thread thread = new Thread(OStorageAbstract.storageThreadGroup, r);
-      thread.setDaemon(true);
-      thread.setName("OrientDB WAL Flush Task (" + writeAheadLog.getStorage().getName() + ")");
-      return thread;
-    }
-  });
+  private final ScheduledExecutorService commitExecutor;
+
   private volatile long    filledUpTo;
   private          boolean closed;
   private OLogSequenceNumber last = null;
@@ -265,6 +252,7 @@ final class OLogSegment implements Comparable<OLogSegment> {
    * @param isLast        flag to mark if is last portion of the record
    * @param fromRecord    the start of the portion of the record to write in this page
    * @param contentLength the length of the portion of the record to write in this page
+   *
    * @return the new page cursor  position after this write.
    */
   private int writeContentInPage(byte[] pageContent, int posInPage, byte[] log, boolean isLast, int fromRecord, int contentLength) {
@@ -288,12 +276,15 @@ final class OLogSegment implements Comparable<OLogSegment> {
   }
 
   OLogSegment(ODiskWriteAheadLog writeAheadLog, File file, int fileTTL, int maxPagesCacheSize,
-      OPerformanceStatisticManager performanceStatisticManager) throws IOException {
+      OPerformanceStatisticManager performanceStatisticManager, ScheduledExecutorService closer,
+      ScheduledExecutorService commitExecutor) throws IOException {
     this.writeAheadLog = writeAheadLog;
     this.file = file;
     this.fileTTL = fileTTL;
     this.maxPagesCacheSize = maxPagesCacheSize;
     this.performanceStatisticManager = performanceStatisticManager;
+    this.closer = closer;
+    this.commitExecutor = commitExecutor;
 
     order = extractOrder(file.getName());
     closed = false;
