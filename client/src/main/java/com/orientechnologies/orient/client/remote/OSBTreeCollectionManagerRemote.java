@@ -25,8 +25,6 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.client.remote.message.OSBTCreateTreeRequest;
 import com.orientechnologies.orient.client.remote.message.OSBTCreateTreeResponse;
-import com.orientechnologies.orient.core.OOrientShutdownListener;
-import com.orientechnologies.orient.core.OOrientStartupListener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -45,8 +43,7 @@ import java.util.UUID;
 /**
  * @author Artem Orobets (enisher-at-gmail.com)
  */
-public class OSBTreeCollectionManagerRemote extends OSBTreeCollectionManagerAbstract
-    implements OOrientStartupListener, OOrientShutdownListener {
+public class OSBTreeCollectionManagerRemote extends OSBTreeCollectionManagerAbstract {
 
   private final OCollectionNetworkSerializer networkSerializer;
   private boolean remoteCreationAllowed = false;
@@ -56,27 +53,23 @@ public class OSBTreeCollectionManagerRemote extends OSBTreeCollectionManagerAbst
   public OSBTreeCollectionManagerRemote(OStorage storage) {
     super(storage);
     networkSerializer = new OCollectionNetworkSerializer();
-
-    Orient.instance().registerWeakOrientStartupListener(this);
-    Orient.instance().registerWeakOrientShutdownListener(this);
   }
 
   // for testing purposes
   /* internal */ OSBTreeCollectionManagerRemote(OStorage storage, OCollectionNetworkSerializer networkSerializer) {
     super(storage);
     this.networkSerializer = networkSerializer;
-
-    Orient.instance().registerWeakOrientStartupListener(this);
-    Orient.instance().registerWeakOrientShutdownListener(this);
   }
 
   @Override
   public void onShutdown() {
     pendingCollections = null;
+    super.onShutdown();
   }
 
   @Override
   public void onStartup() {
+    super.onStartup();
     if (pendingCollections == null)
       pendingCollections = new PendingCollectionsThreadLocal();
   }
