@@ -22,6 +22,9 @@ package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
 
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
 import com.orientechnologies.common.concur.resource.OCloseable;
+import com.orientechnologies.orient.core.OOrientShutdownListener;
+import com.orientechnologies.orient.core.OOrientStartupListener;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
@@ -33,7 +36,8 @@ import java.util.UUID;
 /**
  * @author Artem Orobets (enisher-at-gmail.com)
  */
-public abstract class OSBTreeCollectionManagerAbstract implements OCloseable, OSBTreeCollectionManager {
+public abstract class OSBTreeCollectionManagerAbstract
+    implements OCloseable, OSBTreeCollectionManager, OOrientStartupListener, OOrientShutdownListener {
   public static final String FILE_NAME_PREFIX  = "collections_";
   public static final String DEFAULT_EXTENSION = ".sbc";
 
@@ -127,6 +131,19 @@ public abstract class OSBTreeCollectionManagerAbstract implements OCloseable, OS
     }
 
     this.locks = locks;
+
+    Orient.instance().registerWeakOrientStartupListener(this);
+    Orient.instance().registerWeakOrientShutdownListener(this);
+  }
+
+  @Override
+  public void onStartup() {
+    // do nothing
+  }
+
+  @Override
+  public void onShutdown() {
+    treeCache.clear();
   }
 
   @Override

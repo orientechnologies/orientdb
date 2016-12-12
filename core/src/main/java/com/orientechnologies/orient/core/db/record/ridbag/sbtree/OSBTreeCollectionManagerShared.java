@@ -23,7 +23,6 @@ package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.OOrientShutdownListener;
 import com.orientechnologies.orient.core.OOrientStartupListener;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
@@ -48,9 +47,6 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
     super(storage);
 
     this.storage = storage;
-
-    Orient.instance().registerWeakOrientStartupListener(this);
-    Orient.instance().registerWeakOrientShutdownListener(this);
   }
 
   // for testing purposes
@@ -58,18 +54,17 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
     super(storage, evictionThreshold, cacheMaxSize);
 
     this.storage = storage;
-
-    Orient.instance().registerWeakOrientStartupListener(this);
-    Orient.instance().registerWeakOrientShutdownListener(this);
   }
 
   @Override
   public void onShutdown() {
     collectionPointerChanges = null;
+    super.onShutdown();
   }
 
   @Override
   public void onStartup() {
+    super.onStartup();
     if (collectionPointerChanges == null)
       collectionPointerChanges = new CollectionPointerChangesThreadLocal();
   }
