@@ -29,8 +29,12 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
 public class OChannelTextServer extends OChannelText {
   public OChannelTextServer(final Socket iSocket, final OContextConfiguration iConfiguration) throws IOException {
     super(iSocket, iConfiguration);
-
-    inStream = new BufferedInputStream(socket.getInputStream(), socketBufferSize);
-    outStream = new BufferedOutputStream(socket.getOutputStream(), socketBufferSize);
+    if (socketBufferSize > 0) {
+      inStream = new BufferedInputStream(socket.getInputStream(), socketBufferSize);
+      outStream = new BufferedOutputStream(socket.getOutputStream(), socketBufferSize);
+    } else {
+      inStream = new BufferedInputStream(socket.getInputStream());
+      outStream = new BufferedOutputStream(socket.getOutputStream());
+    }
   }
 }

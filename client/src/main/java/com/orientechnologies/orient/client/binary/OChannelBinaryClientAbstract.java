@@ -75,8 +75,13 @@ public abstract class OChannelBinaryClientAbstract extends OChannelBinary {
         throw new IOException("Cannot connect to host " + remoteHost + ":" + remotePort + " (timeout=" + socketTimeout + ")", e);
       }
       try {
-        inStream = new BufferedInputStream(socket.getInputStream(), socketBufferSize);
-        outStream = new BufferedOutputStream(socket.getOutputStream(), socketBufferSize);
+        if (socketBufferSize > 0) {
+          inStream = new BufferedInputStream(socket.getInputStream(), socketBufferSize);
+          outStream = new BufferedOutputStream(socket.getOutputStream(), socketBufferSize);
+        } else {
+          inStream = new BufferedInputStream(socket.getInputStream());
+          outStream = new BufferedOutputStream(socket.getOutputStream());
+        }
 
         in = new DataInputStream(inStream);
         out = new DataOutputStream(outStream);
