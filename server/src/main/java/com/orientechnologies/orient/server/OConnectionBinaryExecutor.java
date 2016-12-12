@@ -47,6 +47,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
+import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -970,7 +971,17 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       }
     }
     OQueryResponse result = new OQueryResponse();
-    result.setResult(rs);
+
+    //copy the result-set to make sure that the execution is successful
+    OInternalResultSet rsCopy = new OInternalResultSet();
+    rsCopy.setPlan(rs.getExecutionPlan().orElse(null));
+    int i = 0;
+    while (rs.hasNext() && i < request.getRecordsPerPage()) {
+      rsCopy.add(rs.next());
+      i++;
+    }
+
+    result.setResult(rsCopy);
     return result;
   }
 

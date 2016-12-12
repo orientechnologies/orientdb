@@ -10,6 +10,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.OEdgeDelegate;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.record.impl.OVertexDelegate;
+import com.orientechnologies.orient.core.serialization.serializer.result.binary.OResultSerializerNetwork;
 import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
@@ -33,13 +34,11 @@ public class OQueryResponse implements OBinaryResponse {
   private static final byte RECORD_TYPE_ELEMENT    = 3;
   private static final byte RECORD_TYPE_PROJECTION = 4;
 
-  int pageSize;
-
-  public OQueryResponse(int pageSize) {
-    this.pageSize = pageSize;
-  }
-
   private OTodoResultSet result;
+
+
+  public OQueryResponse() {
+  }
 
   @Override public void write(OChannelBinary channel, int protocolVersion, String recordSerializer) throws IOException {
     if (!(result instanceof OLocalResultSetLifecycleDecorator)) {
@@ -47,12 +46,10 @@ public class OQueryResponse implements OBinaryResponse {
     }
     channel.writeString(((OLocalResultSetLifecycleDecorator) result).getQueryId());
     writeExecutionPlan(result.getExecutionPlan(), channel);
-    int curr = 0;
-    while (result.hasNext() && curr < pageSize) {
+    while (result.hasNext()) {
       OResult row = result.next();
       channel.writeBoolean(true);
       writeResult(row, channel, recordSerializer);
-      curr++;
     }
     channel.writeBoolean(false);
     writeQueryStats(result.getQueryStats(), channel);
@@ -60,8 +57,7 @@ public class OQueryResponse implements OBinaryResponse {
 
   @Override public void read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
     String queryId = network.readString();
-    ORemoteResultSet rs = new ORemoteResultSet((ODatabaseDocumentRemote) ODatabaseRecordThreadLocal.INSTANCE.get(), queryId,
-        pageSize);
+    ORemoteResultSet rs = new ORemoteResultSet((ODatabaseDocumentRemote) ODatabaseRecordThreadLocal.INSTANCE.get(), queryId);
     rs.setExecutionPlan(readExecutionPlan(network));
     boolean hasNext = network.readBoolean();
     while (hasNext) {
@@ -98,7 +94,7 @@ public class OQueryResponse implements OBinaryResponse {
     } else if (row.isElement()) {
       writeElement(row, channel, recordSerializer);
     } else {
-      writeProjection(row, channel, recordSerializer);
+      writeProjection(row, channel);
     }
   }
 
@@ -179,9 +175,10 @@ public class OQueryResponse implements OBinaryResponse {
     return null;//TODO
   }
 
-  private void writeProjection(OResult item, OChannelBinary channel, String serializer) throws IOException {
+  private void writeProjection(OResult item, OChannelBinary channel) throws IOException {
     channel.writeByte(RECORD_TYPE_PROJECTION);
-    //TODO
+    OResultSerializerNetwork ser = new OResultSerializerNetwork();
+    ser.toStream(item, channel);
   }
 
   public void setResult(OTodoResultSet result) {

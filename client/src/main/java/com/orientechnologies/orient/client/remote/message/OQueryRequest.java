@@ -108,7 +108,7 @@ public final class OQueryRequest implements OBinaryRequest<OQueryResponse> {
   }
 
   @Override public OQueryResponse createResponse() {
-    return new OQueryResponse(recordsPerPage);
+    return new OQueryResponse();
   }
 
   @Override public OBinaryResponse execute(OBinaryRequestExecutor executor) {
@@ -141,5 +141,9 @@ public final class OQueryRequest implements OBinaryRequest<OQueryResponse> {
       result[(int) e.getKey()] = e.getValue();
     });
     return result;
+  }
+
+  public int getRecordsPerPage() {
+    return recordsPerPage;
   }
 }

@@ -17,16 +17,14 @@ public class ORemoteResultSet implements OTodoResultSet {
 
   private final String                  queryId;
   private final ODatabaseDocumentRemote db;
-  int pageSize;
 
   private List<OResult> currentPage = new ArrayList<>();
   private OExecutionPlan      executionPlan;
   private Map<String, Object> queryStats;
 
-  public ORemoteResultSet(ODatabaseDocumentRemote db, String queryId, int pageSize) {
+  public ORemoteResultSet(ODatabaseDocumentRemote db, String queryId) {
     this.db = db;
     this.queryId = queryId;
-    this.pageSize = pageSize;
   }
 
   @Override public boolean hasNext() {

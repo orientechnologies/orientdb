@@ -26,6 +26,10 @@ public class OInternalResultSet implements OTodoResultSet {
     return Optional.of(plan);
   }
 
+  public void setPlan(OExecutionPlan plan) {
+    this.plan = plan;
+  }
+
   @Override public Map<String, Object> getQueryStats() {
     return new HashMap<>();
   }
