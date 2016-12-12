@@ -1001,4 +1001,35 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     }
     return new OCloseQueryResponse();
   }
+
+  @Override public OBinaryResponse executeQueryNextPage(OQueryNextPageRequest request) {
+    String dbSerializerName = connection.getDatabase().getSerializer().toString();
+    String name = connection.getData().serializationImpl;
+    if (name == null)
+      name = dbSerializerName;
+    ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(name);
+
+    final long serverTimeout = OGlobalConfiguration.COMMAND_TIMEOUT.getValueAsLong();
+    //TODO set a timeout on the request?
+
+    OTodoResultSet rs = connection.getDatabase().getActiveQuery(request.getQueryId());
+
+    OQueryResponse result = new OQueryResponse();
+
+    //copy the result-set to make sure that the execution is successful
+    OInternalResultSet rsCopy = new OInternalResultSet();
+    rsCopy.setPlan(rs.getExecutionPlan().orElse(null));
+    int i = 0;
+    while (rs.hasNext() && i < request.getRecordsPerPage()) {
+      rsCopy.add(rs.next());
+      i++;
+    }
+
+    OLocalResultSetLifecycleDecorator item = new OLocalResultSetLifecycleDecorator(rsCopy,
+        ((OLocalResultSetLifecycleDecorator) rs).getQueryId());
+
+    item.setHasNextPage(rs.hasNext());
+    result.setResult(item);
+    return result;
+  }
 }

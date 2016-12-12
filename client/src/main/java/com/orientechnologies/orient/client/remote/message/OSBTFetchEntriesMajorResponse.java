@@ -27,12 +27,11 @@ import java.util.Map.Entry;
 
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OSBTreeBonsaiRemote;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
 
 public class OSBTFetchEntriesMajorResponse<K, V> implements OBinaryResponse {
   private final OBinarySerializer<K> keySerializer;
@@ -52,7 +51,7 @@ public class OSBTFetchEntriesMajorResponse<K, V> implements OBinaryResponse {
   }
 
   @Override
-  public void read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+  public void read(OChannelDataInput network, OStorageRemoteSession session) throws IOException {
     byte[] stream = network.readBytes();
     int offset = 0;
     final int count = OIntegerSerializer.INSTANCE.deserializeLiteral(stream, 0);
@@ -67,7 +66,7 @@ public class OSBTFetchEntriesMajorResponse<K, V> implements OBinaryResponse {
     }
   }
 
-  public void write(OChannelBinary channel, int protocolVersion, String recordSerializer) throws IOException {
+  public void write(OChannelDataOutput channel, int protocolVersion, String recordSerializer) throws IOException {
     byte[] stream = new byte[OIntegerSerializer.INT_SIZE
         + list.size() * (keySerializer.getFixedLength() + valueSerializer.getFixedLength())];
     int offset = 0;

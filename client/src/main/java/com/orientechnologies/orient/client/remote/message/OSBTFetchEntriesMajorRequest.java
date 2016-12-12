@@ -23,14 +23,14 @@ import java.io.IOException;
 
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
-import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OCollectionNetworkSerializer;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
 
 public class OSBTFetchEntriesMajorRequest<K, V> implements OBinaryRequest<OSBTFetchEntriesMajorResponse<K, V>> {
   private boolean                  inclusive;
@@ -53,14 +53,14 @@ public class OSBTFetchEntriesMajorRequest<K, V> implements OBinaryRequest<OSBTFe
   }
 
   @Override
-  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+  public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
     OCollectionNetworkSerializer.INSTANCE.writeCollectionPointer(network, pointer);
     network.writeBytes(keyStream);
     network.writeBoolean(inclusive);
     network.writeInt(128);
   }
 
-  public void read(OChannelBinary channel, int protocolVersion, String serializerName) throws IOException {
+  public void read(OChannelDataInput channel, int protocolVersion, String serializerName) throws IOException {
     this.pointer = OCollectionNetworkSerializer.INSTANCE.readCollectionPointer(channel);
     this.keyStream = channel.readBytes();
     this.inclusive = channel.readBoolean();

@@ -25,12 +25,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
 
 public final class OCommitResponse implements OBinaryResponse {
   public static class OCreatedRecordResponse {
@@ -86,7 +86,7 @@ public final class OCommitResponse implements OBinaryResponse {
   }
 
   @Override
-  public void read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+  public void read(OChannelDataInput network, OStorageRemoteSession session) throws IOException {
 
     final int createdRecords = network.readInt();
     created = new ArrayList<>(createdRecords);
@@ -112,7 +112,7 @@ public final class OCommitResponse implements OBinaryResponse {
   }
 
   @Override
-  public void write(OChannelBinary channel, int protocolVersion, String recordSerializer) throws IOException {
+  public void write(OChannelDataOutput channel, int protocolVersion, String recordSerializer) throws IOException {
 
     channel.writeInt(created.size());
     for (OCreatedRecordResponse createdRecord : created) {

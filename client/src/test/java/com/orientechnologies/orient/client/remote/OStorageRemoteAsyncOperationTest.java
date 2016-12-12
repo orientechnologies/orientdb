@@ -4,9 +4,9 @@ import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
-import org.junit.Assert;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -70,13 +70,13 @@ public class OStorageRemoteAsyncOperationTest {
       }
 
       @Override
-      public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+      public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
         assertNull(status.status);
         status.status = "write";
       }
 
       @Override
-      public void read(OChannelBinary channel, int protocolVersion, String serializerName) throws IOException {
+      public void read(OChannelDataInput channel, int protocolVersion, String serializerName) throws IOException {
 
       }
 
@@ -103,13 +103,13 @@ public class OStorageRemoteAsyncOperationTest {
       public OBinaryResponse createResponse() {
         return new OBinaryResponse() {
           @Override
-          public void read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+          public void read(OChannelDataInput network, OStorageRemoteSession session) throws IOException {
             assertEquals(status.status, "write");
             status.status = "read";
           }
 
           @Override
-          public void write(OChannelBinary channel, int protocolVersion, String recordSerializer) throws IOException {
+          public void write(OChannelDataOutput channel, int protocolVersion, String recordSerializer) throws IOException {
           }
 
         };
@@ -130,13 +130,13 @@ public class OStorageRemoteAsyncOperationTest {
       }
 
       @Override
-      public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+      public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
         assertNull(status.status);
         status.status = "write";
       }
 
       @Override
-      public void read(OChannelBinary channel, int protocolVersion, String serializerName) throws IOException {
+      public void read(OChannelDataInput channel, int protocolVersion, String serializerName) throws IOException {
       }
 
       @Override
@@ -164,12 +164,12 @@ public class OStorageRemoteAsyncOperationTest {
 
         return new OBinaryResponse() {
           @Override
-          public void read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+          public void read(OChannelDataInput network, OStorageRemoteSession session) throws IOException {
             fail();
           }
 
           @Override
-          public void write(OChannelBinary channel, int protocolVersion, String recordSerializer) throws IOException {
+          public void write(OChannelDataOutput channel, int protocolVersion, String recordSerializer) throws IOException {
           }
         };
       }
@@ -193,13 +193,13 @@ public class OStorageRemoteAsyncOperationTest {
       }
 
       @Override
-      public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+      public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
         assertNull(status.status);
         status.status = "write";
       }
 
       @Override
-      public void read(OChannelBinary channel, int protocolVersion, String serializerName) throws IOException {
+      public void read(OChannelDataInput channel, int protocolVersion, String serializerName) throws IOException {
 
       }
 
@@ -226,7 +226,7 @@ public class OStorageRemoteAsyncOperationTest {
       public OBinaryResponse createResponse() {
         return new OBinaryResponse() {
           @Override
-          public void read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+          public void read(OChannelDataInput network, OStorageRemoteSession session) throws IOException {
             try {
               if (callBackWait.await(10, TimeUnit.MILLISECONDS))
                 readDone.countDown();
@@ -236,7 +236,7 @@ public class OStorageRemoteAsyncOperationTest {
           }
 
           @Override
-          public void write(OChannelBinary channel, int protocolVersion, String recordSerializer) throws IOException {
+          public void write(OChannelDataOutput channel, int protocolVersion, String recordSerializer) throws IOException {
           }
         };
       }

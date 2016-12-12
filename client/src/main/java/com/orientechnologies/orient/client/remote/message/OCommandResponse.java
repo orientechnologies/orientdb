@@ -19,28 +19,14 @@
  */
 package com.orientechnologies.orient.client.remote.message;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
-import com.orientechnologies.orient.client.remote.OBinaryResponse;
-import com.orientechnologies.orient.client.remote.OFetchPlanResults;
-import com.orientechnologies.orient.client.remote.ORemoteConnectionPool;
-import com.orientechnologies.orient.client.remote.OStorageRemote;
-import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
-import com.orientechnologies.orient.client.remote.SimpleValueFetchPlanCommandListener;
+import com.orientechnologies.orient.client.remote.*;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -53,8 +39,12 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 import com.orientechnologies.orient.core.sql.query.OBasicResultSet;
 import com.orientechnologies.orient.core.sql.query.OLiveResultListener;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
+
+import java.io.IOException;
+import java.util.*;
 
 public final class OCommandResponse implements OBinaryResponse {
   private boolean                   asynch;
@@ -84,7 +74,7 @@ public final class OCommandResponse implements OBinaryResponse {
     this.live = live;
   }
 
-  public void write(OChannelBinary channel, int protocolVersion, String recordSerializer) throws IOException {
+  public void write(OChannelDataOutput channel, int protocolVersion, String recordSerializer) throws IOException {
     if (asynch) {
       if (params == null)
         result = database.command(command).execute();
@@ -111,7 +101,7 @@ public final class OCommandResponse implements OBinaryResponse {
 
   }
 
-  public void serializeValue(OChannelBinary channel, final SimpleValueFetchPlanCommandListener listener, Object result,
+  public void serializeValue(OChannelDataOutput channel, final SimpleValueFetchPlanCommandListener listener, Object result,
       boolean load, boolean isRecordResultSet, int protocolVersion, String recordSerializer) throws IOException {
     if (result == null) {
       // NULL VALUE
@@ -194,7 +184,7 @@ public final class OCommandResponse implements OBinaryResponse {
     }
   }
 
-  private void writeSimpleValue(OChannelBinary channel, SimpleValueFetchPlanCommandListener listener, Object result,
+  private void writeSimpleValue(OChannelDataOutput channel, SimpleValueFetchPlanCommandListener listener, Object result,
       int protocolVersion, String recordSerializer) throws IOException {
 
     if (protocolVersion >= OChannelBinaryProtocol.PROTOCOL_VERSION_35) {
@@ -217,8 +207,7 @@ public final class OCommandResponse implements OBinaryResponse {
     }
   }
 
-  @Override
-  public void read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+  @Override public void read(OChannelDataInput network, OStorageRemoteSession session) throws IOException {
     try {
       // Collection of prefetched temporary record (nested projection record), to refer for avoid garbage collection.
       List<ORecord> temporaryResults = new ArrayList<ORecord>();
@@ -263,23 +252,20 @@ public final class OCommandResponse implements OBinaryResponse {
             } else {
               final OLiveResultListener listener = (OLiveResultListener) this.listener;
               final ODatabaseDocument dbCopy = database.copy();
-              ORemoteConnectionPool pool = storage.connectionManager.getPool(network.getServerURL());
+              ORemoteConnectionPool pool = storage.connectionManager.getPool(((OChannelBinaryAsynchClient) network).getServerURL());
               storage.asynchEventListener.registerLiveListener(pool, token, new OLiveResultListener() {
 
-                @Override
-                public void onUnsubscribe(int iLiveToken) {
+                @Override public void onUnsubscribe(int iLiveToken) {
                   listener.onUnsubscribe(iLiveToken);
                   dbCopy.close();
                 }
 
-                @Override
-                public void onLiveResult(int iLiveToken, ORecordOperation iOp) throws OException {
+                @Override public void onLiveResult(int iLiveToken, ORecordOperation iOp) throws OException {
                   dbCopy.activateOnCurrentThread();
                   listener.onLiveResult(iLiveToken, iOp);
                 }
 
-                @Override
-                public void onError(int iLiveToken) {
+                @Override public void onError(int iLiveToken) {
                   listener.onError(iLiveToken);
                   dbCopy.close();
                 }
@@ -303,7 +289,7 @@ public final class OCommandResponse implements OBinaryResponse {
     }
   }
 
-  protected Object readSynchResult(final OChannelBinaryAsynchClient network, final ODatabaseDocument database,
+  protected Object readSynchResult(final OChannelDataInput network, final ODatabaseDocument database,
       List<ORecord> temporaryResults) throws IOException {
 
     final Object result;
@@ -361,17 +347,15 @@ public final class OCommandResponse implements OBinaryResponse {
       result = null;
     }
 
-    if (network.getSrvProtocolVersion() >= 17) {
-      // LOAD THE FETCHED RECORDS IN CACHE
-      byte status;
-      while ((status = network.readByte()) > 0) {
-        final ORecord record = (ORecord) OChannelBinaryProtocol.readIdentifiable(network);
-        if (record != null && status == 2) {
-          // PUT IN THE CLIENT LOCAL CACHE
-          database.getLocalCache().updateRecord(record);
-          if (record.getIdentity().getClusterId() == -2)
-            temporaryResults.add(record);
-        }
+    // LOAD THE FETCHED RECORDS IN CACHE
+    byte status;
+    while ((status = network.readByte()) > 0) {
+      final ORecord record = (ORecord) OChannelBinaryProtocol.readIdentifiable(network);
+      if (record != null && status == 2) {
+        // PUT IN THE CLIENT LOCAL CACHE
+        database.getLocalCache().updateRecord(record);
+        if (record.getIdentity().getClusterId() == -2)
+          temporaryResults.add(record);
       }
     }
 

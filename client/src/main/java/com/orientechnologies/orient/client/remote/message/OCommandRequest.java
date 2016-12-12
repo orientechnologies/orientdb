@@ -22,7 +22,6 @@ package com.orientechnologies.orient.client.remote.message;
 import java.io.IOException;
 
 import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
-import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
@@ -31,8 +30,9 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
 
 public final class OCommandRequest implements OBinaryRequest<OCommandResponse> {
   private ODatabaseDocumentInternal database;
@@ -51,7 +51,7 @@ public final class OCommandRequest implements OBinaryRequest<OCommandResponse> {
   }
 
   @Override
-  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+  public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
     if (live) {
       network.writeByte((byte) 'l');
     } else {
@@ -61,7 +61,7 @@ public final class OCommandRequest implements OBinaryRequest<OCommandResponse> {
 
   }
 
-  public void read(OChannelBinary channel, int protocolVersion, String serializerName) throws IOException {
+  public void read(OChannelDataInput channel, int protocolVersion, String serializerName) throws IOException {
 
     byte type = channel.readByte();
     if (type == (byte) 'l')

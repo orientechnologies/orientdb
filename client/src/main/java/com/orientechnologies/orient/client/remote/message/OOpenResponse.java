@@ -3,12 +3,12 @@ package com.orientechnologies.orient.client.remote.message;
 import java.io.IOException;
 import java.util.Collection;
 
-import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
 
 public class OOpenResponse implements OBinaryResponse {
   private int        sessionId;
@@ -30,7 +30,7 @@ public class OOpenResponse implements OBinaryResponse {
   }
 
   @Override
-  public void write(OChannelBinary channel, int protocolVersion, String recordSerializer) throws IOException {
+  public void write(OChannelDataOutput channel, int protocolVersion, String recordSerializer) throws IOException {
     channel.writeInt(sessionId);
     if (protocolVersion > OChannelBinaryProtocol.PROTOCOL_VERSION_26)
       channel.writeBytes(sessionToken);
@@ -41,7 +41,7 @@ public class OOpenResponse implements OBinaryResponse {
   }
 
   @Override
-  public void read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+  public void read(OChannelDataInput network, OStorageRemoteSession session) throws IOException {
     sessionId = network.readInt();
     sessionToken = network.readBytes();
     clusterIds = OBinaryProtocolHelper.readClustersArray(network);

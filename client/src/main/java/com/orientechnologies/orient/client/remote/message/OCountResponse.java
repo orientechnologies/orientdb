@@ -21,10 +21,10 @@ package com.orientechnologies.orient.client.remote.message;
 
 import java.io.IOException;
 
-import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
 
 public final class OCountResponse implements OBinaryResponse {
 
@@ -38,11 +38,11 @@ public final class OCountResponse implements OBinaryResponse {
   }
 
   @Override
-  public void read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+  public void read(OChannelDataInput network, OStorageRemoteSession session) throws IOException {
     count = network.readLong();
   }
 
-  public void write(OChannelBinary channel, int protocolVersion, String recordSerializer) throws IOException {
+  public void write(OChannelDataOutput channel, int protocolVersion, String recordSerializer) throws IOException {
     channel.writeLong(count);
   }
 

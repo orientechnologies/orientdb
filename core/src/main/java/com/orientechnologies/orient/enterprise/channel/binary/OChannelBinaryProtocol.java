@@ -77,6 +77,7 @@ public class OChannelBinaryProtocol {
   public static final byte REQUEST_RECORD_LOAD_IF_VERSION_NOT_LATEST = 44;                 // since 2.1
   public static final byte REQUEST_QUERY                             = 45;                 // since 3.0
   public static final byte REQUEST_CLOSE_QUERY                       = 46;                 // since 3.0
+  public static final byte REQUEST_QUERY_NEXT_PAGE                   = 47;                 // since 3.0
 
   public static final byte REQUEST_TX_COMMIT = 60;
 
@@ -91,12 +92,10 @@ public class OChannelBinaryProtocol {
   public static final byte REQUEST_PUSH_LIVE_QUERY     = 81;                 // SINCE 2.1
 
   // DISTRIBUTED
-  @Deprecated
-  public static final byte REQUEST_DB_COPY     = 90;                 // SINCE 1.0rc8
-  @Deprecated
-  public static final byte REQUEST_REPLICATION = 91;                 // SINCE 1.0
-  public static final byte REQUEST_CLUSTER     = 92;                 // SINCE 1.0
-  public static final byte REQUEST_DB_TRANSFER = 93;                 // NOT USED ANYMORE
+  @Deprecated public static final byte REQUEST_DB_COPY     = 90;                 // SINCE 1.0rc8
+  @Deprecated public static final byte REQUEST_REPLICATION = 91;                 // SINCE 1.0
+  public static final             byte REQUEST_CLUSTER     = 92;                 // SINCE 1.0
+  public static final             byte REQUEST_DB_TRANSFER = 93;                 // NOT USED ANYMORE
 
   // Lock + sync
   public static final byte REQUEST_DB_FREEZE  = 94;                 // SINCE 1.1.0
@@ -153,7 +152,7 @@ public class OChannelBinaryProtocol {
 
   public static final int CURRENT_PROTOCOL_VERSION = PROTOCOL_VERSION_36;
 
-  public static OIdentifiable readIdentifiable(final OChannelBinary network) throws IOException {
+  public static OIdentifiable readIdentifiable(final OChannelDataInput network) throws IOException {
     final int classId = network.readShort();
     if (classId == RECORD_NULL)
       return null;

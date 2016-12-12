@@ -1,7 +1,7 @@
 package com.orientechnologies.orient.client.remote;
 
-import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
 
 import java.io.IOException;
 
@@ -10,7 +10,7 @@ import java.io.IOException;
  */
 public interface OBinaryResponse {
 
-  void write(OChannelBinary channel, int protocolVersion, String recordSerializer) throws IOException;
+  void write(OChannelDataOutput channel, int protocolVersion, String recordSerializer) throws IOException;
 
-  void read(final OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException;
+  void read(final OChannelDataInput network, OStorageRemoteSession session) throws IOException;
 }

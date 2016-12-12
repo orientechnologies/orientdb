@@ -1,15 +1,7 @@
 package com.orientechnologies.orient.client.remote.message;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.UUID;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.util.OCommonConst;
-import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OClusterRemote;
 import com.orientechnologies.orient.client.remote.OCollectionNetworkSerializer;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -26,12 +18,20 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.UUID;
 
 public class OBinaryProtocolHelper {
 
-  public static void writeIdentifiable(OChannelBinary channel, final OIdentifiable o, String recordSerializer) throws IOException {
+  public static void writeIdentifiable(OChannelDataOutput channel, final OIdentifiable o, String recordSerializer) throws IOException {
     if (o == null)
       channel.writeShort(OChannelBinaryProtocol.RECORD_NULL);
     else if (o instanceof ORecordId) {
@@ -42,7 +42,7 @@ public class OBinaryProtocolHelper {
     }
   }
 
-  public static void writeRecord(OChannelBinary channel, final ORecord iRecord, String recordSerializer) throws IOException {
+  public static void writeRecord(OChannelDataOutput channel, final ORecord iRecord, String recordSerializer) throws IOException {
     channel.writeShort((short) 0);
     channel.writeByte(ORecordInternal.getRecordType(iRecord));
     channel.writeRID(iRecord.getIdentity());
@@ -75,7 +75,7 @@ public class OBinaryProtocolHelper {
     return stream;
   }
 
-  public static Map<UUID, OBonsaiCollectionPointer> readCollectionChanges(OChannelBinaryAsynchClient network) throws IOException {
+  public static Map<UUID, OBonsaiCollectionPointer> readCollectionChanges(OChannelDataInput network) throws IOException {
     Map<UUID, OBonsaiCollectionPointer> collectionsUpdates = new HashMap<>();
     int count = network.readInt();
     for (int i = 0; i < count; i++) {
@@ -89,7 +89,7 @@ public class OBinaryProtocolHelper {
     return collectionsUpdates;
   }
 
-  public static void writeCollectionChanges(OChannelBinary channel, Map<UUID, OBonsaiCollectionPointer> changedIds)
+  public static void writeCollectionChanges(OChannelDataOutput channel, Map<UUID, OBonsaiCollectionPointer> changedIds)
       throws IOException {
     channel.writeInt(changedIds.size());
     for (Entry<UUID, OBonsaiCollectionPointer> entry : changedIds.entrySet()) {
@@ -99,7 +99,7 @@ public class OBinaryProtocolHelper {
     }
   }
 
-  public static void writePhysicalPositions(OChannelBinary channel, OPhysicalPosition[] previousPositions) throws IOException {
+  public static void writePhysicalPositions(OChannelDataOutput channel, OPhysicalPosition[] previousPositions) throws IOException {
     if (previousPositions == null) {
       channel.writeInt(0); // NO ENTRIEs
     } else {
@@ -113,7 +113,7 @@ public class OBinaryProtocolHelper {
     }
   }
 
-  public static OPhysicalPosition[] readPhysicalPositions(OChannelBinaryAsynchClient network) throws IOException {
+  public static OPhysicalPosition[] readPhysicalPositions(OChannelDataInput network) throws IOException {
     final int positionsCount = network.readInt();
     final OPhysicalPosition[] physicalPositions;
     if (positionsCount == 0) {
@@ -134,7 +134,7 @@ public class OBinaryProtocolHelper {
     return physicalPositions;
   }
 
-  public static OCluster[] readClustersArray(final OChannelBinaryAsynchClient network) throws IOException {
+  public static OCluster[] readClustersArray(final OChannelDataInput network) throws IOException {
 
     final int tot = network.readShort();
     OCluster[] clusters = new OCluster[tot];
@@ -153,7 +153,7 @@ public class OBinaryProtocolHelper {
     return clusters;
   }
 
-  public static void writeClustersArray(OChannelBinary channel, OCluster[] clusters, int protocolVersion) throws IOException {
+  public static void writeClustersArray(OChannelDataOutput channel, OCluster[] clusters, int protocolVersion) throws IOException {
     int clusterCount = 0;
     for (OCluster c : clusters) {
       if (c != null) {

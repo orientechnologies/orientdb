@@ -6,12 +6,12 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
-import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
 
 public class OImportRequest implements OBinaryRequest<OImportResponse> {
   private InputStream inputStream;
@@ -29,7 +29,7 @@ public class OImportRequest implements OBinaryRequest<OImportResponse> {
   }
 
   @Override
-  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+  public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
     network.writeString(options);
     network.writeString(name);
     byte[] buffer = new byte[1024];
@@ -42,7 +42,7 @@ public class OImportRequest implements OBinaryRequest<OImportResponse> {
   }
 
   @Override
-  public void read(OChannelBinary channel, int protocolVersion, String serializerName) throws IOException {
+  public void read(OChannelDataInput channel, int protocolVersion, String serializerName) throws IOException {
     options = channel.readString();
     name = channel.readString();
     File file = File.createTempFile("import", name);

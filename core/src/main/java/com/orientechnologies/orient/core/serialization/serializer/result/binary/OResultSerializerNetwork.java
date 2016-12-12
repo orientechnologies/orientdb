@@ -43,7 +43,8 @@ import com.orientechnologies.orient.core.serialization.serializer.record.binary.
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.util.ODateHelper;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -615,13 +616,13 @@ public class OResultSerializerNetwork {
     return toCalendar.getTimeInMillis();
   }
 
-  public void toStream(OResult item, OChannelBinary channel) throws IOException {
+  public void toStream(OResult item, OChannelDataOutput channel) throws IOException {
     final BytesContainer bytes = new BytesContainer();
     this.serialize(item, bytes);
     channel.writeBytes(bytes.fitBytes());
   }
 
-  public OResult fromStream(OChannelBinary channel) throws IOException {
+  public OResult fromStream(OChannelDataInput channel) throws IOException {
     BytesContainer bytes = new BytesContainer();
     bytes.bytes = channel.readBytes();
     return this.deserialize(bytes);

@@ -22,15 +22,14 @@ package com.orientechnologies.orient.client.remote.message;
 import java.io.IOException;
 
 import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
-import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryAsyncRequest;
-import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
 
 public class OCreateRecordRequest implements OBinaryAsyncRequest<OCreateRecordResponse> {
   private byte[]    content;
@@ -62,14 +61,14 @@ public class OCreateRecordRequest implements OBinaryAsyncRequest<OCreateRecordRe
   }
 
   @Override
-  public void write(final OChannelBinaryAsynchClient network, final OStorageRemoteSession session) throws IOException {
+  public void write(final OChannelDataOutput network, final OStorageRemoteSession session) throws IOException {
     network.writeShort((short) rid.getClusterId());
     network.writeBytes(content);
     network.writeByte(recordType);
     network.writeByte((byte) mode);
   }
 
-  public void read(OChannelBinary channel, int protocolVersion, String serializerName) throws IOException {
+  public void read(OChannelDataInput channel, int protocolVersion, String serializerName) throws IOException {
     final int dataSegmentId = protocolVersion < 24 ? channel.readInt() : 0;
 
     rid = new ORecordId(channel.readShort(), ORID.CLUSTER_POS_INVALID);

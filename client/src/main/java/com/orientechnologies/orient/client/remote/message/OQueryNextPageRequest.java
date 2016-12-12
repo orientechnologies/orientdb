@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.client.remote.message;
 
-import java.io.IOException;
-
 import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
@@ -29,47 +27,56 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProt
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
 
-public class OSBTCreateTreeRequest implements OBinaryRequest<OSBTCreateTreeResponse> {
-  private int clusterId;
+import java.io.IOException;
 
-  public OSBTCreateTreeRequest(int clusterId) {
-    this.clusterId = clusterId;
+public final class OQueryNextPageRequest implements OBinaryRequest<OQueryResponse> {
+
+  private String queryId;
+  private int    recordsPerPage;
+
+  public OQueryNextPageRequest(String queryId, int recordsPerPage) {
+    this.queryId = queryId;
+    this.recordsPerPage = recordsPerPage;
   }
 
-  public OSBTCreateTreeRequest() {
+  public OQueryNextPageRequest() {
   }
 
-  @Override
-  public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
-    network.writeInt(clusterId);
+  @Override public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
+    network.writeString(queryId);
+    network.writeInt(recordsPerPage);
   }
 
   public void read(OChannelDataInput channel, int protocolVersion, String serializerName) throws IOException {
-    this.clusterId = channel.readInt();
+    this.queryId = channel.readString();
+    this.recordsPerPage = channel.readInt();
   }
 
-  @Override
-  public byte getCommand() {
-    return OChannelBinaryProtocol.REQUEST_CREATE_SBTREE_BONSAI;
+  @Override public byte getCommand() {
+    return OChannelBinaryProtocol.REQUEST_QUERY_NEXT_PAGE;
   }
 
-  @Override
-  public String getDescription() {
-    return "Create SB-Tree bonsai instance";
+  @Override public String getDescription() {
+    return "Execute remote query";
   }
 
-  public int getClusterId() {
-    return clusterId;
+  @Override public OQueryResponse createResponse() {
+    return new OQueryResponse();
   }
 
-  @Override
-  public OSBTCreateTreeResponse createResponse() {
-    return new OSBTCreateTreeResponse();
+  @Override public OBinaryResponse execute(OBinaryRequestExecutor executor) {
+    return executor.executeQueryNextPage(this);
   }
 
-  @Override
-  public OBinaryResponse execute(OBinaryRequestExecutor executor) {
-    return executor.executeSBTreeCreate(this);
+  public String getQueryId() {
+    return queryId;
   }
 
+  public void setQueryId(String queryId) {
+    this.queryId = queryId;
+  }
+
+  public int getRecordsPerPage() {
+    return recordsPerPage;
+  }
 }

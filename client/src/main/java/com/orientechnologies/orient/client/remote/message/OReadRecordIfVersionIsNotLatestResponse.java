@@ -22,16 +22,15 @@ package com.orientechnologies.orient.client.remote.message;
 import java.io.IOException;
 import java.util.Set;
 
-import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.OStorageOperationResult;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
 
 public class OReadRecordIfVersionIsNotLatestResponse implements OBinaryResponse {
 
@@ -51,7 +50,7 @@ public class OReadRecordIfVersionIsNotLatestResponse implements OBinaryResponse 
     this.recordsToSend = recordsToSend;
   }
 
-  public void write(OChannelBinary network, int protocolVersion, String recordSerializer) throws IOException {
+  public void write(OChannelDataOutput network, int protocolVersion, String recordSerializer) throws IOException {
     if (record != null) {
       network.writeByte((byte) 1);
       if (protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_27) {
@@ -76,7 +75,7 @@ public class OReadRecordIfVersionIsNotLatestResponse implements OBinaryResponse 
   }
 
   @Override
-  public void read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+  public void read(OChannelDataInput network, OStorageRemoteSession session) throws IOException {
 
     if (network.readByte() == 0)
       return;

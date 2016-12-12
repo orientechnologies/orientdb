@@ -23,12 +23,12 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 
-import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
 
 public class OCreateRecordResponse implements OBinaryResponse {
 
@@ -45,7 +45,7 @@ public class OCreateRecordResponse implements OBinaryResponse {
     this.changedIds = changedIds;
   }
 
-  public void write(OChannelBinary channel, int protocolVersion, String recordSerializer) throws IOException {
+  public void write(OChannelDataOutput channel, int protocolVersion, String recordSerializer) throws IOException {
     channel.writeShort((short) this.identity.getClusterId());
     channel.writeLong(this.identity.getClusterPosition());
     channel.writeInt(version);
@@ -54,7 +54,7 @@ public class OCreateRecordResponse implements OBinaryResponse {
   }
 
   @Override
-  public void read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+  public void read(OChannelDataInput network, OStorageRemoteSession session) throws IOException {
     short clusterId = network.readShort();
     long posistion = network.readLong();
     identity = new ORecordId(clusterId, posistion);

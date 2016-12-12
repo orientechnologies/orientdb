@@ -22,13 +22,13 @@ package com.orientechnologies.orient.client.remote.message;
 import java.io.IOException;
 
 import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
-import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryAsyncRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
 
 public class ODeleteRecordRequest implements OBinaryAsyncRequest<ODeleteRecordResponse> {
   private ORecordId rid;
@@ -53,14 +53,14 @@ public class ODeleteRecordRequest implements OBinaryAsyncRequest<ODeleteRecordRe
     return "Delete Record";
   }
 
-  public void read(OChannelBinary channel, int protocolVersion, String serializerName) throws IOException {
+  public void read(OChannelDataInput channel, int protocolVersion, String serializerName) throws IOException {
     rid = channel.readRID();
     version = channel.readVersion();
     mode = channel.readByte();
   }
 
   @Override
-  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+  public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
     network.writeRID(rid);
     network.writeVersion(version);
     network.writeByte((byte) mode);

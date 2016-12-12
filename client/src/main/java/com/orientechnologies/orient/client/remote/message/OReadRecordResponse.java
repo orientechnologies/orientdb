@@ -19,19 +19,18 @@
  */
 package com.orientechnologies.orient.client.remote.message;
 
-import java.io.IOException;
-import java.util.Set;
-
-import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.OStorageOperationResult;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
+
+import java.io.IOException;
+import java.util.Set;
 
 public final class OReadRecordResponse implements OBinaryResponse {
 
@@ -51,7 +50,7 @@ public final class OReadRecordResponse implements OBinaryResponse {
     this.recordsToSend = recordsToSend;
   }
 
-  public void write(OChannelBinary network, int protocolVersion, String recordSerializer) throws IOException {
+  public void write(OChannelDataOutput network, int protocolVersion, String recordSerializer) throws IOException {
     if (record != null) {
       network.writeByte((byte) 1);
       if (protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_27) {
@@ -75,20 +74,15 @@ public final class OReadRecordResponse implements OBinaryResponse {
     network.writeByte((byte) 0);
   }
 
-  @Override
-  public void read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+  @Override public void read(OChannelDataInput network, OStorageRemoteSession session) throws IOException {
     if (network.readByte() == 0)
       return;
 
     final ORawBuffer buffer;
-    if (network.getSrvProtocolVersion() <= 27)
-      buffer = new ORawBuffer(network.readBytes(), network.readVersion(), network.readByte());
-    else {
-      final byte type = network.readByte();
-      final int recVersion = network.readVersion();
-      final byte[] bytes = network.readBytes();
-      buffer = new ORawBuffer(bytes, recVersion, type);
-    }
+    final byte type = network.readByte();
+    final int recVersion = network.readVersion();
+    final byte[] bytes = network.readBytes();
+    buffer = new ORawBuffer(bytes, recVersion, type);
 
     // TODO: This should not be here, move it in a callback or similar
     final ODatabaseDocument database = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();

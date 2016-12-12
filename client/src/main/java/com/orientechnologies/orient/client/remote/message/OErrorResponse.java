@@ -5,10 +5,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
 
 public class OErrorResponse implements OBinaryResponse {
   private Map<String, String> messages;
@@ -23,7 +23,7 @@ public class OErrorResponse implements OBinaryResponse {
   }
 
   @Override
-  public void read(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+  public void read(OChannelDataInput network, OStorageRemoteSession session) throws IOException {
     messages = new HashMap<>();
     while (network.readByte() == 1) {
       String key = network.readString();
@@ -34,7 +34,7 @@ public class OErrorResponse implements OBinaryResponse {
   }
 
   @Override
-  public void write(OChannelBinary channel, int protocolVersion, String recordSerializer) throws IOException {
+  public void write(OChannelDataOutput channel, int protocolVersion, String recordSerializer) throws IOException {
     for (Entry<String, String> entry : messages.entrySet()) {
       // MORE DETAILS ARE COMING AS EXCEPTION
       channel.writeByte((byte) 1);

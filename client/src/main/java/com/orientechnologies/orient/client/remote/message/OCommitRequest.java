@@ -19,13 +19,8 @@
  */
 package com.orientechnologies.orient.client.remote.message;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
-import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
@@ -34,8 +29,13 @@ import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public final class OCommitRequest implements OBinaryRequest<OCommitResponse> {
   public class ORecordOperationRequest {
@@ -111,7 +111,7 @@ public final class OCommitRequest implements OBinaryRequest<OCommitResponse> {
   }
 
   @Override
-  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+  public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
 
     network.writeInt(txId);
     network.writeBoolean(usingLong);
@@ -128,7 +128,7 @@ public final class OCommitRequest implements OBinaryRequest<OCommitResponse> {
 
   }
 
-  private void commitEntry(final OChannelBinaryAsynchClient iNetwork, final ORecordOperationRequest txEntry) throws IOException {
+  private void commitEntry(final OChannelDataOutput iNetwork, final ORecordOperationRequest txEntry) throws IOException {
     iNetwork.writeByte((byte) 1);
     iNetwork.writeByte(txEntry.type);
     iNetwork.writeRID(txEntry.id);
@@ -152,7 +152,7 @@ public final class OCommitRequest implements OBinaryRequest<OCommitResponse> {
   }
 
   @Override
-  public void read(OChannelBinary channel, int protocolVersion, String serializerName) throws IOException {
+  public void read(OChannelDataInput channel, int protocolVersion, String serializerName) throws IOException {
     txId = channel.readInt();
     usingLong = channel.readBoolean();
     operations = new ArrayList<>();

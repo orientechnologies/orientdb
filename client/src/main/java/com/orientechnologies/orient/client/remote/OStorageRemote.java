@@ -799,12 +799,21 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
   public void closeQuery(ODatabaseDocumentRemote oDatabaseDocumentRemote, String queryId) {
     OCloseQueryRequest request = new OCloseQueryRequest(queryId);
-    OCloseQueryResponse response = networkOperation(request, "Error closing query: "+queryId);
+    OCloseQueryResponse response = networkOperation(request, "Error closing query: " + queryId);
   }
 
   public void fetchNextPage(ODatabaseDocumentRemote oDatabaseDocumentRemote, ORemoteResultSet rs) {
-    //TODO implement this!
-    throw new UnsupportedOperationException();
+    OQueryNextPageRequest request = new OQueryNextPageRequest(rs.getQueryId(), 100);
+    OQueryResponse response = networkOperation(request, "Error on fetching next page for statment: " + rs.getQueryId());
+
+    ORemoteResultSet remoteRs = ((ORemoteResultSet) response.getResult());
+    rs.setCurrentPage(remoteRs.getCurrentPage());
+    rs.setHasNextPage(remoteRs.hasNextPage());
+    Map<String, Object> newQueryStats = remoteRs.getQueryStats();
+    if (newQueryStats != null) {
+      rs.setQueryStats(newQueryStats);
+    }
+    remoteRs.getExecutionPlan().ifPresent(x -> rs.setExecutionPlan(x));
   }
 
   public List<ORecordOperation> commit(final OTransaction iTx, final Runnable callback) {

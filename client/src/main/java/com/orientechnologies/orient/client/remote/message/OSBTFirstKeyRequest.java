@@ -22,14 +22,14 @@ package com.orientechnologies.orient.client.remote.message;
 import java.io.IOException;
 
 import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
-import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OCollectionNetworkSerializer;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
 
 public class OSBTFirstKeyRequest implements OBinaryRequest<OSBTFirstKeyResponse> {
   private OBonsaiCollectionPointer collectionPointer;
@@ -42,11 +42,11 @@ public class OSBTFirstKeyRequest implements OBinaryRequest<OSBTFirstKeyResponse>
   }
 
   @Override
-  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+  public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
     OCollectionNetworkSerializer.INSTANCE.writeCollectionPointer(network, collectionPointer);
   }
 
-  public void read(OChannelBinary channel, int protocolVersion, String serializerName) throws IOException {
+  public void read(OChannelDataInput channel, int protocolVersion, String serializerName) throws IOException {
     collectionPointer = OCollectionNetworkSerializer.INSTANCE.readCollectionPointer(channel);
   }
 

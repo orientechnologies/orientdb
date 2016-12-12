@@ -3,16 +3,15 @@ package com.orientechnologies.orient.client.remote.message;
 import java.io.IOException;
 
 import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
-import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
-import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
 
 public class OOpenRequest implements OBinaryRequest<OOpenResponse> {
   private String  driverName      = OStorageRemote.DRIVER_NAME;
@@ -39,7 +38,7 @@ public class OOpenRequest implements OBinaryRequest<OOpenResponse> {
   }
 
   @Override
-  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+  public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
     network.writeString(driverName);
     network.writeString(driverVersion);
     network.writeShort((short) protocolVersion);
@@ -54,7 +53,7 @@ public class OOpenRequest implements OBinaryRequest<OOpenResponse> {
   }
 
   @Override
-  public void read(OChannelBinary channel, int protocolVersion, String serializerName) throws IOException {
+  public void read(OChannelDataInput channel, int protocolVersion, String serializerName) throws IOException {
 
     driverName = channel.readString();
     driverVersion = channel.readString();

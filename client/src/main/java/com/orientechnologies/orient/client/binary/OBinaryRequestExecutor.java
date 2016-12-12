@@ -96,4 +96,6 @@ public interface OBinaryRequestExecutor {
   OBinaryResponse executeQuery(OQueryRequest oQueryRequest);
 
   OBinaryResponse closeQuery(OCloseQueryRequest oQueryRequest);
+
+  OBinaryResponse executeQueryNextPage(OQueryNextPageRequest oQueryNextPageRequest);
 }

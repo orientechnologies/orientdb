@@ -87,4 +87,16 @@ public class ORemoteResultSet implements OTodoResultSet {
   public void setHasNextPage(boolean b) {
     this.hasNextPage = b;
   }
+
+  public String getQueryId() {
+    return queryId;
+  }
+
+  public void setCurrentPage(List<OResult> currentPage) {
+    this.currentPage = currentPage;
+  }
+
+  public List<OResult> getCurrentPage() {
+    return currentPage;
+  }
 }

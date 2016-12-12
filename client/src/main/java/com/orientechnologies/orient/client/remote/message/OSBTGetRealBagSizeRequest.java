@@ -19,13 +19,9 @@
  */
 package com.orientechnologies.orient.client.remote.message;
 
-import java.io.IOException;
-import java.util.Map;
-
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
-import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OCollectionNetworkSerializer;
@@ -34,8 +30,12 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag.Change;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
+
+import java.io.IOException;
+import java.util.Map;
 
 public class OSBTGetRealBagSizeRequest implements OBinaryRequest<OSBTGetRealBagSizeResponse> {
 
@@ -54,7 +54,7 @@ public class OSBTGetRealBagSizeRequest implements OBinaryRequest<OSBTGetRealBagS
   }
 
   @Override
-  public void write(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+  public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
     OCollectionNetworkSerializer.INSTANCE.writeCollectionPointer(network, collectionPointer);
     final OSBTreeRidBag.ChangeSerializationHelper changeSerializer = OSBTreeRidBag.ChangeSerializationHelper.INSTANCE;
     final byte[] stream = new byte[OIntegerSerializer.INT_SIZE + changeSerializer.getChangesSerializedSize(changes.size())];
@@ -62,7 +62,7 @@ public class OSBTGetRealBagSizeRequest implements OBinaryRequest<OSBTGetRealBagS
     network.writeBytes(stream);
   }
 
-  public void read(OChannelBinary channel, int protocolVersion, String serializerName) throws IOException {
+  public void read(OChannelDataInput channel, int protocolVersion, String serializerName) throws IOException {
     collectionPointer = OCollectionNetworkSerializer.INSTANCE.readCollectionPointer(channel);
     byte[] stream = channel.readBytes();
     final OSBTreeRidBag.ChangeSerializationHelper changeSerializer = OSBTreeRidBag.ChangeSerializationHelper.INSTANCE;
