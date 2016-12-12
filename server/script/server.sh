@@ -46,7 +46,7 @@ PRGDIR=`dirname "$PRG"`
 
 # Only set ORIENTDB_HOME if not already set
 [ -f "$ORIENTDB_HOME"/bin/server.sh ] || ORIENTDB_HOME=`cd "$PRGDIR/.." ; pwd`
-
+export ORIENTDB_HOME
 cd "$ORIENTDB_HOME/bin"
 
 if [ ! -f "${CONFIG_FILE}" ]
@@ -58,6 +58,7 @@ fi
 if [ `uname -m` != "armv6l" ]; then
   JAVA_OPTS="$JAVA_OPTS -server "
 fi
+export JAVA_OPTS
 
 # Set JavaHome if it exists
 if [ -f "${JAVA_HOME}/bin/java" ]; then 
@@ -65,6 +66,7 @@ if [ -f "${JAVA_HOME}/bin/java" ]; then
 else
    JAVA=java
 fi
+export JAVA
 
 if [ -z "$ORIENTDB_LOG_CONF" ] ; then
     ORIENTDB_LOG_CONF=$ORIENTDB_HOME/config/orientdb-server-log.properties
@@ -94,9 +96,10 @@ for var in "$@"; do
     fi
 done
 
-# ORIENTDB memory options, default to 512 of heap.
+# ORIENTDB memory options, default to 2GB of heap.
+
 if [ -z "$ORIENTDB_OPTS_MEMORY" ] ; then
-    ORIENTDB_OPTS_MEMORY="-Xms512m -Xmx512m"
+    ORIENTDB_OPTS_MEMORY="-Xms2G -Xmx2G"
 fi
 
 if [ -z "$JAVA_OPTS_SCRIPT" ] ; then
