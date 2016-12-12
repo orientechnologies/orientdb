@@ -542,7 +542,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       break;
 
     case OChannelBinaryProtocol.REQUEST_QUERY:
-      request = new OCommandRequest();
+      request = new OQueryRequest();
       break;
 
     case OChannelBinaryProtocol.REQUEST_TX_COMMIT:

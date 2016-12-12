@@ -82,7 +82,9 @@ public final class OQueryRequest implements OBinaryRequest<OQueryResponse> {
     //params
     ODocument parms = new ODocument();
     parms.field("params", this.params);
-    OBinaryProtocolHelper.writeRecord(network, parms, serializer);
+
+    byte[] bytes = OBinaryProtocolHelper.getRecordBytes(parms, serializer);
+    network.writeBytes(bytes);
     network.writeBoolean(namedParams);
   }
 
@@ -93,8 +95,10 @@ public final class OQueryRequest implements OBinaryRequest<OQueryResponse> {
 
     //params
     ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(serializerName);
+
     ODocument paramsDoc = new ODocument();
-    ser.fromStream(channel.readBytes(), paramsDoc, null);
+    byte[] bytes = channel.readBytes();
+    ser.fromStream(bytes, paramsDoc, null);
     this.params = paramsDoc.field("params");
     this.namedParams = channel.readBoolean();
   }

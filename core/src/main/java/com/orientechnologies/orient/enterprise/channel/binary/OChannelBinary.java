@@ -38,7 +38,7 @@ import java.util.Arrays;
  * 
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public abstract class OChannelBinary extends OChannel {
+public abstract class OChannelBinary extends OChannel  {
   private static final int MAX_LENGTH_DEBUG = 150;
   protected final boolean  debug;
   private final int        maxChunkSize;

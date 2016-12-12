@@ -49,6 +49,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
+import com.orientechnologies.orient.core.sql.parser.OLocalResultSetLifecycleDecorator;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.*;
@@ -981,7 +982,11 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       i++;
     }
 
-    result.setResult(rsCopy);
+    OLocalResultSetLifecycleDecorator item = new OLocalResultSetLifecycleDecorator(rsCopy,
+        ((OLocalResultSetLifecycleDecorator) rs).getQueryId());
+
+    item.setHasNextPage(rs.hasNext());
+    result.setResult(item);
     return result;
   }
 

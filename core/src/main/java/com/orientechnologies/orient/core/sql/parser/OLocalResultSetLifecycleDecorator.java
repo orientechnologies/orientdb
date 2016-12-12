@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.db.document.OQueryLifecycleListener;
 import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
+import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
 
@@ -22,9 +23,16 @@ public class OLocalResultSetLifecycleDecorator implements OTodoResultSet {
   private List<OQueryLifecycleListener> lifecycleListeners = new ArrayList<>();
   private String queryId;
 
+  private boolean hasNextPage;
+
   public OLocalResultSetLifecycleDecorator(OTodoResultSet entity) {
     this.entity = entity;
     queryId = "" + System.currentTimeMillis() + "_" + counter.incrementAndGet();
+  }
+
+  public OLocalResultSetLifecycleDecorator(OInternalResultSet rsCopy, String queryId) {
+    this.entity = rsCopy;
+    this.queryId = queryId;
   }
 
   public void addLifecycleListener(OQueryLifecycleListener db) {
@@ -55,5 +63,13 @@ public class OLocalResultSetLifecycleDecorator implements OTodoResultSet {
 
   public String getQueryId() {
     return queryId;
+  }
+
+  public boolean hasNextPage() {
+    return hasNextPage;
+  }
+
+  public void setHasNextPage(boolean b) {
+    this.hasNextPage = b;
   }
 }

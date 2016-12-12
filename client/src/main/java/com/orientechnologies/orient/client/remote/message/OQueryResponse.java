@@ -44,6 +44,7 @@ public class OQueryResponse implements OBinaryResponse {
       throw new IllegalStateException();
     }
     channel.writeString(((OLocalResultSetLifecycleDecorator) result).getQueryId());
+
     writeExecutionPlan(result.getExecutionPlan(), channel);
     while (result.hasNext()) {
       OResult row = result.next();
@@ -51,6 +52,7 @@ public class OQueryResponse implements OBinaryResponse {
       writeResult(row, channel, recordSerializer);
     }
     channel.writeBoolean(false);
+    channel.writeBoolean(((OLocalResultSetLifecycleDecorator) result).hasNextPage());
     writeQueryStats(result.getQueryStats(), channel);
   }
 
@@ -64,7 +66,9 @@ public class OQueryResponse implements OBinaryResponse {
       rs.add(item);
       hasNext = network.readBoolean();
     }
+    rs.setHasNextPage(network.readBoolean());
     rs.setQueryStats(readQueryStats(rs));
+    this.result = rs;
   }
 
   private void writeQueryStats(Map<String, Object> queryStats, OChannelBinary channel) {
@@ -181,7 +185,7 @@ public class OQueryResponse implements OBinaryResponse {
     ser.toStream(item, channel);
   }
 
-  public void setResult(OTodoResultSet result) {
+  public void setResult(OLocalResultSetLifecycleDecorator result) {
     this.result = result;
   }
 

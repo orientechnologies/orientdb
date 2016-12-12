@@ -21,6 +21,7 @@ public class ORemoteResultSet implements OTodoResultSet {
   private List<OResult> currentPage = new ArrayList<>();
   private OExecutionPlan      executionPlan;
   private Map<String, Object> queryStats;
+  private boolean hasNextPage = false;
 
   public ORemoteResultSet(ODatabaseDocumentRemote db, String queryId) {
     this.db = db;
@@ -30,6 +31,9 @@ public class ORemoteResultSet implements OTodoResultSet {
   @Override public boolean hasNext() {
     if (!currentPage.isEmpty()) {
       return true;
+    }
+    if (!hasNextPage()) {
+      return false;
     }
     fetchNextPage();
     return !currentPage.isEmpty();
@@ -41,6 +45,9 @@ public class ORemoteResultSet implements OTodoResultSet {
 
   @Override public OResult next() {
     if (currentPage.isEmpty()) {
+      if (!hasNextPage()) {
+        throw new IllegalStateException();
+      }
       fetchNextPage();
     }
     if (currentPage.isEmpty()) {
@@ -71,5 +78,13 @@ public class ORemoteResultSet implements OTodoResultSet {
 
   public void setExecutionPlan(OExecutionPlan executionPlan) {
     this.executionPlan = executionPlan;
+  }
+
+  public boolean hasNextPage() {
+    return hasNextPage;
+  }
+
+  public void setHasNextPage(boolean b) {
+    this.hasNextPage = b;
   }
 }
