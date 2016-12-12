@@ -207,9 +207,10 @@ public class OServerNetworkListener extends Thread {
           }
 
           socket.setPerformancePreferences(0, 2, 1);
-          socket.setSendBufferSize(socketBufferSize);
-          socket.setReceiveBufferSize(socketBufferSize);
-
+          if (socketBufferSize > 0) {
+            socket.setSendBufferSize(socketBufferSize);
+            socket.setReceiveBufferSize(socketBufferSize);
+          }
           // CREATE A NEW PROTOCOL INSTANCE
           final ONetworkProtocol protocol = constructor.newInstance(server);
 
@@ -361,6 +362,6 @@ public class OServerNetworkListener extends Thread {
         configuration.setValue(param.name, param.value);
     }
 
-    socketBufferSize = configuration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_BUFFER_SIZE);
+     socketBufferSize = configuration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_BUFFER_SIZE);
   }
 }

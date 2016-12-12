@@ -75,7 +75,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
 
   public OChannelBinaryAsynchClient(final String remoteHost, final int remotePort, final String iDatabaseName,
       final OContextConfiguration iConfig, final int protocolVersion, final ORemoteServerEventListener asynchEventListener)
-          throws IOException {
+      throws IOException {
     super(OSocketFactory.instance(iConfig).createSocket(), iConfig);
     try {
 
@@ -93,8 +93,13 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
         throw new IOException("Cannot connect to host " + remoteHost + ":" + remotePort, e);
       }
       try {
-        inStream = new BufferedInputStream(socket.getInputStream(), socketBufferSize);
-        outStream = new BufferedOutputStream(socket.getOutputStream(), socketBufferSize);
+        if (socketBufferSize > 0) {
+          inStream = new BufferedInputStream(socket.getInputStream(), socketBufferSize);
+          outStream = new BufferedOutputStream(socket.getOutputStream(), socketBufferSize);
+        } else {
+          inStream = new BufferedInputStream(socket.getInputStream());
+          outStream = new BufferedOutputStream(socket.getOutputStream());
+        }
 
         in = new DataInputStream(inStream);
         out = new DataOutputStream(outStream);
@@ -138,7 +143,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
       if (c == null)
         c = excClass.getConstructor(String.class);
 
-    }  catch (Exception e) {
+    } catch (Exception e) {
       // UNABLE TO REPRODUCE THE SAME SERVER-SIDE EXCEPTION: THROW AN SYSTEM EXCEPTION
       rootException = OException.wrapException(new OSystemException(iMessage), iPrevious);
     }
@@ -447,7 +452,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
 
     if (throwable instanceof Throwable) {
       throw new OResponseProcessingException("Exception during response processing", (Throwable) throwable);
-    } 
+    }
     // WRAP IT
     else
       OLogManager.instance().error(this,

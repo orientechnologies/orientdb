@@ -84,8 +84,10 @@ public abstract class OChannel extends OListenerManger<OChannelListener> {
 
     socket = iSocket;
     socket.setTcpNoDelay(true);
-    socket.setSendBufferSize(socketBufferSize);
-    socket.setReceiveBufferSize(socketBufferSize);
+    if (socketBufferSize > 0) {
+      socket.setSendBufferSize(socketBufferSize);
+      socket.setReceiveBufferSize(socketBufferSize);
+    }
     // THIS TIMEOUT IS CORRECT BUT CREATE SOME PROBLEM ON REMOTE, NEED CHECK BEFORE BE ENABLED
     // timeout = iConfig.getValueAsLong(OGlobalConfiguration.NETWORK_REQUEST_TIMEOUT);
   }

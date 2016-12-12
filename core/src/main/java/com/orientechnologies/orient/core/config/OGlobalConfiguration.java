@@ -394,7 +394,7 @@ public enum OGlobalConfiguration {
   NETWORK_MAX_CONCURRENT_SESSIONS("network.maxConcurrentSessions", "Maximum number of concurrent sessions", Integer.class, 1000,
       true),
 
-  NETWORK_SOCKET_BUFFER_SIZE("network.socketBufferSize", "TCP/IP Socket buffer size", Integer.class, 32768, true),
+  NETWORK_SOCKET_BUFFER_SIZE("network.socketBufferSize", "TCP/IP Socket buffer size, if 0 use the OS default", Integer.class, 0, true),
 
   NETWORK_LOCK_TIMEOUT("network.lockTimeout", "Timeout (in ms) to acquire a lock against a channel", Integer.class, 15000, true),
 
