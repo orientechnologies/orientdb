@@ -13,8 +13,8 @@ node("master") {
         try {
             stage("Run downstream projects") {
 
-                build job: 'orientdb-develop-ibm-jdk8'
-//                    build job: 'orientdb-spatial-multibranch/${env.BRANCH_NAME}'
+//                build job: 'orientdb-develop-ibm-jdk8'
+                    build job: "orientdb-spatial-multibranch/${env.BRANCH_NAME}"
 //                    build job: 'orientdb-enterprise-multibranch/${env.BRANCH_NAME}'
 //                    build job: 'orientdb-security-multibranch/${env.BRANCH_NAME}'
 //                    build job: 'orientdb-neo4j-importer-multibranch/${env.BRANCH_NAME}'
