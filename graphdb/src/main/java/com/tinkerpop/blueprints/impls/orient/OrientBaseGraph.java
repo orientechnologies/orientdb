@@ -1688,11 +1688,13 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       if (point > 0) {
         String oClassName = indexName.substring(0, point);
         OClass oClass = schema.getClass(oClassName);
-        if (oClass.isSubClassOf(elementOClassName)) {
-          if (includeClassNames)
-            result.add(index.getName());
-          else
-            result.add(index.getDefinition().getFields().get(0));
+        if(oClass!=null) {
+          if (oClass.isSubClassOf(elementOClassName)) {
+            if (includeClassNames)
+              result.add(index.getName());
+            else
+              result.add(index.getDefinition().getFields().get(0));
+          }
         }
       }
     }
