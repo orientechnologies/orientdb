@@ -32,7 +32,7 @@ import java.util.Iterator;
 public class OrientElementIterable<T extends Element> implements CloseableIterable<T> {
 
   private final Iterable<?>     iterable;
-  private final OrientBaseGraph graph;
+  protected final OrientBaseGraph graph;
 
   public OrientElementIterable(final OrientBaseGraph graph, final Iterable<?> iterable) {
     this.graph = graph;

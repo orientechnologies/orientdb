@@ -15,7 +15,7 @@ public class OrientClassVertexIterable extends OrientElementIterable<Vertex> {
 
   @Override
   public Iterator<Vertex> iterator() {
-    return new OrientClassVertexIterator(super.iterator(), klass);
+    return new OrientClassVertexIterator(super.graph, super.iterator(), klass);
   }
 
 }
