@@ -33,9 +33,6 @@ import java.util.List;
  */
 public class DocumentEmbeddedTest extends BaseLuceneTest {
 
-  public DocumentEmbeddedTest() {
-
-  }
 
   @Before
   public void init() {

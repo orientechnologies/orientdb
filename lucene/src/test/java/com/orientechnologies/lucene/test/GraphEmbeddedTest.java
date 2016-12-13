@@ -35,10 +35,6 @@ public class GraphEmbeddedTest extends BaseLuceneTest {
 
   private OrientGraph graph;
 
-  public GraphEmbeddedTest() {
-
-  }
-
   @Before
   public void init() {
 
