@@ -1,7 +1,7 @@
 #!groovy
 node("master") {
     def mvnHome = tool 'mvn'
-    def mvnJdk8Image = "orientdb/mvn-zulu-jdk-8:20161124"
+    def mvnJdk8Image = "orientdb/mvn-gradle-zulu-jdk-8"
 
     stage('Source checkout') {
 
@@ -9,18 +9,20 @@ node("master") {
     }
 
     stage('Run tests on Java8') {
-        try {
-            docker.image("${mvnJdk8Image}")
-                    .inside("${env.VOLUMES}") {
+        docker.image("${mvnJdk8Image}").inside("${env.VOLUMES}") {
+            try {
 
                 sh "${mvnHome}/bin/mvn  --batch-mode -V -U  clean install -Dmaven.test.failure.ignore=true -Dsurefire.useFile=false"
-                step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml'])
+            } catch (e) {
+                currentBuild.result = 'FAILURE'
+
+                slackSend(color: 'bad', message: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
+            } finally {
+                junit allowEmptyResults: true, testResults: '**/target/surefire-reports/TEST-*.xml'
+
             }
 
-//        slackSend(color: 'good', message: "SUCCESSFUL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
 
-        } catch (e) {
-            slackSend(color: 'bad', message: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
         }
     }
 
