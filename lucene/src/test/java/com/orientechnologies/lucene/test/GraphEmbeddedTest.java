@@ -57,15 +57,26 @@ public class GraphEmbeddedTest extends BaseLuceneTest {
   @Test
   public void embeddedTx() {
 
+    //THIS WON'T USE LUCENE INDEXES!!!! see #6997
+
     graph.getRawGraph().begin();
-    graph.addVertex("class:City", new Object[] { "name", "London" });
+    graph.addVertex("class:City", new Object[] { "name", "London / a" });
     graph.addVertex("class:City", new Object[] { "name", "Rome" });
 
     graph.commit();
 
-    Iterable<Vertex> vertexes = graph.getVertices("City", new String[] { "name" }, new Object[] { "London" });
+    Iterable<Vertex> vertexes = graph.getVertices("City", new String[] { "name" }, new Object[] { "London / a" });
 
     int size = 0;
+    for (Vertex v : vertexes) {
+      size++;
+      Assert.assertNotNull(v);
+    }
+    Assert.assertEquals(size, 1);
+
+    vertexes = graph.getVertices("City", new String[] { "name" }, new Object[] { "Rome" });
+
+    size = 0;
     for (Vertex v : vertexes) {
       size++;
       Assert.assertNotNull(v);
