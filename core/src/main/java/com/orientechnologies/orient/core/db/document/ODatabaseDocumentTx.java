@@ -3022,8 +3022,9 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
     ORecordSerializerFactory serializerFactory = ORecordSerializerFactory.instance();
     String serializeName = getStorage().getConfiguration().getRecordSerializer();
-    if (serializeName == null)
-      serializeName = ORecordSerializerSchemaAware2CSV.NAME;
+    if (serializeName == null) {
+      throw new ODatabaseException("Database created with orientdb version not supported anymore, use export+import to migrate the database"); 
+    }
     serializer = serializerFactory.getFormat(serializeName);
     if (serializer == null)
       throw new ODatabaseException("RecordSerializer with name '" + serializeName + "' not found ");
