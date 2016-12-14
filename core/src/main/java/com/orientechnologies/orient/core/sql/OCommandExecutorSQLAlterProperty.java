@@ -29,10 +29,13 @@ import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OProperty.ATTRIBUTES;
 import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.parser.OAlterPropertyStatement;
 import com.orientechnologies.orient.core.sql.parser.OExpression;
+import com.orientechnologies.orient.core.util.ODateHelper;
 
 import java.util.Arrays;
+import java.util.Date;
 import java.util.Locale;
 import java.util.Map;
 
@@ -116,12 +119,16 @@ public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLAbstrac
       if(preParsedStatement != null) {
         OExpression settingExp = ((OAlterPropertyStatement) preParsedStatement).settingValue;
         if (settingExp != null) {
-          Object expValue = settingExp.execute((OIdentifiable)null, context);
-          if(expValue == null){
+          Object expValue = settingExp.execute((OIdentifiable) null, context);
+          if (expValue == null) {
             expValue = settingExp.toString();
           }
-          value = expValue == null ? null : expValue.toString();
-          if(attribute.equals(ATTRIBUTES.NAME) ||attribute.equals(ATTRIBUTES.LINKEDCLASS)){
+          if (expValue instanceof Date) {
+            value = ODateHelper.getDateTimeFormatInstance().format((Date) expValue);
+          } else
+            value = expValue.toString();
+
+          if (attribute.equals(ATTRIBUTES.NAME) || attribute.equals(ATTRIBUTES.LINKEDCLASS)) {
             value = decodeClassName(value);
           }
         }

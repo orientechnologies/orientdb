@@ -80,7 +80,7 @@ public class OSQLHelper {
     }
 
     // PARSE AS FIELD
-    return new OSQLFilterItemField(null, iWord, iRecord.getSchemaClass());
+    return iWord;
   }
 
   /**
