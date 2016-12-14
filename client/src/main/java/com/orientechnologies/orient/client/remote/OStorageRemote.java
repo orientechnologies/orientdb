@@ -821,7 +821,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         (Iterable<ORecordOperation>) iTx.getAllRecordEntries(), iTx.getIndexChanges());
 
     OCommitResponse response = networkOperation(request, "Error on commit");
-
     for (OCreatedRecordResponse created : response.getCreated()) {
       iTx.updateIdentityAfterCommit(created.getCurrentRid(), created.getCreatedRid());
     }
@@ -840,9 +839,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     for (ORecordOperation txEntry : iTx.getAllRecordEntries())
       ORecordInternal.unsetDirty(txEntry.getRecord());
 
-    // UPDATE THE CACHE ONLY IF THE ITERATOR ALLOWS IT. USE THE STRATEGY TO ALWAYS REMOVE ALL THE RECORDS SINCE THEY COULD BE
-    // CHANGED AS CONTENT IN CASE OF TREE AND GRAPH DUE TO CROSS REFERENCES
-    OTransactionAbstract.updateCacheFromEntries(iTx, iTx.getAllRecordEntries(), false);
+    // UPDATE THE CACHE ONLY IF THE ITERATOR ALLOWS IT. 
+    OTransactionAbstract.updateCacheFromEntries(iTx, iTx.getAllRecordEntries(), true);
     return null;
   }
 
