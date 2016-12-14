@@ -130,16 +130,18 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
       String database = parts[2];
       String cluster = parts[3];
 
-      // Ugly workaround
 
-      ODatabaseDocumentInternal db = server.openDatabase(database, "", "", null, true);
-      ODatabaseRecordThreadLocal.INSTANCE.set(db);
+      final ODatabaseDocumentInternal db = server.openDatabase(database, "", "", null, true);
+      try {
+        String localNodeName = server.getDistributedManager().getLocalNodeName();
 
-      String localNodeName = server.getDistributedManager().getLocalNodeName();
+        Object result = db.command(new OCommandSQL(String.format("ha stop replication %s ", localNodeName))).execute();
+        ODocument document = new ODocument().field("result", result);
+        iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, document.toJSON(""), null);
+      } finally {
+        db.close();
+      }
 
-      Object result = db.command(new OCommandSQL(String.format("ha stop replication %s ", localNodeName))).execute();
-      ODocument document = new ODocument().field("result", result);
-      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, document.toJSON(""), null);
     } else if (command.equalsIgnoreCase("startReplication")) {
       if (parts.length < 3)
         throw new IllegalArgumentException("Cannot start replication : missing database name ");
@@ -153,15 +155,19 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
 
       ODatabaseDocumentInternal db = server.openDatabase(database, "", "", null, true);
 
-      Object result = OCommandExecutorSQLHAStartReplication.startReplication(db, new ArrayList<String>() {
-        {
-          add(localNodeName);
-        }
+      try {
+        Object result = OCommandExecutorSQLHAStartReplication.startReplication(db, new ArrayList<String>() {
+          {
+            add(localNodeName);
+          }
 
-      }, OCommandExecutorSQLHAStartReplication.MODE.FULL);
+        }, OCommandExecutorSQLHAStartReplication.MODE.FULL);
 
-      ODocument document = new ODocument().field("result", result);
-      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, document.toJSON(""), null);
+        ODocument document = new ODocument().field("result", result);
+        iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, document.toJSON(""), null);
+      } finally {
+        db.close();
+      }
     }
 
   }
@@ -176,11 +182,15 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
     String database = parts[2];
     String cluster = parts[3];
 
-    ODatabaseDocumentInternal db = server.openDatabase(database, "", "", null, true);
 
-    Object result = db.command(new OCommandSQL(String.format("ha sync cluster  %s ", cluster))).execute();
-    ODocument document = new ODocument().field("result", result);
-    iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, document.toJSON(""), null);
+    ODatabaseDocumentInternal db = server.openDatabase(database, "", "", null, true);
+    try {
+      Object result = db.command(new OCommandSQL(String.format("ha sync cluster  %s ", cluster))).execute();
+      ODocument document = new ODocument().field("result", result);
+      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, document.toJSON(""), null);
+    } finally {
+      db.close();
+    }
   }
 
   private void syncDatabase(OHttpResponse iResponse, String[] parts) throws IOException {
@@ -192,24 +202,29 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
 
     String database = parts[2];
 
+
     ODatabaseDocumentInternal db = server.openDatabase(database, "", "", null, true);
+    try {
+      final OStorage stg = db.getStorage();
+      if (!(stg instanceof ODistributedStorage))
+        throw new ODistributedException("SYNC DATABASE command cannot be executed against a non distributed server");
 
-    final OStorage stg = db.getStorage();
-    if (!(stg instanceof ODistributedStorage))
-      throw new ODistributedException("SYNC DATABASE command cannot be executed against a non distributed server");
+      final ODistributedStorage dStg = (ODistributedStorage) stg;
 
-    final ODistributedStorage dStg = (ODistributedStorage) stg;
+      final OHazelcastPlugin dManager = (OHazelcastPlugin) dStg.getDistributedManager();
+      if (dManager == null || !dManager.isEnabled())
+        throw new OCommandExecutionException("OrientDB is not started in distributed mode");
 
-    final OHazelcastPlugin dManager = (OHazelcastPlugin) dStg.getDistributedManager();
-    if (dManager == null || !dManager.isEnabled())
-      throw new OCommandExecutionException("OrientDB is not started in distributed mode");
 
-    boolean installDatabase = dManager.installDatabase(true, database,
-        false,
-        true);
+      boolean installDatabase = dManager.installDatabase(true, database,
+          false,
+          true);
 
-    ODocument document = new ODocument().field("result", installDatabase);
-    iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, document.toJSON(""), null);
+      ODocument document = new ODocument().field("result", installDatabase);
+      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, document.toJSON(""), null);
+    } finally {
+      db.close();
+    }
   }
 
   public void changeConfig(OServer server, String database, final String jsonContent) {

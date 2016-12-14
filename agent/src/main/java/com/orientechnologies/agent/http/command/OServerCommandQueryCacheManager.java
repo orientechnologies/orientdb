@@ -68,66 +68,75 @@ public class OServerCommandQueryCacheManager extends OServerCommandDistributedSc
 
     if (urlParts.length > 2) {
       String command = urlParts[2];
-      if ("results".equalsIgnoreCase(command)) {
-        iRequest.databaseName = urlParts[1];
-        ODatabaseDocumentInternal profiledDatabaseInstance = getProfiledDatabaseInstance(iRequest);
-        OCommandCacheSoftRefs commandCache = (OCommandCacheSoftRefs) profiledDatabaseInstance.getMetadata().getCommandCache();
-        ODocument query = new ODocument().fromJSON(iRequest.content);
-        String q = query.field("query");
 
-        int userPos = q.indexOf(".");
-        int limitPos = q.lastIndexOf(".");
 
-        String user = q.substring(0, userPos);
-        String realQuery = q.substring(userPos + 1, limitPos);
-        String limit = q.substring(limitPos + 1, q.length());
+      final ODatabaseDocumentInternal profiledDatabaseInstance = getProfiledDatabaseInstance(iRequest);
+      try {
 
-        OUser ouser = new OUser(user);
-        Object results = commandCache.get(ouser, realQuery, Integer.parseInt(limit));
+        if ("results".equalsIgnoreCase(command)) {
+          iRequest.databaseName = urlParts[1];
+          OCommandCacheSoftRefs commandCache = (OCommandCacheSoftRefs) profiledDatabaseInstance.getMetadata().getCommandCache();
+          ODocument query = new ODocument().fromJSON(iRequest.content);
+          String q = query.field("query");
 
-        iResponse.writeResult(results);
+          int userPos = q.indexOf(".");
+          int limitPos = q.lastIndexOf(".");
 
-      } else if ("purge".equalsIgnoreCase(command)) {
+          String user = q.substring(0, userPos);
+          String realQuery = q.substring(userPos + 1, limitPos);
+          String limit = q.substring(limitPos + 1, q.length());
 
-        iRequest.databaseName = urlParts[1];
-        ODatabaseDocumentInternal profiledDatabaseInstance = getProfiledDatabaseInstance(iRequest);
-        OCommandCacheSoftRefs commandCache = (OCommandCacheSoftRefs) profiledDatabaseInstance.getMetadata().getCommandCache();
-        commandCache.clear();
-        iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, null, null);
-      } else {
-        throw new IllegalArgumentException("Method " + iRequest.httpMethod + " not supported.");
+          OUser ouser = new OUser(user);
+          Object results = commandCache.get(ouser, realQuery, Integer.parseInt(limit));
+
+          iResponse.writeResult(results);
+
+        } else if ("purge".equalsIgnoreCase(command)) {
+
+          iRequest.databaseName = urlParts[1];
+          OCommandCacheSoftRefs commandCache = (OCommandCacheSoftRefs) profiledDatabaseInstance.getMetadata().getCommandCache();
+          commandCache.clear();
+          iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, null, null);
+        } else {
+          throw new IllegalArgumentException("Method " + iRequest.httpMethod + " not supported.");
+        }
+      } finally {
+        profiledDatabaseInstance.close();
       }
-
     }
   }
 
   private void doPut(OHttpRequest iRequest, OHttpResponse iResponse, String[] urlParts) throws InterruptedException, IOException {
 
     iRequest.databaseName = urlParts[1];
-    ODatabaseDocumentInternal profiledDatabaseInstance = getProfiledDatabaseInstance(iRequest);
-    OCommandCacheSoftRefs commandCache = (OCommandCacheSoftRefs) profiledDatabaseInstance.getMetadata().getCommandCache();
+      ODatabaseDocumentInternal profiledDatabaseInstance = getProfiledDatabaseInstance(iRequest);
+    try {
+      OCommandCacheSoftRefs commandCache = (OCommandCacheSoftRefs) profiledDatabaseInstance.getMetadata().getCommandCache();
 
-    if (urlParts.length == 2) {
+      if (urlParts.length == 2) {
 
-      ODocument cfg = new ODocument().fromJSON(iRequest.content);
+        ODocument cfg = new ODocument().fromJSON(iRequest.content);
 
-      commandCache.changeConfig(cfg);
+        commandCache.changeConfig(cfg);
 
-      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, null, null);
-    } else {
-      if (urlParts.length > 2) {
-        String command = urlParts[2];
+        iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, null, null);
+      } else {
+        if (urlParts.length > 2) {
+          String command = urlParts[2];
 
-        if ("enable".equalsIgnoreCase(command)) {
+          if ("enable".equalsIgnoreCase(command)) {
 
-          commandCache.enable();
-          iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, null, null);
-        } else if ("disable".equalsIgnoreCase(command)) {
+            commandCache.enable();
+            iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, null, null);
+          } else if ("disable".equalsIgnoreCase(command)) {
 
-          commandCache.disable();
-          iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, null, null);
+            commandCache.disable();
+            iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, null, null);
+          }
         }
       }
+    } finally {
+      profiledDatabaseInstance.close();
     }
   }
 
@@ -135,40 +144,42 @@ public class OServerCommandQueryCacheManager extends OServerCommandDistributedSc
 
     iRequest.databaseName = urlParts[1];
 
-    ODatabaseDocumentInternal profiledDatabaseInstance = getProfiledDatabaseInstance(iRequest);
+    final ODatabaseDocumentInternal profiledDatabaseInstance = getProfiledDatabaseInstance(iRequest);
+    try {
+      OCommandCacheSoftRefs commandCache = (OCommandCacheSoftRefs) profiledDatabaseInstance.getMetadata().getCommandCache();
+      if (urlParts.length > 2 && urlParts[2].equalsIgnoreCase("results")) {
+        ODocument cache = new ODocument();
+        Collection<ODocument> results = new ArrayList<ODocument>();
+        cache.field("results", results);
 
-    OCommandCacheSoftRefs commandCache = (OCommandCacheSoftRefs) profiledDatabaseInstance.getMetadata().getCommandCache();
-    if (urlParts.length > 2 && urlParts[2].equalsIgnoreCase("results")) {
-      ODocument cache = new ODocument();
-      Collection<ODocument> results = new ArrayList<ODocument>();
-      cache.field("results", results);
+        Set<Map.Entry<String, OCommandCacheSoftRefs.OCachedResult>> entries = commandCache.entrySet();
 
-      Set<Map.Entry<String, OCommandCacheSoftRefs.OCachedResult>> entries = commandCache.entrySet();
-
-      for (Map.Entry<String, OCommandCacheSoftRefs.OCachedResult> entry : entries) {
-        ODocument doc = new ODocument();
-        doc.field("query", entry.getKey());
-        Object result = entry.getValue().getResult();
-        int size = 1;
-        if (result instanceof Collection) {
-          size = ((Collection) result).size();
+        for (Map.Entry<String, OCommandCacheSoftRefs.OCachedResult> entry : entries) {
+          ODocument doc = new ODocument();
+          doc.field("query", entry.getKey());
+          Object result = entry.getValue().getResult();
+          int size = 1;
+          if (result instanceof Collection) {
+            size = ((Collection) result).size();
+          }
+          doc.field("size", size);
+          results.add(doc);
         }
-        doc.field("size", size);
-        results.add(doc);
+        iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, cache.toJSON(), null);
+      } else {
+
+        ODocument cache = new ODocument();
+        cache.field("size", commandCache.size());
+        cache.field("evictStrategy", commandCache.getEvictStrategy());
+        cache.field("enabled", commandCache.isEnabled());
+        cache.field("maxResultsetSize", commandCache.getMaxResultsetSize());
+        cache.field("minExecutionTime", commandCache.getMinExecutionTime());
+
+        iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, cache.toJSON(), null);
       }
-      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, cache.toJSON(), null);
-    } else {
-
-      ODocument cache = new ODocument();
-      cache.field("size", commandCache.size());
-      cache.field("evictStrategy", commandCache.getEvictStrategy());
-      cache.field("enabled", commandCache.isEnabled());
-      cache.field("maxResultsetSize", commandCache.getMaxResultsetSize());
-      cache.field("minExecutionTime", commandCache.getMinExecutionTime());
-
-      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, cache.toJSON(), null);
+    } finally {
+      profiledDatabaseInstance.close();
     }
-
   }
 
   @Override
@@ -176,4 +187,3 @@ public class OServerCommandQueryCacheManager extends OServerCommandDistributedSc
     return NAMES;
   }
 }
-
