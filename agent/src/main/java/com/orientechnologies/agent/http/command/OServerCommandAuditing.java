@@ -17,6 +17,7 @@
  */
 package com.orientechnologies.agent.http.command;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
@@ -155,27 +156,40 @@ public class OServerCommandAuditing extends OServerCommandDistributedScope {
 
     ODocument config = new ODocument().fromJSON(iRequest.content, "noMap");
     iRequest.databaseName = db;
-    getProfiledDatabaseInstance(iRequest);
 
-    if (server.getSecurity().getAuditing() != null)
-      server.getSecurity().getAuditing().changeConfig(db, config);
+    ODatabaseDocument dbDoc = null;
+    
+    try {
+      dbDoc = getProfiledDatabaseInstance(iRequest);
 
-    iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, config.toJSON("prettyPrint"), null);
+      if (server.getSecurity().getAuditing() != null)
+        server.getSecurity().getAuditing().changeConfig(db, config);
+  
+      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, config.toJSON("prettyPrint"), null);
+    } finally {
+     	if (dbDoc != null) dbDoc.close();
+    }
   }
 
   private void doGet(OHttpRequest iRequest, OHttpResponse iResponse, String db) throws Exception {
     iRequest.databaseName = db;
-    getProfiledDatabaseInstance(iRequest);
+    
+    ODatabaseDocument dbDoc = null;
+    
+    try {
+      dbDoc = getProfiledDatabaseInstance(iRequest);
 
-    ODocument config = null;
-    if (server.getSecurity().getAuditing() != null) {
-      config = server.getSecurity().getAuditing().getConfig(db);
-    } else {
-      config = new ODocument();
-    }
-
-    iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, config.toJSON("prettyPrint"), null);
-
+      ODocument config = null;
+      if (server.getSecurity().getAuditing() != null) {
+        config = server.getSecurity().getAuditing().getConfig(db);
+      } else {
+        config = new ODocument();
+      }
+  
+      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, config.toJSON("prettyPrint"), null);
+    } finally {
+     	if (dbDoc != null) dbDoc.close();
+    }  
   }
 
   @Override
