@@ -1391,7 +1391,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
           // UPDATE THE CACHE ONLY IF THE ITERATOR ALLOWS IT. USE THE STRATEGY TO ALWAYS REMOVE ALL THE RECORDS SINCE THEY COULD BE
           // CHANGED AS CONTENT IN CASE OF TREE AND GRAPH DUE TO CROSS REFERENCES
-          OTransactionAbstract.updateCacheFromEntries(iTx, iTx.getAllRecordEntries(), false);
+          OTransactionAbstract.updateCacheFromEntries(iTx, iTx.getAllRecordEntries(), true);
 
           return null;
         } finally {
