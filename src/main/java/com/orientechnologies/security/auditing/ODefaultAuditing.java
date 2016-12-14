@@ -359,8 +359,10 @@ public class ODefaultAuditing implements OAuditingService, ODatabaseLifecycleLis
   private void createClassIfNotExists() {
     final ODatabaseDocumentInternal currentDB = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
 
+    ODatabaseDocumentInternal sysdb = null;
+
     try {
-      ODatabaseDocumentInternal sysdb = server.getSystemDatabase().openSystemDatabase();
+      sysdb = server.getSystemDatabase().openSystemDatabase();
 
       OSchema schema = sysdb.getMetadata().getSchema();
       OClass cls = schema.getClass(AUDITING_LOG_CLASSNAME);
@@ -378,7 +380,9 @@ public class ODefaultAuditing implements OAuditingService, ODatabaseLifecycleLis
     } catch (Exception e) {
       OLogManager.instance().error(this, "Creating auditing class exception: %s", e.getMessage());
     } finally {
-      if (currentDB != null)
+    	if (sysdb != null) sysdb.close();
+    	
+    	if (currentDB != null)
         ODatabaseRecordThreadLocal.INSTANCE.set(currentDB);
       else
         ODatabaseRecordThreadLocal.INSTANCE.remove();
