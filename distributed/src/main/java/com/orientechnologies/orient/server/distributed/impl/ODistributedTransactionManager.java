@@ -547,7 +547,7 @@ public class ODistributedTransactionManager {
 
     if (lastRecordCannotLock != null) {
       // localDistributedDatabase.dumpLocks();
-      throw new ODistributedRecordLockedException(lastRecordCannotLock, lastLockHolder, System.currentTimeMillis() - begin);
+      throw new ODistributedRecordLockedException(dManager.getLocalNodeName(), lastRecordCannotLock, lastLockHolder, System.currentTimeMillis() - begin);
     }
   }
 

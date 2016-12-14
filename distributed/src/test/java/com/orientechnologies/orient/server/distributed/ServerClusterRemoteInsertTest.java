@@ -19,8 +19,4 @@ package com.orientechnologies.orient.server.distributed;
  * Insert records concurrently against the cluster using "remote" protocol.
  */
 public class ServerClusterRemoteInsertTest extends AbstractServerClusterInsertTest {
-
-  protected String getDatabaseURL(final ServerRun server) {
-    return "remote:" + server.getBinaryProtocolAddress() + "/" + getDatabaseName();
-  }
 }

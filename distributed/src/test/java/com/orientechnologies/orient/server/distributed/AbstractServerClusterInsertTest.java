@@ -43,12 +43,12 @@ import java.util.concurrent.*;
  * Insert records concurrently against the cluster
  */
 public abstract class AbstractServerClusterInsertTest extends AbstractDistributedWriteTest {
-  protected volatile int delayWriter = 0;
-  protected volatile int delayReader = 1000;
-  protected static   int writerCount = 5;
-  protected          int baseCount   = 0;
-  protected long      expected;
-  protected OIndex<?> idx;
+  protected volatile int    delayWriter           = 0;
+  protected volatile int    delayReader           = 1000;
+  protected static int      writerCount           = 5;
+  protected int             baseCount             = 0;
+  protected long            expected;
+  protected OIndex<?>       idx;
   protected int             maxRetries            = 5;
   protected boolean         useTransactions       = false;
   protected List<ServerRun> executeTestsOnServers = serverInstance;
@@ -118,7 +118,6 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
               if (retry >= maxRetries)
                 e.printStackTrace();
 
-              break;
             } catch (ODistributedException e) {
               if (!(e.getCause() instanceof ORecordDuplicatedException)) {
                 database.rollback();
@@ -145,9 +144,8 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
       checkClusterStrategy(database);
 
       final String uniqueId = serverId + "-" + threadId + "-" + i;
-      ODocument person = new ODocument("Person")
-          .fields("id", uid, "name", "Billy" + uniqueId, "surname", "Mayes" + uniqueId, "birthday", new Date(), "children",
-              uniqueId);
+      ODocument person = new ODocument("Person").fields("id", uid, "name", "Billy" + uniqueId, "surname", "Mayes" + uniqueId,
+          "birthday", new Date(), "children", uniqueId);
 
       for (int retry = 0; retry < 5; ++retry) {
         try {
@@ -162,8 +160,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
             // RETRY
             System.out.println("EXCEPTION " + e.getCause() + " RETRY " + retry + " ON CREATE RECORD");
             Thread.sleep(1000);
-          }
-          else
+          } else
             throw e;
         }
       }
@@ -204,8 +201,8 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
 
       final String uniqueId = serverId + "-" + threadId + "-" + i;
 
-      List<ODocument> result = database
-          .query(new OSQLSynchQuery<ODocument>("select from Person where name = ?"), "Billy" + uniqueId);
+      List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from Person where name = ?"),
+          "Billy" + uniqueId);
       if (result.size() == 0)
         Assert.assertTrue("No record found with name = 'Billy" + uniqueId + "'!", false);
       else if (result.size() > 1)
@@ -382,12 +379,20 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
     return new Reader(databaseURL);
   }
 
-  protected abstract String getDatabaseURL(ServerRun server);
+  @Override
+  protected String getDatabaseURL(ServerRun server) {
+    return getRemoteDatabaseURL(server);
+  }
+
+  protected String getRemoteDatabaseURL(final ServerRun server) {
+    return "remote:" + server.getBinaryProtocolAddress() + "/" + getDatabaseName();
+  }
 
   /**
    * Event called right after the database has been created and right before to be replicated to the X servers
    *
-   * @param db Current database
+   * @param db
+   *          Current database
    */
   @Override
   protected void onAfterDatabaseCreation(final OrientBaseGraph db) {
@@ -547,6 +552,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
 
   private void printMissingIndexEntries(final ServerRun server, final ODatabaseDocumentTx database) {
     List<ODocument> qResult;// ERROR: CHECK WHAT'S MISSING
+    int missingKeys = 0;
     for (int s = 0; s < executeTestsOnServers.size(); ++s) {
       ServerRun srv = executeTestsOnServers.get(s);
       final int srvId = Integer.parseInt(srv.serverId);
@@ -559,11 +565,14 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
           qResult = database
               .query(new OSQLSynchQuery<OIdentifiable>("select from index:" + indexName + " where key='" + key + "'"));
 
-          if (qResult.isEmpty())
+          if (qResult.isEmpty()) {
+            missingKeys++;
             System.out.println("Missing key: " + key + " on server: " + server);
+          }
         }
       }
     }
+    System.out.println("Total missing keys " + missingKeys + " on server: " + server);
   }
 
   protected void checkInsertedEntries() {
@@ -580,6 +589,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
 
       if (total != expected) {
         // ERROR: CHECK WHAT'S MISSING
+        int missingRecords = 0;
         for (int s = 0; s < executeTestsOnServers.size(); ++s) {
           ServerRun srv = executeTestsOnServers.get(s);
           final int srvId = Integer.parseInt(srv.serverId);
@@ -590,13 +600,16 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
               final String key = "Billy" + srvId + "-" + threadId + "-" + i;
 
               final List<?> qResult = database
-                  .query(new OSQLSynchQuery<OIdentifiable>("select from index:" + indexName + " where key='" + key + "'"));
+                  .query(new OSQLSynchQuery<OIdentifiable>("select from " + className + " where name='" + key + "'"));
 
-              if (qResult.isEmpty())
+              if (qResult.isEmpty()) {
+                missingRecords++;
                 System.out.println("Missing record with key: " + key + " on server: " + server);
+              }
             }
           }
         }
+        System.out.println("Total missing records " + missingRecords + " on server: " + server);
       }
 
       Assert.assertEquals("Server " + server.getServerId() + " count is not what was expected", expected, total);

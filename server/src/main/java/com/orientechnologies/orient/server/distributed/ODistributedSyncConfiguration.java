@@ -34,14 +34,17 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ODistributedSyncConfiguration {
   private final ODistributedServerManager       dManager;
   private final Map<String, OLogSequenceNumber> lastLSN                = new ConcurrentHashMap<String, OLogSequenceNumber>();
+  private final String                          databaseName;
 
   private ODistributedMomentum                  momentum;
   private File                                  file;
   private long                                  lastOperationTimestamp = -1;
   private long                                  lastLSNWrittenOnDisk   = 0l;
 
-  public ODistributedSyncConfiguration(final ODistributedServerManager manager, final File file) throws IOException {
-    dManager = manager;
+  public ODistributedSyncConfiguration(final ODistributedServerManager manager, final String databaseName, final File file)
+      throws IOException {
+    this.dManager = manager;
+    this.databaseName = databaseName;
     momentum = new ODistributedMomentum();
     this.file = file;
 
@@ -71,6 +74,10 @@ public class ODistributedSyncConfiguration {
       if (clusterTime > -1)
         lastOperationTimestamp = clusterTime;
     }
+
+    // if (updateLastOperationTimestamp)
+    // ODistributedServerLog.debug(this, dManager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.IN,
+    // "Updating LSN %s lastOperationTimestamp=%d", lsn, lastOperationTimestamp);
 
     if (System.currentTimeMillis() - lastLSNWrittenOnDisk > 2000)
       save();
@@ -125,5 +132,10 @@ public class ODistributedSyncConfiguration {
     momentum.setLastOperationTimestamp(lastOperationTimestamp);
     for (Map.Entry<String, OLogSequenceNumber> entry : lastLSN.entrySet())
       momentum.setLSN(entry.getKey(), entry.getValue());
+  }
+
+  public void removeServer(final String nodeName) throws IOException {
+    if (lastLSN.remove(nodeName) != null)
+      save();
   }
 }

@@ -101,13 +101,11 @@ public class OScenarioThreadLocal extends ThreadLocal<OScenarioThreadLocal.RunCo
   public void setRunMode(final RUN_MODE value) {
     final RunContext context = get();
     context.runMode = value;
-    super.set(context);
   }
 
   public void setInDatabaseLock(final boolean value) {
     final RunContext context = get();
     context.inDatabaseLock = value;
-    super.set(context);
   }
 
   public RUN_MODE getRunMode() {
@@ -123,10 +121,7 @@ public class OScenarioThreadLocal extends ThreadLocal<OScenarioThreadLocal.RunCo
   }
 
   @Override
-  public RunContext get() {
-    RunContext result = super.get();
-    if (result == null)
-      result = new RunContext();
-    return result;
+  protected RunContext initialValue() {
+    return new RunContext();
   }
 }

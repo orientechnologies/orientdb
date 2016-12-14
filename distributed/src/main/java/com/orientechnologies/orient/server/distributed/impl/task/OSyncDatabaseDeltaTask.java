@@ -22,9 +22,7 @@ package com.orientechnologies.orient.server.distributed.impl.task;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -33,15 +31,11 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseChunk;
-import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
-import com.orientechnologies.orient.server.distributed.task.ODatabaseIsOldException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedDatabaseDeltaSyncException;
 
 import java.io.*;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -50,23 +44,18 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
-public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
-  public final static int      CHUNK_MAX_SIZE       = 4194304;              // 4MB
-  public static final String   DEPLOYDB             = "deploydb.";
+public class OSyncDatabaseDeltaTask extends OAbstractSyncDatabaseTask {
   public static final int      FACTORYID            = 13;
 
   protected OLogSequenceNumber startLSN;
-  protected long               lastOperationTimestamp;
-  protected long               random;
   protected Set<String>        excludedClusterNames = new HashSet<String>();
 
   public OSyncDatabaseDeltaTask() {
   }
 
   public OSyncDatabaseDeltaTask(final OLogSequenceNumber iFirstLSN, final long lastOperationTimestamp) {
+    super(lastOperationTimestamp);
     this.startLSN = iFirstLSN;
-    this.lastOperationTimestamp = lastOperationTimestamp;
-    this.random = UUID.randomUUID().getLeastSignificantBits();
   }
 
   @Override
@@ -107,22 +96,12 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
 
     iManager.getConfigurationMap().put(DEPLOYDB + databaseName, random);
 
-    final ODistributedDatabase dDatabase = iManager.getMessageService().getDatabase(databaseName);
-    if (dDatabase.getSyncConfiguration().getLastOperationTimestamp() < lastOperationTimestamp) {
-      final String msg = String.format(
-          "Skip deploying delta database '%s' because the requesting server has a most recent database (reqLastOperation=%s currLastOperation=%s)",
-          databaseName, new Date(lastOperationTimestamp), new Date(dDatabase.getSyncConfiguration().getLastOperationTimestamp()));
-      ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE, msg);
+    final ODistributedDatabase dDatabase = checkIfCurrentDatabaseIsNotOlder(iManager, databaseName, startLSN);
 
-      throw new ODatabaseIsOldException(msg);
-    }
-
-    iManager.setDatabaseStatus(
-
-        getNodeSource(), databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
+    iManager.setDatabaseStatus(getNodeSource(), databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
 
     ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-        "Deploying database %s with delta of changes...", databaseName);
+        "Deploying database '%s' with delta of changes...", databaseName);
 
     // CREATE A BACKUP OF DATABASE
     final File backupFile = new File(Orient.getTempPath() + "/backup_" + getNodeSource() + "_" + database.getName() + ".zip");
@@ -220,21 +199,6 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
   }
 
   @Override
-  public RESULT_STRATEGY getResultStrategy() {
-    return RESULT_STRATEGY.UNION;
-  }
-
-  @Override
-  public OCommandDistributedReplicateRequest.QUORUM_TYPE getQuorumType() {
-    return OCommandDistributedReplicateRequest.QUORUM_TYPE.NONE;
-  }
-
-  @Override
-  public long getDistributedTimeout() {
-    return OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_SYNCH_TIMEOUT.getValueAsLong();
-  }
-
-  @Override
   public String getName() {
     return "deploy_delta_db";
   }
@@ -260,11 +224,6 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
     for (int i = 0; i < total; ++i) {
       excludedClusterNames.add(in.readUTF());
     }
-  }
-
-  @Override
-  public boolean isNodeOnlineRequired() {
-    return false;
   }
 
   @Override

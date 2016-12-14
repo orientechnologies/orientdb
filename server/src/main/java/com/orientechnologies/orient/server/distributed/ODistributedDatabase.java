@@ -71,10 +71,10 @@ public interface ODistributedDatabase {
   /**
    * Unlocks all the record locked by node iNodeName
    *
-   * @param iNodeId
+   * @param nodeName
    *          node id
    */
-  void handleUnreachableNode(int iNodeId);
+  void handleUnreachableNode(String nodeName);
 
   ODistributedSyncConfiguration getSyncConfiguration();
 

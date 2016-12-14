@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPagi
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
+import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
@@ -69,7 +70,10 @@ public class ServerRun {
   }
 
   public String getBinaryProtocolAddress() {
-    return server.getListenerByProtocol(ONetworkProtocolBinary.class).getListeningAddress(true);
+    final OServerNetworkListener prot = server.getListenerByProtocol(ONetworkProtocolBinary.class);
+    if( prot == null )
+      return null;
+    return prot.getListeningAddress(true);
   }
 
   public void deleteNode() {

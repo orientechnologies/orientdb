@@ -873,6 +873,9 @@ public class OSchemaShared extends ODocumentWrapperNoClass
   @Override
   public void close() {
     classes.clear();
+    clustersToClasses.clear();
+    blobClusters.clear();
+    properties.clear();
     document.clear();
   }
 

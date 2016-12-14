@@ -36,7 +36,10 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.task.*;
+import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
+import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
+import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
+import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
 import java.io.File;
@@ -184,20 +187,22 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
     totalReceivedRequests.incrementAndGet();
 
-    final ODistributedMomentum lastMomentum = filterByMomentum.get();
-    if (lastMomentum != null && task instanceof OAbstractReplicatedTask) {
-      final OLogSequenceNumber taskLastLSN = ((OAbstractReplicatedTask) task).getLastLSN();
-
-      final String sourceServer = manager.getNodeNameById(request.getId().getNodeId());
-      final OLogSequenceNumber lastLSNFromMomentum = lastMomentum.getLSN(sourceServer);
-
-      if (taskLastLSN != null && lastLSNFromMomentum != null && taskLastLSN.compareTo(lastLSNFromMomentum) < 0) {
-        // SKIP REQUEST BECAUSE CONTAINS AN OLD LSN
-        ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE,
-            "Skipped request %s on database '%s' because %s < current %s", request, databaseName, taskLastLSN, lastLSNFromMomentum);
-        return;
-      }
-    }
+    // final ODistributedMomentum lastMomentum = filterByMomentum.get();
+    // if (lastMomentum != null && task instanceof OAbstractReplicatedTask) {
+    // final OLogSequenceNumber taskLastLSN = ((OAbstractReplicatedTask) task).getLastLSN();
+    //
+    // final String sourceServer = manager.getNodeNameById(request.getId().getNodeId());
+    // final OLogSequenceNumber lastLSNFromMomentum = lastMomentum.getLSN(sourceServer);
+    //
+    // if (taskLastLSN != null && lastLSNFromMomentum != null && taskLastLSN.compareTo(lastLSNFromMomentum) < 0) {
+    // // SKIP REQUEST BECAUSE CONTAINS AN OLD LSN
+    // final String msg = String.format("Skipped request %s on database '%s' because %s < current %s", request, databaseName,
+    // taskLastLSN, lastLSNFromMomentum);
+    // ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE, msg);
+    // ODistributedWorker.sendResponseBack(this, manager, request, new ODistributedException(msg));
+    // return;
+    // }
+    // }
 
     final int[] partitionKeys = task.getPartitionKey();
 
@@ -540,7 +545,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       }
 
     if (currentLock != null)
-      throw new ODistributedRecordLockedException(rid, currentLock.reqId, timeout);
+      throw new ODistributedRecordLockedException(manager.getLocalNodeName(), rid, currentLock.reqId, timeout);
 
     // DUMP STACK TRACE
     // OException.dumpStackTrace(String.format("Distributed transaction: %s locked record %s in database '%s' (thread=%d)",
@@ -626,7 +631,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       final String path = manager.getServerInstance().getDatabaseDirectory() + databaseName + "/" + DISTRIBUTED_SYNC_JSON_FILENAME;
       final File cfgFile = new File(path);
       try {
-        syncConfiguration = new ODistributedSyncConfiguration(manager, cfgFile);
+        syncConfiguration = new ODistributedSyncConfiguration(manager, databaseName, cfgFile);
       } catch (IOException e) {
         throw new ODistributedException("Cannot open database distributed sync configuration file: " + cfgFile);
       }
@@ -640,8 +645,15 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   @Override
-  public void handleUnreachableNode(final int iNodeId) {
-    if (iNodeId < 0)
+  public void handleUnreachableNode(final String nodeName) {
+    try {
+      getSyncConfiguration().removeServer(nodeName);
+    } catch (IOException e) {
+      // IGNORE IT
+    }
+
+    final int nodeLeftId = manager.getNodeIdByName(nodeName);
+    if (nodeLeftId < 0)
       return;
 
     int rollbacks = 0;
@@ -649,10 +661,11 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
     final ODatabaseDocumentTx database = getDatabaseInstance();
     try {
+
       final Iterator<ODistributedTxContextImpl> pendingReqIterator = activeTxContexts.values().iterator();
       while (pendingReqIterator.hasNext()) {
         final ODistributedTxContextImpl pReq = pendingReqIterator.next();
-        if (pReq != null && pReq.getReqId().getNodeId() == iNodeId) {
+        if (pReq != null && pReq.getReqId().getNodeId() == nodeLeftId) {
           try {
             tasks += pReq.rollback(database);
             rollbacks++;
@@ -668,9 +681,18 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       database.close();
     }
 
-    ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE,
-        "Distributed transaction: rolled back %d transactions (%d total operations) in database '%s' owned by server '%s'",
-        rollbacks, tasks, databaseName, manager.getNodeNameById(iNodeId));
+    int recordLocks = 0;
+    for (Map.Entry<ORID, ODistributedLock> entry : lockManager.entrySet()) {
+      final ODistributedLock lock = entry.getValue();
+      if (lock != null && lock.reqId != null && lock.reqId.getNodeId() == nodeLeftId) {
+        OLogManager.instance().info(this, "Unlocking record %s acquired with req=%s", entry.getKey(), lock.reqId);
+        recordLocks++;
+      }
+    }
+
+    ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE,
+        "Distributed transaction: rolled back %d transactions (%d total operations) and %d single locks in database '%s' owned by server '%s'",
+        rollbacks, tasks, recordLocks, databaseName, nodeName);
   }
 
   @Override
@@ -906,11 +928,10 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     txTimeoutTask = new TimerTask() {
       @Override
       public void run() {
+        ODatabaseDocumentTx database = null;
         try {
           final long now = System.currentTimeMillis();
           final long timeout = OGlobalConfiguration.DISTRIBUTED_TX_EXPIRE_TIMEOUT.getValueAsLong();
-
-          ODatabaseDocumentTx database = null;
 
           for (final Iterator<ODistributedTxContextImpl> it = activeTxContexts.values().iterator(); it.hasNext();) {
             if (!isRunning())
@@ -946,6 +967,9 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
           // CATCH EVERYTHING TO AVOID THE TIMER IS CANCELED
           ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE,
               "Error on checking for expired distributed transaction on database '%s'", databaseName);
+        } finally {
+          if (database != null)
+            database.close();
         }
       }
     };

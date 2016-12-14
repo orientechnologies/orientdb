@@ -108,7 +108,8 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
             writer = createWriter(serverId, threadId++, getPlocalDatabaseURL(server));
           } else if (storageType.equals("remote")) {
             writer = createWriter(serverId, threadId++, getRemoteDatabaseURL(server));
-          }
+          } else
+            throw new IllegalArgumentException("storageType " + storageType + " not supported");
           writerWorkers.add(writer);
         }
         serverId++;
@@ -358,10 +359,14 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
     }, String.format("Expected value %s for field %s on record %s on all servers.", expectedFieldValue, fieldName, recordId));
   }
 
-  protected ODocument retrieveRecord(String dbUrl, String uniqueId, boolean returnsMissingDocument, OCallable<ODocument,ODocument> assertion) {
+  protected ODocument retrieveRecord(String dbUrl, String uniqueId, boolean returnsMissingDocument,
+      OCallable<ODocument, ODocument> assertion) {
     ODatabaseDocumentTx dbServer = poolFactory.get(dbUrl, "admin", "admin").acquire();
     // dbServer.getLocalCache().invalidate();
     ODatabaseRecordThreadLocal.INSTANCE.set(dbServer);
+
+    dbServer.getMetadata().getSchema().reload();
+
     try {
       List<ODocument> result = dbServer.query(new OSQLSynchQuery<ODocument>("select from Person where id = '" + uniqueId + "'"));
       if (result.size() == 0) {
@@ -426,10 +431,6 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
     return "plocal:" + server.getDatabasePath(databaseName);
   }
 
-  protected String getRemoteDatabaseURL(final ServerRun server) {
-    return "remote:" + server.getBinaryProtocolAddress() + "/" + getDatabaseName();
-  }
-
   protected String getDatabaseURL(final ServerRun server, String storageType) {
 
     if (storageType.equals("plocal"))
@@ -477,7 +478,7 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
   private void printStats(final String databaseUrl) {
     final ODatabaseDocumentTx database = poolFactory.get(databaseUrl, "admin", "admin").acquire();
     try {
-      database.reload();
+      //database.reload();
       List<ODocument> result = database.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from Person"));
 
       final String name = database.getURL();

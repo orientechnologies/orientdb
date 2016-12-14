@@ -163,7 +163,7 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
     }
     cls.set(attribute, value);
 
-    return null;
+    return Boolean.TRUE;
   }
 
   @Override

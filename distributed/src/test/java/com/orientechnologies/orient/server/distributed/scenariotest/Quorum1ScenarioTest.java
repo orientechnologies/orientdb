@@ -48,7 +48,7 @@ public class Quorum1ScenarioTest extends AbstractScenarioTest {
 
   @Test
   public void test() throws Exception {
-    useTransactions = false;
+    useTransactions = true;
     maxRetries = 10;
     init(SERVERS);
     prepare(false);

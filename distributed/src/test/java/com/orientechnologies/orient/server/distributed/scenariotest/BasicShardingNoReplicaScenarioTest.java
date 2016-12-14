@@ -38,17 +38,12 @@ import java.util.List;
 import static org.junit.Assert.*;
 
 /**
- * It checks the consistency in the cluster with the following scenario:
- * - 3 server (europe, usa, asia)
- * - 3 shards, one for each server (client_europe, client_usa, client_asia)
- * - writes on each node (5 threads for each running server write 100 records)
- * - check availability no-replica (you can retry records of all the shards)
- * - shutdown server3
- * - check availability no-replica (you can retry only records in shard1 and shard2)
- * - restart server3
- * - check availability no-replica (you can retry records of all the shards)
- * - this test checks also the full restore of database that doesn't overwrite the client_asia
- * cluster because owned only by asia server
+ * It checks the consistency in the cluster with the following scenario: - 3 server (europe, usa, asia) - 3 shards, one for each
+ * server (client_europe, client_usa, client_asia) - writes on each node (5 threads for each running server write 100 records) -
+ * check availability no-replica (you can retry records of all the shards) - shutdown server3 - check availability no-replica (you
+ * can retry only records in shard1 and shard2) - restart server3 - check availability no-replica (you can retry records of all the
+ * shards) - this test checks also the full restore of database that doesn't overwrite the client_asia cluster because owned only by
+ * asia server
  *
  * @author Gabriele Ponzi
  * @email <gabriele.ponzi--at--gmail.com>
@@ -73,10 +68,6 @@ public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenario
 
     ODistributedConfiguration databaseConfiguration = manager1.getDatabaseConfiguration(this.getDatabaseName());
     ODocument cfg = databaseConfiguration.getDocument();
-    cfg.field("autoDeploy", false);
-    cfg.field("version", (Integer) cfg.field("version") + 1);
-
-    manager1.updateCachedDatabaseConfiguration(this.getDatabaseName(), cfg, true, true);
 
     OrientGraphFactory localFactory = new OrientGraphFactory("plocal:target/server0/databases/" + getDatabaseName());
     OrientGraphNoTx graphNoTx = null;

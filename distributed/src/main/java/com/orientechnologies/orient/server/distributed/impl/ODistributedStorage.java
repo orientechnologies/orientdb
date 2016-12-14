@@ -55,6 +55,7 @@ import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorageComponent;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
@@ -644,15 +645,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
               } else
                 unlockCallback.call(null);
 
-              try {
-                localDistributedDatabase.getSyncConfiguration().setLastLSN(localNodeName,
-                    ((OLocalPaginatedStorage) getUnderlying()).getLSN(), true);
-              } catch (IOException e) {
-                ODistributedServerLog.debug(this, dManager != null ? dManager.getLocalNodeName() : "?", null,
-                    ODistributedServerLog.DIRECTION.NONE, "Error on updating local LSN configuration for database '%s'",
-                    wrapped.getName());
-              }
-
               return localResult;
             }
           });
@@ -712,8 +704,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       }
 
       // DISTRIBUTE IT
-      final Object dResult = dManager.sendRequest(getName(), Collections.singleton(clusterName), nodes,
-          new OReadRecordTask(iRecordId), dManager.getNextMessageIdCounter(), EXECUTION_MODE.RESPONSE, null, null).getPayload();
+      final ODistributedResponse response = dManager.sendRequest(getName(), Collections.singleton(clusterName), nodes,
+          new OReadRecordTask(iRecordId), dManager.getNextMessageIdCounter(), EXECUTION_MODE.RESPONSE, null, null);
+      final Object dResult = response != null ? response.getPayload() : null;
 
       if (dResult instanceof ONeedRetryException)
         throw (ONeedRetryException) dResult;
@@ -912,15 +905,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
                     dManager.getNextMessageIdCounter(), localResultPayload, unlockCallback, null));
               }
 
-              try {
-                localDistributedDatabase.getSyncConfiguration().setLastLSN(localNodeName,
-                    ((OLocalPaginatedStorage) getUnderlying()).getLSN(), true);
-              } catch (IOException e) {
-                ODistributedServerLog.debug(this, dManager != null ? dManager.getLocalNodeName() : "?", null,
-                    ODistributedServerLog.DIRECTION.NONE, "Error on updating local LSN configuration for database '%s'",
-                    wrapped.getName());
-              }
-
               return localResult;
             }
           });
@@ -1077,15 +1061,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
               }
 
-              try {
-                localDistributedDatabase.getSyncConfiguration().setLastLSN(localNodeName,
-                    ((OLocalPaginatedStorage) getUnderlying()).getLSN(), true);
-              } catch (IOException e) {
-                ODistributedServerLog.debug(this, dManager != null ? dManager.getLocalNodeName() : "?", null,
-                    ODistributedServerLog.DIRECTION.NONE, "Error on updating local LSN configuration for database '%s'",
-                    wrapped.getName());
-              }
-
               return localResult;
             }
           });
@@ -1124,6 +1099,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
     ODistributedRequestId requestId = null;
 
+    final OLogSequenceNumber lastLSN = wrapped.getLSN();
+
     final AtomicBoolean lockReleased = new AtomicBoolean(false);
     try {
 
@@ -1152,6 +1129,15 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
         if (lockReleased.compareAndSet(false, true))
           releaseRecordLock(rid2Lock, requestId);
       }
+
+      final OLogSequenceNumber currentLSN = wrapped.getLSN();
+      if (!lastLSN.equals(currentLSN))
+        // SAVE LAST LSN
+        try {
+        localDistributedDatabase.getSyncConfiguration().setLastLSN(getDistributedManager().getLocalNodeName(), ((OLocalPaginatedStorage) getUnderlying()).getLSN(), true);
+        } catch (IOException e) {
+        ODistributedServerLog.debug(this, dManager != null ? dManager.getLocalNodeName() : "?", null, ODistributedServerLog.DIRECTION.NONE, "Error on updating local LSN configuration for database '%s'", wrapped.getName());
+        }
     }
   }
 
@@ -1411,7 +1397,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   @Override
   public int addCluster(final String iClusterName, boolean forceListBased, final Object... iParameters) {
     for (int retry = 0; retry < 10; ++retry) {
-      int clId = wrapped.addCluster(iClusterName, false, iParameters);
+      final AtomicInteger clId = new AtomicInteger();
 
       if (!OScenarioThreadLocal.INSTANCE.isRunModeDistributed()) {
 
@@ -1426,6 +1412,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
               new OCallable<Object, ODistributedConfiguration>() {
                 @Override
                 public Object call(ODistributedConfiguration iArgument) {
+                  clId.set(wrapped.addCluster(iClusterName, false, iParameters));
+
                   final OCommandSQL commandSQL = new OCommandSQL(cmd.toString());
                   commandSQL.addExcludedNode(getNodeId());
                   return command(commandSQL);
@@ -1433,15 +1421,16 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
               });
         } catch (Exception e) {
           // RETRY
+          wrapped.dropCluster(iClusterName, false);
           continue;
         }
 
-        if (result != null && ((Integer) result).intValue() != clId) {
+        if (result != null && ((Integer) result).intValue() != clId.get()) {
           ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
               "Error on creating cluster '%s' on distributed nodes: ids are different (local=%d and remote=%d). Retrying %d/%d...",
               iClusterName, clId, ((Integer) result).intValue(), retry, 10);
 
-          wrapped.dropCluster(clId, false);
+          wrapped.dropCluster(clId.get(), false);
 
           // REMOVE ON REMOTE NODES TOO
           cmd.setLength(0);
@@ -1460,8 +1449,10 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
           wrapped.reload(); // TODO: RELOAD DOESN'T DO ANYTHING WHILE HERE IT'S NEEDED A WAY TO CLOSE/OPEN THE DB
           continue;
         }
-      }
-      return clId;
+      } else
+        clId.set(wrapped.addCluster(iClusterName, false, iParameters));
+
+      return clId.get();
     }
 
     throw new ODistributedException(

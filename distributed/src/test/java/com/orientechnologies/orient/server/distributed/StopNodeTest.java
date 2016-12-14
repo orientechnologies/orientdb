@@ -153,10 +153,6 @@ public class StopNodeTest extends AbstractServerClusterTxTest {
     Assert.assertTrue("Found no node has been stopped", nodeLefts.get() > 0);
   }
 
-  protected String getDatabaseURL(final ServerRun server) {
-    return "remote:" + server.getBinaryProtocolAddress() + "/" + getDatabaseName();
-  }
-
   @Override
   public String getDatabaseName() {
     return "distributed-stopnode";

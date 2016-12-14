@@ -360,14 +360,12 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     long totalProcessedRequests = getMessageService().getProcessedRequests();
 
     final long start = System.currentTimeMillis();
-    while (totalProcessedRequests < totalReceivedRequests - 2 && (System.currentTimeMillis() - start < 10000)) {
+    while (totalProcessedRequests < totalReceivedRequests - 2
+        && (System.currentTimeMillis() - start < OGlobalConfiguration.DISTRIBUTED_MAX_STARTUP_DELAY.getValueAsInteger())) {
       Thread.sleep(300);
       totalProcessedRequests = getMessageService().getProcessedRequests();
       totalReceivedRequests = getMessageService().getReceivedRequests();
     }
-
-    // WAIT FOR THE COMPLETION OF ALL THE REQUESTS
-    Thread.sleep(OGlobalConfiguration.DISTRIBUTED_CRUD_TASK_SYNCH_TIMEOUT.getValueAsInteger());
 
     serverStarted.countDown();
   }
@@ -1091,6 +1089,24 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       final Set<String> servers = dCfg.getAllConfiguredServers();
       servers.remove(nodeName);
 
+      // WAIT ALL THE SERVERS BECOME ONLINE
+      boolean allServersAreOnline = false;
+      while (!allServersAreOnline) {
+        allServersAreOnline = true;
+        for (String s : servers) {
+          final DB_STATUS st = getDatabaseStatus(s, dbName);
+          if (st == DB_STATUS.NOT_AVAILABLE || st == DB_STATUS.SYNCHRONIZING || st == DB_STATUS.BACKUP) {
+            allServersAreOnline = false;
+            try {
+              Thread.sleep(300);
+            } catch (InterruptedException e) {
+              Thread.currentThread().interrupt();
+              break;
+            }
+          }
+        }
+      }
+
       if (!servers.isEmpty() && messageService.getDatabase(dbName) != null)
         sendRequest(dbName, null, servers, new ODropDatabaseTask(), getNextMessageIdCounter(),
             ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
@@ -1124,6 +1140,12 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   public DB_STATUS getDatabaseStatus(final String iNode, final String iDatabaseName) {
     final DB_STATUS status = (DB_STATUS) configurationMap
         .getLocalCachedValue(OHazelcastPlugin.CONFIG_DBSTATUS_PREFIX + iNode + "." + iDatabaseName);
+    return status != null ? status : DB_STATUS.NOT_AVAILABLE;
+  }
+
+  public DB_STATUS getDatabaseStatus(final String iNode, final String iDatabaseName, final boolean useCache) {
+    final String key = OHazelcastPlugin.CONFIG_DBSTATUS_PREFIX + iNode + "." + iDatabaseName;
+    final DB_STATUS status = (DB_STATUS) (useCache ? configurationMap.getLocalCachedValue(key) : configurationMap.get(key));
     return status != null ? status : DB_STATUS.NOT_AVAILABLE;
   }
 
@@ -1274,9 +1296,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
       // UNLOCK ANY PENDING LOCKS
       if (messageService != null) {
-        final int nodeLeftId = getNodeIdByName(nodeLeftName);
         for (String dbName : messageService.getDatabases())
-          messageService.getDatabase(dbName).handleUnreachableNode(nodeLeftId);
+          messageService.getDatabase(dbName).handleUnreachableNode(nodeLeftName);
       }
 
       final Member member = activeNodes.remove(nodeLeftName);

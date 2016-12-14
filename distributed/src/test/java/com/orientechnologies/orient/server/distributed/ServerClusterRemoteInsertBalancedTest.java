@@ -112,7 +112,4 @@ public class ServerClusterRemoteInsertBalancedTest extends AbstractServerCluster
     return "distributed-insert-loadbalancing";
   }
 
-  protected String getDatabaseURL(final ServerRun server) {
-    return "remote:" + server.getBinaryProtocolAddress() + "/" + getDatabaseName();
-  }
 }

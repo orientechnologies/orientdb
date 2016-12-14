@@ -104,7 +104,7 @@ import java.util.Map;
   }
 
   @Override public long getDistributedTimeout() {
-    if (className != null)
+    if (className != null && getDatabase().getMetadata().getSchema().existsClass(className))
       return OGlobalConfiguration.DISTRIBUTED_COMMAND_QUICK_TASK_SYNCH_TIMEOUT.getValueAsLong() + (2 * getDatabase()
           .countClass(className));
 

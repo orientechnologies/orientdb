@@ -22,21 +22,17 @@ package com.orientechnologies.orient.server.distributed.impl.task;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseChunk;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
-import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
-import com.orientechnologies.orient.server.distributed.task.ODatabaseIsOldException;
 
 import java.io.*;
-import java.util.Date;
-import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
@@ -46,20 +42,15 @@ import java.util.concurrent.locks.Lock;
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
-public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OCommandOutputListener {
-  public final static int    CHUNK_MAX_SIZE = 8388608;    // 8MB
-  public static final String DEPLOYDB       = "deploydb.";
-  public static final int    FACTORYID      = 14;
-
-  protected long             lastOperationTimestamp;
-  protected long             random;
+public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
+  public static final int FACTORYID = 14;
 
   public OSyncDatabaseTask() {
   }
 
-  public OSyncDatabaseTask(final long lastOperationTimestamp) {
-    random = UUID.randomUUID().getLeastSignificantBits();
-    this.lastOperationTimestamp = lastOperationTimestamp;
+  public OSyncDatabaseTask(final OLogSequenceNumber lastLSN, final long lastOperationTimestamp) {
+    super(lastOperationTimestamp);
+    this.lastLSN = lastLSN;
   }
 
   @Override
@@ -72,15 +63,7 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
 
       final String databaseName = database.getName();
 
-      final ODistributedDatabase dDatabase = iManager.getMessageService().getDatabase(databaseName);
-      if (dDatabase.getSyncConfiguration().getLastOperationTimestamp() < lastOperationTimestamp) {
-        final String msg = String.format(
-            "Skip deploying delta database '%s' because the requesting server has a most recent database (reqLastOperation=%s>currLastOperation=%s)",
-            databaseName, new Date(lastOperationTimestamp), new Date(dDatabase.getSyncConfiguration().getLastOperationTimestamp()));
-        ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE, msg);
-
-        throw new ODatabaseIsOldException(msg);
-      }
+      final ODistributedDatabase dDatabase = checkIfCurrentDatabaseIsNotOlder(iManager, databaseName, null);
 
       final Lock lock = iManager.getLock("sync." + databaseName);
       if (lock.tryLock()) {
@@ -214,55 +197,26 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
   }
 
   @Override
-  public RESULT_STRATEGY getResultStrategy() {
-    return RESULT_STRATEGY.UNION;
-  }
-
-  @Override
-  public OCommandDistributedReplicateRequest.QUORUM_TYPE getQuorumType() {
-    return OCommandDistributedReplicateRequest.QUORUM_TYPE.ALL;
-  }
-
-  @Override
-  public long getDistributedTimeout() {
-    return OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_SYNCH_TIMEOUT.getValueAsLong();
-  }
-
-  @Override
   public String getName() {
     return "deploy_db";
   }
 
   @Override
   public void toStream(final DataOutput out) throws IOException {
+    writeOptionalLSN(out);
     out.writeLong(random);
     out.writeLong(lastOperationTimestamp);
   }
 
   @Override
   public void fromStream(final DataInput in, final ORemoteTaskFactory factory) throws IOException {
+    readOptionalLSN(in);
     random = in.readLong();
     lastOperationTimestamp = in.readLong();
-  }
-
-  @Override
-  public void onMessage(String iText) {
-    if (iText.startsWith("\r\n"))
-      iText = iText.substring(2);
-    if (iText.startsWith("\n"))
-      iText = iText.substring(1);
-
-    OLogManager.instance().info(this, iText);
-  }
-
-  @Override
-  public boolean isNodeOnlineRequired() {
-    return false;
   }
 
   @Override
   public int getFactoryId() {
     return FACTORYID;
   }
-
 }

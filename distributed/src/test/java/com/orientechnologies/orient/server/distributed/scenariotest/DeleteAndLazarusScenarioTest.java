@@ -73,9 +73,7 @@ public class DeleteAndLazarusScenarioTest extends AbstractScenarioTest {
     OHazelcastPlugin manager = (OHazelcastPlugin) server.getServerInstance().getDistributedManager();
     ODistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration(getDatabaseName());
     cfg = databaseConfiguration.getDocument();
-    cfg.field("autoDeploy", false);
-    cfg.field("version", (Integer) cfg.field("version") + 1);
-    manager.updateCachedDatabaseConfiguration(getDatabaseName(), cfg, true, true);
+
     System.out.println("\nConfiguration updated.");
 
     // inserting record r1 and checking consistency on all the servers
