@@ -63,19 +63,19 @@ public class OSystemDatabase {
     final ODatabaseDocumentInternal currentDB = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     try {
       final ODatabaseDocumentInternal sysdb = openSystemDatabase();
-
-      if (!sysdb.existsCluster(clusterName)) {
-        OSchema schema = sysdb.getMetadata().getSchema();
-        OClass cls = schema.getClass(className);
-
-        if (cls != null) {
-          cls.addCluster(clusterName);
-        } else {
-          OLogManager.instance().error(this, "createCluster() Class name %s does not exist", className);
-        }
-      }
-
       try {
+
+        if (!sysdb.existsCluster(clusterName)) {
+          OSchema schema = sysdb.getMetadata().getSchema();
+          OClass cls = schema.getClass(className);
+
+          if (cls != null) {
+            cls.addCluster(clusterName);
+          } else {
+            OLogManager.instance().error(this, "createCluster() Class name %s does not exist", className);
+          }
+        }
+
       } finally {
         sysdb.close();
       }
