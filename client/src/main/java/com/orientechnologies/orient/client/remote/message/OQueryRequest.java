@@ -150,4 +150,8 @@ public final class OQueryRequest implements OBinaryRequest<OQueryResponse> {
   public int getRecordsPerPage() {
     return recordsPerPage;
   }
+
+  public String getSerializer() {
+    return serializer;
+  }
 }
