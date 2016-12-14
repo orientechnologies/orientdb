@@ -10,21 +10,21 @@ import java.io.OutputStream;
  */
 public interface OChannelDataOutput {
 
-  public OChannelBinary writeByte(final byte iContent) throws IOException;
+  public OChannelDataOutput writeByte(final byte iContent) throws IOException;
 
-  public OChannelBinary writeBoolean(final boolean iContent) throws IOException;
+  public OChannelDataOutput writeBoolean(final boolean iContent) throws IOException;
 
-  public OChannelBinary writeInt(final int iContent) throws IOException ;
+  public OChannelDataOutput writeInt(final int iContent) throws IOException ;
 
-  public OChannelBinary writeLong(final long iContent) throws IOException;
+  public OChannelDataOutput writeLong(final long iContent) throws IOException;
 
-  public OChannelBinary writeShort(final short iContent) throws IOException;
+  public OChannelDataOutput writeShort(final short iContent) throws IOException;
 
-  public OChannelBinary writeString(final String iContent) throws IOException;
+  public OChannelDataOutput writeString(final String iContent) throws IOException;
 
-  public OChannelBinary writeBytes(final byte[] iContent) throws IOException;
+  public OChannelDataOutput writeBytes(final byte[] iContent) throws IOException;
 
-  public OChannelBinary writeBytes(final byte[] iContent, final int iLength) throws IOException;
+  public OChannelDataOutput writeBytes(final byte[] iContent, final int iLength) throws IOException;
 
   public void writeRID(final ORID iRID) throws IOException;
 
