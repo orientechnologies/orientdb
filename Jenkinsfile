@@ -2,8 +2,8 @@
 node("master") {
     lock("${env.BRANCH_NAME}") {
         def mvnHome = tool 'mvn'
-        def mvnJdk8Image = "orientdb/mvn-gradle-zulu-jdk-8:20161125"
-        def mvnIBMJdkImage = "orientdb/jenkins-slave-ibm-jdk-8:20161027"
+        def mvnJdk8Image = "orientdb/mvn-gradle-zulu-jdk-8"
+        def mvnIBMJdkImage = "orientdb/jenkins-slave-ibm-jdk-8"
 
         stage('Source checkout') {
             checkout scm
