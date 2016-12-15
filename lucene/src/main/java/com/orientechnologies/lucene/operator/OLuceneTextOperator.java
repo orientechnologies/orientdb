@@ -38,14 +38,20 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.operator.OIndexReuseType;
 import com.orientechnologies.orient.core.sql.operator.OQueryTargetOperator;
 import com.orientechnologies.orient.core.sql.parser.ParseException;
-import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.memory.MemoryIndex;
-import org.apache.lucene.search.Query;
 
-import java.util.*;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 public class OLuceneTextOperator extends OQueryTargetOperator {
+
+  public static final String MEMORY_INDEX = "_memoryIndex";
 
   public OLuceneTextOperator() {
     this("LUCENE", 5, false);
@@ -55,24 +61,30 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
     super(iKeyword, iPrecedence, iLogical);
   }
 
-  protected static ODatabaseDocumentInternal getDatabase() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get();
+  @Override
+  public OIndexReuseType getIndexReuseType(Object iLeft, Object iRight) {
+    return OIndexReuseType.INDEX_OPERATOR;
+  }
+
+  @Override
+  public OIndexSearchResult getOIndexSearchResult(OClass iSchemaClass, OSQLFilterCondition iCondition,
+      List<OIndexSearchResult> iIndexSearchResults, OCommandContext context) {
+    // FIXME questo non trova l'indice se l'ordine e' errato
+    OIndexSearchResult result = OLuceneOperatorUtil.buildOIndexSearchResult(iSchemaClass, iCondition,
+        iIndexSearchResults, context);
+
+    return result;
   }
 
   @Override
   public OIndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
-    OIndexCursor cursor;
-    Object indexResult = index.get(new OFullTextCompositeKey(keyParams).setContext(iContext));
-    if (indexResult == null || indexResult instanceof OIdentifiable)
-      cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, new OFullTextCompositeKey(keyParams));
-    else
-      cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult), new OFullTextCompositeKey(keyParams));
-    return cursor;
-  }
 
-  @Override
-  public OIndexReuseType getIndexReuseType(Object iLeft, Object iRight) {
-    return OIndexReuseType.INDEX_OPERATOR;
+    Object indexResult = index.get(new OFullTextCompositeKey(keyParams).setContext(iContext));
+
+    if (indexResult == null || indexResult instanceof OIdentifiable)
+      return new OIndexCursorSingleValue((OIdentifiable) indexResult, new OFullTextCompositeKey(keyParams));
+
+    return new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult), new OFullTextCompositeKey(keyParams));
   }
 
   @Override
@@ -86,11 +98,8 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
   }
 
   @Override
-  public OIndexSearchResult getOIndexSearchResult(OClass iSchemaClass, OSQLFilterCondition iCondition,
-      List<OIndexSearchResult> iIndexSearchResults, OCommandContext context) {
-
-    // FIXME questo non trova l'indice se l'ordine e' errato
-    return OLuceneOperatorUtil.buildOIndexSearchResult(iSchemaClass, iCondition, iIndexSearchResults, context);
+  public boolean canBeMerged() {
+    return false;
   }
 
   @Override
@@ -104,35 +113,31 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
       Object iRight, OCommandContext iContext) {
 
     OLuceneFullTextIndex index = involvedIndex(iRecord, iCurrentResult, iCondition, iLeft, iRight);
-
     if (index == null) {
       throw new OCommandExecutionException("Cannot evaluate lucene condition without index configuration.");
     }
 
-    MemoryIndex memoryIndex = (MemoryIndex) iContext.getVariable("_memoryIndex");
+    MemoryIndex memoryIndex = (MemoryIndex) iContext.getVariable(MEMORY_INDEX);
     if (memoryIndex == null) {
       memoryIndex = new MemoryIndex();
-      iContext.setVariable("_memoryIndex", memoryIndex);
+      iContext.setVariable(MEMORY_INDEX, memoryIndex);
     }
     memoryIndex.reset();
 
-    Document doc = null;
     try {
-      doc = index.buildDocument(iLeft);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
+      for (IndexableField field : index.buildDocument(iLeft).getFields()) {
+        memoryIndex.addField(field.name(), field.tokenStream(index.indexAnalyzer(), null));
+      }
+      return memoryIndex.search(index.buildQuery(iRight)) > 0.0f;
 
-    for (IndexableField field : doc.getFields()) {
-      memoryIndex.addField(field.name(), field.stringValue(), index.indexAnalyzer());
-    }
-    Query query = null;
-    try {
-      query = index.buildQuery(iRight);
     } catch (ParseException e) {
       OLogManager.instance().error(this, "error occurred while building query", e);
+
+    } catch (IOException e) {
+      OLogManager.instance().error(this, "error occurred while building memory index", e);
+
     }
-    return memoryIndex.search(query) > 0.0f;
+    return null;
   }
 
   protected OLuceneFullTextIndex involvedIndex(OIdentifiable iRecord, ODocument iCurrentResult, OSQLFilterCondition iCondition,
@@ -164,6 +169,10 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
       }
     }
     return idx;
+  }
+
+  protected static ODatabaseDocumentInternal getDatabase() {
+    return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 
   private boolean isChained(Object left) {
@@ -203,10 +212,5 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
       }
     }
     return Collections.emptyList();
-  }
-
-  @Override
-  public boolean canBeMerged() {
-    return false;
   }
 }

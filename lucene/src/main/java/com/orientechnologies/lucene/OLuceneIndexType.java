@@ -54,15 +54,14 @@ public class OLuceneIndexType {
 
     if (value instanceof Number) {
       Number number = (Number) value;
-      if (value instanceof Long)
+      if (value instanceof Long) {
         return new LongField(fieldName, number.longValue(), store);
-      else if (value instanceof Float)
+      } else if (value instanceof Float) {
         return new FloatField(fieldName, number.floatValue(), store);
-      else if (value instanceof Double)
+      } else if (value instanceof Double) {
         return new DoubleField(fieldName, number.doubleValue(), store);
-
+      }
       return new IntField(fieldName, number.intValue(), store);
-
     } else if (value instanceof Date) {
       return new LongField(fieldName, ((Date) value).getTime(), store);
     }
@@ -104,10 +103,6 @@ public class OLuceneIndexType {
     return query;
   }
 
-  public static Query createQueryId(OIdentifiable value) {
-    return new TermQuery(new Term(OLuceneIndexEngineAbstract.RID, value.getIdentity().toString()));
-  }
-
   public static Query createDeleteQuery(OIdentifiable value, List<String> fields, Object key) {
 
     final BooleanQuery.Builder queryBuilder = new BooleanQuery.Builder();
@@ -125,6 +120,10 @@ public class OLuceneIndexType {
       queryBuilder.add(new TermQuery(new Term(s, values.get(s).toLowerCase())), BooleanClause.Occur.MUST);
     }
     return queryBuilder.build();
+  }
+
+  public static Query createQueryId(OIdentifiable value) {
+    return new TermQuery(new Term(OLuceneIndexEngineAbstract.RID, value.getIdentity().toString()));
   }
 
   public static Query createFullQuery(OIndexDefinition index, Object key, Analyzer analyzer) throws ParseException {

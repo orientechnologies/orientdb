@@ -19,15 +19,11 @@
 package com.orientechnologies.lucene.test;
 
 import com.orientechnologies.orient.core.command.script.OCommandScript;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.apache.lucene.analysis.en.EnglishAnalyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -35,7 +31,7 @@ import org.junit.Test;
 import java.io.InputStream;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * Created by enricorisa on 19/09/14.
@@ -48,7 +44,6 @@ public class LuceneMultiFieldTest extends BaseLuceneTest {
 
   @Before
   public void init() {
-
 
     InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql");
 
@@ -65,7 +60,6 @@ public class LuceneMultiFieldTest extends BaseLuceneTest {
     assertThat(index.<Object>field("title_index")).isEqualTo(EnglishAnalyzer.class.getName());
 
   }
-
 
   @Test
   public void testSelectSingleDocumentWithAndOperator() {
@@ -121,7 +115,9 @@ public class LuceneMultiFieldTest extends BaseLuceneTest {
   @Test
   public void testSelectOnIndexWithIgnoreNullValuesToFalse() {
     //#5579
-    String script = "create class Item\n" + "create property Item.title string\n" + "create property Item.summary string\n"
+    String script = "create class Item\n"
+        + "create property Item.title string\n"
+        + "create property Item.summary string\n"
         + "create property Item.content string\n"
         + "create index Item.i_lucene on Item(title, summary, content) fulltext engine lucene METADATA {ignoreNullValues:false}\n"
         + "insert into Item set title = 'test', content = 'this is a test'\n";

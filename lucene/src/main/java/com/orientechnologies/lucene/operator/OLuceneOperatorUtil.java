@@ -31,53 +31,11 @@ import java.util.List;
 
 public class OLuceneOperatorUtil {
 
-  public static boolean checkIndexExistence(final OClass iSchemaClass, final OIndexSearchResult result) {
-    if (!iSchemaClass.areIndexed(result.fields()))
-      return false;
+  public static OIndexSearchResult buildOIndexSearchResult(OClass iSchemaClass,
+      OSQLFilterCondition iCondition,
+      List<OIndexSearchResult> iIndexSearchResults,
+      OCommandContext context) {
 
-    if (result.lastField.isLong()) {
-      final int fieldCount = result.lastField.getItemCount();
-      OClass cls = iSchemaClass.getProperty(result.lastField.getItemName(0)).getLinkedClass();
-
-      for (int i = 1; i < fieldCount; i++) {
-        if (cls == null || !cls.areIndexed(result.lastField.getItemName(i))) {
-          return false;
-        }
-
-        cls = cls.getProperty(result.lastField.getItemName(i)).getLinkedClass();
-      }
-    }
-    return true;
-  }
-
-  public static OIndexSearchResult createIndexedProperty(final OSQLFilterCondition iCondition, final Object iItem) {
-    if (iItem == null || !(iItem instanceof OSQLFilterItemField))
-      return null;
-
-    if (iCondition.getLeft() instanceof OSQLFilterItemField && iCondition.getRight() instanceof OSQLFilterItemField)
-      return null;
-
-    final OSQLFilterItemField item = (OSQLFilterItemField) iItem;
-
-    if (item.hasChainOperators() && !item.isFieldChain())
-      return null;
-
-    final Object origValue = iCondition.getLeft() == iItem ? iCondition.getRight() : iCondition.getLeft();
-
-    if (iCondition.getOperator() instanceof OQueryOperatorBetween || iCondition.getOperator() instanceof OQueryOperatorIn) {
-      return new OIndexSearchResult(iCondition.getOperator(), item.getFieldChain(), origValue);
-    }
-
-    final Object value = OSQLHelper.getValue(origValue);
-
-    if (value == null)
-      return null;
-
-    return new OIndexSearchResult(iCondition.getOperator(), item.getFieldChain(), value);
-  }
-
-  public static OIndexSearchResult buildOIndexSearchResult(OClass iSchemaClass, OSQLFilterCondition iCondition,
-      List<OIndexSearchResult> iIndexSearchResults, OCommandContext context) {
     if (iCondition.getLeft() instanceof Collection) {
       OIndexSearchResult lastResult = null;
 
@@ -130,6 +88,51 @@ public class OLuceneOperatorUtil {
 
       return result;
     }
+  }
+
+  public static boolean checkIndexExistence(final OClass iSchemaClass, final OIndexSearchResult result) {
+    if (!iSchemaClass.areIndexed(result.fields()))
+      return false;
+
+    if (result.lastField.isLong()) {
+      final int fieldCount = result.lastField.getItemCount();
+      OClass cls = iSchemaClass.getProperty(result.lastField.getItemName(0)).getLinkedClass();
+
+      for (int i = 1; i < fieldCount; i++) {
+        if (cls == null || !cls.areIndexed(result.lastField.getItemName(i))) {
+          return false;
+        }
+
+        cls = cls.getProperty(result.lastField.getItemName(i)).getLinkedClass();
+      }
+    }
+    return true;
+  }
+
+  public static OIndexSearchResult createIndexedProperty(final OSQLFilterCondition iCondition, final Object iItem) {
+    if (iItem == null || !(iItem instanceof OSQLFilterItemField))
+      return null;
+
+    if (iCondition.getLeft() instanceof OSQLFilterItemField && iCondition.getRight() instanceof OSQLFilterItemField)
+      return null;
+
+    final OSQLFilterItemField item = (OSQLFilterItemField) iItem;
+
+    if (item.hasChainOperators() && !item.isFieldChain())
+      return null;
+
+    final Object origValue = iCondition.getLeft() == iItem ? iCondition.getRight() : iCondition.getLeft();
+
+    if (iCondition.getOperator() instanceof OQueryOperatorBetween || iCondition.getOperator() instanceof OQueryOperatorIn) {
+      return new OIndexSearchResult(iCondition.getOperator(), item.getFieldChain(), origValue);
+    }
+
+    final Object value = OSQLHelper.getValue(origValue);
+
+    if (value == null)
+      return null;
+
+    return new OIndexSearchResult(iCondition.getOperator(), item.getFieldChain(), value);
   }
 
 }

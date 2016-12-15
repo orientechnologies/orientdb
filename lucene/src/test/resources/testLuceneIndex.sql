@@ -8,15 +8,14 @@ create property Song.description STRING
 
 create class Author extends V
 create property Author.name STRING
+create property Author.score INTEGER
 
 begin
-
-
-create vertex Author set name="Bob Dylan"
-create vertex Author set name="Grateful Dead"
-create vertex Author set name="Lennon McCartney"
-create vertex Author set name="Chuck Berry"
-create vertex Author set name="Jack Mountain"
+create vertex Author set name="Bob Dylan", score =10
+create vertex Author set name="Grateful Dead", score =5
+create vertex Author set name="Lennon McCartney", score =7
+create vertex Author set name="Chuck Berry", score =10
+create vertex Author set name="Jack Mountain", score =4
 
 
 create vertex Song set title="BELIEVE IT OR NOT", author="Hunter"

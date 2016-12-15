@@ -1,6 +1,5 @@
 package com.orientechnologies.lucene.test;
 
-import com.orientechnologies.lucene.test.BaseLuceneTest;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -62,11 +61,19 @@ public class LuceneReuseTest extends BaseLuceneTest {
     db.command(new OCommandSQL("create index Reuse.name_surname on Reuse (name,surname) FULLTEXT ENGINE LUCENE")).execute();
 
     for (int i = 0; i < 10; i++) {
-      db.save(new ODocument("Reuse").field("name", "John").field("date", new Date()).field("surname", "Reese").field("age", i));
+      db.save(new ODocument("Reuse")
+          .field("name", "John")
+          .field("date", new Date())
+          .field("surname", "Reese")
+          .field("age", i));
     }
 
     //additional record
-    db.save(new ODocument("Reuse").field("name", "John").field("date", new Date()).field("surname", "Franklin").field("age", 11));
+    db.save(new ODocument("Reuse")
+        .field("name", "John")
+        .field("date", new Date())
+        .field("surname", "Franklin")
+        .field("age", 11));
 
     Collection<ODocument> results = db
         .command(new OCommandSQL("SELECT FROM Reuse WHERE name='John' and [name,surname] LUCENE 'Reese'")).execute();
