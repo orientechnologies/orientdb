@@ -23,6 +23,8 @@ import com.orientechnologies.orient.core.sql.filter.OSQLTarget;
 import com.orientechnologies.orient.core.sql.query.OBasicResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.sun.javafx.collections.MappingChange;
+import com.sun.javafx.geom.Edge;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -286,7 +288,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
         return new OBasicResultSet();// some aliases do not match on any classes
       }
 
-      List<EdgeTraversal> sortedEdges = sortEdges(estimatedRootEntries, pattern);
+      List<EdgeTraversal> sortedEdges = getTopologicalSortedSchedule(estimatedRootEntries, pattern);
       MatchExecutionPlan executionPlan = new MatchExecutionPlan();
       executionPlan.sortedEdges = sortedEdges;
 
@@ -303,126 +305,186 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
   }
 
   /**
+   * Start a depth-first traversal from the starting node, adding all viable unscheduled edges and vertices.
+   * @param startNode the node from which to start the depth-first traversal
+   * @param visitedNodes set of nodes that are already visited (mutated in this function)
+   * @param visitedEdges set of edges that are already visited and therefore don't need to be scheduled
+   *                     (mutated in this function)
+   * @param remainingDependencies dependency map including only the dependencies that haven't yet been satisfied
+   *                              (mutated in this function)
+   * @param resultingSchedule the schedule being computed i.e. appended to (mutated in this function)
+   */
+  private void updateScheduleStartingAt(PatternNode startNode, Set<PatternNode> visitedNodes,
+                                        Set<PatternEdge> visitedEdges, Map<String, Set<String>> remainingDependencies,
+                                        List<EdgeTraversal> resultingSchedule) {
+    // OrientDB requires the schedule to contain all edges present in the query, which is a stronger condition
+    // than simply visiting all nodes in the query. Consider the following example query:
+    //     MATCH {
+    //         class: A,
+    //         as: foo
+    //     }.in() {
+    //         as: bar
+    //     }, {
+    //         class: B,
+    //         as: bar
+    //     }.out() {
+    //         as: foo
+    //     } RETURN $matches
+    // The schedule for the above query must have two edges, even though there are only two nodes and they can both
+    // be visited with the traversal of a single edge.
+    //
+    // To satisfy it, we obey the following for each non-optional node:
+    // - ignore edges to neighboring nodes which have unsatisfied dependencies;
+    // - for visited neighboring nodes, add their edge if it wasn't already present in the schedule, but do not
+    //   recurse into the neighboring node;
+    // - for unvisited neighboring nodes with satisfied dependencies, add their edge and recurse into them.
+    visitedNodes.add(startNode);
+    for (Set<String> dependencies : remainingDependencies.values()) {
+      dependencies.remove(startNode.alias);
+    }
+
+    Map<PatternEdge, Boolean> edges = new LinkedHashMap<PatternEdge, Boolean>();
+    for (PatternEdge outEdge : startNode.out) {
+      edges.put(outEdge, true);
+    }
+    for (PatternEdge inEdge : startNode.in) {
+      edges.put(inEdge, false);
+    }
+
+    for (Map.Entry<PatternEdge, Boolean> edgeData : edges.entrySet()) {
+      PatternEdge edge = edgeData.getKey();
+      boolean isOutbound = edgeData.getValue();
+      PatternNode neighboringNode = isOutbound ? edge.in : edge.out;
+
+      if (!remainingDependencies.get(neighboringNode.alias).isEmpty()) {
+        // Unsatisfied dependencies, ignore this neighboring node.
+        continue;
+      }
+
+      if (visitedNodes.contains(neighboringNode)) {
+        if (!visitedEdges.contains(edge)) {
+          // If we are executing in this block, we are in the following situation:
+          // - the startNode has not been visited yet;
+          // - it has a neighboringNode that has already been visited;
+          // - the edge between the startNode and the neighboringNode has not been scheduled yet.
+          //
+          // The isOutbound value shows us whether the edge is outbound from the point of view of the startNode.
+          // However, if there are edges to the startNode, we must visit the startNode from an already-visited
+          // neighbor, to preserve the validity of the traversal. Therefore, we negate the value of isOutbound
+          // to ensure that the edge is always scheduled in the direction from the already-visited neighbor
+          // toward the startNode.
+          boolean traversalDirection = !isOutbound;
+
+          visitedEdges.add(edge);
+          resultingSchedule.add(new EdgeTraversal(edge, traversalDirection));
+        }
+      } else if (!startNode.optional) {
+        // If the neighboring node wasn't visited, we don't expand the optional node into it, hence the above check.
+        // Instead, we'll allow the neighboring node to add the edge we failed to visit, via the above block.
+        if (visitedEdges.contains(edge)) {
+          // Should never happen.
+          throw new AssertionError("The edge was visited, but the neighboring vertex was not: " + edge +
+                  " " + neighboringNode);
+        }
+
+        visitedEdges.add(edge);
+        resultingSchedule.add(new EdgeTraversal(edge, isOutbound));
+        updateScheduleStartingAt(neighboringNode, visitedNodes, visitedEdges, remainingDependencies, resultingSchedule);
+      }
+    }
+  }
+
+  /**
+   * Calculate the set of dependency aliases for each alias in the pattern.
+   * @param pattern
+   * @return map of alias to the set of aliases it depends on
+   */
+  private Map<String, Set<String>> getDependencies(Pattern pattern) {
+    Map<String, Set<String>> result = new HashMap<String, Set<String>>();
+
+    for (PatternNode node : pattern.aliasToNode.values()) {
+      Set<String> currentDependencies = new HashSet<String>();
+
+      OWhereClause filter = aliasFilters.get(node.alias);
+      if (filter != null && filter.baseExpression != null) {
+        List<String> involvedAliases = filter.baseExpression.getMatchPatternInvolvedAliases();
+        if (involvedAliases != null) {
+          currentDependencies.addAll(involvedAliases);
+        }
+      }
+
+      result.put(node.alias, currentDependencies);
+    }
+
+    return result;
+  }
+
+  /**
    * sort edges in the order they will be matched
    */
-  private List<EdgeTraversal> sortEdges(Map<String, Long> estimatedRootEntries, Pattern pattern) {
-    List<EdgeTraversal> result = new ArrayList<EdgeTraversal>();
+  private List<EdgeTraversal> getTopologicalSortedSchedule(Map<String, Long> estimatedRootEntries, Pattern pattern) {
+    List<EdgeTraversal> resultingSchedule = new ArrayList<EdgeTraversal>();
+    Map<String, Set<String>> remainingDependencies = getDependencies(pattern);
+    Set<PatternNode> visitedNodes = new HashSet<PatternNode>();
+    Set<PatternEdge> visitedEdges = new HashSet<PatternEdge>();
 
+    // Sort the possible root vertices in order of estimated size, since we want to start with a small vertex set.
     List<OPair<Long, String>> rootWeights = new ArrayList<OPair<Long, String>>();
     for (Map.Entry<String, Long> root : estimatedRootEntries.entrySet()) {
       rootWeights.add(new OPair<Long, String>(root.getValue(), root.getKey()));
     }
     Collections.sort(rootWeights);
 
-    Set<PatternEdge> traversedEdges = new HashSet<PatternEdge>();
-    Set<PatternNode> traversedNodes = new HashSet<PatternNode>();
-    List<PatternNode> nextNodes = new ArrayList<PatternNode>();
-
-    //pattern to direction (true -> out)
-    Map<PatternEdge, Boolean> lateEvaluatedEdges = new IdentityHashMap<PatternEdge, Boolean>();
-
-    //    do {
-    while (result.size() < pattern.getNumOfEdges()) {
-      for (OPair<Long, String> rootPair : rootWeights) {
-        PatternNode root = pattern.get(rootPair.getValue());
-        if (root.isOptionalNode()) {
-          continue;
-        }
-        OWhereClause filter = aliasFilters.get(root.alias);
-        if (filter != null && filter.baseExpression != null && filter.baseExpression.getMatchPatternInvolvedAliases() != null) {
-          continue;
-        }
-        if (!traversedNodes.contains(root)) {
-          nextNodes.add(root);
-          break;
-        }
-      }
-
-      if (nextNodes.isEmpty()) {
-        break;
-      }
-      //first evaluation, no $matched.xx nodes
-      while (!nextNodes.isEmpty()) {
-        PatternNode node = nextNodes.remove(0);
-        traversedNodes.add(node);
-        for (PatternEdge edge : node.out) {
-          if (!traversedEdges.contains(edge)) {
-            OWhereClause nextNodeFilter = aliasFilters.get(edge.in.alias);
-            if (nextNodeFilter != null && nextNodeFilter.baseExpression != null
-                && nextNodeFilter.baseExpression.getMatchPatternInvolvedAliases() != null) {
-              //late processing
-              lateEvaluatedEdges.put(edge, true);
-            } else {
-              result.add(new EdgeTraversal(edge, true));
-              traversedEdges.add(edge);
-              if (!traversedNodes.contains(edge.in) && !nextNodes.contains(edge.in)) {
-                nextNodes.add(edge.in);
-              }
-            }
-          }
-        }
-        for (PatternEdge edge : node.in) {
-          OWhereClause nextNodeFilter = aliasFilters.get(edge.out.alias);
-          if (nextNodeFilter != null && nextNodeFilter.baseExpression != null
-              && nextNodeFilter.baseExpression.getMatchPatternInvolvedAliases() != null) {
-            //late processing
-            lateEvaluatedEdges.put(edge, false);
-          } else {
-            if (!traversedEdges.contains(edge) && edge.item.isBidirectional()) {
-              result.add(new EdgeTraversal(edge, false));
-              traversedEdges.add(edge);
-              if (!traversedNodes.contains(edge.out) && !nextNodes.contains(edge.out)) {
-                nextNodes.add(edge.out);
-              }
-            }
-          }
-        }
-      }
-
-      //second traverse, restart from $matched.xx
-
-      for (Map.Entry<PatternEdge, Boolean> edgeEntry : lateEvaluatedEdges.entrySet()) {
-        PatternEdge edge = edgeEntry.getKey();
-        boolean directionOut = edgeEntry.getValue();
-
-        PatternNode nextNode = directionOut ? edge.in : edge.out;
-        if (!traversedEdges.contains(edge) && edge.item.isBidirectional()) {
-          result.add(new EdgeTraversal(edge, directionOut));
-          traversedEdges.add(edge);
-          if (!traversedNodes.contains(nextNode) && !nextNodes.contains(nextNode)) {
-            nextNodes.add(nextNode);
-          }
-        }
-      }
-      while (!nextNodes.isEmpty()) {
-        PatternNode node = nextNodes.remove(0);
-        traversedNodes.add(node);
-        for (PatternEdge edge : node.out) {
-          if (!traversedEdges.contains(edge)) {
-            result.add(new EdgeTraversal(edge, true));
-            traversedEdges.add(edge);
-            if (!traversedNodes.contains(edge.in) && !nextNodes.contains(edge.in)) {
-              nextNodes.add(edge.in);
-            }
-          }
-        }
-        for (PatternEdge edge : node.in) {
-          OWhereClause nextNodeFilter = aliasFilters.get(edge.out.alias);
-          if (!traversedEdges.contains(edge) && edge.item.isBidirectional()) {
-            result.add(new EdgeTraversal(edge, false));
-            traversedEdges.add(edge);
-            if (!traversedNodes.contains(edge.out) && !nextNodes.contains(edge.out)) {
-              nextNodes.add(edge.out);
-            }
-          }
-        }
+    // Add the starting vertices, in the correct order, to an ordered set.
+    Set<String> remainingStarts = new LinkedHashSet<String>();
+    for (OPair<Long, String> item : rootWeights) {
+      remainingStarts.add(item.getValue());
+    }
+    // Add all the remaining aliases after all the suggested start points.
+    for (String alias : pattern.aliasToNode.keySet()) {
+      if (!remainingStarts.contains(alias)) {
+        remainingStarts.add(alias);
       }
     }
 
-    //    } while (lateEvaluatedEdges.size() > 0 && nextNodes.add(startingNode(lateEvaluatedEdges.get(0))));
+    while (resultingSchedule.size() < pattern.numOfEdges) {
+      // Start a new depth-first pass, adding all nodes with satisfied dependencies.
+      // 1. Find a starting vertex for the depth-first pass.
+      PatternNode startingNode = null;
+      List<String> startsToRemove = new ArrayList<String>();
+      for (String currentAlias : remainingStarts) {
+        PatternNode currentNode = pattern.aliasToNode.get(currentAlias);
 
-    checkConsistency(result);
-    return result;
+        if (visitedNodes.contains(currentNode)) {
+          // If a previous traversal already visited this alias, remove it from further consideration.
+          startsToRemove.add(currentAlias);
+        } else if (remainingDependencies.get(currentAlias).isEmpty()) {
+          // If it hasn't been visited, and has all dependencies satisfied, visit it.
+          startsToRemove.add(currentAlias);
+          startingNode = currentNode;
+          break;
+        }
+      }
+      remainingStarts.removeAll(startsToRemove);
+
+      if (startingNode == null) {
+        // We didn't manage to find a valid root, and yet we haven't constructed a complete schedule.
+        // This means there must be a cycle in our dependency graph, or all dependency-free nodes are optional.
+        // Therefore, the query is invalid.
+        throw new OCommandExecutionException("This query contains MATCH conditions that cannot be evaluated, " +
+                "like an undefined alias or a circular dependency on a $matched condition.");
+      }
+
+      // 2. Having found a starting vertex, traverse its neighbors depth-first,
+      //    adding any non-visited ones with satisfied dependencies to our schedule.
+      updateScheduleStartingAt(startingNode, visitedNodes, visitedEdges, remainingDependencies, resultingSchedule);
+    }
+
+    if (resultingSchedule.size() != pattern.numOfEdges) {
+      throw new AssertionError("Incorrect number of edges: " + resultingSchedule.size() + " vs " + pattern.numOfEdges);
+    }
+
+    return resultingSchedule;
   }
 
   /**
