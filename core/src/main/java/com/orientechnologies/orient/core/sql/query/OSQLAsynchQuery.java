@@ -79,7 +79,7 @@ public class OSQLAsynchQuery<T extends Object> extends OSQLQuery<T> implements O
    */
   @Override
   public boolean isIdempotent() {
-    return false;
+    return true;
   }
 
   @Override
