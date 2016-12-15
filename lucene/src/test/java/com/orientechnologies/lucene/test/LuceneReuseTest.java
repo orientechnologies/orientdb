@@ -1,4 +1,4 @@
-package com.orientechnologies.lucene;
+package com.orientechnologies.lucene.test;
 
 import com.orientechnologies.lucene.test.BaseLuceneTest;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -28,7 +28,7 @@ public class LuceneReuseTest extends BaseLuceneTest {
     cls.createProperty("surname", OType.STRING);
     cls.createProperty("age", OType.LONG);
 
-    db.command(new OCommandSQL("create index Reuse.comp on Reuse (name,surname,date,age) UNIQUE")).execute();
+    db.command(new OCommandSQL("create index Reuse.composite on Reuse (name,surname,date,age) UNIQUE")).execute();
     db.command(new OCommandSQL("create index Reuse.surname on Reuse (surname) FULLTEXT ENGINE LUCENE")).execute();
 
     for (int i = 0; i < 10; i++) {
@@ -56,12 +56,16 @@ public class LuceneReuseTest extends BaseLuceneTest {
     cls.createProperty("surname", OType.STRING);
     cls.createProperty("age", OType.LONG);
 
-    db.command(new OCommandSQL("create index Reuse.comp on Reuse (name,surname,date,age) UNIQUE")).execute();
-    db.command(new OCommandSQL("create index Reuse.n_surname on Reuse (name,surname) FULLTEXT ENGINE LUCENE")).execute();
+    db.command(new OCommandSQL("create index Reuse.composite on Reuse (name,surname,date,age) UNIQUE")).execute();
+
+    //lucene on name and surname
+    db.command(new OCommandSQL("create index Reuse.name_surname on Reuse (name,surname) FULLTEXT ENGINE LUCENE")).execute();
 
     for (int i = 0; i < 10; i++) {
       db.save(new ODocument("Reuse").field("name", "John").field("date", new Date()).field("surname", "Reese").field("age", i));
     }
+
+    //additional record
     db.save(new ODocument("Reuse").field("name", "John").field("date", new Date()).field("surname", "Franklin").field("age", 11));
     Collection<ODocument> results = db
         .command(new OCommandSQL("SELECT FROM Reuse WHERE name='John' and [name,surname] LUCENE 'Reese'")).execute();

@@ -19,15 +19,16 @@
 package com.orientechnologies.lucene.builder;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.lucene.parser.OLuceneMultiFieldQueryParser;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.parser.ParseException;
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
-import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -82,11 +83,7 @@ public class OLuceneQueryBuilder {
   }
 
   protected Query getQueryParser(OIndexDefinition index, String key, Analyzer analyzer) throws ParseException {
-    QueryParser queryParser;
-    if ((key).startsWith("(")) {
-      queryParser = new QueryParser("", analyzer);
 
-    } else {
       String[] fields;
       if (index.isAutomatic()) {
         fields = index.getFields().toArray(new String[index.getFields().size()]);
@@ -99,9 +96,17 @@ public class OLuceneQueryBuilder {
         }
       }
 
-      queryParser = new MultiFieldQueryParser(fields, analyzer);
+    Map<String, OType> types = new HashMap<String, OType>();
+    for (int i = 0; i < fields.length; i++) {
+      String field = fields[i];
+      types.put(field, index.getTypes()[i]);
+
     }
 
+//    for (Map.Entry<String, OType> typeEntry : types.entrySet()) {
+//      System.out.println("typeEntry = " + typeEntry);
+//    }
+    final OLuceneMultiFieldQueryParser queryParser = new OLuceneMultiFieldQueryParser(types, fields, analyzer);
     queryParser.setAllowLeadingWildcard(allowLeadingWildcard);
 
     queryParser.setLowercaseExpandedTerms(lowercaseExpandedTerms);
