@@ -55,7 +55,7 @@ public class LuceneCrossClassIndexTest extends BaseLuceneTest {
         "create index Song.author on Song (author) FULLTEXT ENGINE LUCENE METADATA {\"analyzer\":\"" + StandardAnalyzer.class
             .getName() + "\"}")).execute();
     db.command(new OCommandSQL(
-        "create index Author.name on Author(name) FULLTEXT ENGINE LUCENE METADATA {\"analyzer\":\"" + StandardAnalyzer.class
+        "create index Author.name on Author(name,score) FULLTEXT ENGINE LUCENE METADATA {\"analyzer\":\"" + StandardAnalyzer.class
             .getName() + "\"}")).execute();
 
   }
@@ -110,6 +110,26 @@ public class LuceneCrossClassIndexTest extends BaseLuceneTest {
       if (doc.getClassName().equals("Author"))
         assertThat(doc.<String>field("name")).containsIgnoringCase("chuck");
 
+    }
+  }
+
+  @Test
+  public void shouldSearchAcrossAllClassesWithRangeQuery() {
+
+    String query = "select SEARCH('Song.title:mountain Author.score:[4 TO 7]') ";
+    List<ODocument> docs = db.query(new OSQLSynchQuery<ODocument>(query));
+
+    assertThat(docs).hasSize(1);
+
+    List<ODocument> results = fetchDocs(docs);
+
+    for (ODocument doc : results) {
+      if (doc.getClassName().equals("Song")) {
+        assertThat(doc.<String>field("title")).containsIgnoringCase("mountain");
+      }
+      if (doc.getClassName().equals("Author")) {
+        assertThat(doc.<Integer>field("score")).isGreaterThan(4).isLessThan(7);
+      }
     }
   }
 
