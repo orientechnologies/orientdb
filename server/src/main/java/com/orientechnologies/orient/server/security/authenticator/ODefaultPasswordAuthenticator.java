@@ -1,6 +1,6 @@
 /*
  *
- *  *  Copyright 2016 OrientDB LTD (info(at)orientdb.com)
+ *  *  Copyright 2016 Orient Technologies LTD (info(at)orientdb.com)
  *  *
  *  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  *  you may not use this file except in compliance with the License.
@@ -55,31 +55,38 @@ public class ODefaultPasswordAuthenticator extends OSecurityAuthenticatorAbstrac
         List<ODocument> usersList = jsonConfig.field("users");
 
         for (ODocument userDoc : usersList) {
-          if (userDoc.containsField("username") && userDoc.containsField("resources")) {
-            final String user = userDoc.field("username");
-            final String resources = userDoc.field("resources");
-            String password = userDoc.field("password");
-
-            String checkName = user;
-
-            if (!isCaseSensitive())
-              checkName = user.toLowerCase();
-
-            if (!usersMap.containsKey(checkName)) {
-              if (password == null)
-                password = "";
-
-              OServerUserConfiguration userCfg = new OServerUserConfiguration(user, password, resources);
-              usersMap.put(checkName, userCfg);
-            } else {
-              OLogManager.instance().error(this, "ODefaultPasswordAuthenticator.config() User: %s already exists", checkName);
-            }
+        	
+          OServerUserConfiguration userCfg = createServerUser(userDoc);
+         
+          if (userCfg != null) {
+            String checkName = userCfg.name;
+    
+            if (!isCaseSensitive()) checkName = checkName.toLowerCase();
+          	
+          	usersMap.put(checkName, userCfg);
           }
         }
       }
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "ODefaultPasswordAuthenticator.config() Exception: %s", ex.getMessage());
+      OLogManager.instance().error(this, "config() Exception: %s", ex.getMessage());
     }
+  }
+  
+  // Derived implementations can override this method to provide new server user implementations.
+  protected OServerUserConfiguration createServerUser(final ODocument userDoc) {
+    OServerUserConfiguration userCfg = null;
+    
+    if (userDoc.containsField("username") && userDoc.containsField("resources")) {
+      final String user = userDoc.field("username");
+      final String resources = userDoc.field("resources");
+      String password = userDoc.field("password");    
+    
+      if (password == null) password = "";
+    
+      userCfg = new OServerUserConfiguration(user, password, resources);
+    }
+   
+    return userCfg;
   }
 
   // OSecurityComponent
@@ -99,7 +106,7 @@ public class ODefaultPasswordAuthenticator extends OSecurityAuthenticatorAbstrac
     try {
       OServerUserConfiguration user = getUser(username);
 
-      if (user != null && user.password != null && !user.password.isEmpty()) {
+      if (isPasswordValid(user)) {
         if (OSecurityManager.instance().checkPassword(password, user.password)) {
           principal = user.name;
         }

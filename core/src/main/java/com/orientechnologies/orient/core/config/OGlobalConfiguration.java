@@ -812,6 +812,18 @@ public enum OGlobalConfiguration {
   @OApi(maturity = OApi.MATURITY.NEW)CLIENT_CREDENTIAL_INTERCEPTOR("client.credentialinterceptor",
       "The name of the CredentialInterceptor class", String.class, null),
 
+  @OApi(maturity = OApi.MATURITY.NEW)CLIENT_CI_KEYALGORITHM("client.ci.keyalgorithm",
+      "The key algorithm used by the symmetric key credential interceptor", String.class, "AES"),
+
+  @OApi(maturity = OApi.MATURITY.NEW)CLIENT_CI_CIPHERTRANSFORM("client.ci.ciphertransform",
+      "The cipher transformation used by the symmetric key credential interceptor", String.class, "AES/CBC/PKCS5Padding"),
+
+  @OApi(maturity = OApi.MATURITY.NEW)CLIENT_CI_KEYSTORE_FILE("client.ci.keystore.file",
+      "The file path of the keystore used by the symmetric key credential interceptor", String.class, null),
+
+  @OApi(maturity = OApi.MATURITY.NEW)CLIENT_CI_KEYSTORE_PASSWORD("client.ci.keystore.password",
+      "The password of the keystore used by the symmetric key credential interceptor", String.class, null),
+
   /**
    * @Since 2.2
    */
