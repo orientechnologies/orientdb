@@ -1,0 +1,90 @@
+{
+  "enabled": true,
+  "debug": false,
+  "server": {
+    "createDefaultUsers": false
+  },
+  "authentication": {
+    "allowDefault": true,
+    "authenticators": [
+      {
+        "name": "Password",
+        "class": "com.orientechnologies.orient.server.security.authenticator.ODefaultPasswordAuthenticator",
+        "enabled": true,
+        "users": [
+          {
+            "username": "guest",
+            "resources": "server.listDatabases,server.dblist"
+          }
+        ]
+      },
+      {
+        "name": "OSystemSymmetricKey",
+        "class": "com.orientechnologies.agent.security.authenticator.OSystemSymmetricKeyAuth",
+        "enabled": true
+      },
+      {
+        "name": "SymmetricKey-Key",
+        "class": "com.orientechnologies.agent.security.authenticator.OSecuritySymmetricKeyAuth",
+        "enabled": true,
+        "users": [
+          {
+            "username": "test",
+            "resources": "*",
+            "properties" :
+				{
+					"key" : "8BC7LeGkFbmHEYNTz5GwDw==",
+					"keyAlgorithm" : "AES"
+				}
+          }
+        ]
+      },
+      {
+        "name": "SymmetricKey-File",
+        "class": "com.orientechnologies.agent.security.authenticator.OSecuritySymmetricKeyAuth",
+        "enabled": true,
+        "users": [
+          {
+            "username": "test2",
+            "resources": "*",
+            "properties" :
+				{
+					"keyFile" : "${ORIENTDB_HOME}/config/AES.key",
+					"keyAlgorithm" : "AES"
+				}
+          }
+        ]
+      },
+      {
+        "name": "SymmetricKey-Keystore",
+        "class": "com.orientechnologies.agent.security.authenticator.OSecuritySymmetricKeyAuth",
+        "enabled": true,
+        "users": [
+          {
+            "username": "test3",
+            "resources": "*",
+            "properties" :
+				{
+					"keyStore" : 
+					{
+						"file" 			: "${ORIENTDB_HOME}/config/test.jks",
+						"password" 		: "password",
+						"keyAlias"		: "keyAlias",
+						"keyPassword"	: "password"
+					}				
+				}
+          }
+        ]
+      },
+      {
+        "name": "ServerConfig",
+        "class": "com.orientechnologies.orient.server.security.authenticator.OServerConfigAuthenticator",
+        "enabled": true
+      },
+      {
+        "name": "SystemAuthenticator",
+        "class": "com.orientechnologies.orient.server.security.authenticator.OSystemUserAuthenticator",
+        "enabled": false
+      } ]
+  }
+}

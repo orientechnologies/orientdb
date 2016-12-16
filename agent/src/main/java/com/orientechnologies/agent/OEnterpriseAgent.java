@@ -100,6 +100,8 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
       installCommands();
       installPlugins();
 
+      registerSecurityComponents();
+
       Thread installer = new Thread(new Runnable() {
         @Override
         public void run() {
@@ -144,6 +146,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
   @Override
   public void shutdown() {
     if (enabled) {
+      unregisterSecurityComponents();
       uninstallBackupManager();
       uninstallCommands();
       uninstallProfiler();
@@ -346,5 +349,27 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
 
   public void onAfterShutdown(final OServerPlugin plugin) {
 
+  }
+
+  private void registerSecurityComponents() {
+    try {
+      if (server.getSecurity() != null) {
+        server.getSecurity().registerSecurityClass(com.orientechnologies.agent.security.authenticator.OSecuritySymmetricKeyAuth.class);
+        server.getSecurity().registerSecurityClass(com.orientechnologies.agent.security.authenticator.OSystemSymmetricKeyAuth.class);
+      }
+    } catch (Throwable th) {
+      OLogManager.instance().error(this, "registerSecurityComponents() Throwable: " + th);
+    }
+  }
+
+  private void unregisterSecurityComponents() {
+    try {
+      if (server.getSecurity() != null) {
+        server.getSecurity().unregisterSecurityClass(com.orientechnologies.agent.security.authenticator.OSecuritySymmetricKeyAuth.class);
+        server.getSecurity().unregisterSecurityClass(com.orientechnologies.agent.security.authenticator.OSystemSymmetricKeyAuth.class);
+      }
+    } catch (Throwable th) {
+      OLogManager.instance().error(this, "unregisterSecurityComponents() Throwable: " + th);
+    }
   }
 }
