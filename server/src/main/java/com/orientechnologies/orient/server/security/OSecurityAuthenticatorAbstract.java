@@ -125,4 +125,8 @@ public abstract class OSecurityAuthenticatorAbstract implements OSecurityAuthent
   public boolean isSingleSignOnSupported() {
     return false;
   }
+
+  protected boolean isPasswordValid(final OServerUserConfiguration user) {
+    return user != null && user.password != null && !user.password.isEmpty();
+  }
 }
