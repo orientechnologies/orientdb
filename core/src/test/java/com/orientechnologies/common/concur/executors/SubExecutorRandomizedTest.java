@@ -43,14 +43,14 @@ public class SubExecutorRandomizedTest {
 
   private static final int CORES = Runtime.getRuntime().availableProcessors();
 
-  private ScheduledExecutorService executor;
-  private ScheduledExecutorService subExecutor;
+  private ScheduledThreadPoolExecutor executor;
+  private ScheduledExecutorService    subExecutor;
 
   private Random random;
 
   @Before
   public void before() {
-    executor = Executors.newScheduledThreadPool(CORES);
+    executor = new ScheduledThreadPoolExecutor(CORES);
     subExecutor = new SubScheduledExecutorService(executor);
 
     final long seed = System.currentTimeMillis();

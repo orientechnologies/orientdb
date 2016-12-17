@@ -36,12 +36,12 @@ import static org.junit.Assert.assertTrue;
  */
 public class SubScheduledExecutorServiceTest {
 
-  private ScheduledExecutorService executor;
-  private ScheduledExecutorService subExecutor;
+  private ScheduledThreadPoolExecutor executor;
+  private ScheduledExecutorService    subExecutor;
 
   @Before
   public void before() {
-    executor = Executors.newScheduledThreadPool(1);
+    executor = new ScheduledThreadPoolExecutor(1);
     subExecutor = new SubScheduledExecutorService(executor);
   }
 
