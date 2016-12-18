@@ -57,7 +57,7 @@ public class OPassthroughPageCache implements OPageCache {
 
   @Override
   public void releaseFilePages(long fileId, OWriteCache writeCache) {
-    // do nothing
+    releasePage(fileId, writeCache);
   }
 
   @Override
@@ -67,7 +67,7 @@ public class OPassthroughPageCache implements OPageCache {
 
   @Override
   public void reset(OWriteCache writeCache) {
-    // do nothing
+    writeCache = null;
   }
 
 }
