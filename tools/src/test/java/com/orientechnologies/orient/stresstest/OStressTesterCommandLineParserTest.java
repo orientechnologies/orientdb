@@ -108,9 +108,10 @@ public class OStressTesterCommandLineParserTest {
 
     stressTester = OStressTesterCommandLineParser
         .getStressTester(new String[] { "-c", "4", "-m", "plocal", "-w", "crud:c1r1u1d1", "--root-password", "foo" });
-    assertEquals(4, stressTester.getThreadsNumber());
-    assertEquals(OStressTester.OMode.PLOCAL, stressTester.getMode());
-    assertEquals("foo", stressTester.getPassword());
+    assertEquals( 4, stressTester.getThreadsNumber());
+    assertEquals( OStressTester.OMode.PLOCAL, stressTester.getMode());
+    assertEquals( "foo", stressTester.getPassword());
+    assertEquals( tmpDir, stressTester.getDatabaseIdentifier().getPlocalPath());
 
     // TODO: add tests for checking value of creates/reads to check the remotion of iteration had no impact
   }
