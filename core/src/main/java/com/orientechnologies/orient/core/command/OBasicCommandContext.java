@@ -325,6 +325,8 @@ public class OBasicCommandContext implements OCommandContext {
   @Override
   public void merge(final OCommandContext iContext) {
     // TODO: SOME VALUES NEED TO BE MERGED
+	  setChild(iContext);
+	  variables.put(iContext.getVariables());
   }
 
   private void init() {
