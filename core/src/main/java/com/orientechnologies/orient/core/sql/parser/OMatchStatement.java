@@ -370,8 +370,17 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
           // However, if there are edges to the startNode, we must visit the startNode from an already-visited
           // neighbor, to preserve the validity of the traversal. Therefore, we negate the value of isOutbound
           // to ensure that the edge is always scheduled in the direction from the already-visited neighbor
-          // toward the startNode.
-          boolean traversalDirection = !isOutbound;
+          // toward the startNode. Notably, this is also the case when evaluating "optional" nodes -- we always
+          // visit the optional node from its non-optional and already-visited neighbor.
+          //
+          // The only exception to the above is when we have edges with "while" conditions. We are not allowed
+          // to flip their directionality, so we leave them as-is.
+          boolean traversalDirection;
+          if (startNode.optional || edge.item.isBidirectional()) {
+            traversalDirection = !isOutbound;
+          } else {
+            traversalDirection = isOutbound;
+          }
 
           visitedEdges.add(edge);
           resultingSchedule.add(new EdgeTraversal(edge, traversalDirection));
