@@ -1664,6 +1664,55 @@ public class OMatchStatementExecutionTest {
     }
   }
 
+  @Test
+  public void testCyclicDeepTraversal() {
+    db.command(new OCommandSQL("CREATE CLASS testCyclicDeepTraversalV EXTENDS V")).execute();
+    db.command(new OCommandSQL("CREATE CLASS testCyclicDeepTraversalE EXTENDS E")).execute();
+
+    db.command(new OCommandSQL("CREATE VERTEX testCyclicDeepTraversalV SET name = 'a'")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX testCyclicDeepTraversalV SET name = 'b'")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX testCyclicDeepTraversalV SET name = 'c'")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX testCyclicDeepTraversalV SET name = 'z'")).execute();
+
+    // a -> b -> z
+    // z -> c -> a
+    db.command(new OCommandSQL("CREATE EDGE testCyclicDeepTraversalE from"
+            + "(select from testCyclicDeepTraversalV where name = 'a') to (select from testCyclicDeepTraversalV where name = 'b')"))
+            .execute();
+
+    db.command(new OCommandSQL("CREATE EDGE testCyclicDeepTraversalE from"
+            + "(select from testCyclicDeepTraversalV where name = 'b') to (select from testCyclicDeepTraversalV where name = 'z')"))
+            .execute();
+
+    db.command(new OCommandSQL("CREATE EDGE testCyclicDeepTraversalE from"
+            + "(select from testCyclicDeepTraversalV where name = 'z') to (select from testCyclicDeepTraversalV where name = 'c')"))
+            .execute();
+
+    db.command(new OCommandSQL("CREATE EDGE testCyclicDeepTraversalE from"
+            + "(select from testCyclicDeepTraversalV where name = 'c') to (select from testCyclicDeepTraversalV where name = 'a')"))
+            .execute();
+
+    OSQLSynchQuery query = new OSQLSynchQuery(
+            "MATCH {\n" +
+            "    class: testCyclicDeepTraversalV,\n" +
+            "    as: foo,\n" +
+            "    where: (name = 'a')\n" +
+            "}.out() {\n" +
+            "    while: ($depth < 2),\n" +
+            "    where: (name = 'z'),\n" +
+            "    as: bar\n" +
+            "}, {\n" +
+            "    as: bar\n" +
+            "}.out() {\n" +
+            "    while: ($depth < 2),\n" +
+            "    as: foo\n" +
+            "} RETURN $patterns"
+    );
+
+    List<?> result = db.query(query);
+    assertEquals(1, result.size());
+  }
+
   private List<OIdentifiable> getManagedPathElements(String managerName) {
     StringBuilder query = new StringBuilder();
     query.append("  match {class:Employee, as:boss, where: (name = '" + managerName + "')}");
