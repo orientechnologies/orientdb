@@ -254,7 +254,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
         final Collection<String> involvedClusters = exec.getInvolvedClusters();
 
         if (resultMgmt == OCommandDistributedReplicateRequest.DISTRIBUTED_RESULT_MGMT.MERGE) {
-          if (!exec.isIdempotent())
+          if (!exec.isIdempotent() && dbCfg.isSharded())
             throw new ODistributedOperationException("Cannot distribute the command '" + iCommand.getText()
                 + "' because it is not idempotent and a map-reduce has been requested");
 

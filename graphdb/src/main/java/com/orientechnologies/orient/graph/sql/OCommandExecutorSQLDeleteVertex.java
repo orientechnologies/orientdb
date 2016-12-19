@@ -333,8 +333,7 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
   }
 
   public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
-    return query != null && !getDatabase().getTransaction().isActive() ? DISTRIBUTED_EXECUTION_MODE.REPLICATE
-        : DISTRIBUTED_EXECUTION_MODE.LOCAL;
+    return DISTRIBUTED_EXECUTION_MODE.LOCAL;
   }
 
   /**

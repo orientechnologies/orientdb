@@ -249,7 +249,7 @@ public final class DistributedConfigReloadTest {
   public boolean checkAndCreateDatabase(String dbName) {
     boolean isNewDB = false;
     try {
-      OServerAdmin serverAdmin = new OServerAdmin(getDBURL()).connect("root", "database");
+      OServerAdmin serverAdmin = new OServerAdmin(getDBURL()).connect("root", "root");
       if (!serverAdmin.existsDatabase("plocal")) {
         log("Database does not exists. New database is created");
         serverAdmin.createDatabase(dbName, "graph", "plocal");
