@@ -60,6 +60,11 @@ public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object> 
   }
 
   @Override
+  public boolean containsKey(final Object key) {
+    return hzMap.containsKey(key);
+  }
+
+  @Override
   public Set<Entry<String, Object>> entrySet() {
     return hzMap.entrySet();
   }
@@ -124,19 +129,20 @@ public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object> 
   }
 
   @Override
+  public void entryUpdated(final EntryEvent<String, Object> event) {
+    if (ODistributedServerLog.isDebugEnabled())
+      ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+          "Map entry updated key=" + event.getKey() + ": " + event.getValue());
+
+    super.put(event.getKey(), event.getValue());
+  }
+
+  @Override
   public void entryRemoved(final EntryEvent<String, Object> event) {
     if (ODistributedServerLog.isDebugEnabled())
       ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
           "Map entry removed key=" + event.getKey() + ": " + event.getValue());
     super.remove(event.getKey());
-  }
-
-  @Override
-  public void entryUpdated(final EntryEvent<String, Object> event) {
-    if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-          "Map entry updated key=" + event.getKey() + ": " + event.getValue());
-    super.put(event.getKey(), event.getValue());
   }
 
   @Override

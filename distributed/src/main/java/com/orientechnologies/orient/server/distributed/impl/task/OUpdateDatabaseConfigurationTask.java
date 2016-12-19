@@ -22,52 +22,49 @@ package com.orientechnologies.orient.server.distributed.impl.task;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.util.ODateHelper;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
+import com.orientechnologies.orient.server.distributed.*;
+import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 /**
- * Task to manage the end of distributed transaction when no fix is needed (OFixTxTask) and all the locks must be released. Locks
- * are necessary to prevent concurrent modification of records before the transaction is finished. <br>
- * This task uses the same partition keys used by TxTask to avoid synchronizing all the worker threads (and queues).
+ * Task to update the database configuration across all the servers. This task is executed inside a distributed lock
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  *
  */
-public class OHeartbeatTask extends OAbstractRemoteTask {
-  private static final long             serialVersionUID = 1L;
-  public static final int               FACTORYID        = 16;
+public class OUpdateDatabaseConfigurationTask extends OAbstractRemoteTask {
+  public static final int FACTORYID = 24;
 
-  private long                          timestamp        = System.currentTimeMillis();
+  private String          databaseName;
+  private ODocument       configuration;
 
-  private final static SimpleDateFormat dateFormat       = new SimpleDateFormat(ODateHelper.DEF_DATETIME_FORMAT);
+  public OUpdateDatabaseConfigurationTask() {
+  }
 
-  public OHeartbeatTask() {
+  public OUpdateDatabaseConfigurationTask(final String databaseName, final ODocument cfg) {
+    this.databaseName = databaseName;
+    this.configuration = cfg;
   }
 
   @Override
   public Object execute(final ODistributedRequestId msgId, final OServer iServer, ODistributedServerManager iManager,
       final ODatabaseDocumentInternal database) throws Exception {
 
-    if (ODistributedServerLog.isDebugEnabled())
-      synchronized (dateFormat) {
-        ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-            "Received heartbeat (sourceTimeStamp=%s)", dateFormat.format(new Date(timestamp)));
-      }
+    final ODistributedStorage stg = (ODistributedStorage) iManager.getStorage(databaseName);
+    if (stg != null) {
+      ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.IN,
+          "Replacing distributed cfg for database '%s'\nnew: %s", databaseName, configuration);
 
-    // RETURN LOCAL TIME
-    return System.currentTimeMillis();
+      stg.setDistributedConfiguration(new OModifiableDistributedConfiguration(configuration));
+    }
+
+    return true;
   }
 
   @Override
@@ -87,22 +84,24 @@ public class OHeartbeatTask extends OAbstractRemoteTask {
 
   @Override
   public void toStream(final DataOutput out) throws IOException {
-    out.writeLong(timestamp);
+    out.writeUTF(databaseName);
+    final byte[] stream = configuration.toStream();
+    out.writeInt(stream.length);
+    out.write(stream);
   }
 
   @Override
   public void fromStream(final DataInput in, final ORemoteTaskFactory factory) throws IOException {
-    timestamp = in.readLong();
+    databaseName = in.readUTF();
+    final int length = in.readInt();
+    final byte[] stream = new byte[length];
+    in.readFully(stream);
+    configuration = new ODocument().fromStream(stream);
   }
 
-  /**
-   * Computes the timeout according to the transaction size.
-   *
-   * @return
-   */
   @Override
-  public long getDistributedTimeout() {
-    return OGlobalConfiguration.DISTRIBUTED_HEARTBEAT_TIMEOUT.getValueAsLong();
+  public boolean isNodeOnlineRequired() {
+    return false;
   }
 
   @Override
@@ -111,18 +110,13 @@ public class OHeartbeatTask extends OAbstractRemoteTask {
   }
 
   @Override
-  public long getSynchronousTimeout(final int iSynchNodes) {
-    return getDistributedTimeout();
-  }
-
-  @Override
-  public long getTotalTimeout(final int iTotalNodes) {
-    return getDistributedTimeout();
+  public long getDistributedTimeout() {
+    return OGlobalConfiguration.DISTRIBUTED_HEARTBEAT_TIMEOUT.getValueAsLong();
   }
 
   @Override
   public String getName() {
-    return "heartbeat";
+    return "upd_db_cfg";
   }
 
   @Override
@@ -132,6 +126,6 @@ public class OHeartbeatTask extends OAbstractRemoteTask {
 
   @Override
   public String toString() {
-    return getName() + " timestamp: " + timestamp;
+    return getName();
   }
 }

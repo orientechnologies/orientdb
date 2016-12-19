@@ -126,6 +126,9 @@ public abstract class OBaseWorkload implements OWorkload {
           context.totalPerThread = context.threadId < concurrencyLevel - 1 ? totalPerThread : totalPerLastThread;
 
           context.init(dbIdentifier, operationsPerTransaction);
+
+          init(context);
+
           try {
             final int startIdx = totalPerThread * context.threadId;
 
@@ -234,14 +237,17 @@ public abstract class OBaseWorkload implements OWorkload {
     return contexts;
   }
 
-  protected void manageNeedRetryException(final OBaseWorkLoadContext context, final ONeedRetryException e) {
-  }
-
   protected abstract void beginTransaction(OBaseWorkLoadContext context);
 
   protected abstract void commitTransaction(OBaseWorkLoadContext context);
 
   protected abstract OBaseWorkLoadContext getContext();
+
+  protected void init(OBaseWorkLoadContext context) {
+  }
+
+  protected void manageNeedRetryException(final OBaseWorkLoadContext context, final ONeedRetryException e) {
+  }
 
   protected String getErrors() {
     final StringBuilder buffer = new StringBuilder();

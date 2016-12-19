@@ -29,6 +29,7 @@ import com.orientechnologies.orient.stresstest.ODatabaseIdentifier;
 import com.orientechnologies.orient.stresstest.OStressTesterSettings;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 
 import java.util.List;
 import java.util.Random;
@@ -57,6 +58,18 @@ public class OGraphInsertWorkload extends OBaseGraphWorkload {
   @Override
   public String getName() {
     return "GINSERT";
+  }
+
+  @Override
+  protected void init(OBaseWorkLoadContext context) {
+    synchronized (getClass()) {
+      final OrientBaseGraph g = ((OWorkLoadContext) context).graph;
+      if (g.getVertexType(className) == null) {
+        final OrientVertexType c = g.createVertexType(className);
+        c.createProperty("_id", OType.LONG);
+        c.createProperty("ts", OType.DATETIME);
+      }
+    }
   }
 
   @Override
@@ -93,7 +106,8 @@ public class OGraphInsertWorkload extends OBaseGraphWorkload {
             final OWorkLoadContext graphContext = ((OWorkLoadContext) context);
             final OrientBaseGraph graph = graphContext.graph;
 
-            final OrientVertex v = graph.addVertex(null, "_id", resultVertices.current.get());
+            final OrientVertex v = graph.addVertex("class:" + className, "_id", resultVertices.current.get(), "ts",
+                System.currentTimeMillis());
 
             if (graphContext.lastVertexToConnect != null) {
               v.addEdge("E", graphContext.lastVertexToConnect);

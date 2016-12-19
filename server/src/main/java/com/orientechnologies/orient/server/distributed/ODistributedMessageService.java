@@ -29,7 +29,7 @@ import java.util.Set;
  * 
  */
 public interface ODistributedMessageService {
-  ODistributedDatabase registerDatabase(String iDatabaseName);
+  ODistributedDatabase registerDatabase(String iDatabaseName, ODistributedConfiguration cfg);
 
   Set<String> getDatabases();
 

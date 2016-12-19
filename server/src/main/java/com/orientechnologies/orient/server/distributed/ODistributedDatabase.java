@@ -78,6 +78,8 @@ public interface ODistributedDatabase {
 
   ODistributedSyncConfiguration getSyncConfiguration();
 
+  void waitForOnline();
+
   void processRequest(ODistributedRequest request);
 
   ODistributedTxContext registerTxContext(ODistributedRequestId reqId);

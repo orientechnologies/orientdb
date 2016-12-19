@@ -377,14 +377,15 @@ public abstract class AbstractServerClusterTest {
 
   protected void assertDatabaseStatusEquals(final int fromServerId, final String serverName, final String dbName,
       final ODistributedServerManager.DB_STATUS status) {
-    Assert.assertEquals(serverInstance.get(fromServerId).getServerInstance().getDistributedManager().getDatabaseStatus(serverName, dbName),
-        status);
+    Assert.assertEquals(
+        serverInstance.get(fromServerId).getServerInstance().getDistributedManager().getDatabaseStatus(serverName, dbName), status);
   }
 
   protected void waitForDatabaseStatus(final int serverId, final String serverName, final String dbName,
       final ODistributedServerManager.DB_STATUS status, final long timeout) {
     final long startTime = System.currentTimeMillis();
-    while (serverInstance.get(serverId).getServerInstance().getDistributedManager().getDatabaseStatus(serverName, dbName) != status) {
+    while (serverInstance.get(serverId).getServerInstance().getDistributedManager().getDatabaseStatus(serverName,
+        dbName) != status) {
 
       if (timeout > 0 && System.currentTimeMillis() - startTime > timeout) {
         OLogManager.instance().error(this, "TIMEOUT on wait-for condition (timeout=" + timeout + ")");
@@ -421,7 +422,7 @@ public abstract class AbstractServerClusterTest {
     while (!serverInstance.get(fromServerId).getServerInstance().getDistributedManager().isNodeOnline(serverName, dbName)) {
 
       if (timeout > 0 && System.currentTimeMillis() - startTime > timeout) {
-        OLogManager.instance().error(this, "TIMEOUT on wait-for condition (timeout=" + timeout + ")");
+        OLogManager.instance().error(this, "TIMEOUT on waitForDatabaseIsOnline condition (timeout=" + timeout + ")");
         break;
       }
 
@@ -550,5 +551,30 @@ public abstract class AbstractServerClusterTest {
     for (int s : serverIds)
       result.add(serverInstance.get(s));
     return result;
+  }
+
+  protected void checkSameClusters() {
+    List<String> clusters = null;
+    for (ServerRun s : serverInstance) {
+      ODatabaseDocumentTx d = new ODatabaseDocumentTx(getDatabaseURL(s));
+      try {
+        d.open("admin", "admin");
+        d.reload();
+
+        final List<String> dbClusters = new ArrayList<String>(d.getClusterNames());
+        Collections.sort(dbClusters);
+
+        if (clusters == null) {
+          clusters = new ArrayList<String>(dbClusters);
+        } else {
+          Assert.assertEquals(
+              "Clusters are not the same number. server0=" + clusters + " server" + s.getServerId() + "=" + dbClusters,
+              clusters.size(), dbClusters.size());
+        }
+      } finally {
+        d.activateOnCurrentThread();
+        d.close();
+      }
+    }
   }
 }

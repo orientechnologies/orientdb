@@ -29,6 +29,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECU
 import com.orientechnologies.orient.server.distributed.conflict.ODistributedConflictResolverFactory;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
@@ -162,7 +163,8 @@ public interface ODistributedServerManager {
 
   void setDistributedStrategy(final ODistributedStrategy streatgy);
 
-  void updateCachedDatabaseConfiguration(String iDatabaseName, ODocument cfg, boolean iSaveToDisk, boolean iDeployToCluster);
+  boolean updateCachedDatabaseConfiguration(String iDatabaseName, OModifiableDistributedConfiguration cfg,
+      boolean iDeployToCluster);
 
   long getNextMessageIdCounter();
 
@@ -170,8 +172,7 @@ public interface ODistributedServerManager {
 
   void updateLastClusterChange();
 
-  boolean reassignClustersOwnership(String iNode, String databaseName, Set<String> clustersWithNotAvailableOwner,
-      boolean rebalance);
+  boolean reassignClustersOwnership(String iNode, String databaseName, final OModifiableDistributedConfiguration cfg);
 
   /**
    * Available means not OFFLINE, so ONLINE or SYNCHRONIZING.
@@ -244,8 +245,7 @@ public interface ODistributedServerManager {
 
   List<String> getOnlineNodes(String iDatabaseName);
 
-  boolean installDatabase(boolean iStartup, String databaseName, ODocument config, boolean forceDeployment,
-      boolean tryWithDeltaFirst);
+  boolean installDatabase(boolean iStartup, String databaseName, boolean forceDeployment, boolean tryWithDeltaFirst);
 
   ORemoteTaskFactory getTaskFactory();
 
@@ -260,4 +260,6 @@ public interface ODistributedServerManager {
    * -almost- the same on all members of the cluster.
    */
   long getClusterTime();
+
+  File getDefaultDatabaseConfigFile();
 }

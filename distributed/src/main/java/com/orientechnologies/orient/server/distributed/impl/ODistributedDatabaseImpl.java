@@ -36,10 +36,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
-import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
-import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
-import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
+import com.orientechnologies.orient.server.distributed.task.*;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
 import java.io.File;
@@ -78,6 +75,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private AtomicLong                                                            totalSentRequests              = new AtomicLong();
   private AtomicLong                                                            totalReceivedRequests          = new AtomicLong();
   private TimerTask                                                             txTimeoutTask                  = null;
+  private CountDownLatch                                                        waitForOnline                  = new CountDownLatch(
+      1);
   private volatile boolean                                                      running                        = true;
   private AtomicBoolean                                                         parsing                        = new AtomicBoolean(
       true);
@@ -94,17 +93,20 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   public ODistributedDatabaseImpl(final OHazelcastPlugin manager, final ODistributedMessageServiceImpl msgService,
-      final String iDatabaseName) {
+      final String iDatabaseName, final ODistributedConfiguration cfg) {
     this.manager = manager;
     this.msgService = msgService;
     this.databaseName = iDatabaseName;
     this.localNodeName = manager.getLocalNodeName();
 
+    // SELF REGISTERING ITSELF HERE BECAUSE IT'S NEEDED FURTHER IN THE CALL CHAIN
+    msgService.databases.put(iDatabaseName, this);
+
     this.requestLock = manager.getHazelcastInstance().getLock(NODE_LOCK_PREFIX + iDatabaseName);
 
     startAcceptingRequests();
 
-    checkLocalNodeInConfiguration();
+    checkLocalNodeInConfiguration(cfg);
 
     startTxTimeoutTimerTask();
 
@@ -159,6 +161,16 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     return getSyncConfiguration().getLastLSN(server);
   }
 
+  @Override
+  public void waitForOnline() {
+    try {
+      waitForOnline.await();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      // IGNORE IT
+    }
+  }
+
   /**
    * Distributed requests against the available workers by using one queue per worker. This guarantee the sequence of the operations
    * against the same record cluster.
@@ -168,47 +180,48 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       // DISCARD IT
       return;
 
-    if (!parsing.get()) {
-      // WAIT FOR PARSING REQUESTS
-      while (!parsing.get()) {
-        try {
-          Thread.sleep(300);
-        } catch (InterruptedException e) {
-          break;
-        }
-      }
-
-      if (!running)
-        // DISCARD IT
-        return;
-    }
-
     final ORemoteTask task = request.getTask();
+
+    if (task.isNodeOnlineRequired())
+      if (!parsing.get()) {
+        // WAIT FOR PARSING REQUESTS
+        while (!parsing.get()) {
+          try {
+            Thread.sleep(300);
+          } catch (InterruptedException e) {
+            break;
+          }
+        }
+
+        if (!running)
+          // DISCARD IT
+          return;
+      }
 
     totalReceivedRequests.incrementAndGet();
 
-    // final ODistributedMomentum lastMomentum = filterByMomentum.get();
-    // if (lastMomentum != null && task instanceof OAbstractReplicatedTask) {
-    // final OLogSequenceNumber taskLastLSN = ((OAbstractReplicatedTask) task).getLastLSN();
-    //
-    // final String sourceServer = manager.getNodeNameById(request.getId().getNodeId());
-    // final OLogSequenceNumber lastLSNFromMomentum = lastMomentum.getLSN(sourceServer);
-    //
-    // if (taskLastLSN != null && lastLSNFromMomentum != null && taskLastLSN.compareTo(lastLSNFromMomentum) < 0) {
-    // // SKIP REQUEST BECAUSE CONTAINS AN OLD LSN
-    // final String msg = String.format("Skipped request %s on database '%s' because %s < current %s", request, databaseName,
-    // taskLastLSN, lastLSNFromMomentum);
-    // ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE, msg);
-    // ODistributedWorker.sendResponseBack(this, manager, request, new ODistributedException(msg));
-    // return;
-    // }
-    // }
+//    final ODistributedMomentum lastMomentum = filterByMomentum.get();
+//    if (lastMomentum != null && task instanceof OAbstractReplicatedTask) {
+//      final OLogSequenceNumber taskLastLSN = ((OAbstractReplicatedTask) task).getLastLSN();
+//
+//      final String sourceServer = manager.getNodeNameById(request.getId().getNodeId());
+//      final OLogSequenceNumber lastLSNFromMomentum = lastMomentum.getLSN(sourceServer);
+//
+//      if (taskLastLSN != null && lastLSNFromMomentum != null && taskLastLSN.compareTo(lastLSNFromMomentum) < 0) {
+//        // SKIP REQUEST BECAUSE CONTAINS AN OLD LSN
+//        final String msg = String.format("Skipped request %s on database '%s' because %s < current %s", request, databaseName,
+//            taskLastLSN, lastLSNFromMomentum);
+//        ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE, msg);
+//        ODistributedWorker.sendResponseBack(this, manager, request, new ODistributedException(msg));
+//        return;
+//      }
+//    }
 
     final int[] partitionKeys = task.getPartitionKey();
 
-    // if (ODistributedServerLog.isDebugEnabled())
-    ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE, "Request %s on database '%s' partitionKeys=%s task=%s",
-        request, databaseName, Arrays.toString(partitionKeys), task);
+    if (ODistributedServerLog.isDebugEnabled())
+      ODistributedServerLog.debug(this, localNodeName, request.getTask().getNodeSource(), DIRECTION.IN,
+          "Request %s on database '%s' partitionKeys=%s task=%s", request, databaseName, Arrays.toString(partitionKeys), task);
 
     if (partitionKeys.length > 1 || partitionKeys[0] == -1) {
 
@@ -334,7 +347,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
     final int partition = partitionKey % workerThreads.size();
 
-    ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE,
+    ODistributedServerLog.debug(this, localNodeName, request.getTask().getNodeSource(), DIRECTION.IN,
         "Request %s on database '%s' dispatched to the worker %d", request, databaseName, partition);
 
     workerThreads.get(partition).processRequest(request);
@@ -480,6 +493,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
     // SET THE NODE.DB AS ONLINE
     manager.setDatabaseStatus(localNodeName, databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
+
+    waitForOnline.countDown();
   }
 
   @Override
@@ -874,20 +889,23 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     return currentResponseMgr.getFinalResponse();
   }
 
-  protected void checkLocalNodeInConfiguration() {
-    manager.executeInDistributedDatabaseLock(databaseName, 0, new OCallable<Void, ODistributedConfiguration>() {
-      @Override
-      public Void call(final ODistributedConfiguration cfg) {
-        // GET LAST VERSION IN LOCK
-        final List<String> foundPartition = cfg.addNewNodeInServerList(localNodeName);
-        if (foundPartition != null) {
-          ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE, "Adding node '%s' in partition: %s db=%s v=%d",
-              localNodeName, databaseName, foundPartition, cfg.getVersion());
-        }
-        manager.setDatabaseStatus(localNodeName, databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
-        return null;
-      }
-    });
+  protected void checkLocalNodeInConfiguration(final ODistributedConfiguration cfg) {
+    manager.executeInDistributedDatabaseLock(databaseName, 0, cfg.modify(),
+        new OCallable<Void, OModifiableDistributedConfiguration>() {
+          @Override
+          public Void call(final OModifiableDistributedConfiguration cfg) {
+            // GET LAST VERSION IN LOCK
+            final List<String> foundPartition = cfg.addNewNodeInServerList(localNodeName);
+            if (foundPartition != null) {
+              ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE, "Adding node '%s' in partition: %s db=%s v=%d",
+                  localNodeName, databaseName, foundPartition, cfg.getVersion());
+            }
+            return null;
+          }
+        });
+
+    if (!manager.isNodeOnline(localNodeName, databaseName))
+      manager.setDatabaseStatus(localNodeName, databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
   }
 
   protected String getLocalNodeName() {

@@ -44,7 +44,12 @@ public class DistributedDbDropAndReCreateAnotherTest extends AbstractServerClust
       waitForDatabaseIsOnline(0, "europe-0", getDatabaseName(), 5000);
       waitForDatabaseIsOnline(0, "europe-1", getDatabaseName(), 5000);
       waitForDatabaseIsOnline(0, "europe-2", getDatabaseName(), 5000);
+
       db.drop();
+
+      waitForDatabaseIsOffline("europe-0", getDatabaseName(), 5000);
+      waitForDatabaseIsOffline("europe-1", getDatabaseName(), 5000);
+      waitForDatabaseIsOffline("europe-2", getDatabaseName(), 5000);
 
       server = serverInstance.get(lastServerNum);
 
@@ -55,12 +60,24 @@ public class DistributedDbDropAndReCreateAnotherTest extends AbstractServerClust
       banner("(RE)CREATING DATABASE " + dbName + " ON SERVER " + server.getServerId());
 
       final OrientGraphNoTx graph = new OrientGraphNoTx(dbName);
+
+      waitForDatabaseIsOnline(0, "europe-0", getDatabaseName(), 15000);
+      waitForDatabaseIsOnline(0, "europe-1", getDatabaseName(), 15000);
+      waitForDatabaseIsOnline(0, "europe-2", getDatabaseName(), 15000);
+
+      checkSameClusters();
+
+      graph.makeActive();
       onAfterDatabaseCreation(graph);
       graph.shutdown();
 
-      Thread.sleep(2000);
+      checkThePersonClassIsPresentOnAllTheServers();
 
     } while (lastServerNum < serverInstance.size());
+
+    banner("EXECUTING FINAL TESTS");
+
+    dumpDistributedDatabaseCfgOfAllTheServers();
 
     executeMultipleTest(0);
   }

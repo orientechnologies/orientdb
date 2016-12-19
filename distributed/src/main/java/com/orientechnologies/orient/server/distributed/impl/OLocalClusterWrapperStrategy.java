@@ -32,7 +32,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -137,9 +136,10 @@ public class OLocalClusterWrapperStrategy implements OClusterSelectionStrategy {
     List<String> bestClusters = cfg.getOwnedClustersByServer(clusterNames, nodeName);
     if (bestClusters.isEmpty()) {
       // REBALANCE THE CLUSTERS
-      manager.reassignClustersOwnership(nodeName, databaseName, new HashSet<String>(clusterNames), true);
+      manager.reassignClustersOwnership(nodeName, databaseName, cfg.modify());
 
       cfg = manager.getDatabaseConfiguration(databaseName);
+
       bestClusters = cfg.getOwnedClustersByServer(clusterNames, nodeName);
 
       if (bestClusters.isEmpty()) {

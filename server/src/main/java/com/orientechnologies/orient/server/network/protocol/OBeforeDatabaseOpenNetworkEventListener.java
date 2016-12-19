@@ -17,22 +17,14 @@
  *  * For more information: http://www.orientechnologies.com
  *
  */
-package com.orientechnologies.orient.server.distributed.impl;
-
-import com.orientechnologies.orient.core.db.ODatabaseInternal;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
-
-import java.util.Set;
+package com.orientechnologies.orient.server.network.protocol;
 
 /**
- * Interface to manage balancing of cluster ownership.
- *
+ * Listener interface to receive notification before a new database is open.
+ * 
  * @author Luca Garulli (l.garulli--at--orientdb.com)
+ * 
  */
-public interface OClusterOwnershipAssignmentStrategy {
-
-  boolean assignClusterOwnershipOfClass(final ODatabaseInternal iDatabase, final OModifiableDistributedConfiguration cfg,
-      final OClass iClass, final Set<String> availableNodes);
-
+public interface OBeforeDatabaseOpenNetworkEventListener {
+  void onBeforeDatabaseOpen(String url);
 }

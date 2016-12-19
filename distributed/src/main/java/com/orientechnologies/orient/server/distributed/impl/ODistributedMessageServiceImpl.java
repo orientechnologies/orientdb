@@ -44,7 +44,7 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
   private final OHazelcastPlugin                                     manager;
   private final ConcurrentHashMap<Long, ODistributedResponseManager> responsesByRequestIds;
   private final TimerTask                                            asynchMessageManager;
-  private Map<String, ODistributedDatabaseImpl> databases = new ConcurrentHashMap<String, ODistributedDatabaseImpl>();
+  Map<String, ODistributedDatabaseImpl> databases = new ConcurrentHashMap<String, ODistributedDatabaseImpl>();
   private Thread responseThread;
   private          long[]                      responseTimeMetrics = new long[10];
   private volatile boolean                     running             = true;
@@ -124,10 +124,8 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
     return total > 0 ? total / involved : 0;
   }
 
-  public ODistributedDatabaseImpl registerDatabase(final String iDatabaseName) {
-    final ODistributedDatabaseImpl db = new ODistributedDatabaseImpl(manager, this, iDatabaseName);
-    databases.put(iDatabaseName, db);
-    return db;
+  public ODistributedDatabaseImpl registerDatabase(final String iDatabaseName, final ODistributedConfiguration cfg) {
+    return new ODistributedDatabaseImpl(manager, this, iDatabaseName, cfg);
   }
 
   public ODistributedDatabaseImpl unregisterDatabase(final String iDatabaseName) {

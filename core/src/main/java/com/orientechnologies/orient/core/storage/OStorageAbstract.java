@@ -23,6 +23,7 @@ import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.concur.resource.OSharedContainer;
 import com.orientechnologies.common.concur.resource.OSharedContainerImpl;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.io.OUtils;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -90,10 +91,7 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
   }
 
   protected String normalizeName(String name) {
-    if (OStringSerializerHelper.contains(name, '/'))
-      return name.substring(name.lastIndexOf("/") + 1);
-    else
-      return name;
+    return OUtils.getDatabaseNameFromURL(name);
   }
 
   public abstract OCluster getClusterByName(final String iClusterName);

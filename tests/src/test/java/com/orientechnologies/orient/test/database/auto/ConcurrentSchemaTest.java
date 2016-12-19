@@ -109,16 +109,12 @@ public class ConcurrentSchemaTest extends DocumentDBBaseTest {
 
   @Test
   public void concurrentCommands() throws Exception {
-//    System.out.println("Create classes, spanning " + THREADS + " threads...");
-
     ConcurrentTestHelper.test(THREADS, new TestFactory<Void>() {
       @Override
       public Callable<Void> createWorker() {
         return new CreateClassCommandExecutor(url);
       }
     });
-
-//    System.out.println("Create classes, checking...");
 
     for (int id = 0; id < THREADS; ++id) {
       for (int i = 0; i < CYCLES; ++i) {
@@ -127,16 +123,12 @@ public class ConcurrentSchemaTest extends DocumentDBBaseTest {
       }
     }
 
-//    System.out.println("Dropping classes, spanning " + THREADS + " threads...");
-
     ConcurrentTestHelper.test(THREADS, new TestFactory<Void>() {
       @Override
       public Callable<Void> createWorker() {
         return new DropClassCommandExecutor(url);
       }
     });
-
-//    System.out.println("Done!");
 
     Assert.assertEquals(counter.get(), 0);
   }

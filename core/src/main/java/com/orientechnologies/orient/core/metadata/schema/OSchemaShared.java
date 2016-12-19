@@ -67,30 +67,30 @@ import java.util.concurrent.Callable;
 @SuppressWarnings("unchecked")
 public class OSchemaShared extends ODocumentWrapperNoClass
     implements OSchema, OCloseable, OOrientStartupListener, OOrientShutdownListener {
-  private static final int  NOT_EXISTENT_CLUSTER_ID = -1;
-  public static final  int  CURRENT_VERSION_NUMBER  = 4;
-  public static final  int  VERSION_NUMBER_V4       = 4;
+  private static final int                         NOT_EXISTENT_CLUSTER_ID = -1;
+  public static final int                          CURRENT_VERSION_NUMBER  = 4;
+  public static final int                          VERSION_NUMBER_V4       = 4;
   // this is needed for guarantee the compatibility to 2.0-M1 and 2.0-M2 no changed associated with it
-  public static final  int  VERSION_NUMBER_V5       = 5;
-  private static final long serialVersionUID        = 1L;
+  public static final int                          VERSION_NUMBER_V5       = 5;
+  private static final long                        serialVersionUID        = 1L;
 
-  private final boolean clustersCanNotBeSharedAmongClasses;
+  private final boolean                            clustersCanNotBeSharedAmongClasses;
 
-  private final OReadersWriterSpinLock rwSpinLock = new OReadersWriterSpinLock();
+  private final OReadersWriterSpinLock             rwSpinLock              = new OReadersWriterSpinLock();
 
-  private final Map<String, OClass>  classes           = new HashMap<String, OClass>();
-  private final Map<Integer, OClass> clustersToClasses = new HashMap<Integer, OClass>();
+  private final Map<String, OClass>                classes                 = new HashMap<String, OClass>();
+  private final Map<Integer, OClass>               clustersToClasses       = new HashMap<Integer, OClass>();
 
-  private final OClusterSelectionFactory clusterSelectionFactory = new OClusterSelectionFactory();
+  private final OClusterSelectionFactory           clusterSelectionFactory = new OClusterSelectionFactory();
 
-  private volatile ThreadLocal<OModifiableInteger> modificationCounter  = new OModificationsCounter();
-  private final    List<OGlobalProperty>           properties           = new ArrayList<OGlobalProperty>();
-  private final    Map<String, OGlobalProperty>    propertiesByNameType = new HashMap<String, OGlobalProperty>();
-  private          Set<Integer>                    blobClusters         = new HashSet<Integer>();
-  private volatile int                             version              = 0;
-  private volatile OImmutableSchema snapshot;
+  private volatile ThreadLocal<OModifiableInteger> modificationCounter     = new OModificationsCounter();
+  private final List<OGlobalProperty>              properties              = new ArrayList<OGlobalProperty>();
+  private final Map<String, OGlobalProperty>       propertiesByNameType    = new HashMap<String, OGlobalProperty>();
+  private Set<Integer>                             blobClusters            = new HashSet<Integer>();
+  private volatile int                             version                 = 0;
+  private volatile OImmutableSchema                snapshot;
 
-  private static Set<String> internalClasses = new HashSet<String>();
+  private static Set<String>                       internalClasses         = new HashSet<String>();
 
   static {
     internalClasses.add("ouser");
@@ -211,7 +211,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass
   }
 
   public OClass createClass(final Class<?> clazz) {
-    OClass result;
+    OClass result = null;
 
     int[] clusterIds = null;
     int retry = 0;
@@ -379,7 +379,13 @@ public class OSchemaShared extends ODocumentWrapperNoClass
         break;
       } catch (ClusterIdsAreEmptyException e) {
         classes.remove(className.toLowerCase());
-        clusterIds = createClusters(className);
+        clusterIds = (int[]) OScenarioThreadLocal.executeAsDefault(new Callable<int[]>() {
+          @Override
+          public int[] call() throws Exception {
+            return createClusters(className);
+          }
+        });
+
         retry++;
       }
 
@@ -512,7 +518,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass
       cmd.append(className);
       cmd.append(" unsafe");
 
-      if (isDistributedCommand()) {
+      if (executeThroughDistributedStorage()) {
         final OAutoshardedStorage autoshardedStorage = (OAutoshardedStorage) storage;
         OCommandSQL commandSQL = new OCommandSQL(cmd.toString());
         commandSQL.addExcludedNode(autoshardedStorage.getNodeId());
@@ -955,7 +961,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass
     return global;
   }
 
-  private OClass doCreateClass(final String className, final int[] clusterIds, int retry, OClass... superClasses)
+  private OClass doCreateClass(final String className, int[] clusterIds, int retry, OClass... superClasses)
       throws ClusterIdsAreEmptyException {
     OClass result;
 
@@ -974,8 +980,12 @@ public class OSchemaShared extends ODocumentWrapperNoClass
       if (classes.containsKey(key) && retry == 0)
         throw new OSchemaException("Class '" + className + "' already exists in current database");
 
-      if (!isDistributedCommand())
+      if (!executeThroughDistributedStorage())
         checkClustersAreAbsent(clusterIds);
+
+      if (clusterIds == null || clusterIds.length == 0) {
+        clusterIds = createClusters(className, getDatabase().getStorage().getConfiguration().getMinimumClusters());
+      }
 
       cmd = new StringBuilder("create class ");
       if (getDatabase().getStorage().getConfiguration().isStrictSql())
@@ -1017,7 +1027,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass
         }
       }
 
-      if (isDistributedCommand()) {
+      if (executeThroughDistributedStorage()) {
         createClassInternal(className, clusterIds, superClassesList);
 
         final OAutoshardedStorage autoshardedStorage = (OAutoshardedStorage) storage;
@@ -1035,7 +1045,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass
       result = classes.get(className.toLowerCase());
 
       // WAKE UP DB LIFECYCLE LISTENER
-      for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext(); )
+      for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();)
         it.next().onCreateClass(getDatabase(), result);
 
     } finally {
@@ -1093,7 +1103,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass
         cmd.append(clusters);
       }
 
-      if (isDistributedCommand()) {
+      if (executeThroughDistributedStorage()) {
 
         final int[] clusterIds = createClusters(className, clusters);
         createClassInternal(className, clusterIds, superClassesList);
@@ -1115,7 +1125,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass
       result = classes.get(className.toLowerCase());
 
       // WAKE UP DB LIFECYCLE LISTENER
-      for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext(); )
+      for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();)
         it.next().onCreateClass(getDatabase(), result);
 
     } catch (ClusterIdsAreEmptyException e) {
@@ -1127,7 +1137,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass
     return result;
   }
 
-  private boolean isDistributedCommand() {
+  private boolean executeThroughDistributedStorage() {
     return getDatabase().getStorage() instanceof OAutoshardedStorage && !OScenarioThreadLocal.INSTANCE.isRunModeDistributed();
   }
 
@@ -1227,7 +1237,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass
   }
 
   private String getNextAvailableClusterName(final String className) {
-    for (int i = 1; ; ++i) {
+    for (int i = 1;; ++i) {
       final String clusterName = className + "_" + i;
       if (getDatabase().getClusterIdByName(clusterName) < 0)
         // FREE NAME
@@ -1278,7 +1288,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass
       removeClusterClassMap(cls);
 
       // WAKE UP DB LIFECYCLE LISTENER
-      for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext(); )
+      for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();)
         it.next().onDropClass(getDatabase(), cls);
 
     } finally {

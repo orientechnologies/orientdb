@@ -3366,6 +3366,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       configuration.update();
     }
 
+    if (OLogManager.instance().isDebugEnabled())
+      OLogManager.instance().debug(this, "Created cluster '%s' in database '%s' with id %d. Clusters: %s", clusterName, url,
+          createdClusterId, clusters);
+
     return createdClusterId;
   }
 

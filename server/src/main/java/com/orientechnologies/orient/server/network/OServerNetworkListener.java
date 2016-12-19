@@ -31,6 +31,7 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.ShutdownHelper;
 import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
+import com.orientechnologies.orient.server.network.protocol.OBeforeDatabaseOpenNetworkEventListener;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
 
@@ -41,17 +42,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class OServerNetworkListener extends Thread {
-  private OServerSocketFactory              socketFactory;
-  private ServerSocket                      serverSocket;
-  private InetSocketAddress                 inboundAddr;
-  private Class<? extends ONetworkProtocol> protocolType;
-  private volatile boolean                  active            = true;
-  private List<OServerCommandConfiguration> statefulCommands  = new ArrayList<OServerCommandConfiguration>();
-  private List<OServerCommand>              statelessCommands = new ArrayList<OServerCommand>();
-  private int                               socketBufferSize;
-  private OContextConfiguration             configuration;
-  private OServer                           server;
-  private int                               protocolVersion   = -1;
+  private OServerSocketFactory                          socketFactory;
+  private ServerSocket                                  serverSocket;
+  private InetSocketAddress                             inboundAddr;
+  private Class<? extends ONetworkProtocol>             protocolType;
+  private volatile boolean                              active                                 = true;
+  private List<OServerCommandConfiguration>             statefulCommands                       = new ArrayList<OServerCommandConfiguration>();
+  private List<OServerCommand>                          statelessCommands                      = new ArrayList<OServerCommand>();
+  private int                                           socketBufferSize;
+  private OContextConfiguration                         configuration;
+  private OServer                                       server;
+  private int                                           protocolVersion                        = -1;
+  private List<OBeforeDatabaseOpenNetworkEventListener> beforeDatabaseOpenNetworkEventListener = new ArrayList<OBeforeDatabaseOpenNetworkEventListener>();
 
   public OServerNetworkListener(final OServer iServer, final OServerSocketFactory iSocketFactory, final String iHostName,
       final String iHostPortRange, final String iProtocolName, final Class<? extends ONetworkProtocol> iProtocol,
@@ -231,6 +233,14 @@ public class OServerNetworkListener extends Thread {
     }
   }
 
+  public void registerBeforeConnectNetworkEventListener(final OBeforeDatabaseOpenNetworkEventListener listener) {
+    beforeDatabaseOpenNetworkEventListener.add(listener);
+  }
+
+  public void unregisterBeforeConnectNetworkEventListener(final OBeforeDatabaseOpenNetworkEventListener listener) {
+    beforeDatabaseOpenNetworkEventListener.remove(listener);
+  }
+
   public Class<? extends ONetworkProtocol> getProtocolType() {
     return protocolType;
   }
@@ -305,6 +315,10 @@ public class OServerNetworkListener extends Thread {
     return null;
   }
 
+  public List<OBeforeDatabaseOpenNetworkEventListener> getBeforeDatabaseOpenNetworkEventListener() {
+    return beforeDatabaseOpenNetworkEventListener;
+  }
+
   /**
    * Initialize a server socket for communicating with the client.
    *
@@ -359,6 +373,6 @@ public class OServerNetworkListener extends Thread {
         configuration.setValue(param.name, param.value);
     }
 
-     socketBufferSize = configuration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_BUFFER_SIZE);
+    socketBufferSize = configuration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_BUFFER_SIZE);
   }
 }

@@ -35,6 +35,8 @@ import com.tinkerpop.blueprints.impls.orient.*;
  * @author Luca Garulli
  */
 public abstract class OBaseGraphWorkload extends OBaseWorkload implements OCheckWorkload {
+  protected String className = "TestVertex";
+
   public class OWorkLoadContext extends OBaseWorkload.OBaseWorkLoadContext {
     OrientBaseGraph graph;
     OrientVertex    lastVertexToConnect;

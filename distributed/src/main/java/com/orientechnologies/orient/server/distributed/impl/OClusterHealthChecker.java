@@ -130,7 +130,7 @@ public class OClusterHealthChecker extends TimerTask {
         try {
           final ODistributedConfiguration dCfg = ((ODistributedStorage) manager.getStorage(dbName)).getDistributedConfiguration();
           if (dCfg != null) {
-            final boolean result = manager.installDatabase(true, dbName, dCfg.getDocument(), false, true);
+            final boolean result = manager.installDatabase(true, dbName, false, true);
 
             if (result)
               ODistributedServerLog.info(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,

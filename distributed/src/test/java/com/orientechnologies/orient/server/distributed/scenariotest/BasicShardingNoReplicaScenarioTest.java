@@ -16,12 +16,20 @@
 
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
+import static org.junit.Assert.*;
+
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+
+import org.junit.Test;
+
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
+import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ServerRun;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.tinkerpop.blueprints.Vertex;
@@ -29,13 +37,6 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
-import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-
-import static org.junit.Assert.*;
 
 /**
  * It checks the consistency in the cluster with the following scenario: - 3 server (europe, usa, asia) - 3 shards, one for each
@@ -66,7 +67,8 @@ public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenario
 
     OHazelcastPlugin manager1 = (OHazelcastPlugin) serverInstance.get(0).getServerInstance().getDistributedManager();
 
-    ODistributedConfiguration databaseConfiguration = manager1.getDatabaseConfiguration(this.getDatabaseName());
+    final OModifiableDistributedConfiguration databaseConfiguration = manager1.getDatabaseConfiguration(this.getDatabaseName())
+        .modify();
     ODocument cfg = databaseConfiguration.getDocument();
 
     OrientGraphFactory localFactory = new OrientGraphFactory("plocal:target/server0/databases/" + getDatabaseName());
@@ -76,14 +78,14 @@ public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenario
 
       final OrientVertexType clientType = graphNoTx.createVertexType("Client", 1);
 
-      ODistributedConfiguration dCfg = new ODistributedConfiguration(cfg);
+      OModifiableDistributedConfiguration dCfg = new OModifiableDistributedConfiguration(cfg);
       for (int i = 0; i < serverInstance.size(); ++i) {
         final String serverName = serverInstance.get(i).getServerInstance().getDistributedManager().getLocalNodeName();
         clientType.addCluster("client_" + serverName);
 
         dCfg.setServerOwner("client_" + serverName, serverName);
       }
-      manager1.updateCachedDatabaseConfiguration(this.getDatabaseName(), dCfg.getDocument(), true, true);
+      manager1.updateCachedDatabaseConfiguration(this.getDatabaseName(), dCfg, true);
 
       final OrientVertexType.OrientVertexProperty prop = clientType.createProperty("name", OType.STRING);
       prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);

@@ -21,41 +21,41 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 
 import java.util.*;
 
 /**
- * Distributed configuration. It uses an ODocument object to store the configuration. Every changes increment the field "version".
+ * Immutable Distributed configuration. It uses an ODocument object to store the configuration. Every changes must be done by
+ * obtaining a modifiable verson of the object through the method `modify()`.
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class ODistributedConfiguration {
-  public static final String        NEW_NODE_TAG               = "<NEW_NODE>";
-  public static final String        ALL_WILDCARD               = "*";
-  private static final String       SERVERS                    = "servers";
-  private static final String       DCS                        = "dataCenters";
-  private static final String       OWNER                      = "owner";
-  private static final String       CLUSTERS                   = "clusters";
-  private static final String       VERSION                    = "version";
+  public static final String          NEW_NODE_TAG               = "<NEW_NODE>";
+  public static final String          ALL_WILDCARD               = "*";
 
-  private static final String       READ_QUORUM                = "readQuorum";
-  private static final String       WRITE_QUORUM               = "writeQuorum";
-  public static final String        QUORUM_MAJORITY            = "majority";
-  public static final String        QUORUM_ALL                 = "all";
-  public static final String        QUORUM_LOCAL_DC            = "localDataCenter";
-  public static final Integer       DEFAULT_READ_QUORUM        = 1;
-  public static final String        DEFAULT_WRITE_QUORUM       = QUORUM_MAJORITY;
+  protected static final String       SERVERS                    = "servers";
+  protected static final String       DCS                        = "dataCenters";
+  protected static final String       OWNER                      = "owner";
+  protected static final String       CLUSTERS                   = "clusters";
+  protected static final String       VERSION                    = "version";
 
-  private static final String       NEW_NODE_STRATEGY          = "newNodeStrategy";
-  private static final String       READ_YOUR_WRITES           = "readYourWrites";
-  private static final String       EXECUTION_MODE             = "executionMode";
-  private static final String       EXECUTION_MODE_SYNCHRONOUS = "synchronous";
+  protected static final String       READ_QUORUM                = "readQuorum";
+  protected static final String       WRITE_QUORUM               = "writeQuorum";
+  public static final String          QUORUM_MAJORITY            = "majority";
+  public static final String          QUORUM_ALL                 = "all";
+  public static final String          QUORUM_LOCAL_DC            = "localDataCenter";
+  public static final Integer         DEFAULT_READ_QUORUM        = 1;
+  public static final String          DEFAULT_WRITE_QUORUM       = QUORUM_MAJORITY;
 
-  private final ODocument           configuration;
-  private static final List<String> DEFAULT_CLUSTER_NAME       = Collections.singletonList(ALL_WILDCARD);
+  protected static final String       NEW_NODE_STRATEGY          = "newNodeStrategy";
+  protected static final String       READ_YOUR_WRITES           = "readYourWrites";
+  protected static final String       EXECUTION_MODE             = "executionMode";
+  protected static final String       EXECUTION_MODE_SYNCHRONOUS = "synchronous";
+
+  protected final ODocument           configuration;
+  protected static final List<String> DEFAULT_CLUSTER_NAME       = Collections.singletonList(ALL_WILDCARD);
 
   public enum ROLES {
     MASTER, REPLICA
@@ -67,6 +67,10 @@ public class ODistributedConfiguration {
 
   public ODistributedConfiguration(final ODocument iConfiguration) {
     configuration = iConfiguration;
+  }
+
+  public OModifiableDistributedConfiguration modify() {
+    return new OModifiableDistributedConfiguration(configuration.copy());
   }
 
   /**
@@ -554,22 +558,6 @@ public class ODistributedConfiguration {
   }
 
   /**
-   * Sets the server role between MASTER (default) and REPLICA.
-   */
-  public void setServerRole(final String iServerName, final ROLES role) {
-    synchronized (configuration) {
-      ODocument servers = configuration.field(SERVERS);
-      if (servers == null) {
-        servers = new ODocument();
-        configuration.field(SERVERS, servers, OType.EMBEDDED);
-      }
-
-      servers.field(iServerName, role);
-      incrementVersion();
-    }
-  }
-
-  /**
    * Returns the registered servers.
    */
   public Set<String> getRegisteredServers() {
@@ -584,128 +572,7 @@ public class ODistributedConfiguration {
   }
 
   public ODocument getDocument() {
-    return configuration.copy();
-  }
-
-  /**
-   * Adds a server in the configuration. It replaces all the tags &lt;NEW_NODE&gt; with the new server name<br>
-   * NOTE: It must be executed in distributed database lock.
-   *
-   * @param iNode
-   *          Server name
-   * @return
-   */
-  public List<String> addNewNodeInServerList(final String iNode) {
-    synchronized (configuration) {
-      final List<String> changedPartitions = new ArrayList<String>();
-      // ADD THE NODE IN CONFIGURATION. LOOK FOR $newNode TAG
-      for (String clusterName : getClusterNames()) {
-        final List<String> partitions = getClusterConfiguration(clusterName).field(SERVERS);
-        if (partitions != null) {
-          final int newNodePos = partitions.indexOf(ODistributedConfiguration.NEW_NODE_TAG);
-          if (newNodePos > -1 && !partitions.contains(iNode)) {
-            partitions.add(newNodePos, iNode);
-            changedPartitions.add(clusterName);
-          }
-        }
-      }
-
-      if (!changedPartitions.isEmpty() && !getRegisteredServers().contains(iNode)) {
-        if (getNewNodeStrategy() == NEW_NODE_STRATEGIES.STATIC) {
-          // REGISTER THE SERVER AS STATIC AND INCREMENT VERSION
-          setServerRole(iNode, getServerRole("*"));
-        } else
-          // INCREMENT VERSION
-          incrementVersion();
-
-        return changedPartitions;
-      }
-    }
-    return null;
-  }
-
-  /**
-   * Sets the server as owner for the given cluster. The owner server is the first in server list.<br>
-   * NOTE: It must be executed in distributed database lock.
-   *
-   * @param iClusterName
-   *          Cluster name or *. Does not accept null.
-   */
-  public void setServerOwner(final String iClusterName, final String iServerName) {
-    if (iClusterName == null)
-      throw new IllegalArgumentException("cluster name cannot be null");
-
-    synchronized (configuration) {
-      final ODocument clusters = configuration.field(CLUSTERS);
-      ODocument cluster = clusters.field(iClusterName);
-
-      if (cluster == null)
-        // CREATE IT
-        cluster = createCluster(iClusterName);
-      else {
-        // CHECK IF THE OWNER IS ALREADY CONFIGURED
-        final String owner = cluster.field(OWNER);
-        if (owner != null && !iServerName.equalsIgnoreCase(owner))
-          throw new ODistributedException("Cannot overwrite ownership of cluster '" + iClusterName + "' to the server '"
-              + iServerName + "', because server '" + owner + "' was already configured as owner");
-      }
-
-      List<String> serverList = getClusterConfiguration(iClusterName).field(SERVERS);
-      if (serverList == null) {
-        serverList = initClusterServers(cluster);
-      }
-
-      if (!serverList.isEmpty() && serverList.get(0).equals(iServerName))
-        // ALREADY OWNER
-        return;
-
-      // REMOVE THE NODE IF ANY
-      for (Iterator<String> it = serverList.iterator(); it.hasNext();) {
-        if (it.next().equals(iServerName)) {
-          it.remove();
-          break;
-        }
-      }
-
-      // ADD THE NODE AS FIRST OF THE LIST = MASTER
-      serverList.add(0, iServerName);
-
-      incrementVersion();
-    }
-  }
-
-  /**
-   * Removes a server from the list.<br>
-   * NOTE: It must be executed in distributed database lock.
-   *
-   * @param iNode
-   *          Server name
-   * @return
-   */
-  public List<String> removeServer(final String iNode) {
-    synchronized (configuration) {
-      final List<String> changedPartitions = new ArrayList<String>();
-
-      for (String clusterName : getClusterNames()) {
-        final Collection<String> nodes = getClusterConfiguration(clusterName).field(SERVERS);
-        if (nodes != null) {
-          for (String node : nodes) {
-            if (node.equals(iNode)) {
-              // FOUND: REMOVE IT
-              nodes.remove(node);
-              changedPartitions.add(clusterName);
-              break;
-            }
-          }
-        }
-      }
-
-      if (!changedPartitions.isEmpty()) {
-        incrementVersion();
-        return changedPartitions;
-      }
-    }
-    return null;
+    return configuration;
   }
 
   /**
@@ -819,62 +686,10 @@ public class ODistributedConfiguration {
     return null;
   }
 
-  /**
-   * Set a server offline. It assures the offline server is never on top of the list.<br>
-   * NOTE: It must be executed in distributed database lock.
-   *
-   * @param iNode
-   *          Server name
-   * @param newServerCoordinator
-   *          New coordinator server name
-   * @return
-   */
-  public List<String> setServerOffline(final String iNode, final String newServerCoordinator) {
-    final List<String> changedPartitions = new ArrayList<String>();
-
-    final String[] clusters = getClusterNames();
-    synchronized (configuration) {
-      for (String clusterName : clusters) {
-        final List<String> nodes = getClusterConfiguration(clusterName).field(SERVERS);
-        if (nodes != null && nodes.size() > 1) {
-          for (String node : nodes) {
-            if (node.equals(iNode)) {
-              // FOUND: PUT THE NODE AT THE END (BEFORE ANY TAG <NEW_NODE>)
-              nodes.remove(node);
-
-              final boolean newNodeRemoved = nodes.remove(NEW_NODE_TAG);
-
-              nodes.add(node);
-
-              if (newNodeRemoved)
-                // REINSERT NEW NODE TAG AT THE END
-                nodes.add(NEW_NODE_TAG);
-
-              if (newServerCoordinator != null) {
-                // ASSURE THE NEW COORDINATOR IS THE FIRST IN THE LIST
-                if (nodes.remove(newServerCoordinator))
-                  nodes.add(0, newServerCoordinator);
-              }
-
-              changedPartitions.add(clusterName);
-              break;
-            }
-          }
-        }
-      }
-
-      if (!changedPartitions.isEmpty()) {
-        incrementVersion();
-        return changedPartitions;
-      }
-    }
-    return null;
-  }
-
   public int getVersion() {
     final Integer v = configuration.field(VERSION);
     if (v == null)
-      return 0;
+      return 1;
     return v;
   }
 
@@ -937,6 +752,11 @@ public class ODistributedConfiguration {
     return clusters;
   }
 
+  @Override
+  public String toString() {
+    return configuration.toString();
+  }
+
   /**
    * Gets the document representing the cluster configuration.
    *
@@ -946,7 +766,7 @@ public class ODistributedConfiguration {
    * @throws OConfigurationException
    *           in case "clusters" field is not found in configuration
    */
-  private ODocument getClusterConfiguration(String iClusterName) {
+  protected ODocument getClusterConfiguration(String iClusterName) {
     final ODocument clusters = getConfiguredClusters();
 
     if (iClusterName == null)
@@ -1021,40 +841,4 @@ public class ODistributedConfiguration {
     return (Integer) value;
   }
 
-  private void incrementVersion() {
-    // INCREMENT VERSION
-    Integer oldVersion = configuration.field(VERSION);
-    if (oldVersion == null)
-      oldVersion = 0;
-    configuration.field(VERSION, oldVersion.intValue() + 1);
-  }
-
-  private List<String> initClusterServers(final ODocument cluster) {
-    final ODocument any = getClusterConfiguration(ALL_WILDCARD);
-
-    // COPY THE SERVER LIST FROM ALL_WILDCARD
-    final List<String> anyServers = any.field(SERVERS);
-    final List<String> servers = new ArrayList<String>(anyServers);
-    cluster.field(SERVERS, servers);
-
-    return servers;
-  }
-
-  private ODocument createCluster(final String iClusterName) {
-    // CREATE IT
-    final ODocument clusters = configuration.field(CLUSTERS);
-
-    ODocument cluster = clusters.field(iClusterName);
-    if (cluster != null)
-      // ALREADY EXISTS
-      return clusters;
-
-    cluster = new ODocument();
-    ODocumentInternal.addOwner(cluster, clusters);
-    clusters.field(iClusterName, cluster, OType.EMBEDDED);
-
-    final List<String> servers = initClusterServers(cluster);
-
-    return cluster;
-  }
 }

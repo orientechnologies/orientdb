@@ -101,8 +101,9 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
   @Override
   public Object executeRecordTask(final ODistributedRequestId requestId, final OServer iServer,
       final ODistributedServerManager iManager, final ODatabaseDocumentInternal database) throws Exception {
-    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-        "Creating record %s/%s v.%d reqId=%s...", database.getName(), rid.toString(), version, requestId);
+    if (ODistributedServerLog.isDebugEnabled())
+      ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+          "Creating record %s/%s v.%d reqId=%s...", database.getName(), rid.toString(), version, requestId);
 
     if (!rid.isPersistent())
       throw new ODistributedException("Record " + rid + " has not been saved on owner node first (temporary rid)");
