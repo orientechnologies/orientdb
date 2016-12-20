@@ -47,6 +47,7 @@ import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetwork;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.enterprise.channel.binary.*;
 import com.orientechnologies.orient.server.OClientConnection;
@@ -181,15 +182,12 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
             tokenBytes = channel.readBytes();
           }
           int protocolVersion = OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION;
-          String serializationImpl = ORecordSerializerFactory.instance().getDefaultRecordSerializer().toString();
+          ORecordSerializer serializer = ORecordSerializerNetwork.INSTANCE;
           if (connection != null) {
             protocolVersion = connection.getData().protocolVersion;
-            serializationImpl = connection.getData().serializationImpl;
-            if (connection.getDatabase() != null) {
-              connection.getDatabase().activateOnCurrentThread();
-            }
+            serializer = connection.getData().getSerializer();
           }
-          request.read(channel, protocolVersion, serializationImpl);
+          request.read(channel, protocolVersion, serializer);
         } catch (IOException e) {
           OLogManager.instance().debug(this, "I/O Error on client clientId=%d reqType=%d", clientTxId, requestType, e);
           sendShutdown();
@@ -201,9 +199,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
             connection = onBeforeHandshakeRequest(connection, tokenBytes);
           else
             connection = onBeforeOperationalRequest(connection, tokenBytes);
-
-          connection.getData().commandInfo = request.getDescription();
-          connection.setProtocol(this); // This is need for the request command
+          if (connection != null) {
+            connection.getData().commandInfo = request.getDescription();
+            connection.setProtocol(this); // This is need for the request command
+          }
 
           if (request.requireServerUser()) {
             checkServerAccess(request.requiredServerRole(), connection);
@@ -251,7 +250,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
             beginResponse();
             try {
               sendOk(connection, clientTxId);
-              response.write(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
+              response.write(channel, connection.getData().protocolVersion, connection.getData().getSerializer());
             } finally {
               endResponse(connection);
             }
@@ -726,10 +725,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
       OBinaryResponse error = new OErrorResponse(messages, result);
       int protocolVersion = OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION;
-      String serializationImpl = ORecordSerializerFactory.instance().getDefaultRecordSerializer().toString();
+      ORecordSerializer serializationImpl = ORecordSerializerNetwork.INSTANCE;
       if (connection != null) {
         protocolVersion = connection.getData().protocolVersion;
-        serializationImpl = connection.getData().serializationImpl;
+        serializationImpl = connection.getData().getSerializer();
       }
       error.write(channel, protocolVersion, serializationImpl);
       channel.flush();
@@ -791,7 +790,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   }
 
   public static String getRecordSerializerName(OClientConnection connection) {
-    return connection.getData().serializationImpl;
+    return connection.getData().getSerializationImpl();
   }
 
   @Override
@@ -851,7 +850,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     String dbSerializerName = null;
     if (ODatabaseRecordThreadLocal.INSTANCE.getIfDefined() != null)
       dbSerializerName = ((ODatabaseDocumentInternal) iRecord.getDatabase()).getSerializer().toString();
-    String name = getRecordSerializerName(connection);
+    String name = connection.getData().getSerializationImpl();
     if (ORecordInternal.getRecordType(iRecord) == ODocument.RECORD_TYPE
         && (dbSerializerName == null || !dbSerializerName.equals(name))) {
       ((ODocument) iRecord).deserializeFields();
@@ -887,7 +886,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     int realLength = stream.length;
     final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     if (db != null && db instanceof ODatabaseDocument) {
-      if (ORecordSerializerSchemaAware2CSV.NAME.equals(getRecordSerializerName(connection))) {
+      if (ORecordSerializerSchemaAware2CSV.NAME.equals(connection.getData().getSerializationImpl())) {
         // TRIM TAILING SPACES (DUE TO OVERSIZE)
         for (int i = stream.length - 1; i > -1; --i) {
           if (stream[i] == 32)

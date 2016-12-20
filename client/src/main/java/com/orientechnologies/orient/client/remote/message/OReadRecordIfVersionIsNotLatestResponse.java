@@ -27,6 +27,7 @@ import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
@@ -50,7 +51,7 @@ public class OReadRecordIfVersionIsNotLatestResponse implements OBinaryResponse 
     this.recordsToSend = recordsToSend;
   }
 
-  public void write(OChannelDataOutput network, int protocolVersion, String recordSerializer) throws IOException {
+  public void write(OChannelDataOutput network, int protocolVersion, ORecordSerializer serializer) throws IOException {
     if (record != null) {
       network.writeByte((byte) 1);
       if (protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_27) {
@@ -66,7 +67,7 @@ public class OReadRecordIfVersionIsNotLatestResponse implements OBinaryResponse 
         if (d.getIdentity().isValid()) {
           network.writeByte((byte) 2); // CLIENT CACHE
           // RECORD. IT ISN'T PART OF THE RESULT SET
-          OMessageHelper.writeRecord(network, d, recordSerializer);
+          OMessageHelper.writeRecord(network, d, serializer);
         }
       }
     }

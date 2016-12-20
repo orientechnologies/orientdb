@@ -25,14 +25,20 @@ import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.remote.OBinaryAsyncRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
 
 public class OCreateRecordRequest implements OBinaryAsyncRequest<OCreateRecordResponse> {
-  private byte[]    content;
+  private ORecord   content;
+  private byte[]    rawContent;
   private ORecordId rid;
   private byte      recordType;
   private byte      mode;
@@ -55,7 +61,7 @@ public class OCreateRecordRequest implements OBinaryAsyncRequest<OCreateRecordRe
   }
 
   public OCreateRecordRequest(byte[] iContent, ORecordId iRid, byte iRecordType) {
-    this.content = iContent;
+    this.rawContent = iContent;
     this.rid = iRid;
     this.recordType = iRecordType;
   }
@@ -63,25 +69,27 @@ public class OCreateRecordRequest implements OBinaryAsyncRequest<OCreateRecordRe
   @Override
   public void write(final OChannelDataOutput network, final OStorageRemoteSession session) throws IOException {
     network.writeShort((short) rid.getClusterId());
-    network.writeBytes(content);
+    network.writeBytes(rawContent);
     network.writeByte(recordType);
     network.writeByte((byte) mode);
   }
 
-  public void read(OChannelDataInput channel, int protocolVersion, String serializerName) throws IOException {
+  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
     final int dataSegmentId = protocolVersion < 24 ? channel.readInt() : 0;
 
     rid = new ORecordId(channel.readShort(), ORID.CLUSTER_POS_INVALID);
-    content = channel.readBytes();
+    byte[] rec = channel.readBytes();
     recordType = channel.readByte();
     mode = channel.readByte();
+    content = Orient.instance().getRecordFactoryManager().newInstance(recordType);
+    serializer.fromStream(rec, content, null);
   }
 
   public ORecordId getRid() {
     return rid;
   }
 
-  public byte[] getContent() {
+  public ORecord getContent() {
     return content;
   }
 

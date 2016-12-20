@@ -7,6 +7,7 @@ import java.util.Map.Entry;
 
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
 
@@ -22,7 +23,7 @@ public class OListGlobalConfigurationsResponse implements OBinaryResponse {
   }
 
   @Override
-  public void write(OChannelDataOutput channel, int protocolVersion, String recordSerializer) throws IOException {
+  public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
     channel.writeShort((short) configs.size());
     for (Entry<String, String> entry : configs.entrySet()) {
       channel.writeString(entry.getKey());

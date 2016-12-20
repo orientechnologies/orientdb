@@ -1,5 +1,12 @@
 package com.orientechnologies.orient.client.remote.message;
 
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.UUID;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.client.remote.OClusterRemote;
@@ -15,27 +22,18 @@ import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordFactoryManager;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
-import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.UUID;
-
 public class OMessageHelper {
 
-  public static void writeIdentifiable(OChannelDataOutput channel, final OIdentifiable o, String recordSerializer)
+  public static void writeIdentifiable(OChannelDataOutput channel, final OIdentifiable o, ORecordSerializer serializer)
       throws IOException {
     if (o == null)
       channel.writeShort(OChannelBinaryProtocol.RECORD_NULL);
@@ -43,17 +41,17 @@ public class OMessageHelper {
       channel.writeShort(OChannelBinaryProtocol.RECORD_RID);
       channel.writeRID((ORID) o);
     } else {
-      writeRecord(channel, o.getRecord(), recordSerializer);
+      writeRecord(channel, o.getRecord(), serializer);
     }
   }
 
-  public static void writeRecord(OChannelDataOutput channel, final ORecord iRecord, String recordSerializer) throws IOException {
+  public static void writeRecord(OChannelDataOutput channel, final ORecord iRecord, ORecordSerializer serializer) throws IOException {
     channel.writeShort((short) 0);
     channel.writeByte(ORecordInternal.getRecordType(iRecord));
     channel.writeRID(iRecord.getIdentity());
     channel.writeVersion(iRecord.getVersion());
     try {
-      final byte[] stream = getRecordBytes(iRecord, recordSerializer);
+      final byte[] stream = getRecordBytes(iRecord, serializer);
       channel.writeBytes(stream);
     } catch (Exception e) {
       channel.writeBytes(null);
@@ -63,17 +61,16 @@ public class OMessageHelper {
     }
   }
 
-  public static byte[] getRecordBytes(final ORecord iRecord, String recordSerializer) {
+  public static byte[] getRecordBytes(final ORecord iRecord, ORecordSerializer serializer) {
 
     final byte[] stream;
     String dbSerializerName = null;
     if (ODatabaseRecordThreadLocal.INSTANCE.getIfDefined() != null)
       dbSerializerName = ((ODatabaseDocumentInternal) iRecord.getDatabase()).getSerializer().toString();
     if (ORecordInternal.getRecordType(iRecord) == ODocument.RECORD_TYPE
-        && (dbSerializerName == null || !dbSerializerName.equals(recordSerializer))) {
+        && (dbSerializerName == null || !dbSerializerName.equals(serializer.toString()))) {
       ((ODocument) iRecord).deserializeFields();
-      ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(recordSerializer);
-      stream = ser.toStream(iRecord, false);
+      stream = serializer.toStream(iRecord, false);
     } else
       stream = iRecord.toStream();
 

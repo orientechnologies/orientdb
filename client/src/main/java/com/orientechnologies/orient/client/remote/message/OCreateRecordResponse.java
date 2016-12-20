@@ -27,6 +27,7 @@ import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
 
@@ -45,7 +46,7 @@ public class OCreateRecordResponse implements OBinaryResponse {
     this.changedIds = changedIds;
   }
 
-  public void write(OChannelDataOutput channel, int protocolVersion, String recordSerializer) throws IOException {
+  public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
     channel.writeShort((short) this.identity.getClusterId());
     channel.writeLong(this.identity.getClusterPosition());
     channel.writeInt(version);

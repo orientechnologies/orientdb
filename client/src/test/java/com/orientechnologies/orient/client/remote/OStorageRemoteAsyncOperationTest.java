@@ -3,6 +3,7 @@ package com.orientechnologies.orient.client.remote;
 import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
@@ -76,7 +77,7 @@ public class OStorageRemoteAsyncOperationTest {
       }
 
       @Override
-      public void read(OChannelDataInput channel, int protocolVersion, String serializerName) throws IOException {
+      public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
 
       }
 
@@ -109,7 +110,7 @@ public class OStorageRemoteAsyncOperationTest {
           }
 
           @Override
-          public void write(OChannelDataOutput channel, int protocolVersion, String recordSerializer) throws IOException {
+          public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
           }
 
         };
@@ -136,7 +137,7 @@ public class OStorageRemoteAsyncOperationTest {
       }
 
       @Override
-      public void read(OChannelDataInput channel, int protocolVersion, String serializerName) throws IOException {
+      public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
       }
 
       @Override
@@ -169,7 +170,7 @@ public class OStorageRemoteAsyncOperationTest {
           }
 
           @Override
-          public void write(OChannelDataOutput channel, int protocolVersion, String recordSerializer) throws IOException {
+          public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
           }
         };
       }
@@ -199,7 +200,7 @@ public class OStorageRemoteAsyncOperationTest {
       }
 
       @Override
-      public void read(OChannelDataInput channel, int protocolVersion, String serializerName) throws IOException {
+      public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
 
       }
 
@@ -236,7 +237,7 @@ public class OStorageRemoteAsyncOperationTest {
           }
 
           @Override
-          public void write(OChannelDataOutput channel, int protocolVersion, String recordSerializer) throws IOException {
+          public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
           }
         };
       }

@@ -36,14 +36,15 @@ import java.util.Map;
 
 public final class OQueryRequest implements OBinaryRequest<OQueryResponse> {
 
-  private int recordsPerPage = 100;
-  private String  serializer;
-  private String  statement;
-  private boolean idempotent;
-  Map<Object, Object> params;
-  private boolean namedParams;
+  private int               recordsPerPage = 100;
+  private ORecordSerializer serializer;
+  private String            statement;
+  private boolean           idempotent;
+  Map<Object, Object>       params;
+  private boolean           namedParams;
 
-  public OQueryRequest(String iCommand, Object[] positionalParams, boolean idempotent, String serializer, int recordsPerPage) {
+  public OQueryRequest(String iCommand, Object[] positionalParams, boolean idempotent, ORecordSerializer serializer,
+      int recordsPerPage) {
     this.statement = iCommand;
     params = new HashMap<>();
     if (positionalParams == null) {
@@ -59,7 +60,7 @@ public final class OQueryRequest implements OBinaryRequest<OQueryResponse> {
     }
   }
 
-  public OQueryRequest(String iCommand, Map<String, Object> namedParams, boolean idempotent, String serializer,
+  public OQueryRequest(String iCommand, Map<String, Object> namedParams, boolean idempotent, ORecordSerializer serializer,
       int recordsPerPage) {
     this.statement = iCommand;
     this.params = (Map) namedParams;
@@ -74,12 +75,13 @@ public final class OQueryRequest implements OBinaryRequest<OQueryResponse> {
   public OQueryRequest() {
   }
 
-  @Override public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
+  @Override
+  public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
     network.writeString(statement);
     network.writeBoolean(idempotent);
     network.writeInt(recordsPerPage);
 
-    //params
+    // params
     ODocument parms = new ODocument();
     parms.field("params", this.params);
 
@@ -88,34 +90,36 @@ public final class OQueryRequest implements OBinaryRequest<OQueryResponse> {
     network.writeBoolean(namedParams);
   }
 
-  public void read(OChannelDataInput channel, int protocolVersion, String serializerName) throws IOException {
+  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
     this.statement = channel.readString();
     this.idempotent = channel.readBoolean();
     this.recordsPerPage = channel.readInt();
 
-    //params
-    ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(serializerName);
-
+    // params
     ODocument paramsDoc = new ODocument();
     byte[] bytes = channel.readBytes();
-    ser.fromStream(bytes, paramsDoc, null);
+    serializer.fromStream(bytes, paramsDoc, null);
     this.params = paramsDoc.field("params");
     this.namedParams = channel.readBoolean();
   }
 
-  @Override public byte getCommand() {
+  @Override
+  public byte getCommand() {
     return OChannelBinaryProtocol.REQUEST_QUERY;
   }
 
-  @Override public String getDescription() {
+  @Override
+  public String getDescription() {
     return "Execute remote query";
   }
 
-  @Override public OQueryResponse createResponse() {
+  @Override
+  public OQueryResponse createResponse() {
     return new OQueryResponse();
   }
 
-  @Override public OBinaryResponse execute(OBinaryRequestExecutor executor) {
+  @Override
+  public OBinaryResponse execute(OBinaryRequestExecutor executor) {
     return executor.executeQuery(this);
   }
 
@@ -151,7 +155,7 @@ public final class OQueryRequest implements OBinaryRequest<OQueryResponse> {
     return recordsPerPage;
   }
 
-  public String getSerializer() {
+  public ORecordSerializer getSerializer() {
     return serializer;
   }
 }

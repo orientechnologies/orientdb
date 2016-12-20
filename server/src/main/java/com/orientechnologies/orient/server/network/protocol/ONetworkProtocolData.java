@@ -20,6 +20,8 @@
 package com.orientechnologies.orient.server.network.protocol;
 
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 
 /**
  * Saves all the important information about the network connection. Useful for monitoring and statistics.
@@ -40,10 +42,24 @@ public class ONetworkProtocolData {
   public int                 sessionId            = -1;
   public String              clientId             = null;
   public String              currentUserId        = null;
-  public String              serializationImpl    = null;
+  private String             serializationImpl    = null;
   public boolean             serverUser           = false;
   public String              serverUsername       = null;
   public OCommandRequestText command              = null;
   public boolean             supportsPushMessages = true;
   public boolean             collectStats         = true;
+  private ORecordSerializer  serializer;
+
+  public String getSerializationImpl() {
+    return serializationImpl;
+  }
+
+  public void setSerializationImpl(String serializationImpl) {
+    this.serializationImpl = serializationImpl;
+    serializer = ORecordSerializerFactory.instance().getFormat(serializationImpl);
+  }
+
+  public ORecordSerializer getSerializer() {
+    return serializer;
+  }
 }

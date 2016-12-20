@@ -92,8 +92,7 @@ public final class OCommitRequest implements OBinaryRequest<OCommitResponse> {
   }
 
   @Override
-  public void read(OChannelDataInput channel, int protocolVersion, String serializerName) throws IOException {
-    ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(serializerName);
+  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
     txId = channel.readInt();
     usingLong = channel.readBoolean();
     operations = new ArrayList<>();
@@ -101,7 +100,7 @@ public final class OCommitRequest implements OBinaryRequest<OCommitResponse> {
     do {
       hasEntry = channel.readByte();
       if (hasEntry == 1) {
-        ORecordOperationRequest entry = OMessageHelper.readTransactionEntry(channel, ser);
+        ORecordOperationRequest entry = OMessageHelper.readTransactionEntry(channel, serializer);
         operations.add(entry);
       }
     } while (hasEntry == 1);

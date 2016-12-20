@@ -5,6 +5,7 @@ import java.util.Collection;
 
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
@@ -30,7 +31,7 @@ public class OOpenResponse implements OBinaryResponse {
   }
 
   @Override
-  public void write(OChannelDataOutput channel, int protocolVersion, String recordSerializer) throws IOException {
+  public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
     channel.writeInt(sessionId);
     if (protocolVersion > OChannelBinaryProtocol.PROTOCOL_VERSION_26)
       channel.writeBytes(sessionToken);

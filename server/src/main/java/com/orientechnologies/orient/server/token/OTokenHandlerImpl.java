@@ -209,7 +209,7 @@ public class OTokenHandlerImpl implements OTokenHandler {
         token.setUserRid(user.getIdentity().getIdentity());
       token.setExpiry(curTime + sessionInMills);
       token.setProtocolVersion(data.protocolVersion);
-      token.setSerializer(data.serializationImpl);
+      token.setSerializer(data.getSerializationImpl());
       token.setDriverName(data.driverName);
       token.setDriverVersion(data.driverVersion);
 
@@ -237,7 +237,7 @@ public class OTokenHandlerImpl implements OTokenHandler {
       final ONetworkProtocolData data = new ONetworkProtocolData();
       // data.clientId = binary.get;
       data.protocolVersion = binary.getProtocolVersion();
-      data.serializationImpl = binary.getSerializer();
+      data.setSerializationImpl(binary.getSerializer());
       data.driverName = binary.getDriverName();
       data.driverVersion = binary.getDriverVersion();
       data.serverUser = binary.isServerUser();

@@ -314,8 +314,9 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
   @Override public OBinaryResponse executeCreateRecord(OCreateRecordRequest request) {
 
-    final ORecord record = Orient.instance().getRecordFactoryManager().newInstance(request.getRecordType());
-    fillRecord(connection, request.getRid(), request.getContent(), 0, record);
+    final ORecord record = request.getContent();
+    ORecordInternal.setIdentity(record, request.getRid());
+    ORecordInternal.setVersion(record, 0);
     if (record instanceof ODocument) {
       // Force conversion of value to class for trigger default values.
       ODocumentInternal.autoConvertValueToClass(connection.getDatabase(), (ODocument) record);
@@ -339,9 +340,10 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   @Override public OBinaryResponse executeUpdateRecord(OUpdateRecordRequest request) {
 
     ODatabaseDocumentInternal database = connection.getDatabase();
-    final ORecord newRecord = Orient.instance().getRecordFactoryManager().newInstance(request.getRecordType());
-    fillRecord(connection, request.getRid(), request.getContent(), request.getVersion(), newRecord);
-
+    final ORecord newRecord = request.getContent();
+    ORecordInternal.setIdentity(newRecord, request.getRid());
+    ORecordInternal.setVersion(newRecord, request.getVersion());
+    
     ORecordInternal.setContentChanged(newRecord, request.isUpdateContent());
     ORecordInternal.getDirtyManager(newRecord).clearForSave();
     ORecord currentRecord = null;
@@ -456,12 +458,6 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
     final boolean live = request.isLive();
     final boolean asynch = request.isAsynch();
-
-    String dbSerializerName = connection.getDatabase().getSerializer().toString();
-    String name = connection.getData().serializationImpl;
-    if (name == null)
-      name = dbSerializerName;
-    ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(name);
 
     OCommandRequestText command = request.getQuery();
 
@@ -774,7 +770,7 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     connection.getData().driverVersion = request.getDriverVersion();
     connection.getData().protocolVersion = request.getProtocolVersion();
     connection.getData().clientId = request.getClientId();
-    connection.getData().serializationImpl = request.getRecordFormat();
+    connection.getData().setSerializationImpl(request.getRecordFormat());
 
     connection.setTokenBased(request.isTokenBased());
     connection.getData().supportsPushMessages = request.isSupportPush();
@@ -804,7 +800,7 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     connection.getData().driverVersion = request.getDriverVersion();
     connection.getData().protocolVersion = request.getProtocolVersion();
     connection.getData().clientId = request.getClientId();
-    connection.getData().serializationImpl = request.getRecordFormat();
+    connection.getData().setSerializationImpl(request.getRecordFormat());
     connection.setTokenBased(request.isUseToken());
     connection.getData().supportsPushMessages = request.isSupportsPush();
     connection.getData().collectStats = request.isCollectStats();
@@ -912,7 +908,7 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     String dbSerializerName = null;
     if (ODatabaseRecordThreadLocal.INSTANCE.getIfDefined() != null)
       dbSerializerName = ((ODatabaseDocumentInternal) iRecord.getDatabase()).getSerializer().toString();
-    String name = connection.getData().serializationImpl;
+    String name = connection.getData().getSerializationImpl();
     if (ORecordInternal.getRecordType(iRecord) == ODocument.RECORD_TYPE && (dbSerializerName == null || !dbSerializerName
         .equals(name))) {
       ((ODocument) iRecord).deserializeFields();
@@ -924,32 +920,8 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     return stream;
   }
 
-  public void fillRecord(OClientConnection connection, final ORecordId rid, final byte[] buffer, final int version,
-      final ORecord record) {
-    String dbSerializerName = "";
-    if (connection.getDatabase() != null)
-      dbSerializerName = connection.getDatabase().getSerializer().toString();
-
-    String name = connection.getData().serializationImpl;
-    if (ORecordInternal.getRecordType(record) == ODocument.RECORD_TYPE && !dbSerializerName.equals(name)) {
-      ORecordInternal.fill(record, rid, version, null, true);
-      ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(name);
-      ser.fromStream(buffer, record, null);
-      record.setDirty();
-    } else
-      ORecordInternal.fill(record, rid, version, buffer, true);
-  }
-
   @Override public OBinaryResponse executeQuery(OQueryRequest request) {
-    String dbSerializerName = connection.getDatabase().getSerializer().toString();
-    String name = connection.getData().serializationImpl;
-    if (name == null)
-      name = dbSerializerName;
-    ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(name);
-
     String command = request.getStatement();
-
-    final Map<Object, Object> params = request.getParams();
 
     connection.getData().commandDetail = command;
 
@@ -1002,12 +974,6 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   }
 
   @Override public OBinaryResponse executeQueryNextPage(OQueryNextPageRequest request) {
-    String dbSerializerName = connection.getDatabase().getSerializer().toString();
-    String name = connection.getData().serializationImpl;
-    if (name == null)
-      name = dbSerializerName;
-    ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(name);
-
     final long serverTimeout = OGlobalConfiguration.COMMAND_TIMEOUT.getValueAsLong();
     //TODO set a timeout on the request?
 

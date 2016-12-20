@@ -774,25 +774,25 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   public OTodoResultSet query(ODatabase db, String query, Object[] args) {
-    OQueryRequest request = new OQueryRequest(query, args, true, ((ODatabaseDocumentInternal) db).getSerializer().toString(), 100);
+    OQueryRequest request = new OQueryRequest(query, args, true, ((ODatabaseDocumentInternal) db).getSerializer(), 100);
     OQueryResponse response = networkOperation(request, "Error on executing command: " + query);
     return response.getResult();
   }
 
   public OTodoResultSet query(ODatabase db, String query, Map args) {
-    OQueryRequest request = new OQueryRequest(query, args, true, ((ODatabaseDocumentInternal) db).getSerializer().toString(), 100);
+    OQueryRequest request = new OQueryRequest(query, args, true, ((ODatabaseDocumentInternal) db).getSerializer(), 100);
     OQueryResponse response = networkOperation(request, "Error on executing command: " + query);
     return response.getResult();
   }
 
   public OTodoResultSet command(ODatabase db, String query, Object[] args) {
-    OQueryRequest request = new OQueryRequest(query, args, false, ((ODatabaseDocumentInternal) db).getSerializer().toString(), 100);
+    OQueryRequest request = new OQueryRequest(query, args, false, ((ODatabaseDocumentInternal) db).getSerializer(), 100);
     OQueryResponse response = networkOperation(request, "Error on executing command: " + query);
     return response.getResult();
   }
 
   public OTodoResultSet command(ODatabase db, String query, Map args) {
-    OQueryRequest request = new OQueryRequest(query, args, false, ((ODatabaseDocumentInternal) db).getSerializer().toString(), 100);
+    OQueryRequest request = new OQueryRequest(query, args, false, ((ODatabaseDocumentInternal) db).getSerializer(), 100);
     OQueryResponse response = networkOperation(request, "Error on executing command: " + query);
     return response.getResult();
   }

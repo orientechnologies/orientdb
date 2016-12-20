@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag.Change;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
@@ -62,7 +63,7 @@ public class OSBTGetRealBagSizeRequest implements OBinaryRequest<OSBTGetRealBagS
     network.writeBytes(stream);
   }
 
-  public void read(OChannelDataInput channel, int protocolVersion, String serializerName) throws IOException {
+  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
     collectionPointer = OCollectionNetworkSerializer.INSTANCE.readCollectionPointer(channel);
     byte[] stream = channel.readBytes();
     final OSBTreeRidBag.ChangeSerializationHelper changeSerializer = OSBTreeRidBag.ChangeSerializationHelper.INSTANCE;
