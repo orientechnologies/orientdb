@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetwork;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -157,15 +158,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
       return;
 
     ORecordSerializerFactory serializerFactory = ORecordSerializerFactory.instance();
-    String serializeName = getStorage().getConfiguration().getRecordSerializer();
-    if (serializeName == null)
-      serializeName = ORecordSerializerSchemaAware2CSV.NAME;
-    serializer = serializerFactory.getFormat(serializeName);
-    if (serializer == null)
-      throw new ODatabaseException("RecordSerializer with name '" + serializeName + "' not found ");
-    if (getStorage().getConfiguration().getRecordSerializerVersion() > serializer.getMinSupportedVersion())
-      throw new ODatabaseException("Persistent record serializer version is not support by the current implementation");
-
+    serializer = serializerFactory.getFormat(ORecordSerializerNetwork.NAME);
     localCache.startup();
     componentsFactory = getStorage().getComponentsFactory();
     user = null;

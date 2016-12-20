@@ -8,7 +8,7 @@ import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.OConstants;
-import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetwork;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
@@ -18,7 +18,7 @@ public class OOpenRequest implements OBinaryRequest<OOpenResponse> {
   private String  driverVersion   = OConstants.ORIENT_VERSION;
   private short   protocolVersion = OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION;
   private String  clientId        = null;
-  private String  recordFormat    = ORecordSerializerFactory.instance().getDefaultRecordSerializer().toString();
+  private String  recordFormat    = ORecordSerializerNetwork.NAME;
   private boolean useToken        = true;
   private boolean supportsPush    = true;
   private boolean collectStats    = true;
