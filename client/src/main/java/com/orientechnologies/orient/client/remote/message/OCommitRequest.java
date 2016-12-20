@@ -19,58 +19,26 @@
  */
 package com.orientechnologies.orient.client.remote.message;
 
-import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
-import com.orientechnologies.orient.client.remote.OBinaryRequest;
-import com.orientechnologies.orient.client.remote.OBinaryResponse;
-import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
-import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.exception.OTransactionException;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
+import com.orientechnologies.orient.client.remote.OBinaryRequest;
+import com.orientechnologies.orient.client.remote.OBinaryResponse;
+import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
+import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
+
 public final class OCommitRequest implements OBinaryRequest<OCommitResponse> {
-  public class ORecordOperationRequest {
-    private byte    type;
-    private byte    recordType;
-    private ORID    id;
-    private byte[]  record;
-    private int     version;
-    private boolean contentChanged;
-
-    public ORID getId() {
-      return id;
-    }
-
-    public byte[] getRecord() {
-      return record;
-    }
-
-    public byte getRecordType() {
-      return recordType;
-    }
-
-    public byte getType() {
-      return type;
-    }
-
-    public int getVersion() {
-      return version;
-    }
-
-    public boolean isContentChanged() {
-      return contentChanged;
-    }
-  }
-
   private int                           txId;
   private boolean                       usingLong;
   private List<ORecordOperationRequest> operations;
@@ -85,21 +53,16 @@ public final class OCommitRequest implements OBinaryRequest<OCommitResponse> {
       if (txEntry.type == ORecordOperation.LOADED)
         continue;
       ORecordOperationRequest request = new ORecordOperationRequest();
-      request.type = txEntry.type;
-      request.version = txEntry.getRecord().getVersion();
-      request.id = txEntry.getRecord().getIdentity();
-      request.recordType = ORecordInternal.getRecordType(txEntry.getRecord());
-      try {
-        switch (txEntry.type) {
-        case ORecordOperation.CREATED:
-        case ORecordOperation.UPDATED:
-          request.record = txEntry.getRecord().toStream();
-          request.contentChanged = ORecordInternal.isContentChanged(txEntry.getRecord());
-          break;
-        }
-      } catch (Exception e) {
-        // ABORT TX COMMIT
-        throw OException.wrapException(new OTransactionException("Error on transaction commit"), e);
+      request.setType(txEntry.type);
+      request.setVersion(txEntry.getRecord().getVersion());
+      request.setId(txEntry.getRecord().getIdentity());
+      request.setRecordType(ORecordInternal.getRecordType(txEntry.getRecord()));
+      switch (txEntry.type) {
+      case ORecordOperation.CREATED:
+      case ORecordOperation.UPDATED:
+        request.setRecord(txEntry.getRecord());
+        request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
+        break;
       }
       netOperations.add(request);
     }
@@ -112,47 +75,25 @@ public final class OCommitRequest implements OBinaryRequest<OCommitResponse> {
 
   @Override
   public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
-
+    ORecordSerializer serializer = ODatabaseRecordThreadLocal.INSTANCE.get().getSerializer();
     network.writeInt(txId);
     network.writeBoolean(usingLong);
 
     for (ORecordOperationRequest txEntry : operations) {
-      commitEntry(network, txEntry);
+      OMessageHelper.writeTransactionEntry(network, txEntry, serializer);
     }
 
     // END OF RECORD ENTRIES
     network.writeByte((byte) 0);
 
-    // SEND EMPTY TX CHANGES, TRACKING MADE SERVER SIDE
+    // SEND MANUAL INDEX CHANGES
     network.writeBytes(indexChanges.toStream());
 
   }
 
-  private void commitEntry(final OChannelDataOutput iNetwork, final ORecordOperationRequest txEntry) throws IOException {
-    iNetwork.writeByte((byte) 1);
-    iNetwork.writeByte(txEntry.type);
-    iNetwork.writeRID(txEntry.id);
-    iNetwork.writeByte(txEntry.recordType);
-
-    switch (txEntry.type) {
-    case ORecordOperation.CREATED:
-      iNetwork.writeBytes(txEntry.record);
-      break;
-
-    case ORecordOperation.UPDATED:
-      iNetwork.writeVersion(txEntry.version);
-      iNetwork.writeBytes(txEntry.record);
-      iNetwork.writeBoolean(txEntry.contentChanged);
-      break;
-
-    case ORecordOperation.DELETED:
-      iNetwork.writeVersion(txEntry.version);
-      break;
-    }
-  }
-
   @Override
   public void read(OChannelDataInput channel, int protocolVersion, String serializerName) throws IOException {
+    ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(serializerName);
     txId = channel.readInt();
     usingLong = channel.readBoolean();
     operations = new ArrayList<>();
@@ -160,25 +101,7 @@ public final class OCommitRequest implements OBinaryRequest<OCommitResponse> {
     do {
       hasEntry = channel.readByte();
       if (hasEntry == 1) {
-        ORecordOperationRequest entry = new ORecordOperationRequest();
-        entry.type = channel.readByte();
-        entry.id = channel.readRID();
-        entry.recordType = channel.readByte();
-        switch (entry.type) {
-        case ORecordOperation.CREATED:
-          entry.record = channel.readBytes();
-          break;
-        case ORecordOperation.UPDATED:
-          entry.version = channel.readVersion();
-          entry.record = channel.readBytes();
-          entry.contentChanged = channel.readBoolean();
-          break;
-        case ORecordOperation.DELETED:
-          entry.version = channel.readVersion();
-          break;
-        default:
-          break;
-        }
+        ORecordOperationRequest entry = OMessageHelper.readTransactionEntry(channel, ser);
         operations.add(entry);
       }
     } while (hasEntry == 1);

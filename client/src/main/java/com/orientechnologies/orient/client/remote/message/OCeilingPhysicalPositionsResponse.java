@@ -39,12 +39,12 @@ public class OCeilingPhysicalPositionsResponse implements OBinaryResponse {
   }
 
   public void write(OChannelDataOutput channel, int protocolVersion, String recordSerializer) throws IOException {
-    OBinaryProtocolHelper.writePhysicalPositions(channel, positions);
+    OMessageHelper.writePhysicalPositions(channel, positions);
   }
 
   @Override
   public void read(OChannelDataInput network, OStorageRemoteSession session) throws IOException {
-    positions = OBinaryProtocolHelper.readPhysicalPositions(network);
+    positions = OMessageHelper.readPhysicalPositions(network);
   }
 
   public OPhysicalPosition[] getPositions() {

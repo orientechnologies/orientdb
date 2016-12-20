@@ -225,7 +225,7 @@ public class OQueryResponse implements OBinaryResponse {
   }
 
   private void writeDocument(OChannelDataOutput channel, ODocument doc, String serializer) throws IOException {
-    OBinaryProtocolHelper.writeIdentifiable(channel, doc, serializer);
+    OMessageHelper.writeIdentifiable(channel, doc, serializer);
   }
 
   private OResult readProjection(OChannelDataInput channel) throws IOException {

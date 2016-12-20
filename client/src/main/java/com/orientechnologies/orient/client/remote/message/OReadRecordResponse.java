@@ -66,7 +66,7 @@ public final class OReadRecordResponse implements OBinaryResponse {
         if (d.getIdentity().isValid()) {
           network.writeByte((byte) 2); // CLIENT CACHE
           // RECORD. IT ISN'T PART OF THE RESULT SET
-          OBinaryProtocolHelper.writeRecord(network, d, recordSerializer);
+          OMessageHelper.writeRecord(network, d, recordSerializer);
         }
       }
     }

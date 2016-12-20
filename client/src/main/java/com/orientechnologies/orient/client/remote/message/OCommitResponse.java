@@ -107,7 +107,7 @@ public final class OCommitResponse implements OBinaryResponse {
       updated.add(new OUpdatedRecordResponse(rid, version));
     }
 
-    collectionChanges = OBinaryProtocolHelper.readCollectionChanges(network);
+    collectionChanges = OMessageHelper.readCollectionChanges(network);
 
   }
 
@@ -126,7 +126,7 @@ public final class OCommitResponse implements OBinaryResponse {
       channel.writeVersion(updatedRecord.version);
     }
     if (protocolVersion >= 20)
-      OBinaryProtocolHelper.writeCollectionChanges(channel, collectionChanges);
+      OMessageHelper.writeCollectionChanges(channel, collectionChanges);
   }
 
   public List<OCreatedRecordResponse> getCreated() {

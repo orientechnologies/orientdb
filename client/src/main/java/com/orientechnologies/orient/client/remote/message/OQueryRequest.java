@@ -83,7 +83,7 @@ public final class OQueryRequest implements OBinaryRequest<OQueryResponse> {
     ODocument parms = new ODocument();
     parms.field("params", this.params);
 
-    byte[] bytes = OBinaryProtocolHelper.getRecordBytes(parms, serializer);
+    byte[] bytes = OMessageHelper.getRecordBytes(parms, serializer);
     network.writeBytes(bytes);
     network.writeBoolean(namedParams);
   }

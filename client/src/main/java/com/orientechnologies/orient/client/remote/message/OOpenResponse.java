@@ -35,7 +35,7 @@ public class OOpenResponse implements OBinaryResponse {
     if (protocolVersion > OChannelBinaryProtocol.PROTOCOL_VERSION_26)
       channel.writeBytes(sessionToken);
 
-    OBinaryProtocolHelper.writeClustersArray(channel, clusterIds, protocolVersion);
+    OMessageHelper.writeClustersArray(channel, clusterIds, protocolVersion);
     channel.writeBytes(distributedConfiguration);
     channel.writeString(serverVersion);
   }
@@ -44,7 +44,7 @@ public class OOpenResponse implements OBinaryResponse {
   public void read(OChannelDataInput network, OStorageRemoteSession session) throws IOException {
     sessionId = network.readInt();
     sessionToken = network.readBytes();
-    clusterIds = OBinaryProtocolHelper.readClustersArray(network);
+    clusterIds = OMessageHelper.readClustersArray(network);
     distributedConfiguration = network.readBytes();
     serverVersion = network.readString();
   }

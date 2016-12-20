@@ -45,13 +45,13 @@ public class OUpdateRecordResponse implements OBinaryResponse {
   public void write(OChannelDataOutput channel, int protocolVersion, String recordSerializer) throws IOException {
     channel.writeVersion(version);
     if (protocolVersion >= 20)
-      OBinaryProtocolHelper.writeCollectionChanges(channel, changes);
+      OMessageHelper.writeCollectionChanges(channel, changes);
   }
 
   @Override
   public void read(OChannelDataInput network, OStorageRemoteSession session) throws IOException {
     version = network.readVersion();
-    changes = OBinaryProtocolHelper.readCollectionChanges(network);
+    changes = OMessageHelper.readCollectionChanges(network);
   }
 
   public int getVersion() {

@@ -92,7 +92,7 @@ public final class OCommandResponse implements OBinaryResponse {
           channel.writeByte((byte) 2); // CLIENT CACHE RECORD. IT
           // ISN'T PART OF THE
           // RESULT SET
-          OBinaryProtocolHelper.writeIdentifiable(channel, rec, recordSerializer);
+          OMessageHelper.writeIdentifiable(channel, rec, recordSerializer);
         }
 
         channel.writeByte((byte) 0); // NO MORE RECORDS
@@ -114,14 +114,14 @@ public final class OCommandResponse implements OBinaryResponse {
 
       if (listener != null)
         listener.result(result);
-      OBinaryProtocolHelper.writeIdentifiable(channel, (OIdentifiable) result, recordSerializer);
+      OMessageHelper.writeIdentifiable(channel, (OIdentifiable) result, recordSerializer);
     } else if (result instanceof ODocumentWrapper) {
       // RECORD
       channel.writeByte((byte) 'r');
       final ODocument doc = ((ODocumentWrapper) result).getDocument();
       if (listener != null)
         listener.result(doc);
-      OBinaryProtocolHelper.writeIdentifiable(channel, doc, recordSerializer);
+      OMessageHelper.writeIdentifiable(channel, doc, recordSerializer);
     } else if (!isRecordResultSet) {
       writeSimpleValue(channel, listener, result, protocolVersion, recordSerializer);
     } else if (OMultiValue.isMultiValue(result)) {
@@ -135,10 +135,10 @@ public final class OCommandResponse implements OBinaryResponse {
           if (listener != null)
             listener.result(o);
 
-          OBinaryProtocolHelper.writeIdentifiable(channel, (OIdentifiable) o, recordSerializer);
+          OMessageHelper.writeIdentifiable(channel, (OIdentifiable) o, recordSerializer);
         } catch (Exception e) {
           OLogManager.instance().warn(this, "Cannot serialize record: " + o);
-          OBinaryProtocolHelper.writeIdentifiable(channel, null, recordSerializer);
+          OMessageHelper.writeIdentifiable(channel, null, recordSerializer);
           // WRITE NULL RECORD TO AVOID BREAKING PROTOCOL
         }
       }
@@ -153,7 +153,7 @@ public final class OCommandResponse implements OBinaryResponse {
               listener.result(o);
 
             channel.writeByte((byte) 1); // ONE MORE RECORD
-            OBinaryProtocolHelper.writeIdentifiable(channel, (OIdentifiable) o, recordSerializer);
+            OMessageHelper.writeIdentifiable(channel, (OIdentifiable) o, recordSerializer);
           } catch (Exception e) {
             OLogManager.instance().warn(this, "Cannot serialize record: " + o);
           }
@@ -171,7 +171,7 @@ public final class OCommandResponse implements OBinaryResponse {
             if (listener != null)
               listener.result(o);
 
-            OBinaryProtocolHelper.writeIdentifiable(channel, (OIdentifiable) o, recordSerializer);
+            OMessageHelper.writeIdentifiable(channel, (OIdentifiable) o, recordSerializer);
           } catch (Exception e) {
             OLogManager.instance().warn(this, "Cannot serialize record: " + o);
           }
@@ -191,7 +191,7 @@ public final class OCommandResponse implements OBinaryResponse {
       channel.writeByte((byte) 'w');
       ODocument document = new ODocument();
       document.field("result", result);
-      OBinaryProtocolHelper.writeIdentifiable(channel, document, recordSerializer);
+      OMessageHelper.writeIdentifiable(channel, document, recordSerializer);
       if (listener != null)
         listener.linkdedBySimpleValue(document);
     } else {

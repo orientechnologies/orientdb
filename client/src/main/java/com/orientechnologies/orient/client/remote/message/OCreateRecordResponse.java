@@ -50,7 +50,7 @@ public class OCreateRecordResponse implements OBinaryResponse {
     channel.writeLong(this.identity.getClusterPosition());
     channel.writeInt(version);
     if (protocolVersion >= 20)
-      OBinaryProtocolHelper.writeCollectionChanges(channel, changedIds);
+      OMessageHelper.writeCollectionChanges(channel, changedIds);
   }
 
   @Override
@@ -59,7 +59,7 @@ public class OCreateRecordResponse implements OBinaryResponse {
     long posistion = network.readLong();
     identity = new ORecordId(clusterId, posistion);
     version = network.readVersion();
-    changedIds = OBinaryProtocolHelper.readCollectionChanges(network);
+    changedIds = OMessageHelper.readCollectionChanges(network);
   }
 
   public ORecordId getIdentity() {

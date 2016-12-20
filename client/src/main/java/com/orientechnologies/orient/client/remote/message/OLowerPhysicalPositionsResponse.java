@@ -40,11 +40,11 @@ public class OLowerPhysicalPositionsResponse implements OBinaryResponse {
 
   @Override
   public void read(OChannelDataInput network, OStorageRemoteSession session) throws IOException {
-    this.previousPositions = OBinaryProtocolHelper.readPhysicalPositions(network);
+    this.previousPositions = OMessageHelper.readPhysicalPositions(network);
   }
 
   public void write(OChannelDataOutput channel, int protocolVersion, String recordSerializer) throws IOException {
-    OBinaryProtocolHelper.writePhysicalPositions(channel, previousPositions);
+    OMessageHelper.writePhysicalPositions(channel, previousPositions);
   }
 
   public OPhysicalPosition[] getPreviousPositions() {

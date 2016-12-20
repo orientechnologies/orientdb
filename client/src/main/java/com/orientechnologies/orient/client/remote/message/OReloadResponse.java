@@ -40,11 +40,11 @@ public class OReloadResponse implements OBinaryResponse {
 
   @Override
   public void read(OChannelDataInput network, OStorageRemoteSession session) throws IOException {
-    this.clusters = OBinaryProtocolHelper.readClustersArray(network);
+    this.clusters = OMessageHelper.readClustersArray(network);
   }
 
   public void write(OChannelDataOutput channel, int protocolVersion, String recordSerializer) throws IOException {
-    OBinaryProtocolHelper.writeClustersArray(channel, clusters, protocolVersion);
+    OMessageHelper.writeClustersArray(channel, clusters, protocolVersion);
   }
 
   public OCluster[] getClusters() {

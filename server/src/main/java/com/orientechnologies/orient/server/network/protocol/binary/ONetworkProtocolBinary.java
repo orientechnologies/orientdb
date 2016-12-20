@@ -185,6 +185,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
           if (connection != null) {
             protocolVersion = connection.getData().protocolVersion;
             serializationImpl = connection.getData().serializationImpl;
+            if (connection.getDatabase() != null) {
+              connection.getDatabase().activateOnCurrentThread();
+            }
           }
           request.read(channel, protocolVersion, serializationImpl);
         } catch (IOException e) {

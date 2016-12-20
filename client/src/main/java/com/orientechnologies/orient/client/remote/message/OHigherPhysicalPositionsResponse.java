@@ -39,11 +39,11 @@ public class OHigherPhysicalPositionsResponse implements OBinaryResponse {
 
   @Override
   public void read(OChannelDataInput network, OStorageRemoteSession session) throws IOException {
-    this.nextPositions = OBinaryProtocolHelper.readPhysicalPositions(network);
+    this.nextPositions = OMessageHelper.readPhysicalPositions(network);
   }
 
   public void write(OChannelDataOutput channel, int protocolVersion, String recordSerializer) throws IOException {
-    OBinaryProtocolHelper.writePhysicalPositions(channel, nextPositions);
+    OMessageHelper.writePhysicalPositions(channel, nextPositions);
   }
 
   public OPhysicalPosition[] getNextPositions() {
