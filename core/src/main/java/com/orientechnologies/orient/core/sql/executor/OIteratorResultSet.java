@@ -44,7 +44,7 @@ public class OIteratorResultSet implements OTodoResultSet {
     return Optional.empty();
   }
 
-  @Override public Map<String, Object> getQueryStats() {
+  @Override public Map<String, Long> getQueryStats() {
     return new HashMap<>();
   }
 

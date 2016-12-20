@@ -30,7 +30,7 @@ public class OInternalResultSet implements OTodoResultSet {
     this.plan = plan;
   }
 
-  @Override public Map<String, Object> getQueryStats() {
+  @Override public Map<String, Long> getQueryStats() {
     return new HashMap<>();
   }
 

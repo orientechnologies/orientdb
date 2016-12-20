@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
@@ -72,7 +73,13 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
   }
 
   @Override public OResult toResult() {
-    return new OResultInternal();
+    OResultInternal result = new OResultInternal();
+    result.setProperty("type", "ScriptExecutionPlan");
+    result.setProperty("javaType", getClass().getName());
+    result.setProperty("cost", getCost());
+    result.setProperty("prettyPrint", prettyPrint(0, 2));
+    result.setProperty("steps", steps == null ? null : steps.stream().map(x -> x.toResult()).collect(Collectors.toList()));
+    return result;
   }
 
   @Override public long getCost() {

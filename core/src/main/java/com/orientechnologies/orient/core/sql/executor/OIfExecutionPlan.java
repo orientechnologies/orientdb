@@ -57,7 +57,13 @@ public class OIfExecutionPlan implements OInternalExecutionPlan {
   }
 
   @Override public OResult toResult() {
-    return new OResultInternal();
+    OResultInternal result = new OResultInternal();
+    result.setProperty("type", "IfExecutionPlan");
+    result.setProperty("javaType", getClass().getName());
+    result.setProperty("cost", getCost());
+    result.setProperty("prettyPrint", prettyPrint(0, 2));
+    result.setProperty("steps", Collections.singletonList(step.toResult()));
+    return result;
   }
 
   @Override public long getCost() {

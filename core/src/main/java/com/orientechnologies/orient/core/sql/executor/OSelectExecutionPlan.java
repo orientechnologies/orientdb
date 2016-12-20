@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Created by luigidellaquila on 06/07/16.
@@ -70,7 +71,13 @@ public class OSelectExecutionPlan implements OInternalExecutionPlan {
   }
 
   @Override public OResult toResult() {
-    return new OResultInternal();
+    OResultInternal result = new OResultInternal();
+    result.setProperty("type", "QueryExecutionPlan");
+    result.setProperty("javaType", getClass().getName());
+    result.setProperty("cost", getCost());
+    result.setProperty("prettyPrint", prettyPrint(0, 2));
+    result.setProperty("steps", steps == null ? null : steps.stream().map(x -> x.toResult()).collect(Collectors.toList()));
+    return result;
   }
 
   @Override public long getCost() {

@@ -70,7 +70,7 @@ public class OrderByStep extends AbstractExecutionStep {
         return Optional.empty();
       }
 
-      @Override public Map<String, Object> getQueryStats() {
+      @Override public Map<String, Long> getQueryStats() {
         return new HashMap<>();
       }
     };

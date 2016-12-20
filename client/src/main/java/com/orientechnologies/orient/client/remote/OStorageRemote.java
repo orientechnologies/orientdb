@@ -809,7 +809,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     ORemoteResultSet remoteRs = ((ORemoteResultSet) response.getResult());
     rs.setCurrentPage(remoteRs.getCurrentPage());
     rs.setHasNextPage(remoteRs.hasNextPage());
-    Map<String, Object> newQueryStats = remoteRs.getQueryStats();
+    Map<String, Long> newQueryStats = remoteRs.getQueryStats();
     if (newQueryStats != null) {
       rs.setQueryStats(newQueryStats);
     }

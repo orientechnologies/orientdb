@@ -10,16 +10,15 @@ import com.orientechnologies.orient.core.record.impl.OEdgeDelegate;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.record.impl.OVertexDelegate;
 import com.orientechnologies.orient.core.serialization.serializer.result.binary.OResultSerializerNetwork;
-import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
-import com.orientechnologies.orient.core.sql.executor.OResult;
-import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
+import com.orientechnologies.orient.core.sql.executor.*;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSetLifecycleDecorator;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -45,7 +44,7 @@ public class OQueryResponse implements OBinaryResponse {
     }
     channel.writeString(((OLocalResultSetLifecycleDecorator) result).getQueryId());
 
-    writeExecutionPlan(result.getExecutionPlan(), channel);
+    writeExecutionPlan(result.getExecutionPlan(), channel, recordSerializer);
     while (result.hasNext()) {
       OResult row = result.next();
       channel.writeBoolean(true);
@@ -57,8 +56,13 @@ public class OQueryResponse implements OBinaryResponse {
   }
 
   @Override public void read(OChannelDataInput network, OStorageRemoteSession session) throws IOException {
-    String queryId = network.readString();
-    ORemoteResultSet rs = new ORemoteResultSet((ODatabaseDocumentRemote) ODatabaseRecordThreadLocal.INSTANCE.get(), queryId);
+    ORemoteResultSet rs = new ORemoteResultSet((ODatabaseDocumentRemote) ODatabaseRecordThreadLocal.INSTANCE.get());
+    doRead(network, rs);
+    this.result = rs;
+  }
+
+  protected void doRead(OChannelDataInput network, ORemoteResultSet rs) throws IOException {
+    rs.setQueryId(network.readString());
     rs.setExecutionPlan(readExecutionPlan(network));
     boolean hasNext = network.readBoolean();
     while (hasNext) {
@@ -67,24 +71,74 @@ public class OQueryResponse implements OBinaryResponse {
       hasNext = network.readBoolean();
     }
     rs.setHasNextPage(network.readBoolean());
-    rs.setQueryStats(readQueryStats(rs));
-    this.result = rs;
+    rs.setQueryStats(readQueryStats(network));
   }
 
-  private void writeQueryStats(Map<String, Object> queryStats, OChannelDataOutput channel) {
-    //TODO
+  private void writeQueryStats(Map<String, Long> queryStats, OChannelDataOutput channel) throws IOException {
+    if (queryStats == null) {
+      channel.writeInt(0);
+      return;
+    }
+    channel.writeInt(queryStats.size());
+    for (Map.Entry<String, Long> entry : queryStats.entrySet()) {
+      channel.writeString(entry.getKey());
+      channel.writeLong(entry.getValue());
+    }
   }
 
-  private Map<String, Object> readQueryStats(ORemoteResultSet rs) {
-    return null; //TODO
+  private Map<String, Long> readQueryStats(OChannelDataInput channel) throws IOException {
+    Map<String, Long> result = new HashMap<>();
+    int size = channel.readInt();
+    for (int i = 0; i < size; i++) {
+      String key = channel.readString();
+      Long val = channel.readLong();
+      result.put(key, val);
+    }
+    return result;
   }
 
-  private void writeExecutionPlan(Optional<OExecutionPlan> executionPlan, OChannelDataOutput channel) {
-    //TODO
+  private void writeExecutionPlan(Optional<OExecutionPlan> executionPlan, OChannelDataOutput channel, String recordSerializer)
+      throws IOException {
+    if (executionPlan.isPresent()) {
+      channel.writeBoolean(true);
+      writeResult(executionPlan.get().toResult(), channel, recordSerializer);
+    } else {
+      channel.writeBoolean(false);
+    }
   }
 
-  private OExecutionPlan readExecutionPlan(OChannelDataInput network) {
-    return null; //TODO
+  private OExecutionPlan readExecutionPlan(OChannelDataInput network) throws IOException {
+    boolean present = network.readBoolean();
+    if (!present) {
+      return null;
+    }
+    OInfoExecutionPlan result = new OInfoExecutionPlan();
+    OResult read = readResult(network);
+    result.setCost(read.getProperty("cost"));
+    result.setType(read.getProperty("type"));
+    result.setJavaType(read.getProperty("javaType"));
+    result.setPrettyPrint(read.getProperty("prettyPrint"));
+    result.setStmText(read.getProperty("stmText"));
+    List<OResult> subSteps = read.getProperty("steps");
+    if (subSteps != null) {
+      subSteps.forEach(x -> result.getSteps().add(toInfoStep(x)));
+    }
+    return result;
+  }
+
+  private OExecutionStep toInfoStep(OResult x) {
+    OInfoExecutionStep result = new OInfoExecutionStep();
+    result.setName(x.getProperty("name"));
+    result.setType(x.getProperty("type"));
+    result.setTargetNode(x.getProperty("targetNode"));
+    result.setJavaType(x.getProperty("javaType"));
+    result.setCost(x.getProperty("cost") == null ? -1 : x.getProperty("cost"));
+    List<OResult> ssteps = x.getProperty("subSteps");
+    if (ssteps != null) {
+      ssteps.stream().forEach(sstep -> result.getSubSteps().add(toInfoStep(sstep)));
+    }
+    result.setDescription(x.getProperty("description"));
+    return result;
   }
 
   private void writeResult(OResult row, OChannelDataOutput channel, String recordSerializer) throws IOException {

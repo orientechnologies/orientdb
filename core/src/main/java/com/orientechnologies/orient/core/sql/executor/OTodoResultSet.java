@@ -29,7 +29,7 @@ public interface OTodoResultSet extends Spliterator<OResult>, Iterator<OResult> 
 
   Optional<OExecutionPlan> getExecutionPlan();
 
-  Map<String, Object> getQueryStats();
+  Map<String, Long> getQueryStats();
 
   default void reset() {
     throw new UnsupportedOperationException("Implement RESET on " + getClass().getSimpleName());

@@ -57,7 +57,7 @@ public class OLocalResultSetLifecycleDecorator implements OTodoResultSet {
     return entity.getExecutionPlan();
   }
 
-  @Override public Map<String, Object> getQueryStats() {
+  @Override public Map<String, Long> getQueryStats() {
     return entity.getQueryStats();
   }
 

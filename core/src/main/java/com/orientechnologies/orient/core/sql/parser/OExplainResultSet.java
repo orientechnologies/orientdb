@@ -42,7 +42,7 @@ public class OExplainResultSet implements OTodoResultSet {
     return Optional.of(executionPlan);
   }
 
-  @Override public Map<String, Object> getQueryStats() {
+  @Override public Map<String, Long> getQueryStats() {
     return new HashMap<>();
   }
 }

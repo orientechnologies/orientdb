@@ -15,16 +15,19 @@ import java.util.Optional;
  */
 public class ORemoteResultSet implements OTodoResultSet {
 
-  private final String                  queryId;
+  private       String                  queryId;
   private final ODatabaseDocumentRemote db;
 
   private List<OResult> currentPage = new ArrayList<>();
-  private OExecutionPlan      executionPlan;
-  private Map<String, Object> queryStats;
+  private OExecutionPlan    executionPlan;
+  private Map<String, Long> queryStats;
   private boolean hasNextPage = false;
 
-  public ORemoteResultSet(ODatabaseDocumentRemote db, String queryId) {
+  public ORemoteResultSet(ODatabaseDocumentRemote db) {
     this.db = db;
+  }
+
+  protected void setQueryId(String queryId) {
     this.queryId = queryId;
   }
 
@@ -64,11 +67,11 @@ public class ORemoteResultSet implements OTodoResultSet {
     return Optional.ofNullable(executionPlan);
   }
 
-  @Override public Map<String, Object> getQueryStats() {
+  @Override public Map<String, Long> getQueryStats() {
     return queryStats;
   }
 
-  public void setQueryStats(Map<String, Object> queryStats) {
+  public void setQueryStats(Map<String, Long> queryStats) {
     this.queryStats = queryStats;
   }
 

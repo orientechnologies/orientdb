@@ -69,7 +69,7 @@ public class FindReferencesStep extends AbstractExecutionStep {
         return null;
       }
 
-      @Override public Map<String, Object> getQueryStats() {
+      @Override public Map<String, Long> getQueryStats() {
         return null;
       }
     };

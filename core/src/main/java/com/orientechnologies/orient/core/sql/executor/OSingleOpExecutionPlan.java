@@ -65,6 +65,13 @@ public class OSingleOpExecutionPlan implements OInternalExecutionPlan {
   }
 
   @Override public OResult toResult() {
-    return null;
+    OResultInternal result = new OResultInternal();
+    result.setProperty("type", "QueryExecutionPlan");
+    result.setProperty("javaType", getClass().getName());
+    result.setProperty("stmText", statement.toString());
+    result.setProperty("cost", getCost());
+    result.setProperty("prettyPrint", prettyPrint(0, 2));
+    result.setProperty("steps", null);
+    return result;
   }
 }
