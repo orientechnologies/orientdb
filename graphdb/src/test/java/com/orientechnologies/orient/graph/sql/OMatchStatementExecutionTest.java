@@ -1534,7 +1534,184 @@ public class OMatchStatementExecutionTest {
 
   }
 
+  @Test
+  public void testDependencyOrdering1() {
+    //issue #6931
+    db.command(new OCommandSQL("CREATE CLASS testDependencyOrdering1_Foo EXTENDS V")).execute();
+    db.command(new OCommandSQL("CREATE CLASS testDependencyOrdering1_Bar EXTENDS V")).execute();
+    db.command(new OCommandSQL("CREATE CLASS testDependencyOrdering1_Baz EXTENDS V")).execute();
+    db.command(new OCommandSQL("CREATE CLASS testDependencyOrdering1_Far EXTENDS V")).execute();
+    db.command(new OCommandSQL("CREATE CLASS testDependencyOrdering1_Foo_Bar EXTENDS E")).execute();
+    db.command(new OCommandSQL("CREATE CLASS testDependencyOrdering1_Bar_Baz EXTENDS E")).execute();
+    db.command(new OCommandSQL("CREATE CLASS testDependencyOrdering1_Foo_Far EXTENDS E")).execute();
 
+    db.command(new OCommandSQL("CREATE VERTEX testDependencyOrdering1_Foo SET name = 'foo'")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX testDependencyOrdering1_Bar SET name = 'bar'")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX testDependencyOrdering1_Baz SET name = 'baz'")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX testDependencyOrdering1_Far SET name = 'far'")).execute();
+
+    db.command(new OCommandSQL("CREATE EDGE testDependencyOrdering1_Foo_Bar FROM (" +
+            "SELECT FROM testDependencyOrdering1_Foo) TO (SELECT FROM testDependencyOrdering1_Bar)")).execute();
+    db.command(new OCommandSQL("CREATE EDGE testDependencyOrdering1_Bar_Baz FROM (" +
+            "SELECT FROM testDependencyOrdering1_Bar) TO (SELECT FROM testDependencyOrdering1_Baz)")).execute();
+    db.command(new OCommandSQL("CREATE EDGE testDependencyOrdering1_Foo_Far FROM (" +
+            "SELECT FROM testDependencyOrdering1_Foo) TO (SELECT FROM testDependencyOrdering1_Far)")).execute();
+
+    // The correct but non-obvious execution order here is:
+    // foo, bar, far, baz
+    // This is a test to ensure that the query scheduler resolves dependencies correctly,
+    // even if they are unusual or contrived.
+    List result = db.query(new OSQLSynchQuery(
+            "MATCH {\n" +
+            "    class: testDependencyOrdering1_Foo,\n" +
+            "    as: foo\n" +
+            "}.out('testDependencyOrdering1_Foo_Far') {\n" +
+            "    optional: true,\n" +
+            "    where: ($matched.bar IS NOT null),\n" +
+            "    as: far\n" +
+            "}, {\n" +
+            "    as: foo\n" +
+            "}.out('testDependencyOrdering1_Foo_Bar') {\n" +
+            "    where: ($matched.foo IS NOT null),\n" +
+            "    as: bar\n" +
+            "}.out('testDependencyOrdering1_Bar_Baz') {\n" +
+            "    where: ($matched.far IS NOT null),\n" +
+            "    as: baz\n" +
+            "} RETURN $matches"));
+    assertEquals(1, result.size());
+  }
+
+  @Test
+  public void testCircularDependency() {
+    //issue #6931
+    db.command(new OCommandSQL("CREATE CLASS testCircularDependency_Foo EXTENDS V")).execute();
+    db.command(new OCommandSQL("CREATE CLASS testCircularDependency_Bar EXTENDS V")).execute();
+    db.command(new OCommandSQL("CREATE CLASS testCircularDependency_Baz EXTENDS V")).execute();
+    db.command(new OCommandSQL("CREATE CLASS testCircularDependency_Far EXTENDS V")).execute();
+    db.command(new OCommandSQL("CREATE CLASS testCircularDependency_Foo_Bar EXTENDS E")).execute();
+    db.command(new OCommandSQL("CREATE CLASS testCircularDependency_Bar_Baz EXTENDS E")).execute();
+    db.command(new OCommandSQL("CREATE CLASS testCircularDependency_Foo_Far EXTENDS E")).execute();
+
+    db.command(new OCommandSQL("CREATE VERTEX testCircularDependency_Foo SET name = 'foo'")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX testCircularDependency_Bar SET name = 'bar'")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX testCircularDependency_Baz SET name = 'baz'")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX testCircularDependency_Far SET name = 'far'")).execute();
+
+    db.command(new OCommandSQL("CREATE EDGE testCircularDependency_Foo_Bar FROM (" +
+            "SELECT FROM testCircularDependency_Foo) TO (SELECT FROM testCircularDependency_Bar)")).execute();
+    db.command(new OCommandSQL("CREATE EDGE testCircularDependency_Bar_Baz FROM (" +
+            "SELECT FROM testCircularDependency_Bar) TO (SELECT FROM testCircularDependency_Baz)")).execute();
+    db.command(new OCommandSQL("CREATE EDGE testCircularDependency_Foo_Far FROM (" +
+            "SELECT FROM testCircularDependency_Foo) TO (SELECT FROM testCircularDependency_Far)")).execute();
+
+    // The circular dependency here is:
+    // - far depends on baz
+    // - baz depends on bar
+    // - bar depends on far
+    OSQLSynchQuery query = new OSQLSynchQuery(
+            "MATCH {\n" +
+            "    class: testCircularDependency_Foo,\n" +
+            "    as: foo\n" +
+            "}.out('testCircularDependency_Foo_Far') {\n" +
+            "    where: ($matched.baz IS NOT null),\n" +
+            "    as: far\n" +
+            "}, {\n" +
+            "    as: foo\n" +
+            "}.out('testCircularDependency_Foo_Bar') {\n" +
+            "    where: ($matched.far IS NOT null),\n" +
+            "    as: bar\n" +
+            "}.out('testCircularDependency_Bar_Baz') {\n" +
+            "    where: ($matched.bar IS NOT null),\n" +
+            "    as: baz\n" +
+            "} RETURN $matches");
+
+    try {
+      db.query(query);
+      fail();
+    } catch(OCommandExecutionException x) {
+      // passed the test
+    }
+  }
+
+  @Test
+  public void testUndefinedAliasDependency() {
+    //issue #6931
+    db.command(new OCommandSQL("CREATE CLASS testUndefinedAliasDependency_Foo EXTENDS V")).execute();
+    db.command(new OCommandSQL("CREATE CLASS testUndefinedAliasDependency_Bar EXTENDS V")).execute();
+    db.command(new OCommandSQL("CREATE CLASS testUndefinedAliasDependency_Foo_Bar EXTENDS E")).execute();
+
+    db.command(new OCommandSQL("CREATE VERTEX testUndefinedAliasDependency_Foo SET name = 'foo'")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX testUndefinedAliasDependency_Bar SET name = 'bar'")).execute();
+
+    db.command(new OCommandSQL("CREATE EDGE testUndefinedAliasDependency_Foo_Bar FROM (" +
+        "SELECT FROM testUndefinedAliasDependency_Foo) TO (SELECT FROM testUndefinedAliasDependency_Bar)")).execute();
+
+    // "bar" in the following query declares a dependency on the alias "baz", which doesn't exist.
+    OSQLSynchQuery query = new OSQLSynchQuery(
+            "MATCH {\n" +
+            "    class: testUndefinedAliasDependency_Foo,\n" +
+            "    as: foo\n" +
+            "}.out('testUndefinedAliasDependency_Foo_Bar') {\n" +
+            "    where: ($matched.baz IS NOT null),\n" +
+            "    as: bar\n" +
+            "} RETURN $matches");
+
+    try {
+      db.query(query);
+      fail();
+    } catch(OCommandExecutionException x) {
+      // passed the test
+    }
+  }
+
+  @Test
+  public void testCyclicDeepTraversal() {
+    db.command(new OCommandSQL("CREATE CLASS testCyclicDeepTraversalV EXTENDS V")).execute();
+    db.command(new OCommandSQL("CREATE CLASS testCyclicDeepTraversalE EXTENDS E")).execute();
+
+    db.command(new OCommandSQL("CREATE VERTEX testCyclicDeepTraversalV SET name = 'a'")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX testCyclicDeepTraversalV SET name = 'b'")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX testCyclicDeepTraversalV SET name = 'c'")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX testCyclicDeepTraversalV SET name = 'z'")).execute();
+
+    // a -> b -> z
+    // z -> c -> a
+    db.command(new OCommandSQL("CREATE EDGE testCyclicDeepTraversalE from"
+            + "(select from testCyclicDeepTraversalV where name = 'a') to (select from testCyclicDeepTraversalV where name = 'b')"))
+            .execute();
+
+    db.command(new OCommandSQL("CREATE EDGE testCyclicDeepTraversalE from"
+            + "(select from testCyclicDeepTraversalV where name = 'b') to (select from testCyclicDeepTraversalV where name = 'z')"))
+            .execute();
+
+    db.command(new OCommandSQL("CREATE EDGE testCyclicDeepTraversalE from"
+            + "(select from testCyclicDeepTraversalV where name = 'z') to (select from testCyclicDeepTraversalV where name = 'c')"))
+            .execute();
+
+    db.command(new OCommandSQL("CREATE EDGE testCyclicDeepTraversalE from"
+            + "(select from testCyclicDeepTraversalV where name = 'c') to (select from testCyclicDeepTraversalV where name = 'a')"))
+            .execute();
+
+    OSQLSynchQuery query = new OSQLSynchQuery(
+            "MATCH {\n" +
+            "    class: testCyclicDeepTraversalV,\n" +
+            "    as: foo,\n" +
+            "    where: (name = 'a')\n" +
+            "}.out() {\n" +
+            "    while: ($depth < 2),\n" +
+            "    where: (name = 'z'),\n" +
+            "    as: bar\n" +
+            "}, {\n" +
+            "    as: bar\n" +
+            "}.out() {\n" +
+            "    while: ($depth < 2),\n" +
+            "    as: foo\n" +
+            "} RETURN $patterns"
+    );
+
+    List<?> result = db.query(query);
+    assertEquals(1, result.size());
+  }
 
   private List<OIdentifiable> getManagedPathElements(String managerName) {
     StringBuilder query = new StringBuilder();
