@@ -36,6 +36,7 @@ import com.orientechnologies.orient.server.distributed.task.ODistributedOperatio
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -56,11 +57,12 @@ public class ODistributedWorker extends Thread {
 
   protected volatile ODatabaseDocumentTx                  database;
   protected volatile OUser                                lastUser;
-  protected volatile boolean                              running              = true;
+  protected volatile boolean                              running               = true;
 
-  private AtomicLong                                      processedRequests    = new AtomicLong(0);
+  private AtomicLong                                      processedRequests     = new AtomicLong(0);
+  private AtomicBoolean                                   waitingForNextRequest = new AtomicBoolean(true);
 
-  private static final long                               MAX_SHUTDOWN_TIMEOUT = 5000l;
+  private static final long                               MAX_SHUTDOWN_TIMEOUT  = 5000l;
 
   public ODistributedWorker(final ODistributedDatabaseImpl iDistributed, final String iDatabaseName, final int i) {
     id = i;
@@ -158,6 +160,7 @@ public class ODistributedWorker extends Thread {
 
     } else if (database.isClosed()) {
       // DATABASE CLOSED, REOPEN IT
+      database.activateOnCurrentThread();
       database.close();
       manager.getServerInstance().openDatabase(database, "internal", "internal", null, true);
     }
@@ -232,8 +235,14 @@ public class ODistributedWorker extends Thread {
     return req;
   }
 
+  public boolean isWaitingForNextRequest() {
+    return waitingForNextRequest.get();
+  }
+
   protected ODistributedRequest nextMessage() throws InterruptedException {
+    waitingForNextRequest.set(true);
     final ODistributedRequest req = localQueue.take();
+    waitingForNextRequest.set(false);
     processedRequests.incrementAndGet();
     return req;
   }
@@ -275,7 +284,6 @@ public class ODistributedWorker extends Thread {
     Object responsePayload = null;
     OSecurityUser origin = null;
     try {
-      task.setNodeSource(senderNodeName);
       waitNodeIsOnline();
       if (task.isUsingDatabase()) {
         initDatabaseInstance();
