@@ -1,6 +1,6 @@
 {
   "name": "orientdbstudio",
-  "version": "2.3.0-snapshot",
+  "version": "2.2.15-snapshot",
   "dependencies": {
     "@angular/common": "^2.2.4",
     "@angular/compiler": "^2.2.4",
@@ -53,6 +53,7 @@
     "zone.js": "^0.7.2"
   },
   "scripts": {
+    "dist": "npm install && NODE_ENV=production webpack  --progress --profile --colors",
     "build": "NODE_ENV=production webpack  --progress --profile --colors",
     "watch": "webpack-dev-server --hot --inline --progress --colors --watch-poll"
   },
