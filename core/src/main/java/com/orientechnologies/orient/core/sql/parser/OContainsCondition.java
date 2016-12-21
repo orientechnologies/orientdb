@@ -2,6 +2,7 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.executor.OResult;
@@ -80,15 +81,46 @@ public class OContainsCondition extends OBooleanExpression {
 
   @Override public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
     Object leftValue = left.execute(currentRecord, ctx);
-    Object rightValue = right.execute(currentRecord, ctx);
-    return execute(leftValue, rightValue);
+    if (right != null) {
+      Object rightValue = right.execute(currentRecord, ctx);
+      return execute(leftValue, rightValue);
+    } else {
+      if (!OMultiValue.isMultiValue(leftValue)) {
+        return false;
+      }
+      Iterator<Object> iter = OMultiValue.getMultiValueIterator(leftValue);
+      while (iter.hasNext()) {
+        Object item = iter.next();
+        if (item instanceof OIdentifiable && condition.evaluate((OIdentifiable) item, ctx)) {
+          return true;
+        } else if (item instanceof OResult && condition.evaluate((OResult) item, ctx)) {
+          return true;
+        }
+      }
+      return false;
+    }
   }
-
 
   @Override public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
     Object leftValue = left.execute(currentRecord, ctx);
-    Object rightValue = right.execute(currentRecord, ctx);
-    return execute(leftValue, rightValue);
+    if (right != null) {
+      Object rightValue = right.execute(currentRecord, ctx);
+      return execute(leftValue, rightValue);
+    } else {
+      if (!OMultiValue.isMultiValue(leftValue)) {
+        return false;
+      }
+      Iterator<Object> iter = OMultiValue.getMultiValueIterator(leftValue);
+      while (iter.hasNext()) {
+        Object item = iter.next();
+        if (item instanceof OIdentifiable && condition.evaluate((OIdentifiable) item, ctx)) {
+          return true;
+        } else if (item instanceof OResult && condition.evaluate((OResult) item, ctx)) {
+          return true;
+        }
+      }
+      return false;
+    }
   }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {

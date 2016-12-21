@@ -2,14 +2,12 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class OContainsAllCondition extends OBooleanExpression {
 
@@ -34,12 +32,110 @@ public class OContainsAllCondition extends OBooleanExpression {
     return visitor.visit(this, data);
   }
 
+  public boolean execute(Object left, Object right) {
+    if (left instanceof Collection) {
+      if (right instanceof Collection) {
+        return ((Collection) left).containsAll((Collection) right);
+      }
+      if (right instanceof Iterable) {
+        right = ((Iterable) right).iterator();
+      }
+      if (right instanceof Iterator) {
+        Iterator iterator = (Iterator) right;
+        while (iterator.hasNext()) {
+          Object next = iterator.next();
+          if (!((Collection) left).contains(next)) {
+            return false;
+          }
+        }
+      }
+      return ((Collection) left).contains(right);
+    }
+    if (left instanceof Iterable) {
+      left = ((Iterable) left).iterator();
+    }
+    if (left instanceof Iterator) {
+      if (!(right instanceof Iterable)) {
+        right = Collections.singleton(right);
+      }
+      right = ((Iterable) right).iterator();
+
+      Iterator leftIterator = (Iterator) left;
+      Iterator rightIterator = (Iterator) right;
+      while (rightIterator.hasNext()) {
+        Object leftItem = rightIterator.next();
+        boolean found = false;
+        while (leftIterator.hasNext()) {
+          Object rightItem = leftIterator.next();
+          if (leftItem != null && leftItem.equals(rightItem)) {
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
+          return false;
+        }
+      }
+      return true;
+    }
+    return false;
+  }
+
   @Override public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
-    throw new UnsupportedOperationException("TODO Implement ContainsAll!!!");//TODO
+    Object leftValue = left.execute(currentRecord, ctx);
+    if (right != null) {
+      Object rightValue = right.execute(currentRecord, ctx);
+      return execute(leftValue, rightValue);
+    } else {
+      if (!OMultiValue.isMultiValue(leftValue)) {
+        return false;
+      }
+      Iterator<Object> iter = OMultiValue.getMultiValueIterator(leftValue);
+      while (iter.hasNext()) {
+        Object item = iter.next();
+        if (item instanceof OIdentifiable) {
+          if (!rightBlock.evaluate((OIdentifiable) item, ctx)) {
+            return false;
+          }
+        } else if (item instanceof OResult) {
+          if (!rightBlock.evaluate((OResult) item, ctx)) {
+            return false;
+          }
+        } else {
+          return false;
+        }
+      }
+      return true;
+    }
   }
 
   @Override public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
-    throw new UnsupportedOperationException("TODO Implement ContainsAll!!!");//TODO
+    Object leftValue = left.execute(currentRecord, ctx);
+    if (right != null) {
+      Object rightValue = right.execute(currentRecord, ctx);
+      return execute(leftValue, rightValue);
+    } else {
+      if (!OMultiValue.isMultiValue(leftValue)) {
+        return false;
+      }
+      Iterator<Object> iter = OMultiValue.getMultiValueIterator(leftValue);
+      while (iter.hasNext()) {
+        Object item = iter.next();
+        if (item instanceof OIdentifiable) {
+          if (!rightBlock.evaluate((OIdentifiable) item, ctx)) {
+            return false;
+          }
+        } else if (item instanceof OResult) {
+          if (!rightBlock.evaluate((OResult) item, ctx)) {
+            return false;
+          }
+        } else {
+          return false;
+        }
+      }
+      return true;
+    }
+
   }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
