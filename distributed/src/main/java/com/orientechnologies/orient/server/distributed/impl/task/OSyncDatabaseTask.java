@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.distributed.impl.task;
 
+import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -35,7 +36,6 @@ import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
 import java.io.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.Lock;
 
 /**
  * Ask for synchronization of database from a remote node.
@@ -65,133 +65,136 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
 
       final ODistributedDatabase dDatabase = checkIfCurrentDatabaseIsNotOlder(iManager, databaseName, null);
 
-      final Lock lock = iManager.getLock("sync." + databaseName);
-      if (lock.tryLock()) {
-        try {
-
-          final Long lastDeployment = (Long) iManager.getConfigurationMap().get(DEPLOYDB + databaseName);
-          if (lastDeployment != null && lastDeployment.longValue() == random) {
-            // SKIP IT
-            ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE,
-                "Skip deploying database '%s' because already executed", databaseName);
-            return Boolean.FALSE;
-          }
-
-          iManager.getConfigurationMap().put(DEPLOYDB + databaseName, random);
-
-          iManager.setDatabaseStatus(getNodeSource(), databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
-
-          ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT, "Deploying database %s...",
-              databaseName);
-
-          final AtomicReference<ODistributedMomentum> momentum = new AtomicReference<ODistributedMomentum>();
-
-          File backupFile = ((ODistributedStorage) database.getStorage()).getLastValidBackup();
-
-          if (backupFile == null || !backupFile.exists()) {
-            // CREATE A BACKUP OF DATABASE FROM SCRATCH
-            backupFile = new File(Orient.getTempPath() + "/backup_" + database.getName() + ".zip");
-
-            final int compressionRate = OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger();
-
-            if (backupFile.exists())
-              backupFile.delete();
-            else
-              backupFile.getParentFile().mkdirs();
-            backupFile.createNewFile();
-
-            final FileOutputStream fileOutputStream = new FileOutputStream(backupFile);
-
-            final File completedFile = new File(backupFile.getAbsolutePath() + ".completed");
-            if (completedFile.exists())
-              completedFile.delete();
-
-            ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-                "Creating backup of database '%s' (compressionRate=%d) in directory: %s...", databaseName, compressionRate,
-                backupFile.getAbsolutePath());
-
-            new Thread(new Runnable() {
-              @Override
-              public void run() {
-                Thread.currentThread().setName("OrientDB SyncDatabase node=" + iManager.getLocalNodeName() + " db=" + databaseName);
-
-                try {
-
-                  database.activateOnCurrentThread();
-                  database.backup(fileOutputStream, null, new Callable<Object>() {
-                    @Override
-                    public Object call() throws Exception {
-                      momentum.set(dDatabase.getSyncConfiguration().getMomentum().copy());
-                      return null;
-                    }
-                  }, ODistributedServerLog.isDebugEnabled() ? new OCommandOutputListener() {
-                    @Override
-                    public void onMessage(String iText) {
-                      if (iText.startsWith("\n"))
-                        iText = iText.substring(1);
-
-                      OLogManager.instance().info(this, iText);
-                    }
-                  } : null, OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger(), CHUNK_MAX_SIZE);
-
-                  ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-                      "Backup of database '%s' completed. lastOperationId=%s...", databaseName, requestId);
-
-                } catch (Throwable e) {
-                  OLogManager.instance().error(this, "Cannot execute backup of database '%s' for deploy database", e, databaseName);
-                } finally {
-                  try {
-                    fileOutputStream.close();
-                  } catch (IOException e) {
-                  }
-
-                  try {
-                    completedFile.createNewFile();
-                  } catch (IOException e) {
-                    OLogManager.instance().error(this, "Cannot create file of backup completed: %s", e, completedFile);
-                  }
-                }
-              }
-            }).start();
-
-            // RECORD LAST BACKUP TO BE REUSED IN CASE ANOTHER NODE ASK FOR THE SAME IN SHORT TIME WHILE THE DB IS NOT UPDATED
-            ((ODistributedStorage) database.getStorage()).setLastValidBackup(backupFile);
-
-          } else {
-            momentum.set(dDatabase.getSyncConfiguration().getMomentum().copy());
-            ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-                "Reusing last backup of database '%s' in directory: %s...", databaseName, backupFile.getAbsolutePath());
-          }
-
-          for (int retry = 0; momentum.get() == null && retry < 10; ++retry)
-            Thread.sleep(300);
-
-          final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(backupFile, 0, CHUNK_MAX_SIZE, momentum.get(),
-              false);
-
-          ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
-              "- transferring chunk #%d offset=%d size=%s lsn=%s...", 1, 0, OFileUtils.getSizeAsNumber(chunk.buffer.length),
-              momentum.get());
-
-          if (chunk.last)
-            // NO MORE CHUNKS: SET THE NODE ONLINE (SYNCHRONIZING ENDED)
-            iManager.setDatabaseStatus(iManager.getLocalNodeName(), databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
-
-          return chunk;
-
-        } finally {
-          lock.unlock();
-
-          ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
-              "Deploy database task completed");
+      try {
+        final Long lastDeployment = (Long) iManager.getConfigurationMap().get(DEPLOYDB + databaseName);
+        if (lastDeployment != null && lastDeployment.longValue() == random) {
+          // SKIP IT
+          ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE,
+              "Skip deploying database '%s' because already executed", databaseName);
+          return Boolean.FALSE;
         }
 
-      } else
+        iManager.getConfigurationMap().put(DEPLOYDB + databaseName, random);
+
+        iManager.setDatabaseStatus(getNodeSource(), databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
+
+        // PROPAGATE THE UPDATE TO ALL THE NODES
+        iManager.sendRequest(databaseName, null, iManager.getActiveServers(),
+            new OUpdateDatabaseStatusTask(databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING.name()),
+            iManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
+
+        ODistributedServerLog
+            .info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT, "Deploying database %s...", databaseName);
+
+        final AtomicReference<ODistributedMomentum> momentum = new AtomicReference<ODistributedMomentum>();
+
+        File backupFile = ((ODistributedStorage) database.getStorage()).getLastValidBackup();
+
+        if (backupFile == null || !backupFile.exists()) {
+          // CREATE A BACKUP OF DATABASE FROM SCRATCH
+          backupFile = new File(Orient.getTempPath() + "/backup_" + database.getName() + ".zip");
+
+          final int compressionRate = OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger();
+
+          if (backupFile.exists())
+            backupFile.delete();
+          else
+            backupFile.getParentFile().mkdirs();
+          backupFile.createNewFile();
+
+          final FileOutputStream fileOutputStream = new FileOutputStream(backupFile);
+
+          final File completedFile = new File(backupFile.getAbsolutePath() + ".completed");
+          if (completedFile.exists())
+            completedFile.delete();
+
+          ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
+              "Creating backup of database '%s' (compressionRate=%d) in directory: %s...", databaseName, compressionRate,
+              backupFile.getAbsolutePath());
+
+          new Thread(new Runnable() {
+            @Override
+            public void run() {
+              Thread.currentThread().setName("OrientDB SyncDatabase node=" + iManager.getLocalNodeName() + " db=" + databaseName);
+
+              try {
+                database.activateOnCurrentThread();
+
+                ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
+                    "Compressing database '%s' %d clusters %s...", databaseName, database.getClusterNames().size(),
+                    database.getClusterNames());
+
+                database.backup(fileOutputStream, null, new Callable<Object>() {
+                  @Override
+                  public Object call() throws Exception {
+                    momentum.set(dDatabase.getSyncConfiguration().getMomentum().copy());
+                    return null;
+                  }
+                }, ODistributedServerLog.isDebugEnabled() ? new OCommandOutputListener() {
+                  @Override
+                  public void onMessage(String iText) {
+                    if (iText.startsWith("\n"))
+                      iText = iText.substring(1);
+
+                    OLogManager.instance().info(this, iText);
+                  }
+                } : null, OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger(), CHUNK_MAX_SIZE);
+
+                ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
+                    "Backup of database '%s' completed. lastOperationId=%s...", databaseName, requestId);
+
+              } catch (Throwable e) {
+                OLogManager.instance().error(this, "Cannot execute backup of database '%s' for deploy database", e, databaseName);
+              } finally {
+                try {
+                  fileOutputStream.close();
+                } catch (IOException e) {
+                }
+
+                try {
+                  completedFile.createNewFile();
+                } catch (IOException e) {
+                  OLogManager.instance().error(this, "Cannot create file of backup completed: %s", e, completedFile);
+                }
+              }
+            }
+          }).start();
+
+          // RECORD LAST BACKUP TO BE REUSED IN CASE ANOTHER NODE ASK FOR THE SAME IN SHORT TIME WHILE THE DB IS NOT UPDATED
+          ((ODistributedStorage) database.getStorage()).setLastValidBackup(backupFile);
+
+        } else {
+          momentum.set(dDatabase.getSyncConfiguration().getMomentum().copy());
+          ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
+              "Reusing last backup of database '%s' in directory: %s...", databaseName, backupFile.getAbsolutePath());
+        }
+
+        for (int retry = 0; momentum.get() == null && retry < 10; ++retry)
+          Thread.sleep(300);
+
+        final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(backupFile, 0, CHUNK_MAX_SIZE, momentum.get(), false);
+
+        ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
+            "- transferring chunk #%d offset=%d size=%s lsn=%s...", 1, 0, OFileUtils.getSizeAsNumber(chunk.buffer.length),
+            momentum.get());
+
+        if (chunk.last)
+          // NO MORE CHUNKS: SET THE NODE ONLINE (SYNCHRONIZING ENDED)
+          iManager.setDatabaseStatus(iManager.getLocalNodeName(), databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
+
+        return chunk;
+
+      } catch (OLockException e) {
         ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE,
             "Skip deploying database %s because another node is doing it", databaseName);
+      } finally {
+        ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
+            "Deploy database task completed");
+      }
     } else
-      ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE,
-          "Skip deploying database from the same node");
+      ODistributedServerLog.debug(this, iManager.getLocalNodeName(),
+
+          getNodeSource(), DIRECTION.NONE, "Skip deploying database from the same node");
 
     return Boolean.FALSE;
   }

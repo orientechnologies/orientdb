@@ -35,13 +35,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.locks.Lock;
 
 /**
  * Server cluster interface to abstract cluster behavior.
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- *
  */
 public interface ODistributedServerManager {
   String FILE_DISTRIBUTED_DB_CONFIG = "distributed-config.json";
@@ -69,7 +67,9 @@ public interface ODistributedServerManager {
      * The server is shutting down.
      */
     SHUTTINGDOWN
-  };
+  }
+
+  ;
 
   /**
    * Database status.
@@ -102,17 +102,16 @@ public interface ODistributedServerManager {
      * The database is ONLINE, but is not involved in the quorum.
      */
     BACKUP
-  };
+  }
+
+  ;
 
   /**
    * Checks the node status if it's one of the statuses received as argument.
-   * 
-   * @param iNodeName
-   *          Node name
-   * @param iDatabaseName
-   *          Database name
-   * @param statuses
-   *          vararg of statuses
+   *
+   * @param iNodeName     Node name
+   * @param iDatabaseName Database name
+   * @param statuses      vararg of statuses
    * @return true if the node's status is equals to one of the passed statuses, otherwise false
    */
   boolean isNodeStatusEqualsTo(String iNodeName, String iDatabaseName, DB_STATUS... statuses);
@@ -172,7 +171,7 @@ public interface ODistributedServerManager {
 
   void updateLastClusterChange();
 
-  boolean reassignClustersOwnership(String iNode, String databaseName, final OModifiableDistributedConfiguration cfg);
+  void reassignClustersOwnership(String iNode, String databaseName, final OModifiableDistributedConfiguration cfg);
 
   /**
    * Available means not OFFLINE, so ONLINE or SYNCHRONIZING.
@@ -206,32 +205,20 @@ public interface ODistributedServerManager {
 
   void propagateSchemaChanges(ODatabaseInternal iStorage);
 
-  /**
-   * Gets a distributed lock
-   *
-   * @param iLockName
-   *          name of the lock
-   * @return
-   */
-  Lock getLock(String iLockName);
-
   ODistributedConfiguration getDatabaseConfiguration(String iDatabaseName);
 
   ODistributedConfiguration getDatabaseConfiguration(String iDatabaseName, boolean createIfNotPresent);
 
   /**
    * Sends a distributed request against multiple servers.
-   * 
+   *
    * @param iDatabaseName
    * @param iClusterNames
    * @param iTargetNodeNames
    * @param iTask
-   * @param messageId
-   *          Message Id as long
+   * @param messageId          Message Id as long
    * @param iExecutionMode
-   * @param localResult
-   *          It's the result of the request executed locally
-   *
+   * @param localResult        It's the result of the request executed locally
    * @param iAfterSentCallback
    * @return
    */
@@ -262,4 +249,19 @@ public interface ODistributedServerManager {
   long getClusterTime();
 
   File getDefaultDatabaseConfigFile();
+
+  ODistributedLockManager getLockManagerRequester();
+
+  ODistributedLockManager getLockManagerExecutor();
+
+  /**
+   * Executes an operation protected by a distributed lock (one per database).
+   *
+   * @param <T>            Return type
+   * @param databaseName   Database name
+   * @param timeoutLocking
+   * @param iCallback      Operation @return The operation's result of type T
+   */
+  <T> T executeInDistributedDatabaseLock(final String databaseName, final long timeoutLocking,
+      OModifiableDistributedConfiguration lastCfg, final OCallable<T, OModifiableDistributedConfiguration> iCallback);
 }

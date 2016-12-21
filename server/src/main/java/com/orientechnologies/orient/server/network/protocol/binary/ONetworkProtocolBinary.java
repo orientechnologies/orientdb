@@ -953,10 +953,15 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         throw new ODistributedException("Database configuration not found for database '" + req.getDatabaseName() + "'");
     }
 
+    // SET THE SENDER IN THE TASK
+    String senderNodeName = manager.getNodeNameById(req.getId().getNodeId());
+    req.getTask().setNodeSource(senderNodeName);
+
     if (ddb != null)
       ddb.processRequest(req);
-    else
+    else {
       manager.executeOnLocalNode(req.getId(), req.getTask(), null);
+    }
   }
 
   private void executeDistributedResponse(OClientConnection connection) throws IOException {

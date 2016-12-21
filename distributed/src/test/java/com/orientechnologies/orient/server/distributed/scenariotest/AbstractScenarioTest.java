@@ -483,7 +483,7 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
 
       final String name = database.getURL();
 
-      System.out.println("\nReader " + name + " sql count: " + result.get(0) + " counting class: " + database.countClass("Person")
+      System.out.println("\nReader " + name + "  sql count: " + result.get(0) + " counting class: " + database.countClass("Person")
           + " counting cluster: " + database.countClusterElements("Person"));
 
     } finally {

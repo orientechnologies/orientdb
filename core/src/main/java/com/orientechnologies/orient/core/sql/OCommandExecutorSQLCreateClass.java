@@ -201,6 +201,11 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
   }
 
   @Override
+  public boolean isDistributedExecutingOnLocalNodeFirst() {
+    return false;
+  }
+
+  @Override
   public QUORUM_TYPE getQuorumType() {
     return QUORUM_TYPE.ALL;
   }

@@ -37,15 +37,15 @@ import java.util.Map;
  *
  * @author Luca Garulli
  */
-@SuppressWarnings("unchecked") public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLAbstract
-    implements OCommandDistributedReplicateRequest {
+@SuppressWarnings("unchecked")
+public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
   public static final String KEYWORD_DROP   = "DROP";
   public static final String KEYWORD_CLASS  = "CLASS";
   public static final String KEYWORD_UNSAFE = "UNSAFE";
 
-  private String  className;
-  private boolean unsafe;
-  private boolean ifExists = false;
+  private String             className;
+  private boolean            unsafe;
+  private boolean            ifExists       = false;
 
   public OCommandExecutorSQLDropClass parse(final OCommandRequest iRequest) {
     final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
@@ -99,14 +99,16 @@ import java.util.Map;
     }
   }
 
-  @Override public QUORUM_TYPE getQuorumType() {
+  @Override
+  public QUORUM_TYPE getQuorumType() {
     return QUORUM_TYPE.ALL;
   }
 
-  @Override public long getDistributedTimeout() {
-    if (className != null && getDatabase().getMetadata().getSchema().existsClass(className))
-      return OGlobalConfiguration.DISTRIBUTED_COMMAND_QUICK_TASK_SYNCH_TIMEOUT.getValueAsLong() + (2 * getDatabase()
-          .countClass(className));
+  @Override
+  public long getDistributedTimeout() {
+    final OClass cls = getDatabase().getMetadata().getSchema().getClass(className);
+    if (className != null && cls != null)
+      return OGlobalConfiguration.DISTRIBUTED_COMMAND_QUICK_TASK_SYNCH_TIMEOUT.getValueAsLong() + (2 * cls.count());
 
     return OGlobalConfiguration.DISTRIBUTED_COMMAND_QUICK_TASK_SYNCH_TIMEOUT.getValueAsLong();
   }
@@ -120,7 +122,7 @@ import java.util.Map;
     }
 
     final ODatabaseDocument database = getDatabase();
-    if(ifExists && !database.getMetadata().getSchema().existsClass(className)){
+    if (ifExists && !database.getMetadata().getSchema().existsClass(className)) {
       return true;
     }
     final OClass cls = database.getMetadata().getSchema().getClass(className);
@@ -150,25 +152,26 @@ import java.util.Map;
       if (cls.isSubClassOf("V")) {
         // FOUND VERTICES
         if (unsafe)
-          OLogManager.instance()
-              .warn(this, "Dropped class '%s' containing %d vertices using UNSAFE mode. Database could contain broken edges",
-                  className, records);
+          OLogManager.instance().warn(this,
+              "Dropped class '%s' containing %d vertices using UNSAFE mode. Database could contain broken edges", className,
+              records);
       } else if (cls.isSubClassOf("E")) {
         // FOUND EDGES
-        OLogManager.instance()
-            .warn(this, "Dropped class '%s' containing %d edges using UNSAFE mode. Database could contain broken vertices",
-                className, records);
+        OLogManager.instance().warn(this,
+            "Dropped class '%s' containing %d edges using UNSAFE mode. Database could contain broken vertices", className, records);
       }
     }
 
     return true;
   }
 
-  @Override public String getSyntax() {
+  @Override
+  public String getSyntax() {
     return "DROP CLASS <class> [IF EXISTS] [UNSAFE]";
   }
 
-  @Override public boolean involveSchema() {
+  @Override
+  public boolean involveSchema() {
     return true;
   }
 }

@@ -886,11 +886,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       if (storage instanceof OStorageProxy) {
         database.command(new OCommandSQL("drop property " + name + '.' + propertyName)).execute();
       } else if (isDistributedCommand()) {
-        final OCommandSQL commandSQL = new OCommandSQL("drop property " + name + '.' + propertyName);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-        database.command(commandSQL).execute();
-
         OScenarioThreadLocal.executeAsDistributed(new Callable<OProperty>() {
           @Override
           public OProperty call() throws Exception {
@@ -898,6 +893,11 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
             return null;
           }
         });
+
+        final OCommandSQL commandSQL = new OCommandSQL("drop property " + name + '.' + propertyName);
+        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
+
+        database.command(commandSQL).execute();
       } else
         OScenarioThreadLocal.executeAsDistributed(new Callable<OProperty>() {
           @Override
@@ -2601,17 +2601,19 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
         return getProperty(propertyName);
       } else if (isDistributedCommand()) {
-        final OCommandSQL commandSQL = new OCommandSQL(cmd.toString());
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-        database.command(commandSQL).execute();
-
-        return (OProperty) OScenarioThreadLocal.executeAsDistributed(new Callable<OProperty>() {
+        final OProperty prop = (OProperty) OScenarioThreadLocal.executeAsDistributed(new Callable<OProperty>() {
           @Override
           public OProperty call() throws Exception {
             return addPropertyInternal(propertyName, type, linkedType, linkedClass, unsafe);
           }
         });
+
+        final OCommandSQL commandSQL = new OCommandSQL(cmd.toString());
+        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
+
+        database.command(commandSQL).execute();
+
+        return prop;
       } else
         return (OProperty) OScenarioThreadLocal.executeAsDistributed(new Callable<OProperty>() {
           @Override

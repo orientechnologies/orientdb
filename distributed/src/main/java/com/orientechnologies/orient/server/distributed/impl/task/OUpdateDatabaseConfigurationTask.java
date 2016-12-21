@@ -33,9 +33,9 @@ import java.io.DataOutput;
 import java.io.IOException;
 
 /**
- * Task to update the database configuration across all the servers. This task is executed inside a distributed lock
+ * Task to update the database configuration across all the servers. This task is executed inside a distributed lock.
  *
- * @author Luca Garulli (l.garulli--at--orientechnologies.com)
+ * @author Luca Garulli (l.garulli--at---orientdb.com)
  *
  */
 public class OUpdateDatabaseConfigurationTask extends OAbstractRemoteTask {
@@ -58,7 +58,7 @@ public class OUpdateDatabaseConfigurationTask extends OAbstractRemoteTask {
 
     final ODistributedStorage stg = (ODistributedStorage) iManager.getStorage(databaseName);
     if (stg != null) {
-      ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.IN,
+      ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.IN,
           "Replacing distributed cfg for database '%s'\nnew: %s", databaseName, configuration);
 
       stg.setDistributedConfiguration(new OModifiableDistributedConfiguration(configuration));

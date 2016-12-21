@@ -197,7 +197,8 @@ public abstract class AbstractDistributedWriteTest extends AbstractServerCluster
       // CHECK THE CLASS WAS CREATED ON ALL THE SERVERS
       ODatabaseDocumentTx database = new ODatabaseDocumentTx(getDatabaseURL(s)).open("admin", "admin");
       try {
-        org.junit.Assert.assertTrue("Server " + s, database.getMetadata().getSchema().existsClass("Person"));
+        org.junit.Assert.assertTrue("Server=" + s + " db=" + getDatabaseName(),
+            database.getMetadata().getSchema().existsClass("Person"));
       } finally {
         database.close();
       }

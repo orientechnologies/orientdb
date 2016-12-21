@@ -269,10 +269,10 @@ public class ODistributedConfiguration {
         if (p == null)
           continue;
 
-        final String masterServer = getClusterOwner(p);
-        if (masterServer == null)
+        final String ownerServer = getClusterOwner(p);
+        if (ownerServer == null)
           notDefinedClusters.add(p);
-        else if (iNode.equals(masterServer)) {
+        else if (iNode.equals(ownerServer)) {
           // COLLECT AS CANDIDATE
           candidates.add(p);
         }
@@ -282,8 +282,8 @@ public class ODistributedConfiguration {
         // RETURN THE FIRST ONE
         return candidates;
 
-      final String masterServer = getClusterOwner(ALL_WILDCARD);
-      if (iNode.equals(masterServer))
+      final String owner = getClusterOwner(ALL_WILDCARD);
+      if (iNode.equals(owner))
         // CURRENT SERVER IS MASTER OF DEFAULT: RETURN ALL THE NON CONFIGURED CLUSTERS
         return notDefinedClusters;
 
@@ -383,6 +383,43 @@ public class ODistributedConfiguration {
       }
       return Collections.EMPTY_LIST;
     }
+  }
+
+  /**
+   * Returns an ordered list of master server. The first in the list is the first found in configuration. This is used to determine
+   * the cluster leader.
+   */
+  public List<String> getMasterServers() {
+    final List<String> result = new ArrayList<String>();
+
+    synchronized (configuration) {
+      final List<String> serverList = getClusterConfiguration(null).field(SERVERS);
+      if (serverList != null) {
+        // COPY AND REMOVE ANY NEW_NODE_TAG
+        List<String> masters = new ArrayList<String>(serverList.size());
+        for (String s : serverList) {
+          if (!s.equals(NEW_NODE_TAG))
+            masters.add(s);
+        }
+
+        final ROLES defRole = getDefaultServerRole();
+
+        final ODocument servers = configuration.field(SERVERS);
+        if (servers != null) {
+          for (Iterator<String> it = masters.iterator(); it.hasNext();) {
+            final String server = it.next();
+            final String roleAsString = servers.field(server);
+            final ROLES role = roleAsString != null ? ROLES.valueOf(roleAsString.toUpperCase()) : defRole;
+            if (role != ROLES.MASTER)
+              it.remove();
+          }
+        }
+
+        return masters;
+      }
+    }
+
+    return Collections.EMPTY_LIST;
   }
 
   /**

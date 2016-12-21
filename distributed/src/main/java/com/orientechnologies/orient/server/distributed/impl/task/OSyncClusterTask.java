@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.distributed.impl.task;
 
+import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -36,7 +37,6 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedT
 
 import java.io.*;
 import java.util.UUID;
-import java.util.concurrent.locks.Lock;
 
 /**
  * Ask for deployment of single cluster from a remote node.
@@ -75,111 +75,108 @@ public class OSyncClusterTask extends OAbstractReplicatedTask {
 
       final String databaseName = database.getName();
 
-      final Lock lock = iManager.getLock("sync." + databaseName + "." + clusterName);
-      if (lock.tryLock()) {
-        try {
+      try {
 
-          final Long lastDeployment = (Long) iManager.getConfigurationMap().get(DEPLOYCLUSTER + databaseName + "." + clusterName);
-          if (lastDeployment != null && lastDeployment.longValue() == random) {
-            // SKIP IT
-            ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE,
-                "skip deploying cluster '%s' because already executed", clusterName);
-            return Boolean.FALSE;
-          }
+        final Long lastDeployment = (Long) iManager.getConfigurationMap().get(DEPLOYCLUSTER + databaseName + "." + clusterName);
+        if (lastDeployment != null && lastDeployment.longValue() == random) {
+          // SKIP IT
+          ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE,
+              "skip deploying cluster '%s' because already executed", clusterName);
+          return Boolean.FALSE;
+        }
 
-          iManager.getConfigurationMap().put(DEPLOYCLUSTER + databaseName + "." + clusterName, random);
+        iManager.getConfigurationMap().put(DEPLOYCLUSTER + databaseName + "." + clusterName, random);
 
-          ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT, "deploying cluster %s...",
-              databaseName);
+        ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT, "deploying cluster %s...",
+            databaseName);
 
-          final File backupFile = new File(Orient.getTempPath() + "/backup_" + databaseName + "_" + clusterName + ".zip");
-          if (backupFile.exists())
-            backupFile.delete();
-          else
-            backupFile.getParentFile().mkdirs();
-          backupFile.createNewFile();
+        final File backupFile = new File(Orient.getTempPath() + "/backup_" + databaseName + "_" + clusterName + ".zip");
+        if (backupFile.exists())
+          backupFile.delete();
+        else
+          backupFile.getParentFile().mkdirs();
+        backupFile.createNewFile();
 
-          ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-              "creating backup of cluster '%s' in directory: %s...", databaseName, backupFile.getAbsolutePath());
+        ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
+            "creating backup of cluster '%s' in directory: %s...", databaseName, backupFile.getAbsolutePath());
 
-          final OPaginatedCluster cluster = (OPaginatedCluster) database.getStorage().getClusterByName(clusterName);
+        final OPaginatedCluster cluster = (OPaginatedCluster) database.getStorage().getClusterByName(clusterName);
 
-          switch (mode) {
-          case MERGE:
-            throw new IllegalArgumentException("merge mode not supported");
+        switch (mode) {
+        case MERGE:
+          throw new IllegalArgumentException("merge mode not supported");
 
-          case FULL_REPLACE:
-            final FileOutputStream fileOutputStream = new FileOutputStream(backupFile);
+        case FULL_REPLACE:
+          final FileOutputStream fileOutputStream = new FileOutputStream(backupFile);
 
-            final File completedFile = new File(backupFile.getAbsolutePath() + ".completed");
-            if (completedFile.exists())
-              completedFile.delete();
+          final File completedFile = new File(backupFile.getAbsolutePath() + ".completed");
+          if (completedFile.exists())
+            completedFile.delete();
 
-            new Thread(new Runnable() {
-              @Override
-              public void run() {
-                Thread.currentThread().setName(
-                    "OrientDB SyncCluster node=" + iManager.getLocalNodeName() + " db=" + databaseName + " cluster=" + clusterName);
+          new Thread(new Runnable() {
+            @Override
+            public void run() {
+              Thread.currentThread().setName(
+                  "OrientDB SyncCluster node=" + iManager.getLocalNodeName() + " db=" + databaseName + " cluster=" + clusterName);
+
+              try {
+                database.activateOnCurrentThread();
+                database.freeze();
+                try {
+
+                  final String fileName = cluster.getFileName();
+
+                  final String dbPath = iServer.getDatabaseDirectory() + databaseName;
+
+                  final String[] fileNames = new String[] { fileName,
+                      fileName.substring(0, fileName.length() - 4) + OClusterPositionMap.DEF_EXTENSION };
+
+                  // COPY PCL AND CPM FILE
+                  OZIPCompressionUtil.compressFiles(dbPath, fileNames, fileOutputStream, null,
+                      OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger());
+
+                } catch (IOException e) {
+                  OLogManager.instance().error(this, "Cannot execute backup of cluster '%s.%s' for deploy cluster", e, databaseName,
+                      clusterName);
+                } finally {
+                  database.release();
+                }
+              } finally {
+                try {
+                  fileOutputStream.close();
+                } catch (IOException e) {
+                }
 
                 try {
-                  database.activateOnCurrentThread();
-                  database.freeze();
-                  try {
-
-                    final String fileName = cluster.getFileName();
-
-                    final String dbPath = iServer.getDatabaseDirectory() + databaseName;
-
-                    final String[] fileNames = new String[] { fileName,
-                        fileName.substring(0, fileName.length() - 4) + OClusterPositionMap.DEF_EXTENSION };
-
-                    // COPY PCL AND CPM FILE
-                    OZIPCompressionUtil.compressFiles(dbPath, fileNames, fileOutputStream, null,
-                        OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger());
-
-                  } catch (IOException e) {
-                    OLogManager.instance().error(this, "Cannot execute backup of cluster '%s.%s' for deploy cluster", e,
-                        databaseName, clusterName);
-                  } finally {
-                    database.release();
-                  }
-                } finally {
-                  try {
-                    fileOutputStream.close();
-                  } catch (IOException e) {
-                  }
-
-                  try {
-                    completedFile.createNewFile();
-                  } catch (IOException e) {
-                    OLogManager.instance().error(this, "Cannot create file of backup completed: %s", e, completedFile);
-                  }
+                  completedFile.createNewFile();
+                } catch (IOException e) {
+                  OLogManager.instance().error(this, "Cannot create file of backup completed: %s", e, completedFile);
                 }
               }
-            }).start();
+            }
+          }).start();
 
-            // TODO: SUPPORT BACKUP ON CLUSTER
-            final long fileSize = backupFile.length();
+          // TODO: SUPPORT BACKUP ON CLUSTER
+          final long fileSize = backupFile.length();
 
-            ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-                "Sending the compressed cluster '%s.%s' over the NETWORK to node '%s', size=%s...", databaseName, clusterName,
-                getNodeSource(), OFileUtils.getSizeAsString(fileSize));
+          ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
+              "Sending the compressed cluster '%s.%s' over the NETWORK to node '%s', size=%s...", databaseName, clusterName,
+              getNodeSource(), OFileUtils.getSizeAsString(fileSize));
 
-            final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(backupFile, 0, CHUNK_MAX_SIZE,
-                null, false);
+          final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(backupFile, 0, CHUNK_MAX_SIZE, null, false);
 
-            ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-                "- transferring chunk #%d offset=%d size=%s...", 1, 0, OFileUtils.getSizeAsNumber(chunk.buffer.length));
+          ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
+              "- transferring chunk #%d offset=%d size=%s...", 1, 0, OFileUtils.getSizeAsNumber(chunk.buffer.length));
 
-            return chunk;
-          }
-
-        } finally {
-          lock.unlock();
-
-          ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
-              "deploy cluster %s task completed", clusterName);
+          return chunk;
         }
+
+      } catch (OLockException e) {
+        ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE,
+            "Skip deploying cluster %s.%s because another node is doing it", databaseName, clusterName);
+      } finally {
+        ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
+            "deploy cluster %s task completed", clusterName);
       }
     } else
       ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE,
