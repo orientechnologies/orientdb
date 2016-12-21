@@ -65,7 +65,7 @@ import java.util.zip.ZipOutputStream;
 public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements OFreezableStorageComponent {
 
   private static String[]                                    ALL_FILE_EXTENSIONS = { ".ocf", ".pls", ".pcl", ".oda", ".odh", ".otx",
-      ".ocs", ".oef", ".oem", ".oet", ".fl", ODiskWriteAheadLog.WAL_SEGMENT_EXTENSION, ODiskWriteAheadLog.MASTER_RECORD_EXTENSION,
+      ".ocs", ".oef", ".oem", ".oet", ".fl", ".json", ".DS_Store", ODiskWriteAheadLog.WAL_SEGMENT_EXTENSION, ODiskWriteAheadLog.MASTER_RECORD_EXTENSION,
       OHashTableIndexEngine.BUCKET_FILE_EXTENSION, OHashTableIndexEngine.METADATA_FILE_EXTENSION,
       OHashTableIndexEngine.TREE_FILE_EXTENSION, OHashTableIndexEngine.NULL_BUCKET_FILE_EXTENSION,
       OClusterPositionMap.DEF_EXTENSION, OSBTreeIndexEngine.DATA_FILE_EXTENSION, OWOWCache.NAME_ID_MAP_EXTENSION,
@@ -377,7 +377,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
     File dbDir;// GET REAL DIRECTORY
     dbDir = new File(OIOUtils.getPathFromDatabaseName(OSystemVariableResolver.resolveSystemVariables(url)));
     if (!dbDir.exists() || !dbDir.isDirectory())
-      dbDir = dbDir.getParentFile();
+      return;
 
     // RETRIES
     for (int i = 0; i < DELETE_MAX_RETRIES; ++i) {
