@@ -17,7 +17,7 @@ public class OQueryRequestTest {
     Object[] params = new Object[] { 1, "Foo" };
     OQueryRequest request = new OQueryRequest("select from Foo where a = ?", params, true, ORecordSerializerNetwork.INSTANCE, 123);
 
-    MockChannelDataOut channel = new MockChannelDataOut();
+    MockChannel channel = new MockChannel();
     request.write(channel, null);
 
     channel.close();
@@ -40,7 +40,7 @@ public class OQueryRequestTest {
     params.put("baz", 12);
     OQueryRequest request = new OQueryRequest("select from Foo where a = ?", params, true, ORecordSerializerNetwork.INSTANCE, 123);
 
-    MockChannelDataOut channel = new MockChannelDataOut();
+    MockChannel channel = new MockChannel();
     request.write(channel, null);
 
     channel.close();
@@ -59,7 +59,7 @@ public class OQueryRequestTest {
     Map<String, Object> params = null;
     OQueryRequest request = new OQueryRequest("select from Foo where a = ?", params, true, ORecordSerializerNetwork.INSTANCE, 123);
 
-    MockChannelDataOut channel = new MockChannelDataOut();
+    MockChannel channel = new MockChannel();
     request.write(channel, null);
 
     channel.close();

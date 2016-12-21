@@ -9,11 +9,11 @@ import java.net.Socket;
 /**
  * Created by luigidellaquila on 14/12/16.
  */
-public class MockChannelDataOut extends OChannelBinary {
+public class MockChannel extends OChannelBinary {
 
   private final ByteArrayOutputStream byteOut;
 
-  public MockChannelDataOut() throws IOException {
+  public MockChannel() throws IOException {
     super(new Socket(), new OContextConfiguration());
 
     this.byteOut = new ByteArrayOutputStream();
