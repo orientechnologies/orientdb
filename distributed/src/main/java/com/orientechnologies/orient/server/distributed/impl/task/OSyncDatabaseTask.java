@@ -79,9 +79,9 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
         iManager.setDatabaseStatus(getNodeSource(), databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
 
         // PROPAGATE THE UPDATE TO ALL THE NODES
-        iManager.sendRequest(databaseName, null, iManager.getActiveServers(),
-            new OUpdateDatabaseStatusTask(databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING.name()),
-            iManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
+//        iManager.sendRequest(databaseName, null, iManager.getActiveServers(),
+//            new OUpdateDatabaseStatusTask(databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING.name()),
+//            iManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
 
         ODistributedServerLog
             .info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT, "Deploying database %s...", databaseName);
