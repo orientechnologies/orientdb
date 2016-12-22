@@ -285,6 +285,9 @@ public class ODistributedWorker extends Thread {
     OSecurityUser origin = null;
     try {
       waitNodeIsOnline();
+
+      distributed.waitIsReady(task);
+
       if (task.isUsingDatabase()) {
         initDatabaseInstance();
         if (database == null)

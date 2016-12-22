@@ -204,21 +204,11 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
     final ORemoteTask task = request.getTask();
 
-    if (task.isNodeOnlineRequired())
-      if (!parsing.get()) {
-        // WAIT FOR PARSING REQUESTS
-        while (!parsing.get()) {
-          try {
-            Thread.sleep(300);
-          } catch (InterruptedException e) {
-            break;
-          }
-        }
+    waitIsReady(task);
 
-        if (!running)
-          // DISCARD IT
-          return;
-      }
+    if (!running)
+      // DISCARD IT
+      return;
 
     totalReceivedRequests.incrementAndGet();
 
@@ -366,6 +356,20 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     } else {
       processRequest(partitionKeys[0], request);
     }
+  }
+
+  public void waitIsReady(ORemoteTask task) {
+    if (task.isNodeOnlineRequired())
+      if (!parsing.get()) {
+        // WAIT FOR PARSING REQUESTS
+        while (!parsing.get()) {
+          try {
+            Thread.sleep(300);
+          } catch (InterruptedException e) {
+            break;
+          }
+        }
+      }
   }
 
   protected Set<Integer> getInvolvedQueuesByPartitionKeys(final int[] partitionKeys) {
