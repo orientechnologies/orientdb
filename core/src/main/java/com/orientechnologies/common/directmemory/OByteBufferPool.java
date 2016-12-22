@@ -23,7 +23,12 @@ import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.OOrientShutdownListener;
+import com.orientechnologies.orient.core.OOrientStartupListener;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import sun.misc.Cleaner;
+import sun.nio.ch.DirectBuffer;
 
 import javax.management.*;
 import java.io.PrintWriter;
@@ -33,10 +38,7 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -55,7 +57,7 @@ import java.util.logging.LogManager;
  *
  * @see OGlobalConfiguration#MEMORY_CHUNK_SIZE
  */
-public class OByteBufferPool implements OByteBufferPoolMXBean {
+public class OByteBufferPool implements OOrientStartupListener, OOrientShutdownListener, OByteBufferPoolMXBean {
   /**
    * {@link OByteBufferPool}'s MBean name.
    */
@@ -84,7 +86,7 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
   /**
    * Page which is filled with zeros and used to speedup clear operation on page acquire operation {@link #acquireDirect(boolean)}.
    */
-  private final ByteBuffer zeroPage;
+  private ByteBuffer zeroPage = null;
 
   /**
    * Collections of chunks which are preallocated on demand when limit of currently allocated memory exceeds.
@@ -171,6 +173,9 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
       trackedBuffers = null;
       trackedReleases = null;
     }
+
+    Orient.instance().registerWeakOrientStartupListener(this);
+    Orient.instance().registerWeakOrientShutdownListener(this);
   }
 
   /**
@@ -505,6 +510,77 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
     }
   }
 
+  @Override
+  public void onStartup() {
+    if (this.zeroPage != null) // already/still started?
+      return;
+
+    this.zeroPage = ByteBuffer.allocateDirect(pageSize).order(ByteOrder.nativeOrder());
+  }
+
+  @Override
+  public void onShutdown() {
+    if (zeroPage == null) // already/still shutdown?
+      return;
+
+    try {
+      final Set<ByteBuffer> cleaned = Collections.newSetFromMap(new IdentityHashMap<ByteBuffer, Boolean>());
+      clean(zeroPage, cleaned);
+      for (ByteBuffer byteBuffer : pool)
+        clean(byteBuffer, cleaned);
+    } catch (Throwable t) {
+      return;
+    }
+
+    this.zeroPage = null;
+    if (this.lastPreallocatedArea != null)
+      this.lastPreallocatedArea.set(null);
+    nextAllocationPosition.set(0);
+    pool.clear();
+    overflowBufferCount.set(0);
+
+    if (TRACK) {
+      for (TrackedBufferReference reference : trackedReferences)
+        reference.clear();
+      trackedReferences.clear();
+      trackedBuffers.clear();
+      trackedReleases.clear();
+
+      //noinspection StatementWithEmptyBody
+      while (trackedBuffersQueue.poll() != null)
+        ;
+    }
+  }
+
+  private void clean(ByteBuffer buffer, Set<ByteBuffer> cleaned) {
+    final ByteBuffer directByteBufferWithCleaner = findDirectByteBufferWithCleaner(buffer, 16);
+    if (directByteBufferWithCleaner != null && !cleaned.contains(directByteBufferWithCleaner)) {
+      cleaned.add(directByteBufferWithCleaner);
+      ((DirectBuffer) directByteBufferWithCleaner).cleaner().clean();
+      if (TRACK)
+        OLogManager.instance().info(this, "DIRECT-TRACK: cleaned " + directByteBufferWithCleaner);
+    }
+  }
+
+  private static ByteBuffer findDirectByteBufferWithCleaner(ByteBuffer buffer, int depthLimit) {
+    if (depthLimit == 0)
+      return null;
+
+    if (!(buffer instanceof DirectBuffer))
+      return null;
+    final DirectBuffer directBuffer = (DirectBuffer) buffer;
+
+    final Cleaner cleaner = directBuffer.cleaner();
+    if (cleaner != null)
+      return buffer;
+
+    final Object attachment = directBuffer.attachment();
+    if (!(attachment instanceof ByteBuffer))
+      return null;
+
+    return findDirectByteBufferWithCleaner((ByteBuffer) attachment, depthLimit - 1);
+  }
+
   private static final class BufferHolder {
     private volatile ByteBuffer buffer;
     private final CountDownLatch latch = new CountDownLatch(1);
@@ -624,7 +700,7 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
     return System.identityHashCode(object);
   }
 
-  @SuppressWarnings("AssertWithSideEffects")
+  @SuppressWarnings({ "AssertWithSideEffects", "ConstantConditions" })
   private static boolean logInAssertion() {
     boolean assertionsEnabled = false;
     assert assertionsEnabled = true;
