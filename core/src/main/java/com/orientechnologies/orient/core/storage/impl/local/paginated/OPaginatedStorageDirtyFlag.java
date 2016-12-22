@@ -154,13 +154,19 @@ public class OPaginatedStorageDirtyFlag {
   public void close() throws IOException {
     lock.lock();
     try {
-      if (dirtyFile == null)
+      if (dirtyFile == null) {
+        OLogManager.instance().error(this, "Dirty file is null , file lock is not released");
         return;
+      }
+
 
       if (dirtyFile.exists()) {
         if (fileLock != null) {
           fileLock.release();
           fileLock = null;
+          OLogManager.instance().error(this, "file lock is released");
+        } else {
+          OLogManager.instance().error(this, "File lock is null , file lock is not released");
         }
 
         dirtyFileData.close();
