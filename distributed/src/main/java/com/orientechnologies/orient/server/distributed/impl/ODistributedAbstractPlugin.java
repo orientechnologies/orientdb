@@ -1138,6 +1138,11 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         // distrDatabase.filterBeforeThisMomentum(((ODistributedDatabaseChunk) value).getMomentum());
         final File uniqueClustersBackupDirectory = getClusterOwnedExclusivelyByCurrentNode(dbPath, databaseName);
 
+        // CLOSE THE STORAGE FIRST
+        final ODistributedStorage stg = storages.remove(databaseName);
+        if (stg != null)
+          stg.close(true, false);
+
         if (backupDatabase)
           backupCurrentDatabase(databaseName);
 
