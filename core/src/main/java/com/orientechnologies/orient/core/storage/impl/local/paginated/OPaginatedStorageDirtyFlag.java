@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.io.StringWriter;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
@@ -93,11 +94,27 @@ public class OPaginatedStorageDirtyFlag {
   }
 
   private void lockFile() throws IOException {
+    StringWriter sw = new StringWriter();
+
     try {
+      Thread thread = Thread.currentThread();
+      long now = System.nanoTime();
+
+      sw.append("Thread ").append(thread.getName()).append(" is going to acquire log at ").append(String.valueOf(now)).append("\n");
+
       fileLock = channel.tryLock();
+      if (fileLock != null)
+        sw.append("Attempt was successful\n");
+      else
+        sw.append("Other process holds given lock\n");
+
     } catch (OverlappingFileLockException e) {
       OLogManager.instance().warn(this, "Database is open by another process");
+
+      sw.append("Database lock is overlapped\n");
     }
+
+    OLogManager.instance().error(this, sw.toString());
 
     if (fileLock == null)
       throw new OStorageException("Can not open storage it is acquired by other process");
@@ -130,7 +147,6 @@ public class OPaginatedStorageDirtyFlag {
         channel.write(buffer);
       }
 
-
       dirtyFileData = new RandomAccessFile(dirtyFile, "rwd");
       channel = dirtyFileData.getChannel();
 
@@ -159,12 +175,15 @@ public class OPaginatedStorageDirtyFlag {
         return;
       }
 
-
       if (dirtyFile.exists()) {
         if (fileLock != null) {
+          long now = System.nanoTime();
+          Thread thread = Thread.currentThread();
+
           fileLock.release();
           fileLock = null;
-          OLogManager.instance().error(this, "file lock is released");
+
+          OLogManager.instance().error(this, "File lock is released by thread " + thread.getName() + " at " + now);
         } else {
           OLogManager.instance().error(this, "File lock is null , file lock is not released");
         }
