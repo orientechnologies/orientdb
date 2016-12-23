@@ -120,6 +120,8 @@ public class OFunctionLibraryImpl implements OFunctionLibrary {
 
     final OClass f = db.getMetadata().getSchema().createClass("OFunction");
     OProperty prop = f.createProperty("name", OType.STRING, (OType) null, true);
+    prop.set(OProperty.ATTRIBUTES.NOTNULL, true);
+    prop.set(OProperty.ATTRIBUTES.MANDATORY, true);
     prop.createIndex(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX);
     f.createProperty("code", OType.STRING, (OType) null, true);
     f.createProperty("language", OType.STRING, (OType) null, true);
