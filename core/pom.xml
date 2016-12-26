@@ -38,6 +38,7 @@
             com.orientechnologies.orient.client.remote;resolution:=optional,
             com.sun.jna;resolution:=optional,
             org.xerial.snappy;resolution:=optional,
+            sun.nio.ch;resolution:=optional,
             *
         </osgi.import>
         <osgi.export>com.orientechnologies.orient.core.*,
