@@ -22,11 +22,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecordsFactory;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WriteAheadLogTest;
 import org.assertj.core.api.Assertions;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -61,7 +57,7 @@ public class ReadWriteDiskCacheTest {
       buildDirectory = ".";
 
     storagePath = buildDirectory + "/ReadWriteDiskCacheTest";
-    storageLocal = (OLocalPaginatedStorage) Orient.instance().getEngine("plocal").createStorage(storagePath, null);
+    storageLocal = (OLocalPaginatedStorage) Orient.instance().getRunningEngine("plocal").createStorage(storagePath, null);
     //    storageLocal = (OLocalPaginatedStorage) Orient.instance().loadStorage("plocal:" + storagePath);
     storageLocal.create(new OContextConfiguration());
     storageLocal.close(true, false);
