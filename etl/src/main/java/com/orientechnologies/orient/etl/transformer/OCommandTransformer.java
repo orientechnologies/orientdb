@@ -25,7 +25,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.graph.gremlin.OCommandGremlin;
 
-import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.*;
+import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.DEBUG;
 
 /**
  * Executes a command.
@@ -38,8 +38,7 @@ public class OCommandTransformer extends OAbstractTransformer {
   public ODocument getConfiguration() {
     return new ODocument().fromJSON("{parameters:[" + getCommonConfigurationParameters() + ","
         + "{language:{optional:true,description:'Command language, SQL by default'}},"
-        + "{command:{optional:false,description:'Command to execute'}}],"
-        + "input:['ODocument'],output:'ODocument'}");
+        + "{command:{optional:false,description:'Command to execute'}}]," + "input:['ODocument'],output:'ODocument'}");
   }
 
   @Override

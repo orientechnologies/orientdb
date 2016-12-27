@@ -27,11 +27,7 @@ import com.orientechnologies.orient.etl.extractor.*;
 import com.orientechnologies.orient.etl.loader.OLoader;
 import com.orientechnologies.orient.etl.loader.OOrientDBLoader;
 import com.orientechnologies.orient.etl.loader.OOutputLoader;
-import com.orientechnologies.orient.etl.source.OContentSource;
-import com.orientechnologies.orient.etl.source.OFileSource;
-import com.orientechnologies.orient.etl.source.OHttpSource;
-import com.orientechnologies.orient.etl.source.OInputSource;
-import com.orientechnologies.orient.etl.source.OSource;
+import com.orientechnologies.orient.etl.source.*;
 import com.orientechnologies.orient.etl.transformer.*;
 
 import java.util.HashMap;
@@ -39,7 +35,7 @@ import java.util.Map;
 
 /**
  * ETL component factory. Registers all the ETL components.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com) (l.garulli-at-orientdb.com)
  */
 public class OETLComponentFactory {

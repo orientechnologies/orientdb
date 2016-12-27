@@ -26,11 +26,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLProcessHaltedException;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.*;
 
@@ -72,8 +68,7 @@ public class OLinkTransformer extends OAbstractLookupTransformer {
   @Override
   public Object executeTransform(final Object input) {
     if (!(input instanceof OIdentifiable)) {
-      log(DEBUG, "skip because input value is not a record, but rather an instance of class: %s",
-          input.getClass());
+      log(DEBUG, "skip because input value is not a record, but rather an instance of class: %s", input.getClass());
       return null;
     }
 

@@ -26,7 +26,7 @@ import org.junit.Test;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 public class OLogTransformerTest extends OETLBaseTest {
 
@@ -49,10 +49,8 @@ public class OLogTransformerTest extends OETLBaseTest {
   @Test
   public void testPrefix() throws Exception {
     ByteArrayOutputStream output = getByteArrayOutputStream();
-    String cfgJson = "{source: { content: { value: 'id,text\n1,Hello\n2,Bye'} }, "
-        + "extractor : { csv: {} }, "
-        + "transformers : [{ log : {prefix:'-> '}}], "
-        + "loader : { test: {} } }";
+    String cfgJson = "{source: { content: { value: 'id,text\n1,Hello\n2,Bye'} }, " + "extractor : { csv: {} }, "
+        + "transformers : [{ log : {prefix:'-> '}}], " + "loader : { test: {} } }";
     process(cfgJson);
     String[] stringList = output.toString().split(System.getProperty("line.separator"));
     assertEquals("[1:log] INFO -> {id:1,text:Hello}", stringList[2]);
@@ -62,10 +60,8 @@ public class OLogTransformerTest extends OETLBaseTest {
   @Test
   public void testPostfix() throws Exception {
     ByteArrayOutputStream output = getByteArrayOutputStream();
-    String cfgJson = "{source: { content: { value: 'id,text\n1,Hello\n2,Bye'} }, "
-        + "extractor : { csv : {} }, "
-        + "transformers : [{ log : {postfix:'-> '}}], "
-        + "loader : { test: {} } }";
+    String cfgJson = "{source: { content: { value: 'id,text\n1,Hello\n2,Bye'} }, " + "extractor : { csv : {} }, "
+        + "transformers : [{ log : {postfix:'-> '}}], " + "loader : { test: {} } }";
     process(cfgJson);
     String[] stringList = output.toString().split(System.getProperty("line.separator"));
 

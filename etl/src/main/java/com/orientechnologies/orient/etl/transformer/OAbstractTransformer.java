@@ -20,7 +20,7 @@ package com.orientechnologies.orient.etl.transformer;
 
 import com.orientechnologies.orient.etl.OAbstractETLPipelineComponent;
 
-import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.*;
+import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.DEBUG;
 
 /**
  * Abstract Transformer.

@@ -24,7 +24,7 @@ import org.junit.Test;
 
 import java.util.Iterator;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 /**
  * Tests ETL Flow Transformer.
@@ -36,10 +36,8 @@ public class OFlowTransformerTest extends OETLBaseTest {
   public void testSkip() {
 
     process("{source: { content: { value: 'name,surname\nJay,Miner\nSkipMe,Test' } }, extractor : { csv: {} },"
-        + " transformers: [{vertex: {class:'V'}}, "
-        + "{flow:{operation:'skip',if: 'name <> \'Jay\''}},"
-        + "{field:{fieldName:'name', value:'3'}}"
-        + "], loader: { orientdb: { dbURL: 'memory:OETLBaseTest', dbType:'graph' } } }");
+        + " transformers: [{vertex: {class:'V'}}, " + "{flow:{operation:'skip',if: 'name <> \'Jay\''}},"
+        + "{field:{fieldName:'name', value:'3'}}" + "], loader: { orientdb: { dbURL: 'memory:OETLBaseTest', dbType:'graph' } } }");
 
     assertEquals(1, graph.countVertices("V"));
 
@@ -53,14 +51,11 @@ public class OFlowTransformerTest extends OETLBaseTest {
 
   @Test
   public void testSkipNever() {
-    process("{source: { content: { value: 'name,surname\nJay,Miner\nTest,Test' } }, "
-        + "extractor : { csv: {} },"
-        + " transformers: ["
-        + "{vertex: {class:'V'}}, "
-        + "{flow:{operation:'skip',if: 'name = \'Jay\''}},"
-        + "{field:{fieldName:'name', value:'3'}}"
-        + "],"
-        + " loader: { orientdb: {  dbURL: 'memory:OETLBaseTest', dbType:'graph'} } }");
+    process(
+        "{source: { content: { value: 'name,surname\nJay,Miner\nTest,Test' } }, " + "extractor : { csv: {} }," + " transformers: ["
+            + "{vertex: {class:'V'}}, " + "{flow:{operation:'skip',if: 'name = \'Jay\''}},"
+            + "{field:{fieldName:'name', value:'3'}}" + "],"
+            + " loader: { orientdb: {  dbURL: 'memory:OETLBaseTest', dbType:'graph'} } }");
 
     assertEquals(1, graph.countVertices("V"));
 

@@ -21,7 +21,6 @@ package com.orientechnologies.orient.etl.block;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
-import com.orientechnologies.orient.etl.OETLProcessor;
 
 public class OLetBlock extends OAbstractBlock {
   protected String     name;

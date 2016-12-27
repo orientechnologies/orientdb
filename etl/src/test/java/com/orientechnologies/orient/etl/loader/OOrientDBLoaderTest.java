@@ -32,7 +32,7 @@ import org.junit.Test;
 
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Created by frank on 9/14/15.
@@ -93,8 +93,9 @@ public class OOrientDBLoaderTest extends OETLBaseTest {
   @Test
   public void shouldSaveDocuments() {
 
-    process("{source: { content: { value: 'name,surname,@class\nJay,Miner,Person' } }, extractor : { csv: {} }, loader: { orientdb: {\n"
-        + "      dbURL: \"memory:OETLBaseTest\",\n" + "      dbUser: \"admin\",\n" + "      dbPassword: \"admin\",\n"
+    process(
+        "{source: { content: { value: 'name,surname,@class\nJay,Miner,Person' } }, extractor : { csv: {} }, loader: { orientdb: {\n"
+            + "      dbURL: \"memory:OETLBaseTest\",\n" + "      dbUser: \"admin\",\n" + "      dbPassword: \"admin\",\n"
             + "      dbAutoCreate: true,\n      tx: false,\n" + "      batchCommit: 1000,\n" + "      wal : false,\n"
             + "      dbType: \"document\" , \"classes\": [\n" + "        {\n" + "          \"name\": \"Person\"\n" + "        },\n"
             + "        {\n" + "          \"name\": \"UpdateDetails\"\n" + "        }\n" + "      ]      } } }");
@@ -123,12 +124,11 @@ public class OOrientDBLoaderTest extends OETLBaseTest {
     db.close();
 
     //store data
-    process(
-        "{source: { content: { value: 'name,surname,married,birthday\nJay,Miner,false,1970-01-01 05:30:00' } }, "
-            + "extractor : { csv: {columns:['name:string','surname:string','married:boolean','birthday:datetime'], dateFormat :'yyyy-MM-dd HH:mm:ss'} }, loader: { orientdb: {\n"
-            + "      dbURL: \"memory:OETLBaseTest\", class:'Person',     dbUser: \"admin\",\n" + "      dbPassword: \"admin\",\n"
-            + "      dbAutoCreate: false,\n      tx: false,\n" + "      batchCommit: 1000,\n" + "      wal : false,\n"
-            + "      dbType: \"document\" } } }");
+    process("{source: { content: { value: 'name,surname,married,birthday\nJay,Miner,false,1970-01-01 05:30:00' } }, "
+        + "extractor : { csv: {columns:['name:string','surname:string','married:boolean','birthday:datetime'], dateFormat :'yyyy-MM-dd HH:mm:ss'} }, loader: { orientdb: {\n"
+        + "      dbURL: \"memory:OETLBaseTest\", class:'Person',     dbUser: \"admin\",\n" + "      dbPassword: \"admin\",\n"
+        + "      dbAutoCreate: false,\n      tx: false,\n" + "      batchCommit: 1000,\n" + "      wal : false,\n"
+        + "      dbType: \"document\" } } }");
 
     graph.makeActive();
 

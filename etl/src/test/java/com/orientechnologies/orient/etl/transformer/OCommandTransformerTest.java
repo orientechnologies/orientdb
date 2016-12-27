@@ -26,10 +26,9 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.etl.OETLBaseTest;
 import com.orientechnologies.orient.etl.OETLDatabaseProvider;
-import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Created by frank on 21/09/2016.
@@ -40,41 +39,17 @@ public class OCommandTransformerTest extends OETLBaseTest {
   public void shouldAllowSingleQuoteInsideFieldValue() {
     //Data contains a field with single quote: Miner O'Greedy
     // so the query must be enclosed inside double quote "
-    process("{\n"
-        + "  'config': {\n"
-        + "    'log': 'INFO'\n"
-        + "  },\n"
-        + "  'source': {\n"
-        + "    'content': {\n"
-        + "      'value': \"name,surname\n Jay, Miner O'Greedy \n Jay, Miner O'Greedy   \"\n"
-        + "    }\n"
-        + "  },\n"
-        + "  'transformers': [\n"
-        + "    {\n"
-        + "      'command': {\n"
-        + "       'log': 'INFO',\n"
-        + "       'output': 'previous',\n"
-        + "       'language': 'sql',\n"
-        + "        'command': \"SELECT name FROM Person WHERE surname= \"={eval('$input.surname')}\"\"\n"
-        + "      }\n"
-        + "    },\n"
-        + "  {vertex: {class:'Person', skipDuplicates:false}} "
-        + "],"
-        + "  'extractor': {\n"
-        + "    'csv': {}\n"
-        + "  },\n"
-        + "  'loader': {\n"
-        + "      'orientdb': {\n"
+    process("{\n" + "  'config': {\n" + "    'log': 'INFO'\n" + "  },\n" + "  'source': {\n" + "    'content': {\n"
+        + "      'value': \"name,surname\n Jay, Miner O'Greedy \n Jay, Miner O'Greedy   \"\n" + "    }\n" + "  },\n"
+        + "  'transformers': [\n" + "    {\n" + "      'command': {\n" + "       'log': 'INFO',\n"
+        + "       'output': 'previous',\n" + "       'language': 'sql',\n"
+        + "        'command': \"SELECT name FROM Person WHERE surname= \"={eval('$input.surname')}\"\"\n" + "      }\n" + "    },\n"
+        + "  {vertex: {class:'Person', skipDuplicates:false}} " + "]," + "  'extractor': {\n" + "    'csv': {}\n" + "  },\n"
+        + "  'loader': {\n" + "      'orientdb': {\n"
         //        + "       'log': 'DEBUG',\n"
 
-        + "        'dbURL': 'memory:OETLBaseTest',\n"
-        + "        'dbType': 'graph',\n"
-        + "        'useLightweightEdges': false ,\n"
-        + "         \"classes\": [\n"
-        + "        {\"name\":\"Person\", \"extends\": \"V\" }"
-        + "      ]"
-        + "      }\n"
-        + "    }\n"
+        + "        'dbURL': 'memory:OETLBaseTest',\n" + "        'dbType': 'graph',\n" + "        'useLightweightEdges': false ,\n"
+        + "         \"classes\": [\n" + "        {\"name\":\"Person\", \"extends\": \"V\" }" + "      ]" + "      }\n" + "    }\n"
         + "}");
 
     assertThat(graph.countVertices("Person")).isEqualTo(2);
@@ -89,10 +64,7 @@ public class OCommandTransformerTest extends OETLBaseTest {
 
     OCommandTransformer tr = new OCommandTransformer();
 
-    ODocument cnf = new ODocument()
-        .field("language", "sql")
-        .field("log", "INFO")
-        .field("output", "prev")
+    ODocument cnf = new ODocument().field("language", "sql").field("log", "INFO").field("output", "prev")
         .field("command", "SELECT name FROM Person WHERE surname= \"={eval('$input.surname')}\"");
 
     OCommandContext ctx = new OBasicCommandContext();
@@ -102,9 +74,7 @@ public class OCommandTransformerTest extends OETLBaseTest {
     tr.setDatabaseProvider(new OETLDatabaseProvider(graph.getRawGraph(), graph));
     tr.setContext(ctx);
 
-    ODocument input = new ODocument()
-        .field("name", "Jay")
-        .field("surname", "Miner O'Greedy");
+    ODocument input = new ODocument().field("name", "Jay").field("surname", "Miner O'Greedy");
 
     Object transform = tr.transform(input);
 
