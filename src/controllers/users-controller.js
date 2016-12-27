@@ -365,7 +365,9 @@ UserModule.controller("RolesController", ['$scope', '$routeParams', '$location',
 
 
       DocumentApi.createDocument($scope.database.getName(), modalPromise.$scope.user["@rid"], modalPromise.$scope.user).then(function (data) {
-        $scope.usersResult.push(data);
+        $scope.usersResult.push(Object.assign({}, data, {
+          inheritedRole: modalPromise.$scope.user.inheritedRole
+        }));
         Notification.push({content: 'Role ' + data.name + ' has been created.'});
       }, function error(err) {
         Notification.push({content: err, error: true});
