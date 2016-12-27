@@ -223,6 +223,9 @@ public enum OGlobalConfiguration {
   WAL_LOCATION("storage.wal.path", "Path to the WAL file on the disk. By default, it is placed in the DB directory, but"
       + " it is highly recommended to use a separate disk to store log operations", String.class, null),
 
+  DISK_CACHE_ADD_DATA_VERIFICATION("storage.diskCache.addDataVerification", "Add CRC32 and magic number to the page", Boolean.class,
+      false),
+
   DISK_CACHE_PAGE_SIZE("storage.diskCache.pageSize", "Size of page of disk buffer (in kilobytes). !!! NEVER CHANGE THIS VALUE !!!",
       Integer.class, 64),
 
@@ -247,8 +250,7 @@ public enum OGlobalConfiguration {
 
   // DATABASE
   OBJECT_SAVE_ONLY_DIRTY("object.saveOnlyDirty", "Object Database only! It saves objects bound to dirty records", Boolean.class,
-      false, true),
-  DOCUMENT_BINARY_MAPPING("document.binaryMapping", "Mapping approach for binary fields", Integer.class, 0),
+      false, true), DOCUMENT_BINARY_MAPPING("document.binaryMapping", "Mapping approach for binary fields", Integer.class, 0),
 
   // DATABASE
   DB_POOL_MIN("db.pool.min", "Default database pool minimum size", Integer.class, 1),
@@ -394,7 +396,8 @@ public enum OGlobalConfiguration {
   NETWORK_MAX_CONCURRENT_SESSIONS("network.maxConcurrentSessions", "Maximum number of concurrent sessions", Integer.class, 1000,
       true),
 
-  NETWORK_SOCKET_BUFFER_SIZE("network.socketBufferSize", "TCP/IP Socket buffer size, if 0 use the OS default", Integer.class, 0, true),
+  NETWORK_SOCKET_BUFFER_SIZE("network.socketBufferSize", "TCP/IP Socket buffer size, if 0 use the OS default", Integer.class, 0,
+      true),
 
   NETWORK_LOCK_TIMEOUT("network.lockTimeout", "Timeout (in ms) to acquire a lock against a channel", Integer.class, 15000, true),
 
@@ -631,7 +634,7 @@ public enum OGlobalConfiguration {
 
   SERVER_BACKWARD_COMPATIBILITY("server.backwardCompatibility",
       "guarantee that the server use global context for search the database instance", Boolean.class, Boolean.TRUE, true, false),
-  
+
   // DISTRIBUTED
 
   DISTRIBUTED_CRUD_TASK_SYNCH_TIMEOUT("distributed.crudTaskTimeout", "Maximum timeout (in ms) to wait for CRUD remote tasks",
@@ -759,8 +762,8 @@ public enum OGlobalConfiguration {
    * @Since 2.1.3
    */
   @OApi(maturity = OApi.MATURITY.NEW)DISTRIBUTED_BACKUP_DIRECTORY("distributed.backupDirectory",
-      "Directory where the copy of an existent database is saved, before it is downloaded from the cluster. Leave it empty to avoid the backup.", String.class,
-      "../backup/databases"),
+      "Directory where the copy of an existent database is saved, before it is downloaded from the cluster. Leave it empty to avoid the backup.",
+      String.class, "../backup/databases"),
 
   /**
    * @Since 2.1
@@ -803,7 +806,8 @@ public enum OGlobalConfiguration {
   @OApi(maturity = OApi.MATURITY.NEW)CLIENT_KRB5_KTNAME("client.krb5.ktname", "Location of the Kerberos client keytab",
       String.class, null),
 
-  @OApi(maturity = OApi.MATURITY.NEW)CLIENT_CONNECTION_STRATEGY("client.connection.strategy", "Strategy used for open connections from a client in case of multiple servers, possible options:STICKY, ROUND_ROBIN_CONNECT, ROUND_ROBIN_REQUEST",
+  @OApi(maturity = OApi.MATURITY.NEW)CLIENT_CONNECTION_STRATEGY("client.connection.strategy",
+      "Strategy used for open connections from a client in case of multiple servers, possible options:STICKY, ROUND_ROBIN_CONNECT, ROUND_ROBIN_REQUEST",
       String.class, null),
 
   /**
@@ -995,6 +999,7 @@ public enum OGlobalConfiguration {
    * Find the OGlobalConfiguration instance by the key. Key is case insensitive.
    *
    * @param iKey Key to find. It's case insensitive.
+   *
    * @return OGlobalConfiguration instance if found, otherwise null
    */
   public static OGlobalConfiguration findByKey(final String iKey) {

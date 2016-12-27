@@ -24,16 +24,16 @@ import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.storage.cache.local.OBackgroundExceptionListener;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 
 public interface OWriteCache {
-  void startFuzzyCheckpoints();
-
   void addLowDiskSpaceListener(OLowDiskSpaceListener listener);
 
   void removeLowDiskSpaceListener(OLowDiskSpaceListener listener);
@@ -70,13 +70,15 @@ public interface OWriteCache {
 
   boolean checkLowDiskSpace();
 
-  void makeFuzzyCheckpoint();
+  void makeFuzzyCheckpoint(long segmentId) throws IOException;
+
+  void flushTillSegment(long segmentId);
 
   boolean exists(String fileName);
 
   boolean exists(long fileId);
 
-  Future store(long fileId, long pageIndex, OCachePointer dataPointer);
+  CountDownLatch store(long fileId, long pageIndex, OCachePointer dataPointer);
 
   OCachePointer[] load(long fileId, long startPageIndex, int pageCount, boolean addNewPages, OModifiableBoolean cacheHit)
       throws IOException;
@@ -153,6 +155,10 @@ public interface OWriteCache {
    * @see #getId()
    */
   long externalFileId(int fileId);
+
+  OLogSequenceNumber getMinimalNotFlushedLSN();
+
+  void updateDirtyPagesTable(OCachePointer pointer) throws IOException;
 
   OPerformanceStatisticManager getPerformanceStatisticManager();
 }

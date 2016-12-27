@@ -231,6 +231,32 @@ public class OFileClassic implements OFile, OClosableItem {
     }
   }
 
+  @Override
+  public void write(long offset, ByteBuffer[] buffers) throws IOException {
+    int attempts = 0;
+
+    while (true) {
+      try {
+        acquireWriteLock();
+        try {
+          offset += HEADER_SIZE;
+          channel.position(offset);
+          channel.write(buffers);
+
+          setDirty();
+
+          break;
+        } finally {
+          releaseWriteLock();
+          attempts++;
+        }
+      } catch (IOException e) {
+        OLogManager.instance().error(this, "Error during data write for file '" + getName() + "' " + attempts + "-th attempt", e);
+        reopenFile(attempts, e);
+      }
+    }
+  }
+
   public void write(long iOffset, byte[] iData, int iSize, int iArrayOffset) throws IOException {
     int attempts = 0;
 

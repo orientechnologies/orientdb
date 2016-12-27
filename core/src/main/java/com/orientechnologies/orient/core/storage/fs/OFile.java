@@ -34,6 +34,7 @@ public interface OFile {
    * Opens the file.
    *
    * @return
+   *
    * @throws IOException
    */
   void open();
@@ -85,6 +86,7 @@ public interface OFile {
    * Shrink the file content (filledUpTo attribute only)
    *
    * @param iSize
+   *
    * @throws IOException
    */
   void shrink(final long iSize) throws IOException;
@@ -116,4 +118,6 @@ public interface OFile {
   long read(long offset, ByteBuffer[] buffers) throws IOException;
 
   void write(long offset, ByteBuffer buffer) throws IOException;
+
+  void write(long offset, ByteBuffer[] buffers) throws IOException;
 }

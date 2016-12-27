@@ -45,6 +45,8 @@ public interface OWriteAheadLog {
 
   OLogSequenceNumber begin() throws IOException;
 
+  OLogSequenceNumber begin(long segmentId) throws IOException;
+
   OLogSequenceNumber end();
 
   void flush();
@@ -74,6 +76,8 @@ public interface OWriteAheadLog {
 
   void cutTill(OLogSequenceNumber lsn) throws IOException;
 
+  void cutAllSegmentsSmallerThan(long segmentId) throws IOException;
+
   void addFullCheckpointListener(OFullCheckpointRequestListener listener);
 
   void removeFullCheckpointListener(OFullCheckpointRequestListener listener);
@@ -93,8 +97,8 @@ public interface OWriteAheadLog {
   void newSegment() throws IOException;
 
   /**
-   * @return preferred segment count this WAL instance tries to keep under. In fact, there may be less segments or more segments
-   * in this WAL instance than the returned count, but the returned count is preferred by this WAL instance.
+   * @return preferred segment count this WAL instance tries to keep under. In fact, there may be less segments or more segments in
+   * this WAL instance than the returned count, but the returned count is preferred by this WAL instance.
    */
   long getPreferredSegmentCount();
 }

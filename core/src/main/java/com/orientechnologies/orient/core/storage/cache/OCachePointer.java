@@ -43,12 +43,14 @@ public class OCachePointer {
 
   private final AtomicInteger usagesCounter = new AtomicInteger();
 
-  private volatile OLogSequenceNumber lastFlushedLsn;
-
   private volatile WritersListener writersListener;
 
   private final ByteBuffer      buffer;
   private final OByteBufferPool bufferPool;
+
+  private volatile boolean notFlushed;
+
+  private long version;
 
   private final ThreadLocal<ByteBuffer> threadLocalBuffer = new ThreadLocal<ByteBuffer>() {
     @Override
@@ -67,9 +69,7 @@ public class OCachePointer {
   private final long fileId;
   private final long pageIndex;
 
-  public OCachePointer(final ByteBuffer buffer, final OByteBufferPool bufferPool, final OLogSequenceNumber lastFlushedLsn,
-      final long fileId, final long pageIndex) {
-    this.lastFlushedLsn = lastFlushedLsn;
+  public OCachePointer(final ByteBuffer buffer, final OByteBufferPool bufferPool, final long fileId, final long pageIndex) {
     this.buffer = buffer;
     this.bufferPool = bufferPool;
 
@@ -87,14 +87,6 @@ public class OCachePointer {
 
   public long getPageIndex() {
     return pageIndex;
-  }
-
-  public OLogSequenceNumber getLastFlushedLsn() {
-    return lastFlushedLsn;
-  }
-
-  public void setLastFlushedLsn(final OLogSequenceNumber lastFlushedLsn) {
-    this.lastFlushedLsn = lastFlushedLsn;
   }
 
   public void incrementReadersReferrer() {
@@ -210,6 +202,14 @@ public class OCachePointer {
       throw new IllegalStateException("Invalid direct memory state, number of referrers cannot be negative " + rf);
   }
 
+  public void setNotFlushed(boolean notFlushed) {
+    this.notFlushed = notFlushed;
+  }
+
+  public boolean isNotFlushed() {
+    return notFlushed;
+  }
+
   public ByteBuffer getSharedBuffer() {
     return threadLocalBuffer.get();
   }
@@ -220,10 +220,21 @@ public class OCachePointer {
 
   public void acquireExclusiveLock() {
     readWriteLock.writeLock().lock();
+    version++;
   }
 
   public boolean tryAcquireExclusiveLock() {
-    return readWriteLock.writeLock().tryLock();
+    boolean result = readWriteLock.writeLock().tryLock();
+
+    if (result) {
+      version++;
+    }
+
+    return result;
+  }
+
+  public long getVersion() {
+    return version;
   }
 
   public void releaseExclusiveLock() {
