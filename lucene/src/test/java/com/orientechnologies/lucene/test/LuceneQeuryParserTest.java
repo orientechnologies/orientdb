@@ -11,7 +11,7 @@ import org.junit.Test;
 import java.io.InputStream;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Created by frank on 19/05/2016.
@@ -35,8 +35,7 @@ public class LuceneQeuryParserTest extends BaseLuceneTest {
         .execute();
 
     //querying with leading wildcard
-    List<ODocument> docs = db
-        .query(new OSQLSynchQuery<ODocument>("select * from Song where [title] LUCENE \"(title:*tain)\""));
+    List<ODocument> docs = db.query(new OSQLSynchQuery<ODocument>("select * from Song where [title] LUCENE \"(title:*tain)\""));
 
     assertThat(docs).hasSize(4);
   }
@@ -49,8 +48,7 @@ public class LuceneQeuryParserTest extends BaseLuceneTest {
         "create index Song.author on Song (author) FULLTEXT ENGINE LUCENE metadata {\"default\": \"" + KeywordAnalyzer.class
             .getCanonicalName() + "\", \"lowercaseExpandedTerms\": false}")).execute();
 
-    List<ODocument> docs = db
-        .query(new OSQLSynchQuery<ODocument>("select * from Song where [author] LUCENE \"Hunter\""));
+    List<ODocument> docs = db.query(new OSQLSynchQuery<ODocument>("select * from Song where [author] LUCENE \"Hunter\""));
 
     assertThat(docs).hasSize(97);
 
@@ -68,8 +66,7 @@ public class LuceneQeuryParserTest extends BaseLuceneTest {
         .execute();
 
     //querying with leading wildcard
-    List<ODocument> docs = db
-        .query(new OSQLSynchQuery<ODocument>("select * from Song where [title] LUCENE \"(title:*tain)\""));
+    List<ODocument> docs = db.query(new OSQLSynchQuery<ODocument>("select * from Song where [title] LUCENE \"(title:*tain)\""));
 
     assertThat(docs).hasSize(4);
   }

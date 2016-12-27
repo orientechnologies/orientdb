@@ -17,7 +17,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.logging.Level;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Created by frank on 20/09/2016.
@@ -42,17 +42,17 @@ public class OLuceneAllIndexTest extends BaseLuceneTest {
     //            + "\"}")).execute();
 
     //three separate indeexs, one result
-    db.command(
-        new OCommandSQL("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE METADATA {\"index_analyzer\":\""
-            + StandardAnalyzer.class.getName() + "\"}")).execute();
+    db.command(new OCommandSQL(
+        "create index Song.title on Song (title) FULLTEXT ENGINE LUCENE METADATA {\"index_analyzer\":\"" + StandardAnalyzer.class
+            .getName() + "\"}")).execute();
 
-    db.command(
-        new OCommandSQL("create index Song.author on Song (author) FULLTEXT ENGINE LUCENE METADATA {\"index_analyzer\":\""
-            + StandardAnalyzer.class.getName() + "\"}")).execute();
+    db.command(new OCommandSQL(
+        "create index Song.author on Song (author) FULLTEXT ENGINE LUCENE METADATA {\"index_analyzer\":\"" + StandardAnalyzer.class
+            .getName() + "\"}")).execute();
 
-    db.command(
-        new OCommandSQL("create index Song.lyrics on Song (lyrics) FULLTEXT ENGINE LUCENE METADATA {\"index_analyzer\":\""
-            + EnglishAnalyzer.class.getName() + "\"}")).execute();
+    db.command(new OCommandSQL(
+        "create index Song.lyrics on Song (lyrics) FULLTEXT ENGINE LUCENE METADATA {\"index_analyzer\":\"" + EnglishAnalyzer.class
+            .getName() + "\"}")).execute();
 
   }
 

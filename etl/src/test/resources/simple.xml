@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <a>
-	<b>
-		<c name='Ferrari' color='red'>ignore</c>
-		<c name='Maserati' color='black'/>
-	</b>
+    <b>
+        <c name='Ferrari' color='red'>ignore</c>
+        <c name='Maserati' color='black'/>
+    </b>
 </a>

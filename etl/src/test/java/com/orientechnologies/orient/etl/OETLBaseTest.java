@@ -45,8 +45,7 @@ public abstract class OETLBaseTest {
   public void setUp() {
     graph = new OrientGraph("memory:OETLBaseTest");
     graph.setUseLightweightEdges(false);
-    OETLComponentFactory factory = new OETLComponentFactory()
-        .registerLoader(OETLStubLoader.class)
+    OETLComponentFactory factory = new OETLComponentFactory().registerLoader(OETLStubLoader.class)
         .registerExtractor(OETLStubRandomExtractor.class);
 
     configurator = new OETLProcessorConfigurator(factory);

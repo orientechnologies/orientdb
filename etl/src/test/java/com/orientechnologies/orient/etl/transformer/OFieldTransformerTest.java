@@ -18,14 +18,13 @@
 
 package com.orientechnologies.orient.etl.transformer;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-
-import org.junit.Test;
-
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLBaseTest;
+import org.junit.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
 
 /**
  * Tests ETL Field Transformer.
@@ -62,11 +61,8 @@ public class OFieldTransformerTest extends OETLBaseTest {
 
   @Test
   public void testRemove() {
-    process(
-        "{source: { content: { value: 'name,surname\nJay,Miner' } }, "
-            + "extractor : { csv: {} }, "
-            + "transformers: [ {field: {fieldName:'surname', operation: 'remove'}}], "
-            + "loader: { test: {} } }");
+    process("{source: { content: { value: 'name,surname\nJay,Miner' } }, " + "extractor : { csv: {} }, "
+        + "transformers: [ {field: {fieldName:'surname', operation: 'remove'}}], " + "loader: { test: {} } }");
     assertEquals(1, getResult().size());
 
     ODocument doc = getResult().get(0);
@@ -76,15 +72,11 @@ public class OFieldTransformerTest extends OETLBaseTest {
 
   @Test
   public void testSave() {
-    process(
-        "{source: { content: { value: 'name,surname\nJay,Miner' } }, "
-            + "extractor : { csv: {} }, "
-            + "transformers: ["
-            + "{field:{log:'DEBUG',fieldName:'@class', value:'Test'}}, "
-            + "{field:{log:'DEBUG', fieldName:'test', value: 33, save:true}}"
-            + "], "
-            + "loader: { orientdb: { dbURL: 'memory:OETLBaseTest' } } }");
-    
+    process("{source: { content: { value: 'name,surname\nJay,Miner' } }, " + "extractor : { csv: {} }, " + "transformers: ["
+        + "{field:{log:'DEBUG',fieldName:'@class', value:'Test'}}, "
+        + "{field:{log:'DEBUG', fieldName:'test', value: 33, save:true}}" + "], "
+        + "loader: { orientdb: { dbURL: 'memory:OETLBaseTest' } } }");
+
     OSchema schema = graph.getRawGraph().getMetadata().getSchema();
     schema.reload();
 

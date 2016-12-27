@@ -21,11 +21,8 @@ package com.orientechnologies.orient.etl;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.exception.OQueryParsingException;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import org.assertj.core.api.Assertions;
 import org.junit.After;
 import org.junit.Test;
 
@@ -49,9 +46,7 @@ public class SandboxTest {
   public void shouldThrowParsingExceptionDueToLackOfClass() throws Exception {
 
     //Set @class has not the reference to rhe db, it doesn't create the class on it
-    ODocument doc = new ODocument()
-        .field("@class", "Test")
-        .field("name", "myName");
+    ODocument doc = new ODocument().field("@class", "Test").field("name", "myName");
 
     db = new ODatabaseDocumentTx("memory:testDB").create();
 
@@ -71,11 +66,8 @@ public class SandboxTest {
 
     db = new ODatabaseDocumentTx("memory:testDB").create();
 
-
     //the set of field @class creates the class on the db
-    ODocument doc = new ODocument()
-        .field("@class", "Test")
-        .field("name", "myName");
+    ODocument doc = new ODocument().field("@class", "Test").field("name", "myName");
 
     db.save(doc);
     List<ODocument> res = db.command(new OCommandSQL("SELECT from Test")).execute();

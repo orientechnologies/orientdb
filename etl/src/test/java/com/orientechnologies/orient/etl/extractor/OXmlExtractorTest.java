@@ -69,7 +69,8 @@ public class OXmlExtractorTest extends OETLBaseTest {
 
   @Test
   public void testCollectionXml() {
-    process("{source: { file: { path: 'src/test/resources/music.xml' } }, extractor : { xml: { rootNode: 'CATALOG.CD', tagsAsAttribute: ['CATALOG.CD'] } }, loader: { test: {} } }");
+    process(
+        "{source: { file: { path: 'src/test/resources/music.xml' } }, extractor : { xml: { rootNode: 'CATALOG.CD', tagsAsAttribute: ['CATALOG.CD'] } }, loader: { test: {} } }");
     assertEquals(3, getResult().size());
 
     final List<ODocument> cds = getResult();

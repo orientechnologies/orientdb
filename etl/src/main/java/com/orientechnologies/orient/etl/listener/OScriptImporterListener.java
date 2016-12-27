@@ -21,7 +21,6 @@ package com.orientechnologies.orient.etl.listener;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -29,7 +28,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class OScriptImporterListener implements OImporterListener {
-  private final Map<String, String>   events;
+  private final Map<String, String> events;
   private Map<String, OCommandScript> scripts = new HashMap<String, OCommandScript>();
 
   public OScriptImporterListener() {

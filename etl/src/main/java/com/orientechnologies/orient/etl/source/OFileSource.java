@@ -30,21 +30,21 @@ import java.nio.charset.Charset;
 import java.util.zip.GZIPInputStream;
 
 public class OFileSource extends OAbstractSource {
-  protected String            fileName;
-  protected String            path;
-  protected boolean           lockFile    = false;
-  protected long              byteParsed  = 0;
-  protected long              byteToParse = -1;
-  protected long              skipFirst   = 0;
-  protected long              skipLast    = 0;
+  protected String fileName;
+  protected String path;
+  protected boolean lockFile    = false;
+  protected long    byteParsed  = 0;
+  protected long    byteToParse = -1;
+  protected long    skipFirst   = 0;
+  protected long    skipLast    = 0;
 
-  protected RandomAccessFile  raf         = null;
-  protected FileChannel       channel     = null;
-  protected InputStreamReader fileReader  = null;
-  protected FileInputStream   fis         = null;
-  protected FileLock          lock        = null;
-  private Charset             encoding    = Charset.forName("UTF-8");
-  private File                input;
+  protected RandomAccessFile  raf        = null;
+  protected FileChannel       channel    = null;
+  protected InputStreamReader fileReader = null;
+  protected FileInputStream   fis        = null;
+  protected FileLock          lock       = null;
+  private   Charset           encoding   = Charset.forName("UTF-8");
+  private File input;
 
   @Override
   public String getUnit() {
@@ -57,20 +57,20 @@ public class OFileSource extends OAbstractSource {
   }
 
   @Override
-  public void configure( ODocument iConfiguration, OCommandContext iContext) {
+  public void configure(ODocument iConfiguration, OCommandContext iContext) {
     super.configure(iConfiguration, iContext);
 
     if (iConfiguration.containsField("lock"))
-      lockFile = iConfiguration.<Boolean> field("lock");
+      lockFile = iConfiguration.<Boolean>field("lock");
 
     if (iConfiguration.containsField("skipFirst"))
-      skipFirst = Long.parseLong(iConfiguration.<String> field("skipFirst"));
+      skipFirst = Long.parseLong(iConfiguration.<String>field("skipFirst"));
 
     if (iConfiguration.containsField("skipLast"))
-      skipLast = Long.parseLong(iConfiguration.<String> field("skipLast"));
+      skipLast = Long.parseLong(iConfiguration.<String>field("skipLast"));
 
     if (iConfiguration.containsField("encoding"))
-      encoding = Charset.forName(iConfiguration.<String> field("encoding"));
+      encoding = Charset.forName(iConfiguration.<String>field("encoding"));
 
     path = (String) resolve(iConfiguration.field("path"));
 
@@ -123,21 +123,21 @@ public class OFileSource extends OAbstractSource {
   @Override
   public void begin() {
 
-      try {
-        final String fileMode = lockFile ? "rw" : "r";
-        raf = new RandomAccessFile(input, fileMode);
-        channel = raf.getChannel();
-        fis = new FileInputStream(input);
-        if (fileName.endsWith(".gz"))
-          fileReader = new InputStreamReader(new GZIPInputStream(fis),encoding);
-        else {
-          fileReader = new InputStreamReader(new FileInputStream(input),encoding);
-          byteToParse = input.length();
-        }
-
-      } catch (Exception e) {
-        end();
+    try {
+      final String fileMode = lockFile ? "rw" : "r";
+      raf = new RandomAccessFile(input, fileMode);
+      channel = raf.getChannel();
+      fis = new FileInputStream(input);
+      if (fileName.endsWith(".gz"))
+        fileReader = new InputStreamReader(new GZIPInputStream(fis), encoding);
+      else {
+        fileReader = new InputStreamReader(new FileInputStream(input), encoding);
+        byteToParse = input.length();
       }
+
+    } catch (Exception e) {
+      end();
+    }
 
     byteParsed = 0;
 

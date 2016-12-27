@@ -33,23 +33,17 @@ public class OLuceneFullTextIndex extends OLuceneIndexNotUnique {
 
   public Document buildDocument(final Object key) {
 
-    return storage.callIndexEngine(false, false, indexId, engine ->
-        ((OLuceneIndexEngine) engine).buildDocument(key, null)
-    );
+    return storage.callIndexEngine(false, false, indexId, engine -> ((OLuceneIndexEngine) engine).buildDocument(key, null));
   }
 
   public Query buildQuery(final Object query) throws ParseException {
 
-    return storage.callIndexEngine(false, false, indexId, engine ->
-        ((OLuceneIndexEngine) engine).buildQuery(query)
-    );
+    return storage.callIndexEngine(false, false, indexId, engine -> ((OLuceneIndexEngine) engine).buildQuery(query));
   }
 
   public Analyzer queryAnalyzer() {
 
-    return storage.callIndexEngine(false, false, indexId, engine ->
-        ((OLuceneIndexEngine) engine).queryAnalyzer()
-    );
+    return storage.callIndexEngine(false, false, indexId, engine -> ((OLuceneIndexEngine) engine).queryAnalyzer());
   }
 
   public Analyzer indexAnalyzer() {

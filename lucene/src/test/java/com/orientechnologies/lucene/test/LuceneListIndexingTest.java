@@ -36,7 +36,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Created by enricorisa on 28/06/14.
@@ -57,8 +57,7 @@ public class LuceneListIndexingTest extends BaseLuceneTest {
     OClass person = schema.createClass("Person");
     person.createProperty("name", OType.STRING);
     person.createProperty("tags", OType.EMBEDDEDLIST, OType.STRING);
-    db.command(new OCommandSQL("create index Person.name_tags on Person (name,tags) FULLTEXT ENGINE LUCENE"))
-        .execute();
+    db.command(new OCommandSQL("create index Person.name_tags on Person (name,tags) FULLTEXT ENGINE LUCENE")).execute();
 
     OClass city = schema.createClass("City");
     city.createProperty("name", OType.STRING);
@@ -178,8 +177,7 @@ public class LuceneListIndexingTest extends BaseLuceneTest {
 
     assertThat(query).hasSize(1);
 
-    query = db
-        .query(new OSQLSynchQuery<Object>("select from (select from Person where [name,tags] lucene 'Enrico')"));
+    query = db.query(new OSQLSynchQuery<Object>("select from (select from Person where [name,tags] lucene 'Enrico')"));
 
     assertThat(query).hasSize(1);
 
@@ -195,8 +193,7 @@ public class LuceneListIndexingTest extends BaseLuceneTest {
 
     assertThat(query).hasSize(2);
 
-    query = db
-        .query(new OSQLSynchQuery<Object>("select from Person where [name,tags] lucene '(name:Enrico AND tags:Geek)'"));
+    query = db.query(new OSQLSynchQuery<Object>("select from Person where [name,tags] lucene '(name:Enrico AND tags:Geek)'"));
 
     assertThat(query).hasSize(1);
   }

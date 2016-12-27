@@ -41,12 +41,7 @@ import com.orientechnologies.orient.core.sql.parser.ParseException;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.memory.MemoryIndex;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class OLuceneTextOperator extends OQueryTargetOperator {
 
@@ -58,6 +53,10 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
 
   public OLuceneTextOperator(String iKeyword, int iPrecedence, boolean iLogical) {
     super(iKeyword, iPrecedence, iLogical);
+  }
+
+  protected static ODatabaseDocumentInternal getDatabase() {
+    return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 
   @Override
@@ -164,10 +163,6 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
       }
     }
     return idx;
-  }
-
-  protected static ODatabaseDocumentInternal getDatabase() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 
   private boolean isChained(Object left) {

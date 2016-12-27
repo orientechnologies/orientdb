@@ -48,10 +48,12 @@ public class ODefaultImporterListener implements OImporterListener {
   }
 
   @Override
-  public void onJoinNotFound(final ODatabaseDocument db, final OCommandContext iContext, final OIndex<?> iIndex, final Object iKey) {
+  public void onJoinNotFound(final ODatabaseDocument db, final OCommandContext iContext, final OIndex<?> iIndex,
+      final Object iKey) {
     iContext.setVariable("joinNotFound", ((Integer) iContext.getVariable("joinNotFound", 0)) + 1);
-    OLogManager.instance().warn(this, "     + %d line: join record not found in index '%s' for key='%s'",
-        iContext.getVariable("currentLine"), iIndex, iKey);
+    OLogManager.instance()
+        .warn(this, "     + %d line: join record not found in index '%s' for key='%s'", iContext.getVariable("currentLine"), iIndex,
+            iKey);
   }
 
   @Override

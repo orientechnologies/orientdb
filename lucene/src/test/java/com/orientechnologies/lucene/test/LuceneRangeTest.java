@@ -13,7 +13,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Created by frank on 13/12/2016.
@@ -32,12 +32,9 @@ public class LuceneRangeTest extends BaseLuceneTest {
 
     List<String> names = Arrays.asList("John", "Robert", "Jane", "andrew", "Scott", "luke", "Enriquez", "Luis", "Gabriel", "Sara");
     for (int i = 0; i < 10; i++) {
-      db.save(new ODocument("Person")
-          .field("name", names.get(i))
-          .field("surname", "Reese")
+      db.save(new ODocument("Person").field("name", names.get(i)).field("surname", "Reese")
           //from today back one day a time
-          .field("date", System.currentTimeMillis() - (i * 3600 * 24 * 1000))
-          .field("age", i));
+          .field("date", System.currentTimeMillis() - (i * 3600 * 24 * 1000)).field("age", i));
     }
 
   }
@@ -50,16 +47,12 @@ public class LuceneRangeTest extends BaseLuceneTest {
     assertThat(db.getMetadata().getIndexManager().getIndex("Person.age").getSize()).isEqualTo(10);
 
     //range
-    Collection<ODocument> results = db.command(
-        new OCommandSQL("SELECT FROM Person WHERE age LUCENE 'age:[5 TO 6]'"))
-        .execute();
+    Collection<ODocument> results = db.command(new OCommandSQL("SELECT FROM Person WHERE age LUCENE 'age:[5 TO 6]'")).execute();
 
     assertThat(results).hasSize(2);
 
     //single value
-    results = db.command(
-        new OCommandSQL("SELECT FROM Person WHERE age LUCENE 'age:5'"))
-        .execute();
+    results = db.command(new OCommandSQL("SELECT FROM Person WHERE age LUCENE 'age:5'")).execute();
 
     assertThat(results).hasSize(1);
   }
@@ -77,9 +70,8 @@ public class LuceneRangeTest extends BaseLuceneTest {
     String fiveDaysAgo = DateTools.timeToString(System.currentTimeMillis() - (5 * 3600 * 24 * 1000), DateTools.Resolution.MINUTE);
 
     //range
-    Collection<ODocument> results = db.command(
-        new OCommandSQL("SELECT FROM Person WHERE date LUCENE 'date:[" + fiveDaysAgo + " TO " + today + "]'"))
-        .execute();
+    Collection<ODocument> results = db
+        .command(new OCommandSQL("SELECT FROM Person WHERE date LUCENE 'date:[" + fiveDaysAgo + " TO " + today + "]'")).execute();
 
     assertThat(results).hasSize(5);
 
@@ -98,9 +90,8 @@ public class LuceneRangeTest extends BaseLuceneTest {
     String fiveDaysAgo = DateTools.timeToString(System.currentTimeMillis() - (5 * 3600 * 24 * 1000), DateTools.Resolution.MINUTE);
 
     //anme and age range
-    Collection<ODocument> results = db.command(
-        new OCommandSQL("SELECT * FROM Person WHERE [name,surname,date,age] LUCENE 'name:luke  age:[5 TO 6]'"))
-        .execute();
+    Collection<ODocument> results = db
+        .command(new OCommandSQL("SELECT * FROM Person WHERE [name,surname,date,age] LUCENE 'name:luke  age:[5 TO 6]'")).execute();
 
     assertThat(results).hasSize(2);
 
@@ -112,10 +103,8 @@ public class LuceneRangeTest extends BaseLuceneTest {
     assertThat(results).hasSize(5);
 
     //age and date range with MUST
-    results = db.command(
-        new OCommandSQL(
-            "SELECT FROM Person WHERE [name,surname,date,age] LUCENE '+age:[4 TO 7]  +date:[" + fiveDaysAgo + " TO " + today
-                + "]'"))
+    results = db.command(new OCommandSQL(
+        "SELECT FROM Person WHERE [name,surname,date,age] LUCENE '+age:[4 TO 7]  +date:[" + fiveDaysAgo + " TO " + today + "]'"))
         .execute();
 
     assertThat(results).hasSize(2);

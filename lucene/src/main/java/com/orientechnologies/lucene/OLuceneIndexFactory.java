@@ -37,7 +37,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import static com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE.*;
+import static com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE.FULLTEXT;
 
 public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleListener {
 
@@ -104,8 +104,7 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
 
   @Override
   public OIndexEngine createIndexEngine(String algorithm, String indexName, Boolean durableInNonTxMode, OStorage storage,
-      int version,
-      Map<String, String> engineProperties) {
+      int version, Map<String, String> engineProperties) {
 
     return new OLuceneFullTextIndexEngine(storage, indexName);
 
@@ -141,12 +140,8 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
 
       OLogManager.instance().debug(this, "Dropping Lucene indexes...");
 
-      db.getMetadata()
-          .getIndexManager()
-          .getIndexes().stream()
-          .filter(idx -> idx.getInternal() instanceof OLuceneFullTextIndex)
-          .peek(idx -> OLogManager.instance().debug(this, "deleting index " + idx.getName()))
-          .forEach(idx -> idx.delete());
+      db.getMetadata().getIndexManager().getIndexes().stream().filter(idx -> idx.getInternal() instanceof OLuceneFullTextIndex)
+          .peek(idx -> OLogManager.instance().debug(this, "deleting index " + idx.getName())).forEach(idx -> idx.delete());
 
     } catch (Exception e) {
       OLogManager.instance().warn(this, "Error on dropping Lucene indexes", e);

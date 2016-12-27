@@ -18,11 +18,11 @@
 
 package com.orientechnologies.orient.etl.extractor;
 
-import java.io.Reader;
-import java.util.Iterator;
-
 import com.orientechnologies.orient.etl.OETLComponent;
 import com.orientechnologies.orient.etl.OExtractedItem;
+
+import java.io.Reader;
+import java.util.Iterator;
 
 /**
  * ETL Extractor.

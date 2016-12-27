@@ -8,7 +8,7 @@ import org.junit.Test;
 
 import java.util.HashMap;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Created by frank on 30/11/2015.

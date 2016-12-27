@@ -54,8 +54,7 @@ public class OLuceneIndexPlugin extends OServerPluginAbstract implements ODataba
     //    registerFunctions();
 
     //    spatialManager = new OLuceneSpatialManager(OShapeFactory.INSTANCE);
-    OLogManager.instance()
-               .info(this, "Lucene index plugin installed and active. Lucene version: %s", Version.LATEST);
+    OLogManager.instance().info(this, "Lucene index plugin installed and active. Lucene version: %s", Version.LATEST);
   }
 
   protected void registerOperators() {
@@ -69,8 +68,7 @@ public class OLuceneIndexPlugin extends OServerPluginAbstract implements ODataba
   protected void registerFunctions() {
 
     for (String s : OLuceneFunctionsFactory.FUNCTIONS.keySet()) {
-      OSQLEngine.getInstance()
-                .registerFunction(s, (OSQLFunction) OLuceneFunctionsFactory.FUNCTIONS.get(s));
+      OSQLEngine.getInstance().registerFunction(s, (OSQLFunction) OLuceneFunctionsFactory.FUNCTIONS.get(s));
     }
 
   }
@@ -106,14 +104,10 @@ public class OLuceneIndexPlugin extends OServerPluginAbstract implements ODataba
 
   @Override
   public void onDrop(final ODatabaseInternal iDatabase) {
-    OLogManager.instance()
-               .info(this, "Dropping Lucene indexes...");
-    for (OIndex idx : iDatabase.getMetadata()
-                               .getIndexManager()
-                               .getIndexes()) {
+    OLogManager.instance().info(this, "Dropping Lucene indexes...");
+    for (OIndex idx : iDatabase.getMetadata().getIndexManager().getIndexes()) {
       if (idx.getInternal() instanceof OLuceneIndex) {
-        OLogManager.instance()
-                   .info(this, "- index '%s'", idx.getName());
+        OLogManager.instance().info(this, "- index '%s'", idx.getName());
         idx.delete();
       }
     }

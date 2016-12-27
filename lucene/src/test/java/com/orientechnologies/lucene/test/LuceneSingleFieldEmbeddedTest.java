@@ -37,8 +37,7 @@ public class LuceneSingleFieldEmbeddedTest extends BaseLuceneTest {
   @Test
   public void loadAndTest() {
 
-    List<ODocument> docs = db.query(new OSQLSynchQuery<ODocument>(
-        "select * from Song where [title] LUCENE \"(title:mountain)\""));
+    List<ODocument> docs = db.query(new OSQLSynchQuery<ODocument>("select * from Song where [title] LUCENE \"(title:mountain)\""));
 
     Assert.assertEquals(docs.size(), 4);
 

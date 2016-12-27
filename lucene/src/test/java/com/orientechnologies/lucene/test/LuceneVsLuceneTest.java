@@ -41,7 +41,6 @@ import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.NIOFSDirectory;
-import org.assertj.core.api.Assertions;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -74,8 +73,7 @@ public class LuceneVsLuceneTest extends BaseLuceneTest {
       Directory dir = getDirectory();
       analyzer = new OLucenePerFieldAnalyzerWrapper(new StandardAnalyzer());
 
-      analyzer.add("title", new StandardAnalyzer())
-          .add("Song.title", new StandardAnalyzer());
+      analyzer.add("title", new StandardAnalyzer()).add("Song.title", new StandardAnalyzer());
 
       IndexWriterConfig iwc = new IndexWriterConfig(analyzer);
       iwc.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
@@ -124,8 +122,7 @@ public class LuceneVsLuceneTest extends BaseLuceneTest {
     final TopDocs docs = searcher.search(query, Integer.MAX_VALUE);
     ScoreDoc[] hits = docs.scoreDocs;
 
-    List<ODocument> oDocs = db
-        .query(new OSQLSynchQuery<ODocument>("select *,$score from Song where title LUCENE \"down the\""));
+    List<ODocument> oDocs = db.query(new OSQLSynchQuery<ODocument>("select *,$score from Song where title LUCENE \"down the\""));
 
     Assert.assertEquals(oDocs.size(), hits.length);
 

@@ -22,7 +22,6 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.script.OCommandExecutorScript;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.etl.OETLProcessor;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -31,10 +30,10 @@ import java.util.Map;
  * Executes arbitrary code in any supported language by JVM.
  */
 public class OCodeBlock extends OAbstractBlock {
-  protected String                 language = "javascript";
+  protected String language = "javascript";
   protected String                 code;
   protected OCommandExecutorScript cmd;
-  protected Map<Object, Object>    params   = new HashMap<Object, Object>();
+  protected Map<Object, Object> params = new HashMap<Object, Object>();
 
   @Override
   public ODocument getConfiguration() {
@@ -43,7 +42,7 @@ public class OCodeBlock extends OAbstractBlock {
   }
 
   @Override
-  public void configure( final ODocument iConfiguration, OCommandContext iContext) {
+  public void configure(final ODocument iConfiguration, OCommandContext iContext) {
     super.configure(iConfiguration, iContext);
     if (iConfiguration.containsField("language"))
       language = iConfiguration.field("language");

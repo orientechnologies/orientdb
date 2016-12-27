@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 
 import java.util.List;
 
-import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.*;
+import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.DEBUG;
 
 public class OFieldTransformer extends OAbstractTransformer {
   private String       fieldName;

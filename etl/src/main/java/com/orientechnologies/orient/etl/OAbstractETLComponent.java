@@ -27,7 +27,8 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS;
 
-import static com.orientechnologies.common.parser.OSystemVariableResolver.*;
+import static com.orientechnologies.common.parser.OSystemVariableResolver.VAR_BEGIN;
+import static com.orientechnologies.common.parser.OSystemVariableResolver.VAR_END;
 
 /**
  * ETL abstract component.
@@ -154,8 +155,8 @@ public abstract class OAbstractETLComponent implements OETLComponent {
     }
 
     if (value instanceof String) {
-      value = OVariableParser.resolveVariables((String) value, "={", "}",
-          variable -> new OSQLPredicate(variable).evaluate(context));
+      value = OVariableParser
+          .resolveVariables((String) value, "={", "}", variable -> new OSQLPredicate(variable).evaluate(context));
     }
     return value;
   }

@@ -51,8 +51,7 @@ public class LuceneBooleanIndexTest extends BaseLuceneTest {
     song.setSuperClass(v);
     song.createProperty("isDeleted", OType.BOOLEAN);
 
-    db.command(new OCommandSQL("create index Person.isDeleted on Person (isDeleted) FULLTEXT ENGINE LUCENE"))
-        .execute();
+    db.command(new OCommandSQL("create index Person.isDeleted on Person (isDeleted) FULLTEXT ENGINE LUCENE")).execute();
 
   }
 
@@ -65,8 +64,7 @@ public class LuceneBooleanIndexTest extends BaseLuceneTest {
       db.save(doc);
     }
 
-    List<ODocument> docs = db
-        .query(new OSQLSynchQuery<ODocument>("select from Person where isDeleted lucene false"));
+    List<ODocument> docs = db.query(new OSQLSynchQuery<ODocument>("select from Person where isDeleted lucene false"));
 
     Assert.assertEquals(500, docs.size());
     Assert.assertEquals(false, docs.get(0).field("isDeleted"));

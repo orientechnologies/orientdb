@@ -56,7 +56,8 @@ import java.util.Map;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract.*;
+import static com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract.OLUCENE_BASE_DIR;
+import static com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract.RID;
 
 public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements OOrientListener {
 

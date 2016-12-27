@@ -21,7 +21,6 @@ package com.orientechnologies.lucene.test;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.OrientDBFactory;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -53,15 +52,13 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 public class LuceneAutomaticBackupRestoreTest {
 
-  private OrientDBFactory           factory;
-
+  private final static String DBNAME    = "LuceneAutomaticBackupRestoreTest";
   @Rule
-  public TemporaryFolder            tempFolder = new TemporaryFolder();
-
-  private final static String       DBNAME     = "LuceneAutomaticBackupRestoreTest";
-  private String                    URL        = null;
-  private String                    BACKUPDIR  = null;
-  private String                    BACKUFILE  = null;
+  public TemporaryFolder tempFolder = new TemporaryFolder();
+  private OrientDBFactory factory;
+  private              String URL       = null;
+  private              String BACKUPDIR = null;
+  private              String BACKUFILE = null;
 
   private OServer                   server;
   private ODatabaseDocumentInternal db;

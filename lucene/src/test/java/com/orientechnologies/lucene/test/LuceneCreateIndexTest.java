@@ -75,8 +75,7 @@ public class LuceneCreateIndexTest extends BaseLuceneTest {
   }
 
   protected void assertQuery() {
-    List<ODocument> docs = db.query(new OSQLSynchQuery<ODocument>(
-        "select * from Song where [title] LUCENE \"(title:mountain)\""));
+    List<ODocument> docs = db.query(new OSQLSynchQuery<ODocument>("select * from Song where [title] LUCENE \"(title:mountain)\""));
 
     Assert.assertEquals(docs.size(), 4);
 
@@ -97,8 +96,7 @@ public class LuceneCreateIndexTest extends BaseLuceneTest {
 
   protected void assertNewQuery() {
 
-    List<ODocument> docs = db.query(new OSQLSynchQuery<ODocument>(
-        "select * from Song where [title] LUCENE \"(title:Local)\""));
+    List<ODocument> docs = db.query(new OSQLSynchQuery<ODocument>("select * from Song where [title] LUCENE \"(title:Local)\""));
 
     Assert.assertEquals(docs.size(), 1);
   }

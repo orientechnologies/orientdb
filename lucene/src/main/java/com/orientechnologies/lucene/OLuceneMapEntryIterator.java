@@ -32,7 +32,7 @@ public class OLuceneMapEntryIterator<K, V> implements Iterator<Map.Entry<K, V>> 
   private final OIndexDefinition definition;
   private final IndexReader      reader;
 
-  private int                    currentIdx;
+  private int currentIdx;
 
   public OLuceneMapEntryIterator(IndexReader reader, OIndexDefinition definition) {
 
