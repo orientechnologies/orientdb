@@ -8,15 +8,11 @@ import org.apache.lucene.store.MMapDirectory;
 import org.apache.lucene.store.NIOFSDirectory;
 import org.apache.lucene.store.RAMDirectory;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
- *
- *
- *
  * Created by frank on 03/03/2016.
  */
 public class OLuceneDirectoryFactory {

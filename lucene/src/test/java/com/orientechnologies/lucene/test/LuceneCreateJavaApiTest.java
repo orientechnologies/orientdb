@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -34,7 +33,6 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Created by Enrico Risa on 07/07/15.
  */
 public class LuceneCreateJavaApiTest extends BaseLuceneTest {
-
 
   @Before
   public void init() {
@@ -47,7 +45,6 @@ public class LuceneCreateJavaApiTest extends BaseLuceneTest {
     song.createProperty("description", OType.STRING);
   }
 
-
   @Test
   public void testCreateIndex() {
     OSchema schema = db.getMetadata().getSchema();
@@ -55,8 +52,8 @@ public class LuceneCreateJavaApiTest extends BaseLuceneTest {
     OClass song = schema.getClass("Song");
 
     ODocument meta = new ODocument().field("analyzer", StandardAnalyzer.class.getName());
-    OIndex<?> lucene = song.createIndex("Song.title", OClass.INDEX_TYPE.FULLTEXT.toString(), null, meta, "LUCENE",
-        new String[] { "title" });
+    OIndex<?> lucene = song
+        .createIndex("Song.title", OClass.INDEX_TYPE.FULLTEXT.toString(), null, meta, "LUCENE", new String[] { "title" });
 
     assertThat(lucene).isNotNull();
 

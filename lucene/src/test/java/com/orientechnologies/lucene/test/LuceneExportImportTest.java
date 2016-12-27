@@ -38,8 +38,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.zip.GZIPInputStream;
 
-import static com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE.*;
-import static org.assertj.core.api.Assertions.*;
+import static com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE.FULLTEXT;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Created by Enrico Risa on 07/07/15.

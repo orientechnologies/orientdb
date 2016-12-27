@@ -42,7 +42,6 @@ public class OLuceneIndexWriterFactory {
     if (metadata.containsField("ram_per_thread_MB"))
       config.setRAMPerThreadHardLimitMB(Integer.valueOf(metadata.<String>field("ram_per_thread_MB")));
 
-
     return config;
   }
 }

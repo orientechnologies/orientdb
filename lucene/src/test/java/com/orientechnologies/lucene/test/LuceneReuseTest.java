@@ -1,6 +1,5 @@
 package com.orientechnologies.lucene.test;
 
-import com.orientechnologies.lucene.test.BaseLuceneTest;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;

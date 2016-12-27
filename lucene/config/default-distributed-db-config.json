@@ -16,7 +16,9 @@
     "index": {
     },
     "*": {
-      "servers": ["<NEW_NODE>"]
+      "servers": [
+        "<NEW_NODE>"
+      ]
     }
   }
 }

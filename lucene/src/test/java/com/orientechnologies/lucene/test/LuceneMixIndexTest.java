@@ -44,8 +44,7 @@ public class LuceneMixIndexTest extends BaseLuceneTest {
 
     db.command(new OCommandSQL("create index Song.author on Song (author) NOTUNIQUE")).execute();
 
-    db.command(new OCommandSQL("create index Song.composite on Song (title,lyrics) FULLTEXT ENGINE LUCENE"))
-        .execute();
+    db.command(new OCommandSQL("create index Song.composite on Song (title,lyrics) FULLTEXT ENGINE LUCENE")).execute();
 
   }
 

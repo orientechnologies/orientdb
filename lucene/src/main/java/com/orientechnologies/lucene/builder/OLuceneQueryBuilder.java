@@ -84,17 +84,17 @@ public class OLuceneQueryBuilder {
 
   protected Query getQueryParser(OIndexDefinition index, String key, Analyzer analyzer) throws ParseException {
 
-      String[] fields;
-      if (index.isAutomatic()) {
-        fields = index.getFields().toArray(new String[index.getFields().size()]);
-      } else {
-        int length = index.getTypes().length;
+    String[] fields;
+    if (index.isAutomatic()) {
+      fields = index.getFields().toArray(new String[index.getFields().size()]);
+    } else {
+      int length = index.getTypes().length;
 
-        fields = new String[length];
-        for (int i = 0; i < length; i++) {
-          fields[i] = "k" + i;
-        }
+      fields = new String[length];
+      for (int i = 0; i < length; i++) {
+        fields[i] = "k" + i;
       }
+    }
 
     Map<String, OType> types = new HashMap<String, OType>();
     for (int i = 0; i < fields.length; i++) {

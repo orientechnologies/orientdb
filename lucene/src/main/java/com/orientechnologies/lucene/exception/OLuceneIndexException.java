@@ -16,7 +16,6 @@
 
 package com.orientechnologies.lucene.exception;
 
-
 public class OLuceneIndexException extends Exception {
   public OLuceneIndexException() {
   }

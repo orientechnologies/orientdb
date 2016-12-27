@@ -33,12 +33,12 @@ public class OLuceneCompositeKey extends OCompositeKey {
     super(keys);
   }
 
+  public OCommandContext getContext() {
+    return context;
+  }
+
   public OLuceneCompositeKey setContext(OCommandContext context) {
     this.context = context;
     return this;
-  }
-
-  public OCommandContext getContext() {
-    return context;
   }
 }

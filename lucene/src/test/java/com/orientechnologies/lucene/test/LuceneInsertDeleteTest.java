@@ -31,7 +31,7 @@ import org.junit.Test;
 
 import java.util.Collection;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Created by enricorisa on 28/06/14.

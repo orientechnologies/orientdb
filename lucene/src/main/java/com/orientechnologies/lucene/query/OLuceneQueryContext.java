@@ -79,25 +79,20 @@ public class OLuceneQueryContext {
     return this;
   }
 
-  public void setFacetConfig(FacetsConfig facetConfig) {
-    this.facetConfig = facetConfig;
-  }
-
   public FacetsConfig getFacetConfig() {
     return facetConfig;
   }
 
-  public void setFacetField(String facetField) {
-    this.facetField = facetField;
+  public void setFacetConfig(FacetsConfig facetConfig) {
+    this.facetConfig = facetConfig;
   }
 
   public String getFacetField() {
     return facetField;
   }
 
-  public void setDrillDownQuery(String drillDownQuery) {
-    this.drillDownQuery = drillDownQuery;
-    drillDown = drillDownQuery != null;
+  public void setFacetField(String facetField) {
+    this.facetField = facetField;
   }
 
   public boolean isDrillDown() {
@@ -106,6 +101,11 @@ public class OLuceneQueryContext {
 
   public String getDrillDownQuery() {
     return drillDownQuery;
+  }
+
+  public void setDrillDownQuery(String drillDownQuery) {
+    this.drillDownQuery = drillDownQuery;
+    drillDown = drillDownQuery != null;
   }
 
   public boolean isInTx() {

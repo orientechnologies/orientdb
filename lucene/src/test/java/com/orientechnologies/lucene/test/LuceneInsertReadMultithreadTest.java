@@ -28,7 +28,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -55,7 +54,6 @@ public class LuceneInsertReadMultithreadTest extends BaseLuceneTest {
     oClass.createProperty("name", OType.STRING);
     db.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE")).execute();
   }
-
 
   @Test
   public void testConcurrentInsertWithIndex() throws Exception {

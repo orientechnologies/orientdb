@@ -19,15 +19,11 @@
 package com.orientechnologies.lucene.test;
 
 import com.orientechnologies.orient.core.command.script.OCommandScript;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.apache.lucene.analysis.en.EnglishAnalyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -49,7 +45,6 @@ public class LuceneMultiFieldTest extends BaseLuceneTest {
   @Before
   public void init() {
 
-
     InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql");
 
     db.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
@@ -65,7 +60,6 @@ public class LuceneMultiFieldTest extends BaseLuceneTest {
     assertThat(index.<Object>field("title_index")).isEqualTo(EnglishAnalyzer.class.getName());
 
   }
-
 
   @Test
   public void testSelectSingleDocumentWithAndOperator() {
@@ -92,8 +86,7 @@ public class LuceneMultiFieldTest extends BaseLuceneTest {
   @Test
   public void testSelectOnTitleAndAuthorWithMatchOnTitle() {
 
-    List<ODocument> docs = db
-        .query(new OSQLSynchQuery<ODocument>("select * from Song where [title,author] LUCENE \"mountain\""));
+    List<ODocument> docs = db.query(new OSQLSynchQuery<ODocument>("select * from Song where [title,author] LUCENE \"mountain\""));
 
     assertThat(docs).hasSize(5);
 
@@ -112,8 +105,7 @@ public class LuceneMultiFieldTest extends BaseLuceneTest {
   @Ignore
   public void testSelectOnAuthorWithMatchOnAuthor() {
     //FIXME please
-    List<ODocument> docs = db.query(
-        new OSQLSynchQuery<ODocument>("select * from Song where [author,title] LUCENE \"(fabbio)\""));
+    List<ODocument> docs = db.query(new OSQLSynchQuery<ODocument>("select * from Song where [author,title] LUCENE \"(fabbio)\""));
 
     assertThat(docs).hasSize(87);
   }
@@ -133,8 +125,7 @@ public class LuceneMultiFieldTest extends BaseLuceneTest {
 
     assertThat(docs).hasSize(1);
 
-    docs = db
-        .query(new OSQLSynchQuery<ODocument>("select * from Item where [title, summary, content] lucene 'test'"));
+    docs = db.query(new OSQLSynchQuery<ODocument>("select * from Item where [title, summary, content] lucene 'test'"));
 
     assertThat(docs).hasSize(1);
 

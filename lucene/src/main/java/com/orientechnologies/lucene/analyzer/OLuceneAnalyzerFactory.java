@@ -18,15 +18,6 @@ import java.util.Collection;
  */
 public class OLuceneAnalyzerFactory {
 
-  public enum AnalyzerKind {
-    INDEX, QUERY;
-
-    @Override
-    public String toString() {
-      return name().toLowerCase();
-    }
-  }
-
   public Analyzer createAnalyzer(OIndexDefinition index, AnalyzerKind kind, ODocument metadata) {
     final String defaultAnalyzerFQN = metadata.field("default");
 
@@ -113,6 +104,15 @@ public class OLuceneAnalyzerFactory {
       OLogManager.instance().error(this, "Error on getting analyzer for Lucene index", e);
     }
     return new StandardAnalyzer();
+  }
+
+  public enum AnalyzerKind {
+    INDEX, QUERY;
+
+    @Override
+    public String toString() {
+      return name().toLowerCase();
+    }
   }
 
 }

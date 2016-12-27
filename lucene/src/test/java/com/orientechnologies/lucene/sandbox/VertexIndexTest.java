@@ -1,6 +1,5 @@
 package com.orientechnologies.lucene.sandbox;
 
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
@@ -25,7 +24,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Created by frank on 9/28/15.

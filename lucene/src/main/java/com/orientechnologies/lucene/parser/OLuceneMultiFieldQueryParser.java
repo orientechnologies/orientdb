@@ -16,9 +16,7 @@ import java.util.Map;
 public class OLuceneMultiFieldQueryParser extends MultiFieldQueryParser {
   private final Map<String, OType> types;
 
-  public OLuceneMultiFieldQueryParser(Map<String, OType> types, String[] fields,
-      Analyzer analyzer,
-      Map<String, Float> boosts) {
+  public OLuceneMultiFieldQueryParser(Map<String, OType> types, String[] fields, Analyzer analyzer, Map<String, Float> boosts) {
     super(fields, analyzer, boosts);
     this.types = types;
   }
@@ -64,19 +62,19 @@ public class OLuceneMultiFieldQueryParser extends MultiFieldQueryParser {
     if (types.containsKey(field)) {
       switch (types.get(field)) {
       case LONG:
-        return LegacyNumericRangeQuery.newLongRange(field, Long.parseLong(part1), Long.parseLong(part2),
-            startInclusive, endInclusive);
+        return LegacyNumericRangeQuery
+            .newLongRange(field, Long.parseLong(part1), Long.parseLong(part2), startInclusive, endInclusive);
       case INTEGER:
-        return LegacyNumericRangeQuery.newIntRange(field, Integer.parseInt(part1), Integer.parseInt(part2),
-            startInclusive, endInclusive);
+        return LegacyNumericRangeQuery
+            .newIntRange(field, Integer.parseInt(part1), Integer.parseInt(part2), startInclusive, endInclusive);
       case DOUBLE:
-        return LegacyNumericRangeQuery.newDoubleRange(field, Double.parseDouble(part1), Double.parseDouble(part2),
-            startInclusive, endInclusive);
+        return LegacyNumericRangeQuery
+            .newDoubleRange(field, Double.parseDouble(part1), Double.parseDouble(part2), startInclusive, endInclusive);
       case DATE:
       case DATETIME:
         try {
-          return LegacyNumericRangeQuery.newLongRange(field, DateTools.stringToTime(part1), DateTools.stringToTime(part2),
-              startInclusive, endInclusive);
+          return LegacyNumericRangeQuery
+              .newLongRange(field, DateTools.stringToTime(part1), DateTools.stringToTime(part2), startInclusive, endInclusive);
         } catch (java.text.ParseException e) {
           throw new ParseException(e.getMessage());
         }

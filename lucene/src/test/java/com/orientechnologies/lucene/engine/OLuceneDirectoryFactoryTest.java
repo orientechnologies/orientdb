@@ -15,8 +15,8 @@ import org.mockito.Mockito;
 import java.io.File;
 import java.util.Collections;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
 /**
  * Created by frank on 03/03/2016.

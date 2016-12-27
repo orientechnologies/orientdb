@@ -52,19 +52,16 @@ public class LuceneManualIndexTest extends BaseLuceneTest {
   public void shouldCreateManualIndexWithJavaApi() throws Exception {
 
     ODocument meta = new ODocument().field("analyzer", StandardAnalyzer.class.getName());
-    OIndex<?> index = db.getMetadata().getIndexManager()
-        .createIndex("apiManual", OClass.INDEX_TYPE.FULLTEXT.toString(),
-            new OSimpleKeyIndexDefinition(1, OType.STRING, OType.STRING), null, null, meta, OLuceneIndexFactory.LUCENE_ALGORITHM);
+    OIndex<?> index = db.getMetadata().getIndexManager().createIndex("apiManual", OClass.INDEX_TYPE.FULLTEXT.toString(),
+        new OSimpleKeyIndexDefinition(1, OType.STRING, OType.STRING), null, null, meta, OLuceneIndexFactory.LUCENE_ALGORITHM);
 
-    db.command(new OCommandSQL("insert into index:apiManual (key,rid) values(['Enrico','London'],#5:0) "))
-        .execute();
+    db.command(new OCommandSQL("insert into index:apiManual (key,rid) values(['Enrico','London'],#5:0) ")).execute();
     db.command(new OCommandSQL("insert into index:apiManual (key,rid) values(['Luca','Rome'],#5:0) ")).execute();
     db.command(new OCommandSQL("insert into index:apiManual (key,rid) values(['Luigi','Rome'],#5:0) ")).execute();
 
     Assert.assertEquals(index.getSize(), 3);
 
-    List<ODocument> docs = db
-        .command(new OSQLSynchQuery("select from index:apiManual where key LUCENE '(k0:Enrico)'")).execute();
+    List<ODocument> docs = db.command(new OSQLSynchQuery("select from index:apiManual where key LUCENE '(k0:Enrico)'")).execute();
     Assert.assertEquals(docs.size(), 1);
 
     docs = db.command(new OSQLSynchQuery("select from index:apiManual where key LUCENE '(k0:Luca)'")).execute();
@@ -85,8 +82,7 @@ public class LuceneManualIndexTest extends BaseLuceneTest {
 
     Assert.assertEquals(manual.getSize(), 3);
 
-    List<ODocument> docs = db.command(new OSQLSynchQuery("select from index:manual where key LUCENE 'Enrico'"))
-        .execute();
+    List<ODocument> docs = db.command(new OSQLSynchQuery("select from index:manual where key LUCENE 'Enrico'")).execute();
     Assert.assertEquals(docs.size(), 1);
   }
 
@@ -97,8 +93,7 @@ public class LuceneManualIndexTest extends BaseLuceneTest {
 
     Assert.assertEquals(manual.getSize(), 3);
 
-    List<ODocument> docs = db.command(new OSQLSynchQuery("select from index:manual where key LUCENE '(k0:Enrico)'"))
-        .execute();
+    List<ODocument> docs = db.command(new OSQLSynchQuery("select from index:manual where key LUCENE '(k0:Enrico)'")).execute();
     Assert.assertEquals(docs.size(), 1);
 
     docs = db.command(new OSQLSynchQuery("select from index:manual where key LUCENE '(k0:Luca)'")).execute();

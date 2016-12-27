@@ -29,8 +29,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static com.orientechnologies.lucene.OLuceneIndexType.*;
-import static com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract.*;
+import static com.orientechnologies.lucene.OLuceneIndexType.createField;
+import static com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract.RID;
 
 /**
  * Created by Enrico Risa on 02/09/15.

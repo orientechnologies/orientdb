@@ -14,10 +14,11 @@ import org.mockito.Mockito;
 import java.io.File;
 import java.io.IOException;
 
-import static com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory.AnalyzerKind.*;
-import static java.util.Arrays.*;
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory.AnalyzerKind.INDEX;
+import static com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory.AnalyzerKind.QUERY;
+import static java.util.Arrays.asList;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
 /**
  * Created by frank on 30/10/2015.
@@ -43,7 +44,7 @@ public class OLuceneAnalyzerFactoryTest {
 
     indexDef = Mockito.mock(OIndexDefinition.class);
 
-    when(indexDef.getFields()).thenReturn(asList("name","title", "author", "lyrics", "genre", "description"));
+    when(indexDef.getFields()).thenReturn(asList("name", "title", "author", "lyrics", "genre", "description"));
     when(indexDef.getClassName()).thenReturn("Song");
 
   }
@@ -113,7 +114,6 @@ public class OLuceneAnalyzerFactoryTest {
 
   @Test
   public void shouldUseClassNameToPrefixFieldName() throws Exception {
-
 
     OLucenePerFieldAnalyzerWrapper analyzer = (OLucenePerFieldAnalyzerWrapper) analyzerFactory
         .createAnalyzer(indexDef, QUERY, metadata);
