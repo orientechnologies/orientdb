@@ -143,8 +143,18 @@ functionModule.controller("FunctionController", ['$scope', '$routeParams', '$loc
     }
   })
   $scope.$watch("functionToExecute.name", function (newVal, oldVal) {
+
+
     if (oldVal && oldVal != newVal) {
       $scope.isDirty = true;
+    }
+  })
+
+  $scope.$watch("functionToExecute.idempotent", function (newVal, oldVal) {
+    if (newVal != null) {
+      if (oldVal !== newVal) {
+        $scope.isDirty = true;
+      }
     }
   })
   $scope.$watchCollection("functionToExecute.parameters", function (newVal, oldVal) {
