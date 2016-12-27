@@ -19,11 +19,11 @@ import java.util.Map;
  * @since 2/6/14
  */
 public abstract class OrientGraphRemoteTest extends OrientGraphTest {
-  private static final String             serverPort     = System.getProperty("orient.server.port", "3080");
-  private static OServer                  server;
-  private static String                   oldOrientDBHome;
+  private static final String serverPort = System.getProperty("orient.server.port", "3080");
+  private static OServer server;
+  private static String  oldOrientDBHome;
 
-  private static String                   serverHome;
+  private static String serverHome;
 
   private Map<String, OrientGraphFactory> graphFactories = new HashMap<String, OrientGraphFactory>();
 
@@ -198,6 +198,8 @@ public abstract class OrientGraphRemoteTest extends OrientGraphTest {
       Assert.assertEquals(v2.getId(), v1.getVertices(Direction.OUT, "TestE").iterator().next().getId());
       Assert.assertEquals(v1.getId(), v2.getVertices(Direction.IN, "TestE").iterator().next().getId());
     }
+    graph.shutdown();
   }
+
 
 }
