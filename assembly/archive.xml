@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<assembly>
+
+  <id>distribution</id>
+
+  <formats>
+    <format>zip</format>
+  </formats>
+
+  <includeBaseDirectory>false</includeBaseDirectory>
+
+  <files>
+    <file>
+      <source>${basedir}/plugin.json</source>
+      <outputDirectory>/</outputDirectory>
+    </file>
+  </files>
+
+  <fileSets>
+    <!--
+     | copy benchmarks scripts
+    -->
+
+
+    <!--
+     | copy server scripts
+    -->
+
+
+    <!--
+     | copy distributed scripts
+    -->
+
+    <!--
+     | copy graphdb scripts
+    -->
+
+    <!--
+     | configurations
+    -->
+
+    <fileSet>
+      <directory>${basedir}/dist/www</directory>
+      <outputDirectory>www</outputDirectory>
+    </fileSet>
+
+    <!--
+     | Plugins
+    -->
+    <fileSet>
+      <directory>${basedir}/plugins</directory>
+      <outputDirectory>plugins</outputDirectory>
+    </fileSet>
+
+
+
+    <!--
+     | creates an empty log directory
+    -->
+    <fileSet>
+      <directory>${basedir}/config</directory>
+      <outputDirectory>log</outputDirectory>
+      <excludes>
+        <exclude>*</exclude>
+      </excludes>
+    </fileSet>
+
+
+  </fileSets>
+
+
+
+</assembly>

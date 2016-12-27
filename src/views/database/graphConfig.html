@@ -1,0 +1,37 @@
+<div class="popover config-graph-popover">
+  <h3 class="popover-title" ng-bind-html="title" ng-show="title"></h3>
+
+  <div class="popover-content">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-md-12">
+          <form class="form-horizontal">
+            <fieldset>
+              <div class="form-group">
+                <label class="control-label col-md-4">Physics</label>
+                <div class="col-md-8">
+                  <input bs-switch type="checkbox" ng-model="physics"
+                         class="btn btn-primary btn-sm">
+                  </input>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="control-label col-md-4">Link Distance</label>
+                <div class="col-md-8">
+                  <input type="text" class="form-control input-sm" ng-model="linkDistance"/>
+                </div>
+              </div>
+              <div class="form-group">
+
+                <label class="control-label col-md-4">Limit</label>
+                <div class="col-md-8">
+                  <input type="text" class="form-control input-sm" ng-model="config.limit"/>
+                </div>
+              </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,39 @@
+<div class="modal" tabindex="-1" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" ng-click="$hide()" aria-hidden="true">×
+        </button>
+        <h4 class="modal-title">New Rule</h4>
+      </div>
+      <form class="form-horizontal" name="classForm" novalidate>
+        <div class="modal-body edge">
+          <div class="row-fluid">
+            <div class="span12">
+              <div class="form-group">
+                <label class="control-label col-md-3" for="inputName"> Name *</label>
+
+                <div class="col-md-9">
+                  <input type="text" id="inputName" class="form-control" required
+                         ng-model="name"/>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-sm btn-default" ng-click="$hide()">Close</button>
+          <button type="submit" class="btn btn-sm btn-primary"
+                  ng-disabled="classForm.$invalid"
+                  ng-click="save(name);$hide();">
+            Add Rule
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>
+
+
+

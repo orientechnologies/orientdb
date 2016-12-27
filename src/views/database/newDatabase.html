@@ -1,0 +1,99 @@
+<div class="modal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" ng-click="$hide()" aria-hidden="true">×
+        </button>
+        <h3>New Database </h3>
+      </div>
+      <div class="modal-body edge">
+        <form id="signin" name="newDB" class="form-horizontal" novalidate="">
+          <fieldset>
+            <div class="form-group">
+              <label class="control-label col-md-2">Name</label>
+
+              <div class="col-md-10">
+                <input type="text" class="form-control" required ng-model="name"
+                       placeholder="Database name" focus="true"/>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="control-label col-md-2">Server User</label>
+
+              <div class="col-md-10">
+                <input id="serverUser" class="form-control" type="text" required ng-model="username"
+                       value=""/>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="control-label col-md-2">Server Password</label>
+
+              <div class="col-md-10">
+                <input id="serverPassword" type="password" class="form-control" required
+                       ng-model="password"
+                       value=""/>
+              </div>
+
+            </div>
+
+
+            <div class="form-group">
+              <div class="col-sm-offset-2 col-sm-10">
+                <div class="checkbox">
+                  <label>
+                    <input type="checkbox" ng-model="advanced"> Advanced Options
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div class="form-group" ng-show="advanced">
+              <label class="control-label col-md-2">Storage Type</label>
+
+              <div class="col-md-10">
+                <select class='form-control' ng-model="stype" required ng-options="c for c in stypes">
+                </select>
+              </div>
+            </div>
+            <div class="form-group" ng-show="advanced">
+              <label class="control-label col-md-2">Database Type</label>
+
+              <div class="col-md-10">
+                <select class='form-control' ng-model="type" required ng-options="c for c in types">
+                </select>
+              </div>
+            </div>
+            <div class="form-group" ng-show="advanced">
+              <div class="col-sm-offset-2 col-sm-10">
+                <div class="checkbox">
+                  <label>
+                    <input type="checkbox" ng-model="lightweight"> Lightweight edges
+                  </label>
+                </div>
+              </div>
+            </div>
+
+          </fieldset>
+        </form>
+
+        <div class="progress progress-striped active" ng-show="creating">
+          <div class="progress-bar" role="progressbar" aria-valuenow="100" aria-valuemin="0"
+               aria-valuemax="100" style="width: 100%">
+            <span class="progress-value">Creating database {{ name }}</span>
+          </div>
+        </div>
+        <div class="alert alert-error" ng-show="error">
+          <button type="button" class="close" ng-click="error = null">×</button>
+          {{error}}
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn" ng-click="$hide()">Close</button>
+        <button class="btn btn-primary" ng-disabled="!sso && newDB.$invalid"
+                ng-click="createNew(name, type, stype, username, password, lightweight)">Create database
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+

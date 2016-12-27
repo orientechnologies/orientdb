@@ -1,0 +1,138 @@
+<div class="row">
+  <div class="col-md-12">
+    <div class="admin-header">
+      <div class="row">
+        <div class="col-md-6 admin-title">
+          <h2>
+            <button class="btn btn-xs btn-warning btn-trasparent" ng-click="showAllFunctions()"><i class="fa "
+                                                                                                   ng-class="listClass"></i>
+            </button>
+            &nbsp;Functions Management
+            <a href="{{ database.getWiki() }}" class="btn btn-trasparent btn-help"
+               data-placement="right"
+               data-title="Help"
+               data-trigger="hover"
+               target="_blank"
+               data-animation="am-flip-x"
+               bs-tooltip>
+              <i class="fa fa-question-circle fa-lg"></i>
+            </a>
+          </h2>
+        </div>
+        <div class="col-md-6">
+          <div class="btn-toolbar pull-right">
+
+            <div class="btn-group">
+              <button type="submit" class="btn btn-sm btn-primary" ng-class="{'btn-success' : isDirty }"
+                      ng-disabled="canSave(functionForm);"
+                      ng-click="saveFunction()"><i class="fa fa-save"></i> Save
+              </button>
+            </div>
+            <div class="btn-group">
+              <button href="javascript:void(0)" class="btn btn-sm btn-default" ng-click="createNewFunction()">
+                <i class="fa fa-plus"></i> New
+              </button>
+            </div>
+            <div class="btn-group">
+              <button href="javascript:void(0)" class="btn btn-sm btn-default" ng-click="copyFunction()"><i
+                class="fa fa-file"></i> Clone
+              </button>
+            </div>
+
+            <div class="btn-group">
+              <button href="javascript:void(0)" class="btn btn-sm btn-danger" ng-click="deleteFunction()"><i
+                class="fa fa-trash-o"></i>
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card card-function">
+      <div class="row">
+
+        <div class="col-md-12 console_class_functions">
+
+          <div class="row">
+            <div class="col-md-12 jumbotron functiotron">
+              <form name="functionForm" class="form-inline" novalidate="" role="form">
+
+                <div class="form-group">
+                  <label for="functionName">Name</label>
+                  <input type="text" id="functionName" class="form-control" required
+                         ng-model="functionToExecute['name']">
+                </div>
+                <div class="form-group">
+                  <label for="functionLanguage">Language</label>
+                  <select id="functionLanguage" class="form-control"
+                          ng-options="lang for lang in languages"
+                          ng-model="selectedLanguage"
+                          ng-change="modifiedLanguage(selectedLanguage)">
+                  </select>
+
+                </div>
+                <div class="checkbox">
+                  <label>
+                    <input ng-model="functionToExecute['idempotent']" type="checkbox"> Idempotent
+                  </label>
+                </div>
+                <div class="form-group">
+                  <button href="javascript:void(0)" class="btn  btn-sm btn-success"
+                          ng-click="addParam()"><i
+                    class="fa fa-plus"></i> Parameter
+                  </button>
+                </div>
+              </form>
+            </div>
+            <div class="col-md-12 parameters" ng-show="functionToExecute.parameters.length > 0">
+              <div class="row">
+                <div class="col-md-2"
+                     ng-repeat="param in functionToExecute.parameters  track by $index">
+                  <form>
+                    <div class="input-group">
+                      <input type="text" class="form-control"
+                             ng-model="functionToExecute['parameters'][$index]">
+                                            <span class="input-group-btn">
+                                            <button href="javascript:void(0)" class="btn"
+                                                    ng-click="removeParam($index)"><i
+                                              class="fa fa-trash-o"></i></button>
+                                                </span>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-12 code-editor">
+              <form ng-submit="query()" class="form-horizontal" role="form">
+                <div class="form-group">
+                  <div ui-codemirror="editorOptions" ng-model="functionToExecute['code']"></div>
+                </div>
+              </form>
+            </div>
+            <div class="col-md-12 jumbotron functiotron">
+              <ul class="horizontallist">
+                <b>{{functionToExecute['name']}}(</b>
+
+                <li ng-repeat="element in parametersToExecute track by $index">
+                  <input type="text" ng-model="parametersToExecute[$index]">
+                </li>
+                <b>)</b>
+                <button href="javascript:void(0)" class="btn btn-success btn-sm"
+                        ng-disabled="!nameFunction"
+                        ng-click="executeFunction()">
+                  <i class="fa fa-cog"></i>
+                  Execute
+                </button>
+              </ul>
+            </div>
+            <div class="col-md-12 function-error">
+              <div jsontext ui-codemirror="viewerOptions" ng-class="logLevel" ng-model="resultExecute"
+                   style="width: 100%; "></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

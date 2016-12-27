@@ -1,0 +1,42 @@
+<div class="modal" tabindex="-1" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" ng-click="$hide()" aria-hidden="true">×
+        </button>
+        <h4 class="modal-title">Add Class</h4>
+      </div>
+      <form class="form-horizontal" name="classForm" novalidate>
+        <div class="modal-body edge">
+          <div class="row-fluid">
+            <div class="span12">
+
+              <div class="form-group">
+                <label class="control-label col-md-3" for="inputIn"> Audited Class</label>
+
+                <div class="col-md-9">
+                  <select id="inputIn" class="form-control" ng-model="selectedClass"
+                          ng-options="cls.name for cls in classes"
+                          required="">
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-sm btn-default" ng-click="$hide()">Close</button>
+          <button type="submit" class="btn btn-sm btn-primary"
+                  ng-disabled="classForm.$invalid"
+                  ng-click="save(selectedClass);$hide();">
+            Add Class
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>
+
+
+

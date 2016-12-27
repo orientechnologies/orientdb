@@ -1,0 +1,42 @@
+<div class="row" ng-controller="DocumentEditController">
+    <div class="col-md-9">
+        <ng-include src="'views/database/record.html'" onload=""></ng-include>
+    </div>
+    <div class="col-md-3">
+        <div class="panel panel-default panel-orient">
+            <div class="panel-heading">
+                Links <a href="javascript:void(0)" ng-controller="DocumentPopoverLinkController"
+                         data-placement="bottom" data-title="Add Link"
+                         data-template-url="views/document/addLink.html" bs-popover><i class="fa fa-plus-square"></i></a>
+            </div>
+            <div class="panel-body">
+                <form>
+                    <div class="accordion row-fluid" id="accordion1">
+                        <div class="accordion-group" ng-repeat="i in outgoings">
+                            <div class="accordion-heading">
+                                <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion1"
+                                   data-target="#{{i}}" href="javascript:void(0)">
+                                    {{getLabelFor(i)}}
+                                    <i class="fa fa-plus-circle" data-placement="left"
+                                       ng-click="showModalConnection(i)"></i>
+                                </a>
+                            </div>
+                            <div id="{{i}}" class="accordion-body collapse">
+                                <div class="accordion-inner accordion-scroll">
+                                        <span ng-repeat="out in filterArray(doc[i])"
+                                              class="label label-default badge-edge">
+                                                <a href="javascript:void(0)" ng-click="follow(out)">{{out}}</a>
+                                                <a href="javascript:void(0)" data-placement="right"
+                                                   bs-tooltip="'Remove'"><i
+                                                        class="fa fa-times"
+                                                        ng-click="deleteLink(i,out)"></i></a>
+                                         </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

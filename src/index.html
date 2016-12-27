@@ -1,0 +1,90 @@
+<!doctype html>
+<!--[if lt IE 7]>
+<html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>
+<html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>
+<html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!-->
+<html class="no-js"> <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title></title>
+  <meta name="description" content="">
+  <meta name="viewport" content="width=device-width">
+
+  <script src="bundle.js"></script>
+
+
+  <!-- endbuild -->
+</head>
+<body  class="antialiased" ng-class="bodyClass">
+<!--[if lt IE 7]>
+<p class="chromeframe">You are using an outdated browser. <a href="http://browsehappy.com/">Upgrade your browser
+  today</a> or <a href="http://www.google.com/chromeframe/?redirect=true">install Google Chrome Frame</a> to better
+  experience this site.</p>
+<![endif]-->
+
+<div id="wrap">
+  <div ng-controller="HeaderController">
+    <div ng-include src="'views/header.html'"></div>
+  </div>
+
+  <div id="spinner-container" class="">
+    <div id="spinner">
+    </div>
+  </div>
+
+
+  <div class="server-down-container">
+    <div ng-include src="'views/status.html'"></div>
+  </div>
+  <div ng-include src="'views/spinner.html'"></div>
+  <div id="interrupter-container" class="circle-interrupt-stop">
+    <a id="interrupter" class="btn btn-danger" href="javascript:void(0)" data-placement="bottom"
+       bs-tooltip="'Interrupt request'"></i>Interrupt</a>
+  </div>
+  <div class="circle-interrupt-stop">
+
+  </div>
+
+  <!-- Add your site or application content here -->
+
+
+  <nav class="sidebar ee-view-hide" ng-controller="EEDashboardController" ng-class="show">
+    <ul class="nav nav-pills nav-stacked">
+      <li ng-class="{'active' :  m.name  == activeTab.name }" ng-repeat="m in menus">
+        <a href="#/dashboard/{{m.name}}"> <i class="fa fa-2x {{m.icon}}"></i>
+        </a>
+      </li>
+    </ul>
+  </nav>
+
+  <div class="container-fluid container-studio" ng-controller="AsideManagerController">
+    <div ng-class="asideClass">
+      <div ng-include="'views/widget/aside.html'"></div>
+    </div>
+    <div ng-class="containerClass">
+      <div class="container-fluid slideLeft" ng-view>
+      </div>
+    </div>
+  </div>
+
+</div>
+<div id="footer">
+  <div class="container-fluid container-notification">
+    <div class="row">
+      <div class="col-md-12">
+        <div ng-controller="NotificationController">
+          <div ng-include src="'views/notification.html'"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!--/container-->
+</div>
+
+
+</body>
+</html>
