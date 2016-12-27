@@ -1,13 +1,4 @@
 # [OrientDB Studio](https://github.com/orientechnologies/orientdb-studio)
- 
-## Users
-#### OrientDB v1.6 or major
-
-Copy the **studio.zip** file inside the directory "plugins" in OrientDB Server.
-
-#### OrientDB v1.4 - v1.5
-
-Unpack the **studio.zip** file inside the directory "www/studio" in OrientDB Server. If you want also to keep the previous version of studio, rename the existent "www/studio" directory in some other like "www/studioprev".
 
 ## Developers
 
@@ -21,25 +12,34 @@ Unpack the **studio.zip** file inside the directory "www/studio" in OrientDB Ser
     $ git clone https://github.com/orientechnologies/orientdb-studio.git
     ```
 
-2. Install global dependencies `yo`, `bower` and `compass` (remove "sudo" if your account already has the permissions to install software):
+2. Install local dependencies:
 
     ```bash
-    $ sudo npm install -g yo bower compass
-    ```
-
-3. Install local dependencies:
-
-    ```bash
+    $ cd orientdb-studio
     $ npm install
-    $ bower install
     ```
 
-4. Start OrientDB server.
+3. Start OrientDB server.
 
-
-5. Start the server grunt and your browser will be opened at `http://localhost:9000`:
+4. Start webpack server and open your browser at `http://localhost:8080`:
 
     ```bash
-	$ grunt server
+	$ npm run watch
     ```
     
+### Distribution
+
+To create the Studio package just run
+
+```
+$ mvn clean install
+```
+
+and the package will be available in `target` directory
+
+```
+target/orientdb-studio.*.zip
+```
+
+
+
