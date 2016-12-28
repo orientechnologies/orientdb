@@ -22,7 +22,7 @@ package com.orientechnologies.orient.etl;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.etl.loader.OAbstractLoader;
+import com.orientechnologies.orient.etl.loader.OETLAbstractLoader;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 
 import java.util.ArrayList;
@@ -33,7 +33,7 @@ import java.util.List;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com) on 27/11/14.
  */
-public class OETLStubLoader extends OAbstractLoader {
+public class OETLStubLoader extends OETLAbstractLoader {
   public final List<ODocument> loadedRecords = new ArrayList<ODocument>();
 
   public OETLStubLoader() {

@@ -25,10 +25,10 @@ import java.util.concurrent.BlockingQueue;
  */
 final class OETLPipelineWorker implements Runnable {
 
-  private final BlockingQueue<OExtractedItem> queue;
-  private final OETLPipeline                  pipeline;
+  private final BlockingQueue<OETLExtractedItem> queue;
+  private final OETLPipeline                     pipeline;
 
-  public OETLPipelineWorker(BlockingQueue<OExtractedItem> queue, OETLPipeline pipeline) {
+  public OETLPipelineWorker(BlockingQueue<OETLExtractedItem> queue, OETLPipeline pipeline) {
     this.queue = queue;
     this.pipeline = pipeline;
     pipeline.begin();
@@ -37,7 +37,7 @@ final class OETLPipelineWorker implements Runnable {
   @Override
   public void run() {
     try {
-      OExtractedItem content;
+      OETLExtractedItem content;
       while (!(content = queue.take()).finished) {
         pipeline.execute(content);
       }

@@ -20,16 +20,17 @@ package com.orientechnologies.orient.etl;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.etl.block.OBlock;
-import com.orientechnologies.orient.etl.extractor.OExtractor;
-import com.orientechnologies.orient.etl.loader.OLoader;
-import com.orientechnologies.orient.etl.source.OSource;
-import com.orientechnologies.orient.etl.transformer.OTransformer;
+import com.orientechnologies.orient.etl.block.OETLBlock;
+import com.orientechnologies.orient.etl.extractor.OETLExtractor;
+import com.orientechnologies.orient.etl.loader.OETLLoader;
+import com.orientechnologies.orient.etl.source.OETLSource;
+import com.orientechnologies.orient.etl.transformer.OETLTransformer;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
@@ -37,11 +38,9 @@ import java.util.List;
 import java.util.TimerTask;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
-import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.DEBUG;
-import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.ERROR;
 
 /**
  * ETL processor class.
@@ -49,24 +48,25 @@ import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.ERROR;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com) (l.garulli-at-orientdb.com)
  */
 public class OETLProcessor {
-  protected final OETLComponentFactory factory;
-  protected final OETLProcessorStats   stats;
-  private final   ExecutorService      executor;
-  protected       List<OBlock>         endBlocks;
-  protected       List<OTransformer>   transformers;
-  protected       List<OBlock>         beginBlocks;
-  protected       OSource              source;
-  protected       OExtractor           extractor;
-  protected       OLoader              loader;
-  protected       OCommandContext      context;
-  protected       long                 startTime;
-  protected       long                 elapsed;
-  protected       TimerTask            dumpTask;
-  protected LOG_LEVELS logLevel    = LOG_LEVELS.INFO;
-  protected boolean    haltOnError = true;
-  protected int        maxRetries  = 10;
-  protected int        workers     = 1;
-  private   boolean    parallel    = false;
+  protected final OETLComponentFactory  factory;
+  protected final OETLProcessorStats    stats;
+  private final   ExecutorService       executor;
+  protected       List<OETLBlock>       endBlocks;
+  protected       List<OETLTransformer> transformers;
+  protected       List<OETLBlock>       beginBlocks;
+  protected       OETLSource            source;
+  protected       OETLExtractor         extractor;
+  protected       OETLLoader            loader;
+  protected       OCommandContext       context;
+  protected       long                  startTime;
+  protected       long                  elapsed;
+  protected       TimerTask             dumpTask;
+  protected Level   logLevel    = Level.INFO;
+  protected boolean haltOnError = true;
+  protected int     maxRetries  = 10;
+  protected int     workers     = 1;
+  private   boolean parallel    = false;
+
   /**
    * Creates an ETL processor by setting all the components on construction.
    *
@@ -78,8 +78,12 @@ public class OETLProcessor {
    * @param iEndBlocks    List of Blocks to execute at the end of processing
    * @param iContext      Execution Context
    */
-  public OETLProcessor(final List<OBlock> iBeginBlocks, final OSource iSource, final OExtractor iExtractor,
-      final List<OTransformer> iTransformers, final OLoader iLoader, final List<OBlock> iEndBlocks,
+  public OETLProcessor(final List<OETLBlock> iBeginBlocks,
+      final OETLSource iSource,
+      final OETLExtractor iExtractor,
+      final List<OETLTransformer> iTransformers,
+      final OETLLoader iLoader,
+      final List<OETLBlock> iEndBlocks,
       final OCommandContext iContext) {
     beginBlocks = iBeginBlocks;
     source = iSource;
@@ -113,7 +117,7 @@ public class OETLProcessor {
   protected void configRunBehaviour(OCommandContext context) {
     final String cfgLog = (String) context.getVariable("log");
     if (cfgLog != null)
-      logLevel = OETLProcessor.LOG_LEVELS.valueOf(cfgLog.toUpperCase());
+      logLevel = Level.parse(cfgLog.toUpperCase());
 
     final Boolean cfgHaltOnError = (Boolean) context.getVariable("haltOnError");
     if (cfgHaltOnError != null)
@@ -132,32 +136,33 @@ public class OETLProcessor {
 
   }
 
-  public void out(final LOG_LEVELS iLogLevel, final String iText, final Object... iArgs) {
-    if (logLevel.ordinal() >= iLogLevel.ordinal())
-      System.out.println(String.format(iText, iArgs));
+  public void out_NO(final Level iLogLevel, final String iText, final Object... iArgs) {
+//    if (logLevel.ordinal() >= iLogLevel.ordinal())
+    System.out.println(String.format(iText, iArgs));
+
   }
 
   public OETLProcessorStats getStats() {
     return stats;
   }
 
-  public OExtractor getExtractor() {
+  public OETLExtractor getExtractor() {
     return extractor;
   }
 
-  public OSource getSource() {
+  public OETLSource getSource() {
     return source;
   }
 
-  public OLoader getLoader() {
+  public OETLLoader getLoader() {
     return loader;
   }
 
-  public List<OTransformer> getTransformers() {
+  public List<OETLTransformer> getTransformers() {
     return transformers;
   }
 
-  public LOG_LEVELS getLogLevel() {
+  public Level getLogLevel() {
     return logLevel;
   }
 
@@ -178,38 +183,47 @@ public class OETLProcessor {
   private void runExtractorAndPipeline() {
     try {
 
-      out(LOG_LEVELS.INFO, "Started execution with %d worker threads", workers);
+//      out(LOG_LEVELS.INFO, "Started execution with %d worker threads", workers);
 
+      OLogManager.instance().info(this, "Started execution with %d worker threads", workers);
       extractor.extract(source.read());
 
-      BlockingQueue<OExtractedItem> queue = new LinkedBlockingQueue<OExtractedItem>(workers * 500);
+      BlockingQueue<OETLExtractedItem> queue = new LinkedBlockingQueue<OETLExtractedItem>(workers * 500);
 
       final AtomicLong counter = new AtomicLong();
 
-      List<CompletableFuture<Void>> futures = IntStream.range(0, workers).boxed().map(i -> CompletableFuture
-          .runAsync(new OETLPipelineWorker(queue, new OETLPipeline(this, transformers, loader, logLevel, maxRetries, haltOnError)),
-              executor)).collect(Collectors.toList());
+      List<CompletableFuture<Void>> futures = IntStream.range(0, workers).boxed()
+          .map(i -> CompletableFuture.runAsync(
+              new OETLPipelineWorker(queue,
+                  new OETLPipeline(this, transformers, loader, logLevel, maxRetries, haltOnError)),
+              executor))
+          .collect(Collectors.toList());
 
       futures.add(CompletableFuture.runAsync(new OETLExtractorWorker(this, queue, counter), executor));
 
       futures.forEach(cf -> cf.join());
 
-      out(DEBUG, "all items extracted");
+      OLogManager.instance().debug(this, "all items extracted");
+//      out(DEBUG, "all items extracted");
 
       executor.shutdown();
     } catch (OETLProcessHaltedException e) {
-      out(ERROR, "ETL process halted: %s", e);
+//      out(ERROR, "ETL process halted: %s", e);
+      OLogManager.instance().error(this, "ETL process halted: ", e);
       executor.shutdownNow();
     } catch (Exception e) {
-      out(ERROR, "ETL process has problem: %s", e);
-      e.printStackTrace();
+//      out(ERROR, "ETL process has problem: %s", e);
+      OLogManager.instance().error(this, "ETL process has problem: ", e);
+
+//      e.printStackTrace();
       executor.shutdownNow();
     }
   }
 
   protected void begin() {
-    out(LOG_LEVELS.INFO, "BEGIN ETL PROCESSOR");
+//    out(LOG_LEVELS.INFO, "BEGIN ETL PROCESSOR");
 
+    OLogManager.instance().info(this, "BEGIN ETL PROCESSOR");
     final Integer cfgMaxRetries = (Integer) context.getVariable("maxRetries");
     if (cfgMaxRetries != null)
       maxRetries = cfgMaxRetries;
@@ -228,7 +242,7 @@ public class OETLProcessor {
       startTime = System.currentTimeMillis();
     }
 
-    for (OBlock t : beginBlocks) {
+    for (OETLBlock t : beginBlocks) {
       t.begin();
       t.execute();
       t.end();
@@ -240,7 +254,7 @@ public class OETLProcessor {
   }
 
   protected void end() {
-    for (OTransformer t : transformers)
+    for (OETLTransformer t : transformers)
       t.end();
 
     if (source != null)
@@ -248,7 +262,7 @@ public class OETLProcessor {
     extractor.end();
     loader.end();
 
-    for (OBlock t : endBlocks) {
+    for (OETLBlock t : endBlocks) {
       t.begin();
       t.execute();
       t.end();
@@ -259,8 +273,9 @@ public class OETLProcessor {
       dumpTask.cancel();
     }
 
-    out(LOG_LEVELS.INFO, "END ETL PROCESSOR");
+//    out(LOG_LEVELS.INFO, "END ETL PROCESSOR");
 
+    OLogManager.instance().info(this, "END ETL PROCESSOR");
     dumpProgress();
   }
 
@@ -279,15 +294,27 @@ public class OETLProcessor {
     final String extractorTotalFormatted = extractorTotal > -1 ? String.format("%,d", extractorTotal) : "?";
 
     if (extractorTotal == -1) {
-      out(LOG_LEVELS.INFO,
+//      out(LOG_LEVELS.INFO,
+//          "+ extracted %,d %s (%,d %s/sec) - %,d %s -> loaded %,d %s (%,d %s/sec) Total time: %s [%d warnings, %d errors]",
+//          extractorProgress, extractorUnit, extractorItemsSec, extractorUnit, extractor.getProgress(), extractor.getUnit(),
+//          loaderProgress, loaderUnit, loaderItemsSec, loaderUnit, OIOUtils.getTimeAsString(now - startTime), stats.warnings.get(),
+//          stats.errors.get());
+
+      OLogManager.instance().info(this,
           "+ extracted %,d %s (%,d %s/sec) - %,d %s -> loaded %,d %s (%,d %s/sec) Total time: %s [%d warnings, %d errors]",
           extractorProgress, extractorUnit, extractorItemsSec, extractorUnit, extractor.getProgress(), extractor.getUnit(),
           loaderProgress, loaderUnit, loaderItemsSec, loaderUnit, OIOUtils.getTimeAsString(now - startTime), stats.warnings.get(),
           stats.errors.get());
+
     } else {
       float extractorPercentage = ((float) extractorProgress * 100 / extractorTotal);
 
-      out(LOG_LEVELS.INFO,
+//      out(LOG_LEVELS.INFO,
+//          "+ %3.2f%% -> extracted %,d/%,d %s (%,d %s/sec) - %,d %s -> loaded %,d %s (%,d %s/sec) Total time: %s [%d warnings, %d errors]",
+//          extractorPercentage, extractorProgress, extractorTotal, extractorUnit, extractorItemsSec, extractorUnit,
+//          extractor.getProgress(), extractor.getUnit(), loaderProgress, loaderUnit, loaderItemsSec, loaderUnit,
+//          OIOUtils.getTimeAsString(now - startTime), stats.warnings.get(), stats.errors.get());
+      OLogManager.instance().info(this,
           "+ %3.2f%% -> extracted %,d/%,d %s (%,d %s/sec) - %,d %s -> loaded %,d %s (%,d %s/sec) Total time: %s [%d warnings, %d errors]",
           extractorPercentage, extractorProgress, extractorTotal, extractorUnit, extractorItemsSec, extractorUnit,
           extractor.getProgress(), extractor.getUnit(), loaderProgress, loaderUnit, loaderItemsSec, loaderUnit,
@@ -308,7 +335,7 @@ public class OETLProcessor {
 
     OETLComponent lastComponent = extractor;
 
-    for (OTransformer t : transformers) {
+    for (OETLTransformer t : transformers) {
       checkTypeCompatibility(t, lastComponent);
       lastComponent = t;
     }
@@ -376,10 +403,6 @@ public class OETLProcessor {
 
   public OETLComponentFactory getFactory() {
     return factory;
-  }
-
-  public enum LOG_LEVELS {
-    NONE, ERROR, INFO, DEBUG
   }
 
   public class OETLProcessorStats {

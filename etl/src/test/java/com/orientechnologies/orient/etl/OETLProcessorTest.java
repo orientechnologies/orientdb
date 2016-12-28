@@ -18,7 +18,7 @@
 
 package com.orientechnologies.orient.etl;
 
-import com.orientechnologies.orient.etl.transformer.OVertexTransformer;
+import com.orientechnologies.orient.etl.transformer.OETLVertexTransformer;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -46,7 +46,7 @@ public class OETLProcessorTest {
             "./src/test/resources/comment_split_2.json" });
 
     assertThat(processor.getContext().getVariable("dburl")).isEqualTo("local:/tmp/db");
-    assertThat(processor.getTransformers().get(0)).isInstanceOf(OVertexTransformer.class);
+    assertThat(processor.getTransformers().get(0)).isInstanceOf(OETLVertexTransformer.class);
     assertThat(processor.getExtractor().getName()).isEqualTo("csv");
   }
 

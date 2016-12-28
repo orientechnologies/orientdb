@@ -163,6 +163,10 @@
             <outputDirectory>config</outputDirectory>
         </fileSet>
         <fileSet>
+            <directory>${basedir}/../etl/config</directory>
+            <outputDirectory>config</outputDirectory>
+        </fileSet>
+        <fileSet>
             <directory>${basedir}/../tools/config</directory>
             <outputDirectory>config</outputDirectory>
         </fileSet>

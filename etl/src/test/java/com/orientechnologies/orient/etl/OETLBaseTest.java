@@ -18,12 +18,15 @@
 
 package com.orientechnologies.orient.etl;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
+import org.junit.rules.TestName;
 
 import java.util.List;
 
@@ -33,27 +36,39 @@ import java.util.List;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public abstract class OETLBaseTest {
+  @Rule
+  public TestName name = new TestName();
+
   protected String[] names    = new String[] { "Jay", "Luca", "Bill", "Steve", "Jill", "Luigi", "Enrico", "Emanuele" };
   protected String[] surnames = new String[] { "Miner", "Ferguson", "Cancelli", "Lavori", "Raggio", "Eagles", "Smiles",
       "Ironcutter" };
-
-  protected OrientGraph               graph;
+  protected OrientGraph graph;
   protected OETLProcessor             proc;
   private   OETLProcessorConfigurator configurator;
 
   @Before
-  public void setUp() {
-    graph = new OrientGraph("memory:OETLBaseTest");
+  public void setupDatabse() throws Throwable {
+
+    OLogManager.instance().installCustomFormatter();
+    String config = System.getProperty("orientdb.test.env", "memory");
+
+    graph = new OrientGraph("memory:" + name.getMethodName());
+
     graph.setUseLightweightEdges(false);
+
+  }
+
+  @After
+  public void dropDatabase() {
+    graph.drop();
+  }
+
+  @Before
+  public void setUpConfigurator() {
     OETLComponentFactory factory = new OETLComponentFactory().registerLoader(OETLStubLoader.class)
         .registerExtractor(OETLStubRandomExtractor.class);
 
     configurator = new OETLProcessorConfigurator(factory);
-  }
-
-  @After
-  public void tearDown() {
-    graph.drop();
   }
 
   protected List<ODocument> getResult() {
