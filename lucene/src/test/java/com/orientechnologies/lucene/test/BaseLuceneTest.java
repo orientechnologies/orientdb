@@ -20,8 +20,9 @@ package com.orientechnologies.lucene.test;
 
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Rule;
-import org.junit.rules.ExternalResource;
 import org.junit.rules.TestName;
 
 import java.io.IOException;
@@ -37,30 +38,26 @@ public abstract class BaseLuceneTest {
 
   protected ODatabaseDocumentTx db;
 
-  @Rule
-  public ExternalResource resource = new ExternalResource() {
+  @Before
+  public void setupDatabase() throws Throwable {
 
-    @Override
-    protected void before() throws Throwable {
+    String config = System.getProperty("orientdb.test.env", "memory");
 
-      String config = System.getProperty("orientdb.test.env", "memory");
-
-      if ("ci".equals(config) || "release".equals(config)) {
-        db = new ODatabaseDocumentTx("plocal:./target/databases/" + name.getMethodName());
-      } else {
-        db = new ODatabaseDocumentTx("memory:" + name.getMethodName());
-      }
-
-      db.create();
+    if ("ci".equals(config) || "release".equals(config)) {
+      db = new ODatabaseDocumentTx("plocal:./target/databases/" + name.getMethodName());
+    } else {
+      db = new ODatabaseDocumentTx("memory:" + name.getMethodName());
     }
 
-    @Override
-    protected void after() {
-      db.activateOnCurrentThread();
-      db.drop();
-    }
+    System.out.println("db.getURL() = " + db.getURL());
+    db.create();
+  }
 
-  };
+  @After
+  public void dropDatabase() {
+    db.activateOnCurrentThread();
+    db.drop();
+  }
 
   protected ODatabaseDocumentTx dropOrCreate(String url, boolean drop) {
     ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
