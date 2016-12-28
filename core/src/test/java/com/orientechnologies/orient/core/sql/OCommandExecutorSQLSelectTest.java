@@ -1573,6 +1573,15 @@ public class OCommandExecutorSQLSelectTest {
 
   }
 
+  @Test
+  public void testDoubleExponentNotation(){
+    //issue #7013
+
+    List<ODocument> results = db.query(new OSQLSynchQuery<ODocument>("select 1e-2 as a"));
+    Assert.assertEquals(results.size(), 1);
+    Assert.assertEquals(results.get(0).field("a"), 0.01d);
+  }
+
   private long indexUsages(ODatabaseDocumentTx db) {
     final long oldIndexUsage;
     try {
