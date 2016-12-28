@@ -26,7 +26,7 @@ import com.orientechnologies.orient.etl.OETLProcessor;
  */
 public abstract class OAbstractTransformer extends OAbstractETLPipelineComponent implements OTransformer {
   @Override
-  public Object transform(final Object input) {
+  public Object transform(final Object input) throws Exception {
     log(OETLProcessor.LOG_LEVELS.DEBUG, "Transformer input: %s", input);
 
     if (input == null)
@@ -47,5 +47,5 @@ public abstract class OAbstractTransformer extends OAbstractETLPipelineComponent
     return input;
   }
 
-  protected abstract Object executeTransform(final Object input);
+  protected abstract Object executeTransform(final Object input) throws Exception;
 }

@@ -40,14 +40,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.TimerTask;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.logging.Level;
 
 /**
  * ETL processor class.
@@ -55,10 +50,6 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Luca Garulli (l.garulli-at-orientechnologies.com)
  */
 public class OETLProcessor {
-  public enum LOG_LEVELS {
-    NONE, ERROR, INFO, DEBUG
-  }
-
   protected final OETLComponentFactory factory = new OETLComponentFactory();
   protected final OETLProcessorStats   stats   = new OETLProcessorStats();
   protected List<OBlock>       beginBlocks;
@@ -101,28 +92,6 @@ public class OETLProcessor {
     endBlocks = iEndBlocks;
     context = iContext;
     init();
-  }
-
-  protected void init() {
-    final String cfgLog = (String) context.getVariable("log");
-    if (cfgLog != null)
-      logLevel = LOG_LEVELS.valueOf(cfgLog.toUpperCase());
-
-    final Boolean cfgHaltOnError = (Boolean) context.getVariable("haltOnError");
-    if (cfgHaltOnError != null)
-      haltOnError = cfgHaltOnError;
-
-    final Object parallelSetting = context.getVariable("parallel");
-    if (parallelSetting != null)
-      parallel = (Boolean) parallelSetting;
-
-    if (parallel) {
-      final int cores = Runtime.getRuntime().availableProcessors();
-
-      if (cores >= 2)
-        workers = cores - 1;
-    }
-
   }
 
   public OETLProcessor() {
@@ -182,6 +151,28 @@ public class OETLProcessor {
     return context;
   }
 
+  protected void init() {
+    final String cfgLog = (String) context.getVariable("log");
+    if (cfgLog != null)
+      logLevel = LOG_LEVELS.valueOf(cfgLog.toUpperCase());
+
+    final Boolean cfgHaltOnError = (Boolean) context.getVariable("haltOnError");
+    if (cfgHaltOnError != null)
+      haltOnError = cfgHaltOnError;
+
+    final Object parallelSetting = context.getVariable("parallel");
+    if (parallelSetting != null)
+      parallel = (Boolean) parallelSetting;
+
+    if (parallel) {
+      final int cores = Runtime.getRuntime().availableProcessors();
+
+      if (cores >= 2)
+        workers = cores - 1;
+    }
+
+  }
+
   public OETLProcessor parse(final ODocument cfg, final OCommandContext iContext) {
     return parse(cfg.<Collection<ODocument>>field("begin"),
         cfg.<ODocument>field("source"),
@@ -202,6 +193,7 @@ public class OETLProcessor {
    * @param iLoader       Loader component configuration
    * @param iEndBlocks    List of Block configurations to execute at the end of processing
    * @param iContext      Execution Context
+   *
    * @return Current OETProcessor instance
    **/
   public OETLProcessor parse(final Collection<ODocument> iBeginBlocks,
@@ -592,6 +584,25 @@ public class OETLProcessor {
             "Class '" + iClassName + "' declared as 'input' of ETL Component '" + iComponent.getName() + "' was not found.");
       }
     return inClass;
+  }
+
+  public enum LOG_LEVELS {
+    NONE(Level.OFF),
+    ERROR(Level.SEVERE),
+    INFO(Level.INFO),
+    DEBUG(Level.FINE);
+
+    private final Level julLevel;
+
+    LOG_LEVELS(Level julLevel) {
+
+      this.julLevel = julLevel;
+    }
+
+    public Level toJulLevel() {
+      return julLevel;
+    }
+
   }
 
   private static final class OETLPipelineWorker implements Callable<Boolean> {

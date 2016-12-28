@@ -25,6 +25,6 @@ import com.orientechnologies.orient.etl.OETLPipelineComponent;
  */
 public interface OTransformer extends OETLPipelineComponent {
 
-  Object transform(final Object input);
+  Object transform(final Object input) throws Exception;
 
 }

@@ -64,7 +64,7 @@ public class OCodeTransformer extends OAbstractTransformer {
   }
 
   @Override
-  public Object executeTransform(final Object input) {
+  public Object executeTransform(final Object input) throws Exception {
     if (input == null)
       return null;
 
@@ -72,10 +72,17 @@ public class OCodeTransformer extends OAbstractTransformer {
     if (input instanceof OIdentifiable)
       params.put("record", ((OIdentifiable) input).getRecord());
 
-    Object result = cmd.executeInContext(context, params);
+    try {
+      Object result = cmd.executeInContext(context, params);
 
-    log(OETLProcessor.LOG_LEVELS.DEBUG, "executed code=%s, result=%s", cmd, result);
+      log(OETLProcessor.LOG_LEVELS.DEBUG, "input=%s executed code=%s, result=%s", input, cmd, result);
 
-    return result;
+      return result;
+    } catch (Exception e) {
+
+      log(OETLProcessor.LOG_LEVELS.ERROR, "exception=%s - input=%s - command=%s ", e.getMessage(), input, cmd);
+
+      throw e;
+    }
   }
 }
