@@ -26,7 +26,6 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
-import com.orientechnologies.common.util.OMemory;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.OStorageAbstract;
@@ -40,6 +39,8 @@ import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionSt
 
 import java.io.*;
 import java.lang.ref.WeakReference;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -83,7 +84,6 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   private          OLogSequenceNumber secondMasterRecord;
 
   private volatile OLogSequenceNumber flushedLsn;
-  private volatile OLogSequenceNumber writtenLsn;
 
   private volatile OLogSequenceNumber preventCutTill;
 
@@ -95,6 +95,8 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   private final Set<OOperationUnitId>                               activeOperations        = new HashSet<OOperationUnitId>();
   private final List<WeakReference<OLowDiskSpaceListener>>          lowDiskSpaceListeners   = new CopyOnWriteArrayList<WeakReference<OLowDiskSpaceListener>>();
   private final List<WeakReference<OFullCheckpointRequestListener>> fullCheckpointListeners = new CopyOnWriteArrayList<WeakReference<OFullCheckpointRequestListener>>();
+
+  private final ByteBuffer fileDataBuffer = ByteBuffer.allocateDirect(OWALPage.PAGE_SIZE).order(ByteOrder.nativeOrder());
 
   private static class SimpleFileNameFilter implements java.io.FilenameFilter {
     private final String storageName;
@@ -222,7 +224,8 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
         OLogSegment logSegment = new OLogSegment(this, new File(this.walLocation, getSegmentName(0)), fileTTL, maxPagesCacheSize,
             performanceStatisticManager, new SubScheduledExecutorService(autoFileCloser),
             new SubScheduledExecutorService(commitExecutor));
-        logSegment.init();
+
+        logSegment.init(fileDataBuffer);
         logSegment.startFlush();
         logSegments.add(logSegment);
 
@@ -236,7 +239,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
         for (File walFile : walFiles) {
           OLogSegment logSegment = new OLogSegment(this, walFile, fileTTL, maxPagesCacheSize, performanceStatisticManager,
               new SubScheduledExecutorService(autoFileCloser), new SubScheduledExecutorService(commitExecutor));
-          logSegment.init();
+          logSegment.init(fileDataBuffer);
 
           logSegments.add(logSegment);
           logSize += logSegment.filledUpTo();
@@ -525,7 +528,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
           last = new OLogSegment(this, new File(walLocation, getSegmentName(last.getOrder() + 1)), fileTTL, maxPagesCacheSize,
               performanceStatisticManager, new SubScheduledExecutorService(autoFileCloser),
               new SubScheduledExecutorService(commitExecutor));
-          last.init();
+          last.init(fileDataBuffer);
           last.startFlush();
 
           logSegments.add(last);
@@ -574,7 +577,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       last = new OLogSegment(this, new File(walLocation, getSegmentName(lsn.getSegment() + 1)), fileTTL, maxPagesCacheSize,
           performanceStatisticManager, new SubScheduledExecutorService(autoFileCloser),
           new SubScheduledExecutorService(commitExecutor));
-      last.init();
+      last.init(fileDataBuffer);
       last.startFlush();
 
       logSegments.add(last);
@@ -601,7 +604,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       last = new OLogSegment(this, new File(walLocation, getSegmentName(last.getOrder() + 1)), fileTTL, maxPagesCacheSize,
           performanceStatisticManager, new SubScheduledExecutorService(autoFileCloser),
           new SubScheduledExecutorService(commitExecutor));
-      last.init();
+      last.init(fileDataBuffer);
       last.startFlush();
 
       logSegments.add(last);
@@ -775,7 +778,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
         return null;
 
       OLogSegment logSegment = logSegments.get(index);
-      byte[] recordEntry = logSegment.readRecord(lsn);
+      byte[] recordEntry = logSegment.readRecord(lsn, fileDataBuffer);
       if (recordEntry == null)
         return null;
 
@@ -801,7 +804,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
         return null;
 
       OLogSegment logSegment = logSegments.get(index);
-      OLogSequenceNumber nextLSN = logSegment.getNextLSN(lsn);
+      OLogSequenceNumber nextLSN = logSegment.getNextLSN(lsn, fileDataBuffer);
 
       if (nextLSN == null) {
         index++;
@@ -995,13 +998,6 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     this.flushedLsn = flushedLsn;
   }
 
-  public void setWrittenLsn(OLogSequenceNumber writtenLsn) {
-    this.writtenLsn = writtenLsn;
-  }
-
-  public OLogSequenceNumber getWrittenLsn() {
-    return writtenLsn;
-  }
 
   public void checkFreeSpace() {
     final long freeSpace = walLocation.getFreeSpace();
