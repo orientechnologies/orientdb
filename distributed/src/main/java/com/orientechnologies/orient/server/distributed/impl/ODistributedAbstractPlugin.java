@@ -279,7 +279,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       if (distribDatabase == null) {
         // CHECK TO PUBLISH IT TO THE CLUSTER
         distribDatabase = messageService.registerDatabase(dbName, cfg);
-        distribDatabase.setParsing(true);
+        distribDatabase.resume();
         distribDatabase.setOnline();
       }
 
@@ -859,7 +859,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         stg.setDistributedConfiguration(cfg);
 
         // DISCARD MESSAGES DURING THE REQUEST OF DATABASE INSTALLATION
-        distrDatabase.setParsing(false);
+        distrDatabase.suspend();
 
         final Boolean deploy = forceDeployment ? Boolean.TRUE : (Boolean) cfg.getDocument().field("autoDeploy");
 
@@ -871,7 +871,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
           if (deploy == null || !deploy) {
             // NO AUTO DEPLOY
             setDatabaseStatus(nodeName, databaseName, DB_STATUS.ONLINE);
-            distrDatabase.setParsing(true);
+            distrDatabase.resume();
             return false;
           }
 
@@ -892,7 +892,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
               if (deploy == null || !deploy) {
                 // NO AUTO DEPLOY
                 setDatabaseStatus(nodeName, databaseName, DB_STATUS.ONLINE);
-                distrDatabase.setParsing(true);
+                distrDatabase.resume();
                 return false;
               }
 
@@ -1053,7 +1053,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       }
     }
 
-    distrDatabase.setParsing(true);
+    distrDatabase.resume();
 
     return true;
   }
@@ -1149,7 +1149,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         installDatabaseFromNetwork(dbPath, databaseName, distrDatabase, r.getKey(), (ODistributedDatabaseChunk) value, false,
             uniqueClustersBackupDirectory, cfg);
 
-        distrDatabase.setParsing(true);
+        distrDatabase.resume();
 
         return true;
 
@@ -1371,13 +1371,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       }
 
       try {
-        if (db.isClosed())
-          getServerInstance().openDatabase(db);
-
-        db.reload();
-
         rebalanceClusterOwnership(nodeName, db, cfg);
-
         distrDatabase.setOnline();
       } finally {
         db.activateOnCurrentThread();

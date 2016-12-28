@@ -1035,8 +1035,18 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     return running;
   }
 
-  public void setParsing(final boolean parsing) {
-    this.parsing.set(parsing);
+  public void suspend() {
+    if (this.parsing.get())
+      // RESET THE DATABASE
+      for (ODistributedWorker w : workerThreads) {
+        w.reset();
+      }
+
+    this.parsing.set(false);
+  }
+
+  public void resume() {
+    this.parsing.set(true);
   }
 
   @Override

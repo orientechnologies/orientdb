@@ -430,6 +430,15 @@ public class ODistributedWorker extends Thread {
     return processedRequests.get();
   }
 
+  public void reset() {
+    localQueue.clear();
+    if (database != null) {
+      database.activateOnCurrentThread();
+      database.close();
+      database = null;
+    }
+  }
+
   public void sendShutdown() {
     running = false;
     this.interrupt();
