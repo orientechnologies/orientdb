@@ -831,8 +831,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * @param lsn                LSN from which we should find changed records
    * @param stream             Stream which will contain found records
    * @param excludedClusterIds Array of cluster ids to exclude from the export
+   *
    * @return Last LSN processed during examination of changed records, or <code>null</code> if it was impossible to find changed
    * records: write ahead log is absent, record with start LSN was not found in WAL, etc.
+   *
    * @see OGlobalConfiguration#STORAGE_TRACK_CHANGED_RECORDS_IN_WAL
    */
   public OLogSequenceNumber recordsChangedAfterLSN(final OLogSequenceNumber lsn, final OutputStream stream,
@@ -1921,7 +1923,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * @param key       the key to put the value under.
    * @param value     the value to put.
    * @param validator the operation validator.
+   *
    * @return {@code true} if the validator allowed the put, {@code false} otherwise.
+   *
    * @see OIndexEngine.Validator#validate(Object, Object, Object)
    */
   public boolean validatedPutIndexValue(int indexId, Object key, OIdentifiable value,
@@ -3322,7 +3326,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * Register the cluster internally.
    *
    * @param cluster OCluster implementation
+   *
    * @return The id (physical position into the array) of the new cluster just created. First is 0.
+   *
    * @throws IOException
    */
   private int registerCluster(final OCluster cluster) throws IOException {
@@ -3993,6 +3999,17 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         final OUpdatePageRecord updatePageRecord = (OUpdatePageRecord) walRecord;
 
         long fileId = updatePageRecord.getFileId();
+        if (!writeCache.exists(fileId)) {
+          String fileName = writeCache.restoreFileById(fileId);
+
+          if (fileName == null) {
+            throw new OStorageException(
+                "File with id " + fileId + " was deleted from storage, the rest of operations can not be restored");
+          } else {
+            OLogManager.instance().warn(this, "Previously deleted file with name " + fileName
+                + " was deleted but new empty file was added to continue restore process");
+          }
+        }
 
         final long pageIndex = updatePageRecord.getPageIndex();
         fileId = writeCache.externalFileId(writeCache.internalFileId(fileId));

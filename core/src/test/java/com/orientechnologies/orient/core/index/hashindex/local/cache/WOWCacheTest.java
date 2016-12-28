@@ -287,6 +287,54 @@ public class WOWCacheTest {
     }
   }
 
+  public void testFileRestore() throws IOException {
+    final long nonDelFileId = wowCache.addFile(fileName);
+    final long fileId = wowCache.addFile("removedFile.del");
+
+    wowCache.deleteFile(fileId);
+    File deletedFile = new File(storageLocal.getStoragePath(), "removedFile.del");
+    Assert.assertTrue(!deletedFile.exists());
+
+    String fileName = wowCache.restoreFileById(fileId);
+    Assert.assertEquals(fileName, "removedFile.del");
+
+    fileName = wowCache.restoreFileById(nonDelFileId);
+    Assert.assertNull(fileName);
+    Assert.assertTrue(deletedFile.exists());
+
+    fileName = wowCache.restoreFileById(1525454L);
+    Assert.assertNull(fileName);
+
+    wowCache.deleteFile(fileId);
+    Assert.assertTrue(!deletedFile.exists());
+  }
+
+  public void testFileRestoreAfterClose() throws IOException {
+    final long nonDelFileId = wowCache.addFile(fileName);
+    final long fileId = wowCache.addFile("removedFile.del");
+
+    wowCache.deleteFile(fileId);
+    File deletedFile = new File(storageLocal.getStoragePath(), "removedFile.del");
+    Assert.assertTrue(!deletedFile.exists());
+
+    wowCache.close();
+
+    initBuffer();
+
+    String fileName = wowCache.restoreFileById(fileId);
+    Assert.assertEquals(fileName, "removedFile.del");
+
+    fileName = wowCache.restoreFileById(nonDelFileId);
+    Assert.assertNull(fileName);
+    Assert.assertTrue(deletedFile.exists());
+
+    fileName = wowCache.restoreFileById(1525454L);
+    Assert.assertNull(fileName);
+
+    wowCache.deleteFile(fileId);
+    Assert.assertTrue(!deletedFile.exists());
+  }
+
   private void assertFile(long pageIndex, byte[] value, OLogSequenceNumber lsn) throws IOException {
     String path = storageLocal.getConfiguration().getDirectory() + File.separator + fileName;
 

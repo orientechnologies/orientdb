@@ -112,6 +112,15 @@ public interface OWriteCache {
 
   int pageSize();
 
+  /**
+   * Finds if there was file in write cache with given id which is deleted right now.
+   * If such file exists it creates new file with the same name at it was in deleted file.
+   *
+   * @param fileId If of file which should be restored
+   * @return Name of restored file or <code>null</code> if such name does not exist
+   */
+  String restoreFileById(long fileId) throws IOException;
+
   boolean fileIdsAreEqual(long firsId, long secondId);
 
   /**

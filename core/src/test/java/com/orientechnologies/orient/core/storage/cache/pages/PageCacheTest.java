@@ -341,6 +341,11 @@ public class PageCacheTest {
     private List<ByteBuffer> buffers     = new ArrayList<ByteBuffer>();
 
     @Override
+    public String restoreFileById(long fileId) throws IOException {
+      return null;
+    }
+
+    @Override
     public void startFuzzyCheckpoints() {
 
     }
