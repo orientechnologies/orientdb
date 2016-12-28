@@ -117,7 +117,7 @@ public class OETLProcessor {
   protected void configRunBehaviour(OCommandContext context) {
     final String cfgLog = (String) context.getVariable("log");
     if (cfgLog != null)
-      logLevel = Level.parse(cfgLog.toUpperCase());
+      logLevel = LOG_LEVELS.valueOf(cfgLog.toUpperCase()).toJulLevel();
 
     final Boolean cfgHaltOnError = (Boolean) context.getVariable("haltOnError");
     if (cfgHaltOnError != null)
@@ -395,6 +395,25 @@ public class OETLProcessor {
 
   public OETLComponentFactory getFactory() {
     return factory;
+  }
+
+  public enum LOG_LEVELS {
+    NONE(Level.OFF),
+    ERROR(Level.SEVERE),
+    INFO(Level.INFO),
+    DEBUG(Level.FINE);
+
+    private final Level julLevel;
+
+    LOG_LEVELS(Level julLevel) {
+
+      this.julLevel = julLevel;
+    }
+
+    public Level toJulLevel() {
+      return julLevel;
+    }
+
   }
 
   public class OETLProcessorStats {

@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
+import com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS;
 
 import java.util.logging.Level;
 
@@ -58,7 +59,7 @@ public abstract class OETLAbstractComponent implements OETLComponent {
   @Override
   public void begin() {
     if (configuration.containsField("log"))
-      logLevel = Level.parse(configuration.field("log").toString().toUpperCase());
+      logLevel = LOG_LEVELS.valueOf(configuration.field("log").toString().toUpperCase()).toJulLevel();
     else
       logLevel = processor.getLogLevel();
 

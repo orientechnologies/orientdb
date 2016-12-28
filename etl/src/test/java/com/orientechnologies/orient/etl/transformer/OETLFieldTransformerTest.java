@@ -73,8 +73,8 @@ public class OETLFieldTransformerTest extends OETLBaseTest {
   @Test
   public void testSave() {
     process("{source: { content: { value: 'name,surname\nJay,Miner' } }, " + "extractor : { csv: {} }, " + "transformers: ["
-        + "{field:{log:'FINE',fieldName:'@class', value:'Test'}}, "
-        + "{field:{log:'FINE', fieldName:'test', value: 33, save:true}}" + "], "
+        + "{field:{log:'DEBUG',fieldName:'@class', value:'Test'}}, "
+        + "{field:{log:'DEBUG', fieldName:'test', value: 33, save:true}}" + "], "
         + "loader: { orientdb: { dbURL: 'memory:" + name.getMethodName() + "' } } }");
 
     OSchema schema = graph.getRawGraph().getMetadata().getSchema();
