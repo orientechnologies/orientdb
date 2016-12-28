@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -1379,6 +1380,89 @@ public class OCommandExecutorSQLSelectTest {
     assertEquals(results.size(), 1);
 
   }
+//<<<<<<< HEAD
+//=======
+
+  @Test
+  public void testOrderByRidDescMultiCluster(){
+    //issue #6694
+
+    OClass clazz = db.getMetadata().getSchema().createClass("TestOrderByRidDescMultiCluster");
+    if(clazz.getClusterIds().length<2){
+      clazz.addCluster("TestOrderByRidDescMultiCluster_11111");
+    }
+    for(int i=0;i<100;i++) {
+      db.command(new OCommandSQL("insert into TestOrderByRidDescMultiCluster set foo = "+i)).execute();
+    }
+
+    List<ODocument> results = db.query(new OSQLSynchQuery<ODocument>("SELECT from TestOrderByRidDescMultiCluster order by @rid desc"));
+    assertEquals(results.size(), 100);
+    ODocument lastDoc = null;
+    for(ODocument doc:results){
+      if(lastDoc!=null){
+        assertTrue(doc.getIdentity().compareTo(lastDoc.getIdentity()) < 0);
+      }
+      lastDoc = doc;
+    }
+
+    results = db.query(new OSQLSynchQuery<ODocument>("SELECT from TestOrderByRidDescMultiCluster order by @rid asc"));
+    assertEquals(results.size(), 100);
+    lastDoc = null;
+    for(ODocument doc:results){
+      if(lastDoc!=null){
+        assertTrue(doc.getIdentity().compareTo(lastDoc.getIdentity()) > 0);
+      }
+      lastDoc = doc;
+    }
+
+  }
+
+
+  @Test
+  public void testCountOnSubclassIndexes(){
+    //issue #6737
+
+    db.command(new OCommandSQL("create class testCountOnSubclassIndexes_superclass")).execute();
+    db.command(new OCommandSQL("create property testCountOnSubclassIndexes_superclass.foo boolean")).execute();
+    db.command(new OCommandSQL("create index testCountOnSubclassIndexes_superclass.foo on testCountOnSubclassIndexes_superclass (foo) notunique")).execute();
+
+    db.command(new OCommandSQL("create class testCountOnSubclassIndexes_sub1 extends testCountOnSubclassIndexes_superclass")).execute();
+    db.command(new OCommandSQL("create index testCountOnSubclassIndexes_sub1.foo on testCountOnSubclassIndexes_sub1 (foo) notunique")).execute();
+
+    db.command(new OCommandSQL("create class testCountOnSubclassIndexes_sub2 extends testCountOnSubclassIndexes_superclass")).execute();
+    db.command(new OCommandSQL("create index testCountOnSubclassIndexes_sub2.foo on testCountOnSubclassIndexes_sub2 (foo) notunique")).execute();
+
+    db.command(new OCommandSQL("insert into testCountOnSubclassIndexes_sub1 set name = 'a', foo = true")).execute();
+    db.command(new OCommandSQL("insert into testCountOnSubclassIndexes_sub1 set name = 'b', foo = false")).execute();
+    db.command(new OCommandSQL("insert into testCountOnSubclassIndexes_sub2 set name = 'c', foo = true")).execute();
+    db.command(new OCommandSQL("insert into testCountOnSubclassIndexes_sub2 set name = 'd', foo = true")).execute();
+    db.command(new OCommandSQL("insert into testCountOnSubclassIndexes_sub2 set name = 'e', foo = false")).execute();
+
+
+    List<ODocument> results = db.query(new OSQLSynchQuery<ODocument>("SELECT count(*) from testCountOnSubclassIndexes_sub1 where foo = true"));
+    assertEquals(results.size(), 1);
+    assertEquals(results.get(0).field("count"), (Object)1L);
+
+    results = db.query(new OSQLSynchQuery<ODocument>("SELECT count(*) from testCountOnSubclassIndexes_sub2 where foo = true"));
+    assertEquals(results.size(), 1);
+    assertEquals(results.get(0).field("count"), (Object)2L);
+
+    results = db.query(new OSQLSynchQuery<ODocument>("SELECT count(*) from testCountOnSubclassIndexes_superclass where foo = true"));
+    assertEquals(results.size(), 1);
+    assertEquals(results.get(0).field("count"), (Object)3L);
+  }
+
+
+  @Test
+  public void testDoubleExponentNotation(){
+    //issue #7013
+
+    List<ODocument> results = db.query(new OSQLSynchQuery<ODocument>("select 1e-2 as a"));
+    assertEquals(results.size(), 1);
+    assertEquals(results.get(0).field("a"), (Object)0.01d);
+  }
+
+
   private long indexUsages(ODatabaseDocumentTx db) {
     final long oldIndexUsage;
     try {
