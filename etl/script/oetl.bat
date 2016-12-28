@@ -37,6 +37,8 @@ goto END
 set JAVA_MAX_DIRECT=-XX:MaxDirectMemorySize=512g
 :END
 
+if NOT exist "%CONFIG_FILE%" set CONFIG_FILE=%ORIENTDB_HOME%/config/orientdb-etl-config.xml
+
 
 set KEYSTORE=%ORIENTDB_HOME%\config\cert\orientdb-console.ks
 set KEYSTORE_PASS=password
@@ -45,6 +47,6 @@ set TRUSTSTORE_PASS=password
 set SSL_OPTS="-Dclient.ssl.enabled=false -Djavax.net.ssl.keyStore=%KEYSTORE% -Djavax.net.ssl.keyStorePassword=%KEYSTORE_PASS% -Djavax.net.ssl.trustStore=%TRUSTSTORE% -Djavax.net.ssl.trustStorePassword=%TRUSTSTORE_PASS%"
 
 set ORIENTDB_SETTINGS=%JAVA_MAX_DIRECT% -Xmx512m -Djava.util.logging.config.file="%ORIENTDB_HOME%\config\orientdb-client-log.properties" -Djava.awt.headless=true
-call %JAVA% -server %SSL_OPTS% %ORIENTDB_SETTINGS% -Dfile.encoding=utf-8 -Dorientdb.build.number="@BUILD@" -cp "%ORIENTDB_HOME%\lib\*;" com.orientechnologies.orient.etl.OETLProcessor %CMD_LINE_ARGS%
+call %JAVA% -server %SSL_OPTS% %ORIENTDB_SETTINGS% -Djava.util.logging.config.file="%LOG_FILE%" -Dfile.encoding=utf-8 -Dorientdb.build.number="@BUILD@" -cp "%ORIENTDB_HOME%\lib\*;" com.orientechnologies.orient.etl.OETLProcessor %CMD_LINE_ARGS%
 
 :end

@@ -22,17 +22,17 @@ package com.orientechnologies.orient.etl;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.etl.extractor.OAbstractExtractor;
+import com.orientechnologies.orient.etl.extractor.OETLAbstractExtractor;
 
 import java.io.Reader;
 import java.util.Random;
 
 /**
- * ETL stub  OAbstractExtractor to check the result in tests.
+ * ETL stub  OETLAbstractExtractor to check the result in tests.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com) on 27/11/14.
  */
-public class OETLStubRandomExtractor extends OAbstractExtractor {
+public class OETLStubRandomExtractor extends OETLAbstractExtractor {
   private int  fields;
   private long items;
   private int delay = 0;
@@ -64,7 +64,7 @@ public class OETLStubRandomExtractor extends OAbstractExtractor {
   }
 
   @Override
-  public OExtractedItem next() {
+  public OETLExtractedItem next() {
     final ODocument doc = new ODocument();
 
     for (int i = 0; i < fields; ++i) {
@@ -78,7 +78,7 @@ public class OETLStubRandomExtractor extends OAbstractExtractor {
       } catch (InterruptedException e) {
       }
 
-    return new OExtractedItem(current++, doc);
+    return new OETLExtractedItem(current++, doc);
   }
 
   @Override

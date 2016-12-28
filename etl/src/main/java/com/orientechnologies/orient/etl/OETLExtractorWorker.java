@@ -18,6 +18,8 @@
 
 package com.orientechnologies.orient.etl;
 
+import com.orientechnologies.common.log.OLogManager;
+
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -25,11 +27,11 @@ import java.util.concurrent.atomic.AtomicLong;
  * Created by frank on 14/06/2016.
  */
 class OETLExtractorWorker implements Runnable {
-  private final BlockingQueue<OExtractedItem> queue;
-  private final AtomicLong                    counter;
-  private       OETLProcessor                 oetlProcessor;
+  private final BlockingQueue<OETLExtractedItem> queue;
+  private final AtomicLong                       counter;
+  private       OETLProcessor                    oetlProcessor;
 
-  public OETLExtractorWorker(OETLProcessor oetlProcessor, BlockingQueue<OExtractedItem> queue, AtomicLong counter) {
+  public OETLExtractorWorker(OETLProcessor oetlProcessor, BlockingQueue<OETLExtractedItem> queue, AtomicLong counter) {
     this.oetlProcessor = oetlProcessor;
     this.queue = queue;
     this.counter = counter;
@@ -38,16 +40,17 @@ class OETLExtractorWorker implements Runnable {
   @Override
   public void run() {
     try {
-      oetlProcessor.out(OETLProcessor.LOG_LEVELS.DEBUG, "Start extracting");
+//      oetlProcessor.out(OETLProcessor.LOG_LEVELS.DEBUG, "Start extracting");
+      OLogManager.instance().debug(this, "Start extracting");
       while (oetlProcessor.extractor.hasNext()) {
         // EXTRACTOR
-        final OExtractedItem current = oetlProcessor.extractor.next();
+        final OETLExtractedItem current = oetlProcessor.extractor.next();
 
         // enqueue for transform and load
         queue.put(current);
         counter.incrementAndGet();
       }
-      queue.put(new OExtractedItem(true));
+      queue.put(new OETLExtractedItem(true));
     } catch (InterruptedException e) {
 
     }

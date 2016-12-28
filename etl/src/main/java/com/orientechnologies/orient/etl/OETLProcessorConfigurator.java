@@ -6,11 +6,11 @@ import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.etl.block.OBlock;
-import com.orientechnologies.orient.etl.extractor.OExtractor;
-import com.orientechnologies.orient.etl.loader.OLoader;
-import com.orientechnologies.orient.etl.source.OSource;
-import com.orientechnologies.orient.etl.transformer.OTransformer;
+import com.orientechnologies.orient.etl.block.OETLBlock;
+import com.orientechnologies.orient.etl.extractor.OETLExtractor;
+import com.orientechnologies.orient.etl.loader.OETLLoader;
+import com.orientechnologies.orient.etl.source.OETLSource;
+import com.orientechnologies.orient.etl.transformer.OETLTransformer;
 
 import java.io.File;
 import java.io.IOException;
@@ -78,11 +78,11 @@ public class OETLProcessorConfigurator {
       throw new IllegalArgumentException("No Extractor configured");
 
     try {
-      List<OBlock> beginBlocks = configureBeginBlocks(cfg, context);
+      List<OETLBlock> beginBlocks = configureBeginBlocks(cfg, context);
 
-      OSource source = configureSource(cfg, context);
+      OETLSource source = configureSource(cfg, context);
 
-      OExtractor extractor = configureExtractor(cfg, context);
+      OETLExtractor extractor = configureExtractor(cfg, context);
 
       //copy  the skipDuplicates flag from vertex trensformer to Loader
       Optional.ofNullable(cfg.<Collection<ODocument>>field("transformers")).map(
@@ -91,11 +91,11 @@ public class OETLProcessorConfigurator {
                   skip -> cfg.<ODocument>field("loader").<ODocument>field(cfg.<ODocument>field("loader").fieldNames()[0])
                       .field("skipDuplicates", skip)).count());
 
-      OLoader loader = configureLoader(cfg, context);
+      OETLLoader loader = configureLoader(cfg, context);
 
-      List<OTransformer> transformers = configureTransformers(cfg, context);
+      List<OETLTransformer> transformers = configureTransformers(cfg, context);
 
-      List<OBlock> endBlocks = configureEndBlocks(cfg, context);
+      List<OETLBlock> endBlocks = configureEndBlocks(cfg, context);
 
       // isn't working right now
       // analyzeFlow();
@@ -123,15 +123,15 @@ public class OETLProcessorConfigurator {
     iComponent.configure(iCfg, iContext);
   }
 
-  private List<OBlock> configureEndBlocks(ODocument cfg, OCommandContext iContext)
+  private List<OETLBlock> configureEndBlocks(ODocument cfg, OCommandContext iContext)
 
       throws IllegalAccessException, InstantiationException {
-    List<OBlock> endBlocks = new ArrayList<OBlock>();
+    List<OETLBlock> endBlocks = new ArrayList<OETLBlock>();
     Collection<ODocument> endBlocksConf = cfg.field("end");
     if (endBlocksConf != null) {
       for (ODocument blockConf : endBlocksConf) {
         final String name = blockConf.fieldNames()[0];
-        final OBlock block = factory.getBlock(name);
+        final OETLBlock block = factory.getBlock(name);
         endBlocks.add(block);
         configureComponent(block, blockConf.<ODocument>field(name), iContext);
       }
@@ -139,14 +139,14 @@ public class OETLProcessorConfigurator {
     return endBlocks;
   }
 
-  private List<OTransformer> configureTransformers(ODocument cfg, OCommandContext iContext)
+  private List<OETLTransformer> configureTransformers(ODocument cfg, OCommandContext iContext)
       throws IllegalAccessException, InstantiationException {
     Collection<ODocument> transformersConf = cfg.<Collection<ODocument>>field("transformers");
-    List<OTransformer> transformers = new ArrayList<OTransformer>();
+    List<OETLTransformer> transformers = new ArrayList<OETLTransformer>();
     if (transformersConf != null) {
       for (ODocument t : transformersConf) {
         String name = t.fieldNames()[0];
-        final OTransformer tr = factory.getTransformer(name);
+        final OETLTransformer tr = factory.getTransformer(name);
         transformers.add(tr);
         configureComponent(tr, t.<ODocument>field(name), iContext);
       }
@@ -154,59 +154,59 @@ public class OETLProcessorConfigurator {
     return transformers;
   }
 
-  private OLoader configureLoader(ODocument cfg, OCommandContext iContext) throws IllegalAccessException, InstantiationException {
+  private OETLLoader configureLoader(ODocument cfg, OCommandContext iContext) throws IllegalAccessException, InstantiationException {
     ODocument loadersConf = cfg.field("loader");
     if (loadersConf != null) {
       // LOADER
       String name = loadersConf.fieldNames()[0];
-      OLoader loader = factory.getLoader(name);
+      OETLLoader loader = factory.getLoader(name);
       configureComponent(loader, loadersConf.<ODocument>field(name), iContext);
       return loader;
     }
 
-    OLoader loader = factory.getLoader("output");
+    OETLLoader loader = factory.getLoader("output");
     configureComponent(loader, new ODocument(), iContext);
 
     return loader;
 
   }
 
-  private OExtractor configureExtractor(ODocument cfg, OCommandContext iContext)
+  private OETLExtractor configureExtractor(ODocument cfg, OCommandContext iContext)
       throws IllegalAccessException, InstantiationException {
     // EXTRACTOR
     ODocument extractorConf = cfg.<ODocument>field("extractor");
     String name = extractorConf.fieldNames()[0];
-    OExtractor extractor = factory.getExtractor(name);
+    OETLExtractor extractor = factory.getExtractor(name);
     configureComponent(extractor, extractorConf.<ODocument>field(name), iContext);
     return extractor;
   }
 
-  private OSource configureSource(ODocument cfg, OCommandContext iContext) throws IllegalAccessException, InstantiationException {
+  private OETLSource configureSource(ODocument cfg, OCommandContext iContext) throws IllegalAccessException, InstantiationException {
 
     ODocument sourceConf = cfg.field("source");
     if (sourceConf != null) {
       // SOURCE
       String name = sourceConf.fieldNames()[0];
-      OSource source = factory.getSource(name);
+      OETLSource source = factory.getSource(name);
       configureComponent(source, sourceConf.<ODocument>field(name), iContext);
       return source;
     }
 
-    OSource source = factory.getSource("input");
+    OETLSource source = factory.getSource("input");
     configureComponent(source, new ODocument(), iContext);
     return source;
 
   }
 
-  private List<OBlock> configureBeginBlocks(ODocument cfg, OCommandContext iContext)
+  private List<OETLBlock> configureBeginBlocks(ODocument cfg, OCommandContext iContext)
       throws IllegalAccessException, InstantiationException {
 
     Collection<ODocument> iBeginBlocks = cfg.field("begin");
-    List<OBlock> blocks = new ArrayList<OBlock>();
+    List<OETLBlock> blocks = new ArrayList<OETLBlock>();
     if (iBeginBlocks != null) {
       for (ODocument block : iBeginBlocks) {
         final String name = block.fieldNames()[0];// BEGIN BLOCKS
-        final OBlock b = factory.getBlock(name);
+        final OETLBlock b = factory.getBlock(name);
         blocks.add(b);
         configureComponent(b, block.<ODocument>field(name), iContext);
         // Execution is necessary to resolve let blocks and provide resolved variables to other components

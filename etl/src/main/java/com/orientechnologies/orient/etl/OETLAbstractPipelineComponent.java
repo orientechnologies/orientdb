@@ -18,33 +18,21 @@
 
 package com.orientechnologies.orient.etl;
 
-import java.util.concurrent.BlockingQueue;
+import com.orientechnologies.orient.core.command.OCommandContext;
 
 /**
- * Created by frank on 14/06/2016.
+ * ETL Pipeline abstract component.
  */
-final class OETLPipelineWorker implements Runnable {
+public abstract class OETLAbstractPipelineComponent extends OETLAbstractComponent implements OETLPipelineComponent {
+  protected OETLDatabaseProvider databaseProvider;
 
-  private final BlockingQueue<OETLExtractedItem> queue;
-  private final OETLPipeline                     pipeline;
-
-  public OETLPipelineWorker(BlockingQueue<OETLExtractedItem> queue, OETLPipeline pipeline) {
-    this.queue = queue;
-    this.pipeline = pipeline;
-    pipeline.begin();
+  @Override
+  public void setDatabaseProvider(OETLDatabaseProvider databaseProvider) {
+    this.databaseProvider = databaseProvider;
   }
 
   @Override
-  public void run() {
-    try {
-      OETLExtractedItem content;
-      while (!(content = queue.take()).finished) {
-        pipeline.execute(content);
-      }
-      pipeline.end();
-      //RE-ADD END FLAG FOR OTHER THREADS
-      queue.put(content);
-    } catch (InterruptedException e) {
-    }
+  public void setContext(OCommandContext context) {
+    this.context = context;
   }
 }
