@@ -72,10 +72,18 @@ public class OETLCodeTransformer extends OETLAbstractTransformer {
     if (input instanceof OIdentifiable)
       params.put("record", ((OIdentifiable) input).getRecord());
 
-    Object result = cmd.executeInContext(context, params);
+    try {
+      Object result = cmd.executeInContext(context, params);
 
-    log(Level.FINE, "executed code=%s, result=%s", cmd, result);
+      log(Level.FINE, "executed code=%s, result=%s", cmd, result);
+      return result;
 
-    return result;
+    } catch (Exception e) {
+
+      log(Level.SEVERE, "exception=%s - input=%s - command=%s ", e.getMessage(), input, cmd);
+
+      throw e;
+    }
+
   }
 }

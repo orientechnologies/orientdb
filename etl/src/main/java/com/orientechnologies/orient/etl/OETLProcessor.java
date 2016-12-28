@@ -136,12 +136,6 @@ public class OETLProcessor {
 
   }
 
-  public void out_NO(final Level iLogLevel, final String iText, final Object... iArgs) {
-//    if (logLevel.ordinal() >= iLogLevel.ordinal())
-    System.out.println(String.format(iText, iArgs));
-
-  }
-
   public OETLProcessorStats getStats() {
     return stats;
   }
@@ -272,8 +266,6 @@ public class OETLProcessor {
     if (dumpTask != null) {
       dumpTask.cancel();
     }
-
-//    out(LOG_LEVELS.INFO, "END ETL PROCESSOR");
 
     OLogManager.instance().info(this, "END ETL PROCESSOR");
     dumpProgress();

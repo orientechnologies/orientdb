@@ -112,22 +112,18 @@ public abstract class OETLAbstractComponent implements OETLComponent {
   }
 
   protected void log(final Level iLevel, String iText, final Object... iArgs) {
-//    if (logLevel.ordinal() >= iLevel.ordinal()) {
+    log(iLevel, iText, null, iArgs);
+  }
+
+  protected void log(final Level iLevel, String iText, Exception exception, final Object... iArgs) {
     final Long extractedNum = context != null ? (Long) context.getVariable("extractedNum") : null;
     if (extractedNum != null) {
-//      System.out.println("[" + extractedNum + ":" + getName() + "] " + iLevel + " " + String.format(iText, iArgs));
-
       OLogManager.instance()
-          .log(this, iLevel, "[" + extractedNum + ":" + getName() + "] " + iLevel + " " + iText, null, iArgs);
-
+          .log(this, iLevel, "[" + extractedNum + ":" + getName() + "] " + iLevel + " " + iText, exception, iArgs);
     } else {
-//      System.out.println("[" + getName() + "] " + iLevel + " " + String.format(iText, iArgs));
-
       OLogManager.instance()
-          .log(this, iLevel, "[" + getName() + "] " + iLevel + " " + iText, null, iArgs);
+          .log(this, iLevel, "[" + getName() + "] " + iLevel + " " + iText, exception, iArgs);
     }
-
-//    }
   }
 
   protected String stringArray2Json(final Object[] iObject) {
