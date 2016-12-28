@@ -140,5 +140,8 @@ public class ODeleteEdgeStatement extends OStatement {
     }
   }
 
+  public OWhereClause getWhereClause() {
+    return whereClause;
+  }
 }
 /* JavaCC - OriginalChecksum=8f4c5bafa99572d7d87a5d0a2c7d55a7 (do not edit this line) */
