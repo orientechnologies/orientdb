@@ -23,6 +23,7 @@ import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.orient.server.OSystemDatabase;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.impl.task.ODistributedLockTask;
+import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 
 import java.util.*;
 
@@ -43,32 +44,53 @@ public class ODistributedLockManagerRequester implements ODistributedLockManager
 
   @Override
   public void acquireExclusiveLock(final String resource, final String nodeSource, final long timeout) {
-    final String coordinator = getCoordinatorServer();
-    if (coordinator == null || coordinator.equals(manager.getLocalNodeName()))
-      // NO MASTERS, USE LOCAL SERVER
-      manager.getLockManagerExecutor().acquireExclusiveLock(resource, manager.getLocalNodeName(), timeout);
-    else {
-      // SEND A DISTRIBUTED MSG TO THE COORDINATOR SERVER
-      final Set<String> servers = new HashSet<String>();
-      servers.add(coordinator);
+    String coordinator = getCoordinatorServer();
+    while (true) {
+      if (coordinator == null || coordinator.equals(manager.getLocalNodeName())) {
+        // NO MASTERS, USE LOCAL SERVER
+        manager.getLockManagerExecutor().acquireExclusiveLock(resource, manager.getLocalNodeName(), timeout);
+        break;
+      } else {
+        // SEND A DISTRIBUTED MSG TO THE COORDINATOR SERVER
+        final Set<String> servers = new HashSet<String>();
+        servers.add(coordinator);
 
-      ODistributedServerLog.debug(this, manager.getLocalNodeName(), coordinator, ODistributedServerLog.DIRECTION.OUT,
-          "Server '%s' is acquiring distributed lock on resource '%s'...", nodeSource, resource);
+        ODistributedServerLog.debug(this, manager.getLocalNodeName(), coordinator, ODistributedServerLog.DIRECTION.OUT,
+            "Server '%s' is acquiring distributed lock on resource '%s'...", nodeSource, resource);
 
-      final ODistributedResponse dResponse = manager
-          .sendRequest(OSystemDatabase.SYSTEM_DB_NAME, null, servers, new ODistributedLockTask(resource, timeout, true),
-              manager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
+        final ODistributedResponse dResponse = manager
+            .sendRequest(OSystemDatabase.SYSTEM_DB_NAME, null, servers, new ODistributedLockTask(resource, timeout, true),
+                manager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
 
-      if (dResponse == null) {
-        ODistributedServerLog.warn(this, manager.getLocalNodeName(), coordinator, ODistributedServerLog.DIRECTION.OUT,
-            "Server '%s' cannot acquire distributed lock on resource '%s' (timeout=%d)...", nodeSource, resource, timeout);
-        throw new OLockException(
-            "Server '" + nodeSource + "' cannot acquire exclusive lock on resource '" + resource + "' (timeout=" + timeout + ")");
+        if (dResponse == null) {
+          ODistributedServerLog.warn(this, manager.getLocalNodeName(), coordinator, ODistributedServerLog.DIRECTION.OUT,
+              "Server '%s' cannot acquire distributed lock on resource '%s' (timeout=%d)...", nodeSource, resource, timeout);
+
+          throw new OLockException(
+              "Server '" + nodeSource + "' cannot acquire exclusive lock on resource '" + resource + "' (timeout=" + timeout + ")");
+        }
+
+        final Object result = dResponse.getPayload();
+
+        if (result instanceof ODistributedOperationException) {
+          if (manager.getActiveServers().contains(coordinator))
+            // WAIT ONLY IN THE CASE THE COORDINATOR IS STILL ONLINE
+            try {
+              Thread.sleep(500);
+            } catch (InterruptedException e) {
+              // IGNORE IT
+            }
+
+          if (!manager.getActiveServers().contains(coordinator)) {
+            // THE COORDINATOR WAS DOWN DURING THE REQUEST, RETRY WITH ANOTHER COORDINATOR
+            coordinator = getCoordinatorServer();
+            continue;
+          }
+        } else if (result instanceof RuntimeException)
+          throw (RuntimeException) result;
+
+        break;
       }
-
-      final Object result = dResponse.getPayload();
-      if (result instanceof RuntimeException)
-        throw (RuntimeException) result;
     }
 
     ODistributedServerLog.debug(this, manager.getLocalNodeName(), coordinator, ODistributedServerLog.DIRECTION.OUT,
@@ -149,6 +171,7 @@ public class ODistributedLockManagerRequester implements ODistributedLockManager
   /**
    * Returns the coordinator server name. If it's not available, uses the next available always starting from 0.
    */
+
   protected String getCoordinatorServer() {
     if (coordinatorName == null) {
       final List<String> sortedServers = new ArrayList<String>(manager.getActiveServers());

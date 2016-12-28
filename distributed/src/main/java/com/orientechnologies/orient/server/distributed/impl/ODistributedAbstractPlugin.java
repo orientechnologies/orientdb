@@ -710,7 +710,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     // REASSIGN CLUSTERS WITHOUT AN OWNER, AVOIDING TO REBALANCE EXISTENT
     final ODatabaseDocumentTx database = serverInstance.openDatabase(databaseName, "internal", "internal", null, true);
     try {
-      executeInDistributedDatabaseLock(databaseName, 5000, cfg, new OCallable<Boolean, OModifiableDistributedConfiguration>() {
+      executeInDistributedDatabaseLock(databaseName, 15000, cfg, new OCallable<Boolean, OModifiableDistributedConfiguration>() {
         @Override
         public Boolean call(final OModifiableDistributedConfiguration cfg) {
           rebalanceClusterOwnership(iNode, database, cfg);

@@ -1248,7 +1248,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           }
         });
 
-    setDatabaseStatus(nodeLeftName, databaseName, statusOffline ? DB_STATUS.OFFLINE : DB_STATUS.NOT_AVAILABLE);
+    final DB_STATUS nodeLeftStatus = getDatabaseStatus(nodeLeftName, databaseName);
+    if (statusOffline && nodeLeftStatus != DB_STATUS.OFFLINE)
+      setDatabaseStatus(nodeLeftName, databaseName, DB_STATUS.OFFLINE);
+    else if (!statusOffline && nodeLeftStatus != DB_STATUS.NOT_AVAILABLE)
+      setDatabaseStatus(nodeLeftName, databaseName, DB_STATUS.NOT_AVAILABLE);
 
     return found;
   }
@@ -1256,6 +1260,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   @Override
   public synchronized void removeServer(final String nodeLeftName, final boolean removeOnlyDynamicServers) {
     if (nodeLeftName == null)
+      return;
+
+    final Member member = activeNodes.remove(nodeLeftName);
+    if (member == null)
       return;
 
     ODistributedServerLog
@@ -1282,12 +1290,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           messageService.getDatabase(dbName).handleUnreachableNode(nodeLeftName);
       }
 
-      final Member member = activeNodes.remove(nodeLeftName);
-      if (member != null) {
-        if (member.getUuid() != null)
-          activeNodesNamesByUuid.remove(member.getUuid());
-        activeNodesUuidByName.remove(nodeLeftName);
-      }
+      if (member.getUuid() != null)
+        activeNodesNamesByUuid.remove(member.getUuid());
+      activeNodesUuidByName.remove(nodeLeftName);
 
       if (hazelcastInstance == null || !hazelcastInstance.getLifecycleService().isRunning())
         return;
@@ -1319,7 +1324,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       }
 
       for (String databaseName : getManagedDatabases()) {
-        if (getDatabaseStatus(nodeLeftName, databaseName) != DB_STATUS.OFFLINE)
+        final DB_STATUS nodeLeftStatus = getDatabaseStatus(nodeLeftName, databaseName);
+        if (nodeLeftStatus != DB_STATUS.OFFLINE && nodeLeftStatus != DB_STATUS.NOT_AVAILABLE)
           configurationMap.put(CONFIG_DBSTATUS_PREFIX + nodeLeftName + "." + databaseName, DB_STATUS.NOT_AVAILABLE);
       }
 

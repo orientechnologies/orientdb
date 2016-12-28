@@ -126,10 +126,10 @@ public final class DistributedConfigReloadTest {
         try {
           boolean isRunning = true;
           for (int j = 0; j < 1000000; j++) {
-            String sql = "SELECT FROM " + className;
-            // String sql = "SELECT FROM " + className;
             try {
-              //              Iterable<OrientVertex> result = graph.command(new OCommandSQL(sql)).execute();
+              String sql = "SELECT FROM " + className;
+//              String sql = "DELETE FROM " + className;
+//              Iterable<OrientVertex> result = graph.command(new OCommandSQL(sql)).execute();
               Iterable<Vertex> vtxs = graph.command(new OCommandSQL(sql)).execute();
               for (Vertex vtx : vtxs) {
                 try {
