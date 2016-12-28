@@ -89,9 +89,12 @@ public class OHttpGraphResponse extends OHttpResponse {
           OClass schemaClass = ((ODocument) entry).getSchemaClass();
           if (schemaClass != null && schemaClass.isVertexType())
             vertices.add(graph.getVertex(entry));
-          else if (schemaClass != null && schemaClass.isEdgeType())
-            edges.add(graph.getEdge(entry));
-          else
+          else if (schemaClass != null && schemaClass.isEdgeType()) {
+            OrientEdge edge = graph.getEdge(entry);
+            vertices.add(graph.getVertex(edge.getVertex(Direction.IN)));
+            vertices.add(graph.getVertex(edge.getVertex(Direction.OUT)));
+            edges.add(edge);
+          } else
             // IGNORE IT
             continue;
         }
