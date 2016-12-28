@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Parameter;
 import com.tinkerpop.blueprints.Vertex;
@@ -87,8 +88,8 @@ public final class DistributedConfigReloadTest {
       clazz = orientGraph.createVertexType(vertexClassName);
       clazz.createProperty(property, OType.STRING);
       clazz.createProperty(keyIndexProperty, OType.STRING);
-      orientGraph.createKeyIndex(keyIndexProperty, Vertex.class, new Parameter("class", vertexClassName),
-          new Parameter("type", "UNIQUE"));
+      orientGraph
+          .createKeyIndex(keyIndexProperty, Vertex.class, new Parameter("class", vertexClassName), new Parameter("type", "UNIQUE"));
       clazz.createIndex(vertexClassName + "_Index_" + property, INDEX_TYPE.UNIQUE, property);
     } else {
       log("Class " + vertexClassName + " already exists");
@@ -125,15 +126,20 @@ public final class DistributedConfigReloadTest {
         try {
           boolean isRunning = true;
           for (int j = 0; j < 1000000; j++) {
-            String sql = "DELETE VERTEX " + className;
+            String sql = "SELECT FROM " + className;
             // String sql = "SELECT FROM " + className;
             try {
-              graph.command(new OCommandSQL(sql)).execute();
-              /*
-               * Iterable<Vertex> vtxs = graph.command(new OCommandSQL(sql)).execute(); for (Vertex vtx : vtxs) { try {
-               * vtx.remove(); graph.commit(); } catch (Exception ex) { log("[" + j + "] Failed to delete vertex  [" + className +
-               * "][" + ex + "]"); } }
-               */
+              //              Iterable<OrientVertex> result = graph.command(new OCommandSQL(sql)).execute();
+              Iterable<Vertex> vtxs = graph.command(new OCommandSQL(sql)).execute();
+              for (Vertex vtx : vtxs) {
+                try {
+                  vtx.remove();
+                  graph.commit();
+                } catch (Exception ex) {
+                  log("[" + j + "] Failed to delete vertex  [" + className + "][" + ex + "]");
+                }
+              }
+
               log(" [" + id + "] Delete vertex : [" + j + "] [" + className + "]");
             } catch (Exception ex) {
               log("***************** [" + j + "] Failed to delete vertex  [" + className + "][" + ex + "]");
@@ -171,12 +177,15 @@ public final class DistributedConfigReloadTest {
                 } else {
                   log("[" + id + "] OrientDB Exception [" + ex + "]");
                 }
-                if (!(ex instanceof ODistributedConfigurationChangedException
-                    || ex.getCause() instanceof ODistributedConfigurationChangedException)) {
+                if (!(ex instanceof ODistributedConfigurationChangedException || ex
+                    .getCause() instanceof ODistributedConfigurationChangedException)) {
                   // reloadVertex(vertex, ex);
                 } else {
                   log("[" + id + "] ODistributedConfigurationChangedException {} while updating vertex " + vertex);
                 }
+              } catch (ORecordDuplicatedException ex) {
+                log("[" + id + "] Caught [" + ex + "], no errors just go ahead");
+
               } catch (ODistributedException ex) {
                 if (ex.getCause() instanceof ONeedRetryException) {
                   log("[" + id + "] OrientDB Retry Exception [" + ex + "]");

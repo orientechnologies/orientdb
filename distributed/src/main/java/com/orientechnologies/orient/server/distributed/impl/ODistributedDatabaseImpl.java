@@ -430,12 +430,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       final int quorum = calculateQuorum(task.getQuorumType(), iClusterNames, cfg, expectedResponses, nodesConcurToTheQuorum.size(),
           checkNodesAreOnline, localNodeName);
 
-      final boolean groupByResponse;
-      if (task.getResultStrategy() == OAbstractRemoteTask.RESULT_STRATEGY.UNION) {
-        groupByResponse = false;
-      } else {
-        groupByResponse = true;
-      }
+      final boolean groupByResponse = task.getResultStrategy() != OAbstractRemoteTask.RESULT_STRATEGY.UNION;
 
       final boolean waitLocalNode = waitForLocalNode(cfg, iClusterNames, iNodes);
 
@@ -495,7 +490,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
                 manager.getAvailableNodeNames(databaseName));
           else
             ODistributedServerLog.error(this, localNodeName, node, ODistributedServerLog.DIRECTION.OUT,
-                "Error on sending distributed request %s (%s). Active nodes: %s", iRequest, reason,
+                "Error on sending distributed request %s (err=%s). Active nodes: %s", iRequest, reason,
                 manager.getAvailableNodeNames(databaseName));
         }
       }
@@ -706,12 +701,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   @Override
   public void handleUnreachableNode(final String nodeName) {
-    try {
-      getSyncConfiguration().removeServer(nodeName);
-    } catch (IOException e) {
-      // IGNORE IT
-    }
-
     final int nodeLeftId = manager.getNodeIdByName(nodeName);
     if (nodeLeftId < 0)
       return;

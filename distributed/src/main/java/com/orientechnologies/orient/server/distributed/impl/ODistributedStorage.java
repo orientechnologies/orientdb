@@ -1820,10 +1820,10 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   protected void checkLocalNodeIsAvailable() {
-    if (!dManager.isNodeAvailable(dManager.getLocalNodeName(), getName()))
-      throw new ODistributedException(
-          "Cannot execute operation on current node '" + dManager.getLocalNodeName() + "', database '" + getName()
-              + "' because is not available (status=" + dManager.getDatabaseStatus(dManager.getLocalNodeName(), getName()) + ")");
+//    if (!dManager.isNodeAvailable(dManager.getLocalNodeName(), getName()))
+//      throw new ODistributedException(
+//          "Cannot execute operation on current node '" + dManager.getLocalNodeName() + "', database '" + getName()
+//              + "' because is not available (status=" + dManager.getDatabaseStatus(dManager.getLocalNodeName(), getName()) + ")");
   }
 
   public File getLastValidBackup() {

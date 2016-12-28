@@ -228,8 +228,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         OStorageRemoteNodeSession nodeSession = session.getServerSession(network.getServerURL());
         if (nodeSession == null || !nodeSession.isValid()) {
           openRemoteDatabase(network);
-          if (!network.tryLock())
+          if (!network.tryLock()) {
+            connectionManager.release(network);
             continue;
+          }
         }
 
         return operation.execute(network, session);

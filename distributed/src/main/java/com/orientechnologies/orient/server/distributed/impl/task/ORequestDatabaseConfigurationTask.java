@@ -23,62 +23,42 @@ import com.orientechnologies.orient.core.command.OCommandDistributedReplicateReq
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
-import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
-import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
+import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
 /**
- * Task to acquire and release a distributed exclusive lock across the entire cluster. In case the server is declared unreachable,
- * the lock is freed.
+ * Task to request last database configuration across all the servers. This task is executed inside a distributed lock.
  *
- * @author Luca Garulli (l.garulli--at--orientdb.com)
+ * @author Luca Garulli (l.garulli--at---orientdb.com)
  */
-public class ODistributedLockTask extends OAbstractReplicatedTask {
-  public static final int FACTORYID = 26;
+public class ORequestDatabaseConfigurationTask extends OAbstractRemoteTask {
+  public static final int FACTORYID = 27;
 
-  private String  resource;
-  private long    timeout;
-  private boolean acquire;
+  private String databaseName;
 
-  public ODistributedLockTask() {
+  public ORequestDatabaseConfigurationTask() {
   }
 
-  public ODistributedLockTask(final String resource, final long timeout, final boolean acquire) {
-    this.resource = resource;
-    this.timeout = timeout;
-    this.acquire = acquire;
+  public ORequestDatabaseConfigurationTask(final String databaseName) {
+    this.databaseName = databaseName;
   }
 
   @Override
   public Object execute(final ODistributedRequestId msgId, final OServer iServer, ODistributedServerManager iManager,
       final ODatabaseDocumentInternal database) throws Exception {
 
-    if (acquire)
-      iManager.getLockManagerExecutor().acquireExclusiveLock(resource, getNodeSource(), timeout);
-    else
-      iManager.getLockManagerExecutor().releaseExclusiveLock(resource, getNodeSource());
-
-    return true;
-  }
-
-  @Override
-  public ORemoteTask getUndoTask(final ODistributedRequestId reqId) {
-    if (acquire)
-      // RELEASE
-      return new ODistributedLockTask(resource, timeout, false);
+    final ODistributedConfiguration cfg = iManager.getDatabaseConfiguration(databaseName);
+    if (cfg != null)
+      return cfg.getDocument();
 
     return null;
-  }
-
-  @Override
-  public int[] getPartitionKey() {
-    return ANY;
   }
 
   @Override
@@ -87,25 +67,23 @@ public class ODistributedLockTask extends OAbstractReplicatedTask {
   }
 
   @Override
-  public RESULT_STRATEGY getResultStrategy() {
-    return RESULT_STRATEGY.ANY;
-  }
-
-  @Override
   public boolean isUsingDatabase() {
     return false;
   }
 
   @Override
+  public RESULT_STRATEGY getResultStrategy() {
+    return RESULT_STRATEGY.UNION;
+  }
+
+  @Override
   public void toStream(final DataOutput out) throws IOException {
-    out.writeUTF(resource);
-    out.writeBoolean(acquire);
+    out.writeUTF(databaseName);
   }
 
   @Override
   public void fromStream(final DataInput in, final ORemoteTaskFactory factory) throws IOException {
-    resource = in.readUTF();
-    acquire = in.readBoolean();
+    databaseName = in.readUTF();
   }
 
   @Override
@@ -115,17 +93,17 @@ public class ODistributedLockTask extends OAbstractReplicatedTask {
 
   @Override
   public boolean isIdempotent() {
-    return false;
+    return true;
   }
 
   @Override
   public long getDistributedTimeout() {
-    return timeout > 0 ? timeout : OGlobalConfiguration.DISTRIBUTED_COMMAND_LONG_TASK_SYNCH_TIMEOUT.getValueAsLong();
+    return OGlobalConfiguration.DISTRIBUTED_HEARTBEAT_TIMEOUT.getValueAsLong();
   }
 
   @Override
   public String getName() {
-    return "exc_lock";
+    return "req_db_cfg";
   }
 
   @Override
@@ -135,6 +113,6 @@ public class ODistributedLockTask extends OAbstractReplicatedTask {
 
   @Override
   public String toString() {
-    return getName() + " " + (acquire ? "acquire" : "release") + " resource=" + resource;
+    return getName();
   }
 }

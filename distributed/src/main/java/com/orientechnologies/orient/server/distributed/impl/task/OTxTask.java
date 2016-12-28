@@ -54,7 +54,7 @@ public class OTxTask extends OAbstract2pcTask {
   public Object execute(final ODistributedRequestId requestId, final OServer iServer, ODistributedServerManager iManager,
       final ODatabaseDocumentInternal database) throws Exception {
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-        "Committing transaction db=%s (reqId=%s)...", database.getName(), requestId);
+        "Executing transaction db=%s (reqId=%s)...", database.getName(), requestId);
 
     ODatabaseRecordThreadLocal.INSTANCE.set(database);
 
@@ -164,9 +164,6 @@ public class OTxTask extends OAbstract2pcTask {
         ODistributedServerLog.info(this, getNodeSource(), null, DIRECTION.NONE, "Error on distributed transaction commit", e);
 
       return e;
-    } finally {
-      ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-          "Transaction completed db=%s (reqId=%s)...", database.getName(), requestId);
     }
   }
 

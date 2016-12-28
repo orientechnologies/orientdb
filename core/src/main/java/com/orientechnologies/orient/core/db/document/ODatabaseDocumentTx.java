@@ -2796,6 +2796,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       currentTx.rollback(false, 0);
       getLocalCache().clear();
 
+      activateOnCurrentThread();
+
       // WAKE UP ROLLBACK LISTENERS
       for (ODatabaseListener listener : browseListeners())
         try {
@@ -2912,7 +2914,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     if (storage == null)
       storage = Orient.instance().loadStorage(url);
 
-    getStorage().restore(in, options, callable, iListener);
+    storage.restore(in, options, callable, iListener);
 
     if (!isClosed())
       getMetadata().reload();

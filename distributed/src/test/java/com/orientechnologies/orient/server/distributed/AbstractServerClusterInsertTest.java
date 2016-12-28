@@ -43,12 +43,12 @@ import java.util.concurrent.*;
  * Insert records concurrently against the cluster
  */
 public abstract class AbstractServerClusterInsertTest extends AbstractDistributedWriteTest {
-  protected volatile int    delayWriter           = 0;
-  protected volatile int    delayReader           = 1000;
-  protected static int      writerCount           = 5;
-  protected int             baseCount             = 0;
-  protected long            expected;
-  protected OIndex<?>       idx;
+  protected volatile int delayWriter = 0;
+  protected volatile int delayReader = 1000;
+  protected static   int writerCount = 5;
+  protected          int baseCount   = 0;
+  protected long      expected;
+  protected OIndex<?> idx;
   protected int             maxRetries            = 5;
   protected boolean         useTransactions       = false;
   protected List<ServerRun> executeTestsOnServers = serverInstance;
@@ -144,8 +144,9 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
       checkClusterStrategy(database);
 
       final String uniqueId = serverId + "-" + threadId + "-" + i;
-      ODocument person = new ODocument("Person").fields("id", uid, "name", "Billy" + uniqueId, "surname", "Mayes" + uniqueId,
-          "birthday", new Date(), "children", uniqueId);
+      ODocument person = new ODocument("Person")
+          .fields("id", uid, "name", "Billy" + uniqueId, "surname", "Mayes" + uniqueId, "birthday", new Date(), "children",
+              uniqueId);
 
       for (int retry = 0; retry < 5; ++retry) {
         try {
@@ -201,8 +202,8 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
 
       final String uniqueId = serverId + "-" + threadId + "-" + i;
 
-      List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from Person where name = ?"),
-          "Billy" + uniqueId);
+      List<ODocument> result = database
+          .query(new OSQLSynchQuery<ODocument>("select from Person where name = ?"), "Billy" + uniqueId);
       if (result.size() == 0)
         Assert.assertTrue("No record found with name = 'Billy" + uniqueId + "'!", false);
       else if (result.size() > 1)
@@ -391,8 +392,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
   /**
    * Event called right after the database has been created and right before to be replicated to the X servers
    *
-   * @param db
-   *          Current database
+   * @param db Current database
    */
   @Override
   protected void onAfterDatabaseCreation(final OrientBaseGraph db) {
@@ -498,17 +498,15 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
     if (indexName == null)
       return;
 
-    try {
-      Thread.sleep(2000);
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
-
     final Map<String, Long> result = new HashMap<String, Long>();
 
     for (ServerRun server : serverInstance) {
       if (server.isActive()) {
         final ODatabaseDocumentTx database = poolFactory.get(getDatabaseURL(server), "admin", "admin").acquire();
+
+        Assert.assertNotNull("server " + server + " has no index " + indexName + " defined",
+            database.getMetadata().getIndexManager().getIndex(indexName));
+
         try {
           final long indexSize = database.getMetadata().getIndexManager().getIndex(indexName).getSize();
 
@@ -582,7 +580,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
     }
   }
 
-  private void checkInsertedEntriesOnServer(final ServerRun server) {
+  protected void checkInsertedEntriesOnServer(final ServerRun server) {
     final ODatabaseDocumentTx database = poolFactory.get(getDatabaseURL(server), "admin", "admin").acquire();
     try {
       final int total = (int) database.countClass(className);

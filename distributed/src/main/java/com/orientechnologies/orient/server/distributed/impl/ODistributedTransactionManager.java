@@ -67,7 +67,7 @@ public class ODistributedTransactionManager {
   private final ODistributedStorage       storage;
   private final ODistributedDatabase      localDistributedDatabase;
 
-  private static final boolean            SYNC_TX_COMPLETED = false;
+  private static final boolean SYNC_TX_COMPLETED = false;
 
   public ODistributedTransactionManager(final ODistributedStorage storage, final ODistributedServerManager manager,
       final ODistributedDatabase iDDatabase) {
@@ -118,12 +118,12 @@ public class ODistributedTransactionManager {
         });
 
         try {
-          localDistributedDatabase.getSyncConfiguration().setLastLSN(localNodeName,
-              ((OLocalPaginatedStorage) storage.getUnderlying()).getLSN(), true);
+          localDistributedDatabase.getSyncConfiguration()
+              .setLastLSN(localNodeName, ((OLocalPaginatedStorage) storage.getUnderlying()).getLSN(), true);
         } catch (IOException e) {
-          ODistributedServerLog.debug(this, dManager != null ? dManager.getLocalNodeName() : "?", null,
-              ODistributedServerLog.DIRECTION.NONE, "Error on updating local LSN configuration for database '%s'",
-              storage.getName());
+          ODistributedServerLog
+              .debug(this, dManager != null ? dManager.getLocalNodeName() : "?", null, ODistributedServerLog.DIRECTION.NONE,
+                  "Error on updating local LSN configuration for database '%s'", storage.getName());
         }
 
         // REMOVE THE TX OBJECT FROM DATABASE TO AVOID UND OPERATIONS ARE "LOST IN TRANSACTION"
@@ -135,7 +135,7 @@ public class ODistributedTransactionManager {
         }
 
         final Set<String> involvedClusters = getInvolvedClusters(uResult);
-        final Set<String> nodes = getAvailableNodesButLocal(dbCfg, involvedClusters, localNodeName);
+        Set<String> nodes = getAvailableNodesButLocal(dbCfg, involvedClusters, localNodeName);
         if (nodes.isEmpty()) {
           // NO FURTHER NODES TO INVOLVE
           executionModeSynch = true;
@@ -159,6 +159,19 @@ public class ODistributedTransactionManager {
             ODistributedResponse lastResult = null;
             for (int retry = 1; retry <= maxAutoRetry; ++retry) {
               boolean isLastRetry = maxAutoRetry == retry;
+
+              if (retry > 1) {
+                // REBUILD THE SERVER LIST
+                nodes = getAvailableNodesButLocal(dbCfg, involvedClusters, localNodeName);
+                if (nodes.isEmpty()) {
+                  // NO FURTHER NODES TO INVOLVE
+                  executionModeSynch = true;
+                  return null;
+                }
+
+                ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
+                    "Retrying (%d/%d) transaction reqId=%s...", retry, maxAutoRetry, requestId);
+              }
 
               // SYNCHRONOUS CALL: REPLICATE IT
               lastResult = dManager.sendRequest(storage.getName(), involvedClusters, nodes, txTask, requestId.getMessageId(),
@@ -308,8 +321,9 @@ public class ODistributedTransactionManager {
     final OAsyncReplicationError onAsyncReplicationError = storage.getAsyncReplicationError();
 
     // ASYNCHRONOUSLY REPLICATE IT TO ALL THE OTHER NODES
-    storage.asynchronousExecution(new OAsynchDistributedOperation(storage.getName(), involvedClusters, nodes, txTask, messageId,
-        localResult, afterSendCallback, new OCallable<Object, OPair<ODistributedRequestId, Object>>() {
+    storage.asynchronousExecution(
+        new OAsynchDistributedOperation(storage.getName(), involvedClusters, nodes, txTask, messageId, localResult,
+            afterSendCallback, new OCallable<Object, OPair<ODistributedRequestId, Object>>() {
           @Override
           public Object call(final OPair<ODistributedRequestId, Object> iArgument) {
             try {
@@ -454,17 +468,19 @@ public class ODistributedTransactionManager {
 
     try {
       // SEND FINAL TX COMPLETE TASK TO UNLOCK RECORDS
-      final ODistributedResponse response = dManager.sendRequest(storage.getName(), involvedClusters, nodes,
-          new OCompleted2pcTask(reqId, status, partitionKey), dManager.getNextMessageIdCounter(),
-          SYNC_TX_COMPLETED ? EXECUTION_MODE.NO_RESPONSE : EXECUTION_MODE.NO_RESPONSE, null, null);
+      final ODistributedResponse response = dManager
+          .sendRequest(storage.getName(), involvedClusters, nodes, new OCompleted2pcTask(reqId, status, partitionKey),
+              dManager.getNextMessageIdCounter(), SYNC_TX_COMPLETED ? EXECUTION_MODE.NO_RESPONSE : EXECUTION_MODE.NO_RESPONSE, null,
+              null);
 
       if (SYNC_TX_COMPLETED) {
         // WAIT FOR THE RESPONSE
         final Object result = response.getPayload();
         if (!(result instanceof Boolean) || !((Boolean) result).booleanValue()) {
           // EXCEPTION: LOG IT AND ADD AS NESTED EXCEPTION
-          ODistributedServerLog.error(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
-              "Distributed transaction complete error: %s", response);
+          ODistributedServerLog
+              .error(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE, "Distributed transaction complete error: %s",
+                  response);
 
         }
       }
@@ -547,7 +563,8 @@ public class ODistributedTransactionManager {
 
     if (lastRecordCannotLock != null) {
       // localDistributedDatabase.dumpLocks();
-      throw new ODistributedRecordLockedException(dManager.getLocalNodeName(), lastRecordCannotLock, lastLockHolder, System.currentTimeMillis() - begin);
+      throw new ODistributedRecordLockedException(dManager.getLocalNodeName(), lastRecordCannotLock, lastLockHolder,
+          System.currentTimeMillis() - begin);
     }
   }
 
@@ -555,8 +572,8 @@ public class ODistributedTransactionManager {
    * Create undo content for distributed 2-phase rollback. This list of undo tasks is sent to all the nodes to revert a transaction
    * and it's also applied locally.
    *
-   * @param iTx
-   *          Current transaction
+   * @param iTx Current transaction
+   *
    * @return List of remote undo tasks
    */
   protected List<OAbstractRemoteTask> createUndoTasksFromTx(final OTransaction iTx) {
@@ -661,8 +678,8 @@ public class ODistributedTransactionManager {
       }
 
       if (ODistributedServerLog.isDebugEnabled())
-        ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
-            "Distributed transaction %s completed", reqId);
+        ODistributedServerLog
+            .debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE, "Distributed transaction %s completed", reqId);
 
       sendTxCompleted(localNodeName, involvedClusters, nodes, reqId, true, txTask.getPartitionKey());
 
@@ -688,8 +705,9 @@ public class ODistributedTransactionManager {
     } else if (result instanceof Exception) {
       // EXCEPTION: LOG IT AND ADD AS NESTED EXCEPTION
       if (ODistributedServerLog.isDebugEnabled())
-        ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
-            "Distributed transaction %s received error: %s", reqId, result, result.toString());
+        ODistributedServerLog
+            .debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE, "Distributed transaction %s received error: %s",
+                reqId, result, result.toString());
 
       // LET TO THE CALLER TO UNDO IT
       if (result instanceof OTransactionException || result instanceof ONeedRetryException)

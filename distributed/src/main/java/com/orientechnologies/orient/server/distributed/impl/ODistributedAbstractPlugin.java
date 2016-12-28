@@ -1846,6 +1846,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         in.close();
       }
 
+      getServerInstance().openDatabase(db, "internal", "internal", null, true);
+      db.reload();
+
       ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Installed database '%s' (LSN=%s)", databaseName,
           ((OAbstractPaginatedStorage) db.getStorage().getUnderlying()).getLSN());
 

@@ -16,7 +16,6 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -43,7 +42,8 @@ public class SplitBrainNetworkTest extends AbstractHARemoveNode {
   protected void onAfterExecution() throws Exception {
     banner("SIMULATE ISOLATION OF SERVER " + (SERVERS - 1) + "...");
 
-    checkRecordCount();
+    checkInsertedEntries();
+    checkIndexedEntries();
 
     serverInstance.get(2).disconnectFrom(serverInstance.get(0), serverInstance.get(1));
 
@@ -65,7 +65,8 @@ public class SplitBrainNetworkTest extends AbstractHARemoveNode {
 
     banner("RUN TEST WITHOUT THE OFFLINE SERVER " + (SERVERS - 1) + "...");
 
-    checkRecordCount();
+    checkInsertedEntries();
+    checkIndexedEntries();
 
     count = 10;
     final long currentRecords = expected;
@@ -119,7 +120,10 @@ public class SplitBrainNetworkTest extends AbstractHARemoveNode {
 
     banner("NETWORK FOR THE ISOLATED NODE " + (SERVERS - 1) + " HAS BEEN RESTORED");
 
-    checkRecordCount();
+    poolFactory.reset();
+
+    checkInsertedEntries();
+    checkIndexedEntries();
 
     banner("RESTARTING TESTS WITH SERVER " + (SERVERS - 1) + " CONNECTED...");
 
@@ -133,18 +137,6 @@ public class SplitBrainNetworkTest extends AbstractHARemoveNode {
       OLogManager.instance().info(this, "MAP SERVER %s", s.getServerId());
       for (Map.Entry<String, Object> entry : s.server.getDistributedManager().getConfigurationMap().entrySet()) {
         OLogManager.instance().info(this, " %s=%s", entry.getKey(), entry.getValue());
-      }
-    }
-  }
-
-  private void checkRecordCount() {
-    for (ServerRun s : serverInstance) {
-      final ODatabaseDocumentTx db = new ODatabaseDocumentTx(getDatabaseURL(s)).open("admin", "admin");
-      try {
-        final long found = db.countClass("Person");
-        Assert.assertEquals("Server " + s + " expected " + expected + " but found " + found, expected, found);
-      } finally {
-        db.close();
       }
     }
   }

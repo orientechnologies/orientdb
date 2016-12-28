@@ -2098,7 +2098,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     connection.setDatabase(getDatabaseInstance(dbName, ODatabaseDocument.TYPE, storageType));
 
     if (connection.getDatabase().exists()) {
-      OLogManager.instance().info(this, "Realising database '%s'", connection.getDatabase().getURL());
+      OLogManager.instance().info(this, "Releasing database '%s'", connection.getDatabase().getURL());
 
       if (connection.getDatabase().isClosed())
         server.openDatabaseBypassingSecurity(connection.getDatabase(), connection.getData(), connection.getServerUser().name);

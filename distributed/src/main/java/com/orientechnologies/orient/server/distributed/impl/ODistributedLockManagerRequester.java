@@ -33,9 +33,9 @@ import java.util.*;
  */
 public class ODistributedLockManagerRequester implements ODistributedLockManager {
   private final ODistributedServerManager manager;
-  private int                             coordinatorId     = 0;
-  private String                          coordinatorName;
-  private Map<String, Long>               acquiredResources = new HashMap<String, Long>();
+  private int coordinatorId = 0;
+  private String coordinatorName;
+  private Map<String, Long> acquiredResources = new HashMap<String, Long>();
 
   public ODistributedLockManagerRequester(final ODistributedServerManager manager) {
     this.manager = manager;
@@ -55,13 +55,16 @@ public class ODistributedLockManagerRequester implements ODistributedLockManager
       ODistributedServerLog.debug(this, manager.getLocalNodeName(), coordinator, ODistributedServerLog.DIRECTION.OUT,
           "Server '%s' is acquiring distributed lock on resource '%s'...", nodeSource, resource);
 
-      final ODistributedResponse dResponse = manager.sendRequest(OSystemDatabase.SYSTEM_DB_NAME, null, servers,
-          new ODistributedLockTask(resource, timeout, true), manager.getNextMessageIdCounter(),
-          ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
+      final ODistributedResponse dResponse = manager
+          .sendRequest(OSystemDatabase.SYSTEM_DB_NAME, null, servers, new ODistributedLockTask(resource, timeout, true),
+              manager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
 
-      if (dResponse == null)
+      if (dResponse == null) {
+        ODistributedServerLog.warn(this, manager.getLocalNodeName(), coordinator, ODistributedServerLog.DIRECTION.OUT,
+            "Server '%s' cannot acquire distributed lock on resource '%s' (timeout=%d)...", nodeSource, resource, timeout);
         throw new OLockException(
             "Server '" + nodeSource + "' cannot acquire exclusive lock on resource '" + resource + "' (timeout=" + timeout + ")");
+      }
 
       final Object result = dResponse.getPayload();
       if (result instanceof RuntimeException)
@@ -88,9 +91,9 @@ public class ODistributedLockManagerRequester implements ODistributedLockManager
       final Set<String> servers = new HashSet<String>();
       servers.add(coordinator);
 
-      final ODistributedResponse dResponse = manager.sendRequest(OSystemDatabase.SYSTEM_DB_NAME, null, servers,
-          new ODistributedLockTask(resource, 0, false), manager.getNextMessageIdCounter(),
-          ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
+      final ODistributedResponse dResponse = manager
+          .sendRequest(OSystemDatabase.SYSTEM_DB_NAME, null, servers, new ODistributedLockTask(resource, 0, false),
+              manager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
 
       if (dResponse == null)
         throw new OLockException("Cannot release exclusive lock on resource '" + resource + "'");
@@ -125,7 +128,7 @@ public class ODistributedLockManagerRequester implements ODistributedLockManager
         // REACQUIRE AL THE LOCKS AGAINST THE NEW COORDINATOR
         try {
           for (String resource : acquiredResources.keySet()) {
-            acquireExclusiveLock(resource, manager.getLocalNodeName(), 5000);
+            acquireExclusiveLock(resource, manager.getLocalNodeName(), 20000);
           }
 
           // LOCKED

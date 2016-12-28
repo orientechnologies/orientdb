@@ -22,17 +22,16 @@ package com.orientechnologies.orient.server.distributed.impl;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.impl.task.OHeartbeatTask;
+import com.orientechnologies.orient.server.distributed.impl.task.ORequestDatabaseConfigurationTask;
 import com.orientechnologies.orient.server.distributed.task.ODatabaseIsOldException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimerTask;
+import java.util.*;
 
 /**
  * Timer task that checks periodically the cluster health status.
@@ -51,6 +50,7 @@ public class OClusterHealthChecker extends TimerTask {
     OLogManager.instance().debug(this, "Checking cluster health...");
     try {
 
+      checkServerConfig();
       checkServerStatus();
       checkServerInStall();
       checkServerList();
@@ -65,6 +65,61 @@ public class OClusterHealthChecker extends TimerTask {
         OLogManager.instance().debug(this, "Error on checking cluster health", t);
     } finally {
       OLogManager.instance().debug(this, "Cluster health checking completed");
+    }
+  }
+
+  private void checkServerConfig() {
+    // NO NODES CONFIGURED: CHECK IF THERE IS ANY MISCONFIGURATION BY CHECKING THE DATABASE STATUSES
+    for (String databaseName : manager.getMessageService().getDatabases()) {
+      final ODistributedConfiguration cfg = manager.getDatabaseConfiguration(databaseName);
+
+      final Set<String> confServers = cfg.getServers(null);
+
+      for (String s : manager.getActiveServers()) {
+        if (manager.isNodeAvailable(s, databaseName) && !confServers.contains(s)) {
+          final List<String> nodes = new ArrayList<String>();
+          for (String n : manager.getActiveServers()) {
+            if (manager.isNodeAvailable(n, databaseName))
+              nodes.add(n);
+          }
+
+          // THE SERVERS HAS THE DATABASE ONLINE BUT IT IS NOT IN THE CFG. DETERMINE THE MOST UPD CFG
+          try {
+            final ODistributedResponse response = manager
+                .sendRequest(databaseName, null, nodes, new ORequestDatabaseConfigurationTask(databaseName),
+                    manager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
+
+            final Object payload = response != null ? response.getPayload() : null;
+            if (payload instanceof Map) {
+              String mostUpdatedServer = null;
+              int mostUpdatedServerVersion = -1;
+
+              final Map<String, Object> responses = (Map<String, Object>) payload;
+              for (Map.Entry<String, Object> r : responses.entrySet()) {
+                if (r.getValue() instanceof ODocument) {
+                  final ODocument doc = (ODocument) r.getValue();
+                  int v = doc.field("version");
+                  if (v > mostUpdatedServerVersion) {
+                    mostUpdatedServerVersion = v;
+                    mostUpdatedServer = r.getKey();
+                  }
+                }
+              }
+
+              if (cfg.getVersion() < mostUpdatedServerVersion) {
+                // OVERWRITE DB VERSION
+                ((ODistributedStorage) manager.getStorage(databaseName)).setDistributedConfiguration(
+                    new OModifiableDistributedConfiguration((ODocument) responses.get(mostUpdatedServer)));
+              }
+
+            }
+
+          } catch (ODistributedOperationException e) {
+            // NO SERVER RESPONDED, THE SERVER COULD BE ISOLATED: SET ALL THE SERVER AS OFFLINE
+          }
+
+        }
+      }
     }
   }
 
@@ -172,8 +227,9 @@ public class OClusterHealthChecker extends TimerTask {
             "Sending heartbeat message to servers (db=%s)", dbName);
 
       try {
-        final ODistributedResponse response = manager.sendRequest(dbName, null, servers, new OHeartbeatTask(),
-            manager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
+        final ODistributedResponse response = manager
+            .sendRequest(dbName, null, servers, new OHeartbeatTask(), manager.getNextMessageIdCounter(),
+                ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
 
         final Object payload = response != null ? response.getPayload() : null;
         if (payload instanceof Map) {
