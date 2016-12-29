@@ -45,7 +45,7 @@ public class OClusterHealthChecker extends TimerTask {
     this.manager = manager;
   }
 
-  public void run() {
+  public synchronized void run() {
     // CHECK CURRENT STATUS OF DBS
     OLogManager.instance().debug(this, "Checking cluster health...");
     try {
