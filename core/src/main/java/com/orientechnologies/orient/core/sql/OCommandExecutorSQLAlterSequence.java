@@ -75,6 +75,7 @@ public class OCommandExecutorSQLAlterSequence extends OCommandExecutorSQLAbstrac
     OSequence sequence = database.getMetadata().getSequenceLibrary().getSequence((ODatabaseDocumentInternal) database, this.sequenceName);
 
     final boolean result = sequence.updateParams(this.params);
+    sequence.reset();
     sequence.save();
     return result;
   }
