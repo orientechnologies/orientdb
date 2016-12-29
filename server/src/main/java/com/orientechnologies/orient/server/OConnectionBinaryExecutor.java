@@ -12,7 +12,6 @@ import com.orientechnologies.orient.client.remote.message.*;
 import com.orientechnologies.orient.client.remote.message.OCommitResponse.OCreatedRecordResponse;
 import com.orientechnologies.orient.client.remote.message.OCommitResponse.OUpdatedRecordResponse;
 import com.orientechnologies.orient.core.OConstants;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OCommandCache;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -60,6 +59,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.network.protocol.binary.*;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
+import com.orientechnologies.orient.server.tx.OTransactionOptimisticServer;
 
 import java.io.File;
 import java.io.IOException;
@@ -1048,6 +1048,18 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     item.setHasNextPage(rs.hasNext());
     result.setResult(item);
     return result;
+  }
+
+  @Override
+  public OBinaryResponse executeBeginTransaction(OBeginTransactionRequest request) {
+    final OTransactionOptimisticServer tx = new OTransactionOptimisticServer(connection.getDatabase(), request.getTxId(),
+        request.isUsingLong(), request.getOperations(), request.getChanges());
+    try {
+      connection.getDatabase().begin(tx);
+    } catch (final ORecordNotFoundException e) {
+      throw e.getCause() instanceof OOfflineClusterException ? (OOfflineClusterException) e.getCause() : e;
+    }
+    return new OBeginTransactionResponse(tx.getId());
   }
 
 }

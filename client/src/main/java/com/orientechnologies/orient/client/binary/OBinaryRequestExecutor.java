@@ -99,4 +99,6 @@ public interface OBinaryRequestExecutor {
 
   OBinaryResponse executeQueryNextPage(OQueryNextPageRequest request);
 
+  OBinaryResponse executeBeginTransaction(OBeginTransactionRequest request);
+
 }

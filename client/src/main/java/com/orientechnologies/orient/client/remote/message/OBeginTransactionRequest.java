@@ -173,12 +173,12 @@ public class OBeginTransactionRequest implements OBinaryRequest<OBinaryResponse>
 
   @Override
   public OBinaryResponse createResponse() {
-    return null;
+    return new OBeginTransactionResponse();
   }
 
   @Override
   public OBinaryResponse execute(OBinaryRequestExecutor executor) {
-    return null;
+    return executor.executeBeginTransaction(this);
   }
 
   @Override
