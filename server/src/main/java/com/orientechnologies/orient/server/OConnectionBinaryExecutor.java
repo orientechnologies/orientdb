@@ -77,7 +77,8 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     this.server = server;
   }
 
-  @Override public OListDatabasesResponse executeListDatabases(OListDatabasesRequest request) {
+  @Override
+  public OListDatabasesResponse executeListDatabases(OListDatabasesRequest request) {
 
     Set<String> dbs = server.listDatabases();
     String listener = server.getListenerByProtocol(ONetworkProtocolBinary.class).getInboundAddr().toString();
@@ -88,7 +89,8 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     return new OListDatabasesResponse(toSend);
   }
 
-  @Override public OBinaryResponse executeServerInfo(OServerInfoRequest request) {
+  @Override
+  public OBinaryResponse executeServerInfo(OServerInfoRequest request) {
     try {
       return new OServerInfoResponse(OServerInfo.getServerInfo(server));
     } catch (IOException e) {
@@ -96,12 +98,14 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     }
   }
 
-  @Override public OBinaryResponse executeDBReload(OReloadRequest request) {
+  @Override
+  public OBinaryResponse executeDBReload(OReloadRequest request) {
     final Collection<? extends OCluster> clusters = connection.getDatabase().getStorage().getClusterInstances();
     return new OReloadResponse(clusters.toArray(new OCluster[clusters.size()]));
   }
 
-  @Override public OBinaryResponse executeCreateDatabase(OCreateDatabaseRequest request) {
+  @Override
+  public OBinaryResponse executeCreateDatabase(OCreateDatabaseRequest request) {
 
     if (server.existsDatabase(request.getDatabaseName()))
       throw new ODatabaseException("Database named '" + request.getDatabaseName() + "' already exists");
@@ -119,17 +123,20 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     return new OCreateDatabaseResponse();
   }
 
-  @Override public OBinaryResponse executeClose(OCloseRequest request) {
+  @Override
+  public OBinaryResponse executeClose(OCloseRequest request) {
     server.getClientConnectionManager().disconnect(connection);
     return null;
   }
 
-  @Override public OBinaryResponse executeExistDatabase(OExistsDatabaseRequest request) {
+  @Override
+  public OBinaryResponse executeExistDatabase(OExistsDatabaseRequest request) {
     boolean result = server.existsDatabase(request.getDatabaseName());
     return new OExistsDatabaseResponse(result);
   }
 
-  @Override public OBinaryResponse executeDropDatabase(ODropDatabaseRequest request) {
+  @Override
+  public OBinaryResponse executeDropDatabase(ODropDatabaseRequest request) {
 
     server.dropDatabase(request.getDatabaseName());
     OLogManager.instance().info(this, "Dropped database '%s'", request.getDatabaseName());
@@ -137,15 +144,18 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     return new ODropDatabaseResponse();
   }
 
-  @Override public OBinaryResponse executeGetSize(OGetSizeRequest request) {
+  @Override
+  public OBinaryResponse executeGetSize(OGetSizeRequest request) {
     return new OGetSizeResponse(connection.getDatabase().getStorage().getSize());
   }
 
-  @Override public OBinaryResponse executeCountRecords(OCountRecordsRequest request) {
+  @Override
+  public OBinaryResponse executeCountRecords(OCountRecordsRequest request) {
     return new OCountRecordsResponse(connection.getDatabase().getStorage().countRecords());
   }
 
-  @Override public OBinaryResponse executeDistributedStatus(ODistributedStatusRequest request) {
+  @Override
+  public OBinaryResponse executeDistributedStatus(ODistributedStatusRequest request) {
     final ODocument req = request.getStatus();
     ODocument clusterConfig = null;
 
@@ -163,17 +173,20 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     return new ODistributedStatusResponse(clusterConfig);
   }
 
-  @Override public OBinaryResponse executeCountCluster(OCountRequest request) {
+  @Override
+  public OBinaryResponse executeCountCluster(OCountRequest request) {
     final long count = connection.getDatabase().countClusterElements(request.getClusterIds(), request.isCountTombstones());
     return new OCountResponse(count);
   }
 
-  @Override public OBinaryResponse executeClusterDataRange(OGetClusterDataRangeRequest request) {
+  @Override
+  public OBinaryResponse executeClusterDataRange(OGetClusterDataRangeRequest request) {
     final long[] pos = connection.getDatabase().getStorage().getClusterDataRange(request.getClusterId());
     return new OGetClusterDataRangeResponse(pos);
   }
 
-  @Override public OBinaryResponse executeAddCluster(OAddClusterRequest request) {
+  @Override
+  public OBinaryResponse executeAddCluster(OAddClusterRequest request) {
     final int num;
     if (request.getRequestedId() < 0)
       num = connection.getDatabase().addCluster(request.getClusterName());
@@ -183,7 +196,8 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     return new OAddClusterResponse(num);
   }
 
-  @Override public OBinaryResponse executeDropCluster(ODropClusterRequest request) {
+  @Override
+  public OBinaryResponse executeDropCluster(ODropClusterRequest request) {
     final String clusterName = connection.getDatabase().getClusterNameById(request.getClusterId());
     if (clusterName == null)
       throw new IllegalArgumentException("Cluster " + request.getClusterId()
@@ -193,7 +207,8 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     return new ODropClusterResponse(result);
   }
 
-  @Override public OBinaryResponse executeGetRecordMetadata(OGetRecordMetadataRequest request) {
+  @Override
+  public OBinaryResponse executeGetRecordMetadata(OGetRecordMetadataRequest request) {
     final ORecordMetadata metadata = connection.getDatabase().getRecordMetadata(request.getRid());
     if (metadata != null) {
       return new OGetRecordMetadataResponse(metadata);
@@ -202,7 +217,8 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     }
   }
 
-  @Override public OBinaryResponse executeReadRecord(OReadRecordRequest request) {
+  @Override
+  public OBinaryResponse executeReadRecord(OReadRecordRequest request) {
     final ORecordId rid = request.getRid();
     final String fetchPlanString = request.getFetchPlan();
     boolean ignoreCache = false;
@@ -217,7 +233,8 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       OFetchHelper.checkFetchPlanValid(fetchPlanString);
 
       final byte[] record = connection.getDatabase().getStorage().callInLock(new Callable<byte[]>() {
-        @Override public byte[] call() throws Exception {
+        @Override
+        public byte[] call() throws Exception {
           return connection.getDatabase().getStorage().getConfiguration().toStream(connection.getData().protocolVersion);
         }
       }, false);
@@ -239,7 +256,8 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
               final ODocument doc = (ODocument) record;
               final OFetchListener listener = new ORemoteFetchListener() {
-                @Override protected void sendRecord(ORecord iLinked) {
+                @Override
+                protected void sendRecord(ORecord iLinked) {
                   recordsToSend.add(iLinked);
                 }
               };
@@ -259,7 +277,8 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     return response;
   }
 
-  @Override public OBinaryResponse executeReadRecordIfNotLastest(OReadRecordIfVersionIsNotLatestRequest request) {
+  @Override
+  public OBinaryResponse executeReadRecordIfNotLastest(OReadRecordIfVersionIsNotLatestRequest request) {
 
     final ORecordId rid = request.getRid();
     final int recordVersion = request.getRecordVersion();
@@ -274,7 +293,8 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       OFetchHelper.checkFetchPlanValid(fetchPlanString);
 
       final byte[] record = connection.getDatabase().getStorage().callInLock(new Callable<byte[]>() {
-        @Override public byte[] call() throws Exception {
+        @Override
+        public byte[] call() throws Exception {
           return connection.getDatabase().getStorage().getConfiguration().toStream(connection.getData().protocolVersion);
         }
       }, false);
@@ -295,7 +315,8 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
             final ODocument doc = (ODocument) record;
             final OFetchListener listener = new ORemoteFetchListener() {
-              @Override protected void sendRecord(ORecord iLinked) {
+              @Override
+              protected void sendRecord(ORecord iLinked) {
                 recordsToSend.add(iLinked);
               }
             };
@@ -312,7 +333,8 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     return response;
   }
 
-  @Override public OBinaryResponse executeCreateRecord(OCreateRecordRequest request) {
+  @Override
+  public OBinaryResponse executeCreateRecord(OCreateRecordRequest request) {
 
     final ORecord record = request.getContent();
     ORecordInternal.setIdentity(record, request.getRid());
@@ -337,13 +359,14 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     return null;
   }
 
-  @Override public OBinaryResponse executeUpdateRecord(OUpdateRecordRequest request) {
+  @Override
+  public OBinaryResponse executeUpdateRecord(OUpdateRecordRequest request) {
 
     ODatabaseDocumentInternal database = connection.getDatabase();
     final ORecord newRecord = request.getContent();
     ORecordInternal.setIdentity(newRecord, request.getRid());
     ORecordInternal.setVersion(newRecord, request.getVersion());
-    
+
     ORecordInternal.setContentChanged(newRecord, request.isUpdateContent());
     ORecordInternal.getDirtyManager(newRecord).clearForSave();
     ORecord currentRecord = null;
@@ -389,7 +412,8 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     return null;
   }
 
-  @Override public OBinaryResponse executeDeleteRecord(ODeleteRecordRequest request) {
+  @Override
+  public OBinaryResponse executeDeleteRecord(ODeleteRecordRequest request) {
 
     int result;
     ODatabaseDocumentInternal database = connection.getDatabase();
@@ -413,7 +437,8 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     return null;
   }
 
-  @Override public OBinaryResponse executeHideRecord(OHideRecordRequest request) {
+  @Override
+  public OBinaryResponse executeHideRecord(OHideRecordRequest request) {
 
     int result;
     try {
@@ -430,31 +455,36 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     return null;
   }
 
-  @Override public OBinaryResponse executeHigherPosition(OHigherPhysicalPositionsRequest request) {
+  @Override
+  public OBinaryResponse executeHigherPosition(OHigherPhysicalPositionsRequest request) {
     OPhysicalPosition[] nextPositions = connection.getDatabase().getStorage()
         .higherPhysicalPositions(request.getClusterId(), request.getClusterPosition());
     return new OHigherPhysicalPositionsResponse(nextPositions);
   }
 
-  @Override public OBinaryResponse executeCeilingPosition(OCeilingPhysicalPositionsRequest request) {
+  @Override
+  public OBinaryResponse executeCeilingPosition(OCeilingPhysicalPositionsRequest request) {
     final OPhysicalPosition[] previousPositions = connection.getDatabase().getStorage()
         .ceilingPhysicalPositions(request.getClusterId(), request.getPhysicalPosition());
     return new OCeilingPhysicalPositionsResponse(previousPositions);
   }
 
-  @Override public OBinaryResponse executeLowerPosition(OLowerPhysicalPositionsRequest request) {
+  @Override
+  public OBinaryResponse executeLowerPosition(OLowerPhysicalPositionsRequest request) {
     final OPhysicalPosition[] previousPositions = connection.getDatabase().getStorage()
         .lowerPhysicalPositions(request.getiClusterId(), request.getPhysicalPosition());
     return new OLowerPhysicalPositionsResponse(previousPositions);
   }
 
-  @Override public OBinaryResponse executeFloorPosition(OFloorPhysicalPositionsRequest request) {
+  @Override
+  public OBinaryResponse executeFloorPosition(OFloorPhysicalPositionsRequest request) {
     final OPhysicalPosition[] previousPositions = connection.getDatabase().getStorage()
         .floorPhysicalPositions(request.getClusterId(), request.getPhysicalPosition());
     return new OFloorPhysicalPositionsResponse(previousPositions);
   }
 
-  @Override public OBinaryResponse executeCommand(OCommandRequest request) {
+  @Override
+  public OBinaryResponse executeCommand(OCommandRequest request) {
 
     final boolean live = request.isLive();
     final boolean asynch = request.isAsynch();
@@ -531,7 +561,8 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     return response;
   }
 
-  @Override public OBinaryResponse executeCommit(OCommitRequest request) {
+  @Override
+  public OBinaryResponse executeCommit(OCommitRequest request) {
     final OTransactionOptimisticProxy tx = new OTransactionOptimisticProxy(connection.getDatabase(), request.getTxId(),
         request.isUsingLong(), request.getOperations(), request.getIndexChanges(), connection.getData().protocolVersion);
 
@@ -586,13 +617,15 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     }
   }
 
-  @Override public OBinaryResponse executeGetGlobalConfiguration(OGetGlobalConfigurationRequest request) {
+  @Override
+  public OBinaryResponse executeGetGlobalConfiguration(OGetGlobalConfigurationRequest request) {
     final OGlobalConfiguration cfg = OGlobalConfiguration.findByKey(request.getKey());
     String cfgValue = cfg != null ? cfg.isHidden() ? "<hidden>" : cfg.getValueAsString() : "";
     return new OGetGlobalConfigurationResponse(cfgValue);
   }
 
-  @Override public OBinaryResponse executeListGlobalConfigurations(OListGlobalConfigurationsRequest request) {
+  @Override
+  public OBinaryResponse executeListGlobalConfigurations(OListGlobalConfigurationsRequest request) {
     Map<String, String> configs = new HashMap<>();
     for (OGlobalConfiguration cfg : OGlobalConfiguration.values()) {
       String key;
@@ -617,7 +650,8 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
   }
 
-  @Override public OBinaryResponse executeFreezeDatabase(OFreezeDatabaseRequest request) {
+  @Override
+  public OBinaryResponse executeFreezeDatabase(OFreezeDatabaseRequest request) {
     ODatabaseDocumentInternal database = server
         .openDatabase(request.getName(), connection.getServerUser().name, null, connection.getData(), true);
     connection.setDatabase(database);
@@ -628,7 +662,8 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     return new OFreezeDatabaseResponse();
   }
 
-  @Override public OBinaryResponse executeReleaseDatabase(OReleaseDatabaseRequest request) {
+  @Override
+  public OBinaryResponse executeReleaseDatabase(OReleaseDatabaseRequest request) {
     ODatabaseDocumentInternal database = server
         .openDatabase(request.getName(), connection.getServerUser().name, null, connection.getData(), true);
 
@@ -641,7 +676,8 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
   }
 
-  @Override public OBinaryResponse executeCleanOutRecord(OCleanOutRecordRequest request) {
+  @Override
+  public OBinaryResponse executeCleanOutRecord(OCleanOutRecordRequest request) {
     connection.getDatabase().cleanOutRecord(request.getRecordId(), request.getRecordVersion());
 
     if (request.getMode() < 2) {
@@ -650,7 +686,8 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     return null;
   }
 
-  @Override public OBinaryResponse executeSBTreeCreate(OSBTCreateTreeRequest request) {
+  @Override
+  public OBinaryResponse executeSBTreeCreate(OSBTCreateTreeRequest request) {
     OBonsaiCollectionPointer collectionPointer = connection.getDatabase().getSbTreeCollectionManager()
         .createSBTree(request.getClusterId(), null);
 
@@ -658,7 +695,8 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
   }
 
-  @Override public OBinaryResponse executeSBTGet(OSBTGetRequest request) {
+  @Override
+  public OBinaryResponse executeSBTGet(OSBTGetRequest request) {
     final OSBTreeCollectionManager sbTreeCollectionManager = connection.getDatabase().getSbTreeCollectionManager();
     final OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.loadSBTree(request.getCollectionPointer());
     try {
@@ -681,7 +719,8 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     }
   }
 
-  @Override public OBinaryResponse executeSBTFirstKey(OSBTFirstKeyRequest request) {
+  @Override
+  public OBinaryResponse executeSBTFirstKey(OSBTFirstKeyRequest request) {
 
     final OSBTreeCollectionManager sbTreeCollectionManager = connection.getDatabase().getSbTreeCollectionManager();
     final OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.loadSBTree(request.getCollectionPointer());
@@ -705,7 +744,8 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     }
   }
 
-  @Override public OBinaryResponse executeSBTFetchEntriesMajor(@SuppressWarnings("rawtypes") OSBTFetchEntriesMajorRequest request) {
+  @Override
+  public OBinaryResponse executeSBTFetchEntriesMajor(@SuppressWarnings("rawtypes") OSBTFetchEntriesMajorRequest request) {
 
     final OSBTreeCollectionManager sbTreeCollectionManager = connection.getDatabase().getSbTreeCollectionManager();
     final OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.loadSBTree(request.getPointer());
@@ -725,7 +765,8 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     }
   }
 
-  @Override public OBinaryResponse executeSBTGetRealSize(OSBTGetRealBagSizeRequest request) {
+  @Override
+  public OBinaryResponse executeSBTGetRealSize(OSBTGetRealBagSizeRequest request) {
     final OSBTreeCollectionManager sbTreeCollectionManager = connection.getDatabase().getSbTreeCollectionManager();
     final OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.loadSBTree(request.getCollectionPointer());
     try {
@@ -736,18 +777,21 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     }
   }
 
-  @Override public OBinaryResponse executeIncrementalBackup(OIncrementalBackupRequest request) {
+  @Override
+  public OBinaryResponse executeIncrementalBackup(OIncrementalBackupRequest request) {
     String fileName = connection.getDatabase().incrementalBackup(request.getBackupDirectory());
     return new OIncrementalBackupResponse(fileName);
   }
 
-  @Override public OBinaryResponse executeImport(OImportRequest request) {
+  @Override
+  public OBinaryResponse executeImport(OImportRequest request) {
     List<String> result = new ArrayList<>();
     OLogManager.instance().info(this, "Starting database import");
     ODatabaseImport imp;
     try {
       imp = new ODatabaseImport(connection.getDatabase(), request.getImporPath(), new OCommandOutputListener() {
-        @Override public void onMessage(String iText) {
+        @Override
+        public void onMessage(String iText) {
           OLogManager.instance().debug(OConnectionBinaryExecutor.this, iText);
           if (iText != null)
             result.add(iText);
@@ -765,7 +809,8 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
   }
 
-  @Override public OBinaryResponse executeConnect(OConnectRequest request) {
+  @Override
+  public OBinaryResponse executeConnect(OConnectRequest request) {
     connection.getData().driverName = request.getDriverName();
     connection.getData().driverVersion = request.getDriverVersion();
     connection.getData().protocolVersion = request.getProtocolVersion();
@@ -795,7 +840,8 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     return new OConnectResponse(connection.getId(), token);
   }
 
-  @Override public OBinaryResponse executeDatabaseOpen(OOpenRequest request) {
+  @Override
+  public OBinaryResponse executeDatabaseOpen(OOpenRequest request) {
     connection.getData().driverName = request.getDriverName();
     connection.getData().driverVersion = request.getDriverVersion();
     connection.getData().protocolVersion = request.getProtocolVersion();
@@ -852,7 +898,8 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
   }
 
-  @Override public OBinaryResponse executeShutdown(OShutdownRequest request) {
+  @Override
+  public OBinaryResponse executeShutdown(OShutdownRequest request) {
 
     OLogManager.instance().info(this, "Received shutdown command from the remote client ");
 
@@ -884,11 +931,13 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
   }
 
-  @Override public OBinaryResponse executeReopen(OReopenRequest request) {
+  @Override
+  public OBinaryResponse executeReopen(OReopenRequest request) {
     return new OReopenResponse(connection.getId());
   }
 
-  @Override public OBinaryResponse executeSetGlobalConfig(OSetGlobalConfigurationRequest request) {
+  @Override
+  public OBinaryResponse executeSetGlobalConfig(OSetGlobalConfigurationRequest request) {
 
     final OGlobalConfiguration cfg = OGlobalConfiguration.findByKey(request.getKey());
 
@@ -920,7 +969,8 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     return stream;
   }
 
-  @Override public OBinaryResponse executeQuery(OQueryRequest request) {
+  @Override
+  public OBinaryResponse executeQuery(OQueryRequest request) {
     String command = request.getStatement();
 
     connection.getData().commandDetail = command;
@@ -961,7 +1011,8 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     return result;
   }
 
-  @Override public OBinaryResponse closeQuery(OCloseQueryRequest oQueryRequest) {
+  @Override
+  public OBinaryResponse closeQuery(OCloseQueryRequest oQueryRequest) {
     String queryId = oQueryRequest.getQueryId();
     ODatabaseDocumentInternal db = connection.getDatabase();
     OLocalResultSetLifecycleDecorator query = db.getActiveQuery(queryId);
@@ -973,7 +1024,8 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     return new OCloseQueryResponse();
   }
 
-  @Override public OBinaryResponse executeQueryNextPage(OQueryNextPageRequest request) {
+  @Override
+  public OBinaryResponse executeQueryNextPage(OQueryNextPageRequest request) {
     final long serverTimeout = OGlobalConfiguration.COMMAND_TIMEOUT.getValueAsLong();
     //TODO set a timeout on the request?
 
@@ -997,4 +1049,5 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     result.setResult(item);
     return result;
   }
+
 }

@@ -68,7 +68,7 @@ public final class OAddClusterRequest implements OBinaryRequest<OAddClusterRespo
 
   @Override
   public byte getCommand() {
-    return OChannelBinaryProtocol.REQUEST_DATACLUSTER_ADD;
+    return OChannelBinaryProtocol.REQUEST_CLUSTER_ADD;
   }
 
   @Override

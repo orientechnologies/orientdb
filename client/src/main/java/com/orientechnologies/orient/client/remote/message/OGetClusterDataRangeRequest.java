@@ -51,7 +51,7 @@ public class OGetClusterDataRangeRequest implements OBinaryRequest<OGetClusterDa
 
   @Override
   public byte getCommand() {
-    return OChannelBinaryProtocol.REQUEST_DATACLUSTER_DATARANGE;
+    return OChannelBinaryProtocol.REQUEST_CLUSTER_DATARANGE;
   }
 
   @Override

@@ -47,6 +47,7 @@ import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.client.remote.OStorageRemoteNodeSession;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.client.remote.message.OErrorResponse;
+import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
@@ -105,6 +106,12 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
         out = new DataOutputStream(outStream);
 
         srvProtocolVersion = readShort();
+
+        writeByte(OChannelBinaryProtocol.REQUEST_HANDSHAKE);
+        writeShort((short) protocolVersion);
+        writeString("Java Client");
+        writeString(OConstants.getVersion());
+        flush();
       } catch (IOException e) {
         throw new ONetworkProtocolException(
             "Cannot read protocol version from remote server " + socket.getRemoteSocketAddress() + ": " + e);

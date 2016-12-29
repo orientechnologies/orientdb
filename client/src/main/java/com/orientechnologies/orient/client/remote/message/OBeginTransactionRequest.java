@@ -1,18 +1,10 @@
 package com.orientechnologies.orient.client.remote.message;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.NavigableMap;
-import java.util.TreeMap;
-
 import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -25,6 +17,9 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
+
+import java.io.IOException;
+import java.util.*;
 
 public class OBeginTransactionRequest implements OBinaryRequest<OBinaryResponse> {
 
@@ -57,7 +52,7 @@ public class OBeginTransactionRequest implements OBinaryRequest<OBinaryResponse>
     super();
     this.txId = txId;
     this.usingLong = usingLong;
-    this.changes = new ArrayList<OBeginTransactionRequest.IndexChange>();
+    this.changes = new ArrayList<>();
 
     List<ORecordOperationRequest> netOperations = new ArrayList<>();
     for (ORecordOperation txEntry : operations) {
@@ -152,7 +147,6 @@ public class OBeginTransactionRequest implements OBinaryRequest<OBinaryResponse>
         int changeCount = channel.readInt();
         NavigableMap<Object, OTransactionIndexChangesPerKey> entries = new TreeMap<>();
         while (changeCount-- > 0) {
-          // TODO: READ KEY
           byte bt = channel.readByte();
           OType type = OType.getById(bt);
           Object key = ((ORecordSerializerNetwork) serializer).deserializeValue(channel.readBytes(), type);

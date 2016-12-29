@@ -62,7 +62,7 @@ public final class OCountRequest implements OBinaryRequest<OCountResponse> {
 
   @Override
   public byte getCommand() {
-    return OChannelBinaryProtocol.REQUEST_DATACLUSTER_COUNT;
+    return OChannelBinaryProtocol.REQUEST_CLUSTER_COUNT;
   }
   
   @Override

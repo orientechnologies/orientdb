@@ -51,7 +51,7 @@ public class ODropClusterRequest implements OBinaryRequest<ODropClusterResponse>
 
   @Override
   public byte getCommand() {
-    return OChannelBinaryProtocol.REQUEST_DATACLUSTER_DROP;
+    return OChannelBinaryProtocol.REQUEST_CLUSTER_DROP;
   }
 
   @Override
