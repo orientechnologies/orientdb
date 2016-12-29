@@ -18,15 +18,17 @@ node("master") {
 
                 }
             }
+            if (currentBuild.previousBuild == null || currentBuild.previousBuild.result != currentBuild.result) {
+                slackSend(color: '#00FF00', message: "SUCCESS: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
+            }
+
         } catch (e) {
             currentBuild.result = 'FAILURE'
-
-            slackSend(color: 'bad', message: "FAILED distributed tests: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
-        } finally {
-            junit allowEmptyResults: true, testResults: '**/target/surefire-reports/TEST-*.xml'
-
+            if (currentBuild.previousBuild == null || currentBuild.previousBuild.result != currentBuild.result) {
+                slackSend(color: '#FF0000', message: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
+            }
+            throw e;
         }
-
     }
 
 }
