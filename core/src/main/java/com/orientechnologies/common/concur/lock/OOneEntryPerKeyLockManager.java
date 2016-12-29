@@ -272,6 +272,20 @@ public class OOneEntryPerKeyLockManager<T> implements OLockManager<T> {
     }
   }
 
+  @Override
+  public void lockAllShared() {
+    for (CountableLock lock : map.values()) {
+      lock.readWriteLock.readLock().lock();
+    }
+  }
+
+  @Override
+  public void unlockAllShared() {
+    for (CountableLock lock : map.values()) {
+      lock.readWriteLock.readLock().unlock();
+    }
+  }
+
   // For tests purposes.
   public int getCountCurrentLocks() {
     return map.size();

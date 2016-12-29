@@ -24,7 +24,7 @@ import java.util.concurrent.locks.Lock;
 
 /**
  * Lock Manager interface.
- * 
+ *
  * @author Luca Garulli
  * @since 2.2.0
  */
@@ -46,4 +46,14 @@ public interface OLockManager<T> {
   void lockAllExclusive();
 
   void unlockAllExclusive();
+
+  /**
+   * Locks all the keys inside this lock manager for reading.
+   */
+  void lockAllShared();
+
+  /**
+   * Unlocks all the keys inside this lock manager previously locked with {@link #lockAllShared()} for reading.
+   */
+  void unlockAllShared();
 }

@@ -84,28 +84,34 @@ public interface OIndexInternal<T> extends OIndex<T> {
    * Indicates whether given index can be used to calculate result of
    * {@link com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquality} operators.
    *
-   * @return {@code true} if given index can be used to calculate result of
-   * {@link com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquality} operators.
+   * @return {@code true} if given index can be used to calculate result of {@link com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquality}
+   * operators.
    */
   boolean canBeUsedInEqualityOperators();
 
   boolean hasRangeQuerySupport();
 
   /**
+   * Locks all the keys inside this index for reading.
+   */
+  void lockAllKeysForRead();
+
+  /**
+   * Unlocks all the keys inside this index previously locked with {@link #lockAllKeysForRead()} for reading.
+   */
+  void releaseAllKeysForRead();
+
+  /**
    * Applies exclusive lock on keys which prevents read/modification of this keys in following methods:
-   *
    * <ol>
    * <li>{@link #put(Object, com.orientechnologies.orient.core.db.record.OIdentifiable)}</li>
    * <li>{@link #checkEntry(com.orientechnologies.orient.core.db.record.OIdentifiable, Object)}</li>
    * <li>{@link #remove(Object, com.orientechnologies.orient.core.db.record.OIdentifiable)}</li>
    * <li>{@link #remove(Object)}</li>
    * </ol>
-   *
-   * <p>
    * If you want to lock several keys in single thread, you should pass all those keys in single method call. Several calls of this
    * method in single thread are not allowed because it may lead to deadlocks.
-   * </p>
-   *
+   * <p>
    * This is internal method and cannot be used by end users.
    *
    * @param key Keys to lock.
@@ -114,19 +120,15 @@ public interface OIndexInternal<T> extends OIndex<T> {
 
   /**
    * Applies exclusive lock on keys which prevents read/modification of this keys in following methods:
-   *
    * <ol>
    * <li>{@link #put(Object, com.orientechnologies.orient.core.db.record.OIdentifiable)}</li>
    * <li>{@link #checkEntry(com.orientechnologies.orient.core.db.record.OIdentifiable, Object)}</li>
    * <li>{@link #remove(Object, com.orientechnologies.orient.core.db.record.OIdentifiable)}</li>
    * <li>{@link #remove(Object)}</li>
    * </ol>
-   *
-   * <p>
    * If you want to lock several keys in single thread, you should pass all those keys in single method call. Several calls of this
    * method in single thread are not allowed because it may lead to deadlocks.
-   * </p>
-   *
+   * <p>
    * This is internal method and cannot be used by end users.
    *
    * @param keys Keys to lock.
@@ -137,14 +139,12 @@ public interface OIndexInternal<T> extends OIndex<T> {
 
   /**
    * Release exclusive lock on keys which prevents read/modification of this keys in following methods:
-   *
    * <ol>
    * <li>{@link #put(Object, com.orientechnologies.orient.core.db.record.OIdentifiable)}</li>
    * <li>{@link #checkEntry(com.orientechnologies.orient.core.db.record.OIdentifiable, Object)}</li>
    * <li>{@link #remove(Object, com.orientechnologies.orient.core.db.record.OIdentifiable)}</li>
    * <li>{@link #remove(Object)}</li>
    * </ol>
-   *
    * This is internal method and cannot be used by end users.
    *
    * @param key Keys to unlock.
@@ -168,7 +168,6 @@ public interface OIndexInternal<T> extends OIndex<T> {
   void setType(OType type);
 
   /**
-   * <p>
    * Returns the index name for a key. The name is always the current index name, but in cases where the index supports key-based
    * sharding.
    *
@@ -179,9 +178,7 @@ public interface OIndexInternal<T> extends OIndex<T> {
   String getIndexNameByKey(Object key);
 
   /**
-   * <p>
    * Acquires exclusive lock in the active atomic operation running on the current thread for this index.
-   *
    * <p>
    * If this index supports a more narrow locking, for example key-based sharding, it may use the provided {@code key} to infer a
    * more narrow lock scope, but that is not a requirement.
