@@ -117,7 +117,7 @@ public class OETLProcessor {
   protected void configRunBehaviour(OCommandContext context) {
     final String cfgLog = (String) context.getVariable("log");
     if (cfgLog != null)
-      logLevel = Level.parse(cfgLog.toUpperCase());
+      logLevel = LOG_LEVELS.valueOf(cfgLog.toUpperCase()).toJulLevel();
 
     final Boolean cfgHaltOnError = (Boolean) context.getVariable("haltOnError");
     if (cfgHaltOnError != null)
@@ -133,12 +133,6 @@ public class OETLProcessor {
       if (cores >= 2)
         workers = cores - 1;
     }
-
-  }
-
-  public void out_NO(final Level iLogLevel, final String iText, final Object... iArgs) {
-//    if (logLevel.ordinal() >= iLogLevel.ordinal())
-    System.out.println(String.format(iText, iArgs));
 
   }
 
@@ -273,8 +267,6 @@ public class OETLProcessor {
       dumpTask.cancel();
     }
 
-//    out(LOG_LEVELS.INFO, "END ETL PROCESSOR");
-
     OLogManager.instance().info(this, "END ETL PROCESSOR");
     dumpProgress();
   }
@@ -403,6 +395,25 @@ public class OETLProcessor {
 
   public OETLComponentFactory getFactory() {
     return factory;
+  }
+
+  public enum LOG_LEVELS {
+    NONE(Level.OFF),
+    ERROR(Level.SEVERE),
+    INFO(Level.INFO),
+    DEBUG(Level.FINE);
+
+    private final Level julLevel;
+
+    LOG_LEVELS(Level julLevel) {
+
+      this.julLevel = julLevel;
+    }
+
+    public Level toJulLevel() {
+      return julLevel;
+    }
+
   }
 
   public class OETLProcessorStats {

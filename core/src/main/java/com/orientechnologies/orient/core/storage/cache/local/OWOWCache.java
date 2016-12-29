@@ -1304,6 +1304,24 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   }
 
   @Override
+  public String restoreFileById(long fileId) throws IOException {
+    final int intId = extractFileId(fileId);
+    filesLock.acquireWriteLock();
+    try {
+      for (Map.Entry<String, Integer> entry : nameIdMap.entrySet()) {
+        if (entry.getValue() == -intId) {
+          addFile(entry.getKey(), fileId);
+          return entry.getKey();
+        }
+      }
+    } finally {
+      filesLock.releaseWriteLock();
+    }
+
+    return null;
+  }
+
+  @Override
   public OPageDataVerificationError[] checkStoredPages(OCommandOutputListener commandOutputListener) {
     final int notificationTimeOut = 5000;
     final List<OPageDataVerificationError> errors = new ArrayList<>();

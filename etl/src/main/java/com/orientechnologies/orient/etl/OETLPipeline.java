@@ -87,10 +87,7 @@ public class OETLPipeline {
         for (OETLTransformer t : transformers) {
           current = t.transform(current);
           if (current == null) {
-//            if (logLevel == DEBUG) {
             OLogManager.instance().warn(this, "Transformer [%s] returned null, skip rest of pipeline execution", t);
-//              break;
-//            }
           }
         }
         if (current != null) {
@@ -102,10 +99,8 @@ public class OETLPipeline {
       } catch (ONeedRetryException e) {
         loader.rollback(databaseProvider);
         retry++;
-        OLogManager.instance().info(this, "Error in pipeline execution, retry = %d/%d (exception=%s)", retry, maxRetries, e);
-//        processor.out(INFO, "Error in pipeline execution, retry = %d/%d (exception=%s)", retry, maxRetries, e);
+        OLogManager.instance().info(this, "Error in pipeline execution, retry = %d/%d (exception=)", retry, maxRetries, e);
       } catch (OETLProcessHaltedException e) {
-//        processor.out(ERROR, "Pipeline execution halted");
         OLogManager.instance().error(this, "Pipeline execution halted");
 
         processor.getStats().incrementErrors();
@@ -114,8 +109,7 @@ public class OETLPipeline {
         throw e;
 
       } catch (Exception e) {
-//        processor.out(ERROR, "Error in Pipeline execution: %s", e);
-        OLogManager.instance().error(this, "Error in Pipeline execution: %s", e);
+        OLogManager.instance().error(this, "Error in Pipeline execution:", e);
 
         processor.getStats().incrementErrors();
 

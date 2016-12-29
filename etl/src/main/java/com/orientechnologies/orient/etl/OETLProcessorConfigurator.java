@@ -85,11 +85,16 @@ public class OETLProcessorConfigurator {
       OETLExtractor extractor = configureExtractor(cfg, context);
 
       //copy  the skipDuplicates flag from vertex trensformer to Loader
-      Optional.ofNullable(cfg.<Collection<ODocument>>field("transformers")).map(
-          c -> c.stream().filter(d -> d.containsField("vertex")).map(d -> d.<ODocument>field("vertex"))
-              .filter(d -> d.containsField("skipDuplicates")).map(d -> d.field("skipDuplicates")).map(
-                  skip -> cfg.<ODocument>field("loader").<ODocument>field(cfg.<ODocument>field("loader").fieldNames()[0])
-                      .field("skipDuplicates", skip)).count());
+      Optional.ofNullable(cfg.<Collection<ODocument>>field("transformers"))
+          .map(c -> c.stream()
+              .filter(d -> d.containsField("vertex"))
+              .map(d -> d.<ODocument>field("vertex"))
+              .filter(d -> d.containsField("skipDuplicates"))
+              .map(d -> d.field("skipDuplicates"))
+              .map(skip -> cfg.<ODocument>field("loader")
+                  .<ODocument>field(cfg.<ODocument>field("loader").fieldNames()[0])
+                  .field("skipDuplicates", skip))
+              .count());
 
       OETLLoader loader = configureLoader(cfg, context);
 
@@ -154,7 +159,8 @@ public class OETLProcessorConfigurator {
     return transformers;
   }
 
-  private OETLLoader configureLoader(ODocument cfg, OCommandContext iContext) throws IllegalAccessException, InstantiationException {
+  private OETLLoader configureLoader(ODocument cfg, OCommandContext iContext)
+      throws IllegalAccessException, InstantiationException {
     ODocument loadersConf = cfg.field("loader");
     if (loadersConf != null) {
       // LOADER
@@ -181,7 +187,8 @@ public class OETLProcessorConfigurator {
     return extractor;
   }
 
-  private OETLSource configureSource(ODocument cfg, OCommandContext iContext) throws IllegalAccessException, InstantiationException {
+  private OETLSource configureSource(ODocument cfg, OCommandContext iContext)
+      throws IllegalAccessException, InstantiationException {
 
     ODocument sourceConf = cfg.field("source");
     if (sourceConf != null) {

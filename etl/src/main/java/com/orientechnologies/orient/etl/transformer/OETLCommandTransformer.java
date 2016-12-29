@@ -63,17 +63,25 @@ public class OETLCommandTransformer extends OETLAbstractTransformer {
     final OCommandRequest cmd;
     if (language.equals("sql")) {
       cmd = new OCommandSQL(runtimeCommand);
-
-      log(Level.FINE, "executing command=%s", runtimeCommand);
     } else if (language.equals("gremlin")) {
       cmd = new OCommandGremlin(runtimeCommand);
     } else {
       cmd = new OCommandScript(language, runtimeCommand);
     }
     cmd.setContext(context);
+    try {
 
-    Object result = databaseProvider.getDocumentDatabase().command(cmd).execute();
-    log(Level.FINE, "executed command=%s, result=%s", cmd, result);
-    return result;
+      Object result = databaseProvider.getDocumentDatabase().command(cmd).execute();
+
+      log(Level.FINE, "input=%s - command=%s - result=%s", input, cmd, result);
+
+      return result;
+    } catch (Exception e) {
+
+      log(Level.SEVERE, "exception=%s - input=%s - command=%s ", e.getMessage(), input, cmd);
+
+      throw e;
+    }
   }
+
 }

@@ -22,7 +22,7 @@ public class ORestricetedUserCleanUpTest {
       schema.createClass("TestRecord", schema.getClass(OSecurityShared.RESTRICTED_CLASSNAME));
 
       OSecurity security = db.getMetadata().getSecurity();
-      OUser auser = security.createUser("auser", "whereever", new String[] {});
+      OUser auser = security.createUser("auser", "wherever", new String[] {});
       OUser reader = security.getUser("admin");
       ODocument doc = new ODocument("TestRecord");
       Set<OIdentifiable> users = new HashSet<OIdentifiable>();

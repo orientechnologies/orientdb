@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
+import com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS;
 
 import java.util.logging.Level;
 
@@ -58,7 +59,7 @@ public abstract class OETLAbstractComponent implements OETLComponent {
   @Override
   public void begin() {
     if (configuration.containsField("log"))
-      logLevel = Level.parse(configuration.field("log").toString().toUpperCase());
+      logLevel = LOG_LEVELS.valueOf(configuration.field("log").toString().toUpperCase()).toJulLevel();
     else
       logLevel = processor.getLogLevel();
 
@@ -112,22 +113,18 @@ public abstract class OETLAbstractComponent implements OETLComponent {
   }
 
   protected void log(final Level iLevel, String iText, final Object... iArgs) {
-//    if (logLevel.ordinal() >= iLevel.ordinal()) {
+    log(iLevel, iText, null, iArgs);
+  }
+
+  protected void log(final Level iLevel, String iText, Exception exception, final Object... iArgs) {
     final Long extractedNum = context != null ? (Long) context.getVariable("extractedNum") : null;
     if (extractedNum != null) {
-//      System.out.println("[" + extractedNum + ":" + getName() + "] " + iLevel + " " + String.format(iText, iArgs));
-
       OLogManager.instance()
-          .log(this, iLevel, "[" + extractedNum + ":" + getName() + "] " + iLevel + " " + iText, null, iArgs);
-
+          .log(this, iLevel, "[" + extractedNum + ":" + getName() + "] " + iLevel + " " + iText, exception, iArgs);
     } else {
-//      System.out.println("[" + getName() + "] " + iLevel + " " + String.format(iText, iArgs));
-
       OLogManager.instance()
-          .log(this, iLevel, "[" + getName() + "] " + iLevel + " " + iText, null, iArgs);
+          .log(this, iLevel, "[" + getName() + "] " + iLevel + " " + iText, exception, iArgs);
     }
-
-//    }
   }
 
   protected String stringArray2Json(final Object[] iObject) {

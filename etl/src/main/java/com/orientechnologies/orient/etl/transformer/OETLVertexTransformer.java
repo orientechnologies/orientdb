@@ -21,7 +21,6 @@ package com.orientechnologies.orient.etl.transformer;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
@@ -71,24 +70,9 @@ public class OETLVertexTransformer extends OETLAbstractTransformer {
     OrientBaseGraph graph = databaseProvider.getGraphDatabase();
     final OrientVertex v = graph.getVertex(input);
 
-    if (v == null) {
-      return null;
+    if (v != null && vertexClass != null && !vertexClass.equals(v.getRecord().getClassName())) {
+      v.getRecord().setClassName(vertexClass);
     }
-
-    if (vertexClass != null && !vertexClass.equals(v.getRecord().getClassName()))
-      try {
-
-        v.getRecord().setClassName(vertexClass);
-        //        v.save(clusterName);
-      } catch (ORecordDuplicatedException e) {
-        if (skipDuplicates) {
-          return null;
-        } else {
-          throw e;
-        }
-      } finally {
-
-      }
     return v;
   }
 }
