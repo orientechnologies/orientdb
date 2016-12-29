@@ -1165,7 +1165,7 @@ public class OSelectExecutionPlanner {
   }
 
   /**
-   * given a flat AND block and a set of indexes, returns the best index to be used to process it, with the complete descripton on how to use it
+   * given a flat AND block and a set of indexes, returns the best index to be used to process it, with the complete description on how to use it
    *
    * @param ctx
    * @param indexes

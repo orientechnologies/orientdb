@@ -98,7 +98,7 @@ import com.orientechnologies.common.util.OCommonConst;
  * <li><em>Does not break lines, by default.</em> This is to keep in compliance with
  * <a href="http://www.faqs.org/rfcs/rfc3548.html">RFC3548</a>.</li>
  * <li><em>Throws exceptions instead of returning null values.</em> Because some operations (especially those that may permit the
- * GZIP option) use IO streams, there is a possiblity of an java.io.IOException being thrown. After some discussion and thought,
+ * GZIP option) use IO streams, there is a possibility of an java.io.IOException being thrown. After some discussion and thought,
  * I've changed the behavior of the methods to throw java.io.IOExceptions rather than return null if ever there's an error. I think
  * this is more appropriate, though it will require some changes to your code. Sorry, it should have been done this way to begin
  * with.</li>
@@ -830,7 +830,7 @@ public class OBase64Utils {
    * <p>
    * Encodes up to three bytes of the array <var>source</var> and writes the resulting four Base64 bytes to <var>destination</var>.
    * The source and destination arrays can be manipulated anywhere along their length by specifying <var>srcOffset</var> and
-   * <var>destOffset</var>. This method does not check to make sure your arrays are large enough to accomodate <var>srcOffset</var>
+   * <var>destOffset</var>. This method does not check to make sure your arrays are large enough to accommodate <var>srcOffset</var>
    * + 3 for the <var>source</var> array or <var>destOffset</var> + 4 for the <var>destination</var> array. The actual number of
    * significant bytes in your array is given by <var>numSigBytes</var>.
    * </p>
@@ -1410,7 +1410,7 @@ public class OBase64Utils {
   /**
    * Decodes four bytes from array <var>source</var> and writes the resulting bytes (up to three of them) to <var>destination</var>.
    * The source and destination arrays can be manipulated anywhere along their length by specifying <var>srcOffset</var> and
-   * <var>destOffset</var>. This method does not check to make sure your arrays are large enough to accomodate <var>srcOffset</var>
+   * <var>destOffset</var>. This method does not check to make sure your arrays are large enough to accommodate <var>srcOffset</var>
    * + 4 for the <var>source</var> array or <var>destOffset</var> + 3 for the <var>destination</var> array. This method returns the
    * actual number of bytes that were converted from the Base64 encoding.
    * <p>

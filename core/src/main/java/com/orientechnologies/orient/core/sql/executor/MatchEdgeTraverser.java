@@ -156,7 +156,7 @@ public class MatchEdgeTraverser {
     return filter == null || filter.matchesFilters(origin, iCommandContext);
   }
 
-  //TODO refactor this method to recieve the item.
+  //TODO refactor this method to receive the item.
 
   protected Iterable<OIdentifiable> traversePatternEdge(OIdentifiable startingPoint, OCommandContext iCommandContext) {
 

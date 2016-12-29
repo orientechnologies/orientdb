@@ -14,13 +14,13 @@ import java.util.Set;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-public class ORecordLazySetPeristentTest {
+public class ORecordLazySetPersistentTest {
 
   private ODatabaseDocument db;
 
   @Before
   public void init() throws Exception {
-    String url = "memory:" + ORecordLazySetPeristentTest.class.getSimpleName();
+    String url = "memory:" + ORecordLazySetPersistentTest.class.getSimpleName();
     db = new ODatabaseDocumentTx(url);
     db = db.create();
   }
