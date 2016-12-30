@@ -1,18 +1,16 @@
 #!groovy
+node("master") {
+    milestone()
+    lock(resource: "${env.BRANCH_NAME}", inversePrecedence: true) {
+        milestone()
 def mvnHome = tool 'mvn'
 def mvnJdk8Image = "orientdb/mvn-gradle-zulu-jdk-8"
 def mvnIBMJdkImage = "orientdb/jenkins-slave-ibm-jdk-8"
 
 stage('Source checkout') {
-    milestone
-    lock(resource: "${env.BRANCH_NAME}", inversePrecedence: true) {
-        milestone
-
-        node {
             checkout scm
         }
-    }
-}
+
 
 try {
 
@@ -82,5 +80,5 @@ try {
     }
     throw e;
 }
-
-
+    }
+}
