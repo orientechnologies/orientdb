@@ -13,18 +13,15 @@ node("master") {
             try {
 
                 sh "${mvnHome}/bin/mvn  --batch-mode -V -U  clean install -Dmaven.test.failure.ignore=true -Dsurefire.useFile=false"
+
             } catch (e) {
                 currentBuild.result = 'FAILURE'
-
-                slackSend(color: 'bad', message: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
-            } finally {
-                junit allowEmptyResults: true, testResults: '**/target/surefire-reports/TEST-*.xml'
-
+                if (currentBuild.previousBuild == null || currentBuild.previousBuild.result != currentBuild.result) {
+                    slackSend(color: '#FF0000', message: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
+                }
+                throw e;
             }
-
 
         }
     }
-
 }
-
