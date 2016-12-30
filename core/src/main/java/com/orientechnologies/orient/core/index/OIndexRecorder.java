@@ -338,16 +338,6 @@ public class OIndexRecorder implements OIndex<OIdentifiable>, OIndexInternal<OId
   }
 
   @Override
-  public void lockAllKeysForRead() {
-    // do nothing
-  }
-
-  @Override
-  public void releaseAllKeysForRead() {
-    // do nothing
-  }
-
-  @Override
   public void lockKeysForUpdate(Object... key) {
   }
 

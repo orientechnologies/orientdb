@@ -238,32 +238,6 @@ public class OPartitionedLockManager<T> implements OLockManager<T> {
     }
   }
 
-  @Override
-  public void lockAllShared() {
-    if (useSpinLock) {
-      for (OReadersWriterSpinLock spinLock : spinLocks) {
-        spinLock.acquireReadLock();
-      }
-    } else {
-      for (ReadWriteLock readWriteLock : locks) {
-        readWriteLock.readLock().lock();
-      }
-    }
-  }
-
-  @Override
-  public void unlockAllShared() {
-    if (useSpinLock) {
-      for (OReadersWriterSpinLock spinLock : spinLocks) {
-        spinLock.releaseReadLock();
-      }
-    } else {
-      for (ReadWriteLock readWriteLock : locks) {
-        readWriteLock.readLock().unlock();
-      }
-    }
-  }
-
   public boolean tryAcquireExclusiveLock(final T value, final long timeout) throws InterruptedException {
     if (useSpinLock)
       throw new IllegalStateException("Spin lock does not support try lock mode");
