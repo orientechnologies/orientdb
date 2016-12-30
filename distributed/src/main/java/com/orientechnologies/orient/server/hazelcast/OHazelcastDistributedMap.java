@@ -96,6 +96,16 @@ public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object> 
     return super.put(key, value);
   }
 
+  @Override
+  public Object putIfAbsent(final String key, final Object value) {
+    try {
+      hzMap.putIfAbsent(key, value);
+    } catch (HazelcastInstanceNotActiveException e) {
+      // IGNORE IT
+    }
+    return super.putIfAbsent(key, value);
+  }
+
   public Object putInLocalCache(final String key, final Object value) {
     return super.put(key, value);
   }

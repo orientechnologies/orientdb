@@ -152,7 +152,7 @@ public class OTxTask extends OAbstract2pcTask {
       // if (e instanceof ODistributedRecordLockedException)
       // ddb.dumpLocks();
       ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-          "Rolling back transaction db=%s (reqId=%s error=%s)...", database.getName(), requestId, e);
+          "Rolling back transaction on local server db=%s (reqId=%s error=%s)...", database.getName(), requestId, e);
 
       database.rollback();
       // ddb.popTxContext(requestId);

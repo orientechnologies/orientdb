@@ -48,7 +48,7 @@ public class ODefaultClusterOwnershipAssignmentStrategy implements OClusterOwner
       final OModifiableDistributedConfiguration cfg, final OClass iClass, final Set<String> availableNodes) {
 
     // FILTER OUT NON MASTER SERVER
-    for (Iterator<String> it = availableNodes.iterator(); it.hasNext();) {
+    for (Iterator<String> it = availableNodes.iterator(); it.hasNext(); ) {
       final String node = it.next();
       if (cfg.getServerRole(node) != ODistributedConfiguration.ROLES.MASTER)
         it.remove();
@@ -92,7 +92,7 @@ public class ODefaultClusterOwnershipAssignmentStrategy implements OClusterOwner
       if (ownedClusters.isEmpty()) {
         // CREATE A NEW CLUSTER WHERE THE LOCAL NODE IS THE MASTER
         String newClusterName;
-        for (int i = 0;; ++i) {
+        for (int i = 0; ; ++i) {
           newClusterName = iClass.getName().toLowerCase() + "_" + i;
           if (!allClusterNames.contains(newClusterName))
             break;
@@ -114,7 +114,7 @@ public class ODefaultClusterOwnershipAssignmentStrategy implements OClusterOwner
       final List<String> ownedClusters = cfg.getOwnedClustersByServer(clusterNames, server);
 
       // FILTER ALL THE CLUSTERS WITH A STATIC OWNER CFG
-      for (Iterator<String> it = ownedClusters.iterator(); it.hasNext();) {
+      for (Iterator<String> it = ownedClusters.iterator(); it.hasNext(); ) {
         final String cluster = it.next();
         if (cfg.getConfiguredClusterOwner(cluster) != null)
           it.remove();
@@ -134,6 +134,14 @@ public class ODefaultClusterOwnershipAssignmentStrategy implements OClusterOwner
     final Map<String, String> clusterToAssignOwnership = new HashMap<String, String>();
 
     final Set<String> clustersOfClassToReassign = new HashSet<String>();
+
+    // REASSIGN ALL THE CLUSTERS OF THE NOT AVAILABLE SERVERS
+    for (OPair<String, List<String>> owner : nodeOwners) {
+      final String server = owner.getKey();
+      final List<String> ownedClusters = owner.getValue();
+      if (!availableNodes.contains(server))
+        clustersOfClassToReassign.addAll(ownedClusters);
+    }
 
     int currentServerIndex = 0;
     int clusterAssigned = 0;

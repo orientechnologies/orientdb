@@ -51,8 +51,10 @@ import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.impl.*;
+import com.orientechnologies.orient.server.distributed.impl.task.OAbstractSyncDatabaseTask;
 import com.orientechnologies.orient.server.distributed.impl.task.ODropDatabaseTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OUpdateDatabaseConfigurationTask;
+import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.OBeforeDatabaseOpenNetworkEventListener;
 
@@ -73,6 +75,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
   public static final String CONFIG_NODE_PREFIX     = "node.";
   public static final String CONFIG_DBSTATUS_PREFIX = "dbstatus.";
+  public static final String CONFIG_COORDINATOR     = "coordinator";
   public static final String CONFIG_REGISTEREDNODES = "registeredNodes";
 
   protected String hazelcastConfigFile = "hazelcast.xml";
@@ -181,6 +184,25 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         }
       }
 
+      while (coordinatorServer == null) {
+        if (activeNodes.size() == 1) {
+          // ONLY CURRENT NODE ONLINE, SET IT AS INITIAL COORDINATOR
+          coordinatorServer = nodeName;
+          if (configurationMap.putIfAbsent(CONFIG_COORDINATOR, coordinatorServer) == null)
+            break;
+        } else {
+          coordinatorServer = (String) configurationMap.get(CONFIG_COORDINATOR);
+          if (coordinatorServer != null)
+            break;
+        }
+
+        Thread.sleep(100);
+      }
+
+      getLockManagerRequester().setCoordinatorServer(coordinatorServer);
+
+      OLogManager.instance().info(this, "Distributed coordinator server is '%s'", coordinatorServer);
+
       initRegisteredNodeIds();
 
       messageService = new ODistributedMessageServiceImpl(this);
@@ -220,7 +242,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
       publishLocalNodeConfiguration();
 
-      installNewDatabasesFromCluster(true);
+      installNewDatabasesFromCluster();
 
       loadLocalDatabases();
 
@@ -497,6 +519,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       }
     });
 
+    coordinatorServer = null;
     setNodeStatus(NODE_STATUS.OFFLINE);
   }
 
@@ -1094,6 +1117,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       if (!OScenarioThreadLocal.INSTANCE.isRunModeDistributed()) {
         // LAST NODE HOLDING THE DATABASE, DELETE DISTRIBUTED CFG TOO
         configurationMap.remove(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + dbName);
+        configurationMap.remove(OAbstractSyncDatabaseTask.DEPLOYDB + dbName);
         ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
             "Dropped last copy of database '%s', removing it from the cluster", dbName);
       }
@@ -1148,7 +1172,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     }
   }
 
-  protected void installNewDatabasesFromCluster(final boolean iStartup) {
+  protected void installNewDatabasesFromCluster() {
     if (activeNodes.size() <= 1) {
       // NO OTHER NODES WHERE ALIGN
       return;
@@ -1158,12 +1182,18 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       if (entry.getKey().startsWith(CONFIG_DATABASE_PREFIX)) {
         final String databaseName = entry.getKey().substring(CONFIG_DATABASE_PREFIX.length());
 
-        if (databaseName.equalsIgnoreCase(OSystemDatabase.SYSTEM_DB_NAME))
-          // DON'T REPLICATE SYSTEM BECAUSE IS DIFFERENT AND PER SERVER
+        final Set<String> availableServers = getAvailableNodeNames(databaseName);
+        if (availableServers.isEmpty())
+          // NO NODE HAS THIS DATABASE AVAILABLE
           continue;
 
+        final DB_STATUS currStatus = getDatabaseStatus(nodeName, databaseName);
+        if (currStatus == DB_STATUS.SYNCHRONIZING || currStatus == DB_STATUS.ONLINE || currStatus == DB_STATUS.BACKUP)
+          // FIX PREVIOUS STATUS OF DATABASE
+          setDatabaseStatus(nodeName, databaseName, DB_STATUS.NOT_AVAILABLE);
+
         try {
-          installDatabase(iStartup, databaseName, false, true);
+          installDatabase(true, databaseName, false, true);
         } catch (Exception e) {
           ODistributedServerLog
               .error(this, getLocalNodeName(), null, DIRECTION.IN, "Error on installing database '%s' on local node", databaseName);
@@ -1234,8 +1264,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       final Set<String> registeredServers = cfg.getRegisteredServers();
       if (registeredServers.contains(nodeLeftName)) {
         ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
-            "Cannot remove server '%s' because it is enlisted in distributed configuration for database '%s'", nodeLeftName,
-            databaseName);
+            "Cannot remove server '%s' because it is enlisted in 'servers' of the distributed configuration for database '%s'",
+            nodeLeftName, databaseName);
         return false;
       }
     }
@@ -1280,6 +1310,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         } catch (Exception e) {
           // IGNORE IT
         }
+
+      if (nodeLeftName.equals(coordinatorServer))
+        electNewCoordinator();
 
       getLockManagerExecutor().handleUnreachableServer(nodeLeftName);
       getLockManagerRequester().handleUnreachableServer(nodeLeftName);
@@ -1329,7 +1362,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           configurationMap.put(CONFIG_DBSTATUS_PREFIX + nodeLeftName + "." + databaseName, DB_STATUS.NOT_AVAILABLE);
       }
 
-      ODistributedServerLog.warn(this, nodeLeftName, null, DIRECTION.NONE, "Node removed id=%s name=%s", member, nodeLeftName);
+      ODistributedServerLog.warn(this, nodeName, null, DIRECTION.NONE, "Node removed id=%s name=%s", member, nodeLeftName);
 
       if (nodeLeftName.startsWith("ext:")) {
         final List<String> registeredNodes = getRegisteredNodes();
@@ -1341,11 +1374,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
       for (String databaseName : getManagedDatabases()) {
         try {
-          final OModifiableDistributedConfiguration cfg = getDatabaseConfiguration(databaseName).modify();
-
-          // COLLECT ALL THE CLUSTERS WITH REMOVED NODE AS OWNER
-          reassignClustersOwnership(nodeName, databaseName, cfg);
-
+          reassignClustersOwnership(nodeName, databaseName, null);
         } catch (Exception e) {
           // IGNORE IT
           ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE,
@@ -1362,6 +1391,54 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       // REMOVE NODE IN DB CFG
       if (messageService != null)
         messageService.handleUnreachableNode(nodeLeftName);
+    }
+  }
+
+  /**
+   * Elects a new server as coordinator. The election browse the ordered server list.
+   */
+  private synchronized void electNewCoordinator() {
+    // TRY ALL THE SERVERS IN ORDER (ALL THE SERVERS HAVE THE SAME LIST)
+    final List<String> sortedServers = new ArrayList<String>(getActiveServers());
+    Collections.sort(sortedServers);
+
+    int coordinatorServerId = -1;
+    if (registeredNodeByName.containsKey(coordinatorServer))
+      coordinatorServerId = registeredNodeByName.get(coordinatorServer);
+
+    int currIndex = coordinatorServerId;
+    for (int i = 0; i < registeredNodeById.size(); ++i) {
+      currIndex++;
+      if (currIndex >= registeredNodeById.size())
+        // RESTART FROM THE FIRST
+        currIndex = 0;
+
+      final String newServer = registeredNodeById.get(currIndex);
+      if (activeNodes.containsKey(newServer)) {
+        // TODO: IMPROVE ELECTION BY CHECKING AL THE NODES AGREE ON IT
+
+        coordinatorServer = newServer;
+        getLockManagerRequester().setCoordinatorServer(coordinatorServer);
+
+        // TRY TO ACQUIRE A LOCK AGAINST THE NEW COORDINATOR TO VALIDATE IT
+        try {
+          executeInDistributedDatabaseLock(OSystemDatabase.SYSTEM_DB_NAME, 10000, null,
+              new OCallable<Object, OModifiableDistributedConfiguration>() {
+                @Override
+                public Object call(OModifiableDistributedConfiguration iArgument) {
+                  configurationMap.put(CONFIG_COORDINATOR, newServer);
+                  return null;
+                }
+              });
+
+          break;
+
+        } catch (ODistributedOperationException e) {
+          // NO SERVER RESPONDED, THE SERVER COULD BE ISOLATED, GO AHEAD WITH THE NEXT IN THE LIST
+          ODistributedServerLog
+              .info(this, nodeName, null, DIRECTION.NONE, "Cannot elected server '%s' because is offline", newServer);
+        }
+      }
     }
   }
 

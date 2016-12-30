@@ -38,8 +38,8 @@ import java.io.IOException;
  *
  */
 public abstract class OAbstractRemoteTask implements ORemoteTask {
-  private static final long    serialVersionUID = 1L;
-  protected static final int[] ALL              = new int[] { -1 };
+  private static final   long  serialVersionUID = 1L;
+  public static final    int[] ALL              = new int[] { -1 };
   protected static final int[] ANY              = new int[] { -2 };
 
   protected transient String   nodeSource;

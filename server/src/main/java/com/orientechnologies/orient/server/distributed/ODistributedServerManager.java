@@ -104,25 +104,26 @@ public interface ODistributedServerManager {
     BACKUP
   }
 
-  ;
-
   /**
    * Checks the node status if it's one of the statuses received as argument.
    *
    * @param iNodeName     Node name
    * @param iDatabaseName Database name
    * @param statuses      vararg of statuses
+   *
    * @return true if the node's status is equals to one of the passed statuses, otherwise false
    */
   boolean isNodeStatusEqualsTo(String iNodeName, String iDatabaseName, DB_STATUS... statuses);
 
-  boolean isNodeAvailable(final String iNodeName);
+  boolean isNodeAvailable(String iNodeName);
 
   Set<String> getAvailableNodeNames(String databaseName);
 
+  String getCoordinatorServer();
+
   void waitUntilNodeOnline() throws InterruptedException;
 
-  void waitUntilNodeOnline(final String nodeName, final String databaseName) throws InterruptedException;
+  void waitUntilNodeOnline(String nodeName, String databaseName) throws InterruptedException;
 
   OStorage getStorage(String databaseName);
 
@@ -136,7 +137,7 @@ public interface ODistributedServerManager {
 
   Object executeOnLocalNode(ODistributedRequestId reqId, ORemoteTask task, ODatabaseDocumentInternal database);
 
-  ORemoteServerController getRemoteServer(final String nodeName) throws IOException;
+  ORemoteServerController getRemoteServer(String nodeName) throws IOException;
 
   Map<String, Object> getConfigurationMap();
 
@@ -160,7 +161,7 @@ public interface ODistributedServerManager {
 
   ODistributedStrategy getDistributedStrategy();
 
-  void setDistributedStrategy(final ODistributedStrategy streatgy);
+  void setDistributedStrategy(ODistributedStrategy streatgy);
 
   boolean updateCachedDatabaseConfiguration(String iDatabaseName, OModifiableDistributedConfiguration cfg,
       boolean iDeployToCluster);
@@ -171,7 +172,7 @@ public interface ODistributedServerManager {
 
   void updateLastClusterChange();
 
-  void reassignClustersOwnership(String iNode, String databaseName, final OModifiableDistributedConfiguration cfg);
+  void reassignClustersOwnership(String iNode, String databaseName, OModifiableDistributedConfiguration cfg);
 
   /**
    * Available means not OFFLINE, so ONLINE or SYNCHRONIZING.
@@ -183,9 +184,9 @@ public interface ODistributedServerManager {
    */
   boolean isNodeOnline(String iNodeName, String databaseName);
 
-  int getAvailableNodes(final String iDatabaseName);
+  int getAvailableNodes(String iDatabaseName);
 
-  int getAvailableNodes(final Collection<String> iNodes, final String databaseName);
+  int getAvailableNodes(Collection<String> iNodes, String databaseName);
 
   boolean isOffline();
 
@@ -220,6 +221,7 @@ public interface ODistributedServerManager {
    * @param iExecutionMode
    * @param localResult        It's the result of the request executed locally
    * @param iAfterSentCallback
+   *
    * @return
    */
   ODistributedResponse sendRequest(String iDatabaseName, Collection<String> iClusterNames, Collection<String> iTargetNodeNames,
@@ -262,6 +264,6 @@ public interface ODistributedServerManager {
    * @param timeoutLocking
    * @param iCallback      Operation @return The operation's result of type T
    */
-  <T> T executeInDistributedDatabaseLock(final String databaseName, final long timeoutLocking,
-      OModifiableDistributedConfiguration lastCfg, final OCallable<T, OModifiableDistributedConfiguration> iCallback);
+  <T> T executeInDistributedDatabaseLock(String databaseName, long timeoutLocking, OModifiableDistributedConfiguration lastCfg,
+      OCallable<T, OModifiableDistributedConfiguration> iCallback);
 }

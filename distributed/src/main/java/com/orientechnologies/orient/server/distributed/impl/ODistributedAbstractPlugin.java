@@ -106,6 +106,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected final ConcurrentMap<String, ORemoteServerController> remoteServers                     = new ConcurrentHashMap<String, ORemoteServerController>();
   protected       TimerTask                                      publishLocalNodeConfigurationTask = null;
   protected       OClusterHealthChecker                          healthCheckerTask                 = null;
+  protected String coordinatorServer;
 
   // LOCAL MSG COUNTER
   protected AtomicLong                          localMessageIdCounter     = new AtomicLong();
@@ -177,6 +178,11 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     } catch (IOException e) {
       throw OException.wrapException(new OConfigurationException("Error on deleting 'replicator' user"), e);
     }
+  }
+
+  @Override
+  public synchronized String getCoordinatorServer() {
+    return this.coordinatorServer;
   }
 
   public File getDefaultDatabaseConfigFile() {
@@ -830,6 +836,10 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       final boolean tryWithDeltaFirst) {
     if (getDatabaseStatus(getLocalNodeName(), databaseName) == DB_STATUS.OFFLINE)
       // OFFLINE: AVOID TO INSTALL IT
+      return false;
+
+    if (databaseName.equalsIgnoreCase(OSystemDatabase.SYSTEM_DB_NAME))
+      // DON'T REPLICATE SYSTEM BECAUSE IS DIFFERENT AND PER SERVER
       return false;
 
     final ODistributedDatabaseImpl distrDatabase = messageService.registerDatabase(databaseName, null);

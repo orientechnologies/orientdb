@@ -47,15 +47,15 @@ import java.util.concurrent.atomic.AtomicLong;
  * Test class that creates and executes distributed operations against a cluster of servers created in the same JVM.
  */
 public abstract class AbstractServerClusterTest {
-  protected int             delayServerStartup     = 0;
-  protected int             delayServerAlign       = 0;
-  protected boolean         startupNodesInSequence = true;
-  protected boolean         terminateAtShutdown    = true;
+  protected int     delayServerStartup     = 0;
+  protected int     delayServerAlign       = 0;
+  protected boolean startupNodesInSequence = true;
+  protected boolean terminateAtShutdown    = true;
 
-  protected String          rootDirectory          = "target/servers/";
-  protected AtomicLong      totalVertices          = new AtomicLong(0);
+  protected String     rootDirectory = "target/servers/";
+  protected AtomicLong totalVertices = new AtomicLong(0);
 
-  protected List<ServerRun> serverInstance         = new ArrayList<ServerRun>();
+  protected List<ServerRun> serverInstance = new ArrayList<ServerRun>();
 
   protected AbstractServerClusterTest() {
     OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.setValue(true);
@@ -237,11 +237,11 @@ public abstract class AbstractServerClusterTest {
   }
 
   protected void banner(final String iMessage) {
-    OLogManager.instance().error(this,
-        "**********************************************************************************************************");
+    OLogManager.instance()
+        .error(this, "**********************************************************************************************************");
     OLogManager.instance().error(this, iMessage);
-    OLogManager.instance().error(this,
-        "**********************************************************************************************************");
+    OLogManager.instance()
+        .error(this, "**********************************************************************************************************");
   }
 
   protected void log(final String iMessage) {
@@ -264,9 +264,8 @@ public abstract class AbstractServerClusterTest {
 
   /**
    * Event called right after the database has been created and right before to be replicated to the X servers
-   * 
-   * @param db
-   *          Current database
+   *
+   * @param db Current database
    */
   protected void onAfterDatabaseCreation(final OrientBaseGraph db) {
   }
@@ -377,15 +376,15 @@ public abstract class AbstractServerClusterTest {
 
   protected void assertDatabaseStatusEquals(final int fromServerId, final String serverName, final String dbName,
       final ODistributedServerManager.DB_STATUS status) {
-    Assert.assertEquals(
-        serverInstance.get(fromServerId).getServerInstance().getDistributedManager().getDatabaseStatus(serverName, dbName), status);
+    Assert.assertEquals(status,
+        serverInstance.get(fromServerId).getServerInstance().getDistributedManager().getDatabaseStatus(serverName, dbName));
   }
 
   protected void waitForDatabaseStatus(final int serverId, final String serverName, final String dbName,
       final ODistributedServerManager.DB_STATUS status, final long timeout) {
     final long startTime = System.currentTimeMillis();
-    while (serverInstance.get(serverId).getServerInstance().getDistributedManager().getDatabaseStatus(serverName,
-        dbName) != status) {
+    while (serverInstance.get(serverId).getServerInstance().getDistributedManager().getDatabaseStatus(serverName, dbName)
+        != status) {
 
       if (timeout > 0 && System.currentTimeMillis() - startTime > timeout) {
         OLogManager.instance().error(this, "TIMEOUT on wait-for condition (timeout=" + timeout + ")");
@@ -501,8 +500,9 @@ public abstract class AbstractServerClusterTest {
     final Collection<String> clusterNames = new ArrayList<String>(1);
     clusterNames.add(ODatabaseRecordThreadLocal.INSTANCE.get().getClusterNameById(rid.getClusterId()));
 
-    ODistributedResponse response = dManager.sendRequest(getDatabaseName(), clusterNames, Arrays.asList(servers),
-        new OReadRecordTask(rid), dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
+    ODistributedResponse response = dManager
+        .sendRequest(getDatabaseName(), clusterNames, Arrays.asList(servers), new OReadRecordTask(rid),
+            dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
 
     if (response != null) {
       final ORawBuffer buffer = (ORawBuffer) response.getPayload();
@@ -520,8 +520,8 @@ public abstract class AbstractServerClusterTest {
 
     return dManager.sendRequest(getDatabaseName(), clusterNames, Arrays.asList(servers),
         new OCreateRecordTask((ORecordId) record.getIdentity(), record.toStream(), record.getVersion(),
-            ORecordInternal.getRecordType(record)),
-        dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
+            ORecordInternal.getRecordType(record)), dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE,
+        null, null);
   }
 
   protected ODistributedResponse updateRemoteRecord(final int serverId, final ORecord record, final String[] servers) {
@@ -532,8 +532,8 @@ public abstract class AbstractServerClusterTest {
 
     return dManager.sendRequest(getDatabaseName(), clusterNames, Arrays.asList(servers),
         new OFixUpdateRecordTask((ORecordId) record.getIdentity(), record.toStream(), record.getVersion(),
-            ORecordInternal.getRecordType(record)),
-        dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
+            ORecordInternal.getRecordType(record)), dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE,
+        null, null);
   }
 
   protected ODistributedResponse deleteRemoteRecord(final int serverId, final ORecordId rid, final String[] servers) {

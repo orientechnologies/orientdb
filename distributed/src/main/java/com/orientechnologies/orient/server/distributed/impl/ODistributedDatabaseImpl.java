@@ -28,6 +28,7 @@ import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -37,6 +38,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import com.orientechnologies.orient.server.OSystemDatabase;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+import com.orientechnologies.orient.server.distributed.impl.task.OUnreachableServerLocalTask;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
@@ -67,11 +69,11 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   protected final String                         databaseName;
   protected       ODistributedDatabaseRepairer   repairer;
   protected       ODistributedSyncConfiguration  syncConfiguration;
-  protected       ConcurrentHashMap<ORID, ODistributedLock>                           lockManager      = new ConcurrentHashMap<ORID, ODistributedLock>(
-      256);
-  protected       ConcurrentHashMap<ODistributedRequestId, ODistributedTxContextImpl> activeTxContexts = new ConcurrentHashMap<ODistributedRequestId, ODistributedTxContextImpl>(
+  protected ConcurrentHashMap<ORID, ODistributedLock> lockManager = new ConcurrentHashMap<ORID, ODistributedLock>(256);
+
+  protected       ConcurrentHashMap<ODistributedRequestId, ODistributedTxContext> activeTxContexts = new ConcurrentHashMap<ODistributedRequestId, ODistributedTxContext>(
       64);
-  protected final List<ODistributedWorker>                                            workerThreads    = new ArrayList<ODistributedWorker>();
+  protected final List<ODistributedWorker>                                        workerThreads    = new ArrayList<ODistributedWorker>();
 
   private          AtomicLong                            totalSentRequests     = new AtomicLong();
   private          AtomicLong                            totalReceivedRequests = new AtomicLong();
@@ -83,7 +85,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   private String localNodeName;
 
-  private class ODistributedLock {
+  public class ODistributedLock {
     final ODistributedRequestId reqId;
     final CountDownLatch        lock;
     final long                  acquiredOn;
@@ -232,8 +234,9 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     final int[] partitionKeys = task.getPartitionKey();
 
     if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog.debug(this, localNodeName, request.getTask().getNodeSource(), DIRECTION.IN,
-          "Request %s on database '%s' partitionKeys=%s task=%s", request, databaseName, Arrays.toString(partitionKeys), task);
+      ODistributedServerLog
+          .debug(this, localNodeName, task.getNodeSource(), DIRECTION.IN, "Request %s on database '%s' partitionKeys=%s task=%s",
+              request, databaseName, Arrays.toString(partitionKeys), task);
 
     if (partitionKeys.length > 1 || partitionKeys[0] == -1) {
 
@@ -266,7 +269,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         for (int queue : involvedWorkerQueues)
           workerThreads.get(queue).processRequest(syncRequest);
 
-        long taskTimeout = request.getTask().getDistributedTimeout();
+        long taskTimeout = task.getDistributedTimeout();
         try {
           if (taskTimeout <= 0)
             syncLatch.await();
@@ -573,20 +576,20 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       }
     }
 
-    if (currentLock != null) {
-      // CHECK THE OWNER SERVER IS ONLINE. THIS AVOIDS ANY "WALKING DEAD" LOCKS
-      final String lockingNodeName = manager.getNodeNameById(currentLock.reqId.getNodeId());
-      if (lockingNodeName == null || !manager.isNodeAvailable(lockingNodeName)) {
-        ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE,
-            "Distributed transaction: forcing unlock of record %s in database '%s' because the owner server '%s' is offline (reqId=%s ownerReqId=%s, thread=%d)",
-            iRecord.getIdentity(), databaseName, lockingNodeName, iRequestId, currentLock.reqId, Thread.currentThread().getId());
-
-        // FORCE THE UNLOCK AND LOCK OF CURRENT REQ-ID
-        lockManager.put(rid, lock);
-        currentLock = null;
-      }
-    }
-
+//    if (currentLock != null) {
+//      // CHECK THE OWNER SERVER IS ONLINE. THIS AVOIDS ANY "WALKING DEAD" LOCKS
+//      final String lockingNodeName = manager.getNodeNameById(currentLock.reqId.getNodeId());
+//      if (lockingNodeName == null || !manager.isNodeAvailable(lockingNodeName)) {
+//        ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE,
+//            "Distributed transaction: forcing unlock of record %s in database '%s' because the owner server '%s' is offline (reqId=%s ownerReqId=%s, thread=%d)",
+//            iRecord.getIdentity(), databaseName, lockingNodeName, iRequestId, currentLock.reqId, Thread.currentThread().getId());
+//
+//        // FORCE THE UNLOCK AND LOCK OF CURRENT REQ-ID
+//        lockManager.put(rid, lock);
+//        currentLock = null;
+//      }
+//    }
+//
     if (ODistributedServerLog.isDebugEnabled())
       if (currentLock == null) {
         ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE,
@@ -639,10 +642,46 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   @Override
-  public ODistributedTxContext registerTxContext(final ODistributedRequestId reqId) {
-    ODistributedTxContextImpl ctx = new ODistributedTxContextImpl(this, reqId);
+  public void unlockResourcesOfServer(final ODatabaseDocumentInternal database, final String serverName) {
+    final int nodeLeftId = manager.getNodeIdByName(serverName);
 
-    final ODistributedTxContextImpl prevCtx = activeTxContexts.putIfAbsent(reqId, ctx);
+    int rollbacks = 0;
+    final Iterator<ODistributedTxContext> pendingReqIterator = activeTxContexts.values().iterator();
+    while (pendingReqIterator.hasNext()) {
+      final ODistributedTxContext pReq = pendingReqIterator.next();
+      if (pReq != null && pReq.getReqId().getNodeId() == nodeLeftId) {
+        try {
+          pReq.rollback(database);
+          rollbacks++;
+        } catch (Throwable t) {
+          // IGNORE IT
+          ODistributedServerLog.error(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
+              "Distributed transaction: error on rolling back transaction (req=%s)", pReq.getReqId());
+        }
+        pReq.destroy();
+        pendingReqIterator.remove();
+      }
+    }
+
+    int recordLocks = 0;
+    for (Map.Entry<ORID, ODistributedDatabaseImpl.ODistributedLock> entry : lockManager.entrySet()) {
+      final ODistributedDatabaseImpl.ODistributedLock lock = entry.getValue();
+      if (lock != null && lock.reqId != null && lock.reqId.getNodeId() == nodeLeftId) {
+        OLogManager.instance().debug(this, "Unlocking record %s acquired with req=%s", entry.getKey(), lock.reqId);
+        recordLocks++;
+      }
+    }
+
+    ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE,
+        "Distributed transaction: rolled back %d transactions and %d single locks in database '%s' owned by server '%s'", rollbacks,
+        recordLocks, databaseName, serverName);
+  }
+
+  @Override
+  public ODistributedTxContext registerTxContext(final ODistributedRequestId reqId) {
+    ODistributedTxContext ctx = new ODistributedTxContextImpl(this, reqId);
+
+    final ODistributedTxContext prevCtx = activeTxContexts.putIfAbsent(reqId, ctx);
     if (prevCtx != null) {
       // ALREADY EXISTENT
       ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE,
@@ -706,42 +745,14 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       return;
 
     int rollbacks = 0;
-    int tasks = 0;
 
-    final ODatabaseDocumentTx database = getDatabaseInstance();
-    try {
+    ODistributedServerLog.debug(this, manager.getLocalNodeName(), nodeName, DIRECTION.IN,
+        "Distributed transaction: rolling back all the pending transactions coordinated by the unreachable server '%s'", nodeName);
 
-      final Iterator<ODistributedTxContextImpl> pendingReqIterator = activeTxContexts.values().iterator();
-      while (pendingReqIterator.hasNext()) {
-        final ODistributedTxContextImpl pReq = pendingReqIterator.next();
-        if (pReq != null && pReq.getReqId().getNodeId() == nodeLeftId) {
-          try {
-            tasks += pReq.rollback(database);
-            rollbacks++;
-          } catch (Throwable t) {
-            // IGNORE IT
-            OLogManager.instance().error(this, "Error on rolling back transaction (req=%s)", pReq.getReqId());
-          }
-          pReq.destroy();
-          pendingReqIterator.remove();
-        }
-      }
-    } finally {
-      database.close();
-    }
-
-    int recordLocks = 0;
-    for (Map.Entry<ORID, ODistributedLock> entry : lockManager.entrySet()) {
-      final ODistributedLock lock = entry.getValue();
-      if (lock != null && lock.reqId != null && lock.reqId.getNodeId() == nodeLeftId) {
-        OLogManager.instance().info(this, "Unlocking record %s acquired with req=%s", entry.getKey(), lock.reqId);
-        recordLocks++;
-      }
-    }
-
-    ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE,
-        "Distributed transaction: rolled back %d transactions (%d total operations) and %d single locks in database '%s' owned by server '%s'",
-        rollbacks, tasks, recordLocks, databaseName, nodeName);
+    final OUnreachableServerLocalTask task = new OUnreachableServerLocalTask(nodeName);
+    final ODistributedRequest rollbackRequest = new ODistributedRequest(manager.getTaskFactory(), manager.getLocalNodeId(),
+        manager.getNextMessageIdCounter(), null, task);
+    processRequest(rollbackRequest);
   }
 
   @Override
@@ -986,11 +997,11 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
           final long now = System.currentTimeMillis();
           final long timeout = OGlobalConfiguration.DISTRIBUTED_TX_EXPIRE_TIMEOUT.getValueAsLong();
 
-          for (final Iterator<ODistributedTxContextImpl> it = activeTxContexts.values().iterator(); it.hasNext(); ) {
+          for (final Iterator<ODistributedTxContext> it = activeTxContexts.values().iterator(); it.hasNext(); ) {
             if (!isRunning())
               break;
 
-            final ODistributedTxContextImpl ctx = it.next();
+            final ODistributedTxContext ctx = it.next();
             if (ctx != null) {
               final long started = ctx.getStartedOn();
               final long elapsed = now - started;

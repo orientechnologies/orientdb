@@ -54,7 +54,7 @@ public class OResurrectRecordTask extends OUpdateRecordTask {
   public Object executeRecordTask(ODistributedRequestId requestId, final OServer iServer, ODistributedServerManager iManager,
       final ODatabaseDocumentInternal database) throws Exception {
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-        "resurrecting deleted record %s/%s v.%d", database.getName(), rid.toString(), version);
+        "Resurrecting deleted record %s/%s v.%d", database.getName(), rid.toString(), version);
 
     try {
       database.getStorage().recyclePosition(rid, new byte[] {}, version, recordType);

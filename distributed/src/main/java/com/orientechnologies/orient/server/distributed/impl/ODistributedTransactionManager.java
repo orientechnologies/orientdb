@@ -468,6 +468,9 @@ public class ODistributedTransactionManager {
 
     try {
       // SEND FINAL TX COMPLETE TASK TO UNLOCK RECORDS
+      ODistributedServerLog.debug(this, localNodeName, nodes.toString(), ODistributedServerLog.DIRECTION.OUT,
+          "Sending distributed end of transaction status=%s reqId=%s waitForFinalResponse=%s", status, reqId, SYNC_TX_COMPLETED);
+
       final ODistributedResponse response = dManager
           .sendRequest(storage.getName(), involvedClusters, nodes, new OCompleted2pcTask(reqId, status, partitionKey),
               dManager.getNextMessageIdCounter(), SYNC_TX_COMPLETED ? EXECUTION_MODE.NO_RESPONSE : EXECUTION_MODE.NO_RESPONSE, null,
@@ -687,7 +690,7 @@ public class ODistributedTransactionManager {
       // AUTO RETRY
 
       if (ODistributedServerLog.isDebugEnabled())
-        ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
+        ODistributedServerLog.debug(this, localNodeName, nodes.toString(), ODistributedServerLog.DIRECTION.IN,
             "Distributed transaction %s error: record %s is locked by %s", reqId,
             ((ODistributedRecordLockedException) result).getRid(), ((ODistributedRecordLockedException) result).getLockHolder());
 
@@ -705,9 +708,8 @@ public class ODistributedTransactionManager {
     } else if (result instanceof Exception) {
       // EXCEPTION: LOG IT AND ADD AS NESTED EXCEPTION
       if (ODistributedServerLog.isDebugEnabled())
-        ODistributedServerLog
-            .debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE, "Distributed transaction %s received error: %s",
-                reqId, result, result.toString());
+        ODistributedServerLog.debug(this, localNodeName, nodes.toString(), ODistributedServerLog.DIRECTION.IN,
+            "Distributed transaction %s received error: %s", reqId, result, result.toString());
 
       // LET TO THE CALLER TO UNDO IT
       if (result instanceof OTransactionException || result instanceof ONeedRetryException)
@@ -718,7 +720,7 @@ public class ODistributedTransactionManager {
     } else {
       // UNKNOWN RESPONSE TYPE
       if (ODistributedServerLog.isDebugEnabled())
-        ODistributedServerLog.info(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
+        ODistributedServerLog.info(this, localNodeName, nodes.toString(), ODistributedServerLog.DIRECTION.IN,
             "Distributed transaction %s error, received unknown response type: %s", reqId, result);
 
       // ROLLBACK TX

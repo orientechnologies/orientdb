@@ -387,7 +387,8 @@ public class ODistributedWorker extends Thread {
       final ORemoteServerController remoteSenderServer = manager.getRemoteServer(senderNodeName);
 
       ODistributedServerLog
-          .debug(current, localNodeName, senderNodeName, ODistributedServerLog.DIRECTION.OUT, "Sending response %s back", response);
+          .debug(current, localNodeName, senderNodeName, ODistributedServerLog.DIRECTION.OUT, "Sending response %s back (reqId=%s)",
+              response, iRequest);
 
       remoteSenderServer.sendResponse(response);
 

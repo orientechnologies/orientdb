@@ -56,7 +56,7 @@ public class ORepairClusterTask extends OTxTask {
     final String clusterName = database.getClusterNameById(clusterId);
 
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.IN,
-        "Repairing cluster '%s' db=%s (reqId=%s)...", clusterName, database.getName(), requestId);
+        "Repair cluster: repairing cluster '%s' db=%s (reqId=%s)...", clusterName, database.getName(), requestId);
 
     ODatabaseRecordThreadLocal.INSTANCE.set(database);
     final ODistributedDatabase ddb = iManager.getMessageService().getDatabase(database.getName());
@@ -93,7 +93,7 @@ public class ORepairClusterTask extends OTxTask {
       // if (e instanceof ODistributedRecordLockedException)
       // ddb.dumpLocks();
       ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.IN,
-          "Rolling back transaction db=%s (reqId=%s error=%s)...", database.getName(), requestId, e);
+          "Repair cluster: rolling back transaction db=%s (reqId=%s error=%s)...", database.getName(), requestId, e);
 
       // ddb.popTxContext(requestId);
       reqContext.unlock();
@@ -101,7 +101,7 @@ public class ORepairClusterTask extends OTxTask {
       return e;
     } finally {
       ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.IN,
-          "Transaction completed db=%s (reqId=%s)...", database.getName(), requestId);
+          "Repair cluster: transaction completed db=%s (reqId=%s)...", database.getName(), requestId);
     }
   }
 
