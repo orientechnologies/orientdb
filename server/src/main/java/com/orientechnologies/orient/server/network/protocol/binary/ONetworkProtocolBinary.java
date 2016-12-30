@@ -186,6 +186,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     okSent = false;
     try {
       requestType = channel.readByte();
+
+      OChannelBinaryProtocol.checkRequestTypeRange(channel, requestType);
+
       clientTxId = channel.readInt();
       // GET THE CONNECTION IF EXIST
       OClientConnection connection = server.getClientConnectionManager().getConnection(clientTxId, this);
