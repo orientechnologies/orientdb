@@ -989,6 +989,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     if (state == LifecycleEvent.LifecycleState.MERGED) {
       ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Server merged the existent cluster");
 
+      coordinatorServer = (String) configurationMap.getHazelcastMap().get(CONFIG_COORDINATOR);
+
       configurationMap.clearLocalCache();
     }
   }
@@ -1406,6 +1408,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     if (registeredNodeByName.containsKey(coordinatorServer))
       coordinatorServerId = registeredNodeByName.get(coordinatorServer);
 
+    final String originalCoordinator = coordinatorServer;
+
     int currIndex = coordinatorServerId;
     for (int i = 0; i < registeredNodeById.size(); ++i) {
       currIndex++;
@@ -1426,6 +1430,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
               new OCallable<Object, OModifiableDistributedConfiguration>() {
                 @Override
                 public Object call(OModifiableDistributedConfiguration iArgument) {
+                  ODistributedServerLog
+                      .info(this, nodeName, null, DIRECTION.NONE, "Elected server '%s' as new coordinator (old=%s)", newServer,
+                          originalCoordinator);
+
                   configurationMap.put(CONFIG_COORDINATOR, newServer);
                   return null;
                 }
@@ -1436,7 +1444,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         } catch (ODistributedOperationException e) {
           // NO SERVER RESPONDED, THE SERVER COULD BE ISOLATED, GO AHEAD WITH THE NEXT IN THE LIST
           ODistributedServerLog
-              .info(this, nodeName, null, DIRECTION.NONE, "Cannot elected server '%s' because is offline", newServer);
+              .info(this, nodeName, null, DIRECTION.NONE, "Cannot elect server '%s' because is offline", newServer);
         }
       }
     }

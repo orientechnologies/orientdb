@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed.impl.task;
 
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -52,10 +51,10 @@ import java.util.List;
  */
 public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
   private static final long serialVersionUID = 1L;
-  public static final int   FACTORYID        = 0;
-  protected byte[]          content;
-  protected byte            recordType;
-  protected int             clusterId        = -1;
+  public static final  int  FACTORYID        = 0;
+  protected byte[] content;
+  protected byte   recordType;
+  protected int clusterId = -1;
   private transient ORecord record;
 
   public OCreateRecordTask() {
@@ -102,8 +101,9 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
   public Object executeRecordTask(final ODistributedRequestId requestId, final OServer iServer,
       final ODistributedServerManager iManager, final ODatabaseDocumentInternal database) throws Exception {
     if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-          "Creating record %s/%s v.%d reqId=%s...", database.getName(), rid.toString(), version, requestId);
+      ODistributedServerLog
+          .debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "Creating record %s/%s v.%d reqId=%s...",
+              database.getName(), rid.toString(), version, requestId);
 
     if (!rid.isPersistent())
       throw new ODistributedException("Record " + rid + " has not been saved on owner node first (temporary rid)");
@@ -130,7 +130,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
 
       if (loadedRecord.getResult() != null) {
         // ALREADY PRESENT
-        record = forceUpdate(loadedRecord.getResult());
+        record = forceUpdate(iManager, database, requestId, loadedRecord.getResult());
         return new OPlaceholder(record);
       }
 
@@ -170,8 +170,9 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
             "Record " + rid + " has been saved with the different RID " + newRid + " on server " + iManager.getLocalNodeName());
       }
 
-      ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-          "+-> assigned new rid %s/%s v.%d reqId=%s", database.getName(), rid.toString(), record.getVersion(), requestId);
+      ODistributedServerLog
+          .debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "+-> assigned new rid %s/%s v.%d reqId=%s",
+              database.getName(), rid.toString(), record.getVersion(), requestId);
 
       // } catch (ORecordDuplicatedException e) {
       // // DUPLICATED INDEX ON THE TARGET: CREATE AN EMPTY RECORD JUST TO MAINTAIN THE RID AND LET TO THE FIX OPERATION TO SORT OUT
@@ -196,7 +197,8 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
     return new OPlaceholder(record);
   }
 
-  protected ORecord forceUpdate(final ORawBuffer loadedRecord) {
+  protected ORecord forceUpdate(final ODistributedServerManager manager, final ODatabaseDocumentInternal database,
+      final ODistributedRequestId requestId, final ORawBuffer loadedRecord) {
     // LOAD IT AS RECORD
     final ORecord loadedRecordInstance = Orient.instance().getRecordFactoryManager().newInstance(loadedRecord.recordType);
     ORecordInternal.fill(loadedRecordInstance, rid, loadedRecord.version, loadedRecord.getBuffer(), false);
@@ -206,8 +208,9 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
       // SAME CONTENT
       return loadedRecordInstance;
 
-    OLogManager.instance().info(this, "Error on creating record in an existent position. toStore=%s stored=%s", getRecord(),
-        loadedRecordInstance);
+    ODistributedServerLog.info(this, manager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+        "Error on creating record in an existent position. toStore=%s stored=%s reqId=%s", getRecord(), loadedRecordInstance,
+        requestId);
 
     throw new ODistributedOperationException("Cannot create the record " + rid + " in an already existent position");
   }
@@ -242,12 +245,12 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
           if (dManager.getLocalNodeName().equals(executorNode)) {
             // SAME SERVER: LOAD THE RECORD FROM ANOTHER NODE
             final ODistributedConfiguration dCfg = dManager.getDatabaseConfiguration(iRequest.getDatabaseName());
-            final List<String> nodes = dCfg.getServers(ODatabaseRecordThreadLocal.INSTANCE.get().getClusterNameById(clusterId),
-                dManager.getLocalNodeName());
+            final List<String> nodes = dCfg
+                .getServers(ODatabaseRecordThreadLocal.INSTANCE.get().getClusterNameById(clusterId), dManager.getLocalNodeName());
 
-            final ODistributedResponse response = dManager.sendRequest(iRequest.getDatabaseName(), null, nodes,
-                new OReadRecordTask(toUpdateRid), dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE,
-                null, null);
+            final ODistributedResponse response = dManager
+                .sendRequest(iRequest.getDatabaseName(), null, nodes, new OReadRecordTask(toUpdateRid),
+                    dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
 
             final ORawBuffer remoteReadRecord = (ORawBuffer) response.getPayload();
 
