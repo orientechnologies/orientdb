@@ -36,8 +36,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * expensive in case the number of locks are a lot. This implementation works better than {@link OPartitionedLockManager} when
  * running distributed because there is no way to
  *
- * @param <T>
- *          Type of keys
+ * @param <T> Type of keys
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
@@ -46,12 +45,12 @@ public class OOneEntryPerKeyLockManager<T> implements OLockManager<T> {
     SHARED, EXCLUSIVE
   }
 
-  private long                                              acquireTimeout;
+  private         long                                      acquireTimeout;
   protected final ConcurrentLinkedHashMap<T, CountableLock> map;
-  private final boolean                                     enabled;
-  private final int                                         amountOfCachedInstances;
+  private final   boolean                                   enabled;
+  private final   int                                       amountOfCachedInstances;
 
-  private final static Object                               NULL_KEY = new Object();
+  private final static Object NULL_KEY = new Object();
 
   @SuppressWarnings("serial")
   private static class CountableLock {
@@ -182,8 +181,8 @@ public class OOneEntryPerKeyLockManager<T> implements OLockManager<T> {
           }
         } catch (InterruptedException e) {
           Thread.currentThread().interrupt();
-          throw OException.wrapException(new OLockException("Thread interrupted while waiting for resource '" + iResourceId + "'"),
-              e);
+          throw OException
+              .wrapException(new OLockException("Thread interrupted while waiting for resource '" + iResourceId + "'"), e);
         }
       }
 
@@ -206,8 +205,9 @@ public class OOneEntryPerKeyLockManager<T> implements OLockManager<T> {
 
     final CountableLock lock = map.get(iResourceId);
     if (lock == null)
-      throw new OLockException("Error on releasing a non acquired lock by the requester '" + iRequester
-          + "' against the resource: '" + iResourceId + "'");
+      throw new OLockException(
+          "Error on releasing a non acquired lock by the requester '" + iRequester + "' against the resource: '" + iResourceId
+              + "'");
 
     lock.countLocks.decrementAndGet();
 
@@ -269,6 +269,20 @@ public class OOneEntryPerKeyLockManager<T> implements OLockManager<T> {
   public void unlockAllExclusive() {
     for (CountableLock lock : map.values()) {
       lock.readWriteLock.writeLock().unlock();
+    }
+  }
+
+  @Override
+  public void lockAllShared() {
+    for (CountableLock lock : map.values()) {
+      lock.readWriteLock.readLock().lock();
+    }
+  }
+
+  @Override
+  public void unlockAllShared() {
+    for (CountableLock lock : map.values()) {
+      lock.readWriteLock.readLock().unlock();
     }
   }
 

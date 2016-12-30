@@ -46,4 +46,14 @@ public interface OLockManager<T> {
   void lockAllExclusive();
 
   void unlockAllExclusive();
+
+  /**
+   * Locks all the keys inside this lock manager for reading.
+   */
+  void lockAllShared();
+
+  /**
+   * Unlocks all the keys inside this lock manager previously locked with {@link #lockAllShared()} for reading.
+   */
+  void unlockAllShared();
 }
