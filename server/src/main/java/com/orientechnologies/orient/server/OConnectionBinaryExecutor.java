@@ -1053,7 +1053,7 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   @Override
   public OBinaryResponse executeBeginTransaction(OBeginTransactionRequest request) {
     final OTransactionOptimisticServer tx = new OTransactionOptimisticServer(connection.getDatabase(), request.getTxId(),
-        request.isUsingLong(), request.getOperations(), request.getChanges());
+        request.isUsingLog(), request.getOperations(), request.getIndexChanges());
     try {
       connection.getDatabase().begin(tx);
     } catch (final ORecordNotFoundException e) {

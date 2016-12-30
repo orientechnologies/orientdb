@@ -1,16 +1,14 @@
 package com.orientechnologies.orient.client.remote.message;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.UUID;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.client.remote.OClusterRemote;
 import com.orientechnologies.orient.client.remote.OCollectionNetworkSerializer;
+import com.orientechnologies.orient.client.remote.message.tx.IndexChange;
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -21,12 +19,16 @@ import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollecti
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetwork;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
@@ -45,7 +47,8 @@ public class OMessageHelper {
     }
   }
 
-  public static void writeRecord(OChannelDataOutput channel, final ORecord iRecord, ORecordSerializer serializer) throws IOException {
+  public static void writeRecord(OChannelDataOutput channel, final ORecord iRecord, ORecordSerializer serializer)
+      throws IOException {
     channel.writeShort((short) 0);
     channel.writeByte(ORecordInternal.getRecordType(iRecord));
     channel.writeRID(iRecord.getIdentity());
@@ -67,8 +70,8 @@ public class OMessageHelper {
     String dbSerializerName = null;
     if (ODatabaseRecordThreadLocal.INSTANCE.getIfDefined() != null)
       dbSerializerName = ((ODatabaseDocumentInternal) iRecord.getDatabase()).getSerializer().toString();
-    if (ORecordInternal.getRecordType(iRecord) == ODocument.RECORD_TYPE
-        && (dbSerializerName == null || !dbSerializerName.equals(serializer.toString()))) {
+    if (ORecordInternal.getRecordType(iRecord) == ODocument.RECORD_TYPE && (dbSerializerName == null || !dbSerializerName
+        .equals(serializer.toString()))) {
       ((ODocument) iRecord).deserializeFields();
       stream = serializer.toStream(iRecord, false);
     } else
@@ -224,4 +227,55 @@ public class OMessageHelper {
     return entry;
   }
 
+  static void writeTransactionIndexChanges(OChannelDataOutput network, ORecordSerializerNetwork serializer,
+      List<IndexChange> changes) throws IOException {
+    network.writeInt(changes.size());
+    for (IndexChange indexChange : changes) {
+      network.writeString(indexChange.getName());
+      network.writeBoolean(indexChange.getKeyChanges().cleared);
+      if (!indexChange.getKeyChanges().cleared) {
+        network.writeInt(indexChange.getKeyChanges().changesPerKey.size());
+        for (OTransactionIndexChangesPerKey change : indexChange.getKeyChanges().changesPerKey.values()) {
+          OType type = OType.getTypeByValue(change.key);
+          byte[] value = serializer.serializeValue(change.key, type);
+          network.writeByte((byte) type.getId());
+          network.writeBytes(value);
+          network.writeInt(change.entries.size());
+          for (OTransactionIndexChangesPerKey.OTransactionIndexEntry perKeyChange : change.entries) {
+            network.writeInt(perKeyChange.operation.ordinal());
+            network.writeRID(perKeyChange.value.getIdentity());
+          }
+        }
+      }
+    }
+  }
+
+  static List<IndexChange> readTransactionIndexChanges(OChannelDataInput channel, ORecordSerializerNetwork serializer)
+      throws IOException {
+    List<IndexChange> changes = new ArrayList<>();
+    int val = channel.readInt();
+    while (val-- > 0) {
+      String indexName = channel.readString();
+      boolean cleared = channel.readBoolean();
+      OTransactionIndexChanges entry = new OTransactionIndexChanges();
+      entry.cleared = cleared;
+      if (!cleared) {
+        int changeCount = channel.readInt();
+        NavigableMap<Object, OTransactionIndexChangesPerKey> entries = new TreeMap<>(); while (changeCount-- > 0) {
+          byte bt = channel.readByte();
+          OType type = OType.getById(bt);
+          Object key = serializer.deserializeValue(channel.readBytes(), type);
+          OTransactionIndexChangesPerKey changesPerKey = new OTransactionIndexChangesPerKey(key);
+          int keyChangeCount = channel.readInt();
+          while (keyChangeCount-- > 0) {
+            int op = channel.readInt();
+            ORecordId id = channel.readRID();
+            changesPerKey.add(id, OTransactionIndexChanges.OPERATION.values()[op]);
+          }
+          entries.put(changesPerKey.key, changesPerKey);
+        }
+        entry.changesPerKey = entries;
+      } changes.add(new IndexChange(indexName, entry));
+    } return changes;
+  }
 }

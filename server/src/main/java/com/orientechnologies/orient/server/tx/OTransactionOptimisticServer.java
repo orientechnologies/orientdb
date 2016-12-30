@@ -1,10 +1,9 @@
 package com.orientechnologies.orient.server.tx;
 
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.orient.client.remote.message.OBeginTransactionRequest;
+import com.orientechnologies.orient.client.remote.message.tx.IndexChange;
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -12,17 +11,12 @@ import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
-import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
 import java.util.*;
 
@@ -34,12 +28,12 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
   private final Map<ORID, ORecordOperation> tempEntries    = new LinkedHashMap<ORID, ORecordOperation>();
   private final Map<ORecordId, ORecord>     createdRecords = new HashMap<ORecordId, ORecord>();
   private final Map<ORecordId, ORecord>     updatedRecords = new HashMap<ORecordId, ORecord>();
-  private final int                                        clientTxId;
-  private       List<ORecordOperationRequest>              operations;
-  private final List<OBeginTransactionRequest.IndexChange> indexChanges;
+  private final int                           clientTxId;
+  private       List<ORecordOperationRequest> operations;
+  private final List<IndexChange>             indexChanges;
 
   public OTransactionOptimisticServer(ODatabaseDocumentInternal database, int txId, boolean usingLong,
-      List<ORecordOperationRequest> operations, List<OBeginTransactionRequest.IndexChange> indexChanges) {
+      List<ORecordOperationRequest> operations, List<IndexChange> indexChanges) {
     super(database);
     clientTxId = txId;
     this.setUsingLog(usingLong);
@@ -100,7 +94,7 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
       }
       this.operations = null;
 
-      for (OBeginTransactionRequest.IndexChange change : indexChanges) {
+      for (IndexChange change : indexChanges) {
         indexEntries.put(change.getName(), change.getKeyChanges());
       }
 
