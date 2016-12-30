@@ -545,16 +545,6 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
   }
 
   @Override
-  public void lockAllKeysForRead() {
-    keyLockManager.lockAllShared();
-  }
-
-  @Override
-  public void releaseAllKeysForRead() {
-    keyLockManager.unlockAllShared();
-  }
-
-  @Override
   public void lockKeysForUpdate(Object... key) {
     if (key == null || key.length == 0)
       return;

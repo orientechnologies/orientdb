@@ -104,13 +104,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private static final int RECORD_LOCK_TIMEOUT         = OGlobalConfiguration.STORAGE_RECORD_LOCK_TIMEOUT.getValueAsInteger();
   private static final int WAL_RESTORE_REPORT_INTERVAL = 30 * 1000;                                      // milliseconds
 
-  private static final Comparator<OIndex<?>> INDEX_ID_COMPARATOR = new Comparator<OIndex<?>>() {
-    @Override
-    public int compare(OIndex<?> o1, OIndex<?> o2) {
-      return o1.getIndexId() - o2.getIndexId();
-    }
-  };
-
   private final OComparableLockManager<ORID> lockManager;
 
   /**
@@ -2429,43 +2422,36 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       checkOpeness();
 
-      lockAllIndexKeys();
+      final long freezeId;
+
+      if (throwException)
+        freezeId = atomicOperationsManager
+            .freezeAtomicOperations(OModificationOperationProhibitedException.class, "Modification requests are prohibited");
+      else
+        freezeId = atomicOperationsManager.freezeAtomicOperations(null, null);
+
+      final List<OFreezableStorageComponent> frozenIndexes = new ArrayList<OFreezableStorageComponent>(indexEngines.size());
       try {
-
-        final long freezeId;
-
-        if (throwException)
-          freezeId = atomicOperationsManager
-              .freezeAtomicOperations(OModificationOperationProhibitedException.class, "Modification requests are prohibited");
-        else
-          freezeId = atomicOperationsManager.freezeAtomicOperations(null, null);
-
-        final List<OFreezableStorageComponent> frozenIndexes = new ArrayList<OFreezableStorageComponent>(indexEngines.size());
-        try {
-          for (OIndexEngine indexEngine : indexEngines)
-            if (indexEngine != null && indexEngine instanceof OFreezableStorageComponent) {
-              ((OFreezableStorageComponent) indexEngine).freeze(false);
-              frozenIndexes.add((OFreezableStorageComponent) indexEngine);
-            }
-        } catch (Exception e) {
-          // RELEASE ALL THE FROZEN INDEXES
-          for (OFreezableStorageComponent indexEngine : frozenIndexes)
-            indexEngine.release();
-
-          throw OException.wrapException(new OStorageException("Error on freeze of storage '" + name + "'"), e);
-        }
-
-        synch();
-        try {
-          if (configuration != null)
-            configuration.setSoftlyClosed(true);
-
-        } catch (IOException e) {
-          atomicOperationsManager.releaseAtomicOperations(freezeId);
-          throw OException.wrapException(new OStorageException("Error on freeze of storage '" + name + "'"), e);
-        }
+        for (OIndexEngine indexEngine : indexEngines)
+          if (indexEngine != null && indexEngine instanceof OFreezableStorageComponent) {
+            ((OFreezableStorageComponent) indexEngine).freeze(false);
+            frozenIndexes.add((OFreezableStorageComponent) indexEngine);
+          }
       } catch (Exception e) {
-        unlockAllIndexKeys();
+        // RELEASE ALL THE FROZEN INDEXES
+        for (OFreezableStorageComponent indexEngine : frozenIndexes)
+          indexEngine.release();
+
+        throw OException.wrapException(new OStorageException("Error on freeze of storage '" + name + "'"), e);
+      }
+
+      synch();
+      try {
+        if (configuration != null)
+          configuration.setSoftlyClosed(true);
+
+      } catch (IOException e) {
+        atomicOperationsManager.releaseAtomicOperations(freezeId);
         throw OException.wrapException(new OStorageException("Error on freeze of storage '" + name + "'"), e);
       }
     } finally {
@@ -2475,22 +2461,18 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   public void release() {
     try {
-      try {
-        for (OIndexEngine indexEngine : indexEngines)
-          if (indexEngine != null && indexEngine instanceof OFreezableStorageComponent)
-            ((OFreezableStorageComponent) indexEngine).release();
+      for (OIndexEngine indexEngine : indexEngines)
+        if (indexEngine != null && indexEngine instanceof OFreezableStorageComponent)
+          ((OFreezableStorageComponent) indexEngine).release();
 
-        if (configuration != null)
-          configuration.setSoftlyClosed(false);
+      if (configuration != null)
+        configuration.setSoftlyClosed(false);
 
-      } catch (IOException e) {
-        throw OException.wrapException(new OStorageException("Error on release of storage '" + name + "'"), e);
-      }
-
-      atomicOperationsManager.releaseAtomicOperations(-1);
-    } finally {
-      unlockAllIndexKeys();
+    } catch (IOException e) {
+      throw OException.wrapException(new OStorageException("Error on release of storage '" + name + "'"), e);
     }
+
+    atomicOperationsManager.releaseAtomicOperations(-1);
   }
 
   @Override
@@ -4145,28 +4127,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       rids.add(rid);
     }
     return ridsPerCluster;
-  }
-
-  private void lockAllIndexKeys() {
-    final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.get();
-
-    final List<OIndex<?>> indexes = new ArrayList<OIndex<?>>(database.getMetadata().getIndexManager().getIndexes());
-    Collections.sort(indexes, INDEX_ID_COMPARATOR);
-
-    for (OIndex<?> index : indexes) {
-      final OIndexInternal<?> internal = index.getInternal();
-      if (internal != null)
-        internal.lockAllKeysForRead();
-    }
-  }
-
-  private void unlockAllIndexKeys() {
-    final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.get();
-    for (OIndex<?> index : database.getMetadata().getIndexManager().getIndexes()) {
-      final OIndexInternal<?> internal = index.getInternal();
-      if (internal != null)
-        internal.releaseAllKeysForRead();
-    }
   }
 
   private void lockIndexKeys(OIndexManagerProxy manager, TreeMap<String, OTransactionIndexChanges> indexes, List<Lock[]> lockList) {
