@@ -55,7 +55,7 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <executable>npm</executable>
+                    <executable>yarn</executable>
                     <arguments>
                         <argument>run</argument>
                         <argument>dist</argument>
