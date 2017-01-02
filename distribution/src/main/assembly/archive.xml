@@ -248,6 +248,17 @@
                 <exclude>*:ivy:*</exclude>
             </excludes>
         </dependencySet>
+        <dependencySet>
+            <outputDirectory>plugins</outputDirectory>
+            <includes>
+                <include>*:zip:*</include>
+            </includes>
+            <excludes>
+                <exclude>*:ant:*</exclude>
+                <exclude>*:ant-launcher:*</exclude>
+                <exclude>*:ivy:*</exclude>
+            </excludes>
+        </dependencySet>
     </dependencySets>
 
 </assembly>

@@ -105,6 +105,12 @@
             <artifactId>orientdb-jdbc</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-studio</artifactId>
+            <version>${project.version}</version>
+            <type>zip</type>
+        </dependency>
 
 
     </dependencies>
@@ -127,7 +133,7 @@
                             <arguments>
                                 <argument>-XX:MaxDirectMemorySize=512g</argument>
                                 <argument>-classpath</argument>
-                                <classpath />
+                                <classpath/>
                                 <argument>com.orientechnologies.orient.graph.console.OInternalGraphImporter</argument>
                                 <argument>${project.basedir}/../graphdb/src/test/resources/graph-example-2.xml</argument>
                                 <argument>plocal:${project.basedir}/target/databases/GratefulDeadConcerts</argument>
