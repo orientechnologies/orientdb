@@ -43,9 +43,9 @@ import java.io.IOException;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class ServerRun {
-  protected final String serverId;
-  protected String       rootPath;
-  protected OServer      server;
+  protected final String  serverId;
+  protected       String  rootPath;
+  protected       OServer server;
 
   public ServerRun(final String iRootPath, final String serverId) {
     this.rootPath = iRootPath;
@@ -71,7 +71,7 @@ public class ServerRun {
 
   public String getBinaryProtocolAddress() {
     final OServerNetworkListener prot = server.getListenerByProtocol(ONetworkProtocolBinary.class);
-    if( prot == null )
+    if (prot == null)
       return null;
     return prot.getListeningAddress(true);
   }
@@ -181,8 +181,14 @@ public class ServerRun {
       try {
         ((OHazelcastPlugin) server.getDistributedManager()).getHazelcastInstance().shutdown();
       } catch (Exception e) {
+        // IGNORE IT
       }
-      server.shutdown();
+
+      try {
+        server.shutdown();
+      } catch (Exception e) {
+        // IGNORE IT
+      }
     }
 
     closeStorages();
@@ -198,8 +204,14 @@ public class ServerRun {
         hz.getLifecycleService().terminate();
 
       } catch (Exception e) {
+        // IGNORE IT
       }
-      server.shutdown();
+
+      try {
+        server.shutdown();
+      } catch (Exception e) {
+        // IGNORE IT
+      }
     }
 
     closeStorages();
@@ -207,18 +219,22 @@ public class ServerRun {
 
   public void closeStorages() {
     for (OStorage s : Orient.instance().getStorages()) {
-      if (s instanceof OLocalPaginatedStorage
-          && new File(((OLocalPaginatedStorage) s).getStoragePath()).getAbsolutePath().startsWith(getDatabasePath(""))) {
-        s.close(true, false);
-        Orient.instance().unregisterStorage(s);
+      if (s instanceof OLocalPaginatedStorage && new File(((OLocalPaginatedStorage) s).getStoragePath()).getAbsolutePath()
+          .startsWith(getDatabasePath(""))) {
+        try {
+          s.close(true, false);
+          Orient.instance().unregisterStorage(s);
+        } catch (Exception e) {
+          // IGNORE IT
+        }
       }
     }
   }
 
   public void deleteStorages() {
     for (OStorage s : Orient.instance().getStorages()) {
-      if (s instanceof OLocalPaginatedStorage
-          && new File(((OLocalPaginatedStorage) s).getStoragePath()).getAbsolutePath().startsWith(getDatabasePath(""))) {
+      if (s instanceof OLocalPaginatedStorage && new File(((OLocalPaginatedStorage) s).getStoragePath()).getAbsolutePath()
+          .startsWith(getDatabasePath(""))) {
         s.close(true, true);
         Orient.instance().unregisterStorage(s);
       }

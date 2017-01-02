@@ -55,7 +55,7 @@ public abstract class AbstractServerClusterTest {
   protected String     rootDirectory = "target/servers/";
   protected AtomicLong totalVertices = new AtomicLong(0);
 
-  protected List<ServerRun> serverInstance = new ArrayList<ServerRun>();
+  protected final List<ServerRun> serverInstance = new ArrayList<ServerRun>();
 
   protected AbstractServerClusterTest() {
     OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.setValue(true);
@@ -133,7 +133,7 @@ public abstract class AbstractServerClusterTest {
       banner("Test finished");
 
       OLogManager.instance().flush();
-      banner("Shutting down nodes...");
+      banner("Shutting down " + serverInstance.size() + " nodes...");
       for (ServerRun server : serverInstance) {
         log("Shutting down node " + server.getServerId() + "...");
         if (terminateAtShutdown)

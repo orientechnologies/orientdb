@@ -18,6 +18,7 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -34,8 +35,10 @@ import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.server.distributed.impl.OLocalClusterWrapperStrategy;
 import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import org.junit.Assert;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -51,7 +54,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
   protected OIndex<?> idx;
   protected int             maxRetries            = 5;
   protected boolean         useTransactions       = false;
-  protected List<ServerRun> executeTestsOnServers = serverInstance;
+  protected List<ServerRun> executeTestsOnServers = null;
   protected String          className             = "Person";
   protected String          indexName             = "Person.name";
 
@@ -299,6 +302,14 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
 
   protected void executeMultipleTest() throws InterruptedException, java.util.concurrent.ExecutionException {
     executeMultipleTest(0);
+  }
+
+  @Override
+  protected void prepare(boolean iCopyDatabaseToNodes, boolean iCreateDatabase, OCallable<Object, OrientGraphFactory> iCfgCallback)
+      throws IOException {
+    super.prepare(iCopyDatabaseToNodes, iCreateDatabase, iCfgCallback);
+
+    executeTestsOnServers = new ArrayList<ServerRun>(serverInstance);
   }
 
   protected void executeMultipleTest(final int serverNum) throws InterruptedException, java.util.concurrent.ExecutionException {
