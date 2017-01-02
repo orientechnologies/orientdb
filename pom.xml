@@ -3,64 +3,91 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
-  <modelVersion>4.0.0</modelVersion>
-
-  <groupId>com.orientechnologies</groupId>
-  <artifactId>orientdb-studio</artifactId>
-  <version>2.2.15-SNAPSHOT</version>
+    <modelVersion>4.0.0</modelVersion>
 
 
-  <build>
+    <groupId>com.orientechnologies</groupId>
+    <artifactId>orientdb-studio</artifactId>
+    <version>2.2.15-SNAPSHOT</version>
 
-    <plugins>
+    <distributionManagement>
+        <repository>
+            <id>sonatype-nexus-staging</id>
+            <name>OrientDB Maven2 Repository</name>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
+        </repository>
+        <snapshotRepository>
+            <id>sonatype-nexus-snapshots</id>
+            <name>OrientDB Maven2 Snapshot Repository</name>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+            <uniqueVersion>false</uniqueVersion>
+        </snapshotRepository>
+    </distributionManagement>
+    <repositories>
+        <repository>
+            <id>sonatype-nexus-snapshots</id>
+            <name>Sonatype Nexus Snapshots</name>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+    <build>
 
-      <plugin>
-        <!-- Build the front end -->
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>exec-maven-plugin</artifactId>
-        <version>1.4.0</version>
-        <executions>
-          <execution>
-            <phase>generate-resources</phase>
-            <goals>
-              <goal>exec</goal>
-            </goals>
-          </execution>
-        </executions>
-        <configuration>
-          <executable>npm</executable>
-          <arguments>
-            <argument>run</argument>
-            <argument>dist</argument>
-          </arguments>
-          <workingDirectory>.</workingDirectory>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-assembly-plugin</artifactId>
-        <version>2.4</version>
-        <executions>
-          <execution>
-            <id>distribution-package</id>
-            <phase>package</phase>
-            <goals>
-              <goal>single</goal>
-            </goals>
-            <configuration>
-              <appendAssemblyId>false</appendAssemblyId>
-              <descriptors>
-                <descriptor>${basedir}/assembly/archive.xml</descriptor>
-              </descriptors>
-              <filters>
-                <filter></filter>
-              </filters>
-              <ignoreDirFormatExtensions>false</ignoreDirFormatExtensions>
-              <tarLongFileMode>gnu</tarLongFileMode>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
-  </build>
+        <plugins>
+
+            <plugin>
+
+                <!-- Build the front end -->
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.4.0</version>
+                <executions>
+                    <execution>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <executable>npm</executable>
+                    <arguments>
+                        <argument>run</argument>
+                        <argument>dist</argument>
+                    </arguments>
+                    <workingDirectory>.</workingDirectory>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <!--<version>2.4</version>-->
+                <executions>
+                    <execution>
+                        <id>distribution-package</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <appendAssemblyId>false</appendAssemblyId>
+                            <descriptors>
+                                <descriptor>${basedir}/assembly/archive.xml</descriptor>
+                            </descriptors>
+                            <filters>
+                                <filter></filter>
+                            </filters>
+                            <ignoreDirFormatExtensions>false</ignoreDirFormatExtensions>
+                            <tarLongFileMode>gnu</tarLongFileMode>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>
