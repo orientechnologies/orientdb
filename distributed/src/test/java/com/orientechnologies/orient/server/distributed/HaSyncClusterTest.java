@@ -1,13 +1,18 @@
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import org.testng.Assert;
+import org.junit.Assert;
+import org.junit.Ignore;
+import org.junit.Test;
 
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -39,16 +44,17 @@ import java.util.concurrent.Future;
  * @author Enrico Risa
  */
 public class HaSyncClusterTest extends AbstractServerClusterTest {
-  private final static int SERVERS         = 2;
-  public static final int  NUM_RECORDS     = 1000;
+  private final static int SERVERS     = 2;
+  public static final  int NUM_RECORDS = 1000;
 
-  ExecutorService          executorService = Executors.newSingleThreadExecutor();
+  ExecutorService executorService = Executors.newSingleThreadExecutor();
 
   public String getDatabaseName() {
     return "HaSyncClusterTest";
   }
 
-  // @Test
+  @Test
+  @Ignore
   public void test() throws Exception {
     init(SERVERS);
     prepare(false);
@@ -65,8 +71,12 @@ public class HaSyncClusterTest extends AbstractServerClusterTest {
     ODatabaseDocumentTx db = new ODatabaseDocumentTx("plocal:" + databasePath);
     db.open("admin", "admin");
 
-    try {
+    final OClass person = db.getMetadata().getSchema().getClass("Person");
+    person.createProperty("name", OType.STRING);
+    person.createIndex("testAutoSharding", OClass.INDEX_TYPE.UNIQUE.toString(), (OProgressListener) null, (ODocument) null,
+        "AUTOSHARDING", new String[] { "name" });
 
+    try {
       Future<Long> future = invokeSyncCluster(localNodeName, serverInstance.get(1));
 
       for (int i = 0; i < NUM_RECORDS; i++) {
@@ -135,8 +145,9 @@ public class HaSyncClusterTest extends AbstractServerClusterTest {
               }
               long processed = messageService.getProcessedRequests() - heartbeat - deploy_cluster;
 
-              OLogManager.instance().info(this, "Waiting for processed requests to be [%d], actual [%d] with stats [%s] ",
-                  NUM_RECORDS, processed, messageStats.toJSON());
+              OLogManager.instance()
+                  .info(this, "Waiting for processed requests to be [%d], actual [%d] with stats [%s] ", NUM_RECORDS, processed,
+                      messageStats.toJSON());
 
               return processed >= NUM_RECORDS;
             }

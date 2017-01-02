@@ -296,7 +296,7 @@ public class ODistributedTransactionManager {
           }
         }
 
-        if (storage.checkForCluster(newRid, localNodeName, dbCfg) != null)
+        if (storage.checkForCluster(op.getRecord(), localNodeName, dbCfg) != null)
           iTx.updateIdentityAfterCommit(rid, newRid);
 
         break;

@@ -45,6 +45,8 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.replication.OAsyncReplicationError;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLDelegate;
@@ -601,8 +603,13 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     checkWriteQuorum(dbCfg, clusterName, localNodeName);
 
     try {
+      ODocument documentForClusterSelection = iRecordId.getRecord();
+      if (documentForClusterSelection == null) {
+        // DOCUMENT NOT FOUND: BUILD A TEMPORARY ONE
+        documentForClusterSelection = (ODocument) ORecordInternal.fill(new ODocument(), iRecordId, iRecordVersion, iContent, false);
+      }
 
-      checkForCluster(iRecordId, localNodeName, dbCfg);
+      checkForCluster(documentForClusterSelection, localNodeName, dbCfg);
 
       final List<String> servers = dbCfg.getServers(clusterName, null);
 
@@ -1954,12 +1961,15 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     }
   }
 
-  protected String checkForCluster(final ORecordId iRecordId, final String localNodeName, ODistributedConfiguration dbCfg) {
+  protected String checkForCluster(final ORecord record, final String localNodeName, ODistributedConfiguration dbCfg) {
+    if (!(record instanceof ODocument))
+      return null;
 
-    if (iRecordId.getClusterId() < 0)
-      throw new IllegalArgumentException("RID " + iRecordId + " is not valid");
+    final ORecordId rid = (ORecordId) record.getIdentity();
+    if (rid.getClusterId() < 0)
+      throw new IllegalArgumentException("RID " + rid + " is not valid");
 
-    String clusterName = getClusterNameByRID(iRecordId);
+    String clusterName = getClusterNameByRID(rid);
 
     String ownerNode = dbCfg.getClusterOwner(clusterName);
 
@@ -1987,7 +1997,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
       dbCfg = ((OLocalClusterWrapperStrategy) clSel).readConfiguration();
 
-      newClusterName = getPhysicalClusterNameById(clSel.getCluster(cls, (ODocument) iRecordId.getRecord()));
+      newClusterName = getPhysicalClusterNameById(clSel.getCluster(cls, (ODocument) record));
 
       OLogManager.instance().info(this,
           "Local node '" + localNodeName + "' is not the owner for cluster '" + clusterName + "' (it is '" + ownerNode
@@ -2006,11 +2016,10 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
     // OVERWRITE CLUSTER
     clusterName = newClusterName;
-    final ORecordId oldRID = iRecordId.copy();
-    iRecordId.setClusterId(db.getClusterIdByName(newClusterName));
+    final ORecordId oldRID = rid.copy();
+    rid.setClusterId(db.getClusterIdByName(newClusterName));
 
-    OLogManager.instance()
-        .info(this, "Reassigned local cluster '%s' to the record %s. New RID is %s", newClusterName, oldRID, iRecordId);
+    OLogManager.instance().info(this, "Reassigned local cluster '%s' to the record %s. New RID is %s", newClusterName, oldRID, rid);
 
     return clusterName;
   }
