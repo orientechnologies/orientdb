@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.impl.task.OHeartbeatTask;
 import com.orientechnologies.orient.server.distributed.impl.task.ORequestDatabaseConfigurationTask;
-import com.orientechnologies.orient.server.distributed.task.ODatabaseIsOldException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
@@ -182,24 +181,16 @@ public class OClusterHealthChecker extends TimerTask {
         ODistributedServerLog.info(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
             "Trying to recover current server for database '%s'...", dbName);
 
-        try {
-          final ODistributedConfiguration dCfg = ((ODistributedStorage) manager.getStorage(dbName)).getDistributedConfiguration();
-          if (dCfg != null) {
-            final boolean result = manager.installDatabase(true, dbName, false, true);
+        final ODistributedConfiguration dCfg = ((ODistributedStorage) manager.getStorage(dbName)).getDistributedConfiguration();
+        if (dCfg != null) {
+          final boolean result = manager.installDatabase(true, dbName, false, true);
 
-            if (result)
-              ODistributedServerLog.info(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-                  "Recover complete for database '%s'...", dbName);
-            else
-              ODistributedServerLog.info(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-                  "Recover cannot be completed for database '%s'...", dbName);
-          }
-        } catch (ODatabaseIsOldException e) {
-          // CURRENT DATABASE IS NEWER, SET ALL OTHER DATABASES AS NOT_AVAILABLE TO FORCE THEM TO ASK FOR THE CURRENT DATABASE
-          manager.setDatabaseStatus(manager.getLocalNodeName(), dbName, ODistributedServerManager.DB_STATUS.ONLINE);
-          for (String s : servers) {
-            manager.setDatabaseStatus(s, dbName, ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
-          }
+          if (result)
+            ODistributedServerLog.info(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+                "Recover complete for database '%s'...", dbName);
+          else
+            ODistributedServerLog.info(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+                "Recover cannot be completed for database '%s'...", dbName);
         }
       }
     }

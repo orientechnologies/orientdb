@@ -691,7 +691,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
             reassignClustersOwnership(nodeName, databaseName, cfg);
 
             try {
-              ddb.getSyncConfiguration().setLastLSN(nodeName, ((OLocalPaginatedStorage) stg.getUnderlying()).getLSN(), true);
+              ddb.getSyncConfiguration().setLastLSN(nodeName, ((OLocalPaginatedStorage) stg.getUnderlying()).getLSN(), false);
             } catch (IOException e) {
               ODistributedServerLog
                   .error(this, nodeName, null, DIRECTION.NONE, "Error on saving distributed LSN for database '%s' (err=%s).",

@@ -65,6 +65,7 @@ import com.orientechnologies.orient.server.distributed.conflict.ODistributedConf
 import com.orientechnologies.orient.server.distributed.impl.task.*;
 import com.orientechnologies.orient.server.distributed.sql.OCommandExecutorSQLHASyncCluster;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
+import com.orientechnologies.orient.server.distributed.task.ODatabaseIsOldException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedDatabaseDeltaSyncException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
@@ -875,59 +876,78 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
         boolean databaseInstalled;
 
-        // CREATE THE DISTRIBUTED QUEUE
-        if (!distrDatabase.exists() || distrDatabase.getSyncConfiguration().getMomentum().isEmpty()) {
+        try {
 
-          if (deploy == null || !deploy) {
-            // NO AUTO DEPLOY
-            setDatabaseStatus(nodeName, databaseName, DB_STATUS.ONLINE);
-            distrDatabase.resume();
-            return false;
-          }
+          // CREATE THE DISTRIBUTED QUEUE
+          if (!distrDatabase.exists() || distrDatabase.getSyncConfiguration().getMomentum().isEmpty()) {
 
-          // FIRST TIME, ASK FOR FULL REPLICA
-          databaseInstalled = requestFullDatabase(distrDatabase, databaseName, iStartup, cfg);
-
-        } else {
-          if (tryWithDeltaFirst) {
-            try {
-
-              // TRY WITH DELTA SYNC
-              databaseInstalled = requestDatabaseDelta(distrDatabase, databaseName, cfg);
-
-            } catch (ODistributedDatabaseDeltaSyncException e) {
-              // FALL BACK TO FULL BACKUP
-              removeStorage(databaseName);
-
-              if (deploy == null || !deploy) {
-                // NO AUTO DEPLOY
-                setDatabaseStatus(nodeName, databaseName, DB_STATUS.ONLINE);
-                distrDatabase.resume();
-                return false;
-              }
-
-              databaseInstalled = requestFullDatabase(distrDatabase, databaseName, iStartup, cfg);
+            if (deploy == null || !deploy) {
+              // NO AUTO DEPLOY
+              setDatabaseStatus(nodeName, databaseName, DB_STATUS.ONLINE);
+              distrDatabase.resume();
+              return false;
             }
-          } else
-            // SKIP DELTA AND EXECUTE FULL BACKUP
+
+            // FIRST TIME, ASK FOR FULL REPLICA
             databaseInstalled = requestFullDatabase(distrDatabase, databaseName, iStartup, cfg);
-        }
 
-        if (databaseInstalled) {
-          // OVERWRITE THE LSN
-          final ODatabaseDocumentTx db = distrDatabase.getDatabaseInstance();
-          try {
-            try {
-              distrDatabase.getSyncConfiguration()
-                  .setLastLSN(nodeName, ((OLocalPaginatedStorage) db.getStorage().getUnderlying()).getLSN(), true);
-            } catch (IOException e) {
-              ODistributedServerLog
-                  .error(this, nodeName, null, DIRECTION.NONE, "Error on setting LSN after the installation of database '%s'",
-                      databaseName);
-            }
-          } finally {
-            db.close();
+          } else {
+            if (tryWithDeltaFirst) {
+              try {
+
+                // TRY WITH DELTA SYNC
+                databaseInstalled = requestDatabaseDelta(distrDatabase, databaseName, cfg);
+
+              } catch (ODistributedDatabaseDeltaSyncException e) {
+                // FALL BACK TO FULL BACKUP
+                removeStorage(databaseName);
+
+                if (deploy == null || !deploy) {
+                  // NO AUTO DEPLOY
+                  setDatabaseStatus(nodeName, databaseName, DB_STATUS.ONLINE);
+                  distrDatabase.resume();
+                  return false;
+                }
+
+                databaseInstalled = requestFullDatabase(distrDatabase, databaseName, iStartup, cfg);
+              }
+            } else
+              // SKIP DELTA AND EXECUTE FULL BACKUP
+              databaseInstalled = requestFullDatabase(distrDatabase, databaseName, iStartup, cfg);
           }
+
+          if (databaseInstalled) {
+            // OVERWRITE THE LSN
+            final ODatabaseDocumentTx db = distrDatabase.getDatabaseInstance();
+            try {
+              try {
+                distrDatabase.getSyncConfiguration()
+                    .setLastLSN(nodeName, ((OLocalPaginatedStorage) db.getStorage().getUnderlying()).getLSN(), true);
+              } catch (IOException e) {
+                ODistributedServerLog
+                    .error(this, nodeName, null, DIRECTION.NONE, "Error on setting LSN after the installation of database '%s'",
+                        databaseName);
+              }
+            } finally {
+              db.close();
+            }
+          }
+
+        } catch (ODatabaseIsOldException e) {
+          // CURRENT DATABASE IS NEWER, SET ALL OTHER DATABASES AS NOT_AVAILABLE TO FORCE THEM TO ASK FOR THE CURRENT DATABASE
+          setDatabaseStatus(nodeName, databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
+
+          final Set<String> otherServers = getAvailableNodeNames(databaseName);
+          otherServers.remove(nodeName);
+
+          ODistributedServerLog.info(this, nodeName, otherServers.toString(), DIRECTION.OUT,
+              "Current copy of database '%s' is newer then the copy present in the cluster. Use the local copy and force other nodes to download this",
+              databaseName);
+
+          for (String s : otherServers) {
+            setDatabaseStatus(s, databaseName, ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
+          }
+          databaseInstalled = true;
         }
 
         return databaseInstalled;
@@ -1025,6 +1045,11 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
               throw (ODistributedDatabaseDeltaSyncException) value;
 
+            } else if (value instanceof ODatabaseIsOldException) {
+
+              // MANAGE THIS EXCEPTION AT UPPER LEVEL
+              throw (ODatabaseIsOldException) value;
+
             } else if (value instanceof Throwable) {
 
               ODistributedServerLog
@@ -1055,6 +1080,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
               throw new IllegalArgumentException("Type " + value + " not supported");
           }
         }
+      } catch (ODatabaseIsOldException e) {
+        // FORWARD IT
+        throw (ODatabaseIsOldException) e;
       } catch (Exception e) {
         ODistributedServerLog
             .error(this, nodeName, targetNode, DIRECTION.OUT, "Error on asking delta backup of database '%s' (err=%s)",
@@ -1132,7 +1160,12 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
       if (value instanceof Boolean)
         continue;
-      else if (value instanceof Throwable) {
+      else if (value instanceof ODatabaseIsOldException) {
+
+        // MANAGE THIS EXCEPTION AT UPPER LEVEL
+        throw (ODatabaseIsOldException) value;
+
+      } else if (value instanceof Throwable) {
         ODistributedServerLog
             .error(this, nodeName, r.getKey(), DIRECTION.IN, "Error on installing database '%s' in %s", (Exception) value,
                 databaseName, dbPath);
