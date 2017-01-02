@@ -569,7 +569,7 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
     try {
       try {
-        connection.getDatabase().begin(tx);
+        connection.getDatabase().rawBegin(tx);
       } catch (final ORecordNotFoundException e) {
         throw e.getCause() instanceof OOfflineClusterException ? (OOfflineClusterException) e.getCause() : e;
       }
@@ -1061,7 +1061,7 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     final OTransactionOptimisticServer tx = new OTransactionOptimisticServer(connection.getDatabase(), request.getTxId(),
         request.isUsingLog(), request.getOperations(), request.getIndexChanges());
     try {
-      connection.getDatabase().begin(tx);
+      connection.getDatabase().rawBegin(tx);
     } catch (final ORecordNotFoundException e) {
       throw e.getCause() instanceof OOfflineClusterException ? (OOfflineClusterException) e.getCause() : e;
     }
@@ -1076,7 +1076,7 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       tx = new OTransactionOptimisticServer(database, request.getTxId(), request.isUsingLog(), request.getOperations(),
           request.getIndexChanges());
       try {
-        database.begin(tx);
+        database.rawBegin(tx);
       } catch (final ORecordNotFoundException e) {
         throw e.getCause() instanceof OOfflineClusterException ? (OOfflineClusterException) e.getCause() : e;
       }

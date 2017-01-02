@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSetLifecycleDecorator;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.tx.OTransaction;
 
 import java.util.Set;
 
@@ -112,7 +113,9 @@ public interface ODatabaseDocumentInternal extends ODatabaseDocument, ODatabaseI
 
   void checkForClusterPermissions(String name);
 
-  default OLocalResultSetLifecycleDecorator getActiveQuery(String id){
+  void rawBegin(OTransaction transaction);
+
+  default OLocalResultSetLifecycleDecorator getActiveQuery(String id) {
     throw new UnsupportedOperationException();
   }
 }
