@@ -134,6 +134,12 @@ public class OUpdateStatementTest {
 
   }
 
+  @Test
+  public void testLet() {
+    checkRightSyntax("update foo set a = $a let $a = 2");
+    checkRightSyntax("update foo set a = $a let $a = 2 where foo = 12");
+  }
+
   private void printTree(String s) {
     OrientSql osql = getParserFor(s);
     try {

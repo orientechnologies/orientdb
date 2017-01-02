@@ -20,6 +20,7 @@ public class OUpdateStatement extends OStatement {
   protected boolean                 returnCount  = false;
   protected OProjection             returnProjection;
 
+  public OLetClause                 let;
   public OWhereClause               whereClause;
 
   public OStorage.LOCKING_STRATEGY lockRecord = null;
@@ -63,6 +64,10 @@ public class OUpdateStatement extends OStatement {
         builder.append(" ");
         returnProjection.toString(params, builder);
       }
+    }
+    if(let != null){
+      builder.append(" ");
+      let.toString(params, builder);
     }
     if (whereClause != null) {
       builder.append(" WHERE ");

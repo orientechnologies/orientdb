@@ -1555,6 +1555,7 @@ OUpdateStatement UpdateStatement():
     	        jjtThis.returnProjection = Projection()
     	    ]
     	]
+    	[ jjtThis.let = LetClause() ]
     	[ <WHERE> jjtThis.whereClause = WhereClause() ]
     	[ <LOCK>
             (

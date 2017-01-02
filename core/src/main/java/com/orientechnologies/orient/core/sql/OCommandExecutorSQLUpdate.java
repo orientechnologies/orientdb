@@ -193,6 +193,10 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract
           StringBuilder selectString = new StringBuilder();
           selectString.append("select from ");
           updateStm.target.toString(params, selectString);
+          if(updateStm.let != null){
+            selectString.append(" ");
+            updateStm.let.toString(params, selectString);
+          }
           if (updateStm.whereClause != null) {
             selectString.append(" WHERE ");
             updateStm.whereClause.toString(params, selectString);
