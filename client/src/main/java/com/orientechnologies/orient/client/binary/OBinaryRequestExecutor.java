@@ -101,4 +101,5 @@ public interface OBinaryRequestExecutor {
 
   OBinaryResponse executeBeginTransaction(OBeginTransactionRequest request);
 
+  OBinaryResponse executeCommit37(OCommit37Request request);
 }

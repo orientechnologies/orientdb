@@ -53,6 +53,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineClusterException;
+import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
@@ -971,25 +972,24 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
   @Override
   public OBinaryResponse executeQuery(OQueryRequest request) {
-    String command = request.getStatement();
-
-    connection.getData().commandDetail = command;
-
-    final long serverTimeout = OGlobalConfiguration.COMMAND_TIMEOUT.getValueAsLong();
+    ODatabaseDocumentInternal database = connection.getDatabase();
     //TODO set a timeout on the request?
-
+    final long serverTimeout = OGlobalConfiguration.COMMAND_TIMEOUT.getValueAsLong();
+    if (database.getTransaction().isActive()) {
+      ((OTransactionOptimistic) database.getTransaction()).resetChangesTracking();
+    }
     OTodoResultSet rs;
     if (request.isIdempotent()) {
       if (request.isNamedParams()) {
-        rs = connection.getDatabase().query(request.getStatement(), request.getNamedParameters());
+        rs = database.query(request.getStatement(), request.getNamedParameters());
       } else {
-        rs = connection.getDatabase().query(request.getStatement(), request.getPositionalParameters());
+        rs = database.query(request.getStatement(), request.getPositionalParameters());
       }
     } else {
       if (request.isNamedParams()) {
-        rs = connection.getDatabase().command(request.getStatement(), request.getNamedParameters());
+        rs = database.command(request.getStatement(), request.getNamedParameters());
       } else {
-        rs = connection.getDatabase().command(request.getStatement(), request.getPositionalParameters());
+        rs = database.command(request.getStatement(), request.getPositionalParameters());
       }
     }
     OQueryResponse result = new OQueryResponse();
@@ -1007,7 +1007,13 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
         ((OLocalResultSetLifecycleDecorator) rs).getQueryId());
 
     item.setHasNextPage(rs.hasNext());
+    boolean txChanges = true;
+    if (database.getTransaction().isActive()) {
+      txChanges = ((OTransactionOptimistic) database.getTransaction()).isChanged();
+    }
+
     result.setResult(item);
+    result.setTxChanges(txChanges);
     return result;
   }
 
@@ -1062,4 +1068,40 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     return new OBeginTransactionResponse(tx.getId());
   }
 
+  @Override
+  public OBinaryResponse executeCommit37(OCommit37Request request) {
+    ODatabaseDocumentInternal database = connection.getDatabase();
+    final OTransactionOptimisticServer tx;
+    if (request.isHasContent()) {
+      tx = new OTransactionOptimisticServer(database, request.getTxId(), request.isUsingLog(), request.getOperations(),
+          request.getIndexChanges());
+      try {
+        database.begin(tx);
+      } catch (final ORecordNotFoundException e) {
+        throw e.getCause() instanceof OOfflineClusterException ? (OOfflineClusterException) e.getCause() : e;
+      }
+    } else {
+      tx = (OTransactionOptimisticServer) database.getTransaction();
+    }
+
+    database.commit();
+    List<OCreatedRecordResponse> createdRecords = new ArrayList<>(tx.getCreatedRecords().size());
+    for (Entry<ORecordId, ORecord> entry : tx.getCreatedRecords().entrySet()) {
+      createdRecords.add(new OCreatedRecordResponse(entry.getKey(), (ORecordId) entry.getValue().getIdentity()));
+      // IF THE NEW OBJECT HAS VERSION > 0 MEANS THAT HAS BEEN UPDATED IN THE SAME TX. THIS HAPPENS FOR GRAPHS
+      if (entry.getValue().getVersion() > 0)
+        tx.getUpdatedRecords().put((ORecordId) entry.getValue().getIdentity(), entry.getValue());
+    }
+
+    List<OUpdatedRecordResponse> updatedRecords = new ArrayList<>(tx.getUpdatedRecords().size());
+    for (Entry<ORecordId, ORecord> entry : tx.getUpdatedRecords().entrySet()) {
+      updatedRecords.add(new OUpdatedRecordResponse(entry.getKey(), entry.getValue().getVersion()));
+    }
+    OSBTreeCollectionManager collectionManager = database.getSbTreeCollectionManager();
+    Map<UUID, OBonsaiCollectionPointer> changedIds = null;
+    if (collectionManager != null) {
+      changedIds = collectionManager.changedIds();
+    }
+    return new OCommitResponse(createdRecords, updatedRecords, changedIds);
+  }
 }

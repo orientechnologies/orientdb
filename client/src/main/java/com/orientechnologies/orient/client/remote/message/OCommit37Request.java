@@ -122,7 +122,7 @@ public class OCommit37Request implements OBinaryRequest<OCommitResponse> {
 
   @Override
   public OBinaryResponse execute(OBinaryRequestExecutor executor) {
-    return null;
+    return executor.executeCommit37(this);
   }
 
   @Override

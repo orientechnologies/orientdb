@@ -35,15 +35,18 @@ public class OQueryResponse implements OBinaryResponse {
   private static final byte RECORD_TYPE_PROJECTION = 4;
 
   private OTodoResultSet result;
+  private boolean        txChanges;
 
   public OQueryResponse() {
   }
 
-  @Override public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+  @Override
+  public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
     if (!(result instanceof OLocalResultSetLifecycleDecorator)) {
       throw new IllegalStateException();
     }
     channel.writeString(((OLocalResultSetLifecycleDecorator) result).getQueryId());
+    channel.writeBoolean(txChanges);
 
     writeExecutionPlan(result.getExecutionPlan(), channel, serializer);
     while (result.hasNext()) {
@@ -56,7 +59,8 @@ public class OQueryResponse implements OBinaryResponse {
     writeQueryStats(result.getQueryStats(), channel);
   }
 
-  @Override public void read(OChannelDataInput network, OStorageRemoteSession session) throws IOException {
+  @Override
+  public void read(OChannelDataInput network, OStorageRemoteSession session) throws IOException {
     ORemoteResultSet rs = new ORemoteResultSet((ODatabaseDocumentRemote) ODatabaseRecordThreadLocal.INSTANCE.get());
     doRead(network, rs);
     this.result = rs;
@@ -64,6 +68,7 @@ public class OQueryResponse implements OBinaryResponse {
 
   protected void doRead(OChannelDataInput network, ORemoteResultSet rs) throws IOException {
     rs.setQueryId(network.readString());
+    txChanges = network.readBoolean();
     rs.setExecutionPlan(readExecutionPlan(network));
     boolean hasNext = network.readBoolean();
     while (hasNext) {
@@ -98,8 +103,8 @@ public class OQueryResponse implements OBinaryResponse {
     return result;
   }
 
-  private void writeExecutionPlan(Optional<OExecutionPlan> executionPlan, OChannelDataOutput channel, ORecordSerializer recordSerializer)
-      throws IOException {
+  private void writeExecutionPlan(Optional<OExecutionPlan> executionPlan, OChannelDataOutput channel,
+      ORecordSerializer recordSerializer) throws IOException {
     if (executionPlan.isPresent()) {
       channel.writeBoolean(true);
       writeResult(executionPlan.get().toResult(), channel, recordSerializer);
@@ -246,5 +251,13 @@ public class OQueryResponse implements OBinaryResponse {
 
   public OTodoResultSet getResult() {
     return result;
+  }
+
+  public boolean isTxChanges() {
+    return txChanges;
+  }
+
+  public void setTxChanges(boolean txChanges) {
+    this.txChanges = txChanges;
   }
 }
