@@ -44,7 +44,7 @@ public class OFetchTransactionRequest implements OBinaryRequest<OFetchTransactio
 
   @Override
   public OBinaryResponse execute(OBinaryRequestExecutor executor) {
-    return null;
+    return executor.executeFetchTransaction(this);
   }
 
   @Override

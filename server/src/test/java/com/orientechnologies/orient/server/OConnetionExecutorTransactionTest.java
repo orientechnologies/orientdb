@@ -211,4 +211,34 @@ public class OConnetionExecutorTransactionTest {
 
   }
 
+  @Test
+  public void testBeginChangeFetchTransaction() {
+
+    database.save(new ODocument("test"));
+    OConnectionBinaryExecutor executor = new OConnectionBinaryExecutor(connection, server);
+
+    List<ORecordOperation> operations = new ArrayList<>();
+    ODocument rec = new ODocument("test");
+    operations.add(new ORecordOperation(rec, ORecordOperation.CREATED));
+    assertFalse(database.getTransaction().isActive());
+
+    OBeginTransactionRequest request = new OBeginTransactionRequest(10, true, operations, new HashMap<>());
+    OBinaryResponse response = request.execute(executor);
+    assertTrue(database.getTransaction().isActive());
+    assertTrue(response instanceof OBeginTransactionResponse);
+
+    OQueryRequest query = new OQueryRequest("update test set name='bla'", new HashMap<>(), true, ORecordSerializerNetwork.INSTANCE,
+        20);
+    OQueryResponse queryResponse = (OQueryResponse) query.execute(executor);
+
+    assertTrue(queryResponse.isTxChanges());
+
+    OFetchTransactionRequest fetchRequest = new OFetchTransactionRequest(10);
+
+    OFetchTransactionResponse response1 = (OFetchTransactionResponse) fetchRequest.execute(executor);
+
+    assertEquals(2, response1.getOperations().size());
+
+  }
+
 }

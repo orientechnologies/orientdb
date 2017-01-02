@@ -1104,4 +1104,13 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     }
     return new OCommitResponse(createdRecords, updatedRecords, changedIds);
   }
+
+  @Override
+  public OBinaryResponse executeFetchTransaction(OFetchTransactionRequest request) {
+    ODatabaseDocumentInternal database = connection.getDatabase();
+    if (!database.getTransaction().isActive())
+      throw new ODatabaseException("No Transaction Active");
+    OTransactionOptimistic tx = (OTransactionOptimistic) database.getTransaction();
+    return new OFetchTransactionResponse(tx.getId(), tx.getAllRecordEntries(), tx.getIndexEntries());
+  }
 }
