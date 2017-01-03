@@ -75,6 +75,7 @@ public interface OTransaction {
 
   ODatabaseDocument getDatabase();
 
+  @Deprecated
   void clearRecordEntries();
 
   @Deprecated

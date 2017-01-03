@@ -536,25 +536,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     status = TXSTATUS.COMMITTING;
 
     if (!allEntries.isEmpty() || !indexEntries.isEmpty()) {
-      if (!OScenarioThreadLocal.INSTANCE.isRunModeDistributed() && !(database.getStorage()
-          .getUnderlying() instanceof OAbstractPaginatedStorage))
         database.getStorage().commit(this, null);
-      else {
-
-        final String storageType = database.getStorage().getUnderlying().getType();
-
-        if (storageType.equals(OEngineLocalPaginated.NAME) || storageType.equals(OEngineMemory.NAME))
-          database.getStorage().commit(OTransactionOptimistic.this, null);
-        else {
-          database.getStorage().callInLock(new Callable<Object>() {
-            @Override
-            public Object call() throws Exception {
-              database.getStorage().commit(OTransactionOptimistic.this, null);
-              return null;
-            }
-          }, true);
-        }
-      }
     }
 
     invokeCallbacks();
