@@ -387,9 +387,6 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       }
     }
 
-    if (clazz != null && clazz.getOverSize() > 1) {
-      bytes.alloc((int) ((float) bytes.bytes.length * clazz.getOverSize()));
-    }
   }
 
   @Override
