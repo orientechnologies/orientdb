@@ -120,7 +120,7 @@ public class OQueryResponse implements OBinaryResponse {
     }
     OInfoExecutionPlan result = new OInfoExecutionPlan();
     OResult read = readResult(network);
-    result.setCost(read.getProperty("cost"));
+    result.setCost(((Number) read.getProperty("cost")).intValue());
     result.setType(read.getProperty("type"));
     result.setJavaType(read.getProperty("javaType"));
     result.setPrettyPrint(read.getProperty("prettyPrint"));

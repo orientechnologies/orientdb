@@ -250,15 +250,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
           }
           return;
         } finally {
-
-          // resetting transaction state. Commands are stateless and connection should be cleared
-          // otherwise reused connection (connections pool) may lead to unpredicted errors
-          if (connection != null && connection.getDatabase() != null
-              && connection.getDatabase().activateOnCurrentThread().getTransaction() != null) {
-            connection.getDatabase().activateOnCurrentThread();
-            connection.getDatabase().getTransaction().rollback();
-          }
-
           requests++;
           afterOperationRequest(connection);
         }
@@ -587,18 +578,16 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     switch (requestType) {
 
     case OChannelBinaryProtocol.REQUEST_TX_FETCH:
-      return new OBeginTransactionRequest();
+      return new OFetchTransactionRequest();
 
     case OChannelBinaryProtocol.REQUEST_TX_REBEGIN:
-      return new OBeginTransactionRequest();
+      return new ORebeginTransactionRequest();
 
     case OChannelBinaryProtocol.REQUEST_TX_BEGIN:
       return new OBeginTransactionRequest();
 
     case OChannelBinaryProtocol.REQUEST_TX_COMMIT:
       return new OCommit37Request();
-
-
 
 
     case OChannelBinaryProtocol.REQUEST_DB_OPEN:

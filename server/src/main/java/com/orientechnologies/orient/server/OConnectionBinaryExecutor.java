@@ -1007,7 +1007,7 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
         ((OLocalResultSetLifecycleDecorator) rs).getQueryId());
 
     item.setHasNextPage(rs.hasNext());
-    boolean txChanges = true;
+    boolean txChanges = false;
     if (database.getTransaction().isActive()) {
       txChanges = ((OTransactionOptimistic) database.getTransaction()).isChanged();
     }

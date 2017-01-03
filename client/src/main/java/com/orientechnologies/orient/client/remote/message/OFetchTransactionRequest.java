@@ -18,6 +18,9 @@ public class OFetchTransactionRequest implements OBinaryRequest<OFetchTransactio
 
   private int txId;
 
+  public OFetchTransactionRequest() {
+  }
+
   public OFetchTransactionRequest(int txId) {
     this.txId = txId;
   }

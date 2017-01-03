@@ -5,6 +5,8 @@ import com.orientechnologies.orient.client.remote.message.tx.IndexChange;
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 
@@ -26,6 +28,8 @@ public class OTransactionOptimisticClient extends OTransactionOptimistic {
     this.allEntries.clear();
 
     for (ORecordOperationRequest operation : operations) {
+      ORecordInternal.setIdentity(operation.getRecord(), (ORecordId) operation.getId());
+      ORecordInternal.setVersion(operation.getRecord(), operation.getVersion());
       addRecord(operation.getRecord(), operation.getType(), null);
     }
 
