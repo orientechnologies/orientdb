@@ -43,6 +43,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentRemote;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTxInternal;
+import com.orientechnologies.orient.core.db.document.OTransactionOptimisticClient;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
@@ -62,6 +63,7 @@ import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
+import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OTokenSecurityException;
 
@@ -154,7 +156,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       pMode = mode;
     request.setMode((byte) pMode);
     return baseNetworkOperation(new OStorageRemoteOperation<T>() {
-      @Override public T execute(final OChannelBinaryAsynchClient network, final OStorageRemoteSession session) throws IOException {
+      @Override
+      public T execute(final OChannelBinaryAsynchClient network, final OStorageRemoteSession session) throws IOException {
         // Send The request
         try {
           network.beginRequest(request.getCommand(), session);
@@ -177,7 +180,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         } else if (pMode == 1) {
           // ASYNC
           OStorageRemote.this.asynchExecutor.submit(new Runnable() {
-            @Override public void run() {
+            @Override
+            public void run() {
               try {
                 try {
                   beginResponse(network, session);
@@ -205,7 +209,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   public <T extends OBinaryResponse> T networkOperationRetryTimeout(final OBinaryRequest<T> request, final String errorMessage,
       int retry, int timeout) {
     return baseNetworkOperation(new OStorageRemoteOperation<T>() {
-      @Override public T execute(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+      @Override
+      public T execute(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
         try {
           network.beginRequest(request.getCommand(), session);
           request.write(network, session);
@@ -325,7 +330,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     return retry;
   }
 
-  @Override public boolean isAssigningClusterIds() {
+  @Override
+  public boolean isAssigningClusterIds() {
     return false;
   }
 
@@ -390,7 +396,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     }
   }
 
-  @Override public OSBTreeCollectionManager getSBtreeCollectionManager() {
+  @Override
+  public OSBTreeCollectionManager getSBtreeCollectionManager() {
     return sbTreeCollectionManager;
   }
 
@@ -481,15 +488,18 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     return force || remainingUsers == 0;
   }
 
-  @Override public int getUsers() {
+  @Override
+  public int getUsers() {
     return users.get();
   }
 
-  @Override public int addUser() {
+  @Override
+  public int addUser() {
     return users.incrementAndGet();
   }
 
-  @Override public int removeUser() {
+  @Override
+  public int removeUser() {
     if (users.get() < 1)
       throw new IllegalStateException("Cannot remove user of the remote storage '" + toString() + "' because no user is using it");
 
@@ -553,7 +563,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     }
   }
 
-  @Override public ORecordMetadata getRecordMetadata(final ORID rid) {
+  @Override
+  public ORecordMetadata getRecordMetadata(final ORID rid) {
 
     OGetRecordMetadataRequest request = new OGetRecordMetadataRequest(rid);
     OGetRecordMetadataResponse response = networkOperation(request, "Error on record metadata read " + rid);
@@ -561,7 +572,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     return response.getMetadata();
   }
 
-  @Override public OStorageOperationResult<ORawBuffer> readRecordIfVersionIsNotLatest(final ORecordId rid, final String fetchPlan,
+  @Override
+  public OStorageOperationResult<ORawBuffer> readRecordIfVersionIsNotLatest(final ORecordId rid, final String fetchPlan,
       final boolean ignoreCache, final int recordVersion) throws ORecordNotFoundException {
     if (getCurrentSession().commandExecuting)
       // PENDING NETWORK OPERATION, CAN'T EXECUTE IT NOW
@@ -587,13 +599,15 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     return new OStorageOperationResult<ORawBuffer>(response.getResult());
   }
 
-  @Override public String incrementalBackup(final String backupDirectory) {
+  @Override
+  public String incrementalBackup(final String backupDirectory) {
     OIncrementalBackupRequest request = new OIncrementalBackupRequest(backupDirectory);
     OIncrementalBackupResponse response = networkOperation(request, "Error on incremental backup");
     return response.getFileName();
   }
 
-  @Override public void restoreFromIncrementalBackup(final String filePath) {
+  @Override
+  public void restoreFromIncrementalBackup(final String filePath) {
     throw new UnsupportedOperationException("This operations is part of internal API and is not supported in remote storage");
   }
 
@@ -622,8 +636,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     return new OStorageOperationResult<Integer>(resVersion);
   }
 
-  @Override public OStorageOperationResult<Integer> recyclePosition(ORecordId iRecordId, byte[] iContent, int iVersion,
-      byte recordType) {
+  @Override
+  public OStorageOperationResult<Integer> recyclePosition(ORecordId iRecordId, byte[] iContent, int iVersion, byte recordType) {
     throw new UnsupportedOperationException("recyclePosition");
   }
 
@@ -642,7 +656,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     return new OStorageOperationResult<Boolean>(resDelete);
   }
 
-  @Override public OStorageOperationResult<Boolean> hideRecord(final ORecordId recordId, final int mode,
+  @Override
+  public OStorageOperationResult<Boolean> hideRecord(final ORecordId recordId, final int mode,
       final ORecordCallback<Boolean> callback) {
 
     ORecordCallback<OHideRecordResponse> realCallback = null;
@@ -658,7 +673,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     return new OStorageOperationResult<Boolean>(resHide);
   }
 
-  @Override public boolean cleanOutRecord(final ORecordId recordId, final int recordVersion, final int iMode,
+  @Override
+  public boolean cleanOutRecord(final ORecordId recordId, final int recordVersion, final int iMode,
       final ORecordCallback<Boolean> callback) {
 
     ORecordCallback<OCleanOutRecordResponse> realCallback = null;
@@ -674,13 +690,15 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     return result;
   }
 
-  @Override public List<String> backup(OutputStream out, Map<String, Object> options, Callable<Object> callable,
+  @Override
+  public List<String> backup(OutputStream out, Map<String, Object> options, Callable<Object> callable,
       final OCommandOutputListener iListener, int compressionLevel, int bufferSize) throws IOException {
     throw new UnsupportedOperationException(
         "backup is not supported against remote storage. Open the database with plocal or use the incremental backup in the Enterprise Edition");
   }
 
-  @Override public void restore(InputStream in, Map<String, Object> options, Callable<Object> callable,
+  @Override
+  public void restore(InputStream in, Map<String, Object> options, Callable<Object> callable,
       final OCommandOutputListener iListener) throws IOException {
     throw new UnsupportedOperationException(
         "restore is not supported against remote storage. Open the database with plocal or use Enterprise Edition");
@@ -694,7 +712,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     return count(new int[] { iClusterId });
   }
 
-  @Override public long count(int iClusterId, boolean countTombstones) {
+  @Override
+  public long count(int iClusterId, boolean countTombstones) {
     return count(new int[] { iClusterId }, countTombstones);
   }
 
@@ -705,7 +724,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     return response.getPos();
   }
 
-  @Override public OPhysicalPosition[] higherPhysicalPositions(final int iClusterId, final OPhysicalPosition iClusterPosition) {
+  @Override
+  public OPhysicalPosition[] higherPhysicalPositions(final int iClusterId, final OPhysicalPosition iClusterPosition) {
     OHigherPhysicalPositionsRequest request = new OHigherPhysicalPositionsRequest(iClusterId, iClusterPosition);
 
     OHigherPhysicalPositionsResponse response = networkOperation(request,
@@ -713,7 +733,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     return response.getNextPositions();
   }
 
-  @Override public OPhysicalPosition[] ceilingPhysicalPositions(final int clusterId, final OPhysicalPosition physicalPosition) {
+  @Override
+  public OPhysicalPosition[] ceilingPhysicalPositions(final int clusterId, final OPhysicalPosition physicalPosition) {
 
     OCeilingPhysicalPositionsRequest request = new OCeilingPhysicalPositionsRequest(clusterId, physicalPosition);
 
@@ -722,14 +743,16 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     return response.getPositions();
   }
 
-  @Override public OPhysicalPosition[] lowerPhysicalPositions(final int iClusterId, final OPhysicalPosition physicalPosition) {
+  @Override
+  public OPhysicalPosition[] lowerPhysicalPositions(final int iClusterId, final OPhysicalPosition physicalPosition) {
     OLowerPhysicalPositionsRequest request = new OLowerPhysicalPositionsRequest(physicalPosition, iClusterId);
     OLowerPhysicalPositionsResponse response = networkOperation(request,
         "Error on retrieving lower positions after " + physicalPosition.clusterPosition);
     return response.getPreviousPositions();
   }
 
-  @Override public OPhysicalPosition[] floorPhysicalPositions(final int clusterId, final OPhysicalPosition physicalPosition) {
+  @Override
+  public OPhysicalPosition[] floorPhysicalPositions(final int clusterId, final OPhysicalPosition physicalPosition) {
     OFloorPhysicalPositionsRequest request = new OFloorPhysicalPositionsRequest(physicalPosition, clusterId);
     OFloorPhysicalPositionsResponse response = networkOperation(request,
         "Error on retrieving floor positions after " + physicalPosition.clusterPosition);
@@ -742,7 +765,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     return response.getSize();
   }
 
-  @Override public long countRecords() {
+  @Override
+  public long countRecords() {
     OCountRecordsRequest request = new OCountRecordsRequest();
     OCountRecordsResponse response = networkOperation(request, "Error on read database record count");
     return response.getCountRecords();
@@ -773,36 +797,36 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
   }
 
-  public OTodoResultSet query(ODatabase db, String query, Object[] args) {
+  public ORemoteQueryResult query(ODatabase db, String query, Object[] args) {
     OQueryRequest request = new OQueryRequest(query, args, true, ((ODatabaseDocumentInternal) db).getSerializer(), 100);
     OQueryResponse response = networkOperation(request, "Error on executing command: " + query);
-    return response.getResult();
+    return new ORemoteQueryResult(response.getResult(), response.isTxChanges());
   }
 
-  public OTodoResultSet query(ODatabase db, String query, Map args) {
+  public ORemoteQueryResult query(ODatabase db, String query, Map args) {
     OQueryRequest request = new OQueryRequest(query, args, true, ((ODatabaseDocumentInternal) db).getSerializer(), 100);
     OQueryResponse response = networkOperation(request, "Error on executing command: " + query);
-    return response.getResult();
+    return new ORemoteQueryResult(response.getResult(), response.isTxChanges());
   }
 
-  public OTodoResultSet command(ODatabase db, String query, Object[] args) {
+  public ORemoteQueryResult command(ODatabase db, String query, Object[] args) {
     OQueryRequest request = new OQueryRequest(query, args, false, ((ODatabaseDocumentInternal) db).getSerializer(), 100);
     OQueryResponse response = networkOperation(request, "Error on executing command: " + query);
-    return response.getResult();
+    return new ORemoteQueryResult(response.getResult(), response.isTxChanges());
   }
 
-  public OTodoResultSet command(ODatabase db, String query, Map args) {
+  public ORemoteQueryResult command(ODatabase db, String query, Map args) {
     OQueryRequest request = new OQueryRequest(query, args, false, ((ODatabaseDocumentInternal) db).getSerializer(), 100);
     OQueryResponse response = networkOperation(request, "Error on executing command: " + query);
-    return response.getResult();
+    return new ORemoteQueryResult(response.getResult(), response.isTxChanges());
   }
 
-  public void closeQuery(ODatabaseDocumentRemote oDatabaseDocumentRemote, String queryId) {
+  public void closeQuery(ODatabaseDocumentRemote database, String queryId) {
     OCloseQueryRequest request = new OCloseQueryRequest(queryId);
     OCloseQueryResponse response = networkOperation(request, "Error closing query: " + queryId);
   }
 
-  public void fetchNextPage(ODatabaseDocumentRemote oDatabaseDocumentRemote, ORemoteResultSet rs) {
+  public void fetchNextPage(ODatabaseDocumentRemote database, ORemoteResultSet rs) {
     OQueryNextPageRequest request = new OQueryNextPageRequest(rs.getQueryId(), 100);
     OQueryResponse response = networkOperation(request, "Error on fetching next page for statment: " + rs.getQueryId());
 
@@ -817,8 +841,13 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   public List<ORecordOperation> commit(final OTransaction iTx, final Runnable callback) {
-    OCommitRequest request = new OCommitRequest(iTx.getId(), iTx.isUsingLog(),
-        (Iterable<ORecordOperation>) iTx.getAllRecordEntries(), iTx.getIndexChanges());
+    OCommit37Request request;
+    if (((OTransactionOptimistic) iTx).isChanged()) {
+      request = new OCommit37Request(iTx.getId(), true, iTx.isUsingLog(), (Iterable<ORecordOperation>) iTx.getAllRecordEntries(),
+          ((OTransactionOptimistic) iTx).getIndexEntries());
+    } else {
+      request = new OCommit37Request(iTx.getId(), false, iTx.isUsingLog(), null, null);
+    }
 
     OCommitResponse response = networkOperation(request, "Error on commit");
     for (OCreatedRecordResponse created : response.getCreated()) {
@@ -964,7 +993,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     }
   }
 
-  @Override public long getVersion() {
+  @Override
+  public long getVersion() {
     throw new UnsupportedOperationException("getVersion");
   }
 
@@ -991,7 +1021,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     iNetwork.endResponse();
   }
 
-  @Override public boolean isRemote() {
+  @Override
+  public boolean isRemote() {
     return true;
   }
 
@@ -999,7 +1030,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     return false;
   }
 
-  @SuppressWarnings("unchecked") public void updateClusterConfiguration(final String iConnectedURL, final byte[] obj) {
+  @SuppressWarnings("unchecked")
+  public void updateClusterConfiguration(final String iConnectedURL, final byte[] obj) {
     if (obj == null)
       return;
 
@@ -1053,19 +1085,23 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     }
   }
 
-  @Override public OCluster getClusterByName(final String iClusterName) {
+  @Override
+  public OCluster getClusterByName(final String iClusterName) {
     throw new UnsupportedOperationException("getClusterByName()");
   }
 
-  @Override public ORecordConflictStrategy getConflictStrategy() {
+  @Override
+  public ORecordConflictStrategy getConflictStrategy() {
     throw new UnsupportedOperationException("getConflictStrategy");
   }
 
-  @Override public void setConflictStrategy(final ORecordConflictStrategy iResolver) {
+  @Override
+  public void setConflictStrategy(final ORecordConflictStrategy iResolver) {
     throw new UnsupportedOperationException("setConflictStrategy");
   }
 
-  @Override public String getURL() {
+  @Override
+  public String getURL() {
     return OEngineRemote.NAME + ":" + url;
   }
 
@@ -1078,11 +1114,13 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     }
   }
 
-  @Override public String getType() {
+  @Override
+  public String getType() {
     return OEngineRemote.NAME;
   }
 
-  @Override public String getUserName() {
+  @Override
+  public String getUserName() {
     final OStorageRemoteSession session = getCurrentSession();
     if (session == null)
       return null;
@@ -1424,7 +1462,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
    *
    * @param iCommand id. Ids described at {@link OChannelBinaryProtocol}
    * @param session
+   *
    * @return connection to server
+   *
    * @throws IOException
    */
   public OChannelBinaryAsynchClient beginRequest(final OChannelBinaryAsynchClient network, final byte iCommand,
@@ -1579,7 +1619,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     return session;
   }
 
-  @Override public boolean isClosed() {
+  @Override
+  public boolean isClosed() {
     if (super.isClosed())
       return true;
     final OStorageRemoteSession session = getCurrentSession();
@@ -1640,6 +1681,27 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     } finally {
       stateLock.releaseWriteLock();
     }
+  }
+
+  public void beginTransaction(ODatabaseDocumentRemote database, OTransactionOptimistic transaction) {
+    OBeginTransactionRequest request = new OBeginTransactionRequest(transaction.getId(), transaction.isUsingLog(),
+        transaction.getAllRecordEntries(), transaction.getIndexEntries());
+    OBinaryResponse response = networkOperation(request, "Error on remote treansaction begin");
+
+  }
+
+  public void reBeginTransaction(ODatabaseDocumentRemote database, OTransactionOptimistic transaction) {
+    ORebeginTransactionRequest request = new ORebeginTransactionRequest(transaction.getId(), transaction.isUsingLog(),
+        transaction.getAllRecordEntries(), transaction.getIndexEntries());
+    OBinaryResponse response = networkOperation(request, "Error on remote treansaction begin");
+
+  }
+
+  public void fetchTransaction(ODatabaseDocumentRemote remote) {
+    OTransactionOptimisticClient transaction = (OTransactionOptimisticClient) remote.getTransaction();
+    OFetchTransactionRequest request = new OFetchTransactionRequest(transaction.getId());
+    OFetchTransactionResponse respose = networkOperation(request, "Error fetching transaction from server side");
+    transaction.replaceContent(respose.getOperations(), respose.getIndexChanges());
   }
 
 }

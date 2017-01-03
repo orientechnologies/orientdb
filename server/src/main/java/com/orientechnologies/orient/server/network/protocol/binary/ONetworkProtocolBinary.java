@@ -585,6 +585,22 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
   public static OBinaryRequest<? extends OBinaryResponse> createRequest37(int requestType) {
     switch (requestType) {
+
+    case OChannelBinaryProtocol.REQUEST_TX_FETCH:
+      return new OBeginTransactionRequest();
+
+    case OChannelBinaryProtocol.REQUEST_TX_REBEGIN:
+      return new OBeginTransactionRequest();
+
+    case OChannelBinaryProtocol.REQUEST_TX_BEGIN:
+      return new OBeginTransactionRequest();
+
+    case OChannelBinaryProtocol.REQUEST_TX_COMMIT:
+      return new OCommit37Request();
+
+
+
+
     case OChannelBinaryProtocol.REQUEST_DB_OPEN:
       return new OOpenRequest();
 
@@ -683,9 +699,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
     case OChannelBinaryProtocol.REQUEST_QUERY_NEXT_PAGE:
       return new OQueryNextPageRequest();
-
-    case OChannelBinaryProtocol.REQUEST_TX_COMMIT:
-      return new OCommitRequest();
 
     case OChannelBinaryProtocol.REQUEST_CONFIG_GET:
       return new OGetGlobalConfigurationRequest();

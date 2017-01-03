@@ -234,7 +234,21 @@ public class OMessageHelper {
       network.writeString(indexChange.getName());
       network.writeBoolean(indexChange.getKeyChanges().cleared);
       if (!indexChange.getKeyChanges().cleared) {
-        network.writeInt(indexChange.getKeyChanges().changesPerKey.size());
+
+        int size = indexChange.getKeyChanges().changesPerKey.size();
+        if (indexChange.getKeyChanges().nullKeyChanges != null) {
+          size += 1;
+        }
+        network.writeInt(size);
+        if (indexChange.getKeyChanges().nullKeyChanges != null) {
+          network.writeByte((byte) -1);
+          network.writeInt(indexChange.getKeyChanges().nullKeyChanges.entries.size());
+          for (OTransactionIndexChangesPerKey.OTransactionIndexEntry perKeyChange : indexChange
+              .getKeyChanges().nullKeyChanges.entries) {
+            network.writeInt(perKeyChange.operation.ordinal());
+            network.writeRID(perKeyChange.value.getIdentity());
+          }
+        }
         for (OTransactionIndexChangesPerKey change : indexChange.getKeyChanges().changesPerKey.values()) {
           OType type = OType.getTypeByValue(change.key);
           byte[] value = serializer.serializeValue(change.key, type);
@@ -261,10 +275,16 @@ public class OMessageHelper {
       entry.cleared = cleared;
       if (!cleared) {
         int changeCount = channel.readInt();
-        NavigableMap<Object, OTransactionIndexChangesPerKey> entries = new TreeMap<>(); while (changeCount-- > 0) {
+        NavigableMap<Object, OTransactionIndexChangesPerKey> entries = new TreeMap<>();
+        while (changeCount-- > 0) {
           byte bt = channel.readByte();
-          OType type = OType.getById(bt);
-          Object key = serializer.deserializeValue(channel.readBytes(), type);
+          Object key;
+          if (bt == -1) {
+            key = null;
+          } else {
+            OType type = OType.getById(bt);
+            key = serializer.deserializeValue(channel.readBytes(), type);
+          }
           OTransactionIndexChangesPerKey changesPerKey = new OTransactionIndexChangesPerKey(key);
           int keyChangeCount = channel.readInt();
           while (keyChangeCount-- > 0) {
@@ -272,10 +292,16 @@ public class OMessageHelper {
             ORecordId id = channel.readRID();
             changesPerKey.add(id, OTransactionIndexChanges.OPERATION.values()[op]);
           }
-          entries.put(changesPerKey.key, changesPerKey);
+          if (key == null) {
+            entry.nullKeyChanges = changesPerKey;
+          } else {
+            entries.put(changesPerKey.key, changesPerKey);
+          }
         }
         entry.changesPerKey = entries;
-      } changes.add(new IndexChange(indexName, entry));
-    } return changes;
+      }
+      changes.add(new IndexChange(indexName, entry));
+    }
+    return changes;
   }
 }

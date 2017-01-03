@@ -1,9 +1,11 @@
 package com.orientechnologies.orient.server.tx;
 
+import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.client.remote.message.tx.IndexChange;
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -15,6 +17,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 
@@ -95,6 +98,17 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
       this.operations = null;
 
       for (IndexChange change : indexChanges) {
+        NavigableMap<Object, OTransactionIndexChangesPerKey> changesPerKey = new TreeMap<>(ODefaultComparator.INSTANCE);
+        for (Map.Entry<Object, OTransactionIndexChangesPerKey> keyChange : change.getKeyChanges().changesPerKey.entrySet()) {
+          Object key = keyChange.getKey();
+          if (key instanceof OIdentifiable && ((OIdentifiable) key).getIdentity().isNew())
+            key = ((OIdentifiable) key).getRecord();
+          OTransactionIndexChangesPerKey singleChange = new OTransactionIndexChangesPerKey(key);
+          singleChange.entries.addAll(keyChange.getValue().entries);
+          changesPerKey.put(key, singleChange);
+        }
+        change.getKeyChanges().changesPerKey = changesPerKey;
+
         indexEntries.put(change.getName(), change.getKeyChanges());
       }
 

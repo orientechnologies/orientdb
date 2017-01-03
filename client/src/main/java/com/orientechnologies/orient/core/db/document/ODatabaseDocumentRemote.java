@@ -25,6 +25,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.client.remote.ORemoteQueryResult;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.client.remote.message.ORemoteResultSet;
@@ -46,6 +48,8 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetwork;
 import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 
 /**
  * Created by tglman on 30/06/16.
@@ -86,23 +90,28 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     throw new UnsupportedOperationException("Use OrientDBFactory");
   }
 
-  @Deprecated public <DB extends ODatabase> DB open(final OToken iToken) {
+  @Deprecated
+  public <DB extends ODatabase> DB open(final OToken iToken) {
     throw new UnsupportedOperationException("Deprecated Method");
   }
 
-  @Override public <DB extends ODatabase> DB create() {
+  @Override
+  public <DB extends ODatabase> DB create() {
     throw new UnsupportedOperationException("Deprecated Method");
   }
 
-  @Override public <DB extends ODatabase> DB create(String incrementalBackupPath) {
+  @Override
+  public <DB extends ODatabase> DB create(String incrementalBackupPath) {
     throw new UnsupportedOperationException("use OrientDBFactory");
   }
 
-  @Override public <DB extends ODatabase> DB create(final Map<OGlobalConfiguration, Object> iInitialSettings) {
+  @Override
+  public <DB extends ODatabase> DB create(final Map<OGlobalConfiguration, Object> iInitialSettings) {
     throw new UnsupportedOperationException("use OrientDBFactory");
   }
 
-  @Override public void drop() {
+  @Override
+  public void drop() {
     throw new UnsupportedOperationException("use OrientDBFactory");
   }
 
@@ -118,7 +127,8 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     return database;
   }
 
-  @Override public boolean exists() {
+  @Override
+  public boolean exists() {
     throw new UnsupportedOperationException("use OrientDBFactory");
   }
 
@@ -183,6 +193,48 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     }
   }
 
+  public ODatabaseDocumentAbstract begin(final OTransaction.TXTYPE iType) {
+    checkOpenness();
+    checkIfActive();
+
+    if (currentTx.isActive()) {
+      if (iType == OTransaction.TXTYPE.OPTIMISTIC && currentTx instanceof OTransactionOptimistic) {
+        currentTx.begin();
+        return this;
+      }
+
+      currentTx.rollback(true, 0);
+    }
+
+    // CHECK IT'S NOT INSIDE A HOOK
+    if (!inHook.isEmpty())
+      throw new IllegalStateException("Cannot begin a transaction while a hook is executing");
+
+    // WAKE UP LISTENERS
+    for (ODatabaseListener listener : browseListeners())
+      try {
+        listener.onBeforeTxBegin(this);
+      } catch (Throwable t) {
+        OLogManager.instance().error(this, "Error before tx begin", t);
+      }
+
+    switch (iType) {
+    case NOTX:
+      setDefaultTransactionMode();
+      break;
+
+    case OPTIMISTIC:
+      currentTx = new OTransactionOptimisticClient(this);
+      break;
+
+    case PESSIMISTIC:
+      throw new UnsupportedOperationException("Pessimistic transaction");
+    }
+
+    currentTx.begin();
+    return this;
+  }
+
   public OStorageRemoteSession getSessionMetadata() {
     return sessionMetadata;
   }
@@ -191,28 +243,68 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     this.sessionMetadata = sessionMetadata;
   }
 
-  @Override public OStorage getStorage() {
+  @Override
+  public OStorage getStorage() {
     return storage;
   }
 
-  @Override public void replaceStorage(OStorage iNewStorage) {
+  @Override
+  public void replaceStorage(OStorage iNewStorage) {
     throw new UnsupportedOperationException("unsupported replace of storage for remote database");
   }
 
-  @Override public OTodoResultSet query(String query, Object[] args) {
-    return storage.query(this, query, args);
+  private void checkAndSendTransaction() {
+    if (this.currentTx.isActive() && ((OTransactionOptimistic) this.currentTx).isChanged()) {
+      if (((OTransactionOptimistic) this.getTransaction()).isAlreadyCleared())
+        storage.reBeginTransaction(this, (OTransactionOptimistic) this.currentTx);
+      else
+        storage.beginTransaction(this, (OTransactionOptimistic) this.currentTx);
+      ((OTransactionOptimistic) this.currentTx).resetChangesTracking();
+    }
   }
 
-  @Override public OTodoResultSet query(String query, Map args) {
-    return storage.query(this, query, args);
+  private void fetchTransacion() {
+    storage.fetchTransaction(this);
   }
 
-  @Override public OTodoResultSet command(String query, Object[] args) {
-    return storage.command(this, query, args);
+  @Override
+  public OTodoResultSet query(String query, Object[] args) {
+    checkOpenness();
+    checkAndSendTransaction();
+    ORemoteQueryResult result = storage.query(this, query, args);
+    if (result.isTransactionUpdated())
+      fetchTransacion();
+    return result.getResult();
   }
 
-  @Override public OTodoResultSet command(String query, Map args) {
-    return storage.command(this, query, args);
+  @Override
+  public OTodoResultSet query(String query, Map args) {
+    checkOpenness();
+    checkAndSendTransaction();
+    ORemoteQueryResult result = storage.query(this, query, args);
+    if (result.isTransactionUpdated())
+      fetchTransacion();
+    return result.getResult();
+  }
+
+  @Override
+  public OTodoResultSet command(String query, Object[] args) {
+    checkOpenness();
+    checkAndSendTransaction();
+    ORemoteQueryResult result = storage.command(this, query, args);
+    if (result.isTransactionUpdated())
+      fetchTransacion();
+    return result.getResult();
+  }
+
+  @Override
+  public OTodoResultSet command(String query, Map args) {
+    checkOpenness();
+    checkAndSendTransaction();
+    ORemoteQueryResult result = storage.command(this, query, args);
+    if (result.isTransactionUpdated())
+      fetchTransacion();
+    return result.getResult();
   }
 
   public void closeQuery(String queryId) {

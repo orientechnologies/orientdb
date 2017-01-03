@@ -61,6 +61,8 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
    */
   protected final Set<ODocument> changedDocuments = new HashSet<ODocument>();
 
+
+
   /**
    * Represents information for each index operation for each record in DB.
    */
@@ -381,8 +383,12 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
         OTransactionIndexChanges indexEntryChanges = indexEntries.get(indexOperation.index);
         if (indexEntryChanges == null)
           continue;
-
-        final OTransactionIndexChangesPerKey keyChanges = indexEntryChanges.changesPerKey.get(indexOperation.key);
+        final OTransactionIndexChangesPerKey keyChanges;
+        if (indexOperation.key == null) {
+          keyChanges = indexEntryChanges.nullKeyChanges;
+        } else {
+          keyChanges = indexEntryChanges.changesPerKey.get(indexOperation.key);
+        }
         if (keyChanges != null)
           updateChangesIdentity(oldRid, newRid, keyChanges);
       }

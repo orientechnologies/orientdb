@@ -59,7 +59,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class OTransactionOptimistic extends OTransactionRealAbstract {
   private static AtomicInteger txSerial = new AtomicInteger();
-  private boolean changed;
+  private boolean changed = false;
+  private boolean alreadyCleared = false;
   private boolean usingLog = true;
   private int txStartCounter;
 
@@ -585,10 +586,16 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
   }
 
   public void resetChangesTracking() {
+    alreadyCleared = true;
     changed = false;
   }
 
   public boolean isChanged() {
     return changed;
   }
+
+  public boolean isAlreadyCleared() {
+    return alreadyCleared;
+  }
+
 }
