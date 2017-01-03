@@ -79,12 +79,12 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Set<OIdentifiable>> {
       fromKey = enhanceFromCompositeKeyBetweenAsc(fromKey, fromInclusive);
       toKey = enhanceToCompositeKeyBetweenAsc(toKey, toInclusive);
 
-      if (toInclusive)
+      if (fromInclusive)
         firstKey = indexChanges.getCeilingKey(fromKey);
       else
         firstKey = indexChanges.getHigherKey(fromKey);
 
-      if (fromInclusive)
+      if (toInclusive)
         lastKey = indexChanges.getFloorKey(toKey);
       else
         lastKey = indexChanges.getLowerKey(toKey);
@@ -156,12 +156,12 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Set<OIdentifiable>> {
       fromKey = enhanceFromCompositeKeyBetweenDesc(fromKey, fromInclusive);
       toKey = enhanceToCompositeKeyBetweenDesc(toKey, toInclusive);
 
-      if (toInclusive)
+      if (fromInclusive)
         firstKey = indexChanges.getCeilingKey(fromKey);
       else
         firstKey = indexChanges.getHigherKey(fromKey);
 
-      if (fromInclusive)
+      if (toInclusive)
         lastKey = indexChanges.getFloorKey(toKey);
       else
         lastKey = indexChanges.getLowerKey(toKey);
