@@ -6,10 +6,10 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.tinkerpop.blueprints.Vertex;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -1089,7 +1089,7 @@ public class OMatchStatementExecutionTest {
     ODocument doc = (ODocument) result.get(0);
     Object foo = doc.field("foo");
     assertNotNull(foo);
-    assertTrue(foo instanceof Vertex);
+    assertTrue(foo instanceof OVertex);
   }
 
   @Test
@@ -1170,7 +1170,7 @@ public class OMatchStatementExecutionTest {
     assertNotNull(foo);
     assertTrue(foo instanceof List);
     assertEquals(1, ((List) foo).size());
-    Vertex resultVertex = (Vertex) ((List) foo).get(0);
+    OVertex resultVertex = (OVertex) ((List) foo).get(0);
     assertEquals(2, resultVertex.<Object>getProperty("uid"));
   }
 

@@ -21,6 +21,7 @@ import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -38,7 +39,7 @@ import java.util.Map;
 @Test
 @SuppressWarnings("unused")
 public class TraverseTest extends DocumentDBBaseTest {
-  private int       totalElements = 0;
+  private int totalElements = 0;
   private ODocument tomCruise;
   private ODocument megRyan;
   private ODocument nicoleKidman;
@@ -122,8 +123,8 @@ public class TraverseTest extends DocumentDBBaseTest {
         new OSQLSynchQuery<ODocument>("select from ( traverse out() from " + tomCruise.getIdentity() + ") where @class = 'Movie'"))
         .execute();
     Assert.assertTrue(result1.size() > 0);
-    for (ODocument d : result1) {
-      Assert.assertEquals(d.getClassName(), "Movie");
+    for (OElement d : result1) {
+      Assert.assertEquals(d.getSchemaType().map(x -> x.getName()).orElse(null), "Movie");
     }
   }
 
@@ -140,9 +141,8 @@ public class TraverseTest extends DocumentDBBaseTest {
       Assert.assertEquals(d.getClassName(), "Movie");
     }
 
-    List<ODocument> result3 = database
-        .command(
-            new OSQLSynchQuery<ODocument>("select from ( traverse * from " + tomCruise.getIdentity() + " ) where @class = 'Movie'"))
+    List<ODocument> result3 = database.command(
+        new OSQLSynchQuery<ODocument>("select from ( traverse * from " + tomCruise.getIdentity() + " ) where @class = 'Movie'"))
         .execute();
     Assert.assertTrue(result3.size() > 0);
     Assert.assertTrue(result3.size() > result2.size());
@@ -159,29 +159,33 @@ public class TraverseTest extends DocumentDBBaseTest {
 
   @Test
   public void traverseSQLSelectAndTraverseNested() {
-    List<ODocument> result1 = database.command(new OSQLSynchQuery<ODocument>("traverse * from ( select from ( traverse * from "
-        + tomCruise.getIdentity() + " while $depth <= 2 ) where @class = 'Movie' )")).execute();
+    List<ODocument> result1 = database.command(new OSQLSynchQuery<ODocument>(
+        "traverse * from ( select from ( traverse * from " + tomCruise.getIdentity()
+            + " while $depth <= 2 ) where @class = 'Movie' )")).execute();
     Assert.assertEquals(result1.size(), totalElements);
   }
 
   @Test
   public void traverseAPISelectAndTraverseNested() {
-    List<ODocument> result1 = database.command(new OSQLSynchQuery<ODocument>("traverse * from ( select from ( traverse * from "
-        + tomCruise.getIdentity() + " while $depth <= 2 ) where @class = 'Movie' )")).execute();
+    List<ODocument> result1 = database.command(new OSQLSynchQuery<ODocument>(
+        "traverse * from ( select from ( traverse * from " + tomCruise.getIdentity()
+            + " while $depth <= 2 ) where @class = 'Movie' )")).execute();
     Assert.assertEquals(result1.size(), totalElements);
   }
 
   @Test
   public void traverseAPISelectAndTraverseNestedDepthFirst() {
-    List<ODocument> result1 = database.command(new OSQLSynchQuery<ODocument>("traverse * from ( select from ( traverse * from "
-        + tomCruise.getIdentity() + " while $depth <= 2 strategy depth_first ) where @class = 'Movie' )")).execute();
+    List<ODocument> result1 = database.command(new OSQLSynchQuery<ODocument>(
+        "traverse * from ( select from ( traverse * from " + tomCruise.getIdentity()
+            + " while $depth <= 2 strategy depth_first ) where @class = 'Movie' )")).execute();
     Assert.assertEquals(result1.size(), totalElements);
   }
 
   @Test
   public void traverseAPISelectAndTraverseNestedBreadthFirst() {
-    List<ODocument> result1 = database.command(new OSQLSynchQuery<ODocument>("traverse * from ( select from ( traverse * from "
-        + tomCruise.getIdentity() + " while $depth <= 2 strategy breadth_first ) where @class = 'Movie' )")).execute();
+    List<ODocument> result1 = database.command(new OSQLSynchQuery<ODocument>(
+        "traverse * from ( select from ( traverse * from " + tomCruise.getIdentity()
+            + " while $depth <= 2 strategy breadth_first ) where @class = 'Movie' )")).execute();
     Assert.assertEquals(result1.size(), totalElements);
   }
 
@@ -254,10 +258,8 @@ public class TraverseTest extends DocumentDBBaseTest {
   @Test
   public void traverseAndFilterByAttributeThatContainsDotInValue() {
     // issue #4952
-    List<ODocument> result1 = database
-        .command(new OSQLSynchQuery<ODocument>(
-            "select from ( traverse out_married, in[attributeWithDotValue = 'a.b']  from " + tomCruise.getIdentity() + ")"))
-        .execute();
+    List<ODocument> result1 = database.command(new OSQLSynchQuery<ODocument>(
+        "select from ( traverse out_married, in[attributeWithDotValue = 'a.b']  from " + tomCruise.getIdentity() + ")")).execute();
     Assert.assertTrue(result1.size() > 0);
     boolean found = false;
     for (ODocument doc : result1) {
@@ -276,9 +278,8 @@ public class TraverseTest extends DocumentDBBaseTest {
     // issue #5225
     Map<String, Object> params = new HashMap<String, Object>();
     params.put("param1", "a.b");
-    List<ODocument> result1 = database
-        .command(new OSQLSynchQuery<ODocument>(
-            "select from (traverse out_married, in[attributeWithDotValue = :param1]  from " + tomCruise.getIdentity() + ")"))
+    List<ODocument> result1 = database.command(new OSQLSynchQuery<ODocument>(
+        "select from (traverse out_married, in[attributeWithDotValue = :param1]  from " + tomCruise.getIdentity() + ")"))
         .execute(params);
     Assert.assertTrue(result1.size() > 0);
     boolean found = false;
@@ -319,7 +320,7 @@ public class TraverseTest extends DocumentDBBaseTest {
       boolean found = false;
       Integer i = 0;
       for (Object doc : result1) {
-        Assert.assertTrue(doc instanceof ODocument);
+        Assert.assertTrue(((OElement) doc).isVertex());
       }
     } finally {
       ODatabaseRecordThreadLocal.INSTANCE.set(database);

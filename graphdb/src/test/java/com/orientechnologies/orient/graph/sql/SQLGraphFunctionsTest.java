@@ -40,7 +40,7 @@ public class SQLGraphFunctionsTest {
   public SQLGraphFunctionsTest() {
   }
 
-	@BeforeClass
+  @BeforeClass
   public static void beforeClass() {
     String url = "memory:" + SQLGraphFunctionsTest.class.getSimpleName();
     graph = new OrientGraph(url);
@@ -62,8 +62,7 @@ public class SQLGraphFunctionsTest {
     graph.commit();
   }
 
-
-	@AfterClass
+  @AfterClass
   public static void afterClass() {
     graph.shutdown();
   }
@@ -75,9 +74,12 @@ public class SQLGraphFunctionsTest {
     Assert.assertTrue(result.iterator().hasNext());
 
     for (OrientVertex d : result) {
-      System.out.println("Shortest path from " + ((OrientVertex) d.getProperty("$current")).getProperty("name") + " and "
-          + ((Iterable<OrientVertex>) d.getProperty("$target")).iterator().next().getProperty("name") + " is: "
-          + d.getProperty("path"));
+
+      OrientVertex $current = d.getProperty("$current");
+      Object name = $current.getProperty("name");
+      Iterable<OrientVertex> $target = (Iterable<OrientVertex>) d.getProperty("$target");
+      Object name1 = $target.iterator().next().getProperty("name");
+      System.out.println("Shortest path from " + name + " and " + name1 + " is: " + d.getProperty("path"));
     }
   }
 
@@ -107,8 +109,8 @@ public class SQLGraphFunctionsTest {
     int tc1Id = graph.getRawGraph().getClusterIdByName("tc1");
     int edge1Id = graph.getRawGraph().getClusterIdByName("edge1");
 
-    Iterable<OrientEdge> e = graph.command(
-        new OCommandSQL("create edge edge1 from #" + tc1Id + ":0 to #" + tc1Id + ":1 set f='fieldValue';")).execute();
+    Iterable<OrientEdge> e = graph
+        .command(new OCommandSQL("create edge edge1 from #" + tc1Id + ":0 to #" + tc1Id + ":1 set f='fieldValue';")).execute();
     graph.commit();
 
     List<ODocument> result = graph.getRawGraph().query(new OSQLSynchQuery<ODocument>("select gremlin('current.outE') from tc1"));

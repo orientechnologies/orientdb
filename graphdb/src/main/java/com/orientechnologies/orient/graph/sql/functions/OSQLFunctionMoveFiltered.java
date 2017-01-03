@@ -34,43 +34,43 @@ import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
  */
 public abstract class OSQLFunctionMoveFiltered extends OSQLFunctionMove implements OSQLFunctionFiltered {
 
-  protected static int supernodeThreshold = 1000; // move to some configuration
+    protected static int supernodeThreshold = 1000; // move to some configuration
 
   public OSQLFunctionMoveFiltered() {
-    super(NAME, 1, 2);
-  }
+      super(NAME, 1, 2);
+    }
 
   public OSQLFunctionMoveFiltered(final String iName, final int iMin, final int iMax) {
-    super(iName, iMin, iMax);
-  }
+      super(iName, iMin, iMax);
+    }
 
-  @Override
-  public Object execute(final Object iThis, final OIdentifiable iCurrentRecord, final Object iCurrentResult,
-      final Object[] iParameters, final Iterable<OIdentifiable> iPossibleResults, final OCommandContext iContext) {
-    return OGraphCommandExecutorSQLFactory.runWithAnyGraph(new OGraphCommandExecutorSQLFactory.GraphCallBack<Object>() {
-      @Override
-      public Object call(final OrientBaseGraph graph) {
-        final String[] labels;
-        if (iParameters != null && iParameters.length > 0 && iParameters[0] != null)
-          labels = OMultiValue.array(iParameters, String.class, new OCallable<Object, Object>() {
+    @Override
+    public Object execute(final Object iThis, final OIdentifiable iCurrentRecord, final Object iCurrentResult,
+    final Object[] iParameters, final Iterable<OIdentifiable> iPossibleResults, final OCommandContext iContext) {
+      return OGraphCommandExecutorSQLFactory.runWithAnyGraph(new OGraphCommandExecutorSQLFactory.GraphCallBack<Object>() {
+        @Override
+        public Object call(final OrientBaseGraph graph) {
+          final String[] labels;
+          if (iParameters != null && iParameters.length > 0 && iParameters[0] != null)
+            labels = OMultiValue.array(iParameters, String.class, new OCallable<Object, Object>() {
 
+              @Override
+              public Object call(final Object iArgument) {
+                return OIOUtils.getStringContent(iArgument);
+              }
+            });
+          else
+            labels = null;
+
+          return OSQLEngine.foreachRecord(new OCallable<Object, OIdentifiable>() {
             @Override
-            public Object call(final Object iArgument) {
-              return OIOUtils.getStringContent(iArgument);
+            public Object call(final OIdentifiable iArgument) {
+              return move(graph, iArgument, labels, iPossibleResults);
             }
-          });
-        else
-          labels = null;
-
-        return OSQLEngine.foreachRecord(new OCallable<Object, OIdentifiable>() {
-          @Override
-          public Object call(final OIdentifiable iArgument) {
-            return move(graph, iArgument, labels, iPossibleResults);
-          }
-        }, iThis, iContext);
-      }
-    });
-  }
+          }, iThis, iContext);
+        }
+      });
+    }
 
   protected abstract Object move(OrientBaseGraph graph, OIdentifiable iArgument, String[] labels,
       Iterable<OIdentifiable> iPossibleResults);
