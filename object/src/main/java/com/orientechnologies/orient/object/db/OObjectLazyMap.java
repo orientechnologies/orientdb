@@ -224,7 +224,7 @@ public class OObjectLazyMap<TYPE> extends HashMap<Object, Object> implements Ser
     final ORecord record = (ORecord) underlying.get(iKey);
     if (record == null)
       return;
-    TYPE o = getDatabase().getUserObjectByRecord(record, null);
+    TYPE o = (TYPE) getDatabase().getUserObjectByRecord(record, null);
     ((OObjectProxyMethodHandler) (((ProxyObject) o)).getHandler()).setParentObject(sourceRecord);
     super.put(iKey, o);
   }
@@ -278,7 +278,7 @@ public class OObjectLazyMap<TYPE> extends HashMap<Object, Object> implements Ser
   }
 
   @SuppressWarnings("unchecked")
-  protected ODatabasePojoAbstract<TYPE> getDatabase() {
+  protected OObjectDatabaseTx getDatabase() {
     return OLazyCollectionUtil.getDatabase();
   }
 }

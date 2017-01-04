@@ -139,7 +139,7 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
 
   public boolean retainAll(final Collection<?> c) {
     setDirty();
-    final ODatabasePojoAbstract<TYPE> database = getDatabase();
+    final OObjectDatabaseTx database = getDatabase();
     boolean modified = super.retainAll(c);
     Set<Object> toRetain = new HashSet<Object>();
     Set<Object> toRemove = new HashSet<Object>();
@@ -175,7 +175,7 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
 
   public boolean removeAll(final Collection<?> c) {
     setDirty();
-    final ODatabasePojoAbstract<TYPE> database = getDatabase();
+    final OObjectDatabaseTx database = getDatabase();
     boolean modified = super.removeAll(c);
     for (Object o : c) {
       OIdentifiable record = database.getRecordByUserObject(o, false);
@@ -248,14 +248,14 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
 
     final Set<Object> copy = new HashSet<Object>(underlying);
     super.clear();
-    final ODatabasePojoAbstract<TYPE> database = getDatabase();
+    final OObjectDatabaseTx database = getDatabase();
     for (Object e : copy) {
       if (e != null) {
         if (e instanceof ORID)
-          add(database.getUserObjectByRecord(((ODatabaseDocument) getDatabase().getUnderlying()).load((ORID) e, fetchPlan),
+          add((TYPE) database.getUserObjectByRecord(((ODatabaseDocument) getDatabase().getUnderlying()).load((ORID) e, fetchPlan),
                   fetchPlan));
         else if (e instanceof ODocument)
-          add(database.getUserObjectByRecord((ORecord) e, fetchPlan));
+          add((TYPE)database.getUserObjectByRecord((ORecord) e, fetchPlan));
         else
           add((TYPE) e);
       }
@@ -270,14 +270,14 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
 
     final Set<Object> copy = new HashSet<Object>(underlying);
     super.clear();
-    final ODatabasePojoAbstract<TYPE> database = getDatabase();
+    final OObjectDatabaseTx database = getDatabase();
     for (Object e : copy) {
       if (e != null) {
         if (e instanceof ORID)
-          super.add(database.getUserObjectByRecord(((ODatabaseDocument) getDatabase().getUnderlying()).load((ORID) e, fetchPlan),
+          super.add((TYPE)database.getUserObjectByRecord(((ODatabaseDocument) getDatabase().getUnderlying()).load((ORID) e, fetchPlan),
               fetchPlan));
         else if (e instanceof ODocument)
-          super.add(database.getUserObjectByRecord((ORecord) e, fetchPlan));
+          super.add((TYPE) database.getUserObjectByRecord((ORecord) e, fetchPlan));
         else
           super.add((TYPE) e);
       }
@@ -291,7 +291,7 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
 
     final Set<Object> copy = new HashSet<Object>(underlying);
     super.clear();
-    final ODatabasePojoAbstract<TYPE> database = getDatabase();
+    final OObjectDatabaseTx database = getDatabase();
     for (Object e : copy) {
       if (e != null) {
         if (e instanceof ORID) {
@@ -309,7 +309,7 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
     converted = true;
   }
 
-  protected ODatabasePojoAbstract<TYPE> getDatabase() {
+  protected OObjectDatabaseTx getDatabase() {
     return OLazyCollectionUtil.getDatabase();
   }
 }
