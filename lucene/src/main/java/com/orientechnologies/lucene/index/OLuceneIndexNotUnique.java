@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.OIndexEngineCallback;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.search.IndexSearcher;
 
@@ -86,6 +87,12 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
   @Override
   protected OBinarySerializer determineValueSerializer() {
     return storage.getComponentsFactory().binarySerializerFactory.getObjectSerializer(OStreamSerializerSBTreeIndexRIDContainer.ID);
+  }
+
+  @Override
+  protected Iterable<OTransactionIndexChangesPerKey.OTransactionIndexEntry> interpretTxKeyChanges(
+      OTransactionIndexChangesPerKey changes) {
+    return changes.interpret(OTransactionIndexChangesPerKey.Interpretation.NonUnique);
   }
 
   @Override
