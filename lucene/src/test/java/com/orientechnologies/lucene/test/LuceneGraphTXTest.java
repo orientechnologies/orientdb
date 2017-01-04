@@ -25,8 +25,8 @@ import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
+import org.junit.Assert;
 import org.junit.Test;
-import org.testng.Assert;
 
 import java.util.Collection;
 
@@ -57,7 +57,6 @@ public class LuceneGraphTXTest {
 
       v.save();
 
-
       Collection results = graph.getRawGraph().command(new OCommandSQL("select from City where name lucene 'London'")).execute();
       Assert.assertEquals(results.size(), 1);
 
@@ -85,40 +84,4 @@ public class LuceneGraphTXTest {
 
   }
 
-  @Test
-  public void graphTxTest2() throws Exception {
-
-    OrientGraph graph = new OrientGraph("memory:graphTx");
-
-    try {
-
-      graph.executeOutsideTx(new OCallable<Object, OrientBaseGraph>() {
-        @Override
-        public Object call(OrientBaseGraph graph) {
-          OrientVertexType city = graph.createVertexType("City");
-          city.createProperty("name", OType.STRING);
-          graph.command(new OCommandSQL("create index City.name on City (name) NOTUNIQUE")).execute();
-          return null;
-        }
-      });
-
-      OrientVertex v = graph.addTemporaryVertex("City", "name", "London");
-
-      v.save();
-
-
-
-      v.setProperty("name", "Berlin");
-
-      v.save();
-
-      graph.commit();
-
-
-
-    } finally {
-      graph.drop();
-    }
-
-  }
 }
