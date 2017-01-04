@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.document.LatestVersionRecordReader;
 import com.orientechnologies.orient.core.db.document.RecordReader;
 import com.orientechnologies.orient.core.db.document.SimpleRecordReader;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
@@ -39,6 +40,7 @@ import com.orientechnologies.orient.core.hook.ORecordHook.RESULT;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -57,12 +59,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class OTransactionOptimistic extends OTransactionRealAbstract {
   private static AtomicInteger txSerial = new AtomicInteger();
+  private boolean changed = false;
+  private boolean alreadyCleared = false;
+  private boolean usingLog = true;
+  private int txStartCounter;
 
-  private boolean              usingLog = true;
-  private int                  txStartCounter;
-
-  private ORecordCallback<Long>    recordCreatedCallback  = null;
-  private ORecordCallback<Integer> recordUpdatedCallback  = null;
+  private ORecordCallback<Long>    recordCreatedCallback = null;
+  private ORecordCallback<Integer> recordUpdatedCallback = null;
 
   public OTransactionOptimistic(final ODatabaseDocumentInternal iDatabase) {
     super(iDatabase, txSerial.incrementAndGet());
@@ -89,8 +92,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
    * The transaction is reentrant. If {@code begin()} has been called several times, the actual commit happens only after the same
    * amount of {@code commit()} calls
    *
-   * @param force
-   *          commit transaction even
+   * @param force commit transaction even
    */
   @Override
   public void commit(final boolean force) {
@@ -182,11 +184,9 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
     if (txRecord != null) {
       if (iRecord != null && txRecord != iRecord)
-        OLogManager.instance().warn(this,
-            "Found record in transaction with the same RID %s but different instance. "
-                + "Probably the record has been loaded from another transaction and reused on the current one: reload it "
-                + "from current transaction before to update or delete it",
-            iRecord.getIdentity());
+        OLogManager.instance().warn(this, "Found record in transaction with the same RID %s but different instance. "
+            + "Probably the record has been loaded from another transaction and reused on the current one: reload it "
+            + "from current transaction before to update or delete it", iRecord.getIdentity());
       return txRecord;
     }
 
@@ -194,8 +194,9 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       return null;
 
     // DELEGATE TO THE STORAGE, NO TOMBSTONES SUPPORT IN TX MODE
-    final ORecord record = database.executeReadRecord((ORecordId) rid, iRecord, -1, fetchPlan, ignoreCache, iUpdateCache,
-        loadTombstone, lockingStrategy, new SimpleRecordReader(database.isPrefetchRecords()));
+    final ORecord record = database
+        .executeReadRecord((ORecordId) rid, iRecord, -1, fetchPlan, ignoreCache, iUpdateCache, loadTombstone, lockingStrategy,
+            new SimpleRecordReader(database.isPrefetchRecords()));
 
     if (record != null && isolationLevel == ISOLATION_LEVEL.REPEATABLE_READ)
       // KEEP THE RECORD IN TX TO ASSURE REPEATABLE READS
@@ -225,8 +226,9 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       throw new ORecordNotFoundException(rid);
 
     // DELEGATE TO THE STORAGE, NO TOMBSTONES SUPPORT IN TX MODE
-    final ORecord record = database.executeReadRecord((ORecordId) rid, null, recordVersion, fetchPlan, ignoreCache, !ignoreCache,
-        false, OStorage.LOCKING_STRATEGY.NONE, new SimpleRecordReader(database.isPrefetchRecords()));
+    final ORecord record = database
+        .executeReadRecord((ORecordId) rid, null, recordVersion, fetchPlan, ignoreCache, !ignoreCache, false,
+            OStorage.LOCKING_STRATEGY.NONE, new SimpleRecordReader(database.isPrefetchRecords()));
 
     if (record != null && isolationLevel == ISOLATION_LEVEL.REPEATABLE_READ)
       // KEEP THE RECORD IN TX TO ASSURE REPEATABLE READS
@@ -251,11 +253,9 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
     if (txRecord != null) {
       if (passedRecord != null && txRecord != passedRecord)
-        OLogManager.instance().warn(this,
-            "Found record in transaction with the same RID %s but different instance. "
-                + "Probably the record has been loaded from another transaction and reused on the current one: reload it "
-                + "from current transaction before to update or delete it",
-            passedRecord.getIdentity());
+        OLogManager.instance().warn(this, "Found record in transaction with the same RID %s but different instance. "
+            + "Probably the record has been loaded from another transaction and reused on the current one: reload it "
+            + "from current transaction before to update or delete it", passedRecord.getIdentity());
       return txRecord;
     }
 
@@ -272,8 +272,9 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
         recordReader = new LatestVersionRecordReader();
       }
 
-      ORecord loadedRecord = database.executeReadRecord((ORecordId) rid, passedRecord, -1, fetchPlan, ignoreCache, !ignoreCache,
-          false, OStorage.LOCKING_STRATEGY.NONE, recordReader);
+      ORecord loadedRecord = database
+          .executeReadRecord((ORecordId) rid, passedRecord, -1, fetchPlan, ignoreCache, !ignoreCache, false,
+              OStorage.LOCKING_STRATEGY.NONE, recordReader);
 
       if (force) {
         record = loadedRecord;
@@ -340,8 +341,9 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
           if (rec instanceof ODocument)
             ODocumentInternal.convertAllMultiValuesToTrackedVersions((ODocument) rec);
           if (rec == iRecord) {
-            final byte operation = iForceCreate ? ORecordOperation.CREATED
-                : iRecord.getIdentity().isValid() ? ORecordOperation.UPDATED : ORecordOperation.CREATED;
+            final byte operation = iForceCreate ?
+                ORecordOperation.CREATED :
+                iRecord.getIdentity().isValid() ? ORecordOperation.UPDATED : ORecordOperation.CREATED;
             addRecord(rec, operation, iClusterName);
             originalSaved = true;
           } else
@@ -351,8 +353,9 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     } while (dirtyManager.getNewRecords() != null || dirtyManager.getUpdateRecords() != null);
 
     if (!originalSaved && iRecord.isDirty()) {
-      final byte operation = iForceCreate ? ORecordOperation.CREATED
-          : iRecord.getIdentity().isValid() ? ORecordOperation.UPDATED : ORecordOperation.CREATED;
+      final byte operation = iForceCreate ?
+          ORecordOperation.CREATED :
+          iRecord.getIdentity().isValid() ? ORecordOperation.UPDATED : ORecordOperation.CREATED;
       addRecord(iRecord, operation, iClusterName);
     }
     return iRecord;
@@ -377,6 +380,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
   }
 
   public void addRecord(final ORecord iRecord, final byte iStatus, final String iClusterName) {
+    changed = true;
     checkTransaction();
 
     if (iStatus != ORecordOperation.LOADED)
@@ -390,7 +394,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
         if (res == RESULT.RECORD_CHANGED && iRecord instanceof ODocument)
           ((ODocument) iRecord).validate();
       }
-        break;
+      break;
       case ORecordOperation.LOADED:
         /**
          * Read hooks already invoked in {@link com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx#executeReadRecord}
@@ -402,7 +406,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
         if (res == RESULT.RECORD_CHANGED && iRecord instanceof ODocument)
           ((ODocument) iRecord).validate();
       }
-        break;
+      break;
 
       case ORecordOperation.DELETED:
         database.checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_DELETE, iClusterName);
@@ -532,25 +536,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     status = TXSTATUS.COMMITTING;
 
     if (!allEntries.isEmpty() || !indexEntries.isEmpty()) {
-      if (!OScenarioThreadLocal.INSTANCE.isRunModeDistributed()
-          && !(database.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage))
         database.getStorage().commit(this, null);
-      else {
-
-        final String storageType = database.getStorage().getUnderlying().getType();
-
-        if (storageType.equals(OEngineLocalPaginated.NAME) || storageType.equals(OEngineMemory.NAME))
-          database.getStorage().commit(OTransactionOptimistic.this, null);
-        else {
-          database.getStorage().callInLock(new Callable<Object>() {
-            @Override
-            public Object call() throws Exception {
-              database.getStorage().commit(OTransactionOptimistic.this, null);
-              return null;
-            }
-          }, true);
-        }
-      }
     }
 
     invokeCallbacks();
@@ -573,4 +559,25 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       }
     }
   }
+
+  @Override
+  public void addIndexEntry(OIndex<?> delegate, String iIndexName, OTransactionIndexChanges.OPERATION iOperation, Object key,
+      OIdentifiable iValue, boolean clientTrackOnly) {
+    changed = true;
+    super.addIndexEntry(delegate, iIndexName, iOperation, key, iValue, clientTrackOnly);
+  }
+
+  public void resetChangesTracking() {
+    alreadyCleared = true;
+    changed = false;
+  }
+
+  public boolean isChanged() {
+    return changed;
+  }
+
+  public boolean isAlreadyCleared() {
+    return alreadyCleared;
+  }
+
 }

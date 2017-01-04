@@ -34,8 +34,9 @@ import java.io.IOException;
  */
 public class OChannelBinaryProtocol {
   // OUTGOING
-  public static final byte REQUEST_SHUTDOWN = 1;
-  public static final byte REQUEST_CONNECT  = 2;
+  public static final byte REQUEST_SHUTDOWN  = 1;
+  public static final byte REQUEST_CONNECT   = 2;
+  public static final byte REQUEST_HANDSHAKE = 20;
 
   public static final byte REQUEST_DB_OPEN         = 3;
   public static final byte REQUEST_DB_CREATE       = 4;
@@ -46,15 +47,10 @@ public class OChannelBinaryProtocol {
   public static final byte REQUEST_DB_COUNTRECORDS = 9;
   public static final byte REQUEST_DB_REOPEN       = 17;
 
-  public static final byte REQUEST_DATACLUSTER_ADD                = 10;
-  public static final byte REQUEST_DATACLUSTER_DROP               = 11;
-  public static final byte REQUEST_DATACLUSTER_COUNT              = 12;
-  public static final byte REQUEST_DATACLUSTER_DATARANGE          = 13;
-  public static final byte REQUEST_DATACLUSTER_COPY               = 14;                 // NOT USED ANYMORE
-  public static final byte REQUEST_DATACLUSTER_LH_CLUSTER_IS_USED = 16;                 // since 1.2.0
-
-  public static final byte REQUEST_DATASEGMENT_ADD  = 20;                 // NOT USED ANYMORE
-  public static final byte REQUEST_DATASEGMENT_DROP = 21;                 // NOT USED ANYMORE
+  public static final byte REQUEST_CLUSTER_ADD       = 10;
+  public static final byte REQUEST_CLUSTER_DROP      = 11;
+  public static final byte REQUEST_CLUSTER_COUNT     = 12;
+  public static final byte REQUEST_CLUSTER_DATARANGE = 13;
 
   public static final byte REQUEST_INCREMENTAL_BACKUP = 27;                 // since 2.2
 
@@ -70,7 +66,7 @@ public class OChannelBinaryProtocol {
   public static final byte REQUEST_POSITIONS_FLOOR  = 39;                 // since 1.3.0
 
   public static final byte REQUEST_COUNT                             = 40;                 // DEPRECATED: USE
-  // REQUEST_DATACLUSTER_COUNT
+  // REQUEST_CLUSTER_COUNT
   public static final byte REQUEST_COMMAND                           = 41;
   public static final byte REQUEST_POSITIONS_CEILING                 = 42;                 // since 1.3.0
   public static final byte REQUEST_RECORD_HIDE                       = 43;                 // since 1.7
@@ -79,7 +75,10 @@ public class OChannelBinaryProtocol {
   public static final byte REQUEST_CLOSE_QUERY                       = 46;                 // since 3.0
   public static final byte REQUEST_QUERY_NEXT_PAGE                   = 47;                 // since 3.0
 
-  public static final byte REQUEST_TX_COMMIT = 60;
+  public static final byte REQUEST_TX_COMMIT  = 60;
+  public static final byte REQUEST_TX_BEGIN   = 61;
+  public static final byte REQUEST_TX_REBEGIN = 62;
+  public static final byte REQUEST_TX_FETCH   = 63;
 
   public static final byte REQUEST_CONFIG_GET  = 70;
   public static final byte REQUEST_CONFIG_SET  = 71;
@@ -92,17 +91,10 @@ public class OChannelBinaryProtocol {
   public static final byte REQUEST_PUSH_LIVE_QUERY     = 81;                 // SINCE 2.1
 
   // DISTRIBUTED
-  @Deprecated public static final byte REQUEST_DB_COPY     = 90;                 // SINCE 1.0rc8
-  @Deprecated public static final byte REQUEST_REPLICATION = 91;                 // SINCE 1.0
-  public static final             byte REQUEST_CLUSTER     = 92;                 // SINCE 1.0
-  public static final             byte REQUEST_DB_TRANSFER = 93;                 // NOT USED ANYMORE
-
+  public static final byte REQUEST_CLUSTER    = 92;                 // SINCE 1.0
   // Lock + sync
   public static final byte REQUEST_DB_FREEZE  = 94;                 // SINCE 1.1.0
   public static final byte REQUEST_DB_RELEASE = 95;                 // SINCE 1.1.0
-
-  public static final byte REQUEST_DATACLUSTER_FREEZE  = 96;
-  public static final byte REQUEST_DATACLUSTER_RELEASE = 97;
 
   // IMPORT
   public static final byte REQUEST_DB_IMPORT = 98;
@@ -149,8 +141,9 @@ public class OChannelBinaryProtocol {
 
   public static final int PROTOCOL_VERSION_35 = 35;
   public static final int PROTOCOL_VERSION_36 = 36;                 //ABILITY TO CREATE DATABASE FROM INCREMENTAL BACKUP
+  public static final int PROTOCOL_VERSION_37 = 37;
 
-  public static final int CURRENT_PROTOCOL_VERSION = PROTOCOL_VERSION_36;
+  public static final int CURRENT_PROTOCOL_VERSION = PROTOCOL_VERSION_37;
 
   public static OIdentifiable readIdentifiable(final OChannelDataInput network) throws IOException {
     final int classId = network.readShort();

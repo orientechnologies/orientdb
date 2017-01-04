@@ -25,14 +25,20 @@ import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.remote.OBinaryAsyncRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
 
 public class OUpdateRecordRequest implements OBinaryAsyncRequest<OUpdateRecordResponse> {
   private ORecordId rid;
-  private byte[]    content;
+  private byte[]    rawContent;
+  private ORecord   content;
   private int       version;
   private boolean   updateContent = true;
   private byte      recordType;
@@ -40,7 +46,7 @@ public class OUpdateRecordRequest implements OBinaryAsyncRequest<OUpdateRecordRe
 
   public OUpdateRecordRequest(ORecordId iRid, byte[] iContent, int iVersion, boolean updateContent, byte iRecordType) {
     this.rid = iRid;
-    this.content = iContent;
+    this.rawContent = iContent;
     this.version = iVersion;
     this.updateContent = updateContent;
     this.recordType = iRecordType;
@@ -59,27 +65,31 @@ public class OUpdateRecordRequest implements OBinaryAsyncRequest<OUpdateRecordRe
     return "Update Record";
   }
 
-  public void read(OChannelDataInput channel, int protocolVersion, String serializerName) throws IOException {
+  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
     rid = channel.readRID();
     if (protocolVersion >= 23)
       updateContent = channel.readBoolean();
-    content = channel.readBytes();
+    byte[] bts = channel.readBytes();
     version = channel.readVersion();
     recordType = channel.readByte();
     mode = channel.readByte();
+ 
+    content = Orient.instance().getRecordFactoryManager().newInstance(recordType);
+    serializer.fromStream(bts, content, null);
+
   }
 
   @Override
   public void write(final OChannelDataOutput network, final OStorageRemoteSession session) throws IOException {
     network.writeRID(rid);
     network.writeBoolean(updateContent);
-    network.writeBytes(content);
+    network.writeBytes(rawContent);
     network.writeVersion(version);
     network.writeByte(recordType);
     network.writeByte((byte) mode);
   }
 
-  public byte[] getContent() {
+  public ORecord getContent() {
     return content;
   }
 

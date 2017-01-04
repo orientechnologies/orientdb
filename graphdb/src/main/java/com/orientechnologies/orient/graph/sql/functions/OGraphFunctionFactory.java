@@ -40,15 +40,15 @@ public class OGraphFunctionFactory implements OSQLFunctionFactory {
     register(OSQLFunctionShortestPath.NAME, new OSQLFunctionShortestPath());
 
     register(OSQLFunctionLabel.NAME, new OSQLFunctionLabel());
-    register(OSQLFunctionOut.NAME, new OSQLFunctionOut());
-    register(OSQLFunctionIn.NAME, new OSQLFunctionIn());
-    register(OSQLFunctionBoth.NAME, new OSQLFunctionBoth());
-    register(OSQLFunctionOutE.NAME, new OSQLFunctionOutE());
-    register(OSQLFunctionInE.NAME, new OSQLFunctionInE());
-    register(OSQLFunctionBothE.NAME, new OSQLFunctionBothE());
-    register(OSQLFunctionOutV.NAME, new OSQLFunctionOutV());
-    register(OSQLFunctionInV.NAME, new OSQLFunctionInV());
-    register(OSQLFunctionBothV.NAME, new OSQLFunctionBothV());
+//    register(OSQLFunctionOut.NAME, new OSQLFunctionOut());
+//    register(OSQLFunctionIn.NAME, new OSQLFunctionIn());
+//    register(OSQLFunctionBoth.NAME, new OSQLFunctionBoth());
+//    register(OSQLFunctionOutE.NAME, new OSQLFunctionOutE());
+//    register(OSQLFunctionInE.NAME, new OSQLFunctionInE());
+//    register(OSQLFunctionBothE.NAME, new OSQLFunctionBothE());
+//    register(OSQLFunctionOutV.NAME, new OSQLFunctionOutV());
+//    register(OSQLFunctionInV.NAME, new OSQLFunctionInV());
+//    register(OSQLFunctionBothV.NAME, new OSQLFunctionBothV());
   }
 
   public static void register(final String iName, final Object iImplementation) {

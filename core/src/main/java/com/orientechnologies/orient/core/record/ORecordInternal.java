@@ -76,7 +76,10 @@ public class ORecordInternal {
    * Internal only. Return the record type.
    */
   public static byte getRecordType(final ORecord record) {
-    final ORecordAbstract rec = (ORecordAbstract) record;
+    if (record instanceof ORecordAbstract) {
+      return ((ORecordAbstract) record).getRecordType();
+    }
+    final ORecordAbstract rec = (ORecordAbstract) record.getRecord();
     return rec.getRecordType();
   }
 
@@ -116,14 +119,14 @@ public class ORecordInternal {
   }
 
   public static ODirtyManager getDirtyManager(ORecord record) {
-    if(!(record instanceof ORecordAbstract)){
+    if (!(record instanceof ORecordAbstract)) {
       record = record.getRecord();
     }
     return ((ORecordAbstract) record).getDirtyManager();
   }
 
   public static void setDirtyManager(ORecord record, final ODirtyManager dirtyManager) {
-    if(!(record instanceof ORecordAbstract)){
+    if (!(record instanceof ORecordAbstract)) {
       record = record.getRecord();
     }
     ((ORecordAbstract) record).setDirtyManager(dirtyManager);

@@ -49,7 +49,6 @@ public abstract class BaseLuceneTest {
       db = new ODatabaseDocumentTx("memory:" + name.getMethodName());
     }
 
-    System.out.println("db.getURL() = " + db.getURL());
     db.create();
   }
 

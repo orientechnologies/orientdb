@@ -375,13 +375,13 @@ public class OClientConnectionManager {
         continue;
       }
 
-      if (!(c.getProtocol() instanceof ONetworkProtocolBinary) || c.getData().serializationImpl == null)
+      if (!(c.getProtocol() instanceof ONetworkProtocolBinary) || c.getData().getSerializationImpl() == null)
         // INVOLVE ONLY BINARY PROTOCOLS
         continue;
 
       final ONetworkProtocolBinary p = (ONetworkProtocolBinary) c.getProtocol();
       final OChannelBinary channel = p.getChannel();
-      final ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(c.getData().serializationImpl);
+      final ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(c.getData().getSerializationImpl());
       if (ser == null)
         return;
 

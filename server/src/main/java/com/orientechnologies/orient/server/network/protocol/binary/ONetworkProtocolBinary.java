@@ -47,6 +47,7 @@ import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetwork;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.enterprise.channel.binary.*;
 import com.orientechnologies.orient.server.OClientConnection;
@@ -63,17 +64,21 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.logging.Level;
 
 public class ONetworkProtocolBinary extends ONetworkProtocol {
-  protected final Level    logClientExceptions;
-  protected final boolean  logClientFullStackTrace;
-  protected OChannelBinary channel;
-  protected volatile int   requestType;
-  protected int            clientTxId;
-  protected boolean        okSent;
-  private boolean          tokenConnection = true;
-  private long             requests        = 0;
+  protected final    Level          logClientExceptions;
+  protected final    boolean        logClientFullStackTrace;
+  protected          OChannelBinary channel;
+  protected volatile int            requestType;
+  protected          int            clientTxId;
+  protected          boolean        okSent;
+  private boolean tokenConnection = true;
+  private long    requests        = 0;
+  private HandshakeInfo handshakeInfo;
+
+  private Function<Integer, OBinaryRequest<? extends OBinaryResponse>> factory = ONetworkProtocolBinary::createRequest;
 
   public ONetworkProtocolBinary(OServer server) {
     this(server, "OrientDB <- BinaryClient/?");
@@ -87,7 +92,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
   /**
    * Internal varialbe injection useful for testing.
-   * 
+   *
    * @param server
    * @param channel
    */
@@ -143,6 +148,11 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     okSent = false;
     try {
       requestType = channel.readByte();
+      if (requestType == OChannelBinaryProtocol.REQUEST_HANDSHAKE) {
+        handleHandshake();
+        return;
+      }
+
       clientTxId = channel.readInt();
       // GET THE CONNECTION IF EXIST
       OClientConnection connection = server.getClientConnectionManager().getConnection(clientTxId, this);
@@ -155,6 +165,14 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       sendShutdown();
       throw e;
     }
+  }
+
+  private void handleHandshake() throws IOException {
+    short protocolVersion = channel.readShort();
+    String driverName = channel.readString();
+    String driverVersion = channel.readString();
+    this.handshakeInfo = new HandshakeInfo(protocolVersion, driverName, driverVersion);
+    this.factory = ONetworkProtocolBinary::createRequest37;
   }
 
   public boolean shouldReadToken(OClientConnection connection, int requestType) {
@@ -172,7 +190,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     OLogManager.instance().debug(this, "Request id:" + clientTxId + " type:" + requestType);
 
     try {
-      OBinaryRequest<? extends OBinaryResponse> request = createRequest(requestType);
+      OBinaryRequest<? extends OBinaryResponse> request = factory.apply(requestType);
       if (request != null) {
         byte[] tokenBytes = null;
 
@@ -181,12 +199,12 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
             tokenBytes = channel.readBytes();
           }
           int protocolVersion = OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION;
-          String serializationImpl = ORecordSerializerFactory.instance().getDefaultRecordSerializer().toString();
+          ORecordSerializer serializer = ORecordSerializerNetwork.INSTANCE;
           if (connection != null) {
             protocolVersion = connection.getData().protocolVersion;
-            serializationImpl = connection.getData().serializationImpl;
+            serializer = connection.getData().getSerializer();
           }
-          request.read(channel, protocolVersion, serializationImpl);
+          request.read(channel, protocolVersion, serializer);
         } catch (IOException e) {
           OLogManager.instance().debug(this, "I/O Error on client clientId=%d reqType=%d", clientTxId, requestType, e);
           sendShutdown();
@@ -198,9 +216,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
             connection = onBeforeHandshakeRequest(connection, tokenBytes);
           else
             connection = onBeforeOperationalRequest(connection, tokenBytes);
-
-          connection.getData().commandInfo = request.getDescription();
-          connection.setProtocol(this); // This is need for the request command
+          if (connection != null) {
+            connection.getData().commandInfo = request.getDescription();
+            connection.setProtocol(this); // This is need for the request command
+          }
 
           if (request.requireServerUser()) {
             checkServerAccess(request.requiredServerRole(), connection);
@@ -231,15 +250,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
           }
           return;
         } finally {
-
-          // resetting transaction state. Commands are stateless and connection should be cleared
-          // otherwise reused connection (connections pool) may lead to unpredicted errors
-          if (connection != null && connection.getDatabase() != null
-              && connection.getDatabase().activateOnCurrentThread().getTransaction() != null) {
-            connection.getDatabase().activateOnCurrentThread();
-            connection.getDatabase().getTransaction().rollback();
-          }
-
           requests++;
           afterOperationRequest(connection);
         }
@@ -248,9 +258,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
             beginResponse();
             try {
               sendOk(connection, clientTxId);
-              response.write(channel, connection.getData().protocolVersion, connection.getData().serializationImpl);
+              response.write(channel, connection.getData().protocolVersion, connection.getData().getSerializer());
             } finally {
-              endResponse(connection);
+              endResponse();
             }
           } catch (IOException e) {
             OLogManager.instance().debug(this, "I/O Error on client clientId=%d reqType=%d", clientTxId, requestType, e);
@@ -267,8 +277,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
     } finally {
 
-      Orient.instance().getProfiler().stopChrono("server.network.requests", "Total received requests", timer,
-          "server.network.requests");
+      Orient.instance().getProfiler()
+          .stopChrono("server.network.requests", "Total received requests", timer, "server.network.requests");
 
       OSerializationThreadLocal.INSTANCE.get().clear();
     }
@@ -304,8 +314,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       OLogManager.instance().warn(this, "I/O Error on distributed channel  clientId=%d reqType=%d", clientTxId, requestType, t);
       sendShutdown();
     } finally {
-      Orient.instance().getProfiler().stopChrono("server.network.requests", "Total received requests", timer,
-          "server.network.requests");
+      Orient.instance().getProfiler()
+          .stopChrono("server.network.requests", "Total received requests", timer, "server.network.requests");
     }
 
   }
@@ -313,8 +323,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   private OClientConnection onBeforeHandshakeRequest(OClientConnection connection, byte[] tokenBytes) {
     try {
       if (requestType != OChannelBinaryProtocol.REQUEST_DB_REOPEN) {
-        if (clientTxId >= 0 && connection == null
-            && (requestType == OChannelBinaryProtocol.REQUEST_DB_OPEN || requestType == OChannelBinaryProtocol.REQUEST_CONNECT)) {
+        if (clientTxId >= 0 && connection == null && (requestType == OChannelBinaryProtocol.REQUEST_DB_OPEN
+            || requestType == OChannelBinaryProtocol.REQUEST_CONNECT)) {
           // THIS EXCEPTION SHULD HAPPEN IN ANY CASE OF OPEN/CONNECT WITH SESSIONID >= 0, BUT FOR COMPATIBILITY IT'S ONLY IF THERE
           // IS NO CONNECTION
           shutdown();
@@ -417,199 +427,309 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     }
   }
 
-  private OBinaryRequest<? extends OBinaryResponse> createRequest(int requestType) {
-    OBinaryRequest<? extends OBinaryResponse> request = null;
+  public static OBinaryRequest<? extends OBinaryResponse> createRequest(int requestType) {
     switch (requestType) {
-
-    case OChannelBinaryProtocol.REQUEST_DB_REOPEN:
-      request = new OReopenRequest();
-      break;
-
-    case OChannelBinaryProtocol.REQUEST_SHUTDOWN:
-      request = new OShutdownRequest();
-      break;
-
     case OChannelBinaryProtocol.REQUEST_DB_OPEN:
-      request = new OOpenRequest();
-      break;
+      return new OOpenRequest();
 
     case OChannelBinaryProtocol.REQUEST_CONNECT:
-      request = new OConnectRequest();
-      break;
+      return new OConnectRequest();
+
+    case OChannelBinaryProtocol.REQUEST_DB_REOPEN:
+      return new OReopenRequest();
+
+    case OChannelBinaryProtocol.REQUEST_SHUTDOWN:
+      return new OShutdownRequest();
 
     case OChannelBinaryProtocol.REQUEST_DB_LIST:
-      request = new OListDatabasesRequest();
-      break;
+      return new OListDatabasesRequest();
 
     case OChannelBinaryProtocol.REQUEST_SERVER_INFO:
-      request = new OServerInfoRequest();
-      break;
+      return new OServerInfoRequest();
 
     case OChannelBinaryProtocol.REQUEST_DB_RELOAD:
-      request = new OReloadRequest();
-      break;
+      return new OReloadRequest();
 
     case OChannelBinaryProtocol.REQUEST_DB_CREATE:
-      request = new OCreateDatabaseRequest();
-      break;
+      return new OCreateDatabaseRequest();
 
     case OChannelBinaryProtocol.REQUEST_DB_CLOSE:
-      request = new OCloseRequest();
-      break;
+      return new OCloseRequest();
 
     case OChannelBinaryProtocol.REQUEST_DB_EXIST:
-      request = new OExistsDatabaseRequest();
-      break;
+      return new OExistsDatabaseRequest();
 
     case OChannelBinaryProtocol.REQUEST_DB_DROP:
-      request = new ODropDatabaseRequest();
-      break;
+      return new ODropDatabaseRequest();
 
     case OChannelBinaryProtocol.REQUEST_DB_SIZE:
-      request = new OGetSizeRequest();
-      break;
+      return new OGetSizeRequest();
 
     case OChannelBinaryProtocol.REQUEST_DB_COUNTRECORDS:
-      request = new OCountRecordsRequest();
-      break;
+      return new OCountRecordsRequest();
 
     case OChannelBinaryProtocol.REQUEST_CLUSTER:
-      request = new ODistributedStatusRequest();
-      break;
+      return new ODistributedStatusRequest();
 
-    case OChannelBinaryProtocol.REQUEST_DATACLUSTER_COUNT:
-      request = new OCountRequest();
-      break;
+    case OChannelBinaryProtocol.REQUEST_CLUSTER_COUNT:
+      return new OCountRequest();
 
-    case OChannelBinaryProtocol.REQUEST_DATACLUSTER_DATARANGE:
-      request = new OGetClusterDataRangeRequest();
-      break;
+    case OChannelBinaryProtocol.REQUEST_CLUSTER_DATARANGE:
+      return new OGetClusterDataRangeRequest();
 
-    case OChannelBinaryProtocol.REQUEST_DATACLUSTER_ADD:
-      request = new OAddClusterRequest();
-      break;
+    case OChannelBinaryProtocol.REQUEST_CLUSTER_ADD:
+      return new OAddClusterRequest();
 
-    case OChannelBinaryProtocol.REQUEST_DATACLUSTER_DROP:
-      request = new ODropClusterRequest();
-      break;
+    case OChannelBinaryProtocol.REQUEST_CLUSTER_DROP:
+      return new ODropClusterRequest();
 
     case OChannelBinaryProtocol.REQUEST_RECORD_METADATA:
-      request = new OGetRecordMetadataRequest();
-      break;
+      return new OGetRecordMetadataRequest();
 
     case OChannelBinaryProtocol.REQUEST_RECORD_LOAD:
-      request = new OReadRecordRequest();
-      break;
+      return new OReadRecordRequest();
 
     case OChannelBinaryProtocol.REQUEST_RECORD_LOAD_IF_VERSION_NOT_LATEST:
-      request = new OReadRecordIfVersionIsNotLatestRequest();
-      break;
+      return new OReadRecordIfVersionIsNotLatestRequest();
 
     case OChannelBinaryProtocol.REQUEST_RECORD_CREATE:
-      request = new OCreateRecordRequest();
-      break;
+      return new OCreateRecordRequest();
 
     case OChannelBinaryProtocol.REQUEST_RECORD_UPDATE:
-      request = new OUpdateRecordRequest();
-      break;
+      return new OUpdateRecordRequest();
 
     case OChannelBinaryProtocol.REQUEST_RECORD_DELETE:
-      request = new ODeleteRecordRequest();
-      break;
+      return new ODeleteRecordRequest();
 
     case OChannelBinaryProtocol.REQUEST_RECORD_HIDE:
-      request = new OHideRecordRequest();
-      break;
+      return new OHideRecordRequest();
 
     case OChannelBinaryProtocol.REQUEST_POSITIONS_HIGHER:
-      request = new OHigherPhysicalPositionsRequest();
-      break;
+      return new OHigherPhysicalPositionsRequest();
 
     case OChannelBinaryProtocol.REQUEST_POSITIONS_CEILING:
-      request = new OCeilingPhysicalPositionsRequest();
-      break;
+      return new OCeilingPhysicalPositionsRequest();
 
     case OChannelBinaryProtocol.REQUEST_POSITIONS_LOWER:
-      request = new OLowerPhysicalPositionsRequest();
-      break;
+      return new OLowerPhysicalPositionsRequest();
 
     case OChannelBinaryProtocol.REQUEST_POSITIONS_FLOOR:
-      request = new OFloorPhysicalPositionsRequest();
-      break;
+      return new OFloorPhysicalPositionsRequest();
 
     case OChannelBinaryProtocol.REQUEST_COMMAND:
-      request = new OCommandRequest();
-      break;
+      return new OCommandRequest();
 
     case OChannelBinaryProtocol.REQUEST_QUERY:
-      request = new OQueryRequest();
-      break;
+      return new OQueryRequest();
 
     case OChannelBinaryProtocol.REQUEST_CLOSE_QUERY:
-      request = new OCloseQueryRequest();
-      break;
+      return new OCloseQueryRequest();
 
     case OChannelBinaryProtocol.REQUEST_QUERY_NEXT_PAGE:
-      request = new OQueryNextPageRequest();
-      break;
+      return new OQueryNextPageRequest();
 
     case OChannelBinaryProtocol.REQUEST_TX_COMMIT:
-      request = new OCommitRequest();
-      break;
+      return new OCommitRequest();
 
     case OChannelBinaryProtocol.REQUEST_CONFIG_GET:
-      request = new OGetGlobalConfigurationRequest();
-      break;
+      return new OGetGlobalConfigurationRequest();
 
     case OChannelBinaryProtocol.REQUEST_CONFIG_SET:
-      request = new OSetGlobalConfigurationRequest();
-      break;
+      return new OSetGlobalConfigurationRequest();
 
     case OChannelBinaryProtocol.REQUEST_CONFIG_LIST:
-      request = new OListGlobalConfigurationsRequest();
-      break;
+      return new OListGlobalConfigurationsRequest();
 
     case OChannelBinaryProtocol.REQUEST_DB_FREEZE:
-      request = new OFreezeDatabaseRequest();
-      break;
+      return new OFreezeDatabaseRequest();
 
     case OChannelBinaryProtocol.REQUEST_DB_RELEASE:
-      request = new OReleaseDatabaseRequest();
-      break;
+      return new OReleaseDatabaseRequest();
 
     case OChannelBinaryProtocol.REQUEST_RECORD_CLEAN_OUT:
-      request = new OCleanOutRecordRequest();
-      break;
+      return new OCleanOutRecordRequest();
 
     case OChannelBinaryProtocol.REQUEST_CREATE_SBTREE_BONSAI:
-      request = new OSBTCreateTreeRequest();
-      break;
+      return new OSBTCreateTreeRequest();
 
     case OChannelBinaryProtocol.REQUEST_SBTREE_BONSAI_GET:
-      request = new OSBTGetRequest();
-      break;
+      return new OSBTGetRequest();
 
     case OChannelBinaryProtocol.REQUEST_SBTREE_BONSAI_FIRST_KEY:
-      request = new OSBTFirstKeyRequest();
-      break;
+      return new OSBTFirstKeyRequest();
 
     case OChannelBinaryProtocol.REQUEST_SBTREE_BONSAI_GET_ENTRIES_MAJOR:
-      request = new OSBTFetchEntriesMajorRequest<>();
-      break;
+      return new OSBTFetchEntriesMajorRequest<>();
 
     case OChannelBinaryProtocol.REQUEST_RIDBAG_GET_SIZE:
-      request = new OSBTGetRealBagSizeRequest();
-      break;
+      return new OSBTGetRealBagSizeRequest();
 
     case OChannelBinaryProtocol.REQUEST_INCREMENTAL_BACKUP:
-      request = new OIncrementalBackupRequest();
-      break;
+      return new OIncrementalBackupRequest();
 
     case OChannelBinaryProtocol.REQUEST_DB_IMPORT:
-      request = new OImportRequest();
-      break;
+      return new OImportRequest();
+    default:
+      throw new ODatabaseException("binary protocol command with code: " + requestType);
     }
-    return request;
+  }
+
+  public static OBinaryRequest<? extends OBinaryResponse> createRequest37(int requestType) {
+    switch (requestType) {
+
+    case OChannelBinaryProtocol.REQUEST_TX_FETCH:
+      return new OFetchTransactionRequest();
+
+    case OChannelBinaryProtocol.REQUEST_TX_REBEGIN:
+      return new ORebeginTransactionRequest();
+
+    case OChannelBinaryProtocol.REQUEST_TX_BEGIN:
+      return new OBeginTransactionRequest();
+
+    case OChannelBinaryProtocol.REQUEST_TX_COMMIT:
+      return new OCommit37Request();
+
+
+    case OChannelBinaryProtocol.REQUEST_DB_OPEN:
+      return new OOpenRequest();
+
+    case OChannelBinaryProtocol.REQUEST_CONNECT:
+      return new OConnectRequest();
+
+    case OChannelBinaryProtocol.REQUEST_DB_REOPEN:
+      return new OReopenRequest();
+
+    case OChannelBinaryProtocol.REQUEST_SHUTDOWN:
+      return new OShutdownRequest();
+
+    case OChannelBinaryProtocol.REQUEST_DB_LIST:
+      return new OListDatabasesRequest();
+
+    case OChannelBinaryProtocol.REQUEST_SERVER_INFO:
+      return new OServerInfoRequest();
+
+    case OChannelBinaryProtocol.REQUEST_DB_RELOAD:
+      return new OReloadRequest();
+
+    case OChannelBinaryProtocol.REQUEST_DB_CREATE:
+      return new OCreateDatabaseRequest();
+
+    case OChannelBinaryProtocol.REQUEST_DB_CLOSE:
+      return new OCloseRequest();
+
+    case OChannelBinaryProtocol.REQUEST_DB_EXIST:
+      return new OExistsDatabaseRequest();
+
+    case OChannelBinaryProtocol.REQUEST_DB_DROP:
+      return new ODropDatabaseRequest();
+
+    case OChannelBinaryProtocol.REQUEST_DB_SIZE:
+      return new OGetSizeRequest();
+
+    case OChannelBinaryProtocol.REQUEST_DB_COUNTRECORDS:
+      return new OCountRecordsRequest();
+
+    case OChannelBinaryProtocol.REQUEST_CLUSTER:
+      return new ODistributedStatusRequest();
+
+    case OChannelBinaryProtocol.REQUEST_CLUSTER_COUNT:
+      return new OCountRequest();
+
+    case OChannelBinaryProtocol.REQUEST_CLUSTER_DATARANGE:
+      return new OGetClusterDataRangeRequest();
+
+    case OChannelBinaryProtocol.REQUEST_CLUSTER_ADD:
+      return new OAddClusterRequest();
+
+    case OChannelBinaryProtocol.REQUEST_CLUSTER_DROP:
+      return new ODropClusterRequest();
+
+    case OChannelBinaryProtocol.REQUEST_RECORD_METADATA:
+      return new OGetRecordMetadataRequest();
+
+    case OChannelBinaryProtocol.REQUEST_RECORD_LOAD:
+      return new OReadRecordRequest();
+
+    case OChannelBinaryProtocol.REQUEST_RECORD_LOAD_IF_VERSION_NOT_LATEST:
+      return new OReadRecordIfVersionIsNotLatestRequest();
+
+    case OChannelBinaryProtocol.REQUEST_RECORD_CREATE:
+      return new OCreateRecordRequest();
+
+    case OChannelBinaryProtocol.REQUEST_RECORD_UPDATE:
+      return new OUpdateRecordRequest();
+
+    case OChannelBinaryProtocol.REQUEST_RECORD_DELETE:
+      return new ODeleteRecordRequest();
+
+    case OChannelBinaryProtocol.REQUEST_RECORD_HIDE:
+      return new OHideRecordRequest();
+
+    case OChannelBinaryProtocol.REQUEST_POSITIONS_HIGHER:
+      return new OHigherPhysicalPositionsRequest();
+
+    case OChannelBinaryProtocol.REQUEST_POSITIONS_CEILING:
+      return new OCeilingPhysicalPositionsRequest();
+
+    case OChannelBinaryProtocol.REQUEST_POSITIONS_LOWER:
+      return new OLowerPhysicalPositionsRequest();
+
+    case OChannelBinaryProtocol.REQUEST_POSITIONS_FLOOR:
+      return new OFloorPhysicalPositionsRequest();
+
+    case OChannelBinaryProtocol.REQUEST_COMMAND:
+      return new OCommandRequest();
+
+    case OChannelBinaryProtocol.REQUEST_QUERY:
+      return new OQueryRequest();
+
+    case OChannelBinaryProtocol.REQUEST_CLOSE_QUERY:
+      return new OCloseQueryRequest();
+
+    case OChannelBinaryProtocol.REQUEST_QUERY_NEXT_PAGE:
+      return new OQueryNextPageRequest();
+
+    case OChannelBinaryProtocol.REQUEST_CONFIG_GET:
+      return new OGetGlobalConfigurationRequest();
+
+    case OChannelBinaryProtocol.REQUEST_CONFIG_SET:
+      return new OSetGlobalConfigurationRequest();
+
+    case OChannelBinaryProtocol.REQUEST_CONFIG_LIST:
+      return new OListGlobalConfigurationsRequest();
+
+    case OChannelBinaryProtocol.REQUEST_DB_FREEZE:
+      return new OFreezeDatabaseRequest();
+
+    case OChannelBinaryProtocol.REQUEST_DB_RELEASE:
+      return new OReleaseDatabaseRequest();
+
+    case OChannelBinaryProtocol.REQUEST_RECORD_CLEAN_OUT:
+      return new OCleanOutRecordRequest();
+
+    case OChannelBinaryProtocol.REQUEST_CREATE_SBTREE_BONSAI:
+      return new OSBTCreateTreeRequest();
+
+    case OChannelBinaryProtocol.REQUEST_SBTREE_BONSAI_GET:
+      return new OSBTGetRequest();
+
+    case OChannelBinaryProtocol.REQUEST_SBTREE_BONSAI_FIRST_KEY:
+      return new OSBTFirstKeyRequest();
+
+    case OChannelBinaryProtocol.REQUEST_SBTREE_BONSAI_GET_ENTRIES_MAJOR:
+      return new OSBTFetchEntriesMajorRequest<>();
+
+    case OChannelBinaryProtocol.REQUEST_RIDBAG_GET_SIZE:
+      return new OSBTGetRealBagSizeRequest();
+
+    case OChannelBinaryProtocol.REQUEST_INCREMENTAL_BACKUP:
+      return new OIncrementalBackupRequest();
+
+    case OChannelBinaryProtocol.REQUEST_DB_IMPORT:
+      return new OImportRequest();
+    default:
+      throw new ODatabaseException("binary protocol command with code: " + requestType + " for protocol version 37");
+    }
   }
 
   protected void checkServerAccess(final String iResource, OClientConnection connection) {
@@ -618,15 +738,17 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         throw new OSecurityAccessException("Server user not authenticated");
 
       if (!server.isAllowed(connection.getServerUser().name, iResource))
-        throw new OSecurityAccessException("User '" + connection.getServerUser().name + "' cannot access to the resource ["
-            + iResource + "]. Use another server user or change permission in the file config/orientdb-server-config.xml");
+        throw new OSecurityAccessException(
+            "User '" + connection.getServerUser().name + "' cannot access to the resource [" + iResource
+                + "]. Use another server user or change permission in the file config/orientdb-server-config.xml");
     } else {
       if (!connection.getData().serverUser)
         throw new OSecurityAccessException("Server user not authenticated");
 
       if (!server.isAllowed(connection.getData().serverUsername, iResource))
-        throw new OSecurityAccessException("User '" + connection.getData().serverUsername + "' cannot access to the resource ["
-            + iResource + "]. Use another server user or change permission in the file config/orientdb-server-config.xml");
+        throw new OSecurityAccessException(
+            "User '" + connection.getData().serverUsername + "' cannot access to the resource [" + iResource
+                + "]. Use another server user or change permission in the file config/orientdb-server-config.xml");
     }
   }
 
@@ -666,8 +788,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     response.fromStream(channel.getDataInput());
 
     if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog.debug(this, manager.getLocalNodeName(), response.getExecutorNodeName(),
-          ODistributedServerLog.DIRECTION.IN, "Executing distributed response %s", response);
+      ODistributedServerLog
+          .debug(this, manager.getLocalNodeName(), response.getExecutorNodeName(), ODistributedServerLog.DIRECTION.IN,
+              "Executing distributed response %s", response);
 
     // WHILE MSG SERVICE IS UP & RUNNING
     while (manager.getMessageService() == null)
@@ -686,9 +809,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
       channel.writeByte(OChannelBinaryProtocol.RESPONSE_STATUS_ERROR);
       channel.writeInt(iClientTxId);
-      if (tokenConnection && requestType != OChannelBinaryProtocol.REQUEST_CONNECT
-          && (requestType != OChannelBinaryProtocol.REQUEST_DB_OPEN && requestType != OChannelBinaryProtocol.REQUEST_SHUTDOWN
-              || (connection != null && connection.getData() != null
+      if (tokenConnection && requestType != OChannelBinaryProtocol.REQUEST_CONNECT && (
+          requestType != OChannelBinaryProtocol.REQUEST_DB_OPEN && requestType != OChannelBinaryProtocol.REQUEST_SHUTDOWN || (
+              connection != null && connection.getData() != null
                   && connection.getData().protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_32))
           || requestType == OChannelBinaryProtocol.REQUEST_DB_REOPEN) {
         // TODO: Check if the token is expiring and if it is send a new token
@@ -723,10 +846,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
       OBinaryResponse error = new OErrorResponse(messages, result);
       int protocolVersion = OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION;
-      String serializationImpl = ORecordSerializerFactory.instance().getDefaultRecordSerializer().toString();
+      ORecordSerializer serializationImpl = ORecordSerializerNetwork.INSTANCE;
       if (connection != null) {
         protocolVersion = connection.getData().protocolVersion;
-        serializationImpl = connection.getData().serializationImpl;
+        serializationImpl = connection.getData().getSerializer();
       }
       error.write(channel, protocolVersion, serializationImpl);
       channel.flush();
@@ -755,7 +878,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     channel.acquireWriteLock();
   }
 
-  protected void endResponse(OClientConnection connection) throws IOException {
+  protected void endResponse() throws IOException {
     channel.flush();
     channel.releaseWriteLock();
   }
@@ -788,7 +911,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   }
 
   public static String getRecordSerializerName(OClientConnection connection) {
-    return connection.getData().serializationImpl;
+    return connection.getData().getSerializationImpl();
   }
 
   @Override
@@ -809,8 +932,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
    * - 8 bytes: position in cluster <br>
    * - 4 bytes: record version <br>
    * - x bytes: record content <br>
-   * 
-   * @param channel TODO
+   *
+   * @param channel    TODO
    * @param connection
    * @param o
    *
@@ -848,9 +971,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     String dbSerializerName = null;
     if (ODatabaseRecordThreadLocal.INSTANCE.getIfDefined() != null)
       dbSerializerName = ((ODatabaseDocumentInternal) iRecord.getDatabase()).getSerializer().toString();
-    String name = getRecordSerializerName(connection);
-    if (ORecordInternal.getRecordType(iRecord) == ODocument.RECORD_TYPE
-        && (dbSerializerName == null || !dbSerializerName.equals(name))) {
+    String name = connection.getData().getSerializationImpl();
+    if (ORecordInternal.getRecordType(iRecord) == ODocument.RECORD_TYPE && (dbSerializerName == null || !dbSerializerName
+        .equals(name))) {
       ((ODocument) iRecord).deserializeFields();
       ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(name);
       stream = ser.toStream(iRecord, false);
@@ -884,7 +1007,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     int realLength = stream.length;
     final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     if (db != null && db instanceof ODatabaseDocument) {
-      if (ORecordSerializerSchemaAware2CSV.NAME.equals(getRecordSerializerName(connection))) {
+      if (ORecordSerializerSchemaAware2CSV.NAME.equals(connection.getData().getSerializationImpl())) {
         // TRIM TAILING SPACES (DUE TO OVERSIZE)
         for (int i = stream.length - 1; i > -1; --i) {
           if (stream[i] == 32)

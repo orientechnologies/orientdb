@@ -21,7 +21,9 @@ package com.orientechnologies.orient.core.record;
 
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * @author Luigi Dell'Aquila
@@ -43,22 +45,27 @@ public interface OEdge extends OElement {
     return null;
   }
 
-  //TODO is it needed???
   default boolean isLabeled(String[] labels) {
     if (labels == null) {
-      return false;
-    }
-    if(labels.length ==0){
       return true;
     }
-    String type = "E";
+    if (labels.length == 0) {
+      return true;
+    }
+    Set<String> types = new HashSet<>();
+
     Optional<OClass> typeClass = getSchemaType();
     if (typeClass.isPresent()) {
-      type = typeClass.get().getName();
+      types.add(typeClass.get().getName());
+      typeClass.get().getAllSuperClasses().stream().map(x -> x.getName()).forEach(name -> types.add(name));
+    } else {
+      types.add("E");
     }
     for (String s : labels) {
-      if (type.equalsIgnoreCase(s)) {
-        return true;
+      for (String type : types) {
+        if (type.equalsIgnoreCase(s)) {
+          return true;
+        }
       }
     }
 

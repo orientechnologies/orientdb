@@ -54,14 +54,14 @@ import static com.orientechnologies.common.util.OClassLoaderHelper.lookupProvide
 
 public class OSQLEngine {
 
-  protected static final OSQLEngine               INSTANCE           = new OSQLEngine();
-  private static List<OSQLFunctionFactory>        FUNCTION_FACTORIES = null;
-  private static List<OSQLMethodFactory>          METHOD_FACTORIES   = null;
-  private static List<OCommandExecutorSQLFactory> EXECUTOR_FACTORIES = null;
-  private static List<OQueryOperatorFactory>      OPERATOR_FACTORIES = null;
-  private static List<OCollateFactory>            COLLATE_FACTORIES  = null;
-  private static OQueryOperator[]                 SORTED_OPERATORS   = null;
-  private static ClassLoader                      orientClassLoader  = OSQLEngine.class.getClassLoader();
+  protected static final OSQLEngine                       INSTANCE           = new OSQLEngine();
+  private static         List<OSQLFunctionFactory>        FUNCTION_FACTORIES = null;
+  private static         List<OSQLMethodFactory>          METHOD_FACTORIES   = null;
+  private static         List<OCommandExecutorSQLFactory> EXECUTOR_FACTORIES = null;
+  private static         List<OQueryOperatorFactory>      OPERATOR_FACTORIES = null;
+  private static         List<OCollateFactory>            COLLATE_FACTORIES  = null;
+  private static         OQueryOperator[]                 SORTED_OPERATORS   = null;
+  private static         ClassLoader                      orientClassLoader  = OSQLEngine.class.getClassLoader();
 
   public static OStatement parse(String query, ODatabaseDocumentInternal db) {
     return OStatementCache.get(query, db);
@@ -200,7 +200,7 @@ public class OSQLEngine {
 
   /**
    * Iterates on all factories and append all function names.
-   * 
+   *
    * @return Set of all function names.
    */
   public static Set<String> getFunctionNames() {
@@ -223,7 +223,7 @@ public class OSQLEngine {
 
   /**
    * Iterates on all factories and append all collate names.
-   * 
+   *
    * @return Set of all colate names.
    */
   public static Set<String> getCollateNames() {
@@ -237,7 +237,7 @@ public class OSQLEngine {
 
   /**
    * Iterates on all factories and append all command names.
-   * 
+   *
    * @return Set of all command names.
    */
   public static Set<String> getCommandNames() {
@@ -261,7 +261,7 @@ public class OSQLEngine {
     FUNCTION_FACTORIES = null;
   }
 
-  public static Object foreachRecord(final OCallable<Object, OIdentifiable> iCallable, final Object iCurrent,
+  public static Object foreachRecord(final OCallable<Object, OIdentifiable> iCallable, Object iCurrent,
       final OCommandContext iContext) {
     if (iCurrent == null)
       return null;
@@ -269,6 +269,9 @@ public class OSQLEngine {
     if (!OCommandExecutorAbstract.checkInterruption(iContext))
       return null;
 
+    if (iCurrent instanceof Iterable && !(iCurrent instanceof OIdentifiable)) {
+      iCurrent = ((Iterable) iCurrent).iterator();
+    }
     if (OMultiValue.isMultiValue(iCurrent) || iCurrent instanceof Iterator) {
       final OMultiCollectionIterator<Object> result = new OMultiCollectionIterator<Object>();
       for (Object o : OMultiValue.getMultiValueIterable(iCurrent, false)) {
@@ -285,7 +288,7 @@ public class OSQLEngine {
       return result;
     } else if (iCurrent instanceof OIdentifiable) {
       return iCallable.call((OIdentifiable) iCurrent);
-    } else if(iCurrent instanceof OResult){
+    } else if (iCurrent instanceof OResult) {
       return iCallable.call(((OResult) iCurrent).getElement().orElse(null));
     }
 
@@ -297,7 +300,7 @@ public class OSQLEngine {
   }
 
   public static OCollate getCollate(final String name) {
-    for (Iterator<OCollateFactory> iter = getCollateFactories(); iter.hasNext();) {
+    for (Iterator<OCollateFactory> iter = getCollateFactories(); iter.hasNext(); ) {
       OCollateFactory f = iter.next();
       final OCollate c = f.getCollate(name);
       if (c != null)
@@ -361,7 +364,8 @@ public class OSQLEngine {
     boolean added;
     do {
       added = false;
-      scan: for (final Iterator<OQueryOperator> it = operators.iterator(); it.hasNext();) {
+      scan:
+      for (final Iterator<OQueryOperator> it = operators.iterator(); it.hasNext(); ) {
         final OQueryOperator candidate = it.next();
         for (final Pair pair : pairs) {
           if (pair.after == candidate) {
@@ -370,7 +374,7 @@ public class OSQLEngine {
         }
         sorted.add(candidate);
         it.remove();
-        for (final Iterator<Pair> itp = pairs.iterator(); itp.hasNext();) {
+        for (final Iterator<Pair> itp = pairs.iterator(); itp.hasNext(); ) {
           if (itp.next().before == candidate) {
             itp.remove();
           }
@@ -408,8 +412,8 @@ public class OSQLEngine {
       }
     }
 
-    throw new OCommandSQLParsingException("No function with name '" + iFunctionName + "', available names are : "
-        + OCollections.toString(getFunctionNames()));
+    throw new OCommandSQLParsingException(
+        "No function with name '" + iFunctionName + "', available names are : " + OCollections.toString(getFunctionNames()));
   }
 
   public void unregisterFunction(String iName) {
@@ -489,12 +493,12 @@ public class OSQLEngine {
       if (iTarget.startsWith("$")) {
         Object r = iContext.getVariable(iTarget);
         if (r instanceof OIdentifiable)
-          ids = Collections.<OIdentifiable> singleton((OIdentifiable) r);
+          ids = Collections.<OIdentifiable>singleton((OIdentifiable) r);
         else
           ids = (Set<OIdentifiable>) OMultiValue.add(new HashSet<OIdentifiable>(OMultiValue.getSize(r)), r);
 
       } else
-        ids = Collections.<OIdentifiable> singleton(new ORecordId(iTarget));
+        ids = Collections.<OIdentifiable>singleton(new ORecordId(iTarget));
 
     }
     return ids;

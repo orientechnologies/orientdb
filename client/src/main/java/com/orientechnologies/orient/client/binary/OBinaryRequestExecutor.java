@@ -93,9 +93,15 @@ public interface OBinaryRequestExecutor {
 
   OBinaryResponse executeReopen(OReopenRequest request);
 
-  OBinaryResponse executeQuery(OQueryRequest oQueryRequest);
+  OBinaryResponse executeQuery(OQueryRequest request);
 
-  OBinaryResponse closeQuery(OCloseQueryRequest oQueryRequest);
+  OBinaryResponse closeQuery(OCloseQueryRequest request);
 
-  OBinaryResponse executeQueryNextPage(OQueryNextPageRequest oQueryNextPageRequest);
+  OBinaryResponse executeQueryNextPage(OQueryNextPageRequest request);
+
+  OBinaryResponse executeBeginTransaction(OBeginTransactionRequest request);
+
+  OBinaryResponse executeCommit37(OCommit37Request request);
+
+  OBinaryResponse executeFetchTransaction(OFetchTransactionRequest request);
 }

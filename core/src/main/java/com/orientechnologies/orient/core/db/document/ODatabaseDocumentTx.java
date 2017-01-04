@@ -819,6 +819,11 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   }
 
   @Override
+  public void rawBegin(OTransaction transaction) {
+    throw new UnsupportedOperationException("private api");
+  }
+
+  @Override
   public ODatabase<ORecord> commit() throws OTransactionException {
     checkOpenness();
     internal.commit();

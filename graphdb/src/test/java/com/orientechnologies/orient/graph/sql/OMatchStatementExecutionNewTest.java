@@ -3,12 +3,12 @@ package com.orientechnologies.orient.graph.sql;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.executor.MatchPrefetchStep;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
-import com.tinkerpop.blueprints.Vertex;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -1201,7 +1201,7 @@ public class OMatchStatementExecutionNewTest {
       OResult doc = result.next();
       Object foo = doc.getProperty("foo");
       Assert.assertNotNull(foo);
-      Assert. assertTrue(foo instanceof Vertex);
+      Assert. assertTrue(foo instanceof OVertex);
       result.close();
     }
 
@@ -1296,7 +1296,7 @@ public class OMatchStatementExecutionNewTest {
       Assert.assertNotNull(foo);
       Assert.assertTrue(foo instanceof List);
       Assert.assertEquals(1, ((List) foo).size());
-      Vertex resultVertex = (Vertex) ((List) foo).get(0);
+      OVertex resultVertex = (OVertex) ((List) foo).get(0);
       Assert.assertEquals(2, resultVertex.<Object>getProperty("uid"));
       result.close();
     }

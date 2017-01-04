@@ -27,8 +27,8 @@ public class OQueryResponseTest {
     }
     response.setResult(new OLocalResultSetLifecycleDecorator(rs));
 
-    MockChannelDataOut channel = new MockChannelDataOut();
-    response.write(channel, OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION, ORecordSerializerNetwork.NAME);
+    MockChannel channel = new MockChannel();
+    response.write(channel, OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION, ORecordSerializerNetwork.INSTANCE);
 
     channel.close();
 

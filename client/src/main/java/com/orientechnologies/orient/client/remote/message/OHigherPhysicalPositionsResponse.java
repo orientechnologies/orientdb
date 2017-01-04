@@ -23,6 +23,7 @@ import java.io.IOException;
 
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
@@ -39,11 +40,11 @@ public class OHigherPhysicalPositionsResponse implements OBinaryResponse {
 
   @Override
   public void read(OChannelDataInput network, OStorageRemoteSession session) throws IOException {
-    this.nextPositions = OBinaryProtocolHelper.readPhysicalPositions(network);
+    this.nextPositions = OMessageHelper.readPhysicalPositions(network);
   }
 
-  public void write(OChannelDataOutput channel, int protocolVersion, String recordSerializer) throws IOException {
-    OBinaryProtocolHelper.writePhysicalPositions(channel, nextPositions);
+  public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+    OMessageHelper.writePhysicalPositions(channel, nextPositions);
   }
 
   public OPhysicalPosition[] getNextPositions() {

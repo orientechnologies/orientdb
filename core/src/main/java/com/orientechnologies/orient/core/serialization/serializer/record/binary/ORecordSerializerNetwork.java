@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -105,6 +106,17 @@ public class ORecordSerializerNetwork implements ORecordSerializer {
     }
   }
 
+  public byte[] serializeValue(Object value, OType type) {
+    BytesContainer bytes = new BytesContainer();
+    serializerByVersion[0].serializeValue(bytes, value, type, null);
+    return bytes.fitBytes();
+  }
+
+  public Object deserializeValue(byte[] val, OType type) {
+    BytesContainer bytes = new BytesContainer(val);
+    return serializerByVersion[0].deserializeValue(bytes, type, null);
+  }
+
   @Override
   public String[] getFieldNames(ODocument reference, final byte[] iSource) {
     if (iSource == null || iSource.length == 0)
@@ -118,13 +130,6 @@ public class ORecordSerializerNetwork implements ORecordSerializer {
       OLogManager.instance().warn(this, "Error deserializing record to get field-names, send this data for debugging: %s ",
           OBase64Utils.encodeBytes(iSource));
       throw e;
-    }
-  }
-
-  private void checkTypeODocument(final ORecord iRecord) {
-    if (!(iRecord instanceof ODocument)) {
-      throw new UnsupportedOperationException("The " + ORecordSerializerNetwork.NAME + " don't support record of type "
-          + iRecord.getClass().getName());
     }
   }
 

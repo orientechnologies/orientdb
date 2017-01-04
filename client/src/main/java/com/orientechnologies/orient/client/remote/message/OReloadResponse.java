@@ -23,6 +23,7 @@ import java.io.IOException;
 
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
@@ -40,11 +41,11 @@ public class OReloadResponse implements OBinaryResponse {
 
   @Override
   public void read(OChannelDataInput network, OStorageRemoteSession session) throws IOException {
-    this.clusters = OBinaryProtocolHelper.readClustersArray(network);
+    this.clusters = OMessageHelper.readClustersArray(network);
   }
 
-  public void write(OChannelDataOutput channel, int protocolVersion, String recordSerializer) throws IOException {
-    OBinaryProtocolHelper.writeClustersArray(channel, clusters, protocolVersion);
+  public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+    OMessageHelper.writeClustersArray(channel, clusters, protocolVersion);
   }
 
   public OCluster[] getClusters() {

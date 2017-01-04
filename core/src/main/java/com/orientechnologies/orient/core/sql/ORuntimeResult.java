@@ -178,8 +178,31 @@ public class ORuntimeResult {
               type = OType.EMBEDDEDLIST;
             iValue.field(prjName, projectionValue, type);
 
-          } else
+          } else if (projectionValue instanceof Iterable && !(projectionValue instanceof OIdentifiable)){
+            Iterator iterator = ((Iterable) projectionValue).iterator();
+            boolean link = true;
+            // make temporary value typical case graph database elemenet's iterator edges
+            if (iterator instanceof OResettable)
+              ((OResettable) iterator).reset();
+
+            final List<Object> iteratorValues = new ArrayList<Object>();
+            final Iterator projectionValueIterator = (Iterator) iterator;
+            while (projectionValueIterator.hasNext()) {
+              Object value = projectionValueIterator.next();
+              if (value instanceof OIdentifiable) {
+                value = ((OIdentifiable) value).getRecord();
+                if (value != null && !((OIdentifiable) value).getIdentity().isPersistent())
+                  link = false;
+              }
+
+              if (value != null)
+                iteratorValues.add(value);
+            }
+
+            iValue.field(prjName, iteratorValues, link ? OType.LINKLIST : OType.EMBEDDEDLIST);
+          }else {
             iValue.field(prjName, projectionValue);
+          }
       }
     }
 

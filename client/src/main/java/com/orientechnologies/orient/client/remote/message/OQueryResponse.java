@@ -9,6 +9,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.OEdgeDelegate;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.record.impl.OVertexDelegate;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.result.binary.OResultSerializerNetwork;
 import com.orientechnologies.orient.core.sql.executor.*;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSetLifecycleDecorator;
@@ -34,28 +35,32 @@ public class OQueryResponse implements OBinaryResponse {
   private static final byte RECORD_TYPE_PROJECTION = 4;
 
   private OTodoResultSet result;
+  private boolean        txChanges;
 
   public OQueryResponse() {
   }
 
-  @Override public void write(OChannelDataOutput channel, int protocolVersion, String recordSerializer) throws IOException {
+  @Override
+  public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
     if (!(result instanceof OLocalResultSetLifecycleDecorator)) {
       throw new IllegalStateException();
     }
     channel.writeString(((OLocalResultSetLifecycleDecorator) result).getQueryId());
+    channel.writeBoolean(txChanges);
 
-    writeExecutionPlan(result.getExecutionPlan(), channel, recordSerializer);
+    writeExecutionPlan(result.getExecutionPlan(), channel, serializer);
     while (result.hasNext()) {
       OResult row = result.next();
       channel.writeBoolean(true);
-      writeResult(row, channel, recordSerializer);
+      writeResult(row, channel, serializer);
     }
     channel.writeBoolean(false);
     channel.writeBoolean(((OLocalResultSetLifecycleDecorator) result).hasNextPage());
     writeQueryStats(result.getQueryStats(), channel);
   }
 
-  @Override public void read(OChannelDataInput network, OStorageRemoteSession session) throws IOException {
+  @Override
+  public void read(OChannelDataInput network, OStorageRemoteSession session) throws IOException {
     ORemoteResultSet rs = new ORemoteResultSet((ODatabaseDocumentRemote) ODatabaseRecordThreadLocal.INSTANCE.get());
     doRead(network, rs);
     this.result = rs;
@@ -63,6 +68,7 @@ public class OQueryResponse implements OBinaryResponse {
 
   protected void doRead(OChannelDataInput network, ORemoteResultSet rs) throws IOException {
     rs.setQueryId(network.readString());
+    txChanges = network.readBoolean();
     rs.setExecutionPlan(readExecutionPlan(network));
     boolean hasNext = network.readBoolean();
     while (hasNext) {
@@ -97,8 +103,8 @@ public class OQueryResponse implements OBinaryResponse {
     return result;
   }
 
-  private void writeExecutionPlan(Optional<OExecutionPlan> executionPlan, OChannelDataOutput channel, String recordSerializer)
-      throws IOException {
+  private void writeExecutionPlan(Optional<OExecutionPlan> executionPlan, OChannelDataOutput channel,
+      ORecordSerializer recordSerializer) throws IOException {
     if (executionPlan.isPresent()) {
       channel.writeBoolean(true);
       writeResult(executionPlan.get().toResult(), channel, recordSerializer);
@@ -114,7 +120,7 @@ public class OQueryResponse implements OBinaryResponse {
     }
     OInfoExecutionPlan result = new OInfoExecutionPlan();
     OResult read = readResult(network);
-    result.setCost(read.getProperty("cost"));
+    result.setCost(((Number) read.getProperty("cost")).intValue());
     result.setType(read.getProperty("type"));
     result.setJavaType(read.getProperty("javaType"));
     result.setPrettyPrint(read.getProperty("prettyPrint"));
@@ -141,7 +147,7 @@ public class OQueryResponse implements OBinaryResponse {
     return result;
   }
 
-  private void writeResult(OResult row, OChannelDataOutput channel, String recordSerializer) throws IOException {
+  private void writeResult(OResult row, OChannelDataOutput channel, ORecordSerializer recordSerializer) throws IOException {
     if (row.isBlob()) {
       writeBlob(row, channel, recordSerializer);
     } else if (row.isVertex()) {
@@ -155,22 +161,22 @@ public class OQueryResponse implements OBinaryResponse {
     }
   }
 
-  private void writeElement(OResult row, OChannelDataOutput channel, String recordSerializer) throws IOException {
+  private void writeElement(OResult row, OChannelDataOutput channel, ORecordSerializer recordSerializer) throws IOException {
     channel.writeByte(RECORD_TYPE_ELEMENT);
     writeDocument(channel, row.getElement().get().getRecord(), recordSerializer);
   }
 
-  private void writeEdge(OResult row, OChannelDataOutput channel, String recordSerializer) throws IOException {
+  private void writeEdge(OResult row, OChannelDataOutput channel, ORecordSerializer recordSerializer) throws IOException {
     channel.writeByte(RECORD_TYPE_EDGE);
     writeDocument(channel, row.getElement().get().getRecord(), recordSerializer);
   }
 
-  private void writeVertex(OResult row, OChannelDataOutput channel, String recordSerializer) throws IOException {
+  private void writeVertex(OResult row, OChannelDataOutput channel, ORecordSerializer recordSerializer) throws IOException {
     channel.writeByte(RECORD_TYPE_VERTEX);
     writeDocument(channel, row.getElement().get().getRecord(), recordSerializer);
   }
 
-  private void writeBlob(OResult row, OChannelDataOutput channel, String recordSerializer) throws IOException {
+  private void writeBlob(OResult row, OChannelDataOutput channel, ORecordSerializer recordSerializer) throws IOException {
     channel.writeByte(RECORD_TYPE_BLOB);
     row.getBlob().get().toOutputStream(channel.getDataOutput());
   }
@@ -224,8 +230,8 @@ public class OQueryResponse implements OBinaryResponse {
     return record;
   }
 
-  private void writeDocument(OChannelDataOutput channel, ODocument doc, String serializer) throws IOException {
-    OBinaryProtocolHelper.writeIdentifiable(channel, doc, serializer);
+  private void writeDocument(OChannelDataOutput channel, ODocument doc, ORecordSerializer serializer) throws IOException {
+    OMessageHelper.writeIdentifiable(channel, doc, serializer);
   }
 
   private OResult readProjection(OChannelDataInput channel) throws IOException {
@@ -245,5 +251,13 @@ public class OQueryResponse implements OBinaryResponse {
 
   public OTodoResultSet getResult() {
     return result;
+  }
+
+  public boolean isTxChanges() {
+    return txChanges;
+  }
+
+  public void setTxChanges(boolean txChanges) {
+    this.txChanges = txChanges;
   }
 }

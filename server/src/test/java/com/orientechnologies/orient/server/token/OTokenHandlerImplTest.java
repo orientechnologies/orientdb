@@ -139,7 +139,7 @@ public class OTokenHandlerImplTest {
       ONetworkProtocolData data = new ONetworkProtocolData();
       data.driverName = "aa";
       data.driverVersion = "aa";
-      data.serializationImpl = "a";
+      data.setSerializationImpl("a");
       data.protocolVersion = 2;
 
       byte[] token = handler.getSignedBinaryToken(db, original, data);
@@ -170,7 +170,7 @@ public class OTokenHandlerImplTest {
       ONetworkProtocolData data = new ONetworkProtocolData();
       data.driverName = "aa";
       data.driverVersion = "aa";
-      data.serializationImpl = "a";
+      data.setSerializationImpl("a");
       data.protocolVersion = 2;
 
       byte[] token = handler.getSignedBinaryToken(db, original, data);
@@ -195,7 +195,7 @@ public class OTokenHandlerImplTest {
       ONetworkProtocolData data = new ONetworkProtocolData();
       data.driverName = "aa";
       data.driverVersion = "aa";
-      data.serializationImpl = "a";
+      data.setSerializationImpl("a");
       data.protocolVersion = 2;
 
       byte[] token = handler.getSignedBinaryToken(db, original, data);

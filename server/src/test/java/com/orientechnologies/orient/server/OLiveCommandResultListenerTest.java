@@ -75,7 +75,7 @@ public class OLiveCommandResultListenerTest {
     byte[] token = tokenHandler.getSignedBinaryToken(db, db.getUser(), connection.getData());
     connection = manager.connect(protocol, connection, token, tokenHandler);
     connection.setDatabase(db);
-    connection.getData().serializationImpl = ORecordSerializerNetwork.NAME;
+    connection.getData().setSerializationImpl(ORecordSerializerNetwork.NAME);
     Mockito.when(server.getClientConnectionManager()).thenReturn(manager);
 
   }

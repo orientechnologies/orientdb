@@ -105,6 +105,12 @@
             <artifactId>orientdb-jdbc</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-studio</artifactId>
+            <version>${project.version}</version>
+            <type>zip</type>
+        </dependency>
 
 
     </dependencies>

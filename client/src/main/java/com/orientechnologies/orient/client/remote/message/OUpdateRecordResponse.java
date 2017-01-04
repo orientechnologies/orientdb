@@ -26,6 +26,7 @@ import java.util.UUID;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
 
@@ -42,16 +43,16 @@ public class OUpdateRecordResponse implements OBinaryResponse {
   public OUpdateRecordResponse() {
   }
 
-  public void write(OChannelDataOutput channel, int protocolVersion, String recordSerializer) throws IOException {
+  public void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
     channel.writeVersion(version);
     if (protocolVersion >= 20)
-      OBinaryProtocolHelper.writeCollectionChanges(channel, changes);
+      OMessageHelper.writeCollectionChanges(channel, changes);
   }
 
   @Override
   public void read(OChannelDataInput network, OStorageRemoteSession session) throws IOException {
     version = network.readVersion();
-    changes = OBinaryProtocolHelper.readCollectionChanges(network);
+    changes = OMessageHelper.readCollectionChanges(network);
   }
 
   public int getVersion() {

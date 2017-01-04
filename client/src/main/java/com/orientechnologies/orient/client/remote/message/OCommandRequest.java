@@ -61,15 +61,14 @@ public final class OCommandRequest implements OBinaryRequest<OCommandResponse> {
 
   }
 
-  public void read(OChannelDataInput channel, int protocolVersion, String serializerName) throws IOException {
+  public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
 
     byte type = channel.readByte();
     if (type == (byte) 'l')
       live = true;
     if (type == (byte) 'a')
       asynch = true;
-    ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(serializerName);
-    query = OStreamSerializerAnyStreamable.INSTANCE.fromStream(channel.readBytes(), ser);
+    query = OStreamSerializerAnyStreamable.INSTANCE.fromStream(channel.readBytes(), serializer);
   }
 
   @Override
