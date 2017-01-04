@@ -106,10 +106,6 @@ public class OObjectDatabaseTxPooled extends OObjectDatabaseTx implements ODatab
       return;
     }
 
-    objects2Records.clear();
-    records2Objects.clear();
-    rid2Records.clear();
-
     try {
       commit(true);
     } catch (Exception e) {

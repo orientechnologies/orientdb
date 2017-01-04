@@ -40,7 +40,6 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.serializer.object.OObjectSerializerHelperManager;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.object.db.OObjectLazyList;
@@ -106,10 +105,6 @@ public class OObjectSerializerHelper {
     } catch (Exception e) {
       // IGNORE THE EXCEPTION: JPA NOT FOUND
     }
-  }
-
-  public static void register() {
-    OObjectSerializerHelperManager.getInstance().registerHelper(OObjectSerializerManager.getInstance());
   }
 
   public static boolean hasField(final Object iPojo, final String iProperty) {

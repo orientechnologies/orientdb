@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.core.metadata.security;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.annotation.OBeforeDeserialization;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -131,7 +130,6 @@ public class ORole extends OIdentity implements OSecurityRole {
   }
 
   @Override
-  @OBeforeDeserialization
   public void fromStream(final ODocument iSource) {
     if (document != null)
       return;

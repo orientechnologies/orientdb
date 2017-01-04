@@ -23,7 +23,6 @@ package com.orientechnologies.orient.core.intent;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
@@ -76,11 +75,6 @@ public class OIntentMassiveInsert implements OIntent {
     while (ownerDb.getDatabaseOwner() != ownerDb)
       ownerDb = ownerDb.getDatabaseOwner();
 
-    if (ownerDb instanceof ODatabaseObject) {
-      previousRetainObjects = ((ODatabaseObject) ownerDb).isRetainObjects();
-      ((ODatabaseObject) ownerDb).setRetainObjects(false);
-    }
-
     if (disableHooks) {
       // REMOVE ALL HOOKS BUT INDEX
       removedHooks = new HashMap<ORecordHook, ORecordHook.HOOK_POSITION>();
@@ -117,9 +111,6 @@ public class OIntentMassiveInsert implements OIntent {
 
     while (ownerDb.getDatabaseOwner() != ownerDb)
       ownerDb = ownerDb.getDatabaseOwner();
-
-    if (ownerDb instanceof ODatabaseObject)
-      ((ODatabaseObject) ownerDb).setRetainObjects(previousRetainObjects);
 
     if (disableHooks)
       if (removedHooks != null) {

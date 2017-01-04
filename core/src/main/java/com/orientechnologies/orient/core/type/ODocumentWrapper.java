@@ -21,7 +21,6 @@ package com.orientechnologies.orient.core.type;
 
 import java.io.Serializable;
 
-import com.orientechnologies.orient.core.annotation.OAfterDeserialization;
 import com.orientechnologies.orient.core.annotation.ODocumentInstance;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -53,7 +52,6 @@ public class ODocumentWrapper implements Serializable {
     document = iDocument;
   }
 
-  @OAfterDeserialization
   public void fromStream(final ODocument iDocument) {
     document = iDocument;
   }
