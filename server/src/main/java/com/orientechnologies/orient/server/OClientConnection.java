@@ -207,7 +207,7 @@ public class OClientConnection {
 
   public void endOperation() {
     if (database != null)
-      if (!database.isClosed() && database.getLocalCache() != null)
+      if (!database.isClosed() && !database.getTransaction().isActive() && database.getLocalCache() != null)
         database.getLocalCache().clear();
 
     stats.lastCommandExecutionTime = System.currentTimeMillis() - stats.lastCommandReceived;
