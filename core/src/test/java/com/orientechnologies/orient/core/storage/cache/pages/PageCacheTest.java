@@ -46,6 +46,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 
 import static org.junit.Assert.assertEquals;
@@ -346,11 +347,6 @@ public class PageCacheTest {
     }
 
     @Override
-    public void startFuzzyCheckpoints() {
-
-    }
-
-    @Override
     public void addLowDiskSpaceListener(OLowDiskSpaceListener listener) {
 
     }
@@ -391,7 +387,11 @@ public class PageCacheTest {
     }
 
     @Override
-    public void makeFuzzyCheckpoint() {
+    public void makeFuzzyCheckpoint(long segmentId) throws IOException {
+    }
+
+    @Override
+    public void flushTillSegment(long segmentId) {
 
     }
 
@@ -406,7 +406,7 @@ public class PageCacheTest {
     }
 
     @Override
-    public Future store(long fileId, long pageIndex, OCachePointer dataPointer) {
+    public CountDownLatch store(long fileId, long pageIndex, OCachePointer dataPointer) {
       ++pagesStored;
       return null;
     }
@@ -429,7 +429,7 @@ public class PageCacheTest {
         fileSizes[(int) fileId] += created;
       }
 
-      return new OCachePointer[] { new OCachePointer(acquireBuffer(), OByteBufferPool.instance(), null, fileId, startPageIndex) };
+      return new OCachePointer[] { new OCachePointer(acquireBuffer(), OByteBufferPool.instance(), fileId, startPageIndex) };
     }
 
     private ByteBuffer acquireBuffer() {
@@ -547,6 +547,16 @@ public class PageCacheTest {
     }
 
     @Override
+    public OLogSequenceNumber getMinimalNotFlushedLSN() {
+      return null;
+    }
+
+    @Override
+    public void updateDirtyPagesTable(OCachePointer pointer) throws IOException {
+
+    }
+
+    @Override
     public OPerformanceStatisticManager getPerformanceStatisticManager() {
       return null;
     }
@@ -566,6 +576,16 @@ public class PageCacheTest {
   }
 
   private static class WriteAheadLog implements OWriteAheadLog {
+
+    @Override
+    public OLogSequenceNumber begin(long segmentId) throws IOException {
+      return null;
+    }
+
+    @Override
+    public void cutAllSegmentsSmallerThan(long segmentId) throws IOException {
+
+    }
 
     @Override
     public OLogSequenceNumber logFuzzyCheckPointStart(OLogSequenceNumber flushedLsn) throws IOException {

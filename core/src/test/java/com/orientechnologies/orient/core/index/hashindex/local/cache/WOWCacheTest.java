@@ -49,8 +49,8 @@ public class WOWCacheTest {
     if (buildDirectory == null)
       buildDirectory = ".";
 
-    storageLocal = (OLocalPaginatedStorage) Orient.instance().getEngine("plocal").createStorage(buildDirectory + "/WOWCacheTest",
-        null);
+    storageLocal = (OLocalPaginatedStorage) Orient.instance().getEngine("plocal")
+        .createStorage(buildDirectory + "/WOWCacheTest", null);
 //    storageLocal = (OLocalPaginatedStorage) Orient.instance().loadStorage("plocal:" + buildDirectory + "/WOWCacheTest");
     storageLocal.create(null);
 
@@ -99,8 +99,8 @@ public class WOWCacheTest {
   }
 
   private void initBuffer() throws IOException {
-    wowCache = new OWOWCache(true, pageSize, new OByteBufferPool(pageSize), 10000, writeAheadLog, 10, 100, 100, storageLocal, false,
-        files, 1);
+    wowCache = new OWOWCache(pageSize, new OByteBufferPool(pageSize), writeAheadLog, 10, 100,
+        storageLocal, false, files, 1);
     wowCache.loadRegisteredFiles();
   }
 

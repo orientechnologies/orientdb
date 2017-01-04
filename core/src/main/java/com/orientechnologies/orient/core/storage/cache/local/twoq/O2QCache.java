@@ -38,6 +38,7 @@ import java.nio.channels.FileChannel;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -118,6 +119,7 @@ public class O2QCache implements OReadCache {
    * @param pageSize             Cache page size in bytes.
    * @param checkMinSize         If this flat is set size of cache may be {@link #MIN_CACHE_SIZE} or bigger.
    * @param percentOfPinnedPages Maximum percent of pinned pages which may be hold by this cache.
+   *
    * @see #MAX_PERCENT_OF_PINED_PAGES
    */
   public O2QCache(final long readCacheMaxMemory, final int pageSize, final boolean checkMinSize, final int percentOfPinnedPages) {
@@ -252,6 +254,7 @@ public class O2QCache implements OReadCache {
    * in parameter is much less than current amount of memory.
    *
    * @param readCacheMaxMemory New maximum size of cache in bytes.
+   *
    * @throws IllegalStateException In case of new size of disk cache is too small to hold existing pinned pages.
    */
   public void changeMaximumAmountOfMemory(final long readCacheMaxMemory) throws IllegalStateException {
@@ -429,7 +432,7 @@ public class O2QCache implements OReadCache {
 
   @Override
   public void release(OCacheEntry cacheEntry, OWriteCache writeCache) {
-    Future<?> flushFuture = null;
+    CountDownLatch latch = null;
 
     Lock fileLock;
     Lock pageLock;
@@ -454,7 +457,7 @@ public class O2QCache implements OReadCache {
             }
 
             try {
-              flushFuture = writeCache.store(cacheEntry.getFileId(), cacheEntry.getPageIndex(), cacheEntry.getCachePointer());
+              latch = writeCache.store(cacheEntry.getFileId(), cacheEntry.getPageIndex(), cacheEntry.getCachePointer());
             } finally {
               if (sessionStoragePerformanceStatistic != null) {
                 sessionStoragePerformanceStatistic.stopPageWriteInCacheTimer();
@@ -464,23 +467,21 @@ public class O2QCache implements OReadCache {
             cacheEntry.clearDirty();
           }
         } finally {
-          pageLockManager.releaseExclusiveLock(k);
+          pageLock.unlock();
         }
       } finally {
-        fileLockManager.releaseSharedLock(cacheEntry.getFileId());
+        fileLock.unlock();
       }
     } finally {
       cacheLock.releaseReadLock();
     }
 
-    if (flushFuture != null) {
+    if (latch != null) {
       try {
-        flushFuture.get();
+        latch.await();
       } catch (InterruptedException e) {
         Thread.interrupted();
         throw new OInterruptedException("File flush was interrupted");
-      } catch (Exception e) {
-        throw OException.wrapException(new OReadCacheException("File flush was abnormally terminated"), e);
       }
     }
   }
@@ -639,6 +640,7 @@ public class O2QCache implements OReadCache {
    * If maximum size of cache was decreased cache state will not be restored.
    *
    * @param writeCache Write cache is used to load pages back into cache if needed.
+   *
    * @see #closeStorage(OWriteCache)
    */
   public void loadCacheState(final OWriteCache writeCache) {

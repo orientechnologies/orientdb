@@ -38,10 +38,7 @@ import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -484,7 +481,7 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
           final OByteBufferPool bufferPool = OByteBufferPool.instance();
           final ByteBuffer buffer = bufferPool.acquireDirect(true);
 
-          final OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, new OLogSequenceNumber(-1, -1), id, index);
+          final OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, id, index);
           cachePointer.incrementReferrer();
 
           cacheEntry = new OCacheEntryImpl(composeFileId(storageId, id), index, cachePointer, false);
@@ -556,16 +553,8 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
-  public void startFuzzyCheckpoints() {
-  }
-
-  @Override
   public boolean checkLowDiskSpace() {
     return true;
-  }
-
-  @Override
-  public void makeFuzzyCheckpoint() {
   }
 
   @Override
@@ -592,8 +581,25 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
-  public Future store(long fileId, long pageIndex, OCachePointer dataPointer) {
+  public CountDownLatch store(long fileId, long pageIndex, OCachePointer dataPointer) {
     throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void makeFuzzyCheckpoint(long segmentId) throws IOException {
+  }
+
+  @Override
+  public void flushTillSegment(long segmentId) {
+  }
+
+  @Override
+  public OLogSequenceNumber getMinimalNotFlushedLSN() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void updateDirtyPagesTable(OCachePointer pointer) throws IOException {
   }
 
   @Override

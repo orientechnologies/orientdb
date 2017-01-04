@@ -23,7 +23,7 @@ public class SBTreeValuePageTest {
     OByteBufferPool bufferPool = OByteBufferPool.instance();
     ByteBuffer bufferOne = bufferPool.acquireDirect(true);
 
-    OCachePointer cachePointerOne = new OCachePointer(bufferOne, bufferPool, new OLogSequenceNumber(0, 0), 0, 0);
+    OCachePointer cachePointerOne = new OCachePointer(bufferOne, bufferPool, 0, 0);
     cachePointerOne.incrementReferrer();
 
     OCacheEntry cacheEntryOne = new OCacheEntryImpl(0, 0, cachePointerOne, false);
@@ -38,7 +38,7 @@ public class SBTreeValuePageTest {
     Assert.assertEquals(offset, OSBTreeValuePage.MAX_BINARY_VALUE_SIZE);
 
     ByteBuffer bufferTwo = bufferPool.acquireDirect(true);
-    OCachePointer cachePointerTwo = new OCachePointer(bufferTwo, bufferPool, new OLogSequenceNumber(0, 0), 0, 0);
+    OCachePointer cachePointerTwo = new OCachePointer(bufferTwo, bufferPool,  0, 0);
     cachePointerTwo.incrementReferrer();
 
     OCacheEntry cacheEntryTwo = new OCacheEntryImpl(0, 0, cachePointerTwo, false);
@@ -73,7 +73,7 @@ public class SBTreeValuePageTest {
     OByteBufferPool bufferPool = OByteBufferPool.instance();
     ByteBuffer buffer = bufferPool.acquireDirect(true);
 
-    OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, new OLogSequenceNumber(0, 0), 0, 0);
+    OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
 
     OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false);

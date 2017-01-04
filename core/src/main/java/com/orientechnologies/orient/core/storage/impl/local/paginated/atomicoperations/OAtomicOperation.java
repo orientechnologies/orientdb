@@ -118,7 +118,7 @@ public class OAtomicOperation {
           changesContainer.pageChangesMap.put(pageIndex, pageChangesContainer);
           if (pageChangesContainer.isNew) {
             OCacheEntry delegate = new OCacheEntryImpl(fileId, pageIndex,
-                new OCachePointer(null, null, new OLogSequenceNumber(-1, -1), fileId, pageIndex), false);
+                new OCachePointer(null, null, fileId, pageIndex), false);
             pageChangesContainer.delegate = delegate;
           }
         }
@@ -197,7 +197,7 @@ public class OAtomicOperation {
     changesContainer.pageChangesMap.put(filledUpTo, pageChangesContainer);
     changesContainer.maxNewPageIndex = filledUpTo;
     OCacheEntry delegate = new OCacheEntryImpl(fileId, filledUpTo,
-        new OCachePointer(null, null, new OLogSequenceNumber(-1, -1), fileId, filledUpTo), false);
+        new OCachePointer(null, null, fileId, filledUpTo), false);
     pageChangesContainer.delegate = delegate;
     return pageChangesContainer;
   }

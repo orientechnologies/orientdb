@@ -94,8 +94,9 @@ import java.util.zip.ZipOutputStream;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 28.03.13
  */
-public abstract class OAbstractPaginatedStorage extends OStorageAbstract implements OLowDiskSpaceListener,
-    OFullCheckpointRequestListener, OIdentifiableStorage, OBackgroundExceptionListener, OFreezableStorageComponent {
+public abstract class OAbstractPaginatedStorage extends OStorageAbstract
+    implements OLowDiskSpaceListener, OFullCheckpointRequestListener, OIdentifiableStorage, OBackgroundExceptionListener,
+    OFreezableStorageComponent {
   private static final int RECORD_LOCK_TIMEOUT         = OGlobalConfiguration.STORAGE_RECORD_LOCK_TIMEOUT.getValueAsInteger();
   private static final int WAL_RESTORE_REPORT_INTERVAL = 30 * 1000; // milliseconds
 
@@ -224,8 +225,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
       if (OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_OPEN.getValueAsBoolean())
         makeFullCheckpoint();
-
-      writeCache.startFuzzyCheckpoints();
 
       status = STATUS.OPEN;
 
@@ -372,7 +371,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       if (OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CREATE.getValueAsBoolean())
         makeFullCheckpoint();
 
-      writeCache.startFuzzyCheckpoints();
       postCreateSteps();
 
     } catch (OStorageException e) {
@@ -3136,7 +3134,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
     createClusterFromConfig(
         new OStoragePaginatedClusterConfiguration(configuration, clusters.size(), OMetadataDefault.CLUSTER_INTERNAL_NAME, null,
-            true, 20, 4, storageCompression, storageEncryption, encryptionKey, stgConflictStrategy, OStorageClusterConfiguration.STATUS.ONLINE));
+            true, 20, 4, storageCompression, storageEncryption, encryptionKey, stgConflictStrategy,
+            OStorageClusterConfiguration.STATUS.ONLINE));
 
     createClusterFromConfig(
         new OStoragePaginatedClusterConfiguration(configuration, clusters.size(), OMetadataDefault.CLUSTER_INDEX_NAME, null, false,
@@ -3145,12 +3144,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
     createClusterFromConfig(
         new OStoragePaginatedClusterConfiguration(configuration, clusters.size(), OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME, null,
-            false, 1, 1, storageCompression, storageEncryption, encryptionKey, stgConflictStrategy, OStorageClusterConfiguration.STATUS.ONLINE));
+            false, 1, 1, storageCompression, storageEncryption, encryptionKey, stgConflictStrategy,
+            OStorageClusterConfiguration.STATUS.ONLINE));
 
     defaultClusterId = createClusterFromConfig(
         new OStoragePaginatedClusterConfiguration(configuration, clusters.size(), CLUSTER_DEFAULT_NAME, null, true,
             OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR, OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR,
-            storageCompression,  storageEncryption, encryptionKey, stgConflictStrategy, OStorageClusterConfiguration.STATUS.ONLINE));
+            storageCompression, storageEncryption, encryptionKey, stgConflictStrategy, OStorageClusterConfiguration.STATUS.ONLINE));
   }
 
   private int createClusterFromConfig(final OStorageClusterConfiguration config) throws IOException {
@@ -3909,25 +3909,20 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     if (lowDiskSpace != null) {
       if (checkpointInProgress.compareAndSet(false, true)) {
         try {
-          writeCache.makeFuzzyCheckpoint();
+          synch();
 
           if (writeCache.checkLowDiskSpace()) {
-            synch();
-
-            if (writeCache.checkLowDiskSpace()) {
-              throw new OLowDiskSpaceException("Error occurred while executing a write operation to database '" + name
-                  + "' due to limited free space on the disk (" + (lowDiskSpace.freeSpace / (1024 * 1024))
-                  + " MB). The database is now working in read-only mode."
-                  + " Please close the database (or stop OrientDB), make room on your hard drive and then reopen the database. "
-                  + "The minimal required space is " + (lowDiskSpace.requiredSpace / (1024 * 1024)) + " MB. "
-                  + "Required space is now set to " + OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT.getValueAsInteger()
-                  + "MB (you can change it by setting parameter " + OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT.getKey()
-                  + ") .");
-            } else {
-              lowDiskSpace = null;
-            }
-          } else
+            throw new OLowDiskSpaceException("Error occurred while executing a write operation to database '" + name
+                + "' due to limited free space on the disk (" + (lowDiskSpace.freeSpace / (1024 * 1024))
+                + " MB). The database is now working in read-only mode."
+                + " Please close the database (or stop OrientDB), make room on your hard drive and then reopen the database. "
+                + "The minimal required space is " + (lowDiskSpace.requiredSpace / (1024 * 1024)) + " MB. "
+                + "Required space is now set to " + OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT.getValueAsInteger()
+                + "MB (you can change it by setting parameter " + OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT.getKey()
+                + ") .");
+          } else {
             lowDiskSpace = null;
+          }
         } finally {
           checkpointInProgress.set(false);
         }
@@ -3940,7 +3935,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           final ODiskWriteAheadLog diskWriteAheadLog = (ODiskWriteAheadLog) writeAheadLog;
           final long size = diskWriteAheadLog.size();
 
-          writeCache.makeFuzzyCheckpoint();
           if (size <= diskWriteAheadLog.size())
             synch();
 

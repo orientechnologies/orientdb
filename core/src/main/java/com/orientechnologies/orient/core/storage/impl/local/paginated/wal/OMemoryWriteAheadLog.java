@@ -145,4 +145,13 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   public long getPreferredSegmentCount() {
     throw new UnsupportedOperationException("Operation not supported for in memory storage.");
   }
+
+  @Override
+  public OLogSequenceNumber begin(long segmentId) throws IOException {
+    throw new UnsupportedOperationException("Operation not supported for in memory storage.");
+  }
+
+  @Override
+  public void cutAllSegmentsSmallerThan(long segmentId) throws IOException {
+  }
 }

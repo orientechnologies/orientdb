@@ -226,8 +226,25 @@ public enum OGlobalConfiguration {
   DISK_CACHE_ADD_DATA_VERIFICATION("storage.diskCache.addDataVerification", "Add CRC32 and magic number to the page", Boolean.class,
       false),
 
+  @Deprecated
   DISK_CACHE_PAGE_SIZE("storage.diskCache.pageSize", "Size of page of disk buffer (in kilobytes). !!! NEVER CHANGE THIS VALUE !!!",
       Integer.class, 64),
+
+  DISK_CACHE_WAL_SIZE_TO_START_FLUSH("storage.diskCache.walSizeToStartFlush",
+      "WAL size after which pages in write cache will be started to flush", Long.class, 6 * 1024L * 1024 * 1024),
+
+  DISK_CACHE_EXCLUSIVE_FLUSH_BOUNDARY("storage.diskCache.exclusiveFlushBoundary",
+      "If portion of exclusive pages into cache exceeds this value we start to flush only exclusive pages from disk cache",
+      Float.class, 0.9),
+
+  DISK_CACHE_CHUNK_SIZE("storage.diskCache.chunkSize",
+      "Maximum distance between two pages after which they are not treated as single continous chunk", Integer.class, 256),
+
+  DISK_CACHE_EXCLUSIVE_PAGES_BOUNDARY("storage.diskCache.exclusiveBoundary",
+      "Portion of exclusive pages in write cache after which we will start to flush only exclusive pages", Float.class, 0.7),
+
+  DISK_CACHE_WAL_SIZE_TO_STOP_FLUSH("storage.diskCache.walSizeToStopFlush",
+      "WAL size reaching which pages in write cache will be prevented from flush", Long.class, 2 * 1024L * 1024 * 1024),
 
   DISK_CACHE_FREE_SPACE_LIMIT("storage.diskCache.diskFreeSpaceLimit", "Minimum amount of space on disk, which, when exceeded, "
       + "will cause the database to switch to read-only mode (in megabytes)", Long.class,

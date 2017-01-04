@@ -65,21 +65,21 @@ import java.util.zip.ZipOutputStream;
  */
 public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
-  private static String[]                                    ALL_FILE_EXTENSIONS = { ".ocf", ".pls", ".pcl", ".oda", ".odh", ".otx",
-      ".ocs", ".oef", ".oem", ".oet", ".fl", ODiskWriteAheadLog.WAL_SEGMENT_EXTENSION, ODiskWriteAheadLog.MASTER_RECORD_EXTENSION,
+  private static String[] ALL_FILE_EXTENSIONS = { ".ocf", ".pls", ".pcl", ".oda", ".odh", ".otx", ".ocs", ".oef", ".oem", ".oet",
+      ".fl", ODiskWriteAheadLog.WAL_SEGMENT_EXTENSION, ODiskWriteAheadLog.MASTER_RECORD_EXTENSION,
       OHashTableIndexEngine.BUCKET_FILE_EXTENSION, OHashTableIndexEngine.METADATA_FILE_EXTENSION,
       OHashTableIndexEngine.TREE_FILE_EXTENSION, OHashTableIndexEngine.NULL_BUCKET_FILE_EXTENSION,
       OClusterPositionMap.DEF_EXTENSION, OSBTreeIndexEngine.DATA_FILE_EXTENSION, OWOWCache.NAME_ID_MAP_EXTENSION,
       OIndexRIDContainer.INDEX_FILE_EXTENSION, OSBTreeCollectionManagerShared.DEFAULT_EXTENSION,
       OSBTreeIndexEngine.NULL_BUCKET_FILE_EXTENSION, O2QCache.CACHE_STATISTIC_FILE_EXTENSION };
 
-  private static final int                                   ONE_KB              = 1024;
+  private static final int ONE_KB = 1024;
 
-  private final int                                          DELETE_MAX_RETRIES;
-  private final int                                          DELETE_WAIT_TIME;
+  private final int DELETE_MAX_RETRIES;
+  private final int DELETE_WAIT_TIME;
 
-  private final OStorageVariableParser                       variableParser;
-  private final OPaginatedStorageDirtyFlag                   dirtyFlag;
+  private final OStorageVariableParser     variableParser;
+  private final OPaginatedStorageDirtyFlag dirtyFlag;
 
   private final String                                       storagePath;
   private       ExecutorService                              checkpointExecutor;
@@ -182,8 +182,9 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
       final OutputStream bo = bufferSize > 0 ? new BufferedOutputStream(out, bufferSize) : out;
       try {
-        return OZIPCompressionUtil.compressDirectory(new File(getStoragePath()).getAbsolutePath(), bo,
-            new String[] { ".wal", ".fl" }, iOutput, compressionLevel);
+        return OZIPCompressionUtil
+            .compressDirectory(new File(getStoragePath()).getAbsolutePath(), bo, new String[] { ".wal", ".fl" }, iOutput,
+                compressionLevel);
       } finally {
         if (bufferSize > 0) {
           bo.flush();
@@ -362,8 +363,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     try {
       if (writeAheadLog != null) {
         checkpointExecutor.shutdown();
-        if (!checkpointExecutor.awaitTermination(OGlobalConfiguration.WAL_FULL_CHECKPOINT_SHUTDOWN_TIMEOUT.getValueAsInteger(),
-            TimeUnit.SECONDS))
+        if (!checkpointExecutor
+            .awaitTermination(OGlobalConfiguration.WAL_FULL_CHECKPOINT_SHUTDOWN_TIMEOUT.getValueAsInteger(), TimeUnit.SECONDS))
           throw new OStorageException("Cannot terminate full checkpoint task");
       }
     } catch (InterruptedException e) {
@@ -403,8 +404,9 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
         if (notDeletedFiles == 0) {
           // TRY TO DELETE ALSO THE DIRECTORY IF IT'S EMPTY
           if (!dbDir.delete())
-            OLogManager.instance().error(this, "Cannot delete storage directory with path " + dbDir.getAbsolutePath()
-                + " because directory is not empty. Files: " + Arrays.toString(dbDir.listFiles()));
+            OLogManager.instance().error(this,
+                "Cannot delete storage directory with path " + dbDir.getAbsolutePath() + " because directory is not empty. Files: "
+                    + Arrays.toString(dbDir.listFiles()));
           return;
         }
       } else
@@ -452,10 +454,9 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     long writeCacheSize = (long) Math
         .floor((((double) OGlobalConfiguration.DISK_WRITE_CACHE_PART.getValueAsInteger()) / 100.0) * diskCacheSize);
 
-    final OWOWCache wowCache = new OWOWCache(false, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * ONE_KB,
-        OByteBufferPool.instance(), OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_TTL.getValueAsLong() * 1000, writeAheadLog,
-        OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL.getValueAsInteger(), writeCacheSize, diskCacheSize, this, true,
-        files, getId());
+    final OWOWCache wowCache = new OWOWCache(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * ONE_KB,
+        OByteBufferPool.instance(), writeAheadLog, OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL.getValueAsInteger(),
+        writeCacheSize, this, true, files, getId());
     wowCache.addLowDiskSpaceListener(this);
     wowCache.loadRegisteredFiles();
     wowCache.addBackgroundExceptionListener(this);
