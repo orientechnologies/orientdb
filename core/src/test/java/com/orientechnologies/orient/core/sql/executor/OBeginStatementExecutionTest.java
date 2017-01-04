@@ -26,7 +26,7 @@ public class OBeginStatementExecutionTest {
 
   @Test public void testBegin() {
     Assert.assertTrue(db.getTransaction() == null || !db.getTransaction().isActive());
-    OTodoResultSet result = db.command("begin");
+    OResultSet result = db.command("begin");
     printExecutionPlan(null, result);
     Assert.assertNotNull(result);
     Assert.assertTrue(result.hasNext());

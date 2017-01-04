@@ -8,7 +8,7 @@ import java.util.Optional;
 /**
  * Created by luigidellaquila on 04/11/16.
  */
-public class OTodoResultSetTest {
+public class OResultSetTest {
   @Test
   public void testResultStream(){
     OInternalResultSet rs = new OInternalResultSet();

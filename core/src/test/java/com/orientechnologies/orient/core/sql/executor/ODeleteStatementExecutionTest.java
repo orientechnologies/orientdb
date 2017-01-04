@@ -39,7 +39,7 @@ public class ODeleteStatementExecutionTest {
       doc.setProperty("name", "name" + i);
       doc.save();
     }
-    OTodoResultSet result = db.command("delete from  " + className + " where name = 'name4'");
+    OResultSet result = db.command("delete from  " + className + " where name = 'name4'");
     printExecutionPlan(result);
     for (int i = 0; i < 1; i++) {
       Assert.assertTrue(result.hasNext());
@@ -74,7 +74,7 @@ public class ODeleteStatementExecutionTest {
       doc.save();
     }
     try {
-      OTodoResultSet result = db.command("delete from  " + className + " where name = 'name4'");
+      OResultSet result = db.command("delete from  " + className + " where name = 'name4'");
       Assert.fail();
     } catch (OCommandExecutionException ex) {
 
@@ -97,7 +97,7 @@ public class ODeleteStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.command("delete from  " + className + " where name = 'name4' unsafe");
+    OResultSet result = db.command("delete from  " + className + " where name = 'name4' unsafe");
 
     printExecutionPlan(result);
     for (int i = 0; i < 1; i++) {
@@ -128,7 +128,7 @@ public class ODeleteStatementExecutionTest {
       doc.setProperty("name", "name" + i);
       doc.save();
     }
-    OTodoResultSet result = db.command("delete from  " + className + " return before where name = 'name4' ");
+    OResultSet result = db.command("delete from  " + className + " return before where name = 'name4' ");
     printExecutionPlan(result);
     for (int i = 0; i < 1; i++) {
       Assert.assertTrue(result.hasNext());
@@ -158,7 +158,7 @@ public class ODeleteStatementExecutionTest {
       doc.setProperty("name", "name" + i);
       doc.save();
     }
-    OTodoResultSet result = db.command("delete from  " + className + " limit 5");
+    OResultSet result = db.command("delete from  " + className + " limit 5");
     printExecutionPlan(result);
     for (int i = 0; i < 1; i++) {
       Assert.assertTrue(result.hasNext());
@@ -190,7 +190,7 @@ public class ODeleteStatementExecutionTest {
       doc.setProperty("name", "name" + i);
       doc.save();
     }
-    OTodoResultSet result = db.command("delete from  index:" + className + ".name");
+    OResultSet result = db.command("delete from  index:" + className + ".name");
     printExecutionPlan(result);
     for (int i = 0; i < 1; i++) {
       Assert.assertTrue(result.hasNext());
@@ -217,7 +217,7 @@ public class ODeleteStatementExecutionTest {
       doc.setProperty("name", "name" + i);
       doc.save();
     }
-    OTodoResultSet result = db.command("delete from  index:" + className + ".name where key = 'name1'");
+    OResultSet result = db.command("delete from  index:" + className + ".name where key = 'name1'");
     printExecutionPlan(result);
     for (int i = 0; i < 1; i++) {
       Assert.assertTrue(result.hasNext());

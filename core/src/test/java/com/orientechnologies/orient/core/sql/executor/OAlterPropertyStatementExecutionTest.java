@@ -33,7 +33,7 @@ public class OAlterPropertyStatementExecutionTest {
     OProperty prop = clazz.createProperty("name", OType.STRING);
     prop.setMax("15");
 
-    OTodoResultSet result = db.command("alter property " + className + ".name max 30");
+    OResultSet result = db.command("alter property " + className + ".name max 30");
     printExecutionPlan(null, result);
     Object currentValue = prop.getMax();
 
@@ -53,7 +53,7 @@ public class OAlterPropertyStatementExecutionTest {
     OProperty prop = clazz.createProperty("name", OType.STRING);
     prop.setCustom("foo", "bar");
 
-    OTodoResultSet result = db.command("alter property " + className + ".name custom foo='baz'");
+    OResultSet result = db.command("alter property " + className + ".name custom foo='baz'");
     printExecutionPlan(null, result);
     Object currentValue = prop.getCustom("foo");
 

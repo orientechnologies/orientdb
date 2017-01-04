@@ -16,7 +16,7 @@ public class ScriptLineStep extends AbstractExecutionStep {
     this.plan = nextPlan;
   }
 
-  @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     return plan.fetchNext(nRecords);
   }
 

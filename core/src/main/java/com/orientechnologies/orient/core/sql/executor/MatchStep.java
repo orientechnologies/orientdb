@@ -13,7 +13,7 @@ import java.util.Optional;
 public class MatchStep extends AbstractExecutionStep {
   protected final EdgeTraversal edge;
 
-  OTodoResultSet     upstream;
+  OResultSet         upstream;
   OResult            lastUpstreamRecord;
   MatchEdgeTraverser traverser;
   OResult            nextResult;
@@ -30,8 +30,8 @@ public class MatchStep extends AbstractExecutionStep {
     this.nextResult = null;
   }
 
-  @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    return new OTodoResultSet() {
+  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+    return new OResultSet() {
       int localCount = 0;
 
       @Override public boolean hasNext() {

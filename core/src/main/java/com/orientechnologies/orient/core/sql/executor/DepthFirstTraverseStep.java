@@ -18,7 +18,7 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
   }
 
   @Override protected void fetchNextEntryPoints(OCommandContext ctx, int nRecords) {
-    OTodoResultSet nextN = getPrev().get().syncPull(ctx, nRecords);
+    OResultSet nextN = getPrev().get().syncPull(ctx, nRecords);
     while (nextN.hasNext()) {
       OResult item = toTraverseResult(nextN.next());
       if (item != null && item.isElement() && !traversed.contains(item.getElement().get().getIdentity())) {

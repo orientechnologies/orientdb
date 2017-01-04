@@ -27,7 +27,7 @@ public class OSelectExecutionPlan implements OInternalExecutionPlan {
     lastStep.close();
   }
 
-  @Override public OTodoResultSet fetchNext(int n) {
+  @Override public OResultSet fetchNext(int n) {
     return lastStep.syncPull(ctx, n);
   }
 

@@ -5,7 +5,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.sql.executor.ODDLExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
-import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,9 +23,9 @@ public abstract class ODDLStatement extends OStatement {
     super(p, id);
   }
 
-  public abstract OTodoResultSet executeDDL(OCommandContext ctx);
+  public abstract OResultSet executeDDL(OCommandContext ctx);
 
-  public OTodoResultSet execute(ODatabase db, Object[] args) {
+  public OResultSet execute(ODatabase db, Object[] args) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     ctx.setDatabase(db);
     Map<Object, Object> params = new HashMap<>();
@@ -39,7 +39,7 @@ public abstract class ODDLStatement extends OStatement {
     return executionPlan.executeInternal(ctx);
   }
 
-  public OTodoResultSet execute(ODatabase db, Map params) {
+  public OResultSet execute(ODatabase db, Map params) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     ctx.setDatabase(db);
     ctx.setInputParameters(params);

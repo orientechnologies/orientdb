@@ -8,7 +8,7 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
-import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 
 import java.util.Map;
@@ -50,11 +50,11 @@ public class OStatement extends SimpleNode {
     throw new UnsupportedOperationException("Unsupported command: " + getClass().getSimpleName());
   }
 
-  public OTodoResultSet execute(ODatabase db, Object[] args) {
+  public OResultSet execute(ODatabase db, Object[] args) {
     throw new UnsupportedOperationException();
   }
 
-  public OTodoResultSet execute(ODatabase db, Map args) {
+  public OResultSet execute(ODatabase db, Map args) {
     throw new UnsupportedOperationException();
   }
 

@@ -46,7 +46,7 @@ public class OSelectStatementExecutionTest {
 
   @Test
   public void testSelectNoTarget() {
-    OTodoResultSet result = db.query("select 1 as one, 2 as two, 2+3");
+    OResultSet result = db.query("select 1 as one, 2 as two, 2+3");
     Assert.assertTrue(result.hasNext());
     OResult item = result.next();
     Assert.assertNotNull(item);
@@ -60,7 +60,7 @@ public class OSelectStatementExecutionTest {
 
   @Test
   public void testSelectNoTargetSkip() {
-    OTodoResultSet result = db.query("select 1 as one, 2 as two, 2+3 skip 1");
+    OResultSet result = db.query("select 1 as one, 2 as two, 2+3 skip 1");
     Assert.assertFalse(result.hasNext());
     printExecutionPlan(result);
 
@@ -69,7 +69,7 @@ public class OSelectStatementExecutionTest {
 
   @Test
   public void testSelectNoTargetSkipZero() {
-    OTodoResultSet result = db.query("select 1 as one, 2 as two, 2+3 skip 0");
+    OResultSet result = db.query("select 1 as one, 2 as two, 2+3 skip 0");
     Assert.assertTrue(result.hasNext());
     OResult item = result.next();
     Assert.assertNotNull(item);
@@ -83,7 +83,7 @@ public class OSelectStatementExecutionTest {
 
   @Test
   public void testSelectNoTargetLimit0() {
-    OTodoResultSet result = db.query("select 1 as one, 2 as two, 2+3 limit 0");
+    OResultSet result = db.query("select 1 as one, 2 as two, 2+3 limit 0");
     Assert.assertFalse(result.hasNext());
     printExecutionPlan(result);
 
@@ -92,7 +92,7 @@ public class OSelectStatementExecutionTest {
 
   @Test
   public void testSelectNoTargetLimit1() {
-    OTodoResultSet result = db.query("select 1 as one, 2 as two, 2+3 limit 1");
+    OResultSet result = db.query("select 1 as one, 2 as two, 2+3 limit 1");
     Assert.assertTrue(result.hasNext());
     OResult item = result.next();
     Assert.assertNotNull(item);
@@ -106,7 +106,7 @@ public class OSelectStatementExecutionTest {
 
   @Test
   public void testSelectNoTargetLimitx() {
-    OTodoResultSet result = db.query("select 1 as one, 2 as two, 2+3 skip 0 limit 0");
+    OResultSet result = db.query("select 1 as one, 2 as two, 2+3 skip 0 limit 0");
     printExecutionPlan(result);
   }
 
@@ -120,7 +120,7 @@ public class OSelectStatementExecutionTest {
       doc.setProperty("surname", "surname" + i);
       doc.save();
     }
-    OTodoResultSet result = db.query("select from " + className);
+    OResultSet result = db.query("select from " + className);
     for (int i = 0; i < 100000; i++) {
       Assert.assertTrue(result.hasNext());
       OResult item = result.next();
@@ -142,7 +142,7 @@ public class OSelectStatementExecutionTest {
       doc.setProperty("surname", "surname" + i);
       doc.save();
     }
-    OTodoResultSet result = db.query("select from " + className + " ORDER BY @rid ASC");
+    OResultSet result = db.query("select from " + className + " ORDER BY @rid ASC");
     printExecutionPlan(result);
     OIdentifiable lastItem = null;
     for (int i = 0; i < 100000; i++) {
@@ -170,7 +170,7 @@ public class OSelectStatementExecutionTest {
       doc.setProperty("surname", "surname" + i);
       doc.save();
     }
-    OTodoResultSet result = db.query("select from " + className + " ORDER BY @rid DESC");
+    OResultSet result = db.query("select from " + className + " ORDER BY @rid DESC");
     printExecutionPlan(result);
     OIdentifiable lastItem = null;
     for (int i = 0; i < 100000; i++) {
@@ -198,7 +198,7 @@ public class OSelectStatementExecutionTest {
       doc.setProperty("surname", "surname" + i);
       doc.save();
     }
-    OTodoResultSet result = db.query("select from " + className + " limit 10");
+    OResultSet result = db.query("select from " + className + " limit 10");
     printExecutionPlan(result);
 
     for (int i = 0; i < 10; i++) {
@@ -222,7 +222,7 @@ public class OSelectStatementExecutionTest {
       doc.setProperty("surname", "surname" + i);
       doc.save();
     }
-    OTodoResultSet result = db.query("select from " + className + " skip 100 limit 10");
+    OResultSet result = db.query("select from " + className + " skip 100 limit 10");
     printExecutionPlan(result);
 
     for (int i = 0; i < 10; i++) {
@@ -246,7 +246,7 @@ public class OSelectStatementExecutionTest {
       doc.setProperty("surname", "surname" + i);
       doc.save();
     }
-    OTodoResultSet result = db.query("select from " + className + " order by surname desc");
+    OResultSet result = db.query("select from " + className + " order by surname desc");
     printExecutionPlan(result);
 
     String lastSurname = null;
@@ -274,7 +274,7 @@ public class OSelectStatementExecutionTest {
       doc.setProperty("surname", "surname" + i);
       doc.save();
     }
-    OTodoResultSet result = db.query("select from " + className + " order by surname asc");
+    OResultSet result = db.query("select from " + className + " order by surname asc");
     printExecutionPlan(result);
 
     String lastSurname = null;
@@ -303,7 +303,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
     long begin = System.nanoTime();
-    OTodoResultSet result = db.query("select from " + className + " order by surname asc limit 100");
+    OResultSet result = db.query("select from " + className + " order by surname asc limit 100");
     System.out.println("elapsed: " + (System.nanoTime() - begin));
     printExecutionPlan(result);
 
@@ -328,7 +328,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
     long begin = System.nanoTime();
-    OTodoResultSet result = db.query("select name from " + className + " order by surname asc");
+    OResultSet result = db.query("select name from " + className + " order by surname asc");
     System.out.println("elapsed: " + (System.nanoTime() - begin));
     printExecutionPlan(result);
 
@@ -359,7 +359,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
     long begin = System.nanoTime();
-    OTodoResultSet result = db.query("select name from " + className + " order by name asc, surname asc");
+    OResultSet result = db.query("select name from " + className + " order by name asc, surname asc");
     System.out.println("elapsed: " + (System.nanoTime() - begin));
     printExecutionPlan(result);
 
@@ -389,7 +389,7 @@ public class OSelectStatementExecutionTest {
       doc.setProperty("surname", "surname" + i);
       doc.save();
     }
-    OTodoResultSet result = db.query("select from " + className + " where name = 'name1' or name = 'name7' ");
+    OResultSet result = db.query("select from " + className + " where name = 'name1' or name = 'name7' ");
     printExecutionPlan(result);
 
     for (int i = 0; i < 2; i++) {
@@ -413,7 +413,7 @@ public class OSelectStatementExecutionTest {
       doc.setProperty("surname", "surname" + i);
       doc.save();
     }
-    OTodoResultSet result = db.query("select from " + className + " where name <> 'name1' ");
+    OResultSet result = db.query("select from " + className + " where name <> 'name1' ");
     printExecutionPlan(result);
 
     for (int i = 0; i < 299; i++) {
@@ -437,7 +437,7 @@ public class OSelectStatementExecutionTest {
       doc.setProperty("surname", "surname" + i);
       doc.save();
     }
-    OTodoResultSet result = db.query("select name from " + className);
+    OResultSet result = db.query("select name from " + className);
     printExecutionPlan(result);
 
     for (int i = 0; i < 300; i++) {
@@ -465,7 +465,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
     try {
-      OTodoResultSet result = db.query("select count(*) from " + className);
+      OResultSet result = db.query("select count(*) from " + className);
       printExecutionPlan(result);
       Assert.assertNotNull(result);
       Assert.assertTrue(result.hasNext());
@@ -490,7 +490,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
     try {
-      OTodoResultSet result = db.query("select count(*), name from " + className + " group by name");
+      OResultSet result = db.query("select count(*), name from " + className + " group by name");
       printExecutionPlan(result);
       Assert.assertNotNull(result);
       for (int i = 0; i < 5; i++) {
@@ -543,7 +543,7 @@ public class OSelectStatementExecutionTest {
 
     try {
       String query = "select [max(a), max(b)] from " + className;
-      OTodoResultSet result = db.query(query);
+      OResultSet result = db.query(query);
       printExecutionPlan(query, result);
     } catch (Exception x) {
       Assert.fail();
@@ -556,7 +556,7 @@ public class OSelectStatementExecutionTest {
     db.getMetadata().getSchema().createClass(className);
 
     try {
-      OTodoResultSet result = db
+      OResultSet result = db
           .query("select max(a + b) + (max(b + c * 2) + 1 + 2) * 3 as foo, max(d) + max(e), f from " + className);
       printExecutionPlan(result);
     } catch (Exception e) {
@@ -575,7 +575,7 @@ public class OSelectStatementExecutionTest {
       doc.setProperty("val", i);
       doc.save();
     }
-    OTodoResultSet result = db.query("select sum(val) from " + className);
+    OResultSet result = db.query("select sum(val) from " + className);
     printExecutionPlan(result);
     Assert.assertTrue(result.hasNext());
     OResult item = result.next();
@@ -595,7 +595,7 @@ public class OSelectStatementExecutionTest {
       doc.setProperty("val", i);
       doc.save();
     }
-    OTodoResultSet result = db.query("select sum(val), type from " + className + " group by type");
+    OResultSet result = db.query("select sum(val), type from " + className + " group by type");
     printExecutionPlan(result);
     boolean evenFound = false;
     boolean oddFound = false;
@@ -627,7 +627,7 @@ public class OSelectStatementExecutionTest {
       doc.setProperty("val", i);
       doc.save();
     }
-    OTodoResultSet result = db.query("select sum(val), max(val), min(val), type from " + className + " group by type");
+    OResultSet result = db.query("select sum(val), max(val), min(val), type from " + className + " group by type");
     printExecutionPlan(result);
     boolean evenFound = false;
     boolean oddFound = false;
@@ -663,7 +663,7 @@ public class OSelectStatementExecutionTest {
       doc.setProperty("val", i);
       doc.save();
     }
-    OTodoResultSet result = db.query("select sum(val) from " + className + " group by type");
+    OResultSet result = db.query("select sum(val) from " + className + " group by type");
     printExecutionPlan(result);
     boolean evenFound = false;
     boolean oddFound = false;
@@ -694,7 +694,7 @@ public class OSelectStatementExecutionTest {
       doc.setProperty("val", i);
       doc.save();
     }
-    OTodoResultSet result = db.query("select sum(val) from " + className + " group by type.substring(0,1)");
+    OResultSet result = db.query("select sum(val) from " + className + " group by type.substring(0,1)");
     printExecutionPlan(result);
     for (int i = 0; i < 1; i++) {
       Assert.assertTrue(result.hasNext());
@@ -721,7 +721,7 @@ public class OSelectStatementExecutionTest {
       doc.setProperty("val", i);
       doc.save(targetClusterName);
     }
-    OTodoResultSet result = db.query("select from cluster:" + targetClusterName);
+    OResultSet result = db.query("select from cluster:" + targetClusterName);
     printExecutionPlan(result);
     int sum = 0;
     for (int i = 0; i < 10; i++) {
@@ -749,7 +749,7 @@ public class OSelectStatementExecutionTest {
       doc.setProperty("val", i);
       doc.save(targetClusterName);
     }
-    OTodoResultSet result = db.query("select from cluster:" + targetClusterName + " order by @rid desc");
+    OResultSet result = db.query("select from cluster:" + targetClusterName + " order by @rid desc");
     printExecutionPlan(result);
     int sum = 0;
     for (int i = 0; i < 10; i++) {
@@ -777,7 +777,7 @@ public class OSelectStatementExecutionTest {
       doc.setProperty("val", i);
       doc.save(targetClusterName);
     }
-    OTodoResultSet result = db.query("select from cluster:" + targetClusterName + " order by @rid asc");
+    OResultSet result = db.query("select from cluster:" + targetClusterName + " order by @rid asc");
     printExecutionPlan(result);
     int sum = 0;
     for (int i = 0; i < 10; i++) {
@@ -817,7 +817,7 @@ public class OSelectStatementExecutionTest {
       doc.save(targetClusterName2);
     }
 
-    OTodoResultSet result = db
+    OResultSet result = db
         .query("select from cluster:[" + targetClusterName + ", " + targetClusterName2 + "] order by @rid asc");
     printExecutionPlan(result);
 
@@ -844,7 +844,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select from (select from " + className + " where val > 2)  where val < 8");
+    OResultSet result = db.query("select from (select from " + className + " where val > 2)  where val < 8");
     printExecutionPlan(result);
 
     for (int i = 0; i < 5; i++) {
@@ -860,7 +860,7 @@ public class OSelectStatementExecutionTest {
 
   @Test
   public void testQuerySchema() {
-    OTodoResultSet result = db.query("select from metadata:schema");
+    OResultSet result = db.query("select from metadata:schema");
     printExecutionPlan(result);
 
     for (int i = 0; i < 1; i++) {
@@ -874,7 +874,7 @@ public class OSelectStatementExecutionTest {
 
   @Test
   public void testQueryMetadataIndexManager() {
-    OTodoResultSet result = db.query("select from metadata:indexmanager");
+    OResultSet result = db.query("select from metadata:indexmanager");
     printExecutionPlan(result);
     for (int i = 0; i < 1; i++) {
       Assert.assertTrue(result.hasNext());
@@ -887,7 +887,7 @@ public class OSelectStatementExecutionTest {
 
   @Test
   public void testQueryMetadataIndexManager2() {
-    OTodoResultSet result = db.query("select expand(indexes) from metadata:indexmanager");
+    OResultSet result = db.query("select expand(indexes) from metadata:indexmanager");
     printExecutionPlan(result);
     Assert.assertTrue(result.hasNext());
     result.close();
@@ -895,7 +895,7 @@ public class OSelectStatementExecutionTest {
 
   @Test
   public void testNonExistingRids() {
-    OTodoResultSet result = db.query("select from #0:100000000");
+    OResultSet result = db.query("select from #0:100000000");
     printExecutionPlan(result);
     Assert.assertFalse(result.hasNext());
     result.close();
@@ -903,7 +903,7 @@ public class OSelectStatementExecutionTest {
 
   @Test
   public void testFetchFromSingleRid() {
-    OTodoResultSet result = db.query("select from #0:1");
+    OResultSet result = db.query("select from #0:1");
     printExecutionPlan(result);
     Assert.assertTrue(result.hasNext());
     Assert.assertNotNull(result.next());
@@ -913,7 +913,7 @@ public class OSelectStatementExecutionTest {
 
   @Test
   public void testFetchFromSingleRid2() {
-    OTodoResultSet result = db.query("select from [#0:1]");
+    OResultSet result = db.query("select from [#0:1]");
     printExecutionPlan(result);
     Assert.assertTrue(result.hasNext());
     Assert.assertNotNull(result.next());
@@ -923,7 +923,7 @@ public class OSelectStatementExecutionTest {
 
   @Test
   public void testFetchFromSingleRid3() {
-    OTodoResultSet result = db.query("select from [#0:1, #0:2]");
+    OResultSet result = db.query("select from [#0:1, #0:2]");
     printExecutionPlan(result);
     Assert.assertTrue(result.hasNext());
     Assert.assertNotNull(result.next());
@@ -935,7 +935,7 @@ public class OSelectStatementExecutionTest {
 
   @Test
   public void testFetchFromSingleRid4() {
-    OTodoResultSet result = db.query("select from [#0:1, #0:2, #0:100000]");
+    OResultSet result = db.query("select from [#0:1, #0:2, #0:100000]");
     printExecutionPlan(result);
     Assert.assertTrue(result.hasNext());
     Assert.assertNotNull(result.next());
@@ -958,7 +958,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select from index:" + className + ".name where key = 'name1'");
+    OResultSet result = db.query("select from index:" + className + ".name where key = 'name1'");
     printExecutionPlan(result);
     Assert.assertTrue(result.hasNext());
     Assert.assertNotNull(result.next());
@@ -979,7 +979,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select from index:" + className + ".name where key > 'name1'");
+    OResultSet result = db.query("select from index:" + className + ".name where key > 'name1'");
     printExecutionPlan(result);
     for (int i = 0; i < 8; i++) {
       Assert.assertTrue(result.hasNext());
@@ -1003,7 +1003,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select from index:" + className + ".name where key >= 'name1'");
+    OResultSet result = db.query("select from index:" + className + ".name where key >= 'name1'");
     printExecutionPlan(result);
     for (int i = 0; i < 9; i++) {
       Assert.assertTrue(result.hasNext());
@@ -1027,7 +1027,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select from index:" + className + ".name where key < 'name3'");
+    OResultSet result = db.query("select from index:" + className + ".name where key < 'name3'");
     printExecutionPlan(result);
     for (int i = 0; i < 3; i++) {
       Assert.assertTrue(result.hasNext());
@@ -1051,7 +1051,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select from index:" + className + ".name where key <= 'name3'");
+    OResultSet result = db.query("select from index:" + className + ".name where key <= 'name3'");
     printExecutionPlan(result);
     for (int i = 0; i < 4; i++) {
       Assert.assertTrue(result.hasNext());
@@ -1075,7 +1075,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select from index:" + className + ".name where key between 'name1' and 'name5'");
+    OResultSet result = db.query("select from index:" + className + ".name where key between 'name1' and 'name5'");
     printExecutionPlan(result);
     for (int i = 0; i < 5; i++) {
       Assert.assertTrue(result.hasNext());
@@ -1099,7 +1099,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select from index:" + className + ".name");
+    OResultSet result = db.query("select from index:" + className + ".name");
     printExecutionPlan(result);
     for (int i = 0; i < 10; i++) {
       Assert.assertTrue(result.hasNext());
@@ -1144,7 +1144,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select from indexvalues:" + className + ".name");
+    OResultSet result = db.query("select from indexvalues:" + className + ".name");
     printExecutionPlan(result);
     Set<String> expectedValues = new HashSet<>();
     expectedValues.add("name0");
@@ -1181,7 +1181,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select from indexvaluesasc:" + className + ".name");
+    OResultSet result = db.query("select from indexvaluesasc:" + className + ".name");
     printExecutionPlan(result);
     Set<String> expectedValues = new HashSet<>();
     expectedValues.add("name0");
@@ -1218,7 +1218,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select from indexvaluesdesc:" + className + ".name");
+    OResultSet result = db.query("select from indexvaluesdesc:" + className + ".name");
     printExecutionPlan(result);
     Set<String> expectedValues = new HashSet<>();
     expectedValues.add("name0");
@@ -1255,7 +1255,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select from indexvaluesdesc:" + className + ".name where name = 'name0'");
+    OResultSet result = db.query("select from indexvaluesdesc:" + className + ".name where name = 'name0'");
     printExecutionPlan(result);
     for (int i = 0; i < 4; i++) {
       Assert.assertTrue(result.hasNext());
@@ -1282,7 +1282,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select from " + className + " where name = 'name2'");
+    OResultSet result = db.query("select from " + className + " where name = 'name2'");
     printExecutionPlan(result);
 
     Assert.assertTrue(result.hasNext());
@@ -1318,7 +1318,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select from " + className + " where name = 'name2' or surname = 'surname3'");
+    OResultSet result = db.query("select from " + className + " where name = 'name2' or surname = 'surname3'");
     printExecutionPlan(result);
 
     Assert.assertTrue(result.hasNext());
@@ -1358,7 +1358,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db
+    OResultSet result = db
         .query("select from " + className + " where foo is not null and (name = 'name2' or surname = 'surname3')");
     printExecutionPlan(result);
 
@@ -1383,7 +1383,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select from " + className + " where foo < 100 and (name = 'name2' or surname = 'surname3')");
+    OResultSet result = db.query("select from " + className + " where foo < 100 and (name = 'name2' or surname = 'surname3')");
     printExecutionPlan(result);
 
     Assert.assertTrue(result.hasNext());
@@ -1414,7 +1414,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select from " + className
+    OResultSet result = db.query("select from " + className
         + " where foo < 100 and ((name = 'name2' and foo < 20) or surname = 'surname3') and ( 4<5 and foo < 50)");
     printExecutionPlan(result);
 
@@ -1445,7 +1445,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select from " + className + " where name = 'name3' and surname >= 'surname1'");
+    OResultSet result = db.query("select from " + className + " where name = 'name3' and surname >= 'surname1'");
     printExecutionPlan(result);
 
     Assert.assertTrue(result.hasNext());
@@ -1475,7 +1475,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select from " + className + " where name = 'name3' and surname > 'surname3'");
+    OResultSet result = db.query("select from " + className + " where name = 'name3' and surname > 'surname3'");
     printExecutionPlan(result);
 
     Assert.assertFalse(result.hasNext());
@@ -1498,7 +1498,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select from " + className + " where name = 'name3' and surname >= 'surname3'");
+    OResultSet result = db.query("select from " + className + " where name = 'name3' and surname >= 'surname3'");
     printExecutionPlan(result);
     for (int i = 0; i < 1; i++) {
       OResult next = result.next();
@@ -1525,7 +1525,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select from " + className + " where name = 'name3' and surname < 'surname3'");
+    OResultSet result = db.query("select from " + className + " where name = 'name3' and surname < 'surname3'");
     printExecutionPlan(result);
 
     Assert.assertFalse(result.hasNext());
@@ -1548,7 +1548,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select from " + className + " where name = 'name3' and surname <= 'surname3'");
+    OResultSet result = db.query("select from " + className + " where name = 'name3' and surname <= 'surname3'");
     printExecutionPlan(result);
     for (int i = 0; i < 1; i++) {
       OResult next = result.next();
@@ -1575,7 +1575,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select from " + className + " where name > 'name3' ");
+    OResultSet result = db.query("select from " + className + " where name > 'name3' ");
     printExecutionPlan(result);
     for (int i = 0; i < 6; i++) {
       Assert.assertTrue(result.hasNext());
@@ -1602,7 +1602,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select from " + className + " where name >= 'name3' ");
+    OResultSet result = db.query("select from " + className + " where name >= 'name3' ");
     printExecutionPlan(result);
     for (int i = 0; i < 7; i++) {
       OResult next = result.next();
@@ -1628,7 +1628,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select from " + className + " where name < 'name3' ");
+    OResultSet result = db.query("select from " + className + " where name < 'name3' ");
     printExecutionPlan(result);
     for (int i = 0; i < 3; i++) {
       OResult next = result.next();
@@ -1654,7 +1654,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select from " + className + " where name <= 'name3' ");
+    OResultSet result = db.query("select from " + className + " where name <= 'name3' ");
     printExecutionPlan(result);
     for (int i = 0; i < 4; i++) {
       OResult next = result.next();
@@ -1680,7 +1680,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select from " + className + " where name > 'name3' and name < 'name5'");
+    OResultSet result = db.query("select from " + className + " where name > 'name3' and name < 'name5'");
     printExecutionPlan(result);
     for (int i = 0; i < 1; i++) {
       OResult next = result.next();
@@ -1708,7 +1708,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query(
+    OResultSet result = db.query(
         "select from " + className + " where name > 'name6' and name = 'name3' and surname > 'surname2' and surname < 'surname5' ");
     printExecutionPlan(result);
     Assert.assertFalse(result.hasNext());
@@ -1733,7 +1733,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select from " + className + " where name = 'name6' and surname = 'surname6' ");
+    OResultSet result = db.query("select from " + className + " where name = 'name6' and surname = 'surname6' ");
     printExecutionPlan(result);
 
     for (int i = 0; i < 1; i++) {
@@ -1763,7 +1763,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select from " + className + " where name = 'name6' and surname >= 'surname6' ");
+    OResultSet result = db.query("select from " + className + " where name = 'name6' and surname >= 'surname6' ");
     printExecutionPlan(result);
 
     for (int i = 0; i < 1; i++) {
@@ -1798,7 +1798,7 @@ public class OSelectStatementExecutionTest {
       parent.save();
     }
 
-    OTodoResultSet result = db.query("select expand(linked) from " + parentClassName);
+    OResultSet result = db.query("select expand(linked) from " + parentClassName);
     printExecutionPlan(result);
 
     for (int i = 0; i < count; i++) {
@@ -1833,7 +1833,7 @@ public class OSelectStatementExecutionTest {
       parent.save();
     }
 
-    OTodoResultSet result = db.query("select expand(linked) from " + parentClassName);
+    OResultSet result = db.query("select expand(linked) from " + parentClassName);
     printExecutionPlan(result);
 
     for (int i = 0; i < count * collSize; i++) {
@@ -1868,7 +1868,7 @@ public class OSelectStatementExecutionTest {
       parent.save();
     }
 
-    OTodoResultSet result = db.query("select expand(linked) from " + parentClassName + " order by name");
+    OResultSet result = db.query("select expand(linked) from " + parentClassName + " order by name");
     printExecutionPlan(result);
 
     String last = null;
@@ -1899,7 +1899,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select distinct name, surname from " + className);
+    OResultSet result = db.query("select distinct name, surname from " + className);
     printExecutionPlan(result);
 
     for (int i = 0; i < 10; i++) {
@@ -1925,7 +1925,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select distinct(name) from " + className);
+    OResultSet result = db.query("select distinct(name) from " + className);
     printExecutionPlan(result);
 
     for (int i = 0; i < 10; i++) {
@@ -1939,7 +1939,7 @@ public class OSelectStatementExecutionTest {
 
   @Test
   public void testLet1() {
-    OTodoResultSet result = db.query("select $a as one, $b as two let $a = 1, $b = 1+1");
+    OResultSet result = db.query("select $a as one, $b as two let $a = 1, $b = 1+1");
     Assert.assertTrue(result.hasNext());
     OResult item = result.next();
     Assert.assertNotNull(item);
@@ -1951,7 +1951,7 @@ public class OSelectStatementExecutionTest {
 
   @Test
   public void testLet1Long() {
-    OTodoResultSet result = db.query("select $a as one, $b as two let $a = 1L, $b = 1L+1");
+    OResultSet result = db.query("select $a as one, $b as two let $a = 1L, $b = 1L+1");
     Assert.assertTrue(result.hasNext());
     OResult item = result.next();
     Assert.assertNotNull(item);
@@ -1963,7 +1963,7 @@ public class OSelectStatementExecutionTest {
 
   @Test
   public void testLet2() {
-    OTodoResultSet result = db.query("select $a as one let $a = (select 1 as a)");
+    OResultSet result = db.query("select $a as one let $a = (select 1 as a)");
     printExecutionPlan(result);
     Assert.assertTrue(result.hasNext());
     OResult item = result.next();
@@ -1979,7 +1979,7 @@ public class OSelectStatementExecutionTest {
 
   @Test
   public void testLet3() {
-    OTodoResultSet result = db.query("select $a[0].foo as one let $a = (select 1 as foo)");
+    OResultSet result = db.query("select $a[0].foo as one let $a = (select 1 as foo)");
     printExecutionPlan(result);
     Assert.assertTrue(result.hasNext());
     OResult item = result.next();
@@ -2001,7 +2001,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query(
+    OResultSet result = db.query(
         "select name, surname, $nameAndSurname as fullname from " + className + " let $nameAndSurname = name + ' ' + surname");
     printExecutionPlan(result);
     for (int i = 0; i < 10; i++) {
@@ -2026,7 +2026,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db
+    OResultSet result = db
         .query("select from " + className + " where name in (select name from " + className + " where name = 'name1')");
     printExecutionPlan(result);
     for (int i = 0; i < 1; i++) {
@@ -2051,7 +2051,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select $foo as name from " + className + " let $foo = (select name from " + className
+    OResultSet result = db.query("select $foo as name from " + className + " let $foo = (select name from " + className
         + " where name = $parent.$current.name)");
     printExecutionPlan(result);
     for (int i = 0; i < 10; i++) {
@@ -2077,7 +2077,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select $bar as name from " + className + " " + "let $foo = (select name from " + className
+    OResultSet result = db.query("select $bar as name from " + className + " " + "let $foo = (select name from " + className
         + " where name = $parent.$current.name)," + "$bar = $foo[0].name");
     printExecutionPlan(result);
     for (int i = 0; i < 10; i++) {
@@ -2103,7 +2103,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select i, iSeq from " + className + " unwind iSeq");
+    OResultSet result = db.query("select i, iSeq from " + className + " unwind iSeq");
     printExecutionPlan(result);
     for (int i = 0; i < 30; i++) {
       Assert.assertTrue(result.hasNext());
@@ -2135,7 +2135,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select i, iSeq from " + className + " unwind iSeq");
+    OResultSet result = db.query("select i, iSeq from " + className + " unwind iSeq");
     printExecutionPlan(result);
     for (int i = 0; i < 30; i++) {
       Assert.assertTrue(result.hasNext());
@@ -2176,7 +2176,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select from " + parent + " where name = 'name1'");
+    OResultSet result = db.query("select from " + parent + " where name = 'name1'");
     printExecutionPlan(result);
     OInternalExecutionPlan plan = (OInternalExecutionPlan) result.getExecutionPlan().get();
     Assert.assertTrue(plan.getSteps().get(0) instanceof ParallelExecStep);
@@ -2216,7 +2216,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select from " + parent + " where name = 'name1' and surname = 'surname1'");
+    OResultSet result = db.query("select from " + parent + " where name = 'name1' and surname = 'surname1'");
     printExecutionPlan(result);
     OInternalExecutionPlan plan = (OInternalExecutionPlan) result.getExecutionPlan().get();
     Assert.assertTrue(plan.getSteps().get(0) instanceof ParallelExecStep);
@@ -2255,7 +2255,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select from " + parent + " where name = 'name1' and surname = 'surname1'");
+    OResultSet result = db.query("select from " + parent + " where name = 'name1' and surname = 'surname1'");
     printExecutionPlan(result);
     OInternalExecutionPlan plan = (OInternalExecutionPlan) result.getExecutionPlan().get();
     Assert.assertTrue(plan.getSteps().get(0) instanceof FetchFromClassExecutionStep);//no index used
@@ -2299,7 +2299,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select from " + parent + " where name = 'name1' and surname = 'surname1'");
+    OResultSet result = db.query("select from " + parent + " where name = 'name1' and surname = 'surname1'");
     printExecutionPlan(result);
     OInternalExecutionPlan plan = (OInternalExecutionPlan) result.getExecutionPlan().get();
     Assert
@@ -2352,7 +2352,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select from " + parent + " where name = 'name1' and surname = 'surname1'");
+    OResultSet result = db.query("select from " + parent + " where name = 'name1' and surname = 'surname1'");
     printExecutionPlan(result);
     OInternalExecutionPlan plan = (OInternalExecutionPlan) result.getExecutionPlan().get();
     Assert.assertTrue(plan.getSteps().get(0) instanceof ParallelExecStep);
@@ -2402,7 +2402,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select from " + parent + " where name = 'name1' and surname = 'surname1'");
+    OResultSet result = db.query("select from " + parent + " where name = 'name1' and surname = 'surname1'");
     printExecutionPlan(result);
     OInternalExecutionPlan plan = (OInternalExecutionPlan) result.getExecutionPlan().get();
     Assert.assertTrue(plan.getSteps().get(0) instanceof FetchFromClassExecutionStep);
@@ -2431,7 +2431,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select from " + className + " where name = 'name1' order by surname ASC");
+    OResultSet result = db.query("select from " + className + " where name = 'name1' order by surname ASC");
     printExecutionPlan(result);
     String lastSurname = null;
     for (int i = 0; i < 3; i++) {
@@ -2467,7 +2467,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select from " + className + " where name = 'name1' order by surname DESC");
+    OResultSet result = db.query("select from " + className + " where name = 'name1' order by surname DESC");
     printExecutionPlan(result);
     String lastSurname = null;
     for (int i = 0; i < 3; i++) {
@@ -2503,7 +2503,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select from " + className + " where name = 'name1' order by name DESC, surname DESC");
+    OResultSet result = db.query("select from " + className + " where name = 'name1' order by name DESC, surname DESC");
     printExecutionPlan(result);
     String lastSurname = null;
     for (int i = 0; i < 3; i++) {
@@ -2539,7 +2539,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select from " + className + " where name = 'name1' order by name ASC, surname ASC");
+    OResultSet result = db.query("select from " + className + " where name = 'name1' order by name ASC, surname ASC");
     printExecutionPlan(result);
     String lastSurname = null;
     for (int i = 0; i < 3; i++) {
@@ -2578,7 +2578,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select from " + className + " where name = 'name1' order by surname ASC");
+    OResultSet result = db.query("select from " + className + " where name = 'name1' order by surname ASC");
     printExecutionPlan(result);
     String lastSurname = null;
     for (int i = 0; i < 3; i++) {
@@ -2615,7 +2615,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select from " + className + " where name = 'name1' order by surname DESC");
+    OResultSet result = db.query("select from " + className + " where name = 'name1' order by surname DESC");
     printExecutionPlan(result);
     String lastSurname = null;
     for (int i = 0; i < 3; i++) {
@@ -2652,7 +2652,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select from " + className + " where name = 'name1' order by address DESC");
+    OResultSet result = db.query("select from " + className + " where name = 'name1' order by address DESC");
     printExecutionPlan(result);
 
     for (int i = 0; i < 3; i++) {
@@ -2689,7 +2689,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select from " + className + " where name = 'name1' order by name ASC, surname DESC");
+    OResultSet result = db.query("select from " + className + " where name = 'name1' order by name ASC, surname DESC");
     printExecutionPlan(result);
     for (int i = 0; i < 3; i++) {
       Assert.assertTrue(result.hasNext());
@@ -2726,7 +2726,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select from " + className + " order by name , surname ASC");
+    OResultSet result = db.query("select from " + className + " order by name , surname ASC");
     printExecutionPlan(result);
     for (int i = 0; i < 10; i++) {
       Assert.assertTrue(result.hasNext());
@@ -2763,7 +2763,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select from " + className + " order by name desc, surname desc");
+    OResultSet result = db.query("select from " + className + " order by name desc, surname desc");
     printExecutionPlan(result);
     for (int i = 0; i < 10; i++) {
       Assert.assertTrue(result.hasNext());
@@ -2800,7 +2800,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select from " + className + " order by name asc, surname desc");
+    OResultSet result = db.query("select from " + className + " order by name asc, surname desc");
     printExecutionPlan(result);
     for (int i = 0; i < 10; i++) {
       Assert.assertTrue(result.hasNext());
@@ -2837,7 +2837,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select from " + className + " order by name");
+    OResultSet result = db.query("select from " + className + " order by name");
     printExecutionPlan(result);
     String last = null;
     for (int i = 0; i < 10; i++) {
@@ -2874,7 +2874,7 @@ public class OSelectStatementExecutionTest {
       doc.setProperty("name", "name" + i);
       doc.save();
     }
-    OTodoResultSet result = db.query("select from ?", className);
+    OResultSet result = db.query("select from ?", className);
     printExecutionPlan(result);
 
     for (int i = 0; i < 10; i++) {
@@ -2899,7 +2899,7 @@ public class OSelectStatementExecutionTest {
     }
     Map<Object, Object> params = new HashMap<>();
     params.put("target", className);
-    OTodoResultSet result = db.query("select from :target", params);
+    OResultSet result = db.query("select from :target", params);
     printExecutionPlan(result);
 
     for (int i = 0; i < 10; i++) {
@@ -2925,7 +2925,7 @@ public class OSelectStatementExecutionTest {
 
     for (int run = 0; run < 5; run++) {
       long begin = System.nanoTime();
-      OTodoResultSet result = db.query("select name from " + className + " where name <> 'name1' ");
+      OResultSet result = db.query("select name from " + className + " where name <> 'name1' ");
       for (int i = 0; i < 999999; i++) {
         //        Assert.assertTrue(result.hasNext());
         OResult item = result.next();

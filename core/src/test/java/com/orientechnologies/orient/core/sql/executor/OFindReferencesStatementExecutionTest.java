@@ -52,7 +52,7 @@ public class OFindReferencesStatementExecutionTest {
       }
     }
 
-    OTodoResultSet result = db.query("find references " + linked.getIdentity());
+    OResultSet result = db.query("find references " + linked.getIdentity());
 
     printExecutionPlan(result);
 

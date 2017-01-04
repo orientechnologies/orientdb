@@ -32,7 +32,7 @@ public class OAlterClassStatementExecutionTest {
     String className = "testName1";
     OSchema schema = db.getMetadata().getSchema();
     schema.createClass(className);
-    OTodoResultSet result = db.command("alter class " + className + " name " + className + "_new");
+    OResultSet result = db.command("alter class " + className + " name " + className + "_new");
     schema.reload();
     Assert.assertNull(schema.getClass(className));
     Assert.assertNotNull(schema.getClass(className + "_new"));
@@ -67,7 +67,7 @@ public class OAlterClassStatementExecutionTest {
     String className = "testShortName";
     OSchema schema = db.getMetadata().getSchema();
     schema.createClass(className);
-    OTodoResultSet result = db.command("alter class " + className + " shortname " + className + "_new");
+    OResultSet result = db.command("alter class " + className + " shortname " + className + "_new");
     schema.reload();
     OClass clazz = schema.getClass(className);
     Assert.assertEquals(className + "_new", clazz.getShortName());
@@ -79,7 +79,7 @@ public class OAlterClassStatementExecutionTest {
     String className = "testAddCluster";
     OSchema schema = db.getMetadata().getSchema();
     schema.createClass(className);
-    OTodoResultSet result = db.command("alter class " + className + " addcluster " + className + "_new");
+    OResultSet result = db.command("alter class " + className + " addcluster " + className + "_new");
     schema.reload();
     OClass clazz = schema.getClass(className);
     boolean found = false;
@@ -98,7 +98,7 @@ public class OAlterClassStatementExecutionTest {
     String className = "testRemoveCluster";
     OSchema schema = db.getMetadata().getSchema();
     schema.createClass(className);
-    OTodoResultSet result = db.command("alter class " + className + " addcluster " + className + "_new");
+    OResultSet result = db.command("alter class " + className + " addcluster " + className + "_new");
     schema.reload();
     OClass clazz = schema.getClass(className);
     boolean found = false;
@@ -132,7 +132,7 @@ public class OAlterClassStatementExecutionTest {
     OSchema schema = db.getMetadata().getSchema();
     schema.createClass(className);
     OClass superclass = schema.createClass(superclassName);
-    OTodoResultSet result = db.command("alter class " + className + " superclass " + superclassName);
+    OResultSet result = db.command("alter class " + className + " superclass " + superclassName);
     schema.reload();
     Assert.assertTrue(schema.getClass(className).getSuperClasses().contains(superclass));
     result.close();
@@ -147,7 +147,7 @@ public class OAlterClassStatementExecutionTest {
     schema.createClass(className);
     OClass superclass = schema.createClass(superclassName);
     OClass superclass2 = schema.createClass(superclassName2);
-    OTodoResultSet result = db.command("alter class " + className + " superclasses " + superclassName + ", " + superclassName2);
+    OResultSet result = db.command("alter class " + className + " superclasses " + superclassName + ", " + superclassName2);
     schema.reload();
     Assert.assertTrue(schema.getClass(className).getSuperClasses().contains(superclass));
     Assert.assertTrue(schema.getClass(className).getSuperClasses().contains(superclass2));
@@ -159,7 +159,7 @@ public class OAlterClassStatementExecutionTest {
     String className = "testOversize";
     OSchema schema = db.getMetadata().getSchema();
     schema.createClass(className);
-    OTodoResultSet result = db.command("alter class " + className + " oversize 10");
+    OResultSet result = db.command("alter class " + className + " oversize 10");
     schema.reload();
     OClass clazz = schema.getClass(className);
     Assert.assertEquals((Object) 10.0f, clazz.getOverSize());
@@ -171,7 +171,7 @@ public class OAlterClassStatementExecutionTest {
     String className = "testStrictmode";
     OSchema schema = db.getMetadata().getSchema();
     schema.createClass(className);
-    OTodoResultSet result = db.command("alter class " + className + " strictmode true");
+    OResultSet result = db.command("alter class " + className + " strictmode true");
     schema.reload();
     OClass clazz = schema.getClass(className);
     Assert.assertTrue(clazz.isStrictMode());
@@ -183,7 +183,7 @@ public class OAlterClassStatementExecutionTest {
     String className = "testCustom";
     OSchema schema = db.getMetadata().getSchema();
     schema.createClass(className);
-    OTodoResultSet result = db.command("alter class " + className + " custom foo = 'bar'");
+    OResultSet result = db.command("alter class " + className + " custom foo = 'bar'");
     schema.reload();
     OClass clazz = schema.getClass(className);
     Assert.assertEquals("bar", clazz.getCustom("foo"));
@@ -195,7 +195,7 @@ public class OAlterClassStatementExecutionTest {
     String className = "testAbstract";
     OSchema schema = db.getMetadata().getSchema();
     schema.createClass(className);
-    OTodoResultSet result = db.command("alter class " + className + " abstract true");
+    OResultSet result = db.command("alter class " + className + " abstract true");
     schema.reload();
     OClass clazz = schema.getClass(className);
     Assert.assertTrue(clazz.isAbstract());
@@ -217,7 +217,7 @@ public class OAlterClassStatementExecutionTest {
     } catch (OCommandExecutionException ex) {
 
     }
-    OTodoResultSet result = db.command("alter class " + className + " name " + className + "_new unsafe");
+    OResultSet result = db.command("alter class " + className + " name " + className + "_new unsafe");
     schema.reload();
     Assert.assertNull(schema.getClass(className));
     Assert.assertNotNull(schema.getClass(className + "_new"));

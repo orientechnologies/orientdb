@@ -26,7 +26,7 @@ public class OExplainStatementExecutionTest {
   }
 
   @Test public void testExplainSelectNoTarget() {
-    OTodoResultSet result = db.query("explain select 1 as one, 2 as two, 2+3");
+    OResultSet result = db.query("explain select 1 as one, 2 as two, 2+3");
     Assert.assertTrue(result.hasNext());
     OResult next = result.next();
     Assert.assertNotNull(next.getProperty("executionPlan"));

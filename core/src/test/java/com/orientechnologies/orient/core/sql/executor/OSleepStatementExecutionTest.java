@@ -26,7 +26,7 @@ public class OSleepStatementExecutionTest {
 
   @Test public void testBasic() {
     long begin = System.currentTimeMillis();
-    OTodoResultSet result = db.command("sleep 1000");
+    OResultSet result = db.command("sleep 1000");
     Assert.assertTrue(System.currentTimeMillis() - begin >= 1000);
     printExecutionPlan(null, result);
     Assert.assertNotNull(result);

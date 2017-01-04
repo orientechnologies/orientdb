@@ -18,7 +18,7 @@ public class MatchFirstStep extends AbstractExecutionStep {
   OInternalExecutionPlan executionPlan;
 
   Iterator<OResult> iterator;
-  OTodoResultSet    subResultSet;
+  OResultSet        subResultSet;
 
   public MatchFirstStep(OCommandContext context, PatternNode node) {
     this(context, node, null);
@@ -38,10 +38,10 @@ public class MatchFirstStep extends AbstractExecutionStep {
     }
   }
 
-  @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
     init(ctx);
-    return new OTodoResultSet() {
+    return new OResultSet() {
 
       int currentCount = 0;
       @Override public boolean hasNext() {

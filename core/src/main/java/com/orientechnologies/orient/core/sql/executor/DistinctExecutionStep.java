@@ -17,16 +17,16 @@ public class DistinctExecutionStep extends AbstractExecutionStep {
   Set<OResult> pastItems = new HashSet<>();
   ORidSet      pastRids  = new ORidSet();
 
-  OTodoResultSet lastResult = null;
+  OResultSet lastResult = null;
   OResult nextValue;
 
   public DistinctExecutionStep(OCommandContext ctx) {
     super(ctx);
   }
 
-  @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
 
-    OTodoResultSet result = new OTodoResultSet() {
+    OResultSet result = new OResultSet() {
       int nextLocal = 0;
 
       @Override public boolean hasNext() {

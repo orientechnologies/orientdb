@@ -26,12 +26,12 @@ public class UpsertStep extends AbstractExecutionStep {
     this.initialFilter = where;
   }
 
-  @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     if (applied) {
       return getPrev().get().syncPull(ctx, nRecords);
     }
     applied = true;
-    OTodoResultSet upstream = getPrev().get().syncPull(ctx, nRecords);
+    OResultSet upstream = getPrev().get().syncPull(ctx, nRecords);
     if (upstream.hasNext()) {
       return upstream;
     }

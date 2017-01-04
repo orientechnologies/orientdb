@@ -26,9 +26,9 @@ public class InsertValuesStep extends AbstractExecutionStep {
     this.values = valueExpressions;
   }
 
-  @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    OTodoResultSet upstream = getPrev().get().syncPull(ctx, nRecords);
-    return new OTodoResultSet() {
+  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+    OResultSet upstream = getPrev().get().syncPull(ctx, nRecords);
+    return new OResultSet() {
       @Override public boolean hasNext() {
         return upstream.hasNext();
       }

@@ -26,7 +26,7 @@ public class OCreateClassStatementExecutionTest {
 
   @Test public void testPlain() {
     String className = "testPlain";
-    OTodoResultSet result = db.command("create class " + className);
+    OResultSet result = db.command("create class " + className);
     OSchema schema = db.getMetadata().getSchema();
     OClass clazz = schema.getClass(className);
     Assert.assertNotNull(clazz);
@@ -36,7 +36,7 @@ public class OCreateClassStatementExecutionTest {
 
   @Test public void testAbstract() {
     String className = "testAbstract";
-    OTodoResultSet result = db.command("create class " + className + " abstract ");
+    OResultSet result = db.command("create class " + className + " abstract ");
     OSchema schema = db.getMetadata().getSchema();
     OClass clazz = schema.getClass(className);
     Assert.assertNotNull(clazz);
@@ -46,7 +46,7 @@ public class OCreateClassStatementExecutionTest {
 
   @Test public void testCluster() {
     String className = "testCluster";
-    OTodoResultSet result = db.command("create class " + className + " cluster 1235, 1236, 1255");
+    OResultSet result = db.command("create class " + className + " cluster 1235, 1236, 1255");
     OSchema schema = db.getMetadata().getSchema();
     OClass clazz = schema.getClass(className);
     Assert.assertNotNull(clazz);
@@ -57,7 +57,7 @@ public class OCreateClassStatementExecutionTest {
 
   @Test public void testClusters() {
     String className = "testClusters";
-    OTodoResultSet result = db.command("create class " + className + " clusters 32");
+    OResultSet result = db.command("create class " + className + " clusters 32");
     OSchema schema = db.getMetadata().getSchema();
     OClass clazz = schema.getClass(className);
     Assert.assertNotNull(clazz);
@@ -69,7 +69,7 @@ public class OCreateClassStatementExecutionTest {
 
   @Test public void testIfNotExists() {
     String className = "testIfNotExists";
-    OTodoResultSet result = db.command("create class " + className + " if not exists");
+    OResultSet result = db.command("create class " + className + " if not exists");
     OSchema schema = db.getMetadata().getSchema();
     OClass clazz = schema.getClass(className);
     Assert.assertNotNull(clazz);

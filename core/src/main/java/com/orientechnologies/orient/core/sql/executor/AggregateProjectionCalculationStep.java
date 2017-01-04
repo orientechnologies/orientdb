@@ -28,12 +28,12 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
     this.groupBy = groupBy;
   }
 
-  @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     if (finalResults == null) {
       executeAggregation(ctx, nRecords);
     }
 
-    return new OTodoResultSet() {
+    return new OResultSet() {
       int localNext = 0;
 
       @Override public boolean hasNext() {
@@ -72,7 +72,7 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
       throw new OCommandExecutionException("Cannot execute an aggregation or a GROUP BY without a previous result");
     }
     OExecutionStepInternal prevStep = prev.get();
-    OTodoResultSet lastRs = prevStep.syncPull(ctx, nRecords);
+    OResultSet lastRs = prevStep.syncPull(ctx, nRecords);
     while (lastRs.hasNext()) {
       aggregate(lastRs.next(), ctx);
       if (!lastRs.hasNext()) {

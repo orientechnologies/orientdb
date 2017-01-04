@@ -26,7 +26,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OLiveQuery;
 import com.orientechnologies.orient.core.sql.query.OLiveResultListener;
-import com.orientechnologies.orient.core.sql.query.OResultSet;
+import com.orientechnologies.orient.core.sql.query.OLegacyResultSet;
 import com.orientechnologies.orient.core.storage.OCluster;
 import org.junit.Assert; import org.junit.Test;
 
@@ -74,7 +74,7 @@ public class OLiveQueryTest {
       db.getMetadata().getSchema().createClass("test2");
       MyLiveQueryListener listener = new MyLiveQueryListener();
 
-      OResultSet<ODocument> tokens = db.query(new OLiveQuery<ODocument>("live select from test", listener));
+      OLegacyResultSet<ODocument> tokens = db.query(new OLiveQuery<ODocument>("live select from test", listener));
       Assert.assertEquals(tokens.size(), 1);
 
       ODocument tokenDoc = tokens.get(0);

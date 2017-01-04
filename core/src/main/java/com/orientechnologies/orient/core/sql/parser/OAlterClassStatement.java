@@ -9,7 +9,7 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -193,7 +193,7 @@ public class OAlterClassStatement extends ODDLStatement {
     return result;
   }
 
-  @Override public OTodoResultSet executeDDL(OCommandContext ctx) {
+  @Override public OResultSet executeDDL(OCommandContext ctx) {
     OClass oClass = ctx.getDatabase().getMetadata().getSchema().getClass(name.getStringValue());
     if (oClass == null) {
       throw new OCommandExecutionException("Class not found: " + name);

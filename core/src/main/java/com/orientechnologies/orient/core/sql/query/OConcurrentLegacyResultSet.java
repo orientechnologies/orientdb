@@ -32,21 +32,21 @@ import java.util.*;
  * @param <T>
  * @see OSQLAsynchQuery
  */
-public class OConcurrentResultSet<T> implements OResultSet<T> {
+public class OConcurrentLegacyResultSet<T> implements OLegacyResultSet<T> {
   protected final transient Object             waitForNextItem   = new Object();
   protected final transient Object             waitForCompletion = new Object();
-  protected final transient OBasicResultSet<T> wrapped;
+  protected final transient OBasicLegacyResultSet<T> wrapped;
   protected transient volatile boolean         completed         = false;
 
-  public OConcurrentResultSet() {
-    this.wrapped = new OBasicResultSet<T>();
+  public OConcurrentLegacyResultSet() {
+    this.wrapped = new OBasicLegacyResultSet<T>();
   }
 
-  public OConcurrentResultSet(final OBasicResultSet<T> wrapped) {
+  public OConcurrentLegacyResultSet(final OBasicLegacyResultSet<T> wrapped) {
     this.wrapped = wrapped;
   }
 
-  public OConcurrentResultSet<T> setCompleted() {
+  public OConcurrentLegacyResultSet<T> setCompleted() {
     completed = true;
     synchronized (waitForNextItem) {
       waitForNextItem.notifyAll();
@@ -63,14 +63,14 @@ public class OConcurrentResultSet<T> implements OResultSet<T> {
   }
 
   @Override
-  public OResultSet<T> setLimit(final int limit) {
+  public OLegacyResultSet<T> setLimit(final int limit) {
     return wrapped.setLimit(limit);
   }
 
   @Override
-  public OResultSet<T> copy() {
+  public OLegacyResultSet<T> copy() {
     synchronized (wrapped) {
-      final OConcurrentResultSet<T> copy = new OConcurrentResultSet<T>(wrapped.copy());
+      final OConcurrentLegacyResultSet<T> copy = new OConcurrentLegacyResultSet<T>(wrapped.copy());
       copy.completed = true;
       return copy;
     }
@@ -227,7 +227,7 @@ public class OConcurrentResultSet<T> implements OResultSet<T> {
 
       @Override
       public void remove() {
-        throw new UnsupportedOperationException("OResultSet.iterator.remove()");
+        throw new UnsupportedOperationException("OLegacyResultSet.iterator.remove()");
       }
     };
   }

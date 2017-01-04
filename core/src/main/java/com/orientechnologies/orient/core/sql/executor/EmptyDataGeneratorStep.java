@@ -19,9 +19,9 @@ public class EmptyDataGeneratorStep extends AbstractExecutionStep {
     this.size = size;
   }
 
-  @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
-    return new OTodoResultSet() {
+    return new OResultSet() {
       @Override public boolean hasNext() {
         return served < size;
       }

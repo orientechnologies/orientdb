@@ -18,7 +18,7 @@ public class FetchFromIndexedFunctionStep extends AbstractExecutionStep {
     this.queryTarget = queryTarget;
   }
 
-  @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     return null;//TODO
   }
 

@@ -50,7 +50,7 @@ public class OTruncateClassStatementExecutionTest {
     database.save(new ODocument(testClass).field("name", "x").field("data", Arrays.asList(5, 6, 7)));
     database.save(new ODocument(testClass).field("name", "y").field("data", Arrays.asList(8, 9, -1)));
 
-    OTodoResultSet result = database.query("select from test_class");
+    OResultSet result = database.query("select from test_class");
     //    Assert.assertEquals(result.size(), 2);
 
     Set<Integer> set = new HashSet<Integer>();
@@ -81,7 +81,7 @@ public class OTruncateClassStatementExecutionTest {
       Assert.fail();
     } catch (Exception e) {
     }
-    OTodoResultSet result = database.query("select from TestTruncateVertexClass");
+    OResultSet result = database.query("select from TestTruncateVertexClass");
     Assert.assertTrue(result.hasNext());
     result.close();
 
@@ -100,7 +100,7 @@ public class OTruncateClassStatementExecutionTest {
     database.command("insert into TestTruncateVertexClassSuperclass set name = 'foo'");
     database.command("insert into TestTruncateVertexClassSubclass set name = 'bar'");
 
-    OTodoResultSet result = database.query("select from TestTruncateVertexClassSuperclass");
+    OResultSet result = database.query("select from TestTruncateVertexClassSuperclass");
     for (int i = 0; i < 2; i++) {
       Assert.assertTrue(result.hasNext());
       result.next();
@@ -134,7 +134,7 @@ public class OTruncateClassStatementExecutionTest {
     database.command("insert into TestTruncateVertexClassSuperclassWithIndex set name = 'foo'");
     database.command("insert into TestTruncateVertexClassSubclassWithIndex set name = 'bar'");
 
-    OTodoResultSet result = database.query("select from index:TestTruncateVertexClassSuperclassWithIndex_index");
+    OResultSet result = database.query("select from index:TestTruncateVertexClassSuperclassWithIndex_index");
     Assert.assertEquals(toList(result).size(), 2);
     result.close();
 
@@ -150,7 +150,7 @@ public class OTruncateClassStatementExecutionTest {
 
   }
 
-  private List<OResult> toList(OTodoResultSet input) {
+  private List<OResult> toList(OResultSet input) {
     List<OResult> result = new ArrayList<>();
     while (input.hasNext()) {
       result.add(input.next());
@@ -191,7 +191,7 @@ public class OTruncateClassStatementExecutionTest {
     database.save(new ODocument(testClass).field("name", "x").field("data", Arrays.asList(1, 2)));
     database.save(new ODocument(testClass).field("name", "y").field("data", Arrays.asList(3, 0)));
 
-    OTodoResultSet result = database.query("select from test_class");
+    OResultSet result = database.query("select from test_class");
     Assert.assertEquals(toList(result).size(), 2);
 
     database.command("truncate class test_class");

@@ -46,10 +46,10 @@ public class CreateEdgesStep extends AbstractExecutionStep {
 
   }
 
-  @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
     init();
-    return new OTodoResultSet() {
+    return new OResultSet() {
       int currentBatch = 0;
 
       @Override public boolean hasNext() {

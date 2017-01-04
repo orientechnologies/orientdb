@@ -17,7 +17,7 @@ import java.util.Optional;
 public abstract class AbstractUnrollStep extends AbstractExecutionStep {
 
 
-  OTodoResultSet    lastResult      = null;
+  OResultSet        lastResult      = null;
   Iterator<OResult> nextSubsequence = null;
   OResult           nextElement     = null;
 
@@ -31,11 +31,11 @@ public abstract class AbstractUnrollStep extends AbstractExecutionStep {
     this.nextElement = null;
   }
 
-  @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     if (prev == null || !prev.isPresent()) {
       throw new OCommandExecutionException("Cannot expand without a target");
     }
-    return new OTodoResultSet() {
+    return new OResultSet() {
       long localCount = 0;
 
       @Override public boolean hasNext() {

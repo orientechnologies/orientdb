@@ -24,7 +24,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OResultSet;
+import com.orientechnologies.orient.core.sql.query.OLegacyResultSet;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -61,7 +61,7 @@ public class TxUniqueIndexWithCollationTest {
 
     db.command(new OCommandSQL("update user set name='abd' where name='Aby'")).execute();
 
-    final OResultSet<ODocument> r = db.command(new OCommandSQL("select * from user where name like '%B%' order by name")).execute();
+    final OLegacyResultSet<ODocument> r = db.command(new OCommandSQL("select * from user where name like '%B%' order by name")).execute();
     assertEquals(3, r.size());
     assertEquals("abc", r.get(0).field("name"));
     assertEquals("abd", r.get(1).field("name"));
@@ -76,7 +76,7 @@ public class TxUniqueIndexWithCollationTest {
 
     db.command(new OCommandSQL("update user set name='Abd' where name='Aby'")).execute();
 
-    final OResultSet<ODocument> r = db.command(new OCommandSQL("select * from user where name >= 'abd' order by name")).execute();
+    final OLegacyResultSet<ODocument> r = db.command(new OCommandSQL("select * from user where name >= 'abd' order by name")).execute();
     assertEquals(2, r.size());
     assertEquals("Abd", r.get(0).field("name"));
     assertEquals("abz", r.get(1).field("name"));
@@ -90,7 +90,7 @@ public class TxUniqueIndexWithCollationTest {
 
     db.command(new OCommandSQL("update user set name='abd' where name='Aby'")).execute();
 
-    final OResultSet<ODocument> r = db
+    final OLegacyResultSet<ODocument> r = db
         .command(new OCommandSQL("select * from user where name in ['Abc', 'Abd', 'Abz'] order by name")).execute();
     assertEquals(3, r.size());
     assertEquals("abc", r.get(0).field("name"));

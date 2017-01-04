@@ -14,16 +14,16 @@ public class ParallelExecStep extends AbstractExecutionStep {
   private final List<OInternalExecutionPlan> subExecutionPlans;
 
   int current = 0;
-  private OTodoResultSet currentResultSet = null;
+  private OResultSet currentResultSet = null;
 
   public ParallelExecStep(List<OInternalExecutionPlan> subExecuitonPlans, OCommandContext ctx) {
     super(ctx);
     this.subExecutionPlans = subExecuitonPlans;
   }
 
-  @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
-    return new OTodoResultSet() {
+    return new OResultSet() {
       int localCount = 0;
 
       @Override public boolean hasNext() {

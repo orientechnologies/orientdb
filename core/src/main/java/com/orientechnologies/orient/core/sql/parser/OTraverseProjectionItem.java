@@ -5,7 +5,7 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
 import java.util.HashSet;
 import java.util.Iterator;
@@ -58,9 +58,9 @@ public class OTraverseProjectionItem extends SimpleNode {
               result.add(sub);
             }
           }
-        } else if (val instanceof OTodoResultSet) {
-          while (((OTodoResultSet) val).hasNext()) {
-            result.add(((OTodoResultSet) val).next());
+        } else if (val instanceof OResultSet) {
+          while (((OResultSet) val).hasNext()) {
+            result.add(((OResultSet) val).next());
           }
         }
       }

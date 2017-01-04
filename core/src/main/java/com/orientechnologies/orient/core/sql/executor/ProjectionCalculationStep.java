@@ -18,13 +18,13 @@ public class ProjectionCalculationStep extends AbstractExecutionStep {
     this.projection = projection;
   }
 
-  @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     if (!prev.isPresent()) {
       throw new IllegalStateException("Cannot calculate projections without a previous source");
     }
 
-    OTodoResultSet parentRs = prev.get().syncPull(ctx, nRecords);
-    return new OTodoResultSet() {
+    OResultSet parentRs = prev.get().syncPull(ctx, nRecords);
+    return new OResultSet() {
       @Override public boolean hasNext() {
         return parentRs.hasNext();
       }

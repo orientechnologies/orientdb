@@ -39,7 +39,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.object.enhancement.OObjectProxyMethodHandler;
@@ -246,19 +246,19 @@ import java.util.Map.Entry;
     return (RET) resultPojo;
   }
 
-  @Override public OTodoResultSet query(String query, Object... args) {
+  @Override public OResultSet query(String query, Object... args) {
     return underlying.query(query, args);//TODO
   }
 
-  @Override public OTodoResultSet query(String query, Map args) {
+  @Override public OResultSet query(String query, Map args) {
     return underlying.query(query, args);//TODO
   }
 
-  @Override public OTodoResultSet command(String query, Object... args) {
+  @Override public OResultSet command(String query, Object... args) {
     return underlying.query(query, args);//TODO
   }
 
-  @Override public OTodoResultSet command(String query, Map args) {
+  @Override public OResultSet command(String query, Map args) {
     return underlying.query(query, args);//TODO
   }
 

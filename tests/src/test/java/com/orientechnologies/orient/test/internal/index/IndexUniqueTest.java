@@ -26,7 +26,7 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OConcurrentResultSet;
+import com.orientechnologies.orient.core.sql.query.OConcurrentLegacyResultSet;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -153,7 +153,7 @@ public class IndexUniqueTest {
           success++;
         } catch (ORecordDuplicatedException e) {
           for (int n = 0; n < 10; n++) {
-            OConcurrentResultSet result = db
+            OConcurrentLegacyResultSet result = db
                 .command(new OCommandSQL("select * from indexTest where prop" + n + " like " + propValues[n].get())).execute();
             assert result.size() == 1;
           }

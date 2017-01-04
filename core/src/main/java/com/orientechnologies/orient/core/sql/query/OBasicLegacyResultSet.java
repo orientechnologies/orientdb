@@ -40,21 +40,21 @@ import com.orientechnologies.orient.core.record.ORecord;
  * @param <T>
  * @see OSQLAsynchQuery
  */
-public class OBasicResultSet<T> implements OResultSet<T> {
+public class OBasicLegacyResultSet<T> implements OLegacyResultSet<T> {
   protected List<T>       underlying;
   protected transient int limit = -1;
   // Reference to temporary record for avoid garbace collection
   private List<ORecord> temporaryRecordCache;
   
-  public OBasicResultSet() {
+  public OBasicLegacyResultSet() {
     underlying = Collections.synchronizedList(new ArrayList<T>());
   }
 
-  public OBasicResultSet(final int iCapacity) {
+  public OBasicLegacyResultSet(final int iCapacity) {
     underlying = Collections.synchronizedList(new ArrayList<T>(iCapacity));
   }
 
-  public OBasicResultSet<T> setCompleted() {
+  public OBasicLegacyResultSet<T> setCompleted() {
     return this;
   }
 
@@ -108,7 +108,7 @@ public class OBasicResultSet<T> implements OResultSet<T> {
 
       @Override
       public void remove() {
-        throw new UnsupportedOperationException("OBasicResultSet.iterator.remove()");
+        throw new UnsupportedOperationException("OBasicLegacyResultSet.iterator.remove()");
       }
     };
   }
@@ -217,7 +217,7 @@ public class OBasicResultSet<T> implements OResultSet<T> {
     return limit;
   }
 
-  public OResultSet<T> setLimit(final int limit) {
+  public OLegacyResultSet<T> setLimit(final int limit) {
     this.limit = limit;
     return this;
   }
@@ -232,8 +232,8 @@ public class OBasicResultSet<T> implements OResultSet<T> {
     underlying = (List<T>) in.readObject();
   }
 
-  public OBasicResultSet<T> copy() {
-    final OBasicResultSet<T> newValue = new OBasicResultSet<T>();
+  public OBasicLegacyResultSet<T> copy() {
+    final OBasicLegacyResultSet<T> newValue = new OBasicLegacyResultSet<T>();
     newValue.underlying.addAll(underlying);
     return newValue;
   }

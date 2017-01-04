@@ -17,9 +17,9 @@ public class CopyRecordContentBeforeUpdateStep extends AbstractExecutionStep {
     super(ctx);
   }
 
-  @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    OTodoResultSet lastFetched = getPrev().get().syncPull(ctx, nRecords);
-    return new OTodoResultSet() {
+  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+    OResultSet lastFetched = getPrev().get().syncPull(ctx, nRecords);
+    return new OResultSet() {
       @Override public boolean hasNext() {
         return lastFetched.hasNext();
       }

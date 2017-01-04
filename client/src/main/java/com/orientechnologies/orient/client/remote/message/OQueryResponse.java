@@ -34,8 +34,8 @@ public class OQueryResponse implements OBinaryResponse {
   private static final byte RECORD_TYPE_ELEMENT    = 3;
   private static final byte RECORD_TYPE_PROJECTION = 4;
 
-  private OTodoResultSet result;
-  private boolean        txChanges;
+  private OResultSet result;
+  private boolean    txChanges;
 
   public OQueryResponse() {
   }
@@ -249,7 +249,7 @@ public class OQueryResponse implements OBinaryResponse {
     this.result = result;
   }
 
-  public OTodoResultSet getResult() {
+  public OResultSet getResult() {
     return result;
   }
 

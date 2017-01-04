@@ -20,7 +20,7 @@ import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
 import java.util.*;
 
@@ -46,7 +46,7 @@ public class OCreateLinkStatement extends OSimpleExecStatement {
     super(p, id);
   }
 
-  @Override public OTodoResultSet executeSimple(OCommandContext ctx) {
+  @Override public OResultSet executeSimple(OCommandContext ctx) {
     execute(ctx);
     OInternalResultSet rs = new OInternalResultSet();
     OResultInternal result = new OResultInternal();
@@ -223,7 +223,7 @@ public class OCreateLinkStatement extends OSimpleExecStatement {
     return total;
   }
 
-  private List<ODocument> toList(OTodoResultSet rs) {
+  private List<ODocument> toList(OResultSet rs) {
     if (!rs.hasNext()) {
       return null;
     }

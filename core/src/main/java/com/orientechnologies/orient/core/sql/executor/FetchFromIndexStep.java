@@ -38,10 +38,10 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     this.orderAsc = orderAsc;
   }
 
-  @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     init();
     getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
-    return new OTodoResultSet() {
+    return new OResultSet() {
       int localCount = 0;
 
       @Override public boolean hasNext() {

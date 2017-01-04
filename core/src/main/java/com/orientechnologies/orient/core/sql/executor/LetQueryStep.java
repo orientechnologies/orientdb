@@ -27,12 +27,12 @@ public class LetQueryStep extends AbstractExecutionStep {
     this.query = query;
   }
 
-  @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     if (!getPrev().isPresent()) {
       throw new OCommandExecutionException("Cannot execute a local LET on a query without a target");
     }
-    return new OTodoResultSet() {
-      OTodoResultSet source = getPrev().get().syncPull(ctx, nRecords);
+    return new OResultSet() {
+      OResultSet source = getPrev().get().syncPull(ctx, nRecords);
 
       @Override public boolean hasNext() {
         return source.hasNext();

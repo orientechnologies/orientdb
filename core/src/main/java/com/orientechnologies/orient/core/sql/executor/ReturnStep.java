@@ -11,7 +11,7 @@ public class ReturnStep extends AbstractExecutionStep{
     super(ctx);
   }
 
-  @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     return null;
   }
 

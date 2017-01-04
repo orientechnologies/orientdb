@@ -35,7 +35,7 @@ public class OInsertStatementExecutionTest {
     String className = "testInsertSet";
     db.getMetadata().getSchema().createClass(className);
 
-    OTodoResultSet result = db.command("insert into " + className + " set name = 'name1'");
+    OResultSet result = db.command("insert into " + className + " set name = 'name1'");
     printExecutionPlan(result);
     for (int i = 0; i < 1; i++) {
       Assert.assertTrue(result.hasNext());
@@ -61,7 +61,7 @@ public class OInsertStatementExecutionTest {
     String className = "testInsertValue";
     db.getMetadata().getSchema().createClass(className);
 
-    OTodoResultSet result = db.command("insert into " + className + "  (name, surname) values ('name1', 'surname1')");
+    OResultSet result = db.command("insert into " + className + "  (name, surname) values ('name1', 'surname1')");
     printExecutionPlan(result);
     for (int i = 0; i < 1; i++) {
       Assert.assertTrue(result.hasNext());
@@ -88,7 +88,7 @@ public class OInsertStatementExecutionTest {
     String className = "testInsertValue2";
     db.getMetadata().getSchema().createClass(className);
 
-    OTodoResultSet result = db
+    OResultSet result = db
         .command("insert into " + className + "  (name, surname) values ('name1', 'surname1'), ('name2', 'surname2')");
     printExecutionPlan(result);
 
@@ -131,7 +131,7 @@ public class OInsertStatementExecutionTest {
       doc.setProperty("surname", "surname" + i);
       doc.save();
     }
-    OTodoResultSet result = db.command("insert into " + className2 + " from select from " + className1);
+    OResultSet result = db.command("insert into " + className2 + " from select from " + className1);
     printExecutionPlan(result);
 
     for (int i = 0; i < 10; i++) {
@@ -174,7 +174,7 @@ public class OInsertStatementExecutionTest {
       doc.setProperty("surname", "surname" + i);
       doc.save();
     }
-    OTodoResultSet result = db.command("insert into " + className2 + " ( select from " + className1 + ")");
+    OResultSet result = db.command("insert into " + className2 + " ( select from " + className1 + ")");
     printExecutionPlan(result);
 
     for (int i = 0; i < 10; i++) {
@@ -209,7 +209,7 @@ public class OInsertStatementExecutionTest {
     String className = "testContent";
     db.getMetadata().getSchema().createClass(className);
 
-    OTodoResultSet result = db.command("insert into " + className + " content {'name':'name1', 'surname':'surname1'}");
+    OResultSet result = db.command("insert into " + className + " content {'name':'name1', 'surname':'surname1'}");
     printExecutionPlan(result);
     for (int i = 0; i < 1; i++) {
       Assert.assertTrue(result.hasNext());

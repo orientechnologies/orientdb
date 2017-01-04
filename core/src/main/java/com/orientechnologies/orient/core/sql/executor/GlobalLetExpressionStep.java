@@ -20,7 +20,7 @@ public class GlobalLetExpressionStep extends AbstractExecutionStep {
     this.expression = expression;
   }
 
-  @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
     calculate(ctx);
     return new OInternalResultSet();

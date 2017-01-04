@@ -21,7 +21,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OLiveQuery;
 import com.orientechnologies.orient.core.sql.query.OLiveResultListener;
-import com.orientechnologies.orient.core.sql.query.OResultSet;
+import com.orientechnologies.orient.core.sql.query.OLegacyResultSet;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Optional;
@@ -59,7 +59,7 @@ public class SQLLiveSelectTest extends AbstractSelectTest {
     int TOTAL_OPS = 6;
     final CountDownLatch latch = new CountDownLatch(TOTAL_OPS);
     final List<ORecordOperation> ops = Collections.synchronizedList(new ArrayList());
-    OResultSet<ODocument> tokens = database.query(new OLiveQuery<Object>("live select from LiveClassTx", new OLiveResultListener() {
+    OLegacyResultSet<ODocument> tokens = database.query(new OLiveQuery<Object>("live select from LiveClassTx", new OLiveResultListener() {
       @Override
       public void onLiveResult(int iLiveToken, ORecordOperation iOp) throws OException {
         ops.add(iOp);
@@ -111,7 +111,7 @@ public class SQLLiveSelectTest extends AbstractSelectTest {
 
     final CountDownLatch latch = new CountDownLatch(6);
     final List<ORecordOperation> ops = Collections.synchronizedList(new ArrayList());
-    OResultSet<ODocument> tokens = database.query(new OLiveQuery<Object>("live select from LiveClass", new OLiveResultListener() {
+    OLegacyResultSet<ODocument> tokens = database.query(new OLiveQuery<Object>("live select from LiveClass", new OLiveResultListener() {
       @Override
       public void onLiveResult(int iLiveToken, ORecordOperation iOp) throws OException {
         ops.add(iOp);

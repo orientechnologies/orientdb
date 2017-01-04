@@ -40,7 +40,7 @@ import com.orientechnologies.orient.core.serialization.OMemoryStream;
  */
 @SuppressWarnings({ "unchecked", "serial" })
 public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> implements OCommandResultListener, Iterable<T> {
-  private final OResultSet<T> result              = new OConcurrentResultSet<T>();
+  private final OLegacyResultSet<T> result = new OConcurrentLegacyResultSet<T>();
   private ORID                nextPageRID;
   private Map<Object, Object> previousQueryParams = new HashMap<Object, Object>();
 
@@ -92,7 +92,7 @@ public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> impleme
       }
     }
 
-    ((OResultSet) result).setCompleted();
+    ((OLegacyResultSet) result).setCompleted();
 
     if (!result.isEmpty()) {
       previousQueryParams = new HashMap<Object, Object>(queryParams);

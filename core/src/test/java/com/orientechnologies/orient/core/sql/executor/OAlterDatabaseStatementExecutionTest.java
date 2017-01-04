@@ -29,7 +29,7 @@ public class OAlterDatabaseStatementExecutionTest {
   @Test public void testSetProperty() {
     Object previousValue = db.get(ODatabase.ATTRIBUTES.MINIMUMCLUSTERS);
 
-    OTodoResultSet result = db.command("alter database MINIMUMCLUSTERS 12");
+    OResultSet result = db.command("alter database MINIMUMCLUSTERS 12");
 
     Object currentValue = db.get(ODatabase.ATTRIBUTES.MINIMUMCLUSTERS);
 
@@ -51,7 +51,7 @@ public class OAlterDatabaseStatementExecutionTest {
         prev = entry.value;
       }
     }
-    OTodoResultSet result = db.command("alter database custom foo = 'bar'");
+    OResultSet result = db.command("alter database custom foo = 'bar'");
 
     Object after = null;
     for (OStorageEntryConfiguration entry : previousCustoms) {

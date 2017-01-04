@@ -6,7 +6,7 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals;
 
 import java.util.ArrayList;
@@ -87,10 +87,10 @@ public class OInCondition extends OBooleanExpression {
         if (OQueryOperatorEquals.equals(iLeft, o))
           return true;
       }
-    } else if (iRight instanceof OTodoResultSet) {
-      OTodoResultSet rsRight = (OTodoResultSet) iRight;
+    } else if (iRight instanceof OResultSet) {
+      OResultSet rsRight = (OResultSet) iRight;
       rsRight.reset();
-      while (((OTodoResultSet) iRight).hasNext()) {
+      while (((OResultSet) iRight).hasNext()) {
         if (OQueryOperatorEquals.equals(iLeft, rsRight.next())) {
           return true;
         }

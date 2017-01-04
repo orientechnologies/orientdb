@@ -23,7 +23,7 @@ public class CheckClassTypeStep extends AbstractExecutionStep {
     this.parentClass = parentClass;
   }
 
-  @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
     if (found) {
       return new OInternalResultSet();

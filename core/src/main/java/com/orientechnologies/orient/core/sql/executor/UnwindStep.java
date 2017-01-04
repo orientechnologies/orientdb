@@ -20,7 +20,7 @@ public class UnwindStep extends AbstractExecutionStep {
   private final OUnwind      unwind;
   private       List<String> unwindFields;
 
-  OTodoResultSet    lastResult      = null;
+  OResultSet        lastResult      = null;
   Iterator<OResult> nextSubsequence = null;
   OResult           nextElement     = null;
 
@@ -30,11 +30,11 @@ public class UnwindStep extends AbstractExecutionStep {
     unwindFields = unwind.getItems().stream().map(x -> x.getStringValue()).collect(Collectors.toList());
   }
 
-  @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     if (prev == null || !prev.isPresent()) {
       throw new OCommandExecutionException("Cannot expand without a target");
     }
-    return new OTodoResultSet() {
+    return new OResultSet() {
       long localCount = 0;
 
       @Override public boolean hasNext() {

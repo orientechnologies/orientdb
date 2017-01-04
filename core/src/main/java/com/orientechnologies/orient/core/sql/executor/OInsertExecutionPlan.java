@@ -22,7 +22,7 @@ public class OInsertExecutionPlan extends OSelectExecutionPlan {
     super(ctx);
   }
 
-  @Override public OTodoResultSet fetchNext(int n) {
+  @Override public OResultSet fetchNext(int n) {
     if (next >= result.size()) {
       return new OInternalResultSet();//empty
     }
@@ -41,7 +41,7 @@ public class OInsertExecutionPlan extends OSelectExecutionPlan {
 
   public void executeInternal() throws OCommandExecutionException {
     while (true) {
-      OTodoResultSet nextBlock = super.fetchNext(100);
+      OResultSet nextBlock = super.fetchNext(100);
       if (!nextBlock.hasNext()) {
         return;
       }

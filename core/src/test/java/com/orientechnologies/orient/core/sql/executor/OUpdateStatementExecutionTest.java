@@ -39,7 +39,7 @@ public class OUpdateStatementExecutionTest {
       doc.setProperty("name", "name" + i);
       doc.save();
     }
-    OTodoResultSet result = db.command("update " + className + " set surname = 'foo'");
+    OResultSet result = db.command("update " + className + " set surname = 'foo'");
     printExecutionPlan(result);
     for (int i = 0; i < 1; i++) {
       Assert.assertTrue(result.hasNext());
@@ -68,7 +68,7 @@ public class OUpdateStatementExecutionTest {
       doc.setProperty("name", "name" + i);
       doc.save();
     }
-    OTodoResultSet result = db.command("update " + className + " set surname = name");
+    OResultSet result = db.command("update " + className + " set surname = name");
     printExecutionPlan(result);
     for (int i = 0; i < 1; i++) {
       Assert.assertTrue(result.hasNext());
@@ -97,7 +97,7 @@ public class OUpdateStatementExecutionTest {
       doc.setProperty("name", "name" + i);
       doc.save();
     }
-    OTodoResultSet result = db.command("update " + className + " set surname = 'foo'+name ");
+    OResultSet result = db.command("update " + className + " set surname = 'foo'+name ");
     printExecutionPlan(result);
     for (int i = 0; i < 1; i++) {
       Assert.assertTrue(result.hasNext());
@@ -126,7 +126,7 @@ public class OUpdateStatementExecutionTest {
       doc.setProperty("name", "name" + i);
       doc.save();
     }
-    OTodoResultSet result = db.command("update " + className + " set surname = 'foo' where name = 'name3'");
+    OResultSet result = db.command("update " + className + " set surname = 'foo' where name = 'name3'");
     printExecutionPlan(result);
     for (int i = 0; i < 1; i++) {
       Assert.assertTrue(result.hasNext());
@@ -165,7 +165,7 @@ public class OUpdateStatementExecutionTest {
       doc.setProperty("tags", tags);
       doc.save();
     }
-    OTodoResultSet result = db.command("update " + className + " set tags[0] = 'abc' where name = 'name3'");
+    OResultSet result = db.command("update " + className + " set tags[0] = 'abc' where name = 'name3'");
     printExecutionPlan(result);
     for (int i = 0; i < 1; i++) {
       Assert.assertTrue(result.hasNext());
@@ -208,7 +208,7 @@ public class OUpdateStatementExecutionTest {
       doc.setProperty("tags", tags);
       doc.save();
     }
-    OTodoResultSet result = db.command("update " + className + " set tags[6] = 'abc' where name = 'name3'");
+    OResultSet result = db.command("update " + className + " set tags[6] = 'abc' where name = 'name3'");
     printExecutionPlan(result);
     for (int i = 0; i < 1; i++) {
       Assert.assertTrue(result.hasNext());
@@ -255,7 +255,7 @@ public class OUpdateStatementExecutionTest {
       doc.setProperty("tags", tags);
       doc.save();
     }
-    OTodoResultSet result = db.command("update " + className + " set tags['foo'] = 'abc' where name = 'name3'");
+    OResultSet result = db.command("update " + className + " set tags['foo'] = 'abc' where name = 'name3'");
     printExecutionPlan(result);
     for (int i = 0; i < 1; i++) {
       Assert.assertTrue(result.hasNext());
@@ -300,7 +300,7 @@ public class OUpdateStatementExecutionTest {
       doc.setProperty("number", 4L);
       doc.save();
     }
-    OTodoResultSet result = db.command("update " + className + " set name += 'foo', surname += 'bar', number += 5");
+    OResultSet result = db.command("update " + className + " set name += 'foo', surname += 'bar', number += 5");
     printExecutionPlan(result);
     for (int i = 0; i < 1; i++) {
       Assert.assertTrue(result.hasNext());
@@ -333,7 +333,7 @@ public class OUpdateStatementExecutionTest {
       doc.setProperty("number", 4L);
       doc.save();
     }
-    OTodoResultSet result = db.command("update " + className + " set number -= 5");
+    OResultSet result = db.command("update " + className + " set number -= 5");
     printExecutionPlan(result);
     for (int i = 0; i < 1; i++) {
       Assert.assertTrue(result.hasNext());
@@ -363,7 +363,7 @@ public class OUpdateStatementExecutionTest {
       doc.setProperty("number", 4L);
       doc.save();
     }
-    OTodoResultSet result = db.command("update " + className + " set number *= 5");
+    OResultSet result = db.command("update " + className + " set number *= 5");
     printExecutionPlan(result);
     for (int i = 0; i < 1; i++) {
       Assert.assertTrue(result.hasNext());
@@ -393,7 +393,7 @@ public class OUpdateStatementExecutionTest {
       doc.setProperty("number", 4L);
       doc.save();
     }
-    OTodoResultSet result = db.command("update " + className + " set number /= 2");
+    OResultSet result = db.command("update " + className + " set number /= 2");
     printExecutionPlan(result);
     for (int i = 0; i < 1; i++) {
       Assert.assertTrue(result.hasNext());
@@ -424,7 +424,7 @@ public class OUpdateStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select from " + className);
+    OResultSet result = db.query("select from " + className);
     for (int i = 0; i < 10; i++) {
       Assert.assertTrue(result.hasNext());
       OResult item = result.next();
@@ -463,7 +463,7 @@ public class OUpdateStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.command("update " + className + " content {'name': 'foo', 'secondName': 'bar'}");
+    OResultSet result = db.command("update " + className + " content {'name': 'foo', 'secondName': 'bar'}");
     printExecutionPlan(result);
     for (int i = 0; i < 1; i++) {
       Assert.assertTrue(result.hasNext());
@@ -496,7 +496,7 @@ public class OUpdateStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.command("update " + className + " merge {'name': 'foo', 'secondName': 'bar'}");
+    OResultSet result = db.command("update " + className + " merge {'name': 'foo', 'secondName': 'bar'}");
     printExecutionPlan(result);
     for (int i = 0; i < 1; i++) {
       Assert.assertTrue(result.hasNext());
@@ -529,7 +529,7 @@ public class OUpdateStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.command("update " + className + " set foo = 'bar' upsert where name = 'name1'");
+    OResultSet result = db.command("update " + className + " set foo = 'bar' upsert where name = 'name1'");
     printExecutionPlan(result);
     for (int i = 0; i < 1; i++) {
       Assert.assertTrue(result.hasNext());
@@ -566,7 +566,7 @@ public class OUpdateStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.command("update " + className + " set foo = 'bar' upsert where name = 'name11'");
+    OResultSet result = db.command("update " + className + " set foo = 'bar' upsert where name = 'name11'");
     printExecutionPlan(result);
     for (int i = 0; i < 1; i++) {
       Assert.assertTrue(result.hasNext());

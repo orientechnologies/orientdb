@@ -15,11 +15,13 @@ import java.util.stream.StreamSupport;
 /**
  * Created by luigidellaquila on 07/07/16.
  */
-public interface OTodoResultSet extends Spliterator<OResult>, Iterator<OResult> {
+public interface OResultSet extends Spliterator<OResult>, Iterator<OResult> {
 
-  @Override boolean hasNext();
+  @Override
+  boolean hasNext();
 
-  @Override OResult next();
+  @Override
+  OResult next();
 
   default void remove() {
     throw new UnsupportedOperationException();
@@ -47,7 +49,7 @@ public interface OTodoResultSet extends Spliterator<OResult>, Iterator<OResult> 
     Spliterator.super.forEachRemaining(action);
   }
 
-  default OTodoResultSet trySplit() {
+  default OResultSet trySplit() {
     return null;
   }
 
@@ -65,7 +67,8 @@ public interface OTodoResultSet extends Spliterator<OResult>, Iterator<OResult> 
 
   default Stream<OElement> elementStream() {
     return StreamSupport.stream(new Spliterator<OElement>() {
-      @Override public boolean tryAdvance(Consumer<? super OElement> action) {
+      @Override
+      public boolean tryAdvance(Consumer<? super OElement> action) {
         while (hasNext()) {
           OResult elem = next();
           if (elem.isElement()) {
@@ -76,15 +79,18 @@ public interface OTodoResultSet extends Spliterator<OResult>, Iterator<OResult> 
         return false;
       }
 
-      @Override public Spliterator<OElement> trySplit() {
+      @Override
+      public Spliterator<OElement> trySplit() {
         return null;
       }
 
-      @Override public long estimateSize() {
+      @Override
+      public long estimateSize() {
         return Long.MAX_VALUE;
       }
 
-      @Override public int characteristics() {
+      @Override
+      public int characteristics() {
         return ORDERED;
       }
     }, false);
@@ -92,7 +98,8 @@ public interface OTodoResultSet extends Spliterator<OResult>, Iterator<OResult> 
 
   default Stream<OVertex> vertexStream() {
     return StreamSupport.stream(new Spliterator<OVertex>() {
-      @Override public boolean tryAdvance(Consumer<? super OVertex> action) {
+      @Override
+      public boolean tryAdvance(Consumer<? super OVertex> action) {
         while (hasNext()) {
           OResult elem = next();
           if (elem.isVertex()) {
@@ -103,15 +110,18 @@ public interface OTodoResultSet extends Spliterator<OResult>, Iterator<OResult> 
         return false;
       }
 
-      @Override public Spliterator<OVertex> trySplit() {
+      @Override
+      public Spliterator<OVertex> trySplit() {
         return null;
       }
 
-      @Override public long estimateSize() {
+      @Override
+      public long estimateSize() {
         return Long.MAX_VALUE;
       }
 
-      @Override public int characteristics() {
+      @Override
+      public int characteristics() {
         return ORDERED;
       }
     }, false);
@@ -119,7 +129,8 @@ public interface OTodoResultSet extends Spliterator<OResult>, Iterator<OResult> 
 
   default Stream<OEdge> edgeStream() {
     return StreamSupport.stream(new Spliterator<OEdge>() {
-      @Override public boolean tryAdvance(Consumer<? super OEdge> action) {
+      @Override
+      public boolean tryAdvance(Consumer<? super OEdge> action) {
         while (hasNext()) {
           OResult nextElem = next();
           if (nextElem != null && nextElem.isEdge()) {
@@ -130,15 +141,18 @@ public interface OTodoResultSet extends Spliterator<OResult>, Iterator<OResult> 
         return false;
       }
 
-      @Override public Spliterator<OEdge> trySplit() {
+      @Override
+      public Spliterator<OEdge> trySplit() {
         return null;
       }
 
-      @Override public long estimateSize() {
+      @Override
+      public long estimateSize() {
         return Long.MAX_VALUE;
       }
 
-      @Override public int characteristics() {
+      @Override
+      public int characteristics() {
         return ORDERED;
       }
     }, false);

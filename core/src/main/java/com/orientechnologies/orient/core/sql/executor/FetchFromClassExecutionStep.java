@@ -17,7 +17,7 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
 
   private final String className;
   FetchFromClusterExecutionStep[] subSteps;
-  OTodoResultSet                  currentResultSet;
+  OResultSet                      currentResultSet;
   private boolean orderByRidAsc  = false;
   private boolean orderByRidDesc = false;
 
@@ -71,9 +71,9 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
     }
   }
 
-  @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
-    return new OTodoResultSet() {
+    return new OResultSet() {
 
       int totDispatched = 0;
 

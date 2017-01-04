@@ -7,7 +7,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
-import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.executor.OTraverseExecutionPlanner;
 
 import java.util.ArrayList;
@@ -59,7 +59,7 @@ public class OTraverseStatement extends OStatement {
     }
   }
 
-  @Override public OTodoResultSet execute(ODatabase db, Object[] args) {
+  @Override public OResultSet execute(ODatabase db, Object[] args) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     ctx.setDatabase(db);
     Map<Object, Object> params = new HashMap<>();
@@ -74,7 +74,7 @@ public class OTraverseStatement extends OStatement {
     return new OLocalResultSet(executionPlan);
   }
 
-  @Override public OTodoResultSet execute(ODatabase db, Map params) {
+  @Override public OResultSet execute(ODatabase db, Map params) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     ctx.setDatabase(db);
     ctx.setInputParameters(params);

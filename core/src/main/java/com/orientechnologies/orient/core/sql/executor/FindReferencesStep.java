@@ -42,11 +42,11 @@ public class FindReferencesStep extends AbstractExecutionStep {
     this.clusters = clusters;
   }
 
-  @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     if (!inited) {
       init(ctx, nRecords);
     }
-    return new OTodoResultSet() {
+    return new OResultSet() {
       @Override public boolean hasNext() {
 
         return nextResult != null;
@@ -153,7 +153,7 @@ public class FindReferencesStep extends AbstractExecutionStep {
     ridsToFind = new HashSet<>();
 
     OExecutionStepInternal prevStep = getPrev().get();
-    OTodoResultSet nextSlot = prevStep.syncPull(ctx, nRecords);
+    OResultSet nextSlot = prevStep.syncPull(ctx, nRecords);
     while (nextSlot.hasNext()) {
       while (nextSlot.hasNext()) {
         OResult nextRes = nextSlot.next();

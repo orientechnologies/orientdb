@@ -24,7 +24,7 @@ public class OCreateFunctionStatementExecutionTest {
 
   @Test public void testPlain() {
     String name = "testPlain";
-    OTodoResultSet result = db.command("CREATE FUNCTION " + name + " \"return a + b;\" PARAMETERS [a,b] language javascript");
+    OResultSet result = db.command("CREATE FUNCTION " + name + " \"return a + b;\" PARAMETERS [a,b] language javascript");
     Assert.assertTrue(result.hasNext());
     OResult next = result.next();
     Assert.assertFalse(result.hasNext());

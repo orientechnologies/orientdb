@@ -5,7 +5,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OResultSet;
+import com.orientechnologies.orient.core.sql.query.OLegacyResultSet;
 import org.junit.Assert; import org.junit.Test;
 
 import java.util.ArrayList;
@@ -43,7 +43,7 @@ public class OFunctionSqlTest {
 
     System.out.println(result);
 
-    Assert.assertEquals(((OResultSet) result).size(), 1);
+    Assert.assertEquals(((OLegacyResultSet) result).size(), 1);
     db.drop();
   }
 
@@ -88,7 +88,7 @@ public class OFunctionSqlTest {
 
     System.out.println(result);
 
-    Assert.assertEquals(((OResultSet) result).size(), 1);
+    Assert.assertEquals(((OLegacyResultSet) result).size(), 1);
     db.drop();
   }
 }

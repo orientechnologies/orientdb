@@ -27,7 +27,7 @@ public class OCreateClusterStatementExecutionTest {
 
   @Test public void testPlain() {
     String clusterName = "testPlain";
-    OTodoResultSet result = db.command("create cluster " + clusterName);
+    OResultSet result = db.command("create cluster " + clusterName);
     Assert.assertTrue(db.getClusterIdByName(clusterName) > 0);
     result.close();
   }
@@ -47,7 +47,7 @@ public class OCreateClusterStatementExecutionTest {
 
   @Test public void testWithNumber() {
     String clusterName = "testWithNumber";
-    OTodoResultSet result = db.command("create cluster " + clusterName + " id 1000");
+    OResultSet result = db.command("create cluster " + clusterName + " id 1000");
     Assert.assertTrue(db.getClusterIdByName(clusterName) > 0);
     Assert.assertNotNull(db.getClusterNameById(1000));
 
@@ -61,7 +61,7 @@ public class OCreateClusterStatementExecutionTest {
 
   @Test public void testBlob() {
     String clusterName = "testBlob";
-    OTodoResultSet result = db.command("create blob cluster " + clusterName);
+    OResultSet result = db.command("create blob cluster " + clusterName);
     Assert.assertTrue(db.getClusterIdByName(clusterName) > 0);
     OCluster cluster = ((ODatabaseDocumentTx) db).getStorage().getClusterByName(clusterName);
     //TODO test that it's a blob cluster

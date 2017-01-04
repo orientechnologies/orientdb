@@ -39,7 +39,7 @@ public class OCreateVertexStatementExecutionTest {
     OSchema schema = db.getMetadata().getSchema();
     schema.createClass(className, schema.getClass("V"));
 
-    OTodoResultSet result = db.command("create vertex " + className + " set name = 'name1'");
+    OResultSet result = db.command("create vertex " + className + " set name = 'name1'");
     printExecutionPlan(result);
     for (int i = 0; i < 1; i++) {
       Assert.assertTrue(result.hasNext());
@@ -66,7 +66,7 @@ public class OCreateVertexStatementExecutionTest {
     schema.createClass(className);
 
     try {
-      OTodoResultSet result = db.command("create vertex " + className + " set name = 'name1'");
+      OResultSet result = db.command("create vertex " + className + " set name = 'name1'");
       Assert.fail();
     } catch (OCommandExecutionException e1) {
     } catch (Exception e2) {
@@ -79,7 +79,7 @@ public class OCreateVertexStatementExecutionTest {
     OSchema schema = db.getMetadata().getSchema();
     schema.createClass(className, schema.getClass("V"));
 
-    OTodoResultSet result = db.command("create vertex " + className + "  (name, surname) values ('name1', 'surname1')");
+    OResultSet result = db.command("create vertex " + className + "  (name, surname) values ('name1', 'surname1')");
     printExecutionPlan(result);
     for (int i = 0; i < 1; i++) {
       Assert.assertTrue(result.hasNext());
@@ -106,7 +106,7 @@ public class OCreateVertexStatementExecutionTest {
     OSchema schema = db.getMetadata().getSchema();
     schema.createClass(className, schema.getClass("V"));
 
-    OTodoResultSet result = db
+    OResultSet result = db
         .command("create vertex " + className + "  (name, surname) values ('name1', 'surname1'), ('name2', 'surname2')");
     printExecutionPlan(result);
 
@@ -141,7 +141,7 @@ public class OCreateVertexStatementExecutionTest {
     OSchema schema = db.getMetadata().getSchema();
     schema.createClass(className, schema.getClass("V"));
 
-    OTodoResultSet result = db.command("create vertex " + className + " content {'name':'name1', 'surname':'surname1'}");
+    OResultSet result = db.command("create vertex " + className + " content {'name':'name1', 'surname':'surname1'}");
     printExecutionPlan(result);
     for (int i = 0; i < 1; i++) {
       Assert.assertTrue(result.hasNext());

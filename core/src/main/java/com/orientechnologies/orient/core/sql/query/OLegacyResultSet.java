@@ -30,15 +30,15 @@ import java.util.List;
  * @param <T>
  * @see OSQLAsynchQuery
  */
-public interface OResultSet<T> extends List<T>, Externalizable {
+public interface OLegacyResultSet<T> extends List<T>, Externalizable {
 
-  OResultSet<T> setCompleted();
+  OLegacyResultSet<T> setCompleted();
 
   int getLimit();
 
-  OResultSet<T> setLimit(int limit);
+  OLegacyResultSet<T> setLimit(int limit);
 
-  OResultSet<T> copy();
+  OLegacyResultSet<T> copy();
 
   boolean isEmptyNoWait();
 

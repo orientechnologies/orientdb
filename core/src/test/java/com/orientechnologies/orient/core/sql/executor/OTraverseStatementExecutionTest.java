@@ -35,7 +35,7 @@ public class OTraverseStatementExecutionTest {
 
   @Test
   public void testSelectNoTarget() {
-    OTodoResultSet result = db.query("select 1 as one, 2 as two, 2+3");
+    OResultSet result = db.query("select 1 as one, 2 as two, 2+3");
     Assert.assertTrue(result.hasNext());
     OResult item = result.next();
     Assert.assertNotNull(item);

@@ -39,7 +39,7 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.query.OQuery;
 
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
-import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
@@ -882,7 +882,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * @param args  query parameters (positional)
    * @return
    */
-  public OTodoResultSet query(String query, Object... args) throws OCommandSQLParsingException, OCommandExecutionException;
+  public OResultSet query(String query, Object... args) throws OCommandSQLParsingException, OCommandExecutionException;
 
   /**
    * Experimental. Executes an SQL query (idempotent)
@@ -891,7 +891,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * @param args  query parameters (named)
    * @return
    */
-  public OTodoResultSet query(String query, Map args) throws OCommandSQLParsingException, OCommandExecutionException;
+  public OResultSet query(String query, Map args) throws OCommandSQLParsingException, OCommandExecutionException;
 
   /**
    * Experimental. Executes
@@ -900,7 +900,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * @param args  query arguments
    * @return
    */
-  public OTodoResultSet command(String query, Object... args) throws OCommandSQLParsingException, OCommandExecutionException;
+  public OResultSet command(String query, Object... args) throws OCommandSQLParsingException, OCommandExecutionException;
 
   /**
    * Experimental
@@ -909,7 +909,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * @param args
    * @return
    */
-  public OTodoResultSet command(String query, Map args) throws OCommandSQLParsingException, OCommandExecutionException;
+  public OResultSet command(String query, Map args) throws OCommandSQLParsingException, OCommandExecutionException;
 
   /**
    * Execute a command against the database. A command can be a SQL statement or a Procedure. If the OStorage used is remote
