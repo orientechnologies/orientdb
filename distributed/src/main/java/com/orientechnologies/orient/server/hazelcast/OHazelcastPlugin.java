@@ -992,6 +992,34 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       coordinatorServer = (String) configurationMap.getHazelcastMap().get(CONFIG_COORDINATOR);
 
       configurationMap.clearLocalCache();
+
+      // TEMPORARY PATCH TO FIX HAZELCAST'S BEHAVIOUR THAT ENQUEUES THE MERGING ITEM EVENT WITH THIS AND ACTIVE NODES MAP COULD BE STILL NOT FILLED
+      new Thread(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            Thread.sleep(2000);
+          } catch (InterruptedException e) {
+            // IGNORE IT
+          }
+
+          for (final String databaseName : getMessageService().getDatabases()) {
+            executeInDistributedDatabaseLock(databaseName, 0, null, new OCallable<Object, OModifiableDistributedConfiguration>() {
+              @Override
+              public Object call(final OModifiableDistributedConfiguration cfg) {
+                for (Map.Entry<String, Member> entry : activeNodes.entrySet()) {
+                  final String server = entry.getKey();
+                  if (!cfg.getRegisteredServers().contains(server)) {
+                    if (getDatabaseStatus(server, databaseName) != DB_STATUS.OFFLINE)
+                      cfg.addNewNodeInServerList(server);
+                  }
+                }
+                return null;
+              }
+            });
+          }
+        }
+      }).start();
     }
   }
 

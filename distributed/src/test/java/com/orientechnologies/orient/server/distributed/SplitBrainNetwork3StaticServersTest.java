@@ -15,17 +15,14 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.common.log.OLogManager;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.Map;
-
 /**
- * Distributed test with 3 servers running and after a while the server 2 is isolated from the network (using a proxy) and then it
- * re-merges the cluster again.
+ * Distributed test with 3 servers running (0, 1 and 2) and after a while the server 2 is isolated from the network (using a proxy)
+ * and then it re-merges the cluster again.
  */
-public class SplitBrainNetworkTest extends AbstractHARemoveNode {
+public class SplitBrainNetwork3StaticServersTest extends AbstractHARemoveNode {
   final static int SERVERS = 3;
 
   @Test
@@ -91,8 +88,6 @@ public class SplitBrainNetworkTest extends AbstractHARemoveNode {
 
     banner("TEST WITH THE ISOLATED NODE FINISHED, REJOIN THE SERVER " + (SERVERS - 1) + "...");
 
-    // dumpDistributedMap();
-
     // FORCE THE REJOIN
     serverInstance.get(2).rejoin(serverInstance.get(0), serverInstance.get(1));
 
@@ -106,8 +101,6 @@ public class SplitBrainNetworkTest extends AbstractHARemoveNode {
     expected += count * 2;
 
     count = 10;
-
-    // dumpDistributedMap();
 
     waitForDatabaseIsOnline(0, "europe-0", getDatabaseName(), 90000);
     waitForDatabaseIsOnline(0, "europe-1", getDatabaseName(), 5000);
@@ -143,15 +136,6 @@ public class SplitBrainNetworkTest extends AbstractHARemoveNode {
     executeMultipleTest();
   }
 
-  private void dumpDistributedMap() {
-    for (ServerRun s : serverInstance) {
-      OLogManager.instance().info(this, "MAP SERVER %s", s.getServerId());
-      for (Map.Entry<String, Object> entry : s.server.getDistributedManager().getConfigurationMap().entrySet()) {
-        OLogManager.instance().info(this, " %s=%s", entry.getKey(), entry.getValue());
-      }
-    }
-  }
-
   protected String getDatabaseURL(final ServerRun server) {
     return "plocal:" + server.getDatabasePath(getDatabaseName());
   }
@@ -163,6 +147,6 @@ public class SplitBrainNetworkTest extends AbstractHARemoveNode {
 
   @Override
   public String getDatabaseName() {
-    return "distributed-split";
+    return "ha-split-2-static";
   }
 }
