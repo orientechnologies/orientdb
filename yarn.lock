@@ -94,6 +94,10 @@ angular-local-storage@^0.2.7:
   version "0.2.7"
   resolved "https://registry.yarnpkg.com/angular-local-storage/-/angular-local-storage-0.2.7.tgz#62eedadb38bd718f877ec26e61648809495fbb12"
 
+angular-motion@0.4.4:
+  version "0.4.4"
+  resolved "https://registry.yarnpkg.com/angular-motion/-/angular-motion-0.4.4.tgz#fc4a33643383ebdedc23964468b60c26a302f238"
+
 angular-resource@1.5.9:
   version "1.5.9"
   resolved "https://registry.yarnpkg.com/angular-resource/-/angular-resource-1.5.9.tgz#b062c444725305c812961220f408e66fe01faaf3"
@@ -137,13 +141,9 @@ angular-translate@^2.11.0, angular-translate@~2.13.1:
   dependencies:
     angular ">=1.2.26 <=1.6"
 
-angular@1.5.9:
+angular@1.5.9, "angular@>=1.2.26 <=1.6", angular@^1.2.8:
   version "1.5.9"
   resolved "https://registry.yarnpkg.com/angular/-/angular-1.5.9.tgz#b7aeff42dad87881e06be16b6690fe766d868b51"
-
-"angular@>=1.2.26 <=1.6", angular@^1.2.8:
-  version "1.6.0"
-  resolved "https://registry.yarnpkg.com/angular/-/angular-1.6.0.tgz#16c5edebd0a342046bd5281cca2decf04c40df76"
 
 ansi-regex@^2.0.0:
   version "2.0.0"

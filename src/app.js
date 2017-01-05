@@ -53,6 +53,7 @@ import 'ng-tags-input/build/ng-tags-input.min.css';
 import 'ng-tags-input/build/ng-tags-input.bootstrap.min.css';
 import 'c3/c3.min.css';
 import 'fullcalendar/dist/fullcalendar.min.css';
+import 'angular-motion/dist/angular-motion.min.css';
 
 
 import {APP_DECLARATIONS} from './app/app.declarations';
