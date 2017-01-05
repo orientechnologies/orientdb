@@ -1,97 +1,100 @@
 <div class="row opanel" ng-controller="VertexEditController">
-    <div class="col-md-2">
-        <div class="panel panel-default panel-orient">
-            <div class="panel-heading">
-                In Edges <a href="javascript:void(0)" ng-init="init('incomings')"
-                            ng-controller="VertexPopoverLabelController" data-placement="bottom"
-                            data-title="Add Label" data-template="views/vertex/addLabel.html" bs-popover><i
-                    class="fa fa-plus-circle"></i></a>
-            </div>
-            <div class="panel-body">
-                <form>
-                    <div class="accordion row-fluid" id="accordion2">
-                        <div class="accordion-group" ng-repeat="i in incomings">
-                            <div class="accordion-heading">
-                                <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2"
-                                   data-target="#{{i}}" href="javascript:void(0)">
-                                    {{ i | nograph }} ({{filterArray(doc[i]).length}})
-                                    <i class="fa fa-plus-circle" data-placement="bottom"
-                                       ng-click="showModalConnection(i)"></i>
-                                </a>
-                            </div>
-                            <div id="{{i}}" class="accordion-body collapse">
-                                <div class="accordion-inner accordion-scroll">
+  <div class="col-md-2">
+    <div class="panel panel-default panel-orient" ng-class="{ 'disabled' : isNew}">
+      <div class="panel-heading">
+        In Edges <a href="javascript:void(0)"
+                    ng-init="init('incomings')"
+                    ng-controller="VertexPopoverLabelController" data-placement="bottom"
+                    data-title="Add Label" data-template="views/vertex/addLabel.html" bs-popover><i
+        class="fa fa-plus-circle"></i></a>
+      </div>
+      <div class="panel-body">
+        <form>
+          <div class="accordion row-fluid" id="accordion2">
+            <div class="accordion-group" ng-repeat="i in incomings">
+              <div class="accordion-heading">
+                <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2"
+                   data-target="#{{i}}" href="javascript:void(0)">
+                  {{ i | nograph }} ({{filterArray(doc[i]).length}})
+                  <i class="fa fa-plus-circle" data-placement="bottom"
+                     ng-click="showModalConnection(i)"></i>
+                </a>
+              </div>
+              <div id="{{i}}" class="accordion-body collapse">
+                <div class="accordion-inner accordion-scroll">
 
 
-                                            <span ng-repeat="out in filterArray(doc[i],i) | limitTo:limits[i] track by $index "
-                                                  class="label label-warning badge-edge">
+                                            <span
+                                              ng-repeat="out in filterArray(doc[i],i) | limitTo:limits[i] track by $index "
+                                              class="label label-warning badge-edge">
                                                 <a href="javascript:void(0)"
                                                    ng-click="follow(out)">{{out}}</a>
 
                                                     <a href="" data-placement="right" bs-tooltip="'Follow'"><i
-                                                            class="fa fa-chevron-right"
-                                                            ng-click="followEdge(out,'out')"></i></a>
+                                                      class="fa fa-chevron-right"
+                                                      ng-click="followEdge(out,'out')"></i></a>
                                                     <a href="javascript:void(0)" data-placement="right"
                                                        bs-tooltip="'Remove'"><i
-                                                            class="fa fa-times"
-                                                            ng-click="deleteLink(i,out)"></i></a>
+                                                      class="fa fa-times"
+                                                      ng-click="deleteLink(i,out)"></i></a>
                                             </span>
-                                   <span class="label label-primary pointer" ng-hide="isHideMore(i)"
-                                         ng-click="more(i)">..More({{doc[i].length - limits[i]}})</span>
-                                    <span class="label label-primary pointer" ng-hide="isHideLess(i)" ng-click="less(i)">..Less</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </form>
+                  <span class="label label-primary pointer" ng-hide="isHideMore(i)"
+                        ng-click="more(i)">..More({{doc[i].length - limits[i]}})</span>
+                  <span class="label label-primary pointer" ng-hide="isHideLess(i)" ng-click="less(i)">..Less</span>
+                </div>
+              </div>
             </div>
-        </div>
+          </div>
+        </form>
+      </div>
     </div>
-    <div class="col-md-8">
-        <ng-include src="'views/database/record.html'" onload=""></ng-include>
-    </div>
-    <div class="col-md-2">
-        <div class="panel panel-default panel-orient">
-            <div class="panel-heading">
-                <a href="javascript:void(0)" ng-init="init('outgoings')"
-                   ng-controller="VertexPopoverLabelController" data-placement="bottom" data-title="Add Label"
-                   data-template="views/vertex/addLabel.html" bs-popover><i class="fa fa-plus-circle"></i></a> Out Edges
-            </div>
-            <div class="panel-body">
-                <form>
-                    <div class="accordion row-fluid" id="accordion1">
-                        <div class="accordion-group" ng-repeat="i in outgoings">
-                            <div class="accordion-heading">
-                                <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion1"
-                                   data-target="#{{i}}" href="javascript:void(0)">
-                                    {{i | nograph}} ({{filterArray(doc[i]).length}})
-                                    <i class="fa fa-plus-circle" data-placement="bottom"
-                                       ng-click="showModalConnection(i)"></i>
-                                </a>
-                            </div>
-                            <div id="{{i}}" class="accordion-body collapse">
-                                <div class="accordion-inner accordion-scroll">
+  </div>
+  <div class="col-md-8">
+    <ng-include src="'views/database/record.html'" onload=""></ng-include>
+  </div>
+  <div class="col-md-2">
+    <div class="panel panel-default panel-orient" ng-class="{ 'disabled' : isNew}">
+      <div class="panel-heading">
+        <a href="javascript:void(0)" ng-init="init('outgoings')"
+           ng-controller="VertexPopoverLabelController" data-placement="bottom" data-title="Add Label"
+           data-template="views/vertex/addLabel.html" bs-popover><i class="fa fa-plus-circle"></i></a> Out Edges
+      </div>
+      <div class="panel-body">
+        <form>
+          <div class="accordion row-fluid" id="accordion1">
+            <div class="accordion-group" ng-repeat="i in outgoings">
+              <div class="accordion-heading">
+                <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion1"
+                   data-target="#{{i}}" href="javascript:void(0)">
+                  {{i | nograph}} ({{filterArray(doc[i]).length}})
+                  <i class="fa fa-plus-circle" data-placement="bottom"
+                     ng-click="showModalConnection(i)"></i>
+                </a>
+              </div>
+              <div id="{{i}}" class="accordion-body collapse">
+                <div class="accordion-inner accordion-scroll">
 
-                                            <span ng-repeat="out in filterArray(doc[i],i) | limitTo:limits[i] track by $index "
-                                                  class="label label-warning badge-edge">
+                                            <span
+                                              ng-repeat="out in filterArray(doc[i],i) | limitTo:limits[i] track by $index "
+                                              class="label label-warning badge-edge">
                                                 <a href="javascript:void(0)" ng-click="follow(out)">{{out}}</a>
                                                 <a href="" data-placement="right" bs-tooltip="'Follow'"><i
-                                                        class="fa fa-chevron-right"
-                                                        ng-click="followEdge(out,'in')"></i></a>
+                                                  class="fa fa-chevron-right"
+                                                  ng-click="followEdge(out,'in')"></i></a>
                                                 <a href="javascript:void(0)" data-placement="right"
                                                    bs-tooltip="'Remove'"><i
-                                                        class="fa fa-times"
-                                                        ng-click="deleteLink(i,out)"></i></a>
+                                                  class="fa fa-times"
+                                                  ng-click="deleteLink(i,out)"></i></a>
                                             </span>
-                                    <span class="label label-primary pointer" ng-hide="isHideMore(i)"
-                                          ng-click="more(i)">..More({{doc[i].length - limits[i]}})</span>
-                                    <span class="label label-primary pointer" ng-hide="isHideLess(i)" ng-click="less(i)">..Less</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </form>
+                  <span class="label label-primary pointer" ng-hide="isHideMore(i)"
+                        ng-click="more(i)">..More({{doc[i].length - limits[i]}})</span>
+                  <span class="label label-primary pointer" ng-hide="isHideLess(i)" ng-click="less(i)">..Less</span>
+                </div>
+              </div>
             </div>
-        </div>
+          </div>
+        </form>
+      </div>
     </div>
+  </div>
 </div>

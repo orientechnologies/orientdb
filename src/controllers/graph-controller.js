@@ -54,6 +54,7 @@ GraphModule.controller("VertexModalController", ['$scope', '$routeParams', '$loc
 }]);
 GraphModule.controller("VertexEditController", ['$scope', '$injector', '$routeParams', '$location', '$modal', '$q', 'DocumentApi', 'Database', 'CommandApi', 'Notification', function ($scope, $injector, $routeParams, $location, $modal, $q, DocumentApi, Database, CommandApi, Notification) {
 
+
   $injector.invoke(BaseEditController, this, {$scope: $scope});
   Database.setWiki("Edit-vertex.html");
   $scope.label = 'Vertex';

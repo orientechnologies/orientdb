@@ -1269,6 +1269,7 @@ span.badge-edge {
 .graph-info {
   padding-right: 30px;
 }
+
 .graph-info .label {
   margin-right: 5px;
 }
@@ -1288,4 +1289,14 @@ span.badge-edge {
 
 .config-graph-popover {
   width: 250px;
+}
+
+a.disabled {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.panel.disabled {
+  pointer-events: none;
+  opacity: 0.7;
 }

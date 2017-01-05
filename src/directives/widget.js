@@ -2,6 +2,26 @@ import angular from 'angular';
 var Widget = angular.module('rendering', []);
 
 
+
+
+import '../views/widget/string.html';
+import '../views/widget/short.html';
+import '../views/widget/embedded.html';
+import '../views/widget/embeddedmap.html';
+import '../views/widget/boolean.html';
+import '../views/widget/binary.html';
+import '../views/widget/byte.html';
+import '../views/widget/date.html';
+import '../views/widget/datetime.html';
+import '../views/widget/decimal.html';
+import '../views/widget/double.html';
+import '../views/widget/float.html';
+import '../views/widget/embeddedset.html';
+import '../views/widget/embeddedlist.html';
+import '../views/widget/integer.html';
+import '../views/widget/long.html';
+import '../views/widget/link.html';
+
 Widget.directive('docwidget', ["$compile", "$http", "Database", "CommandApi", "DocumentApi", "$timeout", function ($compile, $http, Database, CommandApi, DocumentApi, $timeout) {
 
 
@@ -116,7 +136,9 @@ Widget.directive('docwidget', ["$compile", "$http", "Database", "CommandApi", "D
       }
 
     });
-    var el = angular.element($compile(response.data)(formScope));
+
+
+    var el = angular.element($compile(response)(formScope));
     element.empty();
     element.append(el);
   }
@@ -156,7 +178,6 @@ Widget.directive('docwidget', ["$compile", "$http", "Database", "CommandApi", "D
   var linker = function (scope, element, attrs) {
 
     var url = attrs.docwidget ? attrs.docwidget : "views/widget/form.html"
-
 
     let tpl = `
           <div ng-include="'${url}'"></div>

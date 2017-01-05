@@ -7,6 +7,7 @@ import '../views/database/editDocument.html';
 import '../views/document/addLink.html';
 import '../views/document/modalConnection.html';
 import '../views/database/newFieldPopOver.html';
+import Utilities from '../util/library';
 import angular from 'angular';
 
 let DocController = angular.module('document.controller', []);
