@@ -26,14 +26,9 @@ import com.orientechnologies.common.serialization.types.ONullSerializer;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
-import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
-import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
 
@@ -43,9 +38,7 @@ import java.util.List;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 29.07.11
  */
-public class OCompositeKeySerializer implements OBinarySerializer<OCompositeKey>, OStreamSerializer {
-
-  public static final String NAME = "cks";
+public class OCompositeKeySerializer implements OBinarySerializer<OCompositeKey> {
 
   public static final OCompositeKeySerializer INSTANCE = new OCompositeKeySerializer();
   public static final byte                    ID       = 14;
@@ -149,29 +142,6 @@ public class OCompositeKeySerializer implements OBinarySerializer<OCompositeKey>
 
   public byte getId() {
     return ID;
-  }
-
-  public byte[] toStream(final Object iObject) throws IOException {
-    throw new UnsupportedOperationException("CSV storage format is out of dated and is not supported.");
-  }
-
-  public Object fromStream(final byte[] iStream) throws IOException {
-    final OCompositeKey compositeKey = new OCompositeKey();
-    final OMemoryInputStream inputStream = new OMemoryInputStream(iStream);
-
-    final int keysSize = inputStream.getAsInteger();
-    for (int i = 0; i < keysSize; i++) {
-      final byte[] keyBytes = inputStream.getAsByteArray();
-      final String keyString = new String(keyBytes,"UTF-8");
-      final int typeSeparatorPos = keyString.indexOf(',');
-      final OType type = OType.valueOf(keyString.substring(0, typeSeparatorPos));
-      compositeKey.addKey(ORecordSerializerStringAbstract.simpleValueFromStream(keyString.substring(typeSeparatorPos + 1), type));
-    }
-    return compositeKey;
-  }
-
-  public String getName() {
-    return NAME;
   }
 
   public int getObjectSizeNative(byte[] stream, int startPosition) {

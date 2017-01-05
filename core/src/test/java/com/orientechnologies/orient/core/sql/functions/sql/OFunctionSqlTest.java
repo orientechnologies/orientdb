@@ -41,8 +41,6 @@ public class OFunctionSqlTest {
     function.save();
     Object result = function.executeInContext(new OBasicCommandContext(), "Enrico");
 
-    System.out.println(result);
-
     Assert.assertEquals(((OLegacyResultSet) result).size(), 1);
     db.drop();
   }
@@ -86,7 +84,6 @@ public class OFunctionSqlTest {
     function1.save();
     Object result = function.executeInContext(new OBasicCommandContext(), "Enrico");
 
-    System.out.println(result);
 
     Assert.assertEquals(((OLegacyResultSet) result).size(), 1);
     db.drop();

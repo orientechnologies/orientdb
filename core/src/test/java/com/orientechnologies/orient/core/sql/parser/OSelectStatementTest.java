@@ -30,14 +30,14 @@ public class OSelectStatementTest {
     try {
       SimpleNode result = osql.parse();
       if (!isCorrect) {
-        System.out.println(query);
-        if(result!= null ) {
-          System.out.println("->");
-          StringBuilder builer = new StringBuilder();
-          result.toString(null, builer);
-          System.out.println(builer.toString());
-          System.out.println("............");
-        }
+//        System.out.println(query);
+//        if(result!= null ) {
+//          System.out.println("->");
+//          StringBuilder builer = new StringBuilder();
+//          result.toString(null, builer);
+//          System.out.println(builer.toString());
+//          System.out.println("............");
+//        }
         fail();
       }
 

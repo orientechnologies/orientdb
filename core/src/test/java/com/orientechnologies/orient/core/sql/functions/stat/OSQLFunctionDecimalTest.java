@@ -48,7 +48,6 @@ public class OSQLFunctionDecimalTest {
     function.execute(null, null, null, new Object[] { initial }, null);
     Object result = function.getResult();
     assertEquals(result, new BigDecimal(initial));
-    System.out.println(result);
   }
 
   public void testFromQuery() {
