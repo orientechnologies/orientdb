@@ -49,7 +49,8 @@ import java.util.*;
  *
  * @author Luca Garulli (http://www.orientechnologies.com)
  */
-@SuppressWarnings("unchecked") public class OrientVertex extends OrientElement implements OrientExtendedVertex {
+@SuppressWarnings("unchecked")
+public class OrientVertex extends OrientElement implements OrientExtendedVertex {
   public static final String CONNECTION_OUT_PREFIX = OrientBaseGraph.CONNECTION_OUT + "_";
   public static final String CONNECTION_IN_PREFIX  = OrientBaseGraph.CONNECTION_IN + "_";
 
@@ -295,7 +296,7 @@ import java.util.*;
       if (connection.getKey() == Direction.OUT)
         toAdd = graph.getEdgeInstance(doc, fieldRecord, connection.getValue());
       else
-        toAdd = graph.getEdgeInstance( fieldRecord, doc, connection.getValue());
+        toAdd = graph.getEdgeInstance(fieldRecord, doc, connection.getValue());
 
     } else if (immutableClass.isEdgeType()) {
       // EDGE
@@ -319,7 +320,8 @@ import java.util.*;
     return v;
   }
 
-  @Override public OrientVertex getVertexInstance() {
+  @Override
+  public OrientVertex getVertexInstance() {
     return this;
   }
 
@@ -343,7 +345,8 @@ import java.util.*;
    * Returns all the Property names as Set of String. out, in and label are not returned as properties even if are part of the
    * underlying document because are considered internal properties.
    */
-  @Override public Set<String> getPropertyKeys() {
+  @Override
+  public Set<String> getPropertyKeys() {
     final OrientBaseGraph graph = setCurrentGraphInThreadLocal();
 
     final ODocument doc = getRecord();
@@ -360,7 +363,8 @@ import java.util.*;
     return result;
   }
 
-  @Override public Map<String, Object> getProperties() {
+  @Override
+  public Map<String, Object> getProperties() {
     if (this.rawElement == null)
       return null;
     final ODocument raw = this.rawElement.getRecord();
@@ -387,7 +391,8 @@ import java.util.*;
    * @param iDirection The direction between OUT, IN or BOTH
    * @param iLabels    Optional varargs of Strings representing edge label to consider
    */
-  @Override public Iterable<Vertex> getVertices(final Direction iDirection, final String... iLabels) {
+  @Override
+  public Iterable<Vertex> getVertices(final Direction iDirection, final String... iLabels) {
     setCurrentGraphInThreadLocal();
 
     OrientBaseGraph.getEdgeClassNames(getGraph(), iLabels);
@@ -451,7 +456,8 @@ import java.util.*;
   /**
    * Executes a query against the current vertex. The returning type is a OrientVertexQuery.
    */
-  @Override public OrientVertexQuery query() {
+  @Override
+  public OrientVertexQuery query() {
     setCurrentGraphInThreadLocal();
     return new OrientVertexQuery(this);
   }
@@ -467,7 +473,8 @@ import java.util.*;
   /**
    * Removes the current Vertex from the Graph. all the incoming and outgoing edges are automatically removed too.
    */
-  @Override public void remove() {
+  @Override
+  public void remove() {
     checkClass();
 
     final OrientBaseGraph graph = checkIfAttached();
@@ -478,6 +485,24 @@ import java.util.*;
     final ODocument doc = getRecord();
     if (doc == null)
       throw ExceptionFactory.vertexWithIdDoesNotExist(this.getId());
+
+    Map<String, List<ODocument>> treeRidbagEdgesToRemove = new HashMap<String, List<ODocument>>();
+
+    if (!graph.getRawGraph().getTransaction().isActive()) {
+      for (String fieldName : doc.fieldNames()) {
+        final OPair<Direction, String> connection = getConnection(Direction.BOTH, fieldName);
+        if (connection == null)
+          // SKIP THIS FIELD
+          continue;
+        List<ODocument> docs = new ArrayList<ODocument>();
+        Object fv = doc.field(fieldName);
+        if (fv instanceof ORidBag && !((ORidBag) fv).isEmbedded()) {
+          for (OIdentifiable id : (ORidBag) fv)
+            docs.add(OrientBaseGraph.getDocument(id, true));
+        }
+        treeRidbagEdgesToRemove.put(fieldName, docs);
+      }
+    }
 
     // REMOVE THE VERTEX RECORD FIRST TO CATCH CME BEFORE EDGES ARE REMOVED
     super.removeRecord();
@@ -505,6 +530,15 @@ import java.util.*;
       }
     }
 
+    for (Map.Entry<String, List<ODocument>> entry : treeRidbagEdgesToRemove.entrySet()) {
+      doc.removeField(entry.getKey());
+      Iterator<ODocument> iter = entry.getValue().iterator();
+      while (iter.hasNext()) {
+        ODocument docEdge = iter.next();
+        OrientBaseGraph.deleteEdgeIfAny(docEdge, false);
+      }
+    }
+
     graph.removeEdgesInternal(this, doc, null, true, settings.isUseVertexFieldsForEdgeLabels(), settings.isAutoScaleEdgeType());
   }
 
@@ -512,7 +546,9 @@ import java.util.*;
    * Moves current vertex to another class. All edges are updated automatically.
    *
    * @param iClassName New class name to assign
+   *
    * @return New vertex's identity
+   *
    * @see #moveToCluster(String)
    * @see #moveTo(String, String)
    */
@@ -524,7 +560,9 @@ import java.util.*;
    * Moves current vertex to another cluster. All edges are updated automatically.
    *
    * @param iClusterName Cluster name where to save the new vertex
+   *
    * @return New vertex's identity
+   *
    * @see #moveToClass(String)
    * @see #moveTo(String, String)
    */
@@ -537,7 +575,9 @@ import java.util.*;
    *
    * @param iClassName   New class name to assign
    * @param iClusterName Cluster name where to save the new vertex
+   *
    * @return New vertex's identity
+   *
    * @see #moveToClass(String)
    * @see #moveToCluster(String)
    */
@@ -648,9 +688,11 @@ import java.util.*;
    *
    * @param label    Edge's label or class
    * @param inVertex Outgoing target vertex
+   *
    * @return The new Edge created
    */
-  @Override public Edge addEdge(final String label, Vertex inVertex) {
+  @Override
+  public Edge addEdge(final String label, Vertex inVertex) {
     if (inVertex instanceof PartitionVertex)
       // WRAPPED: GET THE BASE VERTEX
       inVertex = ((PartitionVertex) inVertex).getBaseVertex();
@@ -665,6 +707,7 @@ import java.util.*;
    * @param label      Edge's label or class
    * @param inVertex   Outgoing target vertex
    * @param iClassName Edge's class name
+   *
    * @return The new Edge created
    */
   public OrientEdge addEdge(final String label, final OrientVertex inVertex, final String iClassName) {
@@ -679,6 +722,7 @@ import java.util.*;
    * @param label    Edge's label or class
    * @param inVertex Outgoing target vertex
    * @param fields   Fields must be a odd pairs of key/value or a single object as Map containing entries as key/value pairs
+   *
    * @return The new Edge created
    */
   public OrientEdge addEdge(final String label, final OrientVertex inVertex, final Object[] fields) {
@@ -695,6 +739,7 @@ import java.util.*;
    * @param fields       Fields must be a odd pairs of key/value or a single object as Map containing entries as key/value pairs
    * @param iClassName   Edge's class name
    * @param iClusterName The cluster name where to store the edge record
+   *
    * @return The new Edge created
    */
   public OrientEdge addEdge(String label, final OrientVertex inVertex, final String iClassName, final String iClusterName,
@@ -716,6 +761,7 @@ import java.util.*;
    *
    * @param iDirection The direction between OUT, IN or BOTH
    * @param iLabels    Optional labels as Strings to consider
+   *
    * @return A long with the total edges found
    */
   public long countEdges(final Direction iDirection, final String... iLabels) {
@@ -762,9 +808,11 @@ import java.util.*;
    *
    * @param iDirection The direction between OUT, IN or BOTH
    * @param iLabels    Optional labels as Strings to consider
+   *
    * @return
    */
-  @Override public Iterable<Edge> getEdges(final Direction iDirection, final String... iLabels) {
+  @Override
+  public Iterable<Edge> getEdges(final Direction iDirection, final String... iLabels) {
     return getEdges(null, iDirection, iLabels);
   }
 
@@ -774,6 +822,7 @@ import java.util.*;
    * @param iDestination The target vertex
    * @param iDirection   The direction between OUT, IN or BOTH
    * @param iLabels      Optional labels as Strings to consider
+   *
    * @return
    */
   public Iterable<Edge> getEdges(final OrientVertex iDestination, final Direction iDirection, final String... iLabels) {
@@ -850,7 +899,8 @@ import java.util.*;
    * disable this feature execute this at database level <code>alter database custom useClassForVertexLabel=false
    * </code>
    */
-  @Override public String getLabel() {
+  @Override
+  public String getLabel() {
     setCurrentGraphInThreadLocal();
 
     if (settings.isUseClassForVertexLabel()) {
@@ -865,21 +915,24 @@ import java.util.*;
   /**
    * (Blueprints Extension) Returns "V" as base class name all the vertex sub-classes extend.
    */
-  @Override public String getBaseClassName() {
+  @Override
+  public String getBaseClassName() {
     return OrientVertexType.CLASS_NAME;
   }
 
   /**
    * (Blueprints Extension) Returns "Vertex".
    */
-  @Override public String getElementType() {
+  @Override
+  public String getElementType() {
     return "Vertex";
   }
 
   /**
    * (Blueprints Extension) Returns the Vertex type as OrientVertexType object.
    */
-  @Override public OrientVertexType getType() {
+  @Override
+  public OrientVertexType getType() {
     final OrientBaseGraph graph = getGraph();
     return new OrientVertexType(graph, getRecord().getSchemaClass());
   }
@@ -907,6 +960,7 @@ import java.util.*;
    *
    * @param iDirection Direction of connection
    * @param iFieldName Full field name
+   *
    * @return Class of the connection if any
    */
   public String getConnectionClass(final Direction iDirection, final String iFieldName) {
@@ -926,6 +980,7 @@ import java.util.*;
    * @param iDirection  Direction to check
    * @param iFieldName  Field name
    * @param iClassNames Optional array of class names
+   *
    * @return The found direction if any
    */
   protected OPair<Direction, String> getConnection(final Direction iDirection, final String iFieldName, String... iClassNames) {
@@ -1004,6 +1059,7 @@ import java.util.*;
    *
    * @param iDirection  Direction to check
    * @param iClassNames Optional array of class names
+   *
    * @return The array of field names
    */
   protected String[] getFieldNames(final Direction iDirection, String... iClassNames) {
@@ -1099,7 +1155,7 @@ import java.util.*;
           if (((Collection<Object>) field).contains(iFromVertex)) {
             // ALREADY EXISTS, FORCE THE EDGE-DOCUMENT TO AVOID
             // MULTIPLE DYN-EDGES AGAINST THE SAME VERTICES
-            graph.getEdgeInstance( iFromVertex, iToVertex, label).convertToDocument();
+            graph.getEdgeInstance(iFromVertex, iToVertex, label).convertToDocument();
             return false;
           }
 
