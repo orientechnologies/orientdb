@@ -63,6 +63,7 @@ import java.net.URLEncoder;
 import java.util.*;
 import java.util.logging.Level;
 
+
 /**
  * A Blueprints implementation of the graph database OrientDB (http://www.orientechnologies.com)
  *
@@ -2012,7 +2013,10 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     }
   }
 
-  private static ODocument getDocument(final OIdentifiable id, final boolean forceReload) {
+  protected static ODocument getDocument(final OIdentifiable id, final boolean forceReload) {
+    if (id == null)
+      return null;
+
     final ODocument doc = id.getRecord();
 
     if (doc != null && forceReload) {
@@ -2029,7 +2033,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   /**
    * (Internal only)
    */
-  private static void deleteEdgeIfAny(final OIdentifiable iRecord, boolean forceReload) {
+  protected static void deleteEdgeIfAny(final OIdentifiable iRecord, boolean forceReload) {
     if (iRecord != null) {
       final ODocument doc = getDocument(iRecord, forceReload);
       if (doc != null) {

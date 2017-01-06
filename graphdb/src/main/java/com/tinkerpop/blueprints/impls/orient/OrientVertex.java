@@ -25,7 +25,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandPredicate;
 import com.orientechnologies.orient.core.command.traverse.OTraverse;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OAutoConvertToRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
@@ -41,21 +40,12 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import com.tinkerpop.blueprints.Direction;
-import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.Element;
-import com.tinkerpop.blueprints.Index;
-import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.*;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
 import com.tinkerpop.blueprints.util.wrappers.partition.PartitionVertex;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * OrientDB Vertex implementation of TinkerPop Blueprints standard.
@@ -379,6 +369,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
     return result;
   }
 
+
   /**
    * Returns a lazy iterable instance against vertices.
    *
@@ -468,6 +459,24 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
     if (doc == null)
       throw ExceptionFactory.vertexWithIdDoesNotExist(this.getId());
 
+    Map<String, List<ODocument>> treeRidbagEdgesToRemove = new HashMap<String, List<ODocument>>();
+
+    if (!graph.getRawGraph().getTransaction().isActive()) {
+      for (String fieldName : doc.fieldNames()) {
+        final OPair<Direction, String> connection = getConnection(Direction.BOTH, fieldName);
+        if (connection == null)
+          // SKIP THIS FIELD
+          continue;
+        List<ODocument> docs = new ArrayList<ODocument>();
+        Object fv = doc.field(fieldName);
+        if (fv instanceof ORidBag && !((ORidBag) fv).isEmbedded()) {
+          for (OIdentifiable id : (ORidBag) fv)
+            docs.add(OrientBaseGraph.getDocument(id, true));
+        }
+        treeRidbagEdgesToRemove.put(fieldName, docs);
+      }
+    }
+
     // REMOVE THE VERTEX RECORD FIRST TO CATCH CME BEFORE EDGES ARE REMOVED
     super.removeRecord();
 
@@ -494,6 +503,15 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
       }
     }
 
+    for (Map.Entry<String, List<ODocument>> entry : treeRidbagEdgesToRemove.entrySet()) {
+      doc.removeField(entry.getKey());
+      Iterator<ODocument> iter = entry.getValue().iterator();
+      while (iter.hasNext()) {
+        ODocument docEdge = iter.next();
+        OrientBaseGraph.deleteEdgeIfAny(docEdge, false);
+      }
+    }
+
     graph.removeEdgesInternal(this, doc, null, true, settings.isUseVertexFieldsForEdgeLabels(), settings.isAutoScaleEdgeType());
   }
 
@@ -503,6 +521,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
    * @param iClassName
    *          New class name to assign
    * @return New vertex's identity
+   *
    * @see #moveToCluster(String)
    * @see #moveTo(String, String)
    */
@@ -516,6 +535,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
    * @param iClusterName
    *          Cluster name where to save the new vertex
    * @return New vertex's identity
+   *
    * @see #moveToClass(String)
    * @see #moveTo(String, String)
    */
@@ -531,6 +551,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
    * @param iClusterName
    *          Cluster name where to save the new vertex
    * @return New vertex's identity
+   *
    * @see #moveToClass(String)
    * @see #moveToCluster(String)
    */
