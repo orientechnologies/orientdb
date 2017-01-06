@@ -197,8 +197,36 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
     }
   }
 
+
   @Override
-  public OCacheEntry load(long fileId, long pageIndex, boolean checkPinnedPages, OWriteCache writeCache, final int pageCount) {
+  public OCacheEntry loadForWrite(long fileId, long pageIndex, boolean checkPinnedPages, OWriteCache writeCache, int pageCount)
+      throws IOException {
+
+    final OCacheEntry cacheEntry = doLoad(fileId, pageIndex);
+
+    if (cacheEntry == null)
+      return null;
+
+    cacheEntry.acquireExclusiveLock();
+
+    return cacheEntry;
+  }
+
+  @Override
+  public OCacheEntry loadForRead(long fileId, long pageIndex, boolean checkPinnedPages, OWriteCache writeCache, int pageCount)
+      throws IOException {
+
+    final OCacheEntry cacheEntry = doLoad(fileId, pageIndex);
+
+    if (cacheEntry == null)
+      return null;
+
+    cacheEntry.acquireSharedLock();
+
+    return cacheEntry;
+  }
+
+  private OCacheEntry doLoad(long fileId, long pageIndex) {
     final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = performanceStatisticManager
         .getSessionPerformanceStatistic();
 
@@ -249,6 +277,7 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
         cacheEntry.incrementUsages();
       }
 
+      cacheEntry.acquireExclusiveLock();
       return cacheEntry;
     } finally {
       if (sessionStoragePerformanceStatistic != null) {
@@ -267,10 +296,25 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
-  public void release(OCacheEntry cacheEntry, OWriteCache writeCache) {
+  public void releaseFromWrite(OCacheEntry cacheEntry, OWriteCache writeCache) {
+    cacheEntry.releaseExclusiveLock();
+
+    doRelease(cacheEntry);
+  }
+
+  @Override
+  public void releaseFromRead(OCacheEntry cacheEntry, OWriteCache writeCache) {
+    cacheEntry.releaseSharedLock();
+
+    doRelease(cacheEntry);
+  }
+
+
+  private void doRelease(OCacheEntry cacheEntry) {
     synchronized (cacheEntry) {
       cacheEntry.decrementUsages();
-      assert cacheEntry.getUsagesCount() > 0 || !cacheEntry.isLockAcquiredByCurrentThread();
+      assert cacheEntry.getUsagesCount() > 0 || cacheEntry.getCachePointer().getSharedBuffer() == null || !cacheEntry
+          .isLockAcquiredByCurrentThread();
     }
   }
 

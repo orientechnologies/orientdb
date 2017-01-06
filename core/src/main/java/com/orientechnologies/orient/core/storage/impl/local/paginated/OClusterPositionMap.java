@@ -199,20 +199,16 @@ public class OClusterPositionMap extends ODurableComponent {
         if (lastPage < 0)
           cacheEntry = addPage(atomicOperation, fileId);
         else
-          cacheEntry = loadPage(atomicOperation, fileId, lastPage, false, 1);
+          cacheEntry = loadPageForWrite(atomicOperation, fileId, lastPage, false, 1);
 
         Exception exception = null;
-        cacheEntry.acquireExclusiveLock();
         try {
-
           OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);
           if (bucket.isFull()) {
-            cacheEntry.releaseExclusiveLock();
-            releasePage(atomicOperation, cacheEntry);
+            releasePageFromWrite(atomicOperation, cacheEntry);
 
             cacheEntry = addPage(atomicOperation, fileId);
 
-            cacheEntry.acquireExclusiveLock();
             bucket = new OClusterPositionMapBucket(cacheEntry);
           }
 
@@ -225,8 +221,7 @@ public class OClusterPositionMap extends ODurableComponent {
                   this), e);
         } finally {
           try {
-            cacheEntry.releaseExclusiveLock();
-            releasePage(atomicOperation, cacheEntry);
+            releasePageFromWrite(atomicOperation, cacheEntry);
           } finally {
             endAtomicOperation(exception != null, exception);
           }
@@ -251,20 +246,17 @@ public class OClusterPositionMap extends ODurableComponent {
         if (lastPage < 0)
           cacheEntry = addPage(atomicOperation, fileId);
         else
-          cacheEntry = loadPage(atomicOperation, fileId, lastPage, false, 1);
+          cacheEntry = loadPageForWrite(atomicOperation, fileId, lastPage, false, 1);
 
         Exception exception = null;
-        cacheEntry.acquireExclusiveLock();
         try {
 
           OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);
           if (bucket.isFull()) {
-            cacheEntry.releaseExclusiveLock();
-            releasePage(atomicOperation, cacheEntry);
+            releasePageFromWrite(atomicOperation, cacheEntry);
 
             cacheEntry = addPage(atomicOperation, fileId);
 
-            cacheEntry.acquireExclusiveLock();
             bucket = new OClusterPositionMapBucket(cacheEntry);
           }
 
@@ -277,8 +269,7 @@ public class OClusterPositionMap extends ODurableComponent {
                   this), e);
         } finally {
           try {
-            cacheEntry.releaseExclusiveLock();
-            releasePage(atomicOperation, cacheEntry);
+            releasePageFromWrite(atomicOperation, cacheEntry);
           } finally {
             endAtomicOperation(exception != null, exception);
           }
@@ -305,14 +296,12 @@ public class OClusterPositionMap extends ODurableComponent {
           throw new OClusterPositionMapException(
               "Passed in cluster position " + clusterPosition + " is outside of range of cluster-position map", this);
 
-        final OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false, 1);
-        cacheEntry.acquireExclusiveLock();
+        final OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, pageIndex, false, 1);
         try {
           final OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);
           bucket.set(index, entry);
         } finally {
-          cacheEntry.releaseExclusiveLock();
-          releasePage(atomicOperation, cacheEntry);
+          releasePageFromWrite(atomicOperation, cacheEntry);
         }
 
         endAtomicOperation(false, null);
@@ -346,14 +335,12 @@ public class OClusterPositionMap extends ODurableComponent {
           throw new OClusterPositionMapException(
               "Passed in cluster position " + clusterPosition + " is outside of range of cluster-position map", this);
 
-        final OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false, 1);
-        cacheEntry.acquireExclusiveLock();
+        final OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, pageIndex, false, 1);
         try {
           final OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);
           bucket.resurrect(index, entry);
         } finally {
-          cacheEntry.releaseExclusiveLock();
-          releasePage(atomicOperation, cacheEntry);
+          releasePageFromWrite(atomicOperation, cacheEntry);
         }
 
         endAtomicOperation(false, null);
@@ -390,14 +377,12 @@ public class OClusterPositionMap extends ODurableComponent {
           if (pageIndex >= getFilledUpTo(atomicOperation, fileId))
             return null;
 
-          final OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false, pageCount);
-          cacheEntry.acquireSharedLock();
+          final OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false, pageCount);
           try {
             final OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);
             return bucket.get(index);
           } finally {
-            cacheEntry.releaseSharedLock();
-            releasePage(atomicOperation, cacheEntry);
+            releasePageFromRead(atomicOperation, cacheEntry);
           }
         } finally {
           releaseSharedLock();
@@ -421,8 +406,7 @@ public class OClusterPositionMap extends ODurableComponent {
         int index = (int) (clusterPosition % OClusterPositionMapBucket.MAX_ENTRIES);
 
         Exception exception = null;
-        final OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false, 1);
-        cacheEntry.acquireExclusiveLock();
+        final OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, pageIndex, false, 1);
         try {
           final OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);
 
@@ -434,8 +418,7 @@ public class OClusterPositionMap extends ODurableComponent {
                   this), e);
         } finally {
           try {
-            cacheEntry.releaseExclusiveLock();
-            releasePage(atomicOperation, cacheEntry);
+            releasePageFromWrite(atomicOperation, cacheEntry);
           } finally {
             endAtomicOperation(exception != null, exception);
           }
@@ -491,15 +474,13 @@ public class OClusterPositionMap extends ODurableComponent {
 
           long[] result = null;
           do {
-            OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false, 1);
-            cacheEntry.acquireSharedLock();
+            OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false, 1);
 
             OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);
             int resultSize = bucket.getSize() - index;
 
             if (resultSize <= 0) {
-              cacheEntry.releaseSharedLock();
-              releasePage(atomicOperation, cacheEntry);
+              releasePageFromRead(atomicOperation, cacheEntry);
               pageIndex++;
               index = 0;
             } else {
@@ -521,8 +502,7 @@ public class OClusterPositionMap extends ODurableComponent {
               } else
                 result = Arrays.copyOf(result, entriesCount);
 
-              cacheEntry.releaseSharedLock();
-              releasePage(atomicOperation, cacheEntry);
+              releasePageFromRead(atomicOperation, cacheEntry);
             }
           } while (result == null && pageIndex < filledUpTo);
 
@@ -591,8 +571,7 @@ public class OClusterPositionMap extends ODurableComponent {
           }
 
           do {
-            OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false, 1);
-            cacheEntry.acquireSharedLock();
+            OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false, 1);
 
             OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);
             if (index == Integer.MIN_VALUE)
@@ -618,8 +597,7 @@ public class OClusterPositionMap extends ODurableComponent {
             } else
               result = Arrays.copyOf(result, entriesCount);
 
-            cacheEntry.releaseSharedLock();
-            releasePage(atomicOperation, cacheEntry);
+            releasePageFromRead(atomicOperation, cacheEntry);
           } while (result == null && pageIndex >= 0);
 
           if (result == null)
@@ -648,8 +626,7 @@ public class OClusterPositionMap extends ODurableComponent {
 
           final long filledUpTo = getFilledUpTo(atomicOperation, fileId);
           for (long pageIndex = 0; pageIndex < filledUpTo; pageIndex++) {
-            OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false, 1);
-            cacheEntry.acquireSharedLock();
+            OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false, 1);
             try {
               OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);
               int bucketSize = bucket.getSize();
@@ -659,8 +636,7 @@ public class OClusterPositionMap extends ODurableComponent {
                   return pageIndex * OClusterPositionMapBucket.MAX_ENTRIES + index;
               }
             } finally {
-              cacheEntry.releaseSharedLock();
-              releasePage(atomicOperation, cacheEntry);
+              releasePageFromRead(atomicOperation, cacheEntry);
             }
           }
 
@@ -691,16 +667,14 @@ public class OClusterPositionMap extends ODurableComponent {
           if (pageIndex >= getFilledUpTo(atomicOperation, fileId))
             return OClusterPositionMapBucket.NOT_EXISTENT;
 
-          final OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false, 1);
-          cacheEntry.acquireSharedLock();
+          final OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false, 1);
           try {
             final OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);
 
             return bucket.getStatus(index);
 
           } finally {
-            cacheEntry.releaseSharedLock();
-            releasePage(atomicOperation, cacheEntry);
+            releasePageFromRead(atomicOperation, cacheEntry);
           }
         } finally {
           releaseSharedLock();
@@ -724,8 +698,7 @@ public class OClusterPositionMap extends ODurableComponent {
           final long filledUpTo = getFilledUpTo(atomicOperation, fileId);
 
           for (long pageIndex = filledUpTo - 1; pageIndex >= 0; pageIndex--) {
-            OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false, 1);
-            cacheEntry.acquireSharedLock();
+            OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false, 1);
             try {
               OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);
               final int bucketSize = bucket.getSize();
@@ -735,8 +708,7 @@ public class OClusterPositionMap extends ODurableComponent {
                   return pageIndex * OClusterPositionMapBucket.MAX_ENTRIES + index;
               }
             } finally {
-              cacheEntry.releaseSharedLock();
-              releasePage(atomicOperation, cacheEntry);
+              releasePageFromRead(atomicOperation, cacheEntry);
             }
           }
 
@@ -766,15 +738,13 @@ public class OClusterPositionMap extends ODurableComponent {
           final long filledUpTo = getFilledUpTo(atomicOperation, fileId);
 
           for (long pageIndex = filledUpTo - 1; pageIndex >= 0; pageIndex--) {
-            OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false, 1);
-            cacheEntry.acquireSharedLock();
+            OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false, 1);
             try {
               OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);
               final int bucketSize = bucket.getSize();
               return pageIndex * OClusterPositionMapBucket.MAX_ENTRIES + bucketSize;
             } finally {
-              cacheEntry.releaseSharedLock();
-              releasePage(atomicOperation, cacheEntry);
+              releasePageFromRead(atomicOperation, cacheEntry);
             }
           }
 

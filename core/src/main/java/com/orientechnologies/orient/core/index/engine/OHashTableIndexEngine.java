@@ -69,7 +69,7 @@ public final class OHashTableIndexEngine implements OIndexEngine {
           NULL_BUCKET_FILE_EXTENSION, hashFunction, durableInNonTx, storage);
     else
       hashTable = new OLocalHashTable<Object, Object>(name, METADATA_FILE_EXTENSION, TREE_FILE_EXTENSION, BUCKET_FILE_EXTENSION,
-          NULL_BUCKET_FILE_EXTENSION, hashFunction, durableInNonTx, storage);
+          NULL_BUCKET_FILE_EXTENSION, hashFunction, storage);
 
     this.name = name;
   }

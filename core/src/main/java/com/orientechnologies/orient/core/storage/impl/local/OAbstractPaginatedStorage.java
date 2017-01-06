@@ -3867,25 +3867,22 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         final long pageIndex = updatePageRecord.getPageIndex();
         fileId = writeCache.externalFileId(writeCache.internalFileId(fileId));
 
-        OCacheEntry cacheEntry = readCache.load(fileId, pageIndex, true, writeCache, 1);
+        OCacheEntry cacheEntry = readCache.loadForWrite(fileId, pageIndex, true, writeCache, 1);
         if (cacheEntry == null) {
           do {
             if (cacheEntry != null)
-              readCache.release(cacheEntry, writeCache);
+              readCache.releaseFromWrite(cacheEntry, writeCache);
 
             cacheEntry = readCache.allocateNewPage(fileId, writeCache);
           } while (cacheEntry.getPageIndex() != pageIndex);
         }
 
-        final OCachePointer cachePointer = cacheEntry.getCachePointer();
-        cachePointer.acquireExclusiveLock();
-        try {
+       try {
           ODurablePage durablePage = new ODurablePage(cacheEntry);
           durablePage.restoreChanges(updatePageRecord.getChanges());
           durablePage.setLsn(updatePageRecord.getLsn());
         } finally {
-          cachePointer.releaseExclusiveLock();
-          readCache.release(cacheEntry, writeCache);
+          readCache.releaseFromWrite(cacheEntry, writeCache);
         }
 
         atLeastOnePageUpdate.setValue(true);

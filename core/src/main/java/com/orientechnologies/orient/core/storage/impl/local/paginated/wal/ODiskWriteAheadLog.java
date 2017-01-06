@@ -54,6 +54,8 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   private final long freeSpaceLimit = OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT.getValueAsLong() * ONE_KB * ONE_KB;
   private final long walSizeLimit   = OGlobalConfiguration.WAL_MAX_SIZE.getValueAsLong() * ONE_KB * ONE_KB;
 
+  private volatile OLogSequenceNumber end;
+
   private final List<OLogSegment> logSegments = new ArrayList<OLogSegment>();
   private final int              maxPagesCacheSize;
   private final int              commitDelay;
@@ -205,6 +207,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
 
         logSegments.get(logSegments.size() - 1).startFlush();
         flushedLsn = readFlushedLSN();
+        end = calculateEndLSN();
       }
 
       masterRecordFile = new File(walLocation, this.storage.getName() + MASTER_RECORD_EXTENSION);
@@ -238,6 +241,21 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       OLogManager.instance().error(this, "Error during file initialization for storage '%s'", e, this.storage.getName());
       throw new IllegalStateException("Error during file initialization for storage '" + this.storage.getName() + "'", e);
     }
+  }
+
+  private OLogSequenceNumber calculateEndLSN() {
+    int lastIndex = logSegments.size() - 1;
+    OLogSegment last = logSegments.get(lastIndex);
+
+    while (last.getFilledUpTo() == 0) {
+      lastIndex--;
+      if (lastIndex >= 0)
+        last = logSegments.get(lastIndex);
+      else
+        return null;
+    }
+
+    return last.end();
   }
 
   public void incrementCacheOverflowCount() {
@@ -344,25 +362,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   public OLogSequenceNumber end() {
-    syncObject.lock();
-    try {
-      checkForClose();
-
-      int lastIndex = logSegments.size() - 1;
-      OLogSegment last = logSegments.get(lastIndex);
-
-      while (last.getFilledUpTo() == 0) {
-        lastIndex--;
-        if (lastIndex >= 0)
-          last = logSegments.get(lastIndex);
-        else
-          return null;
-      }
-
-      return last.end();
-    } finally {
-      syncObject.unlock();
-    }
+    return end;
   }
 
   public void flush() {
@@ -475,6 +475,8 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
 
       final OLogSequenceNumber lsn = last.logRecord(recordContent);
       record.setLsn(lsn);
+
+      end = lsn;
 
       if (record.isUpdateMasterRecord()) {
         lastCheckpoint = lsn;
