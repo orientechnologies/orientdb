@@ -25,6 +25,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
@@ -68,6 +69,7 @@ import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.*;
 import java.util.logging.Level;
+
 
 /**
  * A Blueprints implementation of the graph database OrientDB (http://orientdb.com)
@@ -2190,7 +2192,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     }
   }
 
-  private static ODocument getDocument(final OIdentifiable id, final boolean forceReload) {
+  protected static ODocument getDocument(final OIdentifiable id, final boolean forceReload) {
     if (id == null)
       return null;
 
@@ -2210,7 +2212,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   /**
    * (Internal only)
    */
-  private static void deleteEdgeIfAny(final OIdentifiable iRecord, boolean forceReload) {
+  protected static void deleteEdgeIfAny(final OIdentifiable iRecord, boolean forceReload) {
     if (iRecord != null) {
       final ODocument doc = getDocument(iRecord, forceReload);
       if (doc != null) {
