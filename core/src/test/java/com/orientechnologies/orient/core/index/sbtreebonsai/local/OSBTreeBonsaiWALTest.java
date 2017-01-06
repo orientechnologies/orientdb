@@ -265,7 +265,8 @@ public class OSBTreeBonsaiWALTest extends OSBTreeBonsaiLocalTest {
   }
 
   private void restoreDataFromWAL() throws IOException {
-    ODiskWriteAheadLog log = new ODiskWriteAheadLog(4, -1, 10 * 1024L * OWALPage.PAGE_SIZE, null, false, actualStorage);
+    ODiskWriteAheadLog log = new ODiskWriteAheadLog(4, -1, 10 * 1024L * OWALPage.PAGE_SIZE, null, false, actualStorage,
+        16 * OWALPage.PAGE_SIZE, 120);
     OLogSequenceNumber lsn = log.begin();
 
     List<OWALRecord> atomicUnit = new ArrayList<OWALRecord>();

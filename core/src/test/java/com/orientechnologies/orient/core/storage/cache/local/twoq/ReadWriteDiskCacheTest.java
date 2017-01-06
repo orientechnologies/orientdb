@@ -17,10 +17,7 @@ import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODiskWriteAheadLog;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecordsFactory;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WriteAheadLogTest;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 import org.assertj.core.api.Assertions;
 import org.junit.*;
 
@@ -1095,7 +1092,8 @@ public class ReadWriteDiskCacheTest {
     if (!file.exists())
       file.mkdir();
 
-    writeAheadLog = new ODiskWriteAheadLog(1024, -1, 10 * 1024, null, true, storageLocal);
+    writeAheadLog = new ODiskWriteAheadLog(1024, -1, 10 * 1024, null, true, storageLocal,
+        16 * OWALPage.PAGE_SIZE, 120);
 
     final OStorageSegmentConfiguration segmentConfiguration = new OStorageSegmentConfiguration(storageLocal.getConfiguration(),
         "readWriteDiskCacheTest.tst", 0);

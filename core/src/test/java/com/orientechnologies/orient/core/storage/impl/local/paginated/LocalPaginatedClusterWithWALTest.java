@@ -335,7 +335,8 @@ public class LocalPaginatedClusterWithWALTest extends LocalPaginatedClusterTest 
   }
 
   private void restoreClusterFromWAL() throws IOException {
-    ODiskWriteAheadLog log = new ODiskWriteAheadLog(4, -1, 10 * 1024L * OWALPage.PAGE_SIZE, null, true, storage);
+    ODiskWriteAheadLog log = new ODiskWriteAheadLog(4, -1, 10 * 1024L * OWALPage.PAGE_SIZE,
+        null, true, storage, 32 * 1024 * 1024, 120);
     OLogSequenceNumber lsn = log.begin();
 
     List<OWALRecord> atomicUnit = new ArrayList<OWALRecord>();

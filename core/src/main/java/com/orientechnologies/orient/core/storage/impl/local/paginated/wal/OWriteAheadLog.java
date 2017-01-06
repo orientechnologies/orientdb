@@ -49,7 +49,7 @@ public interface OWriteAheadLog {
 
   OLogSequenceNumber end();
 
-  void flush();
+  void flush() throws IOException;
 
   OLogSequenceNumber logAtomicOperationStartRecord(boolean isRollbackSupported, OOperationUnitId unitId) throws IOException;
 

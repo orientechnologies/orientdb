@@ -192,6 +192,9 @@ public enum OGlobalConfiguration {
       "Interval in seconds after which WAL file will be closed if there is no "
           + "any IO operations on this file (in seconds), default value is 10", Integer.class, 10, false),
 
+  WAL_SEGMENT_BUFFER_SIZE("storage.wal.segmentBufferSize", "Size of the buffer which contains WAL records in serialized format "
+      + "in megabytes", Integer.class, 32),
+
   WAL_MAX_SEGMENT_SIZE("storage.wal.maxSegmentSize", "Maximum size of single WAL segment (in megabytes)", Integer.class, 128),
 
   WAL_MAX_SIZE("storage.wal.maxSize", "Maximum size of WAL on disk (in megabytes)", Integer.class, 4096),
@@ -226,7 +229,6 @@ public enum OGlobalConfiguration {
   DISK_CACHE_ADD_DATA_VERIFICATION("storage.diskCache.addDataVerification", "Add CRC32 and magic number to the page", Boolean.class,
       false),
 
-  @Deprecated
   DISK_CACHE_PAGE_SIZE("storage.diskCache.pageSize", "Size of page of disk buffer (in kilobytes). !!! NEVER CHANGE THIS VALUE !!!",
       Integer.class, 64),
 

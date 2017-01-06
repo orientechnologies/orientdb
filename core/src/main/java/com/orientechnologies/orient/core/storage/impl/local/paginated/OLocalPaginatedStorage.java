@@ -319,7 +319,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     final OWriteAheadLog restoreWAL = new ODiskWriteAheadLog(OGlobalConfiguration.WAL_CACHE_SIZE.getValueAsInteger(),
         OGlobalConfiguration.WAL_COMMIT_TIMEOUT.getValueAsInteger(),
         ((long) OGlobalConfiguration.WAL_MAX_SEGMENT_SIZE.getValueAsInteger()) * ONE_KB * ONE_KB, directory.getAbsolutePath(),
-        false, this);
+        false, this, OGlobalConfiguration.WAL_SEGMENT_BUFFER_SIZE.getValueAsInteger() * 1024 * 1024,
+        OGlobalConfiguration.WAL_FILE_AUTOCLOSE_INTERVAL.getValueAsInteger());
 
     return restoreWAL;
   }
