@@ -29,28 +29,9 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALCh
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-public class OStreamSerializerRID implements OStreamSerializer, OBinarySerializer<OIdentifiable> {
-  public static final String               NAME     = "p";
+public class OStreamSerializerRID implements OBinarySerializer<OIdentifiable> {
   public static final OStreamSerializerRID INSTANCE = new OStreamSerializerRID();
   public static final byte                 ID       = 16;
-
-  public String getName() {
-    return NAME;
-  }
-
-  public Object fromStream(final byte[] iStream) throws IOException {
-    if (iStream == null)
-      return null;
-
-    return new ORecordId().fromStream(iStream);
-  }
-
-  public byte[] toStream(final Object iObject) throws IOException {
-    if (iObject == null)
-      return null;
-
-    return ((OIdentifiable) iObject).getIdentity().toStream();
-  }
 
   public int getObjectSize(OIdentifiable object, Object... hints) {
     return OLinkSerializer.INSTANCE.getObjectSize(object.getIdentity());

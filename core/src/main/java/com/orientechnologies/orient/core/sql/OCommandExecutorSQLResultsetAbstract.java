@@ -49,7 +49,7 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorNotEquals;
-import com.orientechnologies.orient.core.sql.query.OResultSet;
+import com.orientechnologies.orient.core.sql.query.OLegacyResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
@@ -431,8 +431,8 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
           subQuery.getContext().setVariable("parentQuery", this);
           subQuery.getContext().setVariable("current", iRecord);
           varValue = ODatabaseRecordThreadLocal.INSTANCE.get().query(subQuery);
-          if (varValue instanceof OResultSet) {
-            varValue = ((OResultSet) varValue).copy();
+          if (varValue instanceof OLegacyResultSet) {
+            varValue = ((OLegacyResultSet) varValue).copy();
           }
 
         } else if (letValue instanceof OSQLFunctionRuntime) {
@@ -715,10 +715,10 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
 
     Object result = null;
 
-    if (firstResult instanceof OResultSet) {
+    if (firstResult instanceof OLegacyResultSet) {
       // REUSE THE SAME RESULTSET TO AVOID DUPLICATES
-      ((OResultSet) firstResult).clear();
-      ((OResultSet) firstResult).addAll(mergedResult);
+      ((OLegacyResultSet) firstResult).clear();
+      ((OLegacyResultSet) firstResult).addAll(mergedResult);
       result = firstResult;
     } else
       result = new ArrayList<Object>(mergedResult);

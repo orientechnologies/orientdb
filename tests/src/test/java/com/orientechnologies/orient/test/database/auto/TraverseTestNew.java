@@ -19,7 +19,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
@@ -82,7 +82,7 @@ import java.util.Map;
   }
 
   public void traverseSQLAllFromActorNoWhereBreadthFrirst() {
-    OTodoResultSet result1 = database.query("traverse * from " + tomCruise.getIdentity() + " strategy BREADTH_FIRST");
+    OResultSet result1 = database.query("traverse * from " + tomCruise.getIdentity() + " strategy BREADTH_FIRST");
 
     for (int i = 0; i < totalElements; i++) {
       Assert.assertTrue(result1.hasNext());
@@ -91,7 +91,7 @@ import java.util.Map;
   }
 
   public void traverseSQLAllFromActorNoWhereDepthFrirst() {
-    OTodoResultSet result1 = database.query("traverse * from " + tomCruise.getIdentity() + " strategy DEPTH_FIRST");
+    OResultSet result1 = database.query("traverse * from " + tomCruise.getIdentity() + " strategy DEPTH_FIRST");
 
     for (int i = 0; i < totalElements; i++) {
       Assert.assertTrue(result1.hasNext());
@@ -100,13 +100,13 @@ import java.util.Map;
   }
 
   @Test public void traverseSQLOutFromActor1Depth() {
-    OTodoResultSet result1 = database.query("traverse out_ from " + tomCruise.getIdentity() + " while $depth <= 1");
+    OResultSet result1 = database.query("traverse out_ from " + tomCruise.getIdentity() + " while $depth <= 1");
 
     Assert.assertTrue(result1.hasNext());
   }
 
   @Test public void traverseSQLMoviesOnly() {
-    OTodoResultSet result1 = database.query("select from ( traverse * from Movie ) where @class = 'Movie'");
+    OResultSet result1 = database.query("select from ( traverse * from Movie ) where @class = 'Movie'");
     Assert.assertTrue(result1.hasNext());
     while (result1.hasNext()) {
       OResult d = result1.next();
@@ -116,7 +116,7 @@ import java.util.Map;
   }
 
   @Test public void traverseSQLPerClassFields() {
-    OTodoResultSet result1 = database
+    OResultSet result1 = database
         .query("select from ( traverse out() from " + tomCruise.getIdentity() + ") where @class = 'Movie'");
     Assert.assertTrue(result1.hasNext());
     while (result1.hasNext()) {
@@ -126,11 +126,11 @@ import java.util.Map;
   }
 
   @Test public void traverseSQLMoviesOnlyDepth() {
-    OTodoResultSet result1 = database
+    OResultSet result1 = database
         .query("select from ( traverse * from " + tomCruise.getIdentity() + " while $depth <= 1 ) where @class = 'Movie'");
     Assert.assertFalse(result1.hasNext());
 
-    OTodoResultSet result2 = database
+    OResultSet result2 = database
         .query("select from ( traverse * from " + tomCruise.getIdentity() + " while $depth <= 2 ) where @class = 'Movie'");
     Assert.assertTrue(result2.hasNext());
     int size2 = 0;
@@ -140,7 +140,7 @@ import java.util.Map;
       size2++;
     }
 
-    OTodoResultSet result3 = database
+    OResultSet result3 = database
         .query("select from ( traverse * from " + tomCruise.getIdentity() + " ) where @class = 'Movie'");
     Assert.assertTrue(result3.hasNext());
     int size3 = 0;
@@ -153,7 +153,7 @@ import java.util.Map;
   }
 
   @Test public void traverseSelect() {
-    OTodoResultSet result1 = database.query("traverse * from ( select from Movie )");
+    OResultSet result1 = database.query("traverse * from ( select from Movie )");
     int tot = 0;
     while (result1.hasNext()) {
       result1.next();
@@ -164,7 +164,7 @@ import java.util.Map;
   }
 
   @Test public void traverseSQLSelectAndTraverseNested() {
-    OTodoResultSet result1 = database.query("traverse * from ( select from ( traverse * from " + tomCruise.getIdentity()
+    OResultSet result1 = database.query("traverse * from ( select from ( traverse * from " + tomCruise.getIdentity()
         + " while $depth <= 2 ) where @class = 'Movie' )");
 
     int tot = 0;
@@ -177,7 +177,7 @@ import java.util.Map;
   }
 
   @Test public void traverseAPISelectAndTraverseNested() {
-    OTodoResultSet result1 = database.command("traverse * from ( select from ( traverse * from " + tomCruise.getIdentity()
+    OResultSet result1 = database.command("traverse * from ( select from ( traverse * from " + tomCruise.getIdentity()
         + " while $depth <= 2 ) where @class = 'Movie' )");
     int tot = 0;
     while (result1.hasNext()) {
@@ -188,7 +188,7 @@ import java.util.Map;
   }
 
   @Test public void traverseAPISelectAndTraverseNestedDepthFirst() {
-    OTodoResultSet result1 = database.query("traverse * from ( select from ( traverse * from " + tomCruise.getIdentity()
+    OResultSet result1 = database.query("traverse * from ( select from ( traverse * from " + tomCruise.getIdentity()
         + " while $depth <= 2 strategy depth_first ) where @class = 'Movie' )");
     int tot = 0;
     while (result1.hasNext()) {
@@ -199,7 +199,7 @@ import java.util.Map;
   }
 
   @Test public void traverseAPISelectAndTraverseNestedBreadthFirst() {
-    OTodoResultSet result1 = database.command("traverse * from ( select from ( traverse * from " + tomCruise.getIdentity()
+    OResultSet result1 = database.command("traverse * from ( select from ( traverse * from " + tomCruise.getIdentity()
         + " while $depth <= 2 strategy breadth_first ) where @class = 'Movie' )");
     int tot = 0;
     while (result1.hasNext()) {
@@ -210,22 +210,22 @@ import java.util.Map;
   }
 
   @Test public void traverseSelectNoInfluence() {
-    OTodoResultSet result1 = database.query("traverse * from Movie while $depth < 2");
+    OResultSet result1 = database.query("traverse * from Movie while $depth < 2");
     List<OResult> list1 = new ArrayList<>();
     while (result1.hasNext()) {
       list1.add(result1.next());
     }
-    OTodoResultSet result2 = database.query("select from ( traverse * from Movie while $depth < 2 )");
+    OResultSet result2 = database.query("select from ( traverse * from Movie while $depth < 2 )");
     List<OResult> list2 = new ArrayList<>();
     while (result2.hasNext()) {
       list2.add(result2.next());
     }
-    OTodoResultSet result3 = database.query("select from ( traverse * from Movie while $depth < 2 ) where true");
+    OResultSet result3 = database.query("select from ( traverse * from Movie while $depth < 2 ) where true");
     List<OResult> list3 = new ArrayList<>();
     while (result3.hasNext()) {
       list3.add(result3.next());
     }
-    OTodoResultSet result4 = database
+    OResultSet result4 = database
         .query("select from ( traverse * from Movie while $depth < 2 and ( true = true ) ) where true");
 
     List<OResult> list4 = new ArrayList<>();
@@ -239,7 +239,7 @@ import java.util.Map;
   }
 
   @Test public void traverseNoConditionLimit1() {
-    OTodoResultSet result1 = database.query("traverse * from Movie limit 1");
+    OResultSet result1 = database.query("traverse * from Movie limit 1");
     Assert.assertTrue(result1.hasNext());
     result1.next();
     Assert.assertFalse(result1.hasNext());
@@ -247,7 +247,7 @@ import java.util.Map;
 
   @Test public void traverseAndFilterByAttributeThatContainsDotInValue() {
     // issue #4952
-    OTodoResultSet result1 = database
+    OResultSet result1 = database
         .query("select from ( traverse out_married, in[attributeWithDotValue = 'a.b']  from " + tomCruise.getIdentity() + ")");
     Assert.assertTrue(result1.hasNext());
     boolean found = false;
@@ -266,7 +266,7 @@ import java.util.Map;
     // issue #5225
     Map<String, Object> params = new HashMap<String, Object>();
     params.put("param1", "a.b");
-    OTodoResultSet result1 = database
+    OResultSet result1 = database
         .query("select from (traverse out_married, in[attributeWithDotValue = :param1]  from " + tomCruise.getIdentity() + ")",
             params);
     Assert.assertTrue(result1.hasNext());
@@ -283,7 +283,7 @@ import java.util.Map;
   }
 
   @Test public void traverseAndCheckDepthInSelect() {
-    OTodoResultSet result1 = database
+    OResultSet result1 = database
         .query("select *, $depth as d from ( traverse out_married  from " + tomCruise.getIdentity() + " while $depth < 2)");
     boolean found = false;
     Integer i = 0;
@@ -302,7 +302,7 @@ import java.util.Map;
       String q = "traverse in('married')  from " + nicoleKidman.getIdentity() + "";
       ODatabaseDocumentTx db = (ODatabaseDocumentTx) database.copy();
       ODatabaseRecordThreadLocal.INSTANCE.set(db);
-      OTodoResultSet result1 = db.query(q);
+      OResultSet result1 = db.query(q);
       Assert.assertTrue(result1.hasNext());
       boolean found = false;
       Integer i = 0;

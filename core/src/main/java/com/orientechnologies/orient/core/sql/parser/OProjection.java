@@ -6,7 +6,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.query.OResultSet;
+import com.orientechnologies.orient.core.sql.query.OLegacyResultSet;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -98,7 +98,7 @@ public class OProjection extends SimpleNode {
     return result;
   }
 
-  public OResultSet calculateExpand(OCommandContext iContext, OResult iRecord) {
+  public OLegacyResultSet calculateExpand(OCommandContext iContext, OResult iRecord) {
     if (!isExpand()) {
       throw new IllegalStateException("This is not an expand projection:" + toString());
     }

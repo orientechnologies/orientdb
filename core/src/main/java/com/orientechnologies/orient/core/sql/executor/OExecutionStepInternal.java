@@ -11,7 +11,7 @@ import java.util.List;
  */
 public interface OExecutionStepInternal extends OExecutionStep, OExecutionCallback {
 
-  OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException;
+  OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException;
 
   void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException;
 

@@ -40,7 +40,7 @@ public class OIfStatement extends OStatement {
     return true;
   }
 
-  @Override public OTodoResultSet execute(ODatabase db, Object[] args) {
+  @Override public OResultSet execute(ODatabase db, Object[] args) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     ctx.setDatabase(db);
     Map<Object, Object> params = new HashMap<>();
@@ -65,7 +65,7 @@ public class OIfStatement extends OStatement {
     }
   }
 
-  @Override public OTodoResultSet execute(ODatabase db, Map params) {
+  @Override public OResultSet execute(ODatabase db, Map params) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     ctx.setDatabase(db);
     ctx.setInputParameters(params);

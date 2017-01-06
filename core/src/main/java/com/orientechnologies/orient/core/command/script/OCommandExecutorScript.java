@@ -31,7 +31,6 @@ import com.orientechnologies.orient.core.command.*;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -47,7 +46,7 @@ import com.orientechnologies.orient.core.sql.parser.OIfStatement;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
 import com.orientechnologies.orient.core.sql.parser.OrientSql;
 import com.orientechnologies.orient.core.sql.parser.ParseException;
-import com.orientechnologies.orient.core.sql.query.OResultSet;
+import com.orientechnologies.orient.core.sql.query.OLegacyResultSet;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
@@ -568,7 +567,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
   }
 
   private void checkIsRecordResultSet(Object result) {
-    if (!(result instanceof OIdentifiable) && !(result instanceof OResultSet)) {
+    if (!(result instanceof OIdentifiable) && !(result instanceof OLegacyResultSet)) {
       if (!OMultiValue.isMultiValue(result)) {
         request.setRecordResultSet(false);
       } else  {

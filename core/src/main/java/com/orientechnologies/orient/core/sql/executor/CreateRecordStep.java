@@ -19,9 +19,9 @@ public class CreateRecordStep extends AbstractExecutionStep {
     this.total = total;
   }
 
-  @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
-    return new OTodoResultSet() {
+    return new OResultSet() {
       int locallyCreated = 0;
 
       @Override public boolean hasNext() {

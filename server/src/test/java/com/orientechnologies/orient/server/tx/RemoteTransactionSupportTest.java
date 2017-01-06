@@ -1,14 +1,12 @@
 package com.orientechnologies.orient.server.tx;
 
-import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.OrientDBFactory;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.ORemoteImportTest;
 import org.junit.After;
@@ -50,7 +48,7 @@ public class RemoteTransactionSupportTest {
     ODocument doc2 = database.load(id.getIdentity());
     doc2.setProperty("name", "Jane");
     database.save(doc2);
-    OTodoResultSet result = database.command("update SomeTx set name='July' where name = 'Jane' ");
+    OResultSet result = database.command("update SomeTx set name='July' where name = 'Jane' ");
     assertEquals((long) result.next().getProperty("count"), 1L);
     ODocument doc3 = database.load(id.getIdentity());
     assertEquals(doc3.getProperty("name"), "July");
@@ -63,7 +61,7 @@ public class RemoteTransactionSupportTest {
     ODocument doc1 = new ODocument("SomeTx");
     doc1.setProperty("name", "Jane");
     OIdentifiable id = database.save(doc1);
-    OTodoResultSet result = database.command("update SomeTx set name='July' where name = 'Jane' ");
+    OResultSet result = database.command("update SomeTx set name='July' where name = 'Jane' ");
     assertEquals((long) result.next().getProperty("count"), 1L);
     ODocument doc2 = database.load(id.getIdentity());
     assertEquals(doc2.getProperty("name"), "July");

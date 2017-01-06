@@ -7,7 +7,7 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +28,7 @@ public class ORevokeStatement extends OSimpleExecStatement {
     super(p, id);
   }
 
-  @Override public OTodoResultSet executeSimple(OCommandContext ctx) {
+  @Override public OResultSet executeSimple(OCommandContext ctx) {
     ORole role = getDatabase().getMetadata().getSecurity().getRole(actor.getStringValue());
     if (role == null)
       throw new OCommandExecutionException("Invalid role: " + actor.getStringValue());

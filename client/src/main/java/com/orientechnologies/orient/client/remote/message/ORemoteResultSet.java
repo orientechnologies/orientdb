@@ -3,7 +3,7 @@ package com.orientechnologies.orient.client.remote.message;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentRemote;
 import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,7 +13,7 @@ import java.util.Optional;
 /**
  * Created by luigidellaquila on 05/12/16.
  */
-public class ORemoteResultSet implements OTodoResultSet {
+public class ORemoteResultSet implements OResultSet {
 
   private       String                  queryId;
   private final ODatabaseDocumentRemote db;

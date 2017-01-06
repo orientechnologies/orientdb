@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerHelper;
 
 public class OStringSerializerAnyStreamable implements OStringSerializer {
   public static final OStringSerializerAnyStreamable INSTANCE = new OStringSerializerAnyStreamable();
@@ -42,7 +41,7 @@ public class OStringSerializerAnyStreamable implements OStringSerializer {
     OSerializableStream instance = null;
 
     int propertyPos = iStream.indexOf(':');
-    int pos = iStream.indexOf(OStreamSerializerHelper.SEPARATOR);
+    int pos = iStream.indexOf(OStringSerializerEmbedded.SEPARATOR);
     if (pos < 0 || propertyPos > -1 && pos > propertyPos) {
       instance = new ODocument();
       pos = -1;
@@ -74,7 +73,7 @@ public class OStringSerializerAnyStreamable implements OStringSerializer {
 
       OSerializableStream stream = (OSerializableStream) iValue;
       iOutput.append(iValue.getClass().getName());
-      iOutput.append(OStreamSerializerHelper.SEPARATOR);
+      iOutput.append(OStringSerializerEmbedded.SEPARATOR);
       iOutput.append(OBase64Utils.encodeBytes(stream.toStream()));
     }
     return iOutput;

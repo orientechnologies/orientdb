@@ -21,7 +21,6 @@
 package com.orientechnologies.orient.core.db.document;
 
 import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseSchemaAware;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
@@ -34,7 +33,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * 
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public interface ODatabaseDocument extends ODatabase<ORecord>, ODatabaseSchemaAware<ORecord> {
+public interface ODatabaseDocument extends ODatabase<ORecord> {
 
   final static String TYPE = "document";
 
@@ -61,6 +60,34 @@ public interface ODatabaseDocument extends ODatabase<ORecord>, ODatabaseSchemaAw
    * @return Iterator of ODocument instances
    */
   ORecordIteratorClass<ODocument> browseClass(String iClassName, boolean iPolymorphic);
+
+
+  /**
+   * Creates a new entity instance. Each database implementation will return the right type.
+   *
+   * @return The new instance.
+   */
+  <RET extends Object> RET newInstance(String iClassName);
+
+  /**
+   * Counts the entities contained in the specified class and sub classes (polymorphic).
+   *
+   * @param iClassName
+   *          Class name
+   * @return Total entities
+   */
+  long countClass(String iClassName);
+
+  /**
+   * Counts the entities contained in the specified class.
+   *
+   * @param iClassName
+   *          Class name
+   * @param iPolymorphic
+   *          True if consider also the sub classes, otherwise false
+   * @return Total entities
+   */
+  long countClass(String iClassName, final boolean iPolymorphic);
 
   /**
    * Flush all indexes and cached storage content to the disk.

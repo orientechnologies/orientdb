@@ -34,7 +34,7 @@ public class ODropPropertyStatementExecutionTest {
 
     schema.reload();
     Assert.assertNotNull(schema.getClass(className).getProperty(propertyName));
-    OTodoResultSet result = db.command("drop property " + className + "." + propertyName);
+    OResultSet result = db.command("drop property " + className + "." + propertyName);
     Assert.assertTrue(result.hasNext());
     OResult next = result.next();
     Assert.assertEquals("drop property", next.getProperty("operation"));
@@ -53,7 +53,7 @@ public class ODropPropertyStatementExecutionTest {
 
     schema.reload();
     Assert.assertNotNull(schema.getClass(className).getProperty(propertyName));
-    OTodoResultSet result = db.command("drop property " + className + "." + propertyName + " force");
+    OResultSet result = db.command("drop property " + className + "." + propertyName + " force");
     for (int i = 0; i < 2; i++) {
       Assert.assertTrue(result.hasNext());
       result.next();

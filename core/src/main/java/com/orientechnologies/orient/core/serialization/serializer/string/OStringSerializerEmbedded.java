@@ -22,19 +22,18 @@ package com.orientechnologies.orient.core.serialization.serializer.string;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OSerializationException;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerHelper;
 
 import java.io.UnsupportedEncodingException;
 
 public class OStringSerializerEmbedded implements OStringSerializer {
   public static final OStringSerializerEmbedded INSTANCE = new OStringSerializerEmbedded();
   public static final String                    NAME     = "em";
+  public static final String SEPARATOR = "|";
+  public static final char SHORT_FORM_PREFIX = '!';
 
   /**
    * Re-Create any object if the class has a public constructor that accepts a String as unique parameter.
@@ -99,7 +98,7 @@ public class OStringSerializerEmbedded implements OStringSerializer {
 
       OSerializableStream stream = (OSerializableStream) iValue;
       iOutput.append(iValue.getClass().getName());
-      iOutput.append(OStreamSerializerHelper.SEPARATOR);
+      iOutput.append(SEPARATOR);
       try {
         iOutput.append(new String(stream.toStream(),"UTF-8"));
       } catch (UnsupportedEncodingException e) {

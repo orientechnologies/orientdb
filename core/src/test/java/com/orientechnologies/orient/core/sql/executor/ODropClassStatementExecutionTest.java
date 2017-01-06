@@ -37,7 +37,7 @@ public class ODropClassStatementExecutionTest {
     schema.reload();
     Assert.assertNotNull(schema.getClass(className));
 
-    OTodoResultSet result = db.command("drop class " + className);
+    OResultSet result = db.command("drop class " + className);
     Assert.assertTrue(result.hasNext());
     OResult next = result.next();
     Assert.assertEquals("drop class", next.getProperty("operation"));
@@ -57,13 +57,13 @@ public class ODropClassStatementExecutionTest {
     db.command("insert into " + className + " set foo = 'bar'");
     try {
 
-      OTodoResultSet result = db.command("drop class " + className);
+      OResultSet result = db.command("drop class " + className);
       Assert.fail();
     } catch (OCommandExecutionException ex1) {
     } catch (Exception ex2) {
       Assert.fail();
     }
-    OTodoResultSet result = db.command("drop class " + className + " unsafe");
+    OResultSet result = db.command("drop class " + className + " unsafe");
     Assert.assertTrue(result.hasNext());
     OResult next = result.next();
     Assert.assertEquals("drop class", next.getProperty("operation"));
@@ -82,7 +82,7 @@ public class ODropClassStatementExecutionTest {
     schema.reload();
     Assert.assertNotNull(schema.getClass(className));
 
-    OTodoResultSet result = db.command("drop class " + className+" if exists");
+    OResultSet result = db.command("drop class " + className+" if exists");
     Assert.assertTrue(result.hasNext());
     OResult next = result.next();
     Assert.assertEquals("drop class", next.getProperty("operation"));

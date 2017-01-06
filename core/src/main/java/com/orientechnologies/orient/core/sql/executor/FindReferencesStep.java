@@ -4,9 +4,6 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
-import com.orientechnologies.orient.core.db.object.OLazyObjectListInterface;
-import com.orientechnologies.orient.core.db.object.OLazyObjectMapInterface;
-import com.orientechnologies.orient.core.db.object.OLazyObjectSetInterface;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
@@ -42,11 +39,11 @@ public class FindReferencesStep extends AbstractExecutionStep {
     this.clusters = clusters;
   }
 
-  @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     if (!inited) {
       init(ctx, nRecords);
     }
-    return new OTodoResultSet() {
+    return new OResultSet() {
       @Override public boolean hasNext() {
 
         return nextResult != null;
@@ -153,7 +150,7 @@ public class FindReferencesStep extends AbstractExecutionStep {
     ridsToFind = new HashSet<>();
 
     OExecutionStepInternal prevStep = getPrev().get();
-    OTodoResultSet nextSlot = prevStep.syncPull(ctx, nRecords);
+    OResultSet nextSlot = prevStep.syncPull(ctx, nRecords);
     while (nextSlot.hasNext()) {
       while (nextSlot.hasNext()) {
         OResult nextRes = nextSlot.next();
@@ -195,13 +192,7 @@ public class FindReferencesStep extends AbstractExecutionStep {
   private static List<String> checkCollection(final Set<ORID> iSourceRIDs, final Collection<?> values, final ORecord iRootObject,
       String prefix) {
     final Iterator<?> it;
-    if (values instanceof OLazyObjectListInterface<?>) {
-      ((OLazyObjectListInterface<?>) values).setConvertToRecord(false);
-      it = ((OLazyObjectListInterface<?>) values).listIterator();
-    } else if (values instanceof OLazyObjectSetInterface) {
-      ((OLazyObjectSetInterface<?>) values).setConvertToRecord(false);
-      it = ((OLazyObjectSetInterface<?>) values).iterator();
-    } else if (values instanceof ORecordLazyMultiValue) {
+    if (values instanceof ORecordLazyMultiValue) {
       it = ((ORecordLazyMultiValue) values).rawIterator();
     } else {
       it = values.iterator();
@@ -216,10 +207,7 @@ public class FindReferencesStep extends AbstractExecutionStep {
   private static List<String> checkMap(final Set<ORID> iSourceRIDs, final Map<?, ?> values, final ORecord iRootObject,
       String prefix) {
     final Iterator<?> it;
-    if (values instanceof OLazyObjectMapInterface<?>) {
-      ((OLazyObjectMapInterface<?>) values).setConvertToRecord(false);
-      it = ((OLazyObjectMapInterface<?>) values).values().iterator();
-    } else if (values instanceof ORecordLazyMap) {
+    if (values instanceof ORecordLazyMap) {
       it = ((ORecordLazyMap) values).rawIterator();
     } else {
       it = values.values().iterator();

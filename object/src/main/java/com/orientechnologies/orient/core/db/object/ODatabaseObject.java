@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.core.db.object;
 
 import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseSchemaAware;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.entity.OEntityManager;
 import com.orientechnologies.orient.core.iterator.object.OObjectIteratorClassInterface;
@@ -32,7 +31,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * 
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public interface ODatabaseObject extends ODatabaseSchemaAware<Object>, OUserObject2RecordHandler {
+public interface ODatabaseObject extends ODatabase<Object>, OUserObject2RecordHandler {
 
   /**
    * Sets as dirty a POJO. This is useful when you change the object and need to tell to the engine to treat as dirty.
@@ -68,6 +67,34 @@ public interface ODatabaseObject extends ODatabaseSchemaAware<Object>, OUserObje
    * @return Iterator of Object instances
    */
   <RET> OObjectIteratorClassInterface<RET> browseClass(Class<RET> iClusterClass);
+
+
+  /**
+   * Creates a new entity instance. Each database implementation will return the right type.
+   *
+   * @return The new instance.
+   */
+  <RET extends Object> RET newInstance(String iClassName);
+
+  /**
+   * Counts the entities contained in the specified class and sub classes (polymorphic).
+   *
+   * @param iClassName
+   *          Class name
+   * @return Total entities
+   */
+  long countClass(String iClassName);
+
+  /**
+   * Counts the entities contained in the specified class.
+   *
+   * @param iClassName
+   *          Class name
+   * @param iPolymorphic
+   *          True if consider also the sub classes, otherwise false
+   * @return Total entities
+   */
+  long countClass(String iClassName, final boolean iPolymorphic);
 
   /**
    * Creates a new entity of the specified class.

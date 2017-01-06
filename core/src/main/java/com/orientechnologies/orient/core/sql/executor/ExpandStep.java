@@ -17,19 +17,19 @@ import java.util.Optional;
  */
 public class ExpandStep extends AbstractExecutionStep {
 
-  OTodoResultSet lastResult      = null;
-  Iterator       nextSubsequence = null;
-  OResult        nextElement     = null;
+  OResultSet lastResult      = null;
+  Iterator   nextSubsequence = null;
+  OResult    nextElement     = null;
 
   public ExpandStep(OCommandContext ctx) {
     super(ctx);
   }
 
-  @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     if (prev == null || !prev.isPresent()) {
       throw new OCommandExecutionException("Cannot expand without a target");
     }
-    return new OTodoResultSet() {
+    return new OResultSet() {
       long localCount = 0;
 
       @Override public boolean hasNext() {

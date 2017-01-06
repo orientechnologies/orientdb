@@ -20,7 +20,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OIterableRecordSource;
 import com.orientechnologies.orient.core.sql.executor.*;
 import com.orientechnologies.orient.core.sql.filter.OSQLTarget;
-import com.orientechnologies.orient.core.sql.query.OBasicResultSet;
+import com.orientechnologies.orient.core.sql.query.OBasicLegacyResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
@@ -113,7 +113,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
   }
 
 
-  @Override public OTodoResultSet execute(ODatabase db, Object[] args) {
+  @Override public OResultSet execute(ODatabase db, Object[] args) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     ctx.setDatabase(db);
     Map<Object, Object> params = new HashMap<>();
@@ -128,7 +128,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     return new OLocalResultSet(executionPlan);
   }
 
-  @Override public OTodoResultSet execute(ODatabase db, Map params) {
+  @Override public OResultSet execute(ODatabase db, Map params) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     ctx.setDatabase(db);
     ctx.setInputParameters(params);
@@ -283,7 +283,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
 
       Map<String, Long> estimatedRootEntries = estimateRootEntries(aliasClasses, aliasFilters, context);
       if (estimatedRootEntries.values().contains(0l)) {
-        return new OBasicResultSet();// some aliases do not match on any classes
+        return new OBasicLegacyResultSet();// some aliases do not match on any classes
       }
 
       List<EdgeTraversal> sortedEdges = getTopologicalSortedSchedule(estimatedRootEntries, pattern);

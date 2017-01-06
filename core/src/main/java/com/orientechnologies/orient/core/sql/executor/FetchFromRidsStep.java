@@ -31,9 +31,9 @@ public class FetchFromRidsStep extends AbstractExecutionStep {
     nextResult = null;
   }
 
-  @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
-    return new OTodoResultSet() {
+    return new OResultSet() {
       int internalNext = 0;
 
       private void fetchNext() {

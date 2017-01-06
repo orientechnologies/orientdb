@@ -32,7 +32,7 @@ public class OAlterSequenceStatementExecutionTest {
     db.getMetadata().getSequenceLibrary()
         .createSequence(sequenceName, OSequence.SEQUENCE_TYPE.ORDERED, new OSequence.CreateParams());
 
-    OTodoResultSet result = db.command("alter sequence " + sequenceName + " increment 20");
+    OResultSet result = db.command("alter sequence " + sequenceName + " increment 20");
     Assert.assertNotNull(result);
     Assert.assertTrue(result.hasNext());
     OResult next = result.next();

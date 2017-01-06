@@ -228,8 +228,6 @@ public class OCommandExecutorSQLUpdateTest {
       doc.field("booleanList", Collections.EMPTY_LIST);
       db.save(doc);
 
-      System.out.println(doc.toJSON());
-
       OCommandSQL updateCommand = new OCommandSQL(
           "UPDATE test SET boolean = :boolean, booleanList = :booleanList, integerList = :integerList WHERE id = 1");
 

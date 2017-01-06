@@ -4,7 +4,7 @@ import com.orientechnologies.orient.core.db.document.OQueryLifecycleListener;
 import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,17 +15,17 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * Created by luigidellaquila on 05/12/16.
  */
-public class OLocalResultSetLifecycleDecorator implements OTodoResultSet {
+public class OLocalResultSetLifecycleDecorator implements OResultSet {
 
   private static final AtomicLong counter = new AtomicLong(0);
 
-  private OTodoResultSet entity;
+  private OResultSet entity;
   private List<OQueryLifecycleListener> lifecycleListeners = new ArrayList<>();
   private String queryId;
 
   private boolean hasNextPage;
 
-  public OLocalResultSetLifecycleDecorator(OTodoResultSet entity) {
+  public OLocalResultSetLifecycleDecorator(OResultSet entity) {
     this.entity = entity;
     queryId = "" + System.currentTimeMillis() + "_" + counter.incrementAndGet();
   }

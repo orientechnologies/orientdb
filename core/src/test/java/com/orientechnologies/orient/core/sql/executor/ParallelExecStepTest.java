@@ -33,6 +33,5 @@ public class ParallelExecStepTest {
     plan.getSteps().add(step);
     plan.getSteps().add(new FetchFromRidsStep(Collections.singleton(new ORecordId(12, 100)), ctx));
 
-    System.out.println(plan.prettyPrint(0, 4));
   }
 }

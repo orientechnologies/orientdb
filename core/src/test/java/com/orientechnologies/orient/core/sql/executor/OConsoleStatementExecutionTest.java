@@ -27,7 +27,7 @@ public class OConsoleStatementExecutionTest {
 
   @Test
   public void testError() {
-    OTodoResultSet result = db.command("console.error 'foo bar'");
+    OResultSet result = db.command("console.error 'foo bar'");
     Assert.assertNotNull(result);
     Assert.assertTrue(result.hasNext());
     OResult item = result.next();
@@ -38,7 +38,7 @@ public class OConsoleStatementExecutionTest {
 
   @Test
   public void testLog() {
-    OTodoResultSet result = db.command("console.log 'foo bar'");
+    OResultSet result = db.command("console.log 'foo bar'");
     Assert.assertNotNull(result);
     Assert.assertTrue(result.hasNext());
     OResult item = result.next();

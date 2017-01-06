@@ -30,7 +30,7 @@ public class GlobalLetQueryStep extends AbstractExecutionStep {
     subExecutionPlan = query.createExecutionPlan(subCtx);
   }
 
-  @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
     calculate(ctx);
     return new OInternalResultSet();

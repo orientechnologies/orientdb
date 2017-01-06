@@ -13,14 +13,14 @@ import java.util.concurrent.LinkedBlockingQueue;
 /**
  * Created by luigidellaquila on 18/03/15.
  */
-public class OLiveResultSet<T> extends OConcurrentResultSet<T> {
+public class OLiveLegacyResultSet<T> extends OConcurrentLegacyResultSet<T> {
 
   final BlockingQueue<T> queue = new LinkedBlockingQueue<T>();
 
-  public OLiveResultSet() {
+  public OLiveLegacyResultSet() {
   }
 
-  public OConcurrentResultSet<T> setCompleted() {
+  public OConcurrentLegacyResultSet<T> setCompleted() {
     // completed = true;
     synchronized (waitForNextItem) {
       waitForNextItem.notifyAll();
@@ -84,7 +84,7 @@ public class OLiveResultSet<T> extends OConcurrentResultSet<T> {
 
       @Override
       public void remove() {
-        throw new UnsupportedOperationException("OResultSet.iterator.remove()");
+        throw new UnsupportedOperationException("OLegacyResultSet.iterator.remove()");
       }
     };
   }
@@ -187,7 +187,7 @@ public class OLiveResultSet<T> extends OConcurrentResultSet<T> {
     return wrapped.getLimit();
   }
 
-  public OResultSet<T> setLimit(final int limit) {
+  public OLegacyResultSet<T> setLimit(final int limit) {
     wrapped.setLimit(limit);
     return null;
   }
@@ -227,8 +227,8 @@ public class OLiveResultSet<T> extends OConcurrentResultSet<T> {
     }
   }
 
-  public OLiveResultSet<T> copy() {
-    OLiveResultSet<T> newValue = new OLiveResultSet<T>();
+  public OLiveLegacyResultSet<T> copy() {
+    OLiveLegacyResultSet<T> newValue = new OLiveLegacyResultSet<T>();
     return newValue;
   }
 }

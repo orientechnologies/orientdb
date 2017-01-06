@@ -23,7 +23,7 @@ import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OResultSet;
+import com.orientechnologies.orient.core.sql.query.OLegacyResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
@@ -136,7 +136,7 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
     graphFactory = new OrientGraphFactory("plocal:target/server0/databases/" + getDatabaseName());
     graph = graphFactory.getNoTx();
     try {
-      OResultSet<ODocument> clients = new OCommandSQL("select from Client").execute();
+      OLegacyResultSet<ODocument> clients = new OCommandSQL("select from Client").execute();
       int total = clients.size();
       assertEquals(expected, total);
 

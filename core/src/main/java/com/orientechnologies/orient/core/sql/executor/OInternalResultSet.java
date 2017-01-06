@@ -5,7 +5,7 @@ import java.util.*;
 /**
  * Created by luigidellaquila on 07/07/16.
  */
-public class OInternalResultSet implements OTodoResultSet {
+public class OInternalResultSet implements OResultSet {
   List<OResult> content = new ArrayList<>();
   int           next    = 0;
   protected OExecutionPlan plan;

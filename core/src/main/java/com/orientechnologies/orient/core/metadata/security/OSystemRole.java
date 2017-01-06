@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.core.metadata.security;
 
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.annotation.OBeforeDeserialization;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -52,7 +50,6 @@ public class OSystemRole extends ORole {
   }
 
   @Override
-  @OBeforeDeserialization
   public void fromStream(final ODocument iSource) {
     super.fromStream(iSource);
 

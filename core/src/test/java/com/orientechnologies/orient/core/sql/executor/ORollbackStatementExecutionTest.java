@@ -28,7 +28,7 @@ public class ORollbackStatementExecutionTest {
     Assert.assertTrue(db.getTransaction() == null || !db.getTransaction().isActive());
     db.begin();
     Assert.assertFalse(db.getTransaction() == null || !db.getTransaction().isActive());
-    OTodoResultSet result = db.command("rollback");
+    OResultSet result = db.command("rollback");
     printExecutionPlan(null, result);
     Assert.assertNotNull(result);
     Assert.assertTrue(result.hasNext());

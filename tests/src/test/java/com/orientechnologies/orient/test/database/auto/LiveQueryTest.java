@@ -20,9 +20,9 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.query.OLegacyResultSet;
 import com.orientechnologies.orient.core.sql.query.OLiveQuery;
 import com.orientechnologies.orient.core.sql.query.OLiveResultListener;
-import com.orientechnologies.orient.core.sql.query.OResultSet;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
@@ -79,7 +79,7 @@ public class LiveQueryTest extends DocumentDBBaseTest implements OCommandOutputL
 
     MyLiveQueryListener listener = new MyLiveQueryListener();
 
-    OResultSet<ODocument> tokens = database.query(new OLiveQuery<ODocument>("live select from " + className1, listener));
+    OLegacyResultSet<ODocument> tokens = database.query(new OLiveQuery<ODocument>("live select from " + className1, listener));
     Assert.assertEquals(tokens.size(), 1);
     ODocument tokenDoc = tokens.get(0);
     int token = tokenDoc.field("token");

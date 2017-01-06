@@ -2,7 +2,6 @@ package com.tinkerpop.blueprints.impls.orient;
 
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.annotation.OId;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.server.OServer;

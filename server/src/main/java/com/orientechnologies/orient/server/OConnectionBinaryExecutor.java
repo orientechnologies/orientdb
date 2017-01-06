@@ -47,7 +47,7 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
-import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSetLifecycleDecorator;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -978,7 +978,7 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     if (database.getTransaction().isActive()) {
       ((OTransactionOptimistic) database.getTransaction()).resetChangesTracking();
     }
-    OTodoResultSet rs;
+    OResultSet rs;
     if (request.isIdempotent()) {
       if (request.isNamedParams()) {
         rs = database.query(request.getStatement(), request.getNamedParameters());
@@ -1035,7 +1035,7 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     final long serverTimeout = OGlobalConfiguration.COMMAND_TIMEOUT.getValueAsLong();
     //TODO set a timeout on the request?
 
-    OTodoResultSet rs = connection.getDatabase().getActiveQuery(request.getQueryId());
+    OResultSet rs = connection.getDatabase().getActiveQuery(request.getQueryId());
 
     OQueryResponse result = new OQueryResponse();
 

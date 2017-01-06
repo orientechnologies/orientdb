@@ -5,7 +5,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OSingleOpExecutionPlan;
-import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -26,9 +26,9 @@ public abstract class OSimpleExecStatement extends OStatement {
     super(p, id);
   }
 
-  public abstract OTodoResultSet executeSimple(OCommandContext ctx);
+  public abstract OResultSet executeSimple(OCommandContext ctx);
 
-  public OTodoResultSet execute(ODatabase db, Object[] args) {
+  public OResultSet execute(ODatabase db, Object[] args) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     ctx.setDatabase(db);
     Map<Object, Object> params = new HashMap<>();
@@ -42,7 +42,7 @@ public abstract class OSimpleExecStatement extends OStatement {
     return executionPlan.executeInternal(ctx);
   }
 
-  public OTodoResultSet execute(ODatabase db, Map params) {
+  public OResultSet execute(ODatabase db, Map params) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     ctx.setDatabase(db);
     ctx.setInputParameters(params);

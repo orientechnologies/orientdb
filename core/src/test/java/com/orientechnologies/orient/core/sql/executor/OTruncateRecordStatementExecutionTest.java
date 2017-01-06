@@ -36,9 +36,9 @@ public class OTruncateRecordStatementExecutionTest {
 
     final Long total = database.countClass("truncateRecord");
 
-    final OTodoResultSet resultset = database.query("select from truncateRecord where sex = 'female' and salary = 2100");
+    final OResultSet resultset = database.query("select from truncateRecord where sex = 'female' and salary = 2100");
 
-    OTodoResultSet records = database.command("truncate record [" + resultset.next().getElement().get().getIdentity() + "]");
+    OResultSet records = database.command("truncate record [" + resultset.next().getElement().get().getIdentity() + "]");
 
     resultset.close();
 
@@ -59,12 +59,12 @@ public class OTruncateRecordStatementExecutionTest {
     if (!database.getMetadata().getSchema().existsClass("truncateNonExistingRecord"))
       database.command("create class truncateNonExistingRecord");
 
-    OTodoResultSet records = database.command("truncate record [ #" + database.getClusterIdByName("truncateNonExistingRecord") + ":99999999 ]");
+    OResultSet records = database.command("truncate record [ #" + database.getClusterIdByName("truncateNonExistingRecord") + ":99999999 ]");
 
     Assert.assertEquals(toList(records).size(), 0);
   }
 
-  private List<OResult> toList(OTodoResultSet input) {
+  private List<OResult> toList(OResultSet input) {
     List<OResult> result = new ArrayList<>();
     while (input.hasNext()) {
       result.add(input.next());

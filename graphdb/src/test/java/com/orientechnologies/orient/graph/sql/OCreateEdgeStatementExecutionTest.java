@@ -7,7 +7,7 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.sql.executor.ExecutionPlanPrintUtils;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -53,9 +53,9 @@ public class OCreateEdgeStatementExecutionTest {
     v2.setProperty("name", "v2");
     v2.save();
 
-    OTodoResultSet createREs = db.command("create edge " + eClass + " from " + v1.getIdentity() + " to " + v2.getIdentity());
+    OResultSet createREs = db.command("create edge " + eClass + " from " + v1.getIdentity() + " to " + v2.getIdentity());
     ExecutionPlanPrintUtils.printExecutionPlan(createREs);
-    OTodoResultSet result = db.query("select expand(out()) from " + v1.getIdentity());
+    OResultSet result = db.query("select expand(out()) from " + v1.getIdentity());
     Assert.assertNotNull(result);
     Assert.assertTrue(result.hasNext());
     OResult next = result.next();
@@ -89,10 +89,10 @@ public class OCreateEdgeStatementExecutionTest {
     v2.setProperty("name", "v2");
     v2.save();
 
-    OTodoResultSet createREs = db
+    OResultSet createREs = db
         .command("create edge " + eClass + " from " + v1.getIdentity() + " to " + v2.getIdentity() + " set name = 'theEdge'");
     ExecutionPlanPrintUtils.printExecutionPlan(createREs);
-    OTodoResultSet result = db.query("select expand(outE()) from " + v1.getIdentity());
+    OResultSet result = db.query("select expand(outE()) from " + v1.getIdentity());
     Assert.assertNotNull(result);
     Assert.assertTrue(result.hasNext());
     OResult next = result.next();
@@ -117,11 +117,11 @@ public class OCreateEdgeStatementExecutionTest {
       v1.save();
     }
 
-    OTodoResultSet createREs = db
+    OResultSet createREs = db
         .command("create edge " + eClass + " from (select from "+vClass+" where name in ['v0', 'v1']) to  (select from "+vClass+" where name in ['v2', 'v3'])");
     ExecutionPlanPrintUtils.printExecutionPlan(createREs);
 
-    OTodoResultSet result = db.query("select expand(out()) from " + vClass+ " where name = 'v0'");
+    OResultSet result = db.query("select expand(out()) from " + vClass+ " where name = 'v0'");
 
     Assert.assertNotNull(result);
     for(int i=0;i<2;i++) {

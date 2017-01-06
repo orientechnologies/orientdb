@@ -31,7 +31,7 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
-import com.orientechnologies.orient.core.sql.query.OResultSet;
+import com.orientechnologies.orient.core.sql.query.OLegacyResultSet;
 
 import java.util.*;
 
@@ -69,9 +69,9 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
       else
         inParams = Collections.singleton(inKeyValue);
 
-      if (inParams instanceof OResultSet) {//manage IN (subquery)
+      if (inParams instanceof OLegacyResultSet) {//manage IN (subquery)
         Set newInParams = new HashSet();
-        for (Object o : ((OResultSet) inParams)) {
+        for (Object o : ((OLegacyResultSet) inParams)) {
           if (o instanceof ODocument && ((ODocument) o).getIdentity().getClusterId() < -1) {
             ODocument doc = (ODocument) o;
             String[] fieldNames = doc.fieldNames();

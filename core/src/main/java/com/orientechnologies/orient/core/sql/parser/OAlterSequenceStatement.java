@@ -9,7 +9,7 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
 import java.util.Map;
 
@@ -27,7 +27,7 @@ public class OAlterSequenceStatement extends ODDLStatement {
     super(p, id);
   }
 
-  @Override public OTodoResultSet executeDDL(OCommandContext ctx) {
+  @Override public OResultSet executeDDL(OCommandContext ctx) {
 
     String sequenceName = name.getStringValue();
 

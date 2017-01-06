@@ -41,7 +41,7 @@ import com.orientechnologies.orient.core.schedule.OSchedulerTrigger;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
-import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSetLifecycleDecorator;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -350,42 +350,42 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     this.activeQueries.remove(rs.getQueryId());
   }
 
-  @Override public OTodoResultSet query(String query, Object[] args) {
+  @Override public OResultSet query(String query, Object[] args) {
     OStatement statement = OSQLEngine.parse(query, this);
     if (!statement.isIdempotent()) {
       throw new OCommandExecutionException("Cannot execute query on non idempotent statement: " + query);
     }
-    OTodoResultSet original = statement.execute(this, args);
+    OResultSet original = statement.execute(this, args);
     OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
     this.queryStarted(result);
     result.addLifecycleListener(this);
     return result;
   }
 
-  @Override public OTodoResultSet query(String query, Map args) {
+  @Override public OResultSet query(String query, Map args) {
     OStatement statement = OSQLEngine.parse(query, this);
     if (!statement.isIdempotent()) {
       throw new OCommandExecutionException("Cannot execute query on non idempotent statement: " + query);
     }
-    OTodoResultSet original = statement.execute(this, args);
+    OResultSet original = statement.execute(this, args);
     OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
     this.queryStarted(result);
     result.addLifecycleListener(this);
     return result;
   }
 
-  @Override public OTodoResultSet command(String query, Object[] args) {
+  @Override public OResultSet command(String query, Object[] args) {
     OStatement statement = OSQLEngine.parse(query, this);
-    OTodoResultSet original = statement.execute(this, args);
+    OResultSet original = statement.execute(this, args);
     OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
     this.queryStarted(result);
     result.addLifecycleListener(this);
     return result;
   }
 
-  @Override public OTodoResultSet command(String query, Map args) {
+  @Override public OResultSet command(String query, Map args) {
     OStatement statement = OSQLEngine.parse(query, this);
-    OTodoResultSet original = statement.execute(this, args);
+    OResultSet original = statement.execute(this, args);
     OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
     this.queryStarted(result);
     result.addLifecycleListener(this);

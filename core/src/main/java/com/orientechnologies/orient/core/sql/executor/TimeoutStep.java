@@ -17,7 +17,7 @@ public class TimeoutStep extends AbstractExecutionStep {
     this.timeout = timeout;
   }
 
-  @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     if (this.expiryTime == null) {
       this.expiryTime = System.currentTimeMillis() + timeout.getVal().longValue();
     }
@@ -27,7 +27,7 @@ public class TimeoutStep extends AbstractExecutionStep {
     return getPrev().get().syncPull(ctx, nRecords);//TODO do it more granular
   }
 
-  private OTodoResultSet fail() {
+  private OResultSet fail() {
     this.timedOut = true;
     sendTimeout();
     if (OTimeout.RETURN.equals(this.timeout.getFailureStrategy())) {

@@ -28,7 +28,7 @@ public class OCommitStatementExecutionTest {
     Assert.assertTrue(db.getTransaction() == null || !db.getTransaction().isActive());
     db.begin();
     Assert.assertFalse(db.getTransaction() == null || !db.getTransaction().isActive());
-    OTodoResultSet result = db.command("commit");
+    OResultSet result = db.command("commit");
     printExecutionPlan(null, result);
     Assert.assertNotNull(result);
     Assert.assertTrue(result.hasNext());

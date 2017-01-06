@@ -5,7 +5,7 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
 import java.util.Map;
 
@@ -21,7 +21,7 @@ public class OCommitStatement extends OSimpleExecStatement {
     super(p, id);
   }
 
-  @Override public OTodoResultSet executeSimple(OCommandContext ctx) {
+  @Override public OResultSet executeSimple(OCommandContext ctx) {
     ctx.getDatabase().commit();
     OInternalResultSet result = new OInternalResultSet();
     OResultInternal item = new OResultInternal();

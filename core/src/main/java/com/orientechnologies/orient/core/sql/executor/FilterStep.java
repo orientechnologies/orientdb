@@ -13,20 +13,20 @@ import java.util.Optional;
 public class FilterStep extends AbstractExecutionStep {
   private final OWhereClause whereClause;
 
-  OTodoResultSet prevResult = null;
+  OResultSet prevResult = null;
 
   public FilterStep(OWhereClause whereClause, OCommandContext ctx) {
     super(ctx);
     this.whereClause = whereClause;
   }
 
-  @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     if (!prev.isPresent()) {
       throw new IllegalStateException("filter step requires a previous step");
     }
     OExecutionStepInternal prevStep = prev.get();
 
-    return new OTodoResultSet() {
+    return new OResultSet() {
       public boolean finished = false;
 
       OResult nextItem = null;

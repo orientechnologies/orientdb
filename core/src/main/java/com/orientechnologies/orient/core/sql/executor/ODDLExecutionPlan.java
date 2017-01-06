@@ -27,7 +27,7 @@ public class ODDLExecutionPlan implements OInternalExecutionPlan {
 
   }
 
-  @Override public OTodoResultSet fetchNext(int n) {
+  @Override public OResultSet fetchNext(int n) {
     return null;
   }
 
@@ -39,12 +39,12 @@ public class ODDLExecutionPlan implements OInternalExecutionPlan {
     return 0;
   }
 
-  public OTodoResultSet executeInternal(OBasicCommandContext ctx) throws OCommandExecutionException {
+  public OResultSet executeInternal(OBasicCommandContext ctx) throws OCommandExecutionException {
     if (executed) {
       throw new OCommandExecutionException("Trying to execute a result-set twice. Please use reset()");
     }
     executed = true;
-    OTodoResultSet result = statement.executeDDL(this.ctx);
+    OResultSet result = statement.executeDDL(this.ctx);
     if (result instanceof OInternalResultSet) {
       ((OInternalResultSet) result).plan = this;
     }

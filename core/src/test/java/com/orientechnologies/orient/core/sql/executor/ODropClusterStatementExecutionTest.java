@@ -32,7 +32,7 @@ public class ODropClusterStatementExecutionTest {
     ((ODatabaseDocumentTx) db).getStorage().addCluster(cluster, false);
 
     Assert.assertTrue(db.getClusterIdByName(cluster) > 0);
-    OTodoResultSet result = db.command("drop cluster " + cluster);
+    OResultSet result = db.command("drop cluster " + cluster);
     Assert.assertTrue(result.hasNext());
     OResult next = result.next();
     Assert.assertEquals("drop cluster", next.getProperty("operation"));

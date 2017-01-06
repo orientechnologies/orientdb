@@ -9,7 +9,7 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 
 import java.util.ArrayList;
@@ -29,7 +29,7 @@ public class OTruncateRecordStatement extends OSimpleExecStatement {
     super(p, id);
   }
 
-  @Override public OTodoResultSet executeSimple(OCommandContext ctx) {
+  @Override public OResultSet executeSimple(OCommandContext ctx) {
     List<ORid> recs = new ArrayList<>();
     if (record != null) {
       recs.add(record);

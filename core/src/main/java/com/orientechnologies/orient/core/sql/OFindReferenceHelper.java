@@ -22,9 +22,6 @@ package com.orientechnologies.orient.core.sql;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.object.OLazyObjectListInterface;
-import com.orientechnologies.orient.core.db.object.OLazyObjectMapInterface;
-import com.orientechnologies.orient.core.db.object.OLazyObjectSetInterface;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
@@ -36,15 +33,8 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 /**
  * Helper class to find reference in records.
@@ -132,13 +122,7 @@ public class OFindReferenceHelper {
   private static void checkCollection(final Set<ORID> iSourceRIDs, final Map<ORID, Set<ORID>> map, final Collection<?> values,
       final ORecord iRootObject) {
     final Iterator<?> it;
-    if (values instanceof OLazyObjectListInterface<?>) {
-      ((OLazyObjectListInterface<?>) values).setConvertToRecord(false);
-      it = ((OLazyObjectListInterface<?>) values).listIterator();
-    } else if (values instanceof OLazyObjectSetInterface) {
-      ((OLazyObjectSetInterface<?>) values).setConvertToRecord(false);
-      it = ((OLazyObjectSetInterface<?>) values).iterator();
-    } else if (values instanceof ORecordLazyMultiValue) {
+    if (values instanceof ORecordLazyMultiValue) {
       it = ((ORecordLazyMultiValue) values).rawIterator();
     } else {
       it = values.iterator();
@@ -151,10 +135,7 @@ public class OFindReferenceHelper {
   private static void checkMap(final Set<ORID> iSourceRIDs, final Map<ORID, Set<ORID>> map, final Map<?, ?> values,
       final ORecord iRootObject) {
     final Iterator<?> it;
-    if (values instanceof OLazyObjectMapInterface<?>) {
-      ((OLazyObjectMapInterface<?>) values).setConvertToRecord(false);
-      it = ((OLazyObjectMapInterface<?>) values).values().iterator();
-    } else if (values instanceof ORecordLazyMap) {
+    if (values instanceof ORecordLazyMap) {
       it = ((ORecordLazyMap) values).rawIterator();
     } else {
       it = values.values().iterator();

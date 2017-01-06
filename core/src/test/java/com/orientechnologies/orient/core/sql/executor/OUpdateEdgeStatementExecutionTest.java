@@ -58,7 +58,7 @@ public class OUpdateEdgeStatementExecutionTest {
     Assert.assertEquals(v4.field("brand"), "fiat");
     Assert.assertEquals(v4.field("name"), "wow");
 
-    OTodoResultSet edges = database.command("create edge E1 from " + v1.getIdentity() + " to " + v2.getIdentity());
+    OResultSet edges = database.command("create edge E1 from " + v1.getIdentity() + " to " + v2.getIdentity());
     Assert.assertTrue(edges.hasNext());
     OResult edge = edges.next();
     Assert.assertFalse(edges.hasNext());
@@ -69,7 +69,7 @@ public class OUpdateEdgeStatementExecutionTest {
         "update edge E1 set out = " + v3.getIdentity() + ", in = " + v4.getIdentity() + " where @rid = " + edge.getElement().get()
             .getIdentity());
 
-    OTodoResultSet result = database.query("select expand(out('E1')) from " + v3.getIdentity());
+    OResultSet result = database.query("select expand(out('E1')) from " + v3.getIdentity());
     Assert.assertTrue(result.hasNext());
     OResult vertex4 = result.next();
     Assert.assertEquals(vertex4.getProperty("vid"), "v4");
@@ -100,7 +100,7 @@ public class OUpdateEdgeStatementExecutionTest {
     ODocument v2 = database.command(new OCommandSQL("create vertex")).execute();
     ODocument v3 = database.command(new OCommandSQL("create vertex")).execute();
 
-    OTodoResultSet edges = database
+    OResultSet edges = database
         .command("create edge E from " + v1.getIdentity() + " to " + v2.getIdentity());
     OResult edge = edges.next();
 

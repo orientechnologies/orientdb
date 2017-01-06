@@ -15,19 +15,19 @@ import java.util.Optional;
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
 public class ConvertToUpdatableResultStep extends AbstractExecutionStep {
-  OTodoResultSet prevResult = null;
+  OResultSet prevResult = null;
 
   public ConvertToUpdatableResultStep(OCommandContext ctx) {
     super(ctx);
   }
 
-  @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     if (!prev.isPresent()) {
       throw new IllegalStateException("filter step requires a previous step");
     }
     OExecutionStepInternal prevStep = prev.get();
 
-    return new OTodoResultSet() {
+    return new OResultSet() {
       public boolean finished = false;
 
       OResult nextItem = null;

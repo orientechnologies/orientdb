@@ -33,7 +33,7 @@ public class ODropIndexStatementExecutionTest {
 
     Assert.assertNotNull(db.getMetadata().getIndexManager().reload().getIndex(indexName));
 
-    OTodoResultSet result = db.command("drop index " + indexName);
+    OResultSet result = db.command("drop index " + indexName);
     Assert.assertTrue(result.hasNext());
     OResult next = result.next();
     Assert.assertEquals("drop index", next.getProperty("operation"));
@@ -50,7 +50,7 @@ public class ODropIndexStatementExecutionTest {
 
     Assert.assertNotNull(db.getMetadata().getIndexManager().reload().getIndex(indexName));
 
-    OTodoResultSet result = db.command("drop index *");
+    OResultSet result = db.command("drop index *");
     Assert.assertTrue(result.hasNext());
     OResult next = result.next();
     Assert.assertEquals("drop index", next.getProperty("operation"));
@@ -66,7 +66,7 @@ public class ODropIndexStatementExecutionTest {
     Assert.assertNull(db.getMetadata().getIndexManager().reload().getIndex(indexName));
 
     try {
-      OTodoResultSet result = db.command("drop index " + indexName);
+      OResultSet result = db.command("drop index " + indexName);
       Assert.fail();
     } catch (OCommandExecutionException e) {
     } catch (Exception e) {

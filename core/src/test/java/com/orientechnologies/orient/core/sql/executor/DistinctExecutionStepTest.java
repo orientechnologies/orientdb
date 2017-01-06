@@ -18,7 +18,7 @@ public class DistinctExecutionStepTest {
     AbstractExecutionStep prev = new AbstractExecutionStep(ctx) {
       boolean done = false;
 
-      @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+      @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
         OInternalResultSet result = new OInternalResultSet();
         if (!done) {
           for (int i = 0; i < 10; i++) {
@@ -41,7 +41,7 @@ public class DistinctExecutionStepTest {
     };
 
     step.setPrevious(prev);
-    OTodoResultSet res = step.syncPull(ctx, 10);
+    OResultSet res = step.syncPull(ctx, 10);
     Assert.assertTrue(res.hasNext());
     res.next();
     Assert.assertTrue(res.hasNext());

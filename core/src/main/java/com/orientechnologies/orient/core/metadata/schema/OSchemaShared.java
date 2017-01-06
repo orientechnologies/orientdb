@@ -26,7 +26,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.types.OModifiableInteger;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -764,7 +763,6 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
    * Binds POJO to ODocument.
    */
   @Override
-  @OBeforeSerialization
   public ODocument toStream() {
     rwSpinLock.acquireReadLock();
     try {

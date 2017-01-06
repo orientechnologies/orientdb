@@ -8,7 +8,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
 import java.util.List;
 import java.util.Map;
@@ -31,7 +31,7 @@ public class OCreateFunctionStatement extends OSimpleExecStatement {
     super(p, id);
   }
 
-  @Override public OTodoResultSet executeSimple(OCommandContext ctx) {
+  @Override public OResultSet executeSimple(OCommandContext ctx) {
     ODatabase database = ctx.getDatabase();
     final OFunction f = database.getMetadata().getFunctionLibrary().createFunction(name.getStringValue());
     f.setCode(code);

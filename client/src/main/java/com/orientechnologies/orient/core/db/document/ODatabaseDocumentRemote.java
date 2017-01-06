@@ -46,7 +46,7 @@ import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetwork;
-import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
@@ -268,7 +268,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   }
 
   @Override
-  public OTodoResultSet query(String query, Object[] args) {
+  public OResultSet query(String query, Object[] args) {
     checkOpenness();
     checkAndSendTransaction();
     ORemoteQueryResult result = storage.query(this, query, args);
@@ -278,7 +278,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   }
 
   @Override
-  public OTodoResultSet query(String query, Map args) {
+  public OResultSet query(String query, Map args) {
     checkOpenness();
     checkAndSendTransaction();
     ORemoteQueryResult result = storage.query(this, query, args);
@@ -288,7 +288,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   }
 
   @Override
-  public OTodoResultSet command(String query, Object[] args) {
+  public OResultSet command(String query, Object[] args) {
     checkOpenness();
     checkAndSendTransaction();
     ORemoteQueryResult result = storage.command(this, query, args);
@@ -298,7 +298,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   }
 
   @Override
-  public OTodoResultSet command(String query, Map args) {
+  public OResultSet command(String query, Map args) {
     checkOpenness();
     checkAndSendTransaction();
     ORemoteQueryResult result = storage.command(this, query, args);

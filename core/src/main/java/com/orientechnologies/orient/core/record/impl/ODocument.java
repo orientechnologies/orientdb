@@ -2983,7 +2983,8 @@ import java.util.stream.Collectors;
   protected void autoConvertFieldsToClass(final ODatabaseDocumentInternal database) {
     if (_className != null) {
       OClass klazz = database.getMetadata().getImmutableSchemaSnapshot().getClass(_className);
-      convertFieldsToClass(klazz);
+      if(klazz != null)
+        convertFieldsToClass(klazz);
     }
   }
   /**

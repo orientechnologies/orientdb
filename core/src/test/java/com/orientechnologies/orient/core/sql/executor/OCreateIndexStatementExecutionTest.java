@@ -31,7 +31,7 @@ public class OCreateIndexStatementExecutionTest {
     clazz.createProperty("name", OType.STRING);
 
     Assert.assertNull(db.getMetadata().getIndexManager().getIndex(className + ".name"));
-    OTodoResultSet result = db.command("create index " + className + ".name on " + className + " (name) notunique");
+    OResultSet result = db.command("create index " + className + ".name on " + className + " (name) notunique");
     Assert.assertTrue(result.hasNext());
     OResult next = result.next();
     Assert.assertFalse(result.hasNext());

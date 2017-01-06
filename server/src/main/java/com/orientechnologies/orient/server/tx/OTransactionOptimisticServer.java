@@ -97,21 +97,6 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
       }
       this.operations = null;
 
-      for (IndexChange change : indexChanges) {
-        NavigableMap<Object, OTransactionIndexChangesPerKey> changesPerKey = new TreeMap<>(ODefaultComparator.INSTANCE);
-        for (Map.Entry<Object, OTransactionIndexChangesPerKey> keyChange : change.getKeyChanges().changesPerKey.entrySet()) {
-          Object key = keyChange.getKey();
-          if (key instanceof OIdentifiable && ((OIdentifiable) key).getIdentity().isNew())
-            key = ((OIdentifiable) key).getRecord();
-          OTransactionIndexChangesPerKey singleChange = new OTransactionIndexChangesPerKey(key);
-          singleChange.entries.addAll(keyChange.getValue().entries);
-          changesPerKey.put(key, singleChange);
-        }
-        change.getKeyChanges().changesPerKey = changesPerKey;
-
-        indexEntries.put(change.getName(), change.getKeyChanges());
-      }
-
       // FIRE THE TRIGGERS ONLY AFTER HAVING PARSED THE REQUEST
       for (Map.Entry<ORID, ORecordOperation> entry : tempEntries.entrySet()) {
 
@@ -142,6 +127,26 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
         addRecord(entry.getValue().getRecord(), entry.getValue().type, null);
       }
       tempEntries.clear();
+
+      for (IndexChange change : indexChanges) {
+        NavigableMap<Object, OTransactionIndexChangesPerKey> changesPerKey = new TreeMap<>(ODefaultComparator.INSTANCE);
+        for (Map.Entry<Object, OTransactionIndexChangesPerKey> keyChange : change.getKeyChanges().changesPerKey.entrySet()) {
+          Object key = keyChange.getKey();
+          if (key instanceof OIdentifiable && ((OIdentifiable) key).getIdentity().isNew())
+            key = ((OIdentifiable) key).getRecord();
+          OTransactionIndexChangesPerKey singleChange = new OTransactionIndexChangesPerKey(key);
+          for (OTransactionIndexChangesPerKey.OTransactionIndexEntry entry : keyChange.getValue().entries) {
+            OIdentifiable rec = entry.value;
+            if (rec.getIdentity().isNew())
+              rec = rec.getRecord();
+            singleChange.entries.add(new OTransactionIndexChangesPerKey.OTransactionIndexEntry(rec, entry.operation));
+          }
+          changesPerKey.put(key, singleChange);
+        }
+        change.getKeyChanges().changesPerKey = changesPerKey;
+
+        indexEntries.put(change.getName(), change.getKeyChanges());
+      }
 
       // UNMARSHALL ALL THE RECORD AT THE END TO BE SURE ALL THE RECORD ARE LOADED IN LOCAL TX
       for (ORecord record : createdRecords.values()) {

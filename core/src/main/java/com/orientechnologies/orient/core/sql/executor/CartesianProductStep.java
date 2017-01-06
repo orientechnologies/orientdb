@@ -20,8 +20,8 @@ public class CartesianProductStep extends AbstractExecutionStep {
   List<Boolean>            completedPrefetch = new ArrayList<>();
   List<OInternalResultSet> preFetches        = new ArrayList<>();//consider using resultset.reset() instead of buffering
 
-  List<OTodoResultSet> resultSets   = new ArrayList<>();
-  List<OResult>        currentTuple = new ArrayList<>();
+  List<OResultSet> resultSets   = new ArrayList<>();
+  List<OResult>    currentTuple = new ArrayList<>();
 
   OResultInternal nextRecord;
 
@@ -29,11 +29,11 @@ public class CartesianProductStep extends AbstractExecutionStep {
     super(ctx);
   }
 
-  @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
     init(ctx);
     //    return new OInternalResultSet();
-    return new OTodoResultSet() {
+    return new OResultSet() {
       int currentCount = 0;
 
       @Override public boolean hasNext() {
@@ -87,7 +87,7 @@ public class CartesianProductStep extends AbstractExecutionStep {
 
   private void fetchFirstRecord() {
     int i = 0;
-    for (OTodoResultSet rs : resultSets) {
+    for (OResultSet rs : resultSets) {
       if (!rs.hasNext()) {
         nextRecord = null;
         return;
@@ -104,7 +104,7 @@ public class CartesianProductStep extends AbstractExecutionStep {
   }
 
   private void fetchNextRecord(int level) {
-    OTodoResultSet currentRs = resultSets.get(level);
+    OResultSet currentRs = resultSets.get(level);
     if (!currentRs.hasNext()) {
       if (level <= 0) {
         nextRecord = null;

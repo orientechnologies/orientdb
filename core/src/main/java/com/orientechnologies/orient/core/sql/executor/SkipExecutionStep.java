@@ -12,7 +12,7 @@ public class SkipExecutionStep extends AbstractExecutionStep {
 
   int skipped = 0;
 
-  OTodoResultSet lastFetch;
+  OResultSet lastFetch;
   private boolean finished;
 
   public SkipExecutionStep(OSkip skip, OCommandContext ctx) {
@@ -20,14 +20,14 @@ public class SkipExecutionStep extends AbstractExecutionStep {
     this.skip = skip;
   }
 
-  @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     if (finished == true) {
       return new OInternalResultSet();//empty
     }
     int skipValue = skip.getValue(ctx);
     while (skipped < skipValue) {
       //fetch and discard
-      OTodoResultSet rs = prev.get().syncPull(ctx, Math.min(100, skipValue - skipped));//fetch blocks of 100, at most
+      OResultSet rs = prev.get().syncPull(ctx, Math.min(100, skipValue - skipped));//fetch blocks of 100, at most
       if (!rs.hasNext()) {
         finished = true;
         return new OInternalResultSet();//empty

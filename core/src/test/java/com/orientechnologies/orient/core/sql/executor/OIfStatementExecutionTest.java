@@ -25,7 +25,7 @@ public class OIfStatementExecutionTest {
   }
 
   @Test public void testPositive() {
-    OTodoResultSet results = db.command("if(1=1){ select 1 as a; }");
+    OResultSet results = db.command("if(1=1){ select 1 as a; }");
     Assert.assertTrue(results.hasNext());
     OResult result = results.next();
     assertThat((Integer) result.getProperty("a")).isEqualTo(1);
@@ -34,7 +34,7 @@ public class OIfStatementExecutionTest {
   }
 
   @Test public void testNegative() {
-    OTodoResultSet results = db.command("if(1=2){ select 1 as a; }");
+    OResultSet results = db.command("if(1=2){ select 1 as a; }");
     Assert.assertFalse(results.hasNext());
     results.close();
   }

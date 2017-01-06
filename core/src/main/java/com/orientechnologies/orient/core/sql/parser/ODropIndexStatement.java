@@ -9,7 +9,7 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManagerProxy;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
 import java.util.Map;
 
@@ -26,7 +26,7 @@ public class ODropIndexStatement extends ODDLStatement {
     super(p, id);
   }
 
-  @Override public OTodoResultSet executeDDL(OCommandContext ctx) {
+  @Override public OResultSet executeDDL(OCommandContext ctx) {
     OInternalResultSet rs = new OInternalResultSet();
     ODatabase db = ctx.getDatabase();
     OIndexManagerProxy idxMgr = db.getMetadata().getIndexManager();

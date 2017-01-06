@@ -41,11 +41,11 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
     this.orderAsc = orderAsc;
   }
 
-  @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
     init();
 
-    return new OTodoResultSet() {
+    return new OResultSet() {
       int localCount = 0;
 
       @Override public boolean hasNext() {

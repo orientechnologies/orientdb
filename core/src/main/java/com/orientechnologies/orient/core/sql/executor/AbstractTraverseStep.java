@@ -27,10 +27,10 @@ public abstract class AbstractTraverseStep extends AbstractExecutionStep {
     this.projections = projections.stream().map(x -> x.copy()).collect(Collectors.toList());
   }
 
-  @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     //TODO
 
-    return new OTodoResultSet() {
+    return new OResultSet() {
       int localFetched = 0;
 
       @Override public boolean hasNext() {

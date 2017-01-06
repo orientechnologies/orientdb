@@ -36,9 +36,9 @@ import java.util.List;
  */
 public class OCommandSQLPojoWrapper implements OCommandRequest {
   private OCommandRequest          command;
-  private ODatabasePojoAbstract<?> database;
+  private OObjectDatabaseTx database;
 
-  public OCommandSQLPojoWrapper(final ODatabasePojoAbstract<?> iDatabase, final OCommandRequest iCommand) {
+  public OCommandSQLPojoWrapper(final OObjectDatabaseTx iDatabase, final OCommandRequest iCommand) {
     database = iDatabase;
     command = iCommand;
   }

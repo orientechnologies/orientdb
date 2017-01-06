@@ -7,7 +7,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
-import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -29,7 +29,7 @@ public class OExplainStatement extends OStatement {
     statement.toString(params, builder);
   }
 
-  @Override public OTodoResultSet execute(ODatabase db, Object[] args) {
+  @Override public OResultSet execute(ODatabase db, Object[] args) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     ctx.setDatabase(db);
     Map<Object, Object> params = new HashMap<>();
@@ -45,7 +45,7 @@ public class OExplainStatement extends OStatement {
     return result;
   }
 
-  @Override public OTodoResultSet execute(ODatabase db, Map args) {
+  @Override public OResultSet execute(ODatabase db, Map args) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     ctx.setDatabase(db);
     ctx.setInputParameters(args);

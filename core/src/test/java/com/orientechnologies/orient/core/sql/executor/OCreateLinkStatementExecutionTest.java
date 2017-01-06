@@ -37,7 +37,7 @@ public class OCreateLinkStatementExecutionTest {
 
     db.command("CREATE LINK theLink type link FROM Basic1.fk TO Basic2.pk ");
 
-    OTodoResultSet result = db.query("select pk, theLink.pk as other from Basic1 order by pk");
+    OResultSet result = db.query("select pk, theLink.pk as other from Basic1 order by pk");
     Assert.assertTrue(result.hasNext());
 
     OResult item = result.next();
@@ -67,7 +67,7 @@ public class OCreateLinkStatementExecutionTest {
 
     db.command("CREATE LINK theLink TYPE LINKSET FROM Inverse1.fk TO Inverse2.pk INVERSE");
 
-    OTodoResultSet result = db.query("select pk, theLink.pk as other from Inverse2 order by pk");
+    OResultSet result = db.query("select pk, theLink.pk as other from Inverse2 order by pk");
     Assert.assertTrue(result.hasNext());
     OResult item = result.next();
 

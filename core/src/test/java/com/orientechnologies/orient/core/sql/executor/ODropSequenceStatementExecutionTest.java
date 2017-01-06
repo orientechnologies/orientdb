@@ -30,7 +30,7 @@ public class ODropSequenceStatementExecutionTest {
     db.getMetadata().getSequenceLibrary().createSequence(name, OSequence.SEQUENCE_TYPE.CACHED, new OSequence.CreateParams());
 
     Assert.assertNotNull(db.getMetadata().getSequenceLibrary().getSequence(name));
-    OTodoResultSet result = db.command("drop sequence " + name);
+    OResultSet result = db.command("drop sequence " + name);
     Assert.assertTrue(result.hasNext());
     OResult next = result.next();
     Assert.assertEquals("drop sequence", next.getProperty("operation"));
@@ -45,7 +45,7 @@ public class ODropSequenceStatementExecutionTest {
     OSequenceLibrary lib = db.getMetadata().getSequenceLibrary();
     Assert.assertNull(lib.getSequence(name));
     try {
-      OTodoResultSet result = db.command("drop sequence " + name);
+      OResultSet result = db.command("drop sequence " + name);
       Assert.fail();
     } catch (OCommandExecutionException ex1) {
 

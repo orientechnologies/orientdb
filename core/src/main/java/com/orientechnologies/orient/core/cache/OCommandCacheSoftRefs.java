@@ -31,7 +31,7 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OResultSet;
+import com.orientechnologies.orient.core.sql.query.OLegacyResultSet;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 
@@ -296,8 +296,8 @@ public class OCommandCacheSoftRefs implements OCommandCache {
       return;
 
     int resultsetSize = 1;
-    if (iResult instanceof OResultSet) {
-      resultsetSize = ((OResultSet) iResult).size();
+    if (iResult instanceof OLegacyResultSet) {
+      resultsetSize = ((OLegacyResultSet) iResult).size();
 
       if (resultsetSize > maxResultsetSize)
         // TOO BIG RESULTSET, SKIP IT

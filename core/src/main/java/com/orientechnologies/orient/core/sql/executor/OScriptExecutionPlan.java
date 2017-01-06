@@ -36,7 +36,7 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
     lastStep.close();
   }
 
-  @Override public OTodoResultSet fetchNext(int n) {
+  @Override public OResultSet fetchNext(int n) {
     return lastStep.syncPull(ctx, n);
   }
 
@@ -112,7 +112,7 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
           return lastStep;
         }
       }
-      OTodoResultSet lastResult = step.syncPull(ctx, 100);
+      OResultSet lastResult = step.syncPull(ctx, 100);
 
       while (lastResult.hasNext()) {
         while (lastResult.hasNext()) {

@@ -7,7 +7,7 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
 import java.util.Map;
 
@@ -30,7 +30,7 @@ public class OCreateClusterStatement extends ODDLStatement {
     super(p, id);
   }
 
-  @Override public OTodoResultSet executeDDL(OCommandContext ctx) {
+  @Override public OResultSet executeDDL(OCommandContext ctx) {
     checkNotExistsCluster(ctx);
     ODatabase db = ctx.getDatabase();
     OResultInternal result = new OResultInternal();

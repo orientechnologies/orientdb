@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.core.metadata.security;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.annotation.OAfterDeserialization;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
@@ -82,7 +81,6 @@ public class OUser extends OIdentity implements OSecurityUser {
   }
 
   @Override
-  @OAfterDeserialization
   public void fromStream(final ODocument iSource) {
     if (document != null)
       return;

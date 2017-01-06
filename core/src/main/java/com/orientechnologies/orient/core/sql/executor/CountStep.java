@@ -17,7 +17,7 @@ public class CountStep extends AbstractExecutionStep {
     super(ctx);
   }
 
-  @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     if (executed) {
       return new OInternalResultSet();
     }
@@ -25,7 +25,7 @@ public class CountStep extends AbstractExecutionStep {
     executed = true;
     long count = 0;
     while (true) {
-      OTodoResultSet prevResult = getPrev().get().syncPull(ctx, nRecords);
+      OResultSet prevResult = getPrev().get().syncPull(ctx, nRecords);
       if (!prevResult.hasNext()) {
         OInternalResultSet result = new OInternalResultSet();
         result.add(resultRecord);

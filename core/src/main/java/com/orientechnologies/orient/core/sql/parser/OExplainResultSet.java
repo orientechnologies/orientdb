@@ -3,7 +3,7 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -12,7 +12,7 @@ import java.util.Optional;
 /**
  * Created by luigidellaquila on 08/07/16.
  */
-public class OExplainResultSet implements OTodoResultSet {
+public class OExplainResultSet implements OResultSet {
   private final OExecutionPlan executionPlan;
   boolean hasNext = true;
 

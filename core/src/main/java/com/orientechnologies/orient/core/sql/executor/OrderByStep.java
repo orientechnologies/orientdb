@@ -29,13 +29,13 @@ public class OrderByStep extends AbstractExecutionStep {
     }
   }
 
-  @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     if (cachedResult == null) {
       cachedResult = new ArrayList<>();
       prev.ifPresent(p -> init(p, ctx));
     }
 
-    return new OTodoResultSet() {
+    return new OResultSet() {
       int currentBatchReturned = 0;
       int offset = nextElement;
 
@@ -79,7 +79,7 @@ public class OrderByStep extends AbstractExecutionStep {
   private void init(OExecutionStepInternal p, OCommandContext ctx) {
     boolean sorted = true;
     do {
-      OTodoResultSet lastBatch = p.syncPull(ctx, 100);
+      OResultSet lastBatch = p.syncPull(ctx, 100);
       if (!lastBatch.hasNext()) {
         break;
       }

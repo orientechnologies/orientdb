@@ -40,8 +40,7 @@ import java.util.Set;
 
 import static com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer.RID_SIZE;
 
-public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializer, OBinarySerializer<OIndexRIDContainer> {
-  public static final String                                   NAME     = "icn";
+public class OStreamSerializerSBTreeIndexRIDContainer implements OBinarySerializer<OIndexRIDContainer> {
   public static final OStreamSerializerSBTreeIndexRIDContainer INSTANCE = new OStreamSerializerSBTreeIndexRIDContainer();
 
   public static final byte ID                       = 21;
@@ -60,24 +59,6 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializ
   public static final int                SBTREE_CONTAINER_SIZE =
       2 * OBooleanSerializer.BOOLEAN_SIZE + 2 * OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE;
   public static final OLinkSerializer    LINK_SERIALIZER       = OLinkSerializer.INSTANCE;
-
-  public Object fromStream(final byte[] iStream) throws IOException {
-    if (iStream == null)
-      return null;
-
-    throw new UnsupportedOperationException("not implemented yet");
-  }
-
-  public byte[] toStream(final Object iObject) throws IOException {
-    if (iObject == null)
-      return null;
-
-    throw new UnsupportedOperationException("not implemented yet");
-  }
-
-  public String getName() {
-    return NAME;
-  }
 
   @Override
   public int getObjectSize(OIndexRIDContainer object, Object... hints) {

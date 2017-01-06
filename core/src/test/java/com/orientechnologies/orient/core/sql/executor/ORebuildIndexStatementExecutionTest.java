@@ -37,7 +37,7 @@ public class ORebuildIndexStatementExecutionTest {
       db.newInstance(className).field("key", "a").field("value", 2).save(className + "secondCluster");
 
       // when
-      OTodoResultSet result = db.command("rebuild index " + className + "index1");
+      OResultSet result = db.command("rebuild index " + className + "index1");
       Assert.assertTrue(result.hasNext());
       OResult resultRecord = result.next();
       Assert.assertEquals(resultRecord.<Object>getProperty("totalIndexed"), 2l);

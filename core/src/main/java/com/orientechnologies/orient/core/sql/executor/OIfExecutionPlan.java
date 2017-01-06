@@ -33,7 +33,7 @@ public class OIfExecutionPlan implements OInternalExecutionPlan {
     step.close();
   }
 
-  @Override public OTodoResultSet fetchNext(int n) {
+  @Override public OResultSet fetchNext(int n) {
     return step.syncPull(ctx, n);
   }
 

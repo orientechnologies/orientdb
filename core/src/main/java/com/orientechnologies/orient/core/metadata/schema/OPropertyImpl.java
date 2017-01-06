@@ -23,7 +23,6 @@ import com.orientechnologies.common.comparator.OCaseInsentiveComparator;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCollections;
-import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.collate.ODefaultCollate;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -1153,7 +1152,6 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   }
 
   @Override
-  @OBeforeSerialization
   public ODocument toStream() {
     document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
 

@@ -14,7 +14,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -106,7 +106,7 @@ public class OCreateIndexStatement extends ODDLStatement {
     super(p, id);
   }
 
-  @Override public OTodoResultSet executeDDL(OCommandContext ctx) {
+  @Override public OResultSet executeDDL(OCommandContext ctx) {
     execute(ctx);
     OInternalResultSet rs = new OInternalResultSet();
     OResultInternal result = new OResultInternal();

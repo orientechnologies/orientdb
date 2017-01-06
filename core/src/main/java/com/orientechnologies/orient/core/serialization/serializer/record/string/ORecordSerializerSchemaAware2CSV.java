@@ -26,8 +26,6 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
-import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
@@ -41,18 +39,12 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstract {
   public static final String                           NAME             = "ORecordDocument2csv";
@@ -296,8 +288,8 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
   }
 
   @Override
-  protected StringBuilder toString(ORecord iRecord, final StringBuilder iOutput, final String iFormat,
-      OUserObject2RecordHandler iObjHandler, final boolean iOnlyDelta, final boolean autoDetectCollectionType) {
+  protected StringBuilder toString(ORecord iRecord, final StringBuilder iOutput, final String iFormat, final boolean iOnlyDelta,
+      final boolean autoDetectCollectionType) {
     if (iRecord == null)
       throw new OSerializationException("Expected a record but was null");
 
@@ -364,14 +356,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
             // DETERMINE THE FIELD TYPE
             type = OType.LINK;
 
-          else if (ODatabaseRecordThreadLocal.INSTANCE.isDefined() && ODatabaseRecordThreadLocal.INSTANCE.get()
-              .getDatabaseOwner() instanceof ODatabaseObject &&
-              ((ODatabaseObject) ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner()).getEntityManager()
-                  .getEntityClass(fieldClassName) != null) {
-            // DETERMINE THE FIELD TYPE
-            type = OType.LINK;
-            linkedClass = getLinkInfo(ODatabaseRecordThreadLocal.INSTANCE.get(), fieldClassName);
-          } else if (fieldValue instanceof Date)
+          else if (fieldValue instanceof Date)
             type = OType.DATETIME;
           else if (fieldValue instanceof String)
             type = OType.STRING;
@@ -419,10 +404,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
                     else
                       type = OType.LINKLIST;
                   } else if (ODatabaseRecordThreadLocal.INSTANCE.isDefined() && (firstValue instanceof ODocument
-                      && !((ODocument) firstValue).isEmbedded()) && (firstValue instanceof ORecord || (
-                      ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner() instanceof ODatabaseObject
-                          && ((ODatabaseObject) ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner()).getEntityManager()
-                                  .getEntityClass(getClassName(firstValue)) != null))) {
+                      && !((ODocument) firstValue).isEmbedded()) && (firstValue instanceof ORecord)) {
                     linkedClass = getLinkInfo(ODatabaseRecordThreadLocal.INSTANCE.get(), getClassName(firstValue));
                     if (type == null) {
                       // LINK: GET THE CLASS
@@ -482,10 +464,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 
               if (firstValue != null) {
                 if (ODatabaseRecordThreadLocal.INSTANCE.isDefined() && (firstValue instanceof ODocument && !((ODocument) firstValue)
-                    .isEmbedded()) && (firstValue instanceof ORecord || (
-                    ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner() instanceof ODatabaseObject &&
-                        ((ODatabaseObject) ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner()).getEntityManager()
-                            .getEntityClass(getClassName(firstValue)) != null))) {
+                    .isEmbedded()) && (firstValue instanceof ORecord)) {
                   linkedClass = getLinkInfo(ODatabaseRecordThreadLocal.INSTANCE.get(), getClassName(firstValue));
                   // LINK: GET THE CLASS
                   linkedType = OType.LINK;
@@ -513,7 +492,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 
       iOutput.append(fieldName);
       iOutput.append(FIELD_VALUE_SEPARATOR);
-      fieldToStream(record, iOutput, iObjHandler, type, linkedClass, linkedType, fieldName, fieldValue, true);
+      fieldToStream(record, iOutput, type, linkedClass, linkedType, fieldName, fieldValue, true);
 
       i++;
     }
@@ -565,16 +544,6 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
       return null;
 
     OClass linkedClass = ((OMetadataInternal) iDatabase.getMetadata()).getImmutableSchemaSnapshot().getClass(iFieldClassName);
-
-    if (iDatabase.getDatabaseOwner() instanceof ODatabaseObject) {
-      ODatabaseObject dbo = (ODatabaseObject) iDatabase.getDatabaseOwner();
-      if (linkedClass == null) {
-        Class<?> entityClass = dbo.getEntityManager().getEntityClass(iFieldClassName);
-        if (entityClass != null)
-          // REGISTER IT
-          linkedClass = iDatabase.getMetadata().getSchema().createClass(iFieldClassName);
-      }
-    }
 
     return linkedClass;
   }
