@@ -359,21 +359,6 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   }
 
   @Override
-  protected void preCloseSteps() throws IOException {
-    try {
-      if (writeAheadLog != null) {
-        checkpointExecutor.shutdown();
-        if (!checkpointExecutor
-            .awaitTermination(OGlobalConfiguration.WAL_FULL_CHECKPOINT_SHUTDOWN_TIMEOUT.getValueAsInteger(), TimeUnit.SECONDS))
-          throw new OStorageException("Cannot terminate full checkpoint task");
-      }
-    } catch (InterruptedException e) {
-      Thread.interrupted();
-      throw OException.wrapException(new OStorageException("Error on closing of storage '" + name), e);
-    }
-  }
-
-  @Override
   protected void postDeleteSteps() {
     File dbDir;// GET REAL DIRECTORY
     dbDir = new File(OIOUtils.getPathFromDatabaseName(OSystemVariableResolver.resolveSystemVariables(url)));
@@ -440,7 +425,9 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
   protected void initWalAndDiskCache() throws IOException {
     if (configuration.getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.USE_WAL)) {
-      checkpointExecutor = Executors.newSingleThreadExecutor(new FullCheckpointThreadFactory());
+      fuzzyCheckpointExecutor.scheduleWithFixedDelay(new PeriodicFuzzyCheckpoint(),
+          OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.getValueAsInteger(),
+          OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.getValueAsInteger(), TimeUnit.SECONDS);
 
       final ODiskWriteAheadLog diskWriteAheadLog = new ODiskWriteAheadLog(this);
       diskWriteAheadLog.addLowDiskSpaceListener(this);
@@ -468,12 +455,14 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     return new File(path + "/" + OMetadataDefault.CLUSTER_INTERNAL_NAME + OPaginatedCluster.DEF_EXTENSION).exists();
   }
 
-  private static class FullCheckpointThreadFactory implements ThreadFactory {
+  private class PeriodicFuzzyCheckpoint implements Runnable {
     @Override
-    public Thread newThread(Runnable r) {
-      Thread thread = new Thread(r);
-      thread.setDaemon(true);
-      return thread;
+    public void run() {
+      try {
+        makeFuzzyCheckpoint();
+      } catch (RuntimeException e) {
+        OLogManager.instance().error(this, "Error during fuzzy checkpoint", e);
+      }
     }
   }
 }

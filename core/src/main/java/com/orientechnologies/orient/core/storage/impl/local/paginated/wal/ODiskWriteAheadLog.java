@@ -27,7 +27,7 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.storage.impl.local.OFullCheckpointRequestListener;
+import com.orientechnologies.orient.core.storage.impl.local.OCheckpointRequestListener;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceInformation;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
@@ -51,8 +51,11 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   public static final  String WAL_SEGMENT_EXTENSION   = ".wal";
   private static final long   ONE_KB                  = 1024L;
 
-  private final long freeSpaceLimit = OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT.getValueAsLong() * ONE_KB * ONE_KB;
-  private final long walSizeLimit   = OGlobalConfiguration.WAL_MAX_SIZE.getValueAsLong() * ONE_KB * ONE_KB;
+  private final long walSizeHardLimit = OGlobalConfiguration.WAL_MAX_SIZE.getValueAsLong() * ONE_KB * ONE_KB;
+  private       long walSizeLimit     = walSizeHardLimit;
+
+  private final    long freeSpaceLimit = OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT.getValueAsLong() * ONE_KB * ONE_KB;
+  private volatile long freeSpace      = -1;
 
   private volatile OLogSequenceNumber end;
 
@@ -60,7 +63,6 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   private final int              maxPagesCacheSize;
   private final int              commitDelay;
   private final long             maxSegmentSize;
-  private final long             preferredSegmentCount;
   private final File             walLocation;
   private final RandomAccessFile masterRecordLSNHolder;
 
@@ -83,9 +85,9 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   private       boolean   segmentCreationFlag     = false;
   private final Condition segmentCreationComplete = syncObject.newCondition();
 
-  private final Set<OOperationUnitId>                               activeOperations        = new HashSet<OOperationUnitId>();
-  private final List<WeakReference<OLowDiskSpaceListener>>          lowDiskSpaceListeners   = new CopyOnWriteArrayList<>();
-  private final List<WeakReference<OFullCheckpointRequestListener>> fullCheckpointListeners = new CopyOnWriteArrayList<>();
+  private final Set<OOperationUnitId>                           activeOperations        = new HashSet<OOperationUnitId>();
+  private final List<WeakReference<OLowDiskSpaceListener>>      lowDiskSpaceListeners   = new CopyOnWriteArrayList<>();
+  private final List<WeakReference<OCheckpointRequestListener>> fullCheckpointListeners = new CopyOnWriteArrayList<>();
 
   private static class SimpleFileNameFilter implements java.io.FilenameFilter {
     private final String storageName;
@@ -141,21 +143,21 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       lowDiskSpaceListeners.remove(ref);
   }
 
-  public void addFullCheckpointListener(OFullCheckpointRequestListener listener) {
-    fullCheckpointListeners.add(new WeakReference<OFullCheckpointRequestListener>(listener));
+  public void addFullCheckpointListener(OCheckpointRequestListener listener) {
+    fullCheckpointListeners.add(new WeakReference<OCheckpointRequestListener>(listener));
   }
 
-  public void removeFullCheckpointListener(OFullCheckpointRequestListener listener) {
-    List<WeakReference<OFullCheckpointRequestListener>> itemsToRemove = new ArrayList<WeakReference<OFullCheckpointRequestListener>>();
+  public void removeFullCheckpointListener(OCheckpointRequestListener listener) {
+    List<WeakReference<OCheckpointRequestListener>> itemsToRemove = new ArrayList<WeakReference<OCheckpointRequestListener>>();
 
-    for (WeakReference<OFullCheckpointRequestListener> ref : fullCheckpointListeners) {
-      final OFullCheckpointRequestListener fullCheckpointRequestListener = ref.get();
+    for (WeakReference<OCheckpointRequestListener> ref : fullCheckpointListeners) {
+      final OCheckpointRequestListener fullCheckpointRequestListener = ref.get();
 
       if (fullCheckpointRequestListener == null || fullCheckpointRequestListener.equals(listener))
         itemsToRemove.add(ref);
     }
 
-    for (WeakReference<OFullCheckpointRequestListener> ref : itemsToRemove)
+    for (WeakReference<OCheckpointRequestListener> ref : itemsToRemove)
       fullCheckpointListeners.remove(ref);
   }
 
@@ -164,7 +166,6 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     this.maxPagesCacheSize = maxPagesCacheSize;
     this.commitDelay = commitDelay;
     this.maxSegmentSize = maxSegmentSize;
-    this.preferredSegmentCount = walSizeLimit / maxSegmentSize;
     this.storage = storage;
     this.performanceStatisticManager = storage.getPerformanceStatisticManager();
 
@@ -450,7 +451,9 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
    *
    * @param record
    * @param recordContent
+   *
    * @return
+   *
    * @throws IOException
    */
   private OLogSequenceNumber internalLog(OWALRecord record, byte[] recordContent) throws IOException {
@@ -513,9 +516,13 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
         }
       }
 
-      if (logSize > walSizeLimit && logSegments.size() > 1) {
-        for (WeakReference<OFullCheckpointRequestListener> listenerWeakReference : fullCheckpointListeners) {
-          final OFullCheckpointRequestListener listener = listenerWeakReference.get();
+      if (walSizeHardLimit < 0 && freeSpace > -1) {
+        walSizeLimit += (logSize + freeSpace) / 2;
+      }
+
+      if (walSizeLimit > -1 && logSize > walSizeLimit && logSegments.size() > 1) {
+        for (WeakReference<OCheckpointRequestListener> listenerWeakReference : fullCheckpointListeners) {
+          final OCheckpointRequestListener listener = listenerWeakReference.get();
           if (listener != null)
             listener.requestCheckpoint();
         }
@@ -619,6 +626,27 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     files = result.toArray(files);
 
     return files;
+  }
+
+
+  @Override
+  public long[] nonActiveSegments() {
+    final long[] result;
+
+    syncObject.lock();
+    try {
+      result = new long[logSegments.size() - 1];
+
+      for (int i = 0; i < logSegments.size() - 1; i++) {
+        final OLogSegment logSegment = logSegments.get(i);
+        result[i] = logSegment.getOrder();
+
+      }
+    } finally {
+      syncObject.unlock();
+    }
+
+    return result;
   }
 
   public long size() {
@@ -856,11 +884,6 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   @Override
   public void preventCutTill(OLogSequenceNumber lsn) throws IOException {
     preventCutTill = lsn;
-  }
-
-  @Override
-  public long getPreferredSegmentCount() {
-    return preferredSegmentCount;
   }
 
   private OLogSegment removeHeadSegmentFromList() {

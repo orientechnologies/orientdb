@@ -20,7 +20,7 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
-import com.orientechnologies.orient.core.storage.impl.local.OFullCheckpointRequestListener;
+import com.orientechnologies.orient.core.storage.impl.local.OCheckpointRequestListener;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationMetadata;
 
@@ -104,11 +104,11 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   @Override
-  public void addFullCheckpointListener(OFullCheckpointRequestListener listener) {
+  public void addFullCheckpointListener(OCheckpointRequestListener listener) {
   }
 
   @Override
-  public void removeFullCheckpointListener(OFullCheckpointRequestListener listener) {
+  public void removeFullCheckpointListener(OCheckpointRequestListener listener) {
   }
 
   @Override
@@ -122,6 +122,11 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   @Override
   public File[] nonActiveSegments(long fromSegment) {
     return new File[0];
+  }
+
+  @Override
+  public long[] nonActiveSegments() {
+    return new long[0];
   }
 
   @Override
@@ -139,11 +144,6 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
 
   @Override
   public void removeLowDiskSpaceListener(OLowDiskSpaceListener listener) {
-  }
-
-  @Override
-  public long getPreferredSegmentCount() {
-    throw new UnsupportedOperationException("Operation not supported for in memory storage.");
   }
 
   @Override

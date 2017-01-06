@@ -20,7 +20,7 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
-import com.orientechnologies.orient.core.storage.impl.local.OFullCheckpointRequestListener;
+import com.orientechnologies.orient.core.storage.impl.local.OCheckpointRequestListener;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationMetadata;
 
@@ -78,9 +78,9 @@ public interface OWriteAheadLog {
 
   void cutAllSegmentsSmallerThan(long segmentId) throws IOException;
 
-  void addFullCheckpointListener(OFullCheckpointRequestListener listener);
+  void addFullCheckpointListener(OCheckpointRequestListener listener);
 
-  void removeFullCheckpointListener(OFullCheckpointRequestListener listener);
+  void removeFullCheckpointListener(OCheckpointRequestListener listener);
 
   void addLowDiskSpaceListener(OLowDiskSpaceListener listener);
 
@@ -92,13 +92,9 @@ public interface OWriteAheadLog {
 
   File[] nonActiveSegments(long fromSegment);
 
+  long[] nonActiveSegments();
+
   long activeSegment();
 
   void newSegment() throws IOException;
-
-  /**
-   * @return preferred segment count this WAL instance tries to keep under. In fact, there may be less segments or more segments in
-   * this WAL instance than the returned count, but the returned count is preferred by this WAL instance.
-   */
-  long getPreferredSegmentCount();
 }
