@@ -428,10 +428,30 @@
                 </configuration>
             </plugin>
             <plugin>
+                <groupId>io.github.zlika</groupId>
+                <artifactId>reproducible-build-maven-plugin</artifactId>
+                <version>0.2</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>strip-jar</goal>
+                            <goal>strip-jaxb</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
                 <version>3.0.1</version>
-		<dependencies><dependency><groupId>org.codehaus.plexus</groupId><artifactId>plexus-archiver</artifactId><version>3.1.1</version></dependency></dependencies>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.codehaus.plexus</groupId>
+                        <artifactId>plexus-archiver</artifactId>
+                        <version>3.1.1</version>
+                    </dependency>
+                </dependencies>
                 <configuration>
                     <!-- | dummy entry to stop bundle plugin from picking 
                         up jar config and reporting | WARNING: Duplicate name in Manifest | See http://markmail.org/message/mpkl24wk3jrjhhjg -->
@@ -485,7 +505,7 @@
                             <Add-Opens>jdk.unsupported/sun.misc=ALL-UNNAMED java.base/sun.security.x509=ALL-UNNAMED
                             </Add-Opens>
                         </manifestEntries>
-			<addMavenDescriptor>false</addMavenDescriptor>
+                        <addMavenDescriptor>false</addMavenDescriptor>
                     </archive>
                 </configuration>
             </plugin>
