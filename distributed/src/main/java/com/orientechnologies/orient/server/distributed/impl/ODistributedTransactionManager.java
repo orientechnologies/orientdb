@@ -260,10 +260,10 @@ public class ODistributedTransactionManager {
     } catch (OConcurrentCreateException e) {
 
       // REQUEST A REPAIR OF THE CLUSTER BECAUSE IS NOT ALIGNED
-      localDistributedDatabase.getDatabaseRepairer().repairCluster(e.getActualRid().getClusterId());
+      localDistributedDatabase.getDatabaseRepairer().enqueueRepairCluster(e.getActualRid().getClusterId());
       throw e;
     } catch (OConcurrentModificationException e) {
-      localDistributedDatabase.getDatabaseRepairer().repairRecord((ORecordId) e.getRid());
+      localDistributedDatabase.getDatabaseRepairer().enqueueRepairRecord((ORecordId) e.getRid());
       throw e;
 
     } catch (Exception e) {
@@ -271,9 +271,9 @@ public class ODistributedTransactionManager {
       for (ORecordOperation op : iTx.getAllRecordEntries()) {
         if (iTx.hasRecordCreation()) {
           final ORecordId lockEntireCluster = (ORecordId) op.getRecord().getIdentity().copy();
-          localDistributedDatabase.getDatabaseRepairer().repairCluster(lockEntireCluster.getClusterId());
+          localDistributedDatabase.getDatabaseRepairer().enqueueRepairCluster(lockEntireCluster.getClusterId());
         }
-        localDistributedDatabase.getDatabaseRepairer().repairRecord((ORecordId) op.getRecord().getIdentity());
+        localDistributedDatabase.getDatabaseRepairer().enqueueRepairRecord((ORecordId) op.getRecord().getIdentity());
       }
 
       storage.handleDistributedException("Cannot route TX operation against distributed node", e);
@@ -714,6 +714,14 @@ public class ODistributedTransactionManager {
       // LET TO THE CALLER TO UNDO IT
       if (result instanceof OTransactionException || result instanceof ONeedRetryException)
         throw (RuntimeException) result;
+
+      if (result instanceof ORecordNotFoundException) {
+        // REPAIR THE RECORD IMMEDIATELY
+        localDistributedDatabase.getDatabaseRepairer().repairRecord((ORecordId) ((ORecordNotFoundException) result).getRid());
+
+        // RETRY
+        return false;
+      }
 
       throw OException.wrapException(new OTransactionException("Error on committing distributed transaction"), (Exception) result);
 

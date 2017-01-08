@@ -62,7 +62,7 @@ public class OTransactionIndexChanges {
 
   public void setCleared() {
     changesPerKey.clear();
-    nullKeyChanges.entries.clear();
+    nullKeyChanges.clear();
 
     cleared = true;
   }

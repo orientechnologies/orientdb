@@ -78,25 +78,36 @@ public class OTransactionIndexChangesPerKey {
   }
 
   public void add(OIdentifiable iValue, final OPERATION iOperation) {
-    entries.add(new OTransactionIndexEntry(iValue != null ? iValue.getIdentity() : null, iOperation));
+    synchronized (this) {
+      entries.add(new OTransactionIndexEntry(iValue != null ? iValue.getIdentity() : null, iOperation));
+    }
   }
 
   /**
    * Interprets this key changes using the given {@link Interpretation interpretation}.
    *
    * @param interpretation the interpretation to use.
+   *
    * @return the interpreted changes.
    */
   public Iterable<OTransactionIndexEntry> interpret(Interpretation interpretation) {
-    switch (interpretation) {
-    case Unique:
-      return interpretAsUnique();
-    case Dictionary:
-      return interpretAsDictionary();
-    case NonUnique:
-      return interpretAsNonUnique();
-    default:
-      throw new IllegalStateException("Unexpected interpretation '" + interpretation + "'");
+    synchronized (this) {
+      switch (interpretation) {
+      case Unique:
+        return interpretAsUnique();
+      case Dictionary:
+        return interpretAsDictionary();
+      case NonUnique:
+        return interpretAsNonUnique();
+      default:
+        throw new IllegalStateException("Unexpected interpretation '" + interpretation + "'");
+      }
+    }
+  }
+
+  public void clear() {
+    synchronized (this) {
+      entries.clear();
     }
   }
 
@@ -121,7 +132,7 @@ public class OTransactionIndexChangesPerKey {
     // 1. Handle common fast paths.
 
     if (entries.size() < 2)
-      return entries;
+      return new ArrayList<OTransactionIndexEntry>(entries);
 
     if (entries.size() == 2) {
       final OTransactionIndexEntry entryA = entries.get(0);
@@ -140,7 +151,7 @@ public class OTransactionIndexChangesPerKey {
         if (entryB.operation == OPERATION.REMOVE) // remove operation cancels put
           return Collections.emptyList();
 
-        return entries; // don't optimize remove-put on the same RID for safety
+        return new ArrayList<OTransactionIndexEntry>(entries); // don't optimize remove-put on the same RID for safety
       }
 
       if (entryB.operation == OPERATION.REMOVE)
@@ -148,7 +159,7 @@ public class OTransactionIndexChangesPerKey {
             Collections.singletonList(entryB) /* latest key removal wins */ :
             swap(entries) /* reorder to remove-put */;
 
-      return entries; // it's either remove-put or put-put
+      return new ArrayList<OTransactionIndexEntry>(entries); // it's either remove-put or put-put
     }
 
     // 2. Calculate observable changes to index.
@@ -206,7 +217,7 @@ public class OTransactionIndexChangesPerKey {
     // 1. Handle common fast paths.
 
     if (entries.size() < 2)
-      return entries;
+      return new ArrayList<OTransactionIndexEntry>(entries);
 
     if (entries.size() == 2) {
       final OTransactionIndexEntry entryA = entries.get(0);
@@ -301,7 +312,7 @@ public class OTransactionIndexChangesPerKey {
     // 1. Handle common fast paths.
 
     if (entries.size() < 2)
-      return entries;
+      return new ArrayList<OTransactionIndexEntry>(entries);
 
     if (entries.size() == 2) {
       final OTransactionIndexEntry entryA = entries.get(0);
@@ -316,7 +327,7 @@ public class OTransactionIndexChangesPerKey {
         if (entryB.operation == OPERATION.REMOVE)
           return Collections.singletonList(entryA); // both are removals
 
-        return entries; // second operation is a put
+        return new ArrayList<OTransactionIndexEntry>(entries); // second operation is a put
       }
 
       if (ridB == null) {
@@ -335,7 +346,7 @@ public class OTransactionIndexChangesPerKey {
         return Collections.singletonList(entryB); // put wins
       }
 
-      return entries; // it's put-put on different RIDs
+      return new ArrayList<OTransactionIndexEntry>(entries); // it's put-put on different RIDs
     }
 
     // 2. Calculate observable changes to index.

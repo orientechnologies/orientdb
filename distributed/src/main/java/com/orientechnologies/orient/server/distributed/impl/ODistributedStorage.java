@@ -352,7 +352,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       return result;
 
     } catch (OConcurrentModificationException e) {
-      localDistributedDatabase.getDatabaseRepairer().repairRecord((ORecordId) e.getRid());
+      localDistributedDatabase.getDatabaseRepairer().enqueueRepairRecord((ORecordId) e.getRid());
       throw e;
     } catch (ONeedRetryException e) {
       // PASS THROUGH
@@ -698,10 +698,10 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       // PASS THROUGH
       throw e;
     } catch (ONeedRetryException e) {
-      localDistributedDatabase.getDatabaseRepairer().repairRecord(iRecordId);
+      localDistributedDatabase.getDatabaseRepairer().enqueueRepairRecord(iRecordId);
       final ORecordId lockEntireCluster = iRecordId.copy();
       lockEntireCluster.setClusterPosition(-1);
-      localDistributedDatabase.getDatabaseRepairer().repairRecord(lockEntireCluster);
+      localDistributedDatabase.getDatabaseRepairer().enqueueRepairRecord(lockEntireCluster);
 
       // PASS THROUGH
       throw e;
@@ -712,10 +712,10 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       throw new OOfflineNodeException("Hazelcast instance is not available");
 
     } catch (Exception e) {
-      localDistributedDatabase.getDatabaseRepairer().repairRecord(iRecordId);
+      localDistributedDatabase.getDatabaseRepairer().enqueueRepairRecord(iRecordId);
       final ORecordId lockEntireCluster = iRecordId.copy();
       lockEntireCluster.setClusterPosition(-1);
-      localDistributedDatabase.getDatabaseRepairer().repairRecord(lockEntireCluster);
+      localDistributedDatabase.getDatabaseRepairer().enqueueRepairRecord(lockEntireCluster);
 
       handleDistributedException("Cannot route create record operation for %s to the distributed node", e, iRecordId);
       // UNREACHABLE
@@ -925,6 +925,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
                     final Object payload = dResponse.getPayload();
 
                     if (payload instanceof Exception) {
+                      if (payload instanceof ORecordNotFoundException) {
+                        // REPAIR THE RECORD IMMEDIATELY
+                        localDistributedDatabase.getDatabaseRepairer()
+                            .enqueueRepairRecord((ORecordId) ((ORecordNotFoundException) payload).getRid());
+                      }
+
                       executeUndoOnLocalServer(dResponse.getRequestId(), task);
 
                       if (payload instanceof ONeedRetryException)
@@ -956,7 +962,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
           });
 
     } catch (ONeedRetryException e) {
-      localDistributedDatabase.getDatabaseRepairer().repairRecord(iRecordId);
+      localDistributedDatabase.getDatabaseRepairer().enqueueRepairRecord(iRecordId);
 
       // PASS THROUGH
       throw e;
@@ -968,7 +974,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       throw new OOfflineNodeException("Hazelcast instance is not available");
 
     } catch (Exception e) {
-      localDistributedDatabase.getDatabaseRepairer().repairRecord(iRecordId);
+      localDistributedDatabase.getDatabaseRepairer().enqueueRepairRecord(iRecordId);
 
       handleDistributedException("Cannot route UPDATE_RECORD operation for %s to the distributed node", e, iRecordId);
       // UNREACHABLE
@@ -1080,7 +1086,13 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
                     final Object payload = dResponse.getPayload();
 
-                    if (payload instanceof Exception && !(payload instanceof ORecordNotFoundException)) {
+                    if (payload instanceof Exception) {
+                      if (payload instanceof ORecordNotFoundException) {
+                        // REPAIR THE RECORD IMMEDIATELY
+                        localDistributedDatabase.getDatabaseRepairer()
+                            .enqueueRepairRecord((ORecordId) ((ORecordNotFoundException) payload).getRid());
+                      }
+
                       executeUndoOnLocalServer(dResponse.getRequestId(), task);
 
                       if (payload instanceof ONeedRetryException)
@@ -1113,7 +1125,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
           });
 
     } catch (ONeedRetryException e) {
-      localDistributedDatabase.getDatabaseRepairer().repairRecord(iRecordId);
+      localDistributedDatabase.getDatabaseRepairer().enqueueRepairRecord(iRecordId);
 
       // PASS THROUGH
       throw e;
@@ -1125,7 +1137,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       throw new OOfflineNodeException("Hazelcast instance is not available");
 
     } catch (Exception e) {
-      localDistributedDatabase.getDatabaseRepairer().repairRecord(iRecordId);
+      localDistributedDatabase.getDatabaseRepairer().enqueueRepairRecord(iRecordId);
 
       handleDistributedException("Cannot route DELETE_RECORD operation for %s to the distributed node", e, iRecordId);
       // UNREACHABLE

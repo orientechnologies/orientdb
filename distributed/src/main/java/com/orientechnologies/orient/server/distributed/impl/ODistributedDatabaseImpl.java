@@ -294,8 +294,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
             if (!locked) {
               final String msg = String
-                  .format("Cannot execute distributed request (%s) because all worker threads (%d) are busy", request,
-                      workerThreads.size());
+                  .format("Cannot execute distributed request (%s) because all worker threads (%d) are busy (pending=%d)", request,
+                      workerThreads.size(), syncLatch.getCount());
               ODistributedWorker.sendResponseBack(this, manager, request, new ODistributedOperationException(msg));
               return;
             }
@@ -740,12 +740,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   @Override
   public void handleUnreachableNode(final String nodeName) {
-    final int nodeLeftId = manager.getNodeIdByName(nodeName);
-    if (nodeLeftId < 0)
-      return;
-
-    int rollbacks = 0;
-
     ODistributedServerLog.debug(this, manager.getLocalNodeName(), nodeName, DIRECTION.IN,
         "Distributed transaction: rolling back all the pending transactions coordinated by the unreachable server '%s'", nodeName);
 
