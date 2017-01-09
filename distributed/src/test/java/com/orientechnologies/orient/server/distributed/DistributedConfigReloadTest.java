@@ -2,6 +2,7 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -10,10 +11,7 @@ import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Parameter;
 import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+import com.tinkerpop.blueprints.impls.orient.*;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -25,7 +23,7 @@ import java.util.concurrent.Future;
 
 public final class DistributedConfigReloadTest {
 
-  private String dbName = "distconfigreloaddb";
+  private String dbName = "distconfigureloaddb";
 
   public DistributedConfigReloadTest(String dbName) {
     this.dbName = dbName;
@@ -123,89 +121,127 @@ public final class DistributedConfigReloadTest {
         log("Starting runnable to create index " + className);
         long st = System.currentTimeMillis();
         OrientGraph graph = graphFactory.getTx();
+        boolean isSelectSuccessful = true;
         try {
           boolean isRunning = true;
           for (int j = 0; j < 1000000; j++) {
+            isSelectSuccessful = true;
+            String sql = "SELECT FROM " + className;
+            int deleteErrorCounter = 0;
             try {
-              String sql = "SELECT FROM " + className;
-//              String sql = "DELETE FROM " + className;
-//              Iterable<OrientVertex> result = graph.command(new OCommandSQL(sql)).execute();
+              graph.command(new OCommandSQL(sql)).execute();
               Iterable<Vertex> vtxs = graph.command(new OCommandSQL(sql)).execute();
               for (Vertex vtx : vtxs) {
-                try {
-                  vtx.remove();
-                  graph.commit();
-                } catch (Exception ex) {
-                  log("[" + j + "] Failed to delete vertex  [" + className + "][" + ex + "]");
+                boolean needRetry = true;
+                for (int i = 0; i < 10 && needRetry; i++) {
+                  try {
+                    vtx.remove();
+                    graph.commit();
+                    needRetry = false;
+                  } catch (ONeedRetryException ex) {
+                    try {
+                      ((OrientElement) vtx).reload();
+                    } catch (ORecordNotFoundException e) {
+                      // BY LUCA
+                      log("[" + id + "] Caught [" + e + "] during reload because the record was already deleted, no errors just go ahead");
+                    }
+                  } catch (ORecordNotFoundException e) {
+                    // BY LUCA
+                    log("[" + id + "] Caught [" + e + "] because the record was already deleted, no errors just go ahead");
+                  } catch (Exception ex) {
+                    log("[" + j + "] Failed to delete vertex  [" + className + "] Vertex: [" + vtx + "] Property 1: [" + vtx
+                        .getProperty("property1") + "] Error: [" + ex + "]");
+                    deleteErrorCounter++;
+                    needRetry = false;
+                  }
                 }
               }
-
               log(" [" + id + "] Delete vertex : [" + j + "] [" + className + "]");
             } catch (Exception ex) {
-              log("***************** [" + j + "] Failed to delete vertex  [" + className + "][" + ex + "]");
+              log("***************** [" + id + "] Failed to select vertex  [" + className + "][" + ex + "]");
+              isSelectSuccessful = false;
             }
-            boolean showException = true;
-            int counter = 0;
-            for (int i = 1; i < 2000 && isRunning; i++) {
-              if ((i % 2000) == 0) {
-                long et = System.currentTimeMillis();
-                log(" [" + id + "] Total Records Processed: [" + i + "] Time taken for [2000] records: [" + (et - st) / 2000
-                    + "] seconds");
-                st = System.currentTimeMillis();
-              }
 
-              Vertex vertex = graph.addVertex("class:" + className);
-              try {
-                vertex.setProperty("property1", "value1-" + i);
-                vertex.setProperty("property2", "value2-" + (System.currentTimeMillis() + "-" + i));
-                vertex.setProperty("property3", "value3-" + i);
-                vertex.setProperty("property4", "value4-1");
-                vertex.setProperty("prop-6", "value6-" + i);
-                vertex.setProperty("prop-7", "value7-" + i);
-                vertex.setProperty("prop-8", "value7-1");
-                vertex.setProperty("prop-9", "value7-1");
-                vertex.setProperty("prop-10", "value7-1");
-                vertex.setProperty("prop11", "value7-1");
-                vertex.setProperty("prop12", "value7-1");
-                vertex.setProperty("prop13", "value7-1");
-                vertex.setProperty("prop14", System.currentTimeMillis());
-                vertex.setProperty("prop15", System.currentTimeMillis());
-                graph.commit();
-              } catch (ONeedRetryException ex) {
-                if (ex instanceof ONeedRetryException || ex.getCause() instanceof ONeedRetryException) {
-                  log("[" + id + "] OrientDB Retry Exception [" + ex + "]");
-                } else {
-                  log("[" + id + "] OrientDB Exception [" + ex + "]");
+            if (isSelectSuccessful) {
+              graph.command(new OCommandSQL(sql)).execute();
+              Iterable<Vertex> vtxs = graph.command(new OCommandSQL(sql)).execute();
+              ArrayList<String> vtxList = new ArrayList();
+              for (Vertex vtx : vtxs) {
+                vtxList.add(vtx.toString());
+              }
+              if (vtxList.size() > 0) {
+                log("########## [" + id + "] Records present after delete vertex  [" + className + "] Error on delete ["
+                    + deleteErrorCounter + "] List: " + vtxList + "");
+              } else {
+                log("########## [" + id + "] Records removed after delete vertex  [" + className + "] Error on delete ["
+                    + deleteErrorCounter + "]");
+              }
+              boolean showException = true;
+              int counter = 0;
+              for (int i = 1; i < 2000 && isRunning; i++) {
+                if ((i % 2000) == 0) {
+                  long et = System.currentTimeMillis();
+                  log(" [" + id + "] Total Records Processed: [" + i + "] Time taken for [2000] records: [" + (et - st) / 2000
+                      + "] seconds");
+                  st = System.currentTimeMillis();
                 }
-                if (!(ex instanceof ODistributedConfigurationChangedException || ex
-                    .getCause() instanceof ODistributedConfigurationChangedException)) {
-                  // reloadVertex(vertex, ex);
-                } else {
-                  log("[" + id + "] ODistributedConfigurationChangedException {} while updating vertex " + vertex);
-                }
-              } catch (ORecordDuplicatedException ex) {
-                log("[" + id + "] Caught [" + ex + "], no errors just go ahead");
 
-              } catch (ODistributedException ex) {
-                if (ex.getCause() instanceof ONeedRetryException) {
-                  log("[" + id + "] OrientDB Retry Exception [" + ex + "]");
-                } else {
-                  log("[" + id + "] OrientDB Exception [" + ex + "]");
-                }
-                if (!(ex.getCause() instanceof ODistributedConfigurationChangedException)) {
-                  // reloadVertex(vertex, ex);
-                } else {
-                  log("[" + id + "] ODistributedConfigurationChangedException {} while updating vertex " + vertex);
-                }
-              } catch (Exception ex) {
-                if (showException) {
-                  log("[" + id + "] Failed non OrientDB Exception [" + ex + "]");
-                  showException = false;
-                  counter++;
+                Vertex vertex = graph.addVertex("class:" + className);
+                try {
+                  vertex.setProperty("property1", "value-" + id + "-" + i);
+                  vertex.setProperty("property2", "value2-" + (System.currentTimeMillis() + "-" + i));
+                  vertex.setProperty("property3", "value3-" + i);
+                  vertex.setProperty("property4", "value4-1");
+                  vertex.setProperty("prop-6", "value6-" + i);
+                  vertex.setProperty("prop-7", "value7-" + i);
+                  vertex.setProperty("prop-8", "value7-1");
+                  vertex.setProperty("prop-9", "value7-1");
+                  vertex.setProperty("prop-10", "value7-1");
+                  vertex.setProperty("prop11", "value7-1");
+                  vertex.setProperty("prop12", "value7-1");
+                  vertex.setProperty("prop13", "value7-1");
+                  vertex.setProperty("prop14", System.currentTimeMillis());
+                  vertex.setProperty("prop15", System.currentTimeMillis());
+                  graph.commit();
+                } catch (ONeedRetryException ex) {
+                  if (ex instanceof ONeedRetryException || ex.getCause() instanceof ONeedRetryException) {
+                    log("[" + id + "] OrientDB Retry Exception [" + ex + "]");
+                  } else {
+                    log("[" + id + "] OrientDB Exception [" + ex + "]");
+                  }
+                  if (!(ex instanceof ODistributedConfigurationChangedException || ex
+                      .getCause() instanceof ODistributedConfigurationChangedException)) {
+                    //reloadVertex(vertex, ex);
+                  } else {
+                    log("[" + id + "] ODistributedConfigurationChangedException {} while updating vertex " + vertex);
+                  }
+                } catch (ORecordDuplicatedException ex) {
+                  // BY LUCA
+                  log("[" + id + "] Caught [" + ex + "], no errors just go ahead");
+                } catch (ODistributedException ex) {
+                  if (ex.getCause() instanceof ONeedRetryException) {
+                    log("[" + id + "] OrientDB Retry Exception [" + ex + "]");
+                  } else {
+                    log("[" + id + "] OrientDB Exception [" + ex + "]");
+                  }
+                  if (!(ex.getCause() instanceof ODistributedConfigurationChangedException)) {
+                    //reloadVertex(vertex, ex);
+                  } else {
+                    log("[" + id + "] ODistributedConfigurationChangedException {} while updating vertex " + vertex);
+                  }
+                } catch (Exception ex) {
+                  if (showException) {
+                    log("[" + id + "] Failed to create record Exception [" + ex + "]");
+                    showException = false;
+                    counter++;
+                  }
                 }
               }
+              log("************ [" + id + "] Total number of errors: [" + counter + "] Delete error counter:[" + deleteErrorCounter
+                  + "]");
+            } else {
+              log("#####################  [" + id + "] Select failed. Skipping create..");
             }
-            log("************ [" + id + "] Total number of errors[" + counter + "]");
 
           }
         } finally {
@@ -277,7 +313,7 @@ public final class DistributedConfigReloadTest {
   }
 
   public static void main(String[] args) {
-    DistributedConfigReloadTest test = new DistributedConfigReloadTest("configreloaddb");
+    DistributedConfigReloadTest test = new DistributedConfigReloadTest("distconfigureloaddb");
     test.runTest();
   }
 
