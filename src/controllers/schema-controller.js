@@ -126,7 +126,7 @@ schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$locatio
       title: 'Warning!',
       body: 'You are dropping class ' + nameClass['name'] + '. Are you sure?',
       success: function () {
-        var sql = 'DROP CLASS ' + nameClass['name'];
+        var sql = 'DROP CLASS `' + nameClass['name'] + "`";
 
         CommandApi.queryText({
           database: $routeParams.database,
@@ -155,7 +155,7 @@ schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$locatio
     }
   }
   $scope.queryAll = function (className) {
-    $location.path("/database/" + $scope.database.getName() + "/browse/select * from " + className);
+    $location.path("/database/" + $scope.database.getName() + "/browse/select * from `" + className + "`");
   }
   $scope.createRecord = function (className) {
     $location.path("/database/" + $scope.database.getName() + "/browse/create/" + className);
@@ -233,7 +233,7 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
     $location.path("/database/" + $scope.database.getName() + "/browse/create/" + className);
   }
   $scope.queryAll = function (className) {
-    $location.path("/database/" + $scope.database.getName() + "/browse/select * from " + className);
+    $location.path("/database/" + $scope.database.getName() + "/browse/select * from `" + className + "`");
   }
   $scope.canDrop = function (clazz) {
 
@@ -457,7 +457,7 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
       title: 'Warning!',
       body: 'You are dropping index ' + nameIndex.name + '. Are you sure?',
       success: function () {
-        var sql = 'DROP INDEX ' + nameIndex.name;
+        var sql = 'DROP INDEX `' + nameIndex.name + "`";
 
         CommandApi.queryText({
           database: $routeParams.database,
@@ -478,16 +478,17 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
       title: 'Warning!',
       body: 'You are dropping property  ' + elementName + '. Are you sure?',
       success: function () {
-        var sql = 'DROP PROPERTY ' + clazz + '.' + elementName;
+        var sql = 'DROP PROPERTY `' + clazz + '`.`' + elementName + "`";
 
 
         CommandApi.queryText({
           database: $routeParams.database,
           language: 'sql',
           text: sql,
-          limit: $scope.limit
+          limit: $scope.limit,
+          verbose: false
         }, function (data) {
-          for (entry in $scope.property) {
+          for (var entry in $scope.property) {
             if ($scope.property[entry]['name'] == elementName) {
               // ($scope.property[entry])
               var index = $scope.property.indexOf($scope.property[entry])
@@ -614,7 +615,7 @@ schemaModule.controller("IndexController", ['$scope', '$routeParams', '$route', 
     }
     var nameInddd = proppps;
     nameInddd.replace(')', '');
-    var sql = 'CREATE INDEX ' + $scope.nameIndexToShow + ' ON ' + $scope.classInject + ' ( ' + proppps + ' ) ' + $scope.newIndex['type'];
+    var sql = 'CREATE INDEX `' + $scope.nameIndexToShow + '` ON `' + $scope.classInject + '` ( `' + proppps + '` ) ' + $scope.newIndex['type'];
 
     if ($scope.newIndex['engine'] == 'LUCENE') {
       sql += ' ENGINE LUCENE';
@@ -679,10 +680,9 @@ schemaModule.controller("PropertyController", ['$scope', '$routeParams', '$locat
     if (propName == undefined || propType == undefined)
       return;
     var linkedType = prop['linkedType'] != null ? prop['linkedType'] : '';
-    var linkedClass = prop['linkedClass'] != null ? prop['linkedClass'] : '';
-    var sql = 'CREATE PROPERTY ' + $scope.classInject + '.' + propName + ' ' + propType + ' ' + linkedType + ' ' + linkedClass;
+    var linkedClass = prop['linkedClass'] != null ? "`" + prop['linkedClass'] + "`" : '';
+    var sql = 'CREATE PROPERTY `' + $scope.classInject + '`.`' + propName + '` ' + propType + ' ' + linkedType + ' ' + linkedClass;
 
-    console.log(sql);
     Spinner.startSpinnerPopup();
     var allCommand = $q.when();
 
@@ -722,16 +722,15 @@ schemaModule.controller("PropertyController", ['$scope', '$routeParams', '$locat
       limit: $scope.limit,
       verbose: false
     }, function (data) {
-
       var len = Object.keys(prop).length;
-      for (entry in prop) {
+      for (let entry in prop) {
         if (prop[entry] == null) {
           len--;
           delete prop[entry];
         }
       }
       var i = 1;
-      for (entry in prop) {
+      for (let entry in prop) {
         var val = prop[entry];
         if (propType === "DATE" || propType === "DATETIME") {
           if (entry === 'min' || entry === 'max') {
@@ -741,7 +740,10 @@ schemaModule.controller("PropertyController", ['$scope', '$routeParams', '$locat
         if (entry === 'name') {
           val = "\"" + val + "\"";
         }
-        var sql = 'ALTER PROPERTY ' + $scope.classInject + '.' + propName + ' ' + entry + ' ' + val;
+        if (entry === 'linkedClass') {
+          val = "`" + val + "`";
+        }
+        var sql = 'ALTER PROPERTY `' + $scope.classInject + '`.`' + propName + '` ' + entry + ' ' + val;
         addCommandToExecute(sql, i, len);
         i++;
       }
@@ -810,12 +812,18 @@ schemaModule.controller("NewClassController", ['$scope', '$routeParams', '$locat
 
 
   $scope.saveNewClass = function () {
-    var sql = 'CREATE CLASS ' + $scope.property['name'];
+    var sql = 'CREATE CLASS `' + $scope.property['name'] + "`";
     var abstract = $scope.property['abstract'] ? ' ABSTRACT ' : '';
     var alias = $scope.property['alias'] == null || $scope.property['alias'] == '' ? null : $scope.property['alias'];
     var supercl = $scope.property['superclass'] != null ? ' extends ' + $scope.property['superclass'] : '';
     var arrSuper = $scope.property['superClasses'];
-    var superClasses = (arrSuper != null && arrSuper.length > 0) ? ' extends ' + $filter('formatArray')($scope.property['superClasses']) : ''
+
+    var superClasses = '';
+    if ((arrSuper != null && arrSuper.length > 0)) {
+      superClasses = ' extends ' + $filter('formatArray')($scope.property['superClasses'].map((c) => {
+          return "`" + c + "`"
+        }));
+    }
     sql = sql + superClasses + abstract;
 
 
@@ -827,7 +835,7 @@ schemaModule.controller("NewClassController", ['$scope', '$routeParams', '$locat
       verbose: false
     }, function (data) {
       if (alias != null) {
-        sql = 'ALTER CLASS ' + $scope.property['name'] + ' SHORTNAME ' + alias;
+        sql = 'ALTER CLASS ' + $scope.property['name'] + ' SHORTNAME `' + alias + "`";
         CommandApi.queryText({
           database: $routeParams.database,
           language: 'sql',

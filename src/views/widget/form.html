@@ -7,9 +7,9 @@
                 <ng-include src="fieldTypes[header]" class='col-md-8 col-xs-7'></ng-include>
 
                 <div class="col-md-3 col-xs-3">
-                    <select class='form-control input-sm' ng-disabled='inSchema(header)' ng-model="selectedHeader"
-                            ng-change="changeType('{{ header }}',selectedHeader)">
-                        <option ng-repeat="t in types" ng-selected="isSelected(header,t)">{{ t }}</option>
+                    <select class='form-control input-sm' ng-disabled='inSchema(header)' ng-model="selectedHeader[header]"
+                            ng-change="changeType('{{ header }}')">
+                        <option ng-repeat="t in types" >{{ t }}</option>
                     </select>
                 </div>
                 <div class="del-field col-md-1 col-xs-1">

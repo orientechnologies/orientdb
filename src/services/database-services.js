@@ -689,7 +689,9 @@ database.factory('CommandApi', ["$http", "$resource", "Notification", "Spinner",
           }
 
           if (data != undefined) {
-            data.notification = noti;
+            if (typeof data != "string") {
+              data.notification = noti;
+            }
             callback(data);
           }
           else {
@@ -979,7 +981,7 @@ database.factory('ClassAlterApi', ["$http", "$resource", "$q", function ($http, 
 
     var deferred = $q.defer();
     var text = API + 'command/' + database + '/sql/-/-1?format=rid,type,version,class,graph';
-    var query = "alter class {{clazz}} {{name}} {{value}}"
+    var query = "alter class `{{clazz}}` {{name}} {{value}}"
     var queryText = S(query).template(props).s;
     $http.post(text, queryText).success(function (data) {
       deferred.resolve(data)

@@ -363,9 +363,11 @@ function BaseEditController($scope, $routeParams, $route, $location, $modal, $q,
 
   $scope.save = function () {
     if (!$scope.isNew) {
-      DocumentApi.updateDocument($scope.database, $scope.rid, $scope.doc, function (data) {
+      DocumentApi.updateDocument($scope.database, $scope.rid, $scope.doc).then((data) => {
         Notification.push({content: JSON.stringify(data)});
         $route.reload();
+      }).catch((err) => {
+        Notification.push({content: err, error: true});
       });
     } else {
       DocumentApi.createDocument($scope.database, $scope.doc['@rid'], $scope.doc, function (data) {

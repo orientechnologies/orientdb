@@ -56,7 +56,6 @@
 
     <div class="card">
       <div class="row properties">
-
         <div class="col-md-12">
           <div class="page-header">
             <h4>Properties
@@ -68,11 +67,16 @@
               </a>
             </h4>
           </div>
-
-          <button href="javascript:void(0)" class="btn  btn-default btn-sm" ng-click="newProperty()"><i
-            class="fa fa-plus"></i> New
-            Property
-          </button>
+        </div>
+        <div class="col-md-12">
+          <div class="btn-group pull-right">
+            <button href="javascript:void(0)" class="btn  btn-default btn-sm" ng-click="newProperty()"><i
+              class="fa fa-plus"></i> New
+              Property
+            </button>
+          </div>
+        </div>
+        <div class="col-md-12">
           <div class="scroll-editclass">
             <table class="table table-striped table-bordered table-hover table-condensed pointer"
                    ng-show="classClickedHeaders">
@@ -197,9 +201,15 @@
               </a>
             </h4>
           </div>
-          <button href="javascript:void(0)" class="btn btn-sm btn-default" ng-click="newIndex()"><i
-            class="fa fa-plus"></i> New Index
-          </button>
+        </div>
+        <div class="col-md-12">
+          <div class="btn-group pull-right">
+            <button href="javascript:void(0)" class="btn btn-sm btn-default" ng-click="newIndex()"><i
+              class="fa fa-plus"></i> New Index
+            </button>
+          </div>
+        </div>
+        <div class="col-md-12">
           <div class="scroll-indexes">
             <table class="table table-striped table-bordered table-hover table-condensed pointer"
                    ng-show="classClickedHeaders">

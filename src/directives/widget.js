@@ -2,8 +2,6 @@ import angular from 'angular';
 var Widget = angular.module('rendering', []);
 
 
-
-
 import '../views/widget/string.html';
 import '../views/widget/short.html';
 import '../views/widget/embedded.html';
@@ -33,6 +31,7 @@ Widget.directive('docwidget', ["$compile", "$http", "Database", "CommandApi", "D
     formScope.options = new Array;
     formScope.types = Database.getSupportedTypes();
     formScope.fieldTypes = new Array;
+    formScope.selectedHeader = {}
     formScope.editorOptions = {
       lineWrapping: true,
       lineNumbers: true,
@@ -52,8 +51,14 @@ Widget.directive('docwidget', ["$compile", "$http", "Database", "CommandApi", "D
       return type == formScope.getType(name);
     }
     formScope.getTemplate = function (header) {
+
+
       if (formScope.doc['@class']) {
-        var type = findType(formScope, header);
+
+        let type = formScope.selectedHeader[header];
+        if (!type) {
+          type = findType(formScope, header);
+        }
         if (type) {
           return 'views/widget/' + type.toLowerCase() + '.html';
         }
@@ -89,7 +94,10 @@ Widget.directive('docwidget', ["$compile", "$http", "Database", "CommandApi", "D
         });
       }
     }
-    formScope.changeType = function (name, type) {
+    formScope.changeType = function (name) {
+
+
+      let type = formScope.selectedHeader[name];
 
       var idx = formScope.headers.indexOf(name);
       formScope.headers.splice(idx, 1);
@@ -100,16 +108,15 @@ Widget.directive('docwidget', ["$compile", "$http", "Database", "CommandApi", "D
       } else {
         types = name + '=' + Database.getMappingFor(type);
       }
-
       formScope.doc['@fieldTypes'] = types;
       formScope.fieldTypes[name] = formScope.getTemplate(name);
       formScope.headers.push(name);
-
-
     }
-    formScope.$watch('formID.$valid', function (validity) {
+    formScope.$parent.$watch('docForm.$valid', function (validity) {
       scope.docValid = validity;
     });
+
+
     formScope.handleFile = function (header, files) {
 
       var reader = new FileReader();
@@ -125,13 +132,16 @@ Widget.directive('docwidget', ["$compile", "$http", "Database", "CommandApi", "D
       reader.readAsDataURL(files[0]);
     }
     scope.$on('fieldAdded', function (event, field) {
+      formScope.selectedHeader[field] = formScope.getType(field);
       formScope.fieldTypes[field] = formScope.getTemplate(field);
     });
     scope.$parent.$watch("headers", function (data) {
       if (data) {
         data.forEach(function (elem, idx, array) {
           formScope.fieldTypes[elem] = formScope.getTemplate(elem);
+          formScope.selectedHeader[elem] = formScope.getType(elem);
         });
+
         formScope.headers = data;
       }
 
