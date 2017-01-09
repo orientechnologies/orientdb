@@ -38,7 +38,7 @@ import java.util.concurrent.ConcurrentMap;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class ORemoteConnectionManager {
-  public static final String                                   PARAM_MAX_POOL = "maxpool";
+  public static final String PARAM_MAX_POOL = "maxpool";
 
   protected final ConcurrentMap<String, ORemoteConnectionPool> connections;
   protected final long                                         timeout;
@@ -112,7 +112,7 @@ public class ORemoteConnectionManager {
   }
 
   public void release(final OChannelBinaryAsynchClient conn) {
-    if( conn == null )
+    if (conn == null)
       return;
 
     final ORemoteConnectionPool pool = connections.get(conn.getServerURL());
@@ -127,12 +127,15 @@ public class ORemoteConnectionManager {
   }
 
   public void remove(final OChannelBinaryAsynchClient conn) {
-    if( conn == null )
+    if (conn == null)
       return;
 
     final ORemoteConnectionPool pool = connections.get(conn.getServerURL());
-    if (pool == null)
-      throw new IllegalStateException("Connection cannot be released because the pool doesn't exist anymore");
+    if (pool == null) {
+      OLogManager.instance()
+          .debug(this, "Connection '%s' cannot be released because the pool doesn't exist anymore", conn.getServerURL());
+      return;
+    }
 
     pool.getPool().remove(conn);
 
