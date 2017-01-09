@@ -126,6 +126,10 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
     if (c != null)
       throw new IllegalArgumentException("Invalid index name '" + iName + "'. Character '" + c + "' is invalid");
 
+    if (indexDefinition == null) {
+      throw new IllegalArgumentException("Index definition cannot be null");
+    }
+
     ODatabaseDocumentInternal database = getDatabase();
     OStorage storage = database.getStorage();
 
@@ -162,7 +166,6 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
         progressListener = new OIndexRebuildOutputListener(index);
 
       final Set<String> clustersToIndex = findClustersByIds(clusterIdsToIndex, database);
-      if (indexDefinition != null) {
         Object ignoreNullValues = metadata == null ? null : metadata.field("ignoreNullValues");
         if (Boolean.TRUE.equals(ignoreNullValues)) {
           indexDefinition.setNullValuesIgnored(true);
@@ -170,12 +173,10 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
           indexDefinition.setNullValuesIgnored(false);
         } else {
           indexDefinition.setNullValuesIgnored(OGlobalConfiguration.INDEX_IGNORE_NULL_VALUES_DEFAULT.getValueAsBoolean());
-        }
       }
 
       // decide which cluster to use ("index" - for automatic and "manindex" for manual)
-      final String clusterName = indexDefinition != null && indexDefinition.getClassName() != null ? defaultClusterName
-          : manualClusterName;
+      final String clusterName = indexDefinition.getClassName() != null ? defaultClusterName : manualClusterName;
 
       index.create(iName, indexDefinition, clusterName, clustersToIndex, true, progressListener);
 

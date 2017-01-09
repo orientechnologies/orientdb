@@ -24,7 +24,7 @@ public class IndexTxAwareOneValueGetTest extends DocumentDBBaseTest {
   public void beforeClass() throws Exception {
     super.beforeClass();
 
-    database.command(new OCommandSQL("create index idxTxAwareOneValueGetTest unique")).execute();
+    database.command(new OCommandSQL("create index idxTxAwareOneValueGetTest unique INTEGER")).execute();
   }
 
   @AfterMethod

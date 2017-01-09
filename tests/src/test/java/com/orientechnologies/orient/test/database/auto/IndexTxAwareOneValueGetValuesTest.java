@@ -30,7 +30,7 @@ public class IndexTxAwareOneValueGetValuesTest extends DocumentDBBaseTest {
   public void beforeClass() throws Exception {
     super.beforeClass();
 
-    database.command(new OCommandSQL("create index idxTxAwareOneValueGetValuesTest unique")).execute();
+    database.command(new OCommandSQL("create index idxTxAwareOneValueGetValuesTest unique INTEGER")).execute();
   }
 
   @AfterMethod

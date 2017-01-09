@@ -34,23 +34,23 @@ import java.util.*;
 
 /**
  * Proxied abstract index.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 @SuppressWarnings("unchecked")
 public abstract class OIndexRemote<T> implements OIndex<T> {
-  public static final String    QUERY_GET_VALUES_BEETWEN_SELECT                   = "select from index:%s where ";
-  public static final String    QUERY_GET_VALUES_BEETWEN_INCLUSIVE_FROM_CONDITION = "key >= ?";
-  public static final String    QUERY_GET_VALUES_BEETWEN_EXCLUSIVE_FROM_CONDITION = "key > ?";
-  public static final String    QUERY_GET_VALUES_BEETWEN_INCLUSIVE_TO_CONDITION   = "key <= ?";
-  public static final String    QUERY_GET_VALUES_BEETWEN_EXCLUSIVE_TO_CONDITION   = "key < ?";
-  public static final String    QUERY_GET_VALUES_AND_OPERATOR                     = " and ";
-  public static final String    QUERY_GET_VALUES_LIMIT                            = " limit ";
+  public static final    String QUERY_GET_VALUES_BEETWEN_SELECT                   = "select from index:%s where ";
+  public static final    String QUERY_GET_VALUES_BEETWEN_INCLUSIVE_FROM_CONDITION = "key >= ?";
+  public static final    String QUERY_GET_VALUES_BEETWEN_EXCLUSIVE_FROM_CONDITION = "key > ?";
+  public static final    String QUERY_GET_VALUES_BEETWEN_INCLUSIVE_TO_CONDITION   = "key <= ?";
+  public static final    String QUERY_GET_VALUES_BEETWEN_EXCLUSIVE_TO_CONDITION   = "key < ?";
+  public static final    String QUERY_GET_VALUES_AND_OPERATOR                     = " and ";
+  public static final    String QUERY_GET_VALUES_LIMIT                            = " limit ";
   protected final static String QUERY_ENTRIES                                     = "select key, rid from index:%s";
   protected final static String QUERY_ENTRIES_DESC                                = "select key, rid from index:%s order by key desc";
 
-  private final static String QUERY_GET_ENTRIES = "select from index:%s where key in [%s]";
+  private final static String QUERY_ITERATE_ENTRIES = "select from index:%s where key in [%s] order by key %s ";
+  private final static String QUERY_GET_ENTRIES     = "select from index:%s where key in [%s]";
 
   private final static String QUERY_PUT         = "insert into index:%s (key,rid) values (?,?)";
   private final static String QUERY_REMOVE      = "delete from index:%s where key = ?";
@@ -65,14 +65,14 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   private final static String QUERY_REBUILD     = "rebuild index %s";
   private final static String QUERY_CLEAR       = "delete from index:%s";
   private final static String QUERY_DROP        = "drop index %s";
-  protected final String      databaseName;
-  private final String        wrappedType;
-  private final String        algorithm;
-  private final ORID          rid;
-  protected OIndexDefinition  indexDefinition;
-  protected String            name;
-  protected ODocument         configuration;
-  protected Set<String>       clustersToIndex;
+  protected final String           databaseName;
+  private final   String           wrappedType;
+  private final   String           algorithm;
+  private final   ORID             rid;
+  protected       OIndexDefinition indexDefinition;
+  protected       String           name;
+  protected       ODocument        configuration;
+  protected       Set<String>      clustersToIndex;
 
   public OIndexRemote(final String iName, final String iWrappedType, final String algorithm, final ORID iRid,
       final OIndexDefinition iIndexDefinition, final ODocument iConfiguration, final Set<String> clustersToIndex) {
@@ -357,7 +357,45 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 
   @Override
   public OIndexCursor iterateEntries(Collection<?> keys, boolean ascSortOrder) {
-    throw new UnsupportedOperationException("iterateEntries");
+
+    final StringBuilder params = new StringBuilder(128);
+    if (!keys.isEmpty()) {
+      params.append("?");
+      for (int i = 1; i < keys.size(); i++) {
+        params.append(", ?");
+      }
+    }
+
+    final OCommandRequest cmd = formatCommand(QUERY_ITERATE_ENTRIES, name, params.toString(), ascSortOrder ? "ASC" : "DESC");
+    final List<ODocument> res = getDatabase().command(cmd).execute(keys.toArray());
+
+    return new OIndexAbstractCursor() {
+      private Iterator<ODocument> entries = res.iterator();
+
+      @Override
+      public Map.Entry<Object, OIdentifiable> nextEntry() {
+        if (!entries.hasNext())
+          return null;
+        final ODocument next = entries.next();
+        return new Map.Entry<Object, OIdentifiable>() {
+          @Override
+          public Object getKey() {
+            return next.field("key");
+          }
+
+          @Override
+          public OIdentifiable getValue() {
+            return next.field("rid");
+          }
+
+          @Override
+          public OIdentifiable setValue(OIdentifiable value) {
+            throw new UnsupportedOperationException("cannot set value of index entry");
+          }
+        };
+      }
+    };
+
   }
 
   @Override

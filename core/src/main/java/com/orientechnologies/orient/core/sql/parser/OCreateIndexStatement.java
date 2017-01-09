@@ -6,6 +6,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
@@ -135,11 +136,7 @@ public class OCreateIndexStatement extends ODDLStatement {
         //            .createIndex(indexName, indexType.toString(), new ORuntimeKeyIndexDefinition(serializerKeyId, factory.getLastVersion()),
         //                null, null, metadataDoc, engine);
       } else {
-        OLogManager.instance().warn(this,
-            "Key type is not provided for '%s' index. Untyped indexes are deprecated and considered unstable."
-                + " Please specify a key type.", name.getValue());
-        idx = database.getMetadata().getIndexManager()
-            .createIndex(name.getValue(), type.getStringValue(), null, null, null, metadataDoc, engine);
+        throw new ODatabaseException("Impossible to create an index without specify the key type or the associated property");
       }
     } else {
       String[] fields = calculateProperties(ctx);

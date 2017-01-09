@@ -256,8 +256,13 @@ public class OMessageHelper {
           network.writeBytes(value);
           network.writeInt(change.entries.size());
           for (OTransactionIndexChangesPerKey.OTransactionIndexEntry perKeyChange : change.entries) {
-            network.writeInt(perKeyChange.operation.ordinal());
-            network.writeRID(perKeyChange.value.getIdentity());
+            OTransactionIndexChanges.OPERATION op = perKeyChange.operation;
+            if(op == OTransactionIndexChanges.OPERATION.REMOVE && perKeyChange.value == null)
+              op = OTransactionIndexChanges.OPERATION.CLEAR;
+
+            network.writeInt(op.ordinal());
+            if(op != OTransactionIndexChanges.OPERATION.CLEAR)
+              network.writeRID(perKeyChange.value.getIdentity());
           }
         }
       }
@@ -289,8 +294,15 @@ public class OMessageHelper {
           int keyChangeCount = channel.readInt();
           while (keyChangeCount-- > 0) {
             int op = channel.readInt();
-            ORecordId id = channel.readRID();
-            changesPerKey.add(id, OTransactionIndexChanges.OPERATION.values()[op]);
+            OTransactionIndexChanges.OPERATION oper = OTransactionIndexChanges.OPERATION.values()[op];
+            ORecordId id;
+            if (oper == OTransactionIndexChanges.OPERATION.CLEAR) {
+              oper = OTransactionIndexChanges.OPERATION.REMOVE;
+              id = null;
+            } else {
+              id = channel.readRID();
+            }
+            changesPerKey.add(id, oper);
           }
           if (key == null) {
             entry.nullKeyChanges = changesPerKey;

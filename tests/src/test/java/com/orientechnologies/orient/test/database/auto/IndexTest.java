@@ -194,7 +194,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
   @Test
   public void testIndexSQL() {
-    database.command(new OCommandSQL("create index idx unique METADATA { ignoreNullValues: false }")).execute();
+    database.command(new OCommandSQL("create index idx unique INTEGER METADATA { ignoreNullValues: false }")).execute();
     database.getMetadata().getIndexManager().reload();
     Assert.assertNotNull(database.getMetadata().getIndexManager().getIndex("idx"));
 
