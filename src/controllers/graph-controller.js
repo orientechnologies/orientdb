@@ -15,6 +15,8 @@ import '../views/database/graph/asideEmpty.html';
 import '../views/database/graph/asideEdge.html';
 import '../views/database/graph/asideVertex.html';
 import '../views/database/graphConfig.html';
+import '../views/vertex/modalConnection.html';
+
 import angular from 'angular';
 
 let GraphModule = angular.module('vertex.controller', ["graph.services", Icons, BrowseConfig]);
@@ -132,7 +134,11 @@ GraphModule.controller("VertexEditController", ['$scope', '$injector', '$routePa
     $scope.limits[i] -= $scope.pageLimit;
   }
   $scope.isHideMore = function (i) {
-    return $scope.limits[i] >= $scope.doc[i].length;
+    if ($scope.doc[i]) {
+      return $scope.limits[i] >= $scope.doc[i].length;
+    } else {
+      return true;
+    }
   }
   $scope.isHideLess = function (i) {
     return $scope.limits[i] == $scope.pageLimit;
@@ -156,6 +162,9 @@ GraphModule.controller("VertexEditController", ['$scope', '$injector', '$routePa
   $scope.filterArray = function (arr, i) {
     if (!$scope.limits[i]) {
       $scope.limits[i] = {};
+    }
+    if (!arr) {
+      return [];
     }
     if (arr instanceof Array) {
       return arr;
@@ -239,14 +248,16 @@ GraphModule.controller("VertexPopoverLabelController", ['$scope', '$routeParams'
     else {
       name = "in_".concat($scope.popover.name);
     }
-    if ($scope[$scope.where].indexOf(name) == -1)
+    if ($scope[$scope.where].indexOf(name) == -1) {
       $scope[$scope.where].push(name);
+      $scope.showModalConnection(name);
+    }
     delete $scope.popover.name;
   }
 
 }]);
 
-GraphModule.controller("VertexModalBrowseController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'Icon', '$timeout', function ($scope, $routeParams, $location, Database, CommandApi, Icon, $timeout) {
+GraphModule.controller("VertexModalBrowseController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'Icon', '$timeout', '$route', function ($scope, $routeParams, $location, Database, CommandApi, Icon, $timeout, $route) {
 
   $scope.database = Database;
   $scope.limit = 20;
@@ -326,7 +337,7 @@ GraphModule.controller("VertexModalBrowseController", ['$scope', '$routeParams',
     }
     CommandApi.queryText({database: $routeParams.database, language: 'sql', text: command}, function (data) {
       $scope.added = new Array;
-      $scope.container.reload();
+      $route.reload();
     });
 
 

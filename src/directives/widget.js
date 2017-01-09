@@ -44,8 +44,10 @@ Widget.directive('docwidget', ["$compile", "$http", "Database", "CommandApi", "D
     formScope.onLoadEditor = function (_editor) {
     }
     formScope.inSchema = function (header) {
-      var property = Database.listPropertyForClass(scope.doc['@class'], header);
-      return property;
+      if (scope.doc['@class']) {
+        var property = Database.listPropertyForClass(scope.doc['@class'], header);
+        return property;
+      }
     }
     formScope.isSelected = function (name, type) {
       return type == formScope.getType(name);
