@@ -59,6 +59,11 @@ public class OProfilerStub extends OAbstractProfiler {
     return tips.get(iMessage);
   }
 
+  @Override
+  public boolean isEnterpriseEdition() {
+    return false;
+  }
+
   public void configure(final String iConfiguration) {
     if (iConfiguration == null || iConfiguration.length() == 0)
       return;
