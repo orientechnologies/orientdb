@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 
 /**
@@ -73,6 +74,10 @@ public class ORecordOperation implements Comparable {
 
   public ORecord getRecord() {
     return record != null ? record.getRecord() : null;
+  }
+
+  public ORID getRID() {
+    return record != null ? record.getIdentity() : null;
   }
 
   public static String getName(final int type) {

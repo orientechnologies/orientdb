@@ -117,6 +117,9 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
     if (!active)
       return;
 
+    if (rid == null || !rid.isPersistent())
+      return;
+
     if (rid.getClusterPosition() < -1)
       // SKIP TRANSACTIONAL RIDS
       return;

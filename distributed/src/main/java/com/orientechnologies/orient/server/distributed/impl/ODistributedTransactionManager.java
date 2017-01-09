@@ -203,7 +203,7 @@ public class ODistributedTransactionManager {
             storage.executeUndoOnLocalServer(requestId, txTask);
             sendTxCompleted(localNodeName, involvedClusters, nodes, lastResult.getRequestId(), false, txTask.getPartitionKey());
 
-            throw (ODistributedRecordLockedException) lastResult.getPayload();
+            throw (RuntimeException) lastResult.getPayload();
 
           } else {
             // ASYNC, MANAGE REPLICATION CALLBACK
@@ -270,10 +270,10 @@ public class ODistributedTransactionManager {
 
       for (ORecordOperation op : iTx.getAllRecordEntries()) {
         if (iTx.hasRecordCreation()) {
-          final ORecordId lockEntireCluster = (ORecordId) op.getRecord().getIdentity().copy();
+          final ORecordId lockEntireCluster = (ORecordId) op.getRID().copy();
           localDistributedDatabase.getDatabaseRepairer().enqueueRepairCluster(lockEntireCluster.getClusterId());
         }
-        localDistributedDatabase.getDatabaseRepairer().enqueueRepairRecord((ORecordId) op.getRecord().getIdentity());
+        localDistributedDatabase.getDatabaseRepairer().enqueueRepairRecord((ORecordId) op.getRID());
       }
 
       storage.handleDistributedException("Cannot route TX operation against distributed node", e);
