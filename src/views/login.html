@@ -6,12 +6,12 @@
                     <div class="form-group">
                         <label class="control-label col-md-2 col-sm-2">Database</label>
 
-                        <div class="col-md-5 col-sm-5">
+                        <div class="col-md-4 col-sm-4">
                             <select ng-model="database" class="form-control" required
                                     ng-options="i for i in databases">
                             </select>
                         </div>
-                        <div class="col-md-5 col-sm-5">
+                        <div class="col-md-6 col-sm-6">
                             <div class="btn-group pull-right">
                                 <a class="btn btn-warning btn-sm btn" ng-click="createNew()"
                                    data-title="{{ 'login.newDb' | translate }}"
@@ -25,6 +25,15 @@
                                    data-animation="am-fade-and-scale" data-container="body"
                                    bs-tooltip> <i
                                         class="fa fa-cloud-download"></i>
+                                </a>
+                                <a class="btn btn-warning btn-sm ee-disabled"
+                                   ng-class="{disabled: !isEE}" ng-click="goToTeleporter()"
+                                   data-placement="top"
+                                   data-content="{{ hint | translate }}"
+                                   data-trigger="hover" data-delay="100,3000"
+                                   data-animation="am-fade-and-scale" data-container="body"
+                                   bs-popover> <i class="fa fa-database">
+                                   </i>
                                 </a>
                                 <a class="btn btn-danger btn-sm" ng-click="deleteDb()"
                                    data-title="{{ 'login.deleteDb' | translate }}"

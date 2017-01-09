@@ -126,6 +126,29 @@ LoginModule.controller("LoginController", ['$scope', '$rootScope', '$routeParams
 
   }
 
+  $scope.isEnterpriseEdition = function () {
+    var commandResult = false;
+    $scope.isEE = commandResult;
+  }
+
+  $scope.isEE = true;
+
+  $scope.myDelay = {"show":500, "hide":3000}
+
+
+  if($scope.isEE) {
+    $scope.hint = "login.importDbFromSQL";
+  }
+  else {
+    $scope.hint = "login.downloadEE";
+  }
+
+  $scope.goToTeleporter = function () {
+    if($scope.isEE) {
+      $location.path("/dashboard/teleporter");
+    }
+  }
+
   $rootScope.$broadcast("request:logout");
   $scope.deleteDb = function () {
     var modalScope = $scope.$new(true);

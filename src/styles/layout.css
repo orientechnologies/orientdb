@@ -472,7 +472,7 @@ text.vicon {
 }
 
 .icon-container {
-  display: block;
+  isplay: block;
   height: 25px;
   width: 25px;
   border-width: 1px;
@@ -1312,4 +1312,8 @@ table.table-backup {
 
 .server-status .row .col-md-8 {
   padding-left: 0px;
+}
+
+.ee-disabled {
+  pointer-events: all !important;
 }
