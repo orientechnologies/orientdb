@@ -27,6 +27,24 @@ LoginModule.controller("LoginController", ['$scope', '$rootScope', '$routeParams
     }
   });
 
+  $scope.isEE = false;
+
+  DatabaseApi.isEE().then(function (data) {
+      $scope.isEE = data.enterprise;
+    if($scope.isEE) {
+      $scope.importHint = "login.importDbFromSQL";
+    }
+  }).catch(function () {
+    $scope.isEE = false;
+  })
+
+    if($scope.isEE) {
+      $scope.importHint = "login.importDbFromSQL";
+    }
+    else {
+      $scope.importHint = "login.downloadEE";
+    }
+
   $scope.connect = function (callback) {
     $scope.$broadcast("autofill:update");
     Database.connect($scope.database, $scope.username, $scope.password, function () {
@@ -124,23 +142,6 @@ LoginModule.controller("LoginController", ['$scope', '$rootScope', '$routeParams
       modalPromise.$promise.then(modalPromise.show);
     }
 
-  }
-
-  $scope.isEnterpriseEdition = function () {
-    var commandResult = false;
-    $scope.isEE = commandResult;
-  }
-
-  $scope.isEE = true;
-
-  $scope.myDelay = {"show":500, "hide":3000}
-
-
-  if($scope.isEE) {
-    $scope.hint = "login.importDbFromSQL";
-  }
-  else {
-    $scope.hint = "login.downloadEE";
   }
 
   $scope.goToTeleporter = function () {

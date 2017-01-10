@@ -1,8 +1,8 @@
 {
   "login.newDb": "Create a new database",
   "login.importDb": "Import a public database",
-  "login.importDbFromSQL": "Migrate your SQL database with Teleporter",
-  "login.downloadEE": "You can't migrate your SQL DB as this is the Community Edition.<br/> You can try your first importing simply downloading the <a href='http://orientdb.com/orientdb-enterprise/?#matrix'>Enterprise Edition.</a>",
+  "login.importDbFromSQL": "Migrate your SQL database with Teleporter.",
+  "login.downloadEE": "You cannot migrate your SQL database as this is the Community Edition.<br/> You can try your first importing simply downloading the <a href='http://orientdb.com/orientdb-enterprise/?#matrix'>Enterprise Edition.</a>",
   "login.deleteDb": "Drop the selected database",
   "login.connectDb": "Connect to the selected database",
   "login.help": "To login, enter the credentials for any database user. By default, <b>reader/reader</b> can read records from the database, <b>writer/writer</b> can read, create, update and delete records. <b>admin/admin</b> has full administrative rights. To learn more about security, read the docs <a href='{{link}}' target='_blank'>here</a>",

@@ -539,6 +539,16 @@ database.factory('DatabaseApi', ["$http", "$resource", "$q", function ($http, $r
     return deferred.promise;
   }
 
+  resource.isEE = function () {
+    var deferred = $q.defer();
+    $http.get(API + 'isEE').success(function (data) {
+        deferred.resolve(data);
+    }).error(function (data) {
+      deferred.reject(data);
+    });
+    return deferred.promise;
+  }
+
   resource.install = function (db, username, password) {
     var deferred = $q.defer();
     if (!resource.sso) {
