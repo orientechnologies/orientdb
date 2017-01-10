@@ -66,7 +66,6 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OSecurityManager;
-import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
@@ -1361,7 +1360,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
                 message("\n |%30d ", page.pageIndex);
                 message(" |%30d ", page.inPagePosition);
                 message(" |%30d ", page.inPageSize);
-                message(" |%s", OBase64Utils.encodeBytes(page.content));
+                message(" |%s", Base64.getEncoder().encodeToString(page.content));
             }
             record = cluster.readRecord(id.getClusterPosition(), false);
         }

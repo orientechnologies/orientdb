@@ -33,7 +33,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerAnyStreamable;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
@@ -863,7 +862,7 @@ public abstract class OStringSerializerHelper {
       // else
       // throw new IllegalArgumentException("Not binary type: " + iValue);
 
-      return OBase64Utils.decode(s);
+      return Base64.getDecoder().decode(s);
     } else
       throw new IllegalArgumentException(
           "Cannot parse binary as the same type as the value (class=" + iValue.getClass().getName() + "): " + iValue);

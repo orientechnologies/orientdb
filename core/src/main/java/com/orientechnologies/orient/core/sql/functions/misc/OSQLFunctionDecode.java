@@ -15,12 +15,12 @@
  */
 package com.orientechnologies.orient.core.sql.functions.misc;
 
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
+
+import java.util.Base64;
 
 /**
  * Encode a string in various format (only base64 for now)
@@ -46,7 +46,7 @@ public class OSQLFunctionDecode extends OSQLFunctionAbstract {
     final String format = iParams[1].toString();
 
     if (OSQLFunctionEncode.FORMAT_BASE64.equalsIgnoreCase(format)) {
-      return OBase64Utils.decode(candidate);
+      return Base64.getDecoder().decode(candidate);
     } else {
       throw new ODatabaseException("unknowned format :" + format);
     }

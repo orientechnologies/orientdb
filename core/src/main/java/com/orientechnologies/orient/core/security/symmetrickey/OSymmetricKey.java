@@ -19,45 +19,27 @@
  */
 package com.orientechnologies.orient.core.security.symmetrickey;
 
-import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.io.OIOUtils;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.OBase64Utils;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.InputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
-import java.security.AlgorithmParameters;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.security.spec.AlgorithmParameterSpec;
-import java.security.spec.KeySpec;
-import java.util.UUID;
-
-import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
-import javax.crypto.EncryptedPrivateKeyInfo;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
+import java.io.BufferedWriter;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.security.KeyStore;
+import java.security.SecureRandom;
+import java.security.spec.KeySpec;
+import java.util.Base64;
+import java.util.UUID;
 
 /**
  * Implements a symmetric key utility class that can create default keys and keys from a String, a file,
@@ -332,7 +314,7 @@ public class OSymmetricKey {
     String result = null;
     
     try {
-      result = OBase64Utils.encodeBytes(bytes);
+      result = Base64.getEncoder().encodeToString(bytes);
     } catch(Exception ex) {
       OLogManager.instance().error(null, "convertToBase64() Exception: %s", ex.getMessage());
     }
@@ -346,7 +328,7 @@ public class OSymmetricKey {
     try
     {
       if(base64 != null) {
-        result = OBase64Utils.decode(base64.getBytes("UTF8"));
+        result =  Base64.getDecoder().decode(base64.getBytes("UTF8"));
       }
     } catch(Exception ex) {
       OLogManager.instance().error(null, "convertFromBase64() Exception: %s", ex.getMessage());

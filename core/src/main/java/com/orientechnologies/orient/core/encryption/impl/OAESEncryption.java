@@ -5,10 +5,10 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.exception.OInvalidStorageEncryptionKeyException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
-import com.orientechnologies.orient.core.serialization.OBase64Utils;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
+import java.util.Base64;
 
 /***
  * Stateful compression implementation that encrypt the content using AES
@@ -48,7 +48,7 @@ public class OAESEncryption extends OAbstractEncryption {
               + OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey() + "'");
 
     try {
-      final byte[] key = OBase64Utils.decode(iOptions);
+      final byte[] key = Base64.getDecoder().decode(iOptions);
 
       theKey = new SecretKeySpec(key, ALGORITHM_NAME); // AES
       cipher = Cipher.getInstance(TRANSFORMATION);

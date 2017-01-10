@@ -28,16 +28,12 @@ import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.util.ODateHelper;
 
 import java.io.*;
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 
 @SuppressWarnings("unchecked")
@@ -112,7 +108,7 @@ public class OJSONWriter {
         if (iFormat != null && iFormat.contains("shallow"))
           buffer.append(source.length);
         else
-          buffer.append(OBase64Utils.encodeBytes(source));
+          buffer.append(Base64.getEncoder().encodeToString(source));
 
         buffer.append('\"');
       } else {
@@ -172,7 +168,7 @@ public class OJSONWriter {
         object.writeObject(iValue);
         object.flush();
         buffer.append('"');
-        buffer.append(OBase64Utils.encodeBytes(baos.toByteArray()));
+        buffer.append(Base64.getEncoder().encodeToString(baos.toByteArray()));
         buffer.append('"');
       }else {
         // TREAT IT AS STRING
