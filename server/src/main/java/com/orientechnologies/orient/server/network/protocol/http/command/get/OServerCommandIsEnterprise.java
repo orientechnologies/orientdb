@@ -27,6 +27,7 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAbstract;
+import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedServerAbstract;
 
 import java.io.IOException;
 
@@ -34,9 +35,13 @@ import java.io.IOException;
  * This command is called in order to know if the running instance of orientdb is EE or not.
  */
 
-public class OServerCommandIsEnterprise extends OServerCommandAbstract {
+public class OServerCommandIsEnterprise extends OServerCommandAuthenticatedServerAbstract {
 
   private static final String[] NAMES = { "GET|isEE" };
+
+  public OServerCommandIsEnterprise() {
+    super("server.listDatabases");
+  }
 
   @Override
   public String[] getNames() {
@@ -58,21 +63,18 @@ public class OServerCommandIsEnterprise extends OServerCommandAbstract {
 
   private void doGet(OHttpRequest iRequest, OHttpResponse iResponse, String[] parts) throws IOException {
 
-    if ("isEE".equalsIgnoreCase(parts[1])) {
+    if ("isEE".equalsIgnoreCase(parts[0])) {
 
       boolean isEE = Orient.instance().getProfiler().isEnterpriseEdition();
 
       final ODocument result = new ODocument();
 
-      if (server.getSecurity() != null
-          && server.getSecurity().isAuthorized(OServerConfiguration.GUEST_USER, "server.listDatabases.system")) {
         if (isEE)
           result.field("enterprise", true);
         else
           result.field("enterprise", false);
-      }
 
-      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, result, null);
+      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, result.toJSON("prettyPrint"), null);
 
     } else {
       throw new IllegalArgumentException("");
