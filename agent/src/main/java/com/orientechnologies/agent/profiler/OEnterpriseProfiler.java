@@ -123,6 +123,11 @@ public class OEnterpriseProfiler extends OAbstractProfiler {
     return realTime.getTip(iMessage);
   }
 
+  @Override
+  public boolean isEnterpriseEdition() {
+    return true;
+  }
+
   public boolean startRecording() {
     if (!super.startRecording())
       return false;
