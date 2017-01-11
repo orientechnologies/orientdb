@@ -234,6 +234,7 @@ public class LocalPaginatedClusterWithWALTest extends LocalPaginatedClusterTest 
     assertFileRestoreFromWAL();
   }
 
+  @Test
   @Override
   public void testRemoveHalfRecords() throws IOException {
     super.testRemoveHalfRecords();

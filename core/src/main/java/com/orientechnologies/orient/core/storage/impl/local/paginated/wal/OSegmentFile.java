@@ -106,7 +106,7 @@ public class OSegmentFile {
       initFile();
 
       segChannel.position(firstCachedPage * OWALPage.PAGE_SIZE);
-      segChannel.write(buffersToFlush);
+      writeByteBuffers(buffersToFlush, segChannel, OWALPage.PAGE_SIZE * buffersToFlush.length);
 
       pageCache.clear();
       pageCache.add(buffers[buffers.length - 1]);
@@ -126,7 +126,7 @@ public class OSegmentFile {
       initFile();
 
       segChannel.position(firstCachedPage * OWALPage.PAGE_SIZE);
-      segChannel.write(buffers);
+      writeByteBuffers(buffers, segChannel, OWALPage.PAGE_SIZE * buffers.length);
 
       pageCache.clear();
       firstCachedPage = -1;
@@ -149,8 +149,8 @@ public class OSegmentFile {
       final ByteBuffer buffer = ByteBuffer.allocate(OWALPage.PAGE_SIZE).order(ByteOrder.nativeOrder());
 
       initFile();
-      segChannel.read(buffer, pageIndex * OWALPage.PAGE_SIZE);
-      buffer.position(0);
+      segChannel.position(pageIndex * OWALPage.PAGE_SIZE);
+      readByteBuffer(buffer, segChannel);
 
       return buffer.array();
     }
@@ -183,7 +183,9 @@ public class OSegmentFile {
 
       initFile();
 
-      segChannel.read(buffer, pageIndex * OWALPage.PAGE_SIZE);
+      segChannel.position(pageIndex * OWALPage.PAGE_SIZE);
+      readByteBuffer(buffer, segChannel);
+
       buffer.position(0);
 
       return buffer;
@@ -309,6 +311,41 @@ public class OSegmentFile {
         FileCloser task = new FileCloser();
         task.self = closer.scheduleWithFixedDelay(task, fileTTL, fileTTL, TimeUnit.SECONDS);
       }
+    }
+  }
+
+  private void writeByteBuffers(ByteBuffer[] buffers, FileChannel channel, long bytesToWrite) throws IOException {
+    long written = 0;
+
+    for (ByteBuffer buffer : buffers) {
+      buffer.position(0);
+    }
+
+    while (written < bytesToWrite) {
+      final int bufferIndex = (int) written / OWALPage.PAGE_SIZE;
+      final int bufferOffset = (int) (written - OWALPage.PAGE_SIZE * bufferIndex);
+
+      if (bufferOffset > 0) {
+        ByteBuffer buffer = buffers[bufferIndex];
+        buffer.position(bufferOffset);
+      }
+
+      written += channel.write(buffers, bufferIndex, buffers.length - bufferIndex);
+    }
+  }
+
+  private void readByteBuffer(ByteBuffer buffer, FileChannel channel) throws IOException {
+    int bytesToRead = buffer.limit();
+
+    int read = 0;
+    while (read < bytesToRead) {
+      buffer.position(read);
+
+      final int r = channel.read(buffer);
+      if (r < 0)
+        throw new IllegalStateException("End of file " + file + " is reached");
+
+      read += r;
     }
   }
 
