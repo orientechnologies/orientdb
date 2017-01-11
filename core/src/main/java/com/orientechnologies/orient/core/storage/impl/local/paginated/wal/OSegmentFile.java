@@ -28,6 +28,7 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
+import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
@@ -35,10 +36,8 @@ import java.util.concurrent.*;
 public class OSegmentFile {
   private final Object lockObject = new Object();
 
-  private final File file;
-
-  private RandomAccessFile segFile;
-  private FileChannel      segChannel;
+  private final Path        file;
+  private       FileChannel segChannel;
 
   private long             firstCachedPage = -1;
   private List<ByteBuffer> pageCache       = new ArrayList<ByteBuffer>();
@@ -54,7 +53,8 @@ public class OSegmentFile {
   private ScheduledExecutorService closer;
 
   public OSegmentFile(final File file, int fileTTL, int bufferSize) {
-    this.file = file;
+    this.file = FileSystems.getDefault().getPath(file.getAbsolutePath());
+
     this.fileTTL = fileTTL;
     this.bufferSize = bufferSize;
 
@@ -208,20 +208,20 @@ public class OSegmentFile {
     closer.shutdown();
     try {
       if (!closer.awaitTermination(15, TimeUnit.MINUTES)) {
-        OLogManager.instance().error(this, "Can not close file " + file.getName());
+        OLogManager.instance().error(this, "Can not close file " + file.getFileName());
       } else {
         synchronized (lockObject) {
           try {
-            if (segFile != null) {
+            if (segChannel != null) {
               closeFile(flush);
             }
           } catch (IOException ioe) {
-            OLogManager.instance().error(this, "Can not close file " + file.getName(), ioe);
+            OLogManager.instance().error(this, "Can not close file " + file.getFileName(), ioe);
           }
         }
       }
     } catch (InterruptedException ie) {
-      OLogManager.instance().warn(this, "WAL file " + file.getName() + " close was interrupted", ie);
+      OLogManager.instance().warn(this, "WAL file " + file.getFileName() + " close was interrupted", ie);
     }
 
   }
@@ -233,37 +233,34 @@ public class OSegmentFile {
       segChannel.force(false);
     }
 
-    segFile.close();
-
-    segFile = null;
+    segChannel.close();
     segChannel = null;
   }
 
-  public void delete() {
+  public void delete() throws IOException {
 
     closer.shutdown();
 
     try {
       if (!closer.awaitTermination(15, TimeUnit.MINUTES)) {
-        OLogManager.instance().error(this, "Can not delete file " + file.getName());
+        OLogManager.instance().error(this, "Can not delete file " + file.getFileName());
       } else {
         synchronized (lockObject) {
           try {
-            segFile.close();
+            if (segChannel != null) {
+              segChannel.close();
 
-            segFile = null;
-            segChannel = null;
+              segChannel = null;
+            }
           } catch (IOException ioe) {
-            OLogManager.instance().error(this, "Can not delete file " + file.getName(), ioe);
+            OLogManager.instance().error(this, "Can not delete file " + file.getFileName(), ioe);
           }
 
-          if (!file.delete()) {
-            OLogManager.instance().error(this, "Can not delete file " + file.getName());
-          }
+          Files.deleteIfExists(file);
         }
       }
     } catch (InterruptedException ie) {
-      OLogManager.instance().warn(this, "WAL file " + file.getName() + " delete was interrupted", ie);
+      OLogManager.instance().warn(this, "WAL file " + file.getFileName() + " delete was interrupted", ie);
     }
 
   }
@@ -273,12 +270,12 @@ public class OSegmentFile {
       lastAccessTime = System.nanoTime();
       initFile();
 
-      long pagesCount = segFile.length() / OWALPage.PAGE_SIZE;
+      long pagesCount = segChannel.size() / OWALPage.PAGE_SIZE;
 
-      if (segFile.length() % OWALPage.PAGE_SIZE > 0) {
+      if (segChannel.size() % OWALPage.PAGE_SIZE > 0) {
         OLogManager.instance().error(this, "Last WAL page was written partially, auto fix");
 
-        segFile.setLength(OWALPage.PAGE_SIZE * pagesCount);
+        segChannel.position(OWALPage.PAGE_SIZE * pagesCount);
       }
 
       firstCachedPage = -1;
@@ -294,7 +291,7 @@ public class OSegmentFile {
       lastAccessTime = System.nanoTime();
       initFile();
 
-      final long endPage = segFile.length() / OWALPage.PAGE_SIZE;
+      final long endPage = segChannel.size() / OWALPage.PAGE_SIZE;
       if (firstCachedPage == -1)
         return endPage;
 
@@ -303,9 +300,8 @@ public class OSegmentFile {
   }
 
   private void initFile() throws IOException {
-    if (segFile == null) {
-      segFile = new RandomAccessFile(file, "rw");
-      segChannel = segFile.getChannel();
+    if (segChannel == null) {
+      segChannel = FileChannel.open(file, StandardOpenOption.CREATE, StandardOpenOption.READ, StandardOpenOption.WRITE);
 
       if (fileTTL > 0) {
         FileCloser task = new FileCloser();
@@ -355,7 +351,7 @@ public class OSegmentFile {
     @Override
     public void run() {
       synchronized (lockObject) {
-        if (segFile == null) {
+        if (segChannel == null) {
           if (self != null) {
             self.cancel(false);
           }

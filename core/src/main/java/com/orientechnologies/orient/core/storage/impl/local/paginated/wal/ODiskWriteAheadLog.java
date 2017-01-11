@@ -37,6 +37,9 @@ import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionSt
 
 import java.io.*;
 import java.lang.ref.WeakReference;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
@@ -741,16 +744,8 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       for (OLogSegment logSegment : logSegments)
         logSegment.delete(false);
 
-      boolean deleted = OFileUtils.delete(masterRecordFile);
-      int retryCount = 0;
-
-      while (!deleted) {
-        deleted = OFileUtils.delete(masterRecordFile);
-        retryCount++;
-
-        if (retryCount > 10)
-          throw new IOException("Cannot delete file. Retry limit exceeded. (" + retryCount + ")");
-      }
+      Path masterRecordPath = FileSystems.getDefault().getPath(masterRecordFile.getCanonicalPath());
+      Files.deleteIfExists(masterRecordPath);
     } finally {
       syncObject.unlock();
     }

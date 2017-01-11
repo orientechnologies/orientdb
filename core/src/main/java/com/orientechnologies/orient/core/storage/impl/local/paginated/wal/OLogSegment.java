@@ -301,16 +301,7 @@ final class OLogSegment implements Comparable<OLogSegment> {
   public void delete(boolean flush) throws IOException {
     close(flush);
 
-    boolean deleted = OFileUtils.delete(file);
-    int retryCount = 0;
-
-    while (!deleted) {
-      deleted = OFileUtils.delete(file);
-      retryCount++;
-
-      if (retryCount > 10)
-        throw new IOException("Cannot delete file. Retry limit exceeded. (" + retryCount + ")");
-    }
+    segmentFile.delete();
   }
 
   public String getPath() {

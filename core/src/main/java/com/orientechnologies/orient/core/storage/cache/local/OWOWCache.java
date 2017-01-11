@@ -1599,6 +1599,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
             fileClassic.open();
             files.add(externalId, fileClassic);
           } else {
+
             final Integer fileId = nameIdMap.get(nameIdEntry.getKey());
 
             if (fileId != null && fileId > 0) {
