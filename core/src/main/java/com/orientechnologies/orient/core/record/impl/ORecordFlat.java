@@ -30,6 +30,8 @@ import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.ORecordStringable;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 
+import java.io.UnsupportedEncodingException;
+
 /**
  * It's schema less. Use this if you need to store Strings at low level. The object can be reused across calls to the database by
  * using the reset() at every re-use.
@@ -104,7 +106,11 @@ public class ORecordFlat extends ORecordAbstract implements ORecordStringable {
         reload();
 
       // LAZY LOADING: LOAD THE RECORD FIRST
-      value = OBinaryProtocol.bytes2string(_source);
+      try {
+        value = new String(_source, "UTF-8");
+      } catch (UnsupportedEncodingException e) {
+        throw new RuntimeException(e);
+      }
     }
 
     return value;
@@ -131,7 +137,11 @@ public class ORecordFlat extends ORecordAbstract implements ORecordStringable {
   @Override
   public byte[] toStream() {
     if (_source == null && value != null)
-      _source = OBinaryProtocol.string2bytes(value);
+      try {
+        _source = value.getBytes("UTF-8");
+      } catch (UnsupportedEncodingException e) {
+        throw new RuntimeException(e);
+      }
     return _source;
   }
 

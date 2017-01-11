@@ -27,12 +27,7 @@ import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordLazyList;
-import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
-import com.orientechnologies.orient.core.db.record.ORecordLazySet;
-import com.orientechnologies.orient.core.db.record.OTrackedList;
-import com.orientechnologies.orient.core.db.record.OTrackedSet;
+import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
@@ -47,8 +42,10 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordStringable;
-import com.orientechnologies.orient.core.record.impl.*;
-import com.orientechnologies.orient.core.serialization.OBase64Utils;
+import com.orientechnologies.orient.core.record.impl.OBlob;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.util.ODateHelper;
@@ -58,12 +55,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.StringWriter;
 import java.text.ParseException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @SuppressWarnings("serial")
 public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
@@ -244,7 +236,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
               iRecord.fromStream(OCommonConst.EMPTY_BYTE_ARRAY);
             else if (iRecord instanceof OBlob) {
               // BYTES
-              iRecord.fromStream(OBase64Utils.decode(fieldValueAsString));
+              iRecord.fromStream(Base64.getDecoder().decode(fieldValueAsString));
             } else if (iRecord instanceof ORecordStringable) {
               ((ORecordStringable) iRecord).value(fieldValueAsString);
             } else
@@ -350,7 +342,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
       } else if (iRecord instanceof OBlob) {
         // BYTES
         final OBlob record = (OBlob) iRecord;
-        json.writeAttribute(settings.indentLevel, true, "value", OBase64Utils.encodeBytes(record.toStream()));
+        json.writeAttribute(settings.indentLevel, true, "value", Base64.getEncoder().encodeToString(record.toStream()));
       } else
 
         throw new OSerializationException(
@@ -541,7 +533,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         return OStringSerializerHelper.fieldTypeFromStream(iRecord, iType, iFieldValueAsString);
       case CUSTOM: {
         try {
-          ByteArrayInputStream bais = new ByteArrayInputStream(OBase64Utils.decode(iFieldValueAsString));
+          ByteArrayInputStream bais = new ByteArrayInputStream(Base64.getDecoder().decode(iFieldValueAsString));
           ObjectInputStream input = new ObjectInputStream(bais);
           return input.readObject();
         } catch (IOException e) {

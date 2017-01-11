@@ -23,8 +23,9 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
+
+import java.util.Base64;
 
 public class OStringSerializerAnyStreamable implements OStringSerializer {
   public static final OStringSerializerAnyStreamable INSTANCE = new OStringSerializerAnyStreamable();
@@ -57,7 +58,7 @@ public class OStringSerializerAnyStreamable implements OStringSerializer {
       }
     }
 
-    instance.fromStream(OBase64Utils.decode(iStream.substring(pos + 1)));
+    instance.fromStream(Base64.getDecoder().decode(iStream.substring(pos + 1)));
     return instance;
   }
 
@@ -74,7 +75,7 @@ public class OStringSerializerAnyStreamable implements OStringSerializer {
       OSerializableStream stream = (OSerializableStream) iValue;
       iOutput.append(iValue.getClass().getName());
       iOutput.append(OStringSerializerEmbedded.SEPARATOR);
-      iOutput.append(OBase64Utils.encodeBytes(stream.toStream()));
+      iOutput.append(Base64.getEncoder().encodeToString(stream.toStream()));
     }
     return iOutput;
   }

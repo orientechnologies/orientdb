@@ -297,9 +297,10 @@ public class OSBTree<K, V> extends ODurableComponent {
             boolean doReleasePage = true;
             try {
               final Object result = validator.validate(key, oldValue, value);
-              if (result == OIndexEngine.Validator.IGNORE)
+              if (result == OIndexEngine.Validator.IGNORE) {
+                endAtomicOperation(false, null);
                 return false;
-              else
+              } else
                 doReleasePage = false;
 
               value = (V) result;
@@ -381,8 +382,10 @@ public class OSBTree<K, V> extends ODurableComponent {
               final V oldValueValue = oldValue == null ? null : readValue(oldValue, atomicOperation);
 
               final Object result = validator.validate(null, oldValueValue, value);
-              if (result == OIndexEngine.Validator.IGNORE)
+              if (result == OIndexEngine.Validator.IGNORE) {
+                endAtomicOperation(false, null);
                 return false;
+              }
 
               value = (V) result;
             }

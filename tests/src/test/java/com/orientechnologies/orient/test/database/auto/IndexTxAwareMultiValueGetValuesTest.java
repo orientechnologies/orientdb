@@ -34,7 +34,7 @@ public class IndexTxAwareMultiValueGetValuesTest extends DocumentDBBaseTest {
   public void beforeClass() throws Exception {
     super.beforeClass();
 
-    database.command(new OCommandSQL("create index idxTxAwareMultiValueGetValuesTest notunique")).execute();
+    database.command(new OCommandSQL("create index idxTxAwareMultiValueGetValuesTest notunique INTEGER")).execute();
   }
 
 

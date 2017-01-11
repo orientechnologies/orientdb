@@ -88,19 +88,6 @@ public class IndexManagerTest extends DocumentDBBaseTest {
   }
 
   @Test
-  public void testCreateNullKeyDefinitionIndexTest() {
-    final OIndexManagerProxy indexManager = database.getMetadata().getIndexManager();
-
-    final OIndex result = indexManager.createIndex("nullkey", OClass.INDEX_TYPE.UNIQUE.toString(), null, null, null, null);
-
-    assertEquals(result.getName(), "nullkey");
-    indexManager.reload();
-
-    assertNull(database.getMetadata().getIndexManager().getClassIndex(CLASS_NAME, "nullkey"));
-    assertEquals(database.getMetadata().getIndexManager().getIndex("nullkey").getName(), result.getName());
-  }
-
-  @Test
   public void testCreateOnePropertyIndexTest() {
     final OIndexManagerProxy indexManager = database.getMetadata().getIndexManager();
 
@@ -612,19 +599,6 @@ public class IndexManagerTest extends DocumentDBBaseTest {
     indexManager.dropIndex("simplekeytwo");
 
     assertNull(indexManager.getIndex("simplekeytwo"));
-  }
-
-  @Test
-  public void testDropNullKeyDefinition() {
-    final OIndexManager indexManager = database.getMetadata().getIndexManager();
-
-    indexManager.createIndex("nullkeytwo", OClass.INDEX_TYPE.UNIQUE.toString(), null, null, null, null);
-
-    assertNotNull(indexManager.getIndex("nullkeytwo"));
-
-    indexManager.dropIndex("nullkeytwo");
-
-    assertNull(indexManager.getIndex("nullkeytwo"));
   }
 
   @Test

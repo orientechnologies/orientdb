@@ -110,4 +110,6 @@ public interface OProfiler extends OService {
   void unregisterListener(OProfilerListener listener);
 
   String threadDump();
+
+  boolean isEnterpriseEdition();
 }

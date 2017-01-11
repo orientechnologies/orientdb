@@ -137,7 +137,7 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
           OTransactionIndexChangesPerKey singleChange = new OTransactionIndexChangesPerKey(key);
           for (OTransactionIndexChangesPerKey.OTransactionIndexEntry entry : keyChange.getValue().entries) {
             OIdentifiable rec = entry.value;
-            if (rec.getIdentity().isNew())
+            if (rec != null && rec.getIdentity().isNew())
               rec = rec.getRecord();
             singleChange.entries.add(new OTransactionIndexChangesPerKey.OTransactionIndexEntry(rec, entry.operation));
           }

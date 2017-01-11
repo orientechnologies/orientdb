@@ -33,17 +33,13 @@ import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringBuilderSerializable;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * A collection that contain links to {@link OIdentifiable}. Bag is similar to set but can contain several entering of the same
@@ -105,7 +101,7 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
   }
 
   public static ORidBag fromStream(final String value) {
-    final byte[] stream = OBase64Utils.decode(value);
+    final byte[] stream = Base64.getDecoder().decode(value);
     return new ORidBag(stream);
   }
 
@@ -278,7 +274,7 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
   public OStringBuilderSerializable toStream(StringBuilder output) throws OSerializationException {
     final BytesContainer container = new BytesContainer();
     toStream(container);
-    output.append(OBase64Utils.encodeBytes(container.bytes, 0, container.offset));
+    output.append(Base64.getEncoder().encode(container.fitBytes()));
     return this;
   }
 
@@ -293,7 +289,7 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
 
   @Override
   public OStringBuilderSerializable fromStream(StringBuilder input) throws OSerializationException {
-    final byte[] stream = OBase64Utils.decode(input.toString());
+    final byte[] stream = Base64.getDecoder().decode(input.toString());
     fromStream(stream);
     return this;
   }

@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
@@ -266,11 +267,7 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
             .createIndex(indexName, indexType.toString(),
                 new ORuntimeKeyIndexDefinition(serializerKeyId, factory.getLastVersion()), null, null, metadataDoc, engine);
       } else {
-        OLogManager.instance().warn(this,
-            "Key type is not provided for '%s' index. Untyped indexes are deprecated and considered unstable." +
-                " Please specify a key type.", indexName);
-        idx = database.getMetadata().getIndexManager()
-            .createIndex(indexName, indexType.toString(), null, null, null, metadataDoc, engine);
+        throw new ODatabaseException("Impossible to create an index without specify the key type or the associated property");
       }
     } else {
       if ((keyTypes == null || keyTypes.length == 0) && collates == null) {

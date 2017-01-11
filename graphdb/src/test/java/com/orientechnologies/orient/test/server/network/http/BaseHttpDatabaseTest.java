@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.test.server.network.http;
 
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -13,6 +14,8 @@ import org.junit.Before;
 public abstract class BaseHttpDatabaseTest extends BaseHttpTest {
   @Before
   public void createDatabase() throws Exception {
+    ODatabaseRecordThreadLocal.INSTANCE.remove();
+
     super.startServer();
     Assert.assertEquals(
         post("database/" + getDatabaseName() + "/memory").setUserName("root").setUserPassword("root").getResponse().getStatusLine()
