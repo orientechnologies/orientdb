@@ -25,8 +25,10 @@ import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Test(groups = "function")
@@ -145,6 +147,28 @@ public class FunctionsTest extends DocumentDBBaseTest {
     Object result = database.getMetadata().getFunctionLibrary().getFunction("testParams").executeInContext(null, params);
     Assert.assertEquals(result, "Hello Jay Miner from USA");
 
+  }
+
+  @Test
+  public void testMapParamToFunction() {
+    database
+        .command(
+            new OCommandSQL(
+                "create function testMapParamToFunction \"return mapParam.get('foo')[0];\" PARAMETERS [mapParam] LANGUAGE Javascript"))
+        .execute();
+
+    Map<String, Object> params = new HashMap<String, Object>();
+
+    List theList = new ArrayList();
+    theList.add("bar");
+    Map theMap = new HashMap();
+    theMap.put("foo", theList);
+    params.put("theParam", theMap);
+
+    OResultSet<OIdentifiable> res1 = database.command(new OCommandSQL("select testMapParamToFunction(:theParam) as a")).execute(params);
+    Assert.assertNotNull(res1);
+    Assert.assertNotNull(res1.get(0));
+    Assert.assertEquals(((ODocument) res1.get(0)).field("a"), "bar");
   }
 
 }

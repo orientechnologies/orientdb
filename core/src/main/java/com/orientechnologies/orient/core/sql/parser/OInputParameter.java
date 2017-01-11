@@ -25,7 +25,9 @@ public class OInputParameter extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
@@ -38,7 +40,7 @@ public class OInputParameter extends SimpleNode {
     if (value == null) {
       return null;
     }
-    if(value instanceof Boolean){
+    if (value instanceof Boolean) {
       return value;
     }
     if (value instanceof Integer) {
@@ -67,6 +69,19 @@ public class OInputParameter extends SimpleNode {
         coll.expressions.add(exp);
       }
       return coll;
+    }
+    if (value instanceof Map) {
+      OJson json = new OJson(-1);
+      json.items = new ArrayList<OJsonItem>();
+      for (Object entry : ((Map) value).entrySet()) {
+        OJsonItem item = new OJsonItem();
+        item.leftString = "" + ((Map.Entry) entry).getKey();
+        OExpression exp = new OExpression(-1);
+        exp.value = toParsedTree(((Map.Entry) entry).getValue());
+        item.right = exp;
+        json.items.add(item);
+      }
+      return json;
     }
     if (value instanceof OIdentifiable) {
       // TODO if invalid build a JSON
@@ -99,7 +114,7 @@ public class OInputParameter extends SimpleNode {
       function.getParams().add(dateFormatExpr);
       return function;
     }
-    if(value instanceof byte[]){
+    if (value instanceof byte[]) {
       OFunctionCall function = new OFunctionCall(-1);
       function.name = new OIdentifier(-1);
       function.name.value = "decode";
