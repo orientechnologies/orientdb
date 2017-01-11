@@ -51,16 +51,15 @@ import java.util.Map.Entry;
 
 @SuppressWarnings({ "unchecked", "serial" })
 public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStringAbstract {
-  public static final char FIELD_VALUE_SEPARATOR = ':';
-  private final boolean    preferSBTreeRIDSet    = OGlobalConfiguration.PREFER_SBTREE_SET.getValueAsBoolean();
+  public static final char    FIELD_VALUE_SEPARATOR = ':';
 
   /**
    * Serialize the link.
-   * 
+   *
    * @param buffer
    * @param iParentRecord
-   * @param iLinked
-   *          Can be an instance of ORID or a Record<?>
+   * @param iLinked       Can be an instance of ORID or a Record<?>
+   *
    * @return
    */
   private static OIdentifiable linkToStream(final StringBuilder buffer, final ODocument iParentRecord, Object iLinked) {
@@ -83,8 +82,9 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
         iLinked = new ORecordId((String) iLinked);
 
       if (!(iLinked instanceof OIdentifiable))
-        throw new IllegalArgumentException("Invalid object received. Expected a OIdentifiable but received type="
-            + iLinked.getClass().getName() + " and value=" + iLinked);
+        throw new IllegalArgumentException(
+            "Invalid object received. Expected a OIdentifiable but received type=" + iLinked.getClass().getName() + " and value="
+                + iLinked);
 
       // RECORD
       ORecord iLinkedRecord = ((OIdentifiable) iLinked).getRecord();
@@ -127,7 +127,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       final String value = iValue.startsWith("[") || iValue.startsWith("<") ? iValue.substring(1, iValue.length() - 1) : iValue;
 
       if (iType == OType.LINKLIST) {
-        return new ORecordLazyList((ODocument) iSourceRecord).setStreamedContent(new StringBuilder(value));
+        return unserializeList((ODocument) iSourceRecord, value);
       } else {
         return unserializeSet((ODocument) iSourceRecord, value);
       }
@@ -180,8 +180,9 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
         try {
           return new ORecordId(linkAsString);
         } catch (IllegalArgumentException e) {
-          OLogManager.instance().error(this, "Error on unmarshalling field '%s' of record '%s': value '%s' is not a link", iName,
-              iSourceRecord, linkAsString);
+          OLogManager.instance()
+              .error(this, "Error on unmarshalling field '%s' of record '%s': value '%s' is not a link", iName, iSourceRecord,
+                  linkAsString);
           return new ORecordId();
         }
       } else
@@ -201,8 +202,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       } else
         return null;
     case LINKBAG:
-      final String value = iValue.charAt(0) == OStringSerializerHelper.BAG_BEGIN ? iValue.substring(1, iValue.length() - 1)
-          : iValue;
+      final String value =
+          iValue.charAt(0) == OStringSerializerHelper.BAG_BEGIN ? iValue.substring(1, iValue.length() - 1) : iValue;
       return ORidBag.fromStream(value);
     default:
       return fieldTypeFromStream((ODocument) iSourceRecord, iType, iValue);
@@ -319,75 +320,58 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
     case LINKLIST: {
       iOutput.append(OStringSerializerHelper.LIST_BEGIN);
+      final ORecordLazyList coll;
+      final Iterator<OIdentifiable> it;
+      if (iValue instanceof OMultiCollectionIterator<?>) {
+        final OMultiCollectionIterator<OIdentifiable> iterator = (OMultiCollectionIterator<OIdentifiable>) iValue;
+        iterator.reset();
+        it = iterator;
+        coll = null;
+      } else if (!(iValue instanceof ORecordLazyList)) {
+        // FIRST TIME: CONVERT THE ENTIRE COLLECTION
+        coll = new ORecordLazyList(iRecord);
 
-      if (iValue instanceof ORecordLazyList && ((ORecordLazyList) iValue).getStreamedContent() != null) {
-        iOutput.append(((ORecordLazyList) iValue).getStreamedContent());
-        PROFILER.updateCounter(PROFILER.getProcessMetric("serializer.record.string.linkList2string.cached"),
-            "Serialize linklist to string in stream mode", +1);
-      } else {
-        final ORecordLazyList coll;
-        final Iterator<OIdentifiable> it;
-        if (iValue instanceof OMultiCollectionIterator<?>) {
-          final OMultiCollectionIterator<OIdentifiable> iterator = (OMultiCollectionIterator<OIdentifiable>) iValue;
-          iterator.reset();
-          it = iterator;
-          coll = null;
-        } else if (!(iValue instanceof ORecordLazyList)) {
-          // FIRST TIME: CONVERT THE ENTIRE COLLECTION
-          coll = new ORecordLazyList(iRecord);
-
-          if (iValue.getClass().isArray()) {
-            Iterable<Object> iterab = OMultiValue.getMultiValueIterable(iValue, false);
-            for (Object i : iterab) {
-              coll.add((OIdentifiable) i);
-            }
-          } else {
-            coll.addAll((Collection<? extends OIdentifiable>) iValue);
-            ((Collection<? extends OIdentifiable>) iValue).clear();
+        if (iValue.getClass().isArray()) {
+          Iterable<Object> iterab = OMultiValue.getMultiValueIterable(iValue, false);
+          for (Object i : iterab) {
+            coll.add((OIdentifiable) i);
           }
-
-          iRecord.field(iName, coll);
-          it = coll.rawIterator();
         } else {
-          // LAZY LIST
-          coll = (ORecordLazyList) iValue;
-          if (coll.getStreamedContent() != null) {
-            // APPEND STREAMED CONTENT
-            iOutput.append(coll.getStreamedContent());
-            PROFILER.updateCounter(PROFILER.getProcessMetric("serializer.record.string.linkList2string.cached"),
-                "Serialize linklist to string in stream mode", +1);
-            it = coll.newItemsIterator();
-          } else
-            it = coll.rawIterator();
+          coll.addAll((Collection<? extends OIdentifiable>) iValue);
+          ((Collection<? extends OIdentifiable>) iValue).clear();
         }
 
-        if (it != null && it.hasNext()) {
-          final StringBuilder buffer = new StringBuilder(128);
-          for (int items = 0; it.hasNext(); items++) {
-            if (items > 0)
-              buffer.append(OStringSerializerHelper.RECORD_SEPARATOR);
+        iRecord.field(iName, coll);
+        it = coll.rawIterator();
+      } else {
+        // LAZY LIST
+        coll = (ORecordLazyList) iValue;
+        it = coll.rawIterator();
+      }
 
-            final OIdentifiable item = it.next();
+      if (it != null && it.hasNext()) {
+        final StringBuilder buffer = new StringBuilder(128);
+        for (int items = 0; it.hasNext(); items++) {
+          if (items > 0)
+            buffer.append(OStringSerializerHelper.RECORD_SEPARATOR);
 
-            final OIdentifiable newRid = linkToStream(buffer, iRecord, item);
-            if (newRid != null)
-              ((OLazyIterator<OIdentifiable>) it).update(newRid);
-          }
+          final OIdentifiable item = it.next();
 
-          if (coll != null)
-            coll.convertRecords2Links();
-
-          iOutput.append(buffer);
-
-          // UPDATE THE STREAM
-          if (coll != null)
-            coll.setStreamedContent(buffer);
+          final OIdentifiable newRid = linkToStream(buffer, iRecord, item);
+          if (newRid != null)
+            ((OLazyIterator<OIdentifiable>) it).update(newRid);
         }
+
+        if (coll != null)
+          coll.convertRecords2Links();
+
+        iOutput.append(buffer);
+
       }
 
       iOutput.append(OStringSerializerHelper.LIST_END);
-      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.linkList2string"), "Serialize linklist to string",
-          timer);
+      PROFILER
+          .stopChrono(PROFILER.getProcessMetric("serializer.record.string.linkList2string"), "Serialize linklist to string", timer);
       break;
     }
 
@@ -415,8 +399,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
         coll.toStream(iOutput);
       }
 
-      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.linkSet2string"), "Serialize linkset to string",
-          timer);
+      PROFILER
+          .stopChrono(PROFILER.getProcessMetric("serializer.record.string.linkSet2string"), "Serialize linkset to string", timer);
       break;
     }
 
@@ -453,8 +437,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       }
 
       iOutput.append(OStringSerializerHelper.MAP_END);
-      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.linkMap2string"), "Serialize linkmap to string",
-          timer);
+      PROFILER
+          .stopChrono(PROFILER.getProcessMetric("serializer.record.string.linkMap2string"), "Serialize linkmap to string", timer);
       break;
     }
 
@@ -571,18 +555,18 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       return null;
 
     // REMOVE BEGIN & END COLLECTIONS CHARACTERS IF IT'S A COLLECTION
-    final String value = iValue.charAt(0) == OStringSerializerHelper.LIST_BEGIN
-        || iValue.charAt(0) == OStringSerializerHelper.SET_BEGIN ? iValue.substring(1, iValue.length() - 1) : iValue;
+    final String value =
+        iValue.charAt(0) == OStringSerializerHelper.LIST_BEGIN || iValue.charAt(0) == OStringSerializerHelper.SET_BEGIN ?
+            iValue.substring(1, iValue.length() - 1) :
+            iValue;
 
     Collection<?> coll;
     if (iLinkedType == OType.LINK) {
       if (iDocument != null)
-        coll = (Collection<?>) (iType == OType.EMBEDDEDLIST ?
-            new ORecordLazyList(iDocument).setStreamedContent(new StringBuilder(value)) :
-            unserializeSet(iDocument, value));
+        coll = (iType == OType.EMBEDDEDLIST ? unserializeList(iDocument, value) : unserializeSet(iDocument, value));
       else {
         if (iType == OType.EMBEDDEDLIST)
-          coll = (Collection<?>) new ORecordLazyList().setStreamedContent(new StringBuilder(value));
+          coll = unserializeList(iDocument, value);
         else {
           return unserializeSet(iDocument, value);
         }
@@ -752,6 +736,27 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       iOutput.append(rid.getIdentity().toString());
     }
     iOutput.append(OStringSerializerHelper.SET_END);
+  }
+
+  private ORecordLazyList unserializeList(final ODocument iSourceRecord, final String value) {
+    final ORecordLazyList coll = new ORecordLazyList(iSourceRecord);
+    final List<String> items = OStringSerializerHelper.smartSplit(value, OStringSerializerHelper.RECORD_SEPARATOR);
+    for (String item : items) {
+      if (item.length() == 0)
+        coll.add(new ORecordId());
+      else {
+        if (item.startsWith("#"))
+          coll.add(new ORecordId(item));
+        else {
+          final ORecord doc = fromString(item);
+          if (doc instanceof ODocument)
+            ODocumentInternal.addOwner((ODocument) doc, iSourceRecord);
+
+          coll.add(doc);
+        }
+      }
+    }
+    return coll;
   }
 
   private ORecordLazySet unserializeSet(final ODocument iSourceRecord, final String value) {

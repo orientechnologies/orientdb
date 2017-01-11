@@ -365,9 +365,6 @@ public enum OGlobalConfiguration {
       "Amount of values, after which a LINKBAG implementation will use an embedded values container (disabled by default)",
       Integer.class, -1, true),
 
-  // COLLECTIONS
-  PREFER_SBTREE_SET("collections.preferSBTreeSet", "This configuration setting is experimental", Boolean.class, false),
-
   // FILE
   TRACK_FILE_CLOSE("file.trackFileClose",
       "Log all the cases when files are closed. This is needed only for internal debugging purposes", Boolean.class, false),
@@ -852,62 +849,19 @@ public enum OGlobalConfiguration {
   @Deprecated DB_MAKE_FULL_CHECKPOINT_ON_SCHEMA_CHANGE("db.makeFullCheckpointOnSchemaChange",
       "When index schema is changed, a full checkpoint is performed", Boolean.class, true, true),
 
-  @Deprecated CLIENT_SESSION_TOKEN_BASED("client.session.tokenBased", "Request a token based session to the server", Boolean.class,
-      true),
-
   @Deprecated OAUTH2_SECRETKEY("oauth2.secretkey", "Http OAuth2 secret key", String.class, ""),
 
   @Deprecated STORAGE_USE_CRC32_FOR_EACH_RECORD("storage.cluster.usecrc32",
       "Indicates whether crc32 should be used for each record to check record integrity", Boolean.class, false),
 
-  @Deprecated LAZYSET_WORK_ON_STREAM("lazyset.workOnStream", "Deprecated, now BINARY serialization is used in place of CSV",
-      Boolean.class, true),
-
-  @Deprecated DB_MVCC("db.mvcc", "Deprecated, MVCC cannot be disabled anymore", Boolean.class, true),
-
   @Deprecated DB_USE_DISTRIBUTED_VERSION("db.use.distributedVersion", "Deprecated, distributed version is not used anymore",
       Boolean.class, Boolean.FALSE),
-
-  @Deprecated MVRBTREE_TIMEOUT("mvrbtree.timeout", "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX",
-      Integer.class, 0),
-
-  @Deprecated MVRBTREE_NODE_PAGE_SIZE("mvrbtree.nodePageSize",
-      "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Integer.class, 256),
-
-  @Deprecated MVRBTREE_LOAD_FACTOR("mvrbtree.loadFactor",
-      "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Float.class, 0.7f),
-
-  @Deprecated MVRBTREE_OPTIMIZE_THRESHOLD("mvrbtree.optimizeThreshold",
-      "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Integer.class, 100000),
-
-  @Deprecated MVRBTREE_ENTRYPOINTS("mvrbtree.entryPoints",
-      "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Integer.class, 64),
-
-  @Deprecated MVRBTREE_OPTIMIZE_ENTRYPOINTS_FACTOR("mvrbtree.optimizeEntryPointsFactor",
-      "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Float.class, 1.0f),
-
-  @Deprecated MVRBTREE_ENTRY_KEYS_IN_MEMORY("mvrbtree.entryKeysInMemory",
-      "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Boolean.class, Boolean.FALSE),
-
-  @Deprecated MVRBTREE_ENTRY_VALUES_IN_MEMORY("mvrbtree.entryValuesInMemory",
-      "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Boolean.class, Boolean.FALSE),
-
-  @Deprecated MVRBTREE_RID_BINARY_THRESHOLD("mvrbtree.ridBinaryThreshold",
-      "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Integer.class, -1),
-
-  @Deprecated MVRBTREE_RID_NODE_PAGE_SIZE("mvrbtree.ridNodePageSize",
-      "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Integer.class, 64),
-
-  @Deprecated MVRBTREE_RID_NODE_SAVE_MEMORY("mvrbtree.ridNodeSaveMemory",
-      "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Boolean.class, Boolean.FALSE),
 
   @Deprecated TX_COMMIT_SYNCH("tx.commit.synch", "Synchronizes the storage after transaction commit", Boolean.class, false),
 
   @Deprecated TX_AUTO_RETRY("tx.autoRetry",
       "Maximum number of automatic retry if some resource has been locked in the middle of the transaction (Timeout exception)",
       Integer.class, 1),
-
-  @Deprecated TX_LOG_TYPE("tx.log.fileType", "File type to handle transaction logs: mmap or classic", String.class, "classic"),
 
   @Deprecated TX_LOG_SYNCH("tx.log.synch",
       "Executes a synch against the file-system at every log entry. This slows down transactions but guarantee transaction reliability on unreliable drives",
@@ -917,14 +871,7 @@ public enum OGlobalConfiguration {
   @Deprecated INDEX_AUTO_REBUILD_AFTER_NOTSOFTCLOSE("index.auto.rebuildAfterNotSoftClose",
       "Auto rebuild all automatic indexes after upon database open when wasn't closed properly", Boolean.class, true),
 
-  @Deprecated CLIENT_CHANNEL_MIN_POOL("client.channel.minPool", "Minimum pool size", Integer.class, 1),
-
-  // DEPRECATED IN 2.0
-  @Deprecated STORAGE_KEEP_OPEN("storage.keepOpen", "Deprecated", Boolean.class, Boolean.TRUE),
-
-  // DEPRECATED IN 2.0, LEVEL1 CACHE CANNOT BE DISABLED ANYMORE
-  @Deprecated CACHE_LOCAL_ENABLED("cache.local.enabled", "Deprecated, Level1 cache cannot be disabled anymore", Boolean.class,
-      true);
+  @Deprecated CLIENT_CHANNEL_MIN_POOL("client.channel.minPool", "Minimum pool size", Integer.class, 1);
 
   private final String   key;
   private final Object   defValue;
