@@ -6,10 +6,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Map;
+import java.util.*;
 
 public class OInputParameter extends SimpleNode {
 
@@ -24,7 +21,9 @@ public class OInputParameter extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
@@ -70,6 +69,19 @@ public class OInputParameter extends SimpleNode {
         coll.expressions.add(exp);
       }
       return coll;
+    }
+    if (value instanceof Map) {
+      OJson json = new OJson(-1);
+      json.items = new ArrayList<OJsonItem>();
+      for (Object entry : ((Map) value).entrySet()) {
+        OJsonItem item = new OJsonItem();
+        item.leftString = "" + ((Map.Entry) entry).getKey();
+        OExpression exp = new OExpression(-1);
+        exp.value = toParsedTree(((Map.Entry) entry).getValue());
+        item.right = exp;
+        json.items.add(item);
+      }
+      return json;
     }
     if (value instanceof OIdentifiable) {
       // TODO if invalid build a JSON
