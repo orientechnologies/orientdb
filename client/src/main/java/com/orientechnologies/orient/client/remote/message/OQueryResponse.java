@@ -11,10 +11,10 @@ import com.orientechnologies.orient.core.record.impl.OEdgeDelegate;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.record.impl.OVertexDelegate;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetwork;
 import com.orientechnologies.orient.core.serialization.serializer.result.binary.OResultSerializerNetwork;
 import com.orientechnologies.orient.core.sql.executor.*;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSetLifecycleDecorator;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
 
@@ -228,7 +228,8 @@ public class OQueryResponse implements OBinaryResponse {
   }
 
   private ORecord readDocument(OChannelDataInput channel) throws IOException {
-    final ORecord record = (ORecord) OChannelBinaryProtocol.readIdentifiable(channel);
+    ORecordSerializer serializer = ORecordSerializerNetwork.INSTANCE;
+    final ORecord record = (ORecord) OMessageHelper.readIdentifiable(channel, serializer);
     return record;
   }
 

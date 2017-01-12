@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetwork;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
@@ -75,7 +76,9 @@ public final class OReadRecordResponse implements OBinaryResponse {
     network.writeByte((byte) 0);
   }
 
-  @Override public void read(OChannelDataInput network, OStorageRemoteSession session) throws IOException {
+  @Override
+  public void read(OChannelDataInput network, OStorageRemoteSession session) throws IOException {
+    ORecordSerializer serializer = ORecordSerializerNetwork.INSTANCE;
     if (network.readByte() == 0)
       return;
 
@@ -89,7 +92,7 @@ public final class OReadRecordResponse implements OBinaryResponse {
     final ODatabaseDocument database = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     ORecord record;
     while (network.readByte() == 2) {
-      record = (ORecord) OChannelBinaryProtocol.readIdentifiable(network);
+      record = (ORecord) OMessageHelper.readIdentifiable(network, serializer);
 
       if (database != null)
         // PUT IN THE CLIENT LOCAL CACHE

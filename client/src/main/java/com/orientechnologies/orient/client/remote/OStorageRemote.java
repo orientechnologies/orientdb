@@ -122,6 +122,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   private final Set<OStorageRemoteSession> sessions = Collections
       .newSetFromMap(new ConcurrentHashMap<OStorageRemoteSession, Boolean>());
 
+  private OStorageRemotePushThread pushThread;
+
   public OStorageRemote(final String iClientId, final String iURL, final String iMode) throws IOException {
     this(iClientId, iURL, iMode, null, true);
   }
@@ -146,6 +148,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
     OEngineRemote engine = (OEngineRemote) Orient.instance().getRunningEngine(OEngineRemote.NAME);
     connectionManager = engine.getConnectionManager();
+    pushThread = new OStorageRemotePushThread(this);
+    pushThread.start();
   }
 
   public <T extends OBinaryResponse> T asyncNetworkOperation(final OBinaryAsyncRequest<T> request, int mode,
@@ -488,6 +492,12 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       sbTreeCollectionManager.close();
 
       super.close(iForce, onDelete);
+      pushThread.interrupt();
+      try {
+        pushThread.join();
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
       status = STATUS.CLOSED;
 
     } finally {

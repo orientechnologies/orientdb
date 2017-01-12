@@ -146,22 +146,4 @@ public class OChannelBinaryProtocol {
 
   public static final int CURRENT_PROTOCOL_VERSION = PROTOCOL_VERSION_37;
 
-  public static OIdentifiable readIdentifiable(final OChannelDataInput network) throws IOException {
-    final int classId = network.readShort();
-    if (classId == RECORD_NULL)
-      return null;
-
-    if (classId == RECORD_RID) {
-      return network.readRID();
-    } else {
-      final ORecord record = Orient.instance().getRecordFactoryManager().newInstance(network.readByte());
-
-      final ORecordId rid = network.readRID();
-      final int version = network.readVersion();
-      final byte[] content = network.readBytes();
-      ORecordInternal.fill(record, rid, version, content, false);
-
-      return record;
-    }
-  }
 }

@@ -257,11 +257,11 @@ public class OMessageHelper {
           network.writeInt(change.entries.size());
           for (OTransactionIndexChangesPerKey.OTransactionIndexEntry perKeyChange : change.entries) {
             OTransactionIndexChanges.OPERATION op = perKeyChange.operation;
-            if(op == OTransactionIndexChanges.OPERATION.REMOVE && perKeyChange.value == null)
+            if (op == OTransactionIndexChanges.OPERATION.REMOVE && perKeyChange.value == null)
               op = OTransactionIndexChanges.OPERATION.CLEAR;
 
             network.writeInt(op.ordinal());
-            if(op != OTransactionIndexChanges.OPERATION.CLEAR)
+            if (op != OTransactionIndexChanges.OPERATION.CLEAR)
               network.writeRID(perKeyChange.value.getIdentity());
           }
         }
@@ -315,5 +315,30 @@ public class OMessageHelper {
       changes.add(new IndexChange(indexName, entry));
     }
     return changes;
+  }
+
+  public static OIdentifiable readIdentifiable(final OChannelDataInput network, ORecordSerializer serializer) throws IOException {
+    final int classId = network.readShort();
+    if (classId == OChannelBinaryProtocol.RECORD_NULL)
+      return null;
+
+    if (classId == OChannelBinaryProtocol.RECORD_RID) {
+      return network.readRID();
+    } else {
+      final ORecord record = readRecordFromBytes(network, serializer);
+      return record;
+    }
+  }
+
+  static ORecord readRecordFromBytes(OChannelDataInput network, ORecordSerializer serializer) throws IOException {
+    final ORecordId rid = network.readRID();
+    final int version = network.readVersion();
+    final byte[] content = network.readBytes();
+
+    final ORecord record = Orient.instance().getRecordFactoryManager().newInstance(network.readByte());
+    serializer.fromStream(content, record, null);
+    ORecordInternal.setIdentity(record, rid);
+    ORecordInternal.setVersion(record, version);
+    return record;
   }
 }
