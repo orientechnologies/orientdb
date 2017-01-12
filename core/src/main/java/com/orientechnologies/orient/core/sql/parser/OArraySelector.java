@@ -62,7 +62,7 @@ public class OArraySelector extends SimpleNode {
     return null;
   }
 
-  public Integer getValue(OResult iCurrentRecord, Object iResult, OCommandContext ctx) {
+  public Object getValue(OResult iCurrentRecord, Object iResult, OCommandContext ctx) {
     Object result = null;
     if (inputParam != null) {
       result = inputParam.bindFromInputParams(ctx.getInputParameters());
@@ -78,7 +78,7 @@ public class OArraySelector extends SimpleNode {
     if (result instanceof Number) {
       return ((Number) result).intValue();
     }
-    return null;
+    return result;
   }
 
   public boolean needsAliases(Set<String> aliases) {
