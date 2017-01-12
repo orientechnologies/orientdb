@@ -380,6 +380,7 @@ public class OSBTree<K, V> extends ODurableComponent {
 
           int sizeDiff = 0;
 
+          boolean ignored = false;
           cacheEntry.acquireExclusiveLock();
           try {
             final ONullBucket<V> nullBucket = new ONullBucket<V>(cacheEntry, valueSerializer, isNew);
@@ -403,7 +404,9 @@ public class OSBTree<K, V> extends ODurableComponent {
             nullBucket.setValue(treeValue);
           } finally {
             cacheEntry.releaseExclusiveLock();
-            releasePage(atomicOperation, cacheEntry);
+            releasePageFromWrite(atomicOperation, cacheEntry);
+            if (ignored)
+              endAtomicOperation(false, null);
           }
 
           sizeDiff++;
