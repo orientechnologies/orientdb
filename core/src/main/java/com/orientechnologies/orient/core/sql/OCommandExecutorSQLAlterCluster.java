@@ -41,7 +41,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * SQL ALTER PROPERTY command: Changes an attribute of an existent property in the target class.
+ * SQL ALTER CLUSTER command: Changes an attribute of an existing cluster
  *
  * @author Luca Garulli
  */
@@ -129,7 +129,7 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract
   }
 
   /**
-   * Execute the ALTER CLASS.
+   * Execute the ALTER CLUSTER.
    */
   public Object execute(final Map<Object, Object> iArgs) {
     if (attribute == null)
@@ -145,23 +145,13 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract
     for (OCluster cluster : getClusters()) {
       if (clusterId > -1 && clusterName.equals(String.valueOf(clusterId))) {
         clusterName = cluster.getName();
+        result = getDatabase().alterCluster(clusterName, attribute, value);
       } else {
         clusterId = cluster.getId();
+        result = getDatabase().alterCluster(clusterId, attribute, value);
       }
 
-      try {
-        if (attribute == ATTRIBUTES.STATUS && OStorageClusterConfiguration.STATUS.OFFLINE.toString().equalsIgnoreCase(value))
-          // REMOVE CACHE OF COMMAND RESULTS IF ACTIVE
-          getDatabase().getMetadata().getCommandCache().invalidateResultsOfCluster(clusterName);
-
-        if (attribute == ATTRIBUTES.NAME)
-          // REMOVE CACHE OF COMMAND RESULTS IF ACTIVE
-          getDatabase().getMetadata().getCommandCache().invalidateResultsOfCluster(clusterName);
-
-        result = cluster.set(attribute, value);
-      } catch (IOException ioe) {
-        throw OException.wrapException(new OCommandExecutionException("Error altering cluster '" + clusterName + "'"), ioe);
-      }
+      
     }
 
     return result;

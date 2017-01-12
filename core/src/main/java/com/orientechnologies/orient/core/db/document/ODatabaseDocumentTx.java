@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.record.*;
@@ -78,6 +79,7 @@ import com.orientechnologies.orient.core.sql.parser.OStatement;
 import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorageComponent;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineClusterException;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.tx.OTransaction;
@@ -1372,18 +1374,83 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   @Override
   public int addCluster(final String iClusterName, final Object... iParameters) {
     checkIfActive();
+    
+    checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_CREATE);
+    
     return storage.addCluster(iClusterName, false, iParameters);
   }
 
   @Override
   public int addCluster(final String iClusterName, final int iRequestedId, final Object... iParameters) {
     checkIfActive();
+    
+    checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_CREATE);
+    
     return storage.addCluster(iClusterName, iRequestedId, false, iParameters);
+  }
+
+  @Override
+  public Object alterCluster(String iClusterName, OCluster.ATTRIBUTES attribute, Object value) {
+  	 checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
+  	 
+  	 OCluster cluster = storage.getClusterById(storage.getClusterIdByName(iClusterName));
+  	 
+    if (cluster == null)
+      throw new ODatabaseException("Cannot alter cluster with name: " + iClusterName);
+
+    Object result;
+
+    try {
+      if (attribute == OCluster.ATTRIBUTES.STATUS && OStorageClusterConfiguration.STATUS.OFFLINE.toString().equalsIgnoreCase((String)value))
+        // REMOVE CACHE OF COMMAND RESULTS IF ACTIVE
+        getMetadata().getCommandCache().invalidateResultsOfCluster(iClusterName);
+
+      if (attribute == OCluster.ATTRIBUTES.NAME)
+        // REMOVE CACHE OF COMMAND RESULTS IF ACTIVE
+        getMetadata().getCommandCache().invalidateResultsOfCluster(iClusterName);
+
+      result = cluster.set(attribute, value);
+    } catch (Exception ex) {
+      throw OException.wrapException(new ODatabaseException("Error while altering cluster with name: " + iClusterName), ex);
+    }
+    
+    return result;
+  }
+
+  @Override
+  public Object alterCluster(int iClusterId, OCluster.ATTRIBUTES attribute, Object value) {  
+    checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
+    
+    OCluster cluster = storage.getClusterById(iClusterId);
+    
+    if (cluster == null)
+      throw new ODatabaseException("Cannot alter cluster with id: " + iClusterId);
+
+    Object result;
+    
+    try {
+      if (attribute == OCluster.ATTRIBUTES.STATUS && OStorageClusterConfiguration.STATUS.OFFLINE.toString().equalsIgnoreCase((String)value))
+        // REMOVE CACHE OF COMMAND RESULTS IF ACTIVE
+        getMetadata().getCommandCache().invalidateResultsOfCluster(getClusterNameById(iClusterId));
+
+      if (attribute == OCluster.ATTRIBUTES.NAME)
+        // REMOVE CACHE OF COMMAND RESULTS IF ACTIVE
+        getMetadata().getCommandCache().invalidateResultsOfCluster(getClusterNameById(iClusterId));
+
+      result = cluster.set(attribute, value);
+    } catch (Exception ex) {
+      throw OException.wrapException(new ODatabaseException("Error while altering cluster with id: " + iClusterId), ex);
+    }
+
+    return result;
   }
 
   @Override
   public boolean dropCluster(final String iClusterName, final boolean iTruncate) {
     checkIfActive();
+    
+    checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_DELETE);
+    
     final int clusterId = getClusterIdByName(iClusterName);
     OSchemaProxy schema = metadata.getSchema();
     OClass clazz = schema.getClassByClusterId(clusterId);
@@ -1400,7 +1467,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   public boolean dropCluster(final int iClusterId, final boolean iTruncate) {
     checkIfActive();
 
-    checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_DELETE, getClusterNameById(iClusterId));
+    checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_DELETE);    
 
     OSchemaProxy schema = metadata.getSchema();
     final OClass clazz = schema.getClassByClusterId(iClusterId);

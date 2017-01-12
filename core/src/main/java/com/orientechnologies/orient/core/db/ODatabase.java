@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.query.OQuery;
+import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -311,6 +312,24 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * @return Cluster id
    */
   int addBlobCluster(String iClusterName, Object... iParameters);
+
+  /**
+   * Alters a cluster.
+   *
+   * @param iClusterName The name of the cluster to alter
+   * @param attribute  The cluster attribute to be modified
+   * @return Dependent on attribute type
+   */
+  Object alterCluster(String iClusterName, OCluster.ATTRIBUTES attribute, Object value);
+
+  /**
+   * Alters a cluster.
+   *
+   * @param iClusterId The id of the cluster to alter
+   * @param attribute  The cluster attribute to be modified
+   * @return Dependent on attribute type
+   */
+  Object alterCluster(int iClusterId, OCluster.ATTRIBUTES attribute, Object value);
 
   /**
    * Retrieve the set of defined blob cluster.
