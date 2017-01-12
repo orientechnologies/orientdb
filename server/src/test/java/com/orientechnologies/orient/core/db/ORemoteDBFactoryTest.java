@@ -84,7 +84,7 @@ public class ORemoteDBFactoryTest {
     if (!factory.exists("test", "root", "root"))
       factory.create("test", "root", "root", OrientDBFactory.DatabaseType.MEMORY);
 
-    OPool<ODatabaseDocument> pool = factory.openPool("test", "admin", "admin");
+    ODatabasePool pool = factory.openPool("test", "admin", "admin");
     ODatabaseDocument db = pool.acquire();
     db.save(new ODocument());
     db.close();

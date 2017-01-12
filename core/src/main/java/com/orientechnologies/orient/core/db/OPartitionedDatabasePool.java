@@ -74,7 +74,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 06/11/14
  */
-public class OPartitionedDatabasePool extends OOrientListenerAbstract implements OPool<ODatabaseDocument> {
+public class OPartitionedDatabasePool extends OOrientListenerAbstract implements ODatabasePool {
   private static final int                 HASH_INCREMENT = 0x61c88647;
   private static final int                 MIN_POOL_SIZE  = 2;
   private static final AtomicInteger       nextHashCode   = new AtomicInteger();

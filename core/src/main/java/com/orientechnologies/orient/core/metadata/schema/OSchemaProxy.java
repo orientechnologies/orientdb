@@ -57,10 +57,6 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared>implements OSche
     return delegate.countClasses();
   }
 
-  public OClass createClass(final Class<?> iClass) {
-    return delegate.createClass(iClass);
-  }
-
   public OClass createClass(final String iClassName) {
 
     return delegate.createClass(iClassName);

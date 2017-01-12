@@ -42,9 +42,8 @@ import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
 
 /**
  * @author Luca Molino (molino.luca--at--gmail.com)
- * 
  */
-public class OSchemaProxyObject implements OSchema {
+public class OSchemaProxyObject implements OSchemaObject {
 
   protected OSchema underlying;
 
@@ -60,11 +59,6 @@ public class OSchemaProxyObject implements OSchema {
   @Override
   public int countClasses() {
     return underlying.countClasses();
-  }
-
-  @Override
-  public OClass createClass(Class<?> iClass) {
-    return underlying.createClass(iClass);
   }
 
   @Override
@@ -214,9 +208,8 @@ public class OSchemaProxyObject implements OSchema {
 
   /**
    * Scans all classes accessible from the context class loader which belong to the given package and subpackages.
-   * 
-   * @param iPackageName
-   *          The base package
+   *
+   * @param iPackageName The base package
    */
   public synchronized void generateSchema(final String iPackageName) {
     generateSchema(iPackageName, Thread.currentThread().getContextClassLoader());
@@ -224,9 +217,8 @@ public class OSchemaProxyObject implements OSchema {
 
   /**
    * Scans all classes accessible from the context class loader which belong to the given package and subpackages.
-   * 
-   * @param iPackageName
-   *          The base package
+   *
+   * @param iPackageName The base package
    */
   public synchronized void generateSchema(final String iPackageName, final ClassLoader iClassLoader) {
     OLogManager.instance().debug(this, "Generating schema inside package: %s", iPackageName);
@@ -244,9 +236,8 @@ public class OSchemaProxyObject implements OSchema {
 
   /**
    * Generate/updates the SchemaClass and properties from given Class<?>.
-   * 
-   * @param iClass
-   *          :- the Class<?> to generate
+   *
+   * @param iClass :- the Class<?> to generate
    */
   public synchronized void generateSchema(final Class<?> iClass) {
     generateSchema(iClass, ODatabaseRecordThreadLocal.INSTANCE.get());
@@ -254,9 +245,8 @@ public class OSchemaProxyObject implements OSchema {
 
   /**
    * Generate/updates the SchemaClass and properties from given Class<?>.
-   * 
-   * @param iClass
-   *          :- the Class<?> to generate
+   *
+   * @param iClass :- the Class<?> to generate
    */
   public synchronized void generateSchema(final Class<?> iClass, ODatabaseDocument database) {
     if (iClass == null || iClass.isInterface() || iClass.isPrimitive() || iClass.isEnum() || iClass.isAnonymousClass())
@@ -312,8 +302,8 @@ public class OSchemaProxyObject implements OSchema {
 
         case EMBEDDED:
           linkedClazz = f.getType();
-          if (linkedClazz == null || linkedClazz.equals(Object.class) || linkedClazz.equals(ODocument.class)
-              || OBlob.class.isAssignableFrom(f.getType())) {
+          if (linkedClazz == null || linkedClazz.equals(Object.class) || linkedClazz.equals(ODocument.class) || OBlob.class
+              .isAssignableFrom(f.getType())) {
             continue;
           } else {
             generateLinkProperty(database, schema, field, t, linkedClazz);
@@ -324,8 +314,8 @@ public class OSchemaProxyObject implements OSchema {
         case EMBEDDEDSET:
         case EMBEDDEDMAP:
           linkedClazz = OReflectionHelper.getGenericMultivalueType(f);
-          if (linkedClazz == null || linkedClazz.equals(Object.class) || linkedClazz.equals(ODocument.class)
-              || OBlob.class.isAssignableFrom(f.getType())) {
+          if (linkedClazz == null || linkedClazz.equals(Object.class) || linkedClazz.equals(ODocument.class) || OBlob.class
+              .isAssignableFrom(f.getType())) {
             continue;
           } else {
             if (OReflectionHelper.isJavaType(linkedClazz)) {
@@ -354,8 +344,8 @@ public class OSchemaProxyObject implements OSchema {
     boolean automaticSchemaGeneration = database.isAutomaticSchemaGeneration();
     boolean reloadSchema = false;
     for (Class<?> iClass : registeredEntities) {
-      if (Proxy.class.isAssignableFrom(iClass) || iClass.isEnum() || OReflectionHelper.isJavaType(iClass)
-          || iClass.isAnonymousClass())
+      if (Proxy.class.isAssignableFrom(iClass) || iClass.isEnum() || OReflectionHelper.isJavaType(iClass) || iClass
+          .isAnonymousClass())
         return;
 
       if (!database.getMetadata().getSchema().existsClass(iClass.getSimpleName())) {
@@ -363,7 +353,7 @@ public class OSchemaProxyObject implements OSchema {
         reloadSchema = true;
       }
 
-      for (Class<?> currentClass = iClass; currentClass != Object.class;) {
+      for (Class<?> currentClass = iClass; currentClass != Object.class; ) {
 
         if (automaticSchemaGeneration && !currentClass.equals(Object.class) && !currentClass.equals(ODocument.class)) {
           ((OSchemaProxyObject) database.getMetadata().getSchema()).generateSchema(currentClass, database.getUnderlying());
@@ -403,7 +393,7 @@ public class OSchemaProxyObject implements OSchema {
 
   protected static void generateOClass(Class<?> iClass, ODatabaseDocument database) {
     boolean reloadSchema = false;
-    for (Class<?> currentClass = iClass; currentClass != Object.class;) {
+    for (Class<?> currentClass = iClass; currentClass != Object.class; ) {
       String iClassName = currentClass.getSimpleName();
       currentClass = currentClass.getSuperclass();
 
@@ -454,6 +444,21 @@ public class OSchemaProxyObject implements OSchema {
 
   public OGlobalProperty createGlobalProperty(String name, OType type, Integer id) {
     return underlying.createGlobalProperty(name, type, id);
+  }
+
+  public OClass createClass(final Class<?> clazz) {
+    OClass result;
+
+    final Class<?> superClass = clazz.getSuperclass();
+    final OClass cls;
+    if (superClass != null && superClass != Object.class && existsClass(superClass.getSimpleName()))
+      cls = getClass(superClass.getSimpleName());
+    else
+      cls = null;
+
+    result = createClass(clazz.getSimpleName(), cls);
+
+    return result;
   }
 
 }
