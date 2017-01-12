@@ -35,8 +35,6 @@ public class OSymmetricKeyTest {
   	 
   	 String decryptedMsg = sk.decryptAsString(magic);
   	 
-  	 System.out.println("decryptedMsg = " + decryptedMsg);
-  	 
   	 assertThat(msgToEncrypt).isEqualTo(decryptedMsg);
   }
 
@@ -49,8 +47,6 @@ public class OSymmetricKeyTest {
   	 String magic = sk.encrypt("AES/CBC/PKCS5Padding", msgToEncrypt);
   	 
   	 String decryptedMsg = sk.decryptAsString(magic);
-  	 
-  	 System.out.println("decryptedMsg = " + decryptedMsg);
   	 
   	 assertThat(msgToEncrypt).isEqualTo(decryptedMsg);
   }
