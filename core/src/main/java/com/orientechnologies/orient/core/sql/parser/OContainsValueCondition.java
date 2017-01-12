@@ -6,11 +6,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class OContainsValueCondition extends OBooleanExpression {
   protected OExpression            left;
@@ -33,12 +29,46 @@ public class OContainsValueCondition extends OBooleanExpression {
     return visitor.visit(this, data);
   }
 
-  @Override public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
-    throw new UnsupportedOperationException("TODO Implement ContainsValue!!!");//TODO
+  @Override
+  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+    Object leftValue = left.execute(currentRecord, ctx);
+    if (leftValue instanceof Map) {
+      Map map = (Map) leftValue;
+      if (condition != null) {
+        for (Object o : map.values()) {
+          if (condition.evaluate(o, ctx)) {
+            return true;
+          }
+        }
+        return false;
+      } else {
+        Object rightValue = expression.execute(currentRecord, ctx);
+        return map.values().contains(rightValue);//TODO type conversions...?
+      }
+
+    }
+    return false;
   }
 
-  @Override public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
-    throw new UnsupportedOperationException("TODO Implement ContainsValue!!!");//TODO
+  @Override
+  public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
+    Object leftValue = left.execute(currentRecord, ctx);
+    if (leftValue instanceof Map) {
+      Map map = (Map) leftValue;
+      if (condition != null) {
+        for (Object o : map.values()) {
+          if (condition.evaluate(o, ctx)) {
+            return true;
+          }
+        }
+        return false;
+      } else {
+        Object rightValue = expression.execute(currentRecord, ctx);
+        return map.values().contains(rightValue);//TODO type conversions...?
+      }
+
+    }
+    return false;
   }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
@@ -55,25 +85,29 @@ public class OContainsValueCondition extends OBooleanExpression {
 
   }
 
-  @Override public boolean supportsBasicCalculation() {
+  @Override
+  public boolean supportsBasicCalculation() {
     return true;
   }
 
-  @Override protected int getNumberOfExternalCalculations() {
+  @Override
+  protected int getNumberOfExternalCalculations() {
     if (condition == null) {
       return 0;
     }
     return condition.getNumberOfExternalCalculations();
   }
 
-  @Override protected List<Object> getExternalCalculationConditions() {
+  @Override
+  protected List<Object> getExternalCalculationConditions() {
     if (condition == null) {
       return Collections.EMPTY_LIST;
     }
     return condition.getExternalCalculationConditions();
   }
 
-  @Override public boolean needsAliases(Set<String> aliases) {
+  @Override
+  public boolean needsAliases(Set<String> aliases) {
     if (left != null && left.needsAliases(aliases)) {
       return true;
     }
@@ -87,7 +121,8 @@ public class OContainsValueCondition extends OBooleanExpression {
     return false;
   }
 
-  @Override public OContainsValueCondition copy() {
+  @Override
+  public OContainsValueCondition copy() {
     OContainsValueCondition result = new OContainsValueCondition(-1);
     result.left = left.copy();
     result.operator = operator;
@@ -96,7 +131,8 @@ public class OContainsValueCondition extends OBooleanExpression {
     return result;
   }
 
-  @Override public void extractSubQueries(SubQueryCollector collector) {
+  @Override
+  public void extractSubQueries(SubQueryCollector collector) {
     left.extractSubQueries(collector);
     if (condition != null) {
       condition.extractSubQueries(collector);
@@ -106,7 +142,8 @@ public class OContainsValueCondition extends OBooleanExpression {
     }
   }
 
-  @Override public boolean refersToParent() {
+  @Override
+  public boolean refersToParent() {
     if (left != null && left.refersToParent()) {
       return true;
     }
@@ -119,7 +156,8 @@ public class OContainsValueCondition extends OBooleanExpression {
     return false;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -139,7 +177,8 @@ public class OContainsValueCondition extends OBooleanExpression {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = left != null ? left.hashCode() : 0;
     result = 31 * result + (operator != null ? operator.hashCode() : 0);
     result = 31 * result + (condition != null ? condition.hashCode() : 0);
@@ -147,7 +186,8 @@ public class OContainsValueCondition extends OBooleanExpression {
     return result;
   }
 
-  @Override public List<String> getMatchPatternInvolvedAliases() {
+  @Override
+  public List<String> getMatchPatternInvolvedAliases() {
     List<String> leftX = left == null ? null : left.getMatchPatternInvolvedAliases();
     List<String> expressionX = expression == null ? null : expression.getMatchPatternInvolvedAliases();
     List<String> conditionX = condition == null ? null : condition.getMatchPatternInvolvedAliases();
