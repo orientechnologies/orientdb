@@ -110,48 +110,27 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract
   }
 
   /**
-   * Execute the ALTER CLASS.
+   * Execute the ALTER CLUSTER.
    */
   public Object execute(final Map<Object, Object> iArgs) {
     if (attribute == null)
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
-    final OCluster cluster = getCluster();
-
-    if (cluster == null)
-      throw new OCommandExecutionException("Cluster '" + clusterName + "' not found");
-
-    if (clusterId > -1 && clusterName.equals(String.valueOf(clusterId))) {
-      clusterName = cluster.getName();
-    } else {
-      clusterId = cluster.getId();
-    }
+    final ODatabaseDocumentInternal database = getDatabase();
 
     Object result;
-    try {
-      result = cluster.set(attribute, value);
-      final OStorage storage = getDatabase().getStorage();
-      if (storage instanceof OLocalPaginatedStorage)
-        ((OLocalPaginatedStorage) storage).synch();
-    } catch (IOException ioe) {
-      throw new OCommandExecutionException("Error altering cluster '" + clusterName + "'", ioe);
-    }
 
+    if (clusterId > -1)
+      result = database.alterCluster(clusterId, attribute, value);
+    else
+      result = database.alterCluster(clusterName, attribute, value);
+      
     return result;
   }
 
   @Override
   public long getDistributedTimeout() {
     return OGlobalConfiguration.DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT.getValueAsLong();
-  }
-
-  protected OCluster getCluster() {
-    final ODatabaseDocumentInternal database = getDatabase();
-    if (clusterId > -1) {
-      return database.getStorage().getClusterById(clusterId);
-    } else {
-      return database.getStorage().getClusterById(database.getStorage().getClusterIdByName(clusterName));
-    }
   }
 
   public String getSyntax() {

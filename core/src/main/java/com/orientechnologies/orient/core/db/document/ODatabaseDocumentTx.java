@@ -91,6 +91,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.OSerial
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
+import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
@@ -100,6 +101,7 @@ import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineClusterException;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.tx.OTransaction;
@@ -1322,18 +1324,74 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   @Override
   public int addCluster(final String iClusterName, final Object... iParameters) {
     checkIfActive();
+    
+    checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_CREATE);
+    
     return storage.addCluster(iClusterName, false, iParameters);
   }
 
   @Override
   public int addCluster(final String iClusterName, final int iRequestedId, final Object... iParameters) {
     checkIfActive();
+    
+    checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_CREATE);
+    
     return storage.addCluster(iClusterName, iRequestedId, false, iParameters);
   }
 
   @Override
+  public Object alterCluster(String iClusterName, OCluster.ATTRIBUTES attribute, Object value) {
+  	 checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
+  	 
+  	 OCluster cluster = storage.getClusterById(storage.getClusterIdByName(iClusterName));
+  	 
+    if (cluster == null)
+      throw new ODatabaseException("Cannot alter cluster with name: " + iClusterName);
+
+    Object result;
+    
+    try {
+      result = cluster.set(attribute, value);
+      
+      if (storage instanceof OLocalPaginatedStorage)
+        ((OLocalPaginatedStorage) storage).synch();
+    } catch (Exception ex) {
+      throw new ODatabaseException("Error while altering cluster with name: " + iClusterName, ex);
+    }
+
+    return result;
+  }
+
+  @Override
+  public Object alterCluster(int iClusterId, OCluster.ATTRIBUTES attribute, Object value) {  
+    checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
+    
+    OCluster cluster = storage.getClusterById(iClusterId);
+    
+    if (cluster == null)
+      throw new ODatabaseException("Cannot alter cluster with id: " + iClusterId);
+
+    Object result;
+    
+    try {
+      result = cluster.set(attribute, value);
+      
+      if (storage instanceof OLocalPaginatedStorage)
+        ((OLocalPaginatedStorage) storage).synch();
+    } catch (Exception ex) {
+      throw new ODatabaseException("Error while altering cluster with id: " + iClusterId, ex);
+    }
+
+    return result;
+  }
+
+
+  @Override
   public boolean dropCluster(final String iClusterName, final boolean iTruncate) {
     checkIfActive();
+    
+    checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_DELETE);
+    
     final int clusterId = getClusterIdByName(iClusterName);
     OClass clazz = metadata.getSchema().getClassByClusterId(clusterId);
     if (clazz != null)
@@ -1345,6 +1403,9 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   @Override
   public boolean dropCluster(final int iClusterId, final boolean iTruncate) {
     checkIfActive();
+    
+    checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_DELETE);
+    
     final OClass clazz = metadata.getSchema().getClassByClusterId(iClusterId);
     if (clazz != null)
       clazz.removeClusterId(iClusterId);

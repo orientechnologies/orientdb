@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.metadata.security.OToken;
+import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
 
@@ -240,6 +241,14 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal, T> 
   public int addCluster(final String iClusterName, final Object... iParameters) {
     checkOpeness();
     return underlying.addCluster(iClusterName, iParameters);
+  }
+
+  public Object alterCluster(String iClusterName, OCluster.ATTRIBUTES attribute, Object value) {
+    return underlying.alterCluster(iClusterName, attribute, value);
+  }
+
+  public Object alterCluster(int iClusterId, OCluster.ATTRIBUTES attribute, Object value) {  
+    return underlying.alterCluster(iClusterId, attribute, value);
   }
 
   /**
