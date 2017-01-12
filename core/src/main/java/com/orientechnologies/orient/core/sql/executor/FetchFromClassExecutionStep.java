@@ -16,7 +16,7 @@ import java.util.Optional;
 public class FetchFromClassExecutionStep extends AbstractExecutionStep {
 
   private final String className;
-  FetchFromClusterExecutionStep[] subSteps;
+  AbstractExecutionStep[] subSteps;
   OResultSet                      currentResultSet;
   private boolean orderByRidAsc  = false;
   private boolean orderByRidDesc = false;
@@ -43,17 +43,33 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
     if (clazz == null) {
       throw new OCommandExecutionException("Class " + className + " not found");
     }
-    int[] clusterIds = clazz.getPolymorphicClusterIds();
-    subSteps = new FetchFromClusterExecutionStep[clusterIds.length];
+    int[] classClusters = clazz.getPolymorphicClusterIds();
+    int[] clusterIds = new int[classClusters.length + 1];
+    System.arraycopy(classClusters, 0, clusterIds, 0, classClusters.length);
+    clusterIds[clusterIds.length - 1] = -1;//temporary cluster, data in tx
+
+    subSteps = new AbstractExecutionStep[clusterIds.length];
     sortClusers(clusterIds);
     for (int i = 0; i < clusterIds.length; i++) {
-      FetchFromClusterExecutionStep step = new FetchFromClusterExecutionStep(clusterIds[i], ctx);
-      if (orderByRidAsc) {
-        step.setOrder(FetchFromClusterExecutionStep.ORDER_ASC);
-      } else if (orderByRidDesc) {
-        step.setOrder(FetchFromClusterExecutionStep.ORDER_DESC);
+      int clusterId = clusterIds[i];
+      if (clusterId > 0) {
+        FetchFromClusterExecutionStep step = new FetchFromClusterExecutionStep(clusterId, ctx);
+        if (orderByRidAsc) {
+          step.setOrder(FetchFromClusterExecutionStep.ORDER_ASC);
+        } else if (orderByRidDesc) {
+          step.setOrder(FetchFromClusterExecutionStep.ORDER_DESC);
+        }
+        subSteps[i] = step;
+      } else {
+        //current tx
+        FetchTemporaryFromTxStep step = new FetchTemporaryFromTxStep(ctx, className);
+        if (orderByRidAsc) {
+          step.setOrder(FetchFromClusterExecutionStep.ORDER_ASC);
+        } else if (orderByRidDesc) {
+          step.setOrder(FetchFromClusterExecutionStep.ORDER_DESC);
+        }
+        subSteps[i] = step;
       }
-      subSteps[i] = step;
     }
   }
 
@@ -71,13 +87,15 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
     }
   }
 
-  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override
+  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
     return new OResultSet() {
 
       int totDispatched = 0;
 
-      @Override public boolean hasNext() {
+      @Override
+      public boolean hasNext() {
         while (true) {
           if (totDispatched >= nRecords) {
             return false;
@@ -98,7 +116,8 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
         }
       }
 
-      @Override public OResult next() {
+      @Override
+      public OResult next() {
         while (true) {
           if (totDispatched >= nRecords) {
             throw new IllegalStateException();
@@ -122,46 +141,54 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
         }
       }
 
-      @Override public void close() {
-        for (FetchFromClusterExecutionStep step : subSteps) {
+      @Override
+      public void close() {
+        for (AbstractExecutionStep step : subSteps) {
           step.close();
         }
       }
 
-      @Override public Optional<OExecutionPlan> getExecutionPlan() {
+      @Override
+      public Optional<OExecutionPlan> getExecutionPlan() {
         return Optional.empty();
       }
 
-      @Override public Map<String, Long> getQueryStats() {
+      @Override
+      public Map<String, Long> getQueryStats() {
         return new HashMap<>();
       }
     };
 
   }
 
-  @Override public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
+  @Override
+  public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
 
   }
 
-  @Override public void sendTimeout() {
+  @Override
+  public void sendTimeout() {
     for (OExecutionStepInternal step : subSteps) {
       step.sendTimeout();
     }
     prev.ifPresent(p -> p.sendTimeout());
   }
 
-  @Override public void close() {
+  @Override
+  public void close() {
     for (OExecutionStepInternal step : subSteps) {
       step.close();
     }
     prev.ifPresent(p -> p.close());
   }
 
-  @Override public void sendResult(Object o, Status status) {
+  @Override
+  public void sendResult(Object o, Status status) {
 
   }
 
-  @Override public String prettyPrint(int depth, int indent) {
+  @Override
+  public String prettyPrint(int depth, int indent) {
     StringBuilder builder = new StringBuilder();
     String ind = OExecutionStepInternal.getIndent(depth, indent);
     builder.append(ind);
