@@ -98,18 +98,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     }
   }
 
-  private class ODatabaseExclusiveDistributedLock {
-    final String         server;
-    final long           acquiredOn;
-    final CountDownLatch lock;
-
-    private ODatabaseExclusiveDistributedLock(final String server) {
-      this.server = server;
-      this.acquiredOn = System.currentTimeMillis();
-      this.lock = new CountDownLatch(1);
-    }
-  }
-
   public ODistributedDatabaseImpl(final OHazelcastPlugin manager, final ODistributedMessageServiceImpl msgService,
       final String iDatabaseName, final ODistributedConfiguration cfg) {
     this.manager = manager;

@@ -802,7 +802,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           final DB_STATUS s = getDatabaseStatus(getLocalNodeName(), databaseName);
           if (s == DB_STATUS.NOT_AVAILABLE) {
             // INSTALL THE DATABASE
-            installDatabase(false, databaseName, false, true);
+            installDatabase(false, databaseName, false,
+                OGlobalConfiguration.DISTRIBUTED_BACKUP_TRY_INCREMENTAL_FIRST.getValueAsBoolean());
           }
         }
       }
@@ -857,7 +858,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           final DB_STATUS s = getDatabaseStatus(getLocalNodeName(), databaseName);
           if (s == DB_STATUS.NOT_AVAILABLE) {
             // INSTALL THE DATABASE
-            installDatabase(false, databaseName, false, true);
+            installDatabase(false, databaseName, false,
+                OGlobalConfiguration.DISTRIBUTED_BACKUP_TRY_INCREMENTAL_FIRST.getValueAsBoolean());
           }
         }
 
@@ -1223,7 +1225,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           setDatabaseStatus(nodeName, databaseName, DB_STATUS.NOT_AVAILABLE);
 
         try {
-          installDatabase(true, databaseName, false, true);
+          installDatabase(true, databaseName, false,
+              OGlobalConfiguration.DISTRIBUTED_BACKUP_TRY_INCREMENTAL_FIRST.getValueAsBoolean());
         } catch (Exception e) {
           ODistributedServerLog
               .error(this, getLocalNodeName(), null, DIRECTION.IN, "Error on installing database '%s' on local node", databaseName);

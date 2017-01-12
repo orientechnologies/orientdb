@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed.sql;
 
-import java.util.Map;
-
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -38,15 +36,16 @@ import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
+import java.util.Map;
+
 /**
  * SQL HA SYNC DATABASE command: synchronizes database form distributed servers.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 @SuppressWarnings("unchecked")
 public class OCommandExecutorSQLHASyncDatabase extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
-  public static final String       NAME = "HA SYNC DATABASE";
+  public static final String NAME = "HA SYNC DATABASE";
   private OHaSyncDatabaseStatement parsedStatement;
 
   public OCommandExecutorSQLHASyncDatabase parse(final OCommandRequest iRequest) {
@@ -83,7 +82,8 @@ public class OCommandExecutorSQLHASyncDatabase extends OCommandExecutorSQLAbstra
 
     final String databaseName = database.getName();
 
-    return dManager.installDatabase(true, databaseName, false, true);
+    return dManager.installDatabase(true, databaseName, false,
+        OGlobalConfiguration.DISTRIBUTED_BACKUP_TRY_INCREMENTAL_FIRST.getValueAsBoolean());
   }
 
   @Override
