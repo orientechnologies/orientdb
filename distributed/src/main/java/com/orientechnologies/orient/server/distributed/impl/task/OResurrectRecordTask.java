@@ -29,19 +29,18 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 /**
  * Distributed task to fix delete record in conflict on synchronization.
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- *
  */
 public class OResurrectRecordTask extends OUpdateRecordTask {
   private static final long serialVersionUID = 1L;
-  public static final int   FACTORYID        = 11;
+  public static final  int  FACTORYID        = 11;
 
   public OResurrectRecordTask() {
   }
@@ -53,8 +52,9 @@ public class OResurrectRecordTask extends OUpdateRecordTask {
   @Override
   public Object executeRecordTask(ODistributedRequestId requestId, final OServer iServer, ODistributedServerManager iManager,
       final ODatabaseDocumentInternal database) throws Exception {
-    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-        "Resurrecting deleted record %s/%s v.%d", database.getName(), rid.toString(), version);
+    ODistributedServerLog
+        .debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "Resurrecting deleted record %s/%s v.%d reqId=%s",
+            database.getName(), rid.toString(), version, requestId);
 
     try {
       database.getStorage().recyclePosition(rid, new byte[] {}, version, recordType);
@@ -64,8 +64,8 @@ public class OResurrectRecordTask extends OUpdateRecordTask {
       ORecordInternal.fill(loadedRecordInstance, rid, version, content, true);
       loadedRecordInstance.save();
 
-      ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-          "+-> resurrected deleted record");
+      ODistributedServerLog
+          .debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "+-> resurrected deleted record");
       return Boolean.TRUE;
 
     } catch (OPaginatedClusterException e) {

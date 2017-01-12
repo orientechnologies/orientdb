@@ -1905,7 +1905,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     else if (iText.startsWith("\n"))
       iText = iText.substring(1);
 
-    OLogManager.instance().info(this, iText);
+    OLogManager.instance().debug(this, iText);
   }
 
   public void stopNode(final String iNode) throws IOException {

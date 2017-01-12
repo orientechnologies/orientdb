@@ -136,7 +136,7 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
                     if (iText.startsWith("\n"))
                       iText = iText.substring(1);
 
-                    OLogManager.instance().info(this, iText);
+                    OLogManager.instance().debug(this, iText);
                   }
                 } : null, OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger(), CHUNK_MAX_SIZE);
 
