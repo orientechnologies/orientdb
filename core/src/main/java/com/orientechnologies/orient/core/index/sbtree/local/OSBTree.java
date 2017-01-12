@@ -309,7 +309,6 @@ public class OSBTree<K, V> extends ODurableComponent {
               failure = false;
             } finally {
               if (failure || ignored) {
-                keyBucketCacheEntry.releaseExclusiveLock();
                 releasePageFromWrite(atomicOperation, keyBucketCacheEntry);
               }
               if (ignored) // in case of a failure atomic operation will be ended in a usual way below
@@ -381,7 +380,6 @@ public class OSBTree<K, V> extends ODurableComponent {
           int sizeDiff = 0;
 
           boolean ignored = false;
-          cacheEntry.acquireExclusiveLock();
           try {
             final ONullBucket<V> nullBucket = new ONullBucket<V>(cacheEntry, valueSerializer, isNew);
             final OSBTreeValue<V> oldValue = nullBucket.getValue();
@@ -403,7 +401,6 @@ public class OSBTree<K, V> extends ODurableComponent {
 
             nullBucket.setValue(treeValue);
           } finally {
-            cacheEntry.releaseExclusiveLock();
             releasePageFromWrite(atomicOperation, cacheEntry);
             if (ignored)
               endAtomicOperation(false, null);
