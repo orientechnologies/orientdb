@@ -2,6 +2,9 @@ import '../views/database/editclass.html';
 import '../views/database/newProperty.html';
 import '../views/database/newIndex.html';
 import '../views/database/newClass.html';
+import '../views/database/newVertex.html';
+import '../views/database/newEdge.html';
+import '../views/database/newGenericClass.html';
 import '../views/database/index/indexMain.html';
 
 
@@ -9,7 +12,7 @@ import Utilities from '../util/library';
 import angular from 'angular';
 
 let schemaModule = angular.module('schema.controller', ['database.services']);
-schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'ClassAlterApi', '$modal', '$q', '$route', '$window', 'Spinner', 'Notification', '$popover', 'GraphConfig', 'DocumentApi', function ($scope, $routeParams, $location, Database, CommandApi, ClassAlterApi, $modal, $q, $route, $window, Spinner, Notification, $popover, GraphConfig, DocumentApi) {
+schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'ClassAlterApi', '$modal', '$q', '$route', '$window', 'Spinner', 'Notification', '$popover', 'GraphConfig', 'DocumentApi', 'SchemaService', function ($scope, $routeParams, $location, Database, CommandApi, ClassAlterApi, $modal, $q, $route, $window, Spinner, Notification, $popover, GraphConfig, DocumentApi, SchemaService) {
 
   //for pagination
   $scope.countPage = 10;
@@ -22,17 +25,53 @@ schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$locatio
     linkInheritance: Database.getOWikiFor("Inheritance.html")
   }
   $scope.popover = {title: "Rename Class"};
-  $scope.clusterStrategies = ['round-robin', "default", "balanced", "local"];
+  $scope.clusterStrategies = ['round-robin', "default", "balanced", ",local"];
   $scope.database = Database;
   $scope.database.refreshMetadata($routeParams.database);
   $scope.database = Database;
   $scope.listClassesTotal = $scope.database.listClasses();
+
+
+  let isSystem = function (c) {
+    return SchemaService.isSystemClass(c);
+  }
+
+
+  let gMap = {};
+  $scope.systemClasses = $scope.listClassesTotal.filter((c) => {
+
+    let system = isSystem(c.name);
+    if (system) {
+      gMap[c.name] = true;
+    }
+    return system;
+  })
+  $scope.vClasses = $scope.listClassesTotal.filter((c) => {
+    let vertex = Database.isVertex(c.name);
+    if (vertex) {
+      gMap[c.name] = true;
+    }
+    return vertex;
+  })
+  $scope.eClasses = $scope.listClassesTotal.filter((c) => {
+    let edge = Database.isEdge(c.name);
+    if (edge) {
+      gMap[c.name] = true;
+    }
+    return edge;
+  })
+
+  $scope.gClasses = $scope.listClassesTotal.filter((c) => {
+    return !gMap[c.name];
+  })
+
 
   $scope.numberOfPage = new Array(Math.ceil($scope.listClassesTotal.length / $scope.countPage));
   $scope.listClasses = $scope.listClassesTotal.slice(0, $scope.countPage);
 
   $scope.colors = d3.scale.category20();
 
+  $scope.tab = 'user';
 
   GraphConfig.get().then(function (data) {
     $scope.config = data;
@@ -169,6 +208,33 @@ schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$locatio
 
     modalScope.parentScope = $scope;
     var modalPromise = $modal({template: 'views/database/newClass.html', scope: modalScope, show: false});
+    modalPromise.$promise.then(modalPromise.show);
+
+  }
+  $scope.createNewVertex = function () {
+    let modalScope = $scope.$new(true);
+    modalScope.db = $scope.database;
+
+    modalScope.parentScope = $scope;
+    var modalPromise = $modal({templateUrl: 'views/database/newVertex.html', scope: modalScope, show: false});
+    modalPromise.$promise.then(modalPromise.show);
+
+  }
+  $scope.createNewEdge = function () {
+    let modalScope = $scope.$new(true);
+    modalScope.db = $scope.database;
+
+    modalScope.parentScope = $scope;
+    var modalPromise = $modal({template: 'views/database/newEdge.html', scope: modalScope, show: false});
+    modalPromise.$promise.then(modalPromise.show);
+
+  }
+  $scope.createNewGeneric = function () {
+    let modalScope = $scope.$new(true);
+    modalScope.db = $scope.database;
+
+    modalScope.parentScope = $scope;
+    var modalPromise = $modal({template: 'views/database/newGenericClass.html', scope: modalScope, show: false});
     modalPromise.$promise.then(modalPromise.show);
 
   }

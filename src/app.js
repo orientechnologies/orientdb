@@ -49,6 +49,7 @@ import  'font-awesome/css/font-awesome.css';
 
 import  'spectrum-colorpicker/spectrum.css';
 import  'ui-select/dist/select.min.css';
+
 import 'ng-tags-input/build/ng-tags-input.min.css';
 import 'ng-tags-input/build/ng-tags-input.bootstrap.min.css';
 import 'c3/c3.min.css';
@@ -86,6 +87,11 @@ import NotificationController from './controllers/notification-controller'
 import ConfigurationController from './controllers/configuration-controller'
 import EEController from './controllers/ee-controller'
 import SchemaController from './controllers/schema-controller'
+
+
+// COMPONENTS Angular 1.5
+
+import APP_COMPONENTS_LEGACY from './components';
 
 // WIDGET
 
@@ -126,6 +132,7 @@ let deps = [HeaderController,
   ConfigurationController,
   EEController,
   SchemaController,
+  ...APP_COMPONENTS_LEGACY,
   'mgcrea.ngStrap',
   CodeMirrorUI,
   'LocalStorageModule',
@@ -135,7 +142,8 @@ let deps = [HeaderController,
   'history.services',
   'browse.services',
   'ee.services',
-  'graph.services',
+  'schema.services',
+  'legacy.filters',
   BootstrapTabSet,
   'ngTable',
   'filters',

@@ -34,7 +34,7 @@ notification.factory('Notification', ["$timeout", "$rootScope", function ($timeo
       }
       this.current = n;
       $timeout(function () {
-        if (n && !(n.options.type === 'error'))
+        if (n && !(n.options.type === 'error') && !(notification.sticky))
           n.close();
       }, 4000);
     },

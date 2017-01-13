@@ -1,0 +1,140 @@
+<div class="row classes-list">
+  <div class="col-md-6">
+    <h4 ng-show="$ctrl.label">
+      <b>{{$ctrl.label}} Classes</b>
+    </h4>
+  </div>
+  <div class="col-md-6">
+    <div class="btn-group pull-right">
+      <button href="javascript:void(0)" ng-show="$ctrl.label" class="btn btn-sm btn-default" ng-click="$ctrl.onCreate()"><i
+        class="fa fa-plus"></i> New {{$ctrl.label}}
+      </button>
+    </div>
+  </div>
+
+  <div class="col-md-12">
+    <div class="table-responsive">
+      <table st-table="displeyedClasses" st-safe-src="$ctrl.classes"
+             class="table table-striped table-bordered table-hover table-condensed pointer table-schema">
+        <thead>
+        <th colspan="10" class="hidden">
+          <input st-search="" ng-model="$ctrl.queryFilter" placeholder="Search class"
+                 class="input-sm form-control "
+                 type="text"/>
+        </th>
+        <tr>
+          <th>Name
+            <a href="javascript:void(0)" tabindex="1"
+               data-trigger="focus" data-placement="right"
+               data-container="body"
+               data-content="{{ 'schema.class' | translate:$ctrl.links }}" bs-popover>
+              <i class="fa fa-question-circle"></i>
+            </a>
+          </th>
+          <th>Color</th>
+          <th>SuperClasses
+            <a href="javascript:void(0)" tabindex="1"
+               data-trigger="focus" data-placement="bottom"
+               data-container="body"
+               data-content="{{ 'schema.superClass' | translate:$ctrl.links }}" bs-popover>
+              <i class="fa fa-question-circle"></i>
+            </a>
+          </th>
+          <th>Alias</th>
+          <th>Abstract</th>
+          <th>Clusters
+            <a href="javascript:void(0)" tabindex="1"
+               data-trigger="focus" data-placement="bottom"
+               data-container="body"
+               data-content="{{ 'schema.clusters' | translate:$ctrl.links }}" bs-popover>
+              <i class="fa fa-question-circle"></i>
+            </a>
+          </th>
+          <th>Default Cluster</th>
+          <th>
+            Cluster Selection
+            <a href="javascript:void(0)" tabindex="1"
+               data-trigger="focus" data-placement="bottom"
+               data-container="body"
+               data-content="{{ 'schema.clusterSelection' | translate:$ctrl.links }}" bs-popover>
+              <i class="fa fa-question-circle"></i>
+            </a>
+          </th>
+          <th>Records</th>
+
+          <th>Actions</th>
+        </tr>
+
+        </thead>
+        <tbody>
+        <tr ng-repeat="result in displeyedClasses ">
+          <td ng-click="$ctrl.openClass(result)">{{result['name']}}</td>
+          <td>
+
+            <spectrum-colorpicker
+              ng-model="$ctrl.config.config['classes'][result['name']].fill"
+              options="{preferredFormat: 'hex'}"></spectrum-colorpicker>
+          </td>
+          <td ng-click="$ctrl.openClass(result)">{{result['superClasses'] | formatArray}}</td>
+          <td ng-click="$ctrl.openClass(result)">{{result['alias']}}</td>
+          <td ng-click="$ctrl.openClass(result)">
+            <input type="checkbox" ng-model="result['abstract']" ng-disabled="true">
+          </td>
+
+          <td ng-click="$ctrl.openClass(result)">{{result['clusters']}}</td>
+          <td ng-click="$ctrl.openClass(result)">{{result['defaultCluster']}}</td>
+          <td>
+            <select type="text" ng-options="opt for opt in $ctrl.clusterStrategies"
+                    ng-change="$ctrl.setClusterStrategy(result)"
+                    ng-model="result['clusterSelection']">
+            </select>
+          </td>
+          <td ng-click="$ctrl.openClass(result)">{{result['records'] | number }}</td>
+          <td>
+            <button href="javascript:void(0)" class="btn btn-primary btn-xs"
+                    ng-click="$ctrl.rename(result)">
+              Rename
+            </button>
+            <button href="javascript:void(0)" class="btn  btn-xs"
+                    ng-click="$ctrl.queryAll(result['name'])">
+              <i
+                class="fa fa-list-alt"></i> Query All
+            </button>
+
+            <button href="javascript:void(0)" class="btn btn-xs" ng-hide="result['abstract']"
+                    ng-click="$ctrl.createRecord(result['name'])">
+              <i
+                class="fa fa-plus"></i> New Record
+
+
+            </button>
+
+            <button href="javascript:void(0)" tabindex="1" class="btn btn-xs btn-disabled disabled"
+                    ng-show="result['abstract']"
+                    data-trigger="hover" data-placement="bottom"
+                    data-container="body"
+                    data-content="{{ 'Cannoct create a new record for an abstract class' }}" bs-popover>
+              <i
+                class="fa fa-plus"></i> New Record
+            </button>
+
+
+            <button href="javascript:void(0)" ng-disabled="!$ctrl.canDrop(result['name'])"
+                    class="btn btn-danger btn-xs"
+                    ng-click="$ctrl.dropClass(result)">
+              <i class="fa fa-trash-o"></i> Drop
+            </button>
+          </td>
+        </tr>
+        </tbody>
+        <tfoot>
+        <tr>
+          <td colspan="10" class="text-center">
+            <div st-pagination="" st-items-by-page="5" st-displayed-pages="7"></div>
+          </td>
+        </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</div>

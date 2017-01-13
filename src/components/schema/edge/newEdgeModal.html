@@ -1,0 +1,116 @@
+<div class="modal-dialog">
+  <div class="modal-content">
+    <div class="modal-header">
+      <button type="button" class="close" data-dismiss="modal" ng-click="$ctrl.hide()" aria-hidden="true">×
+      </button>
+      <h4 class="modal-title">Edge Class: {{$ctrl.property['name']}}</h4>
+    </div>
+    <div class="modal-body edge">
+      <div class="row-fluid">
+        <div class="span12">
+          <form class="form-horizontal" name="classForm" novalidate>
+            <div class="form-group" ng-class="{ 'has-error' : !$ctrl.property['name']}">
+              <label class="control-label col-md-3" for="inputName">Name *</label>
+
+              <div class="col-md-9">
+                <input type="text" id="inputName" class="form-control" required
+                       ng-model="$ctrl.property['name']" focus="true"/>
+                <span ng-show="!$ctrl.property['name']"
+                      class="help-block help-block-sm">Name field required.</span>
+              </div>
+
+
+            </div>
+
+            <div class="form-group" ng-class="{ 'has-error' : $ctrl.property['superClasses'].length == 0}">
+              <label class="control-label col-md-3">SuperClasses</label>
+
+              <div class="col-md-9">
+                <ui-select multiple required ng-model="$ctrl.property['superClasses']" theme="bootstrap"
+                           title="Choose Superclasses">
+                  <ui-select-match placeholder="Select class...">{{$item}}</ui-select-match>
+                  <ui-select-choices repeat="class in $ctrl.listClasses | filter: $select.search">
+                    <div ng-bind-html="class | highlight: $select.search"></div>
+                  </ui-select-choices>
+                </ui-select>
+              </div>
+              <div class="col-md-9 col-md-offset-2">
+                <span ng-show="$ctrl.property['superClasses'].length == 0"
+                      class="help-block help-block-sm ">SuperClasses field required.</span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="control-label col-md-3">From Vertex</label>
+              <div class="col-md-9">
+                <ui-select ng-model="$ctrl.property['out']" theme="bootstrap"
+                           title="Choose From Vertex Class">
+                  <ui-select-match placeholder="Select class...">{{$select.selected}}</ui-select-match>
+                  <ui-select-choices repeat="class in $ctrl.vertices | filter: $select.search">
+                    <div ng-bind-html="class | highlight: $select.search"></div>
+                  </ui-select-choices>
+                </ui-select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="control-label col-md-3">To Vertex</label>
+              <div class="col-md-9">
+                <ui-select ng-model="$ctrl.property['in']" theme="bootstrap"
+                           title="Choose To Vertex Class">
+                  <ui-select-match placeholder="Select class...">{{$select.selected}}</ui-select-match>
+                  <ui-select-choices repeat="class in $ctrl.vertices | filter: $select.search">
+                    <div ng-bind-html="class | highlight: $select.search"></div>
+                  </ui-select-choices>
+                </ui-select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="control-label col-md-3"> Alias</label>
+
+              <div class="col-md-9">
+                <input type="text" id="alias" class="form-control" ng-model="$ctrl.property['alias']"/>
+              </div>
+            </div>
+            <div class="form-group">
+              <div class="col-sm-offset-3 col-sm-9">
+                <div class="checkbox-inline">
+                  <label>
+                    <input type="checkbox" ng-model="$ctrl.property['abstract']"> Abstract
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="control-label col-md-3"> Number of Clusters</label>
+              <div class="col-md-9">
+                <input type="number" class="form-control" ng-model="$ctrl.property['clusters']"/>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+      <div class="alert alert-warning" ng-bind-html="$ctrl.hint">
+
+      </div>
+      <div ng-class="$ctrl.testMsgClass" ng-show="$ctrl.testMsg">
+        <button type="button" class="close" ng-click="$ctrl.testMsg = null">&times;</button>
+        {{ $ctrl.testMsg }}
+      </div>
+    </div>
+
+    <div class="modal-footer">
+
+      <button type="submit" class="btn btn-sm btn-primary"
+              ng-disabled="classForm.$invalid"
+              ng-click="$ctrl.saveNewClass()">
+        Save
+      </button>
+
+    </div>
+  </div>
+</div>
+
+
+
+

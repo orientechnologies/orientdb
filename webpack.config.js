@@ -63,7 +63,7 @@ module.exports = {
       {
         test: /\.html$/,
         loader: 'ngtemplate-loader?relativeTo=' + (path.resolve(__dirname, './src')) + '/!html-loader',
-        exclude: [/src\/app/]
+        exclude: [/src\/app/,/src\/components/]
       },
     ]
   },

@@ -1188,6 +1188,10 @@ span.badge-edge {
   padding: 20px 40px;
 }
 
+.search-container {
+  padding: 10px 0px;
+}
+
 .thumbnails {
   list-style: none;
   padding-left: 0px;
@@ -1299,4 +1303,23 @@ a.disabled {
 .panel.disabled {
   pointer-events: none;
   opacity: 0.7;
+}
+
+.classes-list .breaker {
+  margin-top: 5px;
+  margin-bottom: 10px;
+}
+
+.help-block-sm {
+  margin-bottom: 0px;
+}
+
+.ui-select-bootstrap .ui-select-match .btn-default {
+  color: #333;
+  background-color: #fff;
+  border: 1px solid #b8b8b8;
+}
+
+.ui-select-bootstrap .ui-select-match .ui-select-match-item {
+  background-color: #b8b8b8;
 }

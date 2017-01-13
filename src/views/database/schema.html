@@ -24,7 +24,8 @@
                 Save Colors Config
               </button>
             </div>
-            <div class="btn-group">
+
+            <div class="btn-group" ng-show="false">
               <button href="javascript:void(0)" class="btn btn-sm"
                       ng-click="createNewClass()"><i
                 class="icon-plus"></i>
@@ -32,7 +33,6 @@
                 Class
               </button>
             </div>
-
             <div class="btn-group">
               <button href="javascript:void(0)" class="btn btn-sm" ng-click="allIndexes()"><i
                 class="icon-list"></i>
@@ -53,7 +53,7 @@
       </div>
     </div>
     <div class="card">
-      <div class="row">
+      <div class="row" ng-show="false">
         <div class="col-md-12 dashboard-container">
           <div class="row">
             <div class="col-md-12 nomargin">
@@ -153,14 +153,14 @@
 
                       </button>
 
-                      <button href="javascript:void(0)" tabindex="1" class="btn btn-xs btn-disabled disabled"  ng-show="result['abstract']"
-                         data-trigger="hover" data-placement="bottom"
-                         data-container="body"
-                         data-content="{{ 'Cannoct create a new record for an abstract class' }}" bs-popover>
+                      <button href="javascript:void(0)" tabindex="1" class="btn btn-xs btn-disabled disabled"
+                              ng-show="result['abstract']"
+                              data-trigger="hover" data-placement="bottom"
+                              data-container="body"
+                              data-content="{{ 'Cannoct create a new record for an abstract class' }}" bs-popover>
                         <i
                           class="fa fa-plus"></i> New Record
                       </button>
-
 
 
                       <button href="javascript:void(0)" ng-disabled="!canDrop(result['name'])"
@@ -180,6 +180,55 @@
                   </tfoot>
                 </table>
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-12 search-container">
+          <div class="row">
+
+            <div class="col-md-6 col-md-offset-3 col-xs-12">
+              <form class="form-search">
+                <div class="input-group">
+                  <input type="text" class="input-xxlarge form-control search-query" ng-model="query"
+                         placeholder="Search classes" focus="true">
+                  <span class="input-group-btn">
+                        <button type="submit" class="btn" ng-click="">
+                          <i class="fa fa-search"></i>
+                        </button>
+                            </span>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12 dashboard-container">
+          <div class="row">
+            <div class="col-md-12 nomargin">
+              <ul class="nav nav-tabs">
+                <li ng-class="{active : tab == 'user'}">
+                  <a class="pointer" ng-click="tab = 'user'"> User Classes</a>
+                </li>
+                <li ng-class="{active : tab == 'system'}">
+                  <a class="pointer" ng-click="tab = 'system'"> System Classes</a>
+                </li>
+              </ul>
+            </div>
+            <div class="col-md-12 nomargin" ng-show="tab == 'user'">
+              <classes-list label="Vertex" classes="vClasses" query="query" config="config"
+                            on-create="createNewVertex()"></classes-list>
+              <classes-list label="Edge" classes="eClasses" query="query" on-create="createNewEdge()"
+                            config="config"></classes-list>
+              <classes-list label="Generic" classes="gClasses" on-create="createNewGeneric()" query="query"
+                            config="config"></classes-list>
+            </div>
+            <div class="col-md-12 nomargin" ng-show="tab == 'system'">
+              <classes-list classes="systemClasses" query="query"
+                            config="config"></classes-list>
             </div>
           </div>
         </div>
