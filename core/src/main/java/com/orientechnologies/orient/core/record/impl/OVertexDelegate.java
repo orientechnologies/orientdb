@@ -55,7 +55,8 @@ public class OVertexDelegate implements OVertex {
     this.element = entry;
   }
 
-  @Override public Iterable<OEdge> getEdges(ODirection direction) {
+  @Override
+  public Iterable<OEdge> getEdges(ODirection direction) {
     Set<String> prefixes = new HashSet<>();
     switch (direction) {
     case BOTH:
@@ -81,7 +82,8 @@ public class OVertexDelegate implements OVertex {
     return getEdges(direction, candidateClasses.toArray(new String[] {}));
   }
 
-  @Override public Iterable<OEdge> getEdges(ODirection direction, String... labels) {
+  @Override
+  public Iterable<OEdge> getEdges(ODirection direction, String... labels) {
     final OMultiCollectionIterator<OEdge> iterable = new OMultiCollectionIterator<OEdge>().setEmbedded(true);
 
     Set<String> fieldNames = null;
@@ -132,7 +134,8 @@ public class OVertexDelegate implements OVertex {
     return iterable;
   }
 
-  @Override public Iterable<OEdge> getEdges(ODirection direction, OClass... type) {
+  @Override
+  public Iterable<OEdge> getEdges(ODirection direction, OClass... type) {
     List<String> types = new ArrayList<>();
     if (type != null) {
       for (OClass t : type) {
@@ -143,12 +146,14 @@ public class OVertexDelegate implements OVertex {
 
   }
 
-  @Override public Iterable<OVertex> getVertices(ODirection direction) {
+  @Override
+  public Iterable<OVertex> getVertices(ODirection direction) {
 
     return getVertices(direction, (String[]) null);
   }
 
-  @Override public Iterable<OVertex> getVertices(ODirection direction, String... type) {
+  @Override
+  public Iterable<OVertex> getVertices(ODirection direction, String... type) {
     if (direction == ODirection.BOTH) {
       OMultiCollectionIterator<OVertex> result = new OMultiCollectionIterator<>();
       result.add(getVertices(ODirection.OUT, type));
@@ -161,7 +166,8 @@ public class OVertexDelegate implements OVertex {
 
   }
 
-  @Override public Iterable<OVertex> getVertices(ODirection direction, OClass... type) {
+  @Override
+  public Iterable<OVertex> getVertices(ODirection direction, OClass... type) {
     List<String> types = new ArrayList<>();
     if (type != null) {
       for (OClass t : type) {
@@ -172,12 +178,13 @@ public class OVertexDelegate implements OVertex {
 
   }
 
-  @Override public OEdge addEdge(OVertex to) {
+  @Override
+  public OEdge addEdge(OVertex to) {
     return addEdge(to, "E");
   }
 
-
-  @Override public OVertexDelegate delete() {
+  @Override
+  public OVertexDelegate delete() {
     Iterable<OEdge> allEdges = this.getEdges(ODirection.BOTH);
     for (OEdge edge : allEdges) {
       edge.delete();
@@ -209,12 +216,14 @@ public class OVertexDelegate implements OVertex {
     }
   }
 
-  @Override public OEdge addEdge(OVertex to, String type) {
+  @Override
+  public OEdge addEdge(OVertex to, String type) {
     ODatabase db = getDatabase();
     return db.newEdge(this, to, type == null ? "E" : type);
   }
 
-  @Override public OEdge addEdge(OVertex to, OClass type) {
+  @Override
+  public OEdge addEdge(OVertex to, OClass type) {
     String className = "E";
     if (type != null) {
       className = type.getName();
@@ -222,21 +231,24 @@ public class OVertexDelegate implements OVertex {
     return addEdge(to, className);
   }
 
-  @Override public Set<String> getPropertyNames() {
+  @Override
+  public Set<String> getPropertyNames() {
     return element.getPropertyNames();
   }
 
-  @Override public <RET> RET getProperty(String name) {
+  @Override
+  public <RET> RET getProperty(String name) {
     return element.getProperty(name);
   }
 
-  @Override public void setProperty(String name, Object value) {
+  @Override
+  public void setProperty(String name, Object value) {
     element.setProperty(name, value);
   }
 
   @Override
   public void setProperty(String name, Object value, OType... fieldType) {
-    element.setProperty(name,value,fieldType);
+    element.setProperty(name, value, fieldType);
   }
 
   @Override
@@ -244,55 +256,68 @@ public class OVertexDelegate implements OVertex {
     return element.removeProperty(name);
   }
 
-  @Override public Optional<OVertex> asVertex() {
+  @Override
+  public Optional<OVertex> asVertex() {
     return Optional.of(this);
   }
 
-  @Override public Optional<OEdge> asEdge() {
+  @Override
+  public Optional<OEdge> asEdge() {
     return Optional.empty();
   }
 
-  @Override public boolean isDocument() {
+  @Override
+  public boolean isDocument() {
     return true;
   }
 
-  @Override public boolean isVertex() {
+  @Override
+  public boolean isVertex() {
     return true;
   }
 
-  @Override public boolean isEdge() {
+  @Override
+  public boolean isEdge() {
     return false;
   }
 
-  @Override public Optional<OClass> getSchemaType() {
+  @Override
+  public Optional<OClass> getSchemaType() {
     return Optional.ofNullable(element.getSchemaClass());
   }
 
-  @Override public <T extends ORecord> T getRecord() {
+  @Override
+  public <T extends ORecord> T getRecord() {
     return (T) element;
   }
 
-  @Override public void lock(boolean iExclusive) {
+  @Override
+  public void lock(boolean iExclusive) {
     element.lock(iExclusive);
   }
 
-  @Override public boolean isLocked() {
+  @Override
+  public boolean isLocked() {
     return element.isLocked();
   }
 
-  @Override public OStorage.LOCKING_STRATEGY lockingStrategy() {
+  @Override
+  public OStorage.LOCKING_STRATEGY lockingStrategy() {
     return element.lockingStrategy();
   }
 
-  @Override public void unlock() {
+  @Override
+  public void unlock() {
     element.unlock();
   }
 
-  @Override public int compareTo(OIdentifiable o) {
+  @Override
+  public int compareTo(OIdentifiable o) {
     return element.compareTo(o);
   }
 
-  @Override public int compare(OIdentifiable o1, OIdentifiable o2) {
+  @Override
+  public int compare(OIdentifiable o1, OIdentifiable o2) {
     return element.compare(o1, o2);
   }
 
@@ -499,7 +524,8 @@ public class OVertexDelegate implements OVertex {
     return out;
   }
 
-  @Override public boolean equals(Object obj) {
+  @Override
+  public boolean equals(Object obj) {
     if (!(obj instanceof OIdentifiable)) {
       return false;
     }
@@ -510,131 +536,158 @@ public class OVertexDelegate implements OVertex {
     return element.equals(((OElement) obj).getRecord());
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     return element.hashCode();
   }
 
-  @Override public STATUS getInternalStatus() {
+  @Override
+  public STATUS getInternalStatus() {
     return element.getInternalStatus();
   }
 
-  @Override public void setInternalStatus(STATUS iStatus) {
+  @Override
+  public void setInternalStatus(STATUS iStatus) {
     element.setInternalStatus(iStatus);
   }
 
-  @Override public <RET> RET setDirty() {
+  @Override
+  public <RET> RET setDirty() {
     element.setDirty();
-    return (RET)this;
+    return (RET) this;
   }
 
-  @Override public void setDirtyNoChanged() {
+  @Override
+  public void setDirtyNoChanged() {
     element.setDirtyNoChanged();
   }
 
-  @Override public ORecordElement getOwner() {
+  @Override
+  public ORecordElement getOwner() {
     return element.getOwner();
   }
 
-  @Override public byte[] toStream() throws OSerializationException {
+  @Override
+  public byte[] toStream() throws OSerializationException {
     return element.toStream();
   }
 
-  @Override public OSerializableStream fromStream(byte[] iStream) throws OSerializationException {
+  @Override
+  public OSerializableStream fromStream(byte[] iStream) throws OSerializationException {
     return element.fromStream(iStream);
   }
 
-  @Override public boolean detach() {
+  @Override
+  public boolean detach() {
     return element.detach();
   }
 
-  @Override public <RET extends ORecord> RET reset() {
+  @Override
+  public <RET extends ORecord> RET reset() {
     element.reset();
     return (RET) this;
   }
 
-  @Override public <RET extends ORecord> RET unload() {
+  @Override
+  public <RET extends ORecord> RET unload() {
     element.unload();
     return (RET) this;
   }
 
-  @Override public <RET extends ORecord> RET clear() {
+  @Override
+  public <RET extends ORecord> RET clear() {
     element.clear();
     return (RET) this;
   }
 
-  @Override public <RET extends ORecord> RET copy() {
+  @Override
+  public <RET extends ORecord> RET copy() {
     return (RET) new OVertexDelegate(element.copy());
   }
 
-  @Override public ORID getIdentity() {
+  @Override
+  public ORID getIdentity() {
     return element.getIdentity();
   }
 
-  @Override public int getVersion() {
+  @Override
+  public int getVersion() {
     return element.getVersion();
   }
 
-  @Override public ODatabaseDocument getDatabase() {
+  @Override
+  public ODatabaseDocument getDatabase() {
     return element.getDatabase();
   }
 
-  @Override public boolean isDirty() {
+  @Override
+  public boolean isDirty() {
     return element.isDirty();
   }
 
-  @Override public <RET extends ORecord> RET load() throws ORecordNotFoundException {
+  @Override
+  public <RET extends ORecord> RET load() throws ORecordNotFoundException {
     ORecord newItem = element.load();
-    if(newItem==null){
+    if (newItem == null) {
       return null;
     }
     return (RET) new OVertexDelegate((ODocument) newItem);
   }
 
-  @Override public <RET extends ORecord> RET reload() throws ORecordNotFoundException {
+  @Override
+  public <RET extends ORecord> RET reload() throws ORecordNotFoundException {
     element.reload();
     return (RET) this;
   }
 
-  @Override public <RET extends ORecord> RET reload(String fetchPlan, boolean ignoreCache, boolean force)
-      throws ORecordNotFoundException {
+  @Override
+  public <RET extends ORecord> RET reload(String fetchPlan, boolean ignoreCache, boolean force) throws ORecordNotFoundException {
     element.reload(fetchPlan, ignoreCache, force);
     return (RET) this;
   }
 
-  @Override public <RET extends ORecord> RET save() {
+  @Override
+  public <RET extends ORecord> RET save() {
     element.save();
     return (RET) this;
   }
 
-  @Override public <RET extends ORecord> RET save(String iCluster) {
+  @Override
+  public <RET extends ORecord> RET save(String iCluster) {
     element.save(iCluster);
     return (RET) this;
   }
 
-  @Override public <RET extends ORecord> RET save(boolean forceCreate) {
+  @Override
+  public <RET extends ORecord> RET save(boolean forceCreate) {
     element.save(forceCreate);
     return (RET) this;
   }
 
-  @Override public <RET extends ORecord> RET save(String iCluster, boolean forceCreate) {
+  @Override
+  public <RET extends ORecord> RET save(String iCluster, boolean forceCreate) {
     element.save(iCluster, forceCreate);
     return (RET) this;
   }
 
-  @Override public <RET extends ORecord> RET fromJSON(String iJson) {
+  @Override
+  public <RET extends ORecord> RET fromJSON(String iJson) {
     element.fromJSON(iJson);
     return (RET) this;
   }
 
-  @Override public String toJSON() {
+  @Override
+  public String toJSON() {
     return element.toJSON();
   }
 
-  @Override public String toJSON(String iFormat) {
+  @Override
+  public String toJSON(String iFormat) {
     return element.toJSON(iFormat);
   }
 
-  @Override public int getSize() {
+  @Override
+  public int getSize() {
     return element.getSize();
   }
 }

@@ -173,7 +173,7 @@ public interface OrientDBFactory extends AutoCloseable {
    * @param password the password relative to the user
    * @return a new pool of databases.
    */
-  OPool<ODatabaseDocument> openPool(String name, String user, String password);
+  ODatabasePool openPool(String name, String user, String password);
 
   /**
    * Open a pool of databases, similar to open but with multiple instances.
@@ -184,7 +184,7 @@ public interface OrientDBFactory extends AutoCloseable {
    * @param config database specific configuration that override the factory global settings where needed.
    * @return a new pool of databases.
    */
-  OPool<ODatabaseDocument> openPool(String name, String user, String password, OrientDBConfig config);
+  ODatabasePool openPool(String name, String user, String password, OrientDBConfig config);
 
   /**
    * Close the factory with all related databases and pools.

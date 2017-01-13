@@ -3,6 +3,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.executor.OResult;
@@ -13,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class OInCondition extends OBooleanExpression {
   protected OExpression            left;
@@ -40,11 +42,12 @@ public class OInCondition extends OBooleanExpression {
     return visitor.visit(this, data);
   }
 
-  @Override public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+  @Override
+  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
     Object leftVal = left.execute(currentRecord, ctx);
     Object rightVal = null;
     if (rightStatement != null) {
-      throw new UnsupportedOperationException("TODO Implement IN for statements!!!");
+      rightVal = executeQuery(rightStatement, ctx);
     } else if (rightParam != null) {
       rightVal = rightParam.bindFromInputParams(ctx.getInputParameters());
     } else if (rightMathExpression != null) {
@@ -56,11 +59,12 @@ public class OInCondition extends OBooleanExpression {
     return evaluateExpression(leftVal, rightVal);
   }
 
-  @Override public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
+  @Override
+  public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
     Object leftVal = left.execute(currentRecord, ctx);
     Object rightVal = null;
     if (rightStatement != null) {
-      throw new UnsupportedOperationException("TODO Implement IN for statements!!!");
+      rightVal = executeQuery(rightStatement, ctx);
     } else if (rightParam != null) {
       rightVal = rightParam.bindFromInputParams(ctx.getInputParameters());
     } else if (rightMathExpression != null) {
@@ -70,6 +74,13 @@ public class OInCondition extends OBooleanExpression {
       return false;
     }
     return evaluateExpression(leftVal, rightVal);
+  }
+
+  private Object executeQuery(OSelectStatement rightStatement, OCommandContext ctx) {
+    OBasicCommandContext subCtx = new OBasicCommandContext();
+    subCtx.setParentWithoutOverridingChild(ctx);
+    OResultSet result = rightStatement.execute(ctx.getDatabase(), ctx.getInputParameters());
+    return result.stream().collect(Collectors.toSet());
   }
 
   protected boolean evaluateExpression(final Object iLeft, final Object iRight) {
@@ -122,7 +133,8 @@ public class OInCondition extends OBooleanExpression {
     return o.toString();
   }
 
-  @Override public boolean supportsBasicCalculation() {
+  @Override
+  public boolean supportsBasicCalculation() {
     if (!left.supportsBasicCalculation()) {
       return false;
     }
@@ -136,7 +148,8 @@ public class OInCondition extends OBooleanExpression {
     return true;
   }
 
-  @Override protected int getNumberOfExternalCalculations() {
+  @Override
+  protected int getNumberOfExternalCalculations() {
     int total = 0;
     if (operator != null && !operator.supportsBasicCalculation()) {
       total++;
@@ -150,7 +163,8 @@ public class OInCondition extends OBooleanExpression {
     return total;
   }
 
-  @Override protected List<Object> getExternalCalculationConditions() {
+  @Override
+  protected List<Object> getExternalCalculationConditions() {
     List<Object> result = new ArrayList<Object>();
 
     if (operator != null) {
@@ -165,7 +179,8 @@ public class OInCondition extends OBooleanExpression {
     return result;
   }
 
-  @Override public boolean needsAliases(Set<String> aliases) {
+  @Override
+  public boolean needsAliases(Set<String> aliases) {
     if (left.needsAliases(aliases)) {
       return true;
     }
@@ -176,7 +191,8 @@ public class OInCondition extends OBooleanExpression {
     return false;
   }
 
-  @Override public OInCondition copy() {
+  @Override
+  public OInCondition copy() {
     OInCondition result = new OInCondition(-1);
     result.operator = operator == null ? null : (OBinaryCompareOperator) operator.copy();
     result.left = left == null ? null : left.copy();
@@ -187,7 +203,8 @@ public class OInCondition extends OBooleanExpression {
     return result;
   }
 
-  @Override public void extractSubQueries(SubQueryCollector collector) {
+  @Override
+  public void extractSubQueries(SubQueryCollector collector) {
     if (left != null) {
       left.extractSubQueries(collector);
     }
@@ -201,7 +218,8 @@ public class OInCondition extends OBooleanExpression {
     }
   }
 
-  @Override public boolean refersToParent() {
+  @Override
+  public boolean refersToParent() {
     if (left != null && left.refersToParent()) {
       return true;
     }
@@ -214,7 +232,8 @@ public class OInCondition extends OBooleanExpression {
     return false;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -240,7 +259,8 @@ public class OInCondition extends OBooleanExpression {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = left != null ? left.hashCode() : 0;
     result = 31 * result + (operator != null ? operator.hashCode() : 0);
     result = 31 * result + (rightStatement != null ? rightStatement.hashCode() : 0);
@@ -251,7 +271,8 @@ public class OInCondition extends OBooleanExpression {
     return result;
   }
 
-  @Override public List<String> getMatchPatternInvolvedAliases() {
+  @Override
+  public List<String> getMatchPatternInvolvedAliases() {
     List<String> leftX = left == null ? null : left.getMatchPatternInvolvedAliases();
 
     List<String> conditionX = rightMathExpression == null ? null : rightMathExpression.getMatchPatternInvolvedAliases();

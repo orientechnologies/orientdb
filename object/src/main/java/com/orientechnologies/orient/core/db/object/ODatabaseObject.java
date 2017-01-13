@@ -24,7 +24,9 @@ import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.entity.OEntityManager;
 import com.orientechnologies.orient.core.iterator.object.OObjectIteratorClassInterface;
 import com.orientechnologies.orient.core.iterator.object.OObjectIteratorClusterInterface;
+import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.object.metadata.OMetadataObject;
 
 /**
  * Generic interface for object based Database implementations. Binds to/from Document and POJOs.
@@ -123,4 +125,7 @@ public interface ODatabaseObject extends ODatabase<Object>, OUserObject2RecordHa
   boolean isLazyLoading();
 
   void setLazyLoading(final boolean lazyLoading);
+
+  @Override
+  OMetadataObject getMetadata();
 }

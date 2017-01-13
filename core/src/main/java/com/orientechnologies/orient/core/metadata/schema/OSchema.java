@@ -31,8 +31,6 @@ public interface OSchema {
 
   int countClasses();
 
-  OClass createClass(Class<?> iClass);
-
   OClass createClass(String iClassName);
 
   OClass createClass(String iClassName, OClass iSuperClass);

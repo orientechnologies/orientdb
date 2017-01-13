@@ -64,7 +64,7 @@ public class OEmbeddedDBFactoryTests {
     if (!factory.exists("test", "", ""))
       factory.create("test", "", "", OrientDBFactory.DatabaseType.MEMORY);
 
-    OPool<ODatabaseDocument> pool = factory.openPool("test", "admin", "admin");
+    ODatabasePool pool = factory.openPool("test", "admin", "admin");
     ODatabaseDocument db = pool.acquire();
     db.save(new ODocument());
     db.close();

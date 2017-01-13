@@ -170,19 +170,6 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
     }
   }
 
-  @BeforeClass
-  public void init() {
-    mvccEnabled = OGlobalConfiguration.DB_MVCC.getValueAsBoolean();
-
-    if (!mvccEnabled)
-      OGlobalConfiguration.DB_MVCC.setValue(true);
-  }
-
-  @AfterClass
-  public void deinit() {
-    OGlobalConfiguration.DB_MVCC.setValue(mvccEnabled);
-  }
-
   @Test
   public void concurrentOptimisticUpdates() throws Exception {
     counter.set(0);
