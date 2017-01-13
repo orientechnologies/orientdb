@@ -60,6 +60,7 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
    * Gets the set of records associated with the passed key.
    *
    * @param iKey The key to search
+   *
    * @return The Record set if found, otherwise an empty Set
    */
   T get(Object iKey);
@@ -68,6 +69,7 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
    * Tells if a key is contained in the index.
    *
    * @param iKey The key to search
+   *
    * @return True if the key is contained, otherwise false
    */
   boolean contains(Object iKey);
@@ -77,6 +79,7 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
    *
    * @param iKey   Entry's key
    * @param iValue Entry's value as OIdentifiable instance
+   *
    * @return The index instance itself to allow in chain calls
    */
   OIndex<T> put(Object iKey, OIdentifiable iValue);
@@ -85,6 +88,7 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
    * Removes an entry by its key.
    *
    * @param key The entry's key to remove
+   *
    * @return True if the entry has been found and removed, otherwise false
    */
   boolean remove(Object key);
@@ -93,6 +97,7 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
    * Removes an entry by its key and value.
    *
    * @param iKey The entry's key to remove
+   *
    * @return True if the entry has been found and removed, otherwise false
    */
   boolean remove(Object iKey, OIdentifiable iRID);
@@ -158,6 +163,16 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
   public String getAlgorithm();
 
   /**
+   * Returns binary format version for this index.
+   * Index format changes during system development but old formats are supported for binary compatibility.
+   * This method may be used to detect version of binary format which is used by current index and upgrade
+   * index to new one.
+   *
+   * @return Returns binary format version for this index if possible, otherwise -1.
+   */
+  int getVersion();
+
+  /**
    * Tells if the index is automatic. Automatic means it's maintained automatically by OrientDB. This is the case of indexes created
    * against schema properties. Automatic indexes can always been rebuilt.
    *
@@ -169,6 +184,7 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
    * Rebuilds an automatic index.
    *
    * @return The number of entries rebuilt
+   *
    * @see #getRebuildVersion()
    */
   long rebuild();
@@ -197,6 +213,7 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
    *
    * @param keys         Keys data of which should be returned.
    * @param ascSortOrder Flag which determines whether data iterated by cursor should be in ascending or descending order.
+   *
    * @return cursor which presents data associated with passed in keys.
    */
   OIndexCursor iterateEntries(Collection<?> keys, boolean ascSortOrder);
@@ -218,6 +235,7 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
    * @param toKey         Upper border of index data.
    * @param toInclusive   Indicates whether upper border should be inclusive or exclusive.
    * @param ascOrder      Flag which determines whether data iterated by cursor should be in ascending or descending order.
+   *
    * @return Cursor which presents subset of index data between passed in keys.
    */
   OIndexCursor iterateEntriesBetween(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive, boolean ascOrder);
@@ -228,6 +246,7 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
    * @param fromKey       Lower border of index data.
    * @param fromInclusive Indicates whether lower border should be inclusive or exclusive.
    * @param ascOrder      Flag which determines whether data iterated by cursor should be in ascending or descending order.
+   *
    * @return cursor which presents subset of data which associated with key which is greater than passed in key.
    */
   OIndexCursor iterateEntriesMajor(Object fromKey, boolean fromInclusive, boolean ascOrder);
@@ -238,6 +257,7 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
    * @param toKey       Upper border of index data.
    * @param toInclusive Indicates Indicates whether upper border should be inclusive or exclusive.
    * @param ascOrder    Flag which determines whether data iterated by cursor should be in ascending or descending order.
+   *
    * @return cursor which presents subset of data which associated with key which is less than passed in key.
    */
   OIndexCursor iterateEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder);
@@ -293,6 +313,7 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
    * </ol>
    *
    * @return amount of times  when index was rebuilt since the start of the storage.
+   *
    * @see com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect#searchForIndexes(com.orientechnologies.orient.core.metadata.schema.OClass)
    * @see com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect#getIndexCursors(com.orientechnologies.orient.core.metadata.schema.OClass)
    * @see com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect#getOptimizedSortCursor(com.orientechnologies.orient.core.metadata.schema.OClass)
@@ -305,6 +326,7 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
 
   /**
    * @return Indicates whether index is rebuilding at the moment.
+   *
    * @see #getRebuildVersion()
    */
   boolean isRebuilding();

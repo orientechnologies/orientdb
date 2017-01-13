@@ -672,6 +672,12 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
     }
   }
 
+  @Override
+  public int getVersion() {
+    final IndexConfiguration conf = this.configuration;
+    return version;
+  }
+
   public ODocument checkEntry(final OIdentifiable iRecord, final Object iKey) {
     return null;
   }

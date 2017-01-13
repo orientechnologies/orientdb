@@ -73,6 +73,11 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
     return delegate.getRebuildVersion();
   }
 
+  @Override
+  public int getVersion() {
+    return delegate.getVersion();
+  }
+
   public boolean remove(final Object key) {
     return delegate.remove(key);
   }

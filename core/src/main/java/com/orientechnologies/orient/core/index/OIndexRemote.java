@@ -183,6 +183,18 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     return (Integer) getDatabase().command(cmd).execute(iRecord);
   }
 
+  @Override
+  public int getVersion() {
+    if (configuration == null)
+      return -1;
+
+    final Integer version = configuration.field(OIndexInternal.INDEX_VERSION);
+    if (version != null)
+      return version;
+
+    return -1;
+  }
+
   public void automaticRebuild() {
     throw new UnsupportedOperationException("autoRebuild()");
   }
