@@ -24,7 +24,7 @@ node("master") {
                 docker.image("${mvnJdk8Image}")
                         .inside("${env.VOLUMES}") {
                     try {
-                        sh "${mvnHome}/bin/mvn  --batch-mode -V clean install  -Dmaven.test.failure.ignore=true -Dsurefire.useFile=false"
+                        sh "${mvnHome}/bin/mvn  --batch-mode -V clean install  -Dsurefire.useFile=false"
                         sh "${mvnHome}/bin/mvn  --batch-mode -V deploy -DskipTests"
                     } finally {
                         junit allowEmptyResults: true, testResults: '**/target/surefire-reports/TEST-*.xml'
