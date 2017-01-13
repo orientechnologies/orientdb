@@ -88,20 +88,12 @@ public class SchemaTest extends DocumentDBBaseTest {
     OSchema schema = database.getMetadata().getSchema();
 
 
-    schema.createClass("TestInvalidName:");
-    Assert.assertNotNull(schema.getClass("TestInvalidName:"));
     schema.createClass("TestInvalidName,");
     Assert.assertNotNull(schema.getClass("TestInvalidName,"));
     schema.createClass("TestInvalidName;");
     Assert.assertNotNull(schema.getClass("TestInvalidName;"));
     schema.createClass("TestInvalid Name");
     Assert.assertNotNull(schema.getClass("TestInvalid Name"));
-    schema.createClass("TestInvalid%Name:");
-    Assert.assertNotNull(schema.getClass("TestInvalid%Name:"));
-    schema.createClass("TestInvalid@Name:");
-    Assert.assertNotNull(schema.getClass("TestInvalid@Name:"));
-    schema.createClass("TestInvalid=Name:");
-    Assert.assertNotNull(schema.getClass("TestInvalid=Name:"));
     schema.createClass("TestInvalid.Name");
     Assert.assertNotNull(schema.getClass("TestInvalid.Name"));
 
@@ -570,16 +562,6 @@ public class SchemaTest extends DocumentDBBaseTest {
 //    }
   }
 
-  public void testWrongClassNameWithColon() {
-//    try {
-      database.command(new OCommandSQL("create class `Ant:ni`")).execute();
-//      Assert.fail();
-    //TODO review
-      //why...? it can be allowed now with backtick quoting...
-//    } catch (Exception e) {
-//      Assert.assertTrue(e instanceof OSchemaException);
-//    }
-  }
 
   public void testRenameWithSameNameIsNop() {
     database.getMetadata().getSchema().getClass("V").setName("V");
