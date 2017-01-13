@@ -38,26 +38,13 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODiskW
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.RandomAccessFile;
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -340,7 +327,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
       stream.write(binaryFileId, 0, binaryFileId.length);
 
       for (long pageIndex = 0; pageIndex < filledUpTo; pageIndex++) {
-        final OCacheEntry cacheEntry = readCache.load(fileId, pageIndex, true, writeCache, 1);
+        final OCacheEntry cacheEntry = readCache.loadForRead(fileId, pageIndex, true, writeCache, 1);
         cacheEntry.acquireSharedLock();
         try {
           final OLogSequenceNumber pageLsn = ODurablePage
@@ -360,7 +347,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
           }
         } finally {
           cacheEntry.releaseSharedLock();
-          readCache.release(cacheEntry, writeCache);
+          readCache.releaseFromRead(cacheEntry, writeCache);
         }
       }
 
@@ -503,12 +490,12 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
 
           final long pageIndex = OLongSerializer.INSTANCE.deserializeNative(data, 0);
 
-          OCacheEntry cacheEntry = readCache.load(fileId, pageIndex, true, writeCache, 1);
+          OCacheEntry cacheEntry = readCache.loadForRead(fileId, pageIndex, true, writeCache, 1);
 
           if (cacheEntry == null) {
             do {
               if (cacheEntry != null)
-                readCache.release(cacheEntry, writeCache);
+                readCache.releaseFromRead(cacheEntry, writeCache);
 
               cacheEntry = readCache.allocateNewPage(fileId, writeCache);
             } while (cacheEntry.getPageIndex() != pageIndex);
@@ -541,7 +528,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
             }
           } finally {
             cacheEntry.releaseExclusiveLock();
-            readCache.release(cacheEntry, writeCache);
+            readCache.releaseFromRead(cacheEntry, writeCache);
           }
         }
       }
