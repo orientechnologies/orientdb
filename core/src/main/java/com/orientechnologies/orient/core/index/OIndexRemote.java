@@ -218,7 +218,11 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     if (configuration == null)
       return -1;
 
-    return configuration.field(OIndexInternal.INDEX_VERSION);
+    final Integer version = configuration.field(OIndexInternal.INDEX_VERSION);
+    if (version != null)
+      return version;
+
+    return -1;
   }
 
   @Override
