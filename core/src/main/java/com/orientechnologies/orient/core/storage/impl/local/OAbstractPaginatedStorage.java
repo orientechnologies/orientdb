@@ -2489,7 +2489,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public void reload() {
-    close(true, false);
+    close();
     open(null, null, null);
   }
 
