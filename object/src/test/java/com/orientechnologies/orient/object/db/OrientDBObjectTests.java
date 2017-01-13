@@ -1,9 +1,8 @@
 package com.orientechnologies.orient.object.db;
 
-import com.orientechnologies.orient.core.db.OrientDBFactory;
+import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.exception.OStorageExistsException;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.junit.Test;
 
 import java.util.Set;
@@ -20,7 +19,7 @@ public class OrientDBObjectTests {
     OrientDBObject factory = OrientDBObject.fromUrl("embedded:.", null);
 
     if (!factory.exists("test", "", ""))
-      factory.create("test", "", "", OrientDBFactory.DatabaseType.MEMORY);
+      factory.create("test", "", "", OrientDB.DatabaseType.MEMORY);
 
     ODatabaseObject db = factory.open("test", "admin", "admin");
     db.close();
@@ -32,8 +31,8 @@ public class OrientDBObjectTests {
   public void testEmbeddedDoubleCreate() {
     OrientDBObject factory = OrientDBObject.fromUrl("embedded:.", null);
     try {
-      factory.create("test", "", "", OrientDBFactory.DatabaseType.MEMORY);
-      factory.create("test", "", "", OrientDBFactory.DatabaseType.MEMORY);
+      factory.create("test", "", "", OrientDB.DatabaseType.MEMORY);
+      factory.create("test", "", "", OrientDB.DatabaseType.MEMORY);
     } finally {
       factory.close();
     }
@@ -44,7 +43,7 @@ public class OrientDBObjectTests {
     OrientDBObject factory = OrientDBObject.fromUrl("embedded:.", null);
     // OrientDBObject factory = OrientDBObject.fromUrl("remote:localhost", null);
     try {
-      factory.create("test", "", "", OrientDBFactory.DatabaseType.MEMORY);
+      factory.create("test", "", "", OrientDB.DatabaseType.MEMORY);
       assertTrue(factory.exists("test", "", ""));
       factory.drop("test", "", "");
       assertFalse(factory.exists("test", "", ""));
@@ -59,7 +58,7 @@ public class OrientDBObjectTests {
     // OrientDBObject factory = OrientDBObject.fromUrl("local:.", null);
 
     if (!factory.exists("test", "", ""))
-      factory.create("test", "", "", OrientDBFactory.DatabaseType.MEMORY);
+      factory.create("test", "", "", OrientDB.DatabaseType.MEMORY);
 
     ODatabaseObjectPool pool = factory.openPool("test", "admin", "admin");
     ODatabaseObject db = pool.acquire();
@@ -73,7 +72,7 @@ public class OrientDBObjectTests {
     OrientDBObject factory = OrientDBObject.fromUrl("embedded:.", null);
     // OrientDBObject factory = OrientDBObject.fromUrl("local:.", null);
     assertEquals(factory.listDatabases("", "").size(), 0);
-    factory.create("test", "", "", OrientDBFactory.DatabaseType.MEMORY);
+    factory.create("test", "", "", OrientDB.DatabaseType.MEMORY);
     Set<String> databases = factory.listDatabases("", "");
     assertEquals(databases.size(), 1);
     assertTrue(databases.contains("test"));

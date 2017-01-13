@@ -3,11 +3,10 @@ package com.orientechnologies.orient.server;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.message.*;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
-import com.orientechnologies.orient.core.db.OrientDBFactory;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetwork;
@@ -36,14 +35,14 @@ public class OConnetionExecutorTransactionTest {
   @Mock
   private OClientConnection connection;
 
-  private OrientDBFactory           factory;
+  private OrientDB                  factory;
   private ODatabaseDocumentInternal database;
 
   @Before
   public void before() {
     MockitoAnnotations.initMocks(this);
-    factory = OrientDBFactory.embedded("./", OrientDBConfig.defaultConfig());
-    factory.create(OConnetionExecutorTransactionTest.class.getSimpleName(), null, null, OrientDBFactory.DatabaseType.MEMORY);
+    factory = OrientDB.embedded("./", OrientDBConfig.defaultConfig());
+    factory.create(OConnetionExecutorTransactionTest.class.getSimpleName(), null, null, OrientDB.DatabaseType.MEMORY);
     database = (ODatabaseDocumentInternal) factory.open(OConnetionExecutorTransactionTest.class.getSimpleName(), "admin", "admin");
     database.createClass("test");
     Mockito.when(connection.getDatabase()).thenReturn(database);

@@ -45,7 +45,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.log.OLogManager;
@@ -60,7 +59,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategyFactory;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseThreadLocalFactory;
-import com.orientechnologies.orient.core.db.OEmbeddedDBFactory;
+import com.orientechnologies.orient.core.db.OrientDBEmbedded;
 import com.orientechnologies.orient.core.engine.OEngine;
 import com.orientechnologies.orient.core.record.ORecordFactoryManager;
 import com.orientechnologies.orient.core.security.OSecuritySystem;
@@ -106,7 +105,7 @@ public class Orient extends OListenerManger<OOrientListener> {
 
   private final OLocalRecordCacheFactory                                             localRecordCache              = new OLocalRecordCacheFactoryImpl();
 
-  private Set<OEmbeddedDBFactory>                                                    factories                     = Collections
+  private Set<OrientDBEmbedded> factories = Collections
       .newSetFromMap(new ConcurrentHashMap<>());
 
   static {
@@ -510,7 +509,7 @@ public class Orient extends OListenerManger<OOrientListener> {
 
   public Collection<OStorage> getStorages() {
     List<OStorage> storages = new ArrayList<>();
-    for (OEmbeddedDBFactory factory : factories) {
+    for (OrientDBEmbedded factory : factories) {
       storages.addAll(factory.getStorages());
     }
     return storages;
@@ -835,7 +834,7 @@ public class Orient extends OListenerManger<OOrientListener> {
     this.runningDistributed = runningDistributed;
   }
 
-  public void onEmbeddedFactoryInit(OEmbeddedDBFactory embeddedFactory) {
+  public void onEmbeddedFactoryInit(OrientDBEmbedded embeddedFactory) {
     OEngine memory = engines.get("memory");
     if (!memory.isRunning())
       memory.startup();
@@ -845,7 +844,7 @@ public class Orient extends OListenerManger<OOrientListener> {
     factories.add(embeddedFactory);
   }
 
-  public void onEmbeddedFactoryClose(OEmbeddedDBFactory embeddedFactory) {
+  public void onEmbeddedFactoryClose(OrientDBEmbedded embeddedFactory) {
     factories.remove(embeddedFactory);
     if (factories.isEmpty()) {
       OEngine memory = engines.get("memory");

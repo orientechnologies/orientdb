@@ -30,10 +30,10 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
  */
 public class ORemotePoolByFactory implements ODatabasePool {
   private final OResourcePool<Void, ORemoteDatabasePool> pool;
-  private final ORemoteDBFactory                         factory;
+  private final OrientDBRemote                           factory;
   private final OrientDBConfig                           config;
 
-  public ORemotePoolByFactory(ORemoteDBFactory factory, String database, String user, String password, OrientDBConfig config) {
+  public ORemotePoolByFactory(OrientDBRemote factory, String database, String user, String password, OrientDBConfig config) {
     int max = factory.getConfigurations().getConfigurations().getValueAsInteger(OGlobalConfiguration.DB_POOL_MAX);
     pool = new OResourcePool(max, new OResourcePoolListener<Void, ORemoteDatabasePool>() {
       @Override

@@ -35,7 +35,6 @@ import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.engine.OEngine;
 import com.orientechnologies.orient.core.engine.OMemoryAndLocalPaginatedEnginesInitializer;
@@ -51,7 +50,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPagi
 /**
  * Created by tglman on 08/04/16.
  */
-public class OEmbeddedDBFactory implements OrientDBFactory {
+public class OrientDBEmbedded implements OrientDB {
   private final Map<String, OAbstractPaginatedStorage> storages = new HashMap<>();
   private final Set<ODatabasePool>                     pools    = new HashSet<>();
   private final    OrientDBConfig configurations;
@@ -61,7 +60,7 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
   private volatile Thread         shutdownThread;
   private final    Orient         orient;
 
-  public OEmbeddedDBFactory(String directoryPath, OrientDBConfig configurations, Orient orient) {
+  public OrientDBEmbedded(String directoryPath, OrientDBConfig configurations, Orient orient) {
     super();
     this.orient = orient;
     orient.onEmbeddedFactoryInit(this);
@@ -73,7 +72,7 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
 
     OMemoryAndLocalPaginatedEnginesInitializer.INSTANCE.initialize();
 
-    shutdownThread = new Thread(() -> OEmbeddedDBFactory.this.internalClose());
+    shutdownThread = new Thread(() -> OrientDBEmbedded.this.internalClose());
 
     Runtime.getRuntime().addShutdownHook(shutdownThread);
 

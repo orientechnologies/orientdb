@@ -87,7 +87,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   }
 
   public <DB extends ODatabase> DB open(final String iUserName, final String iUserPassword) {
-    throw new UnsupportedOperationException("Use OrientDBFactory");
+    throw new UnsupportedOperationException("Use OrientDB");
   }
 
   @Deprecated
@@ -102,17 +102,17 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
 
   @Override
   public <DB extends ODatabase> DB create(String incrementalBackupPath) {
-    throw new UnsupportedOperationException("use OrientDBFactory");
+    throw new UnsupportedOperationException("use OrientDB");
   }
 
   @Override
   public <DB extends ODatabase> DB create(final Map<OGlobalConfiguration, Object> iInitialSettings) {
-    throw new UnsupportedOperationException("use OrientDBFactory");
+    throw new UnsupportedOperationException("use OrientDB");
   }
 
   @Override
   public void drop() {
-    throw new UnsupportedOperationException("use OrientDBFactory");
+    throw new UnsupportedOperationException("use OrientDB");
   }
 
   public ODatabaseDocumentInternal copy() {
@@ -129,7 +129,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
 
   @Override
   public boolean exists() {
-    throw new UnsupportedOperationException("use OrientDBFactory");
+    throw new UnsupportedOperationException("use OrientDB");
   }
 
   public void internalOpen(String user, String password, OrientDBConfig config) {

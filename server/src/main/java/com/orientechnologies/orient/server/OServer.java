@@ -97,13 +97,13 @@ public class OServer {
   private OPartitionedDatabasePoolFactory                  dbPoolFactory;
   private SecureRandom                                     random                 = new SecureRandom();
   private Map<String, Object>                              variables              = new HashMap<String, Object>();
-  private String                                           serverRootDirectory;
-  private String                                           databaseDirectory;
-  private OClientConnectionManager                         clientConnectionManager;
-  private ClassLoader                                      extensionClassLoader;
-  private OTokenHandler                                    tokenHandler;
-  private OSystemDatabase                                  systemDatabase;
-  private OEmbeddedDBFactory                               databases;
+  private String                   serverRootDirectory;
+  private String                   databaseDirectory;
+  private OClientConnectionManager clientConnectionManager;
+  private ClassLoader              extensionClassLoader;
+  private OTokenHandler            tokenHandler;
+  private OSystemDatabase          systemDatabase;
+  private OrientDBEmbedded         databases;
 
   public OServer() throws ClassNotFoundException, MalformedObjectNameException, NullPointerException,
       InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException {
@@ -318,7 +318,7 @@ public class OServer {
     if (OGlobalConfiguration.SERVER_BACKWARD_COMPATIBILITY.getValueAsBoolean()) {
       databases = ODatabaseDocumentTxInternal.getOrCreateEmbeddedFactory(this.databaseDirectory, config);
     } else {
-      databases = OrientDBFactory.embedded(this.databaseDirectory, config);
+      databases = OrientDB.embedded(this.databaseDirectory, config);
     }
     databases.removeShutdownHook();
 
@@ -1192,7 +1192,7 @@ public class OServer {
     systemDatabase = new OSystemDatabase(this);
   }
 
-  public OEmbeddedDBFactory getDatabases() {
+  public OrientDBEmbedded getDatabases() {
     return databases;
   }
 
@@ -1208,7 +1208,7 @@ public class OServer {
     return databases.exists(databaseName, null, null);
   }
 
-  public void createDatabase(String databaseName, OrientDBFactory.DatabaseType type, OrientDBConfig config) {
+  public void createDatabase(String databaseName, OrientDB.DatabaseType type, OrientDBConfig config) {
     databases.create(databaseName, null, null, type, config);
   }
 

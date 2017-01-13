@@ -1,10 +1,8 @@
 package com.orientechnologies.orient.object.db;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabasePool;
+import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
-import com.orientechnologies.orient.core.db.OrientDBFactory;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 
 import java.util.Set;
@@ -14,14 +12,14 @@ import java.util.Set;
  */
 public class OrientDBObject implements AutoCloseable {
 
-  private OrientDBFactory factory;
+  private OrientDB factory;
 
-  private OrientDBObject(OrientDBFactory factory) {
+  private OrientDBObject(OrientDB factory) {
     this.factory = factory;
   }
 
   public static OrientDBObject fromUrl(String url, OrientDBConfig config) {
-    return new OrientDBObject(OrientDBFactory.fromUrl(url, config));
+    return new OrientDBObject(OrientDB.fromUrl(url, config));
   }
 
   /**
@@ -60,7 +58,7 @@ public class OrientDBObject implements AutoCloseable {
    * @param password the password relative to the user
    * @param type     can be plocal or memory
    */
-  public void create(String name, String user, String password, OrientDBFactory.DatabaseType type) {
+  public void create(String name, String user, String password, OrientDB.DatabaseType type) {
     factory.create(name, user, password, type);
   }
 
@@ -74,7 +72,7 @@ public class OrientDBObject implements AutoCloseable {
    * @param config   database specific configuration that override the factory global settings where needed.
    * @param type     can be plocal or memory
    */
-  public void create(String name, String user, String password, OrientDBFactory.DatabaseType type, OrientDBConfig config) {
+  public void create(String name, String user, String password, OrientDB.DatabaseType type, OrientDBConfig config) {
     factory.create(name, user, password, type, config);
   }
 
