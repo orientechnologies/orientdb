@@ -5,7 +5,6 @@ import com.orientechnologies.agent.OL;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
@@ -16,10 +15,7 @@ import java.net.HttpURLConnection;
 import java.net.ProtocolException;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -30,6 +26,84 @@ import java.util.concurrent.Future;
 public class HttpProxy {
 
   ExecutorService threadpool = Executors.newFixedThreadPool(2);
+
+  public static void fetchFromServer(ODistributedServerManager manager, ODocument member, OHttpRequest request,
+      Map<String, String> parameters, OHttpResponse response, HttpProxyListener proxyListener) throws Exception {
+
+    Map<String, Object> map = manager.getConfigurationMap();
+
+    String pwd = (String) map.get(OEnterpriseAgent.EE + member.field("name"));
+    if (pwd == null)
+      throw new OConfigurationException("Cannot authenticate remote server");
+
+    Collection<Map> listeners = member.field("listeners");
+
+    String decrypt = "root:" + OL.decrypt(pwd);
+
+    String authStringEnc = "Basic " + Base64.getEncoder().encodeToString(decrypt.getBytes());
+
+    for (Map listener : listeners) {
+      String protocol = (String) listener.get("protocol");
+      if (protocol.equalsIgnoreCase("ONetworkProtocolHttpDb")) {
+        String listen = (String) listener.get("listen");
+        String url = "http://" + listen + request.getUrl();
+
+        if (parameters.size() > 0) {
+          url += appendParamenters(parameters);
+        }
+        final URL remoteUrl = new java.net.URL(url);
+        HttpURLConnection urlConnection = openConnectionForServer(member, authStringEnc, pwd, remoteUrl, request.httpMethod,
+            request.content);
+
+        try {
+          InputStream is = urlConnection.getInputStream();
+          proxyListener.onProxySuccess(request, response, is);
+        } catch (Exception e) {
+          int responseCode = urlConnection.getResponseCode();
+          proxyListener.onProxyError(request, response, urlConnection.getErrorStream(), responseCode, e);
+        }
+      }
+    }
+
+  }
+
+  private static String appendParamenters(Map<String, String> parameters) throws UnsupportedEncodingException {
+
+    StringBuilder stringBuilder = new StringBuilder();
+    stringBuilder.append("?");
+    int i = 0;
+    int size = parameters.size();
+    for (String s : parameters.keySet()) {
+      stringBuilder.append(URLEncoder.encode(s, "UTF-8") + "=" + URLEncoder.encode(parameters.get(s), "UTF-8"));
+      if (i < size - 1) {
+        stringBuilder.append("&");
+      }
+      i++;
+    }
+    return stringBuilder.toString();
+  }
+
+  private static HttpURLConnection openConnectionForServer(final ODocument member, String authentication, String token,
+      URL iRemoteUrl, String httpMethod, final String content) throws IOException, ProtocolException {
+
+    HttpURLConnection urlConnection = (HttpURLConnection) iRemoteUrl.openConnection();
+
+    urlConnection.setRequestProperty("Authorization", authentication);
+
+    urlConnection.setRequestProperty("X-REQUEST-AGENT", token);
+
+    urlConnection.setRequestMethod(httpMethod);
+
+    if (content != null) {
+      urlConnection.setDoOutput(true);
+      OutputStream os = urlConnection.getOutputStream();
+      os.write(content.getBytes("UTF-8"));
+      os.close();
+    } else {
+      urlConnection.connect();
+    }
+    return urlConnection;
+  }
 
   public void proxyRequest(ODistributedServerManager manager, String dest, OHttpRequest request, OHttpResponse response)
       throws IOException {
@@ -143,84 +217,6 @@ public class HttpProxy {
     String res = sb.toString();
     ODocument result = new ODocument();
     return result.fromJSON(res);
-  }
-
-  public static void fetchFromServer(ODistributedServerManager manager, ODocument member, OHttpRequest request,
-      Map<String, String> parameters, OHttpResponse response, HttpProxyListener proxyListener) throws Exception {
-
-    Map<String, Object> map = manager.getConfigurationMap();
-
-    String pwd = (String) map.get(OEnterpriseAgent.EE + member.field("name"));
-    if (pwd == null)
-      throw new OConfigurationException("Cannot authenticate remote server");
-
-    Collection<Map> listeners = member.field("listeners");
-
-    String decrypt = "root:" + OL.decrypt(pwd);
-
-    String authStringEnc = "Basic " + OBase64Utils.encodeBytes(decrypt.getBytes());
-
-    for (Map listener : listeners) {
-      String protocol = (String) listener.get("protocol");
-      if (protocol.equalsIgnoreCase("ONetworkProtocolHttpDb")) {
-        String listen = (String) listener.get("listen");
-        String url = "http://" + listen + request.getUrl();
-
-        if (parameters.size() > 0) {
-          url += appendParamenters(parameters);
-        }
-        final URL remoteUrl = new java.net.URL(url);
-        HttpURLConnection urlConnection = openConnectionForServer(member, authStringEnc, pwd, remoteUrl, request.httpMethod,
-            request.content);
-
-        try {
-          InputStream is = urlConnection.getInputStream();
-          proxyListener.onProxySuccess(request, response, is);
-        } catch (Exception e) {
-          int responseCode = urlConnection.getResponseCode();
-          proxyListener.onProxyError(request, response, urlConnection.getErrorStream(), responseCode, e);
-        }
-      }
-    }
-
-  }
-
-  private static String appendParamenters(Map<String, String> parameters) throws UnsupportedEncodingException {
-
-    StringBuilder stringBuilder = new StringBuilder();
-    stringBuilder.append("?");
-    int i = 0;
-    int size = parameters.size();
-    for (String s : parameters.keySet()) {
-      stringBuilder.append(URLEncoder.encode(s, "UTF-8") + "=" + URLEncoder.encode(parameters.get(s), "UTF-8"));
-      if (i < size - 1) {
-        stringBuilder.append("&");
-      }
-      i++;
-    }
-    return stringBuilder.toString();
-  }
-
-  private static HttpURLConnection openConnectionForServer(final ODocument member, String authentication, String token,
-      URL iRemoteUrl, String httpMethod, final String content) throws IOException, ProtocolException {
-
-    HttpURLConnection urlConnection = (HttpURLConnection) iRemoteUrl.openConnection();
-
-    urlConnection.setRequestProperty("Authorization", authentication);
-
-    urlConnection.setRequestProperty("X-REQUEST-AGENT", token);
-
-    urlConnection.setRequestMethod(httpMethod);
-
-    if (content != null) {
-      urlConnection.setDoOutput(true);
-      OutputStream os = urlConnection.getOutputStream();
-      os.write(content.getBytes("UTF-8"));
-      os.close();
-    } else {
-      urlConnection.connect();
-    }
-    return urlConnection;
   }
 
 }
