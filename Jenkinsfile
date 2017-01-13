@@ -12,7 +12,7 @@ node("master") {
         docker.image("${mvnJdk8Image}").inside("${env.VOLUMES}") {
             try {
 
-                sh "${mvnHome}/bin/mvn  --batch-mode -V -U  clean install -Dmaven.test.failure.ignore=true -Dsurefire.useFile=false"
+                sh "${mvnHome}/bin/mvn  --batch-mode -V -U  clean install -Dsurefire.useFile=false"
                 if (currentBuild.previousBuild == null || currentBuild.previousBuild.result != currentBuild.result) {
                     slackSend(color: '#00FF00', message: "SUCCESS: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
                 }
