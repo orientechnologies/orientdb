@@ -22,7 +22,6 @@ package com.orientechnologies.orient.core.storage.fs;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.FileLock;
 
 /**
  * Interface to represent low-level File access.
@@ -112,7 +111,7 @@ public interface OFile {
 
   void read(long offset, ByteBuffer buffer) throws IOException;
 
-  long read(long offset, ByteBuffer[] buffers) throws IOException;
+  void read(long offset, ByteBuffer[] buffers) throws IOException;
 
   void write(long offset, ByteBuffer buffer) throws IOException;
 }

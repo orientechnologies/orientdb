@@ -1277,19 +1277,12 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
             assert buffers[i].position() == 0;
           }
 
-          final long bytesRead = fileClassic.read(firstPageStartPosition, buffers);
-          assert bytesRead % pageSize == 0;
+          fileClassic.read(firstPageStartPosition, buffers);
 
-          final int buffersRead = (int) (bytesRead / pageSize);
-
-          final OCachePointer[] dataPointers = new OCachePointer[buffersRead];
-          for (int n = 0; n < buffersRead; n++) {
+          final OCachePointer[] dataPointers = new OCachePointer[buffers.length];
+          for (int n = 0; n < buffers.length; n++) {
             buffers[n].position(0);
             dataPointers[n] = new OCachePointer(buffers[n], bufferPool, lastLsn, fileId, startPageIndex + n);
-          }
-
-          for (int n = buffersRead; n < buffers.length; n++) {
-            bufferPool.release(buffers[n]);
           }
 
           pagesRead = dataPointers.length;

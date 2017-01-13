@@ -20,45 +20,30 @@
 package com.orientechnologies.orient.core.storage.fs;
 
 import com.orientechnologies.common.collection.closabledictionary.OClosableItem;
-import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.exception.OFileLockedByAnotherProcessException;
-import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.io.RandomAccessFile;
-import java.io.StringWriter;
 import java.nio.ByteBuffer;
-import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
-import java.nio.channels.OverlappingFileLockException;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class OFileClassic implements OFile, OClosableItem {
-  private static final boolean trackFileClose = OGlobalConfiguration.TRACK_FILE_CLOSE.getValueAsBoolean();
-
-  public final static  String        NAME                     = "classic";
-  public static final  int           HEADER_SIZE              = 1024;
-  private static final int           SOFTLY_CLOSED_OFFSET_V_0 = 8;
-  private static final int           SOFTLY_CLOSED_OFFSET     = 16;
-  private static final int           VERSION_OFFSET           = 48;
-  private static final int           CURRENT_VERSION          = 1;
-  private static final int           OPEN_RETRY_MAX           = 10;
-  private static final int           OPEN_DELAY_RETRY         = 100;
-  private static final long          LOCK_WAIT_TIME           = 300;
-  private static final int           LOCK_MAX_RETRIES         = 10;
-  private final        ReadWriteLock lock                     = new ReentrantReadWriteLock();
-  private              ByteBuffer    internalWriteBuffer      = ByteBuffer.allocate(OBinaryProtocol.SIZE_LONG);
+  public final static  String        NAME                = "classic";
+  public static final  int           HEADER_SIZE         = 1024;
+  private static final int           VERSION_OFFSET      = 48;
+  private static final int           CURRENT_VERSION     = 1;
+  private static final int           OPEN_RETRY_MAX      = 10;
+  private static final int           OPEN_DELAY_RETRY    = 100;
+  private final        ReadWriteLock lock                = new ReentrantReadWriteLock();
+  private              ByteBuffer    internalWriteBuffer = ByteBuffer.allocate(OBinaryProtocol.SIZE_LONG);
 
   private volatile File   osFile;
   private final    String mode;
@@ -69,11 +54,7 @@ public class OFileClassic implements OFile, OClosableItem {
   private volatile boolean headerDirty = false;
   private int version;
 
-  private boolean failCheck = true;
-  private volatile long size;                                                                                // PART OF
-  // HEADER (4
-  // bytes)
-  private boolean wasSoftlyClosed = true;
+  private volatile long size;
 
   public OFileClassic(String osFile, String mode) {
     this.mode = mode;
@@ -130,17 +111,17 @@ public class OFileClassic implements OFile, OClosableItem {
     return size;
   }
 
-  public void read(long iOffset, byte[] iData, int iLength, int iArrayOffset) throws IOException {
+  public void read(long offset, byte[] iData, int iLength, int iArrayOffset) throws IOException {
     int attempts = 0;
 
     while (true) {
       try {
         acquireReadLock();
         try {
-          iOffset = checkRegions(iOffset, iLength);
+          offset = checkRegions(offset, iLength);
 
           final ByteBuffer buffer = ByteBuffer.wrap(iData, iArrayOffset, iLength);
-          channel.read(buffer, iOffset);
+          readByteBuffer(buffer, channel, offset);
           break;
 
         } finally {
@@ -163,7 +144,8 @@ public class OFileClassic implements OFile, OClosableItem {
         acquireReadLock();
         try {
           offset = checkRegions(offset, buffer.limit());
-          channel.read(buffer, offset);
+
+          readByteBuffer(buffer, channel, offset);
 
           break;
 
@@ -179,8 +161,7 @@ public class OFileClassic implements OFile, OClosableItem {
   }
 
   @Override
-  public long read(long offset, ByteBuffer[] buffers) throws IOException {
-    int bytesRead = 0;
+  public void read(long offset, ByteBuffer[] buffers) throws IOException {
 
     int attempts = 0;
 
@@ -191,10 +172,9 @@ public class OFileClassic implements OFile, OClosableItem {
           offset += HEADER_SIZE;
 
           channel.position(offset);
-          bytesRead = (int) channel.read(buffers);
+          readByteBuffers(buffers, channel, buffers.length * buffers[0].limit());
 
           break;
-
         } finally {
           releaseWriteLock();
           attempts++;
@@ -204,8 +184,6 @@ public class OFileClassic implements OFile, OClosableItem {
         reopenFile(attempts, e);
       }
     }
-
-    return bytesRead;
   }
 
   @Override
@@ -217,7 +195,7 @@ public class OFileClassic implements OFile, OClosableItem {
         acquireWriteLock();
         try {
           offset += HEADER_SIZE;
-          channel.write(buffer, offset);
+          writeByteBuffer(buffer, channel, offset);
           setDirty();
 
           break;
@@ -256,7 +234,7 @@ public class OFileClassic implements OFile, OClosableItem {
     if (iData != null) {
       iOffset += HEADER_SIZE;
       ByteBuffer byteBuffer = ByteBuffer.wrap(iData, iArrayOffset, iSize);
-      channel.write(byteBuffer, iOffset);
+      writeByteBuffer(byteBuffer, channel, iOffset);
       setDirty();
     }
   }
@@ -490,8 +468,6 @@ public class OFileClassic implements OFile, OClosableItem {
 
   /**
    * Synchronizes the buffered changes to disk.
-   *
-   * @throws IOException
    */
   @Override
   public boolean synch() throws IOException {
@@ -504,7 +480,7 @@ public class OFileClassic implements OFile, OClosableItem {
     }
   }
 
-  protected void flushHeader() throws IOException {
+  private void flushHeader() throws IOException {
     acquireWriteLock();
     try {
       if (headerDirty || dirty) {
@@ -554,16 +530,18 @@ public class OFileClassic implements OFile, OClosableItem {
 
   }
 
-  private ByteBuffer readData(final long iOffset, final int iSize) throws IOException {
+  private ByteBuffer readData(final long offset, final int iSize) throws IOException {
     ByteBuffer buffer = getBuffer(iSize);
-    channel.read(buffer, iOffset);
+
+    readByteBuffer(buffer, channel, offset);
+
     buffer.rewind();
     return buffer;
   }
 
   private void writeBuffer(final ByteBuffer iBuffer, final long iOffset) throws IOException {
     iBuffer.rewind();
-    channel.write(iBuffer, iOffset);
+    writeByteBuffer(iBuffer, channel, iOffset);
   }
 
   private ByteBuffer getBuffer(final int iLenght) {
@@ -628,18 +606,6 @@ public class OFileClassic implements OFile, OClosableItem {
   public void close() {
     acquireWriteLock();
     try {
-      if (trackFileClose) {
-        final Exception exception = new Exception();
-        final StringWriter writer = new StringWriter();
-        writer.append("File ").append(getName()).append(" was closed at : \r\n");
-
-        final PrintWriter printWriter = new PrintWriter(writer);
-        exception.printStackTrace(printWriter);
-        printWriter.flush();
-
-        OLogManager.instance().warn(this, writer.toString());
-      }
-
       if (accessFile != null && (accessFile.length() - HEADER_SIZE) < getFileSize())
         accessFile.setLength(getFileSize() + HEADER_SIZE);
 
@@ -849,7 +815,7 @@ public class OFileClassic implements OFile, OClosableItem {
    */
   @Override
   public String toString() {
-    StringBuilder builder = new StringBuilder(128);
+    StringBuilder builder = new StringBuilder();
     builder.append("File: ");
     builder.append(osFile.getName());
     if (accessFile != null) {
@@ -867,7 +833,7 @@ public class OFileClassic implements OFile, OClosableItem {
   }
 
   private void reopenFile(int attempt, IOException e) throws IOException {
-    if (attempt > 1)
+    if (attempt > 1 && e != null)
       throw e;
 
     acquireWriteLock();
@@ -895,4 +861,58 @@ public class OFileClassic implements OFile, OClosableItem {
       releaseWriteLock();
     }
   }
+
+  private void readByteBuffer(ByteBuffer buffer, FileChannel channel, long position) throws IOException {
+    int bytesToRead = buffer.limit();
+
+    int read = 0;
+    while (read < bytesToRead) {
+      buffer.position(read);
+
+      final int r = channel.read(buffer, position + read);
+      if (r < 0)
+        throw new IllegalStateException("End of file " + osFile + " is reached");
+
+      read += r;
+    }
+  }
+
+  private void writeByteBuffer(ByteBuffer buffer, FileChannel channel, long position) throws IOException {
+    int bytesToWrite = buffer.limit();
+
+    int written = 0;
+    while (written < bytesToWrite) {
+      buffer.position(written);
+
+      written += channel.write(buffer, position + written);
+    }
+  }
+
+  private void readByteBuffers(ByteBuffer[] buffers, FileChannel channel, long bytesToRead) throws IOException {
+    long read = 0;
+
+    for (ByteBuffer buffer : buffers) {
+      buffer.position(0);
+    }
+
+    final int bufferSize = buffers[0].limit();
+
+    while (read < bytesToRead) {
+      final int bufferIndex = (int) read / bufferSize;
+      final int bufferOffset = (int) (read - bufferSize * bufferIndex);
+
+      if (bufferOffset > 0) {
+        ByteBuffer buffer = buffers[bufferIndex];
+        buffer.position(bufferOffset);
+      }
+
+      final long r = channel.read(buffers, bufferIndex, buffers.length - bufferIndex);
+
+      if (r < 0)
+        throw new IllegalStateException("End of file " + osFile + " is reached");
+
+      read += r;
+    }
+  }
+
 }
