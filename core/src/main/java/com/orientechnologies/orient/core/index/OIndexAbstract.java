@@ -71,21 +71,18 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
   protected static final String CONFIG_CLUSTERS = "clusters";
   protected final    String               type;
   protected final    OLockManager<Object> keyLockManager;
-  protected volatile IndexConfiguration   configuration;
-
   protected final ODocument                 metadata;
   protected final OAbstractPaginatedStorage storage;
   private final   String                    databaseName;
   private final   String                    name;
-
   private final OReadersWriterSpinLock rwLock         = new OReadersWriterSpinLock();
   private final AtomicLong             rebuildVersion = new AtomicLong();
-
   private final int    version;
+  protected volatile IndexConfiguration   configuration;
   protected     String valueContainerAlgorithm;
   protected int indexId = -1;
+  protected Set<String> clustersToIndex = new HashSet<String>();
   private String algorithm;
-  private Set<String> clustersToIndex = new HashSet<String>();
   private volatile OIndexDefinition indexDefinition;
   private volatile boolean             rebuilding       = false;
   private          Map<String, String> engineProperties = new HashMap<String, String>();
@@ -610,6 +607,12 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
   }
 
   @Override
+  public void setType(OType type) {
+    indexDefinition = new OSimpleKeyIndexDefinition(version, type);
+    updateConfiguration();
+  }
+
+  @Override
   public String getAlgorithm() {
     acquireSharedLock();
     try {
@@ -904,12 +907,6 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
   }
 
   @Override
-  public void setType(OType type) {
-    indexDefinition = new OSimpleKeyIndexDefinition(version, type);
-    updateConfiguration();
-  }
-
-  @Override
   public String getIndexNameByKey(final Object key) {
     final OIndexEngine engine = storage.getIndexEngine(indexId);
     return engine.getIndexNameByKey(key);
@@ -1027,6 +1024,10 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
     });
   }
 
+  protected IndexConfiguration indexConfigurationInstance(final ODocument document) {
+    return new IndexConfiguration(document);
+  }
+
   public static final class IndexTxSnapshot {
     public Map<Object, Object> indexSnapshot = new HashMap<Object, Object>();
     public boolean             clear         = false;
@@ -1037,10 +1038,6 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
     protected IndexTxSnapshot initialValue() {
       return new IndexTxSnapshot();
     }
-  }
-
-  protected IndexConfiguration indexConfigurationInstance(final ODocument document) {
-    return new IndexConfiguration(document);
   }
 
   protected static class IndexConfiguration {
