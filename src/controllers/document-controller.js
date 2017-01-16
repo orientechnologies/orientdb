@@ -243,7 +243,13 @@ DocController.controller("EditController", ['$scope', '$routeParams', '$location
   var rid = $routeParams.rid;
   $scope.doc = DocumentApi.get({database: database, document: rid}, function () {
 
-    $scope.template = Database.isGraph($scope.doc['@class']) ? 'views/database/editVertex.html' : 'views/database/editDocument.html'
+    if (Database.isVertex($scope.doc['@class'])) {
+      $scope.template = 'views/database/editVertex.html';
+    } else if (Database.isEdge($scope.doc['@class'])) {
+      $scope.template = 'views/database/editEdge.html';
+    } else {
+      $scope.template = 'views/database/editDocument.html';
+    }
   }, function (error) {
     Notification.push({content: JSON.stringify(error)});
     $location.path('404');
@@ -259,7 +265,14 @@ DocController.controller("CreateController", ['$scope', '$routeParams', '$locati
   $scope.doc = DocumentApi.createNewDoc(clazz);
   $scope.headers = Database.getPropertyFromDoc($scope.doc);
   $scope.isNew = true;
-  $scope.template = Database.isGraph(clazz) ? 'views/database/editVertex.html' : 'views/database/editDocument.html'
+
+  if (Database.isVertex(clazz)) {
+    $scope.template = 'views/database/editVertex.html';
+  } else if (Database.isEdge(clazz)) {
+    $scope.template = 'views/database/editEdge.html';
+  } else {
+    $scope.template = 'views/database/editDocument.html';
+  }
 
 }]);
 DocController.controller("DocumentModalBrowseController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', '$timeout', function ($scope, $routeParams, $location, Database, CommandApi, $timeout) {
