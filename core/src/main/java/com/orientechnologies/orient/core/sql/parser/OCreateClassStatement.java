@@ -75,5 +75,9 @@ public class OCreateClassStatement extends OStatement {
       builder.append(" ABSTRACT");
     }
   }
+
+  public List<OIdentifier> getSuperclasses() {
+    return superclasses;
+  }
 }
 /* JavaCC - OriginalChecksum=4043013624f55fdf0ea8fee6d4f211b0 (do not edit this line) */
