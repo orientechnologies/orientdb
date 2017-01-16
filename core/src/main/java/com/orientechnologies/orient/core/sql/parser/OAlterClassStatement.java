@@ -2,6 +2,7 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -47,7 +48,8 @@ public class OAlterClassStatement extends ODDLStatement {
     super(p, id);
   }
 
-  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("ALTER CLASS ");
     name.toString(params, builder);
     builder.append(" " + property.name() + " ");
@@ -141,7 +143,8 @@ public class OAlterClassStatement extends ODDLStatement {
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -177,7 +180,8 @@ public class OAlterClassStatement extends ODDLStatement {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = name != null ? name.hashCode() : 0;
     result = 31 * result + (property != null ? property.hashCode() : 0);
     result = 31 * result + (identifierValue != null ? identifierValue.hashCode() : 0);
@@ -193,7 +197,8 @@ public class OAlterClassStatement extends ODDLStatement {
     return result;
   }
 
-  @Override public OResultSet executeDDL(OCommandContext ctx) {
+  @Override
+  public OResultSet executeDDL(OCommandContext ctx) {
     OClass oClass = ctx.getDatabase().getMetadata().getSchema().getClass(name.getStringValue());
     if (oClass == null) {
       throw new OCommandExecutionException("Class not found: " + name);
@@ -204,11 +209,21 @@ public class OAlterClassStatement extends ODDLStatement {
         checkNotEdge(oClass);
         checkNotIndexed(oClass);
       }
-      oClass.setName(identifierValue.getStringValue());
+      try {
+        oClass.setName(identifierValue.getStringValue());
+      } catch (Exception e) {
+        OException x = OException.wrapException(new OCommandExecutionException("Invalid class name: " + toString()), e);
+        throw x;
+      }
       break;
     case SHORTNAME:
       if (identifierValue != null) {
-        oClass.setShortName(identifierValue.getStringValue());
+        try {
+          oClass.setShortName(identifierValue.getStringValue());
+        } catch (Exception e) {
+          OException x = OException.wrapException(new OCommandExecutionException("Invalid class name: " + toString()), e);
+          throw x;
+        }
       } else {
         throw new OCommandExecutionException("Invalid class name: " + toString());
       }
