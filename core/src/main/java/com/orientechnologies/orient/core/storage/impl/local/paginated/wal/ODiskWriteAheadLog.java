@@ -20,13 +20,14 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
+import com.orientechnologies.common.concur.executors.SubScheduledExecutorService;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
-import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.storage.OStorageAbstract;
 import com.orientechnologies.orient.core.storage.impl.local.OCheckpointRequestListener;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceInformation;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
@@ -42,6 +43,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
 import java.util.zip.CRC32;
@@ -114,6 +118,28 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       return validateSimpleName(name, storageName, locale);
     }
   }
+
+  private final ScheduledThreadPoolExecutor autoFileCloser = new ScheduledThreadPoolExecutor(1, new ThreadFactory() {
+    @SuppressWarnings("NullableProblems")
+    @Override
+    public Thread newThread(Runnable r) {
+      final Thread thread = new Thread(OStorageAbstract.storageThreadGroup, r);
+      thread.setDaemon(true);
+      thread.setName("WAL Closer Task (" + getStorage().getName() + ")");
+      return thread;
+    }
+  });
+
+  private final ScheduledThreadPoolExecutor commitExecutor = new ScheduledThreadPoolExecutor(1, new ThreadFactory() {
+    @SuppressWarnings("NullableProblems")
+    @Override
+    public Thread newThread(Runnable r) {
+      final Thread thread = new Thread(OStorageAbstract.storageThreadGroup, r);
+      thread.setDaemon(true);
+      thread.setName("OrientDB WAL Flush Task (" + getStorage().getName() + ")");
+      return thread;
+    }
+  });
 
   private static class FilenameFilter implements java.io.FilenameFilter {
     private final String storageName;
@@ -199,7 +225,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
 
       if (walFiles.length == 0) {
         OLogSegment logSegment = new OLogSegment(this, new File(this.walLocation, getSegmentName(0)), maxPagesCacheSize, fileTTL,
-            segmentBufferSize);
+            segmentBufferSize, new SubScheduledExecutorService(autoFileCloser), new SubScheduledExecutorService(commitExecutor));
         logSegment.init();
         logSegment.startFlush();
         logSegments.add(logSegment);
@@ -212,7 +238,8 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
         logSize = 0;
 
         for (File walFile : walFiles) {
-          OLogSegment logSegment = new OLogSegment(this, walFile, maxPagesCacheSize, fileTTL, segmentBufferSize);
+          OLogSegment logSegment = new OLogSegment(this, walFile, maxPagesCacheSize, fileTTL, segmentBufferSize,
+              new SubScheduledExecutorService(autoFileCloser), new SubScheduledExecutorService(commitExecutor));
           logSegment.init();
 
           logSegments.add(logSegment);
@@ -522,7 +549,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
           last.stopFlush(true);
 
           last = new OLogSegment(this, new File(walLocation, getSegmentName(last.getOrder() + 1)), maxPagesCacheSize, fileTTL,
-              segmentBufferSize);
+              segmentBufferSize, new SubScheduledExecutorService(autoFileCloser), new SubScheduledExecutorService(commitExecutor));
           last.init();
           last.startFlush();
 
@@ -574,7 +601,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       }
 
       last = new OLogSegment(this, new File(walLocation, getSegmentName(lsn.getSegment() + 1)), maxPagesCacheSize, fileTTL,
-          segmentBufferSize);
+          segmentBufferSize, new SubScheduledExecutorService(autoFileCloser), new SubScheduledExecutorService(commitExecutor));
       last.init();
       last.startFlush();
 
@@ -600,7 +627,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       last.stopFlush(true);
 
       last = new OLogSegment(this, new File(walLocation, getSegmentName(last.getOrder() + 1)), maxPagesCacheSize, fileTTL,
-          segmentBufferSize);
+          segmentBufferSize, new SubScheduledExecutorService(autoFileCloser), new SubScheduledExecutorService(commitExecutor));
       last.init();
       last.startFlush();
 
@@ -725,6 +752,30 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
 
       for (OLogSegment logSegment : logSegments)
         logSegment.close(flush);
+
+      if (!commitExecutor.isShutdown()) {
+        commitExecutor.shutdown();
+        try {
+          if (!commitExecutor
+              .awaitTermination(OGlobalConfiguration.WAL_SHUTDOWN_TIMEOUT.getValueAsInteger(), TimeUnit.MILLISECONDS))
+            throw new OStorageException("WAL flush task for '" + getStorage().getName() + "' storage cannot be stopped");
+
+        } catch (InterruptedException e) {
+          OLogManager.instance().error(this, "Cannot shutdown background WAL commit thread");
+        }
+      }
+
+      if (!autoFileCloser.isShutdown()) {
+        autoFileCloser.shutdown();
+        try {
+          if (!autoFileCloser
+              .awaitTermination(OGlobalConfiguration.WAL_SHUTDOWN_TIMEOUT.getValueAsInteger(), TimeUnit.MILLISECONDS))
+            throw new OStorageException("WAL file auto close tasks '" + getStorage().getName() + "' storage cannot be stopped");
+
+        } catch (InterruptedException e) {
+          OLogManager.instance().error(this, "Shutdown of file auto close tasks was interrupted");
+        }
+      }
 
       masterRecordLSNHolder.close();
     } finally {

@@ -20,18 +20,21 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.storage.OStorageAbstract;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
-import java.nio.file.*;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 public class OSegmentFile {
   private final Object lockObject = new Object();
@@ -52,21 +55,12 @@ public class OSegmentFile {
 
   private ScheduledExecutorService closer;
 
-  public OSegmentFile(final File file, int fileTTL, int bufferSize) {
+  public OSegmentFile(final File file, int fileTTL, int bufferSize, ScheduledExecutorService closer) {
     this.file = FileSystems.getDefault().getPath(file.getAbsolutePath());
 
     this.fileTTL = fileTTL;
     this.bufferSize = bufferSize;
-
-    closer = Executors.newScheduledThreadPool(1, new ThreadFactory() {
-      @Override
-      public Thread newThread(Runnable r) {
-        final Thread thread = new Thread(OStorageAbstract.storageThreadGroup, r);
-        thread.setDaemon(true);
-        thread.setName("Closer for WAL file " + file.getName());
-        return thread;
-      }
-    });
+    this.closer = closer;
   }
 
   public void writePage(ByteBuffer page, long pageIndex) throws IOException {
