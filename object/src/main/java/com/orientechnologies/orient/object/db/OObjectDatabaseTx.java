@@ -963,36 +963,6 @@ public class OObjectDatabaseTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
   }
 
   @Override
-  public OElement newElement() {
-    return underlying.newElement();
-  }
-
-  @Override
-  public OElement newElement(String className) {
-    return underlying.newElement(className);
-  }
-
-  @Override
-  public OEdge newEdge(OVertex from, OVertex to, OClass type) {
-    return getUnderlying().newEdge(from, to, type);
-  }
-
-  @Override
-  public OEdge newEdge(OVertex from, OVertex to, String type) {
-    return getUnderlying().newEdge(from, to, type);
-  }
-
-  @Override
-  public OVertex newVertex(OClass type) {
-    return getUnderlying().newVertex(type);
-  }
-
-  @Override
-  public OVertex newVertex(String type) {
-    return getUnderlying().newVertex(type);
-  }
-
-  @Override
   public OSharedContext getSharedContext() {
     return underlying.getSharedContext();
   }
@@ -1139,26 +1109,6 @@ public class OObjectDatabaseTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
   public <DBTYPE extends ODatabase<?>> DBTYPE setMVCC(final boolean iMvcc) {
     underlying.setMVCC(iMvcc);
     return (DBTYPE) this;
-  }
-
-  @Override
-  public OResultSet query(String query, Object... args) {
-    return underlying.query(query, args);//TODO
-  }
-
-  @Override
-  public OResultSet query(String query, Map args) {
-    return underlying.query(query, args);//TODO
-  }
-
-  @Override
-  public OResultSet command(String query, Object... args) {
-    return underlying.query(query, args);//TODO
-  }
-
-  @Override
-  public OResultSet command(String query, Map args) {
-    return underlying.query(query, args);//TODO
   }
 
   /**

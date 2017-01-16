@@ -37,12 +37,8 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.query.OQuery;
-
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.record.OEdge;
-import com.orientechnologies.orient.core.record.OElement;
-import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -480,71 +476,6 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    */
   <RET extends Object> RET newInstance();
 
-  OElement newElement();
-
-  OElement newElement(final String className);
-
-  /**
-   * Creates a new Edge of type E
-   *
-   * @param from the starting point vertex
-   * @param to   the endpoint vertex
-   *
-   * @return the edge
-   */
-  default OEdge newEdge(OVertex from, OVertex to) {
-    return newEdge(from, to, "E");
-  }
-
-  /**
-   * Creates a new Edge
-   *
-   * @param from the starting point vertex
-   * @param to   the endpoint vertex
-   * @param type the edge type
-   *
-   * @return the edge
-   */
-  OEdge newEdge(OVertex from, OVertex to, OClass type);
-
-  /**
-   * Creates a new Edge
-   *
-   * @param from the starting point vertex
-   * @param to   the endpoint vertex
-   * @param type the edge type
-   *
-   * @return the edge
-   */
-  OEdge newEdge(OVertex from, OVertex to, String type);
-
-  /**
-   * Creates a new Vertex of type V
-   *
-   * @return
-   */
-  default OVertex newVertex() {
-    return newVertex("V");
-  }
-
-  /**
-   * Creates a new Vertex
-   *
-   * @param type the vertex type
-   *
-   * @return
-   */
-  OVertex newVertex(OClass type);
-
-  /**
-   * Creates a new Vertex
-   *
-   * @param type the vertex type (class name)
-   *
-   * @return
-   */
-  OVertex newVertex(String type);
-
   /**
    * Returns the Dictionary manual index.
    *
@@ -570,53 +501,6 @@ public interface ODatabase<T> extends OBackupable, Closeable {
     OSchema schema = getMetadata().getSchema();
     schema.reload();
     return schema.getClass(className);
-  }
-
-  /**
-   * creates a new vertex class (a class that extends V)
-   *
-   * @param className the class name
-   *
-   * @return The object representing the class in the schema
-   *
-   * @throws OSchemaException if the class already exists or if V class is not defined (Eg. if it was deleted from the schema)
-   */
-  default OClass createVertexClass(String className) throws OSchemaException {
-    return createClass(className, "V");
-  }
-
-  /**
-   * creates a new edge class (a class that extends E)
-   *
-   * @param className the class name
-   *
-   * @return The object representing the class in the schema
-   *
-   * @throws OSchemaException if the class already exists or if E class is not defined (Eg. if it was deleted from the schema)
-   */
-  default OClass createEdgeClass(String className) {
-    return createClass(className, "E");
-  }
-
-  /**
-   * If a class with given name already exists, it's just returned, otherwise the method creates a new class and returns it.
-   *
-   * @param className    the class name
-   * @param superclasses a list of superclasses for the class (can be empty)
-   *
-   * @return the class with the given name
-   *
-   * @throws OSchemaException if one of the superclasses does not exist in the schema
-   */
-  default OClass createClassIfNotExist(String className, String... superclasses) throws OSchemaException {
-    OSchema schema = getMetadata().getSchema();
-    schema.reload();
-
-    OClass result = schema.getClass(className);
-    if (result == null) {
-      result = createClass(className, superclasses);
-    }
-    return result;
   }
 
   /**
@@ -944,46 +828,6 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * @return List of POJOs
    */
   <RET extends List<?>> RET query(final OQuery<?> iCommand, final Object... iArgs);
-
-  /**
-   * Experimental. Executes an SQL query.
-   *
-   * @param query the query string
-   * @param args  query parameters (positional)
-   *
-   * @return
-   */
-  OResultSet query(String query, Object... args) throws OCommandSQLParsingException, OCommandExecutionException;
-
-  /**
-   * Experimental. Executes an SQL query (idempotent)
-   *
-   * @param query the query string
-   * @param args  query parameters (named)
-   *
-   * @return
-   */
-  OResultSet query(String query, Map args) throws OCommandSQLParsingException, OCommandExecutionException;
-
-  /**
-   * Experimental. Executes
-   *
-   * @param query
-   * @param args  query arguments
-   *
-   * @return
-   */
-  OResultSet command(String query, Object... args) throws OCommandSQLParsingException, OCommandExecutionException;
-
-  /**
-   * Experimental
-   *
-   * @param query
-   * @param args
-   *
-   * @return
-   */
-  OResultSet command(String query, Map args) throws OCommandSQLParsingException, OCommandExecutionException;
 
   /**
    * Execute a command against the database. A command can be a SQL statement or a Procedure. If the OStorage used is remote

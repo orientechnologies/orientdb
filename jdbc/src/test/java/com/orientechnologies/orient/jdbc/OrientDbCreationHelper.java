@@ -19,6 +19,7 @@ package com.orientechnologies.orient.jdbc;
 
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
@@ -139,7 +140,7 @@ public class OrientDbCreationHelper {
     return article;
   }
 
-  public static void createWriterAndPosts(ODatabase db, int totAuthors, int totArticles) throws IOException {
+  public static void createWriterAndPosts(ODatabaseDocument db, int totAuthors, int totArticles) throws IOException {
     int articleSerial = 0;
     for (int a = 1; a <= totAuthors; ++a) {
       OVertex writer = db.newVertex("Writer");

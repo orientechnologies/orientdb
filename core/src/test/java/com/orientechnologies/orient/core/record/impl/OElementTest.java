@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.record.impl;
 
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -17,21 +18,21 @@ import java.util.Set;
 
 public class OElementTest {
 
-  static ODatabase db;
-
+  private static ODatabaseDocument db;
 
   @BeforeClass
-  public static void beforeClass(){
+  public static void beforeClass() {
     db = new ODatabaseDocumentTx("memory:OElementTest");
     db.create();
   }
+
   @AfterClass
-  public static void afterClass(){
+  public static void afterClass() {
     db.drop();
   }
 
   @Test
-  public void testGetSetProperty(){
+  public void testGetSetProperty() {
     OElement elem = db.newElement();
     elem.setProperty("foo", "foo1");
     elem.setProperty("foo.bar", "foobar");
@@ -44,7 +45,7 @@ public class OElementTest {
   }
 
   @Test
-  public void testLoadAndSave(){
+  public void testLoadAndSave() {
     db.createClassIfNotExist("TestLoadAndSave");
     OElement elem = db.newElement("TestLoadAndSave");
     elem.setProperty("name", "foo");
