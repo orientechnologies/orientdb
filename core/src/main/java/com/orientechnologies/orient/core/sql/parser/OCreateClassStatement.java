@@ -186,5 +186,8 @@ public class OCreateClassStatement extends ODDLStatement {
     result = 31 * result + (abstractClass ? 1 : 0);
     return result;
   }
+  public List<OIdentifier> getSuperclasses() {
+    return superclasses;
+  }
 }
 /* JavaCC - OriginalChecksum=4043013624f55fdf0ea8fee6d4f211b0 (do not edit this line) */

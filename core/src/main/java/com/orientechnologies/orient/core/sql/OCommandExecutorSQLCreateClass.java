@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.parser.OCreateClassStatement;
+import com.orientechnologies.orient.core.sql.parser.OIdentifier;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +37,11 @@ import java.util.Map;
 /**
  * SQL CREATE CLASS command: Creates a new property in the target class.
  *
+<<<<<<< HEAD
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
+=======
+ * @author Luca Garulli
+>>>>>>> a565f3e... Fixed Parsing of superclasses with backtick
  */
 @SuppressWarnings("unchecked") public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract
     implements OCommandDistributedReplicateRequest {
@@ -51,10 +56,11 @@ import java.util.Map;
   public static final String KEYWORD_EXISTS   = "EXISTS";
 
   private String className;
-  private boolean      ifNotExists  = false;
+
   private List<OClass> superClasses = new ArrayList<OClass>();
   private int[] clusterIds;
-  private Integer clusters = null;
+  private Integer clusters    = null;
+  private boolean ifNotExists = false;
 
   public OCommandExecutorSQLCreateClass parse(final OCommandRequest iRequest) {
     final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
@@ -98,6 +104,7 @@ import java.util.Map;
         final String k = word.toString();
         if (k.equals(KEYWORD_EXTENDS)) {
           boolean hasNext;
+          boolean newParser = this.preParsedStatement != null;
           OClass superClass;
           do {
             oldPos = pos;
@@ -108,7 +115,7 @@ import java.util.Map;
                   parserText, oldPos);
             String superclassName = decodeClassName(word.toString());
 
-            if (!database.getMetadata().getSchema().existsClass(superclassName))
+            if (!database.getMetadata().getSchema().existsClass(superclassName) && !newParser)
               throw new OCommandSQLParsingException("Super-class " + word + " not exists", parserText, oldPos);
             superClass = database.getMetadata().getSchema().getClass(superclassName);
             superClasses.add(superClass);
@@ -121,6 +128,18 @@ import java.util.Map;
                 break;
             }
           } while (hasNext);
+          if (newParser) {
+            OCreateClassStatement statement = (OCreateClassStatement) this.preParsedStatement;
+            List<OIdentifier> superclasses = statement.getSuperclasses();
+            this.superClasses.clear();
+            for (OIdentifier superclass : superclasses) {
+              String superclassName = superclass.getStringValue();
+              if (!database.getMetadata().getSchema().existsClass(superclassName))
+                throw new OCommandSQLParsingException("Super-class " + word + " not exists", parserText, oldPos);
+              superClass = database.getMetadata().getSchema().getClass(superclassName);
+              this.superClasses.add(superClass);
+            }
+          }
         } else if (k.equals(KEYWORD_CLUSTER)) {
           oldPos = pos;
           pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false, " =><()");
