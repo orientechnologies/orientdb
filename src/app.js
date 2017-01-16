@@ -9,6 +9,7 @@ import {HttpModule} from '@angular/http';
 import {platformBrowserDynamic} from '@angular/platform-browser-dynamic';
 
 
+
 import 'core-js';
 import 'babel-polyfill';
 import 'zone.js';
