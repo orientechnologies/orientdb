@@ -179,7 +179,7 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
 
       // REPAIR CLUSTER FIRST
       for (Integer clusterId : clusters.keySet()) {
-        repairCluster(db, clusterId);
+        //repairCluster(db, clusterId);
       }
       clusters.clear();
 

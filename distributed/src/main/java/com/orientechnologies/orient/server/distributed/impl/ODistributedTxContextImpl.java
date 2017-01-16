@@ -42,9 +42,9 @@ import java.util.List;
 public class ODistributedTxContextImpl implements ODistributedTxContext {
   private final ODistributedDatabase  db;
   private final ODistributedRequestId reqId;
-  private final List<ORemoteTask>     undoTasks     = new ArrayList<ORemoteTask>();
-  private final List<ORID>            acquiredLocks = new ArrayList<ORID>();
-  private final long                  startedOn     = System.currentTimeMillis();
+  private final List<ORemoteTask> undoTasks     = new ArrayList<ORemoteTask>();
+  private final List<ORID>        acquiredLocks = new ArrayList<ORID>();
+  private final long              startedOn     = System.currentTimeMillis();
 
   public ODistributedTxContextImpl(final ODistributedDatabase iDatabase, final ODistributedRequestId iRequestId) {
     db = iDatabase;
@@ -110,7 +110,7 @@ public class ODistributedTxContextImpl implements ODistributedTxContext {
 
   public synchronized int rollback(final ODatabaseDocumentInternal database) {
     ODistributedServerLog.debug(this, db.getManager().getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-        "Distributed transaction %s: rolling back transaction (%d ops)", reqId, undoTasks.size());
+        "Distributed transaction %s: rolling back transaction (%d ops) on database '%s'", reqId, undoTasks.size(), database);
 
     for (ORemoteTask task : undoTasks) {
       try {

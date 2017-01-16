@@ -24,8 +24,10 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
-import com.orientechnologies.orient.core.exception.*;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.exception.OSerializationException;
+import com.orientechnologies.orient.core.exception.OTransactionAbortedException;
+import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OCompositeKey;
@@ -55,11 +57,11 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
   private final Map<ORecordId, ORecord>     createdRecords = new HashMap<ORecordId, ORecord>();
   private final Map<ORecordId, ORecord>     updatedRecords = new HashMap<ORecordId, ORecord>();
   @Deprecated
-  private final int                         clientTxId;
-  private final OChannelBinary              channel;
-  private final short                       protocolVersion;
-  private final ONetworkProtocolBinary      oNetworkProtocolBinary;
-  private final OClientConnection           connection;
+  private final int                    clientTxId;
+  private final OChannelBinary         channel;
+  private final short                  protocolVersion;
+  private final ONetworkProtocolBinary oNetworkProtocolBinary;
+  private final OClientConnection      connection;
 
   public OTransactionOptimisticProxy(OClientConnection connection, ONetworkProtocolBinary protocolBinary) throws IOException {
     super((ODatabaseDocumentTx) connection.getDatabase());
@@ -116,7 +118,8 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
           final ORecord rec = rid.getRecord();
           int deleteVersion = channel.readVersion();
           if (rec == null)
-            toThrow = new OConcurrentModificationException(rid.getIdentity(), -1, deleteVersion, ORecordOperation.DELETED);
+//            toThrow = new OConcurrentModificationException(rid.getIdentity(), -1, deleteVersion, ORecordOperation.DELETED);
+            toThrow = new ORecordNotFoundException(rid);
           else {
             ORecordInternal.setVersion(rec, deleteVersion);
             entry.setRecord(rec);

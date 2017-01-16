@@ -39,7 +39,7 @@ import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
  */
 public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
   private static final long serialVersionUID = 1L;
-  public static final int   FACTORYID        = 4;
+  public static final  int  FACTORYID        = 4;
 
   public ODeleteRecordTask() {
   }
@@ -60,8 +60,9 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
   @Override
   public Object executeRecordTask(ODistributedRequestId requestId, final OServer iServer, ODistributedServerManager iManager,
       final ODatabaseDocumentInternal database) throws Exception {
-    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), null, DIRECTION.IN, "Delete record %s/%s v.%d",
-        database.getName(), rid.toString(), version);
+    ODistributedServerLog
+        .debug(this, iManager.getLocalNodeName(), null, DIRECTION.IN, "Deleting record %s/%s v.%d", database.getName(),
+            rid.toString(), version);
 
     prepareUndoOperation();
     if (previousRecord == null)
@@ -94,6 +95,11 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
     final OResurrectRecordTask task = new OResurrectRecordTask(previousRecord);
     task.setLockRecords(false);
     return task;
+  }
+
+  @Override
+  public void checkRecordExists() {
+    // AVOID TO RETURN RECORD NOT FOUND IF ALREADY DELETED
   }
 
   @Override
