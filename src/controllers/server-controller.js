@@ -18,6 +18,7 @@ import '../views/server/general/conn.html';
 import '../views/server/general/threads.html';
 import '../views/server/general/singleServer.html';
 import '../views/widget/restartButton.html';
+import '../views/server/stats/teleporterNew.html';
 import angular from 'angular';
 
 
@@ -441,7 +442,7 @@ ServerModule.controller("ServerDashboardController", ['$scope', '$routeParams', 
       wiki: "Studio-Backup-Management.html"
     },
     {name: "security", title: "Security", template: 'security', icon: 'fa-lock', wiki: "Security-Config.html"},
-    {name: "teleporter", title: "Teleporter", template: 'teleporter', icon: 'fa-usb', wiki: "Studio-Teleporter.html"},
+    {name: "teleporter", title: "Teleporter", template: 'teleporterNew', icon: 'fa-usb', wiki: "Studio-Teleporter.html"},
     {name: "plugins", title: "Plugins Management", template: 'plugins', icon: 'fa-plug'},
     {
       name: "alerts",
