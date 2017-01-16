@@ -51,7 +51,7 @@
 
         <dependency>
             <groupId>com.orientechnologies</groupId>
-            <artifactId>orientdb-graphdb</artifactId>
+            <artifactId>orientdb-server</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

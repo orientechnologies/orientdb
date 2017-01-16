@@ -1,22 +1,23 @@
 /**
  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
+ * <p>
  * For more information: http://orientdb.com
  */
 package com.orientechnologies.orient.jdbc;
 
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
@@ -25,25 +26,17 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
-import java.util.Random;
-import java.util.TimeZone;
+import java.util.*;
 
 public class OrientDbCreationHelper {
 
@@ -64,7 +57,7 @@ public class OrientDbCreationHelper {
     createAuthorAndArticles(db, 50, 50);
     createArticleWithAttachmentSplitted(db);
 
-    createWriterAndPosts(new OrientGraphNoTx(db), 10, 10);
+    createWriterAndPosts(db, 10, 10);
   }
 
   public static ODocument createItem(int id, ODocument doc) {
@@ -146,10 +139,10 @@ public class OrientDbCreationHelper {
     return article;
   }
 
-  public static void createWriterAndPosts(OrientBaseGraph db, int totAuthors, int totArticles) throws IOException {
+  public static void createWriterAndPosts(ODatabase db, int totAuthors, int totArticles) throws IOException {
     int articleSerial = 0;
     for (int a = 1; a <= totAuthors; ++a) {
-      OrientVertex writer = db.addVertex("class:Writer");
+      OVertex writer = db.newVertex("Writer");
       writer.setProperty("uuid", a);
       writer.setProperty("name", "happy writer");
       writer.setProperty("is_active", Boolean.TRUE);
@@ -157,7 +150,7 @@ public class OrientDbCreationHelper {
 
       for (int i = 1; i <= totArticles; ++i) {
 
-        OrientVertex post = db.addVertex("class:Post");
+        OVertex post = db.newVertex("Post");
 
         Calendar instance = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
         Date time = instance.getTime();
@@ -166,19 +159,19 @@ public class OrientDbCreationHelper {
         post.setProperty("title", "the title");
         post.setProperty("content", "the content");
 
-        db.addEdge("class:Writes", writer, post, null);
+        db.newEdge(writer, post, "Writes");
       }
 
     }
 
     //additional wrong data
-    OrientVertex writer = db.addVertex("class:Writer");
+    OVertex writer = db.newVertex("Writer");
     writer.setProperty("uuid", totAuthors * 2);
     writer.setProperty("name", "happy writer");
     writer.setProperty("is_active", Boolean.TRUE);
     writer.setProperty("isActive", Boolean.TRUE);
 
-    OrientVertex post = db.addVertex("class:Post");
+    OVertex post = db.newVertex("Post");
 
     //no date!!
 
@@ -186,7 +179,7 @@ public class OrientDbCreationHelper {
     post.setProperty("title", "the title");
     post.setProperty("content", "the content");
 
-    db.addEdge("class:Writes", writer, post, null);
+    db.newEdge(writer, post, "Writes");
 
   }
 
@@ -270,21 +263,30 @@ public class OrientDbCreationHelper {
     article.createProperty("author", OType.LINK, author);
 
     //Graph
-    OrientGraphNoTx graph = new OrientGraphNoTx(db);
 
-    OrientVertexType post = graph.createVertexType("Post");
+    OClass v = schema.getClass("V");
+    if (v == null) {
+      schema.createClass("V");
+    }
+
+    OClass post = schema.createClass("Post", v);
     post.createProperty("uuid", OType.LONG);
     post.createProperty("title", OType.STRING);
     post.createProperty("date", OType.DATE).createIndex(INDEX_TYPE.NOTUNIQUE);
     post.createProperty("content", OType.STRING);
 
-    OrientVertexType writer = graph.createVertexType("Writer");
+    OClass writer = schema.createClass("Writer", v);
     writer.createProperty("uuid", OType.LONG).createIndex(INDEX_TYPE.UNIQUE);
     writer.createProperty("name", OType.STRING);
     writer.createProperty("is_active", OType.BOOLEAN);
     writer.createProperty("isActive", OType.BOOLEAN);
 
-    graph.createEdgeType("Writes");
+    OClass e = schema.getClass("E");
+    if (e == null) {
+      schema.createClass("E");
+    }
+
+    schema.createClass("Writes", e);
 
     schema.reload();
 
