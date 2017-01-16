@@ -66,8 +66,11 @@ public class OrientDBEmbedded implements OrientDB {
     orient.onEmbeddedFactoryInit(this);
     memory = orient.getEngine("memory");
     disk = orient.getEngine("plocal");
-
-    this.basePath = new java.io.File(directoryPath).getAbsolutePath();
+    directoryPath = directoryPath.trim();
+    if (directoryPath.length() != 0)
+      this.basePath = new java.io.File(directoryPath).getAbsolutePath();
+    else
+      this.basePath = null;
     this.configurations = configurations != null ? configurations : OrientDBConfig.defaultConfig();
 
     OMemoryAndLocalPaginatedEnginesInitializer.INSTANCE.initialize();
@@ -140,6 +143,9 @@ public class OrientDBEmbedded implements OrientDB {
   }
 
   private String buildName(String name) {
+    if (basePath == null) {
+      throw new ODatabaseException("OrientDB instanced created without physical path, only memory databases are allowed");
+    }
     return basePath + "/" + name;
   }
 
@@ -214,7 +220,10 @@ public class OrientDBEmbedded implements OrientDB {
   @Override
   public synchronized boolean exists(String name, String user, String password) {
     if (!storages.containsKey(name)) {
-      return OLocalPaginatedStorage.exists(buildName(name));
+      if (basePath != null) {
+        return OLocalPaginatedStorage.exists(buildName(name));
+      } else
+        return false;
     }
     return true;
   }
@@ -232,8 +241,9 @@ public class OrientDBEmbedded implements OrientDB {
     // SEARCH IN CONFIGURED PATHS
     final Set<String> databases = new HashSet<>();
     // SEARCH IN DEFAULT DATABASE DIRECTORY
-    final String rootDirectory = basePath;
-    scanDatabaseDirectory(new File(rootDirectory), databases);
+    if (basePath != null) {
+      scanDatabaseDirectory(new File(basePath), databases);
+    }
     databases.addAll(this.storages.keySet());
 
     // TODO remove OSystemDatabase.SYSTEM_DB_NAME from the list

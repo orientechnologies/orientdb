@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageExistsException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.junit.Test;
@@ -82,7 +83,7 @@ public class OrientDBEmbeddedTests {
     assertEquals(databases.size(), 1);
     assertTrue(databases.contains("test"));
   }
-  
+
   @Test
   public void testRegisterDatabase() {
     OrientDBEmbedded factory = OrientDB.embedded(".", null);
@@ -100,7 +101,6 @@ public class OrientDBEmbeddedTests {
     factory.drop("database2", null, null);
     factory.close();
   }
-  
 
   @Test
   public void testCopyOpenedDatabase() {
@@ -109,12 +109,33 @@ public class OrientDBEmbeddedTests {
 
     factory.create("test", "", "", OrientDB.DatabaseType.MEMORY);
     ODatabaseDocument db1;
-    try(ODatabaseDocumentInternal db = (ODatabaseDocumentInternal)factory.open("test", "admin", "admin")){
-      db1 =db.copy();
+    try (ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) factory.open("test", "admin", "admin")) {
+      db1 = db.copy();
     }
     db1.activateOnCurrentThread();
     assertFalse(db1.isClosed());
     db1.close();
+    factory.close();
   }
 
+  @Test
+  public void testOrientDBDatabaseOnlyMemory() {
+    OrientDB factory = OrientDB.embedded("", null);
+    // OrientDB factory = OrientDB.fromUrl("local:.", null);
+
+    factory.create("test", "", "", OrientDB.DatabaseType.MEMORY);
+    ODatabaseDocument db = factory.open("test", "admin", "admin");
+    db.save(new ODocument());
+    db.close();
+    factory.close();
+  }
+
+  @Test(expected = ODatabaseException.class)
+  public void testOrientDBDatabaseOnlyMemoryFailPlocal() {
+    try (OrientDB factory = OrientDB.embedded("", null)) {
+      // OrientDB factory = OrientDB.fromUrl("local:.", null);
+
+      factory.create("test", "", "", OrientDB.DatabaseType.PLOCAL);
+    }
+  }
 }
