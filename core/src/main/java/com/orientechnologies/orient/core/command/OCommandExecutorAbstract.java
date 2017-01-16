@@ -76,7 +76,7 @@ public abstract class OCommandExecutorAbstract extends OBaseParser implements OC
   }
 
   public long getDistributedTimeout() {
-    return OGlobalConfiguration.DISTRIBUTED_COMMAND_LONG_TASK_SYNCH_TIMEOUT.getValueAsLong();
+    return getDatabase().getConfiguration().getValueAsLong(OGlobalConfiguration.DISTRIBUTED_COMMAND_LONG_TASK_SYNCH_TIMEOUT);
   }
 
   public int getLimit() {

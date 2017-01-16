@@ -88,7 +88,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
   private   IndexWriter indexWriter;
 
   public OLuceneIndexEngineAbstract(OStorage storage, String indexName) {
-    super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), 0, true);
+    super(true, 0, true);
 
     this.storage = storage;
     this.name = indexName;

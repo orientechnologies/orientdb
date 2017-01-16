@@ -65,7 +65,7 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
     super.create();
 
     final OFile f = segment.getFile();
-    if (OGlobalConfiguration.STORAGE_CONFIGURATION_SYNC_ON_UPDATE.getValueAsBoolean())
+    if ( OGlobalConfiguration.STORAGE_CONFIGURATION_SYNC_ON_UPDATE.getValueAsBoolean())
       f.synch();
   }
 

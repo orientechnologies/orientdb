@@ -157,11 +157,14 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   public ODiskWriteAheadLog(OLocalPaginatedStorage storage) throws IOException {
-    this(OGlobalConfiguration.WAL_CACHE_SIZE.getValueAsInteger(), OGlobalConfiguration.WAL_COMMIT_TIMEOUT.getValueAsInteger(),
-        OGlobalConfiguration.WAL_MAX_SEGMENT_SIZE.getValueAsInteger() * ONE_KB * ONE_KB,
-        OGlobalConfiguration.WAL_LOCATION.getValueAsString(), true, storage,
-        OGlobalConfiguration.WAL_SEGMENT_BUFFER_SIZE.getValueAsInteger() * 1024 * 1024,
-        OGlobalConfiguration.WAL_FILE_AUTOCLOSE_INTERVAL.getValueAsInteger());
+    this(storage.getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.WAL_CACHE_SIZE),
+        storage.getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.WAL_COMMIT_TIMEOUT),
+        storage.getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.WAL_MAX_SEGMENT_SIZE) * ONE_KB
+            * ONE_KB, storage.getConfiguration().getContextConfiguration().getValueAsString(OGlobalConfiguration.WAL_LOCATION),
+        true, storage,
+        storage.getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.WAL_SEGMENT_BUFFER_SIZE) * 1024
+            * 1024,
+        storage.getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.WAL_FILE_AUTOCLOSE_INTERVAL));
   }
 
   public void addLowDiskSpaceListener(OLowDiskSpaceListener listener) {

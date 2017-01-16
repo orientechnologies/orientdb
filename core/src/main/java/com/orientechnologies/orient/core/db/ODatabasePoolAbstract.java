@@ -119,7 +119,7 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabaseInternal> extend
 
   public ODatabasePoolAbstract(final Object iOwner, final int iMinSize, final int iMaxSize, final int iTimeout,
       final long idleTimeoutMillis, final long timeBetweenEvictionRunsMillis) {
-    super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), OGlobalConfiguration.STORAGE_LOCK_TIMEOUT
+    super(true, OGlobalConfiguration.STORAGE_LOCK_TIMEOUT
         .getValueAsInteger(), true);
 
     maxSize = iMaxSize;

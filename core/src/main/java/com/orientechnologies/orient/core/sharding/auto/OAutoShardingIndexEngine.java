@@ -67,7 +67,8 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
     this.hashFunction = new OMurmurHash3HashFunction<Object>();
 
     if (iDurableInNonTxMode == null)
-      durableInNonTx = OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE.getValueAsBoolean();
+      durableInNonTx = iStorage.getConfiguration().getContextConfiguration()
+          .getValueAsBoolean(OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE);
     else
       durableInNonTx = iDurableInNonTxMode;
 

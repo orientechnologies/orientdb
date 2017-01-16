@@ -69,20 +69,20 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
 
   protected static final String CONFIG_MAP_RID  = "mapRid";
   protected static final String CONFIG_CLUSTERS = "clusters";
-  protected final    String               type;
-  protected final    OLockManager<Object> keyLockManager;
+  protected final String                    type;
+  protected final OLockManager<Object>      keyLockManager;
   protected final ODocument                 metadata;
   protected final OAbstractPaginatedStorage storage;
   private final   String                    databaseName;
   private final   String                    name;
   private final OReadersWriterSpinLock rwLock         = new OReadersWriterSpinLock();
   private final AtomicLong             rebuildVersion = new AtomicLong();
-  private final int    version;
-  protected volatile IndexConfiguration   configuration;
-  protected     String valueContainerAlgorithm;
-  protected int indexId = -1;
+  private final      int                version;
+  protected volatile IndexConfiguration configuration;
+  protected          String             valueContainerAlgorithm;
+  protected int         indexId         = -1;
   protected Set<String> clustersToIndex = new HashSet<String>();
-  private String algorithm;
+  private          String           algorithm;
   private volatile OIndexDefinition indexDefinition;
   private volatile boolean             rebuilding       = false;
   private          Map<String, String> engineProperties = new HashMap<String, String>();
@@ -101,7 +101,8 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
       this.valueContainerAlgorithm = valueContainerAlgorithm;
       this.storage = (OAbstractPaginatedStorage) storage.getUnderlying();
       this.keyLockManager = Orient.instance().isRunningDistributed() ?
-          new OOneEntryPerKeyLockManager<Object>(true, -1, OGlobalConfiguration.COMPONENTS_LOCK_CACHE.getValueAsInteger()) :
+          new OOneEntryPerKeyLockManager<Object>(true, -1,
+              storage.getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.COMPONENTS_LOCK_CACHE)) :
           new OPartitionedLockManager<Object>();
 
     } finally {

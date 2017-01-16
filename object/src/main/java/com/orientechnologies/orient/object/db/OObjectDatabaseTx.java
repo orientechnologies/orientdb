@@ -125,6 +125,8 @@ public class OObjectDatabaseTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
   @Override
   public <THISDB extends ODatabase> THISDB open(String iUserName, String iUserPassword) {
     super.open(iUserName, iUserPassword);
+    saveOnlyDirty = getConfiguration().getValueAsBoolean(OGlobalConfiguration.OBJECT_SAVE_ONLY_DIRTY);
+
     entityManager.registerEntityClass(OUser.class);
     entityManager.registerEntityClass(ORole.class);
     metadata = new OMetadataObject((OMetadataInternal) underlying.getMetadata());
@@ -910,7 +912,7 @@ public class OObjectDatabaseTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
   protected void init() {
     entityManager = OEntityManager.getEntityManagerByDatabaseURL(getURL());
     entityManager.setClassHandler(OObjectEntityClassHandler.getInstance(getURL()));
-    saveOnlyDirty = OGlobalConfiguration.OBJECT_SAVE_ONLY_DIRTY.getValueAsBoolean();
+
     lazyLoading = true;
     if (!isClosed() && entityManager.getEntityClass(OUser.class.getSimpleName()) == null) {
       entityManager.registerEntityClass(OUser.class);

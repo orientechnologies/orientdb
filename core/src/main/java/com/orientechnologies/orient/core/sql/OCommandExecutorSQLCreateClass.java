@@ -36,15 +36,14 @@ import java.util.Map;
 
 /**
  * SQL CREATE CLASS command: Creates a new property in the target class.
+ * <p>
+ * <<<<<<< HEAD
  *
-<<<<<<< HEAD
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
-=======
- * @author Luca Garulli
->>>>>>> a565f3e... Fixed Parsing of superclasses with backtick
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com) =======
+ * @author Luca Garulli >>>>>>> a565f3e... Fixed Parsing of superclasses with backtick
  */
-@SuppressWarnings("unchecked") public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract
-    implements OCommandDistributedReplicateRequest {
+@SuppressWarnings("unchecked")
+public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
   public static final String KEYWORD_CREATE   = "CREATE";
   public static final String KEYWORD_CLASS    = "CLASS";
   public static final String KEYWORD_EXTENDS  = "EXTENDS";
@@ -213,11 +212,13 @@ import java.util.Map;
     return this;
   }
 
-  @Override public long getDistributedTimeout() {
-    return OGlobalConfiguration.DISTRIBUTED_COMMAND_QUICK_TASK_SYNCH_TIMEOUT.getValueAsLong();
+  @Override
+  public long getDistributedTimeout() {
+    return getDatabase().getConfiguration().getValueAsLong(OGlobalConfiguration.DISTRIBUTED_COMMAND_QUICK_TASK_SYNCH_TIMEOUT);
   }
 
-  @Override public QUORUM_TYPE getQuorumType() {
+  @Override
+  public QUORUM_TYPE getQuorumType() {
     return QUORUM_TYPE.ALL;
   }
 
@@ -241,15 +242,18 @@ import java.util.Map;
     return database.getMetadata().getSchema().getClasses().size();
   }
 
-  @Override public String getSyntax() {
+  @Override
+  public String getSyntax() {
     return "CREATE CLASS <class> [IF NOT EXISTS] [EXTENDS <super-class> [,<super-class2>*] ] [CLUSTER <clusterId>*] [CLUSTERS <total-cluster-number>] [ABSTRACT]";
   }
 
-  @Override public String getUndoCommand() {
+  @Override
+  public String getUndoCommand() {
     return "drop class " + className;
   }
 
-  @Override public boolean involveSchema() {
+  @Override
+  public boolean involveSchema() {
     return true;
   }
 }

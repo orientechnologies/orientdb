@@ -1319,7 +1319,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
         dManager.getNextMessageIdCounter());
 
     localDistributedDatabase
-        .lockRecord(rid, localReqId, OGlobalConfiguration.DISTRIBUTED_CRUD_TASK_SYNCH_TIMEOUT.getValueAsLong() / 2);
+        .lockRecord(rid, localReqId, getConfiguration().getContextConfiguration().getValueAsLong(OGlobalConfiguration.DISTRIBUTED_CRUD_TASK_SYNCH_TIMEOUT) / 2);
 
     if (eventListener != null) {
       try {

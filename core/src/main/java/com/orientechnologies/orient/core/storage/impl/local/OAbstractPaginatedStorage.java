@@ -225,7 +225,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       openClusters();
       openIndexes();
 
-      if (OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_OPEN.getValueAsBoolean())
+      if (contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_OPEN))
         makeFullCheckpoint();
 
       status = STATUS.OPEN;
@@ -373,7 +373,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       defaultClusterId = doAddCluster(CLUSTER_DEFAULT_NAME, null);
 
       clearStorageDirty();
-      if (OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CREATE.getValueAsBoolean())
+      if (contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CREATE))
         makeFullCheckpoint();
 
       postCreateSteps();
@@ -698,7 +698,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    */
   public OLogSequenceNumber recordsChangedAfterLSN(final OLogSequenceNumber lsn, final OutputStream stream,
       final Set<String> excludedClusterIds, final OCommandOutputListener outputListener) {
-    if (!OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.getValueAsBoolean())
+    if (!getConfiguration().getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL))
       throw new IllegalStateException(
           "Cannot find records which were changed starting from provided LSN because tracking of rids of changed records in WAL is switched off, "
               + "to switch it on please set property " + OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.getKey()
@@ -3967,7 +3967,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                   + " MB). The database is now working in read-only mode."
                   + " Please close the database (or stop OrientDB), make room on your hard drive and then reopen the database. "
                   + "The minimal required space is " + (lowDiskSpace.requiredSpace / (1024 * 1024)) + " MB. "
-                  + "Required space is now set to " + OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT.getValueAsInteger()
+                  + "Required space is now set to " + getConfiguration().getContextConfiguration()
+                  .getValueAsInteger(OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT)
                   + "MB (you can change it by setting parameter " + OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT.getKey()
                   + ") .");
             } else {

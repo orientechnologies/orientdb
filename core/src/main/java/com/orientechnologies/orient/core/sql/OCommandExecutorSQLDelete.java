@@ -287,7 +287,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract
 
   @Override
   public long getDistributedTimeout() {
-    return OGlobalConfiguration.DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT.getValueAsLong();
+    return getDatabase().getConfiguration().getValueAsLong(OGlobalConfiguration.DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT);
   }
 
   /**

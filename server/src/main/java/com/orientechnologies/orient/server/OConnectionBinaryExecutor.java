@@ -529,7 +529,7 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       listener = new OSyncCommandResultListener(null);
     }
 
-    final long serverTimeout = OGlobalConfiguration.COMMAND_TIMEOUT.getValueAsLong();
+    final long serverTimeout = connection.getDatabase().getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT);
 
     if (serverTimeout > 0 && command.getTimeoutTime() > serverTimeout)
       // FORCE THE SERVER'S TIMEOUT
@@ -973,7 +973,7 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   public OBinaryResponse executeQuery(OQueryRequest request) {
     ODatabaseDocumentInternal database = connection.getDatabase();
     //TODO set a timeout on the request?
-    final long serverTimeout = OGlobalConfiguration.COMMAND_TIMEOUT.getValueAsLong();
+    final long serverTimeout = database.getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT);
     if (database.getTransaction().isActive()) {
       ((OTransactionOptimistic) database.getTransaction()).resetChangesTracking();
     }
@@ -1031,7 +1031,7 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
   @Override
   public OBinaryResponse executeQueryNextPage(OQueryNextPageRequest request) {
-    final long serverTimeout = OGlobalConfiguration.COMMAND_TIMEOUT.getValueAsLong();
+    final long serverTimeout = connection.getDatabase().getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT);
     //TODO set a timeout on the request?
 
     OResultSet rs = connection.getDatabase().getActiveQuery(request.getQueryId());

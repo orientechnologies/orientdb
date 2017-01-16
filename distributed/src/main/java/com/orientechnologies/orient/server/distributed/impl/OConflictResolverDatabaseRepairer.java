@@ -305,7 +305,7 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
     final OStorage storage = db.getStorage().getUnderlying();
     final long localEnd = storage.getClusterById(clusterId).getNextPosition() - 1;
 
-    final int batchMax = OGlobalConfiguration.DISTRIBUTED_CONFLICT_RESOLVER_REPAIRER_BATCH.getValueAsInteger();
+    final int batchMax = db.getConfiguration().getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_CONFLICT_RESOLVER_REPAIRER_BATCH);
 
     int recordRepaired = 0;
 
