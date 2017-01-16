@@ -924,7 +924,6 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     Thread shutdownThread = new Thread("OrientDB server shutdown thread") {
       public void run() {
         server.shutdown();
-        ShutdownHelper.shutdown(1);
       }
     };
     shutdownThread.setDaemon(false);
