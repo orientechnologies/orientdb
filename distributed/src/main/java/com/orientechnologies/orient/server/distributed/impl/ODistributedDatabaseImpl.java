@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.OSystemDatabase;
 import com.orientechnologies.orient.server.distributed.*;
@@ -87,11 +88,13 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private String localNodeName;
 
   public class ODistributedLock {
+    final ORecord               record;
     final ODistributedRequestId reqId;
     final CountDownLatch        lock;
     final long                  acquiredOn;
 
-    private ODistributedLock(final ODistributedRequestId reqId) {
+    private ODistributedLock(final ODistributedRequestId reqId, final ORecord record) {
+      this.record = record;
       this.reqId = reqId;
       this.lock = new CountDownLatch(1);
       this.acquiredOn = System.currentTimeMillis();
@@ -528,10 +531,20 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   @Override
+  public ORecord getRecordIfLocked(final OIdentifiable iRecord) {
+    final ORID rid = iRecord.getIdentity();
+    final ODistributedLock currentLock = lockManager.get(rid);
+    if (currentLock != null)
+      return currentLock.record;
+    return null;
+  }
+
+  @Override
   public boolean lockRecord(final OIdentifiable iRecord, final ODistributedRequestId iRequestId, final long timeout) {
     final ORID rid = iRecord.getIdentity();
 
-    final ODistributedLock lock = new ODistributedLock(iRequestId);
+    // TODO: IMPROVE THIS BY RECEIVING THE RECORD AS PARAMETER INSTEAD OF RELOADING IT
+    final ODistributedLock lock = new ODistributedLock(iRequestId, iRecord.getRecord());
 
     boolean newLock = true;
 

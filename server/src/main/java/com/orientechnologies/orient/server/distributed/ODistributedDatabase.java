@@ -23,6 +23,7 @@ import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 
 import java.io.IOException;
@@ -42,6 +43,15 @@ public interface ODistributedDatabase {
       OCallable<Void, ODistributedRequestId> iAfterSentCallback);
 
   void setOnline();
+
+  /**
+   * Returns the locked record for read-only purpose. This avoid to have dirty reads until the transaction is fully committed.
+   *
+   * @param iRecord record to load.
+   *
+   * @return The record if it is locked, otherwise null.
+   */
+  ORecord getRecordIfLocked(OIdentifiable iRecord);
 
   /**
    * Locks the record to be sure distributed transactions never work concurrently against the same records in the meanwhile the
