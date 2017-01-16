@@ -232,6 +232,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       readCache.loadCacheState(writeCache);
 
+    } catch (OStorageException e) {
+      throw e;
     } catch (Exception e) {
       for (OCluster c : clusters) {
         try {

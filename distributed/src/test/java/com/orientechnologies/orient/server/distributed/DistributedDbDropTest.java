@@ -15,11 +15,10 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import org.junit.Assert;
 import org.junit.Test;
-
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.exception.OStorageException;
 
 /**
  * Distributed test on drop database.
@@ -51,7 +50,7 @@ public class DistributedDbDropTest extends AbstractServerClusterTxTest {
         final ODatabaseDocumentTx database = new ODatabaseDocumentTx(getDatabaseURL(s));
         database.open("admin", "admin");
         Assert.fail("The database was not deleted on server " + i);
-      } catch (OStorageException e) {
+      } catch (ODatabaseException e) {
         Assert.assertTrue(e.getCause().getMessage().contains("it does not exist"));
       }
     }
