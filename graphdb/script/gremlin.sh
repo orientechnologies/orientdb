@@ -1,16 +1,26 @@
 #!/bin/sh
 
 #set current working directory
-cd `dirname $0`
+# resolve links - $0 may be a softlink
+PRG="$0"
+
+while [ -h "$PRG" ]; do
+  ls=`ls -ld "$PRG"`
+  link=`expr "$ls" : '.*-> \(.*\)$'`
+  if expr "$link" : '/.*' > /dev/null; then
+    PRG="$link"
+  else
+    PRG=`dirname "$PRG"`/"$link"
+  fi
+done
 
 case `uname` in
   CYGWIN*)
-    CP=$( echo `dirname $0`/../lib/*.jar . | sed 's/ /;/g')
+    CP=$( echo `dirname $PRG`/../lib/*.jar . | sed 's/ /;/g')
     ;;
   *)
-    CP=$( echo `dirname $0`/../lib/*.jar . | sed 's/ /:/g')
+    CP=$( echo `dirname $PRG`/../lib/*.jar . | sed 's/ /:/g')
 esac
-#echo $CP
 
 # Find Java
 if [ "$JAVA_HOME" = "" ] ; then
