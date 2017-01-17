@@ -1511,6 +1511,10 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           i++;
         }
 
+        if (indexDefinition == null) {
+          indexDefinition = new OSimpleKeyIndexDefinition();
+        }
+
         final OIndex index = indexManager
             .createIndex(indexName, indexType, indexDefinition, clusterIdsToIndex, null, metadata, indexAlgorithm);
 
