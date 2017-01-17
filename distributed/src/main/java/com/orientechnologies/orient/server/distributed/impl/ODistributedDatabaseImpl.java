@@ -29,12 +29,14 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.OSystemDatabase;
 import com.orientechnologies.orient.server.distributed.*;
@@ -88,12 +90,12 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private String localNodeName;
 
   public class ODistributedLock {
-    final ORecord               record;
+    final ORawBuffer            record;
     final ODistributedRequestId reqId;
     final CountDownLatch        lock;
     final long                  acquiredOn;
 
-    private ODistributedLock(final ODistributedRequestId reqId, final ORecord record) {
+    private ODistributedLock(final ODistributedRequestId reqId, final ORawBuffer record) {
       this.record = record;
       this.reqId = reqId;
       this.lock = new CountDownLatch(1);
@@ -531,8 +533,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   @Override
-  public ORecord getRecordIfLocked(final OIdentifiable iRecord) {
-    final ORID rid = iRecord.getIdentity();
+  public ORawBuffer getRecordIfLocked(final ORID rid) {
     final ODistributedLock currentLock = lockManager.get(rid);
     if (currentLock != null)
       return currentLock.record;
@@ -540,11 +541,18 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   @Override
-  public boolean lockRecord(final OIdentifiable iRecord, final ODistributedRequestId iRequestId, final long timeout) {
-    final ORID rid = iRecord.getIdentity();
-
+  public boolean lockRecord(final ORID rid, final ODistributedRequestId iRequestId, final long timeout) {
     // TODO: IMPROVE THIS BY RECEIVING THE RECORD AS PARAMETER INSTEAD OF RELOADING IT
-    final ODistributedLock lock = new ODistributedLock(iRequestId, iRecord.getRecord());
+
+    ORawBuffer originalRecord = null;
+
+    if( rid.isPersistent()) {
+      final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+      if (db != null)
+        originalRecord = db.getStorage().getUnderlying().readRecord((ORecordId) rid, null, false, true, null).getResult();
+    }
+
+    final ODistributedLock lock = new ODistributedLock(iRequestId, originalRecord);
 
     boolean newLock = true;
 
@@ -553,8 +561,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       if (iRequestId.equals(currentLock.reqId)) {
         // SAME ID, ALREADY LOCKED
         ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE,
-            "Distributed transaction: %s locked record %s in database '%s' owned by %s (thread=%d)", iRequestId, iRecord,
-            databaseName, currentLock.reqId, Thread.currentThread().getId());
+            "Distributed transaction: %s locked record %s in database '%s' owned by %s (thread=%d)", iRequestId, rid, databaseName,
+            currentLock.reqId, Thread.currentThread().getId());
         currentLock = null;
         newLock = false;
       } else {
@@ -595,11 +603,11 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     if (ODistributedServerLog.isDebugEnabled())
       if (currentLock == null) {
         ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE,
-            "Distributed transaction: %s locked record %s in database '%s' (thread=%d)", iRequestId, iRecord, databaseName,
+            "Distributed transaction: %s locked record %s in database '%s' (thread=%d)", iRequestId, rid, databaseName,
             Thread.currentThread().getId());
       } else {
         ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE,
-            "Distributed transaction: %s cannot lock record %s in database '%s' owned by %s (thread=%d)", iRequestId, iRecord,
+            "Distributed transaction: %s cannot lock record %s in database '%s' owned by %s (thread=%d)", iRequestId, rid,
             databaseName, currentLock.reqId, Thread.currentThread().getId());
       }
 

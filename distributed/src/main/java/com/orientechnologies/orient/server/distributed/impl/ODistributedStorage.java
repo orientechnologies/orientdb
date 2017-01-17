@@ -727,9 +727,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRecordId, final String iFetchPlan,
       final boolean iIgnoreCache, final boolean prefetchRecords, final ORecordCallback<ORawBuffer> iCallback) {
 
-    final ORecord memCopy = localDistributedDatabase.getRecordIfLocked(iRecordId);
+    final ORawBuffer memCopy = localDistributedDatabase.getRecordIfLocked(iRecordId);
     if (memCopy != null)
-      return new OStorageOperationResult<ORawBuffer>(new ORawBuffer(memCopy));
+      return new OStorageOperationResult<ORawBuffer>(memCopy);
 
     try {
       final String clusterName = getClusterNameByRID(iRecordId);
@@ -785,9 +785,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   @Override
   public OStorageOperationResult<ORawBuffer> readRecordIfVersionIsNotLatest(final ORecordId rid, final String fetchPlan,
       final boolean ignoreCache, final int recordVersion) throws ORecordNotFoundException {
-    final ORecord memCopy = localDistributedDatabase.getRecordIfLocked(rid);
+    final ORawBuffer memCopy = localDistributedDatabase.getRecordIfLocked(rid);
     if (memCopy != null)
-      return new OStorageOperationResult<ORawBuffer>(new ORawBuffer(memCopy));
+      return new OStorageOperationResult<ORawBuffer>(memCopy);
 
     try {
       final String clusterName = getClusterNameByRID(rid);

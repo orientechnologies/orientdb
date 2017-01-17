@@ -23,7 +23,8 @@ import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 
 import java.io.IOException;
@@ -51,7 +52,7 @@ public interface ODistributedDatabase {
    *
    * @return The record if it is locked, otherwise null.
    */
-  ORecord getRecordIfLocked(OIdentifiable iRecord);
+  ORawBuffer getRecordIfLocked(ORID iRecord);
 
   /**
    * Locks the record to be sure distributed transactions never work concurrently against the same records in the meanwhile the
@@ -64,7 +65,7 @@ public interface ODistributedDatabase {
    * @throws com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException if the record wasn't locked
    * @see #unlockRecord(OIdentifiable, ODistributedRequestId)
    */
-  boolean lockRecord(OIdentifiable iRecord, final ODistributedRequestId iRequestId, long timeout);
+  boolean lockRecord(ORID iRecord, final ODistributedRequestId iRequestId, long timeout);
 
   /**
    * Unlocks the record previously locked through #lockRecord method.
@@ -72,7 +73,7 @@ public interface ODistributedDatabase {
    * @param iRecord
    * @param requestId
    *
-   * @see #lockRecord(OIdentifiable, ODistributedRequestId, long)
+   * @see #lockRecord(ORID, ODistributedRequestId, long)
    */
   void unlockRecord(OIdentifiable iRecord, ODistributedRequestId requestId);
 
