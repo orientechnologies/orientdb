@@ -1243,7 +1243,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     serverInstance.getDatabases().forceDatabaseClose(iDatabaseName);
 
     // MOVE DIRECTORY TO ../backup/databases/<db-name>
-    final String backupDirectory = OGlobalConfiguration.DISTRIBUTED_BACKUP_DIRECTORY.getValueAsString();
+    final String backupDirectory = serverInstance.getContextConfiguration().getValueAsString(OGlobalConfiguration.DISTRIBUTED_BACKUP_DIRECTORY);
     if (backupDirectory == null || OIOUtils.getStringContent(backupDirectory).trim().isEmpty())
       // SKIP BACKUP
       return;

@@ -1662,7 +1662,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     OImportRequest request = new OImportRequest(inputStream, options, name);
 
     OImportResponse response = networkOperationRetryTimeout(request, "Error sending import request", 0,
-        OGlobalConfiguration.NETWORK_REQUEST_TIMEOUT.getValueAsInteger());
+        getClientConfiguration().getValueAsInteger(OGlobalConfiguration.NETWORK_REQUEST_TIMEOUT));
 
     for (String message : response.getMessages()) {
       listener.onMessage(message);

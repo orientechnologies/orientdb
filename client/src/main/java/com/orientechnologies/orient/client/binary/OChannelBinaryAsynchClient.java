@@ -80,7 +80,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
     super(OSocketFactory.instance(iConfig).createSocket(), iConfig);
     try {
 
-      maxUnreadResponses = OGlobalConfiguration.NETWORK_BINARY_READ_RESPONSE_MAX_TIMES.getValueAsInteger();
+      maxUnreadResponses = iConfig.getValueAsInteger(OGlobalConfiguration.NETWORK_BINARY_READ_RESPONSE_MAX_TIMES);
       serverURL = remoteHost + ":" + remotePort;
       if (iDatabaseName != null)
         serverURL += "/" + iDatabaseName;

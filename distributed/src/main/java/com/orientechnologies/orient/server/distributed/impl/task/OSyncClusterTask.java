@@ -41,9 +41,8 @@ import java.util.concurrent.locks.Lock;
 
 /**
  * Ask for deployment of single cluster from a remote node.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public class OSyncClusterTask extends OAbstractReplicatedTask {
   public final static int    CHUNK_MAX_SIZE = 4194304;         // 4MB
@@ -54,7 +53,7 @@ public class OSyncClusterTask extends OAbstractReplicatedTask {
     FULL_REPLACE, MERGE
   }
 
-  protected MODE   mode = MODE.FULL_REPLACE;
+  protected MODE mode = MODE.FULL_REPLACE;
   protected long   random;
   protected String clusterName;
 
@@ -90,8 +89,8 @@ public class OSyncClusterTask extends OAbstractReplicatedTask {
 
           iManager.getConfigurationMap().put(DEPLOYCLUSTER + databaseName + "." + clusterName, random);
 
-          ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT, "deploying cluster %s...",
-              databaseName);
+          ODistributedServerLog
+              .info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT, "deploying cluster %s...", databaseName);
 
           final File backupFile = new File(Orient.getTempPath() + "/backup_" + databaseName + "_" + clusterName + ".zip");
           if (backupFile.exists())
@@ -135,12 +134,12 @@ public class OSyncClusterTask extends OAbstractReplicatedTask {
                         fileName.substring(0, fileName.length() - 4) + OClusterPositionMap.DEF_EXTENSION };
 
                     // COPY PCL AND CPM FILE
-                    OZIPCompressionUtil.compressFiles(dbPath, fileNames, fileOutputStream, null,
-                        OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger());
+                    OZIPCompressionUtil.compressFiles(dbPath, fileNames, fileOutputStream, null, iServer.getContextConfiguration()
+                        .getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION));
 
                   } catch (IOException e) {
-                    OLogManager.instance().error(this, "Cannot execute backup of cluster '%s.%s' for deploy cluster", e,
-                        databaseName, clusterName);
+                    OLogManager.instance()
+                        .error(this, "Cannot execute backup of cluster '%s.%s' for deploy cluster", e, databaseName, clusterName);
                   } finally {
                     database.release();
                   }

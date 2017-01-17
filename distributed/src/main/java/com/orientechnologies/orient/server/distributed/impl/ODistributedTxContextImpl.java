@@ -42,9 +42,9 @@ import java.util.List;
 public class ODistributedTxContextImpl implements ODistributedTxContext {
   private final ODistributedDatabase  db;
   private final ODistributedRequestId reqId;
-  private final List<ORemoteTask>     undoTasks     = new ArrayList<ORemoteTask>();
-  private final List<ORID>            acquiredLocks = new ArrayList<ORID>();
-  private final long                  startedOn     = System.currentTimeMillis();
+  private final List<ORemoteTask> undoTasks     = new ArrayList<ORemoteTask>();
+  private final List<ORID>        acquiredLocks = new ArrayList<ORID>();
+  private final long              startedOn     = System.currentTimeMillis();
 
   public ODistributedTxContextImpl(final ODistributedDatabase iDatabase, final ODistributedRequestId iRequestId) {
     db = iDatabase;
@@ -64,7 +64,8 @@ public class ODistributedTxContextImpl implements ODistributedTxContext {
   @Override
   public synchronized void lock(ORID rid, long timeout) {
     if (timeout < 0)
-      timeout = OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT.getValueAsInteger();
+      timeout = db.getManager().getServerInstance().getContextConfiguration()
+          .getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT);
 
     if (!rid.isPersistent())
       // CREATE A COPY TO MAINTAIN THE LOCK ON THE CLUSTER AVOIDING THE RID IS TRANSFORMED IN PERSISTENT. THIS ALLOWS TO HAVE

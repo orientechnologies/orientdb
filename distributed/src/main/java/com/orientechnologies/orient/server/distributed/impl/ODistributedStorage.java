@@ -120,7 +120,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
         .debug(this, dManager != null ? dManager.getLocalNodeName() : "?", null, ODistributedServerLog.DIRECTION.NONE,
             "Installing distributed storage on database '%s'", wrapped.getName());
 
-    final int queueSize = OGlobalConfiguration.DISTRIBUTED_ASYNCH_QUEUE_SIZE.getValueAsInteger();
+    final int queueSize = getServer().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_ASYNCH_QUEUE_SIZE);
     if (queueSize <= 0)
       asynchronousOperationsQueue = new LinkedBlockingQueue<OAsynchDistributedOperation>();
     else

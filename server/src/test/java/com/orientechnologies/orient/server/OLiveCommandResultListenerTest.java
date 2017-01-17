@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.server;
 
 import com.orientechnologies.orient.core.command.OCommandResultListener;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -65,6 +66,7 @@ public class OLiveCommandResultListenerTest {
   @Before
   public void before() throws IOException {
     MockitoAnnotations.initMocks(this);
+    Mockito.when(server.getContextConfiguration()).thenReturn(new OContextConfiguration());
     db = new ODatabaseDocumentTx("memory:" + OLiveCommandResultListenerTest.class.getSimpleName());
     db.create();
     OClientConnectionManager manager = new OClientConnectionManager(server);
@@ -77,6 +79,7 @@ public class OLiveCommandResultListenerTest {
     connection.setDatabase(db);
     connection.getData().setSerializationImpl(ORecordSerializerNetwork.NAME);
     Mockito.when(server.getClientConnectionManager()).thenReturn(manager);
+
 
   }
 

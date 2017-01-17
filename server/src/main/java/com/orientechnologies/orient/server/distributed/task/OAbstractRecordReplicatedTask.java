@@ -46,10 +46,10 @@ import java.util.Set;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedTask {
-  protected ORecordId         rid;
-  protected int               version;
-  protected int               partitionKey = -1;
-  protected boolean           lockRecords  = true;
+  protected ORecordId rid;
+  protected int       version;
+  protected int     partitionKey = -1;
+  protected boolean lockRecords  = true;
 
   protected transient ORecord previousRecord;
 
@@ -98,7 +98,8 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
 
     if (lockRecords) {
       // TRY LOCKING RECORD
-      ddb.lockRecord(rid2Lock, requestId, OGlobalConfiguration.DISTRIBUTED_CRUD_TASK_SYNCH_TIMEOUT.getValueAsLong() / 2);
+      ddb.lockRecord(rid2Lock, requestId,
+          iServer.getContextConfiguration().getValueAsLong(OGlobalConfiguration.DISTRIBUTED_CRUD_TASK_SYNCH_TIMEOUT) / 2);
     }
 
     try {

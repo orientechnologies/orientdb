@@ -185,7 +185,7 @@ public class OServerNetworkListener extends Thread {
           // listen for and accept a client connection to serverSocket
           final Socket socket = serverSocket.accept();
 
-          final int max = OGlobalConfiguration.NETWORK_MAX_CONCURRENT_SESSIONS.getValueAsInteger();
+          final int max = server.getContextConfiguration().getValueAsInteger(OGlobalConfiguration.NETWORK_MAX_CONCURRENT_SESSIONS);
 
           int conns = server.getClientConnectionManager().getTotal();
           if (conns >= max) {

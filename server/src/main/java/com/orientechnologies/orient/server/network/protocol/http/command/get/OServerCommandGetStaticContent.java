@@ -43,20 +43,20 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class OServerCommandGetStaticContent extends OServerCommandConfigurableAbstract {
-  private static final String[]                                DEF_PATTERN       = { "GET|www", "GET|studio/", "GET|", "GET|*.htm",
-      "GET|*.html", "GET|*.xml", "GET|*.jpeg", "GET|*.jpg", "GET|*.png", "GET|*.gif", "GET|*.js", "GET|*.otf", "GET|*.css",
-      "GET|*.swf", "GET|favicon.ico", "GET|robots.txt"                          };
+  private static final String[] DEF_PATTERN = { "GET|www", "GET|studio/", "GET|", "GET|*.htm", "GET|*.html", "GET|*.xml",
+      "GET|*.jpeg", "GET|*.jpg", "GET|*.png", "GET|*.gif", "GET|*.js", "GET|*.otf", "GET|*.css", "GET|*.swf", "GET|favicon.ico",
+      "GET|robots.txt" };
 
-  private static final String                                  CONFIG_HTTP_CACHE = "http.cache:";
-  private static final String                                  CONFIG_ROOT_PATH  = "root.path";
-  private static final String                                  CONFIG_FILE_PATH  = "file.path";
+  private static final String CONFIG_HTTP_CACHE = "http.cache:";
+  private static final String CONFIG_ROOT_PATH  = "root.path";
+  private static final String CONFIG_FILE_PATH  = "file.path";
 
-  private ConcurrentHashMap<String, OStaticContentCachedEntry> cacheContents     = new ConcurrentHashMap<String, OStaticContentCachedEntry>();
-  private Map<String, String>                                  cacheHttp         = new HashMap<String, String>();
-  private String                                               cacheHttpDefault  = "Cache-Control: max-age=3000";
-  private String                                               rootPath;
-  private String                                               filePath;
-  private ConcurrentHashMap<String, OCallable<Object, String>> virtualFolders    = new ConcurrentHashMap<String, OCallable<Object, String>>();
+  private ConcurrentHashMap<String, OStaticContentCachedEntry> cacheContents    = new ConcurrentHashMap<String, OStaticContentCachedEntry>();
+  private Map<String, String>                                  cacheHttp        = new HashMap<String, String>();
+  private String                                               cacheHttpDefault = "Cache-Control: max-age=3000";
+  private String rootPath;
+  private String filePath;
+  private ConcurrentHashMap<String, OCallable<Object, String>> virtualFolders = new ConcurrentHashMap<String, OCallable<Object, String>>();
 
   public static class OStaticContent {
     public InputStream is          = null;
@@ -204,8 +204,9 @@ public class OServerCommandGetStaticContent extends OServerCommandConfigurableAb
       // GET GLOBAL CONFIG
       rootPath = iRequest.configuration.getValueAsString("orientdb.www.path", "src/site");
       if (rootPath == null) {
-        OLogManager.instance().warn(this,
-            "No path configured. Specify the 'root.path', 'file.path' or the global 'orientdb.www.path' variable", rootPath);
+        OLogManager.instance()
+            .warn(this, "No path configured. Specify the 'root.path', 'file.path' or the global 'orientdb.www.path' variable",
+                rootPath);
         return;
       }
     }
@@ -239,7 +240,7 @@ public class OServerCommandGetStaticContent extends OServerCommandConfigurableAb
       return;
     }
 
-    if (OGlobalConfiguration.SERVER_CACHE_FILE_STATIC.getValueAsBoolean()) {
+    if (server.getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.SERVER_CACHE_FILE_STATIC)) {
       final OStaticContentCachedEntry cachedEntry = cacheContents.get(path);
       if (cachedEntry != null) {
         staticContent.is = new ByteArrayInputStream(cachedEntry.content);
@@ -273,7 +274,7 @@ public class OServerCommandGetStaticContent extends OServerCommandConfigurableAb
       staticContent.is = new BufferedInputStream(new FileInputStream(inputFile));
       staticContent.contentSize = inputFile.length();
 
-      if (OGlobalConfiguration.SERVER_CACHE_FILE_STATIC.getValueAsBoolean()) {
+      if (server.getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.SERVER_CACHE_FILE_STATIC)) {
         // READ THE ENTIRE STREAM AND CACHE IT IN MEMORY
         final byte[] buffer = new byte[(int) staticContent.contentSize];
         for (int i = 0; i < staticContent.contentSize; ++i)

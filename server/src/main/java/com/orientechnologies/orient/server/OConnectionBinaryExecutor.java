@@ -16,6 +16,7 @@ import com.orientechnologies.orient.core.cache.OCommandCache;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -641,7 +642,8 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
         value = "<hidden>";
       else
         try {
-          value = cfg.getValueAsString() != null ? cfg.getValueAsString() : "";
+          OContextConfiguration config = connection.getProtocol().getServer().getContextConfiguration();
+          value = config.getValueAsString(cfg) != null ? config.getValueAsString(cfg) : "";
         } catch (Exception e) {
           value = "";
         }

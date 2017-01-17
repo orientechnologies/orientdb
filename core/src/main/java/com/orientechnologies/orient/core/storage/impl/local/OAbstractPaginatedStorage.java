@@ -3295,6 +3295,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       return;
 
     final long timer = Orient.instance().getProfiler().startChrono();
+    int fuzzyCheckpointWaitTimeout = getConfiguration().getContextConfiguration()
+        .getValueAsInteger(OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_SHUTDOWN_TIMEOUT);
 
     ScheduledExecutorService executor = fuzzyCheckpointExecutor;
     stateLock.acquireWriteLock();
@@ -3393,8 +3395,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     if (executor != null) {
       executor.shutdown();
       try {
-        if (!executor
-            .awaitTermination(OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_SHUTDOWN_TIMEOUT.getValueAsInteger(), TimeUnit.SECONDS)) {
+        if (!executor.awaitTermination(fuzzyCheckpointWaitTimeout, TimeUnit.SECONDS)) {
           throw new OStorageException("Can not able to terminate fuzzy checkpoint");
         }
       } catch (InterruptedException e) {

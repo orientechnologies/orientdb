@@ -300,7 +300,7 @@ public class OServer {
 
     initFromConfiguration();
 
-    if (OGlobalConfiguration.ENVIRONMENT_DUMP_CFG_AT_STARTUP.getValueAsBoolean()) {
+    if (contextConfiguration.getValueAsBoolean(OGlobalConfiguration.ENVIRONMENT_DUMP_CFG_AT_STARTUP)) {
       System.out.println("Dumping environment after server startup...");
       OGlobalConfiguration.dumpConfiguration(System.out);
     }
@@ -320,7 +320,7 @@ public class OServer {
       databaseDirectory += "/";
 
     OrientDBConfig config = OrientDBConfig.builder().fromContext(contextConfiguration).build();
-    if (OGlobalConfiguration.SERVER_BACKWARD_COMPATIBILITY.getValueAsBoolean()) {
+    if (contextConfiguration.getValueAsBoolean(OGlobalConfiguration.SERVER_BACKWARD_COMPATIBILITY)) {
       databases = ODatabaseDocumentTxInternal.getOrCreateEmbeddedFactory(this.databaseDirectory, config);
     } else {
       databases = OrientDB.embedded(this.databaseDirectory, config);
@@ -451,7 +451,7 @@ public class OServer {
     try {
       boolean res = deinit();
 
-      if (!OGlobalConfiguration.SERVER_BACKWARD_COMPATIBILITY.getValueAsBoolean() && databases != null) {
+      if (!getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.SERVER_BACKWARD_COMPATIBILITY) && databases != null) {
         databases.close();
         databases = null;
       }
@@ -562,7 +562,7 @@ public class OServer {
    * Opens all the available server's databases.
    */
   protected void loadDatabases() {
-    if (!OGlobalConfiguration.SERVER_OPEN_ALL_DATABASES_AT_STARTUP.getValueAsBoolean())
+    if (!getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.SERVER_OPEN_ALL_DATABASES_AT_STARTUP))
       return;
     getDatabases().loadAllDatabases();
   }
@@ -939,7 +939,7 @@ public class OServer {
 
       configuration.isAfterFirstTime = true;
 
-      if (OGlobalConfiguration.CREATE_DEFAULT_USERS.getValueAsBoolean())
+      if (getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.CREATE_DEFAULT_USERS))
         createDefaultServerUsers();
 
     } finally {
@@ -1146,33 +1146,6 @@ public class OServer {
   }
 
   protected void defaultSettings() {
-  }
-
-  private boolean isStorageOfCurrentServerInstance(OStorage storage) {
-    if (storage.getUnderlying() instanceof OLocalPaginatedStorage) {
-      final String rootDirectory = getDatabaseDirectory();
-      return storage.getURL().contains(rootDirectory);
-    } else
-      return true;
-  }
-
-  private void scanDatabaseDirectory(final File directory, final Map<String, String> storages) {
-    if (directory.exists() && directory.isDirectory()) {
-      final File[] files = directory.listFiles();
-      if (files != null)
-        for (File db : files) {
-          if (db.isDirectory()) {
-            final File plocalFile = new File(db.getAbsolutePath() + "/database.ocf");
-            final String dbPath = db.getPath().replace('\\', '/');
-            final int lastBS = dbPath.lastIndexOf('/', dbPath.length() - 1) + 1;// -1 of dbPath may be ended with slash
-            if (plocalFile.exists()) {
-              storages.put(OIOUtils.getDatabaseNameFromPath(dbPath.substring(lastBS)), "plocal:" + dbPath);
-            } else
-              // TRY TO GO IN DEEP RECURSIVELY
-              scanDatabaseDirectory(db, storages);
-          }
-        }
-    }
   }
 
   public OTokenHandler getTokenHandler() {

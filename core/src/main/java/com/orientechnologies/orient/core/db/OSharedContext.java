@@ -52,7 +52,8 @@ public class OSharedContext implements OCloseable {
     sequenceLibrary = new OSequenceLibraryImpl();
     liveQueryOps = new OLiveQueryHook.OLiveQueryOps();
     commandCache = new OCommandCacheSoftRefs(storage);
-    statementCache = new OStatementCache(OGlobalConfiguration.STATEMENT_CACHE_SIZE.getValueAsInteger());
+    statementCache = new OStatementCache(
+        storage.getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.STATEMENT_CACHE_SIZE));
     queryStats = new OQueryStats();
   }
 
@@ -74,8 +75,8 @@ public class OSharedContext implements OCloseable {
       }
     } finally {
       PROFILER
-          .stopChrono(PROFILER.getDatabaseMetric(database.getStorage().getName(), "metadata.load"), "Loading of database metadata", timer,
-              "db.*.metadata.load");
+          .stopChrono(PROFILER.getDatabaseMetric(database.getStorage().getName(), "metadata.load"), "Loading of database metadata",
+              timer, "db.*.metadata.load");
     }
   }
 
@@ -156,7 +157,7 @@ public class OSharedContext implements OCloseable {
     return statementCache;
   }
 
-  public OQueryStats getQueryStats(){
+  public OQueryStats getQueryStats() {
     return queryStats;
   }
 

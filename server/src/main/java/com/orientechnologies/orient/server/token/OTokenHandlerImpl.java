@@ -4,6 +4,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCommonConst;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -53,9 +54,10 @@ public class OTokenHandlerImpl implements OTokenHandler {
     String algorithm;
     Long sessionTimeout;
 
-    String configKey = OGlobalConfiguration.NETWORK_TOKEN_SECRETKEY.getValueAsString();
+    OContextConfiguration config = server.getContextConfiguration();
+    String configKey = config.getValueAsString(OGlobalConfiguration.NETWORK_TOKEN_SECRETKEY);
     if (configKey == null || configKey.length() == 0)
-      configKey = OGlobalConfiguration.OAUTH2_SECRETKEY.getValueAsString();
+      configKey =  config.getValueAsString(OGlobalConfiguration.OAUTH2_SECRETKEY);
 
     if (configKey != null && configKey.length() > 0)
       key = Base64.getUrlDecoder().decode(configKey);
@@ -65,11 +67,11 @@ public class OTokenHandlerImpl implements OTokenHandler {
 
     keyProvider = new DefaultKeyProvider(key);
 
-    sessionTimeout = OGlobalConfiguration.NETWORK_TOKEN_EXPIRE_TIMEOUT.getValueAsLong();
+    sessionTimeout = config.getValueAsLong(OGlobalConfiguration.NETWORK_TOKEN_EXPIRE_TIMEOUT);
     if (sessionTimeout != null)
       sessionInMills = sessionTimeout * 1000 * 60;
 
-    algorithm = OGlobalConfiguration.NETWORK_TOKEN_ENCRYPTION_ALGORITHM.getValueAsString();
+    algorithm = config.getValueAsString(OGlobalConfiguration.NETWORK_TOKEN_ENCRYPTION_ALGORITHM);
     if (algorithm != null)
       this.algorithm = algorithm;
 

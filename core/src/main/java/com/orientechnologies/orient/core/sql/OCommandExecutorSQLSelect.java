@@ -1541,7 +1541,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         ((ORecordIteratorClusters) iTarget).getClusterIds() :
         null;
 
-    parallel = (parallel || OGlobalConfiguration.QUERY_PARALLEL_AUTO.getValueAsBoolean()) && canRunParallel(clusterIds, iTarget);
+    parallel = (parallel || getDatabase().getConfiguration().getValueAsBoolean(OGlobalConfiguration.QUERY_PARALLEL_AUTO)) && canRunParallel(clusterIds, iTarget);
 
     try {
       if (parallel)
@@ -1601,7 +1601,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   private boolean serialIterator(Iterator<? extends OIdentifiable> iTarget) {
-    int queryScanThresholdWarning = OGlobalConfiguration.QUERY_SCAN_THRESHOLD_TIP.getValueAsInteger();
+    int queryScanThresholdWarning = getDatabase().getConfiguration().getValueAsInteger(OGlobalConfiguration.QUERY_SCAN_THRESHOLD_TIP);
 
     boolean tipActivated = queryScanThresholdWarning > 0 && iTarget instanceof OIdentifiableIterator && compiledFilter != null;
 
@@ -1709,7 +1709,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       jobs.add(Orient.instance().submit(job));
     }
 
-    final int maxQueueSize = OGlobalConfiguration.QUERY_PARALLEL_RESULT_QUEUE_SIZE.getValueAsInteger() - 1;
+    final int maxQueueSize = getDatabase().getConfiguration().getValueAsInteger(OGlobalConfiguration.QUERY_PARALLEL_RESULT_QUEUE_SIZE) - 1;
 
     boolean cancelQuery = false;
     boolean tipProvided = false;
