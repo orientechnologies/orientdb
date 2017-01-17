@@ -27,15 +27,25 @@ class SchemaService {
       "OTriggered"];
   }
 
-  createClass(db, {name, abstract, superClasses, clusters}) {
+  createClass(db, {name, abstract, superClasses, clusters}, strict) {
 
-    let query = 'CREATE CLASS `' + name + "`";
+    strict = strict != undefined ? strict : true;
+
+    if (strict) {
+      name = `\`${name}\``;
+    }
+    let query = `CREATE CLASS ${name} `;
+
     let abstractSQL = abstract ? ' ABSTRACT ' : '';
     let superClassesSQL = '';
     if ((superClasses != null && superClasses.length > 0)) {
-      superClassesSQL = ' extends ' + this.arrayPipe.transform((superClasses.map((c) => {
-          return "`" + c + "`"
-        })));
+      if (strict) {
+        superClassesSQL = ' extends ' + this.arrayPipe.transform((superClasses.map((c) => {
+            return "`" + c + "`"
+          })));
+      } else {
+        superClassesSQL = ' extends ' + this.arrayPipe.transform(superClasses);
+      }
     }
     let clusterSQL = '';
     if (clusters) {
@@ -49,8 +59,14 @@ class SchemaService {
     })
   }
 
-  alterClass(db, {clazz, name, value}) {
-    let query = `ALTER CLASS \`${clazz}\` ${name} ${value} `;
+  alterClass(db, {clazz, name, value}, strict) {
+    strict = strict != undefined ? strict : true;
+
+    if (strict) {
+      clazz = `\`${clazz}\``;
+    }
+    let query = `ALTER CLASS ${clazz} ${name} ${value} `;
+
     return this.commandService.command({
       db,
       query
@@ -58,11 +74,101 @@ class SchemaService {
   }
 
 
-  createProperty(db, {clazz, name, type, linkedType, linkedClass}) {
+  dropClass(db, clazz, strict) {
 
+    strict = strict != undefined ? strict : true;
+    if (strict) {
+      clazz = `\`${clazz}\``;
+    }
+    let query = `DROP CLASS ${clazz}  `;
+    return this.commandService.command({
+      db,
+      query
+    })
+  }
+
+
+  createProperty(db, {clazz, name, type, linkedType, linkedClass}, strict) {
+    strict = strict != undefined ? strict : true;
     linkedType = linkedType || '';
-    linkedClass = linkedClass || '';
-    let query = `CREATE PROPERTY \`${clazz}\`.\`${name}\` ${type} ${linkedType} ${linkedClass}`;
+    linkedClass = linkedClass != undefined ? ( strict ? `\`${linkedClass}\`` : linkedClass) : '';
+
+    if (strict) {
+      clazz = `\`${clazz}\``;
+      name = `\`${name}\``;
+    }
+    let query = `CREATE PROPERTY ${clazz}.${name} ${type} ${linkedType} ${linkedClass}`;
+    return this.commandService.command({
+      db,
+      query
+    })
+  }
+
+  alterProperty(db, {clazz, name, entry, value}, strict) {
+    strict = strict != undefined ? strict : true;
+
+    if (strict) {
+      clazz = `\`${clazz}\``;
+      name = `\`${name}\``;
+    }
+    let query = `ALTER PROPERTY ${clazz}.${name} ${entry} ${value}`;
+    return this.commandService.command({
+      db,
+      query
+    })
+  }
+
+  dropProperty(db, {clazz, name}, strict) {
+    strict = strict != undefined ? strict : true;
+
+    if (strict) {
+      clazz = `\`${clazz}\``;
+      name = `\`${name}\``;
+    }
+    let query = `DROP PROPERTY ${clazz}.${name}`;
+    return this.commandService.command({
+      db,
+      query
+    })
+  }
+
+  createIndex(db, {name, clazz, props, type, engine, metadata}, strict) {
+
+    strict = strict != undefined ? strict : true;
+
+    if (strict) {
+      name = `\`${name}\``;
+      clazz = `\`${clazz}\``;
+    }
+
+    let propsString = this.arrayPipe.transform(props.map((p) => {
+      return strict ? `\`${p}\`` : p;
+    }));
+
+    let query = `CREATE INDEX  ${name}  ON  ${clazz}  ( ${propsString} )  ${type}`;
+
+    if (engine == 'LUCENE') {
+      query += ' ENGINE LUCENE';
+
+      if (metadata) {
+        query += ' METADATA ' + metadata;
+      }
+    }
+
+    return this.commandService.command({
+      db,
+      query
+    })
+  }
+
+  dropIndex(db, {name}, strict) {
+
+    strict = strict != undefined ? strict : true;
+
+    if (strict) {
+      name = `\`${name}\``;
+    }
+    let query = `DROP INDEX  ${name}`;
     return this.commandService.command({
       db,
       query

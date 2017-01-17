@@ -18,6 +18,9 @@ let NewVertexModalController = function ($scope, $element, $attrs, $location, $m
   ctrl.property = {"name": "", "alias": null, "superClasses": ["V"], "abstract": false}
   ctrl.database = Database;
   ctrl.db = $routeParams.database;
+
+  ctrl.strict = Database.isStrictSql();
+
   ctrl.listClasses = ctrl.database.listNameOfClasses().filter((c) => {
     return ctrl.database.isVertex(c);
   });
@@ -31,7 +34,7 @@ let NewVertexModalController = function ($scope, $element, $attrs, $location, $m
   });
 
   ctrl.saveNewClass = function () {
-    SchemaService.createClass(ctrl.db, ctrl.property)
+    SchemaService.createClass(ctrl.db, ctrl.property, ctrl.strict)
       .then((res) => {
         if (ctrl.property.alias) {
           let clazz = ctrl.property.name;
@@ -41,7 +44,7 @@ let NewVertexModalController = function ($scope, $element, $attrs, $location, $m
             clazz,
             name,
             value
-          }).then(() => {
+          }, ctrl.strict).then(() => {
             handleResponse({content: "Class '" + ctrl.property['name'] + "' correctly created."})
           }).catch((err) => {
             handleResponse({

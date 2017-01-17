@@ -12,6 +12,8 @@ let NewEdgeModalController = function ($scope, $element, $attrs, $location, $mod
     Notification.push(payload);
   }
 
+  ctrl.strict = Database.isStrictSql();
+
   ctrl.hide = $scope.$parent.$hide;
 
 
@@ -35,7 +37,7 @@ let NewEdgeModalController = function ($scope, $element, $attrs, $location, $mod
 
   ctrl.saveNewClass = function () {
 
-    SchemaService.createClass(ctrl.db, ctrl.property)
+    SchemaService.createClass(ctrl.db, ctrl.property,ctrl.strict)
       .then((res) => {
 
         let promises = [];
@@ -62,7 +64,7 @@ let NewEdgeModalController = function ($scope, $element, $attrs, $location, $mod
           let name = "in";
           let type = "LINK";
           let linkedClass = ctrl.property.in;
-          promises.push(SchemaService.createProperty(ctrl.db, {clazz, name, type, linkedClass}));
+          promises.push(SchemaService.createProperty(ctrl.db, {clazz, name, type, linkedClass},ctrl.strict));
         }
         if (ctrl.property.out) {
           additional = true;
@@ -70,7 +72,7 @@ let NewEdgeModalController = function ($scope, $element, $attrs, $location, $mod
           let name = "out";
           let type = "LINK";
           let linkedClass = ctrl.property.out;
-          promises.push(SchemaService.createProperty(ctrl.db, {clazz, name, type, linkedClass}));
+          promises.push(SchemaService.createProperty(ctrl.db, {clazz, name, type, linkedClass},ctrl.strict));
         }
         promises.forEach((promise) => {
           promise.then(() => {

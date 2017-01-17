@@ -6,7 +6,7 @@ import  template  from './classesList.html';
 
 import '../../views/database/changeNameModal.html';
 
-let SchemaClassesController = function ($scope, $element, $attrs, $location, $modal, $q, $routeParams, Database, ClassAlterApi, CommandApi, Notification) {
+let SchemaClassesController = function ($scope, $element, $attrs, $location, $modal, $q, $routeParams, Database, ClassAlterApi, CommandApi, Notification, SchemaService, FormatErrorPipe) {
 
 
   var ctrl = this;
@@ -18,6 +18,7 @@ let SchemaClassesController = function ($scope, $element, $attrs, $location, $mo
   };
 
 
+  ctrl.strict = Database.isStrictSql();
   ctrl.queryFilter = null;
   ctrl.$onChanges = (changes) => {
     ctrl.queryFilter = changes.query.currentValue;
@@ -43,7 +44,8 @@ let SchemaClassesController = function ($scope, $element, $attrs, $location, $mo
 
 
   ctrl.queryAll = function (className) {
-    $location.path("/database/" + ctrl.database + "/browse/select * from `" + className + "`");
+    className = ctrl.strict ? `\`${className}\`` : className;
+    $location.path("/database/" + ctrl.database + "/browse/select * from " + className + "");
   }
 
 
@@ -57,19 +59,26 @@ let SchemaClassesController = function ($scope, $element, $attrs, $location, $mo
 
     modalScope.rename = function (name) {
       if (name != cls.name) {
-        ClassAlterApi.changeProperty($routeParams.database, {
-          clazz: cls.name,
-          name: "name",
-          value: name
-        }).then(function (data) {
-          var noti = S("The class {{name}} has been renamed to {{newName}}").template({
+
+        let escaped = name;
+        if (ctrl.strict) {
+          escaped = `\`${name}\``
+        }
+        SchemaService.alterClass($routeParams.database,
+          {
+            clazz: cls.name,
+            name: "name",
+            value: escaped
+          }
+          , ctrl.strict).then(() => {
+          let noti = S("The class {{name}} has been renamed to {{newName}}").template({
             name: cls.name,
             newName: name
           }).s;
           Notification.push({content: noti});
           cls.name = name;
-        }, function err(data) {
-          Notification.push({content: data, error: true});
+        }).catch((err) => {
+          Notification.push({content: FormatErrorPipe.transform(err.json()), error: true});
         });
       }
     }
@@ -84,20 +93,14 @@ let SchemaClassesController = function ($scope, $element, $attrs, $location, $mo
       title: 'Warning!',
       body: 'You are dropping class ' + nameClass['name'] + '. Are you sure?',
       success: function () {
-        var sql = 'DROP CLASS `' + nameClass['name'] + "`";
-
-        CommandApi.queryText({
-          database: $routeParams.database,
-          language: 'sql',
-          text: sql,
-          limit: $scope.limit,
-          verbose: false
-        }, function (data) {
+        SchemaService.dropClass($routeParams.database, nameClass['name'], ctrl.strict).then(() => {
           var elem = ctrl.classes.indexOf(nameClass);
           ctrl.classes.splice(elem, 1)
           ctrl.classes.splice();
           Notification.push({content: "Class '" + nameClass['name'] + "' dropped."});
-        });
+        }).catch((err) => {
+          Notification.push({content: FormatErrorPipe.transform(err.json()), error: true});
+        })
       }
     });
 
@@ -108,15 +111,16 @@ let SchemaClassesController = function ($scope, $element, $attrs, $location, $mo
   }
 
   ctrl.setClusterStrategy = function (clazz) {
-    ClassAlterApi.changeProperty(ctrl.database, {
+
+    SchemaService.alterClass(ctrl.database, {
       clazz: clazz.name,
       name: "clusterSelection",
       value: clazz.clusterSelection
-    }).then(function (data) {
-      var noti = S("Cluster selection strategy for the class {{name}} has been changed to {{clusterSelection}}").template(clazz).s;
+    }, ctrl.strict).then(() => {
+      let noti = S("Cluster selection strategy for the class {{name}} has been changed to {{clusterSelection}}").template(clazz).s;
       Notification.push({content: noti});
-    }).catch(function (e) {
-      Notification.push({content: e, error: true});
+    }).catch(function (err) {
+      Notification.push({content: FormatErrorPipe.transform(err.json()), error: true});
     });
   };
 }

@@ -14,6 +14,7 @@ let NewGenericModalController = function ($scope, $element, $attrs, $location, $
 
   ctrl.hide = $scope.$parent.$hide;
 
+  ctrl.strict = Database.isStrictSql();
 
   ctrl.property = {"name": "", "alias": null, "superClasses": [], "abstract": false}
   ctrl.database = Database;
@@ -30,7 +31,7 @@ let NewGenericModalController = function ($scope, $element, $attrs, $location, $
   });
 
   ctrl.saveNewClass = function () {
-    SchemaService.createClass(ctrl.db, ctrl.property)
+    SchemaService.createClass(ctrl.db, ctrl.property, ctrl.strict)
       .then((res) => {
         if (ctrl.property.alias) {
           let clazz = ctrl.property.name;
@@ -40,7 +41,7 @@ let NewGenericModalController = function ($scope, $element, $attrs, $location, $
             clazz,
             name,
             value
-          }).then(() => {
+          }, ctrl.strict).then(() => {
             handleResponse({content: "Class '" + ctrl.property['name'] + "' correctly created."})
           }).catch((err) => {
             handleResponse({

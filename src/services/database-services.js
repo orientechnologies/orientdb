@@ -52,6 +52,7 @@ database.factory('Database', ["DatabaseApi", "localStorageService", function (Da
        } */
       return current.metadata;
     },
+
     setMetadata: function (metadata) {
       current.metadata = metadata;
     },
