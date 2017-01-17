@@ -170,7 +170,7 @@ public class OrientDBEmbedded implements OrientDB {
         throw OException.wrapException(new ODatabaseException("Cannot create database '" + name + "'"), e);
       }
     } else
-      throw new OStorageExistsException("Cannot create new storage '" + name + "' because it already exists");
+      throw new ODatabaseException("Cannot create new storage '" + name + "' because it already exists");
   }
 
   public synchronized void restore(String name, String path) {
@@ -184,7 +184,7 @@ public class OrientDBEmbedded implements OrientDB {
         throw OException.wrapException(new ODatabaseException("Cannot restore database '" + name + "'"), e);
       }
     } else
-      throw new OStorageExistsException("Cannot create new storage '" + name + "' because it already exists");
+      throw new ODatabaseException("Cannot create new storage '" + name + "' because it already exists");
   }
 
   public synchronized void restore(String name, InputStream in, Map<String, Object> options, Callable<Object> callable,
@@ -236,18 +236,33 @@ public class OrientDBEmbedded implements OrientDB {
     }
   }
 
+  private interface DatabaseFound {
+    void found(String name);
+  }
+
   @Override
-  public Set<String> listDatabases(String user, String password) {
+  public synchronized Set<String> listDatabases(String user, String password) {
     // SEARCH IN CONFIGURED PATHS
     final Set<String> databases = new HashSet<>();
     // SEARCH IN DEFAULT DATABASE DIRECTORY
     if (basePath != null) {
-      scanDatabaseDirectory(new File(basePath), databases);
+      scanDatabaseDirectory(new File(basePath), (name) -> databases.add(name));
     }
     databases.addAll(this.storages.keySet());
-
     // TODO remove OSystemDatabase.SYSTEM_DB_NAME from the list
     return databases;
+  }
+
+  public synchronized void loadAllDatabases() {
+    if (basePath != null) {
+      scanDatabaseDirectory(new File(basePath), (name) -> {
+        if (!storages.containsKey(name)) {
+          OAbstractPaginatedStorage storage = getStorage(name);
+          // THIS OPEN THE STORAGE ONLY THE FIRST TIME
+          storage.open(getConfigurations().getConfigurations());
+        }
+      });
+    }
   }
 
   public ODatabasePool openPool(String name, String user, String password) {
@@ -286,10 +301,6 @@ public class OrientDBEmbedded implements OrientDB {
     return configurations;
   }
 
-  public /* OServer */ Object spawnServer(/* OServerConfiguration */Object serverConfiguration) {
-    return null;
-  }
-
   public void removePool(OEmbeddedPoolByFactory pool) {
     pools.remove(pool);
   }
@@ -298,7 +309,7 @@ public class OrientDBEmbedded implements OrientDB {
     T create(OAbstractPaginatedStorage storage);
   }
 
-  private void scanDatabaseDirectory(final File directory, final Set<String> storages) {
+  private void scanDatabaseDirectory(final File directory, DatabaseFound found) {
     if (directory.exists() && directory.isDirectory()) {
       final File[] files = directory.listFiles();
       if (files != null)
@@ -308,7 +319,7 @@ public class OrientDBEmbedded implements OrientDB {
             final String dbPath = db.getPath().replace('\\', '/');
             final int lastBS = dbPath.lastIndexOf('/', dbPath.length() - 1) + 1;// -1 of dbPath may be ended with slash
             if (plocalFile.exists()) {
-              storages.add(OIOUtils.getDatabaseNameFromPath(dbPath.substring(lastBS)));
+              found.found(OIOUtils.getDatabaseNameFromPath(dbPath.substring(lastBS)));
             }
           }
         }
