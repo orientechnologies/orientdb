@@ -19,6 +19,8 @@
  */
 package com.orientechnologies.orient.core.sql.filter;
 
+import java.util.Set;
+
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.common.util.OPair;
@@ -33,10 +35,9 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.OBinaryField;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
+import com.orientechnologies.orient.core.sql.functions.coll.OSQLMethodMultiValue;
 import com.orientechnologies.orient.core.sql.method.OSQLMethodRuntime;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodField;
-
-import java.util.Set;
 
 /**
  * Represent an object field as value in the query condition.
@@ -73,6 +74,27 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
       } else {
         return operationsChain.size() + 1;
       }
+    }
+    
+    /**
+     * Get embedded item name in dot notation.
+     * For e.g. field1.field2.field3 or field1[field2].field3 etc.
+     */
+    public String getEmbeddedItemName() {
+    	if(!isLong()){
+    		return name;
+    	} else {
+    		StringBuilder embeddedItemName = new StringBuilder(name);
+    		for(int i = 1; i < getItemCount(); i++) {
+    			OPair<OSQLMethodRuntime, Object[]> element = operationsChain.get(i - 1);
+    			if(element.getKey().getMethod().getName().equals(OSQLMethodMultiValue.NAME)){
+    				embeddedItemName.append(element.getValue()[0].toString());
+    			} else {
+    				embeddedItemName.append(".").append(element.getValue()[0].toString());
+    			}
+    		}
+    		return embeddedItemName.toString();
+    	}
     }
 
     /**
@@ -175,9 +197,10 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
   }
 
   /**
-   * Check whether or not this filter item is chain of fields (e.g. "field1.field2.field3"). Return true if filter item contains
-   * only field projections operators, if field item contains any other projection operator the method returns false. When filter
-   * item does not contains any chain operator, it is also field chain consist of one field.
+   * Check whether or not this filter item is chain of fields (e.g. "field1.field2.field3" or "field1[field2].field3").
+   * Return true if filter item contains only field projections operators, if field item contains any other projection 
+   * operator the method returns false. When filter item does not contains any chain operator, it is also field chain 
+   * consist of one field.
    *
    * @return whether or not this filter item can be represented as chain of fields.
    */
@@ -187,7 +210,8 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
     }
 
     for (OPair<OSQLMethodRuntime, Object[]> pair : operationsChain) {
-      if (!pair.getKey().getMethod().getName().equals(OSQLMethodField.NAME)) {
+      if (!pair.getKey().getMethod().getName().equals(OSQLMethodField.NAME) 
+              && !pair.getKey().getMethod().getName().equals(OSQLMethodMultiValue.NAME)) {
         return false;
       }
     }

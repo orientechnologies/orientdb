@@ -109,6 +109,17 @@ public class OIndexSearchResult {
     result.add(lastField.getItemName(0));
     return result;
   }
+  
+  /**
+   * 
+   * @return List of embedded fields in dot notation
+   */
+  public List<String> embeddedFields() {
+ 	final List<String> result = new ArrayList<String>(fieldValuePairs.size() + 1);
+ 	result.addAll(fieldValuePairs.keySet());
+ 	result.add(lastField.getEmbeddedItemName());
+ 	return result;
+  }
 
   int getFieldCount() {
     return fieldValuePairs.size() + 1;

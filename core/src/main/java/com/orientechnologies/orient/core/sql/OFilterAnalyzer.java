@@ -40,7 +40,10 @@ public class OFilterAnalyzer {
     final List<OIndex<?>> result = new ArrayList<OIndex<?>>(involvedIndexes.size());
 
     if (searchResultFields.lastField.isLong()) {
-      result.addAll(OChainedIndexProxy.createProxies(iSchemaClass, searchResultFields.lastField));
+    	// Linked fields
+        result.addAll(OChainedIndexProxy.createProxies(iSchemaClass, searchResultFields.lastField));
+        // Embedded fields
+        result.addAll(iSchemaClass.getInvolvedIndexes(searchResultFields.embeddedFields()));
     } else {
       for (OIndex<?> involvedIndex : involvedIndexes) {
         result.add(involvedIndex);
@@ -239,9 +242,12 @@ public class OFilterAnalyzer {
   }
 
   private boolean checkIndexExistence(final OClass iSchemaClass, final OIndexSearchResult result) {
-    return iSchemaClass.areIndexed(result.fields()) && (!result.lastField.isLong() || checkIndexChainExistence(iSchemaClass,
-        result));
-  }
+	    boolean indexExistsOnField = iSchemaClass.areIndexed(result.fields())
+	          && (!result.lastField.isLong() || checkIndexChainExistence(iSchemaClass, result));
+	    boolean indexExistsOnEmbeddedField = iSchemaClass.areIndexed(result.embeddedFields())
+	          && (!result.lastField.isLong() || checkIndexChainExistence(iSchemaClass, result));
+	    return (indexExistsOnField || indexExistsOnEmbeddedField);
+	  }
 
   private boolean checkIndexChainExistence(OClass iSchemaClass, OIndexSearchResult result) {
     final int fieldCount = result.lastField.getItemCount();

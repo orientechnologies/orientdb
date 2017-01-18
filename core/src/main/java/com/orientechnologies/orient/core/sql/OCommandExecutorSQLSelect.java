@@ -1966,11 +1966,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           // we need to test that last field in query subset and field in index that has the same position
           // are equals.
           if (!OIndexSearchResult.isIndexEqualityOperator(operator)) {
-            final String lastFiled = searchResult.lastField.getItemName(searchResult.lastField.getItemCount() - 1);
-            final String relatedIndexField = indexDefinition.getFields().get(searchResult.fieldValuePairs.size());
-            if (!lastFiled.equals(relatedIndexField)) {
-              continue;
-            }
+        	  final String lastFiled = searchResult.lastField.getItemName(searchResult.lastField.getItemCount() - 1);
+              final String embeddedField = searchResult.lastField.getEmbeddedItemName();
+              final String relatedIndexField = indexDefinition.getFields().get(searchResult.fieldValuePairs.size());
+              if (!lastFiled.equals(relatedIndexField) && !embeddedField.equals(relatedIndexField)) {
+                  continue;
+              }
           }
 
           final int searchResultFieldsCount = searchResult.fields().size();
@@ -2120,11 +2121,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             // we need to test that last field in query subset and field in index that has the same position
             // are equals.
             if (!OIndexSearchResult.isIndexEqualityOperator(operator)) {
-              final String lastFiled = searchResult.lastField.getItemName(searchResult.lastField.getItemCount() - 1);
-              final String relatedIndexField = indexDefinition.getFields().get(searchResult.fieldValuePairs.size());
-              if (!lastFiled.equals(relatedIndexField)) {
-                continue;
-              }
+          	  final String lastFiled = searchResult.lastField.getItemName(searchResult.lastField.getItemCount() - 1);
+                final String embeddedField = searchResult.lastField.getEmbeddedItemName();
+                final String relatedIndexField = indexDefinition.getFields().get(searchResult.fieldValuePairs.size());
+                if (!lastFiled.equals(relatedIndexField) && !embeddedField.equals(relatedIndexField)) {
+                    continue;
+                }
             }
 
             final int searchResultFieldsCount = searchResult.fields().size();

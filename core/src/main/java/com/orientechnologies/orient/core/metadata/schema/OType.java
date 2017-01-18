@@ -434,6 +434,24 @@ public enum OType {
                 .parse((String) iValue);
           }
         }
+      } else if (Set.class.isAssignableFrom(iValue.getClass())) {
+          // embeddedset of objects
+    	  // If iValue is set and iTarget is primitive, create a set of values
+          final Set<Object> set = new HashSet<Object>();
+          set.addAll((Collection<? extends Object>) iValue);
+          return set;
+      } else if (List.class.isAssignableFrom(iValue.getClass())) {
+          // embeddedlist of objects
+    	  // If iValue is list and iTarget is primitive, create a list of values
+          final List<Object> list = new ArrayList<Object>();
+          list.addAll((Collection<? extends Object>) iValue);
+          return list;
+      } else if (Collection.class.isAssignableFrom(iValue.getClass())) {
+          // generic collection of objects
+    	  // If iValue is collection and iTarget is primitive, create a list of values
+          final List<Object> list = new ArrayList<Object>();
+          list.addAll((Collection<? extends Object>) iValue);
+          return list;
       } else if (iTargetClass.equals(String.class)) {
         return iValue.toString();
       } else if (iTargetClass.equals(OIdentifiable.class)) {
