@@ -122,6 +122,9 @@ public class OCommandExecutorSQLMoveVertex extends OCommandExecutorSQLSetAware i
   public Object execute(final Map<Object, Object> iArgs) {
 
     ODatabaseDocumentInternal db = getDatabase();
+
+    db.begin();
+
     if (className == null && clusterName == null)
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
@@ -165,12 +168,12 @@ public class OCommandExecutorSQLMoveVertex extends OCommandExecutorSQLSetAware i
             .add(new ODocument().setTrackingChanges(false).field("old", oldVertex, OType.LINK).field("new", newVertex, OType.LINK));
 
         if (batch > 0 && result.size() % batch == 0) {
-          db.commit();
-          db.begin();
+            db.commit();
+            db.begin();
         }
       }
 
-      db.commit();
+        db.commit();
 
       return result;
     } finally {
