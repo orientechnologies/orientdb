@@ -18,7 +18,6 @@ package com.orientechnologies.lucene.index;
 
 import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
-import com.orientechnologies.orient.core.index.OIndexEngine;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.parser.ParseException;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -37,12 +36,9 @@ public class OLuceneFullTextIndex extends OLuceneIndexNotUnique {
 
     while (true)
       try {
-        return storage.callIndexEngine(false, false, indexId, new OIndexEngineCallback<Document>() {
-          @Override
-          public Document callEngine(OIndexEngine engine) {
-            OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
-            return indexEngine.buildDocument(key, null);
-          }
+        return storage.callIndexEngine(false, false, indexId, engine -> {
+          OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
+          return indexEngine.buildDocument(key, null);
         });
       } catch (OInvalidIndexEngineIdException e) {
         doReloadIndexEngine();
@@ -52,12 +48,9 @@ public class OLuceneFullTextIndex extends OLuceneIndexNotUnique {
   public Query buildQuery(final Object query) throws ParseException {
     while (true)
       try {
-        return storage.callIndexEngine(false, false, indexId, new OIndexEngineCallback<Query>() {
-          @Override
-          public Query callEngine(OIndexEngine engine) {
-            OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
-            return indexEngine.buildQuery(query);
-          }
+        return storage.callIndexEngine(false, false, indexId, engine -> {
+          OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
+          return indexEngine.buildQuery(query);
         });
       } catch (OInvalidIndexEngineIdException e) {
         doReloadIndexEngine();
@@ -68,12 +61,9 @@ public class OLuceneFullTextIndex extends OLuceneIndexNotUnique {
   public Analyzer queryAnalyzer() {
     while (true)
       try {
-        return storage.callIndexEngine(false, false, indexId, new OIndexEngineCallback<Analyzer>() {
-          @Override
-          public Analyzer callEngine(OIndexEngine engine) {
-            OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
-            return indexEngine.queryAnalyzer();
-          }
+        return storage.callIndexEngine(false, false, indexId, engine -> {
+          OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
+          return indexEngine.queryAnalyzer();
         });
       } catch (OInvalidIndexEngineIdException e) {
         doReloadIndexEngine();
@@ -83,12 +73,9 @@ public class OLuceneFullTextIndex extends OLuceneIndexNotUnique {
   public Analyzer indexAnalyzer() {
     while (true) {
       try {
-        return storage.callIndexEngine(false, false, indexId, new OIndexEngineCallback<Analyzer>() {
-          @Override
-          public Analyzer callEngine(OIndexEngine engine) {
-            OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
-            return indexEngine.indexAnalyzer();
-          }
+        return storage.callIndexEngine(false, false, indexId, engine -> {
+          OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
+          return indexEngine.indexAnalyzer();
         });
       } catch (OInvalidIndexEngineIdException e) {
         doReloadIndexEngine();

@@ -1500,7 +1500,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public void deleteIndexEngine(int indexId) throws OInvalidIndexEngineIdException {
-    checkOpeness();
+    checkOpenness();
 
     stateLock.acquireWriteLock();
     try {
@@ -1740,10 +1740,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       else
         engine.put(key, value);
 
-      atomicOperationsManager.endAtomicOperation(false, null, (String) null);
+      atomicOperationsManager.endAtomicOperation(false, null);
     } catch (OInvalidIndexEngineIdException e) {
       try {
-        atomicOperationsManager.endAtomicOperation(true, e, (String) null);
+        atomicOperationsManager.endAtomicOperation(true, e);
       } catch (IOException ioe) {
         throw OException.wrapException(new OStorageException("Error during operation rollback"), ioe);
       }
