@@ -14,6 +14,11 @@
     <artifactId>agent</artifactId>
     <packaging>jar</packaging>
 
+    <properties>
+        <surefire.version>2.19.1</surefire.version>
+        <exclude.kerberos.tests>%regex[com.orientechnologies.security.kerberos.*Test.*]</exclude.kerberos.tests>
+    </properties>
+
     <name>agent</name>
     <build>
         <plugins>
@@ -44,12 +49,28 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.19.1</version>
+
+
+                <version>${surefire.version}</version>
                 <configuration>
+                    <excludes>
+                        <exclude>${exclude.kerberos.tests}</exclude>
+                    </excludes>
                     <systemPropertyVariables>
                         <buildDirectory>${project.build.directory}</buildDirectory>
                         <ORIENTDB_HOME>target</ORIENTDB_HOME>
                     </systemPropertyVariables>
+
+
+                    <!--<plugin>-->
+                    <!--<groupId>org.apache.maven.plugins</groupId>-->
+                    <!--<artifactId>maven-surefire-plugin</artifactId>-->
+                    <!--<version>2.19.1</version>-->
+                    <!--<configuration>-->
+                    <!--<systemPropertyVariables>-->
+                    <!--<buildDirectory>${project.build.directory}</buildDirectory>-->
+                    <!--<ORIENTDB_HOME>target</ORIENTDB_HOME>-->
+                    <!--</systemPropertyVariables>-->
 
                 </configuration>
             </plugin>
