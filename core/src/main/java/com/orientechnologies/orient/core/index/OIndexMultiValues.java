@@ -19,16 +19,6 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
@@ -42,11 +32,13 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerSBTreeIndexRIDContainer;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
+import java.util.*;
+import java.util.concurrent.Callable;
+
 /**
  * Abstract index implementation that supports multi-values for the same key.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable>> {
   public OIndexMultiValues(String name, final String type, String algorithm, int version, OAbstractPaginatedStorage storage,
@@ -112,6 +104,9 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
   }
 
   public OIndexMultiValues put(Object key, final OIdentifiable singleValue) {
+    if (singleValue != null && !singleValue.getIdentity().isPersistent())
+      throw new IllegalArgumentException("Cannot index a non persistent record (" + singleValue.getIdentity() + ")");
+
     key = getCollatingValue(key);
 
     final ODatabase database = getDatabase();
@@ -208,8 +203,8 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
   public OIndexMultiValues create(final String name, final OIndexDefinition indexDefinition, final String clusterIndexName,
       final Set<String> clustersToIndex, boolean rebuild, final OProgressListener progressListener) {
 
-    return (OIndexMultiValues) super.create(indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener,
-        determineValueSerializer());
+    return (OIndexMultiValues) super
+        .create(indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener, determineValueSerializer());
   }
 
   protected OBinarySerializer determineValueSerializer() {

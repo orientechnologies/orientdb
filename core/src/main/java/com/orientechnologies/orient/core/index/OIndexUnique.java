@@ -61,6 +61,9 @@ public class OIndexUnique extends OIndexOneValue {
 
   @Override
   public OIndexOneValue put(Object key, final OIdentifiable iSingleValue) {
+    if (iSingleValue != null && !iSingleValue.getIdentity().isPersistent())
+      throw new IllegalArgumentException("Cannot index a non persistent record (" + iSingleValue.getIdentity() + ")");
+
     key = getCollatingValue(key);
 
     final ODatabase database = getDatabase();
