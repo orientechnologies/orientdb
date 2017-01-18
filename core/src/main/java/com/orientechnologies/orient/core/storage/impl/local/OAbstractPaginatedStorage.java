@@ -1499,8 +1499,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return keySerializer;
   }
 
-  public void deleteIndexEngine(int indexId) {
-    checkOpenness();
+  public void deleteIndexEngine(int indexId) throws OInvalidIndexEngineIdException {
+    checkOpeness();
 
     stateLock.acquireWriteLock();
     try {
@@ -1528,12 +1528,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   }
 
-  private void checkIndexId(int indexId) {
-    if (indexId < 0 || indexId >= indexEngines.size())
-      throw new OIndexException("Engine with id " + indexId + " is not registered inside of storage");
+  private void checkIndexId(int indexId) throws OInvalidIndexEngineIdException {
+    if (indexId < 0 || indexId >= indexEngines.size() || indexEngines.get(indexId) == null)
+      throw new OInvalidIndexEngineIdException("Engine with id " + indexId + " is not registered inside of storage");
   }
 
-  public boolean indexContainsKey(int indexId, Object key) {
+  public boolean indexContainsKey(int indexId, Object key) throws OInvalidIndexEngineIdException {
     if (transaction.get() != null)
       return doIndexContainsKey(indexId, key);
 
@@ -1549,7 +1549,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private boolean doIndexContainsKey(int indexId, Object key) {
+  private boolean doIndexContainsKey(int indexId, Object key) throws OInvalidIndexEngineIdException {
     checkIndexId(indexId);
 
     final OIndexEngine engine = indexEngines.get(indexId);
@@ -1557,7 +1557,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return engine.contains(key);
   }
 
-  public boolean removeKeyFromIndex(int indexId, Object key) {
+  public boolean removeKeyFromIndex(int indexId, Object key) throws OInvalidIndexEngineIdException {
     if (transaction.get() != null) {
       return doRemoveKeyFromIndex(indexId, key);
     }
@@ -1576,7 +1576,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private boolean doRemoveKeyFromIndex(int indexId, Object key) {
+  private boolean doRemoveKeyFromIndex(int indexId, Object key) throws OInvalidIndexEngineIdException {
     try {
       checkIndexId(indexId);
 
@@ -1589,7 +1589,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  public void clearIndex(int indexId) {
+  public void clearIndex(int indexId) throws OInvalidIndexEngineIdException {
     if (transaction.get() != null) {
       doClearIndex(indexId);
       return;
@@ -1609,7 +1609,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private void doClearIndex(int indexId) {
+  private void doClearIndex(int indexId) throws OInvalidIndexEngineIdException {
     try {
       checkIndexId(indexId);
 
@@ -1623,7 +1623,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   }
 
-  public Object getIndexValue(int indexId, Object key) {
+  public Object getIndexValue(int indexId, Object key) throws OInvalidIndexEngineIdException {
     if (transaction.get() != null)
       return doGetIndexValue(indexId, key);
 
@@ -1638,7 +1638,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private Object doGetIndexValue(int indexId, Object key) {
+  private Object doGetIndexValue(int indexId, Object key) throws OInvalidIndexEngineIdException {
     checkIndexId(indexId);
 
     final OIndexEngine engine = indexEngines.get(indexId);
@@ -1646,12 +1646,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return engine.get(key);
   }
 
-  public OIndexEngine getIndexEngine(int indexId) {
+  public OIndexEngine getIndexEngine(int indexId) throws OInvalidIndexEngineIdException {
     checkIndexId(indexId);
     return indexEngines.get(indexId);
   }
 
-  public void updateIndexEntry(int indexId, Object key, Callable<Object> valueCreator) {
+  public void updateIndexEntry(int indexId, Object key, Callable<Object> valueCreator) throws OInvalidIndexEngineIdException {
     if (transaction.get() != null) {
       doUpdateIndexEntry(indexId, key, valueCreator);
       return;
@@ -1670,7 +1670,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  public <T> T callIndexEngine(boolean atomicOperation, boolean readOperation, int indexId, OIndexEngineCallback<T> callback) {
+  public <T> T callIndexEngine(boolean atomicOperation, boolean readOperation, int indexId, OIndexEngineCallback<T> callback)
+      throws OInvalidIndexEngineIdException {
     if (transaction.get() != null)
       return doCallIndexEngine(atomicOperation, readOperation, indexId, callback);
 
@@ -1684,7 +1685,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private <T> T doCallIndexEngine(boolean atomicOperation, boolean readOperation, int indexId, OIndexEngineCallback<T> callback) {
+  private <T> T doCallIndexEngine(boolean atomicOperation, boolean readOperation, int indexId, OIndexEngineCallback<T> callback)
+      throws OInvalidIndexEngineIdException {
     checkIndexId(indexId);
     try {
       if (atomicOperation)
@@ -1718,7 +1720,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   }
 
-  private void doUpdateIndexEntry(int indexId, Object key, Callable<Object> valueCreator) {
+  private void doUpdateIndexEntry(int indexId, Object key, Callable<Object> valueCreator) throws OInvalidIndexEngineIdException {
     try {
       atomicOperationsManager.startAtomicOperation((String) null, true);
     } catch (IOException e) {
@@ -1738,7 +1740,15 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       else
         engine.put(key, value);
 
-      atomicOperationsManager.endAtomicOperation(false, null);
+      atomicOperationsManager.endAtomicOperation(false, null, (String) null);
+    } catch (OInvalidIndexEngineIdException e) {
+      try {
+        atomicOperationsManager.endAtomicOperation(true, e, (String) null);
+      } catch (IOException ioe) {
+        throw OException.wrapException(new OStorageException("Error during operation rollback"), ioe);
+      }
+
+      throw e;
     } catch (Exception e) {
       try {
         atomicOperationsManager.endAtomicOperation(true, e);
@@ -1749,7 +1759,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  public void putIndexValue(int indexId, Object key, Object value) {
+  public void putIndexValue(int indexId, Object key, Object value)  throws OInvalidIndexEngineIdException {
     if (transaction.get() != null) {
       doPutIndexValue(indexId, key, value);
       return;
@@ -1769,7 +1779,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private void doPutIndexValue(int indexId, Object key, Object value) {
+  private void doPutIndexValue(int indexId, Object key, Object value) throws OInvalidIndexEngineIdException {
     try {
       checkIndexId(indexId);
 
@@ -1796,7 +1806,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * @see OIndexEngine.Validator#validate(Object, Object, Object)
    */
   public boolean validatedPutIndexValue(int indexId, Object key, OIdentifiable value,
-      OIndexEngine.Validator<Object, OIdentifiable> validator) {
+      OIndexEngine.Validator<Object, OIdentifiable> validator) throws OInvalidIndexEngineIdException {
     if (transaction.get() != null)
       return doValidatedPutIndexValue(indexId, key, value, validator);
 
@@ -1815,7 +1825,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   private boolean doValidatedPutIndexValue(int indexId, Object key, OIdentifiable value,
-      OIndexEngine.Validator<Object, OIdentifiable> validator) {
+      OIndexEngine.Validator<Object, OIdentifiable> validator) throws OInvalidIndexEngineIdException {
     try {
       checkIndexId(indexId);
 
@@ -1828,7 +1838,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  public Object getIndexFirstKey(int indexId) {
+  public Object getIndexFirstKey(int indexId) throws OInvalidIndexEngineIdException {
     if (transaction.get() != null)
       return doGetIndexFirstKey(indexId);
 
@@ -1843,7 +1853,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private Object doGetIndexFirstKey(int indexId) {
+  private Object doGetIndexFirstKey(int indexId) throws OInvalidIndexEngineIdException {
     checkIndexId(indexId);
 
     final OIndexEngine engine = indexEngines.get(indexId);
@@ -1851,7 +1861,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return engine.getFirstKey();
   }
 
-  public Object getIndexLastKey(int indexId) {
+  public Object getIndexLastKey(int indexId) throws OInvalidIndexEngineIdException {
     if (transaction.get() != null)
       return doGetIndexFirstKey(indexId);
 
@@ -1866,7 +1876,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private Object doGetIndexLastKey(int indexId) {
+  private Object doGetIndexLastKey(int indexId) throws OInvalidIndexEngineIdException {
     checkIndexId(indexId);
 
     final OIndexEngine engine = indexEngines.get(indexId);
@@ -1875,7 +1885,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public OIndexCursor iterateIndexEntriesBetween(int indexId, Object rangeFrom, boolean fromInclusive, Object rangeTo,
-      boolean toInclusive, boolean ascSortOrder, OIndexEngine.ValuesTransformer transformer) {
+      boolean toInclusive, boolean ascSortOrder, OIndexEngine.ValuesTransformer transformer) throws OInvalidIndexEngineIdException {
     if (transaction.get() != null)
       return doIterateIndexEntriesBetween(indexId, rangeFrom, fromInclusive, rangeTo, toInclusive, ascSortOrder, transformer);
 
@@ -1891,7 +1901,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   private OIndexCursor doIterateIndexEntriesBetween(int indexId, Object rangeFrom, boolean fromInclusive, Object rangeTo,
-      boolean toInclusive, boolean ascSortOrder, OIndexEngine.ValuesTransformer transformer) {
+      boolean toInclusive, boolean ascSortOrder, OIndexEngine.ValuesTransformer transformer) throws OInvalidIndexEngineIdException {
     checkIndexId(indexId);
 
     final OIndexEngine engine = indexEngines.get(indexId);
@@ -1900,7 +1910,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public OIndexCursor iterateIndexEntriesMajor(int indexId, Object fromKey, boolean isInclusive, boolean ascSortOrder,
-      OIndexEngine.ValuesTransformer transformer) {
+      OIndexEngine.ValuesTransformer transformer) throws OInvalidIndexEngineIdException {
     if (transaction.get() != null)
       return doIterateIndexEntriesMajor(indexId, fromKey, isInclusive, ascSortOrder, transformer);
 
@@ -1916,7 +1926,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   private OIndexCursor doIterateIndexEntriesMajor(int indexId, Object fromKey, boolean isInclusive, boolean ascSortOrder,
-      OIndexEngine.ValuesTransformer transformer) {
+      OIndexEngine.ValuesTransformer transformer)  throws OInvalidIndexEngineIdException {
     checkIndexId(indexId);
 
     final OIndexEngine engine = indexEngines.get(indexId);
@@ -1925,7 +1935,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public OIndexCursor iterateIndexEntriesMinor(int indexId, final Object toKey, final boolean isInclusive, boolean ascSortOrder,
-      OIndexEngine.ValuesTransformer transformer) {
+      OIndexEngine.ValuesTransformer transformer) throws OInvalidIndexEngineIdException {
 
     if (transaction.get() != null)
       return doIterateIndexEntriesMinor(indexId, toKey, isInclusive, ascSortOrder, transformer);
@@ -1942,7 +1952,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   private OIndexCursor doIterateIndexEntriesMinor(int indexId, Object toKey, boolean isInclusive, boolean ascSortOrder,
-      OIndexEngine.ValuesTransformer transformer) {
+      OIndexEngine.ValuesTransformer transformer) throws OInvalidIndexEngineIdException {
     checkIndexId(indexId);
 
     final OIndexEngine engine = indexEngines.get(indexId);
@@ -1950,7 +1960,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return engine.iterateEntriesMinor(toKey, isInclusive, ascSortOrder, transformer);
   }
 
-  public OIndexCursor getIndexCursor(int indexId, OIndexEngine.ValuesTransformer valuesTransformer) {
+  public OIndexCursor getIndexCursor(int indexId, OIndexEngine.ValuesTransformer valuesTransformer)
+      throws OInvalidIndexEngineIdException {
     if (transaction.get() != null)
       return doGetIndexCursor(indexId, valuesTransformer);
 
@@ -1965,7 +1976,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private OIndexCursor doGetIndexCursor(int indexId, OIndexEngine.ValuesTransformer valuesTransformer) {
+  private OIndexCursor doGetIndexCursor(int indexId, OIndexEngine.ValuesTransformer valuesTransformer)
+      throws OInvalidIndexEngineIdException {
     checkIndexId(indexId);
 
     final OIndexEngine engine = indexEngines.get(indexId);
@@ -1973,7 +1985,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return engine.cursor(valuesTransformer);
   }
 
-  public OIndexCursor getIndexDescCursor(int indexId, OIndexEngine.ValuesTransformer valuesTransformer) {
+  public OIndexCursor getIndexDescCursor(int indexId, OIndexEngine.ValuesTransformer valuesTransformer)
+      throws OInvalidIndexEngineIdException {
     if (transaction.get() != null)
       return doGetIndexDescCursor(indexId, valuesTransformer);
 
@@ -1988,7 +2001,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private OIndexCursor doGetIndexDescCursor(int indexId, OIndexEngine.ValuesTransformer valuesTransformer) {
+  private OIndexCursor doGetIndexDescCursor(int indexId, OIndexEngine.ValuesTransformer valuesTransformer)
+      throws OInvalidIndexEngineIdException {
     checkIndexId(indexId);
 
     final OIndexEngine engine = indexEngines.get(indexId);
@@ -1996,7 +2010,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return engine.descCursor(valuesTransformer);
   }
 
-  public OIndexKeyCursor getIndexKeyCursor(int indexId) {
+  public OIndexKeyCursor getIndexKeyCursor(int indexId) throws OInvalidIndexEngineIdException {
     if (transaction.get() != null)
       return doGetIndexKeyCursor(indexId);
 
@@ -2011,7 +2025,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private OIndexKeyCursor doGetIndexKeyCursor(int indexId) {
+  private OIndexKeyCursor doGetIndexKeyCursor(int indexId) throws OInvalidIndexEngineIdException {
     checkIndexId(indexId);
 
     final OIndexEngine engine = indexEngines.get(indexId);
@@ -2019,7 +2033,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return engine.keyCursor();
   }
 
-  public long getIndexSize(int indexId, OIndexEngine.ValuesTransformer transformer) {
+  public long getIndexSize(int indexId, OIndexEngine.ValuesTransformer transformer) throws OInvalidIndexEngineIdException {
     if (transaction.get() != null)
       return doGetIndexSize(indexId, transformer);
 
@@ -2034,7 +2048,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private long doGetIndexSize(int indexId, OIndexEngine.ValuesTransformer transformer) {
+  private long doGetIndexSize(int indexId, OIndexEngine.ValuesTransformer transformer) throws OInvalidIndexEngineIdException {
     checkIndexId(indexId);
 
     final OIndexEngine engine = indexEngines.get(indexId);
@@ -2042,7 +2056,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return engine.size(transformer);
   }
 
-  public boolean hasIndexRangeQuerySupport(int indexId) {
+  public boolean hasIndexRangeQuerySupport(int indexId) throws OInvalidIndexEngineIdException {
     if (transaction.get() != null)
       return doHasRangeQuerySupport(indexId);
 
@@ -2057,7 +2071,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private boolean doHasRangeQuerySupport(int indexId) {
+  private boolean doHasRangeQuerySupport(int indexId) throws OInvalidIndexEngineIdException {
     checkIndexId(indexId);
 
     final OIndexEngine engine = indexEngines.get(indexId);
