@@ -48,14 +48,14 @@ public enum OGlobalConfiguration {
   ENVIRONMENT_DUMP_CFG_AT_STARTUP("environment.dumpCfgAtStartup", "Dumps the configuration during application startup",
       Boolean.class, Boolean.FALSE),
 
-  ENVIRONMENT_CONCURRENT("environment.concurrent",
+  @Deprecated ENVIRONMENT_CONCURRENT("environment.concurrent",
       "Specifies if running in multi-thread environment. Setting this to false turns off the internal lock management",
       Boolean.class, Boolean.TRUE),
 
   ENVIRONMENT_LOCK_MANAGER_CONCURRENCY_LEVEL("environment.lockManager.concurrency.level", "Concurrency level of lock manager",
       Integer.class, Runtime.getRuntime().availableProcessors() << 3, false),
 
-  ENVIRONMENT_ALLOW_JVM_SHUTDOWN("environment.allowJVMShutdown", "Allows the shutdown of the JVM, if needed/requested",
+  @Deprecated ENVIRONMENT_ALLOW_JVM_SHUTDOWN("environment.allowJVMShutdown", "Allows the shutdown of the JVM, if needed/requested",
       Boolean.class, true, true),
 
   // SCRIPT
@@ -82,7 +82,7 @@ public enum OGlobalConfiguration {
       "Some architectures do not allow unaligned memory access or may suffer from speed degradation. For such platforms, this flag should be set to true",
       Boolean.class, true),
 
-  JVM_GC_DELAY_FOR_OPTIMIZE("jvm.gc.delayForOptimize",
+  @Deprecated JVM_GC_DELAY_FOR_OPTIMIZE("jvm.gc.delayForOptimize",
       "Minimal amount of time (in seconds), since the last System.gc(), when called after tree optimization", Long.class, 600),
 
   // STORAGE
@@ -151,7 +151,7 @@ public enum OGlobalConfiguration {
       "Keep disk cache state between moment when storage is closed and moment when it is opened again. true by default",
       Boolean.class, true),
 
-  STORAGE_CONFIGURATION_SYNC_ON_UPDATE("storage.configuration.syncOnUpdate",
+  @Deprecated STORAGE_CONFIGURATION_SYNC_ON_UPDATE("storage.configuration.syncOnUpdate",
       "Indicates a force sync should be performed for each update on the storage configuration", Boolean.class, true),
 
   STORAGE_COMPRESSION_METHOD("storage.compressionMethod", "Record compression method used in storage"
@@ -192,8 +192,8 @@ public enum OGlobalConfiguration {
       "Interval in seconds after which WAL file will be closed if there is no "
           + "any IO operations on this file (in seconds), default value is 10", Integer.class, 10, false),
 
-  WAL_SEGMENT_BUFFER_SIZE("storage.wal.segmentBufferSize", "Size of the buffer which contains WAL records in serialized format "
-      + "in megabytes", Integer.class, 32),
+  WAL_SEGMENT_BUFFER_SIZE("storage.wal.segmentBufferSize",
+      "Size of the buffer which contains WAL records in serialized format " + "in megabytes", Integer.class, 32),
 
   WAL_MAX_SEGMENT_SIZE("storage.wal.maxSegmentSize", "Maximum size of single WAL segment (in megabytes)", Integer.class, 128),
 
@@ -259,17 +259,19 @@ public enum OGlobalConfiguration {
 
   STORAGE_RECORD_LOCK_TIMEOUT("storage.record.lockTimeout", "Maximum of time (in ms) to lock a shared record", Integer.class, 2000),
 
-  STORAGE_USE_TOMBSTONES("storage.useTombstones",
+  @Deprecated STORAGE_USE_TOMBSTONES("storage.useTombstones",
       "When a record is deleted, the space in the cluster will not be freed, but rather tombstoned", Boolean.class, false),
 
   // RECORDS
-  RECORD_DOWNSIZING_ENABLED("record.downsizing.enabled",
+  @Deprecated RECORD_DOWNSIZING_ENABLED("record.downsizing.enabled",
       "On updates, if the record size is lower than before, this reduces the space taken accordingly. "
           + "If enabled this could increase defragmentation, but it reduces the used disk space", Boolean.class, true),
 
   // DATABASE
   OBJECT_SAVE_ONLY_DIRTY("object.saveOnlyDirty", "Object Database only! It saves objects bound to dirty records", Boolean.class,
-      false, true), DOCUMENT_BINARY_MAPPING("document.binaryMapping", "Mapping approach for binary fields", Integer.class, 0),
+      false, true),
+
+  DOCUMENT_BINARY_MAPPING("document.binaryMapping", "Mapping approach for binary fields", Integer.class, 0),
 
   // DATABASE
   DB_POOL_MIN("db.pool.min", "Default database pool minimum size", Integer.class, 1),
@@ -287,7 +289,7 @@ public enum OGlobalConfiguration {
   DB_VALIDATION("db.validation", "Enables or disables validation of records", Boolean.class, true, true),
 
   // SETTINGS OF NON-TRANSACTIONAL MODE
-  NON_TX_RECORD_UPDATE_SYNCH("nonTX.recordUpdate.synch",
+  @Deprecated NON_TX_RECORD_UPDATE_SYNCH("nonTX.recordUpdate.synch",
       "Executes a sync against the file-system for every record operation. This slows down record updates, "
           + "but guarantees reliability on unreliable drives", Boolean.class, Boolean.FALSE),
 
@@ -320,13 +322,13 @@ public enum OGlobalConfiguration {
   INDEX_SYNCHRONOUS_AUTO_REBUILD("index.auto.synchronousAutoRebuild",
       "Synchronous execution of auto rebuilding of indexes, in case of a DB crash", Boolean.class, Boolean.TRUE),
 
-  INDEX_AUTO_LAZY_UPDATES("index.auto.lazyUpdates",
+  @Deprecated INDEX_AUTO_LAZY_UPDATES("index.auto.lazyUpdates",
       "Configure the TreeMaps for automatic indexes, as buffered or not. -1 means buffered until tx.commit() or db.close() are called",
       Integer.class, 10000),
 
   INDEX_FLUSH_AFTER_CREATE("index.flushAfterCreate", "Flush storage buffer after index creation", Boolean.class, true),
 
-  INDEX_MANUAL_LAZY_UPDATES("index.manual.lazyUpdates",
+  @Deprecated INDEX_MANUAL_LAZY_UPDATES("index.manual.lazyUpdates",
       "Configure the TreeMaps for manual indexes as buffered or not. -1 means buffered until tx.commit() or db.close() are called",
       Integer.class, 1),
 
@@ -342,7 +344,7 @@ public enum OGlobalConfiguration {
       "Controls whether null values will be ignored by default " + "by newly created indexes or not (false by default)",
       Boolean.class, false),
 
-  INDEX_TX_MODE("index.txMode",
+  @Deprecated INDEX_TX_MODE("index.txMode",
       "Indicates the index durability level in TX mode. Can be ROLLBACK_ONLY or FULL (ROLLBACK_ONLY by default)", String.class,
       "FULL"),
 

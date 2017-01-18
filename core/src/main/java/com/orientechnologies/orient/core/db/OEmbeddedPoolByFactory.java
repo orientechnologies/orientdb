@@ -29,10 +29,10 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
  */
 public class OEmbeddedPoolByFactory implements ODatabasePool {
   private final OResourcePool<Void, OEmbeddedDatabasePool> pool;
-  private final OEmbeddedDBFactory                         factory;
+  private final OrientDBEmbedded                           factory;
   private final OrientDBConfig                             config;
 
-  public OEmbeddedPoolByFactory(OEmbeddedDBFactory factory, String database, String user, String password, OrientDBConfig config) {
+  public OEmbeddedPoolByFactory(OrientDBEmbedded factory, String database, String user, String password, OrientDBConfig config) {
     int max = factory.getConfigurations().getConfigurations().getValueAsInteger(OGlobalConfiguration.DB_POOL_MAX);
     // TODO use configured max
     pool = new OResourcePool(max, new OResourcePoolListener<Void, OEmbeddedDatabasePool>() {

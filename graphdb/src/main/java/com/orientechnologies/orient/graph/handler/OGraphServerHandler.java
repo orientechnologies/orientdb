@@ -38,12 +38,13 @@ import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import javax.script.Bindings;
 
 public class OGraphServerHandler extends OServerPluginAbstract implements OScriptInjection {
-  private boolean enabled      = true;
-  private int     graphPoolMax = OGlobalConfiguration.DB_POOL_MAX.getValueAsInteger();
+  private boolean enabled = true;
+  private int     graphPoolMax;
   private OServer server;
 
   @Override
   public void config(final OServer server, OServerParameterConfiguration[] iParams) {
+    graphPoolMax = server.getContextConfiguration().getValueAsInteger(OGlobalConfiguration.DB_POOL_MAX);
     for (OServerParameterConfiguration param : iParams) {
       if (param.name.equalsIgnoreCase("enabled")) {
         if (!Boolean.parseBoolean(param.value))
@@ -55,8 +56,8 @@ public class OGraphServerHandler extends OServerPluginAbstract implements OScrip
 
     if (OGremlinHelper.isGremlinAvailable()) {
       enabled = true;
-      OLogManager.instance().info(this, "Installed GREMLIN language v.%s - graph.pool.max=%d", OGremlinHelper.getEngineVersion(),
-          graphPoolMax);
+      OLogManager.instance()
+          .info(this, "Installed GREMLIN language v.%s - graph.pool.max=%d", OGremlinHelper.getEngineVersion(), graphPoolMax);
 
       Orient.instance().getScriptManager().registerInjection(this);
     } else

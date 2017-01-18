@@ -218,7 +218,7 @@ public class OVertexDelegate implements OVertex {
 
   @Override
   public OEdge addEdge(OVertex to, String type) {
-    ODatabase db = getDatabase();
+    ODatabaseDocument db = getDatabase();
     return db.newEdge(this, to, type == null ? "E" : type);
   }
 

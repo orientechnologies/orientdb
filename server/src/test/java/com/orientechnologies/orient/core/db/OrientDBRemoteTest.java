@@ -19,7 +19,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * Created by tglman on 06/07/16.
  */
-public class ORemoteDBFactoryTest {
+public class OrientDBRemoteTest {
 
   private static final String SERVER_DIRECTORY = "./target/dbfactory";
   private OServer server;
@@ -36,10 +36,10 @@ public class ORemoteDBFactoryTest {
 
   @Test
   public void createAndUseRemoteDatabase() {
-    OrientDBFactory factory = OrientDBFactory.remote(new String[] { "localhost" }, null);
-    //    OrientDBFactory factory = OrientDBFactory.fromUrl("remote:localhost", null);
+    OrientDB factory = OrientDB.remote(new String[] { "localhost" }, null);
+    //    OrientDB factory = OrientDB.fromUrl("remote:localhost", null);
     if (!factory.exists("test", "root", "root"))
-      factory.create("test", "root", "root", OrientDBFactory.DatabaseType.MEMORY);
+      factory.create("test", "root", "root", OrientDB.DatabaseType.MEMORY);
 
     ODatabaseDocument db = factory.open("test", "admin", "admin");
     db.save(new ODocument());
@@ -51,11 +51,11 @@ public class ORemoteDBFactoryTest {
   //TODO: Uniform database exist exceptions
   @Test(expected = OStorageException.class)
   public void doubleCreateRemoteDatabase() {
-    OrientDBFactory factory = OrientDBFactory.remote(new String[] { "localhost" }, null);
-    //    OrientDBFactory factory = OrientDBFactory.fromUrl("remote:localhost", null);
+    OrientDB factory = OrientDB.remote(new String[] { "localhost" }, null);
+    //    OrientDB factory = OrientDB.fromUrl("remote:localhost", null);
     try {
-      factory.create("test", "root", "root", OrientDBFactory.DatabaseType.MEMORY);
-      factory.create("test", "root", "root", OrientDBFactory.DatabaseType.MEMORY);
+      factory.create("test", "root", "root", OrientDB.DatabaseType.MEMORY);
+      factory.create("test", "root", "root", OrientDB.DatabaseType.MEMORY);
     } finally {
       factory.close();
     }
@@ -63,10 +63,10 @@ public class ORemoteDBFactoryTest {
 
   @Test
   public void createDropRemoteDatabase() {
-    OrientDBFactory factory = OrientDBFactory.remote(new String[] { "localhost" }, null);
-    //    OrientDBFactory factory = OrientDBFactory.fromUrl("remote:localhost", null);
+    OrientDB factory = OrientDB.remote(new String[] { "localhost" }, null);
+    //    OrientDB factory = OrientDB.fromUrl("remote:localhost", null);
     try {
-      factory.create("test", "root", "root", OrientDBFactory.DatabaseType.MEMORY);
+      factory.create("test", "root", "root", OrientDB.DatabaseType.MEMORY);
       assertTrue(factory.exists("test", "root", "root"));
       factory.drop("test", "root", "root");
       assertFalse(factory.exists("test", "root", "root"));
@@ -78,11 +78,11 @@ public class ORemoteDBFactoryTest {
 
   @Test
   public void testPool() {
-    OrientDBFactory factory = OrientDBFactory.remote(new String[] { "localhost" }, null);
-    //    OrientDBFactory factory = OrientDBFactory.fromUrl("local:.", null);
+    OrientDB factory = OrientDB.remote(new String[] { "localhost" }, null);
+    //    OrientDB factory = OrientDB.fromUrl("local:.", null);
 
     if (!factory.exists("test", "root", "root"))
-      factory.create("test", "root", "root", OrientDBFactory.DatabaseType.MEMORY);
+      factory.create("test", "root", "root", OrientDB.DatabaseType.MEMORY);
 
     ODatabasePool pool = factory.openPool("test", "admin", "admin");
     ODatabaseDocument db = pool.acquire();
@@ -94,10 +94,10 @@ public class ORemoteDBFactoryTest {
 
   @Test
   public void testListDatabases() {
-    OrientDBFactory factory = OrientDBFactory.remote(new String[] { "localhost" }, null);
-    //    OrientDBFactory factory = OrientDBFactory.fromUrl("local:.", null);
+    OrientDB factory = OrientDB.remote(new String[] { "localhost" }, null);
+    //    OrientDB factory = OrientDB.fromUrl("local:.", null);
     assertEquals(factory.listDatabases("root", "root").size(), 0);
-    factory.create("test", "root", "root", OrientDBFactory.DatabaseType.MEMORY);
+    factory.create("test", "root", "root", OrientDB.DatabaseType.MEMORY);
     Set<String> databases = factory.listDatabases("root", "root");
     assertEquals(databases.size(), 1);
     assertTrue(databases.contains("test"));
@@ -105,10 +105,10 @@ public class ORemoteDBFactoryTest {
 
   @Test
   public void testCopyOpenedDatabase() {
-    OrientDBFactory factory = OrientDBFactory.remote(new String[] { "localhost" }, null);
-    // OrientDBFactory factory = OrientDBFactory.fromUrl("local:.", null);
+    OrientDB factory = OrientDB.remote(new String[] { "localhost" }, null);
+    // OrientDB factory = OrientDB.fromUrl("local:.", null);
 
-    factory.create("test", "root", "root", OrientDBFactory.DatabaseType.MEMORY);
+    factory.create("test", "root", "root", OrientDB.DatabaseType.MEMORY);
     ODatabaseDocument db1;
     try(ODatabaseDocumentInternal db = (ODatabaseDocumentInternal)factory.open("test", "admin", "admin")){
       db1 =db.copy();

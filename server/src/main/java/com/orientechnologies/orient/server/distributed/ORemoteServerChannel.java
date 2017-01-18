@@ -110,7 +110,7 @@ public class ORemoteServerChannel {
         channel.writeString(CLIENT_TYPE).writeString(OConstants.ORIENT_VERSION)
             .writeShort((short) OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION).writeString("0");
         channel.writeString(ODatabaseDocumentTx.getDefaultSerializer().toString());
-        channel.writeBoolean(false);
+        channel.writeBoolean(true);
         channel.writeBoolean(false); // SUPPORT PUSH
         channel.writeBoolean(COLLECT_STATS); // COLLECT STATS
 

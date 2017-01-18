@@ -175,7 +175,7 @@ public class OGraphBatchInsertBasic {
    *
    */
   public void begin() {
-    walActive = OGlobalConfiguration.USE_WAL.getValueAsBoolean();
+    walActive =  OGlobalConfiguration.USE_WAL.getValueAsBoolean();
     if (walActive)
       OGlobalConfiguration.USE_WAL.setValue(false);
     if (averageEdgeNumberPerNode > 0) {

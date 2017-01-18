@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OExecutionThreadLocal;
@@ -140,19 +141,22 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
   private          Boolean isAnyFunctionAggregates = null;
   private volatile boolean parallel                = false;
-  private volatile boolean parallelRunning;
-  private final ArrayBlockingQueue<AsyncResult> resultQueue = new ArrayBlockingQueue<AsyncResult>(
-      OGlobalConfiguration.QUERY_PARALLEL_RESULT_QUEUE_SIZE.getValueAsInteger());
+  private volatile boolean                         parallelRunning;
+  private final    ArrayBlockingQueue<AsyncResult> resultQueue;
 
   private ConcurrentHashMap<ORID, ORID> uniqueResult;
-  private boolean noCache           = false;
-  private int     tipLimitThreshold = OGlobalConfiguration.QUERY_LIMIT_THRESHOLD_TIP.getValueAsInteger();
-  private String  NULL_VALUE        = "null";
+  private boolean noCache = false;
+  private int tipLimitThreshold;
+  private String NULL_VALUE = "null";
 
   private AtomicLong tmpQueueOffer = new AtomicLong();
   private Object     resultLock    = new Object();
 
   public OCommandExecutorSQLSelect() {
+    OContextConfiguration conf = getDatabase().getConfiguration();
+    resultQueue = new ArrayBlockingQueue<AsyncResult>(
+        conf.getValueAsInteger(OGlobalConfiguration.QUERY_PARALLEL_RESULT_QUEUE_SIZE));
+    tipLimitThreshold = conf.getValueAsInteger(OGlobalConfiguration.QUERY_LIMIT_THRESHOLD_TIP);
   }
 
   private static final class IndexUsageLog {
@@ -645,6 +649,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
    *
    * @param iRecord  Record to handle
    * @param iContext
+   *
    * @return false if limit has been reached, otherwise true
    */
   @Override
@@ -674,6 +679,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
    * Returns the temporary RID counter assuring it's unique per query tree.
    *
    * @param iContext
+   *
    * @return Serial as integer
    */
   public int getTemporaryRIDCounter(final OCommandContext iContext) {
@@ -1535,7 +1541,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         ((ORecordIteratorClusters) iTarget).getClusterIds() :
         null;
 
-    parallel = (parallel || OGlobalConfiguration.QUERY_PARALLEL_AUTO.getValueAsBoolean()) && canRunParallel(clusterIds, iTarget);
+    parallel = (parallel || getDatabase().getConfiguration().getValueAsBoolean(OGlobalConfiguration.QUERY_PARALLEL_AUTO)) && canRunParallel(clusterIds, iTarget);
 
     try {
       if (parallel)
@@ -1566,7 +1572,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     if (iTarget instanceof ORecordIteratorClusters) {
       if (clusterIds.length > 1) {
         final long totalRecords = getDatabase().getStorage().count(clusterIds);
-        if (totalRecords > OGlobalConfiguration.QUERY_PARALLEL_MINIMUM_RECORDS.getValueAsLong()) {
+        if (totalRecords > getDatabase().getConfiguration().getValueAsLong(OGlobalConfiguration.QUERY_PARALLEL_MINIMUM_RECORDS)) {
           // ACTIVATE PARALLEL
           OLogManager.instance()
               .debug(this, "Activated parallel query. clusterIds=%d, totalRecords=%d", clusterIds.length, totalRecords);
@@ -1595,7 +1601,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   private boolean serialIterator(Iterator<? extends OIdentifiable> iTarget) {
-    int queryScanThresholdWarning = OGlobalConfiguration.QUERY_SCAN_THRESHOLD_TIP.getValueAsInteger();
+    int queryScanThresholdWarning = getDatabase().getConfiguration().getValueAsInteger(OGlobalConfiguration.QUERY_SCAN_THRESHOLD_TIP);
 
     boolean tipActivated = queryScanThresholdWarning > 0 && iTarget instanceof OIdentifiableIterator && compiledFilter != null;
 
@@ -1703,7 +1709,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       jobs.add(Orient.instance().submit(job));
     }
 
-    final int maxQueueSize = OGlobalConfiguration.QUERY_PARALLEL_RESULT_QUEUE_SIZE.getValueAsInteger() - 1;
+    final int maxQueueSize = getDatabase().getConfiguration().getValueAsInteger(OGlobalConfiguration.QUERY_PARALLEL_RESULT_QUEUE_SIZE) - 1;
 
     boolean cancelQuery = false;
     boolean tipProvided = false;
@@ -2314,6 +2320,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
    * Use index to order documents by provided fields.
    *
    * @param iSchemaClass where search for indexes for optimization.
+   *
    * @return true if execution was optimized
    */
   private boolean optimizeSort(OClass iSchemaClass) {
@@ -2564,8 +2571,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           }
 
           if (fieldValue != null) {
-            if(fieldValue instanceof Iterable && !(fieldValue instanceof OIdentifiable)){
-              fieldValue = ((Iterable)fieldValue).iterator();
+            if (fieldValue instanceof Iterable && !(fieldValue instanceof OIdentifiable)) {
+              fieldValue = ((Iterable) fieldValue).iterator();
             }
             if (fieldValue instanceof ODocument) {
               ArrayList<ODocument> partial = new ArrayList<ODocument>();

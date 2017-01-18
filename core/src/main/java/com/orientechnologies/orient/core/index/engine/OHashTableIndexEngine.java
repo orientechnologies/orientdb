@@ -59,7 +59,8 @@ public final class OHashTableIndexEngine implements OIndexEngine {
 
     boolean durableInNonTx;
     if (durableInNonTxMode == null)
-      durableInNonTx = OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE.getValueAsBoolean();
+      durableInNonTx = storage.getConfiguration().getContextConfiguration()
+          .getValueAsBoolean(OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE);
     else
       durableInNonTx = durableInNonTxMode;
 

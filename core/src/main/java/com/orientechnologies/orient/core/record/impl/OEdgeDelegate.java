@@ -136,7 +136,7 @@ public class OEdgeDelegate implements OEdge {
   }
 
   private void promoteToRegularEdge() {
-    ODatabase db = getDatabase();
+    ODatabaseDocument db = getDatabase();
     OVertexDelegate from = (OVertexDelegate) getFrom();
     OVertexDelegate to = (OVertexDelegate) getTo();
     from.detachOutgointEdge(this);

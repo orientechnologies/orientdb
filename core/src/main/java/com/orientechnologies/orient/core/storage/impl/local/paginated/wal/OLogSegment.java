@@ -1,14 +1,12 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.storage.OStorageAbstract;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.File;
@@ -18,7 +16,9 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
@@ -40,15 +40,7 @@ final class OLogSegment implements Comparable<OLogSegment> {
   protected final  Lock             cacheLock  = new ReentrantLock();
   private volatile List<OLogRecord> writeCache = new ArrayList<OLogRecord>();
 
-  private final ScheduledExecutorService commitExecutor = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
-    @Override
-    public Thread newThread(Runnable r) {
-      final Thread thread = new Thread(OStorageAbstract.storageThreadGroup, r);
-      thread.setDaemon(true);
-      thread.setName("OrientDB WAL Flush Task (" + writeAheadLog.getStorage().getName() + ")");
-      return thread;
-    }
-  });
+  private final ScheduledExecutorService commitExecutor;
 
   private volatile long    filledUpTo;
   private          boolean closed;
@@ -195,15 +187,16 @@ final class OLogSegment implements Comparable<OLogSegment> {
     }
   }
 
-  OLogSegment(ODiskWriteAheadLog writeAheadLog, File file, int maxPagesCacheSize, int fileTTL, int segmentBufferSize)
-      throws IOException {
+  OLogSegment(ODiskWriteAheadLog writeAheadLog, File file, int maxPagesCacheSize, int fileTTL, int segmentBufferSize,
+      ScheduledExecutorService closer, ScheduledExecutorService commitExecutor) throws IOException {
     this.writeAheadLog = writeAheadLog;
     this.file = file;
     this.maxPagesCacheSize = maxPagesCacheSize;
+    this.commitExecutor = commitExecutor;
 
     order = extractOrder(file.getName());
 
-    this.segmentFile = new OSegmentFile(file, fileTTL, segmentBufferSize);
+    this.segmentFile = new OSegmentFile(file, fileTTL, segmentBufferSize, closer);
     this.segmentFile.open();
 
     closed = false;

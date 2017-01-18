@@ -62,15 +62,15 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
-  private static ConcurrentMap<String, OrientDBFactory> embedded          = new ConcurrentHashMap<>();
-  private static ConcurrentMap<String, OrientDBFactory> remote            = new ConcurrentHashMap<>();
+  private static ConcurrentMap<String, OrientDB> embedded = new ConcurrentHashMap<>();
+  private static ConcurrentMap<String, OrientDB> remote   = new ConcurrentHashMap<>();
 
-  protected ODatabaseDocumentInternal                   internal;
-  private final String                                  url;
-  private OrientDBFactory                               factory;
-  private final String                                  type;
-  private final String                                  dbName;
-  private final String                                  baseUrl;
+  protected     ODatabaseDocumentInternal internal;
+  private final String                    url;
+  private       OrientDB                  factory;
+  private final String                    type;
+  private final String                    dbName;
+  private final String                    baseUrl;
   private final Map<String, Object>                     preopenProperties = new HashMap<>();
   private final Map<ATTRIBUTES, Object>                 preopenAttributes = new HashMap<>();
   // TODO review for the case of browseListener before open.
@@ -101,36 +101,36 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   }
 
   public static void closeAll() {
-    for (OrientDBFactory factory : embedded.values()) {
+    for (OrientDB factory : embedded.values()) {
       factory.close();
     }
     embedded.clear();
-    for (OrientDBFactory factory : remote.values()) {
+    for (OrientDB factory : remote.values()) {
       factory.close();
     }
     remote.clear();
   }
 
-  protected OrientDBFactory getOrCreateRemoteFactory(String baseUrl) {
-    OrientDBFactory factory;
+  protected OrientDB getOrCreateRemoteFactory(String baseUrl) {
+    OrientDB factory;
     synchronized (remote) {
       factory = remote.get(baseUrl);
       if (factory == null) {
-        factory = OrientDBFactory.fromUrl("remote:" + baseUrl, null);
+        factory = OrientDB.fromUrl("remote:" + baseUrl, null);
         remote.put(baseUrl, factory);
       }
     }
     return factory;
   }
 
-  protected static OEmbeddedDBFactory getOrCreateEmbeddedFactory(String baseUrl, OrientDBConfig config) {
+  protected static OrientDBEmbedded getOrCreateEmbeddedFactory(String baseUrl, OrientDBConfig config) {
     if (!baseUrl.endsWith("/"))
       baseUrl += "/";
-    OEmbeddedDBFactory factory;
+    OrientDBEmbedded factory;
     synchronized (embedded) {
-      factory = (OEmbeddedDBFactory) embedded.get(baseUrl);
+      factory = (OrientDBEmbedded) embedded.get(baseUrl);
       if (factory == null) {
-        factory = (OEmbeddedDBFactory) OrientDBFactory.fromUrl("embedded:" + baseUrl, config);
+        factory = (OrientDBEmbedded) OrientDB.fromUrl("embedded:" + baseUrl, config);
         embedded.put(baseUrl, factory);
       }
     }
@@ -1052,7 +1052,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
         throw new UnsupportedOperationException();
       } else if ("memory".equals(type)) {
         factory = getOrCreateEmbeddedFactory(baseUrl, null);
-        factory.create(dbName, null, null, OrientDBFactory.DatabaseType.MEMORY, config);
+        factory.create(dbName, null, null, OrientDB.DatabaseType.MEMORY, config);
         OrientDBConfig openConfig = OrientDBConfig.builder().fromContext(config.getConfigurations()).build();
         internal = (ODatabaseDocumentInternal) factory.open(dbName, "admin", "admin", openConfig);
         for (Map.Entry<ATTRIBUTES, Object> attr : preopenAttributes.entrySet()) {
@@ -1065,7 +1065,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
       } else {
         factory = getOrCreateEmbeddedFactory(baseUrl, null);
-        factory.create(dbName, null, null, OrientDBFactory.DatabaseType.PLOCAL, config);
+        factory.create(dbName, null, null, OrientDB.DatabaseType.PLOCAL, config);
         OrientDBConfig openConfig = OrientDBConfig.builder().fromContext(config.getConfigurations()).build();
         internal = (ODatabaseDocumentInternal) factory.open(dbName, "admin", "admin", openConfig);
         for (Map.Entry<ATTRIBUTES, Object> attr : preopenAttributes.entrySet()) {

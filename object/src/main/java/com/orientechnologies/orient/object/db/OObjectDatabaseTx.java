@@ -125,6 +125,8 @@ public class OObjectDatabaseTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
   @Override
   public <THISDB extends ODatabase> THISDB open(String iUserName, String iUserPassword) {
     super.open(iUserName, iUserPassword);
+    saveOnlyDirty = getConfiguration().getValueAsBoolean(OGlobalConfiguration.OBJECT_SAVE_ONLY_DIRTY);
+
     entityManager.registerEntityClass(OUser.class);
     entityManager.registerEntityClass(ORole.class);
     metadata = new OMetadataObject((OMetadataInternal) underlying.getMetadata());
@@ -910,7 +912,7 @@ public class OObjectDatabaseTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
   protected void init() {
     entityManager = OEntityManager.getEntityManagerByDatabaseURL(getURL());
     entityManager.setClassHandler(OObjectEntityClassHandler.getInstance(getURL()));
-    saveOnlyDirty = OGlobalConfiguration.OBJECT_SAVE_ONLY_DIRTY.getValueAsBoolean();
+
     lazyLoading = true;
     if (!isClosed() && entityManager.getEntityClass(OUser.class.getSimpleName()) == null) {
       entityManager.registerEntityClass(OUser.class);
@@ -960,36 +962,6 @@ public class OObjectDatabaseTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
   @Override
   public Set<Integer> getBlobClusterIds() {
     return getUnderlying().getBlobClusterIds();
-  }
-
-  @Override
-  public OElement newElement() {
-    return underlying.newElement();
-  }
-
-  @Override
-  public OElement newElement(String className) {
-    return underlying.newElement(className);
-  }
-
-  @Override
-  public OEdge newEdge(OVertex from, OVertex to, OClass type) {
-    return getUnderlying().newEdge(from, to, type);
-  }
-
-  @Override
-  public OEdge newEdge(OVertex from, OVertex to, String type) {
-    return getUnderlying().newEdge(from, to, type);
-  }
-
-  @Override
-  public OVertex newVertex(OClass type) {
-    return getUnderlying().newVertex(type);
-  }
-
-  @Override
-  public OVertex newVertex(String type) {
-    return getUnderlying().newVertex(type);
   }
 
   @Override
@@ -1139,26 +1111,6 @@ public class OObjectDatabaseTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
   public <DBTYPE extends ODatabase<?>> DBTYPE setMVCC(final boolean iMvcc) {
     underlying.setMVCC(iMvcc);
     return (DBTYPE) this;
-  }
-
-  @Override
-  public OResultSet query(String query, Object... args) {
-    return underlying.query(query, args);//TODO
-  }
-
-  @Override
-  public OResultSet query(String query, Map args) {
-    return underlying.query(query, args);//TODO
-  }
-
-  @Override
-  public OResultSet command(String query, Object... args) {
-    return underlying.query(query, args);//TODO
-  }
-
-  @Override
-  public OResultSet command(String query, Map args) {
-    return underlying.query(query, args);//TODO
   }
 
   /**

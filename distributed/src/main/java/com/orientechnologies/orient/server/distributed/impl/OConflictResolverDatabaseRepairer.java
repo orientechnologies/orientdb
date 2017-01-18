@@ -68,7 +68,7 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
     this.databaseName = databaseName;
 
     // REGISTER THE CHAIN OF CONFLICT RESOLVERS
-    final String chain = OGlobalConfiguration.DISTRIBUTED_CONFLICT_RESOLVER_REPAIRER_CHAIN.getValueAsString();
+    final String chain = manager.getServerInstance().getContextConfiguration().getValueAsString(OGlobalConfiguration.DISTRIBUTED_CONFLICT_RESOLVER_REPAIRER_CHAIN);
     final String[] items = chain.split(",");
     for (String item : items) {
       final ODistributedConflictResolver cr = manager.getConflictResolverFactory().getImplementation(item);
@@ -97,7 +97,7 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
 
     };
 
-    final long time = OGlobalConfiguration.DISTRIBUTED_CONFLICT_RESOLVER_REPAIRER_CHECK_EVERY.getValueAsLong();
+    final long time = getDatabase().getConfiguration().getValueAsLong(OGlobalConfiguration.DISTRIBUTED_CONFLICT_RESOLVER_REPAIRER_CHECK_EVERY);
     if (time > 0) {
       Orient.instance().scheduleTask(checkTask, time, time);
       active = true;
@@ -305,7 +305,7 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
     final OStorage storage = db.getStorage().getUnderlying();
     final long localEnd = storage.getClusterById(clusterId).getNextPosition() - 1;
 
-    final int batchMax = OGlobalConfiguration.DISTRIBUTED_CONFLICT_RESOLVER_REPAIRER_BATCH.getValueAsInteger();
+    final int batchMax = db.getConfiguration().getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_CONFLICT_RESOLVER_REPAIRER_BATCH);
 
     int recordRepaired = 0;
 

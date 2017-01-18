@@ -36,11 +36,7 @@ public class OChannelBinarySynchClient extends OChannelBinaryClientAbstract {
     writeByte(iCommand);
     writeInt(sessionId);
     if (token != null) {
-      if (sessionId == -1)
-        // SEND THE TOKEN ONLY THE FIRST TIME
-        writeBytes(token);
-      else
-        writeBytes(new byte[] {});
+      writeBytes(token);
     }
   }
 

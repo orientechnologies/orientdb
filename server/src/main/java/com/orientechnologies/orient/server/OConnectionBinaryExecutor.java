@@ -16,11 +16,12 @@ import com.orientechnologies.orient.core.cache.OCommandCache;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.OrientDBFactory.DatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB.DatabaseType;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
@@ -529,7 +530,7 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       listener = new OSyncCommandResultListener(null);
     }
 
-    final long serverTimeout = OGlobalConfiguration.COMMAND_TIMEOUT.getValueAsLong();
+    final long serverTimeout = connection.getDatabase().getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT);
 
     if (serverTimeout > 0 && command.getTimeoutTime() > serverTimeout)
       // FORCE THE SERVER'S TIMEOUT
@@ -641,7 +642,8 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
         value = "<hidden>";
       else
         try {
-          value = cfg.getValueAsString() != null ? cfg.getValueAsString() : "";
+          OContextConfiguration config = connection.getProtocol().getServer().getContextConfiguration();
+          value = config.getValueAsString(cfg) != null ? config.getValueAsString(cfg) : "";
         } catch (Exception e) {
           value = "";
         }
@@ -924,7 +926,6 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     Thread shutdownThread = new Thread("OrientDB server shutdown thread") {
       public void run() {
         server.shutdown();
-        ShutdownHelper.shutdown(1);
       }
     };
     shutdownThread.setDaemon(false);
@@ -974,7 +975,7 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   public OBinaryResponse executeQuery(OQueryRequest request) {
     ODatabaseDocumentInternal database = connection.getDatabase();
     //TODO set a timeout on the request?
-    final long serverTimeout = OGlobalConfiguration.COMMAND_TIMEOUT.getValueAsLong();
+    final long serverTimeout = database.getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT);
     if (database.getTransaction().isActive()) {
       ((OTransactionOptimistic) database.getTransaction()).resetChangesTracking();
     }
@@ -1032,7 +1033,7 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
   @Override
   public OBinaryResponse executeQueryNextPage(OQueryNextPageRequest request) {
-    final long serverTimeout = OGlobalConfiguration.COMMAND_TIMEOUT.getValueAsLong();
+    final long serverTimeout = connection.getDatabase().getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT);
     //TODO set a timeout on the request?
 
     OResultSet rs = connection.getDatabase().getActiveQuery(request.getQueryId());

@@ -32,7 +32,7 @@ import java.util.Set;
 /**
  * Created by tglman on 27/03/16.
  */
-public interface OrientDBFactory extends AutoCloseable {
+public interface OrientDB extends AutoCloseable {
 
   enum DatabaseType {
     PLOCAL, MEMORY
@@ -48,7 +48,7 @@ public interface OrientDBFactory extends AutoCloseable {
    * @param configuration configuration for the specific factory for the list of option {@see OGlobalConfiguration}.
    * @return the new Orient Factory.
    */
-  static OrientDBFactory fromUrl(String url, OrientDBConfig configuration) {
+  static OrientDB fromUrl(String url, OrientDBConfig configuration) {
     String what = url.substring(0, url.indexOf(':'));
     if ("embedded".equals(what))
       return embedded(url.substring(url.indexOf(':') + 1), configuration);
@@ -64,13 +64,13 @@ public interface OrientDBFactory extends AutoCloseable {
    * @param configuration configuration for the specific factory for the list of option {@see OGlobalConfiguration}.
    * @return a new remote databases factory
    */
-  static OrientDBFactory remote(String[] hosts, OrientDBConfig configuration) {
-    OrientDBFactory factory;
+  static OrientDB remote(String[] hosts, OrientDBConfig configuration) {
+    OrientDB factory;
 
     try {
-      Class<?> kass = Class.forName("com.orientechnologies.orient.core.db.ORemoteDBFactory");
+      Class<?> kass = Class.forName("com.orientechnologies.orient.core.db.OrientDBRemote");
       Constructor<?> constructor = kass.getConstructor(String[].class, OrientDBConfig.class, Orient.class);
-      factory = (OrientDBFactory) constructor.newInstance(hosts, configuration, Orient.instance());
+      factory = (OrientDB) constructor.newInstance(hosts, configuration, Orient.instance());
     } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InstantiationException e) {
       throw new ODatabaseException("OrientDB client API missing");
     } catch (InvocationTargetException e) {
@@ -86,8 +86,8 @@ public interface OrientDBFactory extends AutoCloseable {
    * @param config configuration for the specific factory for the list of option {@see OGlobalConfiguration}
    * @return a new embedded databases factory
    */
-  static OEmbeddedDBFactory embedded(String directoryPath, OrientDBConfig config) {
-    return new OEmbeddedDBFactory(directoryPath, config, Orient.instance());
+  static OrientDBEmbedded embedded(String directoryPath, OrientDBConfig config) {
+    return new OrientDBEmbedded(directoryPath, config, Orient.instance());
   }
 
   /**

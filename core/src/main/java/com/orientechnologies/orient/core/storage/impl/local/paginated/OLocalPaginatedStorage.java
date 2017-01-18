@@ -108,8 +108,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
     configuration = new OStorageConfigurationSegment(this);
 
-    DELETE_MAX_RETRIES = OGlobalConfiguration.FILE_DELETE_RETRY.getValueAsInteger();
-    DELETE_WAIT_TIME = OGlobalConfiguration.FILE_DELETE_DELAY.getValueAsInteger();
+    DELETE_MAX_RETRIES = configuration.getContextConfiguration().getValueAsInteger(OGlobalConfiguration.FILE_DELETE_RETRY);
+    DELETE_WAIT_TIME = configuration.getContextConfiguration().getValueAsInteger(OGlobalConfiguration.FILE_DELETE_DELAY);
 
     dirtyFlag = new OPaginatedStorageDirtyFlag(storagePath + File.separator + "dirty.fl");
   }

@@ -37,7 +37,7 @@ import java.util.*;
 /**
  * Created by tglman on 08/04/16.
  */
-public class ORemoteDBFactory implements OrientDBFactory {
+public class OrientDBRemote implements OrientDB {
   private final Map<String, OStorageRemote> storages = new HashMap<>();
   private final Set<ODatabasePool>          pools    = new HashSet<>();
   private final String[]       hosts;
@@ -46,7 +46,7 @@ public class ORemoteDBFactory implements OrientDBFactory {
   private final Thread         shutdownThread;
   private final Orient         orient;
 
-  public ORemoteDBFactory(String[] hosts, OrientDBConfig configurations, Orient orient) {
+  public OrientDBRemote(String[] hosts, OrientDBConfig configurations, Orient orient) {
     super();
     this.hosts = hosts;
     this.orient = orient;
@@ -54,7 +54,7 @@ public class ORemoteDBFactory implements OrientDBFactory {
 
     this.configurations = configurations != null ? configurations : OrientDBConfig.defaultConfig();
 
-    shutdownThread = new Thread(() -> ORemoteDBFactory.this.internalClose());
+    shutdownThread = new Thread(() -> OrientDBRemote.this.internalClose());
 
     Runtime.getRuntime().addShutdownHook(shutdownThread);
   }

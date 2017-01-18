@@ -264,7 +264,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
   }
 
   private void init() {
-    if (tokenHandler == null && OGlobalConfiguration.NETWORK_HTTP_USE_TOKEN.getValueAsBoolean()) {
+    if (tokenHandler == null && server.getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.NETWORK_HTTP_USE_TOKEN)) {
       tokenHandler = server.getTokenHandler();
     }
   }

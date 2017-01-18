@@ -417,21 +417,6 @@ public class OServerAdmin {
     return storage != null && !storage.isClosed();
   }
 
-  private boolean handleDBFreeze() {
-    boolean retry;
-    OLogManager.instance().warn(this,
-        "DB is frozen will wait for " + OGlobalConfiguration.CLIENT_DB_RELEASE_WAIT_TIMEOUT.getValue() + " ms. and then retry.");
-    retry = true;
-    try {
-      Thread.sleep(OGlobalConfiguration.CLIENT_DB_RELEASE_WAIT_TIMEOUT.getValueAsInteger());
-    } catch (InterruptedException ie) {
-      retry = false;
-
-      Thread.currentThread().interrupt();
-    }
-    return retry;
-  }
-
   protected <T extends OBinaryResponse> T networkAdminOperation(final OBinaryRequest<T> request, final String errorMessage) {
     return networkAdminOperation(new OStorageRemoteOperation<T>() {
       @Override

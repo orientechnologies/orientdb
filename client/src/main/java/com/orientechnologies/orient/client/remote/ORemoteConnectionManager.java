@@ -38,7 +38,7 @@ import java.util.concurrent.ConcurrentMap;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class ORemoteConnectionManager {
-  public static final String                                   PARAM_MAX_POOL = "maxpool";
+  public static final String PARAM_MAX_POOL = "maxpool";
 
   protected final ConcurrentMap<String, ORemoteConnectionPool> connections;
   protected final long                                         timeout;
@@ -68,7 +68,7 @@ public class ORemoteConnectionManager {
 
     ORemoteConnectionPool pool = connections.get(iServerURL);
     if (pool == null) {
-      int maxPool = OGlobalConfiguration.CLIENT_CHANNEL_MAX_POOL.getValueAsInteger();
+      int maxPool = clientConfiguration.getValueAsInteger(OGlobalConfiguration.CLIENT_CHANNEL_MAX_POOL);
 
       if (clientConfiguration != null) {
         final Object max = clientConfiguration.getValue(OGlobalConfiguration.CLIENT_CHANNEL_MAX_POOL);
@@ -105,7 +105,7 @@ public class ORemoteConnectionManager {
   }
 
   public void release(final OChannelBinaryAsynchClient conn) {
-    if( conn == null )
+    if (conn == null)
       return;
 
     final ORemoteConnectionPool pool = connections.get(conn.getServerURL());
@@ -120,7 +120,7 @@ public class ORemoteConnectionManager {
   }
 
   public void remove(final OChannelBinaryAsynchClient conn) {
-    if( conn == null )
+    if (conn == null)
       return;
 
     final ORemoteConnectionPool pool = connections.get(conn.getServerURL());

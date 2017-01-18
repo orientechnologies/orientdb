@@ -213,7 +213,7 @@ public abstract class OCommandExecutorSQLSetAware extends OCommandExecutorSQLAbs
 
   @Override
   public long getDistributedTimeout() {
-    return OGlobalConfiguration.DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT.getValueAsLong();
+    return getDatabase().getConfiguration().getValueAsLong(OGlobalConfiguration.DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT);
   }
 
   protected Object getFieldValueCountingParameters(String fieldValue) {

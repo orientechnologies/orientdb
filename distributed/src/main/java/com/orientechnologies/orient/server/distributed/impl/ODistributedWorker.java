@@ -24,6 +24,7 @@ import com.hazelcast.spi.exception.DistributedObjectDestroyedException;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -53,9 +54,9 @@ public class ODistributedWorker extends Thread {
   protected final ArrayBlockingQueue<ODistributedRequest> localQueue;
   protected final int                                     id;
 
-  protected volatile ODatabaseDocumentInternal            database;
-  protected volatile OUser                                lastUser;
-  protected volatile boolean                              running              = true;
+  protected volatile ODatabaseDocumentInternal database;
+  protected volatile OUser                     lastUser;
+  protected volatile boolean running = true;
 
   private AtomicLong processedRequests = new AtomicLong(0);
 
@@ -65,7 +66,8 @@ public class ODistributedWorker extends Thread {
     id = i;
     setName("OrientDB DistributedWorker node=" + iDistributed.getLocalNodeName() + " db=" + iDatabaseName + " id=" + i);
     distributed = iDistributed;
-    localQueue = new ArrayBlockingQueue<ODistributedRequest>(OGlobalConfiguration.DISTRIBUTED_LOCAL_QUEUESIZE.getValueAsInteger());
+    OContextConfiguration config = distributed.getManager().getServerInstance().getContextConfiguration();
+    localQueue = new ArrayBlockingQueue<>(config.getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_LOCAL_QUEUESIZE));
     databaseName = iDatabaseName;
     manager = distributed.getManager();
     msgService = distributed.msgService;
@@ -390,7 +392,7 @@ public class ODistributedWorker extends Thread {
               "Node is not online yet (status=%s), blocking the command until it is online (retry=%d, queue=%d worker=%d)",
               mgr.getNodeStatus(), retry + 1, localQueue.size(), id);
 
-          if (localQueue.size() >= OGlobalConfiguration.DISTRIBUTED_LOCAL_QUEUESIZE.getValueAsInteger()) {
+          if (localQueue.size() >= manager.getServerInstance().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_LOCAL_QUEUESIZE)) {
             // QUEUE FULL, EMPTY THE QUEUE, IGNORE ALL THE NEXT MESSAGES UNTIL A DELTA SYNC IS EXECUTED
             ODistributedServerLog.warn(this, localNodeName, null, DIRECTION.NONE,
                 "Replication queue is full (retry=%d, queue=%d worker=%d), replication could be delayed", retry + 1,

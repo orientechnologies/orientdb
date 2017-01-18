@@ -21,6 +21,7 @@ package com.orientechnologies.orient.server.distributed.impl;
 
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.impl.task.OHeartbeatTask;
@@ -161,8 +162,9 @@ public class OClusterHealthChecker extends TimerTask {
             "Sending heartbeat message to servers (db=%s)", dbName);
 
       try {
-        final ODistributedResponse response = manager.sendRequest(dbName, null, servers, new OHeartbeatTask(),
-            manager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
+        final ODistributedResponse response = manager
+            .sendRequest(dbName, null, servers, new OHeartbeatTask(), manager.getNextMessageIdCounter(),
+                ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
 
         final Object payload = response != null ? response.getPayload() : null;
         if (payload instanceof Map) {
@@ -184,10 +186,11 @@ public class OClusterHealthChecker extends TimerTask {
     if (manager.getDatabaseStatus(server, dbName) != ODistributedServerManager.DB_STATUS.ONLINE)
       return;
 
-    if (OGlobalConfiguration.DISTRIBUTED_CHECK_HEALTH_CAN_OFFLINE_SERVER.getValueAsBoolean()) {
+    OContextConfiguration conf = manager.getServerInstance().getContextConfiguration();
+    if (conf.getValueAsBoolean(OGlobalConfiguration.DISTRIBUTED_CHECK_HEALTH_CAN_OFFLINE_SERVER)) {
       ODistributedServerLog.warn(this, manager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.OUT,
-          "Server '%s' did not respond to the heartbeat message (db=%s, timeout=%dms). Setting the database as NOT_AVAILABLE", server,
-          dbName, OGlobalConfiguration.DISTRIBUTED_HEARTBEAT_TIMEOUT.getValueAsLong());
+          "Server '%s' did not respond to the heartbeat message (db=%s, timeout=%dms). Setting the database as NOT_AVAILABLE",
+          server, dbName, conf.getValueAsBoolean(OGlobalConfiguration.DISTRIBUTED_HEARTBEAT_TIMEOUT));
 
       manager.setDatabaseStatus(server, dbName, ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
 
@@ -195,7 +198,7 @@ public class OClusterHealthChecker extends TimerTask {
 
       ODistributedServerLog.warn(this, manager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.OUT,
           "Server '%s' did not respond to the heartbeat message (db=%s, timeout=%dms), but cannot be set OFFLINE by configuration",
-          server, dbName, OGlobalConfiguration.DISTRIBUTED_HEARTBEAT_TIMEOUT.getValueAsLong());
+          server, dbName, conf.getValueAsBoolean(OGlobalConfiguration.DISTRIBUTED_HEARTBEAT_TIMEOUT));
     }
   }
 }

@@ -86,8 +86,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
   public ONetworkProtocolBinary(OServer server, final String iThreadName) {
     super(server.getThreadGroup(), iThreadName);
-    logClientExceptions = Level.parse(OGlobalConfiguration.SERVER_LOG_DUMP_CLIENT_EXCEPTION_LEVEL.getValueAsString());
-    logClientFullStackTrace = OGlobalConfiguration.SERVER_LOG_DUMP_CLIENT_EXCEPTION_FULLSTACKTRACE.getValueAsBoolean();
+    logClientExceptions = Level
+        .parse(server.getContextConfiguration().getValueAsString(OGlobalConfiguration.SERVER_LOG_DUMP_CLIENT_EXCEPTION_LEVEL));
+    logClientFullStackTrace = server.getContextConfiguration()
+        .getValueAsBoolean(OGlobalConfiguration.SERVER_LOG_DUMP_CLIENT_EXCEPTION_FULLSTACKTRACE);
   }
 
   /**
@@ -588,7 +590,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
     case OChannelBinaryProtocol.REQUEST_TX_COMMIT:
       return new OCommit37Request();
-
 
     case OChannelBinaryProtocol.REQUEST_DB_OPEN:
       return new OOpenRequest();

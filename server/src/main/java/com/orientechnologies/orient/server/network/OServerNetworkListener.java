@@ -20,15 +20,14 @@
 package com.orientechnologies.orient.server.network;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
 import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.ShutdownHelper;
 import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
@@ -45,19 +44,18 @@ public class OServerNetworkListener extends Thread {
   private ServerSocket                      serverSocket;
   private InetSocketAddress                 inboundAddr;
   private Class<? extends ONetworkProtocol> protocolType;
-  private volatile boolean                  active            = true;
-  private List<OServerCommandConfiguration> statefulCommands  = new ArrayList<OServerCommandConfiguration>();
-  private List<OServerCommand>              statelessCommands = new ArrayList<OServerCommand>();
-  private int                               socketBufferSize;
-  private OContextConfiguration             configuration;
-  private OServer                           server;
-  private int                               protocolVersion   = -1;
+  private volatile boolean                           active            = true;
+  private          List<OServerCommandConfiguration> statefulCommands  = new ArrayList<OServerCommandConfiguration>();
+  private          List<OServerCommand>              statelessCommands = new ArrayList<OServerCommand>();
+  private int                   socketBufferSize;
+  private OContextConfiguration configuration;
+  private OServer               server;
+  private int protocolVersion = -1;
 
   public OServerNetworkListener(final OServer iServer, final OServerSocketFactory iSocketFactory, final String iHostName,
       final String iHostPortRange, final String iProtocolName, final Class<? extends ONetworkProtocol> iProtocol,
       final OServerParameterConfiguration[] iParameters, final OServerCommandConfiguration[] iCommands) {
-    super(iServer.getThreadGroup(),
-        "OrientDB " + iProtocol.getSimpleName() + " listen at " + iHostName + ":" + iHostPortRange);
+    super(iServer.getThreadGroup(), "OrientDB " + iProtocol.getSimpleName() + " listen at " + iHostName + ":" + iHostPortRange);
     server = iServer;
 
     socketFactory = iSocketFactory == null ? OServerSocketFactory.getDefault() : iSocketFactory;
@@ -187,7 +185,7 @@ public class OServerNetworkListener extends Thread {
           // listen for and accept a client connection to serverSocket
           final Socket socket = serverSocket.accept();
 
-          final int max = OGlobalConfiguration.NETWORK_MAX_CONCURRENT_SESSIONS.getValueAsInteger();
+          final int max = server.getContextConfiguration().getValueAsInteger(OGlobalConfiguration.NETWORK_MAX_CONCURRENT_SESSIONS);
 
           int conns = server.getClientConnectionManager().getTotal();
           if (conns >= max) {
@@ -333,17 +331,17 @@ public class OServerNetworkListener extends Thread {
         OLogManager.instance().warn(this, "Port %s:%d busy, trying the next available...", iHostName, port);
       } catch (SocketException se) {
         OLogManager.instance().error(this, "Unable to create socket", se);
-        ShutdownHelper.shutdown(1);
+        throw new RuntimeException(se);
       } catch (IOException ioe) {
         OLogManager.instance().error(this, "Unable to read data from an open socket", ioe);
         System.err.println("Unable to read data from an open socket.");
-        ShutdownHelper.shutdown(1);
+        throw new RuntimeException(ioe);
       }
     }
 
-    OLogManager.instance().error(this, "Unable to listen for connections using the configured ports '%s' on host '%s'",
-        iHostPortRange, iHostName);
-    ShutdownHelper.shutdown(1);
+    OLogManager.instance()
+        .error(this, "Unable to listen for connections using the configured ports '%s' on host '%s'", iHostPortRange, iHostName);
+    throw new OSystemException("Unable to listen for connections using the configured ports '%s' on host '%s'");
   }
 
   /**
@@ -362,6 +360,6 @@ public class OServerNetworkListener extends Thread {
         configuration.setValue(param.name, param.value);
     }
 
-     socketBufferSize = configuration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_BUFFER_SIZE);
+    socketBufferSize = configuration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_BUFFER_SIZE);
   }
 }
