@@ -25,6 +25,16 @@ class TeleporterComponent {
     }
 
     this.config = angular.copy(this.defaultConfig);
+
+    this.congigStep = 1;
+  }
+
+  getConfigStep() {
+    return this.congigStep;
+  }
+
+  switchConfigStep(step) {
+    this.congigStep = step;
   }
 
   drivers() {
@@ -40,7 +50,7 @@ class TeleporterComponent {
   }
 }
 
-TeleporterComponent.parameters = [[TeleporterService]];
+TeleporterComponent.parameters = [TeleporterService];
 
 TeleporterComponent.annotations = [new Component({
   selector: "teleporter",

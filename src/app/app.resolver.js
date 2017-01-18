@@ -1,6 +1,5 @@
-import {DBService, GraphService, SchemaService, CommandService} from './core/services';
+import {DBService, GraphService, SchemaService, CommandService, TeleporterService} from './core/services';
 import {FormatArrayPipe, FormatErrorPipe} from './core/pipes';
-import {DBService, GraphService, TeleporterService} from './core/services';
 
 const APP_PIPES = [
   FormatArrayPipe,
