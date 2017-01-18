@@ -25,7 +25,6 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
-import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
@@ -2243,4 +2242,11 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   protected OrientEdge getEdgeInstance(final OIdentifiable from, final OIdentifiable to, final String label) {
     return new OrientEdge(this, from, to, label);
   }
+
+  public OrientConfigurableGraph setUseLightweightEdges(final boolean useDynamicEdges) {
+    super.setUseLightweightEdges(useDynamicEdges);
+    getRawGraph().setUseLightweightEdges(useDynamicEdges);
+    return this;
+  }
+
 }

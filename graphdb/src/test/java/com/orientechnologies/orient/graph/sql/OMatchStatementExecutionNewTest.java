@@ -26,7 +26,8 @@ public class OMatchStatementExecutionNewTest {
 
   static ODatabaseDocumentTx db;
 
-  @BeforeClass public static void beforeClass() throws Exception {
+  @BeforeClass
+  public static void beforeClass() throws Exception {
     db = new ODatabaseDocumentTx(DB_STORAGE + ":" + DB_NAME);
     db.create();
     getProfilerInstance().startRecording();
@@ -79,16 +80,23 @@ public class OMatchStatementExecutionNewTest {
     }
 
     for (int i = 0; i < 100; i++) {
-      db.command(new OCommandSQL(
+      String cmd =
           "CREATE EDGE IndexedEDGE FROM (SELECT FROM IndexedVertex WHERE uid = 0) TO (SELECT FROM IndexedVertex WHERE uid > " + (
-              i * nodes / 100) + " and uid <" + ((i + 1) * nodes / 100) + ")")).execute();
+              i * nodes / 100) + " and uid <" + ((i + 1) * nodes / 100) + ")";
+      System.out.println(cmd);
+      db.command(new OCommandSQL(cmd)).execute();
+//      break;
     }
 
-    for (int i = 0; i < 100; i++) {
-      db.command(new OCommandSQL(
-          "CREATE EDGE IndexedEDGE FROM (SELECT FROM IndexedVertex WHERE uid > " + ((i * nodes / 100) + 1) + " and uid < " + (
-              ((i + 1) * nodes / 100) + 1) + ") TO (SELECT FROM IndexedVertex WHERE uid = 1)")).execute();
-    }
+//    for (int i = 0; i < 100; i++) {
+//      String cmd =
+//          "CREATE EDGE IndexedEDGE FROM (SELECT FROM IndexedVertex WHERE uid > " + ((i * nodes / 100) + 1) + " and uid < " + (
+//              ((i + 1) * nodes / 100) + 1) + ") TO (SELECT FROM IndexedVertex WHERE uid = 1)";
+//      System.out.println(cmd);
+//      db.command(new OCommandSQL(cmd)).execute();
+//    }
+
+    db.query("select expand(out()) from IndexedVertex where uid = 0").stream().forEach(x-> System.out.println("x = " + x));
   }
 
   private static void initOrgChart() {
@@ -215,7 +223,8 @@ public class OMatchStatementExecutionNewTest {
     }
   }
 
-  @AfterClass public static void afterClass() throws Exception {
+  @AfterClass
+  public static void afterClass() throws Exception {
     if (db.isClosed()) {
       db.open("admin", "admin");
     }
@@ -224,7 +233,8 @@ public class OMatchStatementExecutionNewTest {
     db.close();
   }
 
-  @Test public void testSimple() throws Exception {
+  @Test
+  public void testSimple() throws Exception {
     OResultSet qResult = db.query("match {class:Person, as: person} return person");
     printExecutionPlan(qResult);
 
@@ -239,7 +249,8 @@ public class OMatchStatementExecutionNewTest {
     qResult.close();
   }
 
-  @Test public void testSimpleWhere() throws Exception {
+  @Test
+  public void testSimpleWhere() throws Exception {
     OResultSet qResult = db.query("match {class:Person, as: person, where: (name = 'n1' or name = 'n2')} return person");
 
     for (int i = 0; i < 2; i++) {
@@ -254,18 +265,18 @@ public class OMatchStatementExecutionNewTest {
     qResult.close();
   }
 
-  @Test public void testSimpleLimit() throws Exception {
-    OResultSet qResult = db
-        .query("match {class:Person, as: person, where: (name = 'n1' or name = 'n2')} return person limit 1");
+  @Test
+  public void testSimpleLimit() throws Exception {
+    OResultSet qResult = db.query("match {class:Person, as: person, where: (name = 'n1' or name = 'n2')} return person limit 1");
     Assert.assertTrue(qResult.hasNext());
     qResult.next();
     Assert.assertFalse(qResult.hasNext());
     qResult.close();
   }
 
-  @Test public void testSimpleLimit2() throws Exception {
-    OResultSet qResult = db
-        .query("match {class:Person, as: person, where: (name = 'n1' or name = 'n2')} return person limit -1");
+  @Test
+  public void testSimpleLimit2() throws Exception {
+    OResultSet qResult = db.query("match {class:Person, as: person, where: (name = 'n1' or name = 'n2')} return person limit -1");
     for (int i = 0; i < 2; i++) {
       Assert.assertTrue(qResult.hasNext());
       qResult.next();
@@ -273,10 +284,10 @@ public class OMatchStatementExecutionNewTest {
     qResult.close();
   }
 
-  @Test public void testSimpleLimit3() throws Exception {
+  @Test
+  public void testSimpleLimit3() throws Exception {
 
-    OResultSet qResult = db
-        .query("match {class:Person, as: person, where: (name = 'n1' or name = 'n2')} return person limit 3");
+    OResultSet qResult = db.query("match {class:Person, as: person, where: (name = 'n1' or name = 'n2')} return person limit 3");
     for (int i = 0; i < 2; i++) {
       Assert.assertTrue(qResult.hasNext());
       qResult.next();
@@ -284,7 +295,8 @@ public class OMatchStatementExecutionNewTest {
     qResult.close();
   }
 
-  @Test public void testSimpleUnnamedParams() throws Exception {
+  @Test
+  public void testSimpleUnnamedParams() throws Exception {
     OResultSet qResult = db.query("match {class:Person, as: person, where: (name = ? or name = ?)} return person", "n1", "n2");
 
     printExecutionPlan(qResult);
@@ -301,7 +313,8 @@ public class OMatchStatementExecutionNewTest {
     qResult.close();
   }
 
-  @Test public void testCommonFriends() throws Exception {
+  @Test
+  public void testCommonFriends() throws Exception {
 
     OResultSet qResult = db.query(
         "select friend.name as name from (match {class:Person, where:(name = 'n1')}.both('Friend'){as:friend}.both('Friend'){class: Person, where:(name = 'n4')} return friend)");
@@ -313,7 +326,8 @@ public class OMatchStatementExecutionNewTest {
     qResult.close();
   }
 
-  @Test public void testCommonFriendsPatterns() throws Exception {
+  @Test
+  public void testCommonFriendsPatterns() throws Exception {
 
     OResultSet qResult = db.query(
         "select friend.name as name from (match {class:Person, where:(name = 'n1')}.both('Friend'){as:friend}.both('Friend'){class: Person, where:(name = 'n4')} return $patterns)");
@@ -325,7 +339,8 @@ public class OMatchStatementExecutionNewTest {
     qResult.close();
   }
 
-  @Test public void testPattens() throws Exception {
+  @Test
+  public void testPattens() throws Exception {
     OResultSet qResult = db.query(
         "match {class:Person, where:(name = 'n1')}.both('Friend'){as:friend}.both('Friend'){class: Person, where:(name = 'n4')} return $patterns");
     printExecutionPlan(qResult);
@@ -337,7 +352,8 @@ public class OMatchStatementExecutionNewTest {
     qResult.close();
   }
 
-  @Test public void testPaths() throws Exception {
+  @Test
+  public void testPaths() throws Exception {
     OResultSet qResult = db.query(
         "match {class:Person, where:(name = 'n1')}.both('Friend'){as:friend}.both('Friend'){class: Person, where:(name = 'n4')} return $paths");
     printExecutionPlan(qResult);
@@ -348,7 +364,8 @@ public class OMatchStatementExecutionNewTest {
     qResult.close();
   }
 
-  @Test public void testElements() throws Exception {
+  @Test
+  public void testElements() throws Exception {
     OResultSet qResult = db.query(
         "match {class:Person, where:(name = 'n1')}.both('Friend'){as:friend}.both('Friend'){class: Person, where:(name = 'n4')} return $elements");
     printExecutionPlan(qResult);
@@ -359,7 +376,8 @@ public class OMatchStatementExecutionNewTest {
     qResult.close();
   }
 
-  @Test public void testPathElements() throws Exception {
+  @Test
+  public void testPathElements() throws Exception {
     OResultSet qResult = db.query(
         "match {class:Person, where:(name = 'n1')}.both('Friend'){as:friend}.both('Friend'){class: Person, where:(name = 'n4')} return $pathElements");
     printExecutionPlan(qResult);
@@ -377,7 +395,8 @@ public class OMatchStatementExecutionNewTest {
     qResult.close();
   }
 
-  @Test public void testCommonFriendsMatches() throws Exception {
+  @Test
+  public void testCommonFriendsMatches() throws Exception {
 
     OResultSet qResult = db.query(
         "select friend.name as name from (match {class:Person, where:(name = 'n1')}.both('Friend'){as:friend}.both('Friend'){class: Person, where:(name = 'n4')} return $matches)");
@@ -389,7 +408,8 @@ public class OMatchStatementExecutionNewTest {
     qResult.close();
   }
 
-  @Test public void testCommonFriendsArrows() throws Exception {
+  @Test
+  public void testCommonFriendsArrows() throws Exception {
 
     OResultSet qResult = db.query(
         "select friend.name as name from (match {class:Person, where:(name = 'n1')}-Friend-{as:friend}-Friend-{class: Person, where:(name = 'n4')} return friend)");
@@ -401,7 +421,8 @@ public class OMatchStatementExecutionNewTest {
     qResult.close();
   }
 
-  @Test public void testCommonFriendsArrowsPatterns() throws Exception {
+  @Test
+  public void testCommonFriendsArrowsPatterns() throws Exception {
 
     OResultSet qResult = db.query(
         "select friend.name as name from (match {class:Person, where:(name = 'n1')}-Friend-{as:friend}-Friend-{class: Person, where:(name = 'n4')} return $patterns)");
@@ -413,7 +434,8 @@ public class OMatchStatementExecutionNewTest {
     qResult.close();
   }
 
-  @Test public void testCommonFriends2() throws Exception {
+  @Test
+  public void testCommonFriends2() throws Exception {
 
     OResultSet qResult = db.query(
         "match {class:Person, where:(name = 'n1')}.both('Friend'){as:friend}.both('Friend'){class: Person, where:(name = 'n4')} return friend.name as name");
@@ -425,7 +447,8 @@ public class OMatchStatementExecutionNewTest {
     qResult.close();
   }
 
-  @Test public void testCommonFriends2Arrows() throws Exception {
+  @Test
+  public void testCommonFriends2Arrows() throws Exception {
 
     OResultSet qResult = db.query(
         "match {class:Person, where:(name = 'n1')}-Friend-{as:friend}-Friend-{class: Person, where:(name = 'n4')} return friend.name as name");
@@ -437,7 +460,8 @@ public class OMatchStatementExecutionNewTest {
     qResult.close();
   }
 
-  @Test public void testReturnMethod() throws Exception {
+  @Test
+  public void testReturnMethod() throws Exception {
     OResultSet qResult = db.query(
         "match {class:Person, where:(name = 'n1')}.both('Friend'){as:friend}.both('Friend'){class: Person, where:(name = 'n4')} return friend.name.toUppercase() as name");
     Assert.assertTrue(qResult.hasNext());
@@ -447,7 +471,8 @@ public class OMatchStatementExecutionNewTest {
     qResult.close();
   }
 
-  @Test public void testReturnMethodArrows() throws Exception {
+  @Test
+  public void testReturnMethodArrows() throws Exception {
     OResultSet qResult = db.query(
         "match {class:Person, where:(name = 'n1')}-Friend-{as:friend}-Friend-{class: Person, where:(name = 'n4')} return friend.name.toUppercase() as name");
     Assert.assertTrue(qResult.hasNext());
@@ -457,7 +482,8 @@ public class OMatchStatementExecutionNewTest {
     qResult.close();
   }
 
-  @Test public void testReturnExpression() throws Exception {
+  @Test
+  public void testReturnExpression() throws Exception {
     OResultSet qResult = db.query(
         "match {class:Person, where:(name = 'n1')}.both('Friend'){as:friend}.both('Friend'){class: Person, where:(name = 'n4')} return friend.name + ' ' +friend.name as name");
 
@@ -468,7 +494,8 @@ public class OMatchStatementExecutionNewTest {
     qResult.close();
   }
 
-  @Test public void testReturnExpressionArrows() throws Exception {
+  @Test
+  public void testReturnExpressionArrows() throws Exception {
     OResultSet qResult = db.query(
         "match {class:Person, where:(name = 'n1')}-Friend-{as:friend}-Friend-{class: Person, where:(name = 'n4')} return friend.name + ' ' +friend.name as name");
 
@@ -479,7 +506,8 @@ public class OMatchStatementExecutionNewTest {
     qResult.close();
   }
 
-  @Test public void testReturnDefaultAlias() throws Exception {
+  @Test
+  public void testReturnDefaultAlias() throws Exception {
     OResultSet qResult = db.query(
         "match {class:Person, where:(name = 'n1')}.both('Friend'){as:friend}.both('Friend'){class: Person, where:(name = 'n4')} return friend.name");
 
@@ -490,7 +518,8 @@ public class OMatchStatementExecutionNewTest {
     qResult.close();
   }
 
-  @Test public void testReturnDefaultAliasArrows() throws Exception {
+  @Test
+  public void testReturnDefaultAliasArrows() throws Exception {
     OResultSet qResult = db.query(
         "match {class:Person, where:(name = 'n1')}-Friend-{as:friend}-Friend-{class: Person, where:(name = 'n4')} return friend.name");
 
@@ -501,7 +530,8 @@ public class OMatchStatementExecutionNewTest {
     qResult.close();
   }
 
-  @Test public void testFriendsOfFriends() throws Exception {
+  @Test
+  public void testFriendsOfFriends() throws Exception {
     OResultSet qResult = db.query(
         "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend').out('Friend'){as:friend} return $matches)");
 
@@ -513,7 +543,8 @@ public class OMatchStatementExecutionNewTest {
     qResult.close();
   }
 
-  @Test public void testFriendsOfFriendsArrows() throws Exception {
+  @Test
+  public void testFriendsOfFriendsArrows() throws Exception {
     OResultSet qResult = db.query(
         "select friend.name as name from (match {class:Person, where:(name = 'n1')}-Friend->{}-Friend->{as:friend} return $matches)");
 
@@ -524,7 +555,8 @@ public class OMatchStatementExecutionNewTest {
     qResult.close();
   }
 
-  @Test public void testFriendsOfFriends2() throws Exception {
+  @Test
+  public void testFriendsOfFriends2() throws Exception {
     OResultSet qResult = db.query(
         "select friend.name as name from (match {class:Person, where:(name = 'n1'), as: me}.both('Friend').both('Friend'){as:friend, where: ($matched.me != $currentMatch)} return $matches)");
 
@@ -536,7 +568,8 @@ public class OMatchStatementExecutionNewTest {
     qResult.close();
   }
 
-  @Test public void testFriendsOfFriends2Arrows() throws Exception {
+  @Test
+  public void testFriendsOfFriends2Arrows() throws Exception {
     OResultSet qResult = db.query(
         "select friend.name as name from (match {class:Person, where:(name = 'n1'), as: me}-Friend-{}-Friend-{as:friend, where: ($matched.me != $currentMatch)} return $matches)");
 
@@ -547,7 +580,8 @@ public class OMatchStatementExecutionNewTest {
     qResult.close();
   }
 
-  @Test public void testFriendsWithName() throws Exception {
+  @Test
+  public void testFriendsWithName() throws Exception {
     OResultSet qResult = db.query(
         "select friend.name as name from (match {class:Person, where:(name = 'n1' and 1 + 1 = 2)}.out('Friend'){as:friend, where:(name = 'n2' and 1 + 1 = 2)} return friend)");
 
@@ -557,7 +591,8 @@ public class OMatchStatementExecutionNewTest {
     qResult.close();
   }
 
-  @Test public void testFriendsWithNameArrows() throws Exception {
+  @Test
+  public void testFriendsWithNameArrows() throws Exception {
     OResultSet qResult = db.query(
         "select friend.name as name from (match {class:Person, where:(name = 'n1' and 1 + 1 = 2)}-Friend->{as:friend, where:(name = 'n2' and 1 + 1 = 2)} return friend)");
     Assert.assertTrue(qResult.hasNext());
@@ -566,7 +601,8 @@ public class OMatchStatementExecutionNewTest {
     qResult.close();
   }
 
-  @Test public void testWhile() throws Exception {
+  @Test
+  public void testWhile() throws Exception {
 
     OResultSet qResult = db.query(
         "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, while: ($depth < 1)} return friend)");
@@ -609,7 +645,8 @@ public class OMatchStatementExecutionNewTest {
     return result;
   }
 
-  @Test public void testWhileArrows() throws Exception {
+  @Test
+  public void testWhileArrows() throws Exception {
     OResultSet qResult = db.query(
         "select friend.name as name from (match {class:Person, where:(name = 'n1')}-Friend->{as:friend, while: ($depth < 1)} return friend)");
     Assert.assertEquals(3, size(qResult));
@@ -631,7 +668,8 @@ public class OMatchStatementExecutionNewTest {
     qResult.close();
   }
 
-  @Test public void testMaxDepth() throws Exception {
+  @Test
+  public void testMaxDepth() throws Exception {
     OResultSet qResult = db.query(
         "select friend.name as name from (match {class:Person, where:(name = 'n1')}.out('Friend'){as:friend, maxDepth: 1, where: ($depth=1) } return friend)");
     Assert.assertEquals(2, size(qResult));
@@ -653,7 +691,8 @@ public class OMatchStatementExecutionNewTest {
     qResult.close();
   }
 
-  @Test public void testMaxDepthArrow() throws Exception {
+  @Test
+  public void testMaxDepthArrow() throws Exception {
     OResultSet qResult = db.query(
         "select friend.name as name from (match {class:Person, where:(name = 'n1')}-Friend->{as:friend, maxDepth: 1, where: ($depth=1) } return friend)");
     Assert.assertEquals(2, size(qResult));
@@ -675,7 +714,8 @@ public class OMatchStatementExecutionNewTest {
     qResult.close();
   }
 
-  @Test public void testManager() {
+  @Test
+  public void testManager() {
     // the manager of a person is the manager of the department that person belongs to.
     // if that department does not have a direct manager, climb up the hierarchy until you find one
     Assert.assertEquals("c", getManager("p10").field("name"));
@@ -730,7 +770,8 @@ public class OMatchStatementExecutionNewTest {
     return item.getElement().get().getRecord();
   }
 
-  @Test public void testManager2() {
+  @Test
+  public void testManager2() {
     // the manager of a person is the manager of the department that person belongs to.
     // if that department does not have a direct manager, climb up the hierarchy until you find one
 
@@ -787,7 +828,8 @@ public class OMatchStatementExecutionNewTest {
     return item;
   }
 
-  @Test public void testManaged() {
+  @Test
+  public void testManaged() {
     // people managed by a manager are people who belong to his department or people who belong to sub-departments without a manager
     OResultSet managedByA = getManagedBy("a");
     Assert.assertTrue(managedByA.hasNext());
@@ -831,7 +873,8 @@ public class OMatchStatementExecutionNewTest {
     return db.query(query.toString());
   }
 
-  @Test public void testManagedArrows() {
+  @Test
+  public void testManagedArrows() {
     // people managed by a manager are people who belong to his department or people who belong to sub-departments without a manager
     OResultSet managedByA = getManagedByArrows("a");
     Assert.assertTrue(managedByA.hasNext());
@@ -872,7 +915,8 @@ public class OMatchStatementExecutionNewTest {
     return db.query(query.toString());
   }
 
-  @Test public void testManaged2() {
+  @Test
+  public void testManaged2() {
     // people managed by a manager are people who belong to his department or people who belong to sub-departments without a manager
     OResultSet managedByA = getManagedBy2("a");
     Assert.assertTrue(managedByA.hasNext());
@@ -915,7 +959,8 @@ public class OMatchStatementExecutionNewTest {
     return db.query(query.toString());
   }
 
-  @Test public void testManaged2Arrows() {
+  @Test
+  public void testManaged2Arrows() {
     // people managed by a manager are people who belong to his department or people who belong to sub-departments without a manager
     OResultSet managedByA = getManagedBy2Arrows("a");
     Assert.assertTrue(managedByA.hasNext());
@@ -957,7 +1002,8 @@ public class OMatchStatementExecutionNewTest {
     return db.query(query.toString());
   }
 
-  @Test public void testTriangle1() {
+  @Test
+  public void testTriangle1() {
     StringBuilder query = new StringBuilder();
     query.append("match ");
     query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
@@ -977,7 +1023,8 @@ public class OMatchStatementExecutionNewTest {
     result.close();
   }
 
-  @Test public void testTriangle1Arrows() {
+  @Test
+  public void testTriangle1Arrows() {
     StringBuilder query = new StringBuilder();
     query.append("match ");
     query.append("{class:TriangleV, as: friend1, where: (uid = 0)} -TriangleE-> {as: friend2} -TriangleE-> {as: friend3},");
@@ -991,7 +1038,8 @@ public class OMatchStatementExecutionNewTest {
     result.close();
   }
 
-  @Test public void testTriangle2Old() {
+  @Test
+  public void testTriangle2Old() {
     StringBuilder query = new StringBuilder();
     query.append("match ");
     query.append("{class:TriangleV, as: friend1}");
@@ -1014,7 +1062,8 @@ public class OMatchStatementExecutionNewTest {
     result.close();
   }
 
-  @Test public void testTriangle2() {
+  @Test
+  public void testTriangle2() {
     StringBuilder query = new StringBuilder();
     query.append("match ");
     query.append("{class:TriangleV, as: friend1}");
@@ -1037,7 +1086,8 @@ public class OMatchStatementExecutionNewTest {
     result.close();
   }
 
-  @Test public void testTriangle2Arrows() {
+  @Test
+  public void testTriangle2Arrows() {
     StringBuilder query = new StringBuilder();
     query.append("match ");
     query.append("{class:TriangleV, as: friend1}");
@@ -1060,7 +1110,8 @@ public class OMatchStatementExecutionNewTest {
     result.close();
   }
 
-  @Test public void testTriangle3() {
+  @Test
+  public void testTriangle3() {
     StringBuilder query = new StringBuilder();
     query.append("match ");
     query.append("{class:TriangleV, as: friend1}");
@@ -1077,7 +1128,8 @@ public class OMatchStatementExecutionNewTest {
     result.close();
   }
 
-  @Test public void testTriangle4() {
+  @Test
+  public void testTriangle4() {
     StringBuilder query = new StringBuilder();
     query.append("match ");
     query.append("{class:TriangleV, as: friend1}");
@@ -1094,7 +1146,8 @@ public class OMatchStatementExecutionNewTest {
     result.close();
   }
 
-  @Test public void testTriangle4Arrows() {
+  @Test
+  public void testTriangle4Arrows() {
     StringBuilder query = new StringBuilder();
     query.append("match ");
     query.append("{class:TriangleV, as: friend1}");
@@ -1111,7 +1164,8 @@ public class OMatchStatementExecutionNewTest {
     result.close();
   }
 
-  @Test public void testTriangleWithEdges4() {
+  @Test
+  public void testTriangleWithEdges4() {
     StringBuilder query = new StringBuilder();
     query.append("match ");
     query.append("{class:TriangleV, as: friend1}");
@@ -1129,7 +1183,8 @@ public class OMatchStatementExecutionNewTest {
     result.close();
   }
 
-  @Test public void testCartesianProduct() {
+  @Test
+  public void testCartesianProduct() {
     StringBuilder query = new StringBuilder();
     query.append("match ");
     query.append("{class:TriangleV, as: friend1, where:(uid = 1)},");
@@ -1149,7 +1204,8 @@ public class OMatchStatementExecutionNewTest {
     result.close();
   }
 
-  @Test public void testNoPrefetch() {
+  @Test
+  public void testNoPrefetch() {
     StringBuilder query = new StringBuilder();
     query.append("match ");
     query.append("{class:IndexedVertex, as: one}");
@@ -1169,7 +1225,8 @@ public class OMatchStatementExecutionNewTest {
     result.close();
   }
 
-  @Test public void testCartesianProductLimit() {
+  @Test
+  public void testCartesianProductLimit() {
     StringBuilder query = new StringBuilder();
     query.append("match ");
     query.append("{class:TriangleV, as: friend1, where:(uid = 1)},");
@@ -1186,366 +1243,355 @@ public class OMatchStatementExecutionNewTest {
     result.close();
   }
 
-    @Test
-    public void testArrayNumber() {
-      StringBuilder query = new StringBuilder();
-      query.append("match ");
-      query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
-      query.append("return friend1.out('TriangleE')[0] as foo");
+  @Test
+  public void testArrayNumber() {
+    StringBuilder query = new StringBuilder();
+    query.append("match ");
+    query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
+    query.append("return friend1.out('TriangleE')[0] as foo");
 
-      OResultSet result = db.query(query.toString());
+    OResultSet result = db.query(query.toString());
 
+    Assert.assertTrue(result.hasNext());
 
-      Assert.assertTrue(result.hasNext());
+    OResult doc = result.next();
+    Object foo = doc.getProperty("foo");
+    Assert.assertNotNull(foo);
+    Assert.assertTrue(foo instanceof OVertex);
+    result.close();
+  }
 
-      OResult doc = result.next();
-      Object foo = doc.getProperty("foo");
-      Assert.assertNotNull(foo);
-      Assert. assertTrue(foo instanceof OVertex);
-      result.close();
+  @Test
+  public void testArraySingleSelectors2() {
+    StringBuilder query = new StringBuilder();
+    query.append("match ");
+    query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
+    query.append("return friend1.out('TriangleE')[0,1] as foo");
+
+    OResultSet result = db.query(query.toString());
+    Assert.assertTrue(result.hasNext());
+    OResult doc = result.next();
+    Assert.assertFalse(result.hasNext());
+    Object foo = doc.getProperty("foo");
+    Assert.assertNotNull(foo);
+    Assert.assertTrue(foo instanceof List);
+    Assert.assertEquals(2, ((List) foo).size());
+    result.close();
+  }
+
+  @Test
+  public void testArrayRangeSelectors1() {
+    StringBuilder query = new StringBuilder();
+    query.append("match ");
+    query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
+    query.append("return friend1.out('TriangleE')[0-1] as foo");
+
+    OResultSet result = db.query(query.toString());
+    Assert.assertTrue(result.hasNext());
+    OResult doc = result.next();
+    Assert.assertFalse(result.hasNext());
+
+    Object foo = doc.getProperty("foo");
+    Assert.assertNotNull(foo);
+    Assert.assertTrue(foo instanceof List);
+    Assert.assertEquals(1, ((List) foo).size());
+    result.close();
+  }
+
+  @Test
+  public void testArrayRange2() {
+    StringBuilder query = new StringBuilder();
+    query.append("match ");
+    query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
+    query.append("return friend1.out('TriangleE')[0-2] as foo");
+
+    OResultSet result = db.query(query.toString());
+    Assert.assertTrue(result.hasNext());
+    OResult doc = result.next();
+    Assert.assertFalse(result.hasNext());
+
+    Object foo = doc.getProperty("foo");
+    Assert.assertNotNull(foo);
+    Assert.assertTrue(foo instanceof List);
+    Assert.assertEquals(2, ((List) foo).size());
+    result.close();
+  }
+
+  @Test
+  public void testArrayRange3() {
+    StringBuilder query = new StringBuilder();
+    query.append("match ");
+    query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
+    query.append("return friend1.out('TriangleE')[0-3] as foo");
+
+    OResultSet result = db.query(query.toString());
+    Assert.assertTrue(result.hasNext());
+    OResult doc = result.next();
+    Assert.assertFalse(result.hasNext());
+
+    Object foo = doc.getProperty("foo");
+    Assert.assertNotNull(foo);
+    Assert.assertTrue(foo instanceof List);
+    Assert.assertEquals(2, ((List) foo).size());
+    result.close();
+  }
+
+  @Test
+  public void testConditionInSquareBrackets() {
+    StringBuilder query = new StringBuilder();
+    query.append("match ");
+    query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
+    query.append("return friend1.out('TriangleE')[uid = 2] as foo");
+
+    OResultSet result = db.query(query.toString());
+    Assert.assertTrue(result.hasNext());
+    OResult doc = result.next();
+    Assert.assertFalse(result.hasNext());
+
+    Object foo = doc.getProperty("foo");
+    Assert.assertNotNull(foo);
+    Assert.assertTrue(foo instanceof List);
+    Assert.assertEquals(1, ((List) foo).size());
+    OVertex resultVertex = (OVertex) ((List) foo).get(0);
+    Assert.assertEquals(2, resultVertex.<Object>getProperty("uid"));
+    result.close();
+  }
+
+  @Test
+  public void testIndexedEdge() {
+    StringBuilder query = new StringBuilder();
+    query.append("match ");
+    query.append("{class:IndexedVertex, as: one, where: (uid = 0)}");
+    query.append(".out('IndexedEdge'){class:IndexedVertex, as: two, where: (uid = 1)}");
+    query.append("return one, two");
+
+    OResultSet result = db.query(query.toString());
+    printExecutionPlan(result);
+    Assert.assertTrue(result.hasNext());
+    OResult doc = result.next();
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test
+  public void testIndexedEdgeArrows() {
+    StringBuilder query = new StringBuilder();
+    query.append("match ");
+    query.append("{class:IndexedVertex, as: one, where: (uid = 0)}");
+    query.append("-IndexedEdge->{class:IndexedVertex, as: two, where: (uid = 1)}");
+    query.append("return one, two");
+
+    OResultSet result = db.query(query.toString());
+    Assert.assertTrue(result.hasNext());
+    OResult doc = result.next();
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test
+  public void testJson() {
+    StringBuilder query = new StringBuilder();
+    query.append("match ");
+    query.append("{class:IndexedVertex, as: one, where: (uid = 0)} ");
+    query.append("return {'name':'foo', 'uuid':one.uid}");
+
+    OResultSet result = db.query(query.toString());
+    Assert.assertTrue(result.hasNext());
+    OResult doc = result.next();
+    Assert.assertFalse(result.hasNext());
+
+    //    ODocument doc = result.get(0);
+    //    assertEquals("foo", doc.field("name"));
+    //    assertEquals(0, doc.field("uuid"));
+    result.close();
+  }
+
+  @Test
+  public void testJson2() {
+    StringBuilder query = new StringBuilder();
+    query.append("match ");
+    query.append("{class:IndexedVertex, as: one, where: (uid = 0)} ");
+    query.append("return {'name':'foo', 'sub': {'uuid':one.uid}}");
+
+    OResultSet result = db.query(query.toString());
+    Assert.assertTrue(result.hasNext());
+    OResult doc = result.next();
+    Assert.assertFalse(result.hasNext());
+    //    ODocument doc = result.get(0);
+    //    assertEquals("foo", doc.field("name"));
+    //    assertEquals(0, doc.field("sub.uuid"));
+    result.close();
+  }
+
+  @Test
+  public void testJson3() {
+    StringBuilder query = new StringBuilder();
+    query.append("match ");
+    query.append("{class:IndexedVertex, as: one, where: (uid = 0)} ");
+    query.append("return {'name':'foo', 'sub': [{'uuid':one.uid}]}");
+
+    OResultSet result = db.query(query.toString());
+    Assert.assertTrue(result.hasNext());
+    OResult doc = result.next();
+    Assert.assertFalse(result.hasNext());
+    //    ODocument doc = result.get(0);
+    //    assertEquals("foo", doc.field("name"));
+    //    assertEquals(0, doc.field("sub[0].uuid"));
+
+    result.close();
+  }
+
+  @Test
+  public void testUnique() {
+    StringBuilder query = new StringBuilder();
+    query.append("match ");
+    query.append("{class:DiamondV, as: one, where: (uid = 0)}.out('DiamondE').out('DiamondE'){as: two} ");
+    query.append("return one, two");
+
+    OResultSet result = db.query(query.toString());
+    printExecutionPlan(result);
+    Assert.assertTrue(result.hasNext());
+    OResult doc = result.next();
+    Assert.assertFalse(result.hasNext());
+
+    query = new StringBuilder();
+    query.append("match ");
+    query.append("{class:DiamondV, as: one, where: (uid = 0)}.out('DiamondE').out('DiamondE'){as: two} ");
+    query.append("return one.uid, two.uid");
+
+    result.close();
+
+    result = db.query(query.toString());
+    Assert.assertTrue(result.hasNext());
+    doc = result.next();
+    Assert.assertFalse(result.hasNext());
+    result.close();
+    //    ODocument doc = result.get(0);
+    //    assertEquals("foo", doc.field("name"));
+    //    assertEquals(0, doc.field("sub[0].uuid"));
+  }
+
+  @Test
+  public void testManagedElements() {
+    OResultSet managedByB = getManagedElements("b");
+
+    Set<String> expectedNames = new HashSet<String>();
+    expectedNames.add("b");
+    expectedNames.add("p2");
+    expectedNames.add("p3");
+    expectedNames.add("p6");
+    expectedNames.add("p7");
+    expectedNames.add("p11");
+    Set<String> names = new HashSet<String>();
+    for (int i = 0; i < 6; i++) {
+      Assert.assertTrue(managedByB.hasNext());
+      OResult doc = managedByB.next();
+      String name = doc.getProperty("name");
+      names.add(name);
     }
+    Assert.assertFalse(managedByB.hasNext());
+    Assert.assertEquals(expectedNames, names);
+    managedByB.close();
+  }
 
-    @Test
-    public void testArraySingleSelectors2() {
-      StringBuilder query = new StringBuilder();
-      query.append("match ");
-      query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
-      query.append("return friend1.out('TriangleE')[0,1] as foo");
+  private OResultSet getManagedElements(String managerName) {
+    StringBuilder query = new StringBuilder();
+    query.append("  match {class:Employee, as:boss, where: (name = '" + managerName + "')}");
+    query.append("  -ManagerOf->{}<-ParentDepartment-{");
+    query.append("      while: ($depth = 0 or in('ManagerOf').size() = 0),");
+    query.append("      where: ($depth = 0 or in('ManagerOf').size() = 0)");
+    query.append("  }<-WorksAt-{as: managed}");
+    query.append("  return $elements");
 
-      OResultSet result = db.query(query.toString());
-      Assert.assertTrue(result.hasNext());
-      OResult doc = result.next();
-      Assert.assertFalse(result.hasNext());
-      Object foo = doc.getProperty("foo");
-      Assert.assertNotNull(foo);
-      Assert.assertTrue(foo instanceof List);
-      Assert.assertEquals(2, ((List) foo).size());
-      result.close();
+    return db.query(query.toString());
+  }
+
+  @Test
+  public void testManagedPathElements() {
+    OResultSet managedByB = getManagedPathElements("b");
+
+    Set<String> expectedNames = new HashSet<String>();
+    expectedNames.add("department1");
+    expectedNames.add("department3");
+    expectedNames.add("department4");
+    expectedNames.add("department8");
+    expectedNames.add("b");
+    expectedNames.add("p2");
+    expectedNames.add("p3");
+    expectedNames.add("p6");
+    expectedNames.add("p7");
+    expectedNames.add("p11");
+    Set<String> names = new HashSet<String>();
+    for (int i = 0; i < 10; i++) {
+      Assert.assertTrue(managedByB.hasNext());
+      OResult doc = managedByB.next();
+      String name = doc.getProperty("name");
+      names.add(name);
     }
+    Assert.assertFalse(managedByB.hasNext());
+    Assert.assertEquals(expectedNames, names);
+    managedByB.close();
+  }
 
-    @Test
-    public void testArrayRangeSelectors1() {
-      StringBuilder query = new StringBuilder();
-      query.append("match ");
-      query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
-      query.append("return friend1.out('TriangleE')[0-1] as foo");
+  @Test
+  public void testOptional() throws Exception {
+    OResultSet qResult = db
+        .query("match {class:Person, as: person} -NonExistingEdge-> {as:b, optional:true} return person, b.name");
 
-      OResultSet result = db.query(query.toString());
-      Assert.assertTrue(result.hasNext());
-      OResult doc = result.next();
-      Assert.assertFalse(result.hasNext());
-
-      Object foo = doc.getProperty("foo");
-      Assert.assertNotNull(foo);
-      Assert.assertTrue(foo instanceof List);
-      Assert.assertEquals(1, ((List) foo).size());
-      result.close();
-    }
-
-    @Test
-    public void testArrayRange2() {
-      StringBuilder query = new StringBuilder();
-      query.append("match ");
-      query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
-      query.append("return friend1.out('TriangleE')[0-2] as foo");
-
-      OResultSet result = db.query(query.toString());
-      Assert.assertTrue(result.hasNext());
-      OResult doc = result.next();
-      Assert.assertFalse(result.hasNext());
-
-      Object foo = doc.getProperty("foo");
-      Assert.assertNotNull(foo);
-      Assert.assertTrue(foo instanceof List);
-      Assert.assertEquals(2, ((List) foo).size());
-      result.close();
-    }
-
-    @Test
-    public void testArrayRange3() {
-      StringBuilder query = new StringBuilder();
-      query.append("match ");
-      query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
-      query.append("return friend1.out('TriangleE')[0-3] as foo");
-
-      OResultSet result = db.query(query.toString());
-      Assert.assertTrue(result.hasNext());
-      OResult doc = result.next();
-      Assert.assertFalse(result.hasNext());
-
-      Object foo = doc.getProperty("foo");
-      Assert.assertNotNull(foo);
-      Assert.assertTrue(foo instanceof List);
-      Assert.assertEquals(2, ((List) foo).size());
-      result.close();
-    }
-
-    @Test
-    public void testConditionInSquareBrackets() {
-      StringBuilder query = new StringBuilder();
-      query.append("match ");
-      query.append("{class:TriangleV, as: friend1, where: (uid = 0)}");
-      query.append("return friend1.out('TriangleE')[uid = 2] as foo");
-
-      OResultSet result = db.query(query.toString());
-      Assert.assertTrue(result.hasNext());
-      OResult doc = result.next();
-      Assert.assertFalse(result.hasNext());
-
-      Object foo = doc.getProperty("foo");
-      Assert.assertNotNull(foo);
-      Assert.assertTrue(foo instanceof List);
-      Assert.assertEquals(1, ((List) foo).size());
-      OVertex resultVertex = (OVertex) ((List) foo).get(0);
-      Assert.assertEquals(2, resultVertex.<Object>getProperty("uid"));
-      result.close();
-    }
-
-    @Test
-    public void testIndexedEdge() {
-      StringBuilder query = new StringBuilder();
-      query.append("match ");
-      query.append("{class:IndexedVertex, as: one, where: (uid = 0)}");
-      query.append(".out('IndexedEdge'){class:IndexedVertex, as: two, where: (uid = 1)}");
-      query.append("return one, two");
-
-      OResultSet result = db.query(query.toString());
-      printExecutionPlan(result);
-      Assert.assertTrue(result.hasNext());
-      OResult doc = result.next();
-      Assert.assertFalse(result.hasNext());
-      result.close();
-    }
-
-    @Test
-    public void testIndexedEdgeArrows() {
-      StringBuilder query = new StringBuilder();
-      query.append("match ");
-      query.append("{class:IndexedVertex, as: one, where: (uid = 0)}");
-      query.append("-IndexedEdge->{class:IndexedVertex, as: two, where: (uid = 1)}");
-      query.append("return one, two");
-
-      OResultSet result = db.query(query.toString());
-      Assert.assertTrue(result.hasNext());
-      OResult doc = result.next();
-      Assert.assertFalse(result.hasNext());
-      result.close();
-    }
-
-    @Test
-    public void testJson() {
-      StringBuilder query = new StringBuilder();
-      query.append("match ");
-      query.append("{class:IndexedVertex, as: one, where: (uid = 0)} ");
-      query.append("return {'name':'foo', 'uuid':one.uid}");
-
-      OResultSet result = db.query(query.toString());
-      Assert.assertTrue(result.hasNext());
-      OResult doc = result.next();
-      Assert.assertFalse(result.hasNext());
-
-  //    ODocument doc = result.get(0);
-  //    assertEquals("foo", doc.field("name"));
-  //    assertEquals(0, doc.field("uuid"));
-      result.close();
-    }
-
-    @Test
-    public void testJson2() {
-      StringBuilder query = new StringBuilder();
-      query.append("match ");
-      query.append("{class:IndexedVertex, as: one, where: (uid = 0)} ");
-      query.append("return {'name':'foo', 'sub': {'uuid':one.uid}}");
-
-      OResultSet result = db.query(query.toString());
-      Assert.assertTrue(result.hasNext());
-      OResult doc = result.next();
-      Assert.assertFalse(result.hasNext());
-  //    ODocument doc = result.get(0);
-  //    assertEquals("foo", doc.field("name"));
-  //    assertEquals(0, doc.field("sub.uuid"));
-      result.close();
-    }
-
-
-    @Test
-    public void testJson3() {
-      StringBuilder query = new StringBuilder();
-      query.append("match ");
-      query.append("{class:IndexedVertex, as: one, where: (uid = 0)} ");
-      query.append("return {'name':'foo', 'sub': [{'uuid':one.uid}]}");
-
-      OResultSet result = db.query(query.toString());
-      Assert.assertTrue(result.hasNext());
-      OResult doc = result.next();
-      Assert.assertFalse(result.hasNext());
-  //    ODocument doc = result.get(0);
-  //    assertEquals("foo", doc.field("name"));
-  //    assertEquals(0, doc.field("sub[0].uuid"));
-
-      result.close();
-    }
-
-
-    @Test
-    public void testUnique() {
-      StringBuilder query = new StringBuilder();
-      query.append("match ");
-      query.append("{class:DiamondV, as: one, where: (uid = 0)}.out('DiamondE').out('DiamondE'){as: two} ");
-      query.append("return one, two");
-
-
-      OResultSet result = db.query(query.toString());
-      printExecutionPlan(result);
-      Assert.assertTrue(result.hasNext());
-      OResult doc = result.next();
-      Assert.assertFalse(result.hasNext());
-
-      query = new StringBuilder();
-      query.append("match ");
-      query.append("{class:DiamondV, as: one, where: (uid = 0)}.out('DiamondE').out('DiamondE'){as: two} ");
-      query.append("return one.uid, two.uid");
-
-      result.close();
-
-      result = db.query(query.toString());
-      Assert.assertTrue(result.hasNext());
-      doc = result.next();
-      Assert.assertFalse(result.hasNext());
-      result.close();
-      //    ODocument doc = result.get(0);
-      //    assertEquals("foo", doc.field("name"));
-      //    assertEquals(0, doc.field("sub[0].uuid"));
-    }
-
-
-    @Test
-    public void testManagedElements() {
-      OResultSet managedByB = getManagedElements("b");
-
-      Set<String> expectedNames = new HashSet<String>();
-      expectedNames.add("b");
-      expectedNames.add("p2");
-      expectedNames.add("p3");
-      expectedNames.add("p6");
-      expectedNames.add("p7");
-      expectedNames.add("p11");
-      Set<String> names = new HashSet<String>();
-      for (int i=0;i<6;i++) {
-        Assert.assertTrue(managedByB.hasNext());
-        OResult doc = managedByB.next();
-        String name = doc.getProperty("name");
-        names.add(name);
-      }
-      Assert.assertFalse(managedByB.hasNext());
-      Assert.assertEquals(expectedNames, names);
-      managedByB.close();
-    }
-
-    private OResultSet getManagedElements(String managerName) {
-      StringBuilder query = new StringBuilder();
-      query.append("  match {class:Employee, as:boss, where: (name = '" + managerName + "')}");
-      query.append("  -ManagerOf->{}<-ParentDepartment-{");
-      query.append("      while: ($depth = 0 or in('ManagerOf').size() = 0),");
-      query.append("      where: ($depth = 0 or in('ManagerOf').size() = 0)");
-      query.append("  }<-WorksAt-{as: managed}");
-      query.append("  return $elements");
-
-
-      return db.query(query.toString());
-    }
-
-
-
-    @Test
-    public void testManagedPathElements() {
-      OResultSet managedByB = getManagedPathElements("b");
-
-      Set<String> expectedNames = new HashSet<String>();
-      expectedNames.add("department1");
-      expectedNames.add("department3");
-      expectedNames.add("department4");
-      expectedNames.add("department8");
-      expectedNames.add("b");
-      expectedNames.add("p2");
-      expectedNames.add("p3");
-      expectedNames.add("p6");
-      expectedNames.add("p7");
-      expectedNames.add("p11");
-      Set<String> names = new HashSet<String>();
-      for (int i=0;i<10;i++) {
-        Assert.assertTrue(managedByB.hasNext());
-        OResult doc = managedByB.next();
-        String name = doc.getProperty("name");
-        names.add(name);
-      }
-      Assert.assertFalse(managedByB.hasNext());
-      Assert.assertEquals(expectedNames, names);
-      managedByB.close();
-    }
-
-
-    @Test
-    public void testOptional() throws Exception {
-      OResultSet qResult = db.query("match {class:Person, as: person} -NonExistingEdge-> {as:b, optional:true} return person, b.name");
-
-      printExecutionPlan(qResult);
-      for (int i=0;i<6;i++) {
-        Assert.assertTrue(qResult.hasNext());
-        OResult doc = qResult.next();
-        Assert.assertTrue(doc.getPropertyNames().size() == 2);
-        OResult person = doc.getProperty("person");
-
-        String name = person.getProperty("name");
-        Assert.assertTrue(name.startsWith("n"));
-      }
-    }
-
-    @Test
-    public void testOptional2() throws Exception {
-      OResultSet qResult = db.query("match {class:Person, as: person} --> {as:b, optional:true, where:(nonExisting = 12)} return person, b.name");
-
-      for (int i=0;i<6;i++) {
-        Assert.assertTrue(qResult.hasNext());
-        OResult doc = qResult.next();
-        Assert.assertTrue(doc.getPropertyNames().size() == 2);
-        OResult person = doc.getProperty("person");
-
-        String name = person.getProperty("name");
-        Assert.assertTrue(name.startsWith("n"));
-      }
-    }
-
-    @Test
-    public void testOptional3() throws Exception {
-      OResultSet qResult = db
-          .query(
-                  "select friend.name as name, b from ("
-                      + "match {class:Person, as:a, where:(name = 'n1' and 1 + 1 = 2)}.out('Friend'){as:friend, where:(name = 'n2' and 1 + 1 = 2)},"
-                      + "{as:a}.out(){as:b, where:(nonExisting = 12), optional:true},"
-                      + "{as:friend}.out(){as:b, optional:true}"
-                      + " return friend, b)");
-
-      printExecutionPlan(qResult);
+    printExecutionPlan(qResult);
+    for (int i = 0; i < 6; i++) {
       Assert.assertTrue(qResult.hasNext());
       OResult doc = qResult.next();
-      Assert.assertEquals("n2", doc.getProperty("name"));
-      Assert.assertNull(doc.getProperty("b"));
-      Assert.assertFalse(qResult.hasNext());
+      Assert.assertTrue(doc.getPropertyNames().size() == 2);
+      OResult person = doc.getProperty("person");
+
+      String name = person.getProperty("name");
+      Assert.assertTrue(name.startsWith("n"));
     }
+  }
 
-    private OResultSet getManagedPathElements(String managerName) {
-      StringBuilder query = new StringBuilder();
-      query.append("  match {class:Employee, as:boss, where: (name = '" + managerName + "')}");
-      query.append("  -ManagerOf->{}<-ParentDepartment-{");
-      query.append("      while: ($depth = 0 or in('ManagerOf').size() = 0),");
-      query.append("      where: ($depth = 0 or in('ManagerOf').size() = 0)");
-      query.append("  }<-WorksAt-{as: managed}");
-      query.append("  return $pathElements");
+  @Test
+  public void testOptional2() throws Exception {
+    OResultSet qResult = db
+        .query("match {class:Person, as: person} --> {as:b, optional:true, where:(nonExisting = 12)} return person, b.name");
 
+    for (int i = 0; i < 6; i++) {
+      Assert.assertTrue(qResult.hasNext());
+      OResult doc = qResult.next();
+      Assert.assertTrue(doc.getPropertyNames().size() == 2);
+      OResult person = doc.getProperty("person");
 
-      return db.query(query.toString());
+      String name = person.getProperty("name");
+      Assert.assertTrue(name.startsWith("n"));
     }
+  }
+
+  @Test
+  public void testOptional3() throws Exception {
+    OResultSet qResult = db.query("select friend.name as name, b from ("
+        + "match {class:Person, as:a, where:(name = 'n1' and 1 + 1 = 2)}.out('Friend'){as:friend, where:(name = 'n2' and 1 + 1 = 2)},"
+        + "{as:a}.out(){as:b, where:(nonExisting = 12), optional:true}," + "{as:friend}.out(){as:b, optional:true}"
+        + " return friend, b)");
+
+    printExecutionPlan(qResult);
+    Assert.assertTrue(qResult.hasNext());
+    OResult doc = qResult.next();
+    Assert.assertEquals("n2", doc.getProperty("name"));
+    Assert.assertNull(doc.getProperty("b"));
+    Assert.assertFalse(qResult.hasNext());
+  }
+
+  private OResultSet getManagedPathElements(String managerName) {
+    StringBuilder query = new StringBuilder();
+    query.append("  match {class:Employee, as:boss, where: (name = '" + managerName + "')}");
+    query.append("  -ManagerOf->{}<-ParentDepartment-{");
+    query.append("      while: ($depth = 0 or in('ManagerOf').size() = 0),");
+    query.append("      where: ($depth = 0 or in('ManagerOf').size() = 0)");
+    query.append("  }<-WorksAt-{as: managed}");
+    query.append("  return $pathElements");
+
+    return db.query(query.toString());
+  }
 
   private long indexUsages(ODatabaseDocumentTx db) {
     final long oldIndexUsage;

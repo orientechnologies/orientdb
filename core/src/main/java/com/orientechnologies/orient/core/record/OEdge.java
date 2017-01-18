@@ -36,6 +36,8 @@ public interface OEdge extends OElement {
 
   public OVertex getTo();
 
+  public boolean isLightweight();
+
   default OVertex getVertex(ODirection dir) {
     if (dir == ODirection.IN) {
       return getTo();

@@ -51,11 +51,11 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
     // COMMANDS
     final Map<String, Class<? extends OCommandExecutorSQLAbstract>> commands = new HashMap<String, Class<? extends OCommandExecutorSQLAbstract>>();
 
-    commands.put(OCommandExecutorSQLCreateEdge.NAME, OCommandExecutorSQLCreateEdge.class);
-    commands.put(OCommandExecutorSQLDeleteEdge.NAME, OCommandExecutorSQLDeleteEdge.class);
-    commands.put(OCommandExecutorSQLCreateVertex.NAME, OCommandExecutorSQLCreateVertex.class);
-    commands.put(OCommandExecutorSQLDeleteVertex.NAME, OCommandExecutorSQLDeleteVertex.class);
-    commands.put(OCommandExecutorSQLMoveVertex.NAME, OCommandExecutorSQLMoveVertex.class);
+//    commands.put(OCommandExecutorSQLCreateEdge.NAME, OCommandExecutorSQLCreateEdge.class);
+//    commands.put(OCommandExecutorSQLDeleteEdge.NAME, OCommandExecutorSQLDeleteEdge.class);
+//    commands.put(OCommandExecutorSQLCreateVertex.NAME, OCommandExecutorSQLCreateVertex.class);
+//    commands.put(OCommandExecutorSQLDeleteVertex.NAME, OCommandExecutorSQLDeleteVertex.class);
+//    commands.put(OCommandExecutorSQLMoveVertex.NAME, OCommandExecutorSQLMoveVertex.class);
 
     COMMANDS = Collections.unmodifiableMap(commands);
   }

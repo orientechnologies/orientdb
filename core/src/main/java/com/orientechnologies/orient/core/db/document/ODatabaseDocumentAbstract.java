@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
@@ -2098,6 +2099,13 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     ODocument inDocument = null;
     boolean outDocumentModified = false;
 
+    if (checkDeletedInTx(currentVertex))
+      throw new ORecordNotFoundException(currentVertex.getIdentity(),
+          "The vertex " + currentVertex.getIdentity() + " has been deleted");
+
+    if (checkDeletedInTx(inVertex))
+      throw new ORecordNotFoundException(inVertex.getIdentity(), "The vertex " + inVertex.getIdentity() + " has been deleted");
+
     final int maxRetries = 1;//TODO
     for (int retry = 0; retry < maxRetries; ++retry) {
       try {
@@ -2108,16 +2116,16 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
             throw new IllegalArgumentException("source vertex is invalid (rid=" + currentVertex.getIdentity() + ")");
         }
 
-        if (!ODocumentInternal.getImmutableSchemaClass(outDocument).isVertexType())
-          throw new IllegalArgumentException("source record is not a vertex");
-
         if (inDocument == null) {
           inDocument = inVertex.getRecord();
           if (inDocument == null)
-            throw new IllegalArgumentException("destination vertex is invalid (rid=" + inVertex.getIdentity() + ")");
+            throw new IllegalArgumentException("source vertex is invalid (rid=" + inVertex.getIdentity() + ")");
         }
 
-        if (!ODocumentInternal.getImmutableSchemaClass(inDocument).isVertexType())
+        if (!ODocumentInternal.getImmutableSchemaClass(outDocument).isVertexType())
+          throw new IllegalArgumentException("source record is not a vertex");
+
+        if (!ODocumentInternal.getImmutableSchemaClass(outDocument).isVertexType())
           throw new IllegalArgumentException("destination record is not a vertex");
 
         OVertex to = inVertex;
@@ -2143,30 +2151,37 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
         // CREATE THE EDGE DOCUMENT TO STORE FIELDS TOO
 
-        edge = newInstance(iClassName).asEdge().get();
-        if (fields != null) {
-          for (int i = 0; i < fields.length; i += 2) {
-            String fieldName = "" + fields[i];
-            if (fields.length <= i + 1) {
-              break;
+        if (isUseLightweightEdges() && (fields == null || fields.length == 0)) {
+          edge = newLightweightEdge(iClassName, from, to);
+          OVertexDelegate.createLink(from.getRecord(), to.getRecord(), outFieldName);
+          OVertexDelegate.createLink(to.getRecord(), from.getRecord(), inFieldName);
+        } else {
+          edge = newInstance(iClassName).asEdge().get();
+          edge.setProperty("out", currentVertex.getRecord());
+          edge.setProperty("in", inDocument.getRecord());
+
+          if (fields != null) {
+            for (int i = 0; i < fields.length; i += 2) {
+              String fieldName = "" + fields[i];
+              if (fields.length <= i + 1) {
+                break;
+              }
+              Object fieldValue = fields[i + 1];
+              edge.setProperty(fieldName, fieldValue);
+
             }
-            Object fieldValue = fields[i + 1];
-            edge.setProperty(fieldName, fieldValue);
+          }
+
+          if (!outDocumentModified) {
+            // OUT-VERTEX ---> IN-VERTEX/EDGE
+            OVertexDelegate.createLink(outDocument, edge.getRecord(), outFieldName);
 
           }
-        }
 
-        edge.setProperty("out", currentVertex);
-        edge.setProperty("in", inDocument);
-
-        if (!outDocumentModified) {
-          // OUT-VERTEX ---> IN-VERTEX/EDGE
-          OVertexDelegate.createLink(outDocument, edge, outFieldName);
+          // IN-VERTEX ---> OUT-VERTEX/EDGE
+          OVertexDelegate.createLink(inDocument, edge.getRecord(), inFieldName);
 
         }
-
-        // IN-VERTEX ---> OUT-VERTEX/EDGE
-        OVertexDelegate.createLink(inDocument, edge, inFieldName);
 
         // OK
         break;
@@ -2194,6 +2209,20 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       }
     }
     return edge;
+  }
+
+  private boolean checkDeletedInTx(OVertex currentVertex) {
+    ORID id;
+    if (currentVertex.getRecord() != null)
+      id = currentVertex.getRecord().getIdentity();
+    else
+      return false;
+
+    final ORecordOperation oper = getTransaction().getRecordEntry(id);
+    if (oper == null)
+      return id.isTemporary();
+    else
+      return oper.type == ORecordOperation.DELETED;
   }
 
   private static String getConnectionFieldName(final ODirection iDirection, final String iClassName) {
@@ -3030,6 +3059,27 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     if (encryptionKey != null)
       // SAVE ENCRYPTION KEY IN CONFIGURATION
       configuration.setValue(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY, encryptionKey);
+  }
+
+  public boolean isUseLightweightEdges() {
+    final List<OStorageEntryConfiguration> custom = (List<OStorageEntryConfiguration>) this.get(ATTRIBUTES.CUSTOM);
+    for (OStorageEntryConfiguration c : custom) {
+      if (c.name.equals("useLightweightEdges"))
+        return Boolean.parseBoolean(c.value);
+    }
+    return false;
+  }
+
+  public void setUseLightweightEdges(boolean b){
+    this.setCustom("useLightweightEdges", b);
+  }
+
+  public OEdge newLightweightEdge(String iClassName, OVertex from, OVertex to) {
+    OClass clazz = getMetadata().getSchema().getClass(iClassName);
+    OEdgeDelegate result = new OEdgeDelegate(from, to, clazz);
+
+
+    return result;
   }
 
 }

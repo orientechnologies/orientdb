@@ -30,7 +30,9 @@ import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
+import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSetLifecycleDecorator;
@@ -118,4 +120,10 @@ public interface ODatabaseDocumentInternal extends ODatabaseDocument, ODatabaseI
   default OLocalResultSetLifecycleDecorator getActiveQuery(String id) {
     throw new UnsupportedOperationException();
   }
+
+  boolean isUseLightweightEdges();
+
+  OEdge newLightweightEdge(String iClassName, OVertex from, OVertex to);
+
+  void setUseLightweightEdges(boolean b);
 }
