@@ -25,6 +25,7 @@ import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OIndexRIDContainer;
+import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -38,9 +39,8 @@ import java.util.concurrent.Callable;
 
 /**
  * Fast index for full-text searches.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 public class OIndexFullText extends OIndexMultiValues {
 
@@ -52,13 +52,13 @@ public class OIndexFullText extends OIndexMultiValues {
   private static final boolean DEF_INDEX_RADIX        = true;
   private static final String  DEF_SEPARATOR_CHARS    = " \r\n\t:;,.|+*/\\=!?[]()";
   private static final String  DEF_IGNORE_CHARS       = "'\"";
-  private static final String  DEF_STOP_WORDS         = "the in a at as and or for his her " + "him this that what which while "
-      + "up with be was were is";
-  private static int           DEF_MIN_WORD_LENGTH    = 3;
-  private boolean              indexRadix;
-  private String               separatorChars;
-  private String               ignoreChars;
-  private int                  minWordLength;
+  private static final String  DEF_STOP_WORDS         =
+      "the in a at as and or for his her " + "him this that what which while " + "up with be was were is";
+  private static       int     DEF_MIN_WORD_LENGTH    = 3;
+  private boolean indexRadix;
+  private String  separatorChars;
+  private String  ignoreChars;
+  private int     minWordLength;
 
   private Set<String> stopWords;
 
@@ -98,7 +98,15 @@ public class OIndexFullText extends OIndexMultiValues {
       for (final String word : words) {
         acquireSharedLock();
         try {
-          final Set<OIdentifiable> refs = (Set<OIdentifiable>) storage.getIndexValue(indexId, word);
+          Set<OIdentifiable> refs;
+          while (true) {
+            try {
+              refs = (Set<OIdentifiable>) storage.getIndexValue(indexId, word);
+              break;
+            } catch (OInvalidIndexEngineIdException e) {
+              doReloadIndexEngine();
+            }
+          }
 
           final boolean durable;
           if (metadata != null && Boolean.TRUE.equals(metadata.field("durableInNonTxMode")))
@@ -106,29 +114,39 @@ public class OIndexFullText extends OIndexMultiValues {
           else
             durable = false;
 
+          final Set<OIdentifiable> refsc = refs;
+
           // SAVE THE INDEX ENTRY
-          storage.updateIndexEntry(indexId, word, new Callable<Object>() {
-            @Override
-            public Object call() throws Exception {
-              Set<OIdentifiable> result = null;
+          while (true) {
+            try {
+              storage.updateIndexEntry(indexId, word, new Callable<Object>() {
+                @Override
+                public Object call() throws Exception {
+                  Set<OIdentifiable> result = null;
 
-              if (refs == null) {
-                // WORD NOT EXISTS: CREATE THE KEYWORD CONTAINER THE FIRST TIME THE WORD IS FOUND
-                if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
-                  result = new OIndexRIDContainer(getName(), durable);
-                } else {
-                  throw new IllegalStateException("MBRBTreeContainer is not supported any more");
+                  if (refsc == null) {
+                    // WORD NOT EXISTS: CREATE THE KEYWORD CONTAINER THE FIRST TIME THE WORD IS FOUND
+                    if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
+                      result = new OIndexRIDContainer(getName(), durable);
+                    } else {
+                      throw new IllegalStateException("MBRBTreeContainer is not supported any more");
+                    }
+                  } else {
+                    result = refsc;
+                  }
+
+                  // ADD THE CURRENT DOCUMENT AS REF FOR THAT WORD
+                  result.add(singleValue);
+
+                  return result;
                 }
-              } else {
-                result = refs;
-              }
+              });
 
-              // ADD THE CURRENT DOCUMENT AS REF FOR THAT WORD
-              result.add(singleValue);
-
-              return result;
+              break;
+            } catch (OInvalidIndexEngineIdException e) {
+              doReloadIndexEngine();
             }
-          });
+          }
 
         } finally {
           releaseSharedLock();
@@ -145,11 +163,10 @@ public class OIndexFullText extends OIndexMultiValues {
   /**
    * Splits passed in key on several words and remove records with keys equals to any item of split result and values equals to
    * passed in value.
-   * 
-   * @param key
-   *          Key to remove.
-   * @param value
-   *          Value to remove.
+   *
+   * @param key   Key to remove.
+   * @param value Value to remove.
+   *
    * @return <code>true</code> if at least one record is removed.
    */
   @Override
@@ -171,10 +188,27 @@ public class OIndexFullText extends OIndexMultiValues {
       for (final String word : words) {
         acquireSharedLock();
         try {
-          final Set<OIdentifiable> recs = (Set<OIdentifiable>) storage.getIndexValue(indexId, word);
+          Set<OIdentifiable> recs;
+          while (true) {
+            try {
+              recs = (Set<OIdentifiable>) storage.getIndexValue(indexId, word);
+              break;
+            } catch (OInvalidIndexEngineIdException e) {
+              doReloadIndexEngine();
+            }
+          }
 
           if (recs != null && !recs.isEmpty()) {
-            storage.updateIndexEntry(indexId, word, new EntityRemover(recs, value, removed));
+            while (true) {
+              try {
+                storage.updateIndexEntry(indexId, word, new EntityRemover(recs, value, removed));
+                break;
+              } catch (OInvalidIndexEngineIdException e) {
+                doReloadIndexEngine();
+              }
+
+            }
+
           }
         } finally {
           releaseSharedLock();
@@ -211,8 +245,8 @@ public class OIndexFullText extends OIndexMultiValues {
   @Override
   public ODocument updateConfiguration() {
     super.updateConfiguration();
-    return ((FullTextIndexConfiguration) configuration).updateFullTextIndexConfiguration(separatorChars, ignoreChars, stopWords,
-        minWordLength, indexRadix);
+    return ((FullTextIndexConfiguration) configuration)
+        .updateFullTextIndexConfiguration(separatorChars, ignoreChars, stopWords, minWordLength, indexRadix);
   }
 
   @Override

@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
@@ -41,7 +42,12 @@ public class OIndexNotUnique extends OIndexMultiValues {
 
   @Override
   public boolean supportsOrderedIterations() {
-    return storage.hasIndexRangeQuerySupport(indexId);
+    while (true)
+      try {
+        return storage.hasIndexRangeQuerySupport(indexId);
+      } catch (OInvalidIndexEngineIdException e) {
+        doReloadIndexEngine();
+      }
   }
 
   @Override

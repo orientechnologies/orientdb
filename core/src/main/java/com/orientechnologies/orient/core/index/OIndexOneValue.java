@@ -24,6 +24,7 @@ import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerRID;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
@@ -33,9 +34,8 @@ import java.util.*;
 
 /**
  * Abstract Index implementation that allows only one value for a key.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
   public OIndexOneValue(String name, final String type, String algorithm, int version, OAbstractPaginatedStorage storage,
@@ -53,7 +53,12 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
     try {
       acquireSharedLock();
       try {
-        return (OIdentifiable) storage.getIndexValue(indexId, iKey);
+        while (true)
+          try {
+            return (OIdentifiable) storage.getIndexValue(indexId, iKey);
+          } catch (OInvalidIndexEngineIdException e) {
+            doReloadIndexEngine();
+          }
       } finally {
         releaseSharedLock();
       }
@@ -75,7 +80,12 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
     try {
       acquireSharedLock();
       try {
-        return storage.indexContainsKey(indexId, iKey) ? 1 : 0;
+        while (true)
+          try {
+            return storage.indexContainsKey(indexId, iKey) ? 1 : 0;
+          } catch (OInvalidIndexEngineIdException e) {
+            doReloadIndexEngine();
+          }
       } finally {
         releaseSharedLock();
       }
@@ -115,8 +125,8 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
 
   public OIndexOneValue create(final String name, final OIndexDefinition indexDefinition, final String clusterIndexName,
       final Set<String> clustersToIndex, boolean rebuild, final OProgressListener progressListener) {
-    return (OIndexOneValue) super.create(indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener,
-        determineValueSerializer());
+    return (OIndexOneValue) super
+        .create(indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener, determineValueSerializer());
   }
 
   @Override
@@ -144,7 +154,13 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
 
           acquireSharedLock();
           try {
-            result = (OIdentifiable) storage.getIndexValue(indexId, key);
+            while (true)
+              try {
+                result = (OIdentifiable) storage.getIndexValue(indexId, key);
+                break;
+              } catch (OInvalidIndexEngineIdException e) {
+                doReloadIndexEngine();
+              }
           } finally {
             releaseSharedLock();
           }
@@ -184,7 +200,12 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
 
     acquireSharedLock();
     try {
-      return storage.iterateIndexEntriesBetween(indexId, fromKey, fromInclusive, toKey, toInclusive, ascOrder, null);
+      while (true)
+        try {
+          return storage.iterateIndexEntriesBetween(indexId, fromKey, fromInclusive, toKey, toInclusive, ascOrder, null);
+        } catch (OInvalidIndexEngineIdException e) {
+          doReloadIndexEngine();
+        }
     } finally {
       releaseSharedLock();
     }
@@ -195,7 +216,12 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
     fromKey = getCollatingValue(fromKey);
     acquireSharedLock();
     try {
-      return storage.iterateIndexEntriesMajor(indexId, fromKey, fromInclusive, ascOrder, null);
+      while (true)
+        try {
+          return storage.iterateIndexEntriesMajor(indexId, fromKey, fromInclusive, ascOrder, null);
+        } catch (OInvalidIndexEngineIdException e) {
+          doReloadIndexEngine();
+        }
     } finally {
       releaseSharedLock();
     }
@@ -206,7 +232,14 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
     toKey = getCollatingValue(toKey);
     acquireSharedLock();
     try {
-      return storage.iterateIndexEntriesMinor(indexId, toKey, toInclusive, ascOrder, null);
+      while (true) {
+        try {
+          return storage.iterateIndexEntriesMinor(indexId, toKey, toInclusive, ascOrder, null);
+        } catch (OInvalidIndexEngineIdException e) {
+          doReloadIndexEngine();
+        }
+      }
+
     } finally {
       releaseSharedLock();
     }
@@ -215,7 +248,13 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
   public long getSize() {
     acquireSharedLock();
     try {
-      return storage.getIndexSize(indexId, null);
+      while (true) {
+        try {
+          return storage.getIndexSize(indexId, null);
+        } catch (OInvalidIndexEngineIdException e) {
+          doReloadIndexEngine();
+        }
+      }
     } finally {
       releaseSharedLock();
     }
@@ -224,7 +263,13 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
   public long getKeySize() {
     acquireSharedLock();
     try {
-      return storage.getIndexSize(indexId, null);
+      while (true) {
+        try {
+          return storage.getIndexSize(indexId, null);
+        } catch (OInvalidIndexEngineIdException e) {
+          doReloadIndexEngine();
+        }
+      }
     } finally {
       releaseSharedLock();
     }
@@ -234,7 +279,13 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
   public OIndexCursor cursor() {
     acquireSharedLock();
     try {
-      return storage.getIndexCursor(indexId, null);
+      while (true) {
+        try {
+          return storage.getIndexCursor(indexId, null);
+        } catch (OInvalidIndexEngineIdException e) {
+          doReloadIndexEngine();
+        }
+      }
     } finally {
       releaseSharedLock();
     }
@@ -244,7 +295,13 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
   public OIndexCursor descCursor() {
     acquireSharedLock();
     try {
-      return storage.getIndexDescCursor(indexId, null);
+      while (true) {
+        try {
+          return storage.getIndexDescCursor(indexId, null);
+        } catch (OInvalidIndexEngineIdException e) {
+          doReloadIndexEngine();
+        }
+      }
     } finally {
       releaseSharedLock();
     }

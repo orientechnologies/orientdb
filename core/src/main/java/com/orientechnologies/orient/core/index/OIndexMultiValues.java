@@ -26,6 +26,7 @@ import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OIndexRIDContainer;
+import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -59,7 +60,16 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
       acquireSharedLock();
       try {
 
-        final Set<OIdentifiable> values = (Set<OIdentifiable>) storage.getIndexValue(indexId, key);
+        Set<OIdentifiable> values;
+
+        while (true) {
+          try {
+            values = (Set<OIdentifiable>) storage.getIndexValue(indexId, key);
+            break;
+          } catch (OInvalidIndexEngineIdException e) {
+            doReloadIndexEngine();
+          }
+        }
 
         if (values == null)
           return Collections.emptySet();
@@ -86,7 +96,16 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
       acquireSharedLock();
       try {
 
-        final Set<OIdentifiable> values = (Set<OIdentifiable>) storage.getIndexValue(indexId, key);
+        Set<OIdentifiable> values;
+
+        while (true) {
+          try {
+            values = (Set<OIdentifiable>) storage.getIndexValue(indexId, key);
+            break;
+          } catch (OInvalidIndexEngineIdException e) {
+            doReloadIndexEngine();
+          }
+        }
 
         if (values == null)
           return 0;
@@ -131,12 +150,23 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
         else
           durable = false;
 
-        final Set<OIdentifiable> values = (Set<OIdentifiable>) storage.getIndexValue(indexId, key);
+        Set<OIdentifiable> values = null;
+
+        while (true) {
+          try {
+            values = (Set<OIdentifiable>) storage.getIndexValue(indexId, key);
+            break;
+          } catch (OInvalidIndexEngineIdException e) {
+            doReloadIndexEngine();
+          }
+        }
+
+        final Set<OIdentifiable> cvalues = values;
 
         final Callable<Object> creator = new Callable<Object>() {
           @Override
           public Object call() throws Exception {
-            Set<OIdentifiable> result = values;
+            Set<OIdentifiable> result = cvalues;
 
             if (result == null) {
               if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
@@ -152,8 +182,15 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
           }
         };
 
-        storage.updateIndexEntry(indexId, key, creator);
-        return this;
+        while (true) {
+          try {
+            storage.updateIndexEntry(indexId, key, creator);
+            return this;
+          } catch (OInvalidIndexEngineIdException e) {
+            doReloadIndexEngine();
+          }
+        }
+
       } finally {
         releaseSharedLock();
       }
@@ -176,7 +213,15 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
     try {
       acquireSharedLock();
       try {
-        final Set<OIdentifiable> values = (Set<OIdentifiable>) storage.getIndexValue(indexId, key);
+        Set<OIdentifiable> values = null;
+        while (true) {
+          try {
+            values = (Set<OIdentifiable>) storage.getIndexValue(indexId, key);
+            break;
+          } catch (OInvalidIndexEngineIdException e) {
+            doReloadIndexEngine();
+          }
+        }
 
         if (values == null) {
           return false;
@@ -186,7 +231,13 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
         final Callable<Object> creator = new EntityRemover(value, removed, values);
 
-        storage.updateIndexEntry(indexId, key, creator);
+        while (true)
+          try {
+            storage.updateIndexEntry(indexId, key, creator);
+            break;
+          } catch (OInvalidIndexEngineIdException e) {
+            doReloadIndexEngine();
+          }
 
         return removed.getValue();
 
@@ -219,8 +270,13 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
     acquireSharedLock();
     try {
-      return storage.iterateIndexEntriesBetween(indexId, fromKey, fromInclusive, toKey, toInclusive, ascOrder,
-          MultiValuesTransformer.INSTANCE);
+      while (true)
+        try {
+          return storage.iterateIndexEntriesBetween(indexId, fromKey, fromInclusive, toKey, toInclusive, ascOrder,
+              MultiValuesTransformer.INSTANCE);
+        } catch (OInvalidIndexEngineIdException e) {
+          doReloadIndexEngine();
+        }
     } finally {
       releaseSharedLock();
     }
@@ -232,8 +288,13 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
     acquireSharedLock();
     try {
-      return storage.iterateIndexEntriesMajor(indexId, fromKey, fromInclusive, ascOrder, MultiValuesTransformer.INSTANCE);
-
+      while (true) {
+        try {
+          return storage.iterateIndexEntriesMajor(indexId, fromKey, fromInclusive, ascOrder, MultiValuesTransformer.INSTANCE);
+        } catch (OInvalidIndexEngineIdException e) {
+          doReloadIndexEngine();
+        }
+      }
     } finally {
       releaseSharedLock();
     }
@@ -245,7 +306,13 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
     acquireSharedLock();
     try {
-      return storage.iterateIndexEntriesMinor(indexId, toKey, toInclusive, ascOrder, MultiValuesTransformer.INSTANCE);
+      while (true) {
+        try {
+          return storage.iterateIndexEntriesMinor(indexId, toKey, toInclusive, ascOrder, MultiValuesTransformer.INSTANCE);
+        } catch (OInvalidIndexEngineIdException e) {
+          doReloadIndexEngine();
+        }
+      }
     } finally {
       releaseSharedLock();
     }
@@ -282,7 +349,14 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
             acquireSharedLock();
             try {
-              result = (Collection<OIdentifiable>) storage.getIndexValue(indexId, key);
+              while (true)
+                try {
+                  result = (Collection<OIdentifiable>) storage.getIndexValue(indexId, key);
+                  break;
+                } catch (OInvalidIndexEngineIdException e) {
+                  doReloadIndexEngine();
+                }
+
             } finally {
               releaseSharedLock();
             }
@@ -322,7 +396,12 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
   public long getSize() {
     acquireSharedLock();
     try {
-      return storage.getIndexSize(indexId, MultiValuesTransformer.INSTANCE);
+      while (true)
+        try {
+          return storage.getIndexSize(indexId, MultiValuesTransformer.INSTANCE);
+        } catch (OInvalidIndexEngineIdException e) {
+          doReloadIndexEngine();
+        }
     } finally {
       releaseSharedLock();
     }
@@ -332,7 +411,13 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
   public long getKeySize() {
     acquireSharedLock();
     try {
-      return storage.getIndexSize(indexId, null);
+      while (true) {
+        try {
+          return storage.getIndexSize(indexId, null);
+        } catch (OInvalidIndexEngineIdException e) {
+          doReloadIndexEngine();
+        }
+      }
     } finally {
       releaseSharedLock();
     }
@@ -342,7 +427,14 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
   public OIndexCursor cursor() {
     acquireSharedLock();
     try {
-      return storage.getIndexCursor(indexId, MultiValuesTransformer.INSTANCE);
+      while (true) {
+        try {
+          return storage.getIndexCursor(indexId, MultiValuesTransformer.INSTANCE);
+        } catch (OInvalidIndexEngineIdException e) {
+          doReloadIndexEngine();
+        }
+      }
+
     } finally {
       releaseSharedLock();
     }
@@ -352,7 +444,12 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
   public OIndexCursor descCursor() {
     acquireSharedLock();
     try {
-      return storage.getIndexDescCursor(indexId, MultiValuesTransformer.INSTANCE);
+      while (true)
+        try {
+          return storage.getIndexDescCursor(indexId, MultiValuesTransformer.INSTANCE);
+        } catch (OInvalidIndexEngineIdException e) {
+          doReloadIndexEngine();
+        }
     } finally {
       releaseSharedLock();
     }

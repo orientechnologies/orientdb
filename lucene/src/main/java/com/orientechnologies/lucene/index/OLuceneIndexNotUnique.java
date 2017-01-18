@@ -25,6 +25,7 @@ import com.orientechnologies.lucene.OLuceneTxOperations;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
 import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.index.OIndexAbstract;
 import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
@@ -75,13 +76,20 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
         }
         return true;
       } else {
-        return storage.callIndexEngine(false, false, indexId, new OIndexEngineCallback<Boolean>() {
-          @Override
-          public Boolean callEngine(OIndexEngine engine) {
-            OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
-            return indexEngine.remove(key, value);
+        while (true) {
+          try {
+            return storage.callIndexEngine(false, false, indexId, new OIndexEngineCallback<Boolean>() {
+              @Override
+              public Boolean callEngine(OIndexEngine engine) {
+                OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
+                return indexEngine.remove(key, value);
+              }
+            });
+          } catch (OInvalidIndexEngineIdException e) {
+            doReloadIndexEngine();
           }
-        });
+        }
+
       }
     }
     return true;
@@ -110,33 +118,38 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
 
   @Override
   protected void commitSnapshot(final Map<Object, Object> snapshot) {
+    while (true)
+      try {
+        storage.callIndexEngine(false, false, indexId, new OIndexEngineCallback<Object>() {
+          @Override
+          public Boolean callEngine(OIndexEngine engine) {
+            OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
 
-    storage.callIndexEngine(false, false, indexId, new OIndexEngineCallback<Object>() {
-      @Override
-      public Boolean callEngine(OIndexEngine engine) {
-        OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
+            for (Map.Entry<Object, Object> snapshotEntry : snapshot.entrySet()) {
+              Object key = snapshotEntry.getKey();
+              OLuceneTxOperations operations = (OLuceneTxOperations) snapshotEntry.getValue();
 
-        for (Map.Entry<Object, Object> snapshotEntry : snapshot.entrySet()) {
-          Object key = snapshotEntry.getKey();
-          OLuceneTxOperations operations = (OLuceneTxOperations) snapshotEntry.getValue();
+              for (OIdentifiable oIdentifiable : operations.removed) {
+                indexEngine.remove(decodeKey(key), oIdentifiable);
+              }
 
-          for (OIdentifiable oIdentifiable : operations.removed) {
-            indexEngine.remove(decodeKey(key), oIdentifiable);
+            }
+            for (Map.Entry<Object, Object> snapshotEntry : snapshot.entrySet()) {
+              Object key = snapshotEntry.getKey();
+              OLuceneTxOperations operations = (OLuceneTxOperations) snapshotEntry.getValue();
+
+              indexEngine.put(decodeKey(key), operations.added);
+
+            }
+            OTransaction transaction = getDatabase().getTransaction();
+            resetTransactionChanges(transaction);
+            return null;
           }
-
-        }
-        for (Map.Entry<Object, Object> snapshotEntry : snapshot.entrySet()) {
-          Object key = snapshotEntry.getKey();
-          OLuceneTxOperations operations = (OLuceneTxOperations) snapshotEntry.getValue();
-
-          indexEngine.put(decodeKey(key), operations.added);
-
-        }
-        OTransaction transaction = getDatabase().getTransaction();
-        resetTransactionChanges(transaction);
-        return null;
+        });
+        break;
+      } catch (OInvalidIndexEngineIdException e) {
+        doReloadIndexEngine();
       }
-    });
 
   }
 
@@ -183,15 +196,20 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
 
   @Override
   protected void onIndexEngineChange(int indexId) {
-
-    storage.callIndexEngine(false, false, indexId, new OIndexEngineCallback<Object>() {
-      @Override
-      public Object callEngine(OIndexEngine engine) {
-        OLuceneIndexEngine oIndexEngine = (OLuceneIndexEngine) engine;
-        oIndexEngine.init(getName(), getType(), getDefinition(), isAutomatic(), getMetadata());
-        return null;
+    while (true)
+      try {
+        storage.callIndexEngine(false, false, indexId, new OIndexEngineCallback<Object>() {
+          @Override
+          public Object callEngine(OIndexEngine engine) {
+            OLuceneIndexEngine oIndexEngine = (OLuceneIndexEngine) engine;
+            oIndexEngine.init(getName(), getType(), getDefinition(), isAutomatic(), getMetadata());
+            return null;
+          }
+        });
+        break;
+      } catch (OInvalidIndexEngineIdException e) {
+        doReloadIndexEngine();
       }
-    });
   }
 
   protected Object encodeKey(Object key) {
@@ -202,18 +220,24 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
 
     OLuceneTxChanges changes = (OLuceneTxChanges) transaction.getCustomData(getName());
     if (changes == null) {
-
-      changes = storage.callIndexEngine(false, false, indexId, new OIndexEngineCallback<OLuceneTxChanges>() {
-        @Override
-        public OLuceneTxChanges callEngine(OIndexEngine engine) {
-          OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
-          try {
-            return indexEngine.buildTxChanges();
-          } catch (IOException e) {
-            throw OException.wrapException(new OIndexException("Cannot get searcher from index " + getName()), e);
-          }
+      while (true)
+        try {
+          changes = storage.callIndexEngine(false, false, indexId, new OIndexEngineCallback<OLuceneTxChanges>() {
+            @Override
+            public OLuceneTxChanges callEngine(OIndexEngine engine) {
+              OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
+              try {
+                return indexEngine.buildTxChanges();
+              } catch (IOException e) {
+                throw OException.wrapException(new OIndexException("Cannot get searcher from index " + getName()), e);
+              }
+            }
+          });
+          break;
+        } catch (OInvalidIndexEngineIdException e) {
+          doReloadIndexEngine();
         }
-      });
+
       transaction.setCustomData(getName(), changes);
     }
     return changes;
@@ -222,8 +246,8 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
   @Override
   public OLuceneIndexNotUnique create(String name, OIndexDefinition indexDefinition, String clusterIndexName,
       Set<String> clustersToIndex, boolean rebuild, OProgressListener progressListener) {
-    return (OLuceneIndexNotUnique) super.create(indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener,
-        determineValueSerializer());
+    return (OLuceneIndexNotUnique) super
+        .create(indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener, determineValueSerializer());
   }
 
   @Override
@@ -231,15 +255,28 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
 
     final OTransaction transaction = getDatabase().getTransaction();
     if (transaction.isActive()) {
-      return storage.callIndexEngine(false, false, indexId, new OIndexEngineCallback<Set<OIdentifiable>>() {
-        @Override
-        public Set<OIdentifiable> callEngine(OIndexEngine engine) {
-          OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
-          return (Set<OIdentifiable>) indexEngine.getInTx(key, getTransactionChanges(transaction));
+      while (true) {
+        try {
+          return storage.callIndexEngine(false, false, indexId, new OIndexEngineCallback<Set<OIdentifiable>>() {
+            @Override
+            public Set<OIdentifiable> callEngine(OIndexEngine engine) {
+              OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
+              return (Set<OIdentifiable>) indexEngine.getInTx(key, getTransactionChanges(transaction));
+            }
+          });
+        } catch (OInvalidIndexEngineIdException e) {
+          doReloadIndexEngine();
         }
-      });
+      }
+
     } else {
-      return (Set<OIdentifiable>) storage.getIndexValue(indexId, key);
+      while (true) {
+        try {
+          return (Set<OIdentifiable>) storage.getIndexValue(indexId, key);
+        } catch (OInvalidIndexEngineIdException e) {
+          doReloadIndexEngine();
+        }
+      }
     }
   }
 
@@ -252,13 +289,21 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
         OLuceneTxChanges transactionChanges = getTransactionChanges(transaction);
         transaction.addIndexEntry(this, super.getName(), OTransactionIndexChanges.OPERATION.PUT, encodeKey(key), singleValue);
 
-        Document luceneDoc = storage.callIndexEngine(false, false, indexId, new OIndexEngineCallback<Document>() {
-          @Override
-          public Document callEngine(OIndexEngine engine) {
-            OLuceneIndexEngine oIndexEngine = (OLuceneIndexEngine) engine;
-            return oIndexEngine.buildDocument(key, singleValue);
+        Document luceneDoc;
+        while (true) {
+          try {
+            luceneDoc = storage.callIndexEngine(false, false, indexId, new OIndexEngineCallback<Document>() {
+              @Override
+              public Document callEngine(OIndexEngine engine) {
+                OLuceneIndexEngine oIndexEngine = (OLuceneIndexEngine) engine;
+                return oIndexEngine.buildDocument(key, singleValue);
+              }
+            });
+            break;
+          } catch (OInvalidIndexEngineIdException e) {
+            doReloadIndexEngine();
           }
-        });
+        }
 
         try {
           transactionChanges.put(key, singleValue, luceneDoc);
@@ -267,54 +312,43 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
         }
 
       } else {
-
-        storage.updateIndexEntry(indexId, key, new Callable<Object>() {
-          @Override
-          public Object call() throws Exception {
-            return Arrays.asList(singleValue);
+        while (true) {
+          try {
+            storage.updateIndexEntry(indexId, key, new Callable<Object>() {
+              @Override
+              public Object call() throws Exception {
+                return Arrays.asList(singleValue);
+              }
+            });
+            break;
+          } catch (OInvalidIndexEngineIdException e) {
+            doReloadIndexEngine();
           }
-        });
+        }
       }
     }
     return this;
 
   }
 
-  // @Override
-  // public OIndexMultiValues put(Object key, OIdentifiable iSingleValue) {
-  // checkForRebuild();
-  //
-  // key = getCollatingValue(key);
-  //
-  // modificationLock.requestModificationLock();
-  // try {
-  // acquireExclusiveLock();
-  // try {
-  // checkForKeyType(key);
-  // Set<OIdentifiable> values = new HashSet<OIdentifiable>();
-  // values.add(iSingleValue);
-  // indexEngine.put(key, values);
-  // return this;
-  //
-  // } finally {
-  // releaseExclusiveLock();
-  // }
-  // } finally {
-  // modificationLock.releaseModificationLock();
-  // }
-  // }
-
   @Override
   public long getSize() {
-    return storage.callIndexEngine(false, false, indexId, new OIndexEngineCallback<Long>() {
-      // TODO apply current TX
-      @Override
-      public Long callEngine(OIndexEngine engine) {
-        OTransaction transaction = getDatabase().getTransaction();
-        OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
-        return indexEngine.sizeInTx(getTransactionChanges(transaction));
+    while (true) {
+      try {
+        return storage.callIndexEngine(false, false, indexId, new OIndexEngineCallback<Long>() {
+          // TODO apply current TX
+          @Override
+          public Long callEngine(OIndexEngine engine) {
+            OTransaction transaction = getDatabase().getTransaction();
+            OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
+            return indexEngine.sizeInTx(getTransactionChanges(transaction));
+          }
+        });
+      } catch (OInvalidIndexEngineIdException e) {
+        doReloadIndexEngine();
       }
-    });
+    }
+
   }
 
   @Override
@@ -330,68 +364,59 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
   @Override
   public OIndexCursor iterateEntriesBetween(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
       boolean ascOrder) {
-    return storage.iterateIndexEntriesBetween(indexId, fromKey, fromInclusive, toKey, toInclusive, ascOrder, null);
+    while (true) {
+      try {
+        return storage.iterateIndexEntriesBetween(indexId, fromKey, fromInclusive, toKey, toInclusive, ascOrder, null);
+      } catch (OInvalidIndexEngineIdException e) {
+        doReloadIndexEngine();
+      }
+    }
+
   }
 
   @Override
   public OIndexCursor iterateEntriesMajor(Object fromKey, boolean fromInclusive, boolean ascOrder) {
-    return storage.iterateIndexEntriesMajor(indexId, fromKey, fromInclusive, ascOrder, null);
+    while (true) {
+      try {
+        return storage.iterateIndexEntriesMajor(indexId, fromKey, fromInclusive, ascOrder, null);
+      } catch (OInvalidIndexEngineIdException e) {
+        doReloadIndexEngine();
+      }
+    }
   }
 
   @Override
   public OIndexCursor iterateEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder) {
-    return storage.iterateIndexEntriesMinor(indexId, toKey, toInclusive, ascOrder, null);
+    while (true) {
+      try {
+        return storage.iterateIndexEntriesMinor(indexId, toKey, toInclusive, ascOrder, null);
+      } catch (OInvalidIndexEngineIdException e) {
+        doReloadIndexEngine();
+      }
+    }
   }
-
-  //
-  // @Override
-  // public boolean remove(Object key, OIdentifiable value) {
-  // checkForRebuild();
-  //
-  // key = getCollatingValue(key);
-  // modificationLock.requestModificationLock();
-  // try {
-  // acquireExclusiveLock();
-  // try {
-  //
-  // if (indexEngine instanceof OLuceneIndexEngine) {
-  // return ((OLuceneIndexEngine) indexEngine).remove(key, value);
-  // } else {
-  // return false;
-  // }
-  //
-  // } finally {
-  // releaseExclusiveLock();
-  // }
-  // } finally {
-  // modificationLock.releaseModificationLock();
-  // }
-  // }
-
-  // @Override
-  // public long rebuild(OProgressListener iProgressListener) {
-  //
-  // OLuceneIndexEngine engine = (OLuceneIndexEngine) indexEngine;
-  // try {
-  // engine.setRebuilding(true);
-  // super.rebuild(iProgressListener);
-  // } finally {
-  // engine.setRebuilding(false);
-  //
-  // }
-  // engine.flush();
-  // return ((OLuceneIndexEngine) indexEngine).size(null);
-  //
-  // }
 
   @Override
   public OIndexCursor cursor() {
-    return storage.getIndexCursor(indexId, null);
+    while (true) {
+      try {
+        return storage.getIndexCursor(indexId, null);
+      } catch (OInvalidIndexEngineIdException e) {
+        doReloadIndexEngine();
+      }
+    }
+
   }
 
   @Override
   public OIndexCursor descCursor() {
-    return storage.getIndexCursor(indexId, null);
+    while (true) {
+      try {
+        return storage.getIndexCursor(indexId, null);
+      } catch (OInvalidIndexEngineIdException e) {
+        doReloadIndexEngine();
+      }
+    }
   }
 
   @Override
@@ -401,18 +426,23 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
 
   @Override
   public IndexSearcher searcher() throws IOException {
-    return storage.callIndexEngine(false, false, indexId, new OIndexEngineCallback<IndexSearcher>() {
-      @Override
-      public IndexSearcher callEngine(OIndexEngine engine) {
-        OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
-        try {
-          return indexEngine.searcher();
-        } catch (IOException e) {
-          throw OException.wrapException(new OIndexException("Cannot get searcher from index " + getName()), e);
-        }
+    while (true) {
+      try {
+        return storage.callIndexEngine(false, false, indexId, new OIndexEngineCallback<IndexSearcher>() {
+          @Override
+          public IndexSearcher callEngine(OIndexEngine engine) {
+            OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
+            try {
+              return indexEngine.searcher();
+            } catch (IOException e) {
+              throw OException.wrapException(new OIndexException("Cannot get searcher from index " + getName()), e);
+            }
+          }
+        });
+      } catch (OInvalidIndexEngineIdException e) {
+        doReloadIndexEngine();
       }
-    });
-
+    }
   }
 
   @Override
