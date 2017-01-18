@@ -77,7 +77,10 @@ public class OEngineLocalPaginated extends OEngineAbstract {
    * @see O2QCache#changeMaximumAmountOfMemory(long)
    */
   public void changeCacheSize(final long cacheSize) {
-    readCache.changeMaximumAmountOfMemory(calculateReadCacheMaxMemory(cacheSize));
+    if (readCache != null)
+      readCache.changeMaximumAmountOfMemory(calculateReadCacheMaxMemory(cacheSize));
+
+    //otherwise memory size will be set during cache initialization.
   }
 
   public OStorage createStorage(final String dbName, final Map<String, String> configuration) {
