@@ -55,6 +55,9 @@ public class OSymmetricKeyCITest extends AbstractSecurityTest {
   public static void afterClass() {
     server.shutdown();
 
+    // Just in case...
+    OGlobalConfiguration.CLIENT_CREDENTIAL_INTERCEPTOR.setValue(null);
+
     cleanup(TESTDB);
   }
 
@@ -72,6 +75,8 @@ public class OSymmetricKeyCITest extends AbstractSecurityTest {
     OServerAdmin serverAd = new OServerAdmin("remote:localhost");
     serverAd.connect("test", password);
     serverAd.close();
+    
+    OGlobalConfiguration.CLIENT_CREDENTIAL_INTERCEPTOR.setValue(null);
   }
 
   @Test(expected=OSecurityAccessException.class)
@@ -88,6 +93,8 @@ public class OSymmetricKeyCITest extends AbstractSecurityTest {
     // The key is specified for username "test" in the security.json file.
     serverAd.connect("test", password);
     serverAd.close();
+    
+    OGlobalConfiguration.CLIENT_CREDENTIAL_INTERCEPTOR.setValue(null);
   }
 
   @Test
@@ -103,6 +110,8 @@ public class OSymmetricKeyCITest extends AbstractSecurityTest {
     OServerAdmin serverAd = new OServerAdmin("remote:localhost");
     serverAd.connect("test2", password);
     serverAd.close();
+    
+    OGlobalConfiguration.CLIENT_CREDENTIAL_INTERCEPTOR.setValue(null);
   }
 
   @Test
@@ -118,5 +127,7 @@ public class OSymmetricKeyCITest extends AbstractSecurityTest {
     OServerAdmin serverAd = new OServerAdmin("remote:localhost");
     serverAd.connect("test3", password);
     serverAd.close();
+    
+    OGlobalConfiguration.CLIENT_CREDENTIAL_INTERCEPTOR.setValue(null);
   }
 }
