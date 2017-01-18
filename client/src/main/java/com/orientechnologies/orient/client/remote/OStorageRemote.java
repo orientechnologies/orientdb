@@ -86,7 +86,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  * This object is bound to each remote ODatabase instances.
  */
 public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
+  @Deprecated
   public static final  String        PARAM_CONNECTION_STRATEGY = "connectionStrategy";
+
   private static final String        DEFAULT_HOST              = "localhost";
   private static final int           DEFAULT_PORT              = 2424;
   private static final int           DEFAULT_SSL_PORT          = 2434;

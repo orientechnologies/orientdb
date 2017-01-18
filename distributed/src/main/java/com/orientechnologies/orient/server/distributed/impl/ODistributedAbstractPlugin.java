@@ -1391,15 +1391,13 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
           @Override
           public Void call(final ODistributedConfiguration cfg) {
-            if (db.isClosed())
-              getServerInstance().openDatabase(db);
-
-            db.reload();
-            db.getMetadata().reload();
+            ODatabaseDocumentInternal curDb = db;
+            if (curDb.isClosed())
+              curDb = getServerInstance().openDatabase(databaseName);
 
             distrDatabase.setOnline();
 
-            rebalanceClusterOwnership(nodeName, db, cfg, new HashSet<String>(), true);
+            rebalanceClusterOwnership(nodeName, curDb, cfg, new HashSet<String>(), true);
 
             return null;
           }

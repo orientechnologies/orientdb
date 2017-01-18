@@ -393,8 +393,7 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
     database.save(currentRecord);
 
-    if (currentRecord.getIdentity().toString().equals(database.getStorage().getConfiguration().indexMgrRecordId) && !database
-        .getStatus().equals(ODatabase.STATUS.IMPORTING)) {
+    if (currentRecord.getIdentity().toString().equals(database.getStorage().getConfiguration().indexMgrRecordId)) {
       // FORCE INDEX MANAGER UPDATE. THIS HAPPENS FOR DIRECT CHANGES FROM REMOTE LIKE IN GRAPH
       database.getMetadata().getIndexManager().reload();
     }

@@ -878,32 +878,6 @@ public class OServer {
     return openDatabase(database, "internal", "internal", null, true);
   }
 
-  public void openDatabaseBypassingSecurity(final ODatabaseInternal<?> database, final ONetworkProtocolData data,
-      final String user) {
-    database.activateOnCurrentThread();
-    database.resetInitialization();
-    database.setProperty(ODatabase.OPTIONS.SECURITY.toString(), OSecurityServerUser.class);
-    database.open(user, "nopassword");
-    if (data != null) {
-      data.serverUser = true;
-      data.serverUsername = user;
-    }
-  }
-
-  public ODatabaseInternal openDatabase(final ODatabaseInternal database) {
-    database.activateOnCurrentThread();
-
-    if (database.isClosed())
-      if (database.getStorage() instanceof ODirectMemoryStorage)
-        database.create();
-      else {
-        // SERVER AUTHENTICATED, BYPASS SECURITY
-        openDatabaseBypassingSecurity(database, null, "internal");
-      }
-
-    return database;
-  }
-
   public ODistributedServerManager getDistributedManager() {
     return distributedManager;
   }
