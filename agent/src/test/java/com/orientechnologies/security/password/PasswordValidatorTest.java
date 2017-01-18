@@ -56,6 +56,9 @@ public class PasswordValidatorTest extends AbstractSecurityTest {
   	
   	 createFile(SERVER_DIRECTORY + "/config/orientdb-server-config.xml", PasswordValidatorTest.class.getResourceAsStream("/com/orientechnologies/security/password/orientdb-server-config.xml"));
   	 createFile(SERVER_DIRECTORY + "/config/security.json", PasswordValidatorTest.class.getResourceAsStream("/com/orientechnologies/security/password/security.json"));
+
+  	 // Re-set this in case the credential interceptor has been set in a previous test and not restored.
+  	 OGlobalConfiguration.CLIENT_CREDENTIAL_INTERCEPTOR.setValue(null);
   	
     server = new OServer();
     server.setServerRootDirectory(SERVER_DIRECTORY);
