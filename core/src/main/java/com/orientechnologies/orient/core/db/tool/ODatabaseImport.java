@@ -1512,7 +1512,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         }
 
         if (indexDefinition == null) {
-          indexDefinition = new OSimpleKeyIndexDefinition();
+          indexDefinition = new OSimpleKeyIndexDefinition(0, OType.STRING);
         }
 
         final OIndex index = indexManager
