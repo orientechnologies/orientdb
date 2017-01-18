@@ -75,7 +75,11 @@ public class OSchedulerImpl implements OScheduler {
         @Override
         public Object call(Integer iArgument) {
           OLogManager.instance().debug(this, "Deleting scheduled event '%s' rid=%s...", event, event.getDocument().getIdentity());
-          event.getDocument().delete();
+          try {
+            event.getDocument().delete();
+          } catch (ORecordNotFoundException e) {
+            // ALREADY DELETED: IGNORE IT
+          }
           return null;
         }
       }, 10, 0, new ORecord[] { event.getDocument() });
