@@ -664,7 +664,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
     if (securityFile != null)
       configFile = securityFile;
 
-    String ssf = OGlobalConfiguration.SERVER_SECURITY_FILE.getValueAsString();
+    String ssf = server.getContextConfiguration().getValueAsString(OGlobalConfiguration.SERVER_SECURITY_FILE);
     if (ssf != null)
       configFile = ssf;
 

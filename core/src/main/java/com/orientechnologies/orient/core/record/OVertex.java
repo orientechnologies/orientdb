@@ -26,16 +26,16 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
  */
 public interface OVertex extends OElement{
 
-  public Iterable<OEdge> getEdges(ODirection direction);
-  public Iterable<OEdge> getEdges(ODirection direction, String... type);
-  public Iterable<OEdge> getEdges(ODirection direction, OClass... type);
+  Iterable<OEdge> getEdges(ODirection direction);
+  Iterable<OEdge> getEdges(ODirection direction, String... type);
+  Iterable<OEdge> getEdges(ODirection direction, OClass... type);
 
-  public Iterable<OVertex> getVertices(ODirection direction);
-  public Iterable<OVertex> getVertices(ODirection direction, String... type);
-  public Iterable<OVertex> getVertices(ODirection direction, OClass... type);
+  Iterable<OVertex> getVertices(ODirection direction);
+  Iterable<OVertex> getVertices(ODirection direction, String... type);
+  Iterable<OVertex> getVertices(ODirection direction, OClass... type);
 
-  public OEdge addEdge(OVertex to);
-  public OEdge addEdge(OVertex to, String type);
-  public OEdge addEdge(OVertex to, OClass type);
+  OEdge addEdge(OVertex to);
+  OEdge addEdge(OVertex to, String type);
+  OEdge addEdge(OVertex to, OClass type);
 
 }

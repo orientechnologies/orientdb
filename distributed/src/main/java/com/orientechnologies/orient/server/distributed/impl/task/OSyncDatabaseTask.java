@@ -92,7 +92,7 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
             // CREATE A BACKUP OF DATABASE FROM SCRATCH
             backupFile = new File(Orient.getTempPath() + "/backup_" + database.getName() + ".zip");
 
-            final int compressionRate = OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger();
+            final int compressionRate = iServer.getContextConfiguration().getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION);
 
             if (backupFile.exists())
               backupFile.delete();
@@ -129,7 +129,7 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
 
                           OLogManager.instance().info(this, iText);
                         }
-                      } : null, OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger(), CHUNK_MAX_SIZE);
+                      } : null, iServer.getContextConfiguration().getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION), CHUNK_MAX_SIZE);
 
                   ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
                       "Backup of database '%s' completed. lastOperationId=%s...", databaseName, requestId);

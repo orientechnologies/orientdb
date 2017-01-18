@@ -42,7 +42,7 @@ public class LocalHashTableIterationTest {
     };
 
     localHashTable = new OLocalHashTable<Integer, String>("localHashTableIterationTest", ".imc", ".tsc", ".obf", ".nbh",
-        hashFunction, false, (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
+        hashFunction, (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
 
     localHashTable
         .create(OIntegerSerializer.INSTANCE, OBinarySerializerFactory.getInstance().<String>getObjectSerializer(OType.STRING), null,

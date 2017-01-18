@@ -1,7 +1,7 @@
 package com.orientechnologies.orient.core.db.document;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.OEmbeddedDBFactory;
+import com.orientechnologies.orient.core.db.OrientDBEmbedded;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 
 /**
@@ -22,7 +22,7 @@ public class ODatabaseDocumentTxInternal {
     return new ODatabaseDocumentTx(database, null);
   }
 
-  public static OEmbeddedDBFactory getOrCreateEmbeddedFactory(String databaseDirectory, OrientDBConfig config) {
+  public static OrientDBEmbedded getOrCreateEmbeddedFactory(String databaseDirectory, OrientDBConfig config) {
     return ODatabaseDocumentTx.getOrCreateEmbeddedFactory(databaseDirectory, config);
   }
 

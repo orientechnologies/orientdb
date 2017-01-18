@@ -41,9 +41,9 @@ public class OCommandExecutorSQLCreateCluster extends OCommandExecutorSQLAbstrac
   public static final String KEYWORD_CLUSTER = "CLUSTER";
   public static final String KEYWORD_ID      = "ID";
 
-  private String             clusterName;
-  private int                requestedId     = -1;
-  private boolean            blob            = false;
+  private String clusterName;
+  private int     requestedId = -1;
+  private boolean blob        = false;
 
   public OCommandExecutorSQLCreateCluster parse(final OCommandRequest iRequest) {
     final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
@@ -93,7 +93,7 @@ public class OCommandExecutorSQLCreateCluster extends OCommandExecutorSQLAbstrac
 
   @Override
   public long getDistributedTimeout() {
-    return OGlobalConfiguration.DISTRIBUTED_COMMAND_QUICK_TASK_SYNCH_TIMEOUT.getValueAsLong();
+    return getDatabase().getConfiguration().getValueAsLong(OGlobalConfiguration.DISTRIBUTED_COMMAND_QUICK_TASK_SYNCH_TIMEOUT);
   }
 
   @Override

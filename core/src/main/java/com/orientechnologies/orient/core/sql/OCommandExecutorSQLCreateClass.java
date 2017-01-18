@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.parser.OCreateClassStatement;
+import com.orientechnologies.orient.core.sql.parser.OIdentifier;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,11 +36,14 @@ import java.util.Map;
 
 /**
  * SQL CREATE CLASS command: Creates a new property in the target class.
+ * <p>
+ * <<<<<<< HEAD
  *
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com) =======
+ * @author Luca Garulli >>>>>>> a565f3e... Fixed Parsing of superclasses with backtick
  */
-@SuppressWarnings("unchecked") public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract
-    implements OCommandDistributedReplicateRequest {
+@SuppressWarnings("unchecked")
+public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
   public static final String KEYWORD_CREATE   = "CREATE";
   public static final String KEYWORD_CLASS    = "CLASS";
   public static final String KEYWORD_EXTENDS  = "EXTENDS";
@@ -51,10 +55,11 @@ import java.util.Map;
   public static final String KEYWORD_EXISTS   = "EXISTS";
 
   private String className;
-  private boolean      ifNotExists  = false;
+
   private List<OClass> superClasses = new ArrayList<OClass>();
   private int[] clusterIds;
-  private Integer clusters = null;
+  private Integer clusters    = null;
+  private boolean ifNotExists = false;
 
   public OCommandExecutorSQLCreateClass parse(final OCommandRequest iRequest) {
     final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
@@ -98,6 +103,7 @@ import java.util.Map;
         final String k = word.toString();
         if (k.equals(KEYWORD_EXTENDS)) {
           boolean hasNext;
+          boolean newParser = this.preParsedStatement != null;
           OClass superClass;
           do {
             oldPos = pos;
@@ -108,7 +114,7 @@ import java.util.Map;
                   parserText, oldPos);
             String superclassName = decodeClassName(word.toString());
 
-            if (!database.getMetadata().getSchema().existsClass(superclassName))
+            if (!database.getMetadata().getSchema().existsClass(superclassName) && !newParser)
               throw new OCommandSQLParsingException("Super-class " + word + " not exists", parserText, oldPos);
             superClass = database.getMetadata().getSchema().getClass(superclassName);
             superClasses.add(superClass);
@@ -121,6 +127,18 @@ import java.util.Map;
                 break;
             }
           } while (hasNext);
+          if (newParser) {
+            OCreateClassStatement statement = (OCreateClassStatement) this.preParsedStatement;
+            List<OIdentifier> superclasses = statement.getSuperclasses();
+            this.superClasses.clear();
+            for (OIdentifier superclass : superclasses) {
+              String superclassName = superclass.getStringValue();
+              if (!database.getMetadata().getSchema().existsClass(superclassName))
+                throw new OCommandSQLParsingException("Super-class " + word + " not exists", parserText, oldPos);
+              superClass = database.getMetadata().getSchema().getClass(superclassName);
+              this.superClasses.add(superClass);
+            }
+          }
         } else if (k.equals(KEYWORD_CLUSTER)) {
           oldPos = pos;
           pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false, " =><()");
@@ -194,11 +212,13 @@ import java.util.Map;
     return this;
   }
 
-  @Override public long getDistributedTimeout() {
-    return OGlobalConfiguration.DISTRIBUTED_COMMAND_QUICK_TASK_SYNCH_TIMEOUT.getValueAsLong();
+  @Override
+  public long getDistributedTimeout() {
+    return getDatabase().getConfiguration().getValueAsLong(OGlobalConfiguration.DISTRIBUTED_COMMAND_QUICK_TASK_SYNCH_TIMEOUT);
   }
 
-  @Override public QUORUM_TYPE getQuorumType() {
+  @Override
+  public QUORUM_TYPE getQuorumType() {
     return QUORUM_TYPE.ALL;
   }
 
@@ -222,15 +242,18 @@ import java.util.Map;
     return database.getMetadata().getSchema().getClasses().size();
   }
 
-  @Override public String getSyntax() {
+  @Override
+  public String getSyntax() {
     return "CREATE CLASS <class> [IF NOT EXISTS] [EXTENDS <super-class> [,<super-class2>*] ] [CLUSTER <clusterId>*] [CLUSTERS <total-cluster-number>] [ABSTRACT]";
   }
 
-  @Override public String getUndoCommand() {
+  @Override
+  public String getUndoCommand() {
     return "drop class " + className;
   }
 
-  @Override public boolean involveSchema() {
+  @Override
+  public boolean involveSchema() {
     return true;
   }
 }

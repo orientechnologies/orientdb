@@ -21,7 +21,7 @@ package com.orientechnologies.lucene.test;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.OrientDBFactory;
+import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -55,7 +55,7 @@ public class LuceneAutomaticBackupRestoreTest {
   private final static String DBNAME    = "LuceneAutomaticBackupRestoreTest";
   @Rule
   public TemporaryFolder tempFolder = new TemporaryFolder();
-  private OrientDBFactory factory;
+  private OrientDB factory;
   private              String URL       = null;
   private              String BACKUPDIR = null;
   private              String BACKUFILE = null;
@@ -91,7 +91,7 @@ public class LuceneAutomaticBackupRestoreTest {
 
     dropIfExists();
 
-    factory.create(DBNAME, null, null, OrientDBFactory.DatabaseType.PLOCAL);
+    factory.create(DBNAME, null, null, OrientDB.DatabaseType.PLOCAL);
 
     db = (ODatabaseDocumentInternal) factory.open(DBNAME, "admin", "admin");
 
@@ -265,7 +265,7 @@ public class LuceneAutomaticBackupRestoreTest {
   }
 
   private ODatabaseDocumentInternal createAndOpen() {
-    factory.create(DBNAME, null, null, OrientDBFactory.DatabaseType.PLOCAL);
+    factory.create(DBNAME, null, null, OrientDB.DatabaseType.PLOCAL);
     return open();
   }
 

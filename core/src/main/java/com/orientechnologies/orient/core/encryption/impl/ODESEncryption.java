@@ -5,12 +5,12 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.exception.OInvalidStorageEncryptionKeyException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
-import com.orientechnologies.orient.core.serialization.OBase64Utils;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.DESKeySpec;
+import java.util.Base64;
 
 /***
  * Stateful compression implementation that encrypt the content using DES algorithm
@@ -49,7 +49,7 @@ public class ODESEncryption extends OAbstractEncryption {
               + OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey() + "'");
 
     try {
-      final byte[] key = OBase64Utils.decode(iOptions);
+      final byte[] key =  Base64.getDecoder().decode(iOptions);
 
       final DESKeySpec desKeySpec = new DESKeySpec(key);
       final SecretKeyFactory keyFactory = SecretKeyFactory.getInstance(ALGORITHM_NAME);

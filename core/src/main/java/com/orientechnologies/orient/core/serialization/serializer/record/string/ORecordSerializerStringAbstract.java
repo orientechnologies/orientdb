@@ -32,7 +32,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerAnyStreamable;
@@ -632,9 +631,9 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
     case BINARY:
       iBuffer.append(OStringSerializerHelper.BINARY_BEGINEND);
       if (iValue instanceof Byte)
-        iBuffer.append(OBase64Utils.encodeBytes(new byte[] { ((Byte) iValue).byteValue() }));
+        iBuffer.append(Base64.getEncoder().encodeToString(new byte[] { ((Byte) iValue).byteValue() }));
       else
-        iBuffer.append(OBase64Utils.encodeBytes((byte[]) iValue));
+        iBuffer.append(Base64.getEncoder().encodeToString((byte[]) iValue));
       iBuffer.append(OStringSerializerHelper.BINARY_BEGINEND);
       break;
 

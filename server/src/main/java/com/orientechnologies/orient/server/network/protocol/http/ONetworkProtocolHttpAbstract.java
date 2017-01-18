@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
@@ -62,22 +61,22 @@ import java.util.*;
 import java.util.zip.GZIPInputStream;
 
 public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
-  private static final String          COMMAND_SEPARATOR = "|";
-  private static final Charset         utf8              = Charset.forName("utf8");
-  private static int                   requestMaxContentLength;                    // MAX = 10Kb
-  private static int                   socketTimeout;
-  private final StringBuilder          requestContent    = new StringBuilder(512);
+  private static final String  COMMAND_SEPARATOR = "|";
+  private static final Charset utf8              = Charset.forName("utf8");
+  private static int requestMaxContentLength;                    // MAX = 10Kb
+  private static int socketTimeout;
+  private final StringBuilder requestContent = new StringBuilder(512);
   protected OClientConnection          connection;
   protected OChannelTextServer         channel;
   protected OUser                      account;
   protected OHttpRequest               request;
   protected OHttpResponse              response;
   protected OHttpNetworkCommandManager cmdManager;
-  private String                       responseCharSet;
-  private boolean                      jsonResponseError;
-  private String[]                     additionalResponseHeaders;
-  private String                       listeningAddress  = "?";
-  private OContextConfiguration        configuration;
+  private   String                     responseCharSet;
+  private   boolean                    jsonResponseError;
+  private   String[]                   additionalResponseHeaders;
+  private String listeningAddress = "?";
+  private OContextConfiguration configuration;
 
   public ONetworkProtocolHttpAbstract(OServer server) {
     super(server.getThreadGroup(), "IO-HTTP");
@@ -123,8 +122,8 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
     connection.getData().commandDetail = null;
 
     final String callbackF;
-    if (OGlobalConfiguration.NETWORK_HTTP_JSONP_ENABLED.getValueAsBoolean() && request.parameters != null
-        && request.parameters.containsKey(OHttpUtils.CALLBACK_PARAMETER_NAME))
+    if (server.getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.NETWORK_HTTP_JSONP_ENABLED)
+        && request.parameters != null && request.parameters.containsKey(OHttpUtils.CALLBACK_PARAMETER_NAME))
       callbackF = request.parameters.get(OHttpUtils.CALLBACK_PARAMETER_NAME);
     else
       callbackF = null;
@@ -176,8 +175,9 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
         }
       else {
         try {
-          OLogManager.instance().warn(this, "->" + channel.socket.getInetAddress().getHostAddress() + ": Command not found: "
-              + request.httpMethod + "." + URLDecoder.decode(command, "UTF-8"));
+          OLogManager.instance().warn(this,
+              "->" + channel.socket.getInetAddress().getHostAddress() + ": Command not found: " + request.httpMethod + "."
+                  + URLDecoder.decode(command, "UTF-8"));
 
           sendError(OHttpUtils.STATUS_INVALIDMETHOD_CODE, OHttpUtils.STATUS_INVALIDMETHOD_DESCRIPTION, null,
               OHttpUtils.CONTENT_TEXT_PLAIN, "Command not found: " + command, request.keepAlive);
@@ -449,7 +449,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
             final String auth = line.substring(OHttpUtils.HEADER_AUTHORIZATION.length());
             if (OStringSerializerHelper.startsWithIgnoreCase(auth, OHttpUtils.AUTHORIZATION_BASIC)) {
               iRequest.authorization = auth.substring(OHttpUtils.AUTHORIZATION_BASIC.length() + 1);
-              iRequest.authorization = new String(OBase64Utils.decode(iRequest.authorization));
+              iRequest.authorization = new String(Base64.getDecoder().decode(iRequest.authorization));
             } else if (OStringSerializerHelper.startsWithIgnoreCase(auth, OHttpUtils.AUTHORIZATION_BEARER)) {
               iRequest.bearerTokenRaw = auth.substring(OHttpUtils.AUTHORIZATION_BEARER.length() + 1);
             } else if (OStringSerializerHelper.startsWithIgnoreCase(auth, OHttpUtils.AUTHORIZATION_NEGOTIATE)) {
@@ -475,15 +475,17 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
           } else if (OStringSerializerHelper.startsWithIgnoreCase(line, OHttpUtils.HEADER_CONTENT_LENGTH)) {
             contentLength = Integer.parseInt(line.substring(OHttpUtils.HEADER_CONTENT_LENGTH.length()));
             if (contentLength > requestMaxContentLength)
-              OLogManager.instance().warn(this, "->" + channel.socket.getInetAddress().getHostAddress() + ": Error on content size "
-                  + contentLength + ": the maximum allowed is " + requestMaxContentLength);
+              OLogManager.instance().warn(this,
+                  "->" + channel.socket.getInetAddress().getHostAddress() + ": Error on content size " + contentLength
+                      + ": the maximum allowed is " + requestMaxContentLength);
 
           } else if (OStringSerializerHelper.startsWithIgnoreCase(line, OHttpUtils.HEADER_CONTENT_TYPE)) {
             iRequest.contentType = line.substring(OHttpUtils.HEADER_CONTENT_TYPE.length());
             if (OStringSerializerHelper.startsWithIgnoreCase(iRequest.contentType, OHttpUtils.CONTENT_TYPE_MULTIPART)) {
               iRequest.isMultipart = true;
-              iRequest.boundary = new String(line.substring(OHttpUtils.HEADER_CONTENT_TYPE.length()
-                  + OHttpUtils.CONTENT_TYPE_MULTIPART.length() + 2 + OHttpUtils.BOUNDARY.length() + 1));
+              iRequest.boundary = new String(line.substring(
+                  OHttpUtils.HEADER_CONTENT_TYPE.length() + OHttpUtils.CONTENT_TYPE_MULTIPART.length() + 2 + OHttpUtils.BOUNDARY
+                      .length() + 1));
             }
           } else if (OStringSerializerHelper.startsWithIgnoreCase(line, OHttpUtils.HEADER_IF_MATCH))
             iRequest.ifMatch = line.substring(OHttpUtils.HEADER_IF_MATCH.length());
@@ -543,8 +545,9 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
     }
 
     if (OLogManager.instance().isDebugEnabled())
-      OLogManager.instance().debug(this, "Error on parsing HTTP content from client %s:\n%s",
-          channel.socket.getInetAddress().getHostAddress(), request);
+      OLogManager.instance()
+          .debug(this, "Error on parsing HTTP content from client %s:\n%s", channel.socket.getInetAddress().getHostAddress(),
+              request);
 
     return;
   }
@@ -611,13 +614,13 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
           request.httpVersion = words[2];
           readAllContent(request);
 
-          if (request.content != null && request.contentType != null
-              && request.contentType.equals(OHttpUtils.CONTENT_TYPE_URLENCODED))
+          if (request.content != null && request.contentType != null && request.contentType
+              .equals(OHttpUtils.CONTENT_TYPE_URLENCODED))
             request.content = URLDecoder.decode(request.content, "UTF-8").trim();
 
           if (OLogManager.instance().isDebugEnabled())
-            OLogManager.instance().debug(this, "[ONetworkProtocolHttpAbstract.execute] Requested: %s %s", request.httpMethod,
-                request.url);
+            OLogManager.instance()
+                .debug(this, "[ONetworkProtocolHttpAbstract.execute] Requested: %s %s", request.httpMethod, request.url);
 
           service();
           return;
@@ -648,8 +651,9 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
       readAllContent(request);
     } finally {
       if (connection.getStats().lastCommandReceived > -1)
-        Orient.instance().getProfiler().stopChrono("server.network.requests", "Total received requests",
-            connection.getStats().lastCommandReceived, "server.network.requests");
+        Orient.instance().getProfiler()
+            .stopChrono("server.network.requests", "Total received requests", connection.getStats().lastCommandReceived,
+                "server.network.requests");
 
       request = null;
       response = null;
@@ -690,20 +694,20 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
   }
 
   protected void connectionClosed() {
-    Orient.instance().getProfiler().updateCounter("server.http." + listeningAddress + ".closed", "Close HTTP connection", +1,
-        "server.http.*.closed");
+    Orient.instance().getProfiler()
+        .updateCounter("server.http." + listeningAddress + ".closed", "Close HTTP connection", +1, "server.http.*.closed");
     sendShutdown();
   }
 
   protected void timeout() {
-    Orient.instance().getProfiler().updateCounter("server.http." + listeningAddress + ".timeout", "Timeout of HTTP connection", +1,
-        "server.http.*.timeout");
+    Orient.instance().getProfiler()
+        .updateCounter("server.http." + listeningAddress + ".timeout", "Timeout of HTTP connection", +1, "server.http.*.timeout");
     sendShutdown();
   }
 
   protected void connectionError() {
-    Orient.instance().getProfiler().updateCounter("server.http." + listeningAddress + ".errors", "Error on HTTP connection", +1,
-        "server.http.*.errors");
+    Orient.instance().getProfiler()
+        .updateCounter("server.http." + listeningAddress + ".errors", "Error on HTTP connection", +1, "server.http.*.errors");
     sendShutdown();
   }
 
@@ -725,6 +729,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
     cmdManager.registerCommand(new OServerCommandGetFileDownload());
     cmdManager.registerCommand(new OServerCommandGetIndex());
     cmdManager.registerCommand(new OServerCommandGetListDatabases());
+    cmdManager.registerCommand(new OServerCommandIsEnterprise());
     cmdManager.registerCommand(new OServerCommandGetExportDatabase());
     cmdManager.registerCommand(new OServerCommandPatchDocument());
     cmdManager.registerCommand(new OServerCommandPostBatch());

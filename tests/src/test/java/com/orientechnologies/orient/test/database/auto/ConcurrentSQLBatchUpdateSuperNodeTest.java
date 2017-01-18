@@ -144,19 +144,6 @@ public class ConcurrentSQLBatchUpdateSuperNodeTest extends DocumentDBBaseTest {
     }
   }
 
-  @BeforeClass
-  public void init() {
-    mvccEnabled = OGlobalConfiguration.DB_MVCC.getValueAsBoolean();
-
-    if (!mvccEnabled)
-      OGlobalConfiguration.DB_MVCC.setValue(true);
-  }
-
-  @AfterClass
-  public void deinit() {
-    OGlobalConfiguration.DB_MVCC.setValue(mvccEnabled);
-  }
-
   @Test(enabled = true)
   public void concurrentOptimisticUpdates() throws Exception {
 //    System.out.println("Started Test OPTIMISTIC Batch Update against SuperNode");

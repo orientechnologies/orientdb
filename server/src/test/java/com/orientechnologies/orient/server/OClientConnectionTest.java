@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.server;
 
+import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -42,6 +43,7 @@ public class OClientConnectionTest {
     MockitoAnnotations.initMocks(this);
     Mockito.when(protocol.getServer()).thenReturn(server);
     Mockito.when(server.getClientConnectionManager()).thenReturn(manager);
+    Mockito.when(server.getContextConfiguration()).thenReturn(new OContextConfiguration());
     db = new ODatabaseDocumentTx("memory:" + OClientConnectionTest.class.getSimpleName());
     db.create();
   }
@@ -54,7 +56,7 @@ public class OClientConnectionTest {
   @Test
   public void testValidToken() throws IOException {
     OClientConnection conn = new OClientConnection(1, protocol);
-    OTokenHandler handler = new OTokenHandlerImpl(null);
+    OTokenHandler handler = new OTokenHandlerImpl(server);
     byte[] tokenBytes = handler.getSignedBinaryToken(db, db.getUser(), conn.getData());
 
     conn.validateSession(tokenBytes, handler, null);
@@ -68,7 +70,7 @@ public class OClientConnectionTest {
     OClientConnection conn = new OClientConnection(1, protocol);
     long sessionTimeout = OGlobalConfiguration.NETWORK_TOKEN_EXPIRE_TIMEOUT.getValueAsLong();
     OGlobalConfiguration.NETWORK_TOKEN_EXPIRE_TIMEOUT.setValue(0);
-    OTokenHandler handler = new OTokenHandlerImpl(null);
+    OTokenHandler handler = new OTokenHandlerImpl(server);
     OGlobalConfiguration.NETWORK_TOKEN_EXPIRE_TIMEOUT.setValue(sessionTimeout);
     byte[] tokenBytes = handler.getSignedBinaryToken(db, db.getUser(), conn.getData());
     Thread.sleep(1);
@@ -79,7 +81,7 @@ public class OClientConnectionTest {
   @Test(expected = OTokenSecurityException.class)
   public void testWrongToken() throws IOException {
     OClientConnection conn = new OClientConnection(1, protocol);
-    OTokenHandler handler = new OTokenHandlerImpl(null);
+    OTokenHandler handler = new OTokenHandlerImpl(server);
     byte[] tokenBytes = new byte[120];
     conn.validateSession(tokenBytes, handler, protocol);
 
@@ -88,7 +90,7 @@ public class OClientConnectionTest {
   @Test
   public void testAlreadyAuthenticatedOnConnection() throws IOException {
     OClientConnection conn = new OClientConnection(1, protocol);
-    OTokenHandler handler = new OTokenHandlerImpl(null);
+    OTokenHandler handler = new OTokenHandlerImpl(server);
     byte[] tokenBytes = handler.getSignedBinaryToken(db, db.getUser(), conn.getData());
     conn.validateSession(tokenBytes, handler, protocol);
     assertTrue(conn.getTokenBased());
@@ -105,7 +107,7 @@ public class OClientConnectionTest {
   @Test(expected = OTokenSecurityException.class)
   public void testNotAlreadyAuthenticated() throws IOException {
     OClientConnection conn = new OClientConnection(1, protocol);
-    OTokenHandler handler = new OTokenHandlerImpl(null);
+    OTokenHandler handler = new OTokenHandlerImpl(server);
     // second validation don't need token
     conn.validateSession(null, handler, protocol1);
   }
@@ -113,7 +115,7 @@ public class OClientConnectionTest {
   @Test(expected = OTokenSecurityException.class)
   public void testAlreadyAuthenticatedButNotOnSpecificConnection() throws IOException {
     OClientConnection conn = new OClientConnection(1, protocol);
-    OTokenHandler handler = new OTokenHandlerImpl(null);
+    OTokenHandler handler = new OTokenHandlerImpl(server);
     byte[] tokenBytes = handler.getSignedBinaryToken(db, db.getUser(), conn.getData());
     conn.validateSession(tokenBytes, handler, protocol);
     assertTrue(conn.getTokenBased());

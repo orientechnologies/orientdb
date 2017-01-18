@@ -67,7 +67,8 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
     this.hashFunction = new OMurmurHash3HashFunction<Object>();
 
     if (iDurableInNonTxMode == null)
-      durableInNonTx = OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE.getValueAsBoolean();
+      durableInNonTx = iStorage.getConfiguration().getContextConfiguration()
+          .getValueAsBoolean(OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE);
     else
       durableInNonTx = iDurableInNonTxMode;
 
@@ -161,7 +162,7 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
     for (int i = 0; i < partitionSize; ++i) {
       partitions.add(
           new OLocalHashTable<Object, Object>(name + "_" + i, SUBINDEX_METADATA_FILE_EXTENSION, SUBINDEX_TREE_FILE_EXTENSION,
-              SUBINDEX_BUCKET_FILE_EXTENSION, SUBINDEX_NULL_BUCKET_FILE_EXTENSION, hashFunction, durableInNonTx, storage));
+              SUBINDEX_BUCKET_FILE_EXTENSION, SUBINDEX_NULL_BUCKET_FILE_EXTENSION, hashFunction, storage));
     }
   }
 

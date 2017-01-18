@@ -111,7 +111,7 @@ public class OCommandExecutorSQLDropCluster extends OCommandExecutorSQLAbstract 
     if (clusterName != null && getDatabase().existsCluster(clusterName))
       return 10 * getDatabase().countClusterElements(clusterName);
 
-    return OGlobalConfiguration.DISTRIBUTED_COMMAND_LONG_TASK_SYNCH_TIMEOUT.getValueAsLong();
+    return getDatabase().getConfiguration().getValueAsLong(OGlobalConfiguration.DISTRIBUTED_COMMAND_LONG_TASK_SYNCH_TIMEOUT);
   }
 
   @Override

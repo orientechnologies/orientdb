@@ -143,11 +143,11 @@ public class OStorageConfiguration implements OSerializableStream {
     strictSQL = false;
     txRequiredForSQLGraphOperations = true;
     indexEngines = new ConcurrentHashMap<String, IndexEngineData>();
-    validation = OGlobalConfiguration.DB_VALIDATION.getValueAsBoolean();
+    validation = getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.DB_VALIDATION);
 
     binaryFormatVersion = CURRENT_BINARY_FORMAT_VERSION;
 
-    txRequiredForSQLGraphOperations = OGlobalConfiguration.SQL_GRAPH_CONSISTENCY_MODE.getValueAsString().equalsIgnoreCase("tx");
+    txRequiredForSQLGraphOperations = getContextConfiguration().getValueAsString(OGlobalConfiguration.SQL_GRAPH_CONSISTENCY_MODE).equalsIgnoreCase("tx");
   }
 
   private void autoInitClusters() {

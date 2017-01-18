@@ -14,16 +14,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPa
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitEndRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitStartRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODiskWriteAheadLog;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFileCreatedWALRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ONonTxOperationPerformedWALRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitBodyRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OUpdatePageRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALPage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 import org.junit.*;
 
 import java.io.File;
@@ -118,6 +109,8 @@ public class OSBTreeBonsaiWALTest extends OSBTreeBonsaiLocalTest {
     actualStorage = (OLocalPaginatedStorage) databaseDocumentTx.getStorage();
     actualAtomicOperationsManager = actualStorage.getAtomicOperationsManager();
     ODiskWriteAheadLog writeAheadLog = (ODiskWriteAheadLog) actualStorage.getWALInstance();
+
+    actualStorage.synch();
     writeAheadLog.preventCutTill(writeAheadLog.getFlushedLsn());
 
     sbTree = new OSBTreeBonsaiLocal<Integer, OIdentifiable>("actualSBTree", ".sbt", actualStorage);
@@ -265,7 +258,8 @@ public class OSBTreeBonsaiWALTest extends OSBTreeBonsaiLocalTest {
   }
 
   private void restoreDataFromWAL() throws IOException {
-    ODiskWriteAheadLog log = new ODiskWriteAheadLog(4, -1, 10 * 1024L * OWALPage.PAGE_SIZE, null, false, actualStorage);
+    ODiskWriteAheadLog log = new ODiskWriteAheadLog(4, -1, 10 * 1024L * OWALPage.PAGE_SIZE, null, false, actualStorage,
+        16 * OWALPage.PAGE_SIZE, 120);
     OLogSequenceNumber lsn = log.begin();
 
     List<OWALRecord> atomicUnit = new ArrayList<OWALRecord>();
@@ -299,17 +293,16 @@ public class OSBTreeBonsaiWALTest extends OSBTreeBonsaiLocalTest {
             final long fileId = updatePageRecord.getFileId();
             final long pageIndex = updatePageRecord.getPageIndex();
 
-            OCacheEntry cacheEntry = expectedReadCache.load(fileId, pageIndex, true, expectedWriteCache, 1);
+            OCacheEntry cacheEntry = expectedReadCache.loadForWrite(fileId, pageIndex, true, expectedWriteCache, 1);
             if (cacheEntry == null) {
               do {
                 if (cacheEntry != null)
-                  expectedReadCache.release(cacheEntry, expectedWriteCache);
+                  expectedReadCache.releaseFromWrite(cacheEntry, expectedWriteCache);
 
                 cacheEntry = expectedReadCache.allocateNewPage(fileId, expectedWriteCache);
               } while (cacheEntry.getPageIndex() != pageIndex);
             }
 
-            cacheEntry.acquireExclusiveLock();
             try {
               ODurablePage durablePage = new ODurablePage(cacheEntry);
               durablePage.restoreChanges(updatePageRecord.getChanges());
@@ -317,8 +310,7 @@ public class OSBTreeBonsaiWALTest extends OSBTreeBonsaiLocalTest {
 
               cacheEntry.markDirty();
             } finally {
-              cacheEntry.releaseExclusiveLock();
-              expectedReadCache.release(cacheEntry, expectedWriteCache);
+              expectedReadCache.releaseFromWrite(cacheEntry, expectedWriteCache);
             }
           }
 
@@ -326,7 +318,8 @@ public class OSBTreeBonsaiWALTest extends OSBTreeBonsaiLocalTest {
         atomicUnit.clear();
       } else {
         Assert.assertTrue(walRecord instanceof OUpdatePageRecord || walRecord instanceof ONonTxOperationPerformedWALRecord
-            || walRecord instanceof OFileCreatedWALRecord);
+            || walRecord instanceof OFileCreatedWALRecord || walRecord instanceof OFuzzyCheckpointStartRecord
+            || walRecord instanceof OFuzzyCheckpointEndRecord);
       }
 
       lsn = log.next(lsn);

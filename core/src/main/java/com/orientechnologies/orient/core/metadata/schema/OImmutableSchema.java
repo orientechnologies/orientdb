@@ -96,11 +96,6 @@ public class OImmutableSchema implements OSchema {
   }
 
   @Override
-  public OClass createClass(Class<?> iClass) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public OClass createClass(String iClassName) {
     throw new UnsupportedOperationException();
   }

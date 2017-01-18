@@ -27,6 +27,7 @@ import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -861,7 +862,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   private void startAcceptingRequests() {
     // START ALL THE WORKER THREADS (CONFIGURABLE)
-    final int totalWorkers = OGlobalConfiguration.DISTRIBUTED_DB_WORKERTHREADS.getValueAsInteger();
+    final int totalWorkers = this.manager.getServerInstance().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_DB_WORKERTHREADS);
     if (totalWorkers < 1)
       throw new ODistributedException("Cannot create configured distributed workers (" + totalWorkers + ")");
 
@@ -949,9 +950,9 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         }
       }
     };
-
-    Orient.instance().scheduleTask(txTimeoutTask, OGlobalConfiguration.DISTRIBUTED_TX_EXPIRE_TIMEOUT.getValueAsLong(),
-        OGlobalConfiguration.DISTRIBUTED_TX_EXPIRE_TIMEOUT.getValueAsLong() / 2);
+    OContextConfiguration config = getManager().getServerInstance().getContextConfiguration();
+    Orient.instance().scheduleTask(txTimeoutTask, config.getValueAsLong(OGlobalConfiguration.DISTRIBUTED_TX_EXPIRE_TIMEOUT),
+        config.getValueAsLong(OGlobalConfiguration.DISTRIBUTED_TX_EXPIRE_TIMEOUT) / 2);
   }
 
   private boolean isRunning() {

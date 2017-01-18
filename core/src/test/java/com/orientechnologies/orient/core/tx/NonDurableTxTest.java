@@ -107,7 +107,7 @@ public class NonDurableTxTest {
   }
 
   @Test
-  public void testWalNotGrowingWhileWalDisabledInTx() {
+  public void testWalNotGrowingWhileWalDisabledInTx() throws Exception {
     db.newInstance().field("some-unrelated-key", "some-unrelated-value").save();
 
     wal.flush();
@@ -125,7 +125,7 @@ public class NonDurableTxTest {
   }
 
   @Test
-  public void testWalNotGrowingWhileWalDisabledInAtomicManager() {
+  public void testWalNotGrowingWhileWalDisabledInAtomicManager() throws Exception {
     db.newInstance().field("some-unrelated-key", "some-unrelated-value").save();
 
     wal.flush();

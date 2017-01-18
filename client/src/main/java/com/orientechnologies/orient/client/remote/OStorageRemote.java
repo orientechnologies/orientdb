@@ -1369,18 +1369,19 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     }
 
     synchronized (serverURLs) {
-      if (serverURLs.size() == 1 && OGlobalConfiguration.NETWORK_BINARY_DNS_LOADBALANCING_ENABLED.getValueAsBoolean()) {
+      if (serverURLs.size() == 1 && getClientConfiguration()
+          .getValueAsBoolean(OGlobalConfiguration.NETWORK_BINARY_DNS_LOADBALANCING_ENABLED)) {
         // LOOK FOR LOAD BALANCING DNS TXT RECORD
         final String primaryServer = lastHost;
 
         OLogManager.instance().debug(this, "Retrieving URLs from DNS '%s' (timeout=%d)...", primaryServer,
-            OGlobalConfiguration.NETWORK_BINARY_DNS_LOADBALANCING_TIMEOUT.getValueAsInteger());
+            getClientConfiguration().getValueAsInteger(OGlobalConfiguration.NETWORK_BINARY_DNS_LOADBALANCING_TIMEOUT));
 
         try {
           final Hashtable<String, String> env = new Hashtable<String, String>();
           env.put("java.naming.factory.initial", "com.sun.jndi.dns.DnsContextFactory");
           env.put("com.sun.jndi.ldap.connect.timeout",
-              OGlobalConfiguration.NETWORK_BINARY_DNS_LOADBALANCING_TIMEOUT.getValueAsString());
+              getClientConfiguration().getValueAsString(OGlobalConfiguration.NETWORK_BINARY_DNS_LOADBALANCING_TIMEOUT));
           final DirContext ictx = new InitialDirContext(env);
           final String hostName = !primaryServer.contains(":") ?
               primaryServer :
@@ -1571,12 +1572,14 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   private boolean handleDBFreeze() {
+
     boolean retry;
     OLogManager.instance().warn(this,
-        "DB is frozen will wait for " + OGlobalConfiguration.CLIENT_DB_RELEASE_WAIT_TIMEOUT.getValue() + " ms. and then retry.");
+        "DB is frozen will wait for " + getClientConfiguration().getValue(OGlobalConfiguration.CLIENT_DB_RELEASE_WAIT_TIMEOUT)
+            + " ms. and then retry.");
     retry = true;
     try {
-      Thread.sleep(OGlobalConfiguration.CLIENT_DB_RELEASE_WAIT_TIMEOUT.getValueAsInteger());
+      Thread.sleep(getClientConfiguration().getValueAsInteger(OGlobalConfiguration.CLIENT_DB_RELEASE_WAIT_TIMEOUT));
     } catch (InterruptedException ie) {
       retry = false;
 
@@ -1659,7 +1662,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     OImportRequest request = new OImportRequest(inputStream, options, name);
 
     OImportResponse response = networkOperationRetryTimeout(request, "Error sending import request", 0,
-        OGlobalConfiguration.NETWORK_REQUEST_TIMEOUT.getValueAsInteger());
+        getClientConfiguration().getValueAsInteger(OGlobalConfiguration.NETWORK_REQUEST_TIMEOUT));
 
     for (String message : response.getMessages()) {
       listener.onMessage(message);

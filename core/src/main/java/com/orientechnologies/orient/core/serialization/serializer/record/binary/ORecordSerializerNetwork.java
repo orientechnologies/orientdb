@@ -26,8 +26,9 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
-import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+
+import java.util.Base64;
 
 public class ORecordSerializerNetwork implements ORecordSerializer {
 
@@ -81,7 +82,7 @@ public class ORecordSerializerNetwork implements ORecordSerializer {
         serializerByVersion[iSource[0]].deserialize((ODocument) iRecord, container);
     } catch (RuntimeException e) {
       OLogManager.instance().warn(this, "Error deserializing record with id %s send this data for debugging: %s ",
-          iRecord.getIdentity().toString(), OBase64Utils.encodeBytes(iSource));
+          iRecord.getIdentity().toString(), Base64.getEncoder().encodeToString(iSource));
       throw e;
     }
     return iRecord;
@@ -128,7 +129,7 @@ public class ORecordSerializerNetwork implements ORecordSerializer {
       return serializerByVersion[iSource[0]].getFieldNames(reference, container);
     } catch (RuntimeException e) {
       OLogManager.instance().warn(this, "Error deserializing record to get field-names, send this data for debugging: %s ",
-          OBase64Utils.encodeBytes(iSource));
+          Base64.getEncoder().encodeToString(iSource));
       throw e;
     }
   }

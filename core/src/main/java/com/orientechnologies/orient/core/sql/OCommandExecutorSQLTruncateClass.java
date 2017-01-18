@@ -173,7 +173,7 @@ public class OCommandExecutorSQLTruncateClass extends OCommandExecutorSQLAbstrac
   }
 
   @Override public long getDistributedTimeout() {
-    return OGlobalConfiguration.DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT.getValueAsLong();
+    return getDatabase().getConfiguration().getValueAsLong(OGlobalConfiguration.DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT);
   }
 
   @Override public String getSyntax() {

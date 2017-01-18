@@ -196,7 +196,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
       if (storage instanceof OStorageProxy) {
         final String cmd = String.format("alter class `%s` clusterselection '%s'", name, value);
-        database.command(new OCommandSQL(cmd)).execute();
+        database.command(cmd);
       } else if (isDistributedCommand()) {
         final String cmd = String.format("alter class `%s` clusterselection '%s'", name, value);
         OCommandSQL commandSQL = new OCommandSQL(cmd);
@@ -240,7 +240,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
       if (storage instanceof OStorageProxy) {
         final String cmd = String.format("alter class `%s` custom %s=%s", getName(), name, value);
-        database.command(new OCommandSQL(cmd)).execute();
+        database.command(cmd);
       } else if (isDistributedCommand()) {
         final String cmd = String.format("alter class `%s` custom %s=%s", getName(), name, value);
         final OCommandSQL commandSQL = new OCommandSQL(cmd);
@@ -283,7 +283,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
       if (storage instanceof OStorageProxy) {
         final String cmd = String.format("alter class `%s` custom clear", getName());
-        database.command(new OCommandSQL(cmd)).execute();
+        database.command(cmd);
       } else if (isDistributedCommand()) {
         final String cmd = String.format("alter class `%s` custom clear", getName());
         final OCommandSQL commandSQL = new OCommandSQL(cmd);
@@ -417,7 +417,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
       final String cmd = String.format("alter class `%s` superclasses %s", name, sb);
       if (storage instanceof OStorageProxy) {
-        database.command(new OCommandSQL(cmd)).execute();
+        database.command(cmd);
       } else if (isDistributedCommand()) {
         final OCommandSQL commandSQL = new OCommandSQL(cmd);
         commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
@@ -482,7 +482,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       if (storage instanceof OStorageProxy) {
         final String cmd = String
             .format("alter class `%s` superclass +`%s`", name, superClass != null ? superClass.getName() : null);
-        database.command(new OCommandSQL(cmd)).execute();
+        database.command(cmd);
       } else if (isDistributedCommand()) {
         final String cmd = String
             .format("alter class `%s` superclass +`%s`", name, superClass != null ? superClass.getName() : null);
@@ -542,7 +542,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       if (storage instanceof OStorageProxy) {
         final String cmd = String
             .format("alter class `%s` superclass -`%s`", name, superClass != null ? superClass.getName() : null);
-        database.command(new OCommandSQL(cmd)).execute();
+        database.command(cmd);
       } else if (isDistributedCommand()) {
         final String cmd = String
             .format("alter class `%s` superclass -`%s`", name, superClass != null ? superClass.getName() : null);
@@ -603,7 +603,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
       if (storage instanceof OStorageProxy) {
         final String cmd = String.format("alter class `%s` name `%s`", this.name, name);
-        database.command(new OCommandSQL(cmd)).execute();
+        database.command(cmd);
       } else if (isDistributedCommand()) {
         final String cmd = String.format("alter class `%s` name `%s`", this.name, name);
         final OCommandSQL commandSQL = new OCommandSQL(cmd);
@@ -658,11 +658,11 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       final OStorage storage = database.getStorage();
 
       if (storage instanceof OStorageProxy) {
-        final String cmd = String.format("alter class `%s` shortname %s", name, shortName);
-        database.command(new OCommandSQL(cmd)).execute();
+        final String cmd = String.format("alter class `%s` shortname `%s`", name, shortName);
+        database.command(cmd);
       } else if (isDistributedCommand()) {
 
-        final String cmd = String.format("alter class `%s` shortname %s", name, shortName);
+        final String cmd = String.format("alter class `%s` shortname `%s`", name, shortName);
         final OCommandSQL commandSQL = new OCommandSQL(cmd);
         commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
 
@@ -701,11 +701,11 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       final OStorage storage = database.getStorage();
 
       if (storage instanceof OStorageProxy) {
-        final String cmd = String.format("alter class `%s` description %s", name, shortName);
-        database.command(new OCommandSQL(cmd)).execute();
+        final String cmd = String.format("alter class `%s` description %s", name, iDescription);
+        database.command(cmd);
       } else if (isDistributedCommand()) {
 
-        final String cmd = String.format("alter class `%s` description %s", name, shortName);
+        final String cmd = String.format("alter class `%s` description %s", name, iDescription);
         final OCommandSQL commandSQL = new OCommandSQL(cmd);
         commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
 
@@ -1110,7 +1110,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
       if (storage instanceof OStorageProxy) {
         final String cmd = String.format("alter class `%s` addcluster %d", name, clusterId);
-        database.command(new OCommandSQL(cmd)).execute();
+        database.command(cmd);
       } else if (isDistributedCommand()) {
 
         final String cmd = String.format("alter class `%s` addcluster %d", name, clusterId);
@@ -1152,7 +1152,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
       if (storage instanceof OStorageProxy) {
         final String cmd = String.format("alter class `%s` addcluster `%s`", name, clusterNameOrId);
-        database.command(new OCommandSQL(cmd)).execute();
+        database.command(cmd);
       } else if (isDistributedCommand()) {
         final int clusterId = owner.createClusterIfNeeded(clusterNameOrId);
         addClusterIdInternal(clusterId);
@@ -1187,7 +1187,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       final OStorage storage = database.getStorage();
       if (storage instanceof OStorageProxy) {
         final String cmd = String.format("truncate cluster %s", clusterName);
-        database.command(new OCommandSQL(cmd)).execute();
+        database.command(cmd);
       } else if (isDistributedCommand()) {
         final String cmd = String.format("truncate cluster %s", clusterName);
 
@@ -1237,7 +1237,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
       if (storage instanceof OStorageProxy) {
         final String cmd = String.format("alter class `%s` removecluster %d", name, clusterId);
-        database.command(new OCommandSQL(cmd)).execute();
+        database.command(cmd);
       } else if (isDistributedCommand()) {
         final String cmd = String.format("alter class `%s` removecluster %d", name, clusterId);
 
@@ -1356,7 +1356,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       if (storage instanceof OStorageProxy) {
         // FORMAT FLOAT LOCALE AGNOSTIC
         final String cmd = String.format("alter class `%s` oversize %s", name, new Float(overSize).toString());
-        database.command(new OCommandSQL(cmd)).execute();
+        database.command(cmd);
       } else if (isDistributedCommand()) {
         // FORMAT FLOAT LOCALE AGNOSTIC
         final String cmd = String.format("alter class `%s` oversize %s", name, new Float(overSize).toString());
@@ -1404,7 +1404,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
       if (storage instanceof OStorageProxy) {
         final String cmd = String.format("alter class `%s` abstract %s", name, isAbstract);
-        database.command(new OCommandSQL(cmd)).execute();
+        database.command(cmd);
       } else if (isDistributedCommand()) {
         final String cmd = String.format("alter class `%s` abstract %s", name, isAbstract);
         final OCommandSQL commandSQL = new OCommandSQL(cmd);
@@ -1441,7 +1441,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
       if (storage instanceof OStorageProxy) {
         final String cmd = String.format("alter class `%s` strictmode %s", name, isStrict);
-        database.command(new OCommandSQL(cmd)).execute();
+        database.command(cmd);
       } else if (isDistributedCommand()) {
         final String cmd = String.format("alter class `%s` strictmode %s", name, isStrict);
 
@@ -1773,7 +1773,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
       if (storage instanceof OStorageProxy) {
         final String cmd = String.format("alter class `%s` encryption %s", name, iValue);
-        database.command(new OCommandSQL(cmd)).execute();
+        database.command(cmd);
       } else if (isDistributedCommand()) {
 
         final String cmd = String.format("alter class `%s` encryption %s", name, iValue);

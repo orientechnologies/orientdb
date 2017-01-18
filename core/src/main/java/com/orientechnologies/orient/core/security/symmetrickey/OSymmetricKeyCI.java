@@ -19,25 +19,10 @@
  */
 package com.orientechnologies.orient.core.security.symmetrickey;
 
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OCredentialInterceptor;
-import com.orientechnologies.orient.core.serialization.OBase64Utils;
-
-import java.net.URISyntaxException;
-import java.net.URI;
-
-import java.security.Principal;
-import java.security.PrivilegedAction;
-
-import java.util.Set;
-
-import javax.security.auth.Subject;
-import javax.security.auth.login.LoginContext;
-import javax.security.auth.login.LoginException;
-import javax.security.auth.Subject;
 
 /**
  * Provides a symmetric key credential interceptor.

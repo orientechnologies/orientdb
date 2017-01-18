@@ -1,8 +1,8 @@
 package com.orientechnologies.orient.server.tx;
 
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
-import com.orientechnologies.orient.core.db.OrientDBFactory;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -11,10 +11,9 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.ORemoteImportTest;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 /**
  * Created by tglman on 03/01/17.
@@ -23,7 +22,7 @@ public class RemoteTransactionSupportTest {
 
   private static final String SERVER_DIRECTORY = "./target/transaction";
   private OServer           server;
-  private OrientDBFactory   factory;
+  private OrientDB          factory;
   private ODatabaseDocument database;
 
   @Before
@@ -33,10 +32,11 @@ public class RemoteTransactionSupportTest {
     server.startup(getClass().getResourceAsStream("orientdb-server-config.xml"));
     server.activate();
 
-    factory = OrientDBFactory.remote(new String[] { "localhost" }, OrientDBConfig.defaultConfig());
-    factory.create(ORemoteImportTest.class.getSimpleName(), "root", "root", OrientDBFactory.DatabaseType.MEMORY);
+    factory = OrientDB.remote(new String[] { "localhost" }, OrientDBConfig.defaultConfig());
+    factory.create(ORemoteImportTest.class.getSimpleName(), "root", "root", OrientDB.DatabaseType.MEMORY);
     database = factory.open(ORemoteImportTest.class.getSimpleName(), "admin", "admin");
     database.createClass("SomeTx");
+    database.createClass("SomeTx2");
   }
 
   @Test
@@ -55,16 +55,22 @@ public class RemoteTransactionSupportTest {
   }
 
   @Test
-  @Ignore
   public void testQueryUpdateCreatedInTxTransaction() {
     database.begin();
     ODocument doc1 = new ODocument("SomeTx");
     doc1.setProperty("name", "Jane");
     OIdentifiable id = database.save(doc1);
+
+    ODocument docx = new ODocument("SomeTx2");
+    docx.setProperty("name", "Jane");
+    database.save(doc1);
+
     OResultSet result = database.command("update SomeTx set name='July' where name = 'Jane' ");
+    assertTrue(result.hasNext());
     assertEquals((long) result.next().getProperty("count"), 1L);
     ODocument doc2 = database.load(id.getIdentity());
     assertEquals(doc2.getProperty("name"), "July");
+    assertFalse(result.hasNext());
   }
 
   @After

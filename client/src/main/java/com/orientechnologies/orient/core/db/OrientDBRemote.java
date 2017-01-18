@@ -37,16 +37,16 @@ import java.util.*;
 /**
  * Created by tglman on 08/04/16.
  */
-public class ORemoteDBFactory implements OrientDBFactory {
+public class OrientDBRemote implements OrientDB {
   private final Map<String, OStorageRemote> storages = new HashMap<>();
-  private final Set<OPool<?>>               pools    = new HashSet<>();
-  private final String[]                    hosts;
-  private final OEngineRemote               remote;
-  private final OrientDBConfig              configurations;
-  private final Thread                      shutdownThread;
-  private final Orient                      orient;
+  private final Set<ODatabasePool>          pools    = new HashSet<>();
+  private final String[]       hosts;
+  private final OEngineRemote  remote;
+  private final OrientDBConfig configurations;
+  private final Thread         shutdownThread;
+  private final Orient         orient;
 
-  public ORemoteDBFactory(String[] hosts, OrientDBConfig configurations, Orient orient) {
+  public OrientDBRemote(String[] hosts, OrientDBConfig configurations, Orient orient) {
     super();
     this.hosts = hosts;
     this.orient = orient;
@@ -54,7 +54,7 @@ public class ORemoteDBFactory implements OrientDBFactory {
 
     this.configurations = configurations != null ? configurations : OrientDBConfig.defaultConfig();
 
-    shutdownThread = new Thread(() -> ORemoteDBFactory.this.internalClose());
+    shutdownThread = new Thread(() -> OrientDBRemote.this.internalClose());
 
     Runtime.getRuntime().addShutdownHook(shutdownThread);
   }
@@ -155,12 +155,12 @@ public class ORemoteDBFactory implements OrientDBFactory {
     });
   }
 
-  public OPool<ODatabaseDocument> openPool(String name, String user, String password) {
+  public ODatabasePool openPool(String name, String user, String password) {
     return openPool(name, user, password, null);
   }
 
   @Override
-  public OPool<ODatabaseDocument> openPool(String name, String user, String password, OrientDBConfig config) {
+  public ODatabasePool openPool(String name, String user, String password, OrientDBConfig config) {
     ORemotePoolByFactory pool = new ORemotePoolByFactory(this, name, user, password, solveConfig(config));
     pools.add(pool);
     return pool;

@@ -95,6 +95,7 @@ public class LocalPaginatedClusterWithWALTest extends LocalPaginatedClusterTest 
     databaseDocumentTx.create();
     storage = (OLocalPaginatedStorage) databaseDocumentTx.getStorage();
 
+    storage.synch();
     writeAheadLog = (ODiskWriteAheadLog) storage.getWALInstance();
     writeAheadLog.preventCutTill(writeAheadLog.getFlushedLsn());
     writeCache = storage.getWriteCache();
@@ -234,6 +235,7 @@ public class LocalPaginatedClusterWithWALTest extends LocalPaginatedClusterTest 
     assertFileRestoreFromWAL();
   }
 
+  @Test
   @Override
   public void testRemoveHalfRecords() throws IOException {
     super.testRemoveHalfRecords();
@@ -335,7 +337,8 @@ public class LocalPaginatedClusterWithWALTest extends LocalPaginatedClusterTest 
   }
 
   private void restoreClusterFromWAL() throws IOException {
-    ODiskWriteAheadLog log = new ODiskWriteAheadLog(4, -1, 10 * 1024L * OWALPage.PAGE_SIZE, null, true, storage);
+    ODiskWriteAheadLog log = new ODiskWriteAheadLog(4, -1, 10 * 1024L * OWALPage.PAGE_SIZE, null, true, storage, 32 * 1024 * 1024,
+        120);
     OLogSequenceNumber lsn = log.begin();
 
     List<OWALRecord> atomicUnit = new ArrayList<OWALRecord>();
@@ -369,16 +372,15 @@ public class LocalPaginatedClusterWithWALTest extends LocalPaginatedClusterTest 
             final long fileId = updatePageRecord.getFileId();
             final long pageIndex = updatePageRecord.getPageIndex();
 
-            OCacheEntry cacheEntry = expectedReadCache.load(fileId, pageIndex, true, expectedWriteCache, 1);
+            OCacheEntry cacheEntry = expectedReadCache.loadForWrite(fileId, pageIndex, true, expectedWriteCache, 1);
             if (cacheEntry == null) {
               do {
                 if (cacheEntry != null)
-                  readCache.release(cacheEntry, expectedWriteCache);
+                  readCache.releaseFromWrite(cacheEntry, expectedWriteCache);
 
                 cacheEntry = expectedReadCache.allocateNewPage(fileId, expectedWriteCache);
               } while (cacheEntry.getPageIndex() != pageIndex);
             }
-            cacheEntry.acquireExclusiveLock();
             try {
               ODurablePage durablePage = new ODurablePage(cacheEntry);
               durablePage.restoreChanges(updatePageRecord.getChanges());
@@ -386,8 +388,7 @@ public class LocalPaginatedClusterWithWALTest extends LocalPaginatedClusterTest 
 
               cacheEntry.markDirty();
             } finally {
-              cacheEntry.releaseExclusiveLock();
-              expectedReadCache.release(cacheEntry, expectedWriteCache);
+              expectedReadCache.releaseFromWrite(cacheEntry, expectedWriteCache);
             }
           }
         }

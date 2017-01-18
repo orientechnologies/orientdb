@@ -55,5 +55,6 @@ public class OServerMain {
 
     t.start();
     t.join();
+    System.exit(1);
   }
 }

@@ -74,12 +74,13 @@ public class OLocalHashTableWALTest extends OLocalHashTableBase {
     actualStorageDir = ((OLocalPaginatedStorage) databaseDocumentTx.getStorage()).getStoragePath();
     expectedStorageDir = ((OLocalPaginatedStorage) expectedDatabaseDocumentTx.getStorage()).getStoragePath();
 
-    createActualHashTable();
-
     OLocalPaginatedStorage actualStorage = (OLocalPaginatedStorage) databaseDocumentTx.getStorage();
     ODiskWriteAheadLog diskWriteAheadLog = (ODiskWriteAheadLog) actualStorage.getWALInstance();
 
+    actualStorage.synch();
     diskWriteAheadLog.preventCutTill(diskWriteAheadLog.getFlushedLsn());
+
+    createActualHashTable();
   }
 
   @After
@@ -104,7 +105,7 @@ public class OLocalHashTableWALTest extends OLocalHashTableBase {
     murmurHash3HashFunction.setValueSerializer(OIntegerSerializer.INSTANCE);
 
     localHashTable = new OLocalHashTable<Integer, String>("actualLocalHashTable", ".imc", ".tsc", ".obf", ".nbh",
-        murmurHash3HashFunction, true, (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
+        murmurHash3HashFunction, (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
     localHashTable
         .create(OIntegerSerializer.INSTANCE, OBinarySerializerFactory.getInstance().<String>getObjectSerializer(OType.STRING), null,
             true);
@@ -266,20 +267,18 @@ public class OLocalHashTableWALTest extends OLocalHashTableBase {
             final long fileId = updatePageRecord.getFileId();
             final long pageIndex = updatePageRecord.getPageIndex();
 
-            OCacheEntry cacheEntry = expectedReadCache.load(fileId, pageIndex, true, expectedWriteCache, 1);
+            OCacheEntry cacheEntry = expectedReadCache.loadForWrite(fileId, pageIndex, true, expectedWriteCache, 1);
             if (cacheEntry == null)
               do {
                 cacheEntry = expectedReadCache.allocateNewPage(fileId, expectedWriteCache);
               } while (cacheEntry.getPageIndex() != pageIndex);
 
-            cacheEntry.acquireExclusiveLock();
             try {
               ODurablePage durablePage = new ODurablePage(cacheEntry);
               durablePage.restoreChanges(updatePageRecord.getChanges());
               durablePage.setLsn(updatePageRecord.getLsn());
             } finally {
-              cacheEntry.releaseExclusiveLock();
-              expectedReadCache.release(cacheEntry, expectedWriteCache);
+              expectedReadCache.releaseFromWrite(cacheEntry, expectedWriteCache);
             }
           } else if (restoreRecord instanceof OFileCreatedWALRecord) {
             final OFileCreatedWALRecord fileCreatedCreatedRecord = (OFileCreatedWALRecord) restoreRecord;

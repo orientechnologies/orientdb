@@ -142,6 +142,7 @@
             <class name="com.orientechnologies.orient.test.database.auto.SQLDeleteEdgeTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.SequenceTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.SQLBatchTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.SQLSequenceTest"/>
         </classes>
     </test>
     <test name="other-commands">
@@ -155,6 +156,7 @@
             <class name="com.orientechnologies.orient.test.database.auto.DateTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.SQLFindReferencesTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.SQLCreateLinkTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.MultipleDBTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.ConcurrentUpdatesTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.ConcurrentQueriesTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.DatabaseThreadFactoryTest"/>

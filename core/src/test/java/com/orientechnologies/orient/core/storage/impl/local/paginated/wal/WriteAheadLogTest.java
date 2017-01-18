@@ -58,7 +58,8 @@ public class WriteAheadLogTest {
     when(paginatedStorage.getPerformanceStatisticManager())
         .thenReturn(new OPerformanceStatisticManager(paginatedStorage, Long.MAX_VALUE, -1));
 
-    return new ODiskWriteAheadLog(maxPagesCacheSize, -1, maxSegmentSize, null, true, paginatedStorage);
+    return new ODiskWriteAheadLog(maxPagesCacheSize, -1, maxSegmentSize, null, true, paginatedStorage,
+        16 * OWALPage.PAGE_SIZE, 1);
   }
 
   @After

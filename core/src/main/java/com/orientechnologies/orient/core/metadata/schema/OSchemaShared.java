@@ -193,39 +193,6 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     }
   }
 
-  public OClass createClass(final Class<?> clazz) {
-    OClass result;
-
-    int[] clusterIds = null;
-    int retry = 0;
-
-    while (true)
-      try {
-        acquireSchemaWriteLock();
-        try {
-          // TODO: revisit this logic: interfaces should be also taken into concederation
-          // TODO: Remove code duplication of this kind!
-          final Class<?> superClass = clazz.getSuperclass();
-          final OClass cls;
-          if (superClass != null && superClass != Object.class && existsClass(superClass.getSimpleName()))
-            cls = getClass(superClass.getSimpleName());
-          else
-            cls = null;
-
-          result = doCreateClass(clazz.getSimpleName(), clusterIds, retry, cls);
-          break;
-        } finally {
-          releaseSchemaWriteLock();
-        }
-
-      } catch (ClusterIdsAreEmptyException e) {
-        clusterIds = createClusters(clazz.getSimpleName());
-        retry++;
-      }
-
-    return result;
-  }
-
   @Override
   public OClass createClass(final String className) {
     return createClass(className, (OClass) null, (int[]) null);

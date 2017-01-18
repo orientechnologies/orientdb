@@ -22,10 +22,6 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.atomicope
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.cache.*;
-import com.orientechnologies.orient.core.storage.cache.pages.OLruPageCache;
-import com.orientechnologies.orient.core.storage.cache.pages.OPageCache;
-import com.orientechnologies.orient.core.storage.cache.pages.OPassthroughPageCache;
-import com.orientechnologies.orient.core.storage.cache.pages.OTinyPageCache;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
@@ -64,8 +60,6 @@ public class OAtomicOperation {
 
   private final Map<String, OAtomicOperationMetadata<?>> metadata = new LinkedHashMap<String, OAtomicOperationMetadata<?>>();
 
-  private final OPageCache pageCache;
-
   public OAtomicOperation(OLogSequenceNumber startLSN, OOperationUnitId operationUnitId, OReadCache readCache,
       OWriteCache writeCache, int storageId, OPerformanceStatisticManager performanceStatisticManager) {
     this.storageId = storageId;
@@ -75,7 +69,6 @@ public class OAtomicOperation {
     startCounter = 1;
     this.readCache = readCache;
     this.writeCache = writeCache;
-    this.pageCache = createPageCache(readCache);
   }
 
   public OLogSequenceNumber getStartLSN() {
@@ -117,8 +110,7 @@ public class OAtomicOperation {
           pageChangesContainer = new OCacheEntryChanges();
           changesContainer.pageChangesMap.put(pageIndex, pageChangesContainer);
           if (pageChangesContainer.isNew) {
-            OCacheEntry delegate = new OCacheEntryImpl(fileId, pageIndex,
-                new OCachePointer(null, null, new OLogSequenceNumber(-1, -1), fileId, pageIndex), false);
+            OCacheEntry delegate = new OCacheEntryImpl(fileId, pageIndex, new OCachePointer(null, null, fileId, pageIndex), false);
             pageChangesContainer.delegate = delegate;
           }
         }
@@ -126,7 +118,7 @@ public class OAtomicOperation {
         if (pageChangesContainer.isNew) {
           return pageChangesContainer;
         } else {
-          OCacheEntry delegate = pageCache.loadPage(fileId, pageIndex, checkPinnedPages, writeCache, pageCount);
+          OCacheEntry delegate = readCache.loadForRead(fileId, pageIndex, checkPinnedPages, writeCache, pageCount);
           pageChangesContainer.delegate = delegate;
           return pageChangesContainer;
         }
@@ -196,8 +188,7 @@ public class OAtomicOperation {
 
     changesContainer.pageChangesMap.put(filledUpTo, pageChangesContainer);
     changesContainer.maxNewPageIndex = filledUpTo;
-    OCacheEntry delegate = new OCacheEntryImpl(fileId, filledUpTo,
-        new OCachePointer(null, null, new OLogSequenceNumber(-1, -1), fileId, filledUpTo), false);
+    OCacheEntry delegate = new OCacheEntryImpl(fileId, filledUpTo, new OCachePointer(null, null, fileId, filledUpTo), false);
     pageChangesContainer.delegate = delegate;
     return pageChangesContainer;
   }
@@ -208,7 +199,7 @@ public class OAtomicOperation {
       throw new OStorageException("File with id " + cacheEntry.getFileId() + " is deleted.");
 
     if (cacheEntry.getCachePointer().getExclusiveBuffer() != null)
-      pageCache.releasePage(real.getDelegate(), writeCache);
+      readCache.releaseFromRead(real.getDelegate(), writeCache);
     else {
       assert real.isNew || !cacheEntry.isLockAcquiredByCurrentThread();
     }
@@ -284,8 +275,6 @@ public class OAtomicOperation {
   public void deleteFile(long fileId) {
     fileId = checkFileIdCompatibilty(fileId, storageId);
 
-    pageCache.releaseFilePages(fileId, writeCache);
-
     final FileChanges fileChanges = this.fileChanges.remove(fileId);
     if (fileChanges != null && fileChanges.fileName != null)
       newFileNamesId.remove(fileChanges.fileName);
@@ -335,8 +324,6 @@ public class OAtomicOperation {
 
   public void truncateFile(long fileId) {
     fileId = checkFileIdCompatibilty(fileId, storageId);
-
-    pageCache.releaseFilePages(fileId, writeCache);
 
     FileChanges fileChanges = this.fileChanges.get(fileId);
 
@@ -413,21 +400,17 @@ public class OAtomicOperation {
             continue;
           final long pageIndex = filePageChangesEntry.getKey();
 
-          OCacheEntry cacheEntry = filePageChanges.isNew ? null : pageCache.purgePage(fileId, pageIndex, writeCache);
+          OCacheEntry cacheEntry = readCache.loadForWrite(fileId, pageIndex, true, writeCache, 1);
           if (cacheEntry == null) {
-            cacheEntry = readCache.load(fileId, pageIndex, true, writeCache, 1);
-            if (cacheEntry == null) {
-              assert filePageChanges.isNew;
-              do {
-                if (cacheEntry != null)
-                  readCache.release(cacheEntry, writeCache);
+            assert filePageChanges.isNew;
+            do {
+              if (cacheEntry != null)
+                readCache.releaseFromWrite(cacheEntry, writeCache);
 
-                cacheEntry = readCache.allocateNewPage(fileId, writeCache);
-              } while (cacheEntry.getPageIndex() != pageIndex);
-            }
+              cacheEntry = readCache.allocateNewPage(fileId, writeCache);
+            } while (cacheEntry.getPageIndex() != pageIndex);
           }
 
-          cacheEntry.acquireExclusiveLock();
           try {
             ODurablePage durablePage = new ODurablePage(cacheEntry);
             durablePage.restoreChanges(filePageChanges.changes);
@@ -439,14 +422,11 @@ public class OAtomicOperation {
               readCache.pinPage(cacheEntry);
 
           } finally {
-            cacheEntry.releaseExclusiveLock();
-            readCache.release(cacheEntry, writeCache);
+            readCache.releaseFromWrite(cacheEntry, writeCache);
           }
         }
       }
     } finally {
-      pageCache.reset(writeCache);
-
       if (sessionStoragePerformanceStatistic != null) {
         sessionStoragePerformanceStatistic.stopCommitTimer();
         sessionStoragePerformanceStatistic.completeComponentOperation();
@@ -468,7 +448,6 @@ public class OAtomicOperation {
   }
 
   void rollback(Exception e) {
-    pageCache.reset(writeCache);
     rollback = true;
     rollbackException = e;
   }
@@ -511,14 +490,6 @@ public class OAtomicOperation {
   @Override
   public int hashCode() {
     return operationUnitId.hashCode();
-  }
-
-  protected OPageCache createPageCache(OReadCache readCache) {
-    if (PAGE_CACHE_SIZE > 8)
-      return new OLruPageCache(readCache, PAGE_CACHE_SIZE, Math.max(PAGE_CACHE_SIZE / 8, 4));
-    if (PAGE_CACHE_SIZE > 0)
-      return new OTinyPageCache(readCache, PAGE_CACHE_SIZE);
-    return new OPassthroughPageCache(readCache);
   }
 
   private static class FileChanges {

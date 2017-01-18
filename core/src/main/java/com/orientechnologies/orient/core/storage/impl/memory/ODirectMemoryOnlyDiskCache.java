@@ -38,10 +38,7 @@ import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -200,8 +197,36 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
     }
   }
 
+
   @Override
-  public OCacheEntry load(long fileId, long pageIndex, boolean checkPinnedPages, OWriteCache writeCache, final int pageCount) {
+  public OCacheEntry loadForWrite(long fileId, long pageIndex, boolean checkPinnedPages, OWriteCache writeCache, int pageCount)
+      throws IOException {
+
+    final OCacheEntry cacheEntry = doLoad(fileId, pageIndex);
+
+    if (cacheEntry == null)
+      return null;
+
+    cacheEntry.acquireExclusiveLock();
+
+    return cacheEntry;
+  }
+
+  @Override
+  public OCacheEntry loadForRead(long fileId, long pageIndex, boolean checkPinnedPages, OWriteCache writeCache, int pageCount)
+      throws IOException {
+
+    final OCacheEntry cacheEntry = doLoad(fileId, pageIndex);
+
+    if (cacheEntry == null)
+      return null;
+
+    cacheEntry.acquireSharedLock();
+
+    return cacheEntry;
+  }
+
+  private OCacheEntry doLoad(long fileId, long pageIndex) {
     final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = performanceStatisticManager
         .getSessionPerformanceStatistic();
 
@@ -252,6 +277,7 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
         cacheEntry.incrementUsages();
       }
 
+      cacheEntry.acquireExclusiveLock();
       return cacheEntry;
     } finally {
       if (sessionStoragePerformanceStatistic != null) {
@@ -270,10 +296,25 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
-  public void release(OCacheEntry cacheEntry, OWriteCache writeCache) {
+  public void releaseFromWrite(OCacheEntry cacheEntry, OWriteCache writeCache) {
+    cacheEntry.releaseExclusiveLock();
+
+    doRelease(cacheEntry);
+  }
+
+  @Override
+  public void releaseFromRead(OCacheEntry cacheEntry, OWriteCache writeCache) {
+    cacheEntry.releaseSharedLock();
+
+    doRelease(cacheEntry);
+  }
+
+
+  private void doRelease(OCacheEntry cacheEntry) {
     synchronized (cacheEntry) {
       cacheEntry.decrementUsages();
-      assert cacheEntry.getUsagesCount() > 0 || !cacheEntry.isLockAcquiredByCurrentThread();
+      assert cacheEntry.getUsagesCount() > 0 || cacheEntry.getCachePointer().getSharedBuffer() == null || !cacheEntry
+          .isLockAcquiredByCurrentThread();
     }
   }
 
@@ -484,7 +525,7 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
           final OByteBufferPool bufferPool = OByteBufferPool.instance();
           final ByteBuffer buffer = bufferPool.acquireDirect(true);
 
-          final OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, new OLogSequenceNumber(-1, -1), id, index);
+          final OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, id, index);
           cachePointer.incrementReferrer();
 
           cacheEntry = new OCacheEntryImpl(composeFileId(storageId, id), index, cachePointer, false);
@@ -556,16 +597,8 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
-  public void startFuzzyCheckpoints() {
-  }
-
-  @Override
   public boolean checkLowDiskSpace() {
     return true;
-  }
-
-  @Override
-  public void makeFuzzyCheckpoint() {
   }
 
   @Override
@@ -592,8 +625,25 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
-  public Future store(long fileId, long pageIndex, OCachePointer dataPointer) {
+  public CountDownLatch store(long fileId, long pageIndex, OCachePointer dataPointer) {
     throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void makeFuzzyCheckpoint(long segmentId) throws IOException {
+  }
+
+  @Override
+  public void flushTillSegment(long segmentId) {
+  }
+
+  @Override
+  public OLogSequenceNumber getMinimalNotFlushedLSN() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void updateDirtyPagesTable(OCachePointer pointer) throws IOException {
   }
 
   @Override

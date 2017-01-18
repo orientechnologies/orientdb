@@ -568,6 +568,11 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
+  @Override
+  public int getVersion() {
+    throw new UnsupportedOperationException("Not allowed operation");
+  }
+
   public boolean supportsOrderedIterations() {
     return false;
   }

@@ -50,7 +50,6 @@ public class LocalPaginatedStorageRestoreFromWAL {
 
   @BeforeClass
   public static void beforeClass() {
-    OGlobalConfiguration.MVRBTREE_RID_BINARY_THRESHOLD.setValue(-1);
     OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.setValue("nothing");
     OGlobalConfiguration.FILE_LOCK.setValue(false);
     OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(100000000);

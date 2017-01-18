@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.sharding.auto;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -55,7 +56,12 @@ public class OAutoShardingClusterSelectionStrategy implements OClusterSelectionS
     if (!(stg instanceof OAbstractPaginatedStorage))
       throw new OConfigurationException("Cannot use auto-sharding cluster strategy because storage is not embedded");
 
-    indexEngine = ((OAbstractPaginatedStorage) stg).getIndexEngine(index.getIndexId());
+    try {
+      indexEngine = ((OAbstractPaginatedStorage) stg).getIndexEngine(index.getIndexId());
+    } catch (OInvalidIndexEngineIdException e) {
+      throw new OConfigurationException("Cannot use auto-sharding cluster strategy because the underlying index has not found");
+    }
+
     if (indexEngine == null)
       throw new OConfigurationException("Cannot use auto-sharding cluster strategy because the underlying index has not found");
 

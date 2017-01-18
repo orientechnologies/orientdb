@@ -33,7 +33,7 @@ public class OLocalHashTableTest extends OLocalHashTableBase {
     murmurHash3HashFunction.setValueSerializer(OIntegerSerializer.INSTANCE);
 
     localHashTable = new OLocalHashTable<Integer, String>("localHashTableTest", ".imc", ".tsc", ".obf", ".nbh",
-        murmurHash3HashFunction, false, (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
+        murmurHash3HashFunction, (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
 
     localHashTable
         .create(OIntegerSerializer.INSTANCE, OBinarySerializerFactory.getInstance().<String>getObjectSerializer(OType.STRING), null,

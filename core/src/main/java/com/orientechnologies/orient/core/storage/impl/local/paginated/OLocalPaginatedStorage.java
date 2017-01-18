@@ -65,21 +65,21 @@ import java.util.zip.ZipOutputStream;
  */
 public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
-  private static String[]                                    ALL_FILE_EXTENSIONS = { ".ocf", ".pls", ".pcl", ".oda", ".odh", ".otx",
-      ".ocs", ".oef", ".oem", ".oet", ".fl", ODiskWriteAheadLog.WAL_SEGMENT_EXTENSION, ODiskWriteAheadLog.MASTER_RECORD_EXTENSION,
+  private static String[] ALL_FILE_EXTENSIONS = { ".ocf", ".pls", ".pcl", ".oda", ".odh", ".otx", ".ocs", ".oef", ".oem", ".oet",
+      ".fl", ODiskWriteAheadLog.WAL_SEGMENT_EXTENSION, ODiskWriteAheadLog.MASTER_RECORD_EXTENSION,
       OHashTableIndexEngine.BUCKET_FILE_EXTENSION, OHashTableIndexEngine.METADATA_FILE_EXTENSION,
       OHashTableIndexEngine.TREE_FILE_EXTENSION, OHashTableIndexEngine.NULL_BUCKET_FILE_EXTENSION,
       OClusterPositionMap.DEF_EXTENSION, OSBTreeIndexEngine.DATA_FILE_EXTENSION, OWOWCache.NAME_ID_MAP_EXTENSION,
       OIndexRIDContainer.INDEX_FILE_EXTENSION, OSBTreeCollectionManagerShared.DEFAULT_EXTENSION,
       OSBTreeIndexEngine.NULL_BUCKET_FILE_EXTENSION, O2QCache.CACHE_STATISTIC_FILE_EXTENSION };
 
-  private static final int                                   ONE_KB              = 1024;
+  private static final int ONE_KB = 1024;
 
-  private final int                                          DELETE_MAX_RETRIES;
-  private final int                                          DELETE_WAIT_TIME;
+  private final int DELETE_MAX_RETRIES;
+  private final int DELETE_WAIT_TIME;
 
-  private final OStorageVariableParser                       variableParser;
-  private final OPaginatedStorageDirtyFlag                   dirtyFlag;
+  private final OStorageVariableParser     variableParser;
+  private final OPaginatedStorageDirtyFlag dirtyFlag;
 
   private final String                                       storagePath;
   private       ExecutorService                              checkpointExecutor;
@@ -108,8 +108,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
     configuration = new OStorageConfigurationSegment(this);
 
-    DELETE_MAX_RETRIES = OGlobalConfiguration.FILE_DELETE_RETRY.getValueAsInteger();
-    DELETE_WAIT_TIME = OGlobalConfiguration.FILE_DELETE_DELAY.getValueAsInteger();
+    DELETE_MAX_RETRIES = configuration.getContextConfiguration().getValueAsInteger(OGlobalConfiguration.FILE_DELETE_RETRY);
+    DELETE_WAIT_TIME = configuration.getContextConfiguration().getValueAsInteger(OGlobalConfiguration.FILE_DELETE_DELAY);
 
     dirtyFlag = new OPaginatedStorageDirtyFlag(storagePath + File.separator + "dirty.fl");
   }
@@ -182,8 +182,9 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
       final OutputStream bo = bufferSize > 0 ? new BufferedOutputStream(out, bufferSize) : out;
       try {
-        return OZIPCompressionUtil.compressDirectory(new File(getStoragePath()).getAbsolutePath(), bo,
-            new String[] { ".wal", ".fl" }, iOutput, compressionLevel);
+        return OZIPCompressionUtil
+            .compressDirectory(new File(getStoragePath()).getAbsolutePath(), bo, new String[] { ".wal", ".fl" }, iOutput,
+                compressionLevel);
       } finally {
         if (bufferSize > 0) {
           bo.flush();
@@ -318,7 +319,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     final OWriteAheadLog restoreWAL = new ODiskWriteAheadLog(OGlobalConfiguration.WAL_CACHE_SIZE.getValueAsInteger(),
         OGlobalConfiguration.WAL_COMMIT_TIMEOUT.getValueAsInteger(),
         ((long) OGlobalConfiguration.WAL_MAX_SEGMENT_SIZE.getValueAsInteger()) * ONE_KB * ONE_KB, directory.getAbsolutePath(),
-        false, this);
+        false, this, OGlobalConfiguration.WAL_SEGMENT_BUFFER_SIZE.getValueAsInteger() * 1024 * 1024,
+        OGlobalConfiguration.WAL_FILE_AUTOCLOSE_INTERVAL.getValueAsInteger());
 
     return restoreWAL;
   }
@@ -358,21 +360,6 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   }
 
   @Override
-  protected void preCloseSteps() throws IOException {
-    try {
-      if (writeAheadLog != null) {
-        checkpointExecutor.shutdown();
-        if (!checkpointExecutor.awaitTermination(OGlobalConfiguration.WAL_FULL_CHECKPOINT_SHUTDOWN_TIMEOUT.getValueAsInteger(),
-            TimeUnit.SECONDS))
-          throw new OStorageException("Cannot terminate full checkpoint task");
-      }
-    } catch (InterruptedException e) {
-      Thread.interrupted();
-      throw OException.wrapException(new OStorageException("Error on closing of storage '" + name), e);
-    }
-  }
-
-  @Override
   protected void postDeleteSteps() {
     File dbDir;// GET REAL DIRECTORY
     dbDir = new File(OIOUtils.getPathFromDatabaseName(OSystemVariableResolver.resolveSystemVariables(url)));
@@ -403,8 +390,9 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
         if (notDeletedFiles == 0) {
           // TRY TO DELETE ALSO THE DIRECTORY IF IT'S EMPTY
           if (!dbDir.delete())
-            OLogManager.instance().error(this, "Cannot delete storage directory with path " + dbDir.getAbsolutePath()
-                + " because directory is not empty. Files: " + Arrays.toString(dbDir.listFiles()));
+            OLogManager.instance().error(this,
+                "Cannot delete storage directory with path " + dbDir.getAbsolutePath() + " because directory is not empty. Files: "
+                    + Arrays.toString(dbDir.listFiles()));
           return;
         }
       } else
@@ -438,7 +426,9 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
   protected void initWalAndDiskCache() throws IOException {
     if (configuration.getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.USE_WAL)) {
-      checkpointExecutor = Executors.newSingleThreadExecutor(new FullCheckpointThreadFactory());
+      fuzzyCheckpointExecutor.scheduleWithFixedDelay(new PeriodicFuzzyCheckpoint(),
+          OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.getValueAsInteger(),
+          OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.getValueAsInteger(), TimeUnit.SECONDS);
 
       final ODiskWriteAheadLog diskWriteAheadLog = new ODiskWriteAheadLog(this);
       diskWriteAheadLog.addLowDiskSpaceListener(this);
@@ -452,10 +442,9 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     long writeCacheSize = (long) Math
         .floor((((double) OGlobalConfiguration.DISK_WRITE_CACHE_PART.getValueAsInteger()) / 100.0) * diskCacheSize);
 
-    final OWOWCache wowCache = new OWOWCache(false, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * ONE_KB,
-        OByteBufferPool.instance(), OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_TTL.getValueAsLong() * 1000, writeAheadLog,
-        OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL.getValueAsInteger(), writeCacheSize, diskCacheSize, this, true,
-        files, getId());
+    final OWOWCache wowCache = new OWOWCache(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * ONE_KB,
+        OByteBufferPool.instance(), writeAheadLog, OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL.getValueAsInteger(),
+        writeCacheSize, this, true, files, getId());
     wowCache.addLowDiskSpaceListener(this);
     wowCache.loadRegisteredFiles();
     wowCache.addBackgroundExceptionListener(this);
@@ -467,12 +456,14 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     return new File(path + "/" + OMetadataDefault.CLUSTER_INTERNAL_NAME + OPaginatedCluster.DEF_EXTENSION).exists();
   }
 
-  private static class FullCheckpointThreadFactory implements ThreadFactory {
+  private class PeriodicFuzzyCheckpoint implements Runnable {
     @Override
-    public Thread newThread(Runnable r) {
-      Thread thread = new Thread(r);
-      thread.setDaemon(true);
-      return thread;
+    public void run() {
+      try {
+        makeFuzzyCheckpoint();
+      } catch (RuntimeException e) {
+        OLogManager.instance().error(this, "Error during fuzzy checkpoint", e);
+      }
     }
   }
 }

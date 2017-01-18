@@ -34,8 +34,7 @@ public class OHashTableDirectoryTest {
     OMurmurHash3HashFunction<Integer> murmurHash3HashFunction = new OMurmurHash3HashFunction<Integer>();
     murmurHash3HashFunction.setValueSerializer(OIntegerSerializer.INSTANCE);
 
-    directory = new OHashTableDirectory(".tsc", "hashTableDirectoryTest", "hashTableDirectoryTest", false,
-        (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
+    directory = new OHashTableDirectory(".tsc", "hashTableDirectoryTest", "hashTableDirectoryTest", (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
 
     directory.create();
   }

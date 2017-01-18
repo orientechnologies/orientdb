@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
 import java.io.IOException;
@@ -44,12 +45,13 @@ public class ORemoteServerController {
 
     ODistributedServerLog.debug(this, manager.getLocalNodeName(), iServer, ODistributedServerLog.DIRECTION.OUT,
         "Creating remote channel(s) to distributed server...");
+    OContextConfiguration config = manager.getServerInstance().getContextConfiguration();
 
-    requestChannels = new ORemoteServerChannel[OGlobalConfiguration.DISTRIBUTED_REQUEST_CHANNELS.getValueAsInteger()];
+    requestChannels = new ORemoteServerChannel[ config.getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_REQUEST_CHANNELS)];
     for (int i = 0; i < requestChannels.length; ++i)
       requestChannels[i] = new ORemoteServerChannel(manager, iServer, iURL, user, passwd);
 
-    responseChannels = new ORemoteServerChannel[OGlobalConfiguration.DISTRIBUTED_RESPONSE_CHANNELS.getValueAsInteger()];
+    responseChannels = new ORemoteServerChannel[config.getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_RESPONSE_CHANNELS)];
     for (int i = 0; i < responseChannels.length; ++i)
       responseChannels[i] = new ORemoteServerChannel(manager, iServer, iURL, user, passwd);
   }

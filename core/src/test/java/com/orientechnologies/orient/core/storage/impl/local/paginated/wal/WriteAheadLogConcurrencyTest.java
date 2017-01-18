@@ -41,7 +41,8 @@ public class WriteAheadLogConcurrencyTest {
     when(localPaginatedStorage.getStoragePath()).thenReturn(testDir.getAbsolutePath());
     when(localPaginatedStorage.getName()).thenReturn("WriteAheadLogConcurrencyTest");
 
-    writeAheadLog = new ODiskWriteAheadLog(200, 500, OWALPage.PAGE_SIZE * 800, null, false, localPaginatedStorage);
+    writeAheadLog = new ODiskWriteAheadLog(200, 500, OWALPage.PAGE_SIZE * 800, null, false, localPaginatedStorage,
+        16 * OWALPage.PAGE_SIZE, 120);
 
     writerExecutor = Executors.newCachedThreadPool();
   }

@@ -168,7 +168,7 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
 
   @Override
   public long getDistributedTimeout() {
-    return OGlobalConfiguration.DISTRIBUTED_COMMAND_QUICK_TASK_SYNCH_TIMEOUT.getValueAsLong();
+    return getDatabase().getConfiguration().getValueAsLong(OGlobalConfiguration.DISTRIBUTED_COMMAND_QUICK_TASK_SYNCH_TIMEOUT);
   }
 
   protected void checkClassExists(ODatabaseDocument database, String targetClass, String superClass) {

@@ -23,8 +23,8 @@ import com.orientechnologies.orient.server.network.protocol.http.command.OServer
  * @author Emrul Islam <emrul@emrul.com> Copyright 2014 Emrul Islam
  */
 public class OServerCommandPostAuthToken extends OServerCommandAbstract {
-  private static final String[]  NAMES           = { "POST|token/*" };
-  private static final String    RESPONSE_FORMAT = "indent:-1,attribSameRow";
+  private static final String[] NAMES           = { "POST|token/*" };
+  private static final String   RESPONSE_FORMAT = "indent:-1,attribSameRow";
   private volatile OTokenHandler tokenHandler;
 
   @Override
@@ -34,7 +34,7 @@ public class OServerCommandPostAuthToken extends OServerCommandAbstract {
 
   private void init() {
 
-    if (tokenHandler == null && OGlobalConfiguration.NETWORK_HTTP_USE_TOKEN.getValueAsBoolean()) {
+    if (tokenHandler == null && server.getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.NETWORK_HTTP_USE_TOKEN)) {
       tokenHandler = server.getTokenHandler();
     }
   }
@@ -49,7 +49,7 @@ public class OServerCommandPostAuthToken extends OServerCommandAbstract {
 
     // Parameter names consistent with 4.3.2 (Access Token Request) of RFC 6749
     Map<String, String> content = iRequest.getUrlEncodedContent();
-    if(content == null){
+    if (content == null) {
       ODocument result = new ODocument().field("error", "missing_auth_data");
       sendError(iRequest, iResponse, result);
       return false;
@@ -85,8 +85,8 @@ public class OServerCommandPostAuthToken extends OServerCommandAbstract {
         } catch (OSecurityAccessException e) {
           // WRONG USER/PASSWD
         } catch (OLockException e) {
-          OLogManager.instance().error(this, "Cannot access to the database '" + iRequest.databaseName + "'",
-              ODatabaseException.class, e);
+          OLogManager.instance()
+              .error(this, "Cannot access to the database '" + iRequest.databaseName + "'", ODatabaseException.class, e);
         } finally {
           if (db != null) {
             db.close();
@@ -132,8 +132,8 @@ public class OServerCommandPostAuthToken extends OServerCommandAbstract {
   }
 
   protected void sendError(final OHttpRequest iRequest, final OHttpResponse iResponse, final ODocument error) throws IOException {
-    iResponse.send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_JSON, error.toJSON(),
-        null);
+    iResponse
+        .send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_JSON, error.toJSON(), null);
   }
 
   protected void sendAuthorizationRequest(final OHttpRequest iRequest, final OHttpResponse iResponse, final String iDatabaseName)
@@ -146,8 +146,9 @@ public class OServerCommandPostAuthToken extends OServerCommandAbstract {
       sendJsonError(iResponse, OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
           "401 Unauthorized.", header);
     } else {
-      iResponse.send(OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
-          "401 Unauthorized.", header);
+      iResponse
+          .send(OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, "401 Unauthorized.",
+              header);
     }
 
   }
