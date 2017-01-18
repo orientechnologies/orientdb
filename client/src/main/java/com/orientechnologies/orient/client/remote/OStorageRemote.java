@@ -26,6 +26,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCommonConst;
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
@@ -84,39 +85,39 @@ import java.util.concurrent.atomic.AtomicInteger;
  * This object is bound to each remote ODatabase instances.
  */
 public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
-  public static final String   PARAM_CONNECTION_STRATEGY = "connectionStrategy";
-  private static final String  DEFAULT_HOST              = "localhost";
-  private static final int     DEFAULT_PORT              = 2424;
-  private static final int     DEFAULT_SSL_PORT          = 2434;
-  private static final String  ADDRESS_SEPARATOR         = ";";
-  public static final String   DRIVER_NAME               = "OrientDB Java";
-  private static final String  LOCAL_IP                  = "127.0.0.1";
-  private static final String  LOCALHOST                 = "localhost";
-  private static AtomicInteger sessionSerialId           = new AtomicInteger(-1);
+  public static final  String        PARAM_CONNECTION_STRATEGY = "connectionStrategy";
+  private static final String        DEFAULT_HOST              = "localhost";
+  private static final int           DEFAULT_PORT              = 2424;
+  private static final int           DEFAULT_SSL_PORT          = 2434;
+  private static final String        ADDRESS_SEPARATOR         = ";";
+  public static final  String        DRIVER_NAME               = "OrientDB Java";
+  private static final String        LOCAL_IP                  = "127.0.0.1";
+  private static final String        LOCALHOST                 = "localhost";
+  private static       AtomicInteger sessionSerialId           = new AtomicInteger(-1);
 
   public enum CONNECTION_STRATEGY {
     STICKY, ROUND_ROBIN_CONNECT, ROUND_ROBIN_REQUEST
   }
 
-  private CONNECTION_STRATEGY                  connectionStrategy      = CONNECTION_STRATEGY.STICKY;
+  private CONNECTION_STRATEGY connectionStrategy = CONNECTION_STRATEGY.STICKY;
 
-  private final OSBTreeCollectionManagerRemote sbTreeCollectionManager = new OSBTreeCollectionManagerRemote(this);
-  protected final List<String>                 serverURLs              = new ArrayList<String>();
-  protected final Map<String, OCluster>        clusterMap              = new ConcurrentHashMap<String, OCluster>();
-  private final ExecutorService                asynchExecutor;
-  private final ODocument                      clusterConfiguration    = new ODocument();
-  private final String                         clientId;
-  private final AtomicInteger                  users                   = new AtomicInteger(0);
-  private OContextConfiguration                clientConfiguration;
-  private int                                  connectionRetry;
-  private int                                  connectionRetryDelay;
-  private OCluster[]                           clusters                = OCommonConst.EMPTY_CLUSTER_ARRAY;
-  private int                                  defaultClusterId;
-  private OStorageRemoteAsynchEventListener    asynchEventListener;
-  private Map<String, Object>                  connectionOptions;
-  private String                               recordFormat;
-  protected ORemoteConnectionManager           connectionManager;
-  private final Set<OStorageRemoteSession>     sessions                = Collections
+  private final   OSBTreeCollectionManagerRemote sbTreeCollectionManager = new OSBTreeCollectionManagerRemote(this);
+  protected final List<String>                   serverURLs              = new ArrayList<String>();
+  protected final Map<String, OCluster>          clusterMap              = new ConcurrentHashMap<String, OCluster>();
+  private final ExecutorService asynchExecutor;
+  private final ODocument clusterConfiguration = new ODocument();
+  private final String clientId;
+  private final AtomicInteger users = new AtomicInteger(0);
+  private OContextConfiguration clientConfiguration;
+  private int                   connectionRetry;
+  private int                   connectionRetryDelay;
+  private OCluster[] clusters = OCommonConst.EMPTY_CLUSTER_ARRAY;
+  private   int                               defaultClusterId;
+  private   OStorageRemoteAsynchEventListener asynchEventListener;
+  private   Map<String, Object>               connectionOptions;
+  private   String                            recordFormat;
+  protected ORemoteConnectionManager          connectionManager;
+  private final Set<OStorageRemoteSession> sessions = Collections
       .newSetFromMap(new ConcurrentHashMap<OStorageRemoteSession, Boolean>());
 
   public OStorageRemote(final String iClientId, final String iURL, final String iMode) throws IOException {
@@ -277,8 +278,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   private int handleIOException(int retry, final OChannelBinaryAsynchClient network, final Exception e) {
-    OLogManager.instance().info(this, "Caught Network I/O errors on %s, trying an automatic reconnection... (error: %s)",
-        network.getServerURL(), e.getMessage());
+    OLogManager.instance()
+        .info(this, "Caught Network I/O errors on %s, trying an automatic reconnection... (error: %s)", network.getServerURL(),
+            e.getMessage());
     OLogManager.instance().debug(this, "I/O error stack: ", e);
     connectionManager.remove(network);
     if (--retry <= 0)
@@ -314,8 +316,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     addUser();
     try {
       OStorageRemoteSession session = getCurrentSession();
-      if (status == STATUS.CLOSED || !iUserName.equals(session.connectionUserName)
-          || !iUserPassword.equals(session.connectionUserPassword) || session.sessions.isEmpty()) {
+      if (status == STATUS.CLOSED || !iUserName.equals(session.connectionUserName) || !iUserPassword
+          .equals(session.connectionUserPassword) || session.sessions.isEmpty()) {
 
         OCredentialInterceptor ci = OSecurityManager.instance().newCredentialInterceptor();
 
@@ -548,17 +550,25 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         // SYNCHRONOUS
         try {
           beginResponse(network, session);
-          short clusterId = network.readShort();
 
-          ppos.clusterPosition = network.readLong();
-          ppos.recordVersion = network.readVersion();
+          // FIRST READ THE ENTIRE RESPONSE
+          short clusterId = network.readShort();
+          final long clPos = network.readLong();
+          final int recVer = network.readVersion();
+          final Map<OBonsaiCollectionPointer, OPair<Long, Long>> collectionChanges = readCollectionChanges(network);
+
+          // APPLY CHANGES
+          ppos.clusterPosition = clPos;
+          ppos.recordVersion = recVer;
+
           // THIS IS A COMPATIBILITY FIX TO AVOID TO FILL THE CLUSTER ID IN CASE OF ASYNC
           if (iMode == 0) {
             iRid.setClusterId(clusterId);
             iRid.setClusterPosition(ppos.clusterPosition);
           }
-          readCollectionChanges(network, collectionManager);
+          updateCollection(collectionChanges, collectionManager);
           return ppos;
+
         } finally {
           endResponse(network);
         }
@@ -757,9 +767,13 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       public Integer execute(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
         try {
           beginResponse(network, session);
-          Integer r = network.readVersion();
-          readCollectionChanges(network, collectionManager);
+          final Integer r = network.readVersion();
+          final Map<OBonsaiCollectionPointer, OPair<Long, Long>> collectionChanges = readCollectionChanges(network);
+
+          updateCollection(collectionChanges, collectionManager);
+
           return r;
+
         } finally {
           endResponse(network);
         }
@@ -1354,33 +1368,44 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           }
 
           try {
+            // READ THE ENTIRE RESPONSE FIRST
             beginResponse(network, session);
+
+            // NEW RECORDS
             final int createdRecords = network.readInt();
-            ORecordId currentRid;
-            ORecordId createdRid;
-            for (int i = 0; i < createdRecords; i++) {
-              currentRid = network.readRID();
-              createdRid = network.readRID();
+            final Map<ORecordId, ORecordId> createdRecordsMap = new HashMap<ORecordId, ORecordId>(createdRecords);
+            for (int i = 0; i < createdRecords; i++)
+              createdRecordsMap.put(network.readRID(), network.readRID());
 
-              iTx.updateIdentityAfterCommit(currentRid, createdRid);
-            }
-
+            // UPDATED RECORDS
             final int updatedRecords = network.readInt();
-            ORecordId rid;
-            for (int i = 0; i < updatedRecords; ++i) {
-              rid = network.readRID();
-              int version = network.readVersion();
-              ORecordOperation rop = iTx.getRecordEntry(rid);
+            final Map<ORecordId, Integer> updatedRecordsMap = new HashMap<ORecordId, Integer>(updatedRecords);
+
+            for (int i = 0; i < updatedRecords; ++i)
+              updatedRecordsMap.put(network.readRID(), network.readVersion());
+
+            Map<OBonsaiCollectionPointer, OPair<Long, Long>> collectionChanges = null;
+            if (network.getSrvProtocolVersion() >= 20)
+              collectionChanges = readCollectionChanges(network);
+
+            // APPLY CHANGES
+            for (Map.Entry<ORecordId, ORecordId> entry : createdRecordsMap.entrySet())
+              iTx.updateIdentityAfterCommit(entry.getKey(), entry.getValue());
+            createdRecordsMap.clear();
+
+            for (Map.Entry<ORecordId, Integer> entry : updatedRecordsMap.entrySet()) {
+              final ORecordOperation rop = iTx.getRecordEntry(entry.getKey());
               if (rop != null) {
-                if (version > rop.getRecord().getVersion() + 1)
+                if (entry.getValue() > rop.getRecord().getVersion() + 1)
                   // IN CASE OF REMOTE CONFLICT STRATEGY FORCE UNLOAD DUE TO INVALID CONTENT
                   rop.getRecord().unload();
-                ORecordInternal.setVersion(rop.getRecord(), version);
+                ORecordInternal.setVersion(rop.getRecord(), entry.getValue());
               }
             }
+            updatedRecordsMap.clear();
 
-            if (network.getSrvProtocolVersion() >= 20)
-              readCollectionChanges(network, ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager());
+            if (collectionChanges != null)
+              updateCollection(collectionChanges, ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager());
 
           } finally {
             endResponse(network);
@@ -1396,7 +1421,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           OTransactionAbstract.updateCacheFromEntries(iTx, iTx.getAllRecordEntries(), true);
 
           return null;
-        } finally {
+        } finally
+
+        {
           session.commandExecuting = false;
         }
       }
@@ -1989,8 +2016,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           env.put("com.sun.jndi.ldap.connect.timeout",
               OGlobalConfiguration.NETWORK_BINARY_DNS_LOADBALANCING_TIMEOUT.getValueAsString());
           final DirContext ictx = new InitialDirContext(env);
-          final String hostName = !primaryServer.contains(":") ? primaryServer
-              : primaryServer.substring(0, primaryServer.indexOf(":"));
+          final String hostName = !primaryServer.contains(":") ?
+              primaryServer :
+              primaryServer.substring(0, primaryServer.indexOf(":"));
           final Attributes attrs = ictx.getAttributes(hostName, new String[] { "TXT" });
           final Attribute attr = attrs.get("TXT");
           if (attr != null) {
@@ -2027,8 +2055,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
     // REGISTER THE REMOTE SERVER+PORT
     if (!host.contains(":"))
-      host += ":"
-          + (clientConfiguration.getValueAsBoolean(OGlobalConfiguration.CLIENT_USE_SSL) ? getDefaultSSLPort() : getDefaultPort());
+      host += ":" + (clientConfiguration.getValueAsBoolean(OGlobalConfiguration.CLIENT_USE_SSL) ?
+          getDefaultSSLPort() :
+          getDefaultPort());
     else if (host.split(":").length < 2 || host.split(":")[1].trim().length() == 0)
       host += (clientConfiguration.getValueAsBoolean(OGlobalConfiguration.CLIENT_USE_SSL) ? getDefaultSSLPort() : getDefaultPort());
 
@@ -2066,7 +2095,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
    *
    * @param iCommand id. Ids described at {@link OChannelBinaryProtocol}
    * @param session
+   *
    * @return connection to server
+   *
    * @throws IOException
    */
   public OChannelBinaryAsynchClient beginRequest(final OChannelBinaryAsynchClient network, final byte iCommand,
@@ -2090,16 +2121,16 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
       if (url == null)
         url = getServerURFromList(iIsConnectOperation, session);
-      OLogManager.instance().debug(this,
-          "ROUND_ROBIN_CONNECT: Next remote operation will be executed on server: %s (isConnectOperation=%s)", url,
-          iIsConnectOperation);
+      OLogManager.instance()
+          .debug(this, "ROUND_ROBIN_CONNECT: Next remote operation will be executed on server: %s (isConnectOperation=%s)", url,
+              iIsConnectOperation);
       break;
 
     case ROUND_ROBIN_REQUEST:
       url = getServerURFromList(true, session);
-      OLogManager.instance().debug(this,
-          "ROUND_ROBIN_REQUEST: Next remote operation will be executed on server: %s (isConnectOperation=%s)", url,
-          iIsConnectOperation);
+      OLogManager.instance()
+          .debug(this, "ROUND_ROBIN_REQUEST: Next remote operation will be executed on server: %s (isConnectOperation=%s)", url,
+              iIsConnectOperation);
       break;
 
     default:
@@ -2156,8 +2187,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       }
       if (!network.tryLock()) {
         // CANNOT LOCK IT, MAYBE HASN'T BE CORRECTLY UNLOCKED BY PREVIOUS USER?
-        OLogManager.instance().error(this, "Removing locked network channel '%s' (connected=%s)...", iCurrentURL,
-            network.isConnected());
+        OLogManager.instance()
+            .error(this, "Removing locked network channel '%s' (connected=%s)...", iCurrentURL, network.isConnected());
         connectionManager.remove(network);
         network = null;
       }
@@ -2196,21 +2227,38 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     return physicalPositions;
   }
 
-  private void readCollectionChanges(OChannelBinaryAsynchClient network, OSBTreeCollectionManager collectionManager)
+  private Map<OBonsaiCollectionPointer, OPair<Long, Long>> readCollectionChanges(final OChannelBinaryAsynchClient network)
       throws IOException {
-    int count = network.readInt();
 
+    final int count = network.readInt();
+
+    final Map<OBonsaiCollectionPointer, OPair<Long, Long>> changes = new HashMap<OBonsaiCollectionPointer, OPair<Long, Long>>(
+        count);
     for (int i = 0; i < count; i++) {
       final long mBitsOfId = network.readLong();
       final long lBitsOfId = network.readLong();
 
       final OBonsaiCollectionPointer pointer = OCollectionNetworkSerializer.INSTANCE.readCollectionPointer(network);
+      changes.put(pointer, new OPair<Long, Long>(mBitsOfId, lBitsOfId));
+    }
+    return changes;
+  }
 
-      if (collectionManager != null)
-        collectionManager.updateCollectionPointer(new UUID(mBitsOfId, lBitsOfId), pointer);
+  private void updateCollection(final Map<OBonsaiCollectionPointer, OPair<Long, Long>> changes,
+      final OSBTreeCollectionManager collectionManager) throws IOException {
+
+    if (collectionManager == null)
+      return;
+
+    for (Map.Entry<OBonsaiCollectionPointer, OPair<Long, Long>> entry : changes.entrySet()) {
+      final OBonsaiCollectionPointer pointer = entry.getKey();
+      final long mBitsOfId = entry.getValue().getKey();
+      final long lBitsOfId = entry.getValue().getValue();
+
+      collectionManager.updateCollectionPointer(new UUID(mBitsOfId, lBitsOfId), pointer);
     }
 
-    if (ORecordSerializationContext.getDepth() <= 1 && collectionManager != null)
+    if (ORecordSerializationContext.getDepth() <= 1)
       collectionManager.clearPendingCollections();
   }
 
@@ -2293,8 +2341,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           if (network.getSrvProtocolVersion() < 24)
             network.readString();
 
-          final int dataSegmentId = network.getSrvProtocolVersion() >= 12 && network.getSrvProtocolVersion() < 24
-              ? (int) network.readShort() : 0;
+          final int dataSegmentId =
+              network.getSrvProtocolVersion() >= 12 && network.getSrvProtocolVersion() < 24 ? (int) network.readShort() : 0;
 
           cluster.configure(this, clusterId, clusterName);
 
