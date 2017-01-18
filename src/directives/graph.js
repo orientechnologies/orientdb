@@ -141,7 +141,7 @@ graph.directive('aside', ["$http", "$compile", function ($http, $compile) {
 
       if (s) {
         let tpl = `
-          <div ng-include="'${scope.model.tpl}'"></div>
+          <div style="height: 100%" ng-include="'${scope.model.tpl}'"></div>
         `
         var el = angular.element($compile(tpl)(scope.model.scope));
         element.empty();
