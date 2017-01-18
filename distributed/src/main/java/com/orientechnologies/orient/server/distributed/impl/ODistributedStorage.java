@@ -2025,8 +2025,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       ownerNode = dbCfg.getClusterOwner(newClusterName);
 
       // FORCE THE RETRY OF THE OPERATION
-      // throw new ODistributedConfigurationChangedException(
-      // "Local node '" + localNodeName + "' is not the owner for cluster '" + clusterName + "' (it is '" + ownerNode + "')");
+      throw new ODistributedConfigurationChangedException(
+          "Local node '" + localNodeName + "' is not the owner for cluster '" + clusterName + "' (it is '" + ownerNode + "')");
     }
 
     if (!ownerNode.equals(localNodeName))
