@@ -1,4 +1,5 @@
 import {Component} from '@angular/core';
+
 import {downgradeComponent} from '@angular/upgrade/static';
 import {TeleporterService} from '../../core/services';
 
@@ -27,6 +28,7 @@ class TeleporterComponent {
     this.config = angular.copy(this.defaultConfig);
 
     this.congigStep = 1;
+
   }
 
   getConfigStep() {
@@ -54,7 +56,8 @@ TeleporterComponent.parameters = [TeleporterService];
 
 TeleporterComponent.annotations = [new Component({
   selector: "teleporter",
-  template: template
+  template: template,
+  inputs: ["message"]
 })]
 
 

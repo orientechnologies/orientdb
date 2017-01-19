@@ -8,7 +8,7 @@
 
   <div *ngIf="true">
 
-    <form class="form-horizontal" id="teleporterForm" name="teleporterForm" novalidate>
+    <form class="form-horizontal" id="teleporterForm" name="teleporterForm" novalidate> {{message}}
 
       <div id="stepSwitch" [ngSwitch]="getConfigStep()">
 
@@ -43,6 +43,7 @@
               </div>
             </div>
           </div>
+
         </div>
 
         <div class="stepTwo" *ngSwitchCase="2">
@@ -50,8 +51,8 @@
           <div class="form-group">
             <label class="col-sm-2 control-label">Username</label>
             <div class="col-md-10">
-              <input type="text" id="username" class="form-control"/>
-            </div>
+              <input type="text" id="username" class="form-control" [(ngModel)]="username"/>
+            </div> Hai inserito lo username {{username}}
           </div>
           <div class="form-group">
             <label class="col-sm-2 control-label">Password</label>

@@ -4,6 +4,7 @@ import angular from 'angular';
 
 import {UpgradeModule} from '@angular/upgrade/static';
 import {NgModule} from '@angular/core';
+import {FormsModule} from '@angular/forms'
 import {BrowserModule} from "@angular/platform-browser";
 import {HttpModule} from '@angular/http';
 import {platformBrowserDynamic} from '@angular/platform-browser-dynamic';
@@ -245,7 +246,7 @@ $('body').on('keyup', function (e) {
 
 
 let AppModule = NgModule({
-  imports: [BrowserModule, UpgradeModule, HttpModule],
+  imports: [BrowserModule, UpgradeModule, HttpModule, FormsModule],
   providers: [...APP_RESOLVER_PROVIDERS],
   declarations: [...APP_DECLARATIONS],
   entryComponents: [...APP_DECLARATIONS]
