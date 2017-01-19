@@ -3,6 +3,7 @@ package org.apache.tinkerpop.gremlin.orientdb.traversal.step.sideEffect;
 import com.google.common.annotations.VisibleForTesting;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.index.OIndexManagerProxy;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
@@ -144,7 +145,7 @@ public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E> imple
     public Set<OrientIndexQuery> findIndex() {
         final Set<OrientIndexQuery> indexedQueries = new HashSet<>();
         final OrientGraph graph = getGraph();
-        final OIndexManagerProxy indexManager = graph.database().getMetadata().getIndexManager();
+        final OIndexManager indexManager = graph.database().getMetadata().getIndexManager();
 
         // find indexed keys only for the element subclasses (if present)
         final Set<String> classLabels = findClassLabelsInHasContainers();
