@@ -56,7 +56,7 @@ public class OSymmetricKeyCITest extends AbstractSecurityTest {
     server.shutdown();
 
     // Just in case...
-    OGlobalConfiguration.CLIENT_CREDENTIAL_INTERCEPTOR.setValue(null);
+    OGlobalConfiguration.CLIENT_CREDENTIAL_INTERCEPTOR.setValue("com.orientechnologies.orient.core.security.ODefaultCI");
 
     cleanup(TESTDB);
   }
@@ -66,68 +66,76 @@ public class OSymmetricKeyCITest extends AbstractSecurityTest {
   public void shouldTestSymmetricKeyCIKey() throws Exception {
   	 OGlobalConfiguration.CLIENT_CREDENTIAL_INTERCEPTOR.setValue("com.orientechnologies.orient.core.security.symmetrickey.OSymmetricKeyCI");
   	 
-  	 OGlobalConfiguration.CLIENT_CI_KEYALGORITHM.setValue("AES");
-  	 OGlobalConfiguration.CLIENT_CI_CIPHERTRANSFORM.setValue("AES/CBC/PKCS5Padding");
-  	 
-    // This key is specified in the security.json resource file for username "test".
-  	 final String password = "{'key':'8BC7LeGkFbmHEYNTz5GwDw=='}";
-  	 
-    OServerAdmin serverAd = new OServerAdmin("remote:localhost");
-    serverAd.connect("test", password);
-    serverAd.close();
-    
-    OGlobalConfiguration.CLIENT_CREDENTIAL_INTERCEPTOR.setValue(null);
+  	 try {
+      OGlobalConfiguration.CLIENT_CI_KEYALGORITHM.setValue("AES");
+      OGlobalConfiguration.CLIENT_CI_CIPHERTRANSFORM.setValue("AES/CBC/PKCS5Padding");
+      
+      // This key is specified in the security.json resource file for username "test".
+      final String password = "{'key':'8BC7LeGkFbmHEYNTz5GwDw=='}";
+      
+      OServerAdmin serverAd = new OServerAdmin("remote:localhost");
+      serverAd.connect("test", password);
+      serverAd.close();
+    } finally {    
+      OGlobalConfiguration.CLIENT_CREDENTIAL_INTERCEPTOR.setValue("com.orientechnologies.orient.core.security.ODefaultCI");
+    }
   }
 
   @Test(expected=OSecurityAccessException.class)
   public void shouldTestSymmetricKeyCIKeyFailure() throws Exception {
   	 OGlobalConfiguration.CLIENT_CREDENTIAL_INTERCEPTOR.setValue("com.orientechnologies.orient.core.security.symmetrickey.OSymmetricKeyCI");
   	 
-  	 OGlobalConfiguration.CLIENT_CI_KEYALGORITHM.setValue("AES");
-  	 OGlobalConfiguration.CLIENT_CI_CIPHERTRANSFORM.setValue("AES/CBC/PKCS5Padding");
-  	 
-  	 // Set the key to an invalid one.
-  	 final String password = "{'key':'AAC7LeGkFbmHEYNTz5GwDw=='}";
-  	 
-    OServerAdmin serverAd = new OServerAdmin("remote:localhost");
-    // The key is specified for username "test" in the security.json file.
-    serverAd.connect("test", password);
-    serverAd.close();
-    
-    OGlobalConfiguration.CLIENT_CREDENTIAL_INTERCEPTOR.setValue(null);
+  	 try {
+      OGlobalConfiguration.CLIENT_CI_KEYALGORITHM.setValue("AES");
+      OGlobalConfiguration.CLIENT_CI_CIPHERTRANSFORM.setValue("AES/CBC/PKCS5Padding");
+      
+      // Set the key to an invalid one.
+      final String password = "{'key':'AAC7LeGkFbmHEYNTz5GwDw=='}";
+      
+      OServerAdmin serverAd = new OServerAdmin("remote:localhost");
+      // The key is specified for username "test" in the security.json file.
+      serverAd.connect("test", password);
+      serverAd.close();
+    } finally {    
+      OGlobalConfiguration.CLIENT_CREDENTIAL_INTERCEPTOR.setValue("com.orientechnologies.orient.core.security.ODefaultCI");
+    }
   }
 
   @Test
   public void shouldTestSymmetricKeyCIKeyFile() throws Exception {
   	 OGlobalConfiguration.CLIENT_CREDENTIAL_INTERCEPTOR.setValue("com.orientechnologies.orient.core.security.symmetrickey.OSymmetricKeyCI");
-  	 
-  	 OGlobalConfiguration.CLIENT_CI_KEYALGORITHM.setValue("AES");
-  	 OGlobalConfiguration.CLIENT_CI_CIPHERTRANSFORM.setValue("AES/CBC/PKCS5Padding");
-  	 
-  	 final String password = "{'keyFile':'" + SERVER_DIRECTORY + "/config/AES.key'}";
-  	 
-  	 // The key file is specified for username "test2" in the security.json file.
-    OServerAdmin serverAd = new OServerAdmin("remote:localhost");
-    serverAd.connect("test2", password);
-    serverAd.close();
-    
-    OGlobalConfiguration.CLIENT_CREDENTIAL_INTERCEPTOR.setValue(null);
+
+  	 try {
+      OGlobalConfiguration.CLIENT_CI_KEYALGORITHM.setValue("AES");
+      OGlobalConfiguration.CLIENT_CI_CIPHERTRANSFORM.setValue("AES/CBC/PKCS5Padding");
+      
+      final String password = "{'keyFile':'" + SERVER_DIRECTORY + "/config/AES.key'}";
+      
+      // The key file is specified for username "test2" in the security.json file.
+      OServerAdmin serverAd = new OServerAdmin("remote:localhost");
+      serverAd.connect("test2", password);
+      serverAd.close();
+    } finally {
+      OGlobalConfiguration.CLIENT_CREDENTIAL_INTERCEPTOR.setValue("com.orientechnologies.orient.core.security.ODefaultCI");
+    }
   }
 
   @Test
   public void shouldTestSymmetricKeyCIKeyStore() throws Exception {
   	 OGlobalConfiguration.CLIENT_CREDENTIAL_INTERCEPTOR.setValue("com.orientechnologies.orient.core.security.symmetrickey.OSymmetricKeyCI");
   	 
-  	 OGlobalConfiguration.CLIENT_CI_KEYALGORITHM.setValue("AES");
-  	 OGlobalConfiguration.CLIENT_CI_CIPHERTRANSFORM.setValue("AES/CBC/PKCS5Padding");
-  	 
-  	 final String password = "{'keyStore':{ 'file':'" + SERVER_DIRECTORY + "/config/test.jks', 'password':'password', 'keyAlias':'keyAlias', 'keyPassword':'password' } }";
-  	 
-  	 // The keystore is specified for username "test3" in the security.json file.
-    OServerAdmin serverAd = new OServerAdmin("remote:localhost");
-    serverAd.connect("test3", password);
-    serverAd.close();
-    
-    OGlobalConfiguration.CLIENT_CREDENTIAL_INTERCEPTOR.setValue(null);
+  	 try {
+    	 OGlobalConfiguration.CLIENT_CI_KEYALGORITHM.setValue("AES");
+    	 OGlobalConfiguration.CLIENT_CI_CIPHERTRANSFORM.setValue("AES/CBC/PKCS5Padding");
+    	 
+    	 final String password = "{'keyStore':{ 'file':'" + SERVER_DIRECTORY + "/config/test.jks', 'password':'password', 'keyAlias':'keyAlias', 'keyPassword':'password' } }";
+    	 
+    	 // The keystore is specified for username "test3" in the security.json file.
+      OServerAdmin serverAd = new OServerAdmin("remote:localhost");
+      serverAd.connect("test3", password);
+      serverAd.close();
+    } finally {
+      OGlobalConfiguration.CLIENT_CREDENTIAL_INTERCEPTOR.setValue("com.orientechnologies.orient.core.security.ODefaultCI");
+    }
   }
 }

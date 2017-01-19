@@ -1,7 +1,6 @@
 package com.orientechnologies.security.auditing;
 
 import com.orientechnologies.orient.client.remote.OServerAdmin;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -46,11 +45,9 @@ public class SystemDbAuditingTest extends AbstractSecurityTest {
   	 createFile(SERVER_DIRECTORY + "/config/orientdb-server-config.xml", SystemDbAuditingTest.class.getResourceAsStream("/com/orientechnologies/security/auditing/orientdb-server-config.xml"));
   	 createFile(SERVER_DIRECTORY + "/config/security.json", SystemDbAuditingTest.class.getResourceAsStream("/com/orientechnologies/security/auditing/security.json"));
 
-    server = new OServer();
-  	 // Re-set this in case the credential interceptor has been set in a previous test and not restored.
-  	 OGlobalConfiguration.CLIENT_CREDENTIAL_INTERCEPTOR.setValue(null);
 
-    server.setServerRootDirectory(SERVER_DIRECTORY);
+    server = new OServer();
+    server.setServerRootDirectory(SERVER_DIRECTORY);   
 
     server.startup(new File(SERVER_DIRECTORY + "/config/orientdb-server-config.xml"));
 

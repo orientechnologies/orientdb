@@ -46,9 +46,6 @@ public class OSecuritySymmetricKeyTest extends AbstractSecurityTest {
   	   	 
 //  	 createFile(SERVER_DIRECTORY + "/config/test.jks", OSymmetricKeyTest.class.getResourceAsStream("/com/orientechnologies/security/symmetrickey/test.jks"));
   	
-  	 // Re-set this in case the credential interceptor has been set in a previous test and not restored.
-  	 OGlobalConfiguration.CLIENT_CREDENTIAL_INTERCEPTOR.setValue(null);
-  	
     server = new OServer();
     server.setServerRootDirectory(SERVER_DIRECTORY);
     server.startup(new File(SERVER_DIRECTORY + "/config/orientdb-server-config.xml"));
