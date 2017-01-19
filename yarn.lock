@@ -14,6 +14,10 @@
   version "2.3.1"
   resolved "https://registry.yarnpkg.com/@angular/core/-/core-2.3.1.tgz#be6e91fdfdd7498506604263e051797cf67a47be"
 
+"@angular/forms@^2.2.4":
+  version "2.4.4"
+  resolved "https://registry.yarnpkg.com/@angular/forms/-/forms-2.4.4.tgz#9679ca369d5bc2968ee1a67634ac221d75487364"
+
 "@angular/http@^2.2.4":
   version "2.3.1"
   resolved "https://registry.yarnpkg.com/@angular/http/-/http-2.3.1.tgz#3dda85771dccea49d5e08a47366a7168e3435141"
