@@ -44,8 +44,9 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManagerAbstract> i
   /**
    * Force reloading of indexes.
    */
-  public OIndexManager reload() {
-    return delegate.load(database);
+  public OIndexManagerProxy reload() {
+    delegate.load(database);
+    return this;
   }
 
   public void create() {
@@ -80,8 +81,8 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManagerAbstract> i
       final int[] iClusterIdsToIndex, final OProgressListener progressListener, final ODocument metadata, final String algorithm) {
     if (isDistributedCommand()) {
       final OIndexManagerRemote remoteIndexManager = new OIndexManagerRemote();
-      return remoteIndexManager.createIndex(iName, iType, iIndexDefinition, iClusterIdsToIndex, progressListener, metadata,
-          algorithm);
+      return remoteIndexManager
+          .createIndex(iName, iType, iIndexDefinition, iClusterIdsToIndex, progressListener, metadata, algorithm);
     }
 
     return delegate.createIndex(iName, iType, iIndexDefinition, iClusterIdsToIndex, progressListener, metadata, algorithm);
@@ -190,7 +191,6 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManagerAbstract> i
   }
 
   private boolean isDistributedCommand() {
-    return database.getStorage().isDistributed()
-        && !OScenarioThreadLocal.INSTANCE.isRunModeDistributed();
+    return database.getStorage().isDistributed() && !OScenarioThreadLocal.INSTANCE.isRunModeDistributed();
   }
 }

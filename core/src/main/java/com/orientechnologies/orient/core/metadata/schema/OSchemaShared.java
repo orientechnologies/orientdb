@@ -62,7 +62,7 @@ import java.util.concurrent.Callable;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 @SuppressWarnings("unchecked")
-public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, OCloseable {
+public class OSchemaShared extends ODocumentWrapperNoClass implements OCloseable {
   private static final int  NOT_EXISTENT_CLUSTER_ID = -1;
   public static final  int  CURRENT_VERSION_NUMBER  = 4;
   public static final  int  VERSION_NUMBER_V4       = 4;
@@ -150,7 +150,6 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     return null;
   }
 
-  @Override
   public OImmutableSchema makeSnapshot() {
     if (snapshot == null) {
       // Is null only in the case that is asked while the schema is created
@@ -185,7 +184,9 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     }
   }
 
-  @Override
+  /**
+   * Callback invoked when the schema is loaded, after all the initializations.
+   */
   public void onPostIndexManagement() {
     for (OClass c : classes.values()) {
       if (c instanceof OClassImpl)
@@ -193,32 +194,26 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     }
   }
 
-  @Override
   public OClass createClass(final String className) {
     return createClass(className, (OClass) null, (int[]) null);
   }
 
-  @Override
   public OClass createClass(final String iClassName, final OClass iSuperClass) {
     return createClass(iClassName, iSuperClass, (int[]) null);
   }
 
-  @Override
   public OClass createClass(String iClassName, OClass... superClasses) {
     return createClass(iClassName, (int[]) null, superClasses);
   }
 
-  @Override
   public OClass getOrCreateClass(final String iClassName) {
     return getOrCreateClass(iClassName, (OClass) null);
   }
 
-  @Override
   public OClass getOrCreateClass(final String iClassName, final OClass superClass) {
     return getOrCreateClass(iClassName, superClass == null ? new OClass[0] : new OClass[] { superClass });
   }
 
-  @Override
   public OClass getOrCreateClass(final String iClassName, final OClass... superClasses) {
     if (iClassName == null)
       return null;
@@ -263,7 +258,6 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     return cls;
   }
 
-  @Override
   public OClass createAbstractClass(final Class<?> iClass) {
     OClass cls;
     int[] clusterIds = new int[] { -1 };
@@ -293,27 +287,22 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     return cls;
   }
 
-  @Override
   public OClass createAbstractClass(final String className) {
     return createClass(className, null, new int[] { -1 });
   }
 
-  @Override
   public OClass createAbstractClass(final String className, final OClass superClass) {
     return createClass(className, superClass, new int[] { -1 });
   }
 
-  @Override
   public OClass createAbstractClass(String iClassName, OClass... superClasses) {
     return createClass(iClassName, new int[] { -1 }, superClasses);
   }
 
-  @Override
   public OClass createClass(final String className, final OClass superClass, int[] clusterIds) {
     return createClass(className, clusterIds, superClass);
   }
 
-  @Override
   public OClass createClass(final String className, int[] clusterIds, OClass... superClasses) {
     final Character wrongCharacter = OSchemaShared.checkClassNameIfValid(className);
     if (wrongCharacter != null)
@@ -336,7 +325,6 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     return result;
   }
 
-  @Override
   public OClass createClass(final String className, int clusters, OClass... superClasses) {
     final Character wrongCharacter = OSchemaShared.checkClassNameIfValid(className);
     if (wrongCharacter != null)
@@ -771,7 +759,6 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     }
   }
 
-  @Override
   public Set<OClass> getClassesRelyOnCluster(final String clusterName) {
     getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_READ);
 
@@ -790,12 +777,6 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     }
   }
 
-  
-  @Override
-  public OSchemaShared load() {
-    throw new UnsupportedOperationException();
-  }
-  
   public OSchemaShared load(ODatabaseDocumentInternal database) {
 
     rwSpinLock.acquireWriteLock();
@@ -813,11 +794,6 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       rwSpinLock.releaseWriteLock();
     }
   }
-
-  public void create() {
-    throw new UnsupportedOperationException();
-  }
-  
   public void create(final ODatabaseDocumentInternal database) {
     rwSpinLock.acquireWriteLock();
     try {

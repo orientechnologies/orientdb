@@ -1965,7 +1965,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   public Set<OIndex<?>> getClassIndexes() {
     acquireSchemaReadLock();
     try {
-      final OIndexManagerProxy idxManager = getDatabase().getMetadata().getIndexManager();
+      final OIndexManager idxManager = getDatabase().getMetadata().getIndexManager();
       if (idxManager == null)
         return new HashSet<OIndex<?>>();
 
@@ -1979,7 +1979,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   public void getClassIndexes(final Collection<OIndex<?>> indexes) {
     acquireSchemaReadLock();
     try {
-      final OIndexManagerProxy idxManager = getDatabase().getMetadata().getIndexManager();
+      final OIndexManager idxManager = getDatabase().getMetadata().getIndexManager();
       if (idxManager == null)
         return;
 

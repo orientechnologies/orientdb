@@ -55,22 +55,6 @@ public class OSequenceLibraryProxy extends OProxedResource<OSequenceLibraryImpl>
   }
 
   @Override
-  public OSequence getSequence(ODatabaseDocumentInternal database, String iName) {
-    return delegate.getSequence(database, iName);
-  }
-
-  @Override
-  public OSequence createSequence(ODatabaseDocumentInternal database, String iName, SEQUENCE_TYPE sequenceType,
-      OSequence.CreateParams params) {
-    return delegate.createSequence(database, iName, sequenceType, params);
-  }
-
-  @Override
-  public void dropSequence(ODatabaseDocumentInternal database, String iName) {
-    delegate.dropSequence(database, iName);
-  }
-
-  @Override
   @Deprecated
   public void dropSequence(String iName) {
     delegate.dropSequence(database, iName);
@@ -79,11 +63,6 @@ public class OSequenceLibraryProxy extends OProxedResource<OSequenceLibraryImpl>
   @Override
   public void create() {
     delegate.create(database);
-  }
-
-  @Override
-  public void load(ODatabaseDocumentInternal db) {
-    delegate.load(db);
   }
 
   @Override

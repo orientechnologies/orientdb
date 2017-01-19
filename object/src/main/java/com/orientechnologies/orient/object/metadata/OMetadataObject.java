@@ -19,6 +19,7 @@ package com.orientechnologies.orient.object.metadata;
 import java.io.IOException;
 
 import com.orientechnologies.orient.core.cache.OCommandCache;
+import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.index.OIndexManagerProxy;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
@@ -92,7 +93,7 @@ public class OMetadataObject implements OMetadataInternal {
   }
 
   @Override
-  public OIndexManagerProxy getIndexManager() {
+  public OIndexManager getIndexManager() {
     return underlying.getIndexManager();
   }
 

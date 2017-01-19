@@ -24,7 +24,8 @@ public class OCommandExecutorSQLAlterSequence extends OCommandExecutorSQLAbstrac
   private String                 sequenceName;
   private OSequence.CreateParams params;
 
-  @Override public OCommandExecutorSQLAlterSequence parse(OCommandRequest iRequest) {
+  @Override
+  public OCommandExecutorSQLAlterSequence parse(OCommandRequest iRequest) {
     final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
 
     String queryText = textRequest.getText();
@@ -66,13 +67,14 @@ public class OCommandExecutorSQLAlterSequence extends OCommandExecutorSQLAbstrac
     return this;
   }
 
-  @Override public Object execute(Map<Object, Object> iArgs) {
+  @Override
+  public Object execute(Map<Object, Object> iArgs) {
     if (this.sequenceName == null) {
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
     }
 
     final ODatabaseDocument database = getDatabase();
-    OSequence sequence = database.getMetadata().getSequenceLibrary().getSequence((ODatabaseDocumentInternal) database, this.sequenceName);
+    OSequence sequence = database.getMetadata().getSequenceLibrary().getSequence(this.sequenceName);
 
     final boolean result = sequence.updateParams(this.params);
     sequence.reset();
@@ -80,11 +82,13 @@ public class OCommandExecutorSQLAlterSequence extends OCommandExecutorSQLAbstrac
     return result;
   }
 
-  @Override public String getSyntax() {
+  @Override
+  public String getSyntax() {
     return "ALTER SEQUENCE <sequence> [START <value>] [INCREMENT <value>] [CACHE <value>]";
   }
 
-  @Override public QUORUM_TYPE getQuorumType() {
+  @Override
+  public QUORUM_TYPE getQuorumType() {
     return QUORUM_TYPE.ALL;
   }
 }

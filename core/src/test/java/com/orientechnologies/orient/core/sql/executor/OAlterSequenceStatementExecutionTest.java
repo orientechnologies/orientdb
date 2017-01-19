@@ -39,10 +39,9 @@ public class OAlterSequenceStatementExecutionTest {
     Assert.assertNotNull(next);
     Assert.assertEquals((Object) 20, next.getProperty("increment"));
     result.close();
-    OSequence seq = db.getMetadata().getSequenceLibrary().getSequence((ODatabaseDocumentInternal) db, sequenceName);
+    OSequence seq = db.getMetadata().getSequenceLibrary().getSequence(sequenceName);
     Assert.assertNotNull(seq);
     Assert.assertEquals(20, seq.next());
   }
-
 
 }

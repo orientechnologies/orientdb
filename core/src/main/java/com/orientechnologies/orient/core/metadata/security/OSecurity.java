@@ -43,8 +43,10 @@ public interface OSecurity {
   static final String ONCREATE_IDENTITY_TYPE = "onCreate.identityType";
   static final String ONCREATE_FIELD         = "onCreate.fields";
 
+  @Deprecated
   OUser create();
 
+  @Deprecated
   void load();
 
   boolean isAllowed(final Set<OIdentifiable> iAllowAll, final Set<OIdentifiable> iAllowOperation);
@@ -189,13 +191,18 @@ public interface OSecurity {
 
   List<ODocument> getAllRoles();
 
+  @Deprecated
   void close(boolean onDelete);
 
+  @Deprecated
   void createClassTrigger();
 
+  @Deprecated
   OSecurity getUnderlying();
 
+  @Deprecated
   long getVersion();
 
+  @Deprecated
   void incrementVersion();
 }

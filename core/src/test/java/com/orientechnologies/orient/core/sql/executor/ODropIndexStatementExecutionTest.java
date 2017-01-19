@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import org.junit.AfterClass;
@@ -31,7 +32,7 @@ public class ODropIndexStatementExecutionTest {
         .createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
     String indexName = index.getName();
 
-    Assert.assertNotNull(db.getMetadata().getIndexManager().reload().getIndex(indexName));
+    Assert.assertNotNull(((OIndexManager)db.getMetadata().getIndexManager().reload()).getIndex(indexName));
 
     OResultSet result = db.command("drop index " + indexName);
     Assert.assertTrue(result.hasNext());

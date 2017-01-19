@@ -58,7 +58,7 @@ public class IndexManagerTest extends DocumentDBBaseTest {
 
   @Test
   public void testCreateSimpleKeyInvalidNameIndex() {
-    final OIndexManagerProxy indexManager = database.getMetadata().getIndexManager();
+    final OIndexManager indexManager = database.getMetadata().getIndexManager();
 
     try {
       indexManager.createIndex("simple:key", OClass.INDEX_TYPE.UNIQUE.toString(), new OSimpleKeyIndexDefinition(-1, OType.INTEGER),
@@ -75,7 +75,7 @@ public class IndexManagerTest extends DocumentDBBaseTest {
 
   @Test
   public void testCreateSimpleKeyIndexTest() {
-    final OIndexManagerProxy indexManager = database.getMetadata().getIndexManager();
+    final OIndexManager indexManager = database.getMetadata().getIndexManager();
 
     final OIndex result = indexManager.createIndex("simplekey", OClass.INDEX_TYPE.UNIQUE.toString(), new OSimpleKeyIndexDefinition(
         -1, OType.INTEGER), null, null, null);
@@ -89,7 +89,7 @@ public class IndexManagerTest extends DocumentDBBaseTest {
 
   @Test
   public void testCreateOnePropertyIndexTest() {
-    final OIndexManagerProxy indexManager = database.getMetadata().getIndexManager();
+    final OIndexManager indexManager = database.getMetadata().getIndexManager();
 
     final OIndex result = indexManager.createIndex("propertyone", OClass.INDEX_TYPE.UNIQUE.toString(),
         new OPropertyIndexDefinition(CLASS_NAME, "fOne", OType.INTEGER), new int[] { database.getClusterIdByName(CLASS_NAME) },
@@ -104,7 +104,7 @@ public class IndexManagerTest extends DocumentDBBaseTest {
 
   @Test
   public void createCompositeIndexTestWithoutListener() {
-    final OIndexManagerProxy indexManager = database.getMetadata().getIndexManager();
+    final OIndexManager indexManager = database.getMetadata().getIndexManager();
 
     final OIndex result = indexManager.createIndex(
         "compositeone",
@@ -141,7 +141,7 @@ public class IndexManagerTest extends DocumentDBBaseTest {
       }
     };
 
-    final OIndexManagerProxy indexManager = database.getMetadata().getIndexManager();
+    final OIndexManager indexManager = database.getMetadata().getIndexManager();
 
     final OIndex result = indexManager.createIndex(
         "compositetwo",

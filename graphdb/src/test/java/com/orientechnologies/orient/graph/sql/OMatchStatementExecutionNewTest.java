@@ -96,7 +96,7 @@ public class OMatchStatementExecutionNewTest {
 //      db.command(new OCommandSQL(cmd)).execute();
 //    }
 
-    db.query("select expand(out()) from IndexedVertex where uid = 0").stream().forEach(x-> System.out.println("x = " + x));
+//    db.query("select expand(out()) from IndexedVertex where uid = 0").stream().forEach(x-> System.out.println("x = " + x));
   }
 
   private static void initOrgChart() {

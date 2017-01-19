@@ -17,7 +17,7 @@
 package com.orientechnologies.orient.core.metadata;
 
 import com.orientechnologies.orient.core.cache.OCommandCache;
-import com.orientechnologies.orient.core.index.OIndexManagerProxy;
+import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.metadata.function.OFunctionLibrary;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.security.OIdentity;
@@ -38,10 +38,6 @@ import java.util.Set;
  * 
  */
 public interface OMetadata {
-  Set<String> SYSTEM_CLUSTER = Collections.unmodifiableSet(
-      new HashSet<String>(Arrays.asList(new String[] { OUser.CLASS_NAME.toLowerCase(), ORole.CLASS_NAME.toLowerCase(),
-          OIdentity.CLASS_NAME.toLowerCase(), "ORIDs".toLowerCase(), OSecurity.RESTRICTED_CLASSNAME.toLowerCase(),
-          "OFunction".toLowerCase(), "OTriggered".toLowerCase(), "OSchedule".toLowerCase() })));
 
   @Deprecated
   void load();
@@ -55,8 +51,9 @@ public interface OMetadata {
 
   OSecurity getSecurity();
 
-  OIndexManagerProxy getIndexManager();
+  OIndexManager getIndexManager();
 
+  @Deprecated
   int getSchemaClusterId();
 
   /**

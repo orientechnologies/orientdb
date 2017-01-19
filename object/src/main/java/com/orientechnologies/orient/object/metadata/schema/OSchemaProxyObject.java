@@ -142,11 +142,6 @@ public class OSchemaProxyObject implements OSchemaObject {
   }
 
   @Override
-  public void onPostIndexManagement() {
-    underlying.onPostIndexManagement();
-  }
-
-  @Override
   public OClass getOrCreateClass(String iClassName, OClass... superClasses) {
     return underlying.getOrCreateClass(iClassName, superClasses);
   }

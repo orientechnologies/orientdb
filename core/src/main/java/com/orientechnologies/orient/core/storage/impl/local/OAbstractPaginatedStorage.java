@@ -65,7 +65,10 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.impl.in
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OSimpleKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.storage.*;
-import com.orientechnologies.orient.core.storage.cache.*;
+import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
+import com.orientechnologies.orient.core.storage.cache.OPageDataVerificationError;
+import com.orientechnologies.orient.core.storage.cache.OReadCache;
+import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.cache.local.OBackgroundExceptionListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
@@ -1163,7 +1166,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     txBegun.incrementAndGet();
 
     final ODatabaseDocumentInternal databaseRecord = (ODatabaseDocumentInternal) clientTx.getDatabase();
-    final OIndexManagerProxy indexManager = databaseRecord.getMetadata().getIndexManager();
+    final OIndexManager indexManager = databaseRecord.getMetadata().getIndexManager();
     final TreeMap<String, OTransactionIndexChanges> indexesToCommit = getSortedIndexEntries(clientTx);
 
     databaseRecord.getMetadata().makeThreadLocalSchemaSnapshot();
@@ -4030,7 +4033,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return ridsPerCluster;
   }
 
-  private void lockIndexKeys(OIndexManagerProxy manager, TreeMap<String, OTransactionIndexChanges> indexes, List<Lock[]> lockList) {
+  private void lockIndexKeys(OIndexManager manager, TreeMap<String, OTransactionIndexChanges> indexes, List<Lock[]> lockList) {
     for (Map.Entry<String, OTransactionIndexChanges> entry : indexes.entrySet()) {
       final String indexName = entry.getKey();
       final OTransactionIndexChanges changes = entry.getValue();

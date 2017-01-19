@@ -467,7 +467,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   public void rebuildIndexes() {
     database.getMetadata().getIndexManager().reload();
 
-    OIndexManagerProxy indexManager = database.getMetadata().getIndexManager();
+    OIndexManager indexManager = database.getMetadata().getIndexManager();
 
     listener.onMessage("\nRebuild of stale indexes...");
     for (String indexName : indexesToRebuild) {
@@ -640,7 +640,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       }
     }
 
-    final OIndexManagerProxy indexManager = database.getMetadata().getIndexManager();
+    final OIndexManager indexManager = database.getMetadata().getIndexManager();
     for (String indexName : indexes) {
       indexManager.dropIndex(indexName);
     }
@@ -684,7 +684,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
     ODocument doc = new ODocument();
 
-    OIndexManagerProxy indexManager = database.getMetadata().getIndexManager();
+    OIndexManager indexManager = database.getMetadata().getIndexManager();
     // FORCE RELOADING
     indexManager.reload();
 
@@ -1430,7 +1430,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   private void importIndexes() throws IOException, ParseException {
     listener.onMessage("\n\nImporting indexes ...");
 
-    OIndexManagerProxy indexManager = database.getMetadata().getIndexManager();
+    OIndexManager indexManager = database.getMetadata().getIndexManager();
     indexManager.reload();
 
     jsonReader.readNext(OJSONReader.BEGIN_COLLECTION);
