@@ -35,7 +35,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * @param <V> Value which may be in open/closed stated and associated with key.
  */
 public class OClosableLinkedContainer<K, V extends OClosableItem> {
-  /**
+  /*
    * Design of container consist of several major parts.
    *
    * Operation buffers.
@@ -258,7 +258,12 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
     final OClosableEntry<K, V> removed = data.remove(key);
 
     if (removed != null) {
-      removed.makeRetired();
+      long preStatus = removed.makeRetired();
+
+      if (OClosableEntry.isOpen(preStatus)) {
+        countClosedFiles();
+      }
+
       logRemoved(removed);
       return removed.get();
     }
@@ -385,6 +390,7 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
         readBufferDrainAtWriteCount[n].set(0);
       }
 
+      openFiles.set(0);
       stateBuffer.clear();
 
       while (lruList.poll() != null)

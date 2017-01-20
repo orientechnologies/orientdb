@@ -72,7 +72,7 @@ public class OClosableEntry<K, V extends OClosableItem> {
   private volatile long state     = STATUS_OPEN;
   private final    Lock stateLock = new ReentrantLock();
 
-  public OClosableEntry(V item) {
+  OClosableEntry(V item) {
     this.item = item;
   }
 
@@ -80,12 +80,16 @@ public class OClosableEntry<K, V extends OClosableItem> {
     return item;
   }
 
-  public void acquireStateLock() {
+  void acquireStateLock() {
     stateLock.lock();
   }
 
-  public void releaseStateLock() {
+  void releaseStateLock() {
     stateLock.unlock();
+  }
+
+  public static boolean isOpen(long state) {
+    return state == STATUS_OPEN;
   }
 
   @GuardedBy("stateLock")
@@ -138,13 +142,17 @@ public class OClosableEntry<K, V extends OClosableItem> {
     state = acquireCount << ACQUIRED_OFFSET;
   }
 
-  void makeRetired() {
+  long makeRetired() {
+    long oldSate = state;
+
     stateLock.lock();
     try {
       state = STATUS_RETIRED;
     } finally {
       stateLock.unlock();
     }
+
+    return oldSate;
   }
 
   void makeDead() {

@@ -71,7 +71,7 @@ public class OClosableLinkedContainerTest {
     Assert.assertTrue(dictionary.checkAllOpenItemsInLRUList() == 0);
   }
 
-  @Test
+  @Test(enabled = false)
   public void testMultipleThreadsConsistency() throws Exception {
     CItem.openFiles.set(0);
     CItem.maxDeltaLimit.set(0);
