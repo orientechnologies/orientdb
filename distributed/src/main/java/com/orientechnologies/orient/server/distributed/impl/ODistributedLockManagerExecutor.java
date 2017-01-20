@@ -17,11 +17,14 @@
  *  * For more information: http://www.orientechnologies.com
  *
  */
-package com.orientechnologies.orient.server.distributed;
+package com.orientechnologies.orient.server.distributed.impl;
 
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.server.distributed.ODistributedLockManager;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
 import java.util.ArrayList;
 import java.util.Iterator;
