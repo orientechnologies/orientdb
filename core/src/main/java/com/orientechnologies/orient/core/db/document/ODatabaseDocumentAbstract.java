@@ -202,7 +202,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     for (ODatabaseListener listener : getListenersCopy())
       try {
         activateOnCurrentThread();
-        listener.onDelete(getDatabaseOwner());
+        listener.onDrop(getDatabaseOwner());
       } catch (Throwable t) {
         t.printStackTrace();
       }

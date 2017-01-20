@@ -24,16 +24,17 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Listener Interface to receive callbacks on database usage.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public interface ODatabaseLifecycleListener {
   enum PRIORITY {
     FIRST, EARLY, REGULAR, LATE, LAST
   }
 
-  PRIORITY getPriority();
+  default PRIORITY getPriority() {
+    return PRIORITY.LAST;
+  }
 
   void onCreate(ODatabaseInternal iDatabase);
 
@@ -43,14 +44,20 @@ public interface ODatabaseLifecycleListener {
 
   void onDrop(ODatabaseInternal iDatabase);
 
-  void onCreateClass(ODatabaseInternal iDatabase, OClass iClass);
+  @Deprecated
+  default void onCreateClass(ODatabaseInternal iDatabase, OClass iClass) {
 
-  void onDropClass(ODatabaseInternal iDatabase, OClass iClass);
+  }
+
+  @Deprecated
+  default void onDropClass(ODatabaseInternal iDatabase, OClass iClass) {
+
+  }
 
   /**
    * Event called during the retrieving of distributed configuration, usually at startup and when the cluster shape changes. You can
    * use this event to enrich the ODocument sent to the client with custom properties.
-   * 
+   *
    * @param iConfiguration
    */
   void onLocalNodeConfigurationRequest(ODocument iConfiguration);

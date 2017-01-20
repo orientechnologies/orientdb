@@ -26,10 +26,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.types.OModifiableInteger;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
@@ -971,6 +968,10 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OCloseable
       for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext(); )
         it.next().onCreateClass(getDatabase(), result);
 
+      for (Iterator<ODatabaseListener> it = db.getListeners().iterator(); it.hasNext(); )
+        it.next().onCreateClass(getDatabase(), result);
+
+
     } finally {
       releaseSchemaWriteLock();
     }
@@ -1049,6 +1050,9 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OCloseable
 
       // WAKE UP DB LIFECYCLE LISTENER
       for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext(); )
+        it.next().onCreateClass(getDatabase(), result);
+
+      for (Iterator<ODatabaseListener> it = db.getListeners().iterator(); it.hasNext(); )
         it.next().onCreateClass(getDatabase(), result);
 
     } catch (ClusterIdsAreEmptyException e) {
@@ -1164,13 +1168,14 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OCloseable
   private void dropClassInternal(final String className) {
     acquireSchemaWriteLock();
     try {
-      if (getDatabase().getTransaction().isActive())
+      ODatabaseDocumentInternal database = getDatabase();
+      if (database.getTransaction().isActive())
         throw new IllegalStateException("Cannot drop a class inside a transaction");
 
       if (className == null)
         throw new IllegalArgumentException("Class name is null");
 
-      getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_DELETE);
+      database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_DELETE);
 
       final String key = className.toLowerCase();
 
@@ -1182,7 +1187,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OCloseable
         throw new OSchemaException("Class '" + className + "' cannot be dropped because it has sub classes " + cls.getSubclasses()
             + ". Remove the dependencies before trying to drop it again");
 
-      checkEmbedded(getDatabase().getStorage());
+      checkEmbedded(database.getStorage());
 
       for (OClass superClass : cls.getSuperClasses()) {
         // REMOVE DEPENDENCY FROM SUPERCLASS
@@ -1190,7 +1195,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OCloseable
       }
       for (int id : cls.getClusterIds()) {
         if (id != -1)
-          deleteCluster(getDatabase(), id);
+          deleteCluster(database, id);
       }
 
       dropClassIndexes(cls);
@@ -1205,8 +1210,10 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OCloseable
 
       // WAKE UP DB LIFECYCLE LISTENER
       for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext(); )
-        it.next().onDropClass(getDatabase(), cls);
+        it.next().onDropClass(database, cls);
 
+      for (Iterator<ODatabaseListener> it = database.getListeners().iterator(); it.hasNext(); )
+        it.next().onDropClass(database, cls);
     } finally {
       releaseSchemaWriteLock();
     }

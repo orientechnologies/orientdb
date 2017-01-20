@@ -41,7 +41,7 @@ public interface OrientDB extends AutoCloseable {
   /**
    * Create a new factory from a given url.
    * <p/>
-   * possible kind of urls 'local','remote','distributed', for the case of remote and distributed can be specified multiple nodes
+   * possible kind of urls 'embedded','remote', for the case of remote and distributed can be specified multiple nodes
    * using comma.
    *
    * @param url the url for the specific factory.

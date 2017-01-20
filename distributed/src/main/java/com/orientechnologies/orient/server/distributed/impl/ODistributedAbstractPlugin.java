@@ -314,10 +314,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   }
 
   @Override
-  public void onDropClass(ODatabaseInternal iDatabase, OClass iClass) {
-  }
-
-  @Override
   public String getName() {
     return "cluster";
   }

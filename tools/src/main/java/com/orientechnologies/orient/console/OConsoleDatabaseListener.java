@@ -35,7 +35,7 @@ public class OConsoleDatabaseListener implements ODatabaseListener {
   public void onCreate(ODatabase iDatabase) {
   }
 
-  public void onDelete(ODatabase iDatabase) {
+  public void onDrop(ODatabase database) {
   }
 
   public void onOpen(ODatabase iDatabase) {
@@ -61,17 +61,9 @@ public class OConsoleDatabaseListener implements ODatabaseListener {
 
   @Override
   public void onBeforeCommand(OCommandRequestText iCommand, OCommandExecutor executor) {
-
   }
 
   @Override
   public void onAfterCommand(OCommandRequestText iCommand, OCommandExecutor executor, Object result) {
-
-  }
-
-  public boolean onCorruptionRepairDatabase(ODatabase iDatabase, final String iProblem, String iWhatWillbeFixed) {
-    final String answer = console.ask("\nDatabase seems corrupted:\n> " + iProblem + "\nAuto-repair will execute this action:\n> "
-        + iWhatWillbeFixed + "\n\nDo you want to repair it (Y/n)? ");
-    return answer.length() == 0 || answer.equalsIgnoreCase("Y") || answer.equalsIgnoreCase("Yes");
   }
 }
