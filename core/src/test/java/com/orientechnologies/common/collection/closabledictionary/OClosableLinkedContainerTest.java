@@ -2,19 +2,19 @@ package com.orientechnologies.common.collection.closabledictionary;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
-import org.testng.internal.thread.ThreadUtil;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 
 @Test
 public class OClosableLinkedContainerTest {
-  public void testSingleItemAddRemove() {
-    final OClosableItem closableItem = new CItem(0);
+  public void testSingleItemAddRemove() throws Exception {
+    final OClosableItem closableItem = new CItem(0, 10);
     final OClosableLinkedContainer<Long, OClosableItem> dictionary = new OClosableLinkedContainer<Long, OClosableItem>(10);
 
     dictionary.add(1L, closableItem);
@@ -27,14 +27,14 @@ public class OClosableLinkedContainerTest {
     dictionary.release(entry);
 
     Assert.assertTrue(dictionary.checkAllLRUListItemsInMap());
-    Assert.assertTrue(dictionary.checkAllOpenItemsInLRUList());
+    Assert.assertTrue(dictionary.checkAllOpenItemsInLRUList() == 0);
   }
 
-  public void testCloseHalfOfTheItems() {
+  public void testCloseHalfOfTheItems() throws Exception {
     final OClosableLinkedContainer<Long, OClosableItem> dictionary = new OClosableLinkedContainer<Long, OClosableItem>(10);
 
     for (int i = 0; i < 10; i++) {
-      final OClosableItem closableItem = new CItem(i);
+      final OClosableItem closableItem = new CItem(i, 10);
       dictionary.add((long) i, closableItem);
     }
 
@@ -49,10 +49,10 @@ public class OClosableLinkedContainerTest {
     dictionary.emptyBuffers();
 
     Assert.assertTrue(dictionary.checkAllLRUListItemsInMap());
-    Assert.assertTrue(dictionary.checkAllOpenItemsInLRUList());
+    Assert.assertTrue(dictionary.checkAllOpenItemsInLRUList() == 0);
 
     for (int i = 0; i < 5; i++) {
-      dictionary.add(10L + i, new CItem(10 + i));
+      dictionary.add(10L + i, new CItem(10 + i, 10));
     }
 
     for (int i = 0; i < 5; i++) {
@@ -68,18 +68,21 @@ public class OClosableLinkedContainerTest {
     }
 
     Assert.assertTrue(dictionary.checkAllLRUListItemsInMap());
-    Assert.assertTrue(dictionary.checkAllOpenItemsInLRUList());
+    Assert.assertTrue(dictionary.checkAllOpenItemsInLRUList() == 0);
   }
 
-  @Test(enabled = false)
+  @Test
   public void testMultipleThreadsConsistency() throws Exception {
+    CItem.openFiles.set(0);
+    CItem.maxDeltaLimit.set(0);
+
     ExecutorService executor = Executors.newCachedThreadPool();
     List<Future<Void>> futures = new ArrayList<Future<Void>>();
     CountDownLatch latch = new CountDownLatch(1);
 
     int limit = 60000;
 
-    OClosableLinkedContainer<Long, CItem> dictionary = new OClosableLinkedContainer<Long, CItem>(16);
+    OClosableLinkedContainer<Long, CItem> dictionary = new OClosableLinkedContainer<Long, CItem>(512);
     futures.add(executor.submit(new Adder(dictionary, latch, 0, limit / 3)));
     futures.add(executor.submit(new Adder(dictionary, latch, limit / 3, 2 * limit / 3)));
 
@@ -105,10 +108,13 @@ public class OClosableLinkedContainerTest {
     dictionary.emptyBuffers();
 
     Assert.assertTrue(dictionary.checkAllLRUListItemsInMap());
-    Assert.assertTrue(dictionary.checkAllOpenItemsInLRUList());
+    Assert.assertTrue(dictionary.checkAllOpenItemsInLRUList() == 0);
     Assert.assertTrue(dictionary.checkNoClosedItemsInLRUList());
     Assert.assertTrue(dictionary.checkLRUSize());
     Assert.assertTrue(dictionary.checkLRUSizeEqualsToCapacity());
+
+    System.out.println("Open files " + CItem.openFiles.get());
+    System.out.println("Max open files limit overhead " + CItem.maxDeltaLimit.get());
   }
 
   private class Adder implements Callable<Void> {
@@ -130,7 +136,7 @@ public class OClosableLinkedContainerTest {
 
       try {
         for (int i = from; i < to; i++) {
-          dictionary.add((long) i, new CItem(i));
+          dictionary.add((long) i, new CItem(i, 512));
         }
       } catch (Exception e) {
         e.printStackTrace();
@@ -188,13 +194,20 @@ public class OClosableLinkedContainerTest {
     }
   }
 
-  private class CItem implements OClosableItem {
-    private final Random rnd = new Random();
+  private static class CItem implements OClosableItem {
+    public static AtomicInteger openFiles     = new AtomicInteger();
+    public static AtomicInteger maxDeltaLimit = new AtomicInteger();
+
     private volatile boolean open = true;
     private final int index;
 
-    public CItem(int index) {
+    private final int openLimit;
+
+    public CItem(int index, int openLimit) {
       this.index = index;
+      this.openLimit = openLimit;
+
+      countOpenFiles();
     }
 
     @Override
@@ -205,11 +218,41 @@ public class OClosableLinkedContainerTest {
     @Override
     public void close() {
       open = false;
+
+      int count = openFiles.decrementAndGet();
+
+      if (count - openLimit > 0) {
+        while (true) {
+          int max = maxDeltaLimit.get();
+          if (count - openLimit > max) {
+            if (maxDeltaLimit.compareAndSet(max, count - openLimit))
+              break;
+          } else {
+            break;
+          }
+        }
+      }
     }
 
     public void open() {
-      LockSupport.parkNanos(rnd.nextInt(51) + 50);
       open = true;
+
+      countOpenFiles();
+    }
+
+    private void countOpenFiles() {
+      int count = openFiles.incrementAndGet();
+      if (count - openLimit > 0) {
+        while (true) {
+          int max = maxDeltaLimit.get();
+          if (count - openLimit > max) {
+            if (maxDeltaLimit.compareAndSet(max, count - openLimit))
+              break;
+          } else {
+            break;
+          }
+        }
+      }
     }
   }
 }

@@ -190,6 +190,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     filesLock.acquireWriteLock();
     try {
       initNameIdMapping();
+    } catch (InterruptedException e) {
+      throw OException.wrapException(new OStorageException("Thread was interrupted"), e);
     } finally {
       filesLock.releaseWriteLock();
     }
@@ -410,6 +412,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
         return externalId;
       }
+    } catch (InterruptedException e) {
+      throw OException.wrapException(new OStorageException("Thread was interrupted"), e);
     } finally {
       filesLock.releaseWriteLock();
     }
@@ -440,6 +444,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       writeNameIdEntry(new NameFileIdEntry(fileName, fileId), true);
 
       return externalId;
+    } catch (InterruptedException e) {
+      throw OException.wrapException(new OStorageException("Thread was interrupted"), e);
     } finally {
       filesLock.releaseWriteLock();
     }
@@ -504,6 +510,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       writeNameIdEntry(new NameFileIdEntry(fileName, intId), true);
 
       return fileId;
+    } catch (InterruptedException e) {
+      throw OException.wrapException(new OStorageException("Thread was interrupted"), e);
     } finally {
       filesLock.releaseWriteLock();
     }
@@ -675,6 +683,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         cacheHit.setValue(true);
 
         return new OCachePointer[] { pagePointer };
+      } catch (InterruptedException e) {
+        throw OException.wrapException(new OStorageException("Thread was interrupted"), e);
       } finally {
         for (Lock lock : pageLocks) {
           lock.unlock();
@@ -734,6 +744,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       } finally {
         files.release(entry);
       }
+    } catch (InterruptedException e) {
+      throw OException.wrapException(new OStorageException("Thread was interrupted"), e);
     } finally {
       filesLock.releaseReadLock();
     }
@@ -772,6 +784,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       } finally {
         files.release(entry);
       }
+    } catch (InterruptedException e) {
+      throw OException.wrapException(new OStorageException("Thread was interrupted"), e);
     } finally {
       filesLock.releaseWriteLock();
     }
@@ -807,6 +821,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
       writeNameIdEntry(new NameFileIdEntry(oldFileName, -1), false);
       writeNameIdEntry(new NameFileIdEntry(newFileName, intId), true);
+    } catch (InterruptedException e) {
+      throw OException.wrapException(new OStorageException("Thread was interrupted"), e);
     } finally {
       filesLock.releaseWriteLock();
     }
@@ -994,6 +1010,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       }
 
       return errors.toArray(new OPageDataVerificationError[errors.size()]);
+    } catch (InterruptedException e) {
+      throw OException.wrapException(new OStorageException("Thread was interrupted"), e);
     } finally {
       filesLock.releaseWriteLock();
     }
@@ -1101,7 +1119,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     }
   }
 
-  private void initNameIdMapping() throws IOException {
+  private void initNameIdMapping() throws IOException, InterruptedException {
     if (nameIdMapHolder == null) {
       final File storagePath = new File(storageLocal.getStoragePath());
       if (!storagePath.exists())
@@ -1115,13 +1133,13 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     }
   }
 
-  private OFileClassic createFileInstance(String fileName) {
+  private OFileClassic createFileInstance(String fileName) throws InterruptedException {
     final String path = storageLocal.getVariableParser()
         .resolveVariables(storageLocal.getStoragePath() + File.separator + fileName);
     return new OFileClassic(path, storageLocal.getMode());
   }
 
-  private void readNameIdMap() throws IOException {
+  private void readNameIdMap() throws IOException, InterruptedException {
     nameIdMap = new ConcurrentHashMap<String, Integer>();
     long localFileCounter = -1;
 
@@ -1230,7 +1248,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   }
 
   private OCachePointer[] cacheFileContent(final int intId, final long startPageIndex, final int pageCount,
-      final boolean addNewPages, OModifiableBoolean cacheHit) throws IOException {
+      final boolean addNewPages, OModifiableBoolean cacheHit) throws IOException, InterruptedException {
 
     final long fileId = composeFileId(id, intId);
     final OClosableEntry<Long, OFileClassic> entry = files.acquire(fileId);
@@ -1313,7 +1331,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     }
   }
 
-  private void flushPage(final int fileId, final long pageIndex, final ByteBuffer buffer) throws IOException {
+  private void flushPage(final int fileId, final long pageIndex, final ByteBuffer buffer) throws IOException, InterruptedException {
     if (writeAheadLog != null) {
       final OLogSequenceNumber lsn = ODurablePage.getLogSequenceNumberFromPage(buffer);
       final OLogSequenceNumber flushedLSN = writeAheadLog.getFlushedLsn();
@@ -1516,7 +1534,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     }
 
     private int flushRing(final int writePagesToFlush, int flushedPages, final boolean forceFlush,
-        final boolean iterateByWritePagesFirst) throws IOException {
+        final boolean iterateByWritePagesFirst) throws IOException, InterruptedException {
 
       NavigableMap<PageKey, PageGroup> subMap = null;
       NavigableSet<PageKey> writePagesSubset = null;
@@ -1586,7 +1604,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     }
 
     private int iterateBySubRing(final NavigableMap<PageKey, PageGroup> subMap, NavigableSet<PageKey> subSet, int writePagesToFlush,
-        int flushedWritePages, boolean forceFlush, boolean iterateByWritePagesFirst) throws IOException {
+        int flushedWritePages, boolean forceFlush, boolean iterateByWritePagesFirst) throws IOException, InterruptedException {
       if (!iterateByWritePagesFirst) {
         return iterateByCacheSubRing(subMap, writePagesToFlush, flushedWritePages, forceFlush);
       } else {
@@ -1595,7 +1613,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     }
 
     private int iterateByWritePagesSubRing(final NavigableSet<PageKey> subSet, final int writePagesToFlush, int flushedWritePages,
-        final boolean forceFlush) throws IOException {
+        final boolean forceFlush) throws IOException, InterruptedException {
       final Iterator<PageKey> entriesIterator = subSet.iterator();
       final long currentTime = System.currentTimeMillis();
       final long maxSegmentDistance =
@@ -1670,7 +1688,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     }
 
     private int iterateByCacheSubRing(final NavigableMap<PageKey, PageGroup> subMap, final int writePagesToFlush,
-        int flushedWritePages, final boolean forceFlush) throws IOException {
+        int flushedWritePages, final boolean forceFlush) throws IOException, InterruptedException {
       final Iterator<Map.Entry<PageKey, PageGroup>> entriesIterator = subMap.entrySet().iterator();
       final long currentTime = System.currentTimeMillis();
       final long maxSegmentDistance =
@@ -1848,7 +1866,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       return null;
     }
 
-    private void flushRing(final NavigableMap<PageKey, PageGroup> subMap) throws IOException {
+    private void flushRing(final NavigableMap<PageKey, PageGroup> subMap) throws IOException, InterruptedException {
       final Iterator<Map.Entry<PageKey, PageGroup>> entryIterator = subMap.entrySet().iterator();
 
       while (entryIterator.hasNext()) {
