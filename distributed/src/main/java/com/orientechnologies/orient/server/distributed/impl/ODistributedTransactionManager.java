@@ -471,6 +471,11 @@ public class ODistributedTransactionManager {
       ODistributedServerLog.debug(this, localNodeName, nodes.toString(), ODistributedServerLog.DIRECTION.OUT,
           "Sending distributed end of transaction status=%s reqId=%s waitForFinalResponse=%s", status, reqId, SYNC_TX_COMPLETED);
 
+      // REMOVE HERE THE CONTEXT TO AVOID A ROLLBACK AFTER SENDING THE FINAL 2PC COMMIT
+      final ODistributedTxContext ctx = localDistributedDatabase.popTxContext(reqId);
+      if (ctx != null)
+        ctx.destroy();
+
       final ODistributedResponse response = dManager
           .sendRequest(storage.getName(), involvedClusters, nodes, new OCompleted2pcTask(reqId, status, partitionKey),
               dManager.getNextMessageIdCounter(), SYNC_TX_COMPLETED ? EXECUTION_MODE.NO_RESPONSE : EXECUTION_MODE.NO_RESPONSE, null,

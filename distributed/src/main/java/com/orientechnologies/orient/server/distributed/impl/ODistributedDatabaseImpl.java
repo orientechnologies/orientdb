@@ -660,6 +660,10 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     while (pendingReqIterator.hasNext()) {
       final ODistributedTxContext pReq = pendingReqIterator.next();
       if (pReq != null && pReq.getReqId().getNodeId() == nodeLeftId) {
+
+        ODistributedServerLog.debug(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
+            "Distributed transaction: rolling back transaction (req=%s)", pReq.getReqId());
+
         try {
           pReq.rollback(database);
           rollbacks++;

@@ -32,27 +32,27 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
  * Distributed cluster selection strategy as wrapper for underlying strategies. It limitates the selection of clusters to the
  * available ones on current server.
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientdb.com)
- * 
  */
 public class OLocalClusterWrapperStrategy implements OClusterSelectionStrategy {
-  private OClass                          cls;
+  private       OClass                    cls;
   private final ODistributedServerManager manager;
   private final String                    nodeName;
   private final String                    databaseName;
-  private int                             lastVersion = -1;
-  private OClusterSelectionStrategy       wrapped;
-  private OLocalScopedClass               localScopedClass;
+  private int lastVersion = -1;
+  private OClusterSelectionStrategy wrapped;
+  private OLocalScopedClass         localScopedClass;
 
   private class OLocalScopedClass extends OClassImpl {
-    public OClassImpl     wrapped;
-    public volatile int[] bestClusterIds;
+    public          OClassImpl wrapped;
+    public volatile int[]      bestClusterIds;
 
     public OLocalScopedClass(final OClassImpl wrapping, final int[] newBestClusters) {
       super(wrapping.getOwner(), wrapping.getName());
@@ -110,7 +110,7 @@ public class OLocalClusterWrapperStrategy implements OClusterSelectionStrategy {
     if (ODistributedServerLog.isDebugEnabled())
       ODistributedServerLog.debug(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
           "%d Selected cluster %d for class '%s' from %s (dCfgVersion=%d)", Thread.currentThread().getId(), cluster, cls.getName(),
-          localScopedClass.bestClusterIds, lastVersion);
+          Arrays.toString(localScopedClass.bestClusterIds), lastVersion);
 
     return cluster;
   }
@@ -159,8 +159,9 @@ public class OLocalClusterWrapperStrategy implements OClusterSelectionStrategy {
             "Cannot find best cluster for class '%s'. Configured servers for clusters %s are %s (dCfgVersion=%d)", cls.getName(),
             clusterNames, buffer.toString(), cfg.getVersion());
 
-        throw new ODatabaseException("Cannot find best cluster for class '" + cls.getName() + "' on server '" + nodeName
-            + "'. ClusterStrategy=" + getName() + " dCfgVersion=" + cfg.getVersion());
+        throw new ODatabaseException(
+            "Cannot find best cluster for class '" + cls.getName() + "' on server '" + nodeName + "'. ClusterStrategy=" + getName()
+                + " dCfgVersion=" + cfg.getVersion());
       }
     }
 
