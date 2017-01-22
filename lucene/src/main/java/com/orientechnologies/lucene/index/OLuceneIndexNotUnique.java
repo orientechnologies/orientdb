@@ -147,7 +147,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
 
   }
 
-  private Object decodeKey(Object key) {
+  protected Object decodeKey(Object key) {
     return key;
   }
 
@@ -203,7 +203,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
       }
   }
 
-  private Object encodeKey(Object key) {
+  protected Object encodeKey(Object key) {
     return key;
   }
 
