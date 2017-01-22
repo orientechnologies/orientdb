@@ -699,13 +699,9 @@ public class ODistributedTransactionManager {
             "Distributed transaction %s error: record %s is locked by %s", reqId,
             ((ODistributedRecordLockedException) result).getRid(), ((ODistributedRecordLockedException) result).getLockHolder());
 
-      // ctx.unlock();
-
-      // if this the the last retry (and it failed), we don't need to wait anymore
+      // if this is the last retry (and it failed), we don't need to wait anymore
       if (autoRetryDelay > 0 && !isLastRetry)
         Thread.sleep(autoRetryDelay / 2 + new Random().nextInt(autoRetryDelay));
-
-      // acquireMultipleRecordLocks(iTx, maxAutoRetry, autoRetryDelay, eventListener, ctx);
 
       // RETRY
       return false;
