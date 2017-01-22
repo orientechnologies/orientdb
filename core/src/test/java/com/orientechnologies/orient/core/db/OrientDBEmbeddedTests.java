@@ -1,13 +1,21 @@
 package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageExistsException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import org.junit.Ignore;
 import org.junit.Test;
 
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -72,6 +80,51 @@ public class OrientDBEmbeddedTests {
     pool.close();
     orientDb.close();
   }
+
+
+  @Test
+  @Ignore
+  public void testMultiThread() {
+
+    OrientDB orientDb = OrientDB.embedded(".", null);
+    // OrientDB orientDb = OrientDB.fromUrl("local:.", null);
+
+    if (!orientDb.exists("test", "", ""))
+      orientDb.create("test", "", "", OrientDB.DatabaseType.MEMORY);
+
+    ODatabasePool pool = orientDb.openPool("test", "admin", "admin");
+
+    //do a query and assert on other thread
+    Runnable acquirer = () -> {
+
+      ODatabaseDocument db = pool.acquire();
+
+      try {
+        assertThat(db.isActiveOnCurrentThread()).isTrue();
+
+        List<ODocument> res = db.query(new OSQLSynchQuery<>("SELECT * FROM OUser"));
+
+        assertThat(res).hasSize(3);
+
+      } finally {
+
+        db.close();
+      }
+
+    };
+
+    //spawn 20 threads
+    List<CompletableFuture<Void>> futures = IntStream.range(0, 19).boxed().map(i -> CompletableFuture.runAsync(acquirer))
+        .collect(Collectors.toList());
+
+    futures.forEach(cf -> cf.join());
+
+    pool.close();
+    orientDb.close();
+
+
+  }
+
 
   @Test
   public void testListDatabases() {
