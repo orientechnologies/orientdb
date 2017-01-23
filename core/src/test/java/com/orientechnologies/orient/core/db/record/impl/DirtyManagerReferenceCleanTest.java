@@ -3,9 +3,11 @@ package com.orientechnologies.orient.core.db.record.impl;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODirtyManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import org.junit.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -56,5 +58,21 @@ public class DirtyManagerReferenceCleanTest {
     assertNull(ORecordInternal.getDirtyManager(doc).getReferences());
   }
 
+  @Test
+  public void testReferDeletedDocument() {
+    ODocument doc = new ODocument();
+    ODocument doc1 = new ODocument();
+    doc1.field("aa", "aa");
+    doc.field("ref", doc1);
+    doc.field("bb");
+
+    OIdentifiable id = doc.save();
+
+    doc = db.load(id.getIdentity());
+    doc1 = doc.field("ref");
+    doc1.delete();
+    doc.field("ab", "ab");
+    Assert.assertFalse(ORecordInternal.getDirtyManager(doc).getUpdateRecords().contains(doc1));
+  }
 
 }

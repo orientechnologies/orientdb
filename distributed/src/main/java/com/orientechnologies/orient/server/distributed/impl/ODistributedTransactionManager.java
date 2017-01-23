@@ -471,6 +471,11 @@ public class ODistributedTransactionManager {
       ODistributedServerLog.debug(this, localNodeName, nodes.toString(), ODistributedServerLog.DIRECTION.OUT,
           "Sending distributed end of transaction status=%s reqId=%s waitForFinalResponse=%s", status, reqId, SYNC_TX_COMPLETED);
 
+      // REMOVE HERE THE CONTEXT TO AVOID A ROLLBACK AFTER SENDING THE FINAL 2PC COMMIT
+      final ODistributedTxContext ctx = localDistributedDatabase.popTxContext(reqId);
+      if (ctx != null)
+        ctx.destroy();
+
       final ODistributedResponse response = dManager
           .sendRequest(storage.getName(), involvedClusters, nodes, new OCompleted2pcTask(reqId, status, partitionKey),
               dManager.getNextMessageIdCounter(), SYNC_TX_COMPLETED ? EXECUTION_MODE.NO_RESPONSE : EXECUTION_MODE.NO_RESPONSE, null,
@@ -694,13 +699,9 @@ public class ODistributedTransactionManager {
             "Distributed transaction %s error: record %s is locked by %s", reqId,
             ((ODistributedRecordLockedException) result).getRid(), ((ODistributedRecordLockedException) result).getLockHolder());
 
-      // ctx.unlock();
-
-      // if this the the last retry (and it failed), we don't need to wait anymore
+      // if this is the last retry (and it failed), we don't need to wait anymore
       if (autoRetryDelay > 0 && !isLastRetry)
         Thread.sleep(autoRetryDelay / 2 + new Random().nextInt(autoRetryDelay));
-
-      // acquireMultipleRecordLocks(iTx, maxAutoRetry, autoRetryDelay, eventListener, ctx);
 
       // RETRY
       return false;
