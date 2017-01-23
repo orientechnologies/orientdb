@@ -1,12 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <orient-server>
     <handlers>
-        <handler class="com.orientechnologies.orient.graph.handler.OGraphServerHandler">
-            <parameters>
-                <parameter value="true" name="enabled"/>
-                <parameter value="50" name="graph.pool.max"/>
-            </parameters>
-        </handler>
+
         <handler class="com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin">
             <parameters>
                 <parameter value="${distributed}" name="enabled"/>
@@ -87,7 +82,6 @@
                             <entry value="Cache-Control: max-age=120" name="http.cache:default"/>
                         </parameters>
                     </command>
-                    <command implementation="com.orientechnologies.orient.graph.server.command.OServerCommandGetGephi" pattern="GET|gephi/*" stateful="false"/>
                 </commands>
                 <parameters>
                     <parameter value="utf-8" name="network.http.charset"/>

@@ -22,7 +22,7 @@ import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import org.apache.commons.configuration.Configuration;
@@ -194,14 +194,21 @@ public final class OrientGraph implements Graph {
         });
     }
 
-    public Object executeSql(String sql) {
+    public OResultSet executeSql(String sql, Object... params) {
         return executeWithConnectionCheck(() -> {
             makeActive();
-            OCommandRequest command = database.command(new OCommandSQL(sql));
-            return command.execute();
+            return database.command(sql, params);
         });
     }
 
+    public OResultSet executeSql(String sql, Map params) {
+        return executeWithConnectionCheck(() -> {
+            makeActive();
+            return database.command(sql, params);
+        });
+    }
+
+    @Deprecated
     public Object executeCommand(OCommandRequest command) {
         return executeWithConnectionCheck(() -> {
             return command.execute();

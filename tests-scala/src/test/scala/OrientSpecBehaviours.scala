@@ -1,9 +1,9 @@
-import java.util.{ ArrayList ⇒ JArrayList }
+import java.util.{ArrayList => JArrayList}
 
+import com.orientechnologies.orient.core.sql.executor.OResultSet
 import gremlin.scala._
-import com.orientechnologies.orient.core.sql.query.OResultSet
 import org.apache.tinkerpop.gremlin.orientdb._
-import org.scalatest.{ BeforeAndAfterEach, BeforeAndAfterAll, ShouldMatchers, WordSpec }
+import org.scalatest.{BeforeAndAfterEach, ShouldMatchers, WordSpec}
 
 import scala.collection.JavaConversions._
 
@@ -221,8 +221,7 @@ abstract class OrientSpecBehaviours extends WordSpec with ShouldMatchers with Be
 
     val javaGraph = graph.asJava.asInstanceOf[OrientGraph]
     val results: Seq[_] = javaGraph.executeSql("select from V limit 10") match {
-      case lst: JArrayList[_] ⇒ lst.toSeq
-      case r: OResultSet[_]   ⇒ r.iterator().toSeq
+      case r: OResultSet   ⇒ r.toSeq
       case other              ⇒ println(other.getClass()); println(other); ???
     }
     results should have length 10

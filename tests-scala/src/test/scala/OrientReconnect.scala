@@ -1,11 +1,8 @@
-import com.orientechnologies.common.exception.OException
-import com.orientechnologies.common.io.OIOException
 import com.orientechnologies.orient.client.remote.OServerAdmin
 import com.orientechnologies.orient.server.OServerMain
+import gremlin.scala._
 import org.apache.tinkerpop.gremlin.orientdb.OrientGraphFactory
 import org.scalatest._
-import org.apache.tinkerpop.gremlin.orientdb.OrientGraph
-import gremlin.scala._
 
 class OrientReconnect extends WordSpec with ShouldMatchers {
 
