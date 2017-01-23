@@ -1,6 +1,8 @@
 package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.parser.*;
 
 import java.util.ArrayList;
@@ -34,6 +36,21 @@ public class OCreateEdgeExecutionPlanner {
   }
 
   public OInsertExecutionPlan createExecutionPlan(OCommandContext ctx) {
+
+    if (targetClass == null) {
+      if (targetClusterName == null) {
+        targetClass = new OIdentifier("E");
+      } else {
+        ODatabase db = ctx.getDatabase();
+        OClass clazz = db.getMetadata().getSchema().getClassByClusterId(db.getClusterIdByName(targetClusterName.getStringValue()));
+        if (clazz != null) {
+          targetClass = new OIdentifier(clazz.getName());
+        } else {
+          targetClass = new OIdentifier("E");
+        }
+      }
+    }
+
     OInsertExecutionPlan result = new OInsertExecutionPlan(ctx);
 
     handleCheckType(result, ctx);
