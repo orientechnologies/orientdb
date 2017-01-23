@@ -99,7 +99,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     internalOpen(iUserName, iUserPassword, config, true);
   }
 
-  public void internalOpen(final String iUserName, final String iUserPassword, OrientDBConfig config, boolean checkPassword) {
+  private void internalOpen(final String iUserName, final String iUserPassword, OrientDBConfig config, boolean checkPassword) {
     activateOnCurrentThread();
     this.config = config;
     applyAttributes(config);
@@ -113,15 +113,14 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
       initAtFirstOpen();
 
-      OSecurity security = metadata.getSecurity();
+      final OSecurity security = metadata.getSecurity();
 
       if (user == null || user.getVersion() != security.getVersion() || !user.getName().equalsIgnoreCase(iUserName)) {
         final OUser usr;
-
         if (checkPassword) {
-          usr = security.authenticate(iUserName, iUserPassword);
+          usr = metadata.getSecurity().authenticate(iUserName, iUserPassword);
         } else {
-          usr = security.getUser(iUserName);
+          usr = metadata.getSecurity().getUser(iUserName);
         }
         if (usr != null)
           user = new OImmutableUser(security.getVersion(), usr);
@@ -155,16 +154,13 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
    * Opens a database using an authentication token received as an argument.
    *
    * @param iToken Authentication token
-   *
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
-  @Deprecated
-  public <DB extends ODatabase> DB open(final OToken iToken) {
+  @Deprecated public <DB extends ODatabase> DB open(final OToken iToken) {
     throw new UnsupportedOperationException("Deprecated Method");
   }
 
-  @Override
-  public <DB extends ODatabase> DB create() {
+  @Override public <DB extends ODatabase> DB create() {
     throw new UnsupportedOperationException("Deprecated Method");
   }
 
@@ -182,8 +178,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     installHooksEmbedded();
     // CREATE THE DEFAULT SCHEMA WITH DEFAULT USER
     OSharedContext shared = getStorage().getResource(OSharedContext.class.getName(), new Callable<OSharedContext>() {
-      @Override
-      public OSharedContext call() throws Exception {
+      @Override public OSharedContext call() throws Exception {
         OSharedContext shared = new OSharedContext(getStorage());
         return shared;
       }
@@ -218,21 +213,18 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
   /**
    * {@inheritDoc}
    */
-  @Override
-  public <DB extends ODatabase> DB create(String incrementalBackupPath) {
+  @Override public <DB extends ODatabase> DB create(String incrementalBackupPath) {
     throw new UnsupportedOperationException("use OrientDB");
   }
 
-  @Override
-  public <DB extends ODatabase> DB create(final Map<OGlobalConfiguration, Object> iInitialSettings) {
+  @Override public <DB extends ODatabase> DB create(final Map<OGlobalConfiguration, Object> iInitialSettings) {
     throw new UnsupportedOperationException("use OrientDB");
   }
 
   /**
    * {@inheritDoc}
    */
-  @Override
-  public void drop() {
+  @Override public void drop() {
     throw new UnsupportedOperationException("use OrientDB");
   }
 
@@ -247,13 +239,11 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     return database;
   }
 
-  @Override
-  public boolean exists() {
+  @Override public boolean exists() {
     throw new UnsupportedOperationException("use OrientDB");
   }
 
-  @Override
-  public void close() {
+  @Override public void close() {
     checkIfActive();
 
     closeActiveQueries();
@@ -297,8 +287,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     }
   }
 
-  @Override
-  public boolean isClosed() {
+  @Override public boolean isClosed() {
     return status == STATUS.CLOSED || storage.isClosed();
   }
 
@@ -345,13 +334,11 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     registerHook(new OLiveQueryHook(this), ORecordHook.HOOK_POSITION.LAST);
   }
 
-  @Override
-  public OStorage getStorage() {
+  @Override public OStorage getStorage() {
     return storage;
   }
 
-  @Override
-  public void replaceStorage(OStorage iNewStorage) {
+  @Override public void replaceStorage(OStorage iNewStorage) {
     storage = iNewStorage;
   }
 
@@ -363,8 +350,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     this.activeQueries.remove(rs.getQueryId());
   }
 
-  @Override
-  public OResultSet query(String query, Object[] args) {
+  @Override public OResultSet query(String query, Object[] args) {
     OStatement statement = OSQLEngine.parse(query, this);
     if (!statement.isIdempotent()) {
       throw new OCommandExecutionException("Cannot execute query on non idempotent statement: " + query);
@@ -376,8 +362,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     return result;
   }
 
-  @Override
-  public OResultSet query(String query, Map args) {
+  @Override public OResultSet query(String query, Map args) {
     OStatement statement = OSQLEngine.parse(query, this);
     if (!statement.isIdempotent()) {
       throw new OCommandExecutionException("Cannot execute query on non idempotent statement: " + query);
@@ -389,8 +374,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     return result;
   }
 
-  @Override
-  public OResultSet command(String query, Object[] args) {
+  @Override public OResultSet command(String query, Object[] args) {
     OStatement statement = OSQLEngine.parse(query, this);
     OResultSet original = statement.execute(this, args);
     OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
@@ -399,8 +383,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     return result;
   }
 
-  @Override
-  public OResultSet command(String query, Map args) {
+  @Override public OResultSet command(String query, Map args) {
     OStatement statement = OSQLEngine.parse(query, this);
     OResultSet original = statement.execute(this, args);
     OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);

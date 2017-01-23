@@ -63,6 +63,10 @@ import java.util.*;
  */
 public interface ODatabase<T> extends OBackupable, Closeable {
 
+  enum OPTIONS {
+    SECURITY
+  }
+
   enum STATUS {
     OPEN, CLOSED, IMPORTING
   }

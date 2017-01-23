@@ -23,6 +23,7 @@ import com.orientechnologies.common.console.OConsoleReader;
 import com.orientechnologies.common.console.ODefaultConsoleReader;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OAnsiCode;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
@@ -39,6 +40,9 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.security.OSecurityManager;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.memory.ODirectMemoryStorage;
 import com.orientechnologies.orient.server.config.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.handler.OConfigurableHooksManager;
@@ -51,6 +55,7 @@ import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
 import com.orientechnologies.orient.server.plugin.OServerPluginManager;
 import com.orientechnologies.orient.server.security.ODefaultServerSecurity;
+import com.orientechnologies.orient.server.security.OSecurityServerUser;
 import com.orientechnologies.orient.server.security.OServerSecurity;
 import com.orientechnologies.orient.server.token.OTokenHandlerImpl;
 
@@ -819,7 +824,7 @@ public class OServer {
   }
 
   public ODatabaseDocumentInternal openDatabase(final String iDbUrl, final OToken iToken) {
-    ODatabaseDocumentInternal database = databases.openNoAuthenticate(iDbUrl, null);
+    ODatabaseDocumentInternal database = databases.openNoAutheticate(iDbUrl, null, OSecurityServerUser.class);
     database.setUser(iToken.getUser(database));
     return database;
   }
@@ -840,7 +845,7 @@ public class OServer {
     // TODO: final String path = getStoragePath(iDbUrl); it use to resolve the path in some way
     boolean serverAuth = false;
     if (iBypassAccess) {
-      database = databases.openNoAuthenticate(iDbUrl, user);
+      database = databases.openNoAutheticate(iDbUrl, user, OSecurityServerUser.class);
       serverAuth = true;
     } else {
       OServerUserConfiguration serverUser = serverLogin(user, password, "database.passthrough");
@@ -853,7 +858,7 @@ public class OServer {
         // that user identity is returned.
 
         // SERVER AUTHENTICATED, BYPASS SECURITY
-        database = databases.openNoAuthenticate(iDbUrl, user);
+        database = databases.openNoAutheticate(iDbUrl, user, OSecurityServerUser.class);
       } else {
         // TRY DATABASE AUTHENTICATION
         database = databases.open(iDbUrl, user, password);

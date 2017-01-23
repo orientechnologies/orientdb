@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.security.OSecurityNull;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -503,7 +504,8 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
 
         newDb.activateOnCurrentThread();
         newDb.resetInitialization();
-        newDb.internalOpen("admin", "nopass", null, false);
+        newDb.setProperty(ODatabase.OPTIONS.SECURITY.toString(), OSecurityNull.class);
+        newDb.internalOpen("admin", "nopass", null);
 
         final Collection<ODocument> idxs = getConfiguration();
 

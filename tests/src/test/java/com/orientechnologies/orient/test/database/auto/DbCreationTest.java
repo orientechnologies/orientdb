@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
+import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
@@ -24,6 +25,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.OSecurityNull;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
@@ -69,13 +71,31 @@ public class DbCreationTest extends ObjectDBBaseTest {
   public void afterMethod() throws Exception {
   }
 
+  public void testDbCreationNoSecurity() throws IOException {
+    if (!url.startsWith(OEngineRemote.NAME)) {
+      ODatabaseDocument db = new ODatabaseDocumentTx(url);
+      db.setProperty("security", OSecurityNull.class);
+
+      ODatabaseHelper.dropDatabase(db, "server", getStorageType());
+      ODatabaseHelper.createDatabase(db, url, getStorageType());
+      ODatabaseHelper.dropDatabase(db, "server", getStorageType());
+
+      database = new OObjectDatabaseTx(url);
+      database.setProperty("security", OSecurityNull.class);
+
+      ODatabaseHelper.dropDatabase(database, "server", getStorageType());
+      ODatabaseHelper.createDatabase(database, url, getStorageType());
+      ODatabaseHelper.dropDatabase(database, "server", getStorageType());
+    }
+  }
+
   @AfterMethod
   public void tearDown() {
     if (url.contains("remote:"))
       ODatabaseDocumentPool.global().close();
   }
 
-  @Test
+  @Test(dependsOnMethods = { "testDbCreationNoSecurity" })
   public void testDbCreationDefault() throws IOException {
     if (ODatabaseHelper.existsDatabase(url))
       ODatabaseHelper.dropDatabase(new OObjectDatabaseTx(url), url, getStorageType());

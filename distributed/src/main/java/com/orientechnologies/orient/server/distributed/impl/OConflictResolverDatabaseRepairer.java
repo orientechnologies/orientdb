@@ -97,7 +97,7 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
 
     };
 
-    final long time = manager.getServerInstance().getContextConfiguration().getValueAsLong(OGlobalConfiguration.DISTRIBUTED_CONFLICT_RESOLVER_REPAIRER_CHECK_EVERY);
+    final long time = getDatabase().getConfiguration().getValueAsLong(OGlobalConfiguration.DISTRIBUTED_CONFLICT_RESOLVER_REPAIRER_CHECK_EVERY);
     if (time > 0) {
       Orient.instance().scheduleTask(checkTask, time, time);
       active = true;
