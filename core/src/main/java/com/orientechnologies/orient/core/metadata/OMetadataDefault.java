@@ -133,20 +133,6 @@ public class OMetadataDefault implements OMetadataInternal {
     indexManager = new OIndexManagerProxy(shared.getIndexManager(), database);
     security = new OSecurityProxy(shared.getSecurity(), database);
     commandCache = shared.getCommandCache();
-
-    final Class<? extends OSecurity> securityClass = (Class<? extends OSecurity>) database
-        .getProperty(ODatabase.OPTIONS.SECURITY.toString());
-    if (securityClass != null)
-      // INSTALL CUSTOM WRAPPED SECURITY
-      try {
-        final OSecurity wrapped = security;
-        security = securityClass.getDeclaredConstructor(OSecurity.class, ODatabaseDocumentInternal.class).newInstance(wrapped,
-            database);
-      } catch (Exception e) {
-        throw OException
-            .wrapException(new OSecurityException("Cannot install custom security implementation (" + securityClass + ")"), e);
-      }
-
     functionLibrary = new OFunctionLibraryProxy(shared.getFunctionLibrary(), database);
     sequenceLibrary = new OSequenceLibraryProxy(shared.getSequenceLibrary(), database);
     scheduler = new OSchedulerProxy(shared.getScheduler(), database);
