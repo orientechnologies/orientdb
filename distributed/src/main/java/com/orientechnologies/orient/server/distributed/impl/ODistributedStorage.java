@@ -2031,7 +2031,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
           "Local node '" + localNodeName + "' is not the owner for cluster '" + clusterName + "' (it is '" + ownerNode
               + "'). Switching to a valid cluster of the same class: '" + newClusterName + "'");
 
-      ownerNode = dbCfg.getClusterOwner(newClusterName);
+      dbCfg.getClusterOwner(newClusterName);
 
       // FORCE THE RETRY OF THE OPERATION
       throw new ODistributedConfigurationChangedException(
