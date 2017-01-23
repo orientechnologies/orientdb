@@ -1,12 +1,12 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>com.michaelpollmeier</groupId>
+    <groupId>com.orientechnologies</groupId>
     <artifactId>orientdb-gremlin</artifactId>
     <version>3.2.3.1-SNAPSHOT</version>
     <name>Apache TinkerPop :: OrientDB Gremlin</name>
     <description>TinkerPop3 Graph Structure Implementation for OrientDB</description>
-    <url>https://github.com/mpollmeier/orientdb-gremlin/</url>
+    <url>https://github.com/orientechnologies/orientdb-gremlin</url>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -16,6 +16,10 @@
     </properties>
 
     <developers>
+        <developer>
+            <name>Enrico Risa</name>
+            <email>e.risa@orientdb.com</email>
+        </developer>
         <developer>
             <name>Michael Pollmeier</name>
             <email>michael@michaelpollmeier.com</email>
@@ -36,9 +40,9 @@
         </license>
     </licenses>
     <scm>
-        <connection>scm:git:git@github.com:mpollmeier/orientdb-gremlin.git</connection>
-        <developerConnection>scm:git:git@github.com:mpollmeier/orientdb-gremlin.git</developerConnection>
-        <url>https://github.com/mpollmeier/orientdb-gremlin/</url>
+        <connection>scm:git:git@github.com:orientechnologies/orientdb-gremlin.git</connection>
+        <developerConnection>scm:git:git@github.com:orientechnologies/orientdb-gremlin.git</developerConnection>
+        <url>https://github.com/orientechnologies/orientdb-gremlin</url>
     </scm>
     <dependencies>
         <dependency>
@@ -221,19 +225,19 @@
                         <target>1.8</target>
                     </configuration>
                 </plugin>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-javadoc-plugin</artifactId>
-					<version>2.9.1</version>
-					<executions>
-						<execution>
-							<id>attach-javadocs</id>
-							<goals>
-								<goal>jar</goal>
-							</goals>
-						</execution>
-					</executions>
-				</plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>2.9.1</version>
+                    <executions>
+                        <execution>
+                            <id>attach-javadocs</id>
+                            <goals>
+                                <goal>jar</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
             </plugins>
         </pluginManagement>
     </build>

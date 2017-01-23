@@ -1,22 +1,30 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.util.OURLConnection;
+import com.orientechnologies.orient.core.util.OURLHelper;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.Configuration;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-
 public final class OrientGraphFactory {
     public static String ADMIN = "admin";
     protected final String url;
+    protected String connectionURI;
+    protected String dbName;
     protected final String user;
     protected final String password;
     protected Configuration configuration;
     protected volatile OPartitionedReCreatableDatabasePool pool;
     protected boolean labelAsClassName;
+
+    protected OrientDB factory;
 
     public OrientGraphFactory(String url) {
         this(url, ADMIN, ADMIN);
@@ -27,6 +35,8 @@ public final class OrientGraphFactory {
         this.user = user;
         this.password = password;
         this.labelAsClassName = true;
+        initConnectionParameters(url);
+        factory = OrientDB.fromUrl(connectionURI, OrientDBConfig.defaultConfig());
     }
 
     public OrientGraphFactory(Configuration config) {
@@ -133,7 +143,7 @@ public final class OrientGraphFactory {
     /**
      * Enable or disable the prefixing of class names with V_&lt;label&gt; for
      * vertices or E_&lt;label&gt; for edges.
-     * 
+     *
      * @param is
      *            if true classname equals label, if false classname is prefixed
      *            with V_ or E_ (default)
@@ -170,6 +180,25 @@ public final class OrientGraphFactory {
             pool.close();
 
         pool = null;
+    }
+
+    private void initConnectionParameters(String url) {
+
+        OURLConnection conn = OURLHelper.parse(url);
+        dbName = conn.getDbName();
+        switch (conn.getType()) {
+        case "remote":
+            connectionURI = url;
+            break;
+        case "memory":
+        case "plocal":
+            connectionURI = "embedded:" + conn.getPath();
+            break;
+        default:
+            throw new OConfigurationException("Error on opening database: the engine '" + conn.getType() + "' was not found. URL was: " + url
+                    + ". Registered engines are: [\"memory\",\"remote\",\"plocal\"]");
+        }
+
     }
 
 }
