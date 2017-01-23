@@ -81,9 +81,7 @@ public class OrientDBEmbeddedTests {
     orientDb.close();
   }
 
-
   @Test
-  @Ignore
   public void testMultiThread() {
 
     OrientDB orientDb = OrientDB.embedded(".", null);
@@ -122,9 +120,7 @@ public class OrientDBEmbeddedTests {
     pool.close();
     orientDb.close();
 
-
   }
-
 
   @Test
   public void testListDatabases() {
