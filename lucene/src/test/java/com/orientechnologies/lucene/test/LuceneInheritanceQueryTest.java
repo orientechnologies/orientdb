@@ -62,6 +62,7 @@ public class LuceneInheritanceQueryTest {
     final OrientVertexType c1 = new OrientGraphNoTx(db).createVertexType("C1");
     c1.createProperty("name", OType.STRING);
     c1.createIndex("C1.name", "FULLTEXT", null, null, "LUCENE", new String[] { "name" });
+
     final OrientVertexType c2 = new OrientGraphNoTx(db).createVertexType("C2");
     c2.setSuperClass(c1);
   }

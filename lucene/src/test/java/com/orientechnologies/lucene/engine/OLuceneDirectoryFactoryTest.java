@@ -15,6 +15,7 @@ import org.mockito.Mockito;
 import java.io.File;
 import java.util.Collections;
 
+import static com.orientechnologies.lucene.engine.OLuceneDirectoryFactory.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
@@ -42,7 +43,7 @@ public class OLuceneDirectoryFactoryTest extends BaseLuceneTest {
   @Test
   public void shouldCreateNioFsDirectory() throws Exception {
 
-    meta.field(OLuceneDirectoryFactory.DIRECTORY_TYPE, OLuceneDirectoryFactory.DIRECTORY_NIO);
+    meta.field(DIRECTORY_TYPE, DIRECTORY_NIO);
 
     ODatabaseDocumentTx db = dropOrCreate("plocal:./target/testDatabase/" + name.getMethodName(), true);
 
@@ -59,7 +60,7 @@ public class OLuceneDirectoryFactoryTest extends BaseLuceneTest {
   @Test
   public void shouldCreateMMapFsDirectory() throws Exception {
 
-    meta.field(OLuceneDirectoryFactory.DIRECTORY_TYPE, OLuceneDirectoryFactory.DIRECTORY_MMAP);
+    meta.field(DIRECTORY_TYPE, DIRECTORY_MMAP);
 
     ODatabaseDocumentTx db = dropOrCreate("plocal:./target/testDatabase/" + name.getMethodName(), true);
 
@@ -76,7 +77,7 @@ public class OLuceneDirectoryFactoryTest extends BaseLuceneTest {
   @Test
   public void shouldCreateRamDirectory() throws Exception {
 
-    meta.field(OLuceneDirectoryFactory.DIRECTORY_TYPE, OLuceneDirectoryFactory.DIRECTORY_RAM);
+    meta.field(DIRECTORY_TYPE, DIRECTORY_RAM);
 
     ODatabaseDocumentTx db = dropOrCreate("plocal:./target/testDatabase/" + name.getMethodName(), true);
 
@@ -92,7 +93,7 @@ public class OLuceneDirectoryFactoryTest extends BaseLuceneTest {
   public void shouldCreateRamDirectoryOnMemoryDatabase() throws Exception {
 
     //WRONG type!!!
-    meta.field(OLuceneDirectoryFactory.DIRECTORY_TYPE, OLuceneDirectoryFactory.DIRECTORY_MMAP);
+    meta.field(DIRECTORY_TYPE, DIRECTORY_MMAP);
 
     ODatabaseDocumentTx db = dropOrCreate("memory:" + name.getMethodName(), true);
 

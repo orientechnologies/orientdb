@@ -19,7 +19,7 @@ package com.orientechnologies.lucene.engine;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.lucene.OLuceneIndexType;
+import com.orientechnologies.lucene.builder.OLuceneIndexType;
 import com.orientechnologies.lucene.builder.OLuceneDocumentBuilder;
 import com.orientechnologies.lucene.builder.OLuceneQueryBuilder;
 import com.orientechnologies.lucene.collections.OLuceneCompositeKey;
@@ -37,6 +37,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
@@ -111,6 +112,16 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
   @Override
   public boolean remove(Object key) {
+
+
+    try {
+      Query query = new QueryParser("", queryAnalyzer()).parse((String) key);
+      deleteDocument(query);
+      return true;
+    } catch (org.apache.lucene.queryparser.classic.ParseException e) {
+      e.printStackTrace();
+
+    }
     return false;
   }
 

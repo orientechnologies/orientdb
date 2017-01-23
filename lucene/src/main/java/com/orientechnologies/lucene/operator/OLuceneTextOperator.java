@@ -105,11 +105,14 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
   }
 
   @Override
-  public Object evaluateRecord(OIdentifiable iRecord, ODocument iCurrentResult, OSQLFilterCondition iCondition, Object iLeft,
-      Object iRight, OCommandContext iContext) {
+  public Object evaluateRecord(OIdentifiable iRecord,
+      ODocument iCurrentResult,
+      OSQLFilterCondition iCondition,
+      Object iLeft,
+      Object iRight,
+      OCommandContext iContext) {
 
     OLuceneFullTextIndex index = involvedIndex(iRecord, iCurrentResult, iCondition, iLeft, iRight);
-
     if (index == null) {
       throw new OCommandExecutionException("Cannot evaluate lucene condition without index configuration.");
     }
@@ -123,10 +126,11 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
 
     try {
       for (IndexableField field : index.buildDocument(iLeft).getFields()) {
-        memoryIndex.addField(field.name(), field.tokenStream(index.indexAnalyzer(), null));
-      }
-      return memoryIndex.search(index.buildQuery(iRight)) > 0.0f;
 
+        memoryIndex.addField(field, index.indexAnalyzer());
+      }
+      boolean b = memoryIndex.search(index.buildQuery(iRight)) > 0.0f;
+      return b;
     } catch (ParseException e) {
       OLogManager.instance().error(this, "error occurred while building query", e);
 

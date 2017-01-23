@@ -5,7 +5,9 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.TextField;
@@ -23,6 +25,7 @@ import org.junit.After;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.io.StringReader;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -90,6 +93,15 @@ public class VertexIndexTest {
 
     reader.close();
     writer.close();
+  }
+
+
+
+  @Test
+  public void name() throws Exception {
+
+
+
   }
 
   @After

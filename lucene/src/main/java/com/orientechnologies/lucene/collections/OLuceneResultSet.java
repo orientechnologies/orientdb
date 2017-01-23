@@ -25,6 +25,7 @@ import com.orientechnologies.lucene.query.OLuceneQueryContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
 
@@ -98,19 +99,20 @@ public class OLuceneResultSet extends OLuceneAbstractResultSet {
       TopDocs topDocs = null;
       try {
 
+        IndexSearcher searcher = queryContext.getSearcher();
         switch (queryContext.cfg) {
 
         case NO_FILTER_NO_SORT:
-          topDocs = queryContext.getSearcher().searchAfter(array[array.length - 1], query, PAGE_SIZE);
+          topDocs = searcher.searchAfter(array[array.length - 1], query, PAGE_SIZE);
           break;
         case FILTER_SORT:
-          topDocs = queryContext.getSearcher().searchAfter(array[array.length - 1], query, PAGE_SIZE, queryContext.sort);
+          topDocs = searcher.searchAfter(array[array.length - 1], query, PAGE_SIZE, queryContext.sort);
           break;
         case FILTER:
-          topDocs = queryContext.getSearcher().searchAfter(array[array.length - 1], query, PAGE_SIZE);
+          topDocs = searcher.searchAfter(array[array.length - 1], query, PAGE_SIZE);
           break;
         case SORT:
-          topDocs = queryContext.getSearcher().searchAfter(array[array.length - 1], query, PAGE_SIZE, queryContext.sort);
+          topDocs = searcher.searchAfter(array[array.length - 1], query, PAGE_SIZE, queryContext.sort);
           break;
         }
         array = topDocs.scoreDocs;

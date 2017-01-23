@@ -56,7 +56,6 @@ public class OLuceneQueryContext {
     this.context = context;
     this.searcher = searcher;
     this.query = query;
-    //    this.filter = filter;
     this.sort = sort;
     initCFG();
 

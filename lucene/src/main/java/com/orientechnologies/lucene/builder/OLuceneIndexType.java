@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.orientechnologies.lucene;
+package com.orientechnologies.lucene.builder;
 
 import com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -43,19 +43,24 @@ public class OLuceneIndexType {
     if (value instanceof Number) {
       Number number = (Number) value;
       if (value instanceof Long)
-        return new LegacyLongField(fieldName, number.longValue(), store);
+        return new LongPoint(fieldName, number.longValue());
       else if (value instanceof Float)
-        return new LegacyFloatField(fieldName, number.floatValue(), store);
+        return new FloatPoint(fieldName, number.floatValue());
       else if (value instanceof Double)
-        return new LegacyDoubleField(fieldName, number.doubleValue(), store);
-
-      return new LegacyIntField(fieldName, number.intValue(), store);
+        return new DoublePoint(fieldName, number.doubleValue());
+      return new IntPoint(fieldName, number.intValue());
 
     } else if (value instanceof Date) {
-      return new LegacyLongField(fieldName, ((Date) value).getTime(), store);
+      return new LongPoint(fieldName, ((Date) value).getTime());
     }
 
     if (fieldName.equalsIgnoreCase(OLuceneIndexEngineAbstract.RID)) {
+      StringField ridField = new StringField(fieldName, value.toString(), store);
+      return ridField;
+    }
+
+    //metadata fileds: _CLASS, _CLUSTER
+    if (fieldName.startsWith("_")) {
       StringField ridField = new StringField(fieldName, value.toString(), store);
       return ridField;
     }

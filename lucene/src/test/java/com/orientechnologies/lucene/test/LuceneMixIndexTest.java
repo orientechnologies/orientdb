@@ -52,38 +52,38 @@ public class LuceneMixIndexTest extends BaseLuceneTest {
   public void testMixQuery() {
 
     List<ODocument> docs = db.query(
-        new OSQLSynchQuery<ODocument>("select * from Song where  author = 'Hornsby' and [title] LUCENE \"(title:mountain)\" "));
+        new OSQLSynchQuery<ODocument>("select * from Song where  author = 'Hornsby' and [title,lyrics]  LUCENE \"(title:mountain)\" "));
 
-    Assert.assertEquals(docs.size(), 1);
-
-    docs = db.query(
-        new OSQLSynchQuery<ODocument>("select * from Song where  author = 'Hornsby' and title LUCENE \"(title:mountain)\" "));
-
-    Assert.assertEquals(docs.size(), 1);
+    Assert.assertEquals(1, docs.size());
 
     docs = db.query(
-        new OSQLSynchQuery<ODocument>("select * from Song where  author = 'Hornsby' and [title] LUCENE \"(title:ballad)\" "));
-    Assert.assertEquals(docs.size(), 0);
+        new OSQLSynchQuery<ODocument>("select * from Song where  author = 'Hornsby' and [title,lyrics] LUCENE \"(title:mountain)\" "));
+
+    Assert.assertEquals(1, docs.size());
+
+    docs = db.query(
+        new OSQLSynchQuery<ODocument>("select * from Song where  author = 'Hornsby' and [title,lyrics] LUCENE \"(title:ballad)\" "));
+    Assert.assertEquals(0, docs.size());
 
     docs = db
-        .query(new OSQLSynchQuery<ODocument>("select * from Song where  author = 'Hornsby' and title LUCENE \"(title:ballad)\" "));
-    Assert.assertEquals(docs.size(), 0);
+        .query(new OSQLSynchQuery<ODocument>("select * from Song where  author = 'Hornsby' and [title,lyrics] LUCENE \"(title:ballad)\" "));
+    Assert.assertEquals(0, docs.size());
 
   }
 
   @Test
-  @Ignore
+//  @Ignore
   public void testMixCompositeQuery() {
 
     List<ODocument> docs = db.query(new OSQLSynchQuery<ODocument>(
-        "select * from Song where  author = 'Hornsby' and [title,lyrics] LUCENE \"(title:mountain)\" "));
+        "select * from Song where  author = 'Hornsby' and [title,lyrics] LUCENE \"title:mountain\" "));
 
-    Assert.assertEquals(docs.size(), 1);
+    Assert.assertEquals(1, docs.size());
 
     docs = db
-        .query(new OSQLSynchQuery<ODocument>("select * from Song where author = 'Hornsby' and lyrics LUCENE \"(lyrics:happy)\" "));
+        .query(new OSQLSynchQuery<ODocument>("select * from Song where author = 'Hornsby' and [title,lyrics] LUCENE \"lyrics:happy\" "));
 
-    Assert.assertEquals(docs.size(), 1);
+    Assert.assertEquals(1, docs.size());
 
     // docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(
     // "select * from Song where  author = 'Hornsby' and [title] LUCENE \"(title:ballad)\" "));
