@@ -14,10 +14,10 @@ abstract class OrientSpecBehaviours extends WordSpec with ShouldMatchers with Be
   val testLabel = "testLabel"
   val testProperty = Key[String]("testProperty")
   
-  val vertexLabel1 = "label1"
-  val vertexLabel2 = "label2"
-  val edgeLabel1 = "label1"
-  val edgeLabel2 = "label2"
+  val vertexLabel1 = "vLabel1"
+  val vertexLabel2 = "vLabel2"
+  val edgeLabel1 = "eLabel1"
+  val edgeLabel2 = "eLabel2"
     
   override def beforeEach(): Unit = {
     graph.E.toList.foreach(_.remove())

@@ -4,6 +4,8 @@ import gremlin.scala._
 import org.apache.tinkerpop.gremlin.orientdb.OrientGraphFactory
 import org.scalatest._
 
+
+
 class OrientReconnect extends WordSpec with ShouldMatchers {
 
   def startServer: Unit =
