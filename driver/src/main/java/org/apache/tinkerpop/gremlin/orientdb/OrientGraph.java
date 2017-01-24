@@ -13,7 +13,6 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.index.OPropertyIndexDefinition;
-import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -23,8 +22,6 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.tinkerpop.gremlin.orientdb.traversal.strategy.optimization.OrientGraphStepStrategy;
@@ -83,7 +80,7 @@ public final class OrientGraph implements Graph {
     public static String CONFIG_LABEL_AS_CLASSNAME = "orient-label-as-classname";
 
     protected boolean connectionFailed;
-    protected ODatabaseDocumentTx database;
+    protected ODatabaseDocument database;
     protected final Features features;
     protected final Configuration configuration;
     protected final OPartitionedReCreatableDatabasePool pool;
@@ -98,7 +95,7 @@ public final class OrientGraph implements Graph {
         return factory.getNoTx();
     }
 
-    public OrientGraph(final ODatabaseDocumentTx database, final Configuration configuration, final String user, final String password) {
+    public OrientGraph(final ODatabaseDocument database, final Configuration configuration, final String user, final String password) {
         this.pool = null;
         this.user = user;
         this.password = password;
@@ -131,7 +128,7 @@ public final class OrientGraph implements Graph {
         return features;
     }
 
-    public ODatabaseDocumentTx database() {
+    public ODatabaseDocument database() {
         return database;
     }
 
@@ -139,7 +136,6 @@ public final class OrientGraph implements Graph {
         final ODatabaseDocument tlDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
         if (database != null && tlDb != database) {
             database.activateOnCurrentThread();
-            ODatabaseRecordThreadLocal.INSTANCE.set(database);
         }
     }
 
@@ -378,7 +374,9 @@ public final class OrientGraph implements Graph {
         boolean polymorphic = true;
         if (elementIds.length == 0) {
             // return all vertices as stream
-            Iterator<ORecord> itty = new ORecordIteratorClass<>(database, database, elementClass, polymorphic);
+
+
+            Iterator<ODocument> itty = database.browseClass(elementClass,polymorphic).iterator();
             return asStream(itty).map(toA).iterator();
         } else {
             Stream<ORID> ids = Stream.of(elementIds).map(OrientGraph::createRecordId).peek(id -> checkId(id));
@@ -519,12 +517,7 @@ public final class OrientGraph implements Graph {
 
         try {
             if (!database.isClosed() && commitTx) {
-                final OStorage storage = database.getStorage();
-                if (storage instanceof OAbstractPaginatedStorage) {
-                    if (((OAbstractPaginatedStorage) storage).getWALInstance() != null)
-                        database.commit();
-                }
-
+                database.commit();
             }
 
         } catch (RuntimeException e) {
@@ -584,7 +577,7 @@ public final class OrientGraph implements Graph {
         }
     }
 
-    public ODatabaseDocumentTx getRawDatabase() {
+    public ODatabaseDocument getRawDatabase() {
         makeActive();
         return database;
     }
@@ -642,7 +635,7 @@ public final class OrientGraph implements Graph {
                 String collate = configuration.getString("collate");
                 ODocument metadata = (ODocument) configuration.getProperty("metadata");
 
-                final ODatabaseDocumentTx db = getRawDatabase();
+                final ODatabaseDocument db = getRawDatabase();
                 final OSchema schema = db.getMetadata().getSchema();
 
                 final OClass cls = schema.getClass(className);

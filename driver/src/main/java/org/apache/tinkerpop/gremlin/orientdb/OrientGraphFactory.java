@@ -2,6 +2,7 @@ package org.apache.tinkerpop.gremlin.orientdb;
 
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -85,7 +86,7 @@ public final class OrientGraphFactory {
     }
 
     protected void initGraph(OrientGraph g) {
-        final ODatabaseDocumentTx db = g.getRawDatabase();
+        final ODatabaseDocument db = g.getRawDatabase();
         boolean txActive = db.getTransaction().isActive();
 
         if (txActive)
