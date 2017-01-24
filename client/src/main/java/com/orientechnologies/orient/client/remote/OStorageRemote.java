@@ -527,6 +527,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         }
       };
     }
+    final ORecordId idCopy = iRid.copy();
     // The Upper layer require to return this also if it not really receive response from the network
     final OPhysicalPosition ppos = new OPhysicalPosition(iRecordType);
     asyncNetworkOperation(new OStorageRemoteOperationWrite() {
@@ -566,6 +567,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             iRid.setClusterId(clusterId);
             iRid.setClusterPosition(ppos.clusterPosition);
           }
+          idCopy.setClusterId(clusterId);
+          idCopy.setClusterPosition(ppos.clusterPosition);
+
           updateCollection(collectionChanges, collectionManager);
           return ppos;
 
@@ -573,7 +577,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           endResponse(network);
         }
       }
-    }, iMode, iRid, realCallback, "Error on create record in cluster " + iRid.getClusterId());
+    }, iMode, idCopy, realCallback, "Error on create record in cluster " + iRid.getClusterId());
 
     return new OStorageOperationResult<OPhysicalPosition>(ppos);
   }
