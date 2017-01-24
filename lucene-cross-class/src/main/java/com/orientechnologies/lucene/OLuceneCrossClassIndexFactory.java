@@ -23,11 +23,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexEngine;
-import com.orientechnologies.orient.core.index.OIndexFactory;
-import com.orientechnologies.orient.core.index.OIndexInternal;
-import com.orientechnologies.orient.core.index.OIndexManagerProxy;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -40,7 +36,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import static com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE.*;
+import static com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE.FULLTEXT;
 
 public class OLuceneCrossClassIndexFactory implements OIndexFactory, ODatabaseLifecycleListener {
 
@@ -174,7 +170,7 @@ public class OLuceneCrossClassIndexFactory implements OIndexFactory, ODatabaseLi
   }
 
   private void createCrossClassSearchIndex(ODatabaseInternal db) {
-    OIndexManagerProxy indexManager = db.getMetadata().getIndexManager();
+    OIndexManager indexManager = db.getMetadata().getIndexManager();
     if (!indexManager.existsIndex("CrossClassSearchIndex")) {
 
       OLogManager.instance().info(this, "index is no present:: creating cross class index");
