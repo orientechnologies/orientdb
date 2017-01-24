@@ -530,7 +530,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     ORecordCallback<OCreateRecordResponse> realCallback = null;
     if (iCallback != null) {
       realCallback = (iRID, response) -> {
-        iCallback.call(iRID, response.getIdentity().getClusterPosition());
+        iCallback.call(response.getIdentity(), response.getIdentity().getClusterPosition());
         updateCollectionsFromChanges(collectionManager, response.getChangedIds());
       };
     }
