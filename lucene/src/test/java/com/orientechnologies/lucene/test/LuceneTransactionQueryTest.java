@@ -25,8 +25,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
-import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -44,7 +42,7 @@ public class LuceneTransactionQueryTest extends BaseLuceneTest {
   @Before
   public void init() {
 
-    final OrientVertexType c1 = new OrientGraphNoTx(db).createVertexType("C1");
+    final OClass c1 = db.createVertexClass("C1");
     c1.createProperty("p1", OType.STRING);
     c1.createIndex("C1.p1", "FULLTEXT", null, null, "LUCENE", new String[] { "p1" });
   }

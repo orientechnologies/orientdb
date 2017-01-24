@@ -18,22 +18,22 @@
 
 package com.orientechnologies.lucene.test;
 
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.OVertex;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.tinkerpop.blueprints.Parameter;
-import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
-import org.junit.Assert;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.List;
 
 /**
  * Created by enricorisa on 03/09/14.
  */
 public class GraphEmbeddedTest extends BaseLuceneTest {
-
-  private OrientGraph graph;
 
   public GraphEmbeddedTest() {
 
@@ -42,13 +42,13 @@ public class GraphEmbeddedTest extends BaseLuceneTest {
   @Before
   public void init() {
 
-    graph = new OrientGraph(db, false);
-    OrientVertexType type = graph.createVertexType("City");
+    OClass type = db.createVertexClass("City");
     type.createProperty("latitude", OType.DOUBLE);
     type.createProperty("longitude", OType.DOUBLE);
     type.createProperty("name", OType.STRING);
 
     db.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE")).execute();
+    db.commit();
   }
 
   @Test
@@ -56,52 +56,64 @@ public class GraphEmbeddedTest extends BaseLuceneTest {
 
     //THIS WON'T USE LUCENE INDEXES!!!! see #6997
 
-    graph.getRawGraph().begin();
-    graph.addVertex("class:City", new Object[] { "name", "London / a" });
-    graph.addVertex("class:City", new Object[] { "name", "Rome" });
+    db.begin();
+    OVertex city = db.newVertex("City");
+    city.setProperty("name", "London / a");
+    db.save(city);
 
-    graph.commit();
+    city = db.newVertex("City");
+    city.setProperty("name", "Rome");
+    db.save(city);
+    db.commit();
 
-    Iterable<Vertex> vertexes = graph.getVertices("City", new String[] { "name" }, new Object[] { "London / a" });
+    db.begin();
 
-    int size = 0;
-    for (Vertex v : vertexes) {
-      size++;
-      Assert.assertNotNull(v);
-    }
-    Assert.assertEquals(size, 1);
+    List<ODocument> resultSet = db.query(new OSQLSynchQuery<ODocument>("SELECT from City where name = 'London / a' "));
 
-    vertexes = graph.getVertices("City", new String[] { "name" }, new Object[] { "Rome" });
+    Assertions.assertThat(resultSet).hasSize(1);
 
-    size = 0;
-    for (Vertex v : vertexes) {
-      size++;
-      Assert.assertNotNull(v);
-    }
-    Assert.assertEquals(size, 1);
+    resultSet = db.query(new OSQLSynchQuery<ODocument>("SELECT from City where name = 'Rome' "));
+
+    Assertions.assertThat(resultSet).hasSize(1);
   }
 
   @Test
   public void testGetVericesFilterClass() {
 
-    graph.createVertexType("One");
-    graph.createVertexType("Two");
-    graph.createKeyIndex("name", Vertex.class, new Parameter("type", "NOTUNIQUE"));
+    OClass v = db.getClass("V");
+    v.createProperty("name", OType.STRING);
+    db.command("CREATE INDEX V.name ON V(name) NOTUNIQUE");
+    db.commit();
 
-    graph.getRawGraph().begin();
-    graph.addVertex("class:One", new Object[] { "name", "Same" });
-    graph.addVertex("class:Two", new Object[] { "name", "Same" });
+    OClass oneClass = db.createVertexClass("One");
+    OClass twoClass = db.createVertexClass("Two");
 
-    graph.commit();
+    OVertex one = db.newVertex(oneClass);
+    one.setProperty("name", "Same");
+    db.save(one);
 
-    Iterable<Vertex> vertexes = graph.getVertices("One", new String[] { "name" }, new Object[] { "Same" });
+    OVertex two = db.newVertex(twoClass);
+    two.setProperty("name", "Same");
+    db.save(two);
 
-    int size = 0;
-    for (Vertex v : vertexes) {
-      size++;
-      Assert.assertNotNull(v);
-    }
-    Assert.assertEquals(1, size);
+    db.commit();
+
+    List<ODocument> resultSet = db.query(new OSQLSynchQuery<ODocument>("SELECT from One where name = 'Same' "));
+
+    Assertions.assertThat(resultSet).hasSize(1);
+
+//    graph.addVertex("class:Two", new Object[] { "name", "Same" });
+//
+//    graph.commit();
+//
+//    Iterable<Vertex> vertexes = graph.getVertices("One", new String[] { "name" }, new Object[] { "Same" });
+//
+//    int size = 0;
+//    for (Vertex v : vertexes) {
+//      size++;
+//      Assert.assertNotNull(v);
+//    }
+//    Assert.assertEquals(1, size);
   }
 
 }
