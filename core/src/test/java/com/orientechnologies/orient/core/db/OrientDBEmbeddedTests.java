@@ -135,7 +135,7 @@ public class OrientDBEmbeddedTests {
 
   @Test
   public void testRegisterDatabase() {
-    OrientDBEmbedded orientDb = OrientDB.embedded(".", null);
+    OrientDBEmbedded orientDb = (OrientDBEmbedded) OrientDB.embedded(".", null);
     assertEquals(orientDb.listDatabases("", "").size(), 0);
     orientDb.initCustomStorage("database1", "./target/databases/database1", "", "");
     try (ODatabaseDocument db = orientDb.open("database1", "admin", "admin")) {

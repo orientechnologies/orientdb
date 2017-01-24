@@ -133,7 +133,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     owner = iOwner;
   }
 
-  public static int[] readableClusters(final ODatabaseDocument iDatabase, final int[] iClusterIds) {
+  public static int[] readableClusters(final ODatabaseDocument db, final int[] iClusterIds) {
     List<Integer> listOfReadableIds = new ArrayList<Integer>();
 
     boolean all = true;
@@ -142,14 +142,14 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
         //////////
         // This will exclude (filter out) any specific classes without explicit read permission.
         // getMetadata().getImmutableSchemaSnapshot()?
-        final OClass clazz = iDatabase.getMetadata().getSchema().getClassByClusterId(clusterId);
+        final OClass clazz = db.getMetadata().getSchema().getClassByClusterId(clusterId);
         
         if(clazz != null)
-          iDatabase.checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_READ, clazz.getName());
+          db.checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_READ, clazz.getName());
         //////////
 
-        final String clusterName = iDatabase.getClusterNameById(clusterId);
-        iDatabase.checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_READ, clusterName);
+        final String clusterName = db.getClusterNameById(clusterId);
+        db.checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_READ, clusterName);
         listOfReadableIds.add(clusterId);
       } catch (OSecurityAccessException securityException) {
         all = false;
