@@ -494,13 +494,13 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
         if (connection == null)
           // SKIP THIS FIELD
           continue;
-        List<ODocument> docs = new ArrayList<ODocument>();
         Object fv = doc.field(fieldName);
         if (fv instanceof ORidBag && !((ORidBag) fv).isEmbedded()) {
+          List<ODocument> docs = new ArrayList<ODocument>();
           for (OIdentifiable id : (ORidBag) fv)
             docs.add(OrientBaseGraph.getDocument(id, true));
+          treeRidbagEdgesToRemove.put(fieldName, docs);
         }
-        treeRidbagEdgesToRemove.put(fieldName, docs);
       }
     }
 

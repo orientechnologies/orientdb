@@ -313,8 +313,8 @@ public class OrientGraphNoTx extends OrientBaseGraph {
         final OIdentifiable outVertex = edge.getOutVertex();
 
         if (outVertex != null) {
-          if (outVertex != null) {
-            outVertexRecord = outVertex.getRecord();
+          outVertexRecord = outVertex.getRecord();
+          if (outVertexRecord != null) {
             final String outFieldName = OrientVertex.getConnectionFieldName(Direction.OUT, edgeClassName,
                 useVertexFieldsForEdgeLabels);
             outVertexChanged = edge.dropEdgeFromVertex(inVertexEdge, outVertexRecord, outFieldName,
