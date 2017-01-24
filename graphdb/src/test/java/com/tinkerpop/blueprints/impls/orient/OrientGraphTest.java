@@ -94,9 +94,14 @@ public abstract class OrientGraphTest extends GraphTest {
 
   @Test
   public void testTransactionalGraphTestSuite() throws Exception {
-    this.stopWatch();
-    doTestSuite(new TransactionalGraphTestSuite(this));
-    printTestPerformance("TransactionGraphTestSuite", this.stopWatch());
+    try {
+      this.stopWatch();
+      doTestSuite(new TransactionalGraphTestSuite(this));
+      printTestPerformance("TransactionGraphTestSuite", this.stopWatch());
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw e;
+    }
   }
 
   @Test
