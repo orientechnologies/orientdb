@@ -38,7 +38,9 @@ public class OETLXmlExtractorTest extends OETLBaseTest {
 
   @Test
   public void testSimpleXml() {
-    process("{source: { file: { path: 'src/test/resources/simple.xml' } }, extractor : { xml: {} }, loader: { test: {} } }");
+    configure("{source: { file: { path: 'src/test/resources/simple.xml' } }, extractor : { xml: {} }, loader: { test: {} } }");
+    proc.execute();
+
     assertEquals(1, getResult().size());
     ODocument doc = getResult().get(0);
 
@@ -64,20 +66,19 @@ public class OETLXmlExtractorTest extends OETLBaseTest {
     assertEquals("Maserati", maserati.field("name"));
     assertEquals("black", maserati.field("color"));
 
-//    System.out.println(doc.toJSON("prettyPrint"));
   }
 
   @Test
   public void testCollectionXml() {
-    process(
+    configure(
         "{source: { file: { path: 'src/test/resources/music.xml' } }, extractor : { xml: { rootNode: 'CATALOG.CD', tagsAsAttribute: ['CATALOG.CD'] } }, loader: { test: {} } }");
+    proc.execute();
+
     assertEquals(3, getResult().size());
 
     final List<ODocument> cds = getResult();
     final Iterator<ODocument> it = cds.iterator();
 
-//    for (int i = 0; i<getResult().size(); ++i)
-//      System.out.println(cds.get(i).toJSON("prettyPrint"));
 
     final ODocument doc1 = it.next();
     assertNotNull(doc1);

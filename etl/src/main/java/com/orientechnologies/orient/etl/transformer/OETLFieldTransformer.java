@@ -77,7 +77,7 @@ public class OETLFieldTransformer extends OETLAbstractTransformer {
   }
 
   @Override
-  public Object executeTransform(final Object input) {
+  public Object executeTransform(ODatabaseDocument db, final Object input) {
     if (input instanceof OIdentifiable) {
       final ORecord rec = ((OIdentifiable) input).getRecord();
 
@@ -113,7 +113,6 @@ public class OETLFieldTransformer extends OETLAbstractTransformer {
 
         if (save) {
           log(Level.FINE, "saving record %s", doc.toJSON());
-          final ODatabaseDocument db = databaseProvider.getDocumentDatabase();
           db.save(doc);
           log(Level.FINE, "saved record %s", doc.toJSON());
         }

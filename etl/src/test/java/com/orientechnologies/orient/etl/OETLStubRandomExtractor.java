@@ -28,25 +28,28 @@ import java.io.Reader;
 import java.util.Random;
 
 /**
- * ETL stub  OETLAbstractExtractor to check the result in tests.
+ * ETL .
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com) on 27/11/14.
  */
 public class OETLStubRandomExtractor extends OETLAbstractExtractor {
-  private int  fields;
   private long items;
+  private int  fields;
   private int delay = 0;
 
   @Override
-  public void configure(ODocument iConfiguration, OCommandContext iContext) {
-    super.configure(iConfiguration, iContext);
+  public void configure(ODocument conf, OCommandContext ctx) {
+    super.configure(conf, ctx);
 
-    if (iConfiguration.containsField("items"))
-      items = ((Number) iConfiguration.field("items")).longValue();
-    if (iConfiguration.containsField("fields"))
-      fields = iConfiguration.field("fields");
-    if (iConfiguration.containsField("delay"))
-      delay = iConfiguration.field("delay");
+    if (conf.containsField("items")) {
+      items = ((Number) conf.field("items")).longValue();
+    }
+    if (conf.containsField("fields")) {
+      fields = conf.field("fields");
+    }
+    if (conf.containsField("delay")) {
+      delay = conf.field("delay");
+    }
   }
 
   @Override
@@ -71,12 +74,13 @@ public class OETLStubRandomExtractor extends OETLAbstractExtractor {
       doc.field("field" + i, "value_" + new Random().nextInt(30));
     }
 
-    if (delay > 0)
+    if (delay > 0) {
       // SIMULATE A SLOW DOWN
       try {
         Thread.sleep(delay);
       } catch (InterruptedException e) {
       }
+    }
 
     return new OETLExtractedItem(current++, doc);
   }

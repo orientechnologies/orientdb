@@ -19,6 +19,7 @@
 package com.orientechnologies.orient.etl;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -39,7 +40,7 @@ public interface OETLComponent {
    */
   void configure(ODocument configuration, OCommandContext context);
 
-  void begin();
+  void begin(ODatabaseDocument db);
 
   void end();
 

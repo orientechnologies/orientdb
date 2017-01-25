@@ -84,7 +84,7 @@ public class OETLProcessorConfigurator {
 
       OETLExtractor extractor = configureExtractor(cfg, context);
 
-      //copy  the skipDuplicates flag from vertex trensformer to Loader
+      //copy  the skipDuplicates flag from vertex transformer to Loader
       Optional.ofNullable(cfg.<Collection<ODocument>>field("transformers"))
           .map(c -> c.stream()
               .filter(d -> d.containsField("vertex"))

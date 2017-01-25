@@ -20,6 +20,7 @@ package com.orientechnologies.orient.etl.transformer;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLComponentFactory;
@@ -43,8 +44,8 @@ public class OETLBlockTransformer extends OETLAbstractTransformer {
   }
 
   @Override
-  public void begin() {
-    super.begin();
+  public void begin(ODatabaseDocument db) {
+    super.begin(db);
 
     final String[] fieldNames = configuration.fieldNames();
 
@@ -69,7 +70,7 @@ public class OETLBlockTransformer extends OETLAbstractTransformer {
   }
 
   @Override
-  protected Object executeTransform(final Object input) {
+  protected Object executeTransform(ODatabaseDocument db, final Object input) {
     context.setVariable("input", input);
     block.execute();
     return input;

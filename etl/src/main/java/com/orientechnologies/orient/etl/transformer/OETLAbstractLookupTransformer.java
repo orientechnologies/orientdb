@@ -20,6 +20,7 @@ package com.orientechnologies.orient.etl.transformer;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -59,7 +60,7 @@ public abstract class OETLAbstractLookupTransformer extends OETLAbstractTransfor
       unresolvedLinkAction = ACTION.valueOf(iConfiguration.field("unresolvedLinkAction").toString().toUpperCase());
   }
 
-  protected Object lookup(Object joinValue, final boolean iReturnRIDS) {
+  protected Object lookup(ODatabaseDocument db, Object joinValue, final boolean iReturnRIDS) {
     Object result = null;
 
     if (joinValue != null) {
@@ -68,7 +69,7 @@ public abstract class OETLAbstractLookupTransformer extends OETLAbstractTransfor
         if (lookup.toUpperCase().startsWith("SELECT"))
           sqlQuery = new OSQLSynchQuery<ODocument>(lookup);
         else {
-          index = databaseProvider.getDocumentDatabase().getMetadata().getIndexManager().getIndex(lookup);
+          index = db.getMetadata().getIndexManager().getIndex(lookup);
           if (index == null) {
             OLogManager.instance().warn(this, "WARNING: index %s not found. Lookups could be really slow", lookup);
             final String[] parts = lookup.split("\\.");
@@ -85,7 +86,7 @@ public abstract class OETLAbstractLookupTransformer extends OETLAbstractTransfor
         if (sqlQuery instanceof OSQLSynchQuery)
           ((OSQLSynchQuery) sqlQuery).resetPagination();
 
-        result = databaseProvider.getDocumentDatabase().query(sqlQuery, joinValue);
+        result = db.query(sqlQuery, joinValue);
       }
 
       if (result != null && result instanceof Collection) {

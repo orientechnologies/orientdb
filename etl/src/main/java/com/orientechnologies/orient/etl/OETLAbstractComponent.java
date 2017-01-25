@@ -21,6 +21,7 @@ package com.orientechnologies.orient.etl;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OVariableParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -57,7 +58,7 @@ public abstract class OETLAbstractComponent implements OETLComponent {
   }
 
   @Override
-  public void begin() {
+  public void begin(ODatabaseDocument db) {
     if (configuration.containsField("log"))
       logLevel = LOG_LEVELS.valueOf(configuration.field("log").toString().toUpperCase()).toJulLevel();
     else
@@ -160,7 +161,6 @@ public abstract class OETLAbstractComponent implements OETLComponent {
     } else {
       value = content;
     }
-
     if (value instanceof String) {
       value = OVariableParser
           .resolveVariables((String) value, "={", "}", variable -> new OSQLPredicate(variable).evaluate(context));

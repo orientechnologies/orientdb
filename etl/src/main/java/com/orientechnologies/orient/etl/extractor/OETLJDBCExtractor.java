@@ -20,6 +20,7 @@ package com.orientechnologies.orient.etl.extractor;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -79,7 +80,7 @@ public class OETLJDBCExtractor extends OETLAbstractExtractor {
   }
 
   @Override
-  public void begin() {
+  public void begin(ODatabaseDocument db) {
     try {
       stm = conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
       stm.setFetchSize(fetchSize);

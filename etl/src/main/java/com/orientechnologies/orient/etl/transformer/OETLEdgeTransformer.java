@@ -20,22 +20,23 @@ package com.orientechnologies.orient.etl.transformer;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.record.OEdge;
+import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.OVertexDelegate;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.etl.OETLProcessHaltedException;
-import com.tinkerpop.blueprints.impls.orient.OrientEdge;
-import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 
 public class OETLEdgeTransformer extends OETLAbstractLookupTransformer {
-  private String  edgeClass    = OrientEdgeType.CLASS_NAME;
+  private String  edgeClass    = "E";
   private boolean directionOut = true;
   private ODocument targetVertexFields;
   private ODocument edgeFields;
@@ -53,7 +54,7 @@ public class OETLEdgeTransformer extends OETLAbstractLookupTransformer {
         + "{edgeFields:{optional:true,description:'Map of fields to set in edge. Use ${$input.<field>} to get input field values'}},"
         + "{skipDuplicates:{optional:true,description:'Duplicated edges (with a composite index built on both out and in properties) are skipped', default:false}},"
         + "{unresolvedLinkAction:{optional:true,description:'action when the target vertex is not found',values:"
-        + stringArray2Json(ACTION.values()) + "}}]," + "input:['ODocument','OrientVertex'],output:'OrientVertex'}");
+        + stringArray2Json(ACTION.values()) + "}}]," + "input:['ODocument','OVertex'],output:'OVertex'}");
   }
 
   @Override
@@ -84,22 +85,22 @@ public class OETLEdgeTransformer extends OETLAbstractLookupTransformer {
   }
 
   @Override
-  public void begin() {
-    final OClass cls = databaseProvider.getGraphDatabase().getEdgeType(edgeClass);
+  public void begin(ODatabaseDocument db) {
+    final OClass cls = db.getClass(edgeClass);
     if (cls == null)
-      databaseProvider.getGraphDatabase().createEdgeType(edgeClass);
-    super.begin();
+      db.createEdgeClass(edgeClass);
+    super.begin(db);
   }
 
   @Override
-  public Object executeTransform(final Object input) {
+  public Object executeTransform(ODatabaseDocument db, final Object input) {
     for (Object o : OMultiValue.getMultiValueIterable(input)) {
       // GET JOIN VALUE
-      final OrientVertex vertex;
-      if (o instanceof OrientVertex)
-        vertex = (OrientVertex) o;
+      final OVertex vertex;
+      if (o instanceof OVertex)
+        vertex = (OVertex) o;
       else if (o instanceof OIdentifiable)
-        vertex = databaseProvider.getGraphDatabase().getVertex(o);
+        vertex = db.getRecord((OIdentifiable) o);
       else
         throw new OETLTransformException(getName() + ": input type '" + o + "' is not supported");
 
@@ -108,16 +109,16 @@ public class OETLEdgeTransformer extends OETLAbstractLookupTransformer {
       if (OMultiValue.isMultiValue(joinCurrentValue)) {
         // RESOLVE SINGLE JOINS
         for (Object ob : OMultiValue.getMultiValueIterable(joinCurrentValue)) {
-          final Object r = lookup(ob, true);
-          if (createEdge(vertex, ob, r) == null) {
+          final Object r = lookup(db, ob, true);
+          if (createEdge(db, vertex, ob, r) == null) {
             if (unresolvedLinkAction == ACTION.SKIP)
               // RETURN NULL ONLY IN CASE SKIP ACTION IS REQUESTED
               return null;
           }
         }
       } else {
-        final Object result = lookup(joinCurrentValue, true);
-        if (createEdge(vertex, joinCurrentValue, result) == null) {
+        final Object result = lookup(db, joinCurrentValue, true);
+        if (createEdge(db, vertex, joinCurrentValue, result) == null) {
           if (unresolvedLinkAction == ACTION.SKIP)
             // RETURN NULL ONLY IN CASE SKIP ACTION IS REQUESTED
             return null;
@@ -128,7 +129,7 @@ public class OETLEdgeTransformer extends OETLAbstractLookupTransformer {
     return input;
   }
 
-  private List<OrientEdge> createEdge(final OrientVertex vertex, final Object joinCurrentValue, Object result) {
+  private List<OEdge> createEdge(ODatabaseDocument db, final OVertex vertex, final Object joinCurrentValue, Object result) {
     log(Level.FINE, "joinCurrentValue=%s, lookupResult=%s", joinCurrentValue, result);
 
     if (result == null) {
@@ -139,7 +140,7 @@ public class OETLEdgeTransformer extends OETLAbstractLookupTransformer {
         if (joinCurrentValue != null) {
           if (lookup != null) {
             final String[] lookupParts = lookup.split("\\.");
-            final OrientVertex linkedV = databaseProvider.getGraphDatabase().addTemporaryVertex(lookupParts[0]);
+            final OVertex linkedV = db.newVertex(lookupParts[0]);
             linkedV.setProperty(lookupParts[1], joinCurrentValue);
 
             if (targetVertexFields != null) {
@@ -149,7 +150,7 @@ public class OETLEdgeTransformer extends OETLAbstractLookupTransformer {
 
             linkedV.save();
 
-            log(Level.FINE, "created new vertex=%s", linkedV.getRecord());
+            log(Level.FINE, "created new vertex=" + linkedV.getRecord());
 
             result = linkedV.getIdentity();
           } else {
@@ -176,28 +177,28 @@ public class OETLEdgeTransformer extends OETLAbstractLookupTransformer {
     }
 
     if (result != null) {
-      final List<OrientEdge> edges;
+      final List<OEdge> edges;
       if (OMultiValue.isMultiValue(result)) {
         final int size = OMultiValue.getSize(result);
         if (size == 0)
           // NO EDGES
           return null;
 
-        edges = new ArrayList<OrientEdge>(size);
+        edges = new ArrayList<OEdge>(size);
       } else
-        edges = new ArrayList<OrientEdge>(1);
+        edges = new ArrayList<OEdge>(1);
 
       for (Object o : OMultiValue.getMultiValueIterable(result)) {
         OIdentifiable oid = (OIdentifiable) o;
-        final OrientVertex targetVertex = databaseProvider.getGraphDatabase().getVertex(oid);
+        final OVertex targetVertex = new OVertexDelegate(db.getRecord(oid));
 
         try {
           // CREATE THE EDGE
-          final OrientEdge edge;
+          final OEdge edge;
           if (directionOut)
-            edge = (OrientEdge) vertex.addEdge(edgeClass, targetVertex);
+            edge = (OEdge) vertex.addEdge(targetVertex, edgeClass);
           else
-            edge = (OrientEdge) targetVertex.addEdge(edgeClass, vertex);
+            edge = (OEdge) targetVertex.addEdge(vertex, edgeClass);
 
           if (edgeFields != null) {
             for (String f : edgeFields.fieldNames())
@@ -216,6 +217,8 @@ public class OETLEdgeTransformer extends OETLAbstractLookupTransformer {
           }
         }
       }
+
+      edges.stream().forEach(e -> db.save(e));
 
       return edges;
     }

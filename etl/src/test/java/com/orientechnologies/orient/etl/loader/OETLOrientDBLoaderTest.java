@@ -19,15 +19,13 @@
 package com.orientechnologies.orient.etl.loader;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.etl.OETLBaseTest;
-import com.tinkerpop.blueprints.Vertex;
 import org.junit.Test;
 
 import java.util.List;
@@ -42,25 +40,30 @@ public class OETLOrientDBLoaderTest extends OETLBaseTest {
   @Test(expected = OConfigurationException.class)
   public void shouldFailToManageRemoteServer() throws Exception {
 
-    process("{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { csv: {} }, loader: { orientdb: {\n"
+    configure("{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { csv: {} }, loader: { orientdb: {\n"
         + "      dbURL: \"remote:sadserver/OETLBaseTest\",\n" + "      dbUser: \"admin\",\n" + "      dbPassword: \"admin\",\n"
         + "      serverUser: \"admin\",\n" + "      serverPassword: \"admin\",\n" + "      dbAutoCreate: true,\n"
         + "      tx: false,\n" + "      batchCommit: 1000,\n" + "      wal : true,\n" + "      dbType: \"graph\",\n"
         + "      classes: [\n" + "        {name:\"Person\", extends: \"V\" },\n" + "      ],\n"
         + "      indexes: [{class:\"V\" , fields:[\"surname:String\"], \"type\":\"NOTUNIQUE\", \"metadata\": { \"ignoreNullValues\" : \"false\"}} ]  } } }");
 
+    proc.execute();
+
   }
 
   @Test
   public void testAddMetadataToIndex() {
 
-    process("{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { csv: {} }, loader: { orientdb: {\n"
+    configure("{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { csv: {} }, loader: { orientdb: {\n"
         + "      dbURL: 'memory:" + name.getMethodName() + "',\n" + "      dbUser: \"admin\",\n" + "      dbPassword: \"admin\",\n"
         + "      dbAutoCreate: true,\n" + "      tx: false,\n" + "      batchCommit: 1000,\n" + "      wal : true,\n"
         + "      dbType: \"graph\",\n" + "      classes: [\n" + "        {name:\"Person\", extends: \"V\" },\n" + "      ],\n"
         + "      indexes: [{class:\"V\" , fields:[\"surname:String\"], \"type\":\"NOTUNIQUE\", \"metadata\": { \"ignoreNullValues\" : \"false\"}} ]  } } }");
 
-    final OIndexManager indexManager = graph.getRawGraph().getMetadata().getIndexManager();
+    proc.execute();
+    ODatabaseDocument db = proc.getLoader().getPool().acquire();
+
+    final OIndexManager indexManager = db.getMetadata().getIndexManager();
 
     assertThat(indexManager.existsIndex("V.surname")).isTrue();
 
@@ -73,27 +76,31 @@ public class OETLOrientDBLoaderTest extends OETLBaseTest {
   @Test
   public void shouldSaveDocumentsOnGivenCluster() {
 
-    process("{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { csv: {} }, loader: { orientdb: {\n"
-        + "      dbURL: \"memory:OETLBaseTest\",\n" + "      dbUser: \"admin\",\n" + "      dbPassword: \"admin\",\n"
+    configure("{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { csv: {} }, loader: { orientdb: {\n"
+        + "      dbURL: \"memory:" + name.getMethodName() + "\",\n" + "      dbUser: \"admin\",\n"
+        + "      dbPassword: \"admin\",\n"
         + "      dbAutoCreate: true,\n" + "      cluster : \"myCluster\",\n" + "      tx: false,\n" + "      batchCommit: 1000,\n"
         + "      wal : true,\n" + "      dbType: \"graph\",\n" + "      classes: [\n"
         + "        {name:\"Person\", extends: \"V\" },\n" + "      ],\n"
         + "      indexes: [{class:\"V\" , fields:[\"surname:String\"], \"type\":\"NOTUNIQUE\", \"metadata\": { \"ignoreNullValues\" : \"false\"}} ]  } } }");
+    proc.execute();
 
-    graph.makeActive();
-    int idByName = graph.getRawGraph().getClusterIdByName("myCluster");
+    ODatabaseDocument db = proc.getLoader().getPool().acquire();
+    db.activateOnCurrentThread();
+    int idByName = db.getClusterIdByName("myCluster");
 
-    Iterable<Vertex> vertices = graph.getVertices();
+    OResultSet resultSet = db.query("SELECT from V");
 
-    for (Vertex vertex : vertices) {
-      assertThat(((ORID) vertex.getId()).getClusterId()).isEqualTo(idByName);
-    }
+    resultSet.vertexStream()
+        .forEach(v -> assertThat((v.getIdentity()).getClusterId()).isEqualTo(idByName));
+
+    db.close();
   }
 
   @Test
   public void shouldSaveDocuments() {
 
-    process(
+    configure(
         "{source: { content: { value: 'name,surname,@class\nJay,Miner,Person' } }, extractor : { csv: {} }, loader: { orientdb: {\n"
             + "      dbURL: 'memory:" + name.getMethodName() + "',\n" + "      dbUser: \"admin\",\n"
             + "      dbPassword: \"admin\",\n" + "      dbAutoCreate: true,\n      tx: false,\n" + "      batchCommit: 1000,\n"
@@ -101,8 +108,10 @@ public class OETLOrientDBLoaderTest extends OETLBaseTest {
             + "          \"name\": \"Person\"\n" + "        },\n" + "        {\n" + "          \"name\": \"UpdateDetails\"\n"
             + "        }\n" + "      ]      } } }");
 
-    graph.makeActive();
-    ODatabaseDocumentTx db = graph.getRawGraph();
+    proc.execute();
+    ODatabaseDocument db = proc.getLoader().getPool().acquire();
+
+    db.activateOnCurrentThread();
 
     List<?> res = db.query(new OSQLSynchQuery<ODocument>("SELECT FROM Person"));
 
@@ -113,8 +122,15 @@ public class OETLOrientDBLoaderTest extends OETLBaseTest {
   @Test
   public void shouldSaveDocumentsWithPredefinedSchema() {
 
+    //store data
+    configure("{source: { content: { value: 'name,surname,married,birthday\nJay,Miner,false,1970-01-01 05:30:00' } }, "
+        + "extractor : { csv: {columns:['name:string','surname:string','married:boolean','birthday:datetime'], dateFormat :'yyyy-MM-dd HH:mm:ss'} }, loader: { orientdb: {\n"
+        + "      dbURL: 'memory:" + name.getMethodName() + "', class:'Person',     dbUser: \"admin\",\n"
+        + "      dbPassword: \"admin\",\n" + "      dbAutoCreate: false,\n      tx: false,\n" + "      batchCommit: 1000,\n"
+        + "      wal : false,\n" + "      dbType: \"document\" } } }");
+    ODatabaseDocument db = proc.getLoader().getPool().acquire();
+
     //create class
-    ODatabaseDocument db = new ODatabaseDocumentTx(graph.getRawGraph().getURL()).open("admin", "admin");
 
     db.command(new OCommandSQL("CREATE Class Person")).execute();
     db.command(new OCommandSQL("CREATE property Person.name STRING")).execute();
@@ -122,18 +138,9 @@ public class OETLOrientDBLoaderTest extends OETLBaseTest {
     db.command(new OCommandSQL("CREATE property Person.married BOOLEAN")).execute();
     db.command(new OCommandSQL("CREATE property Person.birthday DATETIME")).execute();
 
-    db.close();
+    proc.execute();
 
-    //store data
-    process("{source: { content: { value: 'name,surname,married,birthday\nJay,Miner,false,1970-01-01 05:30:00' } }, "
-        + "extractor : { csv: {columns:['name:string','surname:string','married:boolean','birthday:datetime'], dateFormat :'yyyy-MM-dd HH:mm:ss'} }, loader: { orientdb: {\n"
-        + "      dbURL: 'memory:" + name.getMethodName() + "', class:'Person',     dbUser: \"admin\",\n"
-        + "      dbPassword: \"admin\",\n" + "      dbAutoCreate: false,\n      tx: false,\n" + "      batchCommit: 1000,\n"
-        + "      wal : false,\n" + "      dbType: \"document\" } } }");
-
-    graph.makeActive();
-
-    db = graph.getRawGraph();
+    db.activateOnCurrentThread();
 
     List<?> res = db.query(new OSQLSynchQuery<ODocument>("SELECT FROM Person"));
 

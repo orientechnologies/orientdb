@@ -23,19 +23,24 @@ public class OETLCSVExtractorTest extends OETLBaseTest {
 
   @Test
   public void testOneObject() {
-    process("{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { csv: {} }, loader: { test: {} } }");
+    configure("{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { csv: {} }, loader: { test: {} } }");
+    proc.execute();
 
     assertEquals(1, getResult().size());
     ODocument doc = getResult().get(0);
     assertEquals(2, doc.fields());
     assertEquals("Jay", doc.field("name"));
     assertEquals("Miner", doc.field("surname"));
+
+
   }
 
   @Test
   public void testEmpty() {
     String cfgJson = "{source: { content: { value: '' }  }, extractor : { csv: {} }, loader: { test: {} } }";
-    process(cfgJson);
+    configure(cfgJson);
+    proc.execute();
+
     assertEquals(0, getResult().size());
   }
 
@@ -44,9 +49,10 @@ public class OETLCSVExtractorTest extends OETLBaseTest {
     String content = "name,surname,id";
     for (int i = 0; i < names.length; ++i)
       content += "\n" + names[i] + "," + surnames[i] + "," + i;
-    process("{source: { content: { value: '" + content + "' } }, extractor : { csv: {} },  loader: { test: {} } }");
+    configure("{source: { content: { value: '" + content + "' } }, extractor : { csv: {} },  loader: { test: {} } }");
+    proc.execute();
 
-    assertEquals(getResult().size(), names.length);
+    assertEquals(names.length, getResult().size());
 
     int i = 0;
     for (ODocument doc : getResult()) {
@@ -64,8 +70,9 @@ public class OETLCSVExtractorTest extends OETLBaseTest {
     String content = "name,surname,id";
     for (int i = 0; i < names.length; ++i)
       content += "\n" + names[i] + "," + surnames[i] + "," + i;
-    process("{source: { content: { value: '" + content + "' } }, " + "extractor : { csv: {skipFrom: 1, skipTo: 4} },  "
+    configure("{source: { content: { value: '" + content + "' } }, " + "extractor : { csv: {skipFrom: 1, skipTo: 4} },  "
         + "loader: { test: {} } }");
+    proc.execute();
 
     assertThat(getResult()).hasSize(names.length - 4);
   }
@@ -73,7 +80,9 @@ public class OETLCSVExtractorTest extends OETLBaseTest {
   @Test
   public void testDateTypeAutodetection() {
     String cfgJson = "{source: { content: { value: 'BirthDay\n2008-04-30' }  }, extractor : { csv: {} }, loader: { test: {} } }";
-    process(cfgJson);
+    configure(cfgJson);
+    proc.execute();
+
     List<ODocument> res = getResult();
     ODocument doc = res.get(0);
     Date birthday = doc.field("BirthDay");
@@ -85,7 +94,9 @@ public class OETLCSVExtractorTest extends OETLBaseTest {
   @Test
   public void testDateTypeAutodetectionWithCustomDateFormat() {
     String cfgJson = "{source: { content: { value: 'BirthDay\n30-04-2008' }  }, extractor : { csv: {dateFormat: \"dd-MM-yyyy\"} }, loader: { test: {} } }";
-    process(cfgJson);
+    configure(cfgJson);
+    proc.execute();
+
     List<ODocument> res = getResult();
     ODocument doc = res.get(0);
     Date birthday = doc.field("BirthDay");
@@ -97,7 +108,9 @@ public class OETLCSVExtractorTest extends OETLBaseTest {
   @Test
   public void testStringInDblQuotes() throws Exception {
     String cfgJson = "{source: { content: { value: 'text\n\"Hello, quotes are here!\"' }  }, extractor : { csv: {} }, loader: { test: {} } }";
-    process(cfgJson);
+    configure(cfgJson);
+    proc.execute();
+
     List<ODocument> res = getResult();
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
@@ -108,7 +121,9 @@ public class OETLCSVExtractorTest extends OETLBaseTest {
   @Test
   public void testStringStartedFromDigit() throws Exception {
     String cfgJson = "{source: { content: { value: 'address\n\"401 Congress Ave, Suite 2450\"' }  }, extractor : { csv: {} }, loader: { test: {} } }";
-    process(cfgJson);
+    configure(cfgJson);
+    proc.execute();
+
     List<ODocument> res = getResult();
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
@@ -119,7 +134,9 @@ public class OETLCSVExtractorTest extends OETLBaseTest {
   @Test
   public void testFloat() {
     String cfgJson = "{source: { content: { value: 'firstNumber\n10.78'}  }, extractor : { csv: {} }, loader: { test: {} } }";
-    process(cfgJson);
+    configure(cfgJson);
+    proc.execute();
+
     List<ODocument> res = getResult();
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
@@ -131,7 +148,9 @@ public class OETLCSVExtractorTest extends OETLBaseTest {
   @Test
   public void testFloatWithinQuotesAndDotAsDecimalSeparator() {
     String cfgJson = "{source: { content: { value: 'firstNumber\n\"10.78\"'}  }, extractor : { csv: {} }, loader: { test: {} } }";
-    process(cfgJson);
+    configure(cfgJson);
+    proc.execute();
+
     List<ODocument> res = getResult();
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
@@ -143,7 +162,9 @@ public class OETLCSVExtractorTest extends OETLBaseTest {
   @Test
   public void testFloatWithinQuotesAndCommaAsDecimalSeparator() {
     String cfgJson = "{source: { content: { value: 'firstNumber\n\"10,78\"'}  }, extractor : { csv: {} }, loader: { test: {} } }";
-    process(cfgJson);
+    configure(cfgJson);
+    proc.execute();
+
     List<ODocument> res = getResult();
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
@@ -157,7 +178,9 @@ public class OETLCSVExtractorTest extends OETLBaseTest {
     Double minDouble = 540282346638528870000000000000000000000.0d;
 
     String cfgJson = "{source: { content: { value: 'secondNumber\n540282346638528870000000000000000000000.0'}  }, extractor : { csv: {} }, loader: { test: {} } }";
-    process(cfgJson);
+    configure(cfgJson);
+    proc.execute();
+
     List<ODocument> res = getResult();
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
@@ -169,7 +192,9 @@ public class OETLCSVExtractorTest extends OETLBaseTest {
     Double minDouble = 540282346638528870000000000000000000000.0d;
 
     String cfgJson = "{source: { content: { value: 'secondNumber\n\"540282346638528870000000000000000000000.0\"'}  }, extractor : { csv: {} }, loader: { test: {} } }";
-    process(cfgJson);
+    configure(cfgJson);
+    proc.execute();
+
     List<ODocument> res = getResult();
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
@@ -181,7 +206,9 @@ public class OETLCSVExtractorTest extends OETLBaseTest {
     Double minDouble = 540282346638528870000000000000000000000.0d;
 
     String cfgJson = "{source: { content: { value: 'secondNumber\n\"540282346638528870000000000000000000000,0\"'}  }, extractor : { csv: {} }, loader: { test: {} } }";
-    process(cfgJson);
+    configure(cfgJson);
+    proc.execute();
+
     List<ODocument> res = getResult();
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
@@ -191,7 +218,9 @@ public class OETLCSVExtractorTest extends OETLBaseTest {
   @Test
   public void testInteger() {
     String cfgJson = "{source: { content: { value: 'number\n100'} }, extractor : { csv : {} }, loader : { test: {} } }";
-    process(cfgJson);
+    configure(cfgJson);
+    proc.execute();
+
     List<ODocument> res = getResult();
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
@@ -201,7 +230,9 @@ public class OETLCSVExtractorTest extends OETLBaseTest {
   @Test
   public void testIntegerWithingQuotes() {
     String cfgJson = "{source: { content: { value: 'number\n\"100\"'} }, extractor : { csv : {} }, loader : { test: {} } }";
-    process(cfgJson);
+    configure(cfgJson);
+    proc.execute();
+
     List<ODocument> res = getResult();
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
@@ -211,7 +242,9 @@ public class OETLCSVExtractorTest extends OETLBaseTest {
   @Test
   public void testLong() {
     String cfgJson = "{source: { content: { value: 'number\n3000000000'} }, extractor : { csv: {} },  loader : { test: {} } }";
-    process(cfgJson);
+    configure(cfgJson);
+    proc.execute();
+
     List<ODocument> res = getResult();
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
@@ -221,7 +254,8 @@ public class OETLCSVExtractorTest extends OETLBaseTest {
   @Test
   public void testLongWithingQuotes() {
     String cfgJson = "{source: { content: { value: 'number\n\"3000000000\"'} }, extractor : { csv : {} }, loader : { test: {} } }";
-    process(cfgJson);
+    configure(cfgJson);
+    proc.execute();
     List<ODocument> res = getResult();
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
@@ -240,7 +274,8 @@ public class OETLCSVExtractorTest extends OETLBaseTest {
   @Test
   public void testNullCell() {
     String cfgJson = "{source: { content: { value: 'id,postId,text\n1,,Hello'} }, extractor : { csv : {} }, loader : { test: {} } }";
-    process(cfgJson);
+    configure(cfgJson);
+    proc.execute();
     List<ODocument> res = getResult();
     ODocument doc = res.get(0);
     assertEquals(new Integer(1), (Integer) doc.field("id"));
@@ -251,7 +286,9 @@ public class OETLCSVExtractorTest extends OETLBaseTest {
   @Test
   public void testNullValueInCell() {
     String cfgJson = "{source: { content: { value: 'id,postId,text\n1,NULL,Hello'} }, extractor : { csv : {} },  loader : { test: {} } }";
-    process(cfgJson);
+    configure(cfgJson);
+
+    proc.execute();
     List<ODocument> res = getResult();
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
@@ -263,7 +300,9 @@ public class OETLCSVExtractorTest extends OETLBaseTest {
   @Test
   public void testCustomNullValueInCell() {
     String cfgJson = "{source: { content: { value: 'id,postId,text\n1,?,Hello'} }, extractor : { csv : {nullValue: \"?\"} },  loader : { test: {} } }";
-    process(cfgJson);
+    configure(cfgJson);
+    proc.execute();
+
     List<ODocument> res = getResult();
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
@@ -275,7 +314,10 @@ public class OETLCSVExtractorTest extends OETLBaseTest {
   @Test
   public void testNullValueInCellEmptyString() {
     String cfgJson = "{source: { content: { value: 'id,title,text\n1,\"\",Hello'} }, extractor : { csv: {} },  loader : { test: {} } }";
-    process(cfgJson);
+
+    configure(cfgJson);
+    proc.execute();
+
     List<ODocument> res = getResult();
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
@@ -288,7 +330,9 @@ public class OETLCSVExtractorTest extends OETLBaseTest {
   @Test
   public void testQuotedEmptyString() {
     String cfgJson = "{source: { content: { value: 'id,title,text\n1,\"\",Hello'} }, extractor : { csv : {} }, loader : { test: {} } }";
-    process(cfgJson);
+    configure(cfgJson);
+    proc.execute();
+
     List<ODocument> res = getResult();
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
@@ -300,7 +344,9 @@ public class OETLCSVExtractorTest extends OETLBaseTest {
   @Test
   public void testCRLFDelimiter() {
     String cfgJson = "{source: { content: { value: 'id,text,num\r\n1,my test text,1'} }, extractor : { csv : {} }, loader : { test: {} } }";
-    process(cfgJson);
+    configure(cfgJson);
+    proc.execute();
+
     List<ODocument> res = getResult();
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
@@ -313,7 +359,9 @@ public class OETLCSVExtractorTest extends OETLBaseTest {
   @Test
   public void testEndingLineBreak() {
     String cfgJson = "{source: { content: { value: 'id,text,num\r\n1,my test text,1\r\n'} }, extractor : { csv : {} }, loader : { test: {} } }";
-    process(cfgJson);
+    configure(cfgJson);
+    proc.execute();
+
     List<ODocument> res = getResult();
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
@@ -325,7 +373,9 @@ public class OETLCSVExtractorTest extends OETLBaseTest {
   @Test
   public void testEndingSpaceInFieldName() {
     String cfgJson = "{source: { content: { value: 'id ,text ,num \r\n1,my test text,1\r\n'} }, extractor : { csv : {} }, loader : { test: {} } }";
-    process(cfgJson);
+    configure(cfgJson);
+    proc.execute();
+
     List<ODocument> res = getResult();
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
@@ -338,7 +388,9 @@ public class OETLCSVExtractorTest extends OETLBaseTest {
   @Test
   public void testCRLFIWithinQuotes() {
     String cfgJson = "{source: { content: { value: 'id ,text ,num \r\n1,\"my test\r\n text\",1\r\n'} }, extractor : { csv : {} }, loader : { test: {} } }";
-    process(cfgJson);
+    configure(cfgJson);
+    proc.execute();
+
     List<ODocument> res = getResult();
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
@@ -350,7 +402,9 @@ public class OETLCSVExtractorTest extends OETLBaseTest {
   @Test
   public void testEscapingDoubleQuotes() {
     String cfgJson = "{source: { content: { value: 'id ,text ,num \r\n1,my test \"\" text,1\r\n'} }, extractor : { csv : {} }, loader : { test: {} } }";
-    process(cfgJson);
+    configure(cfgJson);
+    proc.execute();
+
     List<ODocument> res = getResult();
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
@@ -362,7 +416,9 @@ public class OETLCSVExtractorTest extends OETLBaseTest {
   @Test
   public void testNegativeInteger() {
     String cfgJson = "{source: { content: { value: 'id\r\n-1'} }, extractor : { csv : {} }, loader : { test: {} } }";
-    process(cfgJson);
+    configure(cfgJson);
+    proc.execute();
+
     List<ODocument> res = getResult();
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
@@ -373,7 +429,9 @@ public class OETLCSVExtractorTest extends OETLBaseTest {
   @Test
   public void testNegativeFloat() {
     String cfgJson = "{source: { content: { value: 'id\r\n-1.0'} }, extractor : { csv : {} }, loader : { test: {} } }";
-    process(cfgJson);
+    configure(cfgJson);
+    proc.execute();
+
     List<ODocument> res = getResult();
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
@@ -383,7 +441,9 @@ public class OETLCSVExtractorTest extends OETLBaseTest {
   @Test
   public void testLinkType() {
     String cfgJson = "{source: { content: { value: 'id\n#1:1'} }, extractor : { csv : {'columns':['id:LINK']} }, loader : { test: {} } }";
-    process(cfgJson);
+    configure(cfgJson);
+    proc.execute();
+
     List<ODocument> res = getResult();
     assertThat(res).hasSize(1);
     ODocument doc = res.get(0);
@@ -394,7 +454,9 @@ public class OETLCSVExtractorTest extends OETLBaseTest {
   @Test
   public void testBooleanType() {
     String cfgJson = "{source: { content: { value: 'fake\ntrue'} }, extractor : { csv : {} }, loader : { test: {} } }";
-    process(cfgJson);
+    configure(cfgJson);
+    proc.execute();
+
     List<ODocument> res = getResult();
     assertThat(res).hasSize(1);
     ODocument doc = res.get(0);
@@ -406,7 +468,9 @@ public class OETLCSVExtractorTest extends OETLBaseTest {
   @Test
   public void testColumsDefinitions() {
     String cfgJson = "{source: { content: { value: 'name,date,datetime\nfrank,2008-04-30,2015-03-30 11:00'} }, extractor : { csv : { 'columns':['name:string','date:date','datetime:datetime']} }, loader : { test: {} } }";
-    process(cfgJson);
+    configure(cfgJson);
+    proc.execute();
+
     List<ODocument> res = getResult();
     assertThat(res).hasSize(1);
     ODocument doc = res.get(0);
@@ -427,10 +491,10 @@ public class OETLCSVExtractorTest extends OETLBaseTest {
   @Test
   public void testCsvParsingFormat() {
 
-    //    CSVFormat format = CSVFormat.valueOf("MySQL");
-
     String cfgJson = "{source: { content: { value: 'name,date,datetime\nfrank,2008-04-30,2015-03-30 11:00'} }, extractor : { csv : { \"predefinedFormat\": \"Default\",'columns':['name:string','date:date','datetime:datetime']} }, loader : { test: {} } }";
-    process(cfgJson);
+    configure(cfgJson);
+    proc.execute();
+
     List<ODocument> res = getResult();
     assertThat(res).hasSize(1);
     ODocument doc = res.get(0);
@@ -446,7 +510,9 @@ public class OETLCSVExtractorTest extends OETLBaseTest {
   @Test
   public void testMissingColumns() {
     String cfgJson = "{source: { content: { value: 'name,value,,\nfrank,myvalue,,'} }, extractor : { csv : { \"ignoreMissingColumns\": true } }, loader : { test: {} } }";
-    process(cfgJson);
+    configure(cfgJson);
+    proc.execute();
+
     List<ODocument> res = getResult();
     assertThat(res).hasSize(1);
     ODocument doc = res.get(0);
@@ -458,7 +524,9 @@ public class OETLCSVExtractorTest extends OETLBaseTest {
   @Test
   public void testExcelFormat() {
     String cfgJson = "{source: { content: { value: 'name,value,,\nfrank,myvalue,,'} }, extractor : { csv : { \"predefinedFormat\": \"Excel\" } }, loader : { test: {} } }";
-    process(cfgJson);
+    configure(cfgJson);
+    proc.execute();
+
     List<ODocument> res = getResult();
     assertThat(res).hasSize(1);
     ODocument doc = res.get(0);

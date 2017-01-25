@@ -19,15 +19,16 @@
 package com.orientechnologies.orient.etl.loader;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabasePool;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.etl.OETLDatabaseProvider;
 
 /**
  * ETL Loader that saves record into OrientDB database.
  */
 public class OETLOutputLoader extends OETLAbstractLoader {
   @Override
-  public void load(OETLDatabaseProvider databaseProvider, final Object input, final OCommandContext context) {
+  public void load(ODatabaseDocument db, final Object input, final OCommandContext context) {
     progress.incrementAndGet();
     System.out.println(input);
   }
@@ -38,7 +39,12 @@ public class OETLOutputLoader extends OETLAbstractLoader {
   }
 
   @Override
-  public void rollback(OETLDatabaseProvider databaseProvider) {
+  public void rollback(ODatabaseDocument db) {
+  }
+
+  @Override
+  public ODatabasePool getPool() {
+    return null;
   }
 
   @Override
@@ -49,5 +55,10 @@ public class OETLOutputLoader extends OETLAbstractLoader {
   @Override
   public String getName() {
     return "output";
+  }
+
+  @Override
+  public void close() {
+
   }
 }

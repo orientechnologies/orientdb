@@ -20,6 +20,7 @@ package com.orientechnologies.orient.etl.source;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.io.*;
@@ -121,7 +122,7 @@ public class OETLFileSource extends OETLAbstractSource {
   }
 
   @Override
-  public void begin() {
+  public void begin(ODatabaseDocument db) {
 
     try {
       final String fileMode = lockFile ? "rw" : "r";

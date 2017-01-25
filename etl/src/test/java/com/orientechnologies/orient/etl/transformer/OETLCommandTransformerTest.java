@@ -21,11 +21,10 @@ package com.orientechnologies.orient.etl.transformer;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.etl.OETLBaseTest;
-import com.orientechnologies.orient.etl.OETLDatabaseProvider;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -39,7 +38,7 @@ public class OETLCommandTransformerTest extends OETLBaseTest {
   public void shouldAllowSingleQuoteInsideFieldValue() {
     //Data contains a field with single quote: Miner O'Greedy
     // so the query must be enclosed inside double quote "
-    process("{\n" + "  'config': {\n" + "    'log': 'INFO'\n" + "  },\n" + "  'source': {\n" + "    'content': {\n"
+    configure("{\n" + "  'config': {\n" + "    'log': 'INFO'\n" + "  },\n" + "  'source': {\n" + "    'content': {\n"
         + "      'value': \"name,surname\n Jay, Miner O'Greedy \n Jay, Miner O'Greedy   \"\n" + "    }\n" + "  },\n"
         + "  'transformers': [\n" + "    {\n" + "      'command': {\n" + "       'log': 'INFO',\n"
         + "       'output': 'previous',\n" + "       'language': 'sql',\n"
@@ -48,19 +47,22 @@ public class OETLCommandTransformerTest extends OETLBaseTest {
         + "  'loader': {\n" + "      'orientdb': {\n"
         //        + "       'log': 'DEBUG',\n"
 
-        + "        'dbURL': 'memory:"+name.getMethodName()+"',\n" + "        'dbType': 'graph',\n" + "        'useLightweightEdges': false ,\n"
+        + "        'dbURL': 'memory:" + name.getMethodName() + "',\n" + "        'dbType': 'graph',\n"
+        + "        'useLightweightEdges': false ,\n"
         + "         \"classes\": [\n" + "        {\"name\":\"Person\", \"extends\": \"V\" }" + "      ]" + "      }\n" + "    }\n"
         + "}");
 
-    assertThat(graph.countVertices("Person")).isEqualTo(2);
+    proc.execute();
+    ODatabaseDocument db = proc.getLoader().getPool().acquire();
+
+    assertThat(db.countClass("Person")).isEqualTo(2);
   }
 
   @Test
+  @Ignore
   public void shouldReturnSameObjectAsInput() throws Exception {
 
-    ODatabaseDocument db = new ODatabaseDocumentTx(graph.getRawGraph().getURL()).open("admin", "admin");
-    db.command(new OCommandSQL("CREATE Class Person EXTENDS V")).execute();
-    db.close();
+//    db.command(new OCommandSQL("CREATE Class Person EXTENDS V")).execute();
 
     OETLCommandTransformer tr = new OETLCommandTransformer();
 
@@ -70,13 +72,13 @@ public class OETLCommandTransformerTest extends OETLBaseTest {
     OCommandContext ctx = new OBasicCommandContext();
 
     tr.configure(cnf, ctx);
-    tr.begin();
-    tr.setDatabaseProvider(new OETLDatabaseProvider(graph.getRawGraph(), graph));
+    tr.begin(null);
+//    tr.setDatabaseProvider(new OETLDatabaseProvider(graph));
     tr.setContext(ctx);
 
     ODocument input = new ODocument().field("name", "Jay").field("surname", "Miner O'Greedy");
 
-    Object transform = tr.transform(input);
+    Object transform = tr.transform(null, input);
 
     assertThat(transform).isSameAs(input);
 

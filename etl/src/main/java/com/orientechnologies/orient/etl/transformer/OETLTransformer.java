@@ -18,6 +18,7 @@
 
 package com.orientechnologies.orient.etl.transformer;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.etl.OETLPipelineComponent;
 
 /**
@@ -25,6 +26,6 @@ import com.orientechnologies.orient.etl.OETLPipelineComponent;
  */
 public interface OETLTransformer extends OETLPipelineComponent {
 
-  Object transform(final Object input);
+  Object transform(ODatabaseDocument db, final Object input);
 
 }

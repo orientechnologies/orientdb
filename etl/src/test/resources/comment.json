@@ -36,7 +36,7 @@
   ],
   "loader": {
     "orientdb": {
-      "dbURL": "plocal:./target/databases/blog",
+      "dbURL": "$dbURL",
       "dbType": "graph",
       "classes": [
         {

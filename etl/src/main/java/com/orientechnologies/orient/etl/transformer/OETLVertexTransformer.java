@@ -19,11 +19,11 @@
 package com.orientechnologies.orient.etl.transformer;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
+import com.orientechnologies.orient.core.record.impl.OVertexDelegate;
 
 public class OETLVertexTransformer extends OETLAbstractTransformer {
   private String vertexClass;
@@ -33,7 +33,7 @@ public class OETLVertexTransformer extends OETLAbstractTransformer {
   @Override
   public ODocument getConfiguration() {
     return new ODocument().fromJSON("{parameters:[" + getCommonConfigurationParameters() + ","
-        + "{class:{optional:true,description:'Vertex class name to assign. Default is " + OrientVertexType.CLASS_NAME + "'}}"
+        + "{class:{optional:true,description:'Vertex class name to assign. Default is V  '}}"
         + ",skipDuplicates:{optional:true,description:'Vertices with duplicate keys are skipped', default:false}" + "]"
         + ",input:['OrientVertex','ODocument'],output:'OrientVertex'}");
   }
@@ -45,17 +45,20 @@ public class OETLVertexTransformer extends OETLAbstractTransformer {
 
     if (iConfiguration.containsField("class"))
       vertexClass = (String) resolve(iConfiguration.field("class"));
+
     if (iConfiguration.containsField("skipDuplicates"))
       skipDuplicates = (Boolean) resolve(iConfiguration.field("skipDuplicates"));
   }
 
   @Override
-  public void begin() {
+  public void begin(ODatabaseDocument db) {
     if (vertexClass != null) {
-      OrientBaseGraph graph = databaseProvider.getGraphDatabase();
-      final OClass cls = graph.getVertexType(vertexClass);
-      if (cls == null)
-        graph.createVertexType(vertexClass);
+      final OClass cls = db.getClass(vertexClass);
+      if (cls == null) {
+        db.createVertexClass(vertexClass);
+      }
+    } else {
+      vertexClass = "V";
     }
   }
 
@@ -65,14 +68,14 @@ public class OETLVertexTransformer extends OETLAbstractTransformer {
   }
 
   @Override
-  public Object executeTransform(final Object input) {
+  public Object executeTransform(ODatabaseDocument db, final Object input) {
 
-    OrientBaseGraph graph = databaseProvider.getGraphDatabase();
-    final OrientVertex v = graph.getVertex(input);
+    ODocument doc = (ODocument) input;
 
-    if (v != null && vertexClass != null && !vertexClass.equals(v.getRecord().getClassName())) {
-      v.getRecord().setClassName(vertexClass);
-    }
+    doc.setClassName(vertexClass);
+
+    final OVertex v = new OVertexDelegate(doc);
+
     return v;
   }
 }
