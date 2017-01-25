@@ -76,14 +76,7 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
 
     try {
       db = getProfiledDatabaseInstance(iRequest);
-      OResultSet result;
-      if (params instanceof Map) {
-        result = db.command(text, (Map) params);
-      } else if (params instanceof Object[]) {
-        result = db.command(text, (Object[]) params);
-      } else {
-        result = db.command(text, params);
-      }
+      OResultSet result = executeStatement(language,text, params, db);
       int i = 0;
       List response = new ArrayList();
       while (result.hasNext()) {
@@ -111,6 +104,18 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
     }
 
     return false;
+  }
+
+  protected OResultSet executeStatement(String language, String text, Object params, ODatabaseDocument db) {
+    OResultSet result;
+    if (params instanceof Map) {
+      result = db.command(text, (Map) params);
+    } else if (params instanceof Object[]) {
+      result = db.command(text, (Object[]) params);
+    } else {
+      result = db.command(text, params);
+    }
+    return result;
   }
 
   @Override
