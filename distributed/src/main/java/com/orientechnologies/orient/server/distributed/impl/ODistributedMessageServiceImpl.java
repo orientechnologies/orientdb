@@ -151,8 +151,17 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
   }
 
   @Override
-  public Set<String> getDatabases() {
-    final Set<String> result = new HashSet<String>(databases.keySet());
+  public Set<String> getDatabases() {    
+    // We assign the ConcurrentHashMap (databases) to the Map interface for this reason:
+    // ConcurrentHashMap.keySet() in Java 8 returns a ConcurrentHashMap.KeySetView.
+    // ConcurrentHashMap.keySet() in Java 7 returns a Set.
+    // If this code is compiled with Java 8 yet is run on Java 7, you'll receive a NoSuchMethodError:
+    // java.util.concurrent.ConcurrentHashMap.keySet()Ljava/util/concurrent/ConcurrentHashMap$KeySetView.
+    // By assigning the ConcurrentHashMap variable to a Map, the call to keySet() will return a Set
+    // and not the Java 8 type, KeySetView.
+    Map<String, ODistributedDatabaseImpl> map = databases;
+    
+    final Set<String> result = new HashSet<String>(map.keySet());
     result.remove(OSystemDatabase.SYSTEM_DB_NAME);
     return result;
   }
