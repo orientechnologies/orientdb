@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <orient-server>
     <handlers>
-        <handler class="com.orientechnologies.orient.graph.handler.OGraphServerHandler">
-            <parameters/>
-        </handler>
         <handler class="com.orientechnologies.orient.server.handler.OJMXPlugin">
             <parameters>
                 <parameter value="false" name="enabled"/>

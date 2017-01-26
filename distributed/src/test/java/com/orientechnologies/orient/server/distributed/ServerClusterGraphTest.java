@@ -20,25 +20,26 @@
 
 package com.orientechnologies.orient.server.distributed;
 
-import junit.framework.Assert;
-
-import org.junit.Test;
-
+import com.orientechnologies.orient.core.db.ODatabasePool;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.record.ODirection;
+import com.orientechnologies.orient.core.record.OEdge;
+import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.tinkerpop.blueprints.Direction;
-import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import junit.framework.Assert;
+import org.junit.Test;
 
 /**
  * Check vertex and edge creation are propagated across all the nodes.
  */
 public class ServerClusterGraphTest extends AbstractServerClusterTest {
   final static int     SERVERS = 2;
-  private OrientVertex v1;
-  private OrientVertex v2;
-  private OrientVertex v3;
+  private OVertex      v1;
+  private OVertex      v2;
+  private OVertex v3;
 
   public String getDatabaseName() {
     return "distributed-queries";
@@ -54,81 +55,85 @@ public class ServerClusterGraphTest extends AbstractServerClusterTest {
   @Override
   protected void executeTest() throws Exception {
     {
-      OrientGraphFactory factory = new OrientGraphFactory("plocal:target/server0/databases/" + getDatabaseName());
-      OrientGraphNoTx g = factory.getNoTx();
+      ODatabasePool factory = OrientDB.fromUrl("embedded:target/server0/databases/", OrientDBConfig.defaultConfig()).openPool(getDatabaseName(), "admin", "admin");
+
+      ODatabaseDocument g = factory.acquire();
 
       try {
-        g.createVertexType("Post");
-        g.createVertexType("User");
-        g.createEdgeType("Own");
+        g.createVertexClass("Post");
+        g.createVertexClass("User");
+        g.createEdgeClass("Own");
 
-        g.addVertex("class:User");
+        g.newVertex("User").save();
 
         g.command(new OCommandSQL("insert into Post (content, timestamp) values('test', 1)")).execute();
       } finally {
-        g.shutdown();
+        g.close();
       }
     }
 
     // CHECK VERTEX CREATION ON ALL THE SERVERS
     for (int s = 0; s < SERVERS; ++s) {
-      OrientGraphFactory factory2 = new OrientGraphFactory("plocal:target/server" + s + "/databases/" + getDatabaseName());
-      OrientGraphNoTx g2 = factory2.getNoTx();
+      ODatabasePool factory2 = OrientDB.fromUrl("embedded:target/server" + s + "/databases/", OrientDBConfig.defaultConfig()).openPool(getDatabaseName(), "admin", "admin");
+
+      ODatabaseDocument g2 = factory2.acquire();
 
       try {
 
-        Iterable<OrientVertex> result = g2.command(new OCommandSQL("select from Post")).execute();
+        Iterable<OElement> result = g2.command(new OCommandSQL("select from Post")).execute();
         Assert.assertTrue(result.iterator().hasNext());
         Assert.assertNotNull(result.iterator().next());
 
       } finally {
-        g2.shutdown();
+        g2.close();
       }
     }
 
     {
-      OrientGraphFactory factory = new OrientGraphFactory("plocal:target/server0/databases/" + getDatabaseName());
-      OrientGraphNoTx g = factory.getNoTx();
+      ODatabasePool factory = OrientDB.fromUrl("embedded:target/server0/databases/", OrientDBConfig.defaultConfig()).openPool(getDatabaseName(), "admin", "admin");
+
+      ODatabaseDocument g = factory.acquire();
       try {
         g.command(new OCommandSQL("create edge Own from (select from User) to (select from Post)")).execute();
       } finally {
-        g.shutdown();
+        g.close();
       }
     }
 
     // CHECK VERTEX CREATION ON ALL THE SERVERS
     for (int s = 0; s < SERVERS; ++s) {
-      OrientGraphFactory factory2 = new OrientGraphFactory("plocal:target/server" + s + "/databases/" + getDatabaseName());
-      OrientGraphNoTx g2 = factory2.getNoTx();
+      ODatabasePool factory2 = OrientDB.fromUrl("embedded:target/server" + s + "/databases/", OrientDBConfig.defaultConfig()).openPool(getDatabaseName(), "admin", "admin");
+
+      ODatabaseDocument g2 = factory2.acquire();
 
       try {
 
-        Iterable<OrientVertex> result = g2.command(new OCommandSQL("select from Own")).execute();
+        Iterable<OElement> result = g2.command(new OCommandSQL("select from Own")).execute();
         Assert.assertTrue(result.iterator().hasNext());
         Assert.assertNotNull(result.iterator().next());
 
         result = g2.command(new OCommandSQL("select from Post")).execute();
         Assert.assertTrue(result.iterator().hasNext());
 
-        final OrientVertex v = result.iterator().next();
+        final OVertex v = result.iterator().next().asVertex().get();
         Assert.assertNotNull(v);
 
-        final Iterable<Edge> inEdges = v.getEdges(Direction.IN);
+        final Iterable<OEdge> inEdges = v.getEdges(ODirection.IN);
         Assert.assertTrue(inEdges.iterator().hasNext());
         Assert.assertNotNull(inEdges.iterator().next());
 
         result = g2.command(new OCommandSQL("select from User")).execute();
         Assert.assertTrue(result.iterator().hasNext());
 
-        final OrientVertex v2 = result.iterator().next();
+        final OVertex v2 = result.iterator().next().asVertex().get();
         Assert.assertNotNull(v2);
 
-        final Iterable<Edge> outEdges = v2.getEdges(Direction.OUT);
+        final Iterable<OEdge> outEdges = v2.getEdges(ODirection.OUT);
         Assert.assertTrue(outEdges.iterator().hasNext());
         Assert.assertNotNull(outEdges.iterator().next());
 
       } finally {
-        g2.shutdown();
+        g2.close();
       }
     }
 

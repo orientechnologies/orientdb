@@ -15,10 +15,12 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.orient.client.remote.OStorageRemote;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabasePool;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.record.OVertex;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -47,20 +49,20 @@ public class ServerClusterRemoteInsertBalancedTest extends AbstractServerCluster
   }
 
   private void testRoundRobinOnConnect() {
-    final OrientGraphFactory factory = new OrientGraphFactory("remote:localhost/" + getDatabaseName());
+    ODatabasePool factory = OrientDB.fromUrl("remote:localhost/",
+        OrientDBConfig.builder().addConfig(OGlobalConfiguration.CLIENT_CONNECTION_STRATEGY, "ROUND_ROBIN_CONNECT").build())
+        .openPool(getDatabaseName(), "admin", "admin");
 
-    factory.setConnectionStrategy(OStorageRemote.CONNECTION_STRATEGY.ROUND_ROBIN_CONNECT.toString());
-
-    OrientGraphNoTx graph = factory.getNoTx();
-    graph.createVertexType("Client");
-    graph.shutdown();
+    ODatabaseDocument graph = factory.acquire();
+    graph.createVertexClass("Client");
+    graph.close();
 
     Map<Integer, Integer> clusterIds = new HashMap<Integer, Integer>();
 
     for (int i = 0; i < ITERATIONS; ++i) {
-      graph = factory.getNoTx();
+      graph = factory.acquire();
       try {
-        final OrientVertex v = graph.addVertex("class:Client");
+        final OVertex v = graph.newVertex("Client").save();
 
         Integer value = clusterIds.get(v.getIdentity().getClusterId());
         if (value == null)
@@ -71,7 +73,7 @@ public class ServerClusterRemoteInsertBalancedTest extends AbstractServerCluster
         clusterIds.put(v.getIdentity().getClusterId(), value);
 
       } finally {
-        graph.shutdown();
+        graph.close();
       }
     }
 
@@ -79,17 +81,16 @@ public class ServerClusterRemoteInsertBalancedTest extends AbstractServerCluster
   }
 
   private void testRoundRobinOnRequest() {
-    final OrientGraphFactory factory = new OrientGraphFactory("remote:localhost/" + getDatabaseName());
-
-    factory.setConnectionStrategy(OStorageRemote.CONNECTION_STRATEGY.ROUND_ROBIN_REQUEST.toString());
-
-    OrientGraphNoTx graph = factory.getNoTx();
+    ODatabasePool factory = OrientDB.fromUrl("remote:localhost/",
+        OrientDBConfig.builder().addConfig(OGlobalConfiguration.CLIENT_CONNECTION_STRATEGY, "ROUND_ROBIN_CONNECT").build())
+        .openPool(getDatabaseName(), "admin", "admin");
+    ODatabaseDocument graph = factory.acquire();
 
     Map<Integer, Integer> clusterIds = new HashMap<Integer, Integer>();
 
     try {
       for (int i = 0; i < ITERATIONS; ++i) {
-        final OrientVertex v = graph.addVertex("class:Client");
+        final OVertex v = graph.newVertex("Client").save();
 
         Integer value = clusterIds.get(v.getIdentity().getClusterId());
         if (value == null)
@@ -101,7 +102,7 @@ public class ServerClusterRemoteInsertBalancedTest extends AbstractServerCluster
 
       }
     } finally {
-      graph.shutdown();
+      graph.close();
     }
 
     Assert.assertTrue(clusterIds.size() > 1);

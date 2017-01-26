@@ -15,23 +15,20 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import java.io.File;
-import java.io.IOException;
-
 import com.hazelcast.cluster.impl.ClusterServiceImpl;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.instance.HazelcastInstanceImpl;
 import com.hazelcast.instance.HazelcastInstanceProxy;
 import com.hazelcast.instance.Node;
 import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
+
+import java.io.File;
+import java.io.IOException;
 
 /**
  * Running server instance.
@@ -39,9 +36,9 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class ServerRun {
-  protected final String serverId;
-  protected String       rootPath;
-  protected OServer      server;
+  protected final String  serverId;
+  protected       String  rootPath;
+  protected       OServer server;
 
   public ServerRun(final String iRootPath, final String serverId) {
     this.rootPath = iRootPath;
@@ -119,30 +116,21 @@ public class ServerRun {
     return impl;
   }
 
-  protected OrientBaseGraph createDatabase(final String iName) {
-    return createDatabase(iName, null);
-  }
-
-  public OrientBaseGraph createDatabase(final String iName, final OCallable<Object, OrientGraphFactory> iCfgCallback) {
+  public ODatabaseDocumentTx createDatabase(final String iName) {
     String dbPath = getDatabasePath(iName);
 
     new File(dbPath).mkdirs();
 
-    OrientGraphFactory factory = new OrientGraphFactory("plocal:" + dbPath);
-    if (factory.exists()) {
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx("plocal:" + dbPath);
+    if (db.exists()) {
       System.out.println("Dropping previous database '" + iName + "' under: " + dbPath + "...");
-      new ODatabaseDocumentTx("plocal:" + dbPath).open("admin", "admin").drop();
+      db.drop();
       OFileUtils.deleteRecursively(new File(dbPath));
 
-      factory.drop();
-      factory = new OrientGraphFactory("plocal:" + dbPath);
+      db = new ODatabaseDocumentTx("plocal:" + dbPath);
     }
 
-    if (iCfgCallback != null)
-      iCfgCallback.call(factory);
-
-    System.out.println("Creating database '" + iName + "' under: " + dbPath + "...");
-    return factory.getNoTx();
+    return db;
   }
 
   public void copyDatabase(final String iDatabaseName, final String iDestinationDirectory) throws IOException {

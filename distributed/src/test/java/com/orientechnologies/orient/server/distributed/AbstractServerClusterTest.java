@@ -24,6 +24,7 @@ import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -34,8 +35,6 @@ import com.orientechnologies.orient.server.distributed.impl.task.OCreateRecordTa
 import com.orientechnologies.orient.server.distributed.impl.task.OFixCreateRecordTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OFixUpdateRecordTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OReadRecordTask;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import org.junit.Assert;
 
 import java.io.IOException;
@@ -268,7 +267,7 @@ public abstract class AbstractServerClusterTest {
    * @param db
    *          Current database
    */
-  protected void onAfterDatabaseCreation(final OrientBaseGraph db) {
+  protected void onAfterDatabaseCreation(final ODatabaseDocument db) {
   }
 
   protected abstract void executeTest() throws Exception;
@@ -277,32 +276,23 @@ public abstract class AbstractServerClusterTest {
     prepare(iCopyDatabaseToNodes, true);
   }
 
+
   /**
    * Create the database on first node only
    *
    * @throws IOException
    */
   protected void prepare(final boolean iCopyDatabaseToNodes, final boolean iCreateDatabase) throws IOException {
-    prepare(iCopyDatabaseToNodes, iCreateDatabase, null);
-  }
-
-  /**
-   * Create the database on first node only
-   *
-   * @throws IOException
-   */
-  protected void prepare(final boolean iCopyDatabaseToNodes, final boolean iCreateDatabase,
-      final OCallable<Object, OrientGraphFactory> iCfgCallback) throws IOException {
     // CREATE THE DATABASE
     final Iterator<ServerRun> it = serverInstance.iterator();
     final ServerRun master = it.next();
 
     if (iCreateDatabase) {
-      final OrientBaseGraph graph = master.createDatabase(getDatabaseName(), iCfgCallback);
+      final ODatabaseDocumentTx graph = master.createDatabase(getDatabaseName());
       try {
         onAfterDatabaseCreation(graph);
       } finally {
-        graph.shutdown();
+        graph.close();
         ODatabaseDocumentTx.closeAll();
       }
     }

@@ -1,14 +1,13 @@
 package com.orientechnologies.orient.server.distributed;
 
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicReference;
-
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 /*
  *
@@ -129,7 +128,7 @@ public class HaRemoveServerTest extends AbstractServerClusterTest {
   }
 
   @Override
-  protected void onAfterDatabaseCreation(OrientBaseGraph db) {
+  protected void onAfterDatabaseCreation(ODatabaseDocument db) {
     db.command(new OCommandSQL("CREATE CLASS Person extends V")).execute();
     db.command(new OCommandSQL("CREATE PROPERTY Person.name STRING")).execute();
   }

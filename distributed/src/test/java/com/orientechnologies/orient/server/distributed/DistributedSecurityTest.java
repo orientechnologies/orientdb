@@ -20,13 +20,10 @@
 
 package com.orientechnologies.orient.server.distributed;
 
-import junit.framework.Assert;
-
-import org.junit.Test;
-
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+import junit.framework.Assert;
+import org.junit.Test;
 
 /**
  * Tests the behavior of security in distributed configuration.
@@ -48,9 +45,9 @@ public class DistributedSecurityTest extends AbstractServerClusterTest {
   @Override
   protected void executeTest() throws Exception {
     for (int s = 0; s < SERVERS; ++s) {
-      OrientGraphFactory factory = new OrientGraphFactory("plocal:target/server" + s + "/databases/" + getDatabaseName(), "reader",
-          "reader");
-      OrientGraphNoTx g = factory.getNoTx();
+
+      ODatabaseDocumentTx g = new ODatabaseDocumentTx("plocal:target/server" + s + "/databases/" + getDatabaseName());
+      g.open("reader", "reader");
 
       try {
 
@@ -64,14 +61,14 @@ public class DistributedSecurityTest extends AbstractServerClusterTest {
 
         try {
           // TRY DELETING CURRENT OUSER VIA API
-          g.getRawGraph().getUser().getIdentity().getRecord().delete();
+          g.getUser().getIdentity().getRecord().delete();
           Assert.assertTrue(false);
         } catch (Exception e) {
           Assert.assertTrue(true);
         }
 
       } finally {
-        g.shutdown();
+        g.close();
       }
     }
   }

@@ -3,27 +3,23 @@ package com.orientechnologies.orient.server.distributed;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.ODatabasePool;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.impl.OLocalClusterWrapperStrategy;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
-import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.ConcurrentModificationException;
-import java.util.Date;
-import java.util.List;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -33,7 +29,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * Test case to check the right management of distributed exception while a server is starting. Derived from the test provided by
  * Gino John for issue http://www.prjhub.com/#/issues/6449.
- *
+ * <p>
  * 3 nodes, the test is started after the 1st node is up & running. The test is composed by multiple (8) parallel threads that
  * update the same records 20,000 times.
  *
@@ -47,8 +43,8 @@ public class HALocalGraphTest extends AbstractServerClusterTxTest {
   protected final        AtomicBoolean serverDown              = new AtomicBoolean(false);
   protected final        AtomicBoolean serverRestarting        = new AtomicBoolean(false);
   protected final        AtomicBoolean serverRestarted         = new AtomicBoolean(false);
-  protected OrientGraphFactory graphReadFactory;
-  protected ExecutorService    executorService;
+  protected ODatabasePool   graphReadFactory;
+  protected ExecutorService executorService;
   protected int        serverStarted = 0;
   protected AtomicLong operations    = new AtomicLong();
   List<Future<?>> ths = new ArrayList<Future<?>>();
@@ -163,7 +159,7 @@ public class HALocalGraphTest extends AbstractServerClusterTxTest {
     }
   }
 
-  private Runnable startThread(final int id, final OrientGraphFactory graphFactory) {
+  private Runnable startThread(final int id, final ODatabasePool graphFactory) {
 
     Runnable th = new Runnable() {
       @Override
@@ -190,17 +186,18 @@ public class HALocalGraphTest extends AbstractServerClusterTxTest {
             if (sleep > 0)
               Thread.sleep(sleep);
 
-            OrientGraph graph = graphFactory.getTx();
+            ODatabaseDocument graph = graphFactory.acquire();
+            graph.begin();
 
-            if (!graph.getRawGraph().getURL().startsWith("remote:"))
-              Assert.assertTrue(graph.getVertexType("Test").getClusterSelection() instanceof OLocalClusterWrapperStrategy);
+            if (!graph.getURL().startsWith("remote:"))
+              Assert.assertTrue(graph.getClass("Test").getClusterSelection() instanceof OLocalClusterWrapperStrategy);
 
             try {
               if (useSQL) {
                 boolean update = true;
                 boolean isException = false;
-                String sql = "Update Test set prop5='" + String.valueOf(System.currentTimeMillis()) + "', updateTime='"
-                    + new Date().toString() + "' where prop2='v2-1'";
+                String sql = "Update Test set prop5='" + String.valueOf(System.currentTimeMillis()) + "', updateTime='" + new Date()
+                    .toString() + "' where prop2='v2-1'";
                 for (int k = 0; k < 10 && update; k++) {
                   try {
                     graph.command(new OCommandSQL(sql)).execute();
@@ -210,19 +207,19 @@ public class HALocalGraphTest extends AbstractServerClusterTxTest {
                     update = false;
                     break;
                   } catch (ONeedRetryException ex) {
-                    if (ex instanceof OConcurrentModificationException
-                        || ex.getCause() instanceof OConcurrentModificationException) {
+                    if (ex instanceof OConcurrentModificationException || ex
+                        .getCause() instanceof OConcurrentModificationException) {
                     } else {
                       isException = true;
-                      log("*$$$$$$$$$$$$$$ [" + id + "][" + k + "] Distributed Exception: [" + ex + "] Cause: ["
-                          + (ex.getCause() != null ? ex.getCause() : "--") + "] ");
+                      log("*$$$$$$$$$$$$$$ [" + id + "][" + k + "] Distributed Exception: [" + ex + "] Cause: [" + (
+                          ex.getCause() != null ? ex.getCause() : "--") + "] ");
                     }
                   } catch (ODistributedException ex) {
                     if (ex.getCause() instanceof OConcurrentModificationException) {
                     } else {
                       isException = true;
-                      log("*$$$$$$$$$$$$$$ [" + id + "][" + k + "] Distributed Exception: [" + ex + "] Cause: ["
-                          + (ex.getCause() != null ? ex.getCause() : "--") + "] ");
+                      log("*$$$$$$$$$$$$$$ [" + id + "][" + k + "] Distributed Exception: [" + ex + "] Cause: [" + (
+                          ex.getCause() != null ? ex.getCause() : "--") + "] ");
                     }
 
                   } catch (Exception ex) {
@@ -232,7 +229,7 @@ public class HALocalGraphTest extends AbstractServerClusterTxTest {
               } else {
                 boolean retry = true;
 
-                Iterable<Vertex> vtxs = null;
+                Iterable<OVertex> vtxs = null;
                 for (int k = 0; k < 100 && retry; k++)
                   try {
                     vtxs = graph.command(new OCommandSQL(query)).execute();
@@ -241,19 +238,20 @@ public class HALocalGraphTest extends AbstractServerClusterTxTest {
                     // RETRY
                   }
 
-                for (Vertex vtx : vtxs) {
+                for (OVertex vtx : vtxs) {
                   if (retry) {
                     retry = true;
                     boolean isException = false;
 
                     for (int k = 0; k < 100 && retry; k++) {
-                      OrientVertex vtx1 = (OrientVertex) vtx;
+                      OVertex vtx1 = vtx;
                       try {
                         vtx1.setProperty("prop5", "prop55");
                         vtx1.setProperty("updateTime", new Date().toString());
                         vtx1.setProperty("blob", new byte[1000]);
 
                         graph.commit();
+                        graph.begin();
                         if (isException) {
                           // log("********** [" + id + "][" + k + "] Update success after distributed lock Exception for vertex " +
                           // vtx1);
@@ -274,8 +272,8 @@ public class HALocalGraphTest extends AbstractServerClusterTxTest {
                           if (ex.getCause() instanceof ConcurrentModificationException) {
                             ex.printStackTrace();
                           }
-                          log("*$$$$$$$$$$$$$$ [" + id + "][" + k + "] Distributed Exception: [" + ex + "] Cause: ["
-                              + (ex.getCause() != null ? ex.getCause() : "--") + "] for vertex " + vtx1);
+                          log("*$$$$$$$$$$$$$$ [" + id + "][" + k + "] Distributed Exception: [" + ex + "] Cause: [" + (
+                              ex.getCause() != null ? ex.getCause() : "--") + "] for vertex " + vtx1);
                         }
                         // log("*** [" + id + "][" + k + "] Distributed Exception: [" + ex + "] Cause: [" + (ex.getCause() != null ?
                         // ex.getCause() : "--") + "] for vertex " + vtx1);
@@ -288,8 +286,8 @@ public class HALocalGraphTest extends AbstractServerClusterTxTest {
                           if (ex.getCause() instanceof ConcurrentModificationException) {
                             ex.printStackTrace();
                           }
-                          log("*$$$$$$$$$$$$$$ [" + id + "][" + k + "] Distributed Exception: [" + ex + "] Cause: ["
-                              + (ex.getCause() != null ? ex.getCause() : "--") + "] for vertex " + vtx1);
+                          log("*$$$$$$$$$$$$$$ [" + id + "][" + k + "] Distributed Exception: [" + ex + "] Cause: [" + (
+                              ex.getCause() != null ? ex.getCause() : "--") + "] for vertex " + vtx1);
                         }
                         // log("*** [" + id + "][" + k + "] Distributed Exception: [" + ex + "] Cause: [" + (ex.getCause() != null ?
                         // ex.getCause() : "--") + "] for vertex " + vtx1);
@@ -307,7 +305,7 @@ public class HALocalGraphTest extends AbstractServerClusterTxTest {
               }
 
             } finally {
-              graph.shutdown();
+              graph.close();
             }
 
             operations.incrementAndGet();
@@ -323,20 +321,23 @@ public class HALocalGraphTest extends AbstractServerClusterTxTest {
     return th;
   }
 
-  private OrientGraphFactory getGraphFactory() {
+  private ODatabasePool getGraphFactory() {
     if (graphReadFactory == null) {
+      String dbUrl = getDatabaseURL(serverInstance.get(0));
       log("Datastore pool created with size : 10, db location: " + getDatabaseURL(serverInstance.get(0)));
-      graphReadFactory = new OrientGraphFactory(getDatabaseURL(serverInstance.get(0)));
-      graphReadFactory.setupPool(10, 10);
+      graphReadFactory = OrientDB
+          .fromUrl(dbUrl.substring(0, dbUrl.length() - (getDatabaseName().length() + 1)), OrientDBConfig.defaultConfig())
+          .openPool(getDatabaseName(), "admin", "admin");
+
     }
     return graphReadFactory;
   }
 
-  private void createVertexType(OrientBaseGraph orientGraph, String className) {
-    OClass clazz = orientGraph.getVertexType(className);
+  private void createVertexType(ODatabaseDocument orientGraph, String className) {
+    OClass clazz = orientGraph.getClass(className);
     if (clazz == null) {
       log("Creating vertex type - " + className);
-      orientGraph.createVertexType(className);
+      orientGraph.createVertexClass(className);
     }
   }
 
@@ -348,29 +349,38 @@ public class HALocalGraphTest extends AbstractServerClusterTxTest {
   }
 
   private void createSchemaAndFirstVertices() {
-    OrientBaseGraph orientGraph = new OrientGraphNoTx(getDatabaseURL(serverInstance.get(0)));
+    ODatabaseDocumentTx orientGraph = new ODatabaseDocumentTx(getDatabaseURL(serverInstance.get(0)));
+    if (orientGraph.exists()) {
+      orientGraph.open("admin", "admin");
+    } else {
+      orientGraph.create();
+    }
     createVertexType(orientGraph, "Test");
     createVertexType(orientGraph, "Test1");
-    orientGraph.shutdown();
+    orientGraph.close();
 
-    OrientBaseGraph graph = getGraphFactory().getTx();
+    ODatabaseDocument graph = getGraphFactory().acquire();
 
     for (int i = 1; i <= 1; i++) {
-      Vertex vertex = graph.addVertex("class:Test");
+      OVertex vertex = graph.newVertex("Test");
       vertex.setProperty("prop1", "v1-" + i);
       vertex.setProperty("prop2", "v2-1");
       vertex.setProperty("prop3", "v3-1");
+      vertex.save();
       graph.commit();
+      graph.begin();
       if ((i % 100) == 0) {
         log("Created " + i + " nodes");
       }
     }
     for (int i = 1; i <= 200; i++) {
-      Vertex vertex = graph.addVertex("class:Test1");
+      OVertex vertex = graph.newVertex("class:Test1");
       vertex.setProperty("prop1", "v1-" + i);
       vertex.setProperty("prop2", "v2-1");
       vertex.setProperty("prop3", "v3-1");
+      vertex.save();
       graph.commit();
+      graph.begin();
       if ((i % 10) == 0) {
         System.out.print("." + i + ".");
       }
@@ -378,6 +388,6 @@ public class HALocalGraphTest extends AbstractServerClusterTxTest {
         System.out.println();
       }
     }
-    graph.shutdown();
+    graph.close();
   }
 }

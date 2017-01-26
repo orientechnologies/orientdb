@@ -1,10 +1,11 @@
 package com.orientechnologies.orient.server.distributed.asynch;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.record.OVertex;
 import org.junit.Assert;
 
 import java.util.concurrent.CountDownLatch;
@@ -23,10 +24,18 @@ public class TestAsyncReplMode2Servers2OpsCommitConcurrent extends BareBoneBase2
   protected void dbClient1() {
     // OGlobalConfiguration.LOG_CONSOLE_LEVEL.setValue("FINEST");
 
-    OrientBaseGraph graph = new OrientGraph(getLocalURL());
-    OrientVertex vertex1 = graph.addVertex("vertextype", (String) null);
+    ODatabaseDocumentTx graph = new ODatabaseDocumentTx(getLocalURL());
+    if(graph.exists()){
+      graph.open("admin", "admin");
+    }else{
+      graph.create();
+    }
+    OSchema schema = graph.getMetadata().getSchema();
+    schema.createClass("vertextype", schema.getClass("V"));
+    OVertex vertex1 = graph.newVertex("vertextype");
+    vertex1.save();
     graph.commit();
-    graph.shutdown();
+    graph.close();
 
     vertex1Id = vertex1.getIdentity();
 
@@ -46,9 +55,10 @@ public class TestAsyncReplMode2Servers2OpsCommitConcurrent extends BareBoneBase2
       e.printStackTrace();
     }
 
-    OrientBaseGraph graph = new OrientGraph(getLocalURL());
+    ODatabaseDocumentTx graph = new ODatabaseDocumentTx(getLocalURL());
+    graph.open("admin", "admin");
 
-    OrientVertex vertex1 = graph.getVertex(vertex1Id);
+    OVertex vertex1 = ((OElement)graph.getRecord(vertex1Id)).asVertex().get();
 
     try {
       int i = 0;
@@ -56,8 +66,9 @@ public class TestAsyncReplMode2Servers2OpsCommitConcurrent extends BareBoneBase2
 
         for (int retry = 0; retry < 20; ++retry) {
           try {
-            OrientVertex vertex2 = graph.addVertex("vertextype", (String) null);
-            vertex1.addEdge("edgetype", vertex2);
+            OVertex vertex2 = graph.newVertex("vertextype");
+            vertex1.addEdge( vertex2,"edgetype");
+            vertex1.save();
             graph.commit();
 
             System.out
@@ -85,7 +96,7 @@ public class TestAsyncReplMode2Servers2OpsCommitConcurrent extends BareBoneBase2
 
     } finally {
       System.out.println("Shutting down");
-      graph.shutdown();
+      graph.close();
     }
   }
 }

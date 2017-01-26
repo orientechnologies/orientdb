@@ -1,13 +1,11 @@
 package com.orientechnologies.orient.server.distributed;
 
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import junit.framework.Assert;
-
-import org.junit.Test;
-
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import junit.framework.Assert;
+import org.junit.Test;
 
 /*
  *
@@ -63,7 +61,7 @@ public class DistributedIndexes extends AbstractServerClusterTest {
   }
 
   @Override
-  protected void onAfterDatabaseCreation(OrientBaseGraph db) {
+  protected void onAfterDatabaseCreation(ODatabaseDocument db) {
     db.command(new OCommandSQL("CREATE CLASS Person extends V")).execute();
     db.command(new OCommandSQL("CREATE PROPERTY Person.name STRING")).execute();
     db.command(new OCommandSQL("CREATE INDEX Person.name NOTUNIQUE METADATA { ignoreNullValues: false }")).execute();

@@ -20,15 +20,14 @@
 
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.orient.core.db.ODatabasePool;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.record.OVertex;
 import junit.framework.Assert;
-
 import org.junit.Test;
-
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 
 /**
  * Start 3 servers with only "europe" as master and the others as REPLICA
@@ -50,51 +49,59 @@ public class ReplicaServerTest extends AbstractServerClusterTest {
   @Override
   protected void executeTest() throws Exception {
     for (int s = 0; s < SERVERS; ++s) {
-      OrientGraphFactory factory = new OrientGraphFactory("plocal:target/server" + s + "/databases/" + getDatabaseName());
-      OrientGraphNoTx g = factory.getNoTx();
+      ODatabasePool factory = OrientDB.fromUrl("embedded:target/server" + s + "/databases/", OrientDBConfig.defaultConfig())
+          .openPool(getDatabaseName(), "admin", "admin");
+      ODatabaseDocument g = factory.acquire();
 
       try {
         System.out.println("Creating vertex class Client" + s + " against server " + g + "...");
-        OrientVertexType t = g.createVertexType("Client" + s);
+        OClass t = g.createVertexClass("Client" + s);
 
         System.out.println("Creating vertex class Knows" + s + " against server " + g + "...");
-        g.createEdgeType("Knows" + s);
+        g.createEdgeClass("Knows" + s);
 
         Assert.assertTrue(s == 0);
 
       } catch (Exception e) {
         Assert.assertTrue(s > 0);
       } finally {
-        g.shutdown();
+        g.close();
       }
     }
 
     for (int s = 0; s < SERVERS; ++s) {
       System.out.println("Add vertices on server " + s + "...");
 
-      OrientGraphFactory factory = new OrientGraphFactory("plocal:target/server" + s + "/databases/" + getDatabaseName());
-      OrientGraphNoTx g = factory.getNoTx();
+      ODatabasePool factory = OrientDB.fromUrl("embedded:target/server" + s + "/databases/", OrientDBConfig.defaultConfig())
+          .openPool(getDatabaseName(), "admin", "admin");
+
+      ODatabaseDocument g = factory.acquire();
 
       try {
-        final OrientVertex v = g.addVertex("class:" + "Client" + s);
+        final OVertex v = g.newVertex("Client" + s);
 
         Assert.assertTrue(s == 0);
 
       } catch (Exception e) {
         Assert.assertTrue(s > 0);
       } finally {
-        g.shutdown();
+        g.close();
       }
     }
 
     for (int s = 0; s < SERVERS; ++s) {
       System.out.println("Add vertices in TX on server " + s + "...");
 
-      OrientGraphFactory factory = new OrientGraphFactory("plocal:target/server" + s + "/databases/" + getDatabaseName());
-      OrientGraph g = factory.getTx();
+
+      ODatabasePool factory = OrientDB.fromUrl("embedded:target/server" + s + "/databases/", OrientDBConfig.defaultConfig())
+          .openPool(getDatabaseName(), "admin", "admin");
+
+      ODatabaseDocument g = factory.acquire();
+      g.begin();
 
       try {
-        final OrientVertex v = g.addVertex("class:" + "Client" + s);
+        final OVertex v = g.newVertex("Client" + s).save();
+
         g.commit();
         Assert.assertTrue(s == 0);
 
@@ -102,7 +109,7 @@ public class ReplicaServerTest extends AbstractServerClusterTest {
         Assert.assertTrue(s > 0);
 
       } finally {
-        g.shutdown();
+        g.close();
       }
     }
   }

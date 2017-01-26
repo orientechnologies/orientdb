@@ -17,18 +17,18 @@
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ServerRun;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
-import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -78,12 +78,21 @@ public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenario
 
     manager1.updateCachedDatabaseConfiguration(this.getDatabaseName(), cfg, true, true);
 
-    OrientGraphFactory localFactory = new OrientGraphFactory("plocal:target/server0/databases/" + getDatabaseName());
-    OrientGraphNoTx graphNoTx = null;
+//    OrientGraphFactory localFactory = new OrientGraphFactory(
+    ODatabaseDocumentTx graphNoTx = null;
     try {
-      graphNoTx = localFactory.getNoTx();
+      graphNoTx = new ODatabaseDocumentTx("plocal:target/server0/databases/" + getDatabaseName());
+      if(graphNoTx.exists()){
+        graphNoTx.open("admin", "admin");
+      }else{
+        graphNoTx.create();
+      }
 
-      final OrientVertexType clientType = graphNoTx.createVertexType("Client", 1);
+      graphNoTx.command(" create class Client clusters 1");
+      OSchema schema = graphNoTx.getMetadata().getSchema();
+      schema.reload();
+
+      OClass clientType =schema.getClass("Client");
 
       ODistributedConfiguration dCfg = new ODistributedConfiguration(cfg);
       for (int i = 0; i < serverInstance.size(); ++i) {
@@ -94,14 +103,14 @@ public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenario
       }
       manager1.updateCachedDatabaseConfiguration(this.getDatabaseName(), dCfg.getDocument(), true, true);
 
-      final OrientVertexType.OrientVertexProperty prop = clientType.createProperty("name", OType.STRING);
+      final OProperty prop = clientType.createProperty("name", OType.STRING);
       prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
 
-      assertTrue(graphNoTx.getRawGraph().getMetadata().getIndexManager().existsIndex("Client.name"));
+      assertTrue(graphNoTx.getMetadata().getIndexManager().existsIndex("Client.name"));
 
       Thread.sleep(500);
 
-      graphNoTx.getRawGraph().close();
+      graphNoTx.close();
 
       // writes on the three clusters
       executeMultipleWritesOnShards(executeTestsOnServers, "plocal");
@@ -124,17 +133,22 @@ public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenario
       // this query doesn't return any result
       try {
         System.out.print("Checking that records on server3 are not available in the cluster...");
-        graphNoTx = localFactory.getNoTx();
-        ODatabaseRecordThreadLocal.INSTANCE.set(graphNoTx.getRawGraph());
+        graphNoTx = new ODatabaseDocumentTx("plocal:target/server0/databases/" + getDatabaseName());
+        graphNoTx.open("admin", "admin");
+
+
+        ODatabaseRecordThreadLocal.INSTANCE.set(graphNoTx);
         final String uniqueId = "client_asia-s2-t10-v0";
-        Iterable<Vertex> it = graphNoTx.command(new OCommandSQL("select from Client where name = '" + uniqueId + "'")).execute();
-        List<OrientVertex> result = new LinkedList<OrientVertex>();
-        for (Vertex v : it) {
-          result.add((OrientVertex) v);
+        Iterable<OElement> it = graphNoTx.command(new OCommandSQL("select from Client where name = '" + uniqueId + "'")).execute();
+        List<OVertex> result = new LinkedList<OVertex>();
+        for (OElement v : it) {
+          if(v.isVertex()) {
+            result.add(v.asVertex().get());
+          }
         }
         assertEquals(0, result.size());
         System.out.println("Done");
-        graphNoTx.getRawGraph().close();
+        graphNoTx.close();
         ODatabaseRecordThreadLocal.INSTANCE.set(null);
       } catch (Exception e) {
         e.printStackTrace();
@@ -152,17 +166,26 @@ public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenario
       // checking server3 status by querying a record inserted on it
       try {
         System.out.print("Checking server3 status by querying a record inserted on it...");
-        localFactory = new OrientGraphFactory("plocal:target/server2/databases/" + getDatabaseName());
-        graphNoTx = localFactory.getNoTx();
-        ODatabaseRecordThreadLocal.INSTANCE.set(graphNoTx.getRawGraph());
+
+        graphNoTx = new ODatabaseDocumentTx("plocal:target/server2/databases/" + getDatabaseName());
+        if(graphNoTx.exists()){
+          graphNoTx.open("admin", "admin");
+        }else{
+          graphNoTx.create();
+        }
+
+
+        ODatabaseRecordThreadLocal.INSTANCE.set(graphNoTx);
         final String uniqueId = "client_asia-s2-t10-v0";
-        Iterable<Vertex> it = graphNoTx.command(new OCommandSQL("select from Client where name = '" + uniqueId + "'")).execute();
-        List<OrientVertex> result = new LinkedList<OrientVertex>();
-        for (Vertex v : it) {
-          result.add((OrientVertex) v);
+        Iterable<OElement> it = graphNoTx.command(new OCommandSQL("select from Client where name = '" + uniqueId + "'")).execute();
+        List<OVertex> result = new LinkedList<OVertex>();
+        for (OElement v : it) {
+          if(v.isVertex()) {
+            result.add(v.asVertex().get());
+          }
         }
         assertEquals(1, result.size());
-        graphNoTx.getRawGraph().close();
+        graphNoTx.close();
         ODatabaseRecordThreadLocal.INSTANCE.set(null);
       } catch (Exception e) {
         e.printStackTrace();
@@ -177,9 +200,9 @@ public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenario
       e.printStackTrace();
       fail(e.toString());
     } finally {
-      if (!graphNoTx.getRawGraph().isClosed()) {
-        ODatabaseRecordThreadLocal.INSTANCE.set(graphNoTx.getRawGraph());
-        graphNoTx.getRawGraph().close();
+      if (!graphNoTx.isClosed()) {
+        ODatabaseRecordThreadLocal.INSTANCE.set(graphNoTx);
+        graphNoTx.close();
         ODatabaseRecordThreadLocal.INSTANCE.set(null);
       }
 

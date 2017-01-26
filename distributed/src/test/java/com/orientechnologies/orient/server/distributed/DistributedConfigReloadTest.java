@@ -2,17 +2,16 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
+import com.orientechnologies.orient.core.db.ODatabasePool;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.Parameter;
-import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -36,16 +35,22 @@ public final class DistributedConfigReloadTest {
         if (checkAndCreateDatabase(dbName)) {
             log("Creating data for database " + dbName);
             int totalClassCount = 50;
-            OrientBaseGraph orientGraph = new OrientGraphNoTx(getDBURL());
+            ODatabaseDocumentTx orientGraph = new ODatabaseDocumentTx(getDBURL());
+            if(orientGraph.exists()){
+                orientGraph.open("admin", "admin");
+            }else{
+                orientGraph.create();
+            }
             createVertexType(orientGraph, "Test", "property1", "property2");
             for (int i = 1; i <= totalClassCount; i++) {
                 createVertexType(orientGraph, "Test"+i, "property1", "property2");
             }
-            orientGraph.shutdown();
+            orientGraph.close();
 
-            OrientBaseGraph graph = getGraphFactory().getTx();
+            ODatabaseDocument graph = getGraphFactory().acquire();
+            graph.begin();
             for (int i = 1; i <= 100; i++) {
-                Vertex vertex = graph.addVertex("class:TestNode");
+                OVertex vertex = graph.newVertex("TestNode");
                 vertex.setProperty("property1", "value1-" + i);
                 vertex.setProperty("property2", "value2-" + i);
                 vertex.setProperty("property3", "value3-" + i);
@@ -65,32 +70,30 @@ public final class DistributedConfigReloadTest {
                     log("Created " + i + " nodes");
                 }
             }
-            graph.shutdown();
+            graph.close();
             log("Done. Creating data for database " + dbName);
         }
     }
 
-    public void createVertexType(OrientBaseGraph orientGraph, String className, String property, String keyIndexProperty) {
+    public void createVertexType(ODatabaseDocument orientGraph, String className, String property, String keyIndexProperty) {
         String edgeClassName = className;
         String vertexClassName = className+"Node";
-        OClass clazz = orientGraph.getEdgeType(edgeClassName);
+        OClass clazz = orientGraph.getClass(edgeClassName);
         if (clazz == null) {
             log("Creating edge type - " + edgeClassName);
-            clazz = orientGraph.createEdgeType(edgeClassName);
+            clazz = orientGraph.createEdgeClass(edgeClassName);
             clazz.createProperty("linkKey", OType.STRING);
-            orientGraph.createKeyIndex("linkKey", Edge.class, new Parameter("class", edgeClassName), new Parameter("type", "UNIQUE"));
+            orientGraph.getClass(edgeClassName).createIndex(edgeClassName+".linkKey", INDEX_TYPE.UNIQUE, "linkKey");
         } else {
             log("Edge " +edgeClassName + " already exists");
         }
-        clazz = orientGraph.getVertexType(vertexClassName);
+        clazz = orientGraph.getClass(vertexClassName);
         if (clazz == null) {
             log("Creating vertex type - " + vertexClassName);
-            clazz = orientGraph.createVertexType(vertexClassName);
+            clazz = orientGraph.createVertexClass(vertexClassName);
             clazz.createProperty(property, OType.STRING);
             clazz.createProperty(keyIndexProperty, OType.STRING);
-            orientGraph.createKeyIndex(keyIndexProperty, Vertex.class,
-                    new Parameter("class", vertexClassName),
-                    new Parameter("type", "UNIQUE"));
+            orientGraph.getClass(vertexClassName).createIndex(vertexClassName+"."+keyIndexProperty, INDEX_TYPE.UNIQUE, keyIndexProperty);
             clazz.createIndex(vertexClassName + "_Index_" + property, INDEX_TYPE.UNIQUE, property);
         } else {
             log("Class " + vertexClassName + " already exists");
@@ -117,13 +120,13 @@ public final class DistributedConfigReloadTest {
         }
     }
 
-    private Runnable startCreateDeleteVertex(final int id, final OrientGraphFactory graphFactory, final String className) {
+    private Runnable startCreateDeleteVertex(final int id, final ODatabasePool graphFactory, final String className) {
         Runnable th = new Runnable() {
             @Override
             public void run() {
                 log("Starting runnable to create index " + className);
                 long st = System.currentTimeMillis();
-                OrientGraph graph = graphFactory.getTx();
+                ODatabaseDocument graph = graphFactory.acquire();
                 try {
                     boolean isRunning = true;
                     for (int j=0; j < 1000000; j++) {
@@ -142,7 +145,7 @@ public final class DistributedConfigReloadTest {
                                 st = System.currentTimeMillis();
                             }
 
-                            Vertex vertex = graph.addVertex("class:"+className);
+                            OVertex vertex = graph.newVertex(className);
                             try {
                                 vertex.setProperty("property1", "value1-" + i);
                                 vertex.setProperty("property2", "value2-" + (System.currentTimeMillis() + "-" + i));
@@ -187,7 +190,7 @@ public final class DistributedConfigReloadTest {
                         }
                     }
                 } finally {
-                    graph.shutdown();
+                    graph.close();
                 }
             }
         };
@@ -211,7 +214,7 @@ public final class DistributedConfigReloadTest {
         return formatter.format(new Date());
     }
 
-    private OrientGraphFactory graphReadFactory;
+    private ODatabasePool graphReadFactory;
 
     /**
      * @return
@@ -221,11 +224,10 @@ public final class DistributedConfigReloadTest {
         return "remote:" + dataBaseURL + "/" + dbName;
     }
 
-    private OrientGraphFactory getGraphFactory() {
+    private ODatabasePool getGraphFactory() {
         if (graphReadFactory == null) {
             log("Datastore pool created with size : 50, db location: " + getDBURL());
-            graphReadFactory = new OrientGraphFactory(getDBURL());
-            graphReadFactory.setupPool(1, 50);
+            graphReadFactory = OrientDB.fromUrl(getDBURL().substring(0, getDBURL().length() - (dbName.length() + 1)).replaceFirst("plocal", "embedded"), OrientDBConfig.defaultConfig()).openPool(dbName, "admin", "admin");
         }
         return graphReadFactory;
     }
@@ -240,9 +242,14 @@ public final class DistributedConfigReloadTest {
             if (!serverAdmin.existsDatabase("plocal")) {
                 log("Database does not exists. New database is created");
                 serverAdmin.createDatabase(dbName,"graph", "plocal");
-                OrientBaseGraph orientGraph = new OrientGraphNoTx(getDBURL());
+                ODatabaseDocumentTx orientGraph = new ODatabaseDocumentTx(getDBURL());
+                if(orientGraph.exists()){
+                  orientGraph.open("admin", "admin");
+                }else{
+                  orientGraph.create();
+                }
                 orientGraph.command(new OCommandSQL("ALTER DATABASE custom strictSQL=false")).execute();
-                orientGraph.shutdown();
+                orientGraph.close();
                 isNewDB = true;
             } else {
                 log(dbName + " database already exists");

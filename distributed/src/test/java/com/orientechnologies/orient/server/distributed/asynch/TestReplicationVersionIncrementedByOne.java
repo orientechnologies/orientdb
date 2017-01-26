@@ -1,10 +1,8 @@
 package com.orientechnologies.orient.server.distributed.asynch;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.record.OVertex;
 
 public class TestReplicationVersionIncrementedByOne extends BareBoneBase1ClientTest {
 
@@ -14,27 +12,39 @@ public class TestReplicationVersionIncrementedByOne extends BareBoneBase1ClientT
   }
 
   protected void dbClient1() {
-    OrientBaseGraph graph = new OrientGraph(getLocalURL());
+    ODatabaseDocumentTx graph = new ODatabaseDocumentTx(getLocalURL());
+    if(graph.exists()){
+      graph.open("admin", "admin");
+    }else{
+      graph.create();
+      graph.createClass("vertextype","V");
+      graph.createClass("edgetype","E");
+    }
+    graph.begin();
+
     try {
-      Vertex v1 = graph.addVertex("vertextype", (String) null);
+      OVertex v1 = graph.newVertex("vertextype");
       graph.commit();
-      assertEquals(1, ((OrientVertex) v1).getRecord().getVersion());
+      graph.begin();
+      assertEquals(1, v1.getVersion());
 
-      Vertex v2 = graph.addVertex("vertextype", (String) null);
+      OVertex v2 = graph.newVertex("vertextype");
       graph.commit();
-      assertEquals(1, ((OrientVertex) v2).getRecord().getVersion());
+      graph.begin();
+      assertEquals(1, v2.getVersion());
 
-      v1.addEdge("edgetype", v2);
+      v1.addEdge(v2, "edgetype");
       graph.commit();
-      assertEquals(2, ((OrientVertex) v1).getRecord().getVersion());
-      assertEquals(2, ((OrientVertex) v2).getRecord().getVersion());
+      graph.begin();
+      assertEquals(2, v1.getVersion());
+      assertEquals(2, v2.getVersion());
     } catch (Throwable e) {
       if (exceptionInThread == null) {
         exceptionInThread = e;
       }
     } finally {
       OLogManager.instance().info(this, "Shutting down");
-      graph.shutdown();
+      graph.close();
     }
   }
 

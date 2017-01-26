@@ -15,13 +15,14 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.orient.core.db.ODatabasePool;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.record.OVertex;
+import com.orientechnologies.orient.server.distributed.impl.OLocalClusterWrapperStrategy;
 import org.junit.Assert;
 import org.junit.Test;
-
-import com.orientechnologies.orient.server.distributed.impl.OLocalClusterWrapperStrategy;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 
 public class HAClusterStrategyTest extends AbstractHARemoveNode {
   final static int SERVERS = 2;
@@ -37,36 +38,43 @@ public class HAClusterStrategyTest extends AbstractHARemoveNode {
 
   @Override
   public void executeTest() throws Exception {
-    final OrientGraphFactory factory = new OrientGraphFactory(getDatabaseURL(serverInstance.get(0)));
+    String dbUrl = getDatabaseURL(serverInstance.get(0));
+    OrientDB f = OrientDB
+        .fromUrl(dbUrl.substring(0, dbUrl.length() - (getDatabaseName().length() + 1)), OrientDBConfig.defaultConfig());
+    final ODatabasePool factory = f.openPool(getDatabaseName(), "admin", "admin");
 
-    final OrientGraphNoTx g = factory.getNoTx();
-    g.createVertexType("Test");
-    g.shutdown();
+    final ODatabaseDocument g = factory.acquire();
+    g.createVertexClass("Test");
+    g.close();
 
     for (int i = 0; i < 10; ++i) {
       // pressing 'return' 2 to 10 times should trigger the described behavior
       Thread.sleep(100);
 
-      final OrientGraph graph = factory.getTx();
+      final ODatabaseDocument graph = factory.acquire();
+      graph.begin();
 
       // should always be 'local', but eventually changes to 'round-robin'
-      System.out.println("StrategyClassName: " + graph.getVertexType("Test").getClusterSelection().getClass().getName());
-      System.out.println("ClusterSelectionStrategy for " + graph.getRawGraph().getURL() + ": "
-          + graph.getVertexType("Test").getClusterSelection().getName());
+      System.out.println("StrategyClassName: " + graph.getClass("Test").getClusterSelection().getClass().getName());
+      System.out.println(
+          "ClusterSelectionStrategy for " + graph.getURL() + ": " + graph.getClass("Test").getClusterSelection().getName());
 
-      Assert.assertEquals(graph.getVertexType("Test").getClusterSelection().getClass().getName(),
+      Assert.assertEquals(graph.getClass("Test").getClusterSelection().getClass().getName(),
           OLocalClusterWrapperStrategy.class.getName());
 
-      Assert.assertEquals(graph.getVertexType("Test").getClusterSelection().getName(), "round-robin");
+      Assert.assertEquals(graph.getClass("Test").getClusterSelection().getName(), "round-robin");
 
-      graph.addVertex("class:Test", "firstName", "Roger", "lastName", "Smith");
-      graph.getRawGraph().commit();
+      OVertex v = graph.newVertex("Test");
+      v.setProperty("firstName", "Roger");
+      v.setProperty("lastName", "Smith");
+      v.save();
+      graph.commit();
 
-      graph.shutdown();
+      graph.close();
     }
 
     factory.close();
-    factory.drop();
+    f.drop(getDatabaseName(), "root", "root");
   }
 
   protected String getDatabaseURL(final ServerRun server) {

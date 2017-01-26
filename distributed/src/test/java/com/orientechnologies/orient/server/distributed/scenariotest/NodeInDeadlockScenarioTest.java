@@ -21,8 +21,6 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.ServerRun;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -149,9 +147,14 @@ public class NodeInDeadlockScenarioTest extends AbstractScenarioTest {
 
                 banner("STARTING BACKUP SERVER " + (SERVERS - 1));
 
-                OrientGraphFactory factory = new OrientGraphFactory(
+                ODatabaseDocumentTx g = new ODatabaseDocumentTx(
                     "plocal:target/server" + (SERVERS - 1) + "/databases/" + getDatabaseName());
-                OrientGraphNoTx g = factory.getNoTx();
+                if(g.exists()){
+                  g.open("admin", "admin");
+                }else{
+                  g.create();
+                }
+
 
                 backupInProgress = true;
                 File file = null;
@@ -160,7 +163,7 @@ public class NodeInDeadlockScenarioTest extends AbstractScenarioTest {
                   if (file.exists())
                     Assert.assertTrue(file.delete());
 
-                  g.getRawGraph().backup(new FileOutputStream(file), null, new Callable<Object>() {
+                  g.backup(new FileOutputStream(file), null, new Callable<Object>() {
                     @Override
                     public Object call() throws Exception {
 
@@ -176,7 +179,7 @@ public class NodeInDeadlockScenarioTest extends AbstractScenarioTest {
                   banner("COMPLETED BACKUP SERVER " + (SERVERS - 1));
                   backupInProgress = false;
 
-                  g.shutdown();
+                  g.close();
 
                   if (file != null)
                     file.delete();

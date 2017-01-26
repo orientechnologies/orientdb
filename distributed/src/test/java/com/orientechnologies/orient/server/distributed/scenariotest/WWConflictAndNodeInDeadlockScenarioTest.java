@@ -22,8 +22,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ServerRun;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -268,8 +266,12 @@ public class WWConflictAndNodeInDeadlockScenarioTest extends AbstractScenarioTes
 
                     banner("STARTING BACKUP SERVER " + (2));
 
-                    OrientGraphFactory factory = new OrientGraphFactory("plocal:target/server2/databases/" + getDatabaseName());
-                    OrientGraphNoTx g = factory.getNoTx();
+                    ODatabaseDocumentTx g = new ODatabaseDocumentTx("plocal:target/server2/databases/" + getDatabaseName());
+                    if(g.exists()){
+                      g.open("admin", "admin");
+                    }else{
+                      g.create();
+                    }
 
                     backupInProgress = true;
                     File file = null;
@@ -278,7 +280,7 @@ public class WWConflictAndNodeInDeadlockScenarioTest extends AbstractScenarioTes
                       if (file.exists())
                         Assert.assertTrue(file.delete());
 
-                      g.getRawGraph().backup(new FileOutputStream(file), null, new Callable<Object>() {
+                      g.backup(new FileOutputStream(file), null, new Callable<Object>() {
                         @Override
                         public Object call() throws Exception {
 
@@ -297,7 +299,7 @@ public class WWConflictAndNodeInDeadlockScenarioTest extends AbstractScenarioTes
                       banner("COMPLETED BACKUP SERVER " + (2));
                       backupInProgress = false;
 
-                      g.shutdown();
+                      g.close();
 
                       if (file != null)
                         file.delete();

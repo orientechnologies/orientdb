@@ -2,11 +2,10 @@ package com.orientechnologies.orient.server.distributed.asynch;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 
 import java.io.File;
 
@@ -16,21 +15,22 @@ public class BareBonesServer {
 
   public void createDB(String orientUrl) {
     OLogManager.instance().info(this, "creating the database:" + orientUrl);
-    OrientGraphFactory factory = new OrientGraphFactory(orientUrl);
-    OrientBaseGraph graph = factory.getTx();
-    graph.executeOutsideTx(new OCallable<Object, OrientBaseGraph>() {
-      @Override
-      public Object call(OrientBaseGraph g) {
-        if (g.getEdgeType("edgetype") == null)
-          g.createEdgeType("edgetype");
-        if (g.getVertexType("vertextype") == null)
-          g.createVertexType("vertextype");
-        return null;
-      }
-    });
+    ODatabaseDocumentTx graph = new ODatabaseDocumentTx(orientUrl);
+    if(!graph.exists()){
+      graph.create();
+    }else {
+      graph.open("admin", "admin");
+    }
 
-    graph.shutdown();
-    factory.close();
+    OSchema schema = graph.getMetadata().getSchema();
+    if(!schema.existsClass("edgetype")){
+      schema.createClass("edgetype", schema.getClass("E"));
+    }
+    if(!schema.existsClass("vertextype")){
+      schema.createClass("vertextype", schema.getClass("V"));
+    }
+
+    graph.close();
   }
 
   public void start(String configFileDir, String configFileName) {

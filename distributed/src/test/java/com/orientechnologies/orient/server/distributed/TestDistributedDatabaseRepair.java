@@ -16,15 +16,18 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.db.ODatabasePool;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordVersionHelper;
+import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -32,13 +35,13 @@ import java.util.Set;
 
 /**
  * Checks the distributed database repair feature is working.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class TestDistributedDatabaseRepair extends AbstractServerClusterTest {
 
   protected final static int SERVERS = 3;
-  protected OrientVertex[]   vertices;
+  protected OVertex[] vertices;
 
   @Test
   public void test() throws Exception {
@@ -67,18 +70,24 @@ public class TestDistributedDatabaseRepair extends AbstractServerClusterTest {
   }
 
   @Override
-  protected void onAfterDatabaseCreation(OrientBaseGraph graphNoTx) {
+  protected void onAfterDatabaseCreation(ODatabaseDocument graphNoTx) {
   }
 
   @Override
   protected void executeTest() throws Exception {
-    final OrientGraphFactory localFactory0 = new OrientGraphFactory("plocal:target/server0/databases/" + getDatabaseName(), false);
-    final OrientGraphFactory localFactory1 = new OrientGraphFactory("plocal:target/server1/databases/" + getDatabaseName(), false);
-    final OrientGraphFactory localFactory2 = new OrientGraphFactory("plocal:target/server2/databases/" + getDatabaseName(), false);
+    final ODatabasePool localFactory0 = OrientDB.fromUrl("embedded:target/server0/databases/", OrientDBConfig.defaultConfig())
+        .openPool(getDatabaseName(), "admin", "admin");
+
+    final ODatabasePool localFactory1 = OrientDB.fromUrl("embedded:target/server1/databases/", OrientDBConfig.defaultConfig())
+        .openPool(getDatabaseName(), "admin", "admin");
+
+    final ODatabasePool localFactory2 = OrientDB.fromUrl("embedded:target/server2/databases/", OrientDBConfig.defaultConfig())
+        .openPool(getDatabaseName(), "admin", "admin");
+
     try {
-      final OrientGraphNoTx graph = localFactory0.getNoTx();
-      graph.createVertexType("ProductType");
-      graph.shutdown();
+      final ODatabaseDocument graph = localFactory0.acquire();
+      graph.createVertexClass("ProductType");
+      graph.close();
 
       testNoWinner(localFactory0, localFactory1, localFactory2);
       testWinnerIsMajority(localFactory0, localFactory1, localFactory2);
@@ -92,41 +101,42 @@ public class TestDistributedDatabaseRepair extends AbstractServerClusterTest {
     }
   }
 
-  private void testNoWinner(OrientGraphFactory localFactory0, OrientGraphFactory localFactory1, OrientGraphFactory localFactory2)
+  private void testNoWinner(ODatabasePool localFactory0, ODatabasePool localFactory1, ODatabasePool localFactory2)
       throws Exception {
-    OrientBaseGraph graph = localFactory0.getTx();
+    ODatabaseDocument graph = localFactory0.acquire();
 
-    OrientVertex product;
+    OVertex product;
     try {
-      product = graph.addVertex("class:ProductType");
+      product = graph.newVertex("ProductType");
       product.setProperty("status", "ok");
+      product.save();
     } finally {
-      graph.shutdown();
+      graph.close();
     }
 
     banner("CORRUPT A RECORD IN SERVER 0");
-    graph = localFactory0.getNoTx();
+    graph = localFactory0.acquire();
     try {
-      final OrientVertex product2 = graph.getVertex(product.getIdentity());
-      product2.getRecord().field("status", "corrupted0");
+      final OElement product2 = graph.load(product.getIdentity());
+      product2.setProperty("status", "corrupted0");
       final ODistributedResponse result = updateRemoteRecord(0, product2.getRecord(),
           new String[] { serverInstance.get(0).getServerInstance().getDistributedManager().getLocalNodeName() });
 
       Assert.assertFalse(result.getPayload() instanceof Throwable);
     } finally {
-      graph.shutdown();
+      graph.close();
     }
 
     banner("CORRUPT A RECORD IN SERVER 1");
-    graph = localFactory1.getNoTx();
+    graph = localFactory1.acquire();
     try {
-      final OrientVertex product2 = graph.getVertex(product.getIdentity());
-      product2.getRecord().field("status", "corrupted1");
+      final OElement product2 = graph.load(product.getIdentity());
+      product2.setProperty("status", "corrupted1");
       ODistributedResponse result = updateRemoteRecord(1, product2.getRecord(),
           new String[] { serverInstance.get(1).getServerInstance().getDistributedManager().getLocalNodeName() });
       Assert.assertFalse(result.getPayload() instanceof Throwable);
     } finally {
-      graph.shutdown();
+      graph.close();
     }
 
     serverInstance.get(0).getServerInstance().getDistributedManager().getMessageService().getDatabase(getDatabaseName())
@@ -135,54 +145,58 @@ public class TestDistributedDatabaseRepair extends AbstractServerClusterTest {
     Thread.sleep(3000);
 
     // TEST NOTHING IS CHANGED
-    graph = localFactory0.getNoTx();
+    graph = localFactory0.acquire();
     try {
-      final OrientVertex product2 = graph.getVertex(product.getIdentity());
+      final OElement product2 = graph.load(product.getIdentity());
       Assert.assertEquals("corrupted0", product2.getProperty("status"));
     } finally {
-      graph.shutdown();
+      graph.close();
     }
 
-    graph = localFactory1.getNoTx();
+    graph = localFactory1.acquire();
     try {
-      final OrientVertex product2 = graph.getVertex(product.getIdentity());
+      final OElement product2 = graph.load(product.getIdentity());
       Assert.assertEquals("corrupted1", product2.getProperty("status"));
     } finally {
-      graph.shutdown();
+      graph.close();
     }
 
-    graph = localFactory2.getNoTx();
+    graph = localFactory2.acquire();
     try {
-      final OrientVertex product2 = graph.getVertex(product.getIdentity());
+      final OElement product2 = graph.load(product.getIdentity());
       Assert.assertEquals("ok", product2.getProperty("status"));
     } finally {
-      graph.shutdown();
+      graph.close();
     }
   }
 
-  private void testWinnerIsMajority(OrientGraphFactory localFactory0, OrientGraphFactory localFactory1,
-      OrientGraphFactory localFactory2) throws Exception {
-    OrientBaseGraph graph = localFactory0.getTx();
+  private void testWinnerIsMajority(ODatabasePool localFactory0, ODatabasePool localFactory1, ODatabasePool localFactory2)
+      throws Exception {
+    ODatabaseDocument graph = localFactory0.acquire();
+    graph.begin();
 
-    OrientVertex product;
+    OVertex product;
     try {
-      product = graph.addVertex("class:ProductType");
+      product = graph.newVertex("ProductType");
       product.setProperty("status", "ok");
+      product.save();
+      graph.commit();
     } finally {
-      graph.shutdown();
+      graph.close();
     }
 
     banner("CORRUPT ONLY 1 RECORD IN SERVER 0");
-    graph = localFactory0.getNoTx();
+    graph = localFactory0.acquire();
     try {
-      final OrientVertex product2 = graph.getVertex(product.getIdentity());
-      product2.getRecord().field("status", "corrupted0");
+      final OElement product2 = graph.load(product.getIdentity());
+      product2.setProperty("status", "corrupted0");
+      product2.save();
       final ODistributedResponse result = updateRemoteRecord(0, product2.getRecord(),
           new String[] { serverInstance.get(0).getServerInstance().getDistributedManager().getLocalNodeName() });
 
       Assert.assertFalse(result.getPayload() instanceof Throwable);
     } finally {
-      graph.shutdown();
+      graph.close();
     }
 
     serverInstance.get(0).getServerInstance().getDistributedManager().getMessageService().getDatabase(getDatabaseName())
@@ -193,67 +207,72 @@ public class TestDistributedDatabaseRepair extends AbstractServerClusterTest {
     banner("EXPECTING AUTO RECOVER ON ALL NODES...");
 
     // TEST RECORD IS CHANGED
-    graph = localFactory0.getNoTx();
+    graph = localFactory0.acquire();
     try {
-      final OrientVertex product2 = graph.getVertex(product.getIdentity());
+      final OElement product2 = graph.load(product.getIdentity());
       Assert.assertEquals("ok", product2.getProperty("status"));
     } finally {
-      graph.shutdown();
+      graph.close();
     }
 
-    graph = localFactory1.getNoTx();
+    graph = localFactory1.acquire();
     try {
-      final OrientVertex product2 = graph.getVertex(product.getIdentity());
+      final OElement product2 = graph.load(product.getIdentity());
       Assert.assertEquals("ok", product2.getProperty("status"));
     } finally {
-      graph.shutdown();
+      graph.close();
     }
 
-    graph = localFactory2.getNoTx();
+    graph = localFactory2.acquire();
     try {
-      final OrientVertex product2 = graph.getVertex(product.getIdentity());
+      final OElement product2 = graph.load(product.getIdentity());
       Assert.assertEquals("ok", product2.getProperty("status"));
     } finally {
-      graph.shutdown();
+      graph.close();
     }
   }
 
-  private void testWinnerIsMajorityPlusVersion(OrientGraphFactory localFactory0, OrientGraphFactory localFactory1,
-      OrientGraphFactory localFactory2) throws Exception {
-    OrientBaseGraph graph = localFactory0.getTx();
+  private void testWinnerIsMajorityPlusVersion(ODatabasePool localFactory0, ODatabasePool localFactory1,
+      ODatabasePool localFactory2) throws Exception {
+    ODatabaseDocument graph = localFactory0.acquire();
+    graph.begin();
 
-    OrientVertex product;
+    OVertex product;
     try {
-      product = graph.addVertex("class:ProductType");
+      product = graph.newVertex("ProductType");
       product.setProperty("status", "ok");
+      product.save();
+      graph.commit();
     } finally {
-      graph.shutdown();
+      graph.close();
     }
 
     banner("CORRUPT A RECORD IN SERVER 0");
-    graph = localFactory0.getNoTx();
+    graph = localFactory0.acquire();
     try {
-      final OrientVertex product2 = graph.getVertex(product.getIdentity());
-      product2.getRecord().field("status", "corrupted0");
+      final OElement product2 = graph.load(product.getIdentity());
+      product2.setProperty("status", "corrupted0");
+      product2.save();
       final ODistributedResponse result = updateRemoteRecord(0, product2.getRecord(),
           new String[] { serverInstance.get(0).getServerInstance().getDistributedManager().getLocalNodeName() });
 
       Assert.assertFalse(result.getPayload() instanceof Throwable);
     } finally {
-      graph.shutdown();
+      graph.close();
     }
 
     banner("CORRUPT A RECORD IN SERVER 1 WITH THE HIGHEST VERSION (=WINNER)");
-    graph = localFactory1.getNoTx();
+    graph = localFactory1.acquire();
     try {
-      final OrientVertex product2 = graph.getVertex(product.getIdentity());
-      product2.getRecord().field("status", "thisIsTheMostRecent");
+      final OElement product2 = graph.load(product.getIdentity());
+      product2.setProperty("status", "thisIsTheMostRecent");
+      product2.save();
       ORecordInternal.setVersion(product2.getRecord(), ORecordVersionHelper.setRollbackMode(1000));
       ODistributedResponse result = updateRemoteRecord(1, product2.getRecord(),
           new String[] { serverInstance.get(1).getServerInstance().getDistributedManager().getLocalNodeName() });
       Assert.assertFalse(result.getPayload() instanceof Throwable);
     } finally {
-      graph.shutdown();
+      graph.close();
     }
 
     serverInstance.get(0).getServerInstance().getDistributedManager().getMessageService().getDatabase(getDatabaseName())
@@ -264,45 +283,45 @@ public class TestDistributedDatabaseRepair extends AbstractServerClusterTest {
     banner("EXPECTING AUTO RECOVER ON ALL NODES...");
 
     // TEST RECOVER IS CHANGED
-    graph = localFactory0.getNoTx();
+    graph = localFactory0.acquire();
     try {
-      final OrientVertex product2 = graph.getVertex(product.getIdentity());
+      final OElement product2 = graph.load(product.getIdentity());
       Assert.assertEquals("thisIsTheMostRecent", product2.getProperty("status"));
       Assert.assertEquals(1000, product2.getRecord().getVersion());
     } finally {
-      graph.shutdown();
+      graph.close();
     }
 
-    graph = localFactory1.getNoTx();
+    graph = localFactory1.acquire();
     try {
-      final OrientVertex product2 = graph.getVertex(product.getIdentity());
+      final OElement product2 = graph.load(product.getIdentity());
       Assert.assertEquals("thisIsTheMostRecent", product2.getProperty("status"));
       Assert.assertEquals(1000, product2.getRecord().getVersion());
     } finally {
-      graph.shutdown();
+      graph.close();
     }
 
-    graph = localFactory2.getNoTx();
+    graph = localFactory2.acquire();
     try {
-      final OrientVertex product2 = graph.getVertex(product.getIdentity());
+      final OElement product2 = graph.load(product.getIdentity());
       Assert.assertEquals("thisIsTheMostRecent", product2.getProperty("status"));
       Assert.assertEquals(1000, product2.getRecord().getVersion());
     } finally {
-      graph.shutdown();
+      graph.close();
     }
   }
 
   /**
    * Breaks a cluster by creating new records only on certain servers
    */
-  private void testRepairClusters(OrientGraphFactory localFactory0, OrientGraphFactory localFactory1,
-      OrientGraphFactory localFactory2) throws Exception {
+  private void testRepairClusters(ODatabasePool localFactory0, ODatabasePool localFactory1,
+      ODatabasePool localFactory2) throws Exception {
 
     Thread.sleep(2000);
 
-    OrientBaseGraph graph = localFactory0.getNoTx();
-    graph.createVertexType("Employee");
-    graph.shutdown();
+    ODatabaseDocument graph = localFactory0.acquire();
+    graph.createVertexClass("Employee");
+    graph.close();
 
     final ODistributedConfiguration cfg = serverInstance.get(1).getServerInstance().getDistributedManager()
         .getDatabaseConfiguration(getDatabaseName());
@@ -318,25 +337,31 @@ public class TestDistributedDatabaseRepair extends AbstractServerClusterTest {
       }
     }
 
-    graph = localFactory1.getTx();
+    graph = localFactory1.acquire();
+    graph.begin();
 
-    OrientVertex employee;
+    OVertex employee;
     try {
-      employee = graph.addVertex("Employee", localCluster);
+      employee = graph.newVertex("Employee");
       employee.setProperty("status", "ok");
+      employee.save(localCluster);
+      graph.commit();
     } finally {
-      graph.shutdown();
+      graph.close();
     }
 
     banner("CREATE 10 RECORDS ONLY ON local (1) SERVER and 0");
-    graph = localFactory1.getTx();
+    graph = localFactory1.acquire();
+    graph.begin();
     try {
       for (int i = 0; i < 10; ++i) {
-        OrientVertex v = graph.addVertex("Employee", localCluster);
+        OVertex v = graph.newVertex("Employee");
         v.setProperty("status", "onlyServer0and1");
-
-        graph.getRawGraph().getStorage().getUnderlying().createRecord((ORecordId) v.getRecord().getIdentity(),
-            v.getRecord().toStream(), v.getRecord().getVersion(), ODocument.RECORD_TYPE, 0, null);
+        v.save(localCluster);
+        v.save();
+        ((ODatabaseInternal)graph).getStorage().getUnderlying()
+            .createRecord((ORecordId) v.getRecord().getIdentity(), v.getRecord().toStream(), v.getRecord().getVersion(),
+                ODocument.RECORD_TYPE, 0, null);
 
         final ODistributedResponse result = createRemoteRecord(0, v.getRecord(),
             new String[] { serverInstance.get(0).getServerInstance().getDistributedManager().getLocalNodeName() });
@@ -347,53 +372,58 @@ public class TestDistributedDatabaseRepair extends AbstractServerClusterTest {
     }
 
     banner("CREATE 10 RECORDS ONLY ON SERVER 0");
-    graph = localFactory1.getTx();
+    graph = localFactory1.acquire();
+    graph.begin();
     try {
       for (int i = 0; i < 10; ++i) {
-        OrientVertex v = graph.addVertex("Employee", localCluster);
+        OVertex v = graph.newVertex("Employee");
         v.setProperty("status", "onlyServer0and1");
-        graph.getRawGraph().getStorage().getUnderlying().createRecord((ORecordId) v.getRecord().getIdentity(),
-            v.getRecord().toStream(), v.getRecord().getVersion(), ODocument.RECORD_TYPE, 0, null);
+        v.save(localCluster);
+        ((ODatabaseInternal)graph).getStorage().getUnderlying()
+            .createRecord((ORecordId) v.getRecord().getIdentity(), v.getRecord().toStream(), v.getRecord().getVersion(),
+                ODocument.RECORD_TYPE, 0, null);
       }
     } finally {
       graph.rollback();
     }
 
     // TRY TO CREATE A RECORD TO START THE REPAIR
-    graph = localFactory1.getTx();
+    graph = localFactory1.acquire();
+    graph.begin();
     try {
-      OrientVertex v = graph.addVertex("Employee", localCluster);
+      OVertex v = graph.newVertex("Employee");
       v.setProperty("status", "check");
+      v.save(localCluster);
       graph.commit();
     } catch (ODistributedOperationException e) {
       Assert.assertTrue(true);
     } finally {
-      graph.shutdown();
+      graph.close();
     }
 
     Thread.sleep(5000);
 
     banner("CHECK RECORDS...");
 
-    graph = localFactory0.getNoTx();
+    graph = localFactory0.acquire();
     try {
-      Assert.assertEquals(21, graph.countVertices("Employee"));
+      Assert.assertEquals(21, graph.getClass("Employee").count());
     } finally {
-      graph.shutdown();
+      graph.close();
     }
 
-    graph = localFactory1.getNoTx();
+    graph = localFactory1.acquire();
     try {
-      Assert.assertEquals(21, graph.countVertices("Employee"));
+      Assert.assertEquals(21, graph.getClass("Employee").count());
     } finally {
-      graph.shutdown();
+      graph.close();
     }
 
-    graph = localFactory2.getNoTx();
+    graph = localFactory2.acquire();
     try {
-      Assert.assertEquals(21, graph.countVertices("Employee"));
+      Assert.assertEquals(21, graph.getClass("Employee").count());
     } finally {
-      graph.shutdown();
+      graph.close();
     }
   }
 

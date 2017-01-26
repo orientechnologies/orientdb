@@ -16,7 +16,6 @@
 
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
-import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -28,8 +27,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.server.distributed.ServerRun;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -105,7 +102,7 @@ public class MultipleDBAlignmentOnNodesJoining extends AbstractScenarioTest {
    * @throws IOException
    */
   @Override
-  protected void prepare(final boolean iCopyDatabaseToNodes, final boolean iCreateDatabase, final OCallable<Object, OrientGraphFactory> iCfgCallback) throws IOException {
+  protected void prepare(final boolean iCopyDatabaseToNodes, final boolean iCreateDatabase) throws IOException {
 
     serverInstance.remove(2);
 
@@ -113,17 +110,17 @@ public class MultipleDBAlignmentOnNodesJoining extends AbstractScenarioTest {
     ServerRun master = serverInstance.get(0);
 
     if (iCreateDatabase) {
-      final OrientBaseGraph graph1 = master.createDatabase(dbA, iCfgCallback);
-      final OrientBaseGraph graph2 = master.createDatabase(dbB, iCfgCallback);
+      final ODatabaseDocumentTx graph1 = master.createDatabase(dbA);
+      final ODatabaseDocumentTx graph2 = master.createDatabase(dbB);
       try {
         onAfterDatabaseCreation(graph1, "plocal:" + serverInstance.get(0).getDatabasePath(dbA));
         onAfterDatabaseCreation(graph2, "plocal:" + serverInstance.get(0).getDatabasePath(dbB));
       } finally {
         if(!graph1.isClosed()) {
-          graph1.shutdown();
+          graph1.close();
         }
         if(!graph1.isClosed()) {
-          graph2.shutdown();
+          graph2.close();
         }
       }
     }
@@ -136,12 +133,12 @@ public class MultipleDBAlignmentOnNodesJoining extends AbstractScenarioTest {
     master = serverInstance.get(1);
 
     if (iCreateDatabase) {
-      final OrientBaseGraph graph1 = master.createDatabase(dbC, iCfgCallback);
+      ODatabaseDocumentTx graph1 = master.createDatabase(dbC);
       try {
         onAfterDatabaseCreation(graph1, "plocal:" + serverInstance.get(1).getDatabasePath(dbC));
       } finally {
         if(!graph1.isClosed()) {
-          graph1.shutdown();
+          graph1.close();
         }
       }
     }
@@ -152,21 +149,21 @@ public class MultipleDBAlignmentOnNodesJoining extends AbstractScenarioTest {
    *
    * @param db Current database
    */
-  protected void onAfterDatabaseCreation(final OrientBaseGraph db, String databaseURL) {
+  protected void onAfterDatabaseCreation(final ODatabaseDocumentTx db, String databaseURL) {
 
-    String databaseName = db.getRawGraph().getName();
+    String databaseName = db.getName();
     System.out.println("Creating database schema for " + databaseName + "...");
 
-    ODatabaseRecordThreadLocal.INSTANCE.set(db.getRawGraph());
+    ODatabaseRecordThreadLocal.INSTANCE.set(db);
 
     // building basic schema
-    OClass personClass = db.getRawGraph().getMetadata().getSchema().createClass("Person");
+    OClass personClass = db.getMetadata().getSchema().createClass("Person");
     personClass.createProperty("id", OType.STRING);
     personClass.createProperty("name", OType.STRING);
     personClass.createProperty("birthday", OType.DATE);
     personClass.createProperty("children", OType.STRING);
 
-    final OSchema schema = db.getRawGraph().getMetadata().getSchema();
+    final OSchema schema = db.getMetadata().getSchema();
     OClass person = schema.getClass("Person");
     idx = person.createIndex("Person.name", OClass.INDEX_TYPE.UNIQUE, "name");
 

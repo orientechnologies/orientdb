@@ -21,14 +21,13 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.hook.ORecordHookAbstract;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import junit.framework.Assert;
 import org.junit.Test;
 
@@ -123,9 +122,13 @@ public class DistributedHookTest extends AbstractServerClusterTest {
   @Override
   protected void executeTest() throws Exception {
     for (int s = 1; s <= SERVERS; ++s) {
-      OrientGraphFactory factory = new OrientGraphFactory("plocal:target/server" + s + "/databases/" + getDatabaseName());
-      OrientGraphNoTx g = factory.getNoTx();
-      g.getRawGraph().registerHook(new TestHookSourceNode(), ORecordHook.HOOK_POSITION.REGULAR);
+      ODatabaseDocumentTx g = new ODatabaseDocumentTx("plocal:target/server" + s + "/databases/" + getDatabaseName());
+      if(g.exists()){
+        g.open("admin", "admin");
+      }else{
+        g.create();
+      }
+      g.registerHook(new TestHookSourceNode(), ORecordHook.HOOK_POSITION.REGULAR);
 
       try {
         // CREATE (VIA COMMAND)
@@ -152,7 +155,7 @@ public class DistributedHookTest extends AbstractServerClusterTest {
         Assert.assertEquals(afterDelete.get(), s);
 
       } finally {
-        g.shutdown();
+        g.close();
       }
     }
   }

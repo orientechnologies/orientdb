@@ -20,17 +20,16 @@
 
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.orient.core.db.ODatabasePool;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.OEdge;
+import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientEdge;
-import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 import junit.framework.Assert;
 
 import java.util.Date;
@@ -41,7 +40,7 @@ import java.util.concurrent.Callable;
  * Test distributed TX
  */
 public abstract class AbstractServerClusterSQLGraphTest extends AbstractServerClusterInsertTest {
-  protected OrientGraphFactory factory;
+  protected ODatabasePool factory;
 
   class TxWriter implements Callable<Void> {
     private final String databaseUrl;
@@ -59,19 +58,19 @@ public abstract class AbstractServerClusterSQLGraphTest extends AbstractServerCl
       String name = Integer.toString(serverId);
 
       for (int i = 0; i < count; i += 2) {
-        final OrientGraph graph = factory.getTx();
+        final ODatabaseDocument graph = factory.acquire();
         try {
           if ((i + 1) % 100 == 0)
             System.out.println("\nWriter " + databaseUrl + " managed " + (i + 1) + "/" + count + " vertices so far");
 
           try {
-            OrientVertex person1 = createVertex(graph, serverId, threadId, i);
-            OrientVertex person2 = createVertex(graph, serverId, threadId, i + 1);
+            OVertex person1 = createVertex(graph, serverId, threadId, i);
+            OVertex person2 = createVertex(graph, serverId, threadId, i + 1);
 
-            OrientEdge knows = createEdge(graph, person1, person2);
+            OEdge knows = createEdge(graph, person1, person2);
 
-            Assert.assertEquals(knows.getOutVertex(), person1.getIdentity());
-            Assert.assertEquals(knows.getInVertex(), person2.getIdentity());
+            Assert.assertEquals(knows.getFrom(), person1.getIdentity());
+            Assert.assertEquals(knows.getTo(), person2.getIdentity());
 
             graph.commit();
 
@@ -100,7 +99,7 @@ public abstract class AbstractServerClusterSQLGraphTest extends AbstractServerCl
           break;
         } finally {
           runningWriters.countDown();
-          graph.shutdown();
+          graph.close();
         }
       }
 
@@ -114,29 +113,28 @@ public abstract class AbstractServerClusterSQLGraphTest extends AbstractServerCl
   }
 
   @Override
-  protected void onAfterDatabaseCreation(final OrientBaseGraph graph) {
+  protected void onAfterDatabaseCreation(final ODatabaseDocument graph) {
     System.out.println("Creating graph schema...");
 
     // CREATE BASIC SCHEMA
-    OrientVertexType personClass = graph.createVertexType("Person");
+    OClass personClass = graph.createVertexClass("Person");
     personClass.createProperty("id", OType.STRING);
     personClass.createProperty("name", OType.STRING);
     personClass.createProperty("birthday", OType.DATE);
     personClass.createProperty("children", OType.STRING);
 
-    OrientVertexType person = graph.getVertexType("Person");
+    OClass person = graph.getClass("Person");
     idx = person.createIndex("Person.name", OClass.INDEX_TYPE.UNIQUE, "name");
 
-    OrientVertexType customer = graph.createVertexType("Customer", person);
+    OClass customer = graph.createClass("Customer", person.getName());
     customer.createProperty("totalSold", OType.DECIMAL);
 
-    OrientVertexType provider = graph.createVertexType("Provider", person);
+    OClass provider = graph.createClass("Provider", person.getName());
     provider.createProperty("totalPurchased", OType.DECIMAL);
 
-    OrientEdgeType knows = graph.createEdgeType("Knows");
+    OClass knows = graph.createEdgeClass("Knows");
 
-    factory = new OrientGraphFactory(graph.getRawGraph().getURL(), "admin", "admin", false);
-    factory.setStandardElementConstraints(false);
+    factory = OrientDB.fromUrl(graph.getURL().substring(0, graph.getURL().length() - (graph.getName().length() + 1)).replaceFirst("plocal", "embedded"), OrientDBConfig.defaultConfig()).openPool(graph.getName(), "admin", "admin");
   }
 
   @Override
@@ -144,7 +142,7 @@ public abstract class AbstractServerClusterSQLGraphTest extends AbstractServerCl
     return new TxWriter(serverId, threadId, databaseURL);
   }
 
-  protected OrientVertex createVertex(OrientGraph graph, int serverId, int threadId, int i) {
+  protected OVertex createVertex(ODatabaseDocument graph, int serverId, int threadId, int i) {
     final String uniqueId = serverId + "-" + threadId + "-" + i;
 
     final Object result = graph.command(
@@ -152,24 +150,24 @@ public abstract class AbstractServerClusterSQLGraphTest extends AbstractServerCl
             + "', 'surname': 'Mayes" + uniqueId + "', 'birthday': '"
             + ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getDateFormatInstance().format(new Date())
             + "', 'children': '" + uniqueId + "'}")).execute();
-    return (OrientVertex) result;
+    return (OVertex) result;
   }
 
-  protected OrientEdge createEdge(OrientGraph graph, OrientVertex v1, OrientVertex v2) {
-    final Iterable<OrientEdge> result = graph.command(
+  protected OEdge createEdge(ODatabaseDocument graph, OVertex v1, OVertex v2) {
+    final Iterable<OEdge> result = graph.command(
         new OCommandSQL("create edge knows from " + v1.getIdentity() + " to " + v2.getIdentity())).execute();
     return result.iterator().next();
   }
 
-  protected void updateVertex(OrientGraph graph, OrientVertex v) {
+  protected void updateVertex(ODatabaseDocument graph, OVertex v) {
     graph.command(new OCommandSQL("update " + v.getIdentity() + " set updated = true")).execute();
   }
 
-  protected void checkVertex(OrientGraph graph, OrientVertex v) {
-    final Iterable<OrientVertex> result = graph.command(new OCommandSQL("select from " + v.getIdentity())).execute();
+  protected void checkVertex(ODatabaseDocument graph, OVertex v) {
+    final Iterable<OVertex> result = graph.command(new OCommandSQL("select from " + v.getIdentity())).execute();
     Assert.assertTrue(result.iterator().hasNext());
 
-    final OrientVertex vertex = result.iterator().next();
+    final OVertex vertex = result.iterator().next();
     vertex.reload();
 
     Assert.assertTrue((Boolean) vertex.getProperty("updated"));
