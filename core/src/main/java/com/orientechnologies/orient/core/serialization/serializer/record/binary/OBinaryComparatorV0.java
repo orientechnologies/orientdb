@@ -469,7 +469,33 @@ public class OBinaryComparatorV0 implements OBinaryComparator {
           return value1 == value2;
         }
         case STRING: {
+          final String value2AsString = ORecordSerializerBinaryV0.readString(fieldValue2);
 
+          if (OIOUtils.isLong(value2AsString)) {
+            final long value2 = Long.parseLong(value2AsString);
+            return value1 == value2;
+          }
+
+          final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+          try {
+            final SimpleDateFormat dateFormat = db != null ? db.getStorage().getConfiguration().getDateFormatInstance()
+                : new SimpleDateFormat(OStorageConfiguration.DEFAULT_DATETIME_FORMAT);
+
+            final Date value2AsDate = dateFormat.parse(value2AsString);
+            final long value2 = value2AsDate.getTime();
+            return value1 == value2;
+          } catch (ParseException e) {
+            try {
+              final SimpleDateFormat dateFormat = db != null ? db.getStorage().getConfiguration().getDateFormatInstance()
+                  : new SimpleDateFormat(OStorageConfiguration.DEFAULT_DATE_FORMAT);
+
+              final Date value2AsDate = dateFormat.parse(value2AsString);
+              final long value2 = value2AsDate.getTime();
+              return value1 == value2;
+            } catch (ParseException e1) {
+              return new Date(value1).toString().equals(value2AsString);
+            }
+          }
         }
         case DECIMAL: {
           final BigDecimal value2 = ODecimalSerializer.INSTANCE.deserialize(fieldValue2.bytes, fieldValue2.offset);
