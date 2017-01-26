@@ -23,10 +23,9 @@ import com.orientechnologies.agent.backup.OBackupListener;
 import com.orientechnologies.agent.backup.OBackupTask;
 import com.orientechnologies.agent.backup.log.*;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.metadata.security.OSecurityNull;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
@@ -214,10 +213,7 @@ public abstract class OBackupStrategy {
 
     String url = server.getAvailableStorageNames().get(dbName);
 
-    ODatabaseDocument db = new ODatabaseDocumentTx(url);
-
-    db.setProperty(ODatabase.OPTIONS.SECURITY.toString(), OSecurityNull.class);
-    db.open("admin", "aaa");
+    ODatabaseDocumentInternal db = server.getDatabases().openNoAuthenticate(dbName, null);
 
     return db;
   }
