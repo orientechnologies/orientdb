@@ -104,6 +104,7 @@ public class OETLVertexTransformerTest extends OETLBaseTest {
     //VERIFY
     db = pool.acquire();
     assertThat(db.countClass("V")).isEqualTo(1);
+    db.close();
   }
 
   @Test
@@ -121,5 +122,6 @@ public class OETLVertexTransformerTest extends OETLBaseTest {
     //VERIFY
     db = pool.acquire();
     assertThat(db.countClass("Person")).isEqualTo(2);
+    db.close();
   }
 }

@@ -28,7 +28,7 @@ import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.etl.OETLBaseTest;
-import com.orientechnologies.orient.etl.loader.OETLOrientDBLoader;
+import com.orientechnologies.orient.etl.loader.OETLLoader;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -54,7 +54,6 @@ public class OETLEdgeTransformerTest extends OETLBaseTest {
 
   @After
   public void tearDown() throws Exception {
-
     OFileUtils.deleteRecursively(new File("./target/databases/"));
 
   }
@@ -83,11 +82,12 @@ public class OETLEdgeTransformerTest extends OETLBaseTest {
         + " transformers: [{vertex: {class:'V1'}}, {edge:{class:'Friend',joinFieldName:'friend',lookup:'V2.name'}},"
         + "], loader: { orientdb: { dbURL: 'memory:" + name.getMethodName() + "', dbType:'graph', useLightweightEdges:false } } }");
 
-    OETLOrientDBLoader loader = (OETLOrientDBLoader) proc.getLoader();
+    OETLLoader loader = proc.getLoader();
     ODatabasePool pool = loader.getPool();
     ODatabaseDocument db = pool.acquire();
     createClasses(db);
     db.close();
+
     proc.execute();
     db = pool.acquire();
 
@@ -95,9 +95,6 @@ public class OETLEdgeTransformerTest extends OETLBaseTest {
     assertEquals(1, db.countClass("V2"));
     assertEquals(1, db.countClass("Friend"));
     db.close();
-    pool.close();
-
-    loader.orient.close();
 
   }
 
@@ -107,7 +104,7 @@ public class OETLEdgeTransformerTest extends OETLBaseTest {
         + " transformers: [{vertex: {class:'V1'}}, {edge:{class:'Friend',joinFieldName:'friend',lookup:'V2.name'}},"
         + "], loader: { orientdb: { dbURL: 'memory:" + name.getMethodName() + "', dbType:'graph', useLightweightEdges:false } } }");
 
-    OETLOrientDBLoader loader = (OETLOrientDBLoader) proc.getLoader();
+    OETLLoader loader = proc.getLoader();
     ODatabasePool pool = loader.getPool();
     ODatabaseDocument db = pool.acquire();
     createClasses(db);
@@ -117,6 +114,7 @@ public class OETLEdgeTransformerTest extends OETLBaseTest {
     db.save(vertex);
     db.commit();
     db.close();
+
     proc.execute();
     db = pool.acquire();
 
@@ -126,7 +124,6 @@ public class OETLEdgeTransformerTest extends OETLBaseTest {
     db.close();
     pool.close();
 
-    loader.orient.close();
   }
 
   @Test
@@ -139,7 +136,7 @@ public class OETLEdgeTransformerTest extends OETLBaseTest {
             + "], loader: { orientdb: { dbURL: 'memory:" + name.getMethodName()
             + "', dbType:'graph', useLightweightEdges:false } } }");
 
-    OETLOrientDBLoader loader = (OETLOrientDBLoader) proc.getLoader();
+    OETLLoader loader = proc.getLoader();
     ODatabasePool pool = loader.getPool();
     ODatabaseDocument db = pool.acquire();
     createClasses(db);
@@ -182,8 +179,6 @@ public class OETLEdgeTransformerTest extends OETLBaseTest {
     assertEquals(v0.getProperty("surname"), "Miner");
     assertEquals(v0.<Integer>getProperty("id"), Integer.valueOf(0));
     db.close();
-    pool.close();
-    loader.orient.close();
   }
 
   @Test
@@ -192,7 +187,7 @@ public class OETLEdgeTransformerTest extends OETLBaseTest {
         + " transformers: [{merge: {joinFieldName:'name',lookup:'V1.name'}}, {vertex: {class:'V1'}}, {edge:{class:'Friend',joinFieldName:'friend',lookup:'V2.name'}},"
         + "], loader: { orientdb: { dbURL: 'memory:" + name.getMethodName() + "', dbType:'graph', useLightweightEdges:false } } }");
 
-    OETLOrientDBLoader loader = (OETLOrientDBLoader) proc.getLoader();
+    OETLLoader loader = proc.getLoader();
     ODatabasePool pool = loader.getPool();
     ODatabaseDocument db = pool.acquire();
     createClasses(db);
@@ -202,8 +197,6 @@ public class OETLEdgeTransformerTest extends OETLBaseTest {
 
     assertEquals(1, db.countClass("V1"));
     db.close();
-    pool.close();
-    loader.orient.close();
   }
 
   @Test
@@ -213,7 +206,7 @@ public class OETLEdgeTransformerTest extends OETLBaseTest {
         + "{vertex: {class:'V1'}}, {edge:{class:'Friend',skipDuplicates:true, joinFieldName:'friend',lookup:'V2.name'}},"
         + "], loader: { orientdb: { dbURL: 'memory:" + name.getMethodName() + "', dbType:'graph', useLightweightEdges:false } } }");
 
-    OETLOrientDBLoader loader = (OETLOrientDBLoader) proc.getLoader();
+    OETLLoader loader = proc.getLoader();
     ODatabasePool pool = loader.getPool();
 
     ODatabaseDocument db = pool.acquire();
@@ -225,9 +218,6 @@ public class OETLEdgeTransformerTest extends OETLBaseTest {
     assertEquals(1, db.countClass("V1"));
     assertEquals(1, db.countClass("V2"));
     assertEquals(1, db.countClass("Friend"));
-    pool.close();
-
-    loader.orient.close();
   }
 
   @Test
@@ -238,7 +228,7 @@ public class OETLEdgeTransformerTest extends OETLBaseTest {
         + "], loader: { orientdb: { dbURL: 'plocal:./target/databases/" + name.getMethodName()
         + "', dbType:'graph', classes: [{name:'PersonMF',extends:'V'}] } } }");
 
-    OETLOrientDBLoader loader = (OETLOrientDBLoader) proc.getLoader();
+    OETLLoader loader = proc.getLoader();
     ODatabasePool pool = loader.getPool();
     ODatabaseDocument db = pool.acquire();
 //    createClasses(db);
@@ -250,7 +240,7 @@ public class OETLEdgeTransformerTest extends OETLBaseTest {
     db.close();
 
     pool.close();
-    loader.orient.close();
+    proc.getLoader().close();
 
     // IMPORT FRIEND (EDGES)
     configure(
@@ -262,7 +252,7 @@ public class OETLEdgeTransformerTest extends OETLBaseTest {
             + "], loader: { orientdb: { dbURL: 'plocal:./target/databases/" + name.getMethodName()
             + "', dbType:'graph', classes: [{name:'FriendMF',extends:'E'}] } } }");
 
-    loader = (OETLOrientDBLoader) proc.getLoader();
+    loader = proc.getLoader();
     pool = loader.getPool();
     db = pool.acquire();
 //    createClasses(db);
@@ -274,9 +264,6 @@ public class OETLEdgeTransformerTest extends OETLBaseTest {
     assertEquals(5, db.countClass("PersonMF"));
     assertEquals(7, db.countClass("FriendMF"));
     db.close();
-    pool.close();
-
-    loader.orient.close();
   }
 
 }

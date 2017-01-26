@@ -86,7 +86,7 @@ public class OETLOrientDBLoaderTest extends OETLBaseTest {
     proc.execute();
 
     ODatabaseDocument db = proc.getLoader().getPool().acquire();
-    db.activateOnCurrentThread();
+
     int idByName = db.getClusterIdByName("myCluster");
 
     OResultSet resultSet = db.query("SELECT from V");
@@ -109,42 +109,44 @@ public class OETLOrientDBLoaderTest extends OETLBaseTest {
             + "        }\n" + "      ]      } } }");
 
     proc.execute();
-    ODatabaseDocument db = proc.getLoader().getPool().acquire();
 
-    db.activateOnCurrentThread();
+    ODatabaseDocument db = proc.getLoader().getPool().acquire();
 
     List<?> res = db.query(new OSQLSynchQuery<ODocument>("SELECT FROM Person"));
 
     assertThat(res.size()).isEqualTo(1);
 
+    db.close();
   }
 
   @Test
   public void shouldSaveDocumentsWithPredefinedSchema() {
 
-    //store data
+    //configure
     configure("{source: { content: { value: 'name,surname,married,birthday\nJay,Miner,false,1970-01-01 05:30:00' } }, "
         + "extractor : { csv: {columns:['name:string','surname:string','married:boolean','birthday:datetime'], dateFormat :'yyyy-MM-dd HH:mm:ss'} }, loader: { orientdb: {\n"
         + "      dbURL: 'memory:" + name.getMethodName() + "', class:'Person',     dbUser: \"admin\",\n"
         + "      dbPassword: \"admin\",\n" + "      dbAutoCreate: false,\n      tx: false,\n" + "      batchCommit: 1000,\n"
         + "      wal : false,\n" + "      dbType: \"document\" } } }");
-    ODatabaseDocument db = proc.getLoader().getPool().acquire();
 
     //create class
-
+    ODatabaseDocument db = proc.getLoader().getPool().acquire();
     db.command(new OCommandSQL("CREATE Class Person")).execute();
     db.command(new OCommandSQL("CREATE property Person.name STRING")).execute();
     db.command(new OCommandSQL("CREATE property Person.surname STRING")).execute();
     db.command(new OCommandSQL("CREATE property Person.married BOOLEAN")).execute();
     db.command(new OCommandSQL("CREATE property Person.birthday DATETIME")).execute();
 
+    db.close();
+    //import data
     proc.execute();
 
-    db.activateOnCurrentThread();
+    db = proc.getLoader().getPool().acquire();
 
     List<?> res = db.query(new OSQLSynchQuery<ODocument>("SELECT FROM Person"));
 
     assertThat(res.size()).isEqualTo(1);
 
+    db.close();
   }
 }
