@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.command.script.OCommandScriptException;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
@@ -648,7 +649,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     return internal.isUseLightweightEdges();
   }
 
-  public void setUseLightweightEdges(boolean b){
+  public void setUseLightweightEdges(boolean b) {
     internal.setUseLightweightEdges(b);
   }
 
@@ -1559,4 +1560,17 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     internal.checkForClusterPermissions(name);
   }
 
+  @Override
+  public OResultSet execute(String language, String script, Object... args)
+      throws OCommandExecutionException, OCommandScriptException {
+    checkOpenness();
+    return internal.execute(language, script, args);
+  }
+
+  @Override
+  public OResultSet execute(String language, String script, Map<String, ?> args)
+      throws OCommandExecutionException, OCommandScriptException {
+    checkOpenness();
+    return internal.execute(language, script, args);
+  }
 }

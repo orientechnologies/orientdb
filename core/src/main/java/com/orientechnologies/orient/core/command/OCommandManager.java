@@ -34,12 +34,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class OCommandManager {
-  private static OCommandManager                                                   instance          = new OCommandManager();
-  private Map<String, Class<? extends OCommandRequest>>                            commandRequesters = new HashMap<String, Class<? extends OCommandRequest>>();
-  private Map<Class<? extends OCommandRequest>, OCallable<Void, OCommandRequest>>  configCallbacks   = new HashMap<Class<? extends OCommandRequest>, OCallable<Void, OCommandRequest>>();
-  private Map<Class<? extends OCommandRequest>, Class<? extends OCommandExecutor>> commandReqExecMap = new HashMap<Class<? extends OCommandRequest>, Class<? extends OCommandExecutor>>();
+  private static OCommandManager                                                          instance          = new OCommandManager();
+  private        Map<String, Class<? extends OCommandRequest>>                            commandRequesters = new HashMap<String, Class<? extends OCommandRequest>>();
+  private        Map<Class<? extends OCommandRequest>, OCallable<Void, OCommandRequest>>  configCallbacks   = new HashMap<Class<? extends OCommandRequest>, OCallable<Void, OCommandRequest>>();
+  private        Map<Class<? extends OCommandRequest>, Class<? extends OCommandExecutor>> commandReqExecMap = new HashMap<Class<? extends OCommandRequest>, Class<? extends OCommandExecutor>>();
+  private        Map<String, OScriptExecutor>                                             scriptExecutors   = new HashMap<>();
 
   protected OCommandManager() {
+    registerScriptExecutor("sql", new OSqlScriptExecutor());
+    registerScriptExecutor("script", new OSqlScriptExecutor());
     registerRequester("sql", OCommandSQL.class);
     registerRequester("script", OCommandScript.class);
 
@@ -61,8 +64,8 @@ public class OCommandManager {
     return this;
   }
 
-  public boolean existsRequester(final String iType) {
-    return commandRequesters.containsKey(iType);
+  public OScriptExecutor getScriptExecutor(String language) {
+    return this.scriptExecutors.get(language);
   }
 
   public OCommandRequest getRequester(final String iType) {
@@ -83,6 +86,10 @@ public class OCommandManager {
     registerExecutor(iRequest, iExecutor);
     configCallbacks.put(iRequest, iConfigCallback);
     return this;
+  }
+
+  public void registerScriptExecutor(String language, OScriptExecutor executor) {
+    this.scriptExecutors.put(language, executor);
   }
 
   public OCommandManager registerExecutor(final Class<? extends OCommandRequest> iRequest,
@@ -113,8 +120,8 @@ public class OCommandManager {
       return exec;
 
     } catch (Exception e) {
-      throw OException.wrapException(new OCommandExecutionException("Cannot create the command executor of class " + executorClass
-          + " for the command request: " + iCommand), e);
+      throw OException.wrapException(new OCommandExecutionException(
+          "Cannot create the command executor of class " + executorClass + " for the command request: " + iCommand), e);
     }
   }
 }

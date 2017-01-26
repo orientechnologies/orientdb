@@ -799,25 +799,25 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   public ORemoteQueryResult query(ODatabase db, String query, Object[] args) {
-    OQueryRequest request = new OQueryRequest(query, args, true, ((ODatabaseDocumentInternal) db).getSerializer(), 100);
+    OQueryRequest request = new OQueryRequest("sql", query, args, true, ((ODatabaseDocumentInternal) db).getSerializer(), 100);
     OQueryResponse response = networkOperation(request, "Error on executing command: " + query);
     return new ORemoteQueryResult(response.getResult(), response.isTxChanges());
   }
 
   public ORemoteQueryResult query(ODatabase db, String query, Map args) {
-    OQueryRequest request = new OQueryRequest(query, args, true, ((ODatabaseDocumentInternal) db).getSerializer(), 100);
+    OQueryRequest request = new OQueryRequest("sql", query, args, true, ((ODatabaseDocumentInternal) db).getSerializer(), 100);
     OQueryResponse response = networkOperation(request, "Error on executing command: " + query);
     return new ORemoteQueryResult(response.getResult(), response.isTxChanges());
   }
 
-  public ORemoteQueryResult command(ODatabase db, String query, Object[] args) {
-    OQueryRequest request = new OQueryRequest(query, args, false, ((ODatabaseDocumentInternal) db).getSerializer(), 100);
+  public ORemoteQueryResult command(ODatabase db, String language, String query, Object[] args) {
+    OQueryRequest request = new OQueryRequest(language, query, args, false, ((ODatabaseDocumentInternal) db).getSerializer(), 100);
     OQueryResponse response = networkOperation(request, "Error on executing command: " + query);
     return new ORemoteQueryResult(response.getResult(), response.isTxChanges());
   }
 
-  public ORemoteQueryResult command(ODatabase db, String query, Map args) {
-    OQueryRequest request = new OQueryRequest(query, args, false, ((ODatabaseDocumentInternal) db).getSerializer(), 100);
+  public ORemoteQueryResult command(ODatabase db, String language, String query, Map args) {
+    OQueryRequest request = new OQueryRequest(language, query, args, false, ((ODatabaseDocumentInternal) db).getSerializer(), 100);
     OQueryResponse response = networkOperation(request, "Error on executing command: " + query);
     return new ORemoteQueryResult(response.getResult(), response.isTxChanges());
   }
