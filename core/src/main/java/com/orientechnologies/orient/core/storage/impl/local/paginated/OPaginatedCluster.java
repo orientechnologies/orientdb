@@ -1845,6 +1845,9 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       long pageIndex;
 
       final OCacheEntry pinnedStateEntry = loadPageForRead(atomicOperation, fileId, pinnedStateEntryIndex, true);
+      if (pinnedStateEntry == null) {
+        loadPageForRead(atomicOperation, fileId, pinnedStateEntryIndex, true);
+      }
       try {
         OPaginatedClusterState freePageLists = new OPaginatedClusterState(pinnedStateEntry);
         do {

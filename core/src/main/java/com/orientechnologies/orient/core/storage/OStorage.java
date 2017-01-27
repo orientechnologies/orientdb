@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.util.OBackupable;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -66,7 +67,7 @@ public interface OStorage extends OBackupable, OSharedContainer {
 
   void open(String iUserName, String iUserPassword, final OContextConfiguration contextConfiguration);
 
-  void create(OContextConfiguration contextConfiguration);
+  void create(OContextConfiguration contextConfiguration) throws IOException;
 
   boolean exists();
 

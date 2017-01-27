@@ -19,12 +19,9 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 
-import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
 import com.orientechnologies.orient.core.storage.fs.OFile;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
@@ -41,10 +38,10 @@ public class OSingleFileSegment {
   }
 
   public OSingleFileSegment(final OLocalPaginatedStorage iStorage, final OStorageFileConfiguration iConfig, final String iType)
-      throws IOException {
+       {
     config = iConfig;
     storage = iStorage;
-    file = new OFileClassic(iStorage.getVariableParser().resolveVariables(iConfig.path), iStorage.getMode());
+    file = new OFileClassic(Paths.get(iStorage.getVariableParser().resolveVariables(iConfig.path)));
   }
 
   public void open() throws IOException {
@@ -92,24 +89,5 @@ public class OSingleFileSegment {
 
   public void synch() throws IOException {
     file.synch();
-  }
-
-  public void setSoftlyClosed(boolean softlyClosed) throws IOException {
-  }
-
-  public boolean wasSoftlyClosedAtPreviousTime() {
-    return wasSoftlyClosedAtPreviousTime;
-  }
-
-  public void rename(String iOldName, String iNewName) throws IOException {
-    final String osFileName = file.getName();
-    if (osFileName.startsWith(iOldName)) {
-      final File newFile = new File(
-          storage.getStoragePath() + "/" + iNewName + osFileName.substring(osFileName.lastIndexOf(iOldName) + iOldName.length()));
-      boolean renamed = file.renameTo(newFile);
-      while (!renamed) {
-        renamed = file.renameTo(newFile);
-      }
-    }
   }
 }

@@ -8,7 +8,6 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
-import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
@@ -20,6 +19,7 @@ import org.junit.Before;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
@@ -73,7 +73,7 @@ public class ReadWriteCacheConcurrentTest {
   }
 
   @Before
-  public void beforeMethod() throws IOException {
+  public void beforeMethod() throws Exception {
     if (writeBuffer != null && readBuffer != null)
       readBuffer.closeStorage(writeBuffer);
     else if (writeBuffer != null)
@@ -91,7 +91,7 @@ public class ReadWriteCacheConcurrentTest {
     seed = (byte) (random.nextInt() & 0xFF);
   }
 
-  private void initBuffer() throws IOException {
+  private void initBuffer() throws IOException, InterruptedException {
     writeBuffer = new OWOWCache(8 + systemOffset, new OByteBufferPool(8 + systemOffset), null, -1,
         15000 * (8 + systemOffset), storageLocal, true, files, 1);
     writeBuffer.loadRegisteredFiles();
@@ -188,9 +188,7 @@ public class ReadWriteCacheConcurrentTest {
   }
 
   private void validateFileContent(byte version, int k) throws IOException {
-    String path = storageLocal.getConfiguration().getDirectory() + "/readWriteCacheTest" + k + ".tst";
-
-    OFileClassic fileClassic = new OFileClassic(path, "r");
+    OFileClassic fileClassic = new OFileClassic(Paths.get(storageLocal.getConfiguration().getDirectory(), "readWriteCacheTest" + k + ".tst"));
     fileClassic.open();
 
     for (int i = 0; i < PAGE_COUNT; i++) {

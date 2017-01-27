@@ -20,7 +20,9 @@
 package com.orientechnologies.orient.core.db;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -197,7 +199,12 @@ public class OrientDBEmbedded implements OrientDB {
   }
 
   private void internalCreate(OrientDBConfig config, OAbstractPaginatedStorage storage) {
-    storage.create(config.getConfigurations());
+    try {
+      storage.create(config.getConfigurations());
+    } catch (IOException e) {
+      throw OException.wrapException(new ODatabaseException("Error on database creation"), e);
+    }
+
     ORecordSerializer serializer = ORecordSerializerFactory.instance().getDefaultRecordSerializer();
     if (serializer.toString().equals("ORecordDocument2csv"))
       throw new ODatabaseException("Impossible to create the database with ORecordDocument2csv serializer");
@@ -219,7 +226,7 @@ public class OrientDBEmbedded implements OrientDB {
   public synchronized boolean exists(String name, String user, String password) {
     if (!storages.containsKey(name)) {
       if (basePath != null) {
-        return OLocalPaginatedStorage.exists(buildName(name));
+        return OLocalPaginatedStorage.exists(Paths.get(buildName(name)));
       } else
         return false;
     }
@@ -325,7 +332,7 @@ public class OrientDBEmbedded implements OrientDB {
   }
 
   public synchronized void initCustomStorage(String name, String path, String userName, String userPassword) {
-    boolean exists = OLocalPaginatedStorage.exists(path);
+    boolean exists = OLocalPaginatedStorage.exists(Paths.get(path));
     OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) disk.createStorage(path, new HashMap<>());
     // TODO: Add Creation settings and parameters
     if (!exists) {

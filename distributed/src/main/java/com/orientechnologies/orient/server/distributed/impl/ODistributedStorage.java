@@ -1206,7 +1206,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   @Override
-  public void create(OContextConfiguration contextConfiguration) {
+  public void create(OContextConfiguration contextConfiguration) throws IOException {
     wrapped.create(contextConfiguration);
   }
 

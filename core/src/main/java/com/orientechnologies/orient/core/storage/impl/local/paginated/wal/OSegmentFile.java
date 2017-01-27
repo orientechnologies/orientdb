@@ -26,10 +26,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
@@ -56,7 +53,7 @@ public class OSegmentFile {
   private ScheduledExecutorService closer;
 
   public OSegmentFile(final File file, int fileTTL, int bufferSize, ScheduledExecutorService closer) {
-    this.file = FileSystems.getDefault().getPath(file.getAbsolutePath());
+    this.file = Paths.get(file.getAbsolutePath());
 
     this.fileTTL = fileTTL;
     this.bufferSize = bufferSize;
@@ -313,12 +310,6 @@ public class OSegmentFile {
 
     while (written < bytesToWrite) {
       final int bufferIndex = (int) written / OWALPage.PAGE_SIZE;
-      final int bufferOffset = (int) (written - OWALPage.PAGE_SIZE * bufferIndex);
-
-      if (bufferOffset > 0) {
-        ByteBuffer buffer = buffers[bufferIndex];
-        buffer.position(bufferOffset);
-      }
 
       written += channel.write(buffers, bufferIndex, buffers.length - bufferIndex);
     }

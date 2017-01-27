@@ -22,7 +22,6 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
 import com.orientechnologies.common.collection.closabledictionary.OClosableLinkedContainer;
 import com.orientechnologies.common.directmemory.OByteBufferPool;
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -44,7 +43,6 @@ import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorageComponent;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageConfigurationSegment;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODiskWriteAheadLog;
@@ -52,6 +50,9 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -81,8 +82,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   private final OStorageVariableParser     variableParser;
   private final OPaginatedStorageDirtyFlag dirtyFlag;
 
-  private final String                                       storagePath;
-  private       ExecutorService                              checkpointExecutor;
+  private final Path                                         storagePath;
   private final OClosableLinkedContainer<Long, OFileClassic> files;
 
   public OLocalPaginatedStorage(final String name, final String filePath, final String mode, final int id, OReadCache readCache,
@@ -95,7 +95,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     File f = new File(url);
 
     String sp;
-    if (f.exists() || !exists(f.getParent())) {
+    if (f.exists() || !exists(Paths.get(f.getParent()))) {
       // ALREADY EXISTS OR NOT LEGACY
       sp = OSystemVariableResolver.resolveSystemVariables(OFileUtils.getPath(new File(url).getPath()));
     } else {
@@ -103,7 +103,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
       sp = OSystemVariableResolver.resolveSystemVariables(OFileUtils.getPath(new File(url).getParent()));
     }
 
-    storagePath = OIOUtils.getPathFromDatabaseName(sp);
+    storagePath = Paths.get(OIOUtils.getPathFromDatabaseName(sp));
     variableParser = new OStorageVariableParser(storagePath);
 
     configuration = new OStorageConfigurationSegment(this);
@@ -115,13 +115,12 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   }
 
   @Override
-  public void create(OContextConfiguration contextConfiguration) {
+  public void create(OContextConfiguration contextConfiguration) throws IOException {
     stateLock.acquireWriteLock();
     try {
-      final File storageFolder = new File(storagePath);
-      if (!storageFolder.exists())
-        if (!storageFolder.mkdirs())
-          throw new OStorageException("Cannot create folders in storage with path " + storagePath);
+      final Path storageFolder = storagePath;
+      if (!Files.exists(storageFolder))
+        Files.createDirectories(storageFolder);
 
       super.create(contextConfiguration);
     } finally {
@@ -153,7 +152,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   }
 
   public String getStoragePath() {
-    return storagePath;
+    return storagePath.toString();
   }
 
   public OStorageVariableParser getVariableParser() {
@@ -424,7 +423,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     return true;
   }
 
-  protected void initWalAndDiskCache() throws IOException {
+  protected void initWalAndDiskCache() throws IOException, InterruptedException {
     if (configuration.getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.USE_WAL)) {
       fuzzyCheckpointExecutor.scheduleWithFixedDelay(new PeriodicFuzzyCheckpoint(),
           OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.getValueAsInteger(),
@@ -452,8 +451,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     writeCache = wowCache;
   }
 
-  public static boolean exists(final String path) {
-    return new File(path + "/" + OMetadataDefault.CLUSTER_INTERNAL_NAME + OPaginatedCluster.DEF_EXTENSION).exists();
+  public static boolean exists(final Path path) {
+    return Files.exists(path.resolve(OMetadataDefault.CLUSTER_INTERNAL_NAME + OPaginatedCluster.DEF_EXTENSION));
   }
 
   private class PeriodicFuzzyCheckpoint implements Runnable {

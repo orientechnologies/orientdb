@@ -211,10 +211,11 @@ public abstract class OrientGraphRemoteTest extends OrientGraphTest {
         Assert.assertEquals(v2.getId(), v1.getVertices(Direction.OUT, "TestE").iterator().next().getId());
         Assert.assertEquals(v1.getId(), v2.getVertices(Direction.IN, "TestE").iterator().next().getId());
       }
+
+      graph.shutdown();
     } finally {
       dropGraph("graph");
     }
-    graph.shutdown();
   }
 
 

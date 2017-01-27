@@ -25,18 +25,11 @@ import com.orientechnologies.common.concur.resource.OSharedContainerImpl;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
-import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.metadata.OMetadata;
-import com.orientechnologies.orient.core.metadata.OMetadataInternal;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
-import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -90,10 +83,24 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
   }
 
   protected String normalizeName(String name) {
-    if (OStringSerializerHelper.contains(name, '/'))
-      return name.substring(name.lastIndexOf("/") + 1);
-    else
+    if (OStringSerializerHelper.contains(name, '/')) {
+      name = name.substring(name.lastIndexOf("/") + 1);
+
+      if (OStringSerializerHelper.contains(name, '\\'))
+        return name.substring(name.lastIndexOf("\\") + 1);
+      else
+        return name;
+
+    } else if (OStringSerializerHelper.contains(name, '\\')) {
+      name = name.substring(name.lastIndexOf("\\") + 1);
+
+      if (OStringSerializerHelper.contains(name, '/'))
+        return name.substring(name.lastIndexOf("/") + 1);
+      else
+        return name;
+    } else {
       return name;
+    }
   }
 
   public abstract OCluster getClusterByName(final String iClusterName);

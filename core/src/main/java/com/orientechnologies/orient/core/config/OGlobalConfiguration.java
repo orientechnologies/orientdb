@@ -389,6 +389,7 @@ public enum OGlobalConfiguration {
       Integer.class, -1, true),
 
   // FILE
+  @Deprecated
   TRACK_FILE_CLOSE("file.trackFileClose",
       "Log all the cases when files are closed. This is needed only for internal debugging purposes", Boolean.class, false),
 

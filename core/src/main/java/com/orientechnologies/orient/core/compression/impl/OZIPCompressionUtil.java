@@ -32,6 +32,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -112,8 +114,12 @@ public class OZIPCompressionUtil {
   }
 
   private static String getDirectoryPart(final String name) {
-    final int s = name.lastIndexOf(File.separatorChar);
-    return s == -1 ? null : name.substring(0, s);
+    Path path = Paths.get(name);
+    Path parent = path.getParent();
+    if (parent != null)
+      return parent.toString();
+
+    return null;
   }
 
   private static void addFolder(ZipOutputStream zos, String path, String baseFolderName, final String[] iSkipFileExtensions,

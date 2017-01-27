@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.test.internal.io;
 
 import java.io.IOException;
+import java.nio.file.Paths;
 
 import org.testng.annotations.Test;
 
@@ -24,8 +25,8 @@ import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 
 @Test(enabled = false)
 public class OClassicFileTest extends OFileAbstractTest {
-	@Override
-	protected OFile getFileImpl() throws IOException {
-    return new OFileClassic(FILE_NAME, "rw");
-	}
+  @Override
+  protected OFile getFileImpl() throws IOException {
+    return new OFileClassic(Paths.get(FILE_NAME));
+  }
 }

@@ -329,7 +329,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     open(iToken.getUserName(), "", configuration);
   }
 
-  public void create(OContextConfiguration contextConfiguration) {
+  public void create(OContextConfiguration contextConfiguration) throws IOException {
     stateLock.acquireWriteLock();
     try {
 
@@ -383,6 +383,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       postCreateSteps();
 
+    } catch (InterruptedException e) {
+      throw OException.wrapException(new OStorageException("Storage creation was interrupted"), e);
     } catch (OStorageException e) {
       close();
       throw e;
@@ -1764,7 +1766,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  public void putIndexValue(int indexId, Object key, Object value)  throws OInvalidIndexEngineIdException {
+  public void putIndexValue(int indexId, Object key, Object value) throws OInvalidIndexEngineIdException {
     if (transaction.get() != null) {
       doPutIndexValue(indexId, key, value);
       return;
@@ -1931,7 +1933,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   private OIndexCursor doIterateIndexEntriesMajor(int indexId, Object fromKey, boolean isInclusive, boolean ascSortOrder,
-      OIndexEngine.ValuesTransformer transformer)  throws OInvalidIndexEngineIdException {
+      OIndexEngine.ValuesTransformer transformer) throws OInvalidIndexEngineIdException {
     checkIndexId(indexId);
 
     final OIndexEngine engine = indexEngines.get(indexId);
@@ -2725,7 +2727,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   protected void preCreateSteps() throws IOException {
   }
 
-  protected abstract void initWalAndDiskCache() throws IOException;
+  protected abstract void initWalAndDiskCache() throws IOException, InterruptedException;
 
   protected void postCloseSteps(boolean onDelete) throws IOException {
   }

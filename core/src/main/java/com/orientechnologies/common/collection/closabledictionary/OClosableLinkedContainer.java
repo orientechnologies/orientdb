@@ -8,24 +8,28 @@ import javax.annotation.concurrent.GuardedBy;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * Container for the elements which may be in open/closed state.
- * But only limited amount of elements are hold by given container may be in open state.
+ * Container for the elements which may be in open/closed state. But only limited amount of elements are hold by given container may
+ * be in open state.
  * <p>
- * Elements may be added in this container only in open state,as result after addition of some elements other
- * rarely used elements will be closed.
+ * Elements may be added in this container only in open state,as result after addition of some elements other rarely used elements
+ * will be closed.
  * <p>
- * When you want to use elements from container you should acquire them {@link #acquire(Object)}. So element still will be inside of container
- * but in acquired state. As result it will not be automatically closed when container will try to close rarely used items.
+ * When you want to use elements from container you should acquire them {@link #acquire(Object)}. So element still will be inside of
+ * container but in acquired state. As result it will not be automatically closed when container will try to close rarely used
+ * items.
  * <p>
  * Container uses LRU eviction policy to choose item to be closed.
  * <p>
- * When you finish to work with element from container you should release (@link {@link #release(OClosableEntry)}) element back to container.
+ * When you finish to work with element from container you should release (@link {@link #release(OClosableEntry)}) element back to
+ * container.
  *
  * @param <K> Key associated with entry stored inside of container.
  * @param <V> Value which may be in open/closed stated and associated with key.
@@ -184,6 +188,16 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
   private final AtomicReference<DrainStatus> drainStatus = new AtomicReference<DrainStatus>(DrainStatus.IDLE);
 
   /**
+   * Latch which prevents addition or open of new files if limit of open files is reached
+   */
+  private final AtomicReference<CountDownLatch> openLatch = new AtomicReference<CountDownLatch>();
+
+  /**
+   * Amount of simultaneously open files in container
+   */
+  private final AtomicInteger openFiles = new AtomicInteger();
+
+  /**
    * Creates new instance of container and set limit of open files which may be hold by container.
    *
    * @param openLimit Limit of open files hold by container.
@@ -217,9 +231,11 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
    * @param key  Key associated with given item.
    * @param item Item associated with passed in key.
    */
-  public void add(K key, V item) {
+  public void add(K key, V item) throws InterruptedException {
     if (!item.isOpen())
       throw new IllegalArgumentException("All passed in items should be in open state");
+
+    checkOpenFilesLimit();
 
     final OClosableEntry<K, V> closableEntry = new OClosableEntry<K, V>(item);
     final OClosableEntry<K, V> oldEntry = data.putIfAbsent(key, closableEntry);
@@ -235,13 +251,19 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
    * Removes item associated with passed in key.
    *
    * @param key Key associated with item to remove.
+   *
    * @return Removed item.
    */
   public V remove(K key) {
     final OClosableEntry<K, V> removed = data.remove(key);
 
     if (removed != null) {
-      removed.makeRetired();
+      long preStatus = removed.makeRetired();
+
+      if (OClosableEntry.isOpen(preStatus)) {
+        countClosedFiles();
+      }
+
       logRemoved(removed);
       return removed.get();
     }
@@ -255,9 +277,12 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
    * items.
    *
    * @param key Key associated with item
+   *
    * @return Acquired item if key exists into container or <code>null</code> if there is no item associated with given container
    */
-  public OClosableEntry<K, V> acquire(K key) {
+  public OClosableEntry<K, V> acquire(K key) throws InterruptedException {
+    checkOpenFilesLimit();
+
     final OClosableEntry<K, V> entry = data.get(key);
 
     if (entry == null)
@@ -291,6 +316,37 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
   }
 
   /**
+   * Checks if containers limit of open files is reached.
+   * <p>
+   * In such case execution of threads which add or acquire items is stopped and they wait till buffers will be emptied
+   * and nubmer of open files will be inside limit.
+   */
+  private void checkOpenFilesLimit() throws InterruptedException {
+    CountDownLatch ol = openLatch.get();
+    if (ol != null)
+      ol.await();
+
+    while (openFiles.get() > openLimit) {
+      final CountDownLatch latch = new CountDownLatch(1);
+
+      //make other threads to wait till we evict entries and close evicted open files
+      if (openLatch.compareAndSet(null, latch)) {
+        while (openFiles.get() > openLimit) {
+          emptyBuffers();
+        }
+
+        latch.countDown();
+        openLatch.set(null);
+      } else {
+        ol = openLatch.get();
+
+        if (ol != null)
+          ol.await();
+      }
+    }
+  }
+
+  /**
    * Releases item acquired by call of {@link #acquire(Object)} method.
    * After this call container is free to close given item if limit of open files exceeded and this item is rarely used.
    *
@@ -304,6 +360,7 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
    * Returns item without acquiring it. State of item is not guarantied in such case.
    *
    * @param key Key associated with required item.
+   *
    * @return Item associated with given key.
    */
   public V get(K key) {
@@ -321,6 +378,7 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
     lruLock.lock();
     try {
       data.clear();
+      openFiles.set(0);
 
       for (int n = 0; n < NUMBER_OF_READ_BUFFERS; n++) {
         final AtomicReference<OClosableEntry<K, V>>[] buffer = readBuffers[n];
@@ -347,6 +405,7 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
    * Item will be closed if it exists and is not acquired.
    *
    * @param key Key related to item that has going to be closed.
+   *
    * @return <code>true</code> if item was closed and <code>false</code> otherwise.
    */
   public boolean close(K key) {
@@ -357,6 +416,8 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
       return true;
 
     if (entry.makeClosed()) {
+      countClosedFiles();
+
       return true;
     }
 
@@ -508,6 +569,8 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
    */
   private void logOpen(OClosableEntry<K, V> entry) {
     afterWrite(new LogOpen(entry));
+
+    countOpenFiles();
   }
 
   /**
@@ -517,6 +580,8 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
    */
   private void logAdd(OClosableEntry<K, V> entry) {
     afterWrite(new LogAdd(entry));
+
+    countOpenFiles();
   }
 
   /**
@@ -566,6 +631,7 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
    *
    * @param entry       LRU entry to add.
    * @param bufferIndex Index of buffer
+   *
    * @return Amount of writes to the buffer since creation of this container.
    */
   private long putEntryInReadBuffer(OClosableEntry<K, V> entry, int bufferIndex) {
@@ -667,11 +733,21 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
     }
   }
 
+
+  private void countOpenFiles() {
+    openFiles.incrementAndGet();
+  }
+
+  private void countClosedFiles() {
+    openFiles.decrementAndGet();
+  }
+
   /**
    * Finds closest power of two for given integer value. Idea is simple duplicate the most significant bit to the lowest bits for
    * the smallest number of iterations possible and then increment result value by 1.
    *
    * @param value Integer the most significant power of 2 should be found.
+   *
    * @return The most significant power of 2.
    */
   private static int closestPowerOfTwo(int value) {
@@ -708,6 +784,8 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
           closedFiles++;
           iterator.remove();
           entryClosed = true;
+
+          countClosedFiles();
           break;
         }
       }
