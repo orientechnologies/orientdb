@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.cache.OCommandCacheHook;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OScriptExecutor;
-import com.orientechnologies.orient.core.command.script.OCommandScriptException;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.record.OClassTrigger;
@@ -415,13 +414,21 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
   @Override
   public OResultSet execute(String language, String script, Object... args) {
     OScriptExecutor executor = OCommandManager.instance().getScriptExecutor(language);
-    return executor.execute(this, script, args);
+    OResultSet original = executor.execute(this, script, args);
+    OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
+    this.queryStarted(result);
+    result.addLifecycleListener(this);
+    return result;
   }
 
   @Override
   public OResultSet execute(String language, String script, Map<String, ?> args) {
     OScriptExecutor executor = OCommandManager.instance().getScriptExecutor(language);
-    return executor.execute(this, script, args);
+    OResultSet original = executor.execute(this, script, args);
+    OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
+    this.queryStarted(result);
+    result.addLifecycleListener(this);
+    return result;
   }
 
   public OLocalResultSetLifecycleDecorator getActiveQuery(String id) {

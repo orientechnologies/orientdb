@@ -24,33 +24,20 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandManager;
-import com.orientechnologies.orient.core.command.script.formatter.OGroovyScriptFormatter;
-import com.orientechnologies.orient.core.command.script.formatter.OJSScriptFormatter;
-import com.orientechnologies.orient.core.command.script.formatter.ORubyScriptFormatter;
-import com.orientechnologies.orient.core.command.script.formatter.OSQLScriptFormatter;
-import com.orientechnologies.orient.core.command.script.formatter.OScriptFormatter;
+import com.orientechnologies.orient.core.command.script.formatter.*;
+import com.orientechnologies.orient.core.command.script.transformer.OScriptTransformer;
+import com.orientechnologies.orient.core.command.script.transformer.OScriptTransformerImpl;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.function.OFunctionUtilWrapper;
 import com.orientechnologies.orient.core.sql.OSQLScriptEngine;
 import com.orientechnologies.orient.core.sql.OSQLScriptEngineFactory;
 
-import javax.script.Bindings;
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineFactory;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import javax.script.*;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Scanner;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -69,6 +56,8 @@ public class OScriptManager {
   protected Map<String, OScriptFormatter>                     formatters = new HashMap<String, OScriptFormatter>();
   protected List<OScriptInjection>                            injections = new ArrayList<OScriptInjection>();
   protected ConcurrentHashMap<String, ODatabaseScriptManager> dbManagers = new ConcurrentHashMap<String, ODatabaseScriptManager>();
+
+  protected OScriptTransformer transformer = new OScriptTransformerImpl();
 
   public OScriptManager() {
     scriptEngineManager = new ScriptEngineManager();
@@ -125,7 +114,6 @@ public class OScriptManager {
    *
    * @param db        Current database instance
    * @param iLanguage Language as filter
-   *
    * @return String containing all the functions
    */
   public String getLibrary(final ODatabase<?> db, final String iLanguage) {
@@ -182,9 +170,7 @@ public class OScriptManager {
    *
    * @param databaseName Database name
    * @param language     Script language
-   *
    * @return ScriptEngine instance with the function library already parsed
-   *
    * @see #releaseDatabaseEngine(String, String, OPartitionedObjectPool.PoolEntry)
    */
   public OPartitionedObjectPool.PoolEntry<ScriptEngine> acquireDatabaseEngine(final String databaseName, final String language) {
@@ -210,7 +196,6 @@ public class OScriptManager {
    * @param iLanguage     Script language
    * @param iDatabaseName Database name
    * @param poolEntry     Pool entry to free
-   *
    * @see #acquireDatabaseEngine(String, String)
    */
   public void releaseDatabaseEngine(final String iLanguage, final String iDatabaseName,
@@ -229,18 +214,42 @@ public class OScriptManager {
     return result;
   }
 
+  public Bindings bindContextVariables(final Bindings binding, final ODatabaseDocumentInternal db, final OCommandContext iContext,
+      final Map<Object, Object> iArgs){
+
+
+
+    binding.put("db", new OScriptDatabaseWrapper(db));
+
+    bindInjectors(binding);
+
+    bindContext(binding, iContext);
+
+    bindParameters(binding, iArgs);
+
+    return binding;
+  }
+  @Deprecated
   public Bindings bind(final Bindings binding, final ODatabaseDocumentInternal db, final OCommandContext iContext,
       final Map<Object, Object> iArgs) {
-    if (db != null) {
-      // BIND FIXED VARIABLES
-      binding.put("db", new OScriptDocumentDatabaseWrapper(db));
-      binding.put("orient", new OScriptOrientWrapper(db));
-    }
-    binding.put("util", new OFunctionUtilWrapper());
 
+    bindLegacyDatabaseAndUtil(binding, db);
+
+    bindInjectors(binding);
+
+    bindContext(binding, iContext);
+
+    bindParameters(binding, iArgs);
+
+    return binding;
+  }
+
+  private void bindInjectors(Bindings binding) {
     for (OScriptInjection i : injections)
       i.bind(binding);
+  }
 
+  private void bindContext(Bindings binding, OCommandContext iContext) {
     // BIND CONTEXT VARIABLE INTO THE SCRIPT
     if (iContext != null) {
       binding.put("ctx", iContext);
@@ -248,7 +257,18 @@ public class OScriptManager {
         binding.put(a.getKey(), a.getValue());
       }
     }
+  }
 
+  private void bindLegacyDatabaseAndUtil(Bindings binding, ODatabaseDocumentInternal db) {
+    if (db != null) {
+      // BIND FIXED VARIABLES
+      binding.put("db", new OScriptDocumentDatabaseWrapper(db));
+      binding.put("orient", new OScriptOrientWrapper(db));
+    }
+    binding.put("util", new OFunctionUtilWrapper());
+  }
+
+  private void bindParameters(Bindings binding, Map<Object, Object> iArgs) {
     // BIND PARAMETERS INTO THE SCRIPT
     if (iArgs != null) {
       for (Entry<Object, Object> a : iArgs.entrySet()) {
@@ -258,8 +278,6 @@ public class OScriptManager {
       binding.put("params", iArgs.values().toArray());
     } else
       binding.put("params", EMPTY_PARAMS);
-
-    return binding;
   }
 
   public String throwErrorMessage(final ScriptException e, final String lib) {
@@ -389,5 +407,9 @@ public class OScriptManager {
     final ODatabaseScriptManager dbPool = dbManagers.remove(iDatabaseName);
     if (dbPool != null)
       dbPool.close();
+  }
+
+  public OScriptTransformer getTransformer() {
+    return transformer;
   }
 }
