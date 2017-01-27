@@ -121,4 +121,9 @@ public abstract class OrientElement implements Element {
         return ElementHelper.areEqual(this, object);
     }
 
+
+
+
+
+
 }

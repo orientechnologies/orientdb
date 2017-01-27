@@ -1,7 +1,8 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Rule;
-import org.junit.rules.ExternalResource;
 import org.junit.rules.TestName;
 
 /**
@@ -10,34 +11,28 @@ import org.junit.rules.TestName;
 
 public abstract class OrientGraphBaseTest {
 
-    @Rule
-    public TestName name = new TestName();
+  @Rule
+  public TestName name = new TestName();
 
-    protected OrientGraphFactory factory;
+  protected OrientGraphFactory factory;
 
-    @Rule
-    public ExternalResource resource = new ExternalResource() {
+  @Before
+  public void setupDB() {
+    String config = System.getProperty("orientdb.test.env", "memory");
 
-        @Override
-        protected void before() throws Throwable {
+    String url = null;
+    if ("ci".equals(config) || "release".equals(config)) {
+      url = "plocal:./target/databases/" + name.getMethodName();
+    } else {
+      url = "memory:" + name.getMethodName();
+    }
+    factory = new OrientGraphFactory(url);
 
-            String config = System.getProperty("orientdb.test.env", "memory");
+  }
 
-            String url = null;
-            if ("ci".equals(config) || "release".equals(config)) {
-                url = "plocal:./target/databases/" + name.getMethodName();
-            } else {
-                url = "memory:" + name.getMethodName();
-            }
-            factory = new OrientGraphFactory(url);
-
-        }
-
-        @Override
-        protected void after() {
-            factory.getNoTx().drop();
-        }
-
-    };
+  @After
+  public void dropDB() {
+    factory.getNoTx().drop();
+  }
 
 }
