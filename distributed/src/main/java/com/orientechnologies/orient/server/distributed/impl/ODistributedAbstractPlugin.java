@@ -883,6 +883,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
             if (deploy == null || !deploy) {
               // NO AUTO DEPLOY
+              ODistributedServerLog.debug(this, nodeName, null, DIRECTION.NONE,
+                  "Skipping download of database '%s' from the cluster because autoDeploy=false", databaseName);
+
               setDatabaseStatus(nodeName, databaseName, DB_STATUS.ONLINE);
               distrDatabase.resume();
               return false;
@@ -904,6 +907,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
                 if (deploy == null || !deploy) {
                   // NO AUTO DEPLOY
+                  ODistributedServerLog.debug(this, nodeName, null, DIRECTION.NONE,
+                      "Skipping download of database '%s' from the cluster because autoDeploy=false", databaseName);
+
                   setDatabaseStatus(nodeName, databaseName, DB_STATUS.ONLINE);
                   distrDatabase.resume();
                   return false;
