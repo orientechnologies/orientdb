@@ -77,6 +77,14 @@ public class OSQLFunctionAstar extends OSQLFunctionHeuristicPathFinderAbstract {
             final ORecord record = iCurrentRecord != null ? iCurrentRecord.getRecord() : null;
 
             Object source = iParams[0];
+            Object dest = iParams[1];
+
+            // to fix null source or dest checking
+            if(source == null || dest == null || iParams[2] == null){
+              route.clear();
+              return getPath();
+            }
+
             if (OMultiValue.isMultiValue(source)) {
               if (OMultiValue.getSize(source) > 1)
                 throw new IllegalArgumentException("Only one sourceVertex is allowed");
@@ -84,7 +92,7 @@ public class OSQLFunctionAstar extends OSQLFunctionHeuristicPathFinderAbstract {
             }
             paramSourceVertex = graph.getVertex(OSQLHelper.getValue(source, record, iContext));
 
-            Object dest = iParams[1];
+
             if (OMultiValue.isMultiValue(dest)) {
               if (OMultiValue.getSize(dest) > 1)
                 throw new IllegalArgumentException("Only one destinationVertex is allowed");
@@ -107,6 +115,15 @@ public class OSQLFunctionAstar extends OSQLFunctionHeuristicPathFinderAbstract {
 
     OrientVertex start = paramSourceVertex;
     OrientVertex goal = paramDestinationVertex;
+
+    // for fix the #7103 , https://github.com/orientechnologies/orientdb/issues/7103
+    // clear the route , open and closedSet and set the currentDepth to zero.
+    open.clear();
+    closedSet.clear();
+    route.clear();
+    currentDepth=0;
+
+
 
     open.add(start);
 
