@@ -13,6 +13,7 @@ import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 
+
 /**
  * Tests the "toCalendar()" method implemented by the OSQLMethodToCalendar class.  Note
  * that the only input to the execute() method from the OSQLMethod interface
@@ -23,6 +24,7 @@ import static org.junit.Assert.assertEquals;
 public class OSQLMethodToCalendarTest {
 
   private OSQLMethodToCalendar function;
+
 
   @Before
   public void setup() {

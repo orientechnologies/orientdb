@@ -246,7 +246,7 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/com.ibm.icu/icu4j -->
+        <!-- https://mvnrepository.com/artifact/com.ibm.icu/icu4j 58 -->
         <dependency>
             <groupId>com.ibm.icu</groupId>
             <artifactId>icu4j</artifactId>

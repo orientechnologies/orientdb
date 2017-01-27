@@ -28,7 +28,7 @@ import java.util.Date;
 import java.util.TimeZone;
 
 /**
- * @author Saeed Tabrizi (saeed a_t  nowcando.com)
+ * @author Saeed Tabrizi (saeed a_t nowcando.com)
  */
 public class OSQLMethodToCalendar extends OAbstractSQLMethod {
 
@@ -36,6 +36,10 @@ public class OSQLMethodToCalendar extends OAbstractSQLMethod {
     private String[] weekWorkingDaysDefault = new String[]{OCalendar.CAL_MONDAY, OCalendar.CAL_TUESDAY,
             OCalendar.CAL_WEDNESDAY, OCalendar.CAL_THURSDAY, OCalendar.CAL_FRIDAY};
     private short[] yearHolidaysDefault = new short[]{};
+
+
+
+
 
     public OSQLMethodToCalendar() {
         super(NAME, 0, 3);

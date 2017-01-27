@@ -43,7 +43,7 @@ import java.util.*;
  * <p>
  * If property is not defined in edge or is null, distance between vertexes are 0 .
  *
- * @author Saeed Tabrizi (saeed a_t  nowcando.com)
+ * @author Saeed Tabrizi (saeed a_t nowcando.com)
  */
 public class OSQLFunctionAstar extends OSQLFunctionHeuristicPathFinderAbstract {
   public static final String NAME = "astar";

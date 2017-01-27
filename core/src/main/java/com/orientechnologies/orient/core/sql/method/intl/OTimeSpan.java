@@ -39,14 +39,18 @@ public class OTimeSpan {
     private long  totalMilis =0;
 
     private long  days =0;
+
     private byte  hours =0;
     private byte  minutes =0;
+
     private byte  seconds =0;
     private long   milis =0;
     private boolean isStartGreater = false;
 
     public  OTimeSpan(Date start,Date end){
         try{
+
+
             long diff = end.getTime() - start.getTime();
             if(diff<0) this.isStartGreater=true;
             this.totalDays = Math.floorDiv(diff,MilisPerDay)   ;

@@ -459,7 +459,10 @@ public class OCalendar {
             this.calendar.setTimeZone(com.ibm.icu.util.TimeZone.getTimeZone(timezoneid));
         } catch (Exception ex) {
             // do nothhing
+
         }
+
+
 
         return this;
     }

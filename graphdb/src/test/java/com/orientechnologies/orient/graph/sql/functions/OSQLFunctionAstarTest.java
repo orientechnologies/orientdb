@@ -39,7 +39,7 @@ import java.util.Map;
 import static org.junit.Assert.assertEquals;
 
 /*
-* @author Saeed Tabrizi (saeed a_t  nowcando.com)
+* @author Saeed Tabrizi (saeed a_t nowcando.com)
  */
 public class OSQLFunctionAstarTest {
     private static int dbCounter = 0;
