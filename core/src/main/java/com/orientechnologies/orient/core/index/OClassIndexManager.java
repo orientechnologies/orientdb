@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 
@@ -73,7 +74,7 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
     if (lockedKeys == null)
       lockedKeys = new ArrayDeque<List<Lock[]>>();
   }
-
+  
   private void processCompositeIndexUpdate(final OIndex<?> index, final Set<String> dirtyFields, final ODocument iRecord) {
     final OCompositeIndexDefinition indexDefinition = (OCompositeIndexDefinition) index.getDefinition();
 
@@ -149,6 +150,41 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
       }
     }
   }
+  
+  // Check if field is embedded. For e.g. person.address.city
+  private boolean isFieldEmbedded(String indexField) {
+	  if(indexField.contains("."))
+		  return true;
+	  else
+		  return false;
+  }
+	 
+  // Get Field of the document which contains an embedded. For e.g.
+  // If IndexField is person.address.city, then field is person
+  // If IndexField is mobiles[home].mobileNumber, then field is mobiles
+  private String getFieldFromEmbeddedField(String embeddedField) {
+	  String field = null;
+	  if(embeddedField.contains("."))
+		  field = embeddedField.split("\\.")[0];
+	  if(embeddedField.contains("["))
+		  field = embeddedField.split("\\[")[0];
+	  return field;  
+   }
+	 
+  // Get embedded key from the field. For e.g.
+  // If IndexField is person.address.city, then Embedded key is address.city
+  // If IndexField is mobiles[home].mobileNumber, then Embedded key is home.mobileNumber
+  private String getEmbeddedKeyFromEmbeddedField(String embeddedField) {
+	 String embeddedKey = null;
+	 String field = getFieldFromEmbeddedField(embeddedField);
+	 char firstSeaparator = embeddedField.charAt(field.length());
+	 if(firstSeaparator == '.'){
+		 embeddedKey = embeddedField.substring(field.length() + 1);
+	 } else if(firstSeaparator == '['){
+		 embeddedKey = embeddedField.substring(field.length() + 1).replaceFirst("\\]", "");
+	 }
+	 return embeddedKey;
+  }
 
   private void processSingleIndexUpdate(final OIndex<?> index, final Set<String> dirtyFields, final ODocument iRecord) {
     final OIndexDefinition indexDefinition = index.getDefinition();
@@ -158,31 +194,46 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
       return;
 
     final String indexField = indexFields.get(0);
-    if (!dirtyFields.contains(indexField))
-      return;
+    if(isFieldEmbedded(indexField)) { // If index is on an embedded field update the embedded index
+    	String fieldWithEmbeddedIndex = getFieldFromEmbeddedField(indexField);
+    	if (!dirtyFields.contains(fieldWithEmbeddedIndex))
+    		return;
+    	
+			Object originalDocumentEntry = iRecord.getOriginalValue(fieldWithEmbeddedIndex);
+			Object originalValue = ODocumentHelper.getFieldValue(originalDocumentEntry,
+					getEmbeddedKeyFromEmbeddedField(indexField));
+			final Object origValue = indexDefinition.createValue(originalValue);
+			final Object newValue = indexDefinition.getDocumentValueToIndex(iRecord);
 
-    final OMultiValueChangeTimeLine<?, ?> multiValueChangeTimeLine = iRecord.getCollectionTimeLine(indexField);
-    if (multiValueChangeTimeLine != null) {
-      final OIndexDefinitionMultiValue indexDefinitionMultiValue = (OIndexDefinitionMultiValue) indexDefinition;
-      final Map<Object, Integer> keysToAdd = new HashMap<Object, Integer>();
-      final Map<Object, Integer> keysToRemove = new HashMap<Object, Integer>();
-
-      for (OMultiValueChangeEvent<?, ?> changeEvent : multiValueChangeTimeLine.getMultiValueChangeEvents()) {
-        indexDefinitionMultiValue.processChangeEvent(changeEvent, keysToAdd, keysToRemove);
-      }
-
-      for (final Object keyToRemove : keysToRemove.keySet())
-        removeFromIndex(index, keyToRemove, iRecord);
-
-      for (final Object keyToAdd : keysToAdd.keySet())
-        putInIndex(index, keyToAdd, iRecord.getIdentity());
-
+        processIndexUpdateFieldAssignment(index, iRecord, origValue, newValue);
     } else {
-      final Object origValue = indexDefinition.createValue(iRecord.getOriginalValue(indexField));
-      final Object newValue = indexDefinition.getDocumentValueToIndex(iRecord);
+    	if (!dirtyFields.contains(indexField))
+    		return;
+    	
+    	final OMultiValueChangeTimeLine<?, ?> multiValueChangeTimeLine = iRecord.getCollectionTimeLine(indexField);
+        if (multiValueChangeTimeLine != null) {
+          final OIndexDefinitionMultiValue indexDefinitionMultiValue = (OIndexDefinitionMultiValue) indexDefinition;
+          final Map<Object, Integer> keysToAdd = new HashMap<Object, Integer>();
+          final Map<Object, Integer> keysToRemove = new HashMap<Object, Integer>();
 
-      processIndexUpdateFieldAssignment(index, iRecord, origValue, newValue);
+          for (OMultiValueChangeEvent<?, ?> changeEvent : multiValueChangeTimeLine.getMultiValueChangeEvents()) {
+            indexDefinitionMultiValue.processChangeEvent(changeEvent, keysToAdd, keysToRemove);
+          }
+
+          for (final Object keyToRemove : keysToRemove.keySet())
+            removeFromIndex(index, keyToRemove, iRecord);
+
+          for (final Object keyToAdd : keysToAdd.keySet())
+            putInIndex(index, keyToAdd, iRecord.getIdentity());
+
+        } else {
+          final Object origValue = indexDefinition.createValue(iRecord.getOriginalValue(indexField));
+          final Object newValue = indexDefinition.getDocumentValueToIndex(iRecord);
+
+          processIndexUpdateFieldAssignment(index, iRecord, origValue, newValue);
+        }
     }
+    
   }
 
   private void processIndexUpdateFieldAssignment(OIndex<?> index, ODocument iRecord, final Object origValue,

@@ -78,11 +78,13 @@ public class EmbeddedIndexingTest {
 		mobile6.save();
 
 		db.command(new OCommandSQL("CREATE class person")).execute();
+		db.command(new OCommandSQL("CREATE property person.name STRING")).execute();
 		db.command(new OCommandSQL("CREATE property person.mobile LINK mobile")).execute();
 		db.command(new OCommandSQL("CREATE property person.mobileslist LINKLIST mobile")).execute();
 		db.command(new OCommandSQL("CREATE property person.mobilesset LINKSET mobile")).execute();
 		db.command(new OCommandSQL("CREATE property person.mobilesmap LINKMAP mobile")).execute();
 
+		db.command(new OCommandSQL("CREATE index person_name on person (name) NOTUNIQUE")).execute();
 		db.command(new OCommandSQL("CREATE index person_mobile on person (mobile) NOTUNIQUE")).execute();
 		db.command(new OCommandSQL(
 				"CREATE index person_mobileslist on person (`mobileslist.mobileNumber`) NOTUNIQUE STRING")).execute();
@@ -93,6 +95,7 @@ public class EmbeddedIndexingTest {
 				.execute(); // Indexed on value of particular key of the map
 
 		ODocument person1 = db.newInstance("person");
+		person1.field("name", "person1");
 		person1.field("mobile", mobile1);
 		List<ODocument> elist1 = new LinkedList<ODocument>();
 		elist1.add(mobile3);
@@ -103,25 +106,29 @@ public class EmbeddedIndexingTest {
 		eset1.add(mobile4);
 		person1.field("mobilesset", eset1);
 		Map<String, ODocument> emap1 = new HashMap<String, ODocument>();
-		emap1.put("personal", mobile3);
 		emap1.put("official", mobile4);
 		person1.field("mobilesmap", emap1);
 		person1.save();
 
+		emap1 = person1.field("mobilesmap");
+		emap1.put("personal", mobile3);
+		person1.save();
+
 		ODocument person2 = db.newInstance("person");
+		person2.field("name", "person2");
 		person2.field("mobile", mobile2);
 		List<ODocument> elist2 = new LinkedList<ODocument>();
 		elist2.add(mobile5);
 		elist2.add(mobile6);
-		person1.field("mobileslist", elist2);
+		person2.field("mobileslist", elist2);
 		Set<ODocument> eset2 = new LinkedHashSet<ODocument>();
 		eset2.add(mobile5);
 		eset2.add(mobile6);
-		person1.field("mobilesset", eset2);
+		person2.field("mobilesset", eset2);
 		Map<String, ODocument> emap2 = new HashMap<String, ODocument>();
 		emap2.put("personal", mobile5);
 		emap2.put("official", mobile6);
-		person1.field("mobilesmap", emap2);
+		person2.field("mobilesmap", emap2);
 		person2.save();
 
 		db.command(new OCommandSQL("CREATE class citizen")).execute();
@@ -159,40 +166,50 @@ public class EmbeddedIndexingTest {
 		db.command(new OCommandSQL("insert into foo (name, bar, address, xyz) values "
 				+ "('b', 2, {'pincode':654321, 'city':'LA', '@type':'d', '@class':'address'}, {'asd':{'zxc':'val2'}, '@type':'d'})"))
 				.execute();
+		db.command(new OCommandSQL("insert into foo content "
+				+ "{ 'name': 'c', 'bar': 3, 'address': {'pincode':111111, 'city':'CHE', '@type':'d', '@class':'address'}, 'xyz': {'asd':{'zxc':'val3'}, '@type':'d'}}"))
+				.execute();
 
 		db.command(new OCommandSQL("CREATE class test")).execute();
+		db.command(new OCommandSQL("CREATE property test.name STRING")).execute();
 		db.command(new OCommandSQL("CREATE property test.eliststr EMBEDDEDLIST STRING")).execute();
 		db.command(new OCommandSQL("CREATE property test.esetstr EMBEDDEDSET STRING")).execute();
 		db.command(new OCommandSQL("CREATE property test.emapstr EMBEDDEDMAP STRING")).execute();
 
+		db.command(new OCommandSQL("CREATE index test_name on test (name) NOTUNIQUE")).execute();
 		db.command(new OCommandSQL("CREATE index test_eliststr on test (eliststr) NOTUNIQUE")).execute();
 		db.command(new OCommandSQL("CREATE index test_esetstr on test (esetstr) NOTUNIQUE")).execute();
 		db.command(new OCommandSQL("CREATE index test_emapstr on test (emapstr by value) NOTUNIQUE")).execute();
 
-		db.command(new OCommandSQL("insert into test (eliststr, esetstr, emapstr) values "
-				+ "(['elistval1', 'elistval2', 'elistval3'], ['esetval1', 'esetval2', 'esetval3'], {'k1':'v1', 'k2':'v2'})"))
+		db.command(new OCommandSQL("insert into test (name, eliststr, esetstr, emapstr) values "
+				+ "('test1', ['elistval1', 'elistval2', 'elistval3'], ['esetval1', 'esetval2', 'esetval3'], {'k1':'v1', 'k2':'v2'})"))
 				.execute();
-		db.command(new OCommandSQL("insert into test (eliststr, esetstr, emapstr) values "
-				+ "(['elistval4', 'elistval5', 'elistval6'], ['esetval4', 'esetval5', 'esetval6'], {'k1':'v3', 'k2':'v4'})"))
+		db.command(new OCommandSQL("insert into test (name, eliststr, esetstr, emapstr) values "
+				+ "('test2', ['elistval4', 'elistval5', 'elistval6'], ['esetval4', 'esetval5', 'esetval6'], {'k1':'v3', 'k2':'v4'})"))
+				.execute();
+		db.command(new OCommandSQL("insert into test (name, eliststr, esetstr, emapstr) values "
+				+ "('test3', ['elistval7', 'elistval8', 'elistval9'], ['esetval7', 'esetval8', 'esetval9'], {'k1':'v5', 'k2':'v6'})"))
 				.execute();
 
 		db.command(new OCommandSQL("CREATE class demo")).execute();
+		db.command(new OCommandSQL("CREATE property demo.name STRING")).execute();
 		db.command(new OCommandSQL("CREATE property demo.elist EMBEDDEDLIST address")).execute();
 		db.command(new OCommandSQL("CREATE property demo.eset EMBEDDEDSET address")).execute();
 		db.command(new OCommandSQL("CREATE property demo.emap EMBEDDEDMAP address")).execute();
 
+		db.command(new OCommandSQL("CREATE index demo_name on demo (name) NOTUNIQUE")).execute();
 		db.command(new OCommandSQL("CREATE index demo_elist on demo (`elist.city`) NOTUNIQUE STRING")).execute();
 		db.command(new OCommandSQL("CREATE index demo_eset on demo (`eset.city`) NOTUNIQUE STRING")).execute();
 		db.command(new OCommandSQL("CREATE index demo_emap on demo (`emap[homeAddress].city`) NOTUNIQUE STRING"))
 				.execute();
 
-		db.command(new OCommandSQL("insert into demo (elist, eset, emap) values "
-				+ "([{'@type':'d', '@class':'address','city':'NY','pincode':123456}, {'@type':'d', '@class':'address','city':'LA','pincode':654321}], "
+		db.command(new OCommandSQL("insert into demo (name, elist, eset, emap) values "
+				+ "('demo1', [{'@type':'d', '@class':'address','city':'NY','pincode':123456}, {'@type':'d', '@class':'address','city':'LA','pincode':654321}], "
 				+ "[{'@type':'d', '@class':'address','city':'SJ','pincode':111111}, {'@type':'d', '@class':'address','city':'AU','pincode':222222}], "
 				+ "{'homeAddress':{'@type':'d', '@class':'address','city':'NJ','pincode':333333}, 'officeAddress':{'@type':'d', '@class':'address','city':'WDC','pincode':444444}})"))
 				.execute();
-		db.command(new OCommandSQL("insert into demo (elist, eset, emap) values "
-				+ "([{'@type':'d', '@class':'address','city':'BLR','pincode':555555}, {'@type':'d', '@class':'address','city':'MYS','pincode':666666}], "
+		db.command(new OCommandSQL("insert into demo (name, elist, eset, emap) values "
+				+ "('demo2', [{'@type':'d', '@class':'address','city':'BLR','pincode':555555}, {'@type':'d', '@class':'address','city':'MYS','pincode':666666}], "
 				+ "[{'@type':'d', '@class':'address','city':'ND','pincode':777777}, {'@type':'d', '@class':'address','city':'MUM','pincode':888888}], "
 				+ "{'homeAddress':{'@type':'d', '@class':'address','city':'HYD','pincode':999999}, 'officeAddress':{'@type':'d', '@class':'address','city':'CH','pincode':876789}})"))
 				.execute();
@@ -301,6 +318,34 @@ public class EmbeddedIndexingTest {
 	}
 
 	@Test
+	public void testEmbeddedWithLinkedClass_OnUpdate() throws Exception {
+		long idxUsages1 = indexUsages(db);
+
+		List<ODocument> qResult = db.command(new OCommandSQL("select * from foo where address.city = 'CHE'")).execute();
+		Assert.assertEquals(qResult.size(), 1);
+
+		long idxUsages2 = indexUsages(db);
+		Assert.assertEquals(idxUsages1 + 1, idxUsages2);
+
+		db.command(new OCommandSQL(
+				"update foo set address= {'pincode':222222, 'city':'BLR', '@type':'d', '@class':'address'} where name='c'"))
+				.execute();
+
+		long idxUsages3 = indexUsages(db);
+		List<ODocument> qResult2 = db.command(new OCommandSQL("select * from foo where address.city = 'CHE'"))
+				.execute();
+		Assert.assertEquals(qResult2.size(), 0);
+		long idxUsages4 = indexUsages(db);
+		Assert.assertEquals(idxUsages3 + 1, idxUsages4);
+
+		List<ODocument> qResult3 = db.command(new OCommandSQL("select * from foo where address.city = 'BLR'"))
+				.execute();
+		Assert.assertEquals(qResult3.size(), 1);
+		long idxUsages5 = indexUsages(db);
+		Assert.assertEquals(idxUsages4 + 1, idxUsages5);
+	}
+
+	@Test
 	public void testEmbeddedWithoutLinkedClass() throws Exception {
 		long idxUsagesBefore = indexUsages(db);
 
@@ -309,6 +354,31 @@ public class EmbeddedIndexingTest {
 
 		long idxUsagesAfter = indexUsages(db);
 		Assert.assertEquals(idxUsagesAfter, idxUsagesBefore + 1);
+	}
+
+	@Test
+	public void testEmbeddedWithoutLinkedClass_OnUpdate() throws Exception {
+		long idxUsages1 = indexUsages(db);
+
+		List<ODocument> qResult = db.command(new OCommandSQL("select * from foo where xyz.asd.zxc = 'val3'")).execute();
+		Assert.assertEquals(qResult.size(), 1);
+		long idxUsages2 = indexUsages(db);
+		Assert.assertEquals(idxUsages1 + 1, idxUsages2);
+
+		db.command(new OCommandSQL("update foo set xyz= {'asd':{'zxc':'val4'}, '@type':'d'} where name='c'")).execute();
+
+		long idxUsages3 = indexUsages(db);
+		List<ODocument> qResult2 = db.command(new OCommandSQL("select * from foo where xyz.asd.zxc = 'val3'"))
+				.execute();
+		Assert.assertEquals(qResult2.size(), 0);
+		long idxUsages4 = indexUsages(db);
+		Assert.assertEquals(idxUsages3 + 1, idxUsages4);
+
+		List<ODocument> qResult3 = db.command(new OCommandSQL("select * from foo where xyz.asd.zxc = 'val4'"))
+				.execute();
+		Assert.assertEquals(qResult3.size(), 1);
+		long idxUsages5 = indexUsages(db);
+		Assert.assertEquals(idxUsages4 + 1, idxUsages5);
 	}
 
 	@Test
@@ -324,6 +394,33 @@ public class EmbeddedIndexingTest {
 	}
 
 	@Test
+	public void testEmbeddedListOfPrimitives_OnUpdate() throws Exception {
+		long idxUsages1 = indexUsages(db);
+
+		List<ODocument> qResult = db.command(new OCommandSQL("select * from test where eliststr contains 'elistval7'"))
+				.execute();
+		Assert.assertEquals(qResult.size(), 1);
+		long idxUsages2 = indexUsages(db);
+		Assert.assertEquals(idxUsages1 + 1, idxUsages2);
+
+		db.command(new OCommandSQL(
+				"update test set eliststr= ['elistval10', 'elistval11', 'elistval12'] where name='test3'")).execute();
+
+		long idxUsages3 = indexUsages(db);
+		List<ODocument> qResult2 = db.command(new OCommandSQL("select * from test where eliststr contains 'elistval7'"))
+				.execute();
+		Assert.assertEquals(qResult2.size(), 0);
+		long idxUsages4 = indexUsages(db);
+		Assert.assertEquals(idxUsages3 + 1, idxUsages4);
+
+		List<ODocument> qResult3 = db
+				.command(new OCommandSQL("select * from test where eliststr contains 'elistval10'")).execute();
+		Assert.assertEquals(qResult3.size(), 1);
+		long idxUsages5 = indexUsages(db);
+		Assert.assertEquals(idxUsages4 + 1, idxUsages5);
+	}
+
+	@Test
 	public void testEmbeddedSetOfPrimitives() throws Exception {
 		long idxUsagesBefore = indexUsages(db);
 
@@ -333,6 +430,34 @@ public class EmbeddedIndexingTest {
 
 		long idxUsagesAfter = indexUsages(db);
 		Assert.assertEquals(idxUsagesAfter, idxUsagesBefore + 1);
+	}
+
+	@Test
+	public void testEmbeddedSetOfPrimitives_OnUpdate() throws Exception {
+		long idxUsages1 = indexUsages(db);
+
+		List<ODocument> qResult = db.command(new OCommandSQL("select * from test where esetstr contains 'esetval7'"))
+				.execute();
+		Assert.assertEquals(qResult.size(), 1);
+		long idxUsages2 = indexUsages(db);
+		Assert.assertEquals(idxUsages1 + 1, idxUsages2);
+
+		db.command(
+				new OCommandSQL("update test set esetstr= ['esetval10', 'esetval11', 'esetval12'] where name='test3'"))
+				.execute();
+
+		long idxUsages3 = indexUsages(db);
+		List<ODocument> qResult2 = db.command(new OCommandSQL("select * from test where esetstr contains 'esetval7'"))
+				.execute();
+		Assert.assertEquals(qResult2.size(), 0);
+		long idxUsages4 = indexUsages(db);
+		Assert.assertEquals(idxUsages3 + 1, idxUsages4);
+
+		List<ODocument> qResult3 = db.command(new OCommandSQL("select * from test where esetstr contains 'esetval10'"))
+				.execute();
+		Assert.assertEquals(qResult3.size(), 1);
+		long idxUsages5 = indexUsages(db);
+		Assert.assertEquals(idxUsages4 + 1, idxUsages5);
 	}
 
 	@Test
@@ -349,6 +474,35 @@ public class EmbeddedIndexingTest {
 	}
 
 	@Test
+	public void testEmbeddedMapOfPrimitives_OnUpdate() throws Exception {
+		long idxUsages1 = indexUsages(db);
+
+		List<ODocument> qResult = db
+				.command(new OCommandSQL("select * from test where emapstr containsvalue 'v5' and emapstr[k1]='v5'"))
+				.execute();
+		Assert.assertEquals(qResult.size(), 1);
+		long idxUsages2 = indexUsages(db);
+		Assert.assertEquals(idxUsages1 + 1, idxUsages2);
+
+		db.command(new OCommandSQL("update test set emapstr= {'k1':'v7', 'k2':'v8'} where name='test3'")).execute();
+
+		long idxUsages3 = indexUsages(db);
+		List<ODocument> qResult2 = db
+				.command(new OCommandSQL("select * from test where emapstr containsvalue 'v5' and emapstr[k1]='v5'"))
+				.execute();
+		Assert.assertEquals(qResult2.size(), 0);
+		long idxUsages4 = indexUsages(db);
+		Assert.assertEquals(idxUsages3 + 1, idxUsages4);
+
+		List<ODocument> qResult3 = db
+				.command(new OCommandSQL("select * from test where emapstr containsvalue 'v7' and emapstr[k1]='v7'"))
+				.execute();
+		Assert.assertEquals(qResult3.size(), 1);
+		long idxUsages5 = indexUsages(db);
+		Assert.assertEquals(idxUsages4 + 1, idxUsages5);
+	}
+
+	@Test
 	public void testEmbeddedListOfLinkedClass() throws Exception {
 		long idxUsagesBefore = indexUsages(db);
 
@@ -361,10 +515,38 @@ public class EmbeddedIndexingTest {
 	}
 
 	@Test
+	public void testEmbeddedListOfLinkedClass_OnUpdate() throws Exception {
+		long idxUsages1 = indexUsages(db);
+
+		List<ODocument> qResult = db.command(new OCommandSQL("select * from demo where elist.city contains 'NY'"))
+				.execute();
+		Assert.assertEquals(qResult.size(), 1);
+		long idxUsages2 = indexUsages(db);
+		Assert.assertEquals(idxUsages1 + 1, idxUsages2);
+
+		db.command(new OCommandSQL(
+				"update demo set elist= [{'@type':'d', '@class':'address','city':'MOR','pincode':222111}, {'@type':'d', '@class':'address','city':'SHI','pincode':444333}] where name='demo1'"))
+				.execute();
+
+		long idxUsages3 = indexUsages(db);
+		List<ODocument> qResult2 = db.command(new OCommandSQL("select * from demo where elist.city contains 'NY'"))
+				.execute();
+		Assert.assertEquals(qResult2.size(), 0);
+		long idxUsages4 = indexUsages(db);
+		Assert.assertEquals(idxUsages3 + 1, idxUsages4);
+
+		List<ODocument> qResult3 = db.command(new OCommandSQL("select * from demo where elist.city contains 'MOR'"))
+				.execute();
+		Assert.assertEquals(qResult3.size(), 1);
+		long idxUsages5 = indexUsages(db);
+		Assert.assertEquals(idxUsages4 + 1, idxUsages5);
+	}
+
+	@Test
 	public void testEmbeddedSetOfLinkedClass() throws Exception {
 		long idxUsagesBefore = indexUsages(db);
 
-		List<ODocument> qResult = db.command(new OCommandSQL("select * from demo where 'SJ' in eset.city")).execute();
+		List<ODocument> qResult = db.command(new OCommandSQL("select * from demo where 'ND' in eset.city")).execute();
 		Assert.assertEquals(qResult.size(), 1);
 
 		long idxUsagesAfter = indexUsages(db);
@@ -372,15 +554,68 @@ public class EmbeddedIndexingTest {
 	}
 
 	@Test
+	public void testEmbeddedSetOfLinkedClass_OnUpdate() throws Exception {
+		long idxUsages1 = indexUsages(db);
+
+		List<ODocument> qResult = db.command(new OCommandSQL("select * from demo where 'SJ' in eset.city")).execute();
+		Assert.assertEquals(qResult.size(), 1);
+		long idxUsages2 = indexUsages(db);
+		Assert.assertEquals(idxUsages1 + 1, idxUsages2);
+
+		db.command(new OCommandSQL(
+				"update demo set eset= [{'@type':'d', '@class':'address','city':'HUB','pincode':222111}, {'@type':'d', '@class':'address','city':'TUM','pincode':444333}] where name='demo1'"))
+				.execute();
+
+		long idxUsages3 = indexUsages(db);
+		List<ODocument> qResult2 = db.command(new OCommandSQL("select * from demo where 'SJ' in eset.city")).execute();
+		Assert.assertEquals(qResult2.size(), 0);
+		long idxUsages4 = indexUsages(db);
+		Assert.assertEquals(idxUsages3 + 1, idxUsages4);
+
+		List<ODocument> qResult3 = db.command(new OCommandSQL("select * from demo where 'TUM' in eset.city")).execute();
+		Assert.assertEquals(qResult3.size(), 1);
+		long idxUsages5 = indexUsages(db);
+		Assert.assertEquals(idxUsages4 + 1, idxUsages5);
+	}
+
+	@Test
 	public void testEmbeddedMapOfLinkedClass() throws Exception {
 		long idxUsagesBefore = indexUsages(db);
 
-		List<ODocument> qResult = db.command(new OCommandSQL("select * from demo where emap[homeAddress].city='NJ'"))
+		List<ODocument> qResult = db.command(new OCommandSQL("select * from demo where emap[homeAddress].city='HYD'"))
 				.execute();
 		Assert.assertEquals(qResult.size(), 1);
 
 		long idxUsagesAfter = indexUsages(db);
 		Assert.assertEquals(idxUsagesAfter, idxUsagesBefore + 1);
+	}
+
+	@Test
+	public void testEmbeddedMapOfLinkedClass_OnUpdate() throws Exception {
+		long idxUsages1 = indexUsages(db);
+
+		List<ODocument> qResult = db.command(new OCommandSQL("select * from demo where emap[homeAddress].city='NJ'"))
+				.execute();
+		Assert.assertEquals(qResult.size(), 1);
+		long idxUsages2 = indexUsages(db);
+		Assert.assertEquals(idxUsages1 + 1, idxUsages2);
+
+		db.command(new OCommandSQL(
+				"update demo set emap= {'homeAddress':{'@type':'d', '@class':'address','city':'DAV','pincode':333333}, 'officeAddress':{'@type':'d', '@class':'address','city':'CHI','pincode':444444}} where name='demo1'"))
+				.execute();
+
+		long idxUsages3 = indexUsages(db);
+		List<ODocument> qResult2 = db.command(new OCommandSQL("select * from demo where emap[homeAddress].city='NJ'"))
+				.execute();
+		Assert.assertEquals(qResult2.size(), 0);
+		long idxUsages4 = indexUsages(db);
+		Assert.assertEquals(idxUsages3 + 1, idxUsages4);
+
+		List<ODocument> qResult3 = db.command(new OCommandSQL("select * from demo where emap[homeAddress].city='DAV'"))
+				.execute();
+		Assert.assertEquals(qResult3.size(), 1);
+		long idxUsages5 = indexUsages(db);
+		Assert.assertEquals(idxUsages4 + 1, idxUsages5);
 	}
 
 }
