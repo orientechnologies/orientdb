@@ -14,6 +14,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 public class OrientDataSourceTest extends OrientJdbcBaseTest {
 
@@ -93,20 +94,26 @@ public class OrientDataSourceTest extends OrientJdbcBaseTest {
 
         while (queryTheDb.get()) {
 
-          Connection conn = ds.getConnection();
+          try {
 
-          Statement statement = conn.createStatement();
-          ResultSet rs = statement.executeQuery("SELECT stringKey, intKey, text, length, date FROM Item");
+            Connection conn = ds.getConnection();
 
-          assertThat(rs.first()).isTrue();
-          assertThat(rs.getString("stringKey")).isEqualTo("1");
+            Statement statement = conn.createStatement();
+            ResultSet rs = statement.executeQuery("SELECT stringKey, intKey, text, length, date FROM Item");
 
-          rs.close();
+            assertThat(rs.first()).isTrue();
+            assertThat(rs.getString("stringKey")).isEqualTo("1");
 
-          statement.close();
-          conn.close();
-          assertThat(conn.isClosed()).isTrue();
+            rs.close();
 
+            statement.close();
+            conn.close();
+            assertThat(conn.isClosed()).isTrue();
+
+          } catch (Exception e) {
+            e.printStackTrace();
+            fail("WTF:::", e);
+          }
         }
 
         return Boolean.TRUE;
@@ -122,7 +129,7 @@ public class OrientDataSourceTest extends OrientJdbcBaseTest {
     pool.submit(dbClient);
 
     //and let them work
-    TimeUnit.SECONDS.sleep(2);
+    TimeUnit.SECONDS.sleep(5);
 
     //stop clients
     queryTheDb.set(false);

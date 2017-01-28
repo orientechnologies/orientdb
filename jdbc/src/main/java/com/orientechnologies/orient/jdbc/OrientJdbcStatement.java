@@ -98,6 +98,7 @@ public class OrientJdbcStatement implements Statement {
   @Override
   public boolean execute(final String sqlCommand) throws SQLException {
 
+//    System.out.println("sqlCommand = " + sqlCommand);
     if ("".equals(sqlCommand))
       return false;
 
@@ -127,6 +128,8 @@ public class OrientJdbcStatement implements Statement {
       }
     }
     resultSet = new OrientJdbcResultSet(this, documents, resultSetType, resultSetConcurrency, resultSetHoldability);
+
+
     return true;
 
   }
@@ -155,6 +158,7 @@ public class OrientJdbcStatement implements Statement {
   protected <RET> RET executeCommand(OCommandRequest query) throws SQLException {
 
     try {
+      database.activateOnCurrentThread();
       return database.command(query).execute();
     } catch (OQueryParsingException e) {
       throw new SQLSyntaxErrorException("Error while parsing command", e);
