@@ -20,6 +20,7 @@
 
 package com.orientechnologies.orient.core.db.document;
 
+import com.orientechnologies.orient.core.command.script.OCommandScriptException;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -466,5 +467,32 @@ public interface ODatabaseDocument extends ODatabase<ORecord> {
    * @return
    */
   OResultSet command(String query, Map args) throws OCommandSQLParsingException, OCommandExecutionException;
+
+  /**
+   * Execute a script of a specified query language
+   * <p>
+   * Experimental
+   *
+   * @param language
+   * @param script
+   * @param args
+   *
+   * @return
+   */
+  OResultSet execute(String language, String script, Object... args) throws OCommandExecutionException, OCommandScriptException;
+
+  /**
+   * Execute a script of a specified query language
+   * <p>
+   * Experimental
+   *
+   * @param language
+   * @param script
+   * @param args
+   *
+   * @return
+   */
+  OResultSet execute(String language, String script, Map<String, ?> args)
+      throws OCommandExecutionException, OCommandScriptException;
 
 }

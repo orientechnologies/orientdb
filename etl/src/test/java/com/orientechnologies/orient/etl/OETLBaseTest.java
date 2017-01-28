@@ -22,7 +22,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -42,48 +41,41 @@ public abstract class OETLBaseTest {
   protected String[] names    = new String[] { "Jay", "Luca", "Bill", "Steve", "Jill", "Luigi", "Enrico", "Emanuele" };
   protected String[] surnames = new String[] { "Miner", "Ferguson", "Cancelli", "Lavori", "Raggio", "Eagles", "Smiles",
       "Ironcutter" };
-  protected OrientGraph graph;
   protected OETLProcessor             proc;
   private   OETLProcessorConfigurator configurator;
 
   @Before
-  public void setupDatabse() throws Throwable {
+  public void configureProcessor() throws Throwable {
 
     OLogManager.instance().installCustomFormatter();
-    String config = System.getProperty("orientdb.test.env", "memory");
+    OETLComponentFactory factory = new OETLComponentFactory()
+        .registerLoader(OETLStubLoader.class)
+        .registerExtractor(OETLStubRandomExtractor.class);
 
-    graph = new OrientGraph("memory:" + name.getMethodName());
-
-    graph.setUseLightweightEdges(false);
+    configurator = new OETLProcessorConfigurator(factory);
 
   }
 
   @After
-  public void dropDatabase() {
-    graph.drop();
-  }
-
-  @Before
-  public void setUpConfigurator() {
-    OETLComponentFactory factory = new OETLComponentFactory().registerLoader(OETLStubLoader.class)
-        .registerExtractor(OETLStubRandomExtractor.class);
-
-    configurator = new OETLProcessorConfigurator(factory);
+  public void closeResources() {
+    if (proc != null)
+      proc.close();
   }
 
   protected List<ODocument> getResult() {
     return ((OETLStubLoader) proc.getLoader()).loadedRecords;
   }
 
-  protected void process(final String cfgJson) {
+  protected void configure(final String cfgJson) {
 
-    process(cfgJson, new OBasicCommandContext());
+    configure(cfgJson, new OBasicCommandContext());
   }
 
-  protected void process(final String cfgJson, final OCommandContext iContext) {
+  protected void configure(final String cfgJson, final OCommandContext iContext) {
     ODocument cfg = new ODocument().fromJSON(cfgJson, "noMap");
 
     proc = configurator.parse(cfg, iContext);
-    proc.execute();
+
+//    proc.execute();
   }
 }

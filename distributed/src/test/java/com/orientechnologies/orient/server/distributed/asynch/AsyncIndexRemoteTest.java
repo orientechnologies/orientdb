@@ -1,14 +1,12 @@
 package com.orientechnologies.orient.server.distributed.asynch;
 
-import junit.framework.Assert;
-
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import junit.framework.Assert;
 
 public class AsyncIndexRemoteTest extends BareBoneBase3ServerTest {
 
@@ -18,7 +16,8 @@ public class AsyncIndexRemoteTest extends BareBoneBase3ServerTest {
   }
 
   protected void dbClient1() {
-    OrientBaseGraph graph = new OrientGraphNoTx(getRemoteURL());
+    ODatabaseDocumentTx graph = new ODatabaseDocumentTx(getRemoteURL());
+    graph.open("admin", "admin");
     try {
       graph.command(new OCommandSQL("create class SMS")).execute();
       graph.command(new OCommandSQL("create property SMS.type string")).execute();
@@ -39,7 +38,7 @@ public class AsyncIndexRemoteTest extends BareBoneBase3ServerTest {
       } catch (ORecordDuplicatedException e) {
       }
 
-      final Iterable<OrientVertex> result = graph.command(new OSQLSynchQuery<OrientVertex>("select count(*) from SMS")).execute();
+      final Iterable<OElement> result = graph.command(new OSQLSynchQuery<OElement>("select count(*) from SMS")).execute();
 
       Assert.assertEquals(1, ((Number) result.iterator().next().getProperty("count")).intValue());
 
@@ -49,11 +48,12 @@ public class AsyncIndexRemoteTest extends BareBoneBase3ServerTest {
       }
     } finally {
       OLogManager.instance().info(this, "Shutting down db1");
-      graph.shutdown();
+      graph.close();
     }
 
     // CHECK ON THE 2ND NODE
-    OrientBaseGraph graph2 = new OrientGraphNoTx(getRemoteURL2());
+    ODatabaseDocumentTx graph2 = new ODatabaseDocumentTx(getRemoteURL2());
+    graph2.open("admin", "admin");
     try {
       try {
         graph2
@@ -63,7 +63,7 @@ public class AsyncIndexRemoteTest extends BareBoneBase3ServerTest {
       } catch (ORecordDuplicatedException e) {
       }
 
-      final Iterable<OrientVertex> result = graph2.command(new OSQLSynchQuery<OrientVertex>("select count(*) from SMS")).execute();
+      final Iterable<OElement> result = graph2.command(new OSQLSynchQuery<OElement>("select count(*) from SMS")).execute();
 
       Assert.assertEquals(1, ((Number) result.iterator().next().getProperty("count")).intValue());
 
@@ -73,11 +73,12 @@ public class AsyncIndexRemoteTest extends BareBoneBase3ServerTest {
       }
     } finally {
       OLogManager.instance().info(this, "Shutting down db2");
-      graph2.shutdown();
+      graph2.close();
     }
 
     // CHECK ON THE 2ND NODE
-    OrientBaseGraph graph3 = new OrientGraphNoTx(getRemoteURL3());
+    ODatabaseDocumentTx graph3 = new ODatabaseDocumentTx(getRemoteURL3());
+    graph3.open("admin", "admin");
     try {
       try {
         graph3
@@ -87,7 +88,7 @@ public class AsyncIndexRemoteTest extends BareBoneBase3ServerTest {
       } catch (ORecordDuplicatedException e) {
       }
 
-      final Iterable<OrientVertex> result = graph3.command(new OSQLSynchQuery<OrientVertex>("select count(*) from SMS")).execute();
+      final Iterable<OElement> result = graph3.command(new OSQLSynchQuery<OElement>("select count(*) from SMS")).execute();
 
       Assert.assertEquals(1, ((Number) result.iterator().next().getProperty("count")).intValue());
 
@@ -97,7 +98,7 @@ public class AsyncIndexRemoteTest extends BareBoneBase3ServerTest {
       }
     } finally {
       OLogManager.instance().info(this, "Shutting down db3");
-      graph3.shutdown();
+      graph3.close();
     }
   }
 

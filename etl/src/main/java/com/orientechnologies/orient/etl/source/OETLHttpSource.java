@@ -19,6 +19,7 @@
 package com.orientechnologies.orient.etl.source;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -71,7 +72,7 @@ public class OETLHttpSource extends OETLAbstractSource {
   }
 
   @Override
-  public void begin() {
+  public void begin(ODatabaseDocument db) {
     try {
       final URL obj = new URL(url);
       conn = (HttpURLConnection) obj.openConnection();

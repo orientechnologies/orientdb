@@ -36,25 +36,14 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Matan Shukry (matanshukry@gmail.com)
  * @since 3/2/2015
  */
-public class OSequenceLibraryImpl implements OSequenceLibrary {
+public class OSequenceLibraryImpl {
   private final Map<String, OSequence> sequences = new ConcurrentHashMap<String, OSequence>();
 
-  @Override
-  public void create() {
-
-  }
 
   public void create(ODatabaseDocumentInternal database) {
     init(database);
   }
 
-  @Override
-  @Deprecated
-  public void load() {
-    throw new UnsupportedOperationException("use api with database for internal");
-  }
-
-  @Override
   public void load(final ODatabaseDocumentInternal db) {
     sequences.clear();
 
@@ -69,22 +58,18 @@ public class OSequenceLibraryImpl implements OSequenceLibrary {
     }
   }
 
-  @Override
   public void close() {
     sequences.clear();
   }
 
-  @Override
   public Set<String> getSequenceNames() {
     return sequences.keySet();
   }
 
-  @Override
   public int getSequenceCount() {
     return sequences.size();
   }
 
-  @Override
   public OSequence getSequence(final ODatabaseDocumentInternal database, final String iName) {
     final String name = iName.toUpperCase();
 
@@ -102,18 +87,6 @@ public class OSequenceLibraryImpl implements OSequenceLibrary {
     return seq;
   }
 
-  @Override
-  @Deprecated
-  public OSequence getSequence(final String iName) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public OSequence createSequence(final String iName, final SEQUENCE_TYPE sequenceType, final OSequence.CreateParams params) {
-    throw new UnsupportedOperationException("use api with database for internal");
-  }
-
-  @Override
   public OSequence createSequence(final ODatabaseDocumentInternal database, final String iName, final SEQUENCE_TYPE sequenceType,
       final OSequence.CreateParams params) {
     init(database);
@@ -128,13 +101,6 @@ public class OSequenceLibraryImpl implements OSequenceLibrary {
     return sequence;
   }
 
-  @Override
-  @Deprecated
-  public void dropSequence(final String iName) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public void dropSequence(final ODatabaseDocumentInternal database, final String iName) {
     final OSequence seq = getSequence(database, iName);
 

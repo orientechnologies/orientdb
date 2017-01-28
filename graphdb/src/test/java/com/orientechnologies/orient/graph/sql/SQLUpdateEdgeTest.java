@@ -16,10 +16,10 @@
 package com.orientechnologies.orient.graph.sql;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 import org.junit.After;
 import org.junit.Assert;
@@ -74,10 +74,10 @@ public class SQLUpdateEdgeTest {
     Assert.assertEquals(v4.field("brand"), "fiat");
     Assert.assertEquals(v4.field("name"), "wow");
 
-    List<OrientEdge> edges = database.command(new OCommandSQL("create edge E1 from "+v1.getIdentity()+" to "+v2.getIdentity())).execute();
+    List<OEdge> edges = database.command(new OCommandSQL("create edge E1 from "+v1.getIdentity()+" to "+v2.getIdentity())).execute();
     Assert.assertEquals(edges.size(), 1);
-    OrientEdge edge = edges.get(0);
-    Assert.assertEquals(edge.getLabel(), "E1");
+    OEdge edge = edges.get(0);
+    Assert.assertEquals(edge.getSchemaType().get().getName(), "E1");
 
 
     database.command(new OCommandSQL("update edge E1 set out = "+v3.getIdentity()+", in = "+v4.getIdentity() +" where @rid = "+edge.getIdentity())).execute();
@@ -107,8 +107,8 @@ public class SQLUpdateEdgeTest {
     ODocument v2 = database.command(new OCommandSQL("create vertex")).execute();
     ODocument v3 = database.command(new OCommandSQL("create vertex")).execute();
 
-    Iterable<OrientEdge> edges = database.command(new OCommandSQL("create edge E from " + v1.getIdentity() + " to "+v2.getIdentity())).execute();
-    OrientEdge edge = edges.iterator().next();
+    Iterable<OEdge> edges = database.command(new OCommandSQL("create edge E from " + v1.getIdentity() + " to "+v2.getIdentity())).execute();
+    OEdge edge = edges.iterator().next();
 
     database.command(new OCommandSQL("UPDATE EDGE "+edge.getIdentity()+" SET in = "+v3.getIdentity())).execute();
 

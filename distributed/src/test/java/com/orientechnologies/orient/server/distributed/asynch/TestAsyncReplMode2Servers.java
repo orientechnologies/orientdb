@@ -1,10 +1,10 @@
 package com.orientechnologies.orient.server.distributed.asynch;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.OVertex;
 
 public class TestAsyncReplMode2Servers extends BareBoneBase2ServerTest {
 
@@ -24,17 +24,28 @@ public class TestAsyncReplMode2Servers extends BareBoneBase2ServerTest {
     OGlobalConfiguration.LOG_CONSOLE_LEVEL.setValue("FINEST");
 
     synchronized (LOCK) {
-      OrientBaseGraph graph = new OrientGraph(getRemoteURL());
+      ODatabaseDocumentTx graph = new ODatabaseDocumentTx(getRemoteURL());
+      if(graph.exists()){
+        graph.open("admin", "admin");
+      }else{
+        graph.create();
+        graph.createClass("vertextype", "V");
+      }
+      graph.begin();
       try {
-        OrientVertex parentV1 = graph.addVertex("vertextype", (String) null);
+        OVertex parentV1 = graph.newVertex("vertextype");
+        parentV1.save();
         graph.commit();
+        graph.begin();
         assertEquals(1, parentV1.getRecord().getVersion());
-        parentV1Id = parentV1.getId();
+        parentV1Id = parentV1.getIdentity();
 
-        OrientVertex parentV2 = graph.addVertex("vertextype", (String) null);
+        OVertex parentV2 = graph.newVertex("vertextype");
+        parentV2.save();
         graph.commit();
+        graph.begin();
         assertEquals(1, parentV2.getRecord().getVersion());
-        parentV2Id = parentV2.getId();
+        parentV2Id = parentV2.getIdentity();
 
         int countPropValue = 0;
         for (int i = 0; i < NUM_OF_LOOP_ITERATIONS; i++) {
@@ -46,11 +57,14 @@ public class TestAsyncReplMode2Servers extends BareBoneBase2ServerTest {
           for (int attempt = 0; attempt < NUM_OF_RETRIES; attempt++) {
             try {
               parentV1.setProperty(CNT_PROP_NAME, ++countPropValue);
+              parentV1.save();
               graph.commit();
+              graph.begin();
               System.out.println("Committing parentV1" + parentV1.getRecord()+"...");
               break;
             } catch (OConcurrentModificationException c) {
               graph.rollback();
+              graph.begin();
               parentV1.reload();
             }
           }
@@ -58,11 +72,14 @@ public class TestAsyncReplMode2Servers extends BareBoneBase2ServerTest {
           for (int attempt = 0; attempt < NUM_OF_RETRIES; attempt++) {
             try {
               parentV2.setProperty(CNT_PROP_NAME, countPropValue);
+              parentV2.save();
               graph.commit();
+              graph.begin();
               System.out.println("Committing parentV2" + parentV2.getRecord() + "...");
               break;
             } catch (OConcurrentModificationException c) {
               graph.rollback();
+              graph.begin();
               parentV2.reload();
             }
           }
@@ -73,7 +90,7 @@ public class TestAsyncReplMode2Servers extends BareBoneBase2ServerTest {
         }
       } finally {
         System.out.println("Shutting down");
-        graph.shutdown();
+        graph.close();
         LOCK.notifyAll();
       }
     }
@@ -83,12 +100,19 @@ public class TestAsyncReplMode2Servers extends BareBoneBase2ServerTest {
     sleep(1000);
 
     synchronized (LOCK) {
-      OrientBaseGraph graph = new OrientGraph(getLocalURL2());
+      ODatabaseDocumentTx graph = new ODatabaseDocumentTx(getRemoteURL2());
+      if(graph.exists()){
+        graph.open("admin", "admin");
+      }else{
+        graph.create();
+      }
+      graph.begin();
+
       try {
-        OrientVertex parentV1 = graph.getVertex(parentV1Id);
+        OVertex parentV1 = graph.load((ORID)parentV1Id);
         assertEquals(1, parentV1.getRecord().getVersion());
 
-        OrientVertex parentV2 = graph.getVertex(parentV2Id);
+        OVertex parentV2 = graph.load((ORID)parentV2Id);
         assertEquals(1, parentV2.getRecord().getVersion());
 
         int countPropValue = 0;
@@ -110,7 +134,7 @@ public class TestAsyncReplMode2Servers extends BareBoneBase2ServerTest {
         }
       } finally {
         System.out.println("Shutting down");
-        graph.shutdown();
+        graph.close();
         LOCK.notifyAll();
       }
     }

@@ -21,9 +21,9 @@ package com.orientechnologies.orient.etl.transformer;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.graph.gremlin.OCommandGremlin;
 
 import java.util.logging.Level;
 
@@ -57,21 +57,19 @@ public class OETLCommandTransformer extends OETLAbstractTransformer {
   }
 
   @Override
-  public Object executeTransform(final Object input) {
+  public Object executeTransform(ODatabaseDocument db,final Object input) {
     String runtimeCommand = (String) resolve(command);
 
     final OCommandRequest cmd;
     if (language.equals("sql")) {
       cmd = new OCommandSQL(runtimeCommand);
-    } else if (language.equals("gremlin")) {
-      cmd = new OCommandGremlin(runtimeCommand);
     } else {
       cmd = new OCommandScript(language, runtimeCommand);
     }
     cmd.setContext(context);
     try {
 
-      Object result = databaseProvider.getDocumentDatabase().command(cmd).execute();
+      Object result = db.command(cmd).execute();
 
       log(Level.FINE, "input=%s - command=%s - result=%s", input, cmd, result);
 

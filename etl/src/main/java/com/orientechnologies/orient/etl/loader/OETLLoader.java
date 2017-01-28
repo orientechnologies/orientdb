@@ -19,8 +19,9 @@
 package com.orientechnologies.orient.etl.loader;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabasePool;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.etl.OETLComponent;
-import com.orientechnologies.orient.etl.OETLDatabaseProvider;
 import com.orientechnologies.orient.etl.OETLPipeline;
 
 /**
@@ -28,15 +29,17 @@ import com.orientechnologies.orient.etl.OETLPipeline;
  */
 public interface OETLLoader extends OETLComponent {
 
-  void load(OETLDatabaseProvider databaseProvider, final Object input, OCommandContext context);
+  void load(ODatabaseDocument db, final Object input, OCommandContext context);
 
   void beginLoader(OETLPipeline pipeline);
-
-  void endLoader(OETLDatabaseProvider databaseProvider);
 
   long getProgress();
 
   String getUnit();
 
-  void rollback(OETLDatabaseProvider databaseProvider);
+  void rollback(ODatabaseDocument db);
+
+  ODatabasePool getPool();
+
+  void close();
 }

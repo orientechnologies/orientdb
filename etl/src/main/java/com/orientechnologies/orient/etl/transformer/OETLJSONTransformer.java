@@ -18,6 +18,7 @@
 
 package com.orientechnologies.orient.etl.transformer;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class OETLJSONTransformer extends OETLAbstractTransformer {
@@ -27,7 +28,7 @@ public class OETLJSONTransformer extends OETLAbstractTransformer {
   }
 
   @Override
-  public Object executeTransform(final Object input) {
+  public Object executeTransform(ODatabaseDocument db, final Object input) {
     if (input instanceof ODocument)
       return input;
     else if (input instanceof String)

@@ -70,8 +70,6 @@ public abstract class OBaseGraphWorkload extends OBaseWorkload implements OCheck
     if (database == null)
       throw new IllegalArgumentException("Error on opening database " + databaseIdentifier.getName());
 
-    database.setProperty(OStorageRemote.PARAM_CONNECTION_STRATEGY, connectionStrategy.toString());
-
     final OrientGraph g = (OrientGraph) OrientGraphFactory.getTxGraphImplFactory().getGraph((ODatabaseDocumentTx) database);
     g.setAutoStartTx(false);
     return g;

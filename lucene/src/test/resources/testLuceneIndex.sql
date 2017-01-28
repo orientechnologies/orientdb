@@ -28,7 +28,7 @@ create vertex Song set title="BALLAD OF FRANKIE LEE AND JUDAS PRIEST", author="B
 create vertex Song set title="BETTY AND DUPREE", author="Traditional"
 
 
-create vertex Song set title="HEY BO DIDDLEY", author="Bo Diddley",lyrics = "lyrics text"
+create vertex Song set title="HEY BO DIDDLEY", author="Bo Diddley",lyrics = "lyrics text happy"
 create vertex Song set title="IM A MAN", author="Spencer Davis",lyrics = "lyrics text"
 create vertex Song set title="BERTHA", author="Hunter",lyrics = "lyrics text"
 create vertex Song set title="GOING DOWN THE ROAD FEELING BAD", author="Traditional",lyrics = "lyrics text"
@@ -416,7 +416,7 @@ create vertex Song set title="TERRAPIN FLYER", author="instrumental",lyrics = "l
 create vertex Song set title="TERRAPIN TRANSIT", author="instrumental",lyrics = "lyrics text"
 create vertex Song set title="THIS TIME FOREVER", author="Barlow",lyrics = "lyrics text"
 create vertex Song set title="TILL THE MORNING COMES", author="Hunter",lyrics = "lyrics text"
-create vertex Song set title="THE VALLEY ROAD", author="Hornsby",lyrics = "lyrics text"
+create vertex Song set title="THE VALLEY ROAD", author="Hornsby",lyrics = "lyrics text happy"
 create vertex Song set title="WALK IN THE SUNSHINE", author="Barlow",lyrics = "lyrics text"
 create vertex Song set title="WE CAN RUN", author="Barlow",lyrics = "lyrics text"
 create vertex Song set title="WEATHER REPORT SUITE PRELUDE", author="instrumental",lyrics = "lyrics text"

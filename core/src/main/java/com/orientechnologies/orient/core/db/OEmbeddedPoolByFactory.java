@@ -66,8 +66,8 @@ public class OEmbeddedPoolByFactory implements ODatabasePool {
     factory.removePool(this);
   }
 
-  public synchronized void release(OEmbeddedDatabasePool oPoolDatabaseDocument) {
-    pool.returnResource(oPoolDatabaseDocument);
+  public synchronized void release(OEmbeddedDatabasePool database) {
+    pool.returnResource(database);
   }
   
   public OrientDBConfig getConfig() {

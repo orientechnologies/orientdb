@@ -100,12 +100,8 @@ public class OLuceneQueryBuilder {
     for (int i = 0; i < fields.length; i++) {
       String field = fields[i];
       types.put(field, index.getTypes()[i]);
-
     }
 
-//    for (Map.Entry<String, OType> typeEntry : types.entrySet()) {
-//      System.out.println("typeEntry = " + typeEntry);
-//    }
     final OLuceneMultiFieldQueryParser queryParser = new OLuceneMultiFieldQueryParser(types, fields, analyzer);
     queryParser.setAllowLeadingWildcard(allowLeadingWildcard);
 

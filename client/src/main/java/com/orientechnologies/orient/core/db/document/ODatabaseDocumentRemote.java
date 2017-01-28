@@ -31,12 +31,14 @@ import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.client.remote.message.ORemoteResultSet;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
+import com.orientechnologies.orient.core.command.script.OCommandScriptException;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.index.ClassIndexManagerRemote;
@@ -291,7 +293,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   public OResultSet command(String query, Object[] args) {
     checkOpenness();
     checkAndSendTransaction();
-    ORemoteQueryResult result = storage.command(this, query, args);
+    ORemoteQueryResult result = storage.command(this, "sql", query, args);
     if (result.isTransactionUpdated())
       fetchTransacion();
     return result.getResult();
@@ -301,7 +303,29 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   public OResultSet command(String query, Map args) {
     checkOpenness();
     checkAndSendTransaction();
-    ORemoteQueryResult result = storage.command(this, query, args);
+    ORemoteQueryResult result = storage.command(this, "sql", query, args);
+    if (result.isTransactionUpdated())
+      fetchTransacion();
+    return result.getResult();
+  }
+
+  @Override
+  public OResultSet execute(String language, String script, Object... args)
+      throws OCommandExecutionException, OCommandScriptException {
+    checkOpenness();
+    checkAndSendTransaction();
+    ORemoteQueryResult result = storage.command(this, language, script, args);
+    if (result.isTransactionUpdated())
+      fetchTransacion();
+    return result.getResult();
+  }
+
+  @Override
+  public OResultSet execute(String language, String script, Map<String, ?> args)
+      throws OCommandExecutionException, OCommandScriptException {
+    checkOpenness();
+    checkAndSendTransaction();
+    ORemoteQueryResult result = storage.command(this, language, script, args);
     if (result.isTransactionUpdated())
       fetchTransacion();
     return result.getResult();

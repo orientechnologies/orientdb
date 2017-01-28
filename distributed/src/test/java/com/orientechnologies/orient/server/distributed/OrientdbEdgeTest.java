@@ -23,14 +23,18 @@ package com.orientechnologies.orient.server.distributed;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabasePool;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OSchemaException;
+import com.orientechnologies.orient.core.record.ODirection;
+import com.orientechnologies.orient.core.record.OEdge;
+import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.OServer;
-import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientEdge;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -38,7 +42,9 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -63,10 +69,11 @@ public class OrientdbEdgeTest {
       OFileUtils.deleteRecursively(file);
   }
 
-  protected static OrientGraphFactory getGraphFactory() throws Exception {
+  protected static ODatabasePool getGraphFactory() throws Exception {
     Map<String, Object> conf = new HashMap<String, Object>();
 
     conf.put("storage.url", "remote:localhost/test");
+    conf.put("db.name", "test");
     conf.put("storage.pool-min", 1);
     conf.put("storage.pool-max", 10);
     conf.put("storage.user", "root");
@@ -76,9 +83,9 @@ public class OrientdbEdgeTest {
 
     verifyDatabaseExists(conf);
 
-    return new OrientGraphFactory((String) conf.get("storage.url"), (String) conf.get("storage.user"),
-        (String) conf.get("storage.password")).setupPool((Integer) conf.get("storage.pool-min"),
-            (Integer) conf.get("storage.pool-max"));
+    ODatabasePool pool = OrientDB.fromUrl(((String) conf.get("storage.url")).replaceFirst("plocal", "embedded"), OrientDBConfig.defaultConfig())
+        .openPool((String) conf.get("db.name"), (String) conf.get("storage.user"), (String) conf.get("storage.password"));
+    return pool;
   }
 
   @BeforeClass
@@ -90,11 +97,11 @@ public class OrientdbEdgeTest {
 
     server = new OServer(false);
     server.startup("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" + "<orient-server>\n" + "    <handlers>\n"
-        + "        <!-- GRAPH PLUGIN -->\n"
-        + "        <handler class=\"com.orientechnologies.orient.graph.handler.OGraphServerHandler\">\n"
-        + "            <parameters>\n" + "                <parameter name=\"enabled\" value=\"true\"/>\n"
-        + "                <parameter name=\"graph.pool.max\" value=\"50\"/>\n" + "            </parameters>\n"
-        + "        </handler>\n" + "       \n"
+//        + "        <!-- GRAPH PLUGIN -->\n"
+//        + "        <handler class=\"com.orientechnologies.orient.graph.handler.OGraphServerHandler\">\n"
+//        + "            <parameters>\n" + "                <parameter name=\"enabled\" value=\"true\"/>\n"
+//        + "                <parameter name=\"graph.pool.max\" value=\"50\"/>\n" + "            </parameters>\n"
+//        + "        </handler>\n" + "       \n"
         + "<handler class=\"com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin\">\n" + "            <parameters>\n"
         + "                <parameter name=\"nodeName\" value=\"unittest\" />\n"
         + "                <parameter name=\"enabled\" value=\"true\"/>\n"
@@ -145,18 +152,20 @@ public class OrientdbEdgeTest {
         admin.createDatabase("graph", "plocal");
       }
 
-      OrientGraph t = new OrientGraph(url, (String) conf.get("storage.user"), (String) conf.get("storage.password"));
+      ODatabaseDocumentTx t = new ODatabaseDocumentTx(url);
+      t.open((String) conf.get("storage.user"), (String) conf.get("storage.password"));
+      t.begin();
       try {
         t.command(new OCommandSQL("alter database custom useLightweightEdges=false")).execute();
         t.commit();
-
+        t.begin();
         t.command(new OCommandSQL("ALTER CLASS V CLUSTERSELECTION balanced")).execute();
         t.commit();
-
+        t.begin();
         t.command(new OCommandSQL("ALTER CLASS E CLUSTERSELECTION balanced")).execute();
         t.commit();
       } finally {
-        t.shutdown();
+        t.close();
       }
 
       admin.close();
@@ -167,12 +176,12 @@ public class OrientdbEdgeTest {
 
   @Test
   public void testEdges() throws Exception {
-    OrientGraphFactory factory = getGraphFactory();
+    ODatabasePool factory = getGraphFactory();
 
-    OrientBaseGraph g = factory.getNoTx();
+    ODatabaseDocument g = factory.acquire();
     try {
       try {
-        g.createEdgeType("some-label");
+        g.createEdgeClass("some-label");
       } catch (OSchemaException ex) {
         if (!ex.getMessage().contains("exists"))
           throw (ex);
@@ -180,49 +189,69 @@ public class OrientdbEdgeTest {
       }
 
       try {
-        g.createVertexType("some-v-label");
+        g.createVertexClass("some-v-label");
       } catch (OSchemaException ex) {
         if (!ex.getMessage().contains("exists"))
           throw (ex);
         g.command(new OCommandSQL("delete vertex some-v-label")).execute();
       }
     } finally {
-      g.shutdown();
+      g.close();
     }
 
-    OrientGraph t = factory.getTx();
+    ODatabaseDocument t = factory.acquire();
+    t.begin();
     try {
-      Vertex v1 = t.addVertex("class:some-v-label");
-      Vertex v2 = t.addVertex("class:some-v-label");
+      OVertex v1 = t.newVertex("some-v-label");
+      v1.save();
+      OVertex v2 = t.newVertex("some-v-label");
       v1.setProperty("_id", "v1");
       v2.setProperty("_id", "v2");
+      v2.save();
 
-      OrientEdge edge = t.addEdge(null, v1, v2, "some-label");
+      OEdge edge = v1.addEdge(v2, "some-label");
       edge.setProperty("some", "thing");
-
+      edge.save();
       t.commit();
-      t.shutdown();
+      t.close();
 
-      t = factory.getTx();
+      t = factory.acquire();
+      t.begin();
 
-      assertEquals(2, t.countVertices("some-v-label"));
-      assertEquals(1, t.countEdges());
-      assertNotNull(t.getVertices("_id", "v1").iterator().next());
-      assertNotNull(t.getVertices("_id", "v2").iterator().next());
+      assertEquals(2, t.getClass("some-v-label").count());
+      assertEquals(1, t.getClass("E").count());
+      assertNotNull(getVertices(t, "_id", "v1").iterator().next());
+      assertNotNull(getVertices(t, "_id", "v2").iterator().next());
       t.commit();
-      t.shutdown();
+      t.close();
 
-      t = factory.getTx();
+      t = factory.acquire();
+      t.begin();
 
       // works
-      assertEquals(1, t.getVertices("_id", "v1").iterator().next().query().labels("some-label").count());
+      assertEquals(1, count(getVertices(t, "_id", "v1").iterator().next().getEdges(ODirection.BOTH, "some-label")));
       // NoSuchElementException
-      assertNotNull(t.getVertices("_id", "v1").iterator().next().query().labels("some-label").edges().iterator().next());
+//      assertNotNull(t.getVertices("_id", "v1").iterator().next()..labels("some-label").edges().iterator().next());//TODO what...?
 
       t.commit();
     } finally {
-      t.shutdown();
+      t.close();
     }
 
+  }
+
+  private int count(Iterable<OEdge> edges) {
+    int result = 0;
+    for (OEdge e : edges) {
+      result++;
+    }
+    return result;
+  }
+
+  private Iterable<OVertex> getVertices(ODatabaseDocument db, String key, String value) {
+    OResultSet rs = db.command("SELECT FROM V WHERE " + key + " = ?", value);
+    List<OVertex> result = rs.vertexStream().collect(Collectors.toList());
+    rs.close();
+    return result;
   }
 }

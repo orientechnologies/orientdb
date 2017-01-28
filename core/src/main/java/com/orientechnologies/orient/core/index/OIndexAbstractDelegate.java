@@ -98,7 +98,7 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
       if (type == null)
         return;
 
-      OIndexManagerProxy indexManager = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getIndexManager();
+      OIndexManager indexManager = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getIndexManager();
       getInternal().setType(type);
       indexManager.save();
     }

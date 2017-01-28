@@ -18,7 +18,7 @@
 
 package com.orientechnologies.lucene.tx;
 
-import com.orientechnologies.lucene.OLuceneIndexType;
+import com.orientechnologies.lucene.builder.OLuceneIndexType;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import org.apache.lucene.document.Document;

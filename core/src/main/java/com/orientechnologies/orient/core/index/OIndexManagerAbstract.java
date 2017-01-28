@@ -96,10 +96,10 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
   }
 
   @Override
-  public <RET extends ODocumentWrapper> RET reload() {
+  public OIndexManagerAbstract reload() {
     acquireExclusiveLock();
     try {
-      return (RET) super.reload();
+      return super.reload();
     } finally {
       releaseExclusiveLock();
     }

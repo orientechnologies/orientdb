@@ -18,10 +18,9 @@
 
 package com.orientechnologies.lucene.test;
 
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -35,8 +34,7 @@ public class LuceneIndexCreateDropTest extends BaseLuceneTest {
 
   @Before
   public void init() {
-    OrientGraph graph = new OrientGraph(db, false);
-    OrientVertexType type = graph.createVertexType("City");
+    OClass type = db.createVertexClass("City");
     type.createProperty("name", OType.STRING);
 
     db.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE")).execute();

@@ -34,13 +34,17 @@ public class OETLJsonExtractorTest extends OETLBaseTest {
 
   @Test
   public void testEmptyCollection() {
-    process("{source: { content: { value: [] }  }, extractor : { json: {} }, loader: { test: {} } }");
+    configure("{source: { content: { value: [] }  }, extractor : { json: {} }, loader: { test: {} } }");
+    proc.execute();
+
     assertEquals(0, getResult().size());
   }
 
   @Test
   public void testEmptyObject() {
-    process("{source: { content: { value: {} }  }, extractor : { json: {} }, loader: { test: {} } }");
+    configure("{source: { content: { value: {} }  }, extractor : { json: {} }, loader: { test: {} } }");
+    proc.execute();
+
     assertEquals(1, getResult().size());
     ODocument doc = getResult().get(0);
     assertEquals(0, doc.fields());
@@ -48,7 +52,9 @@ public class OETLJsonExtractorTest extends OETLBaseTest {
 
   @Test
   public void testOneObject() {
-    process("{source: { content: { value: { name: 'Jay', surname: 'Miner' } } }, extractor : { json: {} }, loader: { test: {} } }");
+    configure("{source: { content: { value: { name: 'Jay', surname: 'Miner' } } }, extractor : { json: {} }, loader: { test: {} } }");
+    proc.execute();
+
     assertEquals(1, getResult().size());
     ODocument doc = getResult().get(0);
     assertEquals(2, doc.fields());
@@ -65,9 +71,10 @@ public class OETLJsonExtractorTest extends OETLBaseTest {
       content += "{name:'" + names[i] + "',surname:'" + surnames[i] + "',id:" + i + "}";
     }
 
-    process("{source: { content: { value: [" + content + "] } }, extractor : { json: {} }, loader: { test: {} } }");
+    configure("{source: { content: { value: [" + content + "] } }, extractor : { json: {} }, loader: { test: {} } }");
+    proc.execute();
 
-    assertEquals(getResult().size(), names.length);
+    assertEquals(names.length, getResult().size());
 
     int i = 0;
     for (ODocument doc : getResult()) {

@@ -2913,6 +2913,29 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
+  @Test
+  public void testMatches() {
+    String className = "testMatches";
+    db.getMetadata().getSchema().createClass(className);
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.save();
+    }
+    OResultSet result = db.query("select from "+className+" where name matches 'name1'");
+    printExecutionPlan(result);
+
+    for (int i = 0; i < 1; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Assert.assertEquals(item.getProperty("name") , "name1");
+
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
   public void stressTestNew() {
     String className = "stressTestNew";
     db.getMetadata().getSchema().createClass(className);

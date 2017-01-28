@@ -149,14 +149,6 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
   }
 
   @Override
-  public void onCreateClass(ODatabaseInternal db, OClass oClass) {
-  }
-
-  @Override
-  public void onDropClass(ODatabaseInternal db, OClass oClass) {
-  }
-
-  @Override
   public void onLocalNodeConfigurationRequest(ODocument iConfiguration) {
   }
 

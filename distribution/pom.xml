@@ -67,28 +67,28 @@
             <artifactId>orientdb-distributed</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <dependency>
-            <groupId>com.orientechnologies</groupId>
-            <artifactId>orientdb-graphdb</artifactId>
-            <version>${project.version}</version>
-        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>com.orientechnologies</groupId>-->
+            <!--<artifactId>orientdb-graphdb</artifactId>-->
+            <!--<version>${project.version}</version>-->
+        <!--</dependency>-->
 
         <!-- #5256 removed dep from orientdb-graphdb -->
-        <dependency>
-            <groupId>com.tinkerpop.rexster</groupId>
-            <artifactId>rexster-core</artifactId>
-            <version>${blueprints.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.tinkerpop.gremlin</groupId>
-            <artifactId>gremlin-java</artifactId>
-            <version>${blueprints.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.tinkerpop.gremlin</groupId>
-            <artifactId>gremlin-groovy</artifactId>
-            <version>${blueprints.version}</version>
-        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>com.tinkerpop.rexster</groupId>-->
+            <!--<artifactId>rexster-core</artifactId>-->
+            <!--<version>${blueprints.version}</version>-->
+        <!--</dependency>-->
+        <!--<dependency>-->
+            <!--<groupId>com.tinkerpop.gremlin</groupId>-->
+            <!--<artifactId>gremlin-java</artifactId>-->
+            <!--<version>${blueprints.version}</version>-->
+        <!--</dependency>-->
+        <!--<dependency>-->
+            <!--<groupId>com.tinkerpop.gremlin</groupId>-->
+            <!--<artifactId>gremlin-groovy</artifactId>-->
+            <!--<version>${blueprints.version}</version>-->
+        <!--</dependency>-->
 
         <dependency>
             <groupId>com.orientechnologies</groupId>
@@ -123,10 +123,10 @@
                 <executions>
                     <execution>
                         <id>build-db</id>
-                        <phase>prepare-package</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
+                        <!--<phase>prepare-package</phase>-->
+                        <!--<goals>-->
+                            <!--<goal>exec</goal>-->
+                        <!--</goals>-->
                         <configuration>
                             <executable>${java.home}/bin/java</executable>
                             <workingDirectory>${project.basedir}</workingDirectory>

@@ -21,18 +21,24 @@ package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 
 /**
  * Listener Interface for all the events of the Database instances.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public interface ODatabaseListener {
 
   void onCreate(final ODatabase iDatabase);
 
-  void onDelete(final ODatabase iDatabase);
+  @Deprecated
+  default void onDelete(final ODatabase iDatabase) {
+  }
+
+  default void onDrop(final ODatabase database) {
+    onDelete(database);
+  }
 
   void onOpen(final ODatabase iDatabase);
 
@@ -52,16 +58,24 @@ public interface ODatabaseListener {
 
   void onAfterCommand(final OCommandRequestText iCommand, final OCommandExecutor executor, Object result);
 
+  default void onCreateClass(ODatabase iDatabase, OClass iClass) {
+  }
+
+  default void onDropClass(ODatabase iDatabase, OClass iClass) {
+
+  }
+
   /**
    * Callback to decide if repair the database upon corruption.
-   * 
-   * @param iDatabase
-   *          Target database
-   * @param iReason
-   *          Reason of corruption
-   * @param iWhatWillbeFixed
-   *          TODO
+   *
+   * @param iDatabase        Target database
+   * @param iReason          Reason of corruption
+   * @param iWhatWillbeFixed TODO
+   *
    * @return true if repair must be done, otherwise false
    */
-  boolean onCorruptionRepairDatabase(final ODatabase iDatabase, final String iReason, String iWhatWillbeFixed);
+  @Deprecated
+  default boolean onCorruptionRepairDatabase(final ODatabase iDatabase, final String iReason, String iWhatWillbeFixed) {
+    return false;
+  }
 }

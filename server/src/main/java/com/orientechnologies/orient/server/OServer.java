@@ -23,7 +23,6 @@ import com.orientechnologies.common.console.OConsoleReader;
 import com.orientechnologies.common.console.ODefaultConsoleReader;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OAnsiCode;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
@@ -40,9 +39,6 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.security.OSecurityManager;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.memory.ODirectMemoryStorage;
 import com.orientechnologies.orient.server.config.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.handler.OConfigurableHooksManager;
@@ -55,7 +51,6 @@ import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
 import com.orientechnologies.orient.server.plugin.OServerPluginManager;
 import com.orientechnologies.orient.server.security.ODefaultServerSecurity;
-import com.orientechnologies.orient.server.security.OSecurityServerUser;
 import com.orientechnologies.orient.server.security.OServerSecurity;
 import com.orientechnologies.orient.server.token.OTokenHandlerImpl;
 
@@ -323,7 +318,7 @@ public class OServer {
     if (contextConfiguration.getValueAsBoolean(OGlobalConfiguration.SERVER_BACKWARD_COMPATIBILITY)) {
       databases = ODatabaseDocumentTxInternal.getOrCreateEmbeddedFactory(this.databaseDirectory, config);
     } else {
-      databases = OrientDB.embedded(this.databaseDirectory, config);
+      databases = (OrientDBEmbedded) OrientDB.embedded(this.databaseDirectory, config);
     }
     databases.removeShutdownHook();
 
@@ -824,7 +819,7 @@ public class OServer {
   }
 
   public ODatabaseDocumentInternal openDatabase(final String iDbUrl, final OToken iToken) {
-    ODatabaseDocumentInternal database = databases.openNoAutheticate(iDbUrl, null, OSecurityServerUser.class);
+    ODatabaseDocumentInternal database = databases.openNoAuthenticate(iDbUrl, null);
     database.setUser(iToken.getUser(database));
     return database;
   }
@@ -845,7 +840,7 @@ public class OServer {
     // TODO: final String path = getStoragePath(iDbUrl); it use to resolve the path in some way
     boolean serverAuth = false;
     if (iBypassAccess) {
-      database = databases.openNoAutheticate(iDbUrl, user, OSecurityServerUser.class);
+      database = databases.openNoAuthenticate(iDbUrl, user);
       serverAuth = true;
     } else {
       OServerUserConfiguration serverUser = serverLogin(user, password, "database.passthrough");
@@ -858,7 +853,7 @@ public class OServer {
         // that user identity is returned.
 
         // SERVER AUTHENTICATED, BYPASS SECURITY
-        database = databases.openNoAutheticate(iDbUrl, user, OSecurityServerUser.class);
+        database = databases.openNoAuthenticate(iDbUrl, user);
       } else {
         // TRY DATABASE AUTHENTICATION
         database = databases.open(iDbUrl, user, password);
@@ -876,32 +871,6 @@ public class OServer {
 
   public ODatabaseDocumentInternal openDatabase(String database) {
     return openDatabase(database, "internal", "internal", null, true);
-  }
-
-  public void openDatabaseBypassingSecurity(final ODatabaseInternal<?> database, final ONetworkProtocolData data,
-      final String user) {
-    database.activateOnCurrentThread();
-    database.resetInitialization();
-    database.setProperty(ODatabase.OPTIONS.SECURITY.toString(), OSecurityServerUser.class);
-    database.open(user, "nopassword");
-    if (data != null) {
-      data.serverUser = true;
-      data.serverUsername = user;
-    }
-  }
-
-  public ODatabaseInternal openDatabase(final ODatabaseInternal database) {
-    database.activateOnCurrentThread();
-
-    if (database.isClosed())
-      if (database.getStorage() instanceof ODirectMemoryStorage)
-        database.create();
-      else {
-        // SERVER AUTHENTICATED, BYPASS SECURITY
-        openDatabaseBypassingSecurity(database, null, "internal");
-      }
-
-    return database;
   }
 
   public ODistributedServerManager getDistributedManager() {

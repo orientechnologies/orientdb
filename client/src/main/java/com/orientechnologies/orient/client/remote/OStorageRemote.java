@@ -86,7 +86,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  * This object is bound to each remote ODatabase instances.
  */
 public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
+  @Deprecated
   public static final  String        PARAM_CONNECTION_STRATEGY = "connectionStrategy";
+
   private static final String        DEFAULT_HOST              = "localhost";
   private static final int           DEFAULT_PORT              = 2424;
   private static final int           DEFAULT_SSL_PORT          = 2434;
@@ -528,7 +530,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     ORecordCallback<OCreateRecordResponse> realCallback = null;
     if (iCallback != null) {
       realCallback = (iRID, response) -> {
-        iCallback.call(iRID, response.getIdentity().getClusterPosition());
+        iCallback.call(response.getIdentity(), response.getIdentity().getClusterPosition());
         updateCollectionsFromChanges(collectionManager, response.getChangedIds());
       };
     }
@@ -797,25 +799,25 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   public ORemoteQueryResult query(ODatabase db, String query, Object[] args) {
-    OQueryRequest request = new OQueryRequest(query, args, true, ((ODatabaseDocumentInternal) db).getSerializer(), 100);
+    OQueryRequest request = new OQueryRequest("sql", query, args, true, ((ODatabaseDocumentInternal) db).getSerializer(), 100);
     OQueryResponse response = networkOperation(request, "Error on executing command: " + query);
     return new ORemoteQueryResult(response.getResult(), response.isTxChanges());
   }
 
   public ORemoteQueryResult query(ODatabase db, String query, Map args) {
-    OQueryRequest request = new OQueryRequest(query, args, true, ((ODatabaseDocumentInternal) db).getSerializer(), 100);
+    OQueryRequest request = new OQueryRequest("sql", query, args, true, ((ODatabaseDocumentInternal) db).getSerializer(), 100);
     OQueryResponse response = networkOperation(request, "Error on executing command: " + query);
     return new ORemoteQueryResult(response.getResult(), response.isTxChanges());
   }
 
-  public ORemoteQueryResult command(ODatabase db, String query, Object[] args) {
-    OQueryRequest request = new OQueryRequest(query, args, false, ((ODatabaseDocumentInternal) db).getSerializer(), 100);
+  public ORemoteQueryResult command(ODatabase db, String language, String query, Object[] args) {
+    OQueryRequest request = new OQueryRequest(language, query, args, false, ((ODatabaseDocumentInternal) db).getSerializer(), 100);
     OQueryResponse response = networkOperation(request, "Error on executing command: " + query);
     return new ORemoteQueryResult(response.getResult(), response.isTxChanges());
   }
 
-  public ORemoteQueryResult command(ODatabase db, String query, Map args) {
-    OQueryRequest request = new OQueryRequest(query, args, false, ((ODatabaseDocumentInternal) db).getSerializer(), 100);
+  public ORemoteQueryResult command(ODatabase db, String language, String query, Map args) {
+    OQueryRequest request = new OQueryRequest(language, query, args, false, ((ODatabaseDocumentInternal) db).getSerializer(), 100);
     OQueryResponse response = networkOperation(request, "Error on executing command: " + query);
     return new ORemoteQueryResult(response.getResult(), response.isTxChanges());
   }

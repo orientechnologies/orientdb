@@ -18,11 +18,11 @@
 
 package com.orientechnologies.orient.etl.transformer;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.etl.OETLBaseTest;
-import com.tinkerpop.blueprints.Vertex;
 import org.junit.Test;
-
-import java.util.Iterator;
 
 import static org.junit.Assert.assertEquals;
 
@@ -35,15 +35,17 @@ public class OETLFlowTransformerTest extends OETLBaseTest {
   @Test
   public void testSkip() {
 
-    process("{source: { content: { value: 'name,surname\nJay,Miner\nSkipMe,Test' } }, extractor : { csv: {} },"
+    configure("{source: { content: { value: 'name,surname\nJay,Miner\nSkipMe,Test' } }, extractor : { csv: {} },"
         + " transformers: [{vertex: {class:'V'}}, " + "{flow:{operation:'skip',if: 'name <> \'Jay\''}},"
-        + "{field:{fieldName:'name', value:'3'}}" + "], loader: { orientdb: { dbURL: 'memory:"+name.getMethodName()+"', dbType:'graph' } } }");
+        + "{field:{fieldName:'name', value:'3'}}" + "], loader: { orientdb: { dbURL: 'memory:" + name.getMethodName()
+        + "', dbType:'graph' } } }");
+    proc.execute();
+    ODatabaseDocument db = proc.getLoader().getPool().acquire();
 
-    assertEquals(1, graph.countVertices("V"));
+    assertEquals(1, db.countClass("V"));
 
-    Iterator<Vertex> it = graph.getVertices().iterator();
-
-    Vertex v1 = it.next();
+    OResultSet resultSet = db.query("SELECT FROM V");
+    OResult v1 = resultSet.next();
     Object value1 = v1.getProperty("name");
     assertEquals("3", value1);
 
@@ -51,17 +53,19 @@ public class OETLFlowTransformerTest extends OETLBaseTest {
 
   @Test
   public void testSkipNever() {
-    process(
+    configure(
         "{source: { content: { value: 'name,surname\nJay,Miner\nTest,Test' } }, " + "extractor : { csv: {} }," + " transformers: ["
             + "{vertex: {class:'V'}}, " + "{flow:{operation:'skip',if: 'name = \'Jay\''}},"
             + "{field:{fieldName:'name', value:'3'}}" + "],"
-            + " loader: { orientdb: {  dbURL: 'memory:"+name.getMethodName()+"', dbType:'graph'} } }");
+            + " loader: { orientdb: {  dbURL: 'memory:" + name.getMethodName() + "', dbType:'graph'} } }");
 
-    assertEquals(1, graph.countVertices("V"));
+    proc.execute();
+    ODatabaseDocument db = proc.getLoader().getPool().acquire();
 
-    Iterator<Vertex> it = graph.getVertices().iterator();
+    assertEquals(1, db.countClass("V"));
 
-    Vertex v1 = it.next();
+    OResultSet resultSet = db.query("SELECT FROM V");
+    OResult v1 = resultSet.next();
     Object value1 = v1.getProperty("name");
     assertEquals("3", value1);
     Object value2 = v1.getProperty("surname");

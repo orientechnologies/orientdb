@@ -61,9 +61,21 @@ public interface OResultSet extends Spliterator<OResult>, Iterator<OResult> {
     return ORDERED;
   }
 
+  /**
+   * Returns the result set as a stream. IMPORTANT: the stream consumes the result set!
+   *
+   * @return
+   */
   default Stream<OResult> stream() {
     return StreamSupport.stream(this, false);
   }
+
+  /**
+   * Returns the result set as a stream of elements (filters only the results that are elements - where the isElement() method
+   * returns true). IMPORTANT: the stream consumes the result set!
+   *
+   * @return
+   */
 
   default Stream<OElement> elementStream() {
     return StreamSupport.stream(new Spliterator<OElement>() {
@@ -96,6 +108,13 @@ public interface OResultSet extends Spliterator<OResult>, Iterator<OResult> {
     }, false);
   }
 
+  /**
+   * Returns the result set as a stream of vertices (filters only the results that are vertices - where the isVertex() method
+   * returns true). IMPORTANT: the stream consumes the result set!
+   *
+   * @return
+   */
+
   default Stream<OVertex> vertexStream() {
     return StreamSupport.stream(new Spliterator<OVertex>() {
       @Override
@@ -126,6 +145,13 @@ public interface OResultSet extends Spliterator<OResult>, Iterator<OResult> {
       }
     }, false);
   }
+
+  /**
+   * Returns the result set as a stream of vertices (filters only the results that are edges - where the isEdge() method
+   * returns true). IMPORTANT: the stream consumes the result set!
+   *
+   * @return
+   */
 
   default Stream<OEdge> edgeStream() {
     return StreamSupport.stream(new Spliterator<OEdge>() {

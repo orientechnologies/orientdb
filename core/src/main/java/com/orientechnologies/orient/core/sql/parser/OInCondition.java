@@ -76,14 +76,14 @@ public class OInCondition extends OBooleanExpression {
     return evaluateExpression(leftVal, rightVal);
   }
 
-  private Object executeQuery(OSelectStatement rightStatement, OCommandContext ctx) {
+  protected static Object executeQuery(OSelectStatement rightStatement, OCommandContext ctx) {
     OBasicCommandContext subCtx = new OBasicCommandContext();
     subCtx.setParentWithoutOverridingChild(ctx);
     OResultSet result = rightStatement.execute(ctx.getDatabase(), ctx.getInputParameters());
     return result.stream().collect(Collectors.toSet());
   }
 
-  protected boolean evaluateExpression(final Object iLeft, final Object iRight) {
+  protected static boolean evaluateExpression(final Object iLeft, final Object iRight) {
     if (OMultiValue.isMultiValue(iRight)) {
       if (iRight instanceof Set<?>)
         return ((Set) iRight).contains(iLeft);

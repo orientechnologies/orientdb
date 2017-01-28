@@ -2,15 +2,19 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
+import com.orientechnologies.orient.core.db.ODatabasePool;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.server.distributed.impl.OLocalClusterWrapperStrategy;
-import com.tinkerpop.blueprints.Parameter;
-import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.impls.orient.*;
 import org.junit.Assert;
 
 import java.text.SimpleDateFormat;
@@ -27,9 +31,9 @@ public final class DistributedDatabaseCRUDTest {
    * records with unique index for property1 and property2 3. Populate Test1Node - Test31Node with 500 records. Each record will
    * have edge to TestNode 4. Start a pool of threads to update one record in TestNode using both Java API and SQL
    ******************************************************************************************************/
-  private String             dbName;
-  private OrientGraphFactory graphReadFactory;
-  private int                totalRecords;
+  private String        dbName;
+  private ODatabasePool graphReadFactory;
+  private int           totalRecords;
 
   public DistributedDatabaseCRUDTest(String dbName, int totalRecords) {
     this.dbName = dbName;
@@ -41,26 +45,32 @@ public final class DistributedDatabaseCRUDTest {
     checkAndCreateDatabase(dbName);
     int totalClassCount = 50;
     int mainNodeDataCount = 50;
-    OrientBaseGraph orientGraph = new OrientGraphNoTx(getDBURL());
+    ODatabaseDocumentTx orientGraph = new ODatabaseDocumentTx(getDBURL());
+    if (orientGraph.exists()) {
+      orientGraph.open("admin", "admin");
+    } else {
+      orientGraph.create();
+    }
     createVertexTypeWithUniqueIndex(orientGraph, "Test", "property1", "property2");
     for (int i = 1; i <= totalClassCount; i++) {
       createVertexType(orientGraph, "Test" + i, "property1", "property2");
     }
-    orientGraph.shutdown();
+    orientGraph.close();
 
-    OrientBaseGraph graph = getGraphFactory().getTx();
+    ODatabaseDocument graph = getGraphFactory().acquire();
+    graph.begin();
 
     boolean addTestData = true;
     String query = "select count(*) as dataCount from TestNode";
-    Iterable<Vertex> vtxs = graph.command(new OCommandSQL(query)).execute();
-    for (Vertex vtx : vtxs) {
+    Iterable<OVertex> vtxs = graph.command(new OCommandSQL(query)).execute();
+    for (OVertex vtx : vtxs) {
       long count = vtx.getProperty("dataCount");
       addTestData = (count == 0);
     }
 
     if (addTestData) {
       for (int i = 1; i <= mainNodeDataCount; i++) {
-        Vertex vertex = graph.addVertex("class:TestNode");
+        OVertex vertex = graph.newVertex("TestNode");
         vertex.setProperty("property1", "value1-" + i);
         vertex.setProperty("property2", "value2-" + i);
         vertex.setProperty("property3", "value3-" + i);
@@ -75,13 +85,15 @@ public final class DistributedDatabaseCRUDTest {
         vertex.setProperty("prop13", "v7-1");
         vertex.setProperty("prop14", "v7-1");
         vertex.setProperty("prop15", System.currentTimeMillis());
+        vertex.save();
         graph.commit();
+        graph.begin();
         if ((i % 100) == 0) {
           log("Created " + i + " nodes");
         }
 
-        if (!graph.getRawGraph().getURL().startsWith("remote:"))
-          Assert.assertTrue(graph.getVertexType("TestNode").getClusterSelection() instanceof OLocalClusterWrapperStrategy);
+        if (!graph.getURL().startsWith("remote:"))
+          Assert.assertTrue(graph.getClass("TestNode").getClusterSelection() instanceof OLocalClusterWrapperStrategy);
       }
     }
     int edgeCounter = 1;
@@ -90,7 +102,7 @@ public final class DistributedDatabaseCRUDTest {
       String className = edgeName + "Node";
       System.out.print("[" + className + "] -> ");
       for (int i = 1; i <= totalRecords; i++) {
-        Vertex vertex = graph.addVertex("class:" + className);
+        OVertex vertex = graph.newVertex(className);
         vertex.setProperty("property1", "value1-" + i);
         vertex.setProperty("property2", "value2-" + i);
         vertex.setProperty("property3", "value3-" + i);
@@ -105,7 +117,9 @@ public final class DistributedDatabaseCRUDTest {
         vertex.setProperty("prop13", "value7-1");
         vertex.setProperty("prop14", System.currentTimeMillis());
         vertex.setProperty("prop15", System.currentTimeMillis());
+        vertex.save();
         graph.commit();
+        graph.begin();
         if ((i % 200) == 0) {
           System.out.print(".[" + j + "]" + i + ".");
         }
@@ -117,12 +131,12 @@ public final class DistributedDatabaseCRUDTest {
         }
         graph.command(new OCommandSQL(edgeSQL)).execute();
 
-        if (!graph.getRawGraph().getURL().startsWith("remote:"))
-          Assert.assertTrue(graph.getVertexType("TestNode").getClusterSelection() instanceof OLocalClusterWrapperStrategy);
+        if (!graph.getURL().startsWith("remote:"))
+          Assert.assertTrue(graph.getClass("TestNode").getClusterSelection() instanceof OLocalClusterWrapperStrategy);
       }
       System.out.println();
     }
-    graph.shutdown();
+    graph.close();
     log("Done. Creating data for database " + dbName);
   }
 
@@ -202,7 +216,7 @@ public final class DistributedDatabaseCRUDTest {
     }
   }
 
-  private Runnable startSQLUpdateThread(final int id, final OrientGraphFactory graphFactory, final String propertyValue) {
+  private Runnable startSQLUpdateThread(final int id, final ODatabasePool graphFactory, final String propertyValue) {
     Runnable th = new Runnable() {
       @Override
       public void run() {
@@ -217,10 +231,10 @@ public final class DistributedDatabaseCRUDTest {
                   + "] seconds");
               st = System.currentTimeMillis();
             }
-            OrientGraph graph = graphFactory.getTx();
+            ODatabaseDocument graph = graphFactory.acquire();
 
-            if (!graph.getRawGraph().getURL().startsWith("remote:"))
-              Assert.assertTrue(graph.getVertexType("TestNode").getClusterSelection() instanceof OLocalClusterWrapperStrategy);
+            if (!graph.getURL().startsWith("remote:"))
+              Assert.assertTrue(graph.getClass("TestNode").getClusterSelection() instanceof OLocalClusterWrapperStrategy);
 
             try {
               boolean update = true;
@@ -262,13 +276,13 @@ public final class DistributedDatabaseCRUDTest {
                   }
 
                   if (update) {
-                    log("*******#################******* [" + id + "][ Retry: " + k + "] Failed to update after Exception ["
-                        + ((tex != null) ? tex : "----") + "] for vertex with property4='" + propertyValue + "'");
+                    log("*******#################******* [" + id + "][ Retry: " + k + "] Failed to update after Exception [" + ((tex
+                        != null) ? tex : "----") + "] for vertex with property4='" + propertyValue + "'");
                   }
                 }
               }
             } finally {
-              graph.shutdown();
+              graph.close();
             }
           }
         } catch (Exception ex) {
@@ -308,7 +322,7 @@ public final class DistributedDatabaseCRUDTest {
     }
   }
 
-  private Runnable startVertexUpdateThread(final int id, final OrientGraphFactory graphFactory, final String propertyValue) {
+  private Runnable startVertexUpdateThread(final int id, final ODatabasePool graphFactory, final String propertyValue) {
     Runnable th = new Runnable() {
       @Override
       public void run() {
@@ -324,22 +338,21 @@ public final class DistributedDatabaseCRUDTest {
               log(" Total Records Processed: [" + i + "] Time taken for [100] records: [" + (et - st) / 1000 + "] seconds");
               st = System.currentTimeMillis();
             }
-            OrientGraph graph = graphFactory.getTx();
+            ODatabaseDocument graph = graphFactory.acquire();
             try {
-              Iterable<Vertex> vtxs = graph.command(new OCommandSQL(query)).execute();
+              Iterable<OElement> vtxs = graph.command(new OCommandSQL(query)).execute();
               boolean retry = true;
-              for (Vertex vtx : vtxs) {
+              for (OElement vtx : vtxs) {
                 if (retry) {
                   retry = true;
                   boolean isException = false;
                   Exception tex = null;
                   int k = 1;
                   for (; k <= 100 && retry; k++) {
-                    if (!graph.getRawGraph().getURL().startsWith("remote:"))
-                      Assert.assertTrue(
-                          graph.getVertexType("TestNode").getClusterSelection() instanceof OLocalClusterWrapperStrategy);
+                    if (!graph.getURL().startsWith("remote:"))
+                      Assert.assertTrue(graph.getClass("TestNode").getClusterSelection() instanceof OLocalClusterWrapperStrategy);
 
-                    OrientVertex vtx1 = (OrientVertex) vtx;
+                    OVertex vtx1 = vtx.asVertex().get();
                     try {
                       vtx1.setProperty("prop5", "prop55");
                       vtx1.setProperty("updateTime", new Date().toString());
@@ -381,7 +394,7 @@ public final class DistributedDatabaseCRUDTest {
                 }
               }
             } finally {
-              graph.shutdown();
+              graph.close();
             }
           }
         } catch (Exception ex) {
@@ -410,11 +423,10 @@ public final class DistributedDatabaseCRUDTest {
     return "remote:" + "localhost:2424;localhost:2425;localhost:2426" + "/" + dbName;
   }
 
-  private OrientGraphFactory getGraphFactory() {
+  private ODatabasePool getGraphFactory() {
     if (graphReadFactory == null) {
       log("Datastore pool created with size : 50, db location: " + getDBURL());
-      graphReadFactory = new OrientGraphFactory(getDBURL());
-      graphReadFactory.setupPool(1, 50);
+      graphReadFactory = OrientDB.fromUrl(getDBURL().substring(0, getDBURL().length() - (dbName.length() + 1)).replaceFirst("plocal", "embedded"), OrientDBConfig.defaultConfig()).openPool(dbName, "admin", "admin");
     }
     return graphReadFactory;
   }
@@ -432,9 +444,11 @@ public final class DistributedDatabaseCRUDTest {
         log(dbName + " database already exists");
       }
       serverAdmin.close();
-      OrientBaseGraph orientGraph = new OrientGraphNoTx(getDBURL());
+      ODatabaseDocumentTx orientGraph = new ODatabaseDocumentTx(getDBURL());
+      orientGraph.open("admin", "admin");
+
       orientGraph.command(new OCommandSQL("ALTER DATABASE custom strictSQL=false")).execute();
-      orientGraph.shutdown();
+      orientGraph.close();
     } catch (Exception ex) {
       log("Failed to create database", ex);
     }
@@ -454,23 +468,23 @@ public final class DistributedDatabaseCRUDTest {
    * @param orientGraph
    * @param className
    */
-  public void createVertexType(OrientBaseGraph orientGraph, String className, String property, String keyIndexProperty) {
+  public void createVertexType(ODatabaseDocumentTx orientGraph, String className, String property, String keyIndexProperty) {
     String edgeClassName = className;
     String vertexClassName = className + "Node";
-    OClass clazz = orientGraph.getEdgeType(edgeClassName);
+    OClass clazz = orientGraph.getClass(edgeClassName);
     if (clazz == null) {
       log("Creating edge type - " + edgeClassName);
-      orientGraph.createEdgeType(edgeClassName);
+      orientGraph.createEdgeClass(edgeClassName);
     } else {
       log("Edge " + edgeClassName + " already exists");
     }
-    clazz = orientGraph.getVertexType(vertexClassName);
+    clazz = orientGraph.getClass(vertexClassName);
     if (clazz == null) {
       log("Creating vertex type - " + vertexClassName);
-      clazz = orientGraph.createVertexType(vertexClassName);
+      clazz = orientGraph.createVertexClass(vertexClassName);
       clazz.createProperty(property, OType.STRING);
       clazz.createProperty(keyIndexProperty, OType.STRING);
-      orientGraph.createKeyIndex(keyIndexProperty, Vertex.class, new Parameter("class", vertexClassName));
+      clazz.createIndex(vertexClassName+"."+keyIndexProperty, INDEX_TYPE.NOTUNIQUE, keyIndexProperty);
       clazz.createIndex(vertexClassName + "_Index_" + property, INDEX_TYPE.NOTUNIQUE, property);
     } else {
       log("Class " + vertexClassName + " already exists");
@@ -483,25 +497,24 @@ public final class DistributedDatabaseCRUDTest {
    * @param orientGraph
    * @param className
    */
-  public void createVertexTypeWithUniqueIndex(OrientBaseGraph orientGraph, String className, String property,
+  public void createVertexTypeWithUniqueIndex(ODatabaseDocumentTx orientGraph, String className, String property,
       String keyIndexProperty) {
     String edgeClassName = className;
     String vertexClassName = className + "Node";
-    OClass clazz = orientGraph.getEdgeType(edgeClassName);
+    OClass clazz = orientGraph.getClass(edgeClassName);
     if (clazz == null) {
       log("Creating edge type - " + edgeClassName);
-      orientGraph.createEdgeType(edgeClassName);
+      orientGraph.createEdgeClass(edgeClassName);
     } else {
       log("Edge " + edgeClassName + " already exists");
     }
-    clazz = orientGraph.getVertexType(vertexClassName);
+    clazz = orientGraph.getClass(vertexClassName);
     if (clazz == null) {
       log("Creating vertex type - " + vertexClassName);
-      clazz = orientGraph.createVertexType(vertexClassName);
+      clazz = orientGraph.createVertexClass(vertexClassName);
       clazz.createProperty(property, OType.STRING);
       clazz.createProperty(keyIndexProperty, OType.STRING);
-      orientGraph.createKeyIndex(keyIndexProperty, Vertex.class, new Parameter("class", vertexClassName),
-          new Parameter("type", "UNIQUE"));
+      clazz.createIndex(vertexClassName + "." + keyIndexProperty, INDEX_TYPE.UNIQUE, keyIndexProperty);
       clazz.createIndex(vertexClassName + "_Index_" + property, INDEX_TYPE.UNIQUE, property);
     } else {
       log("Class " + vertexClassName + " already exists");
@@ -530,6 +543,7 @@ public final class DistributedDatabaseCRUDTest {
    *
    * @param threadName
    * @param poolSize
+   *
    * @return
    */
   public static ExecutorService newFixedThreadPool(String threadName, int poolSize) {

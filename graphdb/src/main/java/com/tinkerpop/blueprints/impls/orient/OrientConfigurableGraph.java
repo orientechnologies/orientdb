@@ -722,8 +722,9 @@ public abstract class OrientConfigurableGraph {
    * Changes the setting to postfix vertices fields with edge labels. This improves traversal time by partitioning edges on
    * different collections, one per Edge's class.
    */
+  @Deprecated
   public OrientConfigurableGraph setUseVertexFieldsForEdgeLabels(final boolean useVertexFieldsForEdgeLabels) {
-    this.settings.setUseVertexFieldsForEdgeLabels(useVertexFieldsForEdgeLabels);
+//    this.settings.setUseVertexFieldsForEdgeLabels(useVertexFieldsForEdgeLabels);
     return this;
   }
 

@@ -41,7 +41,8 @@ public abstract class BaseLuceneTest {
   @Before
   public void setupDatabase() throws Throwable {
 
-    String config = System.getProperty("orientdb.test.env", "memory");
+    String config = System.getProperty("orientdb.test.env", "ci");
+
 
     if ("ci".equals(config) || "release".equals(config)) {
       db = new ODatabaseDocumentTx("plocal:./target/databases/" + name.getMethodName());

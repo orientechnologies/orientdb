@@ -19,6 +19,7 @@
 package com.orientechnologies.orient.etl.transformer;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLProcessHaltedException;
@@ -44,9 +45,9 @@ public class OETLMergeTransformer extends OETLAbstractLookupTransformer {
   }
 
   @Override
-  public Object executeTransform(final Object input) {
+  public Object executeTransform(ODatabaseDocument db, final Object input) {
     Object joinValue = ((ODocument) ((OIdentifiable) input).getRecord()).field(joinFieldName);
-    final Object result = lookup(joinValue, false);
+    final Object result = lookup(db, joinValue, false);
 
     log(Level.FINE, "joinValue=%s, lookupResult=%s", joinValue, result);
 

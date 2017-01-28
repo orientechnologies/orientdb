@@ -5,12 +5,14 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.command.script.OCommandScriptException;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -71,29 +73,29 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   private final String                    type;
   private final String                    dbName;
   private final String                    baseUrl;
-  private final Map<String, Object>                     preopenProperties = new HashMap<>();
-  private final Map<ATTRIBUTES, Object>                 preopenAttributes = new HashMap<>();
+  private final Map<String, Object>     preopenProperties = new HashMap<>();
+  private final Map<ATTRIBUTES, Object> preopenAttributes = new HashMap<>();
   // TODO review for the case of browseListener before open.
-  private final Set<ODatabaseListener>                  preopenListener   = new HashSet<>();
-  private ODatabaseInternal<?>                          databaseOwner;
-  private OIntent                                       intent;
-  private OStorage                                      delegateStorage;
-  private ORecordConflictStrategy                       conflictStrategy;
-  private ORecordSerializer                             serializer;
-  protected final AtomicReference<Thread>               owner             = new AtomicReference<Thread>();
-  private final boolean                                 ownerProtection;
+  private final Set<ODatabaseListener>  preopenListener   = new HashSet<>();
+  private ODatabaseInternal<?>    databaseOwner;
+  private OIntent                 intent;
+  private OStorage                delegateStorage;
+  private ORecordConflictStrategy conflictStrategy;
+  private ORecordSerializer       serializer;
+  protected final AtomicReference<Thread> owner = new AtomicReference<Thread>();
+  private final boolean ownerProtection;
 
-  private static OShutdownHandler                       shutdownHandler   = new OShutdownHandler() {
-                                                                            @Override
-                                                                            public void shutdown() throws Exception {
-                                                                              closeAll();
-                                                                            }
+  private static OShutdownHandler shutdownHandler = new OShutdownHandler() {
+    @Override
+    public void shutdown() throws Exception {
+      closeAll();
+    }
 
-                                                                            @Override
-                                                                            public int getPriority() {
-                                                                              return 10000;
-                                                                            }
-                                                                          };
+    @Override
+    public int getPriority() {
+      return 10000;
+    }
+  };
 
   static {
     Orient.instance().registerOrientStartupListener(() -> Orient.instance().addShutdownHandler(shutdownHandler));
@@ -145,7 +147,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
     OURLConnection connection = OURLHelper.parse(url);
     this.url = connection.getUrl();
-    type =  connection.getType();
+    type = connection.getType();
     baseUrl = connection.getPath();
     dbName = connection.getDbName();
     this.ownerProtection = ownerProtection;
@@ -228,8 +230,9 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
       boolean ignoreCache, boolean iUpdateCache, boolean loadTombstones, OStorage.LOCKING_STRATEGY lockingStrategy,
       RecordReader recordReader) {
     checkOpenness();
-    return internal.executeReadRecord(rid, iRecord, recordVersion, fetchPlan, ignoreCache, iUpdateCache, loadTombstones,
-        lockingStrategy, recordReader);
+    return internal
+        .executeReadRecord(rid, iRecord, recordVersion, fetchPlan, ignoreCache, iUpdateCache, loadTombstones, lockingStrategy,
+            recordReader);
   }
 
   @Override
@@ -483,14 +486,16 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     return doc.asVertex().get();
   }
 
-  @Override public OVertex newVertex(OClass type) {
+  @Override
+  public OVertex newVertex(OClass type) {
     if (type == null) {
       return newVertex("E");
     }
     return newVertex(type.getName());
   }
 
-  @Override public OEdge newEdge(OVertex from, OVertex to, String type) {
+  @Override
+  public OEdge newEdge(OVertex from, OVertex to, String type) {
     ODocument doc = newInstance(type);
     if (!doc.isEdge()) {
       throw new IllegalArgumentException("" + type + " is not an edge class");
@@ -499,18 +504,21 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     return addEdgeInternal(from, to, type);
   }
 
-  @Override public OEdge newEdge(OVertex from, OVertex to, OClass type) {
+  @Override
+  public OEdge newEdge(OVertex from, OVertex to, OClass type) {
     if (type == null) {
       return newEdge(from, to, "E");
     }
     return newEdge(from, to, type.getName());
   }
 
-  @Override public OElement newElement() {
+  @Override
+  public OElement newElement() {
     return newInstance();
   }
 
-  @Override public OElement newElement(String className) {
+  @Override
+  public OElement newElement(String className) {
     return newInstance(className);
   }
 
@@ -518,13 +526,19 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     return newInstance(clazz.getName());
   }
 
-
   private OEdge addEdgeInternal(final OVertex currentVertex, final OVertex inVertex, String iClassName, final Object... fields) {
 
     OEdge edge = null;
     ODocument outDocument = null;
     ODocument inDocument = null;
     boolean outDocumentModified = false;
+
+    if (checkDeletedInTx(currentVertex))
+      throw new ORecordNotFoundException(currentVertex.getIdentity(),
+          "The vertex " + currentVertex.getIdentity() + " has been deleted");
+
+    if (checkDeletedInTx(inVertex))
+      throw new ORecordNotFoundException(inVertex.getIdentity(), "The vertex " + inVertex.getIdentity() + " has been deleted");
 
     final int maxRetries = 1;//TODO
     for (int retry = 0; retry < maxRetries; ++retry) {
@@ -571,30 +585,37 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
         // CREATE THE EDGE DOCUMENT TO STORE FIELDS TOO
 
-        edge = newInstance(iClassName).asEdge().get();
-        if (fields != null) {
-          for (int i = 0; i < fields.length; i += 2) {
-            String fieldName = "" + fields[i];
-            if (fields.length <= i + 1) {
-              break;
+        if (isUseLightweightEdges() && (fields == null || fields.length == 0)) {
+          edge = newLightweightEdge(iClassName, from, to);
+          OVertexDelegate.createLink(from.getRecord(), to.getRecord(), outFieldName);
+          OVertexDelegate.createLink(to.getRecord(), from.getRecord(), inFieldName);
+        } else {
+          edge = newInstance(iClassName).asEdge().get();
+          edge.setProperty("out", currentVertex.getRecord());
+          edge.setProperty("in", inDocument.getRecord());
+
+          if (fields != null) {
+            for (int i = 0; i < fields.length; i += 2) {
+              String fieldName = "" + fields[i];
+              if (fields.length <= i + 1) {
+                break;
+              }
+              Object fieldValue = fields[i + 1];
+              edge.setProperty(fieldName, fieldValue);
+
             }
-            Object fieldValue = fields[i + 1];
-            edge.setProperty(fieldName, fieldValue);
+          }
+
+          if (!outDocumentModified) {
+            // OUT-VERTEX ---> IN-VERTEX/EDGE
+            OVertexDelegate.createLink(outDocument, edge.getRecord(), outFieldName);
 
           }
-        }
 
-        edge.setProperty("out", currentVertex.getRecord());
-        edge.setProperty("in", inDocument.getRecord());
-
-        if (!outDocumentModified) {
-          // OUT-VERTEX ---> IN-VERTEX/EDGE
-          OVertexDelegate.createLink(outDocument, edge.getRecord(), outFieldName);
+          // IN-VERTEX ---> OUT-VERTEX/EDGE
+          OVertexDelegate.createLink(inDocument, edge.getRecord(), inFieldName);
 
         }
-
-        // IN-VERTEX ---> OUT-VERTEX/EDGE
-        OVertexDelegate.createLink(inDocument, edge.getRecord(), inFieldName);
 
         // OK
         break;
@@ -622,6 +643,28 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
       }
     }
     return edge;
+  }
+
+  public boolean isUseLightweightEdges() {
+    return internal.isUseLightweightEdges();
+  }
+
+  public void setUseLightweightEdges(boolean b) {
+    internal.setUseLightweightEdges(b);
+  }
+
+  private boolean checkDeletedInTx(OVertex currentVertex) {
+    ORID id;
+    if (currentVertex.getRecord() != null)
+      id = currentVertex.getRecord().getIdentity();
+    else
+      return false;
+
+    final ORecordOperation oper = getTransaction().getRecordEntry(id);
+    if (oper == null)
+      return id.isTemporary();
+    else
+      return oper.type == ORecordOperation.DELETED;
   }
 
   private static String getConnectionFieldName(final ODirection iDirection, final String iClassName) {
@@ -1025,7 +1068,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
       throw new IllegalStateException("Current instance is owned by other thread" + (o != null ? " : '" + o.getName() + "'" : ""));
     }
   }
-  
+
   protected void clearOwner() {
     if (!ownerProtection)
       return;
@@ -1388,6 +1431,11 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     return internal.newInstance(iClassName);
   }
 
+  public OEdge newLightweightEdge(String iClassName, OVertex from, OVertex to) {
+    checkOpenness();
+    return internal.newLightweightEdge(iClassName, from, to);
+  }
+
   @Override
   public long countClass(String iClassName) {
     checkOpenness();
@@ -1446,14 +1494,14 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     if (connectionStrategy != null)
       builder.addConfig(OGlobalConfiguration.CLIENT_CONNECTION_STRATEGY, connectionStrategy);
 
-    final String compressionMethod = pars != null ? (String) pars.get(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getKey())
-        : null;
+    final String compressionMethod =
+        pars != null ? (String) pars.get(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getKey()) : null;
     if (compressionMethod != null)
       // SAVE COMPRESSION METHOD IN CONFIGURATION
       builder.addConfig(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD, compressionMethod);
 
-    final String encryptionMethod = pars != null ? (String) pars.get(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD.getKey())
-        : null;
+    final String encryptionMethod =
+        pars != null ? (String) pars.get(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD.getKey()) : null;
     if (encryptionMethod != null)
       // SAVE ENCRYPTION METHOD IN CONFIGURATION
       builder.addConfig(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD, encryptionMethod);
@@ -1506,10 +1554,23 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     checkOpenness();
     internal.setPrefetchRecords(prefetchRecords);
   }
-  
+
   public void checkForClusterPermissions(String name) {
     checkOpenness();
     internal.checkForClusterPermissions(name);
   }
-  
+
+  @Override
+  public OResultSet execute(String language, String script, Object... args)
+      throws OCommandExecutionException, OCommandScriptException {
+    checkOpenness();
+    return internal.execute(language, script, args);
+  }
+
+  @Override
+  public OResultSet execute(String language, String script, Map<String, ?> args)
+      throws OCommandExecutionException, OCommandScriptException {
+    checkOpenness();
+    return internal.execute(language, script, args);
+  }
 }

@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.index.OIndexManagerProxy;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
@@ -29,7 +30,7 @@ public class ODropIndexStatement extends ODDLStatement {
   @Override public OResultSet executeDDL(OCommandContext ctx) {
     OInternalResultSet rs = new OInternalResultSet();
     ODatabase db = ctx.getDatabase();
-    OIndexManagerProxy idxMgr = db.getMetadata().getIndexManager();
+    OIndexManager idxMgr = db.getMetadata().getIndexManager();
     if (all) {
       for (OIndex<?> idx : idxMgr.getIndexes()) {
         db.getMetadata().getIndexManager().dropIndex(idx.getName());

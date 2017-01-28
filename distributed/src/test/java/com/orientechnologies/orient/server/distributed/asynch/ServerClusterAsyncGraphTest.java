@@ -21,15 +21,15 @@
 package com.orientechnologies.orient.server.distributed.asynch;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.record.ODirection;
+import com.orientechnologies.orient.core.record.OEdge;
+import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.replication.OAsyncReplicationError;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.server.distributed.AbstractServerClusterTest;
 import com.orientechnologies.orient.server.distributed.ServerRun;
-import com.tinkerpop.blueprints.Direction;
-import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import junit.framework.Assert;
 import org.junit.Test;
 
@@ -38,9 +38,9 @@ import org.junit.Test;
  */
 public class ServerClusterAsyncGraphTest extends AbstractServerClusterTest {
   final static int SERVERS = 2;
-  private OrientVertex v1;
-  private OrientVertex v2;
-  private OrientVertex v3;
+  private OVertex      v1;
+  private OVertex v2;
+  private OVertex v3;
 
   public String getDatabaseName() {
     return "distributed-graphtest";
@@ -61,41 +61,55 @@ public class ServerClusterAsyncGraphTest extends AbstractServerClusterTest {
   @Override
   protected void executeTest() throws Exception {
     {
-      OrientGraphFactory factory = new OrientGraphFactory("plocal:target/server0/databases/" + getDatabaseName());
-      OrientGraphNoTx g = factory.getNoTx();
+      ODatabaseDocumentTx g = new ODatabaseDocumentTx("plocal:target/server0/databases/" + getDatabaseName());
+      if(g.exists()){
+        g.open("admin", "admin");
+      }else {
+        g.create();
+      }
+
 
       try {
-        g.createVertexType("Post");
-        g.createVertexType("User");
-        g.createEdgeType("Own");
+        g.createClass("Post", "V");
+        g.createClass("User", "V");
+        g.createClass("Own", "E");
 
-        g.addVertex("class:User");
+        g.newVertex("User").save();
 
         g.command(new OCommandSQL("insert into Post (content, timestamp) values('test', 1)")).execute();
       } finally {
-        g.shutdown();
+        g.close();
       }
     }
 
     // CHECK VERTEX CREATION ON ALL THE SERVERS
     for (int s = 0; s<SERVERS; ++s) {
-      OrientGraphFactory factory2 = new OrientGraphFactory("plocal:target/server" + s + "/databases/" + getDatabaseName());
-      OrientGraphNoTx g2 = factory2.getNoTx();
+      ODatabaseDocumentTx g2= new ODatabaseDocumentTx("plocal:target/server" + s + "/databases/" + getDatabaseName());
+      if(g2.exists()){
+        g2.open("admin", "admin");
+      }else {
+        g2.create();
+      }
 
       try {
 
-        Iterable<OrientVertex> result = g2.command(new OCommandSQL("select from Post")).execute();
+        Iterable<OElement> result = g2.command(new OCommandSQL("select from Post")).execute();
         Assert.assertTrue(result.iterator().hasNext());
         Assert.assertNotNull(result.iterator().next());
 
       } finally {
-        g2.shutdown();
+        g2.close();
       }
     }
 
     {
-      OrientGraphFactory factory = new OrientGraphFactory("plocal:target/server0/databases/" + getDatabaseName());
-      OrientGraphNoTx g = factory.getNoTx();
+      ODatabaseDocumentTx g = new ODatabaseDocumentTx("plocal:target/server0/databases/" + getDatabaseName());
+      if(g.exists()){
+        g.open("admin", "admin");
+      }else {
+        g.create();
+      }
+
       try {
         g.command(new OCommandSQL("create edge Own from (select from User) to (select from Post)").onAsyncReplicationError(new OAsyncReplicationError() {
           @Override
@@ -105,7 +119,7 @@ public class ServerClusterAsyncGraphTest extends AbstractServerClusterTest {
         })).execute();
 
       } finally {
-        g.shutdown();
+        g.close();
       }
     }
 
@@ -113,37 +127,41 @@ public class ServerClusterAsyncGraphTest extends AbstractServerClusterTest {
 
     // CHECK VERTEX CREATION ON ALL THE SERVERS
     for (int s = 0; s<SERVERS; ++s) {
-      OrientGraphFactory factory2 = new OrientGraphFactory("plocal:target/server" + s + "/databases/" + getDatabaseName());
-      OrientGraphNoTx g2 = factory2.getNoTx();
+      ODatabaseDocumentTx g2 = new ODatabaseDocumentTx("plocal:target/server" + s + "/databases/" + getDatabaseName());
+      if(g2.exists()){
+        g2.open("admin", "admin");
+      }else {
+        g2.create();
+      }
 
       try {
 
-        Iterable<OrientVertex> result = g2.command(new OCommandSQL("select from Own")).execute();
+        Iterable<OVertex> result = g2.command(new OCommandSQL("select from Own")).execute();
         Assert.assertTrue(result.iterator().hasNext());
         Assert.assertNotNull(result.iterator().next());
 
         result = g2.command(new OCommandSQL("select from Post")).execute();
         Assert.assertTrue(result.iterator().hasNext());
 
-        final OrientVertex v = result.iterator().next();
+        final OVertex v = result.iterator().next();
         Assert.assertNotNull(v);
 
-        final Iterable<Edge> inEdges = v.getEdges(Direction.IN);
+        final Iterable<OEdge> inEdges = v.getEdges(ODirection.IN);
         Assert.assertTrue(inEdges.iterator().hasNext());
         Assert.assertNotNull(inEdges.iterator().next());
 
         result = g2.command(new OCommandSQL("select from User")).execute();
         Assert.assertTrue(result.iterator().hasNext());
 
-        final OrientVertex v2 = result.iterator().next();
+        final OVertex v2 = result.iterator().next();
         Assert.assertNotNull(v2);
 
-        final Iterable<Edge> outEdges = v2.getEdges(Direction.OUT);
+        final Iterable<OEdge> outEdges = v2.getEdges(ODirection.OUT);
         Assert.assertTrue(outEdges.iterator().hasNext());
         Assert.assertNotNull(outEdges.iterator().next());
 
       } finally {
-        g2.shutdown();
+        g2.close();
       }
     }
 

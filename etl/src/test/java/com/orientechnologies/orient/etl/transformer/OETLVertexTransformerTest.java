@@ -17,10 +17,11 @@
  */
 package com.orientechnologies.orient.etl.transformer;
 
+import com.orientechnologies.orient.core.db.ODatabasePool;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.etl.OETLBaseTest;
-import com.tinkerpop.blueprints.Parameter;
-import com.tinkerpop.blueprints.Vertex;
-import org.junit.Before;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -33,56 +34,94 @@ import static org.junit.Assert.assertEquals;
  */
 public class OETLVertexTransformerTest extends OETLBaseTest {
 
-  @Before
-  public void setUp() {
-    graph.createVertexType("Person");
-    graph.createKeyIndex("name", Vertex.class, new Parameter<String, String>("type", "UNIQUE"),
-        new Parameter<String, String>("class", "Person"));
-    graph.commit();
+  public void createClasses(ODatabaseDocument db) {
+
+    OClass person = db.createVertexClass("Person");
+    person.createProperty("name", OType.STRING);
+    person.createIndex("Person.name", OClass.INDEX_TYPE.UNIQUE, "name");
+
+    db.commit();
   }
 
   @Test
   public void testCreateVertex() {
-    process("{source: { content: { value: 'name,\nGregor' } }, extractor : { csv: {} },"
+    configure("{source: { content: { value: 'name,\nGregor' } }, extractor : { csv: {} },"
         + " transformers: [{vertex: {class:'Person', skipDuplicates:false}},"
         + "], loader: { orientdb: { dbAutoCreateProperties:true, cluster: 'custom', dbURL: 'memory:" + name.getMethodName()
         + "', dbType:'graph', useLightweightEdges:false } } }");
 
-    assertEquals("V", 1, graph.countVertices());
-    assertEquals("person", 1, graph.countVertices("Person"));
+    ODatabasePool pool = proc.getLoader().getPool();
+    ODatabaseDocument db = pool.acquire();
+    createClasses(db);
+    db.close();
 
-    assertThat(graph.getRawGraph().countClusterElements("custom")).isEqualTo(1);
+    proc.execute();
+    db = pool.acquire();
+
+    assertEquals("V", 1, db.countClass("V"));
+    assertEquals("person", 1, db.countClass("Person"));
+
+    assertThat(db.countClusterElements("custom")).isEqualTo(1);
 
   }
 
   @Test
   public void testCreateTargetVertexIfNotExists() {
-    process("{source: { content: { value: 'name,idf,parent\nParent,1,\nChild,2,1' } }, extractor : { csv: {} },"
+    configure("{source: { content: { value: 'name,idf,parent\nParent,1,\nChild,2,1' } }, extractor : { csv: {} },"
         + " transformers: [{merge: { joinFieldName:'idf', lookup:'V.idf'}}, {vertex: {class:'V'}},"
         + "{edge:{ class: 'E', joinFieldName: 'parent', lookup: 'V.idf', unresolvedLinkAction: 'CREATE' }, if: '$input.parent IS NOT NULL'}"
         + "], loader: { orientdb: { dbURL: 'memory:" + name.getMethodName() + "', dbType:'graph', useLightweightEdges:false } } }");
 
-    graph.makeActive();
-    ;
-    assertThat(graph.countVertices("V")).isEqualTo(2);
+    ODatabasePool pool = proc.getLoader().getPool();
+
+    ODatabaseDocument db = pool.acquire();
+    createClasses(db);
+    db.close();
+
+    proc.execute();
+    //VERIFY
+    db = pool.acquire();
+
+    assertThat(db.countClass("V")).isEqualTo(2);
+    db.close();
   }
 
   //  @Test(expected = ORecordDuplicatedException.class)
   @Test
   public void testErrorOnDuplicateVertex() {
-    process("{ config: { 'log': 'DEBUG' },  source: { content: { value: 'name,\nGregor\nGregor\nHans' } }, extractor : { csv: {} },"
-        + " transformers: [ {vertex: {class:'Person', skipDuplicates:false}}," + "], loader: { orientdb: { dbURL: 'memory:" + name
-        .getMethodName() + "', dbType:'graph', useLightweightEdges:false } } }");
+    configure(
+        "{ config: { 'log': 'DEBUG' },  source: { content: { value: 'name,\nGregor\nGregor\nHans' } }, extractor : { csv: {} },"
+            + " transformers: [ {vertex: {class:'Person', skipDuplicates:false}}," + "], loader: { orientdb: { dbURL: 'memory:"
+            + name
+            .getMethodName() + "', dbType:'graph', useLightweightEdges:false } } }");
 
-    assertThat(graph.countVertices("V")).isEqualTo(1);
+    ODatabasePool pool = proc.getLoader().getPool();
+    ODatabaseDocument db = pool.acquire();
+    createClasses(db);
+    db.close();
+
+    proc.execute();
+    //VERIFY
+    db = pool.acquire();
+    assertThat(db.countClass("V")).isEqualTo(1);
+    db.close();
   }
 
   @Test
   public void testSkipDuplicateVertex() {
-    process("{source: { content: { value: 'name,\nGregor\nGregor\nHans' } }, extractor : { csv: {} },"
+    configure("{source: { content: { value: 'name,\nGregor\nGregor\nHans' } }, extractor : { csv: {} },"
         + " transformers: [{vertex: {class:'Person', skipDuplicates:true}},]," + " loader: { orientdb: {  dbURL: 'memory:" + name
         .getMethodName() + "', dbType:'graph', useLightweightEdges:false } } }");
 
-    assertThat(graph.countVertices("Person")).isEqualTo(2);
+    ODatabasePool pool = proc.getLoader().getPool();
+    ODatabaseDocument db = pool.acquire();
+    createClasses(db);
+    db.close();
+    proc.execute();
+
+    //VERIFY
+    db = pool.acquire();
+    assertThat(db.countClass("Person")).isEqualTo(2);
+    db.close();
   }
 }

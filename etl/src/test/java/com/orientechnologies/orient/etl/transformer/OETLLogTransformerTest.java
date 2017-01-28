@@ -59,7 +59,9 @@ public class OETLLogTransformerTest extends OETLBaseTest {
   public void testPrefix() throws Exception {
     String cfgJson = "{source: { content: { value: 'id,text\n1,Hello\n2,Bye'} }, " + "extractor : { csv: {} }, "
         + "transformers : [{ log : {prefix:'-> '}}], " + "loader : { test: {} } }";
-    process(cfgJson);
+    configure(cfgJson);
+    proc.execute();
+
     String[] stringList = output.toString().split(System.getProperty("line.separator"));
 
     assertThat(stringList[3]).contains("-> {id:1,text:Hello}");
@@ -71,12 +73,12 @@ public class OETLLogTransformerTest extends OETLBaseTest {
   public void testPostfix() throws Exception {
     String cfgJson = "{source: { content: { value: 'id,text\n1,Hello\n2,Bye'} }, " + "extractor : { csv : {} }, "
         + "transformers : [{ log : {postfix:'-> '}}], " + "loader : { test: {} } }";
-    process(cfgJson);
+    configure(cfgJson);
+    proc.execute();
+    String out = output.toString();
 
-    String[] stringList = output.toString().split(System.getProperty("line.separator"));
-
-    assertThat(stringList[3]).contains("{id:1,text:Hello}->");
-    assertThat(stringList[4]).contains("{id:2,text:Bye}->");
+    assertThat(out).contains("{id:1,text:Hello}->");
+    assertThat(out).contains("{id:2,text:Bye}->");
 
   }
 

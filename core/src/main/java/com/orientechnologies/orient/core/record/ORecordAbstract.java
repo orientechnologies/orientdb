@@ -294,7 +294,6 @@ public abstract class ORecordAbstract implements ORecord {
 
   public ORecordAbstract delete() {
     getDatabase().delete(this);
-    setDirty();
     return this;
   }
 

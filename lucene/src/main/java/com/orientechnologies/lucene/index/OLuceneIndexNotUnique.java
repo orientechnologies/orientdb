@@ -26,11 +26,7 @@ import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
 import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
-import com.orientechnologies.orient.core.index.OIndexAbstract;
-import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexEngine;
-import com.orientechnologies.orient.core.index.OIndexException;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerSBTreeIndexRIDContainer;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -47,11 +43,15 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-
 public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> implements OLuceneIndex {
 
-  OLuceneIndexNotUnique(String name, String typeId, String algorithm, int version, OAbstractPaginatedStorage storage,
-      String valueContainerAlgorithm, ODocument metadata) {
+  public OLuceneIndexNotUnique(String name,
+      String typeId,
+      String algorithm,
+      int version,
+      OAbstractPaginatedStorage storage,
+      String valueContainerAlgorithm,
+      ODocument metadata) {
     super(name, typeId, algorithm, valueContainerAlgorithm, metadata, version, storage);
   }
 
@@ -95,6 +95,21 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
   @Override
   public boolean remove(Object key) {
     return super.remove(key);
+  }
+
+  @Override
+  public OIndexAbstract<Set<OIdentifiable>> removeCluster(String iClusterName) {
+    acquireExclusiveLock();
+    try {
+      if (clustersToIndex.remove(iClusterName)) {
+        updateConfiguration();
+        remove("_CLUSTER:" + storage.getClusterByName(iClusterName).getId());
+      }
+
+      return this;
+    } finally {
+      releaseExclusiveLock();
+    }
   }
 
   @Override
@@ -147,7 +162,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
 
   }
 
-  private Object decodeKey(Object key) {
+  protected Object decodeKey(Object key) {
     return key;
   }
 
@@ -203,7 +218,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
       }
   }
 
-  private Object encodeKey(Object key) {
+  protected Object encodeKey(Object key) {
     return key;
   }
 
@@ -400,7 +415,6 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
   public boolean supportsOrderedIterations() {
     return false;
   }
-
 
   @Override
   public IndexSearcher searcher() throws IOException {

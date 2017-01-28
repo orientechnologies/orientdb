@@ -39,13 +39,41 @@ public class ONotInCondition extends OBooleanExpression {
     return visitor.visit(this, data);
   }
 
-  @Override public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
-    throw new UnsupportedOperationException("TODO Implement NOT IN!!!");//TODO
+  @Override
+  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+    Object leftVal = left.execute(currentRecord, ctx);
+    Object rightVal = null;
+    if (rightStatement != null) {
+      rightVal = OInCondition.executeQuery(rightStatement, ctx);
+    } else if (rightParam != null) {
+      rightVal = rightParam.bindFromInputParams(ctx.getInputParameters());
+    } else if (rightMathExpression != null) {
+      rightVal = rightMathExpression.execute(currentRecord, ctx);
+    }
+    if (rightVal == null) {
+      return true;
+    }
+    return !OInCondition.evaluateExpression(leftVal, rightVal);
   }
 
-  @Override public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
-    throw new UnsupportedOperationException("TODO Implement NOT IN!!!");//TODO
+  @Override
+  public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
+    Object leftVal = left.execute(currentRecord, ctx);
+    Object rightVal = null;
+    if (rightStatement != null) {
+      rightVal = OInCondition.executeQuery(rightStatement, ctx);
+    } else if (rightParam != null) {
+      rightVal = rightParam.bindFromInputParams(ctx.getInputParameters());
+    } else if (rightMathExpression != null) {
+      rightVal = rightMathExpression.execute(currentRecord, ctx);
+    }
+    if (rightVal == null) {
+      return true;
+    }
+    return !OInCondition.evaluateExpression(leftVal, rightVal);
   }
+
+
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
 

@@ -31,12 +31,55 @@ public class OMatchesCondition extends OBooleanExpression {
     return visitor.visit(this, data);
   }
 
-  @Override public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
-    throw new UnsupportedOperationException("TODO Implement MATCHES!!!");//TODO
+  @Override
+  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+    String regex = right;
+    if (regex != null) {
+      regex = regex.substring(1, regex.length()-1);
+    }else{
+      Object paramVal = rightParam.bindFromInputParams(ctx.getInputParameters());
+      if (paramVal instanceof String) {
+        regex = (String) paramVal;
+      } else {
+        return false;
+      }
+    }
+    Object value = expression.execute(currentRecord, ctx);
+
+    return matches(value, regex, ctx);
   }
 
-  @Override public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
-    throw new UnsupportedOperationException("TODO Implement MATCHES!!!");//TODO
+  private boolean matches(Object value, String regex, OCommandContext ctx) {
+    final String key = "MATCHES_" + regex.hashCode();
+    java.util.regex.Pattern p = (java.util.regex.Pattern) ctx.getVariable(key);
+    if (p == null) {
+      p = java.util.regex.Pattern.compile(regex);
+      ctx.setVariable(key, p);
+    }
+
+    if (value instanceof CharSequence) {
+      return p.matcher((CharSequence) value).matches();
+    } else {
+      return false;
+    }
+  }
+
+  @Override
+  public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
+    String regex = right;
+    if (regex != null) {
+      regex = regex.substring(1, regex.length()-1);
+    }else{
+      Object paramVal = rightParam.bindFromInputParams(ctx.getInputParameters());
+      if (paramVal instanceof String) {
+        regex = (String) paramVal;
+      } else {
+        return false;
+      }
+    }
+    Object value = expression.execute(currentRecord, ctx);
+
+    return matches(value, regex, ctx);
   }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
@@ -49,32 +92,37 @@ public class OMatchesCondition extends OBooleanExpression {
     }
   }
 
-  @Override public boolean supportsBasicCalculation() {
+  @Override
+  public boolean supportsBasicCalculation() {
     return expression.supportsBasicCalculation();
   }
 
-  @Override protected int getNumberOfExternalCalculations() {
+  @Override
+  protected int getNumberOfExternalCalculations() {
     if (expression != null && !expression.supportsBasicCalculation()) {
       return 1;
     }
     return 0;
   }
 
-  @Override protected List<Object> getExternalCalculationConditions() {
+  @Override
+  protected List<Object> getExternalCalculationConditions() {
     if (expression != null && !expression.supportsBasicCalculation()) {
       return (List) Collections.singletonList(expression);
     }
     return Collections.EMPTY_LIST;
   }
 
-  @Override public boolean needsAliases(Set<String> aliases) {
+  @Override
+  public boolean needsAliases(Set<String> aliases) {
     if (expression.needsAliases(aliases)) {
       return true;
     }
     return false;
   }
 
-  @Override public OMatchesCondition copy() {
+  @Override
+  public OMatchesCondition copy() {
     OMatchesCondition result = new OMatchesCondition(-1);
     result.expression = expression == null ? null : expression.copy();
     result.right = right;
@@ -82,18 +130,21 @@ public class OMatchesCondition extends OBooleanExpression {
     return result;
   }
 
-  @Override public void extractSubQueries(SubQueryCollector collector) {
+  @Override
+  public void extractSubQueries(SubQueryCollector collector) {
     expression.extractSubQueries(collector);
   }
 
-  @Override public boolean refersToParent() {
+  @Override
+  public boolean refersToParent() {
     if (expression != null && expression.refersToParent()) {
       return true;
     }
     return false;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -111,14 +162,16 @@ public class OMatchesCondition extends OBooleanExpression {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = expression != null ? expression.hashCode() : 0;
     result = 31 * result + (right != null ? right.hashCode() : 0);
     result = 31 * result + (rightParam != null ? rightParam.hashCode() : 0);
     return result;
   }
 
-  @Override public List<String> getMatchPatternInvolvedAliases() {
+  @Override
+  public List<String> getMatchPatternInvolvedAliases() {
     return expression.getMatchPatternInvolvedAliases();
   }
 

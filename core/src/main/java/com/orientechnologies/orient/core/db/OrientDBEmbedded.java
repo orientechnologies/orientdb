@@ -39,7 +39,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.engine.OEngine;
 import com.orientechnologies.orient.core.engine.OMemoryAndLocalPaginatedEnginesInitializer;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.OStorageExistsException;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
@@ -86,15 +85,14 @@ public class OrientDBEmbedded implements OrientDB {
     return open(name, user, password, null);
   }
 
-  public synchronized ODatabaseDocumentInternal openNoAutheticate(String name, String user, Class<?> sec) {
+  public synchronized ODatabaseDocumentInternal openNoAuthenticate(String name, String user) {
     try {
       OrientDBConfig config = solveConfig(null);
       OAbstractPaginatedStorage storage = getStorage(name);
       // THIS OPEN THE STORAGE ONLY THE FIRST TIME
       storage.open(config.getConfigurations());
       final ODatabaseDocumentEmbedded embedded = new ODatabaseDocumentEmbedded(storage);
-      embedded.setProperty(ODatabase.OPTIONS.SECURITY.toString(), sec);
-      embedded.internalOpen(user, "nopwd", config);
+      embedded.internalOpen(user, "nopwd", config, false);
       return embedded;
     } catch (Exception e) {
       throw OException.wrapException(new ODatabaseException("Cannot open database '" + name + "'"), e);

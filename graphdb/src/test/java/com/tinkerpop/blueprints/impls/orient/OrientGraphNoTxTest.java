@@ -1,12 +1,7 @@
 package com.tinkerpop.blueprints.impls.orient;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.tinkerpop.blueprints.Graph;
-import com.tinkerpop.blueprints.GraphQueryTestSuite;
-import com.tinkerpop.blueprints.IndexableGraphTestSuite;
-import com.tinkerpop.blueprints.KeyIndexableGraphTestSuite;
-import com.tinkerpop.blueprints.TestSuite;
-import com.tinkerpop.blueprints.VertexQueryTestSuite;
+import com.tinkerpop.blueprints.*;
 import com.tinkerpop.blueprints.impls.GraphTest;
 import com.tinkerpop.blueprints.util.io.gml.GMLReaderTestSuite;
 import com.tinkerpop.blueprints.util.io.graphml.GraphMLReaderTestSuite;
@@ -124,7 +119,7 @@ public class OrientGraphNoTxTest extends GraphTest {
   @Override
   public void dropGraph(String graphDirectoryName) {
     final String graphDirectory = getWorkingDirectory() + "/" + graphDirectoryName;
-    final String url = OrientGraphTest.getStorageType() +  ":" + graphDirectory;
+    final String url = OrientGraphTest.getStorageType() + ":" + graphDirectory;
     try {
       OrientGraphNoTx graph = currentGraphs.remove(url);
       if (graph == null || graph.isClosed())
@@ -137,4 +132,34 @@ public class OrientGraphNoTxTest extends GraphTest {
 
     deleteDirectory(new File(graphDirectory));
   }
+
+  @Test
+  public void testRemoveUnlinked() {
+    Graph graph = generateGraph();
+
+    Vertex x = graph.addVertex(null);
+    Vertex y = graph.addVertex(null);
+
+    graph.addEdge(null, x, y, "connected_to");
+
+    for (Vertex v : graph.getVertices()) {
+      graph.removeVertex(v);
+    }
+
+    for (Edge e : graph.getEdges()) {
+      System.out.println("e: " + e);
+    }
+
+    graph.shutdown();
+
+    graph = generateGraph();
+
+    for (Edge e : graph.getEdges()) {
+      graph.removeEdge(e);
+    }
+
+    graph.shutdown();
+  }
+
+
 }

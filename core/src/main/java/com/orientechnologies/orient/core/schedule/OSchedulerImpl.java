@@ -37,13 +37,12 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author henryzhao81-at-gmail.com
  * @since Mar 28, 2013
  */
-public class OSchedulerImpl implements OScheduler {
+public class OSchedulerImpl  {
   private ConcurrentHashMap<String, OScheduledEvent> events = new ConcurrentHashMap<String, OScheduledEvent>();
 
   public OSchedulerImpl() {
   }
 
-  @Override
   public void scheduleEvent(final OScheduledEvent event) {
     if (event.getDocument().getIdentity().isNew())
       // FIST TIME: SAVE IT
@@ -53,7 +52,6 @@ public class OSchedulerImpl implements OScheduler {
       event.schedule();
   }
 
-  @Override
   public void removeEvent(final String eventName) {
     OLogManager.instance().debug(this, "Removing scheduled event '%s'...", eventName);
 
@@ -81,7 +79,6 @@ public class OSchedulerImpl implements OScheduler {
     }
   }
 
-  @Override
   public void updateEvent(final OScheduledEvent event) {
     final OScheduledEvent oldEvent = events.remove(event.getName());
     if (oldEvent != null)
@@ -90,17 +87,14 @@ public class OSchedulerImpl implements OScheduler {
     OLogManager.instance().debug(this, "Updated scheduled event '%s' rid=%s...", event, event.getDocument().getIdentity());
   }
 
-  @Override
   public Map<String, OScheduledEvent> getEvents() {
     return events;
   }
 
-  @Override
   public OScheduledEvent getEvent(final String name) {
     return events.get(name);
   }
 
-  @Override
   public void load() {
     throw new UnsupportedOperationException();
   }
@@ -118,7 +112,6 @@ public class OSchedulerImpl implements OScheduler {
     }
   }
   
-  @Override
   public void close() {
     for (OScheduledEvent event : events.values()) {
       event.interrupt();
@@ -126,11 +119,6 @@ public class OSchedulerImpl implements OScheduler {
     events.clear();
   }
 
-  @Override
-  public void create() {
-    throw new UnsupportedOperationException();
-  }
-  
   public void create(ODatabaseDocumentInternal database) {
     if (database.getMetadata().getSchema().existsClass(OScheduledEvent.CLASS_NAME))
       return;

@@ -16,8 +16,6 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -110,9 +108,12 @@ public class OneNodeBackupTest extends AbstractServerClusterTxTest {
 
                 banner("STARTING BACKUP SERVER " + (SERVERS - 1));
 
-                OrientGraphFactory factory = new OrientGraphFactory(
-                    "plocal:target/server" + (SERVERS - 1) + "/databases/" + getDatabaseName(), false);
-                OrientGraphNoTx g = factory.getNoTx();
+                ODatabaseDocumentTx g = new ODatabaseDocumentTx("plocal:target/server" + (SERVERS - 1) + "/databases/" + getDatabaseName());
+                if(g.exists()){
+                  g.open("admin", "admin");
+                }else{
+                  g.create();
+                }
 
                 backupInProgress = true;
                 File file = null;
@@ -121,7 +122,7 @@ public class OneNodeBackupTest extends AbstractServerClusterTxTest {
                   if (file.exists())
                     Assert.assertTrue(file.delete());
 
-                  g.getRawGraph().backup(new FileOutputStream(file), null, new Callable<Object>() {
+                  g.backup(new FileOutputStream(file), null, new Callable<Object>() {
                     @Override
                     public Object call() throws Exception {
 

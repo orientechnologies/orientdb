@@ -266,10 +266,6 @@ public class OImmutableSchema implements OSchema {
     return clusterSelectionFactory;
   }
 
-  @Override
-  public void onPostIndexManagement() {
-  }
-
   private ODatabaseDocumentInternal getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }

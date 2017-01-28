@@ -23,6 +23,8 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabasePool;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.etl.loader.OETLLoader;
 import com.orientechnologies.orient.etl.transformer.OETLTransformer;
 
@@ -43,10 +45,14 @@ public class OETLPipeline {
   protected final int                   maxRetries;
   protected       boolean               haltOnError;
 
-  protected OETLDatabaseProvider databaseProvider;
+  protected ODatabasePool pool;
 
-  public OETLPipeline(final OETLProcessor processor, final List<OETLTransformer> transformers, final OETLLoader loader,
-      final Level logLevel, final int maxRetries, final boolean haltOnError) {
+  public OETLPipeline(final OETLProcessor processor,
+      final List<OETLTransformer> transformers,
+      final OETLLoader loader,
+      final Level logLevel,
+      final int maxRetries,
+      final boolean haltOnError) {
     this.processor = processor;
     this.transformers = transformers;
     this.loader = loader;
@@ -60,15 +66,16 @@ public class OETLPipeline {
 
   public synchronized void begin() {
     loader.beginLoader(this);
-    for (OETLTransformer t : transformers) {
-      t.setDatabaseProvider(databaseProvider);
-      t.setContext(context);
-      t.begin();
+    for (OETLTransformer transformer : transformers) {
+      transformer.setContext(context);
+      ODatabaseDocument db = pool.acquire();
+      transformer.begin(db);
+      db.close();
     }
   }
 
-  public void setDatabaseProvider(OETLDatabaseProvider databaseProvider) {
-    this.databaseProvider = databaseProvider;
+  public void setPool(ODatabasePool pool) {
+    this.pool = pool;
   }
 
   public OCommandContext getContext() {
@@ -78,6 +85,8 @@ public class OETLPipeline {
   protected Object execute(final OETLExtractedItem source) {
     int retry = 0;
     do {
+      ODatabaseDocument db = pool.acquire();
+      db.activateOnCurrentThread();
       try {
         Object current = source.payload;
 
@@ -85,19 +94,19 @@ public class OETLPipeline {
         context.setVariable("extractedPayload", source.payload);
 
         for (OETLTransformer t : transformers) {
-          current = t.transform(current);
+          current = t.transform(db, current);
           if (current == null) {
             OLogManager.instance().warn(this, "Transformer [%s] returned null, skip rest of pipeline execution", t);
           }
         }
         if (current != null) {
           // LOAD
-          loader.load(databaseProvider, current, context);
+          loader.load(db, current, context);
         }
 
         return current;
       } catch (ONeedRetryException e) {
-        loader.rollback(databaseProvider);
+        loader.rollback(db);
         retry++;
         OLogManager.instance().info(this, "Error in pipeline execution, retry = %d/%d (exception=)", retry, maxRetries, e);
       } catch (OETLProcessHaltedException e) {
@@ -105,7 +114,7 @@ public class OETLPipeline {
 
         processor.getStats().incrementErrors();
 
-        loader.rollback(databaseProvider);
+        loader.rollback(db);
         throw e;
 
       } catch (Exception e) {
@@ -117,9 +126,11 @@ public class OETLPipeline {
           return null;
         }
 
-        loader.rollback(databaseProvider);
+        loader.rollback(db);
         throw OException.wrapException(new OETLProcessHaltedException("Halt"), e);
 
+      } finally {
+        db.close();
       }
     } while (retry < maxRetries);
 
@@ -127,6 +138,6 @@ public class OETLPipeline {
   }
 
   public void end() {
-    loader.endLoader(databaseProvider);
+//    pool.close();
   }
 }

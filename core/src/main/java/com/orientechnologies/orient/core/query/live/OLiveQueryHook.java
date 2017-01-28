@@ -113,7 +113,7 @@ public class OLiveQueryHook extends ODocumentHookAbstract implements ODatabaseLi
   }
 
   @Override
-  public void onDelete(ODatabase iDatabase) {
+  public void onDrop(ODatabase iDatabase) {
     if(Boolean.FALSE.equals(database.getConfiguration().getValue(OGlobalConfiguration.QUERY_LIVE_SUPPORT)))
       return ;
     OLiveQueryOps ops = getOpsReference((ODatabaseInternal) iDatabase);
@@ -229,11 +229,6 @@ public class OLiveQueryHook extends ODocumentHookAbstract implements ODatabaseLi
       }
       list.add(result);
     }
-  }
-
-  @Override
-  public boolean onCorruptionRepairDatabase(ODatabase iDatabase, String iReason, String iWhatWillbeFixed) {
-    return false;
   }
 
   @Override

@@ -19,6 +19,8 @@
 package com.orientechnologies.orient.etl.extractor;
 
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.db.ODatabasePool;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.etl.OETLBaseTest;
 import org.junit.Test;
 
@@ -36,42 +38,59 @@ public class OETLJsonRandomExtractorTest extends OETLBaseTest {
   @Test
   public void shouldLoadSingleThread() {
 
-    process("{extractor : { random: {items: " + TOTAL + ", fields: 10} }, "
+    configure("{extractor : { random: {items: " + TOTAL + ", fields: 10} }, "
             + "loader: { orientdb: {batchCommit: 10000 , dbURL: 'memory:" + name.getMethodName()
             + "', dbType:'graph', class: 'Person', useLightweightEdges:false, " + "classes: [{name: 'Person', extends: 'V'}] } } }",
         new OBasicCommandContext().setVariable("parallel", Boolean.FALSE).setVariable("dumpEveryMs", 1000));
 
-    assertThat(graph.countVertices("Person")).isEqualTo(TOTAL);
+    proc.execute();
 
-    graph.getRawGraph().browseClass("Person").forEach(doc -> assertThat(doc.fields()).isEqualTo(10));
+    ODatabasePool pool = proc.getLoader().getPool();
+
+    ODatabaseDocument db = pool.acquire();
+    assertThat(db.countClass("Person")).isEqualTo(TOTAL);
+
+    db.browseClass("Person").forEach(doc -> assertThat(doc.fields()).isEqualTo(10));
+    db.close();
   }
 
   @Test
   public void shouldLoadMultipleThreadsInParallel() {
 
-    process(
+    configure(
         "{extractor : { random: {items: " + TOTAL + ", fields: 10, delay: 0} }, " + "loader: { orientdb: { dbURL: 'memory:" + name
             .getMethodName() + "', dbType:'graph', class: 'Person', useLightweightEdges:false, "
             + "classes: [{name: 'Person', extends: 'V', clusters: 8  }] } } }",
         new OBasicCommandContext().setVariable("parallel", Boolean.TRUE).setVariable("dumpEveryMs", 1000));
 
-    assertThat(graph.countVertices("Person")).isEqualTo(TOTAL);
+    proc.execute();
+    ODatabasePool pool = proc.getLoader().getPool();
+    ODatabaseDocument db = pool.acquire();
 
-    graph.getRawGraph().browseClass("Person").forEach(doc -> assertThat(doc.fields()).isEqualTo(10));
+    assertThat(db.countClass("Person")).isEqualTo(TOTAL);
+
+    db.browseClass("Person").forEach(doc -> assertThat(doc.fields()).isEqualTo(10));
+    db.close();
   }
 
   @Test
   public void shouldLoadMultipleThreadsInParallelWithBatchCommit() {
 
-    process("{extractor : { random: {items: " + TOTAL + ", fields: 10, delay: 0} }, "
+    configure("{extractor : { random: {items: " + TOTAL + ", fields: 10, delay: 0} }, "
             + "loader: { orientdb: {batchCommit: 10000 ,dbURL: 'memory:" + name.getMethodName()
             + "', dbType:'graph', class: 'Person', useLightweightEdges:false, "
             + "classes: [{name: 'Person', extends: 'V', clusters: 8 }] } } }",
         new OBasicCommandContext().setVariable("parallel", Boolean.TRUE).setVariable("dumpEveryMs", 1000));
 
-    assertThat(graph.countVertices("Person")).isEqualTo(TOTAL);
+    proc.execute();
+    ODatabasePool pool = proc.getLoader().getPool();
+    ODatabaseDocument db = pool.acquire();
 
-    graph.getRawGraph().browseClass("Person").forEach(doc -> assertThat(doc.fields()).isEqualTo(10));
+    assertThat(db.countClass("Person")).isEqualTo(TOTAL);
+
+    db.browseClass("Person").forEach(doc -> assertThat(doc.fields()).isEqualTo(10));
+    db.close();
+
   }
 
 }

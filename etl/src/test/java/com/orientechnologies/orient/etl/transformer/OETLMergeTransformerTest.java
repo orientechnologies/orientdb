@@ -18,12 +18,14 @@
 
 package com.orientechnologies.orient.etl.transformer;
 
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.db.ODatabasePool;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.OVertex;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.etl.OETLBaseTest;
-import com.tinkerpop.blueprints.Parameter;
-import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -36,68 +38,98 @@ public class OETLMergeTransformerTest extends OETLBaseTest {
 
   @Before
   public void loadData() {
-    graph.createVertexType("Person");
-    graph.createKeyIndex("num", Vertex.class, new Parameter<String, String>("type", "UNIQUE"),
-        new Parameter<String, String>("class", "Person"));
-    graph.commit();
   }
 
   @Test
   public void shouldUpdateExistingVertices() throws Exception {
-
-    //prepare graph
-    graph.addVertex("class:Person", "num", 10000, "name", "FirstName");
-    graph.commit();
-
-    assertThat(graph.countVertices("Person")).isEqualTo(1);
-
-    Iterable<Vertex> vertices = graph.getVertices("Person.num", 10000);
-
-    assertThat(vertices).hasSize(1);
-    final Vertex inserted = vertices.iterator().next();
-
-    assertThat(inserted.<String>getProperty("name")).isEqualTo("FirstName");
-    assertThat(inserted.<Integer>getProperty("num")).isEqualTo(10000);
-
     //update graph with CSV: avoid num to be casted to integer forcing string
-    process(
+    configure(
         " {source: { content: { value: 'num,name\n10000,FirstNameUpdated' } }, " + "extractor : { csv: {} }," + " transformers: ["
             + "{merge: {  joinFieldName:'num', lookup:'Person.num'}}, " + "{vertex: { class:'Person', skipDuplicates: false}}"
             + "]," + "loader: { orientdb: { dbURL: 'memory:" + name.getMethodName() + "', dbType:'graph', tx: true} } }");
 
+    ODatabasePool pool = proc.getLoader().getPool();
+    ODatabaseDocument db = pool.acquire();
+
+    OClass personClass = db.createVertexClass("Person");
+    personClass.createProperty("num", OType.INTEGER);
+    personClass.createIndex("Person.num", OClass.INDEX_TYPE.UNIQUE, "num");
+
+    db.commit();
+
+    //prepare graph
+    OVertex person = db.newVertex("Person");
+    person.setProperty("num", 10000);
+    person.setProperty("name", "FirstName");
+    person.save();
+    db.commit();
+    db.close();
+
     //verify
-    graph = new OrientGraph("memory:" + name.getMethodName());
+    db = pool.acquire();
+    assertThat(db.countClass("Person")).isEqualTo(1);
 
-    assertThat(graph.countVertices("Person")).isEqualTo(1);
+    OResultSet resultSet = db.query("SELECT from Person where num = 10000");
 
-    vertices = graph.getVertices("Person.num", 10000);
+    final OResult inserted = resultSet.next();
 
-    assertThat(vertices).hasSize(1);
-    final Vertex updated = vertices.iterator().next();
+    assertThat(inserted.<String>getProperty("name")).isEqualTo("FirstName");
+    assertThat(inserted.<Integer>getProperty("num")).isEqualTo(10000);
+    assertThat(resultSet.hasNext()).isFalse();
 
-    ORecord load = graph.getRawGraph().load((ORID) updated.getId());
+    db.close();
+    //run processor
+    proc.execute();
+
+    //verify
+    db = pool.acquire();
+
+    assertThat(db.countClass("Person")).isEqualTo(1);
+
+    resultSet = db.query("SELECT from Person where num = 10000");
+
+    final OResult updated = resultSet.next();
+
+//    ORecord load = graph.load(updated.toElement().getIdentity());
     assertThat(updated.<String>getProperty("name")).isEqualTo("FirstNameUpdated");
     assertThat(updated.<Integer>getProperty("num")).isEqualTo(10000);
+    assertThat(resultSet.hasNext()).isFalse();
+
   }
 
   @Test
   public void shouldMergeVertexOnDuplitcatedInputSet() throws Exception {
 
     //CSV contains duplicated data
-    process(
+    configure(
         "{source: { content: { value: 'num,name\n10000,FirstName\n10001,SecondName\n10000,FirstNameUpdated' } }, extractor : { csv: {} },"
             + " transformers: [{merge: { joinFieldName:'num', lookup:'Person.num'}}, {vertex: {class:'Person', skipDuplicates: true}}],"
             + " " + "loader: { orientdb: { dbURL: 'memory:" + name.getMethodName()
             + "', dbType:'graph', useLightweightEdges:false } } }");
 
-    assertThat(graph.countVertices("Person")).isEqualTo(2);
+    ODatabasePool pool = proc.getLoader().getPool();
+    ODatabaseDocument db = pool.acquire();
 
-    final Iterable<Vertex> vertices = graph.getVertices("Person.num", "10000");
+    OClass personClass = db.createVertexClass("Person");
+    personClass.createProperty("num", OType.INTEGER);
 
-    assertThat(vertices).hasSize(1);
-    final Vertex updated = vertices.iterator().next();
+    personClass.createIndex("Person.num", OClass.INDEX_TYPE.UNIQUE, "num");
+
+    db.commit();
+    db.close();
+
+    //run processor
+    proc.execute();
+
+    db = pool.acquire();
+    assertThat(db.countClass("Person")).isEqualTo(2);
+
+    OResultSet resultSet = db.query("SELECT from Person where num = 10000");
+
+    final OResult updated = resultSet.next();
 
     assertThat(updated.<String>getProperty("name")).isEqualTo("FirstNameUpdated");
+    assertThat(resultSet.hasNext()).isFalse();
   }
 
 }

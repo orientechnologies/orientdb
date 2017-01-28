@@ -18,6 +18,7 @@
 
 package com.orientechnologies.orient.etl.transformer;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLBaseTest;
@@ -35,8 +36,10 @@ public class OETLFieldTransformerTest extends OETLBaseTest {
 
   @Test
   public void testValue() {
-    process(
+    configure(
         "{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { csv: {} }, transformers: [{field: {fieldName:'test', value: 33}}], loader: { test: {} } }");
+    proc.execute();
+
     assertEquals(1, getResult().size());
 
     ODocument doc = getResult().get(0);
@@ -48,8 +51,9 @@ public class OETLFieldTransformerTest extends OETLBaseTest {
 
   @Test
   public void testExpression() {
-    process(
+    configure(
         "{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { csv: {} }, transformers: [ {field: {fieldName:'test', expression: 'surname'}}], loader: { test: {} } }");
+    proc.execute();
     assertEquals(1, getResult().size());
 
     ODocument doc = getResult().get(0);
@@ -61,8 +65,10 @@ public class OETLFieldTransformerTest extends OETLBaseTest {
 
   @Test
   public void testRemove() {
-    process("{source: { content: { value: 'name,surname\nJay,Miner' } }, " + "extractor : { csv: {} }, "
+    configure("{source: { content: { value: 'name,surname\nJay,Miner' } }, " + "extractor : { csv: {} }, "
         + "transformers: [ {field: {fieldName:'surname', operation: 'remove'}}], " + "loader: { test: {} } }");
+
+    proc.execute();
     assertEquals(1, getResult().size());
 
     ODocument doc = getResult().get(0);
@@ -72,16 +78,18 @@ public class OETLFieldTransformerTest extends OETLBaseTest {
 
   @Test
   public void testSave() {
-    process("{source: { content: { value: 'name,surname\nJay,Miner' } }, " + "extractor : { csv: {} }, " + "transformers: ["
+    configure("{source: { content: { value: 'name,surname\nJay,Miner' } }, " + "extractor : { csv: {} }, " + "transformers: ["
         + "{field:{log:'DEBUG',fieldName:'@class', value:'Test'}}, "
         + "{field:{log:'DEBUG', fieldName:'test', value: 33, save:true}}" + "], "
         + "loader: { orientdb: { dbURL: 'memory:" + name.getMethodName() + "' } } }");
+    proc.execute();
+    ODatabaseDocument db = proc.getLoader().getPool().acquire();
 
-    OSchema schema = graph.getRawGraph().getMetadata().getSchema();
+    OSchema schema = db.getMetadata().getSchema();
     schema.reload();
 
     assertThat(schema.getClass("Test")).isNotNull();
-    assertEquals(1, graph.countVertices("Test"));
+    assertEquals(1, db.countClass("Test"));
   }
 
 }

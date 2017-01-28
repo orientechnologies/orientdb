@@ -15,7 +15,7 @@ public class OQueryRequestTest {
 
   @Test public void testWithPositionalParams() throws IOException {
     Object[] params = new Object[] { 1, "Foo" };
-    OQueryRequest request = new OQueryRequest("select from Foo where a = ?", params, true, ORecordSerializerNetwork.INSTANCE, 123);
+    OQueryRequest request = new OQueryRequest("sql", "select from Foo where a = ?", params, true, ORecordSerializerNetwork.INSTANCE, 123);
 
     MockChannel channel = new MockChannel();
     request.write(channel, null);
@@ -38,7 +38,7 @@ public class OQueryRequestTest {
     Map<String, Object> params = new HashMap<>();
     params.put("foo", "bar");
     params.put("baz", 12);
-    OQueryRequest request = new OQueryRequest("select from Foo where a = ?", params, true, ORecordSerializerNetwork.INSTANCE, 123);
+    OQueryRequest request = new OQueryRequest("sql", "select from Foo where a = ?", params, true, ORecordSerializerNetwork.INSTANCE, 123);
 
     MockChannel channel = new MockChannel();
     request.write(channel, null);
@@ -57,7 +57,7 @@ public class OQueryRequestTest {
 
   @Test public void testWithNoParams() throws IOException {
     Map<String, Object> params = null;
-    OQueryRequest request = new OQueryRequest("select from Foo where a = ?", params, true, ORecordSerializerNetwork.INSTANCE, 123);
+    OQueryRequest request = new OQueryRequest("sql", "select from Foo where a = ?", params, true, ORecordSerializerNetwork.INSTANCE, 123);
 
     MockChannel channel = new MockChannel();
     request.write(channel, null);

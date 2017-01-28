@@ -13,29 +13,29 @@
         <!--
          | copy benchmarks scripts
         -->
-        <fileSet>
-            <directory>${basedir}/../server/benchmarks</directory>
-            <outputDirectory>benchmarks</outputDirectory>
-            <excludes>
-                <exclude>*.sh</exclude>
-            </excludes>
-            <filtered>true</filtered>
-        </fileSet>
-        <fileSet>
-            <directory>${basedir}/../server/benchmarks</directory>
-            <outputDirectory>benchmarks</outputDirectory>
-            <includes>
-                <include>*.sh</include>
-            </includes>
-            <fileMode>755</fileMode>
-            <filtered>true</filtered>
-        </fileSet>
+        <!--<fileSet>-->
+            <!--<directory>${basedir}/benchmarks</directory>-->
+            <!--<outputDirectory>benchmarks</outputDirectory>-->
+            <!--<excludes>-->
+                <!--<exclude>*.sh</exclude>-->
+            <!--</excludes>-->
+            <!--<filtered>true</filtered>-->
+        <!--</fileSet>-->
+        <!--<fileSet>-->
+            <!--<directory>${basedir}/benchmarks</directory>-->
+            <!--<outputDirectory>benchmarks</outputDirectory>-->
+            <!--<includes>-->
+                <!--<include>*.sh</include>-->
+            <!--</includes>-->
+            <!--<fileMode>755</fileMode>-->
+            <!--<filtered>true</filtered>-->
+        <!--</fileSet>-->
 
         <!--
          | copy server scripts
         -->
         <fileSet>
-            <directory>${basedir}/../server/script</directory>
+            <directory>${basedir}/script</directory>
             <outputDirectory>bin</outputDirectory>
             <includes>
                 <include>*.bat</include>
@@ -44,7 +44,7 @@
             <filtered>true</filtered>
         </fileSet>
         <fileSet>
-            <directory>${basedir}/../server/script</directory>
+            <directory>${basedir}/script</directory>
             <outputDirectory>bin</outputDirectory>
             <includes>
                 <include>*.sh</include>
@@ -56,7 +56,7 @@
          | copy service scripts
         -->
         <fileSet>
-            <directory>${basedir}/../server/script</directory>
+            <directory>${basedir}/script</directory>
             <outputDirectory>bin</outputDirectory>
             <includes>
                 <include>orientdb.service</include>
@@ -93,7 +93,7 @@
          | copy tools scripts
         -->
         <fileSet>
-            <directory>${basedir}/../tools/script</directory>
+            <directory>${basedir}/script</directory>
             <outputDirectory>bin</outputDirectory>
             <includes>
                 <include>*.bat</include>
@@ -102,7 +102,7 @@
             <filtered>true</filtered>
         </fileSet>
         <fileSet>
-            <directory>${basedir}/../tools/script</directory>
+            <directory>${basedir}/script</directory>
             <outputDirectory>bin</outputDirectory>
             <includes>
                 <include>*.sh</include>
@@ -115,7 +115,7 @@
          | copy distributed scripts
         -->
         <fileSet>
-            <directory>${basedir}/../distributed/script</directory>
+            <directory>${basedir}/script</directory>
             <outputDirectory>bin</outputDirectory>
             <includes>
                 <include>*.bat</include>
@@ -124,7 +124,7 @@
             <filtered>true</filtered>
         </fileSet>
         <fileSet>
-            <directory>${basedir}/../distributed/script</directory>
+            <directory>${basedir}/script</directory>
             <outputDirectory>bin</outputDirectory>
             <includes>
                 <include>*.sh</include>
@@ -136,48 +136,40 @@
         <!--
          | copy graphdb scripts
         -->
-        <fileSet>
-            <directory>${basedir}/../graphdb/script</directory>
-            <outputDirectory>bin</outputDirectory>
-            <includes>
-                <include>*.bat</include>
-            </includes>
-            <fileMode>644</fileMode>
-            <filtered>true</filtered>
-        </fileSet>
-        <fileSet>
-            <directory>${basedir}/../graphdb/script</directory>
-            <outputDirectory>bin</outputDirectory>
-            <includes>
-                <include>*.sh</include>
-            </includes>
-            <fileMode>755</fileMode>
-            <filtered>true</filtered>
-        </fileSet>
+        <!--<fileSet>-->
+            <!--<directory>${basedir}/../graphdb/script</directory>-->
+            <!--<outputDirectory>bin</outputDirectory>-->
+            <!--<includes>-->
+                <!--<include>*.bat</include>-->
+            <!--</includes>-->
+            <!--<fileMode>644</fileMode>-->
+            <!--<filtered>true</filtered>-->
+        <!--</fileSet>-->
+        <!--<fileSet>-->
+            <!--<directory>${basedir}/../graphdb/script</directory>-->
+            <!--<outputDirectory>bin</outputDirectory>-->
+            <!--<includes>-->
+                <!--<include>*.sh</include>-->
+            <!--</includes>-->
+            <!--<fileMode>755</fileMode>-->
+            <!--<filtered>true</filtered>-->
+        <!--</fileSet>-->
 
         <!--
          | configurations
         -->
         <fileSet>
-            <directory>${basedir}/../server/config</directory>
+            <directory>${basedir}/config</directory>
             <outputDirectory>config</outputDirectory>
         </fileSet>
         <fileSet>
             <directory>${basedir}/../etl/config</directory>
             <outputDirectory>config</outputDirectory>
         </fileSet>
-        <fileSet>
-            <directory>${basedir}/../tools/config</directory>
-            <outputDirectory>config</outputDirectory>
-        </fileSet>
-        <fileSet>
-            <directory>${basedir}/../distributed/config</directory>
-            <outputDirectory>config</outputDirectory>
-        </fileSet>
-        <fileSet>
-            <directory>${basedir}/../graphdb/config</directory>
-            <outputDirectory>config</outputDirectory>
-        </fileSet>
+        <!--<fileSet>-->
+            <!--<directory>${basedir}/../graphdb/config</directory>-->
+            <!--<outputDirectory>config</outputDirectory>-->
+        <!--</fileSet>-->
         <fileSet>
             <directory>${basedir}/../server/config/cert</directory>
             <outputDirectory>config/cert</outputDirectory>
@@ -187,7 +179,7 @@
          | Plugins
         -->
         <fileSet>
-            <directory>${basedir}/../server/plugins</directory>
+            <directory>${basedir}/plugins</directory>
             <outputDirectory>plugins</outputDirectory>
         </fileSet>
 

@@ -155,6 +155,7 @@ public class OrientGraphSpecificTestSuite extends TestSuite {
     assertNotNull(d);
     assertTrue(d.containsKey("telefax"));
     graph.shutdown();
+
     graphTest.dropGraph(((OrientGraphTest) graphTest).getWorkingDirectory() + File.separator + "complex-map");
   }
 }

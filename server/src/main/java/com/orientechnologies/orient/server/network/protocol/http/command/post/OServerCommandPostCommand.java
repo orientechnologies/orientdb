@@ -19,20 +19,14 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
-import com.orientechnologies.orient.core.command.OCommandExecutor;
-import com.orientechnologies.orient.core.command.OCommandManager;
-import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbstract {
   private static final String[] NAMES = { "GET|command/*", "POST|command/*" };
@@ -80,57 +74,26 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
 
     ODatabaseDocument db = null;
 
-    Object response;
-
     try {
       db = getProfiledDatabaseInstance(iRequest);
-
-      final OCommandRequestText cmd = (OCommandRequestText) OCommandManager.instance().getRequester(language);
-
-      cmd.setText(text);
-      cmd.setLimit(limit);
-      cmd.setFetchPlan(fetchPlan);
-
-      final OCommandExecutor executor = OCommandManager.instance().getExecutor(cmd);
-      executor.setContext(cmd.getContext());
-      executor.setProgressListener(cmd.getProgressListener());
-      executor.parse(cmd);
-
-      if (!executor.isIdempotent() && iRequest.httpMethod.equals("GET"))
-        throw new OCommandExecutionException("Cannot execute non idempotent command using HTTP GET");
-
-      // REQUEST CAN'T MODIFY THE RESULT, SO IT'S CACHEABLE
-      cmd.setCacheableResult(true);
-
-      if (params == null) {
-        response = db.command(cmd).execute();
-      } else {
-        response = db.command(cmd).execute(params);
+      OResultSet result = executeStatement(language,text, params, db);
+      int i = 0;
+      List response = new ArrayList();
+      while (result.hasNext()) {
+        if (limit >= 0 && i >= limit) {
+          break;
+        }
+        response.add(result.next().toElement());
+        i++;
       }
-
-      fetchPlan = executor.getFetchPlan();
+      result.close();
 
       String format = null;
-      if (iRequest.parameters.get("format") != null)
-        format = iRequest.parameters.get("format");
-
-      if (fetchPlan != null)
-        if (format != null)
-          format += ",fetchPlan:" + fetchPlan;
-        else
-          format = "fetchPlan:" + fetchPlan;
-
-      Map<String, Object> additionalContent = null;
-
-      final List<String> tips = (List<String>) executor.getContext().getVariable("tips");
-      if (tips != null) {
-        additionalContent = new HashMap<String, Object>(1);
-        additionalContent.put("warnings", tips);
-      }
+      Map<String, Object> additionalContent = new HashMap<>();
 
       if (iRequest.getHeader("TE") != null)
         iResponse.setStreaming(true);
-      
+
       iResponse.writeResult(response, format, accept, additionalContent, mode);
 
     } finally {
@@ -141,6 +104,18 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
     }
 
     return false;
+  }
+
+  protected OResultSet executeStatement(String language, String text, Object params, ODatabaseDocument db) {
+    OResultSet result;
+    if (params instanceof Map) {
+      result = db.command(text, (Map) params);
+    } else if (params instanceof Object[]) {
+      result = db.command(text, (Object[]) params);
+    } else {
+      result = db.command(text, params);
+    }
+    return result;
   }
 
   @Override

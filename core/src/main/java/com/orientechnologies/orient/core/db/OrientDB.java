@@ -34,18 +34,15 @@ import java.util.Set;
  */
 public interface OrientDB extends AutoCloseable {
 
-  enum DatabaseType {
-    PLOCAL, MEMORY
-  }
-
   /**
    * Create a new factory from a given url.
    * <p/>
-   * possible kind of urls 'local','remote','distributed', for the case of remote and distributed can be specified multiple nodes
+   * possible kind of urls 'embedded','remote', for the case of remote and distributed can be specified multiple nodes
    * using comma.
    *
-   * @param url the url for the specific factory.
+   * @param url           the url for the specific factory.
    * @param configuration configuration for the specific factory for the list of option {@see OGlobalConfiguration}.
+   *
    * @return the new Orient Factory.
    */
   static OrientDB fromUrl(String url, OrientDBConfig configuration) {
@@ -60,8 +57,9 @@ public interface OrientDB extends AutoCloseable {
   /**
    * Create a new remote factory
    *
-   * @param hosts array of hosts
+   * @param hosts         array of hosts
    * @param configuration configuration for the specific factory for the list of option {@see OGlobalConfiguration}.
+   *
    * @return a new remote databases factory
    */
   static OrientDB remote(String[] hosts, OrientDBConfig configuration) {
@@ -83,19 +81,21 @@ public interface OrientDB extends AutoCloseable {
    * Create a new Embedded factory
    *
    * @param directoryPath base path where the database are hosted
-   * @param config configuration for the specific factory for the list of option {@see OGlobalConfiguration}
+   * @param config        configuration for the specific factory for the list of option {@see OGlobalConfiguration}
+   *
    * @return a new embedded databases factory
    */
-  static OrientDBEmbedded embedded(String directoryPath, OrientDBConfig config) {
+  static OrientDB embedded(String directoryPath, OrientDBConfig config) {
     return new OrientDBEmbedded(directoryPath, config, Orient.instance());
   }
 
   /**
    * Open a database specified by name using the username and password if needed
    *
-   * @param name of the database to open
-   * @param user the username allowed to open the database
+   * @param name     of the database to open
+   * @param user     the username allowed to open the database
    * @param password related to the specified username
+   *
    * @return the opened database
    */
   ODatabaseDocument open(String name, String user, String password);
@@ -103,10 +103,11 @@ public interface OrientDB extends AutoCloseable {
   /**
    * Open a database specified by name using the username and password if needed, with specific configuration
    *
-   * @param name of the database to open
-   * @param user the username allowed to open the database
+   * @param name     of the database to open
+   * @param user     the username allowed to open the database
    * @param password related to the specified username
-   * @param config database specific configuration that override the factory global settings where needed.
+   * @param config   database specific configuration that override the factory global settings where needed.
+   *
    * @return the opened database
    */
   ODatabaseDocument open(String name, String user, String password, OrientDBConfig config);
@@ -114,33 +115,34 @@ public interface OrientDB extends AutoCloseable {
   /**
    * Create a new database
    *
-   * @param name database name
-   * @param user the username of a user allowed to create a database, in case of remote is a server user for embedded it can be left
-   *          empty
+   * @param name     database name
+   * @param user     the username of a user allowed to create a database, in case of remote is a server user for embedded it can be
+   *                 left empty
    * @param password the password relative to the user
-   * @param type can be plocal or memory
+   * @param type     can be plocal or memory
    */
   void create(String name, String user, String password, DatabaseType type);
 
   /**
    * Create a new database
    *
-   * @param name database name
-   * @param user the username of a user allowed to create a database, in case of remote is a server user for embedded it can be left
-   *          empty
+   * @param name     database name
+   * @param user     the username of a user allowed to create a database, in case of remote is a server user for embedded it can be
+   *                 left empty
    * @param password the password relative to the user
-   * @param config database specific configuration that override the factory global settings where needed.
-   * @param type can be plocal or memory
+   * @param config   database specific configuration that override the factory global settings where needed.
+   * @param type     can be plocal or memory
    */
   void create(String name, String user, String password, DatabaseType type, OrientDBConfig config);
 
   /**
    * Check if a database exists
    *
-   * @param name database name to check
-   * @param user the username of a user allowed to check the database existence, in case of remote is a server user for embedded it
-   *          can be left empty.
+   * @param name     database name to check
+   * @param user     the username of a user allowed to check the database existence, in case of remote is a server user for embedded
+   *                 it can be left empty.
    * @param password the password relative to the user
+   *
    * @return boolean true if exist false otherwise.
    */
   boolean exists(String name, String user, String password);
@@ -148,9 +150,9 @@ public interface OrientDB extends AutoCloseable {
   /**
    * Drop a database
    *
-   * @param name database name
-   * @param user the username of a user allowed to drop a database, in case of remote is a server user for embedded it can be left
-   *          empty
+   * @param name     database name
+   * @param user     the username of a user allowed to drop a database, in case of remote is a server user for embedded it can be
+   *                 left empty
    * @param password the password relative to the user
    */
   void drop(String name, String user, String password);
@@ -158,9 +160,10 @@ public interface OrientDB extends AutoCloseable {
   /**
    * List of database exiting in the current environment
    *
-   * @param user the username of a user allowed to list databases, in case of remote is a server user for embedded it can be left
-   *          empty
+   * @param user     the username of a user allowed to list databases, in case of remote is a server user for embedded it can be
+   *                 left empty
    * @param password the password relative to the user
+   *
    * @return a set of databases names.
    */
   Set<String> listDatabases(String user, String password);
@@ -168,9 +171,10 @@ public interface OrientDB extends AutoCloseable {
   /**
    * Open a pool of databases, similar to open but with multiple instances.
    *
-   * @param name database name
-   * @param user the username allowed to open the database
+   * @param name     database name
+   * @param user     the username allowed to open the database
    * @param password the password relative to the user
+   *
    * @return a new pool of databases.
    */
   ODatabasePool openPool(String name, String user, String password);
@@ -178,10 +182,11 @@ public interface OrientDB extends AutoCloseable {
   /**
    * Open a pool of databases, similar to open but with multiple instances.
    *
-   * @param name database name
-   * @param user the username allowed to open the database
+   * @param name     database name
+   * @param user     the username allowed to open the database
    * @param password the password relative to the user
-   * @param config database specific configuration that override the factory global settings where needed.
+   * @param config   database specific configuration that override the factory global settings where needed.
+   *
    * @return a new pool of databases.
    */
   ODatabasePool openPool(String name, String user, String password, OrientDBConfig config);
@@ -190,5 +195,9 @@ public interface OrientDB extends AutoCloseable {
    * Close the factory with all related databases and pools.
    */
   void close();
+
+  enum DatabaseType {
+    PLOCAL, MEMORY
+  }
 
 }

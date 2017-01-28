@@ -20,6 +20,7 @@ package com.orientechnologies.orient.etl.transformer;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -65,7 +66,7 @@ public class OETLLinkTransformer extends OETLAbstractLookupTransformer {
   }
 
   @Override
-  public Object executeTransform(final Object input) {
+  public Object executeTransform(ODatabaseDocument db, final Object input) {
     if (!(input instanceof OIdentifiable)) {
       log(Level.FINE, "skip because input value is not a record, but rather an instance of class: %s", input.getClass());
       return null;
@@ -85,11 +86,11 @@ public class OETLLinkTransformer extends OETLAbstractLookupTransformer {
       // RESOLVE SINGLE JOINS
       final Collection<Object> singleJoinsResult = new ArrayList<Object>();
       for (Object o : OMultiValue.getMultiValueIterable(joinRuntimeValue)) {
-        singleJoinsResult.add(lookup(o, true));
+        singleJoinsResult.add(lookup(db, o, true));
       }
       result = singleJoinsResult;
     } else
-      result = lookup(joinRuntimeValue, true);
+      result = lookup(db, joinRuntimeValue, true);
 
     log(Level.FINE, "joinRuntimeValue=%s, lookupResult=%s", joinRuntimeValue, result);
 

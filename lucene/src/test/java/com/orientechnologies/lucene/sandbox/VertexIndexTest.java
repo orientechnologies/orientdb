@@ -1,9 +1,6 @@
 package com.orientechnologies.lucene.sandbox;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
@@ -30,21 +27,6 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Created by frank on 9/28/15.
  */
 public class VertexIndexTest {
-
-  @Test
-  public void testFullTextIndexOnvertex() {
-
-    OrientGraph graph = new OrientGraph("memory:TestDB", "admin", "admin");
-    OrientVertexType vType = graph.getVertexType("V");
-
-    vType.createProperty("title", OType.STRING);
-    vType.createProperty("text", OType.STRING);
-
-    vType.createIndex("V.", "FULLTEXT", null, null, "LUCENE", new String[] { "title", "text" });
-
-    // graph.shutdown(); //see #6561
-    graph.drop();
-  }
 
   @Test
   public void testSpacesInQuery() throws IOException, ParseException {
@@ -90,6 +72,11 @@ public class VertexIndexTest {
 
     reader.close();
     writer.close();
+  }
+
+  @Test
+  public void name() throws Exception {
+
   }
 
   @After

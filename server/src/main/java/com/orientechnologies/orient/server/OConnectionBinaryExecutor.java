@@ -393,8 +393,7 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
     database.save(currentRecord);
 
-    if (currentRecord.getIdentity().toString().equals(database.getStorage().getConfiguration().indexMgrRecordId) && !database
-        .getStatus().equals(ODatabase.STATUS.IMPORTING)) {
+    if (currentRecord.getIdentity().toString().equals(database.getStorage().getConfiguration().indexMgrRecordId)) {
       // FORCE INDEX MANAGER UPDATE. THIS HAPPENS FOR DIRECT CHANGES FROM REMOTE LIKE IN GRAPH
       database.getMetadata().getIndexManager().reload();
     }
@@ -981,6 +980,7 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     }
     OResultSet rs;
     if (request.isIdempotent()) {
+      //TODO Assert is sql.
       if (request.isNamedParams()) {
         rs = database.query(request.getStatement(), request.getNamedParameters());
       } else {
@@ -988,9 +988,9 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       }
     } else {
       if (request.isNamedParams()) {
-        rs = database.command(request.getStatement(), request.getNamedParameters());
+        rs = database.execute(request.getLanguage(), request.getStatement(), request.getNamedParameters());
       } else {
-        rs = database.command(request.getStatement(), request.getPositionalParameters());
+        rs = database.execute(request.getLanguage(), request.getStatement(), request.getPositionalParameters());
       }
     }
     OQueryResponse result = new OQueryResponse();

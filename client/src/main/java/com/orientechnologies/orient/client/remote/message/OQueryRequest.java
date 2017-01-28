@@ -25,7 +25,6 @@ import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
-import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
@@ -36,15 +35,17 @@ import java.util.Map;
 
 public final class OQueryRequest implements OBinaryRequest<OQueryResponse> {
 
-  private int               recordsPerPage = 100;
+  private int recordsPerPage = 100;
   private ORecordSerializer serializer;
+  private String            language;
   private String            statement;
   private boolean           idempotent;
-  Map<Object, Object>       params;
-  private boolean           namedParams;
+  Map<Object, Object> params;
+  private boolean namedParams;
 
-  public OQueryRequest(String iCommand, Object[] positionalParams, boolean idempotent, ORecordSerializer serializer,
-      int recordsPerPage) {
+  public OQueryRequest(String language, String iCommand, Object[] positionalParams, boolean idempotent,
+      ORecordSerializer serializer, int recordsPerPage) {
+    this.language = language;
     this.statement = iCommand;
     params = new HashMap<>();
     if (positionalParams == null) {
@@ -60,8 +61,9 @@ public final class OQueryRequest implements OBinaryRequest<OQueryResponse> {
     }
   }
 
-  public OQueryRequest(String iCommand, Map<String, Object> namedParams, boolean idempotent, ORecordSerializer serializer,
-      int recordsPerPage) {
+  public OQueryRequest(String language, String iCommand, Map<String, Object> namedParams, boolean idempotent,
+      ORecordSerializer serializer, int recordsPerPage) {
+    this.language = language;
     this.statement = iCommand;
     this.params = (Map) namedParams;
     this.namedParams = true;
@@ -77,6 +79,7 @@ public final class OQueryRequest implements OBinaryRequest<OQueryResponse> {
 
   @Override
   public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
+    network.writeString(language);
     network.writeString(statement);
     network.writeBoolean(idempotent);
     network.writeInt(recordsPerPage);
@@ -91,6 +94,7 @@ public final class OQueryRequest implements OBinaryRequest<OQueryResponse> {
   }
 
   public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
+    this.language = channel.readString();
     this.statement = channel.readString();
     this.idempotent = channel.readBoolean();
     this.recordsPerPage = channel.readInt();
@@ -157,5 +161,13 @@ public final class OQueryRequest implements OBinaryRequest<OQueryResponse> {
 
   public ORecordSerializer getSerializer() {
     return serializer;
+  }
+
+  public String getLanguage() {
+    return language;
+  }
+
+  public void setLanguage(String language) {
+    this.language = language;
   }
 }

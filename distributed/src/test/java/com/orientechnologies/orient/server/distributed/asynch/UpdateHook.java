@@ -3,8 +3,6 @@ package com.orientechnologies.orient.server.distributed.asynch;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
 
 public class UpdateHook implements ORecordHook {
 
@@ -17,12 +15,12 @@ public class UpdateHook implements ORecordHook {
     if (iType.equals(TYPE.AFTER_DELETE)) {
       if (iRecord instanceof ODocument) {
         ODocument doc = (ODocument) iRecord;
-        if (doc.getSchemaClass() != null && doc.getSchemaClass().isSubClassOf(OrientEdgeType.CLASS_NAME)) {
-          if (doc.field(OrientBaseGraph.CONNECTION_OUT) == null) {
-            throw new RuntimeException(OrientBaseGraph.CONNECTION_OUT + " vertex can't be null");
+        if (doc.getSchemaClass() != null && doc.getSchemaClass().isSubClassOf("E")) {
+          if (doc.field("out") == null) {
+            throw new RuntimeException("out vertex can't be null");
           }
-          if (doc.field(OrientBaseGraph.CONNECTION_IN) == null) {
-            throw new RuntimeException(OrientBaseGraph.CONNECTION_IN + " vertex can't be null");
+          if (doc.field("in") == null) {
+            throw new RuntimeException( "in vertex can't be null");
           }
         }
       }

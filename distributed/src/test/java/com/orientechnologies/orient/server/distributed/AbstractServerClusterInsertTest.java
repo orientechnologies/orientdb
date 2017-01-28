@@ -18,6 +18,7 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -33,7 +34,6 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.server.distributed.impl.OLocalClusterWrapperStrategy;
 import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import org.junit.Assert;
 
 import java.util.*;
@@ -390,17 +390,17 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
    * @param db Current database
    */
   @Override
-  protected void onAfterDatabaseCreation(final OrientBaseGraph db) {
+  protected void onAfterDatabaseCreation(final ODatabaseDocument db) {
     System.out.println("Creating database schema...");
 
     // CREATE BASIC SCHEMA
-    OClass personClass = db.getRawGraph().getMetadata().getSchema().createClass("Person");
+    OClass personClass = db.getMetadata().getSchema().createClass("Person");
     personClass.createProperty("id", OType.STRING);
     personClass.createProperty("name", OType.STRING);
     personClass.createProperty("birthday", OType.DATE);
     personClass.createProperty("children", OType.STRING);
 
-    final OSchema schema = db.getRawGraph().getMetadata().getSchema();
+    final OSchema schema = db.getMetadata().getSchema();
     OClass person = schema.getClass("Person");
     idx = person.createIndex("Person.name", INDEX_TYPE.UNIQUE, "name");
 

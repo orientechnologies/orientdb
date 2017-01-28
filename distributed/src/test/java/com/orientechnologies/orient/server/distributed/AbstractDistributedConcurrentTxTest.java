@@ -20,32 +20,35 @@
 
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.common.concur.ONeedRetryException;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.ODatabasePool;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.OVertex;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
+import org.junit.Assert;
+
 import java.util.Date;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.junit.Assert;
-
-import com.orientechnologies.common.concur.ONeedRetryException;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
-import com.tinkerpop.blueprints.impls.orient.*;
-
 /**
  * Test distributed TX
  */
 public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistributedWriteTest {
-  protected OrientGraphFactory factory;
-  protected ORID               v;
-  protected AtomicLong         lockExceptions              = new AtomicLong(0l);
-  protected boolean            expectedConcurrentException = true;
+  protected ODatabasePool factory;
+  protected ORID          v;
+  protected AtomicLong lockExceptions              = new AtomicLong(0l);
+  protected boolean    expectedConcurrentException = true;
 
   class TxWriter implements Callable<Void> {
     private final String databaseUrl;
@@ -63,9 +66,9 @@ public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistri
       String name = Integer.toString(serverId);
 
       for (int i = 0; i < count; i++) {
-        final OrientGraph graph = factory.getTx();
+        final ODatabaseDocument graph = factory.acquire();
 
-        final OrientVertex localVertex = graph.getVertex(v);
+        final OVertex localVertex = graph.load(v);
 
         try {
           if ((i + 1) % 100 == 0)
@@ -112,7 +115,7 @@ public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistri
           e.printStackTrace();
           break;
         } finally {
-          graph.shutdown();
+          graph.close();
         }
       }
 
@@ -138,27 +141,27 @@ public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistri
   }
 
   @Override
-  protected void onAfterDatabaseCreation(final OrientBaseGraph graph) {
+  protected void onAfterDatabaseCreation(final ODatabaseDocument graph) {
     System.out.println("Creating graph schema...");
 
     // CREATE BASIC SCHEMA
-    OrientVertexType personClass = graph.createVertexType("Person");
+    OClass personClass = graph.createVertexClass("Person");
     personClass.createProperty("id", OType.STRING);
     personClass.createProperty("name", OType.STRING);
     personClass.createProperty("birthday", OType.DATE);
     personClass.createProperty("children", OType.STRING);
 
-    OrientVertexType person = graph.getVertexType("Person");
+    OClass person = graph.createVertexClass("Person");
     person.createIndex("Person.name", OClass.INDEX_TYPE.UNIQUE, "name");
 
-    OrientVertexType customer = graph.createVertexType("Customer", person);
+    OClass customer = graph.createClass("Customer", person.getName());
     customer.createProperty("totalSold", OType.DECIMAL);
 
-    OrientVertexType provider = graph.createVertexType("Provider", person);
+    OClass provider = graph.createClass("Provider", person.getName());
     provider.createProperty("totalPurchased", OType.DECIMAL);
 
-    factory = new OrientGraphFactory(graph.getRawGraph().getURL(), "admin", "admin", false);
-    factory.setStandardElementConstraints(false);
+    factory = OrientDB.fromUrl(graph.getURL().substring(0, graph.getURL().length() - (graph.getName().length() + 1)).replaceFirst("plocal", "embedded"),
+        OrientDBConfig.defaultConfig()).openPool(graph.getName(), "admin", "admin");
 
     v = createVertex(graph, 0, 0, 0).getIdentity();
   }
@@ -168,17 +171,19 @@ public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistri
     return new TxWriter(serverId, databaseURL);
   }
 
-  protected OrientVertex createVertex(OrientBaseGraph graph, int serverId, int threadId, int i) {
+  protected OVertex createVertex(ODatabaseDocument graph, int serverId, int threadId, int i) {
     final String uniqueId = serverId + "-" + threadId + "-" + i;
 
-    final Object result = graph.command(new OCommandSQL("create vertex Provider content {'id': '" + UUID.randomUUID().toString()
-        + "', 'name': 'Billy" + uniqueId + "', 'surname': 'Mayes" + uniqueId + "', 'birthday': '"
-        + ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getDateFormatInstance().format(new Date())
-        + "', 'children': '" + uniqueId + "', 'saved': 0}")).execute();
-    return (OrientVertex) result;
+    final Object result = graph.command(new OCommandSQL(
+        "create vertex Provider content {'id': '" + UUID.randomUUID().toString() + "', 'name': 'Billy" + uniqueId
+            + "', 'surname': 'Mayes" + uniqueId + "', 'birthday': '" + ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
+            .getConfiguration().getDateFormatInstance().format(new Date()) + "', 'children': '" + uniqueId + "', 'saved': 0}"))
+        .execute();
+    return (OVertex) result;
   }
 
-  protected void updateVertex(OrientVertex v) {
+  protected void updateVertex(OVertex v) {
     v.setProperty("saved", ((Integer) v.getProperty("saved")) + 1);
+    v.save();
   }
 }

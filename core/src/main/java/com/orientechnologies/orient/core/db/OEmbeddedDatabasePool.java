@@ -38,10 +38,12 @@ public class OEmbeddedDatabasePool extends ODatabaseDocumentEmbedded {
   public void close() {
     closeActiveQueries();
     super.setStatus(STATUS.CLOSED);
+    ODatabaseRecordThreadLocal.INSTANCE.remove();
     pool.release(this);
   }
 
   public void reuse() {
+    activateOnCurrentThread();
     setStatus(STATUS.OPEN);
   }
 

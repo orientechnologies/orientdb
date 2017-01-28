@@ -24,12 +24,6 @@ import com.orientechnologies.orient.core.command.OCommandContext;
  * ETL Pipeline abstract component.
  */
 public abstract class OETLAbstractPipelineComponent extends OETLAbstractComponent implements OETLPipelineComponent {
-  protected OETLDatabaseProvider databaseProvider;
-
-  @Override
-  public void setDatabaseProvider(OETLDatabaseProvider databaseProvider) {
-    this.databaseProvider = databaseProvider;
-  }
 
   @Override
   public void setContext(OCommandContext context) {

@@ -35,25 +35,17 @@ public interface OSequenceLibrary {
 
   OSequence createSequence(String iName, SEQUENCE_TYPE sequenceType, OSequence.CreateParams params);
 
-  OSequence getSequence(ODatabaseDocumentInternal database, String iName);
+  OSequence getSequence(String iName);
 
-  OSequence createSequence(ODatabaseDocumentInternal database, String iName, SEQUENCE_TYPE sequenceType,
-      OSequence.CreateParams params);
+  void dropSequence(String iName);
 
-  void dropSequence(ODatabaseDocumentInternal database, String iName);
-
+  @Deprecated
   void create();
 
-  void load(ODatabaseDocumentInternal db);
-
+  @Deprecated
   void close();
 
   @Deprecated
   void load();
 
-  @Deprecated
-  void dropSequence(String iName);
-
-  @Deprecated
-  OSequence getSequence(String iName);
 }

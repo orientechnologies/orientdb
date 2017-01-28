@@ -239,7 +239,7 @@ public class TestGraphTransactionOnBatch {
 
     List<ODocument> res = db.query(new OSQLSynchQuery("select from V"));
     Assert.assertEquals(1, res.size());
-
+    Assert.assertFalse(db.getTransaction().isActive());
     try {
       db.command(
           new OCommandScript("sql",

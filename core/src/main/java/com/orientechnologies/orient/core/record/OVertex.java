@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.record;
 
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 
 /**
@@ -37,5 +38,8 @@ public interface OVertex extends OElement{
   OEdge addEdge(OVertex to);
   OEdge addEdge(OVertex to, String type);
   OEdge addEdge(OVertex to, OClass type);
+
+  ORID moveTo(final String iClassName, final String iClusterName);
+
 
 }

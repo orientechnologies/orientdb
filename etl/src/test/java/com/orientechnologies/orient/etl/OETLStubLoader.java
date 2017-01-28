@@ -21,9 +21,11 @@
 package com.orientechnologies.orient.etl;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabasePool;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.loader.OETLAbstractLoader;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +37,8 @@ import java.util.List;
  */
 public class OETLStubLoader extends OETLAbstractLoader {
   public final List<ODocument> loadedRecords = new ArrayList<ODocument>();
+  private ODatabasePool pool;
+  private OrientDB      orient;
 
   public OETLStubLoader() {
   }
@@ -42,14 +46,16 @@ public class OETLStubLoader extends OETLAbstractLoader {
   @Override
   public void beginLoader(OETLPipeline pipeline) {
 
-    OrientGraph graph = new OrientGraph("memory:OETLBaseTest");
-    graph.setUseLightweightEdges(false);
-    OETLDatabaseProvider provider = new OETLDatabaseProvider(graph.getRawGraph(), graph);
-    pipeline.setDatabaseProvider(provider);
+    orient = OrientDB.embedded("memory", null);
+
+    orient.create("testDatabase", "admin", "admin", OrientDB.DatabaseType.MEMORY);
+
+    pool = orient.openPool("testDatabase", "admin", "admin");
+    pipeline.setPool(pool);
   }
 
   @Override
-  public void load(OETLDatabaseProvider databaseProvider, Object input, OCommandContext context) {
+  public void load(ODatabaseDocument db, Object input, OCommandContext context) {
     synchronized (loadedRecords) {
       loadedRecords.add((ODocument) input);
       progress.incrementAndGet();
@@ -62,7 +68,17 @@ public class OETLStubLoader extends OETLAbstractLoader {
   }
 
   @Override
-  public void rollback(OETLDatabaseProvider databaseProvider) {
+  public void rollback(ODatabaseDocument db) {
+  }
+
+  @Override
+  public ODatabasePool getPool() {
+    return pool;
+  }
+
+  @Override
+  public void close() {
+    orient.close();
   }
 
   @Override

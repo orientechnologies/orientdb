@@ -19,11 +19,11 @@
 package com.orientechnologies.lucene.test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
-import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -32,38 +32,34 @@ import java.util.List;
 /**
  * Created by Enrico Risa on 10/08/15.
  */
-public class LuceneInheritanceQueryTest {
+public class LuceneInheritanceQueryTest extends BaseLuceneTest {
 
   public LuceneInheritanceQueryTest() {
   }
 
   @Test
   public void testQuery() {
-
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:testInheritance");
-    db.create();
     createSchema(db);
-    try {
-      ODocument doc = new ODocument("C2");
-      doc.field("name", "abc");
-      db.save(doc);
+    ODocument doc = new ODocument("C2");
+    doc.field("name", "abc");
+    db.save(doc);
 
-      String query = "select from C1 where name lucene \"abc\" ";
-      List<ODocument> vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
+    List<ODocument> vertices = db.query(new OSQLSynchQuery<ODocument>("select from C1 where name lucene \"abc\" "));
 
-      Assert.assertEquals(vertices.size(), 1);
+    Assert.assertEquals(1, vertices.size());
 
-    } finally {
-      db.drop();
-    }
+//    OResultSet resultSet = db.query("select from C1 where name lucene \"abc\" ");
+//
+//    Assert.assertEquals(1, vertices.size());
+
   }
 
   protected void createSchema(ODatabaseDocumentTx db) {
-    final OrientVertexType c1 = new OrientGraphNoTx(db).createVertexType("C1");
+    final OClass c1 = db.createVertexClass("C1");
     c1.createProperty("name", OType.STRING);
     c1.createIndex("C1.name", "FULLTEXT", null, null, "LUCENE", new String[] { "name" });
-    final OrientVertexType c2 = new OrientGraphNoTx(db).createVertexType("C2");
-    c2.setSuperClass(c1);
+
+    final OClass c2 = db.createClass("C2", "C1");
   }
 
 }

@@ -5,8 +5,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import org.junit.Test;
 
 import java.util.HashSet;
@@ -40,7 +38,7 @@ public class TestShardingDocsAndEdges extends AbstractServerClusterTest {
   }
 
   @Override
-  protected void onAfterDatabaseCreation(OrientBaseGraph db) {
+  protected void onAfterDatabaseCreation(ODatabaseDocument db) {
     db.command(new OCommandSQL("ALTER DATABASE CUSTOM useLightweightEdges = true")).execute();
     db.command(new OCommandSQL("ALTER DATABASE MINIMUMCLUSTERS 2")).execute();
     db.command(new OCommandSQL("create class `Client-Type` extends V")).execute();
@@ -121,8 +119,8 @@ public class TestShardingDocsAndEdges extends AbstractServerClusterTest {
     db.open("admin", "admin");
 
     // CREATE A GRAPH TO MANIPULATE ELEMENTS
-    final OrientGraphNoTx graph = new OrientGraphNoTx((ODatabaseDocumentTx) db);
-    graph.makeActive();
+
+    db.activateOnCurrentThread();
 
     try {
       Object o = db.command(new OCommandSQL(command)).execute();
@@ -134,7 +132,6 @@ public class TestShardingDocsAndEdges extends AbstractServerClusterTest {
       }
     } finally {
       db.close();
-      graph.shutdown();
     }
     return resultSet;
   }

@@ -15,10 +15,8 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import org.junit.Test;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+import org.junit.Test;
 
 /**
  * Distributed test on drop + recreate database with a different name.
@@ -51,9 +49,14 @@ public class DistributedDbDropAndReCreateAnotherTest extends AbstractServerClust
 
       banner("(RE)CREATING DATABASE " + dbName + " ON SERVER " + server.getServerId());
 
-      final OrientGraphNoTx graph = new OrientGraphNoTx(dbName);
+      final ODatabaseDocumentTx graph = new ODatabaseDocumentTx(dbName);
+      if(graph.exists()) {
+        graph.open("admin", "admin");
+      }else {
+        graph.create();
+      }
       onAfterDatabaseCreation(graph);
-      graph.shutdown();
+      graph.close();
 
       Thread.sleep(2000);
 

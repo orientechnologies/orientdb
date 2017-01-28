@@ -40,11 +40,11 @@ public class OLuceneTxResultSet extends OLuceneAbstractResultSet {
   private final String indexName;
   protected int deletedMatchCount = 0;
 
-  public OLuceneTxResultSet(OLuceneIndexEngine manager, OLuceneQueryContext queryContext) {
-    super(manager, queryContext);
+  public OLuceneTxResultSet(OLuceneIndexEngine engine, OLuceneQueryContext queryContext) {
+    super(engine, queryContext);
 
     deletedMatchCount = calculateDeletedMatch();
-    indexName = manager.indexName();
+    indexName = engine.indexName();
   }
 
   private int calculateDeletedMatch() {

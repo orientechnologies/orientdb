@@ -394,9 +394,8 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
       }
 
       if (indexOne.getDefinition() == null && indexTwo.getDefinition() != null) {
-        ok = false;
-        listener.onMessage("\n- ERR: Index definition for index " + indexOne.getName() + " for DB2 is not null.");
-        ++differences;
+        //THIS IS NORMAL SINCE 3.0 DUE OF REMOVING OF INDEX WITHOUT THE DEFINITION,  THE IMPORTER WILL CREATE THE DEFINITION
+        listener.onMessage("\n- WARN: Index definition for index " + indexOne.getName() + " for DB2 is not null.");
         continue;
       } else if (indexOne.getDefinition() != null && indexTwo.getDefinition() == null) {
         ok = false;

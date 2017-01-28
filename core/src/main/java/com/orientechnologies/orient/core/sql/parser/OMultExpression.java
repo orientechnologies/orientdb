@@ -22,7 +22,7 @@ class OMultExpression extends OMathExpression {
   }
 
   public boolean needsAliases(Set<String> aliases) {
-    throw new UnsupportedOperationException();
+    return super.needsAliases(aliases);
   }
 }
 /* JavaCC - OriginalChecksum=f75b8be48dca1e0cafae0cacadc608c8 (do not edit this line) */

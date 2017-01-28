@@ -25,14 +25,14 @@ import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.record.OEdge;
+import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.block.OETLBlock;
 import com.orientechnologies.orient.etl.extractor.OETLExtractor;
 import com.orientechnologies.orient.etl.loader.OETLLoader;
 import com.orientechnologies.orient.etl.source.OETLSource;
 import com.orientechnologies.orient.etl.transformer.OETLTransformer;
-import com.tinkerpop.blueprints.impls.orient.OrientEdge;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 import java.util.List;
 import java.util.TimerTask;
@@ -164,7 +164,7 @@ public class OETLProcessor {
     return context;
   }
 
-  protected void execute() {
+  public void execute() {
     configure();
     begin();
     runExtractorAndPipeline();
@@ -174,10 +174,15 @@ public class OETLProcessor {
   private void configure() {
   }
 
+  public void close() {
+    loader.getPool().close();
+
+    loader.close();
+
+  }
+
   private void runExtractorAndPipeline() {
     try {
-
-//      out(LOG_LEVELS.INFO, "Started execution with %d worker threads", workers);
 
       OLogManager.instance().info(this, "Started execution with %d worker threads", workers);
       extractor.extract(source.read());
@@ -198,25 +203,17 @@ public class OETLProcessor {
       futures.forEach(cf -> cf.join());
 
       OLogManager.instance().debug(this, "all items extracted");
-//      out(DEBUG, "all items extracted");
-
       executor.shutdown();
     } catch (OETLProcessHaltedException e) {
-//      out(ERROR, "ETL process halted: %s", e);
       OLogManager.instance().error(this, "ETL process halted: ", e);
       executor.shutdownNow();
     } catch (Exception e) {
-//      out(ERROR, "ETL process has problem: %s", e);
       OLogManager.instance().error(this, "ETL process has problem: ", e);
-
-//      e.printStackTrace();
       executor.shutdownNow();
     }
   }
 
   protected void begin() {
-//    out(LOG_LEVELS.INFO, "BEGIN ETL PROCESSOR");
-
     OLogManager.instance().info(this, "BEGIN ETL PROCESSOR");
     final Integer cfgMaxRetries = (Integer) context.getVariable("maxRetries");
     if (cfgMaxRetries != null)
@@ -236,30 +233,34 @@ public class OETLProcessor {
       startTime = System.currentTimeMillis();
     }
 
-    for (OETLBlock t : beginBlocks) {
-      t.begin();
-      t.execute();
-      t.end();
+    for (OETLBlock block : beginBlocks) {
+      block.begin(null);
+      block.execute();
+      block.end();
     }
 
-    if (source != null)
-      source.begin();
-    extractor.begin();
+    if (source != null) {
+      source.begin(null);
+    }
+    extractor.begin(null);
   }
 
   protected void end() {
-    for (OETLTransformer t : transformers)
-      t.end();
+    for (OETLTransformer transformer : transformers) {
+      transformer.end();
+    }
 
-    if (source != null)
+    if (source != null) {
       source.end();
+    }
+
     extractor.end();
     loader.end();
 
-    for (OETLBlock t : endBlocks) {
-      t.begin();
-      t.execute();
-      t.end();
+    for (OETLBlock block : endBlocks) {
+      block.begin(null);
+      block.execute();
+      block.end();
     }
 
     elapsed = System.currentTimeMillis() - startTime;
@@ -286,12 +287,6 @@ public class OETLProcessor {
     final String extractorTotalFormatted = extractorTotal > -1 ? String.format("%,d", extractorTotal) : "?";
 
     if (extractorTotal == -1) {
-//      out(LOG_LEVELS.INFO,
-//          "+ extracted %,d %s (%,d %s/sec) - %,d %s -> loaded %,d %s (%,d %s/sec) Total time: %s [%d warnings, %d errors]",
-//          extractorProgress, extractorUnit, extractorItemsSec, extractorUnit, extractor.getProgress(), extractor.getUnit(),
-//          loaderProgress, loaderUnit, loaderItemsSec, loaderUnit, OIOUtils.getTimeAsString(now - startTime), stats.warnings.get(),
-//          stats.errors.get());
-
       OLogManager.instance().info(this,
           "+ extracted %,d %s (%,d %s/sec) - %,d %s -> loaded %,d %s (%,d %s/sec) Total time: %s [%d warnings, %d errors]",
           extractorProgress, extractorUnit, extractorItemsSec, extractorUnit, extractor.getProgress(), extractor.getUnit(),
@@ -301,11 +296,6 @@ public class OETLProcessor {
     } else {
       float extractorPercentage = ((float) extractorProgress * 100 / extractorTotal);
 
-//      out(LOG_LEVELS.INFO,
-//          "+ %3.2f%% -> extracted %,d/%,d %s (%,d %s/sec) - %,d %s -> loaded %,d %s (%,d %s/sec) Total time: %s [%d warnings, %d errors]",
-//          extractorPercentage, extractorProgress, extractorTotal, extractorUnit, extractorItemsSec, extractorUnit,
-//          extractor.getProgress(), extractor.getUnit(), loaderProgress, loaderUnit, loaderItemsSec, loaderUnit,
-//          OIOUtils.getTimeAsString(now - startTime), stats.warnings.get(), stats.errors.get());
       OLogManager.instance().info(this,
           "+ %3.2f%% -> extracted %,d/%,d %s (%,d %s/sec) - %,d %s -> loaded %,d %s (%,d %s/sec) Total time: %s [%d warnings, %d errors]",
           extractorPercentage, extractorProgress, extractorTotal, extractorUnit, extractorItemsSec, extractorUnit,
@@ -380,9 +370,9 @@ public class OETLProcessor {
     else if (iClassName.equals("Object"))
       inClass = Object.class;
     else if (iClassName.equals("OrientVertex"))
-      inClass = OrientVertex.class;
+      inClass = OVertex.class;
     else if (iClassName.equals("OrientEdge"))
-      inClass = OrientEdge.class;
+      inClass = OEdge.class;
     else
       try {
         inClass = Class.forName(iClassName);

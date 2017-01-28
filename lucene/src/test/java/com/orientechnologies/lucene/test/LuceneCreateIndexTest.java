@@ -75,30 +75,31 @@ public class LuceneCreateIndexTest extends BaseLuceneTest {
   }
 
   protected void assertQuery() {
-    List<ODocument> docs = db.query(new OSQLSynchQuery<ODocument>("select * from Song where [title] LUCENE \"(title:mountain)\""));
+    List<ODocument> docs = db.query(new OSQLSynchQuery<ODocument>("select * from Song where title LUCENE \"mountain\""));
 
-    Assert.assertEquals(docs.size(), 4);
+    Assert.assertEquals(4, docs.size());
 
-    docs = db.query(new OSQLSynchQuery<ODocument>("select * from Song where [author] LUCENE \"(author:Fabbio)\""));
+    docs = db.query(new OSQLSynchQuery<ODocument>("select * from Song where author LUCENE \"Fabbio\""));
 
-    Assert.assertEquals(docs.size(), 87);
+    Assert.assertEquals(87, docs.size());
 
-    String query = "select * from Song where [title] LUCENE \"(title:mountain)\"  and [author] LUCENE \"(author:Fabbio)\"";
+    System.out.println("-------------");
+    String query = "select * from Song where title LUCENE \"mountain\" and author LUCENE \"Fabbio\"  ";
     //String query = "select * from Song where [title] LUCENE \"(title:mountain)\"  and author = 'Fabbio'";
     docs = db.query(new OSQLSynchQuery<ODocument>(query));
-    Assert.assertEquals(docs.size(), 1);
+    Assert.assertEquals(1, docs.size());
 
-    query = "select * from Song where [title] LUCENE \"(title:mountain)\"  and author = 'Fabbio'";
+    query = "select * from Song where title LUCENE \"mountain\"  and author = 'Fabbio'";
     docs = db.query(new OSQLSynchQuery<ODocument>(query));
 
-    Assert.assertEquals(docs.size(), 1);
+    Assert.assertEquals(1, docs.size());
   }
 
   protected void assertNewQuery() {
 
     List<ODocument> docs = db.query(new OSQLSynchQuery<ODocument>("select * from Song where [title] LUCENE \"(title:Local)\""));
 
-    Assert.assertEquals(docs.size(), 1);
+    Assert.assertEquals(1, docs.size());
   }
 
 }

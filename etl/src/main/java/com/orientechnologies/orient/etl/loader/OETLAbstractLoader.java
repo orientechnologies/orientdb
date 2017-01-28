@@ -19,7 +19,6 @@
 package com.orientechnologies.orient.etl.loader;
 
 import com.orientechnologies.orient.etl.OETLAbstractComponent;
-import com.orientechnologies.orient.etl.OETLDatabaseProvider;
 import com.orientechnologies.orient.etl.OETLPipeline;
 
 import java.util.concurrent.atomic.AtomicLong;
@@ -35,11 +34,9 @@ public abstract class OETLAbstractLoader extends OETLAbstractComponent implement
   }
 
   @Override
-  public void endLoader(OETLDatabaseProvider databaseProvider) {
-  }
-
-  @Override
   public long getProgress() {
     return progress.get();
   }
+
+
 }

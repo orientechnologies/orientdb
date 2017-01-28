@@ -19,16 +19,14 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.common.collection.OMultiCollectionIterator;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabasePool;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.record.ODirection;
+import com.orientechnologies.orient.core.record.OVertex;
 import org.junit.Assert;
 import org.junit.Test;
-
-import com.orientechnologies.common.collection.OMultiCollectionIterator;
-import com.orientechnologies.orient.client.remote.OStorageRemote;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.tinkerpop.blueprints.Direction;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 /**
  * Distributed TX test against "plocal" protocol.
@@ -51,19 +49,19 @@ public class DistributedSuperNodeTest extends AbstractServerClusterGraphTest {
   }
 
   @Override
-  protected void setFactorySettings(OrientGraphFactory factory) {
-    factory.setConnectionStrategy(OStorageRemote.CONNECTION_STRATEGY.ROUND_ROBIN_REQUEST.toString());
+  protected void setFactorySettings(ODatabasePool factory) {
+//    factory.setConnectionStrategy(OStorageRemote.CONNECTION_STRATEGY.ROUND_ROBIN_REQUEST.toString());
   }
 
   @Override
   protected void onAfterExecution() {
-    OrientGraph graph = factory.getTx();
+    ODatabaseDocument graph = factory.acquire();
     try {
-      OrientVertex root = graph.getVertex(rootVertexId);
-      Assert.assertEquals(((OMultiCollectionIterator) root.getEdges(Direction.OUT)).size(),
+      OVertex root = graph.load(rootVertexId);
+      Assert.assertEquals(((OMultiCollectionIterator) root.getEdges(ODirection.OUT)).size(),
           count * serverInstance.size() * writerCount);
     } finally {
-      graph.shutdown();
+      graph.close();
     }
     super.onAfterExecution();
   }

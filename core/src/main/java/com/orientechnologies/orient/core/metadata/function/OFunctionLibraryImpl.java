@@ -42,7 +42,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public class OFunctionLibraryImpl implements OFunctionLibrary {
+public class OFunctionLibraryImpl {
   protected Map<String, OFunction> functions = new ConcurrentHashMap<String, OFunction>();
 
   static {
@@ -52,11 +52,6 @@ public class OFunctionLibraryImpl implements OFunctionLibrary {
   public OFunctionLibraryImpl() {
   }
 
-  @Deprecated
-  public void create() {
-    
-  }
-
   public void create(ODatabaseDocumentInternal db) {
     init(db);
   }
@@ -64,7 +59,7 @@ public class OFunctionLibraryImpl implements OFunctionLibrary {
   public void load() {
     throw new UnsupportedOperationException();
   }
-  
+
   public void load(ODatabaseDocumentInternal db) {
     // COPY CALLBACK IN RAM
     final Map<String, OCallable<Object, Map<Object, Object>>> callbacks = new HashMap<String, OCallable<Object, Map<Object, Object>>>();
@@ -97,11 +92,11 @@ public class OFunctionLibraryImpl implements OFunctionLibrary {
   public OFunction getFunction(final String iName) {
     return functions.get(iName.toUpperCase());
   }
-  
+
   public OFunction createFunction(final String iName) {
     throw new UnsupportedOperationException("Use Create function with database on internal api");
   }
-  
+
   public synchronized OFunction createFunction(ODatabaseDocumentInternal database, final String iName) {
     init(database);
 
@@ -138,7 +133,6 @@ public class OFunctionLibraryImpl implements OFunctionLibrary {
     f.createProperty("parameters", OType.EMBEDDEDLIST, OType.STRING, true);
   }
 
-  @Override
   public synchronized void dropFunction(OFunction function) {
     String name = function.getName();
     ODocument doc = function.getDocument();
@@ -146,7 +140,6 @@ public class OFunctionLibraryImpl implements OFunctionLibrary {
     functions.remove(name.toUpperCase());
   }
 
-  @Override
   public synchronized void dropFunction(String iName) {
     OFunction function = getFunction(iName);
     ODocument doc = function.getDocument();

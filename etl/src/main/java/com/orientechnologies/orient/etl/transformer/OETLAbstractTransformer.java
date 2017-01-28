@@ -18,6 +18,7 @@
 
 package com.orientechnologies.orient.etl.transformer;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.etl.OETLAbstractPipelineComponent;
 
 import java.util.logging.Level;
@@ -27,7 +28,7 @@ import java.util.logging.Level;
  */
 public abstract class OETLAbstractTransformer extends OETLAbstractPipelineComponent implements OETLTransformer {
   @Override
-  public Object transform(final Object input) {
+  public Object transform(ODatabaseDocument db, final Object input) {
     log(Level.FINE, "Transformer input: %s", input);
 
     if (input == null)
@@ -35,11 +36,8 @@ public abstract class OETLAbstractTransformer extends OETLAbstractPipelineCompon
 
     if (!skip(input)) {
       context.setVariable("input", input);
-      //to assure that db instance is on ThreadLocal
-      databaseProvider.getDocumentDatabase();
-      databaseProvider.getGraphDatabase();
 
-      final Object result = executeTransform(input);
+      final Object result = executeTransform(db, input);
       if (output == null) {
         log(Level.FINE, "Transformer output: %s", result);
         return result;
@@ -50,5 +48,5 @@ public abstract class OETLAbstractTransformer extends OETLAbstractPipelineCompon
     return input;
   }
 
-  protected abstract Object executeTransform(final Object input);
+  protected abstract Object executeTransform(ODatabaseDocument db, final Object input);
 }
