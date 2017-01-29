@@ -153,10 +153,7 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
   
   // Check if field is embedded. For e.g. person.address.city
   private boolean isFieldEmbedded(String indexField) {
-	  if(indexField.contains("."))
-		  return true;
-	  else
-		  return false;
+	  return indexField.contains(".");
   }
 	 
   // Get Field of the document which contains an embedded. For e.g.
