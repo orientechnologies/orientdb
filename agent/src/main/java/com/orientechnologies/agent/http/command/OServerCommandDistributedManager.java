@@ -20,7 +20,7 @@ package com.orientechnologies.agent.http.command;
 import com.orientechnologies.agent.ha.sql.OCommandExecutorSQLHAStartReplication;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -216,9 +216,8 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
         throw new OCommandExecutionException("OrientDB is not started in distributed mode");
 
 
-      boolean installDatabase = dManager.installDatabase(true, database,
-          false,
-          true);
+      boolean installDatabase = dManager.installDatabase(true, database, false,
+          OGlobalConfiguration.DISTRIBUTED_BACKUP_TRY_INCREMENTAL_FIRST.getValueAsBoolean());
 
       ODocument document = new ODocument().field("result", installDatabase);
       iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, document.toJSON(""), null);
