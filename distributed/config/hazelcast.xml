@@ -16,6 +16,7 @@
 		<password>orientdb</password>
 	</group>
 	<properties>
+		<property name="hazelcast.phone.home.enabled">false</property>
 		<property name="hazelcast.mancenter.enabled">false</property>
 		<property name="hazelcast.memcache.enabled">false</property>
 		<property name="hazelcast.rest.enabled">false</property>
