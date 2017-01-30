@@ -61,8 +61,8 @@ public class GraphTest {
     try {
       // System.out.println(g.getIndexedKeys(Vertex.class,true)); this will print VC1.p1
       if (g.getIndex("VC1.p1", Vertex.class) == null) {// this will return null. I do not know why
-        g.createKeyIndex("p1", Vertex.class, new Parameter<String, String>("class", "VC1"), new Parameter<String, String>("type",
-            "UNIQUE"), new Parameter<String, OType>("keytype", OType.STRING));
+        g.createKeyIndex("p1", Vertex.class, new Parameter<String, String>("class", "VC1"),
+            new Parameter<String, String>("type", "UNIQUE"), new Parameter<String, OType>("keytype", OType.STRING));
       }
     } catch (OIndexException e) {
       // ignore because the index may exist
@@ -101,8 +101,9 @@ public class GraphTest {
 
     vCollate.createProperty("name", OType.STRING);
 
-    g.createKeyIndex("name", Vertex.class, new Parameter<String, String>("class", "VCollate"), new Parameter<String, String>(
-        "type", "UNIQUE"), new Parameter<String, OType>("keytype", OType.STRING), new Parameter<String, String>("collate", "ci"));
+    g.createKeyIndex("name", Vertex.class, new Parameter<String, String>("class", "VCollate"),
+        new Parameter<String, String>("type", "UNIQUE"), new Parameter<String, OType>("keytype", OType.STRING),
+        new Parameter<String, String>("collate", "ci"));
     OrientVertex vertex = g.addVertex("class:VCollate", new Object[] { "name", "Enrico" });
 
     g.commit();
@@ -267,7 +268,6 @@ public class GraphTest {
     }
   }
 
-
   @Test
   public void testCustomPredicate() {
     OrientGraphFactory orientGraphFactory = new OrientGraphFactory("memory:testCustomPredicate");
@@ -298,6 +298,33 @@ public class GraphTest {
       g.shutdown();
       orientGraphFactory.close();
     }
+  }
+
+  @Test
+  public void testKebabCaseQuery() {
+    OrientGraphFactory orientGraphFactory = new OrientGraphFactory("memory:testKebabCase");
+    final OrientGraphNoTx g = orientGraphFactory.getNoTx();
+    try {
+      g.addVertex(null).setProperty("test-one", true);
+      g.addVertex(null).setProperty("test-one", false);
+
+      g.commit();
+
+      GraphQuery query = g.query();
+      query.has("test-one", true);
+
+      Iterable<Vertex> vertices = query.vertices();
+
+      final Iterator<Vertex> it = vertices.iterator();
+      Assert.assertTrue(it.hasNext());
+      Assert.assertTrue((Boolean) it.next().getProperty("test-one"));
+      Assert.assertFalse(it.hasNext());
+
+    } finally {
+      g.shutdown();
+      orientGraphFactory.close();
+    }
+
   }
 
   @Test
