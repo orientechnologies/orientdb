@@ -641,6 +641,7 @@ schemaModule.controller("IndexController", ['$scope', '$routeParams', '$route', 
       clazz,
       props,
       type,
+      engine,
       metadata
     }, $scope.strict).then(() => {
 
