@@ -21,24 +21,12 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.document.DoubleField;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.document.FloatField;
-import org.apache.lucene.document.IntField;
-import org.apache.lucene.document.LongField;
-import org.apache.lucene.document.StringField;
-import org.apache.lucene.document.TextField;
+import org.apache.lucene.document.*;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.BooleanClause;
-import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.NumericRangeQuery;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.Sort;
-import org.apache.lucene.search.SortField;
-import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.*;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -67,6 +55,12 @@ public class OLuceneIndexType {
     }
 
     if (fieldName.equalsIgnoreCase(OLuceneIndexEngineAbstract.RID)) {
+      StringField ridField = new StringField(fieldName, value.toString(), store);
+      return ridField;
+    }
+
+    //metadata fileds: _CLASS, _CLUSTER
+    if (fieldName.startsWith("_")) {
       StringField ridField = new StringField(fieldName, value.toString(), store);
       return ridField;
     }

@@ -29,8 +29,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static com.orientechnologies.lucene.OLuceneIndexType.*;
-import static com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract.*;
+import static com.orientechnologies.lucene.OLuceneIndexType.createField;
+import static com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract.RID;
 
 /**
  * Created by Enrico Risa on 02/09/15.
@@ -43,6 +43,9 @@ public class OLuceneDocumentBuilder {
 
     if (value != null) {
       doc.add(createField(RID, value.getIdentity().toString(), Field.Store.YES));
+      doc.add(createField("_CLUSTER", "" + value.getIdentity().getClusterId(), Field.Store.YES));
+      doc.add(createField("_CLASS", definition.getClassName(), Field.Store.YES));
+
     }
     List<Object> formattedKey = formatKeys(definition, key);
 
@@ -54,8 +57,6 @@ public class OLuceneDocumentBuilder {
         doc.add(createField(field, val, Field.Store.YES));
         //for cross class index
         doc.add(createField(definition.getClassName() + "." + field, val, Field.Store.YES));
-        doc.add(createField("_CLASS", definition.getClassName(), Field.Store.YES));
-
       }
     }
 

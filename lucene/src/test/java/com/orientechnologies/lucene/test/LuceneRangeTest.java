@@ -13,7 +13,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Created by frank on 13/12/2016.
@@ -122,4 +122,23 @@ public class LuceneRangeTest extends BaseLuceneTest {
 
   }
 
+  @Test
+  public void shouldFetchOnlyFromACluster() throws Exception {
+
+    db.command(new OCommandSQL("create index Person.name on Person(name) FULLTEXT ENGINE LUCENE")).execute();
+
+    assertThat(db.getMetadata().getIndexManager().getIndex("Person.name").getSize()).isEqualTo(10);
+
+    int cluster = db.getMetadata().getSchema().getClass("Person").getClusterIds()[1];
+    db.commit();
+
+//age and date range with MUST
+    Collection<ODocument> results = db.command(
+        new OCommandSQL(
+            "SELECT FROM Person WHERE name LUCENE '+_CLUSTER:" + cluster +"'"))
+        .execute();
+
+    assertThat(results).hasSize(2);
+
+  }
 }
