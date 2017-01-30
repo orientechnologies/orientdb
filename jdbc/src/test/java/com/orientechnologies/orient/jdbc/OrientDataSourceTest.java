@@ -112,7 +112,7 @@ public class OrientDataSourceTest extends OrientJdbcBaseTest {
 
           } catch (Exception e) {
             e.printStackTrace();
-            fail("WTF:::", e);
+            fail("fail:::", e);
           }
         }
 
