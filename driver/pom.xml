@@ -110,12 +110,7 @@
     <build>
         <directory>${basedir}/target</directory>
         <finalName>${project.artifactId}-${project.version}</finalName>
-        <resources>
-            <resource>
-                <directory>driver/src/main/resources
-                </directory>
-            </resource>
-        </resources>
+
         <plugins>
             <plugin>
                 <groupId>org.jacoco</groupId>
