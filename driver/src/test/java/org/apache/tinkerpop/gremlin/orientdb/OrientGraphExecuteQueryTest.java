@@ -11,35 +11,35 @@ import org.junit.Test;
  */
 public class OrientGraphExecuteQueryTest extends OrientGraphBaseTest {
 
-  @Test
-  public void testExecuteGremlinSimpleQueryTest() {
+    @Test
+    public void testExecuteGremlinSimpleQueryTest() {
 
-    OrientGraph noTx = factory.getNoTx();
+        OrientGraph noTx = factory.getNoTx();
 
-    noTx.addVertex(T.label, "Person", "name", "John");
-    noTx.addVertex(T.label, "Person", "name", "Luke");
+        noTx.addVertex(T.label, "Person", "name", "John");
+        noTx.addVertex(T.label, "Person", "name", "Luke");
 
-    OResultSet gremlin = noTx.execute("gremlin", "g.V()", null);
+        OResultSet gremlin = noTx.execute("gremlin", "g.V()", null);
 
-    Assert.assertEquals(2, gremlin.stream().count());
+        Assert.assertEquals(2, gremlin.stream().count());
 
-  }
+    }
 
-  @Test
-  public void testExecuteGremlinCountQueryTest() {
+    @Test
+    public void testExecuteGremlinCountQueryTest() {
 
-    OrientGraph noTx = factory.getNoTx();
+        OrientGraph noTx = factory.getNoTx();
 
-    noTx.addVertex(T.label, "Person", "name", "John");
-    noTx.addVertex(T.label, "Person", "name", "Luke");
+        noTx.addVertex(T.label, "Person", "name", "John");
+        noTx.addVertex(T.label, "Person", "name", "Luke");
 
-    OResultSet gremlin = noTx.execute("gremlin", "g.V().count()", null);
+        OResultSet gremlin = noTx.execute("gremlin", "g.V().count()", null);
 
-    Assert.assertEquals(true, gremlin.hasNext());
-    OResult result = gremlin.next();
-    Long count = result.getProperty("value");
-    Assert.assertEquals(new Long(2), count);
+        Assert.assertEquals(true, gremlin.hasNext());
+        OResult result = gremlin.next();
+        Long count = result.getProperty("value");
+        Assert.assertEquals(new Long(2), count);
 
-  }
+    }
 
 }

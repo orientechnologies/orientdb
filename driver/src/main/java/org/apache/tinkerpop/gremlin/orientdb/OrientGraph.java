@@ -3,7 +3,6 @@ package org.apache.tinkerpop.gremlin.orientdb;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
-import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -25,7 +24,6 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.NotImplementedException;
-import org.apache.tinkerpop.gremlin.orientdb.executor.OCommandGremlinExecutor;
 import org.apache.tinkerpop.gremlin.orientdb.traversal.strategy.optimization.OrientGraphStepStrategy;
 import org.apache.tinkerpop.gremlin.process.computer.GraphComputer;
 import org.apache.tinkerpop.gremlin.process.traversal.TraversalStrategies;
@@ -61,12 +59,6 @@ public final class OrientGraph implements Graph {
                 OrientGraph.class,
                 TraversalStrategies.GlobalCache.getStrategies(Graph.class).clone()
                         .addStrategies(OrientGraphStepStrategy.instance()));
-
-      try {
-        OCommandManager.instance().getScriptExecutor("gremlin");
-      } catch (Exception e){
-        OCommandManager.instance().registerScriptExecutor("gremlin", new OCommandGremlinExecutor());
-      }
     }
 
     private static final Map<String, String> INTERNAL_CLASSES_TO_TINKERPOP_CLASSES;
@@ -212,11 +204,11 @@ public final class OrientGraph implements Graph {
         });
     }
 
-    public OResultSet execute(String language,String script,Map params){
+    public OResultSet execute(String language, String script, Map params) {
 
-        return executeWithConnectionCheck(()->{
+        return executeWithConnectionCheck(() -> {
             makeActive();
-            return database.execute(language,script,params);
+            return database.execute(language, script, params);
         });
     }
 
@@ -391,8 +383,7 @@ public final class OrientGraph implements Graph {
         if (elementIds.length == 0) {
             // return all vertices as stream
 
-
-            Iterator<ODocument> itty = database.browseClass(elementClass,polymorphic).iterator();
+            Iterator<ODocument> itty = database.browseClass(elementClass, polymorphic).iterator();
             return asStream(itty).map(toA).iterator();
         } else {
             Stream<ORID> ids = Stream.of(elementIds).map(OrientGraph::createRecordId).peek(id -> checkId(id));

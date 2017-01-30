@@ -11,28 +11,28 @@ import org.junit.rules.TestName;
 
 public abstract class OrientGraphBaseTest {
 
-  @Rule
-  public TestName name = new TestName();
+    @Rule
+    public TestName name = new TestName();
 
-  protected OrientGraphFactory factory;
+    protected OrientGraphFactory factory;
 
-  @Before
-  public void setupDB() {
-    String config = System.getProperty("orientdb.test.env", "memory");
+    @Before
+    public void setupDB() {
+        String config = System.getProperty("orientdb.test.env", "memory");
 
-    String url = null;
-    if ("ci".equals(config) || "release".equals(config)) {
-      url = "plocal:./target/databases/" + name.getMethodName();
-    } else {
-      url = "memory:" + name.getMethodName();
+        String url = null;
+        if ("ci".equals(config) || "release".equals(config)) {
+            url = "plocal:./target/databases/" + name.getMethodName();
+        } else {
+            url = "memory:" + name.getMethodName();
+        }
+        factory = new OrientGraphFactory(url);
+
     }
-    factory = new OrientGraphFactory(url);
 
-  }
-
-  @After
-  public void dropDB() {
-    factory.getNoTx().drop();
-  }
+    @After
+    public void dropDB() {
+        factory.getNoTx().drop();
+    }
 
 }

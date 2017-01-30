@@ -10,11 +10,11 @@ import org.apache.tinkerpop.gremlin.orientdb.OrientProperty;
  */
 public class OrientPropertyTransformer implements OResultTransformer<OrientProperty> {
 
-  @Override
-  public OResult transform(OrientProperty element) {
+    @Override
+    public OResult transform(OrientProperty element) {
 
-    OResultInternal internal = new OResultInternal();
-    internal.setProperty(element.key(), element.value());
-    return internal;
-  }
+        OResultInternal internal = new OResultInternal();
+        internal.setProperty(element.key(), element.value());
+        return internal;
+    }
 }

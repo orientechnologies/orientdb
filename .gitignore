@@ -55,3 +55,6 @@ local.properties
 
 ### jvm (https://github.com/caarlos0/jvm) ###
 .java-version
+
+### 
+databases

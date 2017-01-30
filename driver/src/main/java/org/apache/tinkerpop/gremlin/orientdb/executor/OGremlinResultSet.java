@@ -17,57 +17,57 @@ import java.util.Optional;
  */
 public class OGremlinResultSet implements OResultSet {
 
-  protected Traversal          traversal;
-  private   OScriptTransformer transformer;
-  private   boolean            closeGraph;
+    protected Traversal traversal;
+    private OScriptTransformer transformer;
+    private boolean closeGraph;
 
-  public OGremlinResultSet(Traversal traversal, OScriptTransformer transformer) {
-    this(traversal, transformer, false);
-  }
-
-  public OGremlinResultSet(Traversal traversal, OScriptTransformer transformer, boolean closeGraph) {
-    this.traversal = traversal;
-    this.transformer = transformer;
-    this.closeGraph = closeGraph;
-  }
-
-  @Override
-  public boolean hasNext() {
-    return traversal.hasNext();
-  }
-
-  @Override
-  public OResult next() {
-
-    Object next = traversal.next();
-    return transformer.toResult(next);
-  }
-
-  @Override
-  public void close() {
-    try {
-      traversal.close();
-      if (closeGraph) {
-        traversal.asAdmin().getGraph().ifPresent(graph -> {
-          try {
-            ((Graph) graph).close();
-          } catch (Exception e) {
-            throw OException.wrapException(new OCommandExecutionException("Error closing the Graph "), e);
-          }
-        });
-      }
-    } catch (Exception e) {
-      throw OException.wrapException(new OCommandExecutionException("Error closing the gremlin Result Set"), e);
+    public OGremlinResultSet(Traversal traversal, OScriptTransformer transformer) {
+        this(traversal, transformer, false);
     }
-  }
 
-  @Override
-  public Optional<OExecutionPlan> getExecutionPlan() {
-    return Optional.empty();
-  }
+    public OGremlinResultSet(Traversal traversal, OScriptTransformer transformer, boolean closeGraph) {
+        this.traversal = traversal;
+        this.transformer = transformer;
+        this.closeGraph = closeGraph;
+    }
 
-  @Override
-  public Map<String, Long> getQueryStats() {
-    return null;
-  }
+    @Override
+    public boolean hasNext() {
+        return traversal.hasNext();
+    }
+
+    @Override
+    public OResult next() {
+
+        Object next = traversal.next();
+        return transformer.toResult(next);
+    }
+
+    @Override
+    public void close() {
+        try {
+            traversal.close();
+            if (closeGraph) {
+                traversal.asAdmin().getGraph().ifPresent(graph -> {
+                    try {
+                        ((Graph) graph).close();
+                    } catch (Exception e) {
+                        throw OException.wrapException(new OCommandExecutionException("Error closing the Graph "), e);
+                    }
+                });
+            }
+        } catch (Exception e) {
+            throw OException.wrapException(new OCommandExecutionException("Error closing the gremlin Result Set"), e);
+        }
+    }
+
+    @Override
+    public Optional<OExecutionPlan> getExecutionPlan() {
+        return Optional.empty();
+    }
+
+    @Override
+    public Map<String, Long> getQueryStats() {
+        return null;
+    }
 }

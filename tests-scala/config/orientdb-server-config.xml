@@ -96,6 +96,7 @@
         <user resources="connect,server.listDatabases,server.dblist" password="guest" name="guest"/>
     </users>
     <properties>
+        <entry name="security.userPasswordSaltIterations" value="1"/>
         <entry value="1" name="db.pool.min"/>
         <entry value="50" name="db.pool.max"/>
         <entry value="true" name="profiler.enabled"/>

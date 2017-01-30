@@ -10,10 +10,10 @@ import org.apache.tinkerpop.gremlin.orientdb.OrientElement;
  */
 public class OElementTransformer implements OResultTransformer<OrientElement> {
 
-  @Override
-  public OResult transform(OrientElement element) {
-    OResultInternal internal = new OResultInternal();
-    internal.setElement(element.getRawElement());
-    return internal;
-  }
+    @Override
+    public OResult transform(OrientElement element) {
+        OResultInternal internal = new OResultInternal();
+        internal.setElement(element.getRawElement());
+        return internal;
+    }
 }

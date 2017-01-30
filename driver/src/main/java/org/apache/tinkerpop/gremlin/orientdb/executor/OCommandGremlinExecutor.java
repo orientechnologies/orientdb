@@ -20,7 +20,6 @@
 package org.apache.tinkerpop.gremlin.orientdb.executor;
 
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OScriptExecutor;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -49,75 +48,75 @@ import java.util.Map;
  */
 public class OCommandGremlinExecutor implements OScriptExecutor {
 
-  private final OScriptManager                   scriptManager;
-  private       GremlinGroovyScriptEngineFactory factory;
+    private final OScriptManager scriptManager;
+    private GremlinGroovyScriptEngineFactory factory;
 
-  public OCommandGremlinExecutor() {
+    public OCommandGremlinExecutor(OScriptManager scriptManager) {
 
-    factory = new GremlinGroovyScriptEngineFactory();
-    factory.setCustomizerManager(new CachedGremlinScriptEngineManager());
-    this.scriptManager = Orient.instance().getScriptManager();
+        factory = new GremlinGroovyScriptEngineFactory();
+        factory.setCustomizerManager(new CachedGremlinScriptEngineManager());
+        this.scriptManager = scriptManager;
 
-    initCustomTransformer(this.scriptManager);
-
-  }
-
-  private void initCustomTransformer(OScriptManager scriptManager) {
-
-    scriptManager.getTransformer().registerResultTransformer(OrientVertex.class, new OElementTransformer());
-    scriptManager.getTransformer().registerResultTransformer(OrientElement.class, new OElementTransformer());
-    scriptManager.getTransformer().registerResultTransformer(OrientVertexProperty.class, new OrientPropertyTransformer());
-  }
-
-  @Override
-  public OResultSet execute(ODatabaseDocumentInternal database, String script, Object... params) {
-    throw new UnsupportedOperationException("");
-  }
-
-  @Override
-  public OResultSet execute(final ODatabaseDocumentInternal iDatabase, final String iText, final Map params) {
-
-    try {
-      final ScriptEngine engine = getGremlinEngine(acquireGraph(iDatabase));
-      bindParameters(engine, params);
-
-      final Traversal result = (Traversal) engine.eval(iText);
-
-      return new OGremlinResultSet(result, scriptManager.getTransformer(), true);
-
-    } catch (Exception e) {
-      throw OException.wrapException(new OCommandExecutionException("Error on execution of the GREMLIN script"), e);
-    } finally {
+        initCustomTransformer(scriptManager);
 
     }
-  }
 
-  protected ScriptEngine getGremlinEngine(final OrientGraph graph) {
-    GremlinScriptEngine engine = factory.getScriptEngine();
-    engine.getBindings(ScriptContext.ENGINE_SCOPE).put("g", graph.traversal());
-    return engine;
-  }
+    private void initCustomTransformer(OScriptManager scriptManager) {
 
-  public void bindParameters(final ScriptEngine iEngine, final Map<Object, Object> iParameters) {
-    if (iParameters != null && !iParameters.isEmpty())
-      // Every call to the function is a execution itself. Therefore, it requires a fresh set of input parameters.
-      // Therefore, clone the parameters map trying to recycle previous instances
-      for (Map.Entry<Object, Object> param : iParameters.entrySet()) {
-        final String paramName = param.getKey().toString().trim();
-        iEngine.getBindings(ScriptContext.ENGINE_SCOPE).put(paramName, param.getValue());
-      }
+        scriptManager.getTransformer().registerResultTransformer(OrientVertex.class, new OElementTransformer());
+        scriptManager.getTransformer().registerResultTransformer(OrientElement.class, new OElementTransformer());
+        scriptManager.getTransformer().registerResultTransformer(OrientVertexProperty.class, new OrientPropertyTransformer());
+    }
 
-  }
+    @Override
+    public OResultSet execute(ODatabaseDocumentInternal database, String script, Object... params) {
+        throw new UnsupportedOperationException("");
+    }
 
-  public OrientGraph acquireGraph(final ODatabaseDocumentInternal database) {
-    return new OrientGraph(database, new BaseConfiguration() {
-      {
-        setProperty(OrientGraph.CONFIG_TRANSACTIONAL, true);
-      }
-    }, null, null);
-  }
+    @Override
+    public OResultSet execute(final ODatabaseDocumentInternal iDatabase, final String iText, final Map params) {
 
-  public String getEngineVersion() {
-    return factory.getEngineVersion();
-  }
+        try {
+            final ScriptEngine engine = getGremlinEngine(acquireGraph(iDatabase));
+            bindParameters(engine, params);
+
+            final Traversal result = (Traversal) engine.eval(iText);
+
+            return new OGremlinResultSet(result, scriptManager.getTransformer(), true);
+
+        } catch (Exception e) {
+            throw OException.wrapException(new OCommandExecutionException("Error on execution of the GREMLIN script"), e);
+        } finally {
+
+        }
+    }
+
+    protected ScriptEngine getGremlinEngine(final OrientGraph graph) {
+        GremlinScriptEngine engine = factory.getScriptEngine();
+        engine.getBindings(ScriptContext.ENGINE_SCOPE).put("g", graph.traversal());
+        return engine;
+    }
+
+    public void bindParameters(final ScriptEngine iEngine, final Map<Object, Object> iParameters) {
+        if (iParameters != null && !iParameters.isEmpty())
+            // Every call to the function is a execution itself. Therefore, it requires a fresh set of input parameters.
+            // Therefore, clone the parameters map trying to recycle previous instances
+            for (Map.Entry<Object, Object> param : iParameters.entrySet()) {
+            final String paramName = param.getKey().toString().trim();
+            iEngine.getBindings(ScriptContext.ENGINE_SCOPE).put(paramName, param.getValue());
+            }
+
+    }
+
+    public OrientGraph acquireGraph(final ODatabaseDocumentInternal database) {
+        return new OrientGraph(database, new BaseConfiguration() {
+            {
+                setProperty(OrientGraph.CONFIG_TRANSACTIONAL, true);
+            }
+        }, null, null);
+    }
+
+    public String getEngineVersion() {
+        return factory.getEngineVersion();
+    }
 }
