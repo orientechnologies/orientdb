@@ -24,6 +24,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandManager;
+import com.orientechnologies.orient.core.command.OScriptExecutorRegister;
 import com.orientechnologies.orient.core.command.script.formatter.*;
 import com.orientechnologies.orient.core.command.script.transformer.OScriptTransformer;
 import com.orientechnologies.orient.core.command.script.transformer.OScriptTransformerImpl;
@@ -39,6 +40,8 @@ import javax.script.*;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+
+import static com.orientechnologies.common.util.OClassLoaderHelper.lookupProviderWithOrientClassLoader;
 
 /**
  * Executes Script Commands.
@@ -90,6 +93,10 @@ public class OScriptManager {
 
     // Registring sql script engine after for not fight with the basic engine
     registerEngine(OSQLScriptEngine.NAME, new OSQLScriptEngineFactory());
+
+    Iterator<OScriptExecutorRegister> customExecutors = lookupProviderWithOrientClassLoader(OScriptExecutorRegister.class);
+
+    customExecutors.forEachRemaining(e -> e.registerExecutor(this, OCommandManager.instance()));
 
   }
 
