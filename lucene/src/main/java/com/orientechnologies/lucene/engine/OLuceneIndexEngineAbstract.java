@@ -175,14 +175,36 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
   protected void commit() {
     flush();
   }
+  
+  // Check if indexField is embedded
+  private boolean isFieldEmbedded(String indexField) {
+	  return indexField.contains(".");
+  }
 
+  //Get Field of the document which contains an embedded. For e.g.
+  // If IndexField is person.address.city, then field is person
+  // If IndexField is mobiles[home].mobileNumber, then field is mobiles
+  private String getFieldFromEmbeddedField(String embeddedField) {
+	   String field = null;
+	   if(embeddedField.contains("."))
+		   field = embeddedField.split("\\.")[0];
+	   if(embeddedField.contains("["))
+		   field = embeddedField.split("\\[")[0];
+	   return field;  
+   }
+ 
   private void checkCollectionIndex(OIndexDefinition indexDefinition) {
 
     List<String> fields = indexDefinition.getFields();
 
     OClass aClass = getDatabase().getMetadata().getSchema().getClass(indexDefinition.getClassName());
     for (String field : fields) {
-      OProperty property = aClass.getProperty(field);
+      OProperty property = null;
+      if(isFieldEmbedded(field)) {
+    	  property = aClass.getProperty(getFieldFromEmbeddedField(field));
+      } else {
+    	  property = aClass.getProperty(field);
+      }
 
       if (property.getType().isEmbedded() && property.getLinkedType() != null) {
         collectionFields.put(field, true);
