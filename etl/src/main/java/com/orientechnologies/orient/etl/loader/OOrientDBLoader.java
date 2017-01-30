@@ -27,11 +27,7 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
-import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.etl.OETLPipeline;
@@ -46,7 +42,8 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.*;
-import static com.orientechnologies.orient.etl.loader.OOrientDBLoader.DB_TYPE.*;
+import static com.orientechnologies.orient.etl.loader.OOrientDBLoader.DB_TYPE.DOCUMENT;
+import static com.orientechnologies.orient.etl.loader.OOrientDBLoader.DB_TYPE.GRAPH;
 
 /**
  * ETL Loader that saves record into OrientDB database.
@@ -54,11 +51,6 @@ import static com.orientechnologies.orient.etl.loader.OOrientDBLoader.DB_TYPE.*;
 public class OOrientDBLoader extends OAbstractLoader implements OLoader {
 
   private static String NOT_DEF = "not_defined";
-
-  protected enum DB_TYPE {
-    DOCUMENT, GRAPH
-  }
-
   protected String          clusterName;
   protected String          className;
   protected List<ODocument> classes;
@@ -81,7 +73,6 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
   protected boolean    wal                        = true;
   protected boolean    txUseLog                   = false;
   private   boolean    skipDuplicates             = false;
-
   public OOrientDBLoader() {
   }
 
@@ -397,11 +388,15 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
   }
 
   private void configureGraphDB() {
-    final OrientGraphFactory factory = new OrientGraphFactory(dbURL, dbUser, dbPassword);
+    OrientGraphFactory factory = new OrientGraphFactory(dbURL, dbUser, dbPassword);
 
     if (dbAutoDropIfExists && factory.exists()) {
       log(INFO, "Dropping existent database '%s'...", dbURL);
       factory.drop();
+    }
+
+    if (!factory.exists()) {
+      factory = new OrientGraphFactory(dbURL, dbUser, dbPassword);
     }
 
     final OrientBaseGraph graphDatabase = tx ? factory.getTx() : factory.getNoTx();
@@ -616,5 +611,9 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
       pipeline.getDocumentDatabase().commit();
     else
       pipeline.getGraphDatabase().commit();
+  }
+
+  protected enum DB_TYPE {
+    DOCUMENT, GRAPH
   }
 }
