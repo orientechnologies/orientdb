@@ -10,7 +10,8 @@
         <span class="icon-bar"></span>
       </button>
       <a class="navbar-brand" href="#/" ng-click="logout()">
-        <img src="../img/orient_db.png" alt="logo"/>
+        <img ng-if="!enterprise" src="../img/community.png" alt="logo"/>
+        <img ng-if="enterprise" src="../img/enterprise.png" alt="logo"/>
       </a>
     </div>
 

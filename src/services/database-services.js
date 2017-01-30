@@ -513,6 +513,8 @@ database.factory('DatabaseApi', ["$http", "$resource", "$q", function ($http, $r
   resource.sso = false;
 
 
+  resource.ee = null;
+
   resource.isSSO = function () {
     var deferred = $q.defer();
 
@@ -541,13 +543,27 @@ database.factory('DatabaseApi', ["$http", "$resource", "$q", function ($http, $r
   }
 
   resource.isEE = function () {
-    var deferred = $q.defer();
-    $http.get(API + 'isEE').success(function (data) {
+
+    let promise;
+    if (resource.ee === null) {
+      var deferred = $q.defer();
+      $http.get(API + 'isEE').success(function (data) {
+        resource.ee = data;
         deferred.resolve(data);
-    }).error(function (data) {
-      deferred.reject(data);
-    });
-    return deferred.promise;
+      }).error(function (data) {
+        resource.ee = {enterprise: false};
+        deferred.reject(data);
+      });
+      promise = deferred.promise;
+      resource.ee = promise;
+    } else if (resource.ee.enterprise != undefined) {
+      var deferred = $q.defer();
+      promise = deferred.promise;
+
+    } else {
+      promise = resource.ee;
+    }
+    return promise;
   }
 
   resource.install = function (db, username, password) {

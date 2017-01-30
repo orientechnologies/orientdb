@@ -3,7 +3,7 @@ import {STUDIO_VERSION} from '../constants';
 import '../views/server/about.html';
 import angular from 'angular';
 
-let HeaderController = angular.module('header.controller', [databaseServices]).controller("HeaderController", ['$scope', '$rootScope', '$routeParams', '$http', '$location', '$modal', '$q', 'Database', 'Aside', 'Profiler', function ($scope, $rootScope, $routeParams, $http, $location, $modal, $q, Database, Aside, Profiler) {
+let HeaderController = angular.module('header.controller', [databaseServices]).controller("HeaderController", ['$scope', '$rootScope', '$routeParams', '$http', '$location', '$modal', '$q', 'Database', 'Aside', 'DatabaseApi', function ($scope, $rootScope, $routeParams, $http, $location, $modal, $q, Database, Aside, DatabaseApi) {
   $scope.database = Database;
   $scope.selectedMenu = null;
   $scope.menus = [];
@@ -16,6 +16,15 @@ let HeaderController = angular.module('header.controller', [databaseServices]).c
     }
 
   });
+
+
+  $scope.enterprise = false;
+
+  DatabaseApi.isEE().then((data) => {
+    $scope.enterprise = data.enterprise;
+  }).catch(() => {
+    $scope.enterprise = false;
+  })
   $scope.toggleAside = function () {
     Aside.toggle();
   }
