@@ -854,7 +854,7 @@ schemaModule.controller("NewClassController", ['$scope', '$routeParams', '$locat
           limit: $scope.limit
         }, function (data) {
           $scope.$hide();
-          Notification.push({content: "Class '" + $scope.property['name'] + "' correclty created."})
+          Notification.push({content: "Class '" + $scope.property['name'] + "' correctly created."})
           $scope.parentScope.refreshPage();
         }, function (error) {
           $scope.testMsg = error;
@@ -863,7 +863,7 @@ schemaModule.controller("NewClassController", ['$scope', '$routeParams', '$locat
       }
       else {
         $scope.$hide();
-        Notification.push({content: "Class '" + $scope.property['name'] + "' correclty created."})
+        Notification.push({content: "Class '" + $scope.property['name'] + "' correctly created."})
         $scope.parentScope.refreshWindow();
 
       }
