@@ -78,12 +78,6 @@ public interface OElement extends ORecord{
   public Optional<OEdge> asEdge();
 
   /**
-   * return true if the current element is a document (even if it's a vertex/edge), false otherwise (eg. if it's a row in a result set)
-   * @return true if the current element is a document (even if it's a vertex/edge), false otherwise (eg. if it's a row in a result set)
-   */
-  public boolean isDocument();
-
-  /**
    * return true if the current element is a vertex
    * @return true if the current element is a vertex
    */

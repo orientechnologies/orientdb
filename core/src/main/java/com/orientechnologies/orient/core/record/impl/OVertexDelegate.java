@@ -265,11 +265,6 @@ public class OVertexDelegate implements OVertex {
   }
 
   @Override
-  public boolean isDocument() {
-    return true;
-  }
-
-  @Override
   public boolean isVertex() {
     return true;
   }
