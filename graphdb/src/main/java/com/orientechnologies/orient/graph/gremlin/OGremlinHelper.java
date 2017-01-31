@@ -96,6 +96,9 @@ public class OGremlinHelper {
           if (!iBeforeExecution.call(engine, graph))
             return null;
 
+        if(iText==null){
+          return null;
+        }
         final Object scriptResult = engine.eval(iText);
 
         if (iAfterExecution != null)
