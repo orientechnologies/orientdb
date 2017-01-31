@@ -9,11 +9,11 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -31,14 +31,14 @@ final class OLogSegment implements Comparable<OLogSegment> {
   private volatile long               writtenUpTo;
   private volatile OLogSequenceNumber storedUpTo;
 
-  private final File file;
+  private final Path path;
   private final long order;
   private final int  maxPagesCacheSize;
 
   private final OSegmentFile segmentFile;
 
-  protected final  Lock             cacheLock  = new ReentrantLock();
-  private volatile List<OLogRecord> writeCache = new ArrayList<OLogRecord>();
+  private final    Lock             cacheLock  = new ReentrantLock();
+  private volatile List<OLogRecord> writeCache = new ArrayList<>();
 
   private final ScheduledExecutorService commitExecutor;
 
@@ -48,8 +48,7 @@ final class OLogSegment implements Comparable<OLogSegment> {
 
   private volatile boolean flushNewData = true;
 
-  private WeakReference<OPair<OLogSequenceNumber, byte[]>> lastReadRecord = new WeakReference<OPair<OLogSequenceNumber, byte[]>>(
-      null);
+  private WeakReference<OPair<OLogSequenceNumber, byte[]>> lastReadRecord = new WeakReference<>(null);
 
   private final class WriteTask implements Runnable {
     private WriteTask() {
@@ -182,27 +181,27 @@ final class OLogSegment implements Comparable<OLogSegment> {
       try {
         fsync();
       } catch (IOException ioe) {
-        OLogManager.instance().error(this, "Can not force sync content of file " + file.getName());
+        OLogManager.instance().error(this, "Can not force sync content of file " + path);
       }
     }
   }
 
-  OLogSegment(ODiskWriteAheadLog writeAheadLog, File file, int maxPagesCacheSize, int fileTTL, int segmentBufferSize,
+  OLogSegment(ODiskWriteAheadLog writeAheadLog, Path path, int maxPagesCacheSize, int fileTTL, int segmentBufferSize,
       ScheduledExecutorService closer, ScheduledExecutorService commitExecutor) throws IOException {
     this.writeAheadLog = writeAheadLog;
-    this.file = file;
+    this.path = path;
     this.maxPagesCacheSize = maxPagesCacheSize;
     this.commitExecutor = commitExecutor;
 
-    order = extractOrder(file.getName());
+    order = extractOrder(path.getFileName().toString());
 
-    this.segmentFile = new OSegmentFile(file, fileTTL, segmentBufferSize, closer);
+    this.segmentFile = new OSegmentFile(path, fileTTL, segmentBufferSize, closer);
     this.segmentFile.open();
 
     closed = false;
   }
 
-  public void startFlush() {
+  void startFlush() {
     if (writeAheadLog.getCommitDelay() > 0) {
       commitExecutor.scheduleAtFixedRate(new WriteTask(), 100, 100, TimeUnit.MICROSECONDS);
       commitExecutor.scheduleAtFixedRate(new FSyncer(), writeAheadLog.getCommitDelay(), writeAheadLog.getCommitDelay(),
@@ -210,7 +209,7 @@ final class OLogSegment implements Comparable<OLogSegment> {
     }
   }
 
-  public void stopFlush(boolean flush) throws IOException {
+  void stopFlush(boolean flush) throws IOException {
     if (flush)
       flush();
 
@@ -297,23 +296,23 @@ final class OLogSegment implements Comparable<OLogSegment> {
     segmentFile.delete();
   }
 
-  public String getPath() {
-    return file.getAbsolutePath();
+  public Path getPath() {
+    return path;
   }
 
   public static class OLogRecord {
     public final byte[] record;
-    public final long   writeFrom;
-    public final long   writeTo;
+    final long   writeFrom;
+    final long   writeTo;
 
-    public OLogRecord(byte[] record, long writeFrom, long writeTo) {
+    OLogRecord(byte[] record, long writeFrom, long writeTo) {
       this.record = record;
       this.writeFrom = writeFrom;
       this.writeTo = writeTo;
     }
   }
 
-  public static OLogRecord generateLogRecord(final long starting, final byte[] record) {
+  static OLogRecord generateLogRecord(final long starting, final byte[] record) {
     long from = starting;
     long length = record.length;
     long resultSize;
@@ -352,7 +351,7 @@ final class OLogSegment implements Comparable<OLogSegment> {
     }
   }
 
-  public OLogSequenceNumber logRecord(byte[] record) throws IOException {
+  OLogSequenceNumber logRecord(byte[] record) throws IOException {
     flushNewData = true;
 
     OLogRecord rec = generateLogRecord(filledUpTo, record);
@@ -440,11 +439,11 @@ final class OLogSegment implements Comparable<OLogSegment> {
       }
     }
 
-    lastReadRecord = new WeakReference<OPair<OLogSequenceNumber, byte[]>>(new OPair<OLogSequenceNumber, byte[]>(lsn, record));
+    lastReadRecord = new WeakReference<>(new OPair<>(lsn, record));
     return record;
   }
 
-  public OLogSequenceNumber getNextLSN(OLogSequenceNumber lsn) throws IOException {
+  OLogSequenceNumber getNextLSN(OLogSequenceNumber lsn) throws IOException {
     final byte[] record = readRecord(lsn);
     if (record == null)
       return null;
@@ -493,7 +492,7 @@ final class OLogSegment implements Comparable<OLogSegment> {
     }
   }
 
-  public OLogSequenceNumber readFlushedLSN() throws IOException {
+  OLogSequenceNumber readFlushedLSN() throws IOException {
     if (segmentFile.filledUpTo() == 0)
       return null;
 

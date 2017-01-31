@@ -31,7 +31,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Future;
 
 public interface OWriteCache {
   void addLowDiskSpaceListener(OLowDiskSpaceListener listener);
@@ -68,7 +67,7 @@ public interface OWriteCache {
    */
   long fileIdByName(String fileName);
 
-  boolean checkLowDiskSpace();
+  boolean checkLowDiskSpace() throws IOException;
 
   void makeFuzzyCheckpoint(long segmentId) throws IOException;
 

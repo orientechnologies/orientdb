@@ -363,7 +363,7 @@ public class OrientDBEmbedded implements OrientDB {
   public String getDatabasePath(String iDatabaseName) {
     OAbstractPaginatedStorage storage = storages.get(iDatabaseName);
     if (storage != null && storage instanceof OLocalPaginatedStorage)
-      return ((OLocalPaginatedStorage) storage).getStoragePath();
+      return ((OLocalPaginatedStorage) storage).getStoragePath().toString();
     return null;
   }
 

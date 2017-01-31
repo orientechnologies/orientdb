@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.storage.fs;
 import com.orientechnologies.common.collection.closabledictionary.OClosableItem;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
@@ -33,6 +34,8 @@ import java.nio.channels.FileChannel;
 import java.nio.file.*;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import static com.orientechnologies.common.io.OIOUtils.*;
 
 public class OFileClassic implements OFile, OClosableItem {
   public final static  String NAME            = "classic";
@@ -674,7 +677,7 @@ public class OFileClassic implements OFile, OClosableItem {
 
       if (channel.size() == 0) {
         final ByteBuffer buffer = ByteBuffer.allocate(HEADER_SIZE);
-        channel.write(buffer);
+        OIOUtils.writeByteBuffer(buffer, channel, 0);
       }
 
     } finally {
@@ -838,68 +841,7 @@ public class OFileClassic implements OFile, OClosableItem {
     }
   }
 
-  private void readByteBuffer(ByteBuffer buffer, FileChannel channel, long position) throws IOException {
-    int bytesToRead = buffer.limit();
 
-    int read = 0;
-    while (read < bytesToRead) {
-      buffer.position(read);
-
-      final int r = channel.read(buffer, position + read);
-      if (r < 0)
-        throw new IllegalStateException("End of file " + osFile + " is reached");
-
-      read += r;
-    }
-  }
-
-  private void writeByteBuffer(ByteBuffer buffer, FileChannel channel, long position) throws IOException {
-    int bytesToWrite = buffer.limit();
-
-    int written = 0;
-    while (written < bytesToWrite) {
-      buffer.position(written);
-
-      written += channel.write(buffer, position + written);
-    }
-  }
-
-  private void writeByteBuffers(ByteBuffer[] buffers, FileChannel channel, long bytesToWrite) throws IOException {
-    long written = 0;
-
-    for (ByteBuffer buffer : buffers) {
-      buffer.position(0);
-    }
-
-    final int bufferLimit = buffers[0].limit();
-
-    while (written < bytesToWrite) {
-      final int bufferIndex = (int) written / bufferLimit;
-
-      written += channel.write(buffers, bufferIndex, buffers.length - bufferIndex);
-    }
-  }
-
-  private void readByteBuffers(ByteBuffer[] buffers, FileChannel channel, long bytesToRead) throws IOException {
-    long read = 0;
-
-    for (ByteBuffer buffer : buffers) {
-      buffer.position(0);
-    }
-
-    final int bufferLimit = buffers[0].limit();
-
-    while (read < bytesToRead) {
-      final int bufferIndex = (int) read / bufferLimit;
-
-      final long r = channel.read(buffers, bufferIndex, buffers.length - bufferIndex);
-
-      if (r < 0)
-        throw new IllegalStateException("End of file " + osFile + " is reached");
-
-      read += r;
-    }
-  }
 
 }
 

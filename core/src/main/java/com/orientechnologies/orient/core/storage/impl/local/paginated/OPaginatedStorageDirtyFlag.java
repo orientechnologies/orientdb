@@ -20,17 +20,19 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -39,40 +41,27 @@ import java.util.concurrent.locks.ReentrantLock;
  * @since 5/6/14
  */
 public class OPaginatedStorageDirtyFlag {
-  private final String dirtyFilePath;
-
-  private File             dirtyFile;
-  private RandomAccessFile dirtyFileData;
-  private FileChannel      channel;
-  private FileLock         fileLock;
+  private Path        dirtyFilePath;
+  private FileChannel channel;
+  private FileLock    fileLock;
 
   private volatile boolean dirtyFlag;
 
   private final Lock lock = new ReentrantLock();
 
-  public OPaginatedStorageDirtyFlag(String dirtyFilePath) {
+  public OPaginatedStorageDirtyFlag(Path dirtyFilePath) {
     this.dirtyFilePath = dirtyFilePath;
   }
 
   public void create() throws IOException {
     lock.lock();
     try {
-      dirtyFile = new File(dirtyFilePath);
 
-      if (dirtyFile.exists()) {
-        final boolean fileDeleted = dirtyFile.delete();
-
-        if (!fileDeleted)
-          throw new IllegalStateException("Cannot delete file : " + dirtyFilePath);
+      if (Files.exists(dirtyFilePath)) {
+        Files.delete(dirtyFilePath);
       }
 
-      final boolean fileCreated = dirtyFile.createNewFile();
-      if (!fileCreated)
-        throw new IllegalStateException("Cannot create file : " + dirtyFilePath);
-
-      dirtyFileData = new RandomAccessFile(dirtyFile, "rwd");
-      channel = dirtyFileData.getChannel();
-
+      channel = FileChannel.open(dirtyFilePath, StandardOpenOption.READ, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
       if (OGlobalConfiguration.FILE_LOCK.getValueAsBoolean()) {
         lockFile();
       }
@@ -81,8 +70,7 @@ public class OPaginatedStorageDirtyFlag {
       buffer.put((byte) 1);
       buffer.position(0);
 
-      channel.position(0);
-      channel.write(buffer);
+      OIOUtils.writeByteBuffer(buffer, channel, 0);
 
       dirtyFlag = true;
     } finally {
@@ -104,7 +92,7 @@ public class OPaginatedStorageDirtyFlag {
   public boolean exists() {
     lock.lock();
     try {
-      return new File(dirtyFilePath).exists();
+      return Files.exists(dirtyFilePath);
     } finally {
       lock.unlock();
     }
@@ -113,32 +101,21 @@ public class OPaginatedStorageDirtyFlag {
   public void open() throws IOException {
     lock.lock();
     try {
-      dirtyFile = new File(dirtyFilePath);
-      if (!dirtyFile.exists()) {
-        final boolean fileCreated = dirtyFile.createNewFile();
+      if (!Files.exists(dirtyFilePath)) {
+        channel = FileChannel.open(dirtyFilePath, StandardOpenOption.WRITE, StandardOpenOption.READ, StandardOpenOption.CREATE);
 
-        if (!fileCreated)
-          throw new IllegalStateException("Cannot create file : " + dirtyFilePath);
-
-        dirtyFileData = new RandomAccessFile(dirtyFile, "rwd");
-        channel = dirtyFileData.getChannel();
-
-        channel.position(0);
         ByteBuffer buffer = ByteBuffer.allocate(1);
-        channel.write(buffer);
+        OIOUtils.writeByteBuffer(buffer, channel, 0);
+      } else {
+        channel = FileChannel.open(dirtyFilePath, StandardOpenOption.WRITE, StandardOpenOption.READ, StandardOpenOption.CREATE);
       }
-
-
-      dirtyFileData = new RandomAccessFile(dirtyFile, "rwd");
-      channel = dirtyFileData.getChannel();
 
       if (OGlobalConfiguration.FILE_LOCK.getValueAsBoolean()) {
         lockFile();
       }
 
       ByteBuffer buffer = ByteBuffer.allocate(1);
-      channel.position(0);
-      channel.read(buffer);
+      OIOUtils.readByteBuffer(buffer, channel, 0);
 
       buffer.position(0);
       dirtyFlag = buffer.get() > 0;
@@ -150,17 +127,17 @@ public class OPaginatedStorageDirtyFlag {
   public void close() throws IOException {
     lock.lock();
     try {
-      if (dirtyFile == null)
+      if (channel == null)
         return;
 
-      if (dirtyFile.exists()) {
+      if (Files.exists(dirtyFilePath)) {
         if (fileLock != null) {
           fileLock.release();
           fileLock = null;
         }
 
         channel.close();
-        dirtyFileData.close();
+        channel = null;
       }
 
     } finally {
@@ -171,10 +148,10 @@ public class OPaginatedStorageDirtyFlag {
   public void delete() throws IOException {
     lock.lock();
     try {
-      if (dirtyFile == null)
+      if (channel == null)
         return;
 
-      if (dirtyFile.exists()) {
+      if (Files.exists(dirtyFilePath)) {
 
         if (fileLock != null) {
           fileLock.release();
@@ -182,12 +159,9 @@ public class OPaginatedStorageDirtyFlag {
         }
 
         channel.close();
-        dirtyFileData.close();
+        channel = null;
 
-        boolean deleted = dirtyFile.delete();
-        while (!deleted) {
-          deleted = !dirtyFile.exists() || dirtyFile.delete();
-        }
+        Files.delete(dirtyFilePath);
       }
     } finally {
       lock.unlock();
@@ -204,11 +178,10 @@ public class OPaginatedStorageDirtyFlag {
         return;
 
       final ByteBuffer buffer = ByteBuffer.allocate(1);
-      buffer.put((byte)1);
+      buffer.put((byte) 1);
       buffer.position(0);
 
-      channel.position(0);
-      channel.write(buffer);
+      OIOUtils.writeByteBuffer(buffer, channel, 0);
 
       dirtyFlag = true;
     } finally {
@@ -226,8 +199,7 @@ public class OPaginatedStorageDirtyFlag {
         return;
 
       final ByteBuffer buffer = ByteBuffer.allocate(1);
-      channel.position(0);
-      channel.write(buffer);
+      OIOUtils.writeByteBuffer(buffer, channel, 0);
 
       dirtyFlag = false;
     } finally {

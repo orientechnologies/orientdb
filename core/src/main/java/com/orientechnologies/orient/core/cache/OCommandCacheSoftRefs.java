@@ -90,7 +90,7 @@ public class OCommandCacheSoftRefs implements OCommandCache {
   public OCommandCacheSoftRefs(final OStorage storage) {
     databaseName = storage.getName();
     if (storage instanceof OLocalPaginatedStorage) {
-      fileConfigPath = Paths.get(((OLocalPaginatedStorage) storage).getStoragePath(), CONFIG_FILE).toString();
+      fileConfigPath = ((OLocalPaginatedStorage) storage).getStoragePath().resolve(CONFIG_FILE).toString();
     } else
       fileConfigPath = null;
     OContextConfiguration configuration = storage.getConfiguration().getContextConfiguration();

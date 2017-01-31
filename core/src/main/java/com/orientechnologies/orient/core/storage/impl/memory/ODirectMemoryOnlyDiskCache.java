@@ -597,7 +597,7 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
-  public boolean checkLowDiskSpace() {
+  public boolean checkLowDiskSpace() throws IOException {
     return true;
   }
 

@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPagi
 import org.junit.*;
 
 import java.io.File;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NavigableMap;
@@ -38,7 +39,7 @@ public class WriteAheadLogConcurrencyTest {
       testDir.mkdir();
 
     OLocalPaginatedStorage localPaginatedStorage = mock(OLocalPaginatedStorage.class);
-    when(localPaginatedStorage.getStoragePath()).thenReturn(testDir.getAbsolutePath());
+    when(localPaginatedStorage.getStoragePath()).thenReturn(Paths.get(testDir.getAbsolutePath()));
     when(localPaginatedStorage.getName()).thenReturn("WriteAheadLogConcurrencyTest");
 
     writeAheadLog = new ODiskWriteAheadLog(200, 500, OWALPage.PAGE_SIZE * 800, null, false, localPaginatedStorage,

@@ -111,7 +111,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     DELETE_MAX_RETRIES = configuration.getContextConfiguration().getValueAsInteger(OGlobalConfiguration.FILE_DELETE_RETRY);
     DELETE_WAIT_TIME = configuration.getContextConfiguration().getValueAsInteger(OGlobalConfiguration.FILE_DELETE_DELAY);
 
-    dirtyFlag = new OPaginatedStorageDirtyFlag(storagePath + File.separator + "dirty.fl");
+    dirtyFlag = new OPaginatedStorageDirtyFlag(storagePath.resolve("dirty.fl"));
   }
 
   @Override
@@ -151,8 +151,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     return OEngineLocalPaginated.NAME + ":" + url;
   }
 
-  public String getStoragePath() {
-    return storagePath.toString();
+  public Path getStoragePath() {
+    return storagePath;
   }
 
   public OStorageVariableParser getVariableParser() {
@@ -182,8 +182,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
       final OutputStream bo = bufferSize > 0 ? new BufferedOutputStream(out, bufferSize) : out;
       try {
         return OZIPCompressionUtil
-            .compressDirectory(new File(getStoragePath()).getAbsolutePath(), bo, new String[] { ".wal", ".fl" }, iOutput,
-                compressionLevel);
+            .compressDirectory(getStoragePath().toString(), bo, new String[] { ".wal", ".fl" }, iOutput, compressionLevel);
       } finally {
         if (bufferSize > 0) {
           bo.flush();
@@ -201,7 +200,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     if (!isClosed())
       close(true, false);
 
-    OZIPCompressionUtil.uncompressDirectory(in, getStoragePath(), iListener);
+    OZIPCompressionUtil.uncompressDirectory(in, getStoragePath().toString(), iListener);
 
     if (callable != null)
       try {
@@ -269,7 +268,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
   @Override
   protected File createWalTempDirectory() {
-    final File walDirectory = new File(getStoragePath(), "walIncrementalBackupRestoreDirectory");
+    final File walDirectory = new File(getStoragePath().toFile(), "walIncrementalBackupRestoreDirectory");
 
     if (walDirectory.exists()) {
       OFileUtils.deleteRecursively(walDirectory);

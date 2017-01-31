@@ -281,7 +281,7 @@ public class WOWCacheTest {
     final long fileId = wowCache.addFile("removedFile.del");
 
     wowCache.deleteFile(fileId);
-    File deletedFile = new File(storageLocal.getStoragePath(), "removedFile.del");
+    File deletedFile = storageLocal.getStoragePath().resolve("removedFile.del").toFile();
     Assert.assertTrue(!deletedFile.exists());
 
     String fileName = wowCache.restoreFileById(fileId);
@@ -303,7 +303,7 @@ public class WOWCacheTest {
     final long fileId = wowCache.addFile("removedFile.del");
 
     wowCache.deleteFile(fileId);
-    File deletedFile = new File(storageLocal.getStoragePath(), "removedFile.del");
+    File deletedFile = storageLocal.getStoragePath().resolve("removedFile.del").toFile();
     Assert.assertTrue(!deletedFile.exists());
 
     wowCache.close();

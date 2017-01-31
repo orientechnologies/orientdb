@@ -3871,7 +3871,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         archiveEntry(archiveZipOutputStream, walSegment);
       }
 
-      archiveEntry(archiveZipOutputStream, ((ODiskWriteAheadLog) writeAheadLog).getWMRFile());
+      archiveEntry(archiveZipOutputStream, ((ODiskWriteAheadLog) writeAheadLog).getWMRFile().toString());
 
       archiveZipOutputStream.close();
     } catch (IOException ioe) {
@@ -3998,6 +3998,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             }
           } else
             lowDiskSpace = null;
+        } catch (IOException e) {
+          throw OException.wrapException(new OStorageException("Error during low disk space handling"), e);
         } finally {
           checkpointInProgress.set(false);
         }

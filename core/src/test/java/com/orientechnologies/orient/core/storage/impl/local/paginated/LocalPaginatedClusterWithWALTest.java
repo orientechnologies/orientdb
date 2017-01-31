@@ -81,7 +81,7 @@ public class LocalPaginatedClusterWithWALTest extends LocalPaginatedClusterTest 
     expectedWriteCache = expectedStorage.getWriteCache();
     expectedReadCache = expectedStorage.getReadCache();
 
-    expectedStorageDir = expectedStorage.getStoragePath();
+    expectedStorageDir = expectedStorage.getStoragePath().toString();
   }
 
   private void createActualStorage() throws IOException {
@@ -101,7 +101,7 @@ public class LocalPaginatedClusterWithWALTest extends LocalPaginatedClusterTest 
     writeCache = storage.getWriteCache();
     readCache = storage.getReadCache();
 
-    storageDir = storage.getStoragePath();
+    storageDir = storage.getStoragePath().toString();
   }
 
   private void createPaginatedCluster() throws IOException {
