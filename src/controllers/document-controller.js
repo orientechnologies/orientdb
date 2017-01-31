@@ -197,7 +197,7 @@ DocController.controller("DocumentModalEdgeController", ['$scope', '$routeParams
   $scope.save = function (cls) {
 
     if (!cls) {
-      var cls = $scope.doc["@class"];
+      cls = $scope.doc["@class"];
       delete $scope.doc["@class"];
       delete $scope.doc["@rid"];
       delete $scope.doc["@version"];
@@ -210,9 +210,7 @@ DocController.controller("DocumentModalEdgeController", ['$scope', '$routeParams
       json: JSON.stringify($scope.doc)
     };
     var command = "CREATE EDGE {{label}} FROM {{source}} TO {{target}}"
-    if (!cls) {
-      command += "content {{json}}";
-    }
+    command += "content {{json}}";
 
     var queryText = S(command).template(params).s;
 
