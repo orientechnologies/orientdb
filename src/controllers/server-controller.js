@@ -592,7 +592,7 @@ ServerModule.controller("LogsController", ['$scope', '$http', '$location', '$rou
   }
 
   $scope.agentActive = AgentService.active;
-  $scope.types = ['CONFIG', 'DEBUG', 'ERROR', 'INFO', 'WARNI'];
+  $scope.types = ['CONFIG', 'DEBUG', 'ERROR', 'INFO', 'WARNI','SEVER'];
   $scope.files = ['ALL_FILES', 'LAST'];
   $scope.selectedType = undefined;
   $scope.selectedFile = 'LAST';
