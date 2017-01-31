@@ -202,8 +202,8 @@ public class OConnetionExecutorTransactionTest {
     assertTrue(database.getTransaction().isActive());
     assertTrue(response instanceof OBeginTransactionResponse);
 
-    OQueryRequest query = new OQueryRequest("sql", "update test set name='bla'", new HashMap<>(), true, ORecordSerializerNetwork.INSTANCE,
-        20);
+    OQueryRequest query = new OQueryRequest("sql", "update test set name='bla'", new HashMap<>(), true,
+        ORecordSerializerNetwork.INSTANCE, 20);
     OQueryResponse queryResponse = (OQueryResponse) query.execute(executor);
 
     assertTrue(queryResponse.isTxChanges());
@@ -226,8 +226,8 @@ public class OConnetionExecutorTransactionTest {
     assertTrue(database.getTransaction().isActive());
     assertTrue(response instanceof OBeginTransactionResponse);
 
-    OQueryRequest query = new OQueryRequest("sql", "update test set name='bla'", new HashMap<>(), true, ORecordSerializerNetwork.INSTANCE,
-        20);
+    OQueryRequest query = new OQueryRequest("sql", "update test set name='bla'", new HashMap<>(), true,
+        ORecordSerializerNetwork.INSTANCE, 20);
     OQueryResponse queryResponse = (OQueryResponse) query.execute(executor);
 
     assertTrue(queryResponse.isTxChanges());
@@ -237,6 +237,26 @@ public class OConnetionExecutorTransactionTest {
     OFetchTransactionResponse response1 = (OFetchTransactionResponse) fetchRequest.execute(executor);
 
     assertEquals(2, response1.getOperations().size());
+
+  }
+
+  @Test
+  public void testBeginRollbackTransaction() {
+    OConnectionBinaryExecutor executor = new OConnectionBinaryExecutor(connection, server);
+
+    List<ORecordOperation> operations = new ArrayList<>();
+    ODocument rec = new ODocument("test");
+    operations.add(new ORecordOperation(rec, ORecordOperation.CREATED));
+    assertFalse(database.getTransaction().isActive());
+
+    OBeginTransactionRequest request = new OBeginTransactionRequest(10, true, operations, new HashMap<>());
+    OBinaryResponse response = request.execute(executor);
+    assertTrue(database.getTransaction().isActive());
+    assertTrue(response instanceof OBeginTransactionResponse);
+
+    ORollbackTransactionRequest rollback = new ORollbackTransactionRequest(10);
+    OBinaryResponse resposne = rollback.execute(executor);
+    assertFalse(database.getTransaction().isActive());
 
   }
 

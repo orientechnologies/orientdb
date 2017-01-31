@@ -79,6 +79,7 @@ public class OChannelBinaryProtocol {
   public static final byte REQUEST_TX_BEGIN   = 61;
   public static final byte REQUEST_TX_REBEGIN = 62;
   public static final byte REQUEST_TX_FETCH   = 63;
+  public static final byte REQUEST_TX_ROLLBACK  = 64;
 
   public static final byte REQUEST_CONFIG_GET  = 70;
   public static final byte REQUEST_CONFIG_SET  = 71;
