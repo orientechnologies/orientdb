@@ -52,7 +52,7 @@ public class OSQLFunctionUUIDTest {
 
   @Test
   public void testResult() {
-    UUID result = (UUID) uuid.execute(null, null, null, null, null);
+    String result = (String) uuid.execute(null, null, null, null, null);
     assertNotNull(result);
   }
 
