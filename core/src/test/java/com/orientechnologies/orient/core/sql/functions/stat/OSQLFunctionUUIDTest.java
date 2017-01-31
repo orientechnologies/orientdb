@@ -28,8 +28,6 @@ import com.orientechnologies.orient.core.sql.query.OLegacyResultSet;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.UUID;
-
 import static org.junit.Assert.*;
 
 public class OSQLFunctionUUIDTest {
@@ -49,7 +47,7 @@ public class OSQLFunctionUUIDTest {
 
   @Test
   public void testResult() {
-    UUID result = (UUID) uuid.execute(null, null, null, null, null);
+    String result = (String) uuid.execute(null, null, null, null, null);
     assertNotNull(result);
   }
 
