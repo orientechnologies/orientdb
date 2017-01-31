@@ -11,7 +11,7 @@ import java.util.Optional;
  * Created by luigidellaquila on 07/07/16.
  */
 public class OIteratorResultSet implements OResultSet {
-  private final Iterator iterator;
+  protected final Iterator iterator;
 
   public OIteratorResultSet(Iterator iter) {
     this.iterator = iter;

@@ -231,10 +231,6 @@ import java.util.stream.Collectors;
     return Optional.empty();
   }
 
-  @Override public boolean isDocument() {
-    return true;
-  }
-
   @Override public boolean isVertex() {
     if (this instanceof OVertex)
       return true;

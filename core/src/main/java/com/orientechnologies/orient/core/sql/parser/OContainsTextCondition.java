@@ -32,11 +32,29 @@ public class OContainsTextCondition extends OBooleanExpression {
   }
 
   @Override public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
-    throw new UnsupportedOperationException("TODO Implement ContainsText!!!");//TODO
+    Object leftValue = left.execute(currentRecord, ctx);
+    if(leftValue==null || !(leftValue instanceof String)){
+      return false;
+    }
+    Object rightValue = right.execute(currentRecord, ctx);
+    if(rightValue==null || !(rightValue instanceof String)){
+      return false;
+    }
+
+    return ((String)leftValue).indexOf((String)rightValue) > -1;
   }
 
   @Override public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
-    throw new UnsupportedOperationException("TODO Implement ContainsText!!!");//TODO
+    Object leftValue = left.execute(currentRecord, ctx);
+    if(leftValue==null || !(leftValue instanceof String)){
+      return false;
+    }
+    Object rightValue = right.execute(currentRecord, ctx);
+    if(rightValue==null || !(rightValue instanceof String)){
+      return false;
+    }
+
+    return ((String)leftValue).indexOf((String)rightValue) > -1;
   }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {

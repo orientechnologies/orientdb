@@ -591,6 +591,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     case OChannelBinaryProtocol.REQUEST_TX_COMMIT:
       return new OCommit37Request();
 
+    case OChannelBinaryProtocol.REQUEST_TX_ROLLBACK:
+      return new ORollbackTransactionRequest();
+
     case OChannelBinaryProtocol.REQUEST_DB_OPEN:
       return new OOpenRequest();
 

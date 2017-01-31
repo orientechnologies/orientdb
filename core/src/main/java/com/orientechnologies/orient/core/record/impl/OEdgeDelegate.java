@@ -176,10 +176,6 @@ public class OEdgeDelegate implements OEdge {
     return Optional.of(this);
   }
 
-  @Override
-  public boolean isDocument() {
-    return true;
-  }
 
   @Override
   public boolean isVertex() {

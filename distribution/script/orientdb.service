@@ -1,0 +1,16 @@
+#
+# Copyright (c) OrientDB LTD (http://http://orientdb.com/)
+#
+
+[Unit]
+Description=OrientDB Server
+After=network.target
+After=syslog.target
+
+[Install]
+WantedBy=multi-user.target
+
+[Service]
+User=ORIENTDB_USER
+Group=ORIENTDB_GROUP
+ExecStart=$ORIENTDB_HOME/bin/server.sh

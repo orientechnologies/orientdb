@@ -27,7 +27,6 @@ public interface OResult {
   }
 
   default Optional<OVertex> getVertex() {
-    System.out.println(getElement());
     Optional<OVertex> result = getElement().flatMap(x -> x.asVertex());
     return result;
   }

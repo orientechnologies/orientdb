@@ -23,7 +23,12 @@ import com.orientechnologies.common.log.OLogManager;
 
 public class OrientShutdownHook extends Thread {
   protected OrientShutdownHook() {
-    Runtime.getRuntime().addShutdownHook(this);
+    try {
+      Runtime.getRuntime().addShutdownHook(this);
+    } catch (IllegalStateException e)
+    {
+      // we may be asked to initialize the runtime and install the hook from another shutdown hook during the shutdown
+    }
   }
 
   /**

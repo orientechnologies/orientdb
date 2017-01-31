@@ -21,7 +21,6 @@ package com.orientechnologies.orient.core.command.script;
 
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 
 /**
@@ -30,12 +29,15 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  * 
  */
+
+@Deprecated
 public class OScriptOrientWrapper {
   protected final ODatabase db;
 
   public OScriptOrientWrapper() {
     this.db = null;
   }
+
 
   public OScriptOrientWrapper(final ODatabase db) {
     this.db = db;

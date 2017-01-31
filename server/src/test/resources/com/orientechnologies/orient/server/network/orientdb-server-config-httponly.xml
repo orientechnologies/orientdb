@@ -44,7 +44,10 @@
                             <entry value="Cache-Control: max-age=120" name="http.cache:default"/>
                         </parameters>
                     </command>
+                    <command pattern="GET|gephi/*"
+                             implementation="com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetGephi"/>
                 </commands>
+
                 <parameters>
                     <parameter value="utf-8" name="network.http.charset"/>
                 </parameters>

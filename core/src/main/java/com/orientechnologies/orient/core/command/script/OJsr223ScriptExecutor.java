@@ -5,9 +5,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OScriptExecutor;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.sql.executor.IfStep;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
 import javax.script.*;
@@ -55,11 +53,11 @@ public class OJsr223ScriptExecutor implements OScriptExecutor {
       }
 
       final Bindings binding = scriptManager
-          .bind(compiledScript.getEngine().getBindings(ScriptContext.ENGINE_SCOPE), database, null, params);
+          .bindContextVariables(compiledScript.getEngine().getBindings(ScriptContext.ENGINE_SCOPE), database, null, params);
 
       try {
         final Object ob = compiledScript.eval(binding);
-        return (OResultSet) ob;
+        return scriptManager.getTransformer().toResultSet(ob);
       } catch (ScriptException e) {
         throw OException
             .wrapException(new OCommandScriptException("Error on execution of the script", script, e.getColumnNumber()), e);

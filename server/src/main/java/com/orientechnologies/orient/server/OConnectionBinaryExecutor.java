@@ -1114,4 +1114,13 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     OTransactionOptimistic tx = (OTransactionOptimistic) database.getTransaction();
     return new OFetchTransactionResponse(tx.getId(), tx.getAllRecordEntries(), tx.getIndexEntries());
   }
+
+  @Override
+  public OBinaryResponse executeRollback(ORollbackTransactionRequest request) {
+    ODatabaseDocumentInternal database = connection.getDatabase();
+    if (!database.getTransaction().isActive())
+      throw new ODatabaseException("No Transaction Active");
+    database.rollback(true);
+    return new ORollbackTransactionResponse();
+  }
 }
