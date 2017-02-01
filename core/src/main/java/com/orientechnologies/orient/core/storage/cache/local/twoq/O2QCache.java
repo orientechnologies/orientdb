@@ -117,6 +117,7 @@ public class O2QCache implements OReadCache {
    * @param pageSize             Cache page size in bytes.
    * @param checkMinSize         If this flat is set size of cache may be {@link #MIN_CACHE_SIZE} or bigger.
    * @param percentOfPinnedPages Maximum percent of pinned pages which may be hold by this cache.
+   *
    * @see #MAX_PERCENT_OF_PINED_PAGES
    */
   public O2QCache(final long readCacheMaxMemory, final int pageSize, final boolean checkMinSize, final int percentOfPinnedPages) {
@@ -208,9 +209,9 @@ public class O2QCache implements OReadCache {
         if (warnings < MAX_PERCENT_OF_PINED_PAGES) {
           pinnedPagesWarningsCache = (int) warnings;
 
-          OLogManager.instance().warn(this, "Maximum amount of pinned pages is reached , given page " + cacheEntry
-              + " will not be marked as pinned which may lead to performance degradation. You may consider to increase percent of pined pages "
-              + "by changing of property " + OGlobalConfiguration.DISK_CACHE_PINNED_PAGES.getKey());
+          OLogManager.instance().warn(this, "Maximum amount of pinned pages is reached, given page " + cacheEntry
+              + " will not be marked as pinned which may lead to performance degradation. You may consider to increase the percent of pinned pages "
+              + "by changing the property '" + OGlobalConfiguration.DISK_CACHE_PINNED_PAGES.getKey() + "'");
         }
       }
 
@@ -251,6 +252,7 @@ public class O2QCache implements OReadCache {
    * in parameter is much less than current amount of memory.
    *
    * @param readCacheMaxMemory New maximum size of cache in bytes.
+   *
    * @throws IllegalStateException In case of new size of disk cache is too small to hold existing pinned pages.
    */
   public void changeMaximumAmountOfMemory(final long readCacheMaxMemory) throws IllegalStateException {
@@ -638,6 +640,7 @@ public class O2QCache implements OReadCache {
    * If maximum size of cache was decreased cache state will not be restored.
    *
    * @param writeCache Write cache is used to load pages back into cache if needed.
+   *
    * @see #closeStorage(OWriteCache)
    */
   public void loadCacheState(final OWriteCache writeCache) {
