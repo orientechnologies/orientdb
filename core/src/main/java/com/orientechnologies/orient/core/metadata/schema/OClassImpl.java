@@ -829,16 +829,10 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   public OProperty createProperty(final String iPropertyName, final OType iType, final OClass iLinkedClass) {
-    if (iLinkedClass == null)
-      throw new OSchemaException("Missing linked class");
-
     return addProperty(iPropertyName, iType, null, iLinkedClass, false);
   }
 
   public OProperty createProperty(final String iPropertyName, final OType iType, final OClass iLinkedClass, final boolean unsafe) {
-    if (iLinkedClass == null)
-      throw new OSchemaException("Missing linked class");
-
     return addProperty(iPropertyName, iType, null, iLinkedClass, unsafe);
   }
 

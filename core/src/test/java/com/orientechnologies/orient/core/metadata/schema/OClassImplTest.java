@@ -72,6 +72,19 @@ public class OClassImplTest {
     Assert.assertFalse(oClass.getDefaultClusterId() == db.getDefaultClusterId());
   }
 
+  @Test
+  public void testCreateNoLinkedClass() {
+    final OSchema oSchema = db.getMetadata().getSchema();
+
+    OClass oClass = oSchema.createClass("Test21");
+    oClass.createProperty("some", OType.LINKLIST, (OClass) null);
+    oClass.createProperty("some2", OType.LINKLIST, (OClass) null, true);
+
+    assertNotNull(oClass.getProperty("some"));
+    assertNotNull(oClass.getProperty("some2"));
+
+  }
+
   @Test(expected = OSchemaException.class)
   public void testCreatePropertyFailOnExistingData() {
     final OSchema oSchema = db.getMetadata().getSchema();
