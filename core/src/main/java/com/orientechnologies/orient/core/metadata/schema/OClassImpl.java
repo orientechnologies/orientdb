@@ -144,8 +144,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
         // This will exclude (filter out) any specific classes without explicit read permission.
         // getMetadata().getImmutableSchemaSnapshot()?
         final OClass clazz = iDatabase.getMetadata().getSchema().getClassByClusterId(clusterId);
-        
-        if(clazz != null)
+
+        if (clazz != null)
           iDatabase.checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_READ, clazz.getName());
         //////////
 
@@ -828,16 +828,10 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   public OProperty createProperty(final String iPropertyName, final OType iType, final OClass iLinkedClass) {
-    if (iLinkedClass == null)
-      throw new OSchemaException("Missing linked class");
-
     return addProperty(iPropertyName, iType, null, iLinkedClass, false);
   }
 
   public OProperty createProperty(final String iPropertyName, final OType iType, final OClass iLinkedClass, final boolean unsafe) {
-    if (iLinkedClass == null)
-      throw new OSchemaException("Missing linked class");
-
     return addProperty(iPropertyName, iType, null, iLinkedClass, unsafe);
   }
 
@@ -886,8 +880,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       if (storage instanceof OStorageProxy) {
         if (getDatabase().getStorage().getConfiguration().isStrictSql()) {
           database.command(new OCommandSQL("drop property " + name + ".`" + propertyName + "`")).execute();
-        }else{
-          database.command(new OCommandSQL("drop property " + name + '.' + propertyName )).execute();
+        } else {
+          database.command(new OCommandSQL("drop property " + name + '.' + propertyName)).execute();
         }
       } else if (isDistributedCommand()) {
         OScenarioThreadLocal.executeAsDistributed(new Callable<OProperty>() {
@@ -901,7 +895,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
         String stm;
         if (getDatabase().getStorage().getConfiguration().isStrictSql()) {
           stm = "drop property " + name + ".`" + propertyName + "`";
-        }else{
+        } else {
           stm = "drop property " + name + "." + propertyName;
         }
         final OCommandSQL commandSQL = new OCommandSQL(stm);
@@ -1588,7 +1582,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
    * Check if the current instance extends specified schema class.
    *
    * @param iClassName of class that should be checked
+   *
    * @return Returns true if the current instance extends the passed schema class (iClass)
+   *
    * @see #isSuperClassOf(OClass)
    */
   public boolean isSubClassOf(final String iClassName) {
@@ -1613,7 +1609,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
    * Check if the current instance extends specified schema class.
    *
    * @param clazz to check
+   *
    * @return true if the current instance extends the passed schema class (iClass)
+   *
    * @see #isSuperClassOf(OClass)
    */
   public boolean isSubClassOf(final OClass clazz) {
@@ -1637,7 +1635,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
    * Returns true if the passed schema class (iClass) extends the current instance.
    *
    * @param clazz to check
+   *
    * @return Returns true if the passed schema class extends the current instance
+   *
    * @see #isSubClassOf(OClass)
    */
   public boolean isSuperClassOf(final OClass clazz) {

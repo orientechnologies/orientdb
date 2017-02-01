@@ -41,7 +41,7 @@ public class OClassImplTest {
 
   /**
    * If class was not abstract and we call {@code setAbstract(false)} clusters should not be changed.
-   * 
+   *
    * @throws Exception
    */
   @Test
@@ -58,7 +58,7 @@ public class OClassImplTest {
 
   /**
    * If class was abstract and we call {@code setAbstract(false)} a new non default cluster should be created.
-   * 
+   *
    * @throws Exception
    */
   @Test
@@ -71,6 +71,19 @@ public class OClassImplTest {
 
     Assert.assertFalse(oClass.getDefaultClusterId() == -1);
     Assert.assertFalse(oClass.getDefaultClusterId() == db.getDefaultClusterId());
+  }
+
+  @Test
+  public void testCreateNoLinkedClass() {
+    final OSchema oSchema = db.getMetadata().getSchema();
+
+    OClass oClass = oSchema.createClass("Test21");
+    oClass.createProperty("some", OType.LINKLIST, (OClass) null);
+    oClass.createProperty("some2", OType.LINKLIST, (OClass) null, true);
+
+    assertNotNull(oClass.getProperty("some"));
+    assertNotNull(oClass.getProperty("some2"));
+
   }
 
   @Test(expectedExceptions = OSchemaException.class)
@@ -478,7 +491,8 @@ public class OClassImplTest {
     assertNotNull(oSchema.createClass("$OClassImplTesttestCla23ssNameSyntax_12"));
     assertNotNull(oSchema.createClass("OClassImplTesttestC$la23ssNameSyntax_12"));
     assertNotNull(oSchema.createClass("oOClassImplTesttestC$la23ssNameSyntax_12"));
-    String[] invalidClassNames = { "foo bar", "12", "#12", "12AAA", ",asdfasdf", "adsf,asdf", "asdf.sadf", ".asdf", "asdfaf.", "asdf:asdf" };
+    String[] invalidClassNames = { "foo bar", "12", "#12", "12AAA", ",asdfasdf", "adsf,asdf", "asdf.sadf", ".asdf", "asdfaf.",
+        "asdf:asdf" };
     for (String s : invalidClassNames) {
       try {
         oSchema.createClass(s);
