@@ -53,7 +53,7 @@ public class OJsr223ScriptExecutor implements OScriptExecutor {
       }
 
       final Bindings binding = scriptManager
-          .bindContextVariables(compiledScript.getEngine().getBindings(ScriptContext.ENGINE_SCOPE), database, null, params);
+          .bindContextVariables(compiledScript.getEngine(),compiledScript.getEngine().getBindings(ScriptContext.ENGINE_SCOPE), database, null, params);
 
       try {
         final Object ob = compiledScript.eval(binding);
@@ -63,7 +63,7 @@ public class OJsr223ScriptExecutor implements OScriptExecutor {
             .wrapException(new OCommandScriptException("Error on execution of the script", script, e.getColumnNumber()), e);
 
       } finally {
-        scriptManager.unbind(binding, null, params);
+        scriptManager.unbind(scriptEngine,binding, null, params);
       }
     } finally {
       scriptManager.releaseDatabaseEngine(language, database.getName(), entry);

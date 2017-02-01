@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.command.script.transformer.OScriptTrans
 import com.orientechnologies.orient.core.command.script.transformer.OScriptTransformerImpl;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.function.OFunctionUtilWrapper;
@@ -221,14 +222,14 @@ public class OScriptManager {
     return result;
   }
 
-  public Bindings bindContextVariables(final Bindings binding, final ODatabaseDocumentInternal db, final OCommandContext iContext,
+  public Bindings bindContextVariables(ScriptEngine engine, final Bindings binding, final ODatabaseDocumentInternal db, final OCommandContext iContext,
       final Map<Object, Object> iArgs){
 
 
 
     binding.put("db", new OScriptDatabaseWrapper(db));
 
-    bindInjectors(binding);
+    bindInjectors(engine,binding,db);
 
     bindContext(binding, iContext);
 
@@ -237,12 +238,12 @@ public class OScriptManager {
     return binding;
   }
   @Deprecated
-  public Bindings bind(final Bindings binding, final ODatabaseDocumentInternal db, final OCommandContext iContext,
+  public Bindings bind(ScriptEngine scriptEngine, final Bindings binding, final ODatabaseDocumentInternal db, final OCommandContext iContext,
       final Map<Object, Object> iArgs) {
 
     bindLegacyDatabaseAndUtil(binding, db);
 
-    bindInjectors(binding);
+    bindInjectors(scriptEngine,binding,db);
 
     bindContext(binding, iContext);
 
@@ -251,9 +252,9 @@ public class OScriptManager {
     return binding;
   }
 
-  private void bindInjectors(Bindings binding) {
+  private void bindInjectors(ScriptEngine engine,Bindings binding,ODatabaseDocument database) {
     for (OScriptInjection i : injections)
-      i.bind(binding);
+      i.bind(engine,binding,database);
   }
 
   private void bindContext(Bindings binding, OCommandContext iContext) {
@@ -340,19 +341,16 @@ public class OScriptManager {
     }
   }
 
-  @Deprecated
-  public void unbind(Bindings binding) {
-    unbind(binding, null, null);
-  }
+
 
   /**
    * Unbinds variables
    *
    * @param binding
    */
-  public void unbind(final Bindings binding, final OCommandContext iContext, final Map<Object, Object> iArgs) {
+  public void unbind(ScriptEngine scriptEngine,final Bindings binding, final OCommandContext iContext, final Map<Object, Object> iArgs) {
     for (OScriptInjection i : injections)
-      i.unbind(binding);
+      i.unbind(scriptEngine,binding);
 
     binding.put("db", null);
     binding.put("orient", null);

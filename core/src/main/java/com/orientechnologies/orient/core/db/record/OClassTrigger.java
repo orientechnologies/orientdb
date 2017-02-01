@@ -16,14 +16,6 @@
 
 package com.orientechnologies.orient.core.db.record;
 
-import java.lang.reflect.Method;
-
-import javax.script.Bindings;
-import javax.script.Invocable;
-import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
-import javax.script.ScriptException;
-
 import com.orientechnologies.common.concur.resource.OPartitionedObjectPool;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
@@ -34,7 +26,6 @@ import com.orientechnologies.orient.core.command.script.OScriptManager;
 import com.orientechnologies.orient.core.db.ODatabase.STATUS;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
@@ -47,6 +38,9 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+
+import javax.script.*;
+import java.lang.reflect.Method;
 
 /**
  * Author : henryzhao81@gmail.com Feb 19, 2013
@@ -289,7 +283,7 @@ public class OClassTrigger extends ODocumentHookAbstract {
     try {
       final Bindings binding = scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE);
 
-      scriptManager.bind(binding, (ODatabaseDocumentInternal) database, null, null);
+      scriptManager.bind(scriptEngine, binding, (ODatabaseDocumentInternal) database, null, null);
       binding.put("doc", iDocument);
 
       String result = null;
@@ -319,7 +313,7 @@ public class OClassTrigger extends ODocumentHookAbstract {
         throw e;
 
       } finally {
-        scriptManager.unbind(binding, null, null);
+        scriptManager.unbind(scriptEngine,binding, null, null);
       }
       if (result == null) {
         return RESULT.RECORD_NOT_CHANGED;

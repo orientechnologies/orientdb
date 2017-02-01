@@ -25,6 +25,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.script.OScriptInjection;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
@@ -38,6 +39,7 @@ import javax.activation.FileDataSource;
 import javax.mail.*;
 import javax.mail.internet.*;
 import javax.script.Bindings;
+import javax.script.ScriptEngine;
 import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
@@ -253,14 +255,15 @@ public class OMailPlugin extends OServerPluginAbstract implements OScriptInjecti
   }
 
   @Override
-  public void bind(final Bindings binding) {
+  public void bind(ScriptEngine engine, Bindings binding, ODatabaseDocument database) {
     binding.put("mail", this);
   }
 
   @Override
-  public void unbind(final Bindings binding) {
+  public void unbind(ScriptEngine engine, Bindings binding) {
     binding.put("mail", null);
   }
+
 
   @Override
   public String getName() {

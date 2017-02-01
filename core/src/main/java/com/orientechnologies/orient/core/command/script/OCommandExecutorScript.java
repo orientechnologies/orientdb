@@ -169,7 +169,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
         request.setCompiledScript(compiledScript);
       }
 
-      final Bindings binding = scriptManager.bind(compiledScript.getEngine().getBindings(ScriptContext.ENGINE_SCOPE),
+      final Bindings binding = scriptManager.bind(scriptEngine, compiledScript.getEngine().getBindings(ScriptContext.ENGINE_SCOPE),
           db, iContext, iArgs);
 
       try {
@@ -181,7 +181,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
             new OCommandScriptException("Error on execution of the script", request.getText(), e.getColumnNumber()), e);
 
       } finally {
-        scriptManager.unbind(binding, iContext, iArgs);
+        scriptManager.unbind(scriptEngine,binding, iContext, iArgs);
       }
     } finally {
       scriptManager.releaseDatabaseEngine(language, db.getName(), entry);
