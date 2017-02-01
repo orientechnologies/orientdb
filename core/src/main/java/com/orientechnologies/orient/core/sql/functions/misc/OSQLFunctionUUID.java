@@ -28,9 +28,8 @@ import java.util.UUID;
 /**
  * Generates a UUID as a 128-bits value using the Leach-Salz variant. For more information look at:
  * http://docs.oracle.com/javase/6/docs/api/java/util/UUID.html.
- * 
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  *
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OSQLFunctionUUID extends OSQLFunctionAbstract {
   public static final String NAME = "uuid";
@@ -44,7 +43,7 @@ public class OSQLFunctionUUID extends OSQLFunctionAbstract {
 
   public Object execute(Object iThis, final OIdentifiable iCurrentRecord, final Object iCurrentResult, final Object[] iParams,
       OCommandContext iContext) {
-    return UUID.randomUUID();
+    return UUID.randomUUID().toString();
   }
 
   public boolean aggregateResults(final Object[] configuredParameters) {

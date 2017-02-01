@@ -90,12 +90,36 @@ public class RemoteTransactionSupportTest {
 
     database.rollback();
 
-    //This give an index array out of bound error:
-    //OResultSet result1 = database.command("select count() from SomeTx where name='Jane'");
     OResultSet result1 = database.command("select count(*) from SomeTx where name='Jane'");
     assertTrue(result1.hasNext());
-    // a bit strange name 'count(*)'
     assertEquals((long) result1.next().getProperty("count(*)"), 1L);
+
+  }
+
+  @Test
+  public void testRollbackTxChekcStatusTransaction() {
+    ODocument doc = new ODocument("SomeTx");
+    doc.setProperty("name", "Jane");
+    database.save(doc);
+
+    database.begin();
+    ODocument doc1 = new ODocument("SomeTx");
+    doc1.setProperty("name", "Jane");
+    database.save(doc1);
+
+    OResultSet result = database.command("select count(*) from SomeTx where name='Jane' ");
+    assertTrue(result.hasNext());
+    assertEquals((long) result.next().getProperty("count(*)"), 2L);
+
+    assertTrue(database.getTransaction().isActive());
+
+    database.rollback();
+
+    OResultSet result1 = database.command("select count(*) from SomeTx where name='Jane'");
+    assertTrue(result1.hasNext());
+    assertEquals((long) result1.next().getProperty("count(*)"), 1L);
+
+    assertFalse(database.getTransaction().isActive());
 
   }
 
