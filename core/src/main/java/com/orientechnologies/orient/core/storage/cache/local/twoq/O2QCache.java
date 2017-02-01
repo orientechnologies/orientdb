@@ -324,9 +324,9 @@ public class O2QCache implements OReadCache {
         if (warnings < MAX_PERCENT_OF_PINED_PAGES) {
           pinnedPagesWarningsCache = (int) warnings;
 
-          OLogManager.instance().warn(this, "Maximum amount of pinned pages is reached , given page " + cacheEntry
-              + " will not be marked as pinned which may lead to performance degradation. You may consider to increase percent of pined pages "
-              + "by changing of property " + OGlobalConfiguration.DISK_CACHE_PINNED_PAGES.getKey());
+          OLogManager.instance().warn(this, "Maximum amount of pinned pages is reached, given page " + cacheEntry
+              + " will not be marked as pinned which may lead to performance degradation. You may consider to increase the percent of pinned pages "
+              + "by changing the property '" + OGlobalConfiguration.DISK_CACHE_PINNED_PAGES.getKey() + "'");
         }
       }
 
