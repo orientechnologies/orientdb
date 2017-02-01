@@ -339,12 +339,17 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
   protected void fullBackupDatabase(final String dbURL, final String iPath, final ODatabaseDocumentInternal db) throws IOException {
     OLogManager.instance().info(this, "AutomaticBackup: executing full backup of database '%s' to %s", dbURL, iPath);
 
-    db.backup(new FileOutputStream(iPath), null, null, new OCommandOutputListener() {
-      @Override
-      public void onMessage(String iText) {
-        OLogManager.instance().info(this, iText);
-      }
-    }, compressionLevel, bufferSize);
+    final FileOutputStream fileOutputStream = new FileOutputStream(iPath);
+    try {
+      db.backup(fileOutputStream, null, null, new OCommandOutputListener() {
+        @Override
+        public void onMessage(String iText) {
+          OLogManager.instance().info(this, iText);
+        }
+      }, compressionLevel, bufferSize);
+    } finally {
+      fileOutputStream.close();
+    }
   }
 
   protected void exportDatabase(final String dbURL, final String iPath, final ODatabaseDocumentInternal db) throws IOException {
