@@ -508,8 +508,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
    * @return Directory which contains all files managed by write cache or <code>null</code> in case of in memory database.
    */
   @Override
-  public File getRootDirectory() {
-    return storagePath.toFile();
+  public Path getRootDirectory() {
+    return storagePath;
   }
 
   @Override
