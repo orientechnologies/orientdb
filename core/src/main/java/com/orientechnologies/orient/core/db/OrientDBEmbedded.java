@@ -52,14 +52,14 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPagi
  * Created by tglman on 08/04/16.
  */
 public class OrientDBEmbedded implements OrientDB {
-  private final Map<String, OAbstractPaginatedStorage> storages = new HashMap<>();
-  private final Set<ODatabasePool>                     pools    = new HashSet<>();
-  private final    OrientDBConfig configurations;
-  private final    String         basePath;
-  private final    OEngine        memory;
-  private final    OEngine        disk;
-  private volatile Thread         shutdownThread;
-  private final    Orient         orient;
+  protected final Map<String, OAbstractPaginatedStorage> storages = new HashMap<>();
+  protected final Set<ODatabasePool>                     pools    = new HashSet<>();
+  protected final    OrientDBConfig configurations;
+  protected final    String         basePath;
+  protected final    OEngine        memory;
+  protected final    OEngine        disk;
+  protected volatile Thread         shutdownThread;
+  protected final    Orient         orient;
 
   public OrientDBEmbedded(String directoryPath, OrientDBConfig configurations, Orient orient) {
     super();
@@ -117,7 +117,7 @@ public class OrientDBEmbedded implements OrientDB {
     }
   }
 
-  private OrientDBConfig solveConfig(OrientDBConfig config) {
+  protected OrientDBConfig solveConfig(OrientDBConfig config) {
     if (config != null) {
       config.setParent(this.configurations);
       return config;
@@ -133,7 +133,7 @@ public class OrientDBEmbedded implements OrientDB {
     return embedded;
   }
 
-  private OAbstractPaginatedStorage getStorage(String name) {
+  protected OAbstractPaginatedStorage getStorage(String name) {
     OAbstractPaginatedStorage storage = storages.get(name);
     if (storage == null) {
       storage = (OAbstractPaginatedStorage) disk.createStorage(buildName(name), new HashMap<>());
@@ -142,7 +142,7 @@ public class OrientDBEmbedded implements OrientDB {
     return storage;
   }
 
-  private String buildName(String name) {
+  protected String buildName(String name) {
     if (basePath == null) {
       throw new ODatabaseException("OrientDB instanced created without physical path, only memory databases are allowed");
     }
@@ -198,7 +198,7 @@ public class OrientDBEmbedded implements OrientDB {
     }
   }
 
-  private void internalCreate(OrientDBConfig config, OAbstractPaginatedStorage storage) {
+  protected void internalCreate(OrientDBConfig config, OAbstractPaginatedStorage storage) {
     try {
       storage.create(config.getConfigurations());
     } catch (IOException e) {
@@ -241,7 +241,7 @@ public class OrientDBEmbedded implements OrientDB {
     }
   }
 
-  private interface DatabaseFound {
+  protected interface DatabaseFound {
     void found(String name);
   }
 
@@ -287,7 +287,7 @@ public class OrientDBEmbedded implements OrientDB {
     internalClose();
   }
 
-  private synchronized void internalClose() {
+  protected synchronized void internalClose() {
     final List<OStorage> storagesCopy = new ArrayList<OStorage>(storages.values());
     for (OStorage stg : storagesCopy) {
       try {
@@ -314,7 +314,7 @@ public class OrientDBEmbedded implements OrientDB {
     T create(OAbstractPaginatedStorage storage);
   }
 
-  private void scanDatabaseDirectory(final File directory, DatabaseFound found) {
+  protected void scanDatabaseDirectory(final File directory, DatabaseFound found) {
     if (directory.exists() && directory.isDirectory()) {
       final File[] files = directory.listFiles();
       if (files != null)
