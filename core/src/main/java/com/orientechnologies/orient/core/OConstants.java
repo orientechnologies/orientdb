@@ -20,15 +20,15 @@
 package com.orientechnologies.orient.core;
 
 public class OConstants {
-  public static final String  ORIENT_VERSION       = "2.2.16-SNAPSHOT";
+  public static final String  ORIENT_VERSION       = "2.2.16";
 
   public static final int     ORIENT_VERSION_MAJOR = 2;
   public static final int     ORIENT_VERSION_MINOR = 2;
   public static final int     ORIENT_VERSION_HOFIX = 16;
-  public static final boolean SNAPSHOT             = true;
+  public static final boolean SNAPSHOT             = false;
 
   public static final String  ORIENT_URL           = "www.orientdb.com";
-  public static final String  COPYRIGHT            = "Copyrights (c) 2016 OrientDB LTD";
+  public static final String  COPYRIGHT            = "Copyrights (c) 2017 OrientDB LTD";
 
   /**
    * Returns the complete text of the current OrientDB version.
