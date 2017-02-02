@@ -6,8 +6,8 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
 import org.apache.tinkerpop.gremlin.process.traversal.Traversal;
-import org.apache.tinkerpop.gremlin.structure.Graph;
 
 import java.util.Map;
 import java.util.Optional;
@@ -20,6 +20,7 @@ public class OGremlinResultSet implements OResultSet {
     protected Traversal traversal;
     private OScriptTransformer transformer;
     private boolean closeGraph;
+    private boolean closing = false;
 
     public OGremlinResultSet(Traversal traversal, OScriptTransformer transformer) {
         this(traversal, transformer, false);
@@ -50,7 +51,11 @@ public class OGremlinResultSet implements OResultSet {
             if (closeGraph) {
                 traversal.asAdmin().getGraph().ifPresent(graph -> {
                     try {
-                        ((Graph) graph).close();
+                        OrientGraph g = (OrientGraph) graph;
+                        if (!closing) {
+                            closing = true;
+                            g.close();
+                        }
                     } catch (Exception e) {
                         throw OException.wrapException(new OCommandExecutionException("Error closing the Graph "), e);
                     }

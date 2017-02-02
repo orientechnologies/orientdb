@@ -1,8 +1,11 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OStorage;
 import org.apache.tinkerpop.gremlin.structure.*;
 import org.apache.tinkerpop.gremlin.structure.util.ElementHelper;
 
@@ -14,7 +17,7 @@ import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public abstract class OrientElement implements Element {
+public abstract class OrientElement implements Element ,OIdentifiable{
 
     protected OElement rawElement;
     protected OrientGraph graph;
@@ -121,4 +124,46 @@ public abstract class OrientElement implements Element {
         return ElementHelper.areEqual(this, object);
     }
 
+
+    @Override
+    public ORID getIdentity() {
+        return rawElement.getIdentity();
+    }
+
+    @Override
+    public <T extends ORecord> T getRecord() {
+        return (T) rawElement;
+    }
+
+    @Override
+    public void lock(boolean iExclusive) {
+
+        rawElement.lock(iExclusive);
+    }
+
+    @Override
+    public boolean isLocked() {
+        return rawElement.isLocked();
+    }
+
+    @Override
+    public OStorage.LOCKING_STRATEGY lockingStrategy() {
+        return rawElement.lockingStrategy();
+    }
+
+    @Override
+    public void unlock() {
+
+        rawElement.unlock();
+    }
+
+    @Override
+    public int compareTo(OIdentifiable o) {
+        return rawElement.compareTo(o);
+    }
+
+    @Override
+    public int compare(OIdentifiable o1, OIdentifiable o2) {
+        return rawElement.compare(o1,o2);
+    }
 }

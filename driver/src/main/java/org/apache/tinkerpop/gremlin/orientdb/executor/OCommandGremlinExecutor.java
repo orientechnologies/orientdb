@@ -19,16 +19,19 @@
   */
 package org.apache.tinkerpop.gremlin.orientdb.executor;
 
+import com.orientechnologies.common.concur.resource.OPartitionedObjectPool;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OScriptExecutor;
+import com.orientechnologies.orient.core.command.script.OScriptInjection;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
+import com.orientechnologies.orient.core.command.script.formatter.OGroovyScriptFormatter;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.tinkerpop.gremlin.groovy.jsr223.GremlinGroovyScriptEngineFactory;
 import org.apache.tinkerpop.gremlin.jsr223.CachedGremlinScriptEngineManager;
-import org.apache.tinkerpop.gremlin.jsr223.GremlinScriptEngine;
 import org.apache.tinkerpop.gremlin.orientdb.OrientElement;
 import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
 import org.apache.tinkerpop.gremlin.orientdb.OrientVertex;
@@ -37,6 +40,7 @@ import org.apache.tinkerpop.gremlin.orientdb.executor.transformer.OElementTransf
 import org.apache.tinkerpop.gremlin.orientdb.executor.transformer.OrientPropertyTransformer;
 import org.apache.tinkerpop.gremlin.process.traversal.Traversal;
 
+import javax.script.Bindings;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import java.util.Map;
@@ -46,8 +50,9 @@ import java.util.Map;
  *
  * @author Enrico Risa (e.risa-(at)--orientdb.com)
  */
-public class OCommandGremlinExecutor implements OScriptExecutor {
+public class OCommandGremlinExecutor implements OScriptExecutor, OScriptInjection {
 
+    public static final String GREMLIN_GROOVY = "gremlin-groovy";
     private final OScriptManager scriptManager;
     private GremlinGroovyScriptEngineFactory factory;
 
@@ -59,6 +64,10 @@ public class OCommandGremlinExecutor implements OScriptExecutor {
 
         initCustomTransformer(scriptManager);
 
+        scriptManager.registerInjection(this);
+
+        scriptManager.registerFormatter(GREMLIN_GROOVY, new OGroovyScriptFormatter());
+        scriptManager.registerEngine(GREMLIN_GROOVY, factory);
     }
 
     private void initCustomTransformer(OScriptManager scriptManager) {
@@ -76,8 +85,10 @@ public class OCommandGremlinExecutor implements OScriptExecutor {
     @Override
     public OResultSet execute(final ODatabaseDocumentInternal iDatabase, final String iText, final Map params) {
 
+        OPartitionedObjectPool.PoolEntry<ScriptEngine> entry = null;
         try {
-            final ScriptEngine engine = getGremlinEngine(acquireGraph(iDatabase));
+            entry = acquireGremlinEngine(acquireGraph(iDatabase));
+            ScriptEngine engine = entry.object;
             bindParameters(engine, params);
 
             final Traversal result = (Traversal) engine.eval(iText);
@@ -87,14 +98,34 @@ public class OCommandGremlinExecutor implements OScriptExecutor {
         } catch (Exception e) {
             throw OException.wrapException(new OCommandExecutionException("Error on execution of the GREMLIN script"), e);
         } finally {
-
+            if (entry != null) {
+                releaseGremlinEngine(iDatabase.getName(), entry);
+            }
         }
     }
 
-    protected ScriptEngine getGremlinEngine(final OrientGraph graph) {
-        GremlinScriptEngine engine = factory.getScriptEngine();
-        engine.getBindings(ScriptContext.ENGINE_SCOPE).put("g", graph.traversal());
-        return engine;
+    protected final OPartitionedObjectPool.PoolEntry<ScriptEngine> acquireGremlinEngine(final OrientGraph graph) {
+
+        final OPartitionedObjectPool.PoolEntry<ScriptEngine> entry = scriptManager.acquireDatabaseEngine(graph.getRawDatabase().getName(),
+                GREMLIN_GROOVY);
+        final ScriptEngine engine = entry.object;
+        Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
+        bindGraph(graph, bindings);
+        return entry;
+    }
+
+    protected void releaseGremlinEngine(String dbName, OPartitionedObjectPool.PoolEntry<ScriptEngine> engine) {
+        scriptManager.releaseDatabaseEngine(GREMLIN_GROOVY, dbName, engine);
+    }
+
+    private void bindGraph(OrientGraph graph, Bindings bindings) {
+        bindings.put("graph", graph);
+        bindings.put("g", graph.traversal());
+    }
+
+    private void unbindGraph(Bindings bindings) {
+        bindings.put("graph", null);
+        bindings.put("g", null);
     }
 
     public void bindParameters(final ScriptEngine iEngine, final Map<Object, Object> iParameters) {
@@ -108,7 +139,7 @@ public class OCommandGremlinExecutor implements OScriptExecutor {
 
     }
 
-    public OrientGraph acquireGraph(final ODatabaseDocumentInternal database) {
+    public OrientGraph acquireGraph(final ODatabaseDocument database) {
         return new OrientGraph(database, new BaseConfiguration() {
             {
                 setProperty(OrientGraph.CONFIG_TRANSACTIONAL, true);
@@ -118,5 +149,18 @@ public class OCommandGremlinExecutor implements OScriptExecutor {
 
     public String getEngineVersion() {
         return factory.getEngineVersion();
+    }
+
+    @Override
+    public void bind(ScriptEngine engine, Bindings binding, ODatabaseDocument database) {
+
+        OrientGraph graph = acquireGraph(database);
+
+        bindGraph(graph, binding);
+    }
+
+    @Override
+    public void unbind(ScriptEngine engine, Bindings binding) {
+        unbindGraph(binding);
     }
 }

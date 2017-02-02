@@ -128,4 +128,5 @@ public final class OrientVertex extends OrientElement implements Vertex {
         return edgeStream.collect(Collectors.toList()).iterator();
     }
 
+
 }

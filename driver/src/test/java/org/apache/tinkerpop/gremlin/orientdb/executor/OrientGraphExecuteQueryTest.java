@@ -1,7 +1,9 @@
-package org.apache.tinkerpop.gremlin.orientdb;
+package org.apache.tinkerpop.gremlin.orientdb.executor;
 
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
+import org.apache.tinkerpop.gremlin.orientdb.OrientGraphBaseTest;
 import org.apache.tinkerpop.gremlin.structure.T;
 import org.junit.Assert;
 import org.junit.Test;
@@ -41,5 +43,4 @@ public class OrientGraphExecuteQueryTest extends OrientGraphBaseTest {
         Assert.assertEquals(new Long(2), count);
 
     }
-
 }
