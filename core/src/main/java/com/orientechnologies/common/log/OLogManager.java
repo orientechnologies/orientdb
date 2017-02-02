@@ -107,7 +107,9 @@ public class OLogManager {
       }
 
       final String requesterName;
-      if (iRequester != null) {
+      if (iRequester instanceof Class<?>) {
+        requesterName = ((Class<?>) iRequester).getName();
+      } else if (iRequester != null) {
         requesterName = iRequester.getClass().getName();
       } else {
         requesterName = DEFAULT_LOG;
