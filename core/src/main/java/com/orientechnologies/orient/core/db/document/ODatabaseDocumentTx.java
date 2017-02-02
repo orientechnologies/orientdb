@@ -489,7 +489,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   @Override
   public OVertex newVertex(OClass type) {
     if (type == null) {
-      return newVertex("E");
+      return newVertex("V");
     }
     return newVertex(type.getName());
   }
