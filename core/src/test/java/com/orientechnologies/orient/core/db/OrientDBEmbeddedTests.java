@@ -40,7 +40,7 @@ public class OrientDBEmbeddedTests {
 
   }
 
-  @Test(expected = OStorageExistsException.class)
+  @Test(expected = ODatabaseException.class)
   public void testEmbeddedDoubleCreate() {
     OrientDB orientDb = OrientDB.embedded(".", null);
     try {
@@ -165,6 +165,48 @@ public class OrientDBEmbeddedTests {
     assertFalse(db1.isClosed());
     db1.close();
     orientDb.close();
+  }
+
+  @Test(expected = ODatabaseException.class)
+  public void testUseAfterCloseCreate() {
+    OrientDB orientDb = OrientDB.embedded("", null);
+    orientDb.close();
+    orientDb.create("test", "", "", OrientDB.DatabaseType.MEMORY);
+  }
+
+  @Test(expected = ODatabaseException.class)
+  public void testUseAfterCloseOpen() {
+    OrientDB orientDb = OrientDB.embedded("", null);
+    orientDb.close();
+    orientDb.open("test", "", "");
+  }
+
+  @Test(expected = ODatabaseException.class)
+  public void testUseAfterCloseList() {
+    OrientDB orientDb = OrientDB.embedded("", null);
+    orientDb.close();
+    orientDb.listDatabases("", "");
+  }
+
+  @Test(expected = ODatabaseException.class)
+  public void testUseAfterCloseExists() {
+    OrientDB orientDb = OrientDB.embedded("", null);
+    orientDb.close();
+    orientDb.exists("", "", "");
+  }
+
+  @Test(expected = ODatabaseException.class)
+  public void testUseAfterCloseOpenPool() {
+    OrientDB orientDb = OrientDB.embedded("", null);
+    orientDb.close();
+    orientDb.openPool("", "", "");
+  }
+
+  @Test(expected = ODatabaseException.class)
+  public void testUseAfterCloseDrop() {
+    OrientDB orientDb = OrientDB.embedded("", null);
+    orientDb.close();
+    orientDb.drop("", "", "");
   }
 
   @Test

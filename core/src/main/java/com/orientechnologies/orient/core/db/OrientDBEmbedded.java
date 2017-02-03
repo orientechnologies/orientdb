@@ -60,6 +60,7 @@ public class OrientDBEmbedded implements OrientDB {
   protected final    OEngine        disk;
   protected volatile Thread         shutdownThread;
   protected final    Orient         orient;
+  private volatile boolean open = true;
 
   public OrientDBEmbedded(String directoryPath, OrientDBConfig configurations, Orient orient) {
     super();
@@ -103,6 +104,7 @@ public class OrientDBEmbedded implements OrientDB {
 
   @Override
   public synchronized ODatabaseDocumentInternal open(String name, String user, String password, OrientDBConfig config) {
+    checkOpen();
     try {
       config = solveConfig(config);
       OAbstractPaginatedStorage storage = getStorage(name);
@@ -126,6 +128,7 @@ public class OrientDBEmbedded implements OrientDB {
   }
 
   public synchronized OEmbeddedDatabasePool poolOpen(String name, String user, String password, OEmbeddedPoolByFactory pool) {
+    checkOpen();
     OAbstractPaginatedStorage storage = getStorage(name);
     storage.open(pool.getConfig().getConfigurations());
     final OEmbeddedDatabasePool embedded = new OEmbeddedDatabasePool(pool, storage);
@@ -224,6 +227,7 @@ public class OrientDBEmbedded implements OrientDB {
 
   @Override
   public synchronized boolean exists(String name, String user, String password) {
+    checkOpen();
     if (!storages.containsKey(name)) {
       if (basePath != null) {
         return OLocalPaginatedStorage.exists(Paths.get(buildName(name)));
@@ -235,6 +239,7 @@ public class OrientDBEmbedded implements OrientDB {
 
   @Override
   public synchronized void drop(String name, String user, String password) {
+    checkOpen();
     if (exists(name, user, password)) {
       getStorage(name).delete();
       storages.remove(name);
@@ -247,6 +252,7 @@ public class OrientDBEmbedded implements OrientDB {
 
   @Override
   public synchronized Set<String> listDatabases(String user, String password) {
+    checkOpen();
     // SEARCH IN CONFIGURED PATHS
     final Set<String> databases = new HashSet<>();
     // SEARCH IN DEFAULT DATABASE DIRECTORY
@@ -276,6 +282,7 @@ public class OrientDBEmbedded implements OrientDB {
 
   @Override
   public ODatabasePool openPool(String name, String user, String password, OrientDBConfig config) {
+    checkOpen();
     OEmbeddedPoolByFactory pool = new OEmbeddedPoolByFactory(this, name, user, password, solveConfig(config));
     pools.add(pool);
     return pool;
@@ -285,6 +292,7 @@ public class OrientDBEmbedded implements OrientDB {
   public synchronized void close() {
     removeShutdownHook();
     internalClose();
+    open = false;
   }
 
   protected synchronized void internalClose() {
@@ -365,6 +373,11 @@ public class OrientDBEmbedded implements OrientDB {
     if (storage != null && storage instanceof OLocalPaginatedStorage)
       return ((OLocalPaginatedStorage) storage).getStoragePath().toString();
     return null;
+  }
+
+  private void checkOpen() {
+    if (!open)
+      throw new ODatabaseException("OrientDB Instance is closed");
   }
 
 }
