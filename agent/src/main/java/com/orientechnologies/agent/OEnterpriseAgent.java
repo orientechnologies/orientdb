@@ -29,16 +29,23 @@ import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValu
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfilerStub;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.engine.OEngine;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.orient.enterprise.channel.binary.ODistributedRedirectException;
+import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
+import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.impl.ODistributedAbstractPlugin;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
@@ -47,7 +54,9 @@ import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
 
+import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.UUID;
 
 public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabaseLifecycleListener, OPluginLifecycleListener {
@@ -69,7 +78,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
     TOKEN = t;
   }
 
-  private OBackupManager        backupManager;
+  private   OBackupManager      backupManager;
   protected OEnterpriseProfiler profiler;
 
   public OEnterpriseAgent() {
@@ -371,7 +380,37 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
   }
 
   public void onAfterShutdown(final OServerPlugin plugin) {
+  }
 
+  @Override
+  public void onBeforeClientRequest(final OClientConnection iConnection, final byte iRequestType) {
+    if (iRequestType == OChannelBinaryProtocol.DISTRIBUTED_REQUEST || iRequestType == OChannelBinaryProtocol.DISTRIBUTED_RESPONSE)
+      return;
+
+    if (Orient.instance().isRunningDistributed()) {
+      final ODatabaseDocumentInternal db = iConnection.getDatabase();
+      if (db != null) {
+        if (((OAbstractPaginatedStorage) db.getStorage().getUnderlying()).isFrozen()) {
+          final ODistributedServerManager manager = OServerMain.server().getDistributedManager();
+          final ODistributedConfiguration dCfg = manager.getDatabaseConfiguration(db.getName());
+          final List<String> masters = dCfg.getMasterServers();
+          masters.remove(manager.getLocalNodeName());
+
+          // FILTER ONLY THE ONLINE SERVERS
+          manager.getNodesWithStatus(masters, db.getName(), ODistributedServerManager.DB_STATUS.ONLINE);
+
+          if (!masters.isEmpty()) {
+            // GET A RANDOM MASTER SERVER TO REDIRECT THE REQUEST
+            final String toServer = masters.get(new Random().nextInt(masters.size()));
+            final String toIPAddress = ODistributedAbstractPlugin
+                .getListeningBinaryAddress(manager.getNodeConfigurationByUuid(manager.getNodeUuidByName(toServer), true));
+
+            throw new ODistributedRedirectException(manager.getLocalNodeName(), toServer, toIPAddress,
+                "The server is frozen (usually is because a backup is running). Redirecting the request to another server");
+          }
+        }
+      }
+    }
   }
 
   private void registerSecurityComponents() {
