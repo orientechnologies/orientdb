@@ -60,6 +60,7 @@ public class OScriptManager {
   protected Map<String, OScriptFormatter>                     formatters = new HashMap<String, OScriptFormatter>();
   protected List<OScriptInjection>                            injections = new ArrayList<OScriptInjection>();
   protected ConcurrentHashMap<String, ODatabaseScriptManager> dbManagers = new ConcurrentHashMap<String, ODatabaseScriptManager>();
+  protected Map<String, OScriptResultHandler>                 handlers   = new HashMap<String, OScriptResultHandler>();
 
   protected OScriptTransformer transformer = new OScriptTransformerImpl();
 
@@ -222,14 +223,12 @@ public class OScriptManager {
     return result;
   }
 
-  public Bindings bindContextVariables(ScriptEngine engine, final Bindings binding, final ODatabaseDocumentInternal db, final OCommandContext iContext,
-      final Map<Object, Object> iArgs){
-
-
+  public Bindings bindContextVariables(ScriptEngine engine, final Bindings binding, final ODatabaseDocumentInternal db,
+      final OCommandContext iContext, final Map<Object, Object> iArgs) {
 
     binding.put("db", new OScriptDatabaseWrapper(db));
 
-    bindInjectors(engine,binding,db);
+    bindInjectors(engine, binding, db);
 
     bindContext(binding, iContext);
 
@@ -237,13 +236,14 @@ public class OScriptManager {
 
     return binding;
   }
+
   @Deprecated
-  public Bindings bind(ScriptEngine scriptEngine, final Bindings binding, final ODatabaseDocumentInternal db, final OCommandContext iContext,
-      final Map<Object, Object> iArgs) {
+  public Bindings bind(ScriptEngine scriptEngine, final Bindings binding, final ODatabaseDocumentInternal db,
+      final OCommandContext iContext, final Map<Object, Object> iArgs) {
 
     bindLegacyDatabaseAndUtil(binding, db);
 
-    bindInjectors(scriptEngine,binding,db);
+    bindInjectors(scriptEngine, binding, db);
 
     bindContext(binding, iContext);
 
@@ -252,9 +252,9 @@ public class OScriptManager {
     return binding;
   }
 
-  private void bindInjectors(ScriptEngine engine,Bindings binding,ODatabaseDocument database) {
+  private void bindInjectors(ScriptEngine engine, Bindings binding, ODatabaseDocument database) {
     for (OScriptInjection i : injections)
-      i.bind(engine,binding,database);
+      i.bind(engine, binding, database);
   }
 
   private void bindContext(Bindings binding, OCommandContext iContext) {
@@ -341,16 +341,15 @@ public class OScriptManager {
     }
   }
 
-
-
   /**
    * Unbinds variables
    *
    * @param binding
    */
-  public void unbind(ScriptEngine scriptEngine,final Bindings binding, final OCommandContext iContext, final Map<Object, Object> iArgs) {
+  public void unbind(ScriptEngine scriptEngine, final Bindings binding, final OCommandContext iContext,
+      final Map<Object, Object> iArgs) {
     for (OScriptInjection i : injections)
-      i.unbind(scriptEngine,binding);
+      i.unbind(scriptEngine, binding);
 
     binding.put("db", null);
     binding.put("orient", null);
@@ -392,6 +391,20 @@ public class OScriptManager {
   public OScriptManager registerFormatter(final String iLanguage, final OScriptFormatter iFormatterImpl) {
     formatters.put(iLanguage.toLowerCase(), iFormatterImpl);
     return this;
+  }
+
+  public OScriptManager registerResultHandler(final String iLanguage, final OScriptResultHandler resultHandler) {
+    handlers.put(iLanguage.toLowerCase(), resultHandler);
+    return this;
+  }
+
+  public Object handleResult(String language, Object result, ScriptEngine engine, Bindings binding, ODatabaseDocument database) {
+    OScriptResultHandler handler = handlers.get(language);
+    if (handler != null) {
+      return handler.handle(result, engine, binding, database);
+    } else {
+      return result;
+    }
   }
 
   /**
