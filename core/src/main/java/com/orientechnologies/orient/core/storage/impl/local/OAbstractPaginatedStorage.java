@@ -1892,7 +1892,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  public void putIndexValue(int indexId, Object key, Object value)  throws OInvalidIndexEngineIdException {
+  public void putIndexValue(int indexId, Object key, Object value) throws OInvalidIndexEngineIdException {
     if (transaction.get() != null) {
       doPutIndexValue(indexId, key, value);
       return;
@@ -2059,7 +2059,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   private OIndexCursor doIterateIndexEntriesMajor(int indexId, Object fromKey, boolean isInclusive, boolean ascSortOrder,
-      OIndexEngine.ValuesTransformer transformer)  throws OInvalidIndexEngineIdException {
+      OIndexEngine.ValuesTransformer transformer) throws OInvalidIndexEngineIdException {
     checkIndexId(indexId);
 
     final OIndexEngine engine = indexEngines.get(indexId);
@@ -2428,6 +2428,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public boolean cleanOutRecord(final ORecordId recordId, final int recordVersion, final int iMode,
       final ORecordCallback<Boolean> callback) {
     return deleteRecord(recordId, recordVersion, iMode, callback).getResult();
+  }
+
+  public boolean isFrozen() {
+    return atomicOperationsManager.isFrozen();
   }
 
   public void freeze(final boolean throwException) {

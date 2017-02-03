@@ -568,31 +568,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           }
         }
 
-        String url = cfg.field("publicAddress");
-
-        final Collection<Map<String, Object>> listeners = (Collection<Map<String, Object>>) cfg.field("listeners");
-        if (listeners == null)
-          throw new ODatabaseException(
-              "Cannot connect to a remote node because bad distributed configuration: missing 'listeners' array field");
-        String listenUrl = null;
-        for (Map<String, Object> listener : listeners) {
-          if (((String) listener.get("protocol")).equals("ONetworkProtocolBinary")) {
-            listenUrl = (String) listener.get("listen");
-            break;
-          }
-        }
-        if (url == null)
-          url = listenUrl;
-        else {
-          int pos;
-          String port;
-          if ((pos = listenUrl.lastIndexOf(":")) != -1) {
-            port = listenUrl.substring(pos + 1);
-          } else {
-            port = "2424";
-          }
-          url += ":" + port;
-        }
+        final String url = ODistributedAbstractPlugin.getListeningBinaryAddress(cfg);
 
         if (url == null)
           throw new ODatabaseException("Cannot connect to a remote node because the url was not found");

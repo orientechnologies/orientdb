@@ -67,6 +67,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSer
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.orient.enterprise.channel.binary.ODistributedRedirectException;
 import com.orientechnologies.orient.enterprise.channel.binary.OTokenSecurityException;
 
 import javax.naming.NamingException;
@@ -211,9 +212,13 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       throw new ODatabaseException(
           "Cannot execute the request because an asynchronous operation is in progress. Please use a different connection");
 
+    String serverUrl = null;
     do {
       OChannelBinaryAsynchClient network = null;
-      String serverUrl = getNextAvailableServerURL(false, session);
+
+      if (serverUrl == null)
+        serverUrl = getNextAvailableServerURL(false, session);
+
       do {
         try {
           network = getNetwork(serverUrl);
@@ -236,19 +241,31 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         }
 
         return operation.execute(network, session);
+      } catch (ODistributedRedirectException e) {
+        connectionManager.release(network);
+        OLogManager.instance()
+            .debug(this, "Redirecting the request from server '%s' to the server '%s' because %s", e.getFromServer(), e.toString(),
+                e.getMessage());
+
+        // RECONNECT TO THE SERVER SUGGESTED IN THE EXCEPTION
+        serverUrl = e.getToServerAddress();
+
       } catch (OModificationOperationProhibitedException mope) {
         connectionManager.release(network);
         handleDBFreeze();
+        serverUrl = null;
       } catch (OTokenException e) {
         connectionManager.release(network);
         session.removeServerSession(network.getServerURL());
         if (--retry <= 0)
           throw OException.wrapException(new OStorageException(errorMessage), e);
+        serverUrl = null;
       } catch (OTokenSecurityException e) {
         connectionManager.release(network);
         session.removeServerSession(network.getServerURL());
         if (--retry <= 0)
           throw OException.wrapException(new OStorageException(errorMessage), e);
+        serverUrl = null;
       } catch (OOfflineNodeException e) {
         connectionManager.release(network);
         // Remove the current url because the node is offline
@@ -259,13 +276,16 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           // Not thread Safe ...
           activeSession.removeServerSession(serverUrl);
         }
+        serverUrl = null;
 
       } catch (IOException e) {
         connectionManager.release(network);
         retry = handleIOException(retry, network, e);
+        serverUrl = null;
       } catch (OIOException e) {
         connectionManager.release(network);
         retry = handleIOException(retry, network, e);
+        serverUrl = null;
       } catch (OException e) {
         connectionManager.release(network);
         throw e;

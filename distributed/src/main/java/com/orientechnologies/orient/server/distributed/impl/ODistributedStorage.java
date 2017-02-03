@@ -59,6 +59,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorageCom
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.enterprise.channel.binary.ODistributedRedirectException;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
@@ -228,8 +229,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     if (exec.isIdempotent() && !dManager.isNodeAvailable(dManager.getLocalNodeName(), getName())) {
       // SPECIAL CASE: NODE IS OFFLINE AND THE COMMAND IS IDEMPOTENT, EXECUTE IT LOCALLY ONLY
       ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-          "Node '%s' is offline, the command '%s' against database '%s' will be executed only on local server with the possibility to have partial result",
-          dManager.getLocalNodeName(), iCommand, wrapped.getName());
+          "Node '%s' is %s, the command '%s' against database '%s' will be executed only on local server with the possibility to have partial result",
+          dManager.getLocalNodeName(), dManager.getDatabaseStatus(dManager.getLocalNodeName(), getName()), iCommand,
+          wrapped.getName());
 
       return wrapped.command(iCommand);
     }
@@ -1999,9 +2001,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
     String clusterName = getClusterNameByRID(rid);
 
-    String ownerNode = dbCfg.getClusterOwner(clusterName);
+    final String ownerServer = dbCfg.getClusterOwner(clusterName);
 
-    if (ownerNode.equals(localNodeName))
+    if (ownerServer.equals(localNodeName))
       // NO CHANGES
       return null;
 
@@ -2019,28 +2021,43 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       if (!(clSel instanceof OLocalClusterWrapperStrategy))
         throw new ODistributedException("Cannot install local cluster strategy on class '" + cls.getName() + "'");
 
-      // OLogManager.instance().info(this,
-      // "Local node '" + localNodeName + "' is not the owner for cluster '" + clusterName + "' (it is '" + ownerNode
-      // + "'). Reloading distributed configuration for database '" + getName() + "'");
-
       dbCfg = ((OLocalClusterWrapperStrategy) clSel).readConfiguration();
 
-      newClusterName = getPhysicalClusterNameById(clSel.getCluster(cls, (ODocument) record));
+      final String newOwnerNode = dbCfg.getClusterOwner(clusterName);
+      if (newOwnerNode.equals(localNodeName))
+        // NO CHANGES
+        return null;
 
-      OLogManager.instance().info(this,
-          "Local node '" + localNodeName + "' is not the owner for cluster '" + clusterName + "' (it is '" + ownerNode
-              + "'). Switching to a valid cluster of the same class: '" + newClusterName + "'");
+      // ONLY IF IT'S A CLIENT REQUEST (NON DISTRIBUTED) AND THE AVAILABLE SERVER IS ONLINE, REDIRECT THE REQUEST TO THAT SERVER
+      if (!OScenarioThreadLocal.INSTANCE.isRunModeDistributed()) {
+        if (dManager.isNodeAvailable(ownerServer, getName())) {
+          final String ownerUUID = dManager.getNodeUuidByName(ownerServer);
+          if (ownerUUID != null) {
+            final ODocument doc = dManager.getNodeConfigurationByUuid(ownerUUID, true);
+            if (doc != null) {
+              final String ownerServerIPAddress = ODistributedAbstractPlugin.getListeningBinaryAddress(doc);
 
-      dbCfg.getClusterOwner(newClusterName);
+              OLogManager.instance().info(this,
+                  "Local node '" + localNodeName + "' is not the owner for cluster '" + clusterName + "' (it is '" + ownerServer
+                      + "'). Sending a redirect to the client to connect it directly to the owner server");
+
+              // FORCE THE REDIRECT AGAINST THE SERVER OWNER OF THE CLUSTER
+              throw new ODistributedRedirectException(getDistributedManager().getLocalNodeName(), ownerServer, ownerServerIPAddress,
+                  "Local node '" + localNodeName + "' is not the owner for cluster '" + clusterName + "' (it is '" + ownerServer
+                      + "')");
+            }
+          }
+        }
+      }
 
       // FORCE THE RETRY OF THE OPERATION
       throw new ODistributedConfigurationChangedException(
-          "Local node '" + localNodeName + "' is not the owner for cluster '" + clusterName + "' (it is '" + ownerNode + "')");
+          "Local node '" + localNodeName + "' is not the owner for cluster '" + clusterName + "' (it is '" + ownerServer + "')");
     }
 
-    if (!ownerNode.equals(localNodeName))
+    if (!ownerServer.equals(localNodeName))
       throw new ODistributedException("Error on inserting into cluster '" + clusterName + "' where local node '" + localNodeName
-          + "' is not the master of it, but it is '" + ownerNode + "'");
+          + "' is not the master of it, but it is '" + ownerServer + "'");
 
     // OVERWRITE CLUSTER
     clusterName = newClusterName;

@@ -416,7 +416,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         connection.setTokenBytes(null);
         connection.acquire();
       } else {
-        // STANDAR FLOW
+        // STANDARD FLOW
         if (!tokenConnection) {
           // ARRIVED HERE FOR DIRECT TOKEN CONNECTION, BUT OLD STYLE SESSION.
           throw new OIOException("Found unknown session " + clientTxId);

@@ -49,7 +49,10 @@ import java.io.StringWriter;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
@@ -162,6 +165,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
    *                             During storage restore procedure this record is monitored and if given record is present then
    *                             rebuild of all indexes is performed.
    * @param lockName             Name of lock (usually name of component) which is going participate in atomic operation.
+   *
    * @return Instance of active atomic operation.
    */
   public OAtomicOperation startAtomicOperation(String lockName, boolean trackNonTxOperations) throws IOException {
@@ -320,6 +324,10 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     }
 
     return id;
+  }
+
+  public boolean isFrozen() {
+    return freezeRequests.get() > 0;
   }
 
   public void releaseAtomicOperations(long id) {
