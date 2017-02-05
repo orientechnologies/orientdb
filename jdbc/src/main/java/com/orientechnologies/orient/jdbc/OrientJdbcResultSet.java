@@ -1,18 +1,18 @@
 /**
  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- * 	http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
+ * <p>
  * For more information: http://orientdb.com
  */
 package com.orientechnologies.orient.jdbc;
@@ -32,28 +32,9 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
 import java.net.URL;
-import java.sql.Array;
-import java.sql.Blob;
-import java.sql.Clob;
+import java.sql.*;
 import java.sql.Date;
-import java.sql.NClob;
-import java.sql.Ref;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.RowId;
-import java.sql.SQLException;
-import java.sql.SQLFeatureNotSupportedException;
-import java.sql.SQLWarning;
-import java.sql.SQLXML;
-import java.sql.Statement;
-import java.sql.Time;
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -61,7 +42,8 @@ import java.util.stream.Collectors;
  * @author Salvatore Piccione (TXT e-solutions SpA - salvo.picci--at--gmail.com)
  */
 public class OrientJdbcResultSet implements ResultSet {
-  private final List<String> fieldNames;
+  private final List<String>                fieldNames;
+  private final OrientJdbcResultSetMetaData resultSetMetaData;
   private List<ODocument> records = null;
   private OrientJdbcStatement statement;
   private int cursor   = -1;
@@ -71,8 +53,12 @@ public class OrientJdbcResultSet implements ResultSet {
   private int       concurrency;
   private int       holdability;
 
-  protected OrientJdbcResultSet(final OrientJdbcStatement statement, final List<ODocument> records, final int type,
-      final int concurrency, int holdability) throws SQLException {
+  protected OrientJdbcResultSet(final OrientJdbcStatement statement,
+      final List<ODocument> records,
+      final int type,
+      final int concurrency,
+      int holdability) throws SQLException {
+
     this.statement = statement;
     this.records = records;
     rowCount = records.size();
@@ -105,6 +91,8 @@ public class OrientJdbcResultSet implements ResultSet {
       throw new SQLException(
           "Bad ResultSet Holdability type: " + holdability + " instead of one of the following values: " + HOLD_CURSORS_OVER_COMMIT
               + " or" + CLOSE_CURSORS_AT_COMMIT);
+
+    resultSetMetaData = new OrientJdbcResultSetMetaData(this);
   }
 
   private List<String> extractFieldNames(OrientJdbcStatement statement) {
@@ -221,7 +209,7 @@ public class OrientJdbcResultSet implements ResultSet {
   }
 
   public ResultSetMetaData getMetaData() throws SQLException {
-    return new OrientJdbcResultSetMetaData(this);
+    return resultSetMetaData;
   }
 
   public void deleteRow() throws SQLException {
@@ -249,11 +237,22 @@ public class OrientJdbcResultSet implements ResultSet {
   }
 
   public Array getArray(int columnIndex) throws SQLException {
-    return null;
+    return getArray(fieldNames.get(getFieldIndex(columnIndex)));
+
   }
 
   public Array getArray(String columnLabel) throws SQLException {
-    return null;
+
+    OType columnType = document.fieldType(columnLabel);
+
+    assert columnType.isEmbedded() && columnType.isMultiValue();
+
+    System.out.println("columnType.name() = " + columnType.getDefaultJavaType());
+
+    OType.EMBEDDEDLIST.getDefaultJavaType();
+    Array array = new OrientJdbcArray(document.field(columnLabel));
+
+    return array;
   }
 
   public InputStream getAsciiStream(int columnIndex) throws SQLException {
@@ -465,8 +464,16 @@ public class OrientJdbcResultSet implements ResultSet {
     return 0;
   }
 
+  public void setFetchDirection(int direction) throws SQLException {
+
+  }
+
   public int getFetchSize() throws SQLException {
     return rowCount;
+  }
+
+  public void setFetchSize(int rows) throws SQLException {
+
   }
 
   public float getFloat(int columnIndex) throws SQLException {
@@ -775,14 +782,6 @@ public class OrientJdbcResultSet implements ResultSet {
   public boolean rowUpdated() throws SQLException {
 
     return false;
-  }
-
-  public void setFetchDirection(int direction) throws SQLException {
-
-  }
-
-  public void setFetchSize(int rows) throws SQLException {
-
   }
 
   public void updateArray(int columnIndex, Array x) throws SQLException {

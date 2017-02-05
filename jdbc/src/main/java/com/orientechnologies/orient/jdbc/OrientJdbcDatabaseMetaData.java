@@ -1,18 +1,18 @@
 /**
  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- * 	http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
+ * <p>
  * For more information: http://orientdb.com
  */
 package com.orientechnologies.orient.jdbc;
@@ -29,18 +29,8 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.ResultSet;
-import java.sql.RowIdLifetime;
-import java.sql.SQLException;
-import java.sql.Types;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.sql.*;
+import java.util.*;
 
 import static com.orientechnologies.orient.core.OConstants.ORIENT_VERSION_MAJOR;
 import static com.orientechnologies.orient.core.OConstants.ORIENT_VERSION_MINOR;
@@ -186,7 +176,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
   public String getSQLKeywords() throws SQLException {
 
     return "@rid,@class,@version,@size,@type,@this,CONTAINS,CONTAINSALL,CONTAINSKEY,"
-           + "CONTAINSVALUE,CONTAINSTEXT,MATCHES,TRAVERSE";
+        + "CONTAINSVALUE,CONTAINSTEXT,MATCHES,TRAVERSE";
   }
 
   public String getNumericFunctions() throws SQLException {
@@ -648,7 +638,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
     }
 
     return new OrientJdbcResultSet(new OrientJdbcStatement(connection), records, ResultSet.TYPE_FORWARD_ONLY,
-                                   ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
+        ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
   }
 
   public ResultSet getProcedureColumns(String catalog, String schemaPattern, String procedureNamePattern, String columnNamePattern)
@@ -658,31 +648,31 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
     final OFunction f = metadata.getFunctionLibrary().getFunction(procedureNamePattern);
 
     for (String p : f.getParameters()) {
-      final ODocument doc = new ODocument();
-      doc.field("PROCEDURE_CAT", (Object) null);
-      doc.field("PROCEDURE_SCHEM", (Object) null);
-      doc.field("PROCEDURE_NAME", f.getName());
-      doc.field("COLUMN_NAME", p);
-      doc.field("COLUMN_TYPE", procedureColumnIn);
-      doc.field("DATA_TYPE", java.sql.Types.OTHER);
-      doc.field("SPECIFIC_NAME", f.getName());
+      final ODocument doc = new ODocument()
+          .field("PROCEDURE_CAT", (Object) null)
+          .field("PROCEDURE_SCHEM", (Object) null)
+          .field("PROCEDURE_NAME", f.getName())
+          .field("COLUMN_NAME", p)
+          .field("COLUMN_TYPE", procedureColumnIn)
+          .field("DATA_TYPE", java.sql.Types.OTHER)
+          .field("SPECIFIC_NAME", f.getName());
 
       records.add(doc);
     }
 
-    final ODocument doc = new ODocument();
-    doc.field("PROCEDURE_CAT", (Object) null);
-    doc.field("PROCEDURE_SCHEM", (Object) null);
-    doc.field("PROCEDURE_NAME", f.getName());
-    doc.field("COLUMN_NAME", "return");
-    doc.field("COLUMN_TYPE", procedureColumnReturn);
-    doc.field("DATA_TYPE", java.sql.Types.OTHER);
-    doc.field("SPECIFIC_NAME", f.getName());
+    final ODocument doc = new ODocument()
+        .field("PROCEDURE_CAT", (Object) null)
+        .field("PROCEDURE_SCHEM", (Object) null)
+        .field("PROCEDURE_NAME", f.getName())
+        .field("COLUMN_NAME", "return")
+        .field("COLUMN_TYPE", procedureColumnReturn)
+        .field("DATA_TYPE", java.sql.Types.OTHER)
+        .field("SPECIFIC_NAME", f.getName());
 
     records.add(doc);
 
     return new OrientJdbcResultSet(new OrientJdbcStatement(connection), records, ResultSet.TYPE_FORWARD_ONLY,
-                                   ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
+        ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
   }
 
   @Override
@@ -701,7 +691,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
         type = "TABLE";
 
       if (tableTypes.contains(type) && (tableNamePattern == null
-                                        || tableNamePattern.equals("%") || tableNamePattern.equalsIgnoreCase(className))) {
+          || tableNamePattern.equals("%") || tableNamePattern.equalsIgnoreCase(className))) {
         final ODocument doc = new ODocument()
             .field("TABLE_CAT", database.getName())
             .field("TABLE_SCHEM", database.getName())
@@ -715,17 +705,17 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
     }
 
     return new OrientJdbcResultSet(new OrientJdbcStatement(connection), records, ResultSet.TYPE_FORWARD_ONLY,
-                                   ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
+        ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
   }
 
   @Override
   public ResultSet getSchemas() throws SQLException {
     final List<ODocument> records = new ArrayList<ODocument>();
     records.add(new ODocument().field("TABLE_SCHEM", database.getName())
-                               .field("TABLE_CATALOG", database.getName()));
+        .field("TABLE_CATALOG", database.getName()));
 
     return new OrientJdbcResultSet(new OrientJdbcStatement(connection), records, ResultSet.TYPE_FORWARD_ONLY,
-                                   ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
+        ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
   }
 
   public ResultSet getCatalogs() throws SQLException {
@@ -733,7 +723,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
     records.add(new ODocument().field("TABLE_CAT", database.getName()));
 
     return new OrientJdbcResultSet(new OrientJdbcStatement(connection), records, ResultSet.TYPE_FORWARD_ONLY,
-                                   ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
+        ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
   }
 
   public ResultSet getTableTypes() throws SQLException {
@@ -746,13 +736,13 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
     }
 
     ResultSet result = new OrientJdbcResultSet(stmt, records, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY,
-                                               ResultSet.HOLD_CURSORS_OVER_COMMIT);
+        ResultSet.HOLD_CURSORS_OVER_COMMIT);
 
     return result;
   }
 
   public ResultSet getColumns(final String catalog, final String schemaPattern, final String tableNamePattern,
-                              final String columnNamePattern) throws SQLException {
+      final String columnNamePattern) throws SQLException {
     final List<ODocument> records = new ArrayList<ODocument>();
     final OClass clazz = database.getMetadata().getSchema().getClass(tableNamePattern);
     if (clazz != null) {
@@ -768,11 +758,11 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
       }
     }
     return new OrientJdbcResultSet(new OrientJdbcStatement(connection), records, ResultSet.TYPE_FORWARD_ONLY,
-                                   ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
+        ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
   }
 
   public ResultSet getColumnPrivileges(final String catalog, final String schema, final String table,
-                                       final String columnNamePattern)
+      final String columnNamePattern)
       throws SQLException {
     return null;
   }
@@ -824,7 +814,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
     final OrientJdbcStatement iOrientJdbcStatement = new OrientJdbcStatement(connection);
 
     final ResultSet result = new OrientJdbcResultSet(iOrientJdbcStatement, records, ResultSet.TYPE_FORWARD_ONLY,
-                                                     ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
+        ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
     return result;
   }
 
@@ -837,7 +827,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
   }
 
   public ResultSet getCrossReference(String parentCatalog, String parentSchema, String parentTable, String foreignCatalog,
-                                     String foreignSchema, String foreignTable) throws SQLException {
+      String foreignSchema, String foreignTable) throws SQLException {
 
     return null;
   }
@@ -845,91 +835,120 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
   public ResultSet getTypeInfo() throws SQLException {
     final List<ODocument> info = new ArrayList<ODocument>();
 
-    info.add(new ODocument().field("TYPE_NAME", OType.BINARY.toString())
-                            .field("DATA_TYPE", Types.BINARY)
-                            .field("NULLABLE", DatabaseMetaData.typeNullable)
-                            .field("CASE_SENSITIVE", true)
-                            .field("SEARCHABLE", true));
-    info.add(new ODocument().field("TYPE_NAME", OType.BOOLEAN.toString())
-                            .field("DATA_TYPE", Types.BOOLEAN)
-                            .field("NULLABLE", DatabaseMetaData.typeNullable)
-                            .field("CASE_SENSITIVE", true)
-                            .field("SEARCHABLE", true));
-    info.add(new ODocument().field("TYPE_NAME", OType.BYTE.toString())
-                            .field("DATA_TYPE", Types.TINYINT)
-                            .field("NULLABLE", DatabaseMetaData.typeNullable)
-                            .field("CASE_SENSITIVE", true)
-                            .field("UNSIGNED_ATTRIBUTE", true)
-                            .field("SEARCHABLE", true));
-    info.add(new ODocument().field("TYPE_NAME", OType.DATE.toString())
-                            .field("DATA_TYPE", Types.DATE)
-                            .field("NULLABLE", DatabaseMetaData.typeNullable)
-                            .field("CASE_SENSITIVE", true)
-                            .field("SEARCHABLE", true));
-    info.add(new ODocument().field("TYPE_NAME", OType.DATETIME.toString())
-                            .field("DATA_TYPE", Types.DATE)
-                            .field("NULLABLE", DatabaseMetaData.typeNullable)
-                            .field("CASE_SENSITIVE", true)
-                            .field("SEARCHABLE", true));
-    info.add(new ODocument().field("TYPE_NAME", OType.DECIMAL.toString())
-                            .field("DATA_TYPE", Types.DECIMAL)
-                            .field("NULLABLE", DatabaseMetaData.typeNullable)
-                            .field("CASE_SENSITIVE", true)
-                            .field("UNSIGNED_ATTRIBUTE", false)
-                            .field("SEARCHABLE", true));
-    info.add(new ODocument().field("TYPE_NAME", OType.FLOAT.toString())
-                            .field("DATA_TYPE", Types.FLOAT)
-                            .field("NULLABLE", DatabaseMetaData.typeNullable)
-                            .field("CASE_SENSITIVE", true)
-                            .field("UNSIGNED_ATTRIBUTE", false)
-                            .field("SEARCHABLE", true));
-    info.add(new ODocument().field("TYPE_NAME", OType.DOUBLE.toString())
-                            .field("DATA_TYPE", Types.DOUBLE)
-                            .field("NULLABLE", DatabaseMetaData.typeNullable)
-                            .field("CASE_SENSITIVE", true)
-                            .field("UNSIGNED_ATTRIBUTE", false)
-                            .field("SEARCHABLE", true));
-    info.add(new ODocument().field("TYPE_NAME", OType.EMBEDDED.toString())
-                            .field("DATA_TYPE", Types.STRUCT)
-                            .field("NULLABLE", DatabaseMetaData.typeNullable)
-                            .field("CASE_SENSITIVE", true)
-                            .field("SEARCHABLE", true));
-    info.add(new ODocument().field("TYPE_NAME", OType.EMBEDDEDLIST.toString())
-                            .field("DATA_TYPE", Types.ARRAY)
-                            .field("NULLABLE", DatabaseMetaData.typeNullable)
-                            .field("CASE_SENSITIVE", true)
-                            .field("SEARCHABLE", true));
-    info.add(new ODocument().field("TYPE_NAME", OType.INTEGER.toString())
-                            .field("DATA_TYPE", Types.INTEGER)
-                            .field("NULLABLE", DatabaseMetaData.typeNullable)
-                            .field("CASE_SENSITIVE", true)
-                            .field("UNSIGNED_ATTRIBUTE", false)
-                            .field("SEARCHABLE", true));
-    info.add(new ODocument().field("TYPE_NAME", OType.LINKLIST.toString())
-                            .field("DATA_TYPE", Types.ARRAY)
-                            .field("NULLABLE", DatabaseMetaData.typeNullable)
-                            .field("CASE_SENSITIVE", true)
-                            .field("SEARCHABLE", true));
-    info.add(new ODocument().field("TYPE_NAME", OType.LONG.toString())
-                            .field("DATA_TYPE", Types.BIGINT)
-                            .field("NULLABLE", DatabaseMetaData.typeNullable)
-                            .field("CASE_SENSITIVE", true)
-                            .field("UNSIGNED_ATTRIBUTE", false)
-                            .field("SEARCHABLE", true));
-    info.add(new ODocument().field("TYPE_NAME", OType.STRING.toString())
-                            .field("DATA_TYPE", Types.VARCHAR)
-                            .field("NULLABLE", DatabaseMetaData.typeNullable)
-                            .field("CASE_SENSITIVE", true)
-                            .field("SEARCHABLE", true));
-    info.add(new ODocument().field("TYPE_NAME", OType.SHORT.toString())
-                            .field("DATA_TYPE", Types.SMALLINT)
-                            .field("NULLABLE", DatabaseMetaData.typeNullable)
-                            .field("CASE_SENSITIVE", true)
-                            .field("UNSIGNED_ATTRIBUTE", false)
-                            .field("SEARCHABLE", true));
+    info.add(new ODocument()
+        .field("TYPE_NAME", OType.BINARY.toString())
+        .field("DATA_TYPE", Types.BINARY)
+        .field("NULLABLE", DatabaseMetaData.typeNullable)
+        .field("CASE_SENSITIVE", true)
+        .field("SEARCHABLE", true));
 
-    return new OrientJdbcResultSet(new OrientJdbcStatement(connection), info, ResultSet.TYPE_FORWARD_ONLY,
-                                   ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
+    info.add(new ODocument()
+        .field("TYPE_NAME", OType.BOOLEAN.toString())
+        .field("DATA_TYPE", Types.BOOLEAN)
+        .field("NULLABLE", DatabaseMetaData.typeNullable)
+        .field("CASE_SENSITIVE", true)
+        .field("SEARCHABLE", true));
+
+    info.add(new ODocument()
+        .field("TYPE_NAME", OType.BYTE.toString())
+        .field("DATA_TYPE", Types.TINYINT)
+        .field("NULLABLE", DatabaseMetaData.typeNullable)
+        .field("CASE_SENSITIVE", true)
+        .field("UNSIGNED_ATTRIBUTE", true)
+        .field("SEARCHABLE", true));
+
+    info.add(new ODocument()
+        .field("TYPE_NAME", OType.DATE.toString())
+        .field("DATA_TYPE", Types.DATE)
+        .field("NULLABLE", DatabaseMetaData.typeNullable)
+        .field("CASE_SENSITIVE", true)
+        .field("SEARCHABLE", true));
+
+    info.add(new ODocument()
+        .field("TYPE_NAME", OType.DATETIME.toString())
+        .field("DATA_TYPE", Types.DATE)
+        .field("NULLABLE", DatabaseMetaData.typeNullable)
+        .field("CASE_SENSITIVE", true)
+        .field("SEARCHABLE", true));
+
+    info.add(new ODocument()
+        .field("TYPE_NAME", OType.DECIMAL.toString())
+        .field("DATA_TYPE", Types.DECIMAL)
+        .field("NULLABLE", DatabaseMetaData.typeNullable)
+        .field("CASE_SENSITIVE", true)
+        .field("UNSIGNED_ATTRIBUTE", false)
+        .field("SEARCHABLE", true));
+
+    info.add(new ODocument()
+        .field("TYPE_NAME", OType.FLOAT.toString())
+        .field("DATA_TYPE", Types.FLOAT)
+        .field("NULLABLE", DatabaseMetaData.typeNullable)
+        .field("CASE_SENSITIVE", true)
+        .field("UNSIGNED_ATTRIBUTE", false)
+        .field("SEARCHABLE", true));
+
+    info.add(new ODocument()
+        .field("TYPE_NAME", OType.DOUBLE.toString())
+        .field("DATA_TYPE", Types.DOUBLE)
+        .field("NULLABLE", DatabaseMetaData.typeNullable)
+        .field("CASE_SENSITIVE", true)
+        .field("UNSIGNED_ATTRIBUTE", false)
+        .field("SEARCHABLE", true));
+
+    info.add(new ODocument()
+        .field("TYPE_NAME", OType.EMBEDDED.toString())
+        .field("DATA_TYPE", Types.STRUCT)
+        .field("NULLABLE", DatabaseMetaData.typeNullable)
+        .field("CASE_SENSITIVE", true)
+        .field("SEARCHABLE", true));
+
+    info.add(new ODocument()
+        .field("TYPE_NAME", OType.EMBEDDEDLIST.toString())
+        .field("DATA_TYPE", Types.ARRAY)
+        .field("NULLABLE", DatabaseMetaData.typeNullable)
+        .field("CASE_SENSITIVE", true)
+        .field("SEARCHABLE", true));
+
+    info.add(new ODocument()
+        .field("TYPE_NAME", OType.INTEGER.toString())
+        .field("DATA_TYPE", Types.INTEGER)
+        .field("NULLABLE", DatabaseMetaData.typeNullable)
+        .field("CASE_SENSITIVE", true)
+        .field("UNSIGNED_ATTRIBUTE", false)
+        .field("SEARCHABLE", true));
+
+    info.add(new ODocument()
+        .field("TYPE_NAME", OType.LINKLIST.toString())
+        .field("DATA_TYPE", Types.ARRAY)
+        .field("NULLABLE", DatabaseMetaData.typeNullable)
+        .field("CASE_SENSITIVE", true)
+        .field("SEARCHABLE", true));
+
+    info.add(new ODocument().field("TYPE_NAME", OType.LONG.toString())
+        .field("DATA_TYPE", Types.BIGINT)
+        .field("NULLABLE", DatabaseMetaData.typeNullable)
+        .field("CASE_SENSITIVE", true)
+        .field("UNSIGNED_ATTRIBUTE", false)
+        .field("SEARCHABLE", true));
+
+    info.add(new ODocument().field("TYPE_NAME", OType.STRING.toString())
+        .field("DATA_TYPE", Types.VARCHAR)
+        .field("NULLABLE", DatabaseMetaData.typeNullable)
+        .field("CASE_SENSITIVE", true)
+        .field("SEARCHABLE", true));
+
+    info.add(new ODocument().field("TYPE_NAME", OType.SHORT.toString())
+        .field("DATA_TYPE", Types.SMALLINT)
+        .field("NULLABLE", DatabaseMetaData.typeNullable)
+        .field("CASE_SENSITIVE", true)
+        .field("UNSIGNED_ATTRIBUTE", false)
+        .field("SEARCHABLE", true));
+
+    return new OrientJdbcResultSet(new OrientJdbcStatement(connection),
+        info,
+        ResultSet.TYPE_FORWARD_ONLY,
+        ResultSet.CONCUR_READ_ONLY,
+        ResultSet.HOLD_CURSORS_OVER_COMMIT);
   }
 
   public ResultSet getIndexInfo(String catalog, String schema, String table, boolean unique, boolean approximate)
@@ -949,7 +968,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
     final List<ODocument> records = new ArrayList<ODocument>();
 
     for (OIndex<?> idx : indexes) {
-      boolean notUniqueIndex = !( idx.getType().equals(INDEX_TYPE.UNIQUE.name()));
+      boolean notUniqueIndex = !(idx.getType().equals(INDEX_TYPE.UNIQUE.name()));
 
       final String fieldNames = idx.getDefinition().getFields().toString();
       ODocument doc = new ODocument()
@@ -967,7 +986,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
     final OrientJdbcStatement iOrientJdbcStatement = new OrientJdbcStatement(connection);
 
     final ResultSet result = new OrientJdbcResultSet(iOrientJdbcStatement, records, ResultSet.TYPE_FORWARD_ONLY,
-                                                     ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
+        ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
     return result;
   }
 
@@ -1047,7 +1066,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
     }
 
     return new OrientJdbcResultSet(new OrientJdbcStatement(connection), records, ResultSet.TYPE_FORWARD_ONLY,
-                                   ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
+        ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
   }
 
   public Connection getConnection() throws SQLException {
@@ -1090,7 +1109,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
     }
 
     return new OrientJdbcResultSet(new OrientJdbcStatement(connection), records, ResultSet.TYPE_FORWARD_ONLY,
-                                   ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
+        ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
   }
 
   public ResultSet getSuperTables(final String catalog, final String schemaPattern, final String tableNamePattern)
@@ -1110,7 +1129,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
     }
 
     return new OrientJdbcResultSet(new OrientJdbcStatement(connection), records, ResultSet.TYPE_FORWARD_ONLY,
-                                   ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
+        ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
   }
 
   public ResultSet getAttributes(String catalog, String schemaPattern, String typeNamePattern, String attributeNamePattern)
@@ -1202,7 +1221,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
     }
 
     return new OrientJdbcResultSet(new OrientJdbcStatement(connection), records, ResultSet.TYPE_FORWARD_ONLY,
-                                   ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
+        ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
   }
 
   public ResultSet getFunctionColumns(String catalog, String schemaPattern, String functionNamePattern, String columnNamePattern)
@@ -1236,7 +1255,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
     records.add(doc);
 
     return new OrientJdbcResultSet(new OrientJdbcStatement(connection), records, ResultSet.TYPE_FORWARD_ONLY,
-                                   ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
+        ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
   }
 
   public ResultSet getPseudoColumns(String arg0, String arg1, String arg2, String arg3) throws SQLException {
@@ -1249,11 +1268,15 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
 
   private ODocument getPropertyAsDocument(final OClass clazz, final OProperty prop) {
     final OType type = prop.getType();
-    return new ODocument().field("TABLE_CAT", database.getName()).field("TABLE_NAME", clazz.getName())
-                          .field("COLUMN_NAME", prop.getName()).field("DATA_TYPE", OrientJdbcResultSetMetaData.getSqlType(type))
-                          .field("TYPE_NAME", type.name()).field("COLUMN_SIZE", 1)
-                          .field("NULLABLE", !prop.isNotNull() ? columnNoNulls : columnNullable)
-                          .field("IS_NULLABLE", prop.isNotNull() ? "NO" : "YES");
+    return new ODocument()
+        .field("TABLE_CAT", database.getName())
+        .field("TABLE_NAME", clazz.getName())
+        .field("COLUMN_NAME", prop.getName())
+        .field("DATA_TYPE", OrientJdbcResultSetMetaData.getSqlType(type))
+        .field("TYPE_NAME", type.name())
+        .field("COLUMN_SIZE", 1)
+        .field("NULLABLE", !prop.isNotNull() ? columnNoNulls : columnNullable)
+        .field("IS_NULLABLE", prop.isNotNull() ? "NO" : "YES");
   }
 
   public <T> T unwrap(Class<T> iface) throws SQLException {

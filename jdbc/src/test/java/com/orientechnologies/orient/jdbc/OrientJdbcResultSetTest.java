@@ -1,18 +1,18 @@
 /**
  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
+ * <p>
  * For more information: http://orientdb.com
  */
 package com.orientechnologies.orient.jdbc;
@@ -22,11 +22,10 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.junit.Test;
 
-import java.sql.ResultSet;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class OrientJdbcResultSetTest extends OrientJdbcBaseTest {
 
@@ -176,4 +175,42 @@ public class OrientJdbcResultSetTest extends OrientJdbcBaseTest {
 
   }
 
+  @Test
+  public void shouldFetchEmbeddedList() throws Exception {
+
+    Statement stmt = conn.createStatement();
+
+    stmt.executeUpdate("CREATE CLASS ListDemo");
+    stmt.executeUpdate("CREATE PROPERTY ListDemo.names EMBEDDEDLIST STRING ");
+    stmt.executeUpdate("INSERT INTO ListDemo (names) VALUES ([\"John\",\"Chris\"])");
+    stmt.executeUpdate("INSERT INTO ListDemo (names) VALUES ([\"Jill\",\"Karl\",\"Susan\"]) ");
+    stmt.close();
+
+    stmt = conn.createStatement();
+
+    stmt.execute("select names from ListDemo");
+
+    ResultSet resultSet = stmt.getResultSet();
+
+    ResultSetMetaData metaData = resultSet.getMetaData();
+
+    System.out.println("metaData.getColumnTypeName(1) = " + metaData.getColumnTypeName(1));
+
+    System.out.println("metaData.getColumnType(1) = " + metaData.getColumnType(1));
+
+    System.out.println("metaData.getColumnCalssName(1) = " + metaData.getColumnClassName(1));
+
+    assertThat(metaData.getColumnType(1)).isEqualTo(Types.ARRAY);
+
+    while (resultSet.next()) {
+
+      System.out.println("resultSet.getArray(1) = " + resultSet.getArray(1));
+      Array namesRef = resultSet.getArray(1);
+
+      Object[] names = (Object[]) namesRef.getArray();
+
+      assertThat(names).isNotNull();
+      System.out.println("names = " + (String)names[0]);
+    }
+  }
 }

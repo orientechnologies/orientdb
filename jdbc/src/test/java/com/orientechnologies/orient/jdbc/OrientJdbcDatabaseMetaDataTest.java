@@ -20,6 +20,7 @@ package com.orientechnologies.orient.jdbc;
 import com.orientechnologies.orient.core.OConstants;
 import org.junit.Before;
 import org.junit.Test;
+import sun.text.resources.BreakIteratorInfo;
 
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
@@ -159,7 +160,7 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
 
   @Test
   public void shouldFetchAllTables() throws SQLException {
-    ResultSet rs = this.metaData.getTables(null, null, null, null);
+    ResultSet rs = metaData.getTables(null, null, null, null);
     int tableCount = rsSizeOf(rs);
 
     assertThat(tableCount).isEqualTo(16);
@@ -177,9 +178,10 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
 
   @Test
   public void shouldFillSchemaAndCatalogWithDatabaseName() throws SQLException {
-    ResultSet rs = this.metaData.getTables(null, null, null, null);
+    ResultSet rs = metaData.getTables(null, null, null, null);
 
     while (rs.next()) {
+      assertThat(rs.getString("TABLE_NAME")).isNotEmpty();
       assertThat(rs.getString("TABLE_SCHEM")).isEqualTo("OrientJdbcDatabaseMetaDataTest");
       assertThat(rs.getString("TABLE_CAT")).isEqualTo("OrientJdbcDatabaseMetaDataTest");
     }
@@ -188,19 +190,19 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
 
   @Test
   public void shouldGetAllTablesFilteredByAllTypes() throws SQLException {
-    ResultSet rs = this.metaData.getTableTypes();
+    ResultSet rs = metaData.getTableTypes();
     List<String> tableTypes = new ArrayList<String>(2);
     while (rs.next()) {
       tableTypes.add(rs.getString(1));
     }
-    rs = this.metaData.getTables(null, null, null, tableTypes.toArray(new String[2]));
+    rs = metaData.getTables(null, null, null, tableTypes.toArray(new String[2]));
     int tableCount = rsSizeOf(rs);
     assertThat(tableCount).isEqualTo(16);
   }
 
   @Test
   public void getNoTablesFilteredByEmptySetOfTypes() throws SQLException {
-    final ResultSet rs = this.metaData.getTables(null, null, null, new String[0]);
+    final ResultSet rs = metaData.getTables(null, null, null, new String[0]);
     int tableCount = rsSizeOf(rs);
 
     assertThat(tableCount).isEqualTo(0);
@@ -208,21 +210,38 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
 
   @Test
   public void getSingleTable() throws SQLException {
-    ResultSet rs = this.metaData.getTables(null, null, "ouser", null);
+    ResultSet rs = metaData.getTables(null, null, "ouser", null);
+    rs.next();
+    for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
 
-    assertThat(rsSizeOf(rs)).isEqualTo(1);
+      System.out.println(
+      rs.getMetaData().getColumnName(i));
+    }
+    assertThat(rs.getString("TABLE_NAME")).isEqualTo("OUser");
+    assertThat(rs.getString("TABLE_CAT")).isEqualTo("OrientJdbcDatabaseMetaDataTest");
+    assertThat(rs.getString("TABLE_SCHEM")).isEqualTo("OrientJdbcDatabaseMetaDataTest");
+    assertThat(rs.getString("REMARKS")).isNull();
+    assertThat(rs.getString("REF_GENERATION")).isNull();
+    assertThat(rs.getString("TYPE_NAME")).isNull();
+
+//
+    assertThat(rs.next()).isFalse();
   }
 
   @Test
   public void shouldGetSingleColumnOfArticle() throws SQLException {
-    ResultSet rs = this.metaData.getColumns(null, null, "Article", "uuid");
+    ResultSet rs = metaData.getColumns(null, null, "Article", "uuid");
+    rs.next();
 
-    assertThat(rsSizeOf(rs)).isEqualTo(1);
+    assertThat(rs.getString("TABLE_NAME")).isEqualTo("Article");
+    assertThat(rs.getString("COLUMN_NAME")).isEqualTo("uuid");
+
+    assertThat(rs.next()).isFalse();
   }
 
   @Test
   public void shouldGetAllColumnsOfArticle() throws SQLException {
-    ResultSet rs = this.metaData.getColumns(null, null, "Article", null);
+    ResultSet rs = metaData.getColumns(null, null, "Article", null);
 
     assertThat(rsSizeOf(rs)).isEqualTo(5);
   }
