@@ -175,15 +175,32 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
   @Test
   public void getSingleTable() throws SQLException {
     ResultSet rs = metaData.getTables(null, null, "ouser", null);
+    rs.next();
+    for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
 
-    assertThat(sizeOf(rs)).isEqualTo(1);
+      System.out.println(
+      rs.getMetaData().getColumnName(i));
+    }
+    assertThat(rs.getString("TABLE_NAME")).isEqualTo("OUser");
+    assertThat(rs.getString("TABLE_CAT")).isEqualTo("OrientJdbcDatabaseMetaDataTest");
+    assertThat(rs.getString("TABLE_SCHEM")).isEqualTo("OrientJdbcDatabaseMetaDataTest");
+    assertThat(rs.getString("REMARKS")).isNull();
+    assertThat(rs.getString("REF_GENERATION")).isNull();
+    assertThat(rs.getString("TYPE_NAME")).isNull();
+
+//
+    assertThat(rs.next()).isFalse();
   }
 
   @Test
   public void shouldGetSingleColumnOfArticle() throws SQLException {
     ResultSet rs = metaData.getColumns(null, null, "Article", "uuid");
+    rs.next();
 
-    assertThat(sizeOf(rs)).isEqualTo(1);
+    assertThat(rs.getString("TABLE_NAME")).isEqualTo("Article");
+    assertThat(rs.getString("COLUMN_NAME")).isEqualTo("uuid");
+
+    assertThat(rs.next()).isFalse();
   }
 
   @Test
