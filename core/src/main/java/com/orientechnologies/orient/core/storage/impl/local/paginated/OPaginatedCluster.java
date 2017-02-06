@@ -565,7 +565,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
       } while (from < to);
 
-      updateClusterState(1, recordsSizeDiff, atomicOperation);
+      updateClusterState(fileId, pinnedStateEntryIndex, 1, recordsSizeDiff, atomicOperation);
 
       recordCreationResult = new RecordCreationResult(firstPageIndex, firstPagePosition, version);
 
@@ -599,7 +599,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
       final AddEntryResult addEntryResult = addEntry(fileId, pinnedStateEntryIndex, recordVersion, entryContent, atomicOperation);
 
-      updateClusterState(1, addEntryResult.recordsSizeDiff, atomicOperation);
+      updateClusterState(fileId, pinnedStateEntryIndex, 1, addEntryResult.recordsSizeDiff, atomicOperation);
 
       recordCreationResult = new RecordCreationResult(addEntryResult.pageIndex, addEntryResult.pagePosition,
           addEntryResult.recordVersion);
@@ -845,7 +845,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
           recordPosition = getRecordPosition(nextPagePointer);
         } while (nextPagePointer >= 0);
 
-        updateClusterState(-1, -removedContentSize, atomicOperation);
+        updateClusterState(fileId, pinnedStateEntryIndex, -1, -removedContentSize, atomicOperation);
 
         clusterPositionMap.remove(clusterPosition);
         addAtomicOperationMetadata(new ORecordId(id, clusterPosition), atomicOperation);
@@ -890,7 +890,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
         }
 
         try {
-          updateClusterState(-1, 0, atomicOperation);
+          updateClusterState(fileId, pinnedStateEntryIndex, -1, 0, atomicOperation);
           clusterPositionMap.remove(position);
 
           addAtomicOperationMetadata(new ORecordId(id, position), atomicOperation);
@@ -1137,7 +1137,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
           clusterPositionMap.update(clusterPosition, new OClusterPositionMapBucket.PositionEntry(newPageIndex, newRecordPosition));
         }
 
-        updateClusterState(0, sizeDiff, atomicOperation);
+        updateClusterState(fileId, pinnedStateEntryIndex, 0, sizeDiff, atomicOperation);
 
         addAtomicOperationMetadata(new ORecordId(id, clusterPosition), atomicOperation);
         endAtomicOperation(false, null);
@@ -1202,7 +1202,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
             final AddEntryResult addEntryResult = addEntry(fileId, pinnedStateEntryIndex, recordVersion, entryContent,
                 atomicOperation);
 
-            updateClusterState(1, addEntryResult.recordsSizeDiff, atomicOperation);
+            updateClusterState(fileId, pinnedStateEntryIndex, 1, addEntryResult.recordsSizeDiff, atomicOperation);
 
             clusterPositionMap.resurrect(clusterPosition,
                 new OClusterPositionMapBucket.PositionEntry(addEntryResult.pageIndex, addEntryResult.pagePosition));
@@ -1233,7 +1233,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
             long prevPageRecordPointer = -1;
             long firstPageIndex = -1;
             int firstPagePosition = -1;
-
 
             int from = 0;
             int to = from + (OClusterPage.MAX_RECORD_SIZE - OByteSerializer.BYTE_SIZE - OLongSerializer.LONG_SIZE);
@@ -1285,7 +1284,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
             } while (from < to);
 
-            updateClusterState(1, recordsSizeDiff, atomicOperation);
+            updateClusterState(fileId, pinnedStateEntryIndex, 1, recordsSizeDiff, atomicOperation);
 
             clusterPositionMap
                 .update(clusterPosition, new OClusterPositionMapBucket.PositionEntry(firstPageIndex, firstPagePosition));
@@ -1353,7 +1352,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   }
 
   @Override
-  public void compress() throws IOException {
+  public void compact() throws IOException {
     startOperation();
     try {
       final long newFileId;
@@ -1362,13 +1361,12 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       final long records = getEntries();
       final String clusterName = getName();
 
-      OLogManager.instance().info(this, "Compression of cluster %s is started %d records to compress",
-          clusterName, records);
+      OLogManager.instance().info(this, "Compaction of cluster %s is started %d records to compress", clusterName, records);
 
       OAtomicOperation atomicOperation = startAtomicOperation(true);
       acquireExclusiveLock();
       try {
-        newFileId = addFile(atomicOperation, getFullName() + DEF_EXTENSION + "t");
+        newFileId = addFile(atomicOperation, getName() + DEF_EXTENSION + "t");
         newStateIndex = initCusterState(newFileId, atomicOperation);
 
         endAtomicOperation(false, null);
@@ -1400,7 +1398,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
             final ORawBuffer buffer = readRecordBuffer(position.clusterPosition, 1, positionEntry);
 
             if (buffer == null)
-              throw new IllegalStateException("Can not add records to new file during data compression");
+              throw new IllegalStateException("Can not add records to new file during data compaction");
 
             recordCreationResults[i] = createDataRecord(newFileId, newStateIndex, buffer.buffer, buffer.version, buffer.recordType,
                 atomicOperation);
@@ -1418,7 +1416,8 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
           processedRecords += positions.length;
           if (processedRecords > 0 && processedRecords % 1000 == 0) {
-            OLogManager.instance().info(this, "Compression of cluster %s : %d records were processed", clusterName, processedRecords);
+            OLogManager.instance()
+                .info(this, "Compaction of cluster %s : %d records were processed", clusterName, processedRecords);
           }
         } catch (RuntimeException e) {
           endAtomicOperation(true, e);
@@ -1453,7 +1452,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       fileId = newFileId;
       pinnedStateEntryIndex = newStateIndex;
 
-      OLogManager.instance().info(this, "%s compression is finished", clusterName);
+      OLogManager.instance().info(this, "%s compaction is finished", clusterName);
 
     } finally {
       completeOperation();
@@ -1804,7 +1803,8 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     storageLocal.getConfiguration().update();
   }
 
-  private void updateClusterState(long sizeDiff, long recordsSizeDiff, OAtomicOperation atomicOperation) throws IOException {
+  private void updateClusterState(long fileId, long pinnedStateEntryIndex, long sizeDiff, long recordsSizeDiff,
+      OAtomicOperation atomicOperation) throws IOException {
     final OCacheEntry pinnedStateEntry = loadPage(atomicOperation, fileId, pinnedStateEntryIndex, true);
     pinnedStateEntry.acquireExclusiveLock();
     try {

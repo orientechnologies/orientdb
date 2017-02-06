@@ -112,7 +112,7 @@ public class OOfflineCluster implements OCluster {
   }
 
   @Override
-  public void compress() throws IOException {
+  public void compact() throws IOException {
     throw new OOfflineClusterException("Cannot compress an offline cluster '" + name + "'");
   }
 

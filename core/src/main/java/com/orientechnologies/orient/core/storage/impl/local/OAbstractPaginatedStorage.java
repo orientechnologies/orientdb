@@ -624,6 +624,29 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
+  public void compactCluster(String clusterName) {
+    final OCluster cluster = getClusterByName(clusterName);
+
+    if (cluster == null)
+      throw new OStorageException("Cluster with name `" + clusterName + "` does not exist");
+
+    checkOpeness();
+    checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
+
+    stateLock.acquireWriteLock();
+    try {
+      checkOpeness();
+      makeStorageDirty();
+
+      cluster.compact();
+
+    } catch (IOException e) {
+      throw OException.wrapException(new OStorageException("Error during compaction of new cluster '" + clusterName), e);
+    } finally {
+      stateLock.releaseWriteLock();
+    }
+  }
+
   public int addCluster(String clusterName, int requestedId, boolean forceListBased, Object... parameters) {
     checkOpeness();
     checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();

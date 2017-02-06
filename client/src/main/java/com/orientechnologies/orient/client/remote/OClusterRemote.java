@@ -139,7 +139,7 @@ public class OClusterRemote implements OCluster {
   }
 
   @Override
-  public void compress() throws IOException {
+  public void compact() throws IOException {
   }
 
   public OPhysicalPosition getPhysicalPosition(OPhysicalPosition iPPosition) throws IOException {
