@@ -41,6 +41,7 @@ import java.util.*;
  */
 public class OrientJdbcResultSet implements ResultSet {
   private final List<String> fieldNames;
+  private final OrientJdbcResultSetMetaData resultSetMetaData;
   private List<ODocument> records = null;
   private OrientJdbcStatement statement;
   private int cursor   = -1;
@@ -84,6 +85,8 @@ public class OrientJdbcResultSet implements ResultSet {
       throw new SQLException(
           "Bad ResultSet Holdability type: " + holdability + " instead of one of the following values: " + HOLD_CURSORS_OVER_COMMIT
               + " or" + CLOSE_CURSORS_AT_COMMIT);
+
+    resultSetMetaData = new OrientJdbcResultSetMetaData(this);
   }
 
   private List<String> extractFieldNames(OrientJdbcStatement statement) {
@@ -222,7 +225,7 @@ public class OrientJdbcResultSet implements ResultSet {
   }
 
   public ResultSetMetaData getMetaData() throws SQLException {
-    return new OrientJdbcResultSetMetaData(this);
+    return resultSetMetaData;
   }
 
   public void deleteRow() throws SQLException {
