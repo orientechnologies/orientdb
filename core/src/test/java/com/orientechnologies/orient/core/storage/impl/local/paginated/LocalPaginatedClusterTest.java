@@ -29,9 +29,7 @@ public class LocalPaginatedClusterTest {
 
   ODatabaseDocumentTx databaseDocumentTx;
 
-  OAtomicOperationsManager atomicOperationsManager;
-
-  @BeforeClass
+    @BeforeClass
   public void beforeClass() throws IOException {
     System.out.println("Start LocalPaginatedClusterTest");
     buildDirectory = System.getProperty("buildDirectory");

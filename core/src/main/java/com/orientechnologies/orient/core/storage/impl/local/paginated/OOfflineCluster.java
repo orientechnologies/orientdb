@@ -112,6 +112,11 @@ public class OOfflineCluster implements OCluster {
   }
 
   @Override
+  public void compress() throws IOException {
+    throw new OOfflineClusterException("Cannot compress an offline cluster '" + name + "'");
+  }
+
+  @Override
   public OPhysicalPosition allocatePosition(byte recordType) throws IOException {
     throw new OOfflineClusterException("Cannot allocat a new position on offline cluster '" + name + "'");
   }

@@ -137,29 +137,35 @@ public class OrientGraphNoTxTest extends GraphTest {
   public void testRemoveUnlinked() {
     Graph graph = generateGraph();
 
-    Vertex x = graph.addVertex(null);
-    Vertex y = graph.addVertex(null);
+    try {
+      Vertex x = graph.addVertex(null);
+      Vertex y = graph.addVertex(null);
 
-    graph.addEdge(null, x, y, "connected_to");
+      graph.addEdge(null, x, y, "connected_to");
 
-    for (Vertex v : graph.getVertices()) {
-      graph.removeVertex(v);
+      for (Vertex v : graph.getVertices()) {
+        graph.removeVertex(v);
+      }
+
+      for (Edge e : graph.getEdges()) {
+        System.out.println("e: " + e);
+      }
+
+    } finally {
+      graph.shutdown();
     }
-
-    for (Edge e : graph.getEdges()) {
-      System.out.println("e: " + e);
-    }
-
-    graph.shutdown();
 
     graph = generateGraph();
 
-    for (Edge e : graph.getEdges()) {
-      graph.removeEdge(e);
+    try {
+      for (Edge e : graph.getEdges()) {
+        graph.removeEdge(e);
+      }
+    } finally {
+      graph.shutdown();
     }
 
-    graph.shutdown();
+    dropGraph("graph");
   }
-
 
 }
