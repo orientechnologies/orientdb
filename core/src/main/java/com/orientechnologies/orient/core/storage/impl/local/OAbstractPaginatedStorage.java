@@ -2247,9 +2247,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       long size = 0;
 
-      for (OCluster c : clusters)
-        if (c != null)
-          size += c.getRecordsSize();
+      stateLock.acquireReadLock();
+      try {
+        for (OCluster c : clusters)
+          if (c != null)
+            size += c.getRecordsSize();
+      } finally {
+        stateLock.releaseReadLock();
+      }
 
       return size;
 
