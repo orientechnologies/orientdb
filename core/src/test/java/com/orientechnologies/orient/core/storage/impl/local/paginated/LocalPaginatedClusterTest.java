@@ -23,8 +23,6 @@ public class LocalPaginatedClusterTest {
   static           OPaginatedCluster   paginatedCluster;
   static           ODatabaseDocumentTx databaseDocumentTx;
 
-  OAtomicOperationsManager atomicOperationsManager;
-
   @BeforeClass
   public static void beforeClass() throws IOException {
 
