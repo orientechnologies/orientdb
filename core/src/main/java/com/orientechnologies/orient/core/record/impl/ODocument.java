@@ -168,7 +168,7 @@ public class ODocument extends ORecordAbstract
    * @param iClass OClass instance
    */
   public ODocument(final OClass iClass) {
-    this(iClass.getName());
+    this(iClass != null ? iClass.getName() : null);
   }
 
   /**

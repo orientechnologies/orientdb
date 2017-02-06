@@ -52,6 +52,12 @@ public class ODocumentTest {
   }
 
   @Test
+  public void testNullConstructor() {
+    new ODocument((String) null);
+    new ODocument((OClass) null);
+  }
+
+  @Test
   public void testClearResetsFieldTypes() throws Exception {
     ODocument doc = new ODocument();
     doc.setFieldType("integer", OType.INTEGER);
