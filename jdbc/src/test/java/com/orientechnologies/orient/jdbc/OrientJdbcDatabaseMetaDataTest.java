@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.jdbc;
 
 import com.orientechnologies.orient.core.OConstants;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -179,7 +180,7 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
     for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
 
       System.out.println(
-      rs.getMetaData().getColumnName(i));
+          rs.getMetaData().getColumnName(i));
     }
     assertThat(rs.getString("TABLE_NAME")).isEqualTo("OUser");
     assertThat(rs.getString("TABLE_CAT")).isEqualTo("OrientJdbcDatabaseMetaDataTest");
@@ -199,6 +200,8 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
 
     assertThat(rs.getString("TABLE_NAME")).isEqualTo("Article");
     assertThat(rs.getString("COLUMN_NAME")).isEqualTo("uuid");
+    assertThat(rs.getString("TYPE_NAME")).isEqualTo("INTEGER");
+    assertThat(rs.getInt("DATA_TYPE")).isEqualTo(4);
 
     assertThat(rs.next()).isFalse();
   }
@@ -207,19 +210,37 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
   public void shouldGetAllColumnsOfArticle() throws SQLException {
     ResultSet rs = metaData.getColumns(null, null, "Article", null);
 
-    assertThat(sizeOf(rs)).isEqualTo(5);
+    while (rs.next()) {
+      assertThat(rs.getString("TABLE_NAME")).isEqualTo("Article");
+      assertThat(rs.getString("COLUMN_NAME")).isIn("date", "uuid", "author", "title", "content");
+      assertThat(rs.getInt("DATA_TYPE")).isIn(9, 12, 4, 91, 2000);
+      assertThat(rs.getString("TYPE_NAME")).isIn("LINK", "DATE", "STRING", "INTEGER");
+
+    }
   }
 
   @Test
-  //FIXME this is not a test: what is the target?
-  public void shouldGetAllFields() throws SQLException {
-    final ResultSet rsmc = conn.getMetaData().getColumns(null, null, "OUser", null);
-    Set<String> fieldNames = new HashSet<String>();
-    while (rsmc.next()) {
-      fieldNames.add(rsmc.getString("COLUMN_NAME"));
-    }
+  public void shouldGetAllIndexesOnArticle() throws Exception {
+    ResultSet rs = metaData.getIndexInfo(null, null, "Article", true, true);
 
-    fieldNames.removeAll(Arrays.asList("name", "password", "roles", "status"));
+    rs.next();
+
+    assertThat(rs.getString("COLUMN_NAME")).isEqualTo("uuid");
+    assertThat(rs.getString("INDEX_NAME")).isEqualTo("Article.uuid");
+    assertThat(rs.getBoolean("NON_UNIQUE")).isFalse();
+
+  }
+
+  @Test
+  public void shouldGetPrimaryKeyOfArticle() throws Exception {
+    ResultSet rs = metaData.getPrimaryKeys(null, null, "Article");
+
+    rs.next();
+    assertThat(rs.getString("TABLE_NAME")).isEqualTo("Article");
+    assertThat(rs.getString("COLUMN_NAME")).isEqualTo("uuid");
+    assertThat(rs.getString("PK_NAME")).isEqualTo("Article.uuid");
+    assertThat(rs.getInt("KEY_SEQ")).isEqualTo(1);
+
   }
 
   private int sizeOf(ResultSet rs) throws SQLException {
