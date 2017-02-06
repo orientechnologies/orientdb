@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by luigidellaquila on 06/07/16.
@@ -68,10 +69,25 @@ public class OResultInternal implements OResult {
       } else if (s != null && s.equalsIgnoreCase("@class")) {
         doc.setClassName(getProperty(s));
       } else {
-        doc.setProperty(s, getProperty(s));
+        doc.setProperty(s, convertToElement(getProperty(s)));
       }
     }
     return doc;
+  }
+
+  private Object convertToElement(Object property) {
+    if(property instanceof OResult){
+      return ((OResult) property).toElement();
+    }
+    if(property instanceof List){
+      return ((List) property).stream().map(x->convertToElement(x)).collect(Collectors.toList());
+    }
+
+    if(property instanceof Set){
+      return ((Set) property).stream().map(x->convertToElement(x)).collect(Collectors.toSet());
+    }
+
+    return property;
   }
 
   public void setElement(OIdentifiable element) {
@@ -89,7 +105,7 @@ public class OResultInternal implements OResult {
       return element.toString();
     }
     return "{\n" +
-        content.entrySet().stream().map(x -> x.getKey() + ": \n" + x.getValue()).reduce("", (a, b) -> a + b + "\n\n") + "}\n";
+        content.entrySet().stream().map(x -> x.getKey() + ": " + x.getValue()).reduce("", (a, b) -> a + b + "\n") + "}\n";
   }
 
   @Override public boolean equals(Object obj) {

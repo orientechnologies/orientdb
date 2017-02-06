@@ -30,6 +30,10 @@ public class OExplainStatementExecutionTest {
     Assert.assertTrue(result.hasNext());
     OResult next = result.next();
     Assert.assertNotNull(next.getProperty("executionPlan"));
+    Assert.assertNotNull(next.getProperty("executionPlanAsString"));
+
+    System.out.println((OResult)next.getProperty("executionPlan"));
+    System.out.println((String)next.getProperty("executionPlanAsString"));
 
     Optional<OExecutionPlan> plan = result.getExecutionPlan();
     Assert.assertTrue(plan.isPresent());
