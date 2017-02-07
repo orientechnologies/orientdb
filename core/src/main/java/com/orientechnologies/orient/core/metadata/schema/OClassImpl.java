@@ -701,15 +701,15 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       final OStorage storage = database.getStorage();
 
       if (storage instanceof OStorageProxy) {
-        final String cmd = String.format("alter class `%s` description %s", name, iDescription);
-        database.command(cmd);
+        final String cmd = String.format("alter class `%s` description ?", name);
+        database.command(cmd,iDescription);
       } else if (isDistributedCommand()) {
 
-        final String cmd = String.format("alter class `%s` description %s", name, iDescription);
+        final String cmd = String.format("alter class `%s` description ?", name);
         final OCommandSQL commandSQL = new OCommandSQL(cmd);
         commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
 
-        database.command(commandSQL).execute();
+        database.command(commandSQL).execute(iDescription);
         setDescriptionInternal(iDescription);
       } else
         setDescriptionInternal(iDescription);
