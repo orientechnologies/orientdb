@@ -40,7 +40,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OSecurityNull;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -54,10 +53,10 @@ import java.util.*;
  */
 @SuppressFBWarnings("EQ_DOESNT_OVERRIDE_EQUALS")
 public class OIndexManagerShared extends OIndexManagerAbstract {
-  private static final long           serialVersionUID      = 1L;
+  private static final long serialVersionUID = 1L;
 
-  protected volatile transient Thread recreateIndexesThread = null;
-  private volatile boolean            rebuildCompleted      = false;
+  protected volatile transient Thread  recreateIndexesThread = null;
+  private volatile             boolean rebuildCompleted      = false;
 
   public OIndexManagerShared(final ODatabaseDocument iDatabase) {
     super(iDatabase);
@@ -76,18 +75,13 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
   /**
    * Create a new index with default algorithm.
    *
-   * @param iName
-   *          - name of index
-   * @param iType
-   *          - index type. Specified by plugged index factories.
-   * @param indexDefinition
-   *          metadata that describes index structure
-   * @param clusterIdsToIndex
-   *          ids of clusters that index should track for changes.
-   * @param progressListener
-   *          listener to track task progress.
-   * @param metadata
-   *          document with additional properties that can be used by index engine.
+   * @param iName             name of index
+   * @param iType             index type. Specified by plugged index factories.
+   * @param indexDefinition   metadata that describes index structure
+   * @param clusterIdsToIndex ids of clusters that index should track for changes.
+   * @param progressListener  listener to track task progress.
+   * @param metadata          document with additional properties that can be used by index engine.
+   *
    * @return a newly created index instance
    */
   public OIndex<?> createIndex(final String iName, final String iType, final OIndexDefinition indexDefinition,
@@ -100,20 +94,14 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
    * <p>
    * May require quite a long time if big amount of data should be indexed.
    *
-   * @param iName
-   *          name of index
-   * @param type
-   *          index type. Specified by plugged index factories.
-   * @param indexDefinition
-   *          metadata that describes index structure
-   * @param clusterIdsToIndex
-   *          ids of clusters that index should track for changes.
-   * @param progressListener
-   *          listener to track task progress.
-   * @param metadata
-   *          document with additional properties that can be used by index engine.
-   * @param algorithm
-   *          tip to an index factory what algorithm to use
+   * @param iName             name of index
+   * @param type              index type. Specified by plugged index factories.
+   * @param indexDefinition   metadata that describes index structure
+   * @param clusterIdsToIndex ids of clusters that index should track for changes.
+   * @param progressListener  listener to track task progress.
+   * @param metadata          document with additional properties that can be used by index engine.
+   * @param algorithm         tip to an index factory what algorithm to use
+   *
    * @return a newly created index instance
    */
   public OIndex<?> createIndex(final String iName, String type, final OIndexDefinition indexDefinition,
@@ -173,8 +161,8 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
       }
 
       // decide which cluster to use ("index" - for automatic and "manindex" for manual)
-      final String clusterName = indexDefinition != null && indexDefinition.getClassName() != null ? defaultClusterName
-          : manualClusterName;
+      final String clusterName =
+          indexDefinition != null && indexDefinition.getClassName() != null ? defaultClusterName : manualClusterName;
 
       index.create(iName, indexDefinition, clusterName, clustersToIndex, true, progressListener);
 
@@ -308,22 +296,18 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
 
   @Override
   public void recreateIndexes() {
+    final ODatabaseDocumentInternal db;
+
     acquireExclusiveLock();
     try {
       if (recreateIndexesThread != null && recreateIndexesThread.isAlive())
         // BUILDING ALREADY IN PROGRESS
         return;
 
-      final ODatabaseDocument db = getDatabase();
-      document = db.load(new ORecordId(getDatabase().getStorage().getConfiguration().indexMgrRecordId));
-      final ODocument doc = new ODocument();
-      document.copyTo(doc);
+      db = getDatabase();
+      document = db.load(new ORecordId(db.getStorage().getConfiguration().indexMgrRecordId));
 
-      // USE A NEW DB INSTANCE
-      final ODatabaseDocumentInternal newDb = new ODatabaseDocumentTx(db.getURL());
-
-      Runnable recreateIndexesTask = new RecreateIndexesTask(newDb, doc);
-
+      final Runnable recreateIndexesTask = new RecreateIndexesTask(db.getURL());
       recreateIndexesThread = new Thread(recreateIndexesTask, "OrientDB rebuild indexes");
       recreateIndexesThread.start();
     } finally {
@@ -332,8 +316,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
 
     if (OGlobalConfiguration.INDEX_SYNCHRONOUS_AUTO_REBUILD.getValueAsBoolean()) {
       waitTillIndexRestore();
-
-      getDatabase().getMetadata().reload();
+      db.getMetadata().reload();
     }
   }
 
@@ -385,16 +368,16 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
         while (indexConfigurationIterator.hasNext()) {
           final ODocument d = indexConfigurationIterator.next();
           try {
-            final int indexVersion = d.field(OIndexInternal.INDEX_VERSION) == null ? 1
-                : (Integer) d.field(OIndexInternal.INDEX_VERSION);
+            final int indexVersion =
+                d.field(OIndexInternal.INDEX_VERSION) == null ? 1 : (Integer) d.field(OIndexInternal.INDEX_VERSION);
 
-            final OIndexMetadata newIndexMetadata = OIndexAbstract.loadMetadataInternal(d,
-                (String) d.field(OIndexInternal.CONFIG_TYPE), (String) d.field(OIndexInternal.ALGORITHM),
-                d.<String> field(OIndexInternal.VALUE_CONTAINER_ALGORITHM));
+            final OIndexMetadata newIndexMetadata = OIndexAbstract
+                .loadMetadataInternal(d, (String) d.field(OIndexInternal.CONFIG_TYPE), (String) d.field(OIndexInternal.ALGORITHM),
+                    d.<String>field(OIndexInternal.VALUE_CONTAINER_ALGORITHM));
 
-            index = OIndexes.createIndex(getDatabase(), newIndexMetadata.getName(), newIndexMetadata.getType(),
-                newIndexMetadata.getAlgorithm(), newIndexMetadata.getValueContainerAlgorithm(),
-                (ODocument) d.field(OIndexInternal.METADATA), indexVersion);
+            index = OIndexes
+                .createIndex(getDatabase(), newIndexMetadata.getName(), newIndexMetadata.getType(), newIndexMetadata.getAlgorithm(),
+                    newIndexMetadata.getValueContainerAlgorithm(), (ODocument) d.field(OIndexInternal.METADATA), indexVersion);
 
             final String normalizedName = newIndexMetadata.getName().toLowerCase(locale);
 
@@ -494,22 +477,21 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
   }
 
   private class RecreateIndexesTask implements Runnable {
-    private final ODatabaseDocumentInternal newDb;
-    private final ODocument                 doc;
-    private       int                       ok;
-    private       int                       errors;
+    private ODatabaseDocumentInternal newDb;
+    private Collection<ODocument>     indexesToRebuild;
 
-    public RecreateIndexesTask(ODatabaseDocumentInternal newDb, ODocument doc) {
-      this.newDb = newDb;
-      this.doc = doc;
+    private final String url;
+    private       int    ok;
+    private       int    errors;
+
+    public RecreateIndexesTask(String url) {
+      this.url = url;
     }
 
     @Override
     public void run() {
       try {
         setUpDatabase();
-
-        final Collection<ODocument> idxs = getConfiguration();
 
         final OStorage storage = newDb.getStorage().getUnderlying();
 
@@ -519,7 +501,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
         }
 
         try {
-          recreateIndexes(idxs);
+          recreateIndexes();
         } finally {
           if (storage instanceof OAbstractPaginatedStorage) {
             final OAbstractPaginatedStorage abstractPaginatedStorage = (OAbstractPaginatedStorage) storage;
@@ -533,10 +515,10 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
       }
     }
 
-    private void recreateIndexes(Collection<ODocument> idxs) {
+    private void recreateIndexes() {
       ok = 0;
       errors = 0;
-      for (ODocument idx : idxs) {
+      for (ODocument idx : indexesToRebuild) {
         try {
           recreateIndex(idx);
 
@@ -546,7 +528,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
         }
       }
 
-      save();
+      newDb.getMetadata().getIndexManager().save();
 
       rebuildCompleted = true;
 
@@ -563,15 +545,16 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
           index.loadFromConfiguration(idx);
           index.delete();
         } catch (Exception e) {
-          OLogManager.instance().error(this, "Error on removing index '%s' on rebuilding. Trying removing index files (Cause: %s)",
-              index.getName(), e);
+          OLogManager.instance()
+              .error(this, "Error on removing index '%s' on rebuilding. Trying removing index files (Cause: %s)", index.getName(),
+                  e);
 
           // TRY DELETING ALL THE FILES RELATIVE TO THE INDEX
-          for (Iterator<OIndexFactory> it = OIndexes.getAllFactories(); it.hasNext();) {
+          for (Iterator<OIndexFactory> it = OIndexes.getAllFactories(); it.hasNext(); ) {
             try {
               final OIndexFactory indexFactory = it.next();
-              final OIndexEngine engine = indexFactory.createIndexEngine(null, index.getName(), false, getDatabase().getStorage(),
-                  0, null);
+              final OIndexEngine engine = indexFactory
+                  .createIndexEngine(null, index.getName(), false, getDatabase().getStorage(), 0, null);
 
               engine.deleteWithoutLoad(index.getName());
             } catch (Exception e2) {
@@ -645,22 +628,27 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
       return OIndexes.createIndex(newDb, indexName, indexType, algorithm, valueContainerAlgorithm, metadata, -1);
     }
 
-    private Collection<ODocument> getConfiguration() {
-      final Collection<ODocument> idxs = doc.field(CONFIG_INDEXES);
-      if (idxs == null) {
-        OLogManager.instance().warn(this, "List of indexes is empty");
-        return Collections.emptyList();
-      }
-      return idxs;
-    }
-
     private void setUpDatabase() {
+      newDb = new ODatabaseDocumentTx(url);
       newDb.activateOnCurrentThread();
       newDb.resetInitialization();
       newDb.setProperty(ODatabase.OPTIONS.SECURITY.toString(), OSecurityNull.class);
       newDb.open("admin", "nopass");
 
-      ODatabaseRecordThreadLocal.INSTANCE.set(newDb);
+      acquireExclusiveLock();
+      try {
+        final Collection<ODocument> knownIndexes = document.field(CONFIG_INDEXES);
+        if (knownIndexes == null) {
+          OLogManager.instance().warn(this, "List of indexes is empty");
+          indexesToRebuild = Collections.emptyList();
+        } else {
+          indexesToRebuild = new ArrayList<ODocument>();
+          for (ODocument index : knownIndexes)
+            indexesToRebuild.add(index.copy()); // make copies to safely iterate them later
+        }
+      } finally {
+        releaseExclusiveLock();
+      }
     }
   }
 

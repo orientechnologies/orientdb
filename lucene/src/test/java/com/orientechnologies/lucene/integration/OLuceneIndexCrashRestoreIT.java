@@ -182,6 +182,8 @@ public class OLuceneIndexCrashRestoreIT {
     assertThat(index.getMetadata().<String>field("default")).isNotNull();
     assertThat(index.getMetadata().<String>field("default"))
         .isEqualTo("org.apache.lucene.analysis.core.KeywordAnalyzer");
+    assertThat(index.getMetadata().<String>field("unknownKey"))
+        .isEqualTo("unknownValue");
 
     //sometimes it is not null, and all works fine
     res = testDocumentTx.query(new OSQLSynchQuery<ODocument>("select from Person where name lucene 'Rob*' "));
@@ -206,7 +208,7 @@ public class OLuceneIndexCrashRestoreIT {
     db.command(new OCommandSQL("Create class Person")).execute();
     db.command(new OCommandSQL("Create property Person.name STRING")).execute();
     db.command(new OCommandSQL(
-        "Create index Person.name on Person(name) fulltext engine lucene metadata {'default':'org.apache.lucene.analysis.core.KeywordAnalyzer'} "))
+        "Create index Person.name on Person(name) fulltext engine lucene metadata {'default':'org.apache.lucene.analysis.core.KeywordAnalyzer', 'unknownKey':'unknownValue'}"))
         .execute();
     db.getMetadata().getIndexManager().reload();
 

@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.concur.resource.OCloseable;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OMultiKey;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -108,16 +109,22 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
         acquireExclusiveLock();
 
         try {
+          boolean saved = false;
           for (int retry = 0; retry < 10; retry++)
             try {
 
               toStream();
               document.save();
+              saved = true;
               break;
 
             } catch (OConcurrentModificationException e) {
+              OLogManager.instance().debug(this, "concurrent modification while saving index manager configuration", e);
               reload(null, true);
             }
+
+          if (!saved)
+            OLogManager.instance().error(this, "failed to save the index manager configuration after 10 retries");
 
           return null;
 
