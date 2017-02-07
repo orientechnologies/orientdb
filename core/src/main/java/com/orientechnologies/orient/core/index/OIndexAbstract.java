@@ -741,6 +741,8 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
 
   public ODocument updateConfiguration() {
     configuration.updateConfiguration(type, name, version, indexDefinition, clustersToIndex, algorithm, valueContainerAlgorithm);
+    if (metadata != null)
+      configuration.document.field(OIndexInternal.METADATA, metadata, OType.EMBEDDED);
     return configuration.getDocument();
   }
 
