@@ -179,8 +179,6 @@ public class OrientJdbcResultSet implements ResultSet {
 
     cursor = iRowNumber;
     document = (ODocument) records.get(cursor).getRecord();
-    //    fieldNames = document.fieldNames();
-    //    System.out.println("fieldNames:: " + String.join(",", Arrays.asList(fieldNames)));
     return true;
   }
 
@@ -247,7 +245,7 @@ public class OrientJdbcResultSet implements ResultSet {
 
     assert columnType.isEmbedded() && columnType.isMultiValue();
 
-    System.out.println("columnType.name() = " + columnType.getDefaultJavaType());
+//    System.out.println("columnType.name() = " + columnType.getDefaultJavaType());
 
     OType.EMBEDDEDLIST.getDefaultJavaType();
     Array array = new OrientJdbcArray(document.field(columnLabel));

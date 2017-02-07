@@ -140,7 +140,13 @@ public class OrientJdbcPreparedStatementTest extends OrientJdbcBaseTest {
     stmt.execute();
 
     // Let's verify the previous process
-    ResultSet resultSet = conn.createStatement().executeQuery("SELECT count(*) FROM insertable WHERE id = 'someRandomUid'");
+    ResultSet resultSet = conn.createStatement()
+        .executeQuery("SELECT count(*) AS num FROM insertable WHERE id = 'someRandomUid'");
+    assertThat(resultSet.getInt(1)).isEqualTo(1);
+
+    //without alias!
+    resultSet = conn.createStatement()
+        .executeQuery("SELECT count(*) FROM insertable WHERE id = 'someRandomUid'");
     assertThat(resultSet.getInt(1)).isEqualTo(1);
   }
 
