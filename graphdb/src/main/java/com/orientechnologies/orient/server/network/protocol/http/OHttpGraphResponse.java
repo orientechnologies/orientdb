@@ -53,8 +53,11 @@ public class OHttpGraphResponse extends OHttpResponse {
 
   public void writeRecords(final Object iRecords, final String iFetchPlan, String iFormat, final String accept,
       final Map<String, Object> iAdditionalProperties, final String mode) throws IOException {
-    if (iRecords == null)
+    if (iRecords == null){
+      send(OHttpUtils.STATUS_OK_NOCONTENT_CODE, "", OHttpUtils.CONTENT_TEXT_PLAIN, null, null);
       return;
+    }
+
 
     if (!mode.equalsIgnoreCase("graph")) {
       super.writeRecords(iRecords, iFetchPlan, iFormat, accept, iAdditionalProperties, mode);

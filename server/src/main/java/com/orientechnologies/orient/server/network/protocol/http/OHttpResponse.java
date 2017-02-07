@@ -250,8 +250,10 @@ public class OHttpResponse {
 
   public void writeRecords(final Object iRecords, final String iFetchPlan, String iFormat, final String accept,
       final Map<String, Object> iAdditionalProperties, final String mode) throws IOException {
-    if (iRecords == null)
+    if (iRecords == null) {
+      send(OHttpUtils.STATUS_OK_NOCONTENT_CODE, "", OHttpUtils.CONTENT_TEXT_PLAIN, null, null);
       return;
+    }
     final int size = OMultiValue.getSize(iRecords);
     final Iterator<Object> it = OMultiValue.getMultiValueIterator(iRecords);
 
