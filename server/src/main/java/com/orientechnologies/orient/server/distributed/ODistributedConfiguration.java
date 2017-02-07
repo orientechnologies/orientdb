@@ -67,6 +67,7 @@ public class ODistributedConfiguration {
 
   public ODistributedConfiguration(final ODocument iConfiguration) {
     configuration = iConfiguration;
+    configuration.setTrackingChanges(false);
   }
 
   public OModifiableDistributedConfiguration modify() {

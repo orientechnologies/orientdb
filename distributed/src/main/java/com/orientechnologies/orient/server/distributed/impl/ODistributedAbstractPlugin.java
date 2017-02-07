@@ -455,6 +455,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   @Override
   public ODocument getLocalNodeConfiguration() {
     final ODocument nodeCfg = new ODocument();
+    nodeCfg.setTrackingChanges(false);
 
     nodeCfg.field("id", nodeId);
     nodeCfg.field("uuid", nodeUuid);
