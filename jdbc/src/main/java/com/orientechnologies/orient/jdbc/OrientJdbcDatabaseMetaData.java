@@ -1,18 +1,18 @@
 /**
  * Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- * 	http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
+ * <p>
  * For more information: http://www.orientechnologies.com
  */
 package com.orientechnologies.orient.jdbc;
@@ -860,83 +860,98 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
   public ResultSet getTypeInfo() throws SQLException {
     final List<ODocument> info = new ArrayList<ODocument>();
 
-    info.add(new ODocument().field("TYPE_NAME", OType.BINARY.toString())
+    info.add(new ODocument()
+        .field("TYPE_NAME", OType.BINARY.toString())
         .field("DATA_TYPE", Types.BINARY)
         .field("NULLABLE", DatabaseMetaData.typeNullable)
         .field("CASE_SENSITIVE", true)
         .field("SEARCHABLE", true));
-    info.add(new ODocument().field("TYPE_NAME", OType.BOOLEAN.toString())
+    info.add(new ODocument()
+        .field("TYPE_NAME", OType.BOOLEAN.toString())
         .field("DATA_TYPE", Types.BOOLEAN)
         .field("NULLABLE", DatabaseMetaData.typeNullable)
         .field("CASE_SENSITIVE", true)
         .field("SEARCHABLE", true));
-    info.add(new ODocument().field("TYPE_NAME", OType.BYTE.toString())
+    info.add(new ODocument()
+        .field("TYPE_NAME", OType.BYTE.toString())
         .field("DATA_TYPE", Types.TINYINT)
         .field("NULLABLE", DatabaseMetaData.typeNullable)
         .field("CASE_SENSITIVE", true)
         .field("UNSIGNED_ATTRIBUTE", true)
         .field("SEARCHABLE", true));
-    info.add(new ODocument().field("TYPE_NAME", OType.DATE.toString())
+    info.add(new ODocument()
+        .field("TYPE_NAME", OType.DATE.toString())
         .field("DATA_TYPE", Types.DATE)
         .field("NULLABLE", DatabaseMetaData.typeNullable)
         .field("CASE_SENSITIVE", true)
         .field("SEARCHABLE", true));
-    info.add(new ODocument().field("TYPE_NAME", OType.DATETIME.toString())
+    info.add(new ODocument()
+        .field("TYPE_NAME", OType.DATETIME.toString())
         .field("DATA_TYPE", Types.DATE)
         .field("NULLABLE", DatabaseMetaData.typeNullable)
         .field("CASE_SENSITIVE", true)
         .field("SEARCHABLE", true));
-    info.add(new ODocument().field("TYPE_NAME", OType.DECIMAL.toString())
+    info.add(new ODocument()
+        .field("TYPE_NAME", OType.DECIMAL.toString())
         .field("DATA_TYPE", Types.DECIMAL)
         .field("NULLABLE", DatabaseMetaData.typeNullable)
         .field("CASE_SENSITIVE", true)
         .field("UNSIGNED_ATTRIBUTE", false)
         .field("SEARCHABLE", true));
-    info.add(new ODocument().field("TYPE_NAME", OType.FLOAT.toString())
+    info.add(new ODocument()
+        .field("TYPE_NAME", OType.FLOAT.toString())
         .field("DATA_TYPE", Types.FLOAT)
         .field("NULLABLE", DatabaseMetaData.typeNullable)
         .field("CASE_SENSITIVE", true)
         .field("UNSIGNED_ATTRIBUTE", false)
         .field("SEARCHABLE", true));
-    info.add(new ODocument().field("TYPE_NAME", OType.DOUBLE.toString())
+    info.add(new ODocument()
+        .field("TYPE_NAME", OType.DOUBLE.toString())
         .field("DATA_TYPE", Types.DOUBLE)
         .field("NULLABLE", DatabaseMetaData.typeNullable)
         .field("CASE_SENSITIVE", true)
         .field("UNSIGNED_ATTRIBUTE", false)
         .field("SEARCHABLE", true));
-    info.add(new ODocument().field("TYPE_NAME", OType.EMBEDDED.toString())
+    info.add(new ODocument()
+        .field("TYPE_NAME", OType.EMBEDDED.toString())
         .field("DATA_TYPE", Types.STRUCT)
         .field("NULLABLE", DatabaseMetaData.typeNullable)
         .field("CASE_SENSITIVE", true)
         .field("SEARCHABLE", true));
-    info.add(new ODocument().field("TYPE_NAME", OType.EMBEDDEDLIST.toString())
+    info.add(new ODocument()
+        .field("TYPE_NAME", OType.EMBEDDEDLIST.toString())
         .field("DATA_TYPE", Types.ARRAY)
         .field("NULLABLE", DatabaseMetaData.typeNullable)
         .field("CASE_SENSITIVE", true)
         .field("SEARCHABLE", true));
-    info.add(new ODocument().field("TYPE_NAME", OType.INTEGER.toString())
+    info.add(new ODocument()
+        .field("TYPE_NAME", OType.INTEGER.toString())
         .field("DATA_TYPE", Types.INTEGER)
         .field("NULLABLE", DatabaseMetaData.typeNullable)
         .field("CASE_SENSITIVE", true)
         .field("UNSIGNED_ATTRIBUTE", false)
         .field("SEARCHABLE", true));
-    info.add(new ODocument().field("TYPE_NAME", OType.LINKLIST.toString())
+    info.add(new ODocument()
+        .field("TYPE_NAME", OType.LINKLIST.toString())
         .field("DATA_TYPE", Types.ARRAY)
         .field("NULLABLE", DatabaseMetaData.typeNullable)
         .field("CASE_SENSITIVE", true)
         .field("SEARCHABLE", true));
-    info.add(new ODocument().field("TYPE_NAME", OType.LONG.toString())
+    info.add(new ODocument()
+        .field("TYPE_NAME", OType.LONG.toString())
         .field("DATA_TYPE", Types.BIGINT)
         .field("NULLABLE", DatabaseMetaData.typeNullable)
         .field("CASE_SENSITIVE", true)
         .field("UNSIGNED_ATTRIBUTE", false)
         .field("SEARCHABLE", true));
-    info.add(new ODocument().field("TYPE_NAME", OType.STRING.toString())
+    info.add(new ODocument()
+        .field("TYPE_NAME", OType.STRING.toString())
         .field("DATA_TYPE", Types.VARCHAR)
         .field("NULLABLE", DatabaseMetaData.typeNullable)
         .field("CASE_SENSITIVE", true)
         .field("SEARCHABLE", true));
-    info.add(new ODocument().field("TYPE_NAME", OType.SHORT.toString())
+    info.add(new ODocument()
+        .field("TYPE_NAME", OType.SHORT.toString())
         .field("DATA_TYPE", Types.SMALLINT)
         .field("NULLABLE", DatabaseMetaData.typeNullable)
         .field("CASE_SENSITIVE", true)
@@ -975,9 +990,12 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
           .field("TABLE_CAT", catalog)
           .field("TABLE_SCHEM", schema)
           .field("TABLE_NAME", table)
-          .field("COLUMN_NAME", fieldNames.substring(1, fieldNames.length() - 1))
           .field("NON_UNIQUE", notUniqueIndex)
+          .field("INDEX_QUALIFIER", (Object) null)
           .field("INDEX_NAME", idx.getName())
+          .field("TYPE", idx.getType())
+          .field("ORDINAL_POSITION", 0)
+          .field("COLUMN_NAME", fieldNames.substring(1, fieldNames.length() - 1))
           .field("ASC_OR_DESC", "ASC");
 
       records.add(doc);
