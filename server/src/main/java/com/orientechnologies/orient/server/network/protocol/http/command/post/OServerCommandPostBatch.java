@@ -202,7 +202,6 @@ public class OServerCommandPostBatch extends OServerCommandDocumentAbstract {
 
       try {
         iResponse.writeResult(lastResult);
-        iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, null, null);
       } catch (RuntimeException e) {
         OLogManager.instance()
             .error(this, "Error (%s) on serializing result of batch command:\n%s", e, batch.toJSON("prettyPrint"));
