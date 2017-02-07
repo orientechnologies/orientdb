@@ -17,7 +17,7 @@ import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public abstract class OrientElement implements Element ,OIdentifiable{
+public abstract class OrientElement implements Element, OIdentifiable {
 
     protected OElement rawElement;
     protected OrientGraph graph;
@@ -124,7 +124,6 @@ public abstract class OrientElement implements Element ,OIdentifiable{
         return ElementHelper.areEqual(this, object);
     }
 
-
     @Override
     public ORID getIdentity() {
         return rawElement.getIdentity();
@@ -164,6 +163,6 @@ public abstract class OrientElement implements Element ,OIdentifiable{
 
     @Override
     public int compare(OIdentifiable o1, OIdentifiable o2) {
-        return rawElement.compare(o1,o2);
+        return rawElement.compare(o1, o2);
     }
 }

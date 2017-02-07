@@ -93,7 +93,7 @@ public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E> imple
 
                 return elements.iterator();
             } else {
-                OLogManager.instance().warn(this, "scanning through all elements without using an index for Traversal " + getTraversal());
+                OLogManager.instance().debug(this, "scanning through all elements without using an index for Traversal " + getTraversal());
                 return this.iteratorList(getAllElements.apply(graph));
             }
         }

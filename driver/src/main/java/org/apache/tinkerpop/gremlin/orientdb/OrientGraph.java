@@ -22,6 +22,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.tinkerpop.gremlin.orientdb.traversal.strategy.optimization.OrientGraphStepStrategy;
@@ -86,6 +87,20 @@ public final class OrientGraph implements Graph {
     protected final OPartitionedReCreatableDatabasePool pool;
     protected final String user;
     protected final String password;
+
+    public static OrientGraph open(String url) {
+        return open(url, "admin", "admin");
+    }
+
+    public static OrientGraph open(String url, String user, String password) {
+        BaseConfiguration configuration = new BaseConfiguration();
+        configuration.setProperty(CONFIG_URL, url);
+        configuration.setProperty(CONFIG_USER, user);
+        configuration.setProperty(CONFIG_PASS, password);
+
+        return open(configuration);
+
+    }
 
     public static OrientGraph open(final Configuration config) {
         OrientGraphFactory factory = new OrientGraphFactory(config);

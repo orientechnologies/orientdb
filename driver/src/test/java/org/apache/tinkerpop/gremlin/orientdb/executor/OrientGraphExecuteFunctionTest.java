@@ -21,108 +21,108 @@ import java.util.stream.Collectors;
  */
 public class OrientGraphExecuteFunctionTest extends OrientGraphBaseTest {
 
-  @Test
-  public void testExecuteGremlinSimpleFunctionTest() {
+    @Test
+    public void testExecuteGremlinSimpleFunctionTest() {
 
-    OrientGraph noTx = factory.getNoTx();
+        OrientGraph noTx = factory.getNoTx();
 
-    noTx.addVertex(T.label, "Person", "name", "John");
-    noTx.addVertex(T.label, "Person", "name", "Luke");
+        noTx.addVertex(T.label, "Person", "name", "John");
+        noTx.addVertex(T.label, "Person", "name", "Luke");
 
-    OFunctionLibrary functionLibrary = noTx.getRawDatabase().getMetadata().getFunctionLibrary();
+        OFunctionLibrary functionLibrary = noTx.getRawDatabase().getMetadata().getFunctionLibrary();
 
-    OFunction testGremlin = functionLibrary.createFunction("testGremlin");
-    testGremlin.setLanguage("gremlin-groovy");
-    testGremlin.setCode("g.V()");
+        OFunction testGremlin = functionLibrary.createFunction("testGremlin");
+        testGremlin.setLanguage("gremlin-groovy");
+        testGremlin.setCode("g.V()");
 
-    testGremlin.save();
+        testGremlin.save();
 
-    Iterator gremlin = (Iterator) testGremlin.execute();
+        Iterator gremlin = (Iterator) testGremlin.execute();
 
-    Assert.assertEquals(2, StreamUtils.asStream(gremlin).count());
+        Assert.assertEquals(2, StreamUtils.asStream(gremlin).count());
 
-  }
+    }
 
-  @Test
-  public void testExecuteGremlinFunctionCountQueryTest() {
+    @Test
+    public void testExecuteGremlinFunctionCountQueryTest() {
 
-    OrientGraph noTx = factory.getNoTx();
+        OrientGraph noTx = factory.getNoTx();
 
-    noTx.addVertex(T.label, "Person", "name", "John");
-    noTx.addVertex(T.label, "Person", "name", "Luke");
+        noTx.addVertex(T.label, "Person", "name", "John");
+        noTx.addVertex(T.label, "Person", "name", "Luke");
 
-    OFunctionLibrary functionLibrary = noTx.getRawDatabase().getMetadata().getFunctionLibrary();
+        OFunctionLibrary functionLibrary = noTx.getRawDatabase().getMetadata().getFunctionLibrary();
 
-    OFunction testGremlin = functionLibrary.createFunction("testGremlin");
-    testGremlin.setLanguage("gremlin-groovy");
-    testGremlin.setCode("g.V().count()");
+        OFunction testGremlin = functionLibrary.createFunction("testGremlin");
+        testGremlin.setLanguage("gremlin-groovy");
+        testGremlin.setCode("g.V().count()");
 
-    testGremlin.save();
+        testGremlin.save();
 
-    Iterator gremlin = (Iterator) testGremlin.execute();
+        Iterator gremlin = (Iterator) testGremlin.execute();
 
-    Assert.assertEquals(true, gremlin.hasNext());
-    Object result = gremlin.next();
-    Assert.assertEquals(new Long(2), result);
+        Assert.assertEquals(true, gremlin.hasNext());
+        Object result = gremlin.next();
+        Assert.assertEquals(new Long(2), result);
 
-  }
+    }
 
-  @Test
-  public void testExecuteGremlinSqlFunctionInvokeTest() {
+    @Test
+    public void testExecuteGremlinSqlFunctionInvokeTest() {
 
-    OrientGraph noTx = factory.getNoTx();
+        OrientGraph noTx = factory.getNoTx();
 
-    noTx.addVertex(T.label, "Person", "name", "John");
-    noTx.addVertex(T.label, "Person", "name", "Luke");
+        noTx.addVertex(T.label, "Person", "name", "John");
+        noTx.addVertex(T.label, "Person", "name", "Luke");
 
-    OFunctionLibrary functionLibrary = noTx.getRawDatabase().getMetadata().getFunctionLibrary();
+        OFunctionLibrary functionLibrary = noTx.getRawDatabase().getMetadata().getFunctionLibrary();
 
-    OFunction testGremlin = functionLibrary.createFunction("testGremlin");
-    testGremlin.setLanguage("gremlin-groovy");
-    testGremlin.setCode("g.V()");
+        OFunction testGremlin = functionLibrary.createFunction("testGremlin");
+        testGremlin.setLanguage("gremlin-groovy");
+        testGremlin.setCode("g.V()");
 
-    testGremlin.save();
+        testGremlin.save();
 
-    OResultSet gremlin = noTx.executeSql("select testGremlin() as gremlin");
+        OResultSet gremlin = noTx.executeSql("select testGremlin() as gremlin");
 
-    Assert.assertEquals(true, gremlin.hasNext());
+        Assert.assertEquals(true, gremlin.hasNext());
 
-    OResult result = gremlin.next();
+        OResult result = gremlin.next();
 
-    Iterator value = result.getProperty("gremlin");
+        Iterator value = result.getProperty("gremlin");
 
-    Assert.assertEquals(2, StreamUtils.asStream(value).count());
-  }
+        Assert.assertEquals(2, StreamUtils.asStream(value).count());
+    }
 
-  @Test
-  public void testExecuteGremlinSqlExpandFunctionInvokeTest() {
+    @Test
+    public void testExecuteGremlinSqlExpandFunctionInvokeTest() {
 
-    OrientGraph noTx = factory.getNoTx();
+        OrientGraph noTx = factory.getNoTx();
 
-    noTx.addVertex(T.label, "Person", "name", "John");
-    noTx.addVertex(T.label, "Person", "name", "Luke");
+        noTx.addVertex(T.label, "Person", "name", "John");
+        noTx.addVertex(T.label, "Person", "name", "Luke");
 
-    OFunctionLibrary functionLibrary = noTx.getRawDatabase().getMetadata().getFunctionLibrary();
+        OFunctionLibrary functionLibrary = noTx.getRawDatabase().getMetadata().getFunctionLibrary();
 
-    OFunction testGremlin = functionLibrary.createFunction("testGremlin");
-    testGremlin.setLanguage("gremlin-groovy");
-    testGremlin.setCode("g.V()");
+        OFunction testGremlin = functionLibrary.createFunction("testGremlin");
+        testGremlin.setLanguage("gremlin-groovy");
+        testGremlin.setCode("g.V()");
 
-    testGremlin.save();
+        testGremlin.save();
 
-    OResultSet gremlin = noTx.executeSql("select expand(testGremlin())");
+        OResultSet gremlin = noTx.executeSql("select expand(testGremlin())");
 
-    List<OResult> collect = gremlin.stream().collect(Collectors.toList());
+        List<OResult> collect = gremlin.stream().collect(Collectors.toList());
 
-    Assert.assertEquals(2, collect.size());
+        Assert.assertEquals(2, collect.size());
 
-    collect.stream().forEach((res) -> {
-      Assert.assertEquals(true, res.isVertex());
+        collect.stream().forEach((res) -> {
+            Assert.assertEquals(true, res.isVertex());
 
-      OVertex oVertex = res.getVertex().get();
+            OVertex oVertex = res.getVertex().get();
 
-      Assert.assertEquals("Person", oVertex.getSchemaType().get().getName());
-    });
+            Assert.assertEquals("Person", oVertex.getSchemaType().get().getName());
+        });
 
-  }
+    }
 }

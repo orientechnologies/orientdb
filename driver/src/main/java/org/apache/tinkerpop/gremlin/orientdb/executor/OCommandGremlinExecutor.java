@@ -24,6 +24,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OScriptExecutor;
 import com.orientechnologies.orient.core.command.script.OScriptInjection;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
+import com.orientechnologies.orient.core.command.script.OScriptResultHandler;
 import com.orientechnologies.orient.core.command.script.formatter.OGroovyScriptFormatter;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -50,7 +51,7 @@ import java.util.Map;
  *
  * @author Enrico Risa (e.risa-(at)--orientdb.com)
  */
-public class OCommandGremlinExecutor implements OScriptExecutor, OScriptInjection {
+public class OCommandGremlinExecutor implements OScriptExecutor, OScriptInjection, OScriptResultHandler {
 
     public static final String GREMLIN_GROOVY = "gremlin-groovy";
     private final OScriptManager scriptManager;
@@ -68,6 +69,8 @@ public class OCommandGremlinExecutor implements OScriptExecutor, OScriptInjectio
 
         scriptManager.registerFormatter(GREMLIN_GROOVY, new OGroovyScriptFormatter());
         scriptManager.registerEngine(GREMLIN_GROOVY, factory);
+
+        scriptManager.registerResultHandler(GREMLIN_GROOVY, this);
     }
 
     private void initCustomTransformer(OScriptManager scriptManager) {
@@ -162,5 +165,15 @@ public class OCommandGremlinExecutor implements OScriptExecutor, OScriptInjectio
     @Override
     public void unbind(ScriptEngine engine, Bindings binding) {
         unbindGraph(binding);
+    }
+
+    @Override
+    public Object handle(Object result, ScriptEngine engine, Bindings binding, ODatabaseDocument database) {
+
+        //        if(result instanceof Traversal){
+        //            return new OGremlinResultSet((Traversal) result, scriptManager.getTransformer(), false);
+        //        }
+        return result;
+
     }
 }
