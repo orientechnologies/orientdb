@@ -49,18 +49,18 @@ public class OETLMergeTransformer extends OETLAbstractLookupTransformer {
     Object joinValue = ((ODocument) ((OIdentifiable) input).getRecord()).field(joinFieldName);
     final Object result = lookup(db, joinValue, false);
 
-    log(Level.FINE, "joinValue=%s, lookupResult=%s", joinValue, result);
+    log(Level.FINE, "%s: joinValue=%s, lookupResult=%s", getName(), joinValue, result);
 
     if (result != null) {
       if (result instanceof OIdentifiable) {
         ((ODocument) result).merge((ODocument) input, true, false);
-        log(Level.FINE, "merged record %s with found record=%s", result, input);
+        log(Level.FINE, "%s: merged record %s with found record=%s", getName(), result, input);
         return result;
 
       } else if (OMultiValue.isMultiValue(result) && OMultiValue.getSize(result) == 1) {
         final Object firstValue = OMultiValue.getFirstValue(result);
         ((ODocument) firstValue).merge((ODocument) ((OIdentifiable) input).getRecord(), true, false);
-        log(Level.FINE, "merged record %s with found record=%s", firstValue, input);
+        log(Level.FINE, "%s: merged record %s with found record=%s", getName(), firstValue, input);
         return firstValue;
       } else if (OMultiValue.isMultiValue(result) && OMultiValue.getSize(result) > 1) {
         throw new OETLProcessHaltedException(
@@ -68,10 +68,10 @@ public class OETLMergeTransformer extends OETLAbstractLookupTransformer {
       }
     } else {
 
-      log(Level.FINE, "unresolved link!!! %s", OMultiValue.getSize(result));
       // APPLY THE STRATEGY DEFINED IN unresolvedLinkAction
       switch (unresolvedLinkAction) {
       case NOTHING:
+        log(Level.FINE, "%s: DOING NOTHING for unresolved link on value %s", getName(), joinValue);
         break;
       case ERROR:
         processor.getStats().incrementErrors();
@@ -82,6 +82,7 @@ public class OETLMergeTransformer extends OETLAbstractLookupTransformer {
         log(Level.INFO, "%s: WARN Cannot resolve join for value '%s'", getName(), joinValue);
         break;
       case SKIP:
+        log(Level.FINE, "%s: SKIPPING unresolved link on value %s", getName(), joinValue);
         return null;
       case HALT:
         throw new OETLProcessHaltedException("[Merge transformer] Cannot resolve join for value '" + joinValue + "'");
