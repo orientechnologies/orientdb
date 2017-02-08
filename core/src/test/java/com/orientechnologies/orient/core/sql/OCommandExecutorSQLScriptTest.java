@@ -3,11 +3,9 @@ package com.orientechnologies.orient.core.sql;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -150,6 +148,20 @@ public class OCommandExecutorSQLScriptTest {
     List<ODocument> qResult = db.command(new OCommandScript("sql", script.toString())).execute();
 
     assertThat(qResult.get(0).<Long>field("weight")).isEqualTo(4L);
+  }
+
+  @Test
+  @Ignore
+  public void testIncrementAndLetNewApi() throws Exception {
+
+    StringBuilder script = new StringBuilder();
+    script.append("CREATE CLASS TestCounter;\n");
+    script.append("INSERT INTO TestCounter set weight = 3;\n");
+    script.append("LET counter = SELECT count(*) FROM TestCounter;\n");
+    script.append("UPDATE TestCounter INCREMENT weight = $counter[0].count RETURN AfTER @this;\n");
+    OResultSet qResult = db.execute("sql", script.toString());
+
+    assertThat(qResult.next().getElement().get().<Long>getProperty("weight")).isEqualTo(4L);
   }
 
   @Test
