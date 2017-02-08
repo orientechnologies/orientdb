@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.server.tx;
 
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -22,7 +23,7 @@ public class RemoteTransactionSupportTest {
 
   private static final String SERVER_DIRECTORY = "./target/transaction";
   private OServer           server;
-  private OrientDB          factory;
+  private OrientDB          orientDB;
   private ODatabaseDocument database;
 
   @Before
@@ -32,9 +33,9 @@ public class RemoteTransactionSupportTest {
     server.startup(getClass().getResourceAsStream("orientdb-server-config.xml"));
     server.activate();
 
-    factory = OrientDB.remote(new String[] { "localhost" }, OrientDBConfig.defaultConfig());
-    factory.create(ORemoteImportTest.class.getSimpleName(), "root", "root", OrientDB.DatabaseType.MEMORY);
-    database = factory.open(ORemoteImportTest.class.getSimpleName(), "admin", "admin");
+    orientDB = new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
+    orientDB.create(ORemoteImportTest.class.getSimpleName(), ODatabaseType.MEMORY);
+    database = orientDB.open(ORemoteImportTest.class.getSimpleName(), "admin", "admin");
     database.createClass("SomeTx");
     database.createClass("SomeTx2");
   }
@@ -126,7 +127,7 @@ public class RemoteTransactionSupportTest {
   @After
   public void after() {
     database.close();
-    factory.close();
+    orientDB.close();
     server.shutdown();
     Orient.instance().startup();
   }

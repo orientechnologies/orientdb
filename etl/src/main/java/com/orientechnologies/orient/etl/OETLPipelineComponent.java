@@ -19,7 +19,6 @@
 package com.orientechnologies.orient.etl;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.ODatabasePool;
 
 /**
  * ETL basic component.

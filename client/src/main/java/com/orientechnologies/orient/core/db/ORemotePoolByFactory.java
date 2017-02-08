@@ -28,7 +28,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 /**
  * Created by tglman on 07/07/16.
  */
-public class ORemotePoolByFactory implements ODatabasePool {
+public class ORemotePoolByFactory implements ODatabasePoolInternal {
   private final OResourcePool<Void, ORemoteDatabasePool> pool;
   private final OrientDBRemote                           factory;
   private final OrientDBConfig                           config;

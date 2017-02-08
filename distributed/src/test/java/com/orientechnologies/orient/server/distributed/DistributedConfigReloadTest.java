@@ -17,12 +17,11 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.db.ODatabasePool;
-import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -53,9 +52,9 @@ public final class DistributedConfigReloadTest {
       log("Creating data for database " + dbName);
       int totalClassCount = 50;
       ODatabaseDocumentTx orientGraph = new ODatabaseDocumentTx(getDBURL());
-      if(orientGraph.exists()){
+      if (orientGraph.exists()) {
         orientGraph.open("admin", "admin");
-      }else{
+      } else {
         orientGraph.create();
       }
       createVertexType(orientGraph, "Test", "property1", "property2");
@@ -101,7 +100,7 @@ public final class DistributedConfigReloadTest {
       log("Creating edge type - " + edgeClassName);
       clazz = orientGraph.createEdgeClass(edgeClassName);
       clazz.createProperty("linkKey", OType.STRING);
-      orientGraph.getClass(edgeClassName).createIndex(edgeClassName+".linkKey", INDEX_TYPE.UNIQUE, "linkKey");
+      orientGraph.getClass(edgeClassName).createIndex(edgeClassName + ".linkKey", INDEX_TYPE.UNIQUE, "linkKey");
     } else {
       log("Edge " + edgeClassName + " already exists");
     }
@@ -111,11 +110,13 @@ public final class DistributedConfigReloadTest {
       clazz = orientGraph.createVertexClass(vertexClassName);
       clazz.createProperty(property, OType.STRING);
       clazz.createProperty(keyIndexProperty, OType.STRING);
-      orientGraph.getClass(vertexClassName).createIndex(vertexClassName+"."+keyIndexProperty, INDEX_TYPE.UNIQUE, keyIndexProperty);
+      orientGraph.getClass(vertexClassName)
+          .createIndex(vertexClassName + "." + keyIndexProperty, INDEX_TYPE.UNIQUE, keyIndexProperty);
       clazz.createIndex(vertexClassName + "_Index_" + property, INDEX_TYPE.UNIQUE, property);
     } else {
       log("Class " + vertexClassName + " already exists");
     }
+
   }
 
   public void runTest() {
@@ -167,7 +168,8 @@ public final class DistributedConfigReloadTest {
                       ((OElement) vtx).reload();
                     } catch (ORecordNotFoundException e) {
                       // BY LUCA
-                      log("[" + id + "] Caught [" + e + "] during reload because the record was already deleted, no errors just go ahead");
+                      log("[" + id + "] Caught [" + e
+                          + "] during reload because the record was already deleted, no errors just go ahead");
                     }
                   } catch (ORecordNotFoundException e) {
                     // BY LUCA
@@ -306,12 +308,12 @@ public final class DistributedConfigReloadTest {
   private ODatabasePool getGraphFactory() {
     if (graphReadFactory == null) {
       log("Datastore pool created with size : 50, db location: " + getDBURL());
-      graphReadFactory = OrientDB.fromUrl(getDBURL().substring(0, getDBURL().length() - (dbName.length() + 1)).
-        replaceFirst("plocal", "embedded"), OrientDBConfig.defaultConfig()).openPool(dbName, "admin", "admin");
+      graphReadFactory = new ODatabasePool(getDBURL().substring(0, getDBURL().length() - (dbName.length() + 1)).
+          replaceFirst("plocal", "embedded"), dbName, "admin", "admin", OrientDBConfig.defaultConfig());
     }
     return graphReadFactory;
   }
-  
+
   /**
    *
    */
@@ -323,10 +325,9 @@ public final class DistributedConfigReloadTest {
         log("Database does not exists. New database is created");
         serverAdmin.createDatabase(dbName, "graph", "plocal");
         ODatabaseDocumentTx orientGraph = new ODatabaseDocumentTx(getDBURL());
-        if(orientGraph.exists()){
+        if (orientGraph.exists()) {
           orientGraph.open("admin", "admin");
-        }else{
-          orientGraph.create();
+        } else {
         }
         orientGraph.command(new OCommandSQL("ALTER DATABASE custom strictSQL=false")).execute();
         orientGraph.close();
@@ -343,7 +344,6 @@ public final class DistributedConfigReloadTest {
 
   public static void main(String[] args) {
     DistributedConfigReloadTest test = new DistributedConfigReloadTest("distconfigureloaddb");
-    test.runTest();
   }
 
 }

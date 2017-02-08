@@ -22,9 +22,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabasePool;
-import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBEmbedded;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -487,33 +485,40 @@ public class OETLOrientDBLoader extends OETLAbstractLoader implements OETLLoader
 
     if ("memory".equalsIgnoreCase(kind)) {
 
-      orient = (OrientDBEmbedded) OrientDB.embedded(dbCtx, null);
-      if (orient.exists(dbCtx, dbUser, dbPassword) && dbAutoDropIfExists) {
-        orient.drop(dbCtx, dbUser, dbPassword);
+      orient = new OrientDB("embedded:" + dbCtx, dbUser, dbPassword, null);
+      if (orient.exists(dbCtx) && dbAutoDropIfExists) {
+        orient.drop(dbCtx);
       }
 
-      if (!orient.exists(dbCtx, dbUser, dbPassword)) {
-        orient.create(dbCtx, dbUser, dbPassword, OrientDB.DatabaseType.MEMORY);
+      if (!orient.exists(dbCtx)) {
+        orient.create(dbCtx, ODatabaseType.MEMORY);
       }
 
-      pool = orient.openPool(dbCtx, dbUser, dbPassword);
+      pool = new ODatabasePool(orient, dbCtx, dbUser, dbPassword);
     } else if ("plocal".equalsIgnoreCase(kind)) {
 
       String dbName = dbCtx.substring(dbCtx.lastIndexOf("/"));
-      orient = (OrientDBEmbedded) OrientDB.embedded(dbCtx, null);
+      orient = new OrientDB("embedded:" + dbCtx, dbUser, dbPassword, null);
 
-      if (orient.exists(dbName, dbUser, dbPassword) && dbAutoDropIfExists) {
-        orient.drop(dbName, dbUser, dbPassword);
+      if (orient.exists(dbName) && dbAutoDropIfExists) {
+        orient.drop(dbName);
       }
 
-      if (!orient.exists(dbName, dbUser, dbPassword) && dbAutoCreate) {
-        orient.create(dbName, dbUser, dbPassword, OrientDB.DatabaseType.PLOCAL);
+      if (!orient.exists(dbName) && dbAutoCreate) {
+        orient.create(dbName, ODatabaseType.PLOCAL);
       }
-      pool = orient.openPool(dbName, dbUser, dbPassword);
+      pool = new ODatabasePool(orient, dbName, dbUser, dbPassword);
     } else {
-      String host = dbCtx.substring(dbCtx.indexOf("/"));
+      orient = new OrientDB("remote:" + dbCtx, dbUser, dbPassword, null);
+      String dbName = dbCtx.substring(dbCtx.lastIndexOf("/"));
+      if (orient.exists(dbName) && dbAutoDropIfExists) {
+        orient.drop(dbName);
+      }
 
-      OrientDB orient = OrientDB.remote(new String[] { host }, null);
+      if (!orient.exists(dbName) && dbAutoCreate) {
+        orient.create(dbName, ODatabaseType.PLOCAL);
+      }
+      pool = new ODatabasePool(orient, dbName, dbUser, dbPassword);
 
     }
 
@@ -604,8 +609,7 @@ public class OETLOrientDBLoader extends OETLAbstractLoader implements OETLLoader
 
         index = cls.createIndex(idxName, idxType, null, metadata, fields);
         log(Level.FINE, "- OrientDocumentLoader: created index '%s' type '%s' against Class '%s', fields %s", idxName, idxType,
-            idxClass,
-            idxFields);
+            idxClass, idxFields);
       }
     }
 //    db.activateOnCurrentThread();

@@ -18,9 +18,7 @@ package com.orientechnologies.orient.server.distributed;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.ODatabasePool;
-import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
@@ -340,9 +338,8 @@ public class HALocalGraphTest extends AbstractServerClusterTxTest {
     if (graphReadFactory == null) {
       String dbUrl = getDatabaseURL(serverInstance.get(0));
       log("Datastore pool created with size : 10, db location: " + getDatabaseURL(serverInstance.get(0)));
-      graphReadFactory = OrientDB
-          .fromUrl(dbUrl.substring(0, dbUrl.length() - (getDatabaseName().length() + 1)), OrientDBConfig.defaultConfig())
-          .openPool(getDatabaseName(), "admin", "admin");
+      graphReadFactory = new ODatabasePool(dbUrl.substring(0, dbUrl.length() - (getDatabaseName().length() + 1)), getDatabaseName(),
+          "admin", "admin", OrientDBConfig.defaultConfig());
 
     }
     return graphReadFactory;

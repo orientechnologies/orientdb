@@ -15,9 +15,7 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.orient.core.db.ODatabasePool;
-import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.server.distributed.impl.OLocalClusterWrapperStrategy;
@@ -39,11 +37,11 @@ public class HAClusterStrategyTest extends AbstractHARemoveNode {
   @Override
   public void executeTest() throws Exception {
     String dbUrl = getDatabaseURL(serverInstance.get(0));
-    OrientDB f = OrientDB
-        .fromUrl(dbUrl.substring(0, dbUrl.length() - (getDatabaseName().length() + 1)), OrientDBConfig.defaultConfig());
-    final ODatabasePool factory = f.openPool(getDatabaseName(), "admin", "admin");
+    OrientDB orientDB = new OrientDB(dbUrl.substring(0, dbUrl.length() - (getDatabaseName().length() + 1)), "root", "root",
+        OrientDBConfig.defaultConfig());
+    final ODatabasePool pool = new ODatabasePool(orientDB, getDatabaseName(), "admin", "admin");
 
-    final ODatabaseDocument g = factory.acquire();
+    final ODatabaseDocument g = pool.acquire();
     g.createVertexClass("Test");
     g.close();
 
@@ -51,7 +49,7 @@ public class HAClusterStrategyTest extends AbstractHARemoveNode {
       // pressing 'return' 2 to 10 times should trigger the described behavior
       Thread.sleep(100);
 
-      final ODatabaseDocument graph = factory.acquire();
+      final ODatabaseDocument graph = pool.acquire();
       graph.begin();
 
       // should always be 'local', but eventually changes to 'round-robin'
@@ -73,8 +71,9 @@ public class HAClusterStrategyTest extends AbstractHARemoveNode {
       graph.close();
     }
 
-    factory.close();
-    f.drop(getDatabaseName(), "root", "root");
+    pool.close();
+    orientDB.drop(getDatabaseName());
+    orientDB.close();
   }
 
   protected String getDatabaseURL(final ServerRun server) {

@@ -1,7 +1,8 @@
 package com.orientechnologies.orient.object.db;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 
@@ -12,14 +13,14 @@ import java.util.Set;
  */
 public class OrientDBObject implements AutoCloseable {
 
-  private OrientDB factory;
+  private OrientDBInternal factory;
 
-  private OrientDBObject(OrientDB factory) {
+  private OrientDBObject(OrientDBInternal factory) {
     this.factory = factory;
   }
 
   public static OrientDBObject fromUrl(String url, OrientDBConfig config) {
-    return new OrientDBObject(OrientDB.fromUrl(url, config));
+    return new OrientDBObject(OrientDBInternal.fromUrl(url, config));
   }
 
   /**
@@ -58,7 +59,7 @@ public class OrientDBObject implements AutoCloseable {
    * @param password the password relative to the user
    * @param type     can be plocal or memory
    */
-  public void create(String name, String user, String password, OrientDB.DatabaseType type) {
+  public void create(String name, String user, String password, ODatabaseType type) {
     factory.create(name, user, password, type);
   }
 
@@ -72,7 +73,7 @@ public class OrientDBObject implements AutoCloseable {
    * @param config   database specific configuration that override the factory global settings where needed.
    * @param type     can be plocal or memory
    */
-  public void create(String name, String user, String password, OrientDB.DatabaseType type, OrientDBConfig config) {
+  public void create(String name, String user, String password, ODatabaseType type, OrientDBConfig config) {
     factory.create(name, user, password, type, config);
   }
 

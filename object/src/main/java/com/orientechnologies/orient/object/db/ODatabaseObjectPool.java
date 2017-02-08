@@ -1,16 +1,16 @@
 package com.orientechnologies.orient.object.db;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabasePool;
+import com.orientechnologies.orient.core.db.ODatabasePoolInternal;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 
 /**
  * Created by tglman on 13/01/17.
  */
 public class ODatabaseObjectPool implements AutoCloseable {
-  private ODatabasePool pool;
+  private ODatabasePoolInternal pool;
 
-  public ODatabaseObjectPool(ODatabasePool pool) {
+  public ODatabaseObjectPool(ODatabasePoolInternal pool) {
     this.pool = pool;
   }
 

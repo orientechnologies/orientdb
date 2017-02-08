@@ -22,7 +22,6 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.db.ODatabasePool;
-import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.id.ORID;
@@ -39,7 +38,7 @@ import java.util.concurrent.Callable;
  * Test distributed TX
  */
 public abstract class AbstractServerClusterGraphTest extends AbstractServerClusterInsertTest {
-  protected ODatabasePool factory;
+  protected ODatabasePool pool;
   protected ORID          rootVertexId;
   protected Object lock = new Object();
 
@@ -61,7 +60,7 @@ public abstract class AbstractServerClusterGraphTest extends AbstractServerClust
       synchronized (lock) {
         if (rootVertexId == null) {
           // ONLY THE FIRST TIME CREATE THE ROOT
-          ODatabaseDocument graph = factory.acquire();
+          ODatabaseDocument graph = pool.acquire();
           graph.begin();
           try {
             OVertex root = createVertex(graph, serverId, threadId, 0);
@@ -75,7 +74,7 @@ public abstract class AbstractServerClusterGraphTest extends AbstractServerClust
       }
 
       int itemInTx = 0;
-      final ODatabaseDocument graph = factory.acquire();
+      final ODatabaseDocument graph = pool.acquire();
       try {
         for (int i = 1; i <= count; i++) {
           if (i % 100 == 0)
@@ -138,7 +137,7 @@ public abstract class AbstractServerClusterGraphTest extends AbstractServerClust
   }
 
   protected void onAfterExecution() {
-    factory.close();
+    pool.close();
   }
 
   @Override
@@ -161,11 +160,13 @@ public abstract class AbstractServerClusterGraphTest extends AbstractServerClust
     OClass provider = graph.createClass("Provider", person.getName());
     provider.createProperty("totalPurchased", OType.DECIMAL);
 
-    factory = OrientDB.fromUrl(graph.getURL().substring(0, graph.getURL().length() - (graph.getName().length() + 1)).replaceFirst("plocal", "embedded"), OrientDBConfig.defaultConfig()).openPool(graph.getName(), "admin", "admin");
-    setFactorySettings(factory);
+    pool = new ODatabasePool(
+        graph.getURL().substring(0, graph.getURL().length() - (graph.getName().length() + 1)).replaceFirst("plocal", "embedded"),
+        graph.getName(), "admin", "admin", OrientDBConfig.defaultConfig());
+    setFactorySettings(pool);
   }
 
-  protected void setFactorySettings(ODatabasePool factory) {
+  protected void setFactorySettings(ODatabasePool pool) {
   }
 
   @Override

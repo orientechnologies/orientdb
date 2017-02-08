@@ -26,7 +26,7 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
-import com.orientechnologies.orient.core.db.OrientDB.DatabaseType;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -150,7 +150,7 @@ public class OSystemDatabase {
 
         OrientDBConfig config = OrientDBConfig.builder().addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
             .addConfig(OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS, 1).build();
-        server.createDatabase(SYSTEM_DB_NAME, DatabaseType.PLOCAL, config);
+        server.createDatabase(SYSTEM_DB_NAME, ODatabaseType.PLOCAL, config);
       }
 
     } finally {
