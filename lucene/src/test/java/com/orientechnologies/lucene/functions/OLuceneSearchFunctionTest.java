@@ -38,8 +38,6 @@ public class OLuceneSearchFunctionTest extends BaseLuceneTest {
 
     OResultSet resultSet = db.query("SELECT from Song where SEARCH_INDEX(Song.title, 'BELIEVE') = true");
 
-    System.out.println();
-    resultSet.getExecutionPlan().ifPresent(x-> System.out.println(x.prettyPrint(0, 2)));
     assertThat(resultSet).hasSize(2);
 
 //    //no params: match tentative
