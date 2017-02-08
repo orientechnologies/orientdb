@@ -6,7 +6,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.InputStream;
@@ -20,7 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class OLuceneSearchFunctionTest extends BaseLuceneTest {
 
   @Test
-  @Ignore
   public void shouldSearchOnIndex() throws Exception {
     InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql");
 
@@ -40,6 +38,8 @@ public class OLuceneSearchFunctionTest extends BaseLuceneTest {
 
     OResultSet resultSet = db.query("SELECT from Song where SEARCH_INDEX(Song.title, 'BELIEVE') = true");
 
+    System.out.println();
+    resultSet.getExecutionPlan().ifPresent(x-> System.out.println(x.prettyPrint(0, 2)));
     assertThat(resultSet).hasSize(2);
 
 //    //no params: match tentative

@@ -849,7 +849,7 @@ public class OSelectExecutionPlanner {
           }
         }
 
-        FetchFromIndexedFunctionStep step = new FetchFromIndexedFunctionStep(blockCandidateFunction, queryTarget, ctx);
+        FetchFromIndexedFunctionStep step = new FetchFromIndexedFunctionStep(blockCandidateFunction, fromClause, ctx);
         if (!blockCandidateFunction.executeIndexedFunctionAfterIndexSearch(fromClause, ctx)) {
           block = block.copy();
           block.getSubBlocks().remove(blockCandidateFunction);
@@ -869,7 +869,9 @@ public class OSelectExecutionPlanner {
         }
       }
     }
-    plan.chain(new ParallelExecStep(resultSubPlans, ctx));
+    if(resultSubPlans.size()>0) {
+      plan.chain(new ParallelExecStep(resultSubPlans, ctx));
+    }
     //WHERE condition already applied
     this.whereClause = null;
     this.flattenedWhereClause = null;
