@@ -22,7 +22,6 @@ package com.orientechnologies.orient.stresstest.workload;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.stresstest.ODatabaseIdentifier;
@@ -186,16 +185,16 @@ public abstract class OBaseWorkload implements OWorkload {
                     operationTiming[context.currentIdx] = System.nanoTime() - startOp;
                   }
 
-                  if (settings.delay > 0)
-                    try {
-                      Thread.sleep(settings.delay);
-                    } catch (InterruptedException e) {
-                      Thread.currentThread().interrupt();
-                    }
-
                   return null;
                 }
               }, 10);
+
+              if (settings.delay > 0)
+                try {
+                  Thread.sleep(settings.delay);
+                } catch (InterruptedException e) {
+                  Thread.currentThread().interrupt();
+                }
             }
 
             if (operationsPerTransaction > 0)
