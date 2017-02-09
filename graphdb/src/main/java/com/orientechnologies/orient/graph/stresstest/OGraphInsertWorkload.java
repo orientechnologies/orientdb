@@ -99,8 +99,7 @@ public class OGraphInsertWorkload extends OBaseGraphWorkload {
   public void execute(final OStressTesterSettings settings, final ODatabaseIdentifier databaseIdentifier) {
     connectionStrategy = settings.loadBalancing;
 
-    final List<OBaseWorkLoadContext> contexts = executeOperation(databaseIdentifier, resultVertices, settings.concurrencyLevel,
-        settings.operationsPerTransaction, new OCallable<Void, OBaseWorkLoadContext>() {
+    final List<OBaseWorkLoadContext> contexts = executeOperation(databaseIdentifier, resultVertices, settings, new OCallable<Void, OBaseWorkLoadContext>() {
           @Override
           public Void call(final OBaseWorkLoadContext context) {
             final OWorkLoadContext graphContext = ((OWorkLoadContext) context);

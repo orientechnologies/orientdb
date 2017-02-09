@@ -46,24 +46,24 @@ import java.util.List;
  */
 public class OCRUDWorkload extends OBaseDocumentWorkload implements OCheckWorkload {
 
-  public static final String CLASS_NAME           = "StressTestCRUD";
-  public static final String INDEX_NAME           = CLASS_NAME + ".Index";
+  public static final String CLASS_NAME = "StressTestCRUD";
+  public static final String INDEX_NAME = CLASS_NAME + ".Index";
 
-  static final String        INVALID_FORM_MESSAGE = "CRUD workload must be in form of CxIxUxDxSx where x is a valid number.";
-  static final String        INVALID_NUMBERS      = "Reads, Updates and Deletes must be less or equals to the Creates";
+  static final String INVALID_FORM_MESSAGE = "CRUD workload must be in form of CxIxUxDxSx where x is a valid number.";
+  static final String INVALID_NUMBERS      = "Reads, Updates and Deletes must be less or equals to the Creates";
 
-  private int                total                = 0;
+  private int total = 0;
 
-  private OWorkLoadResult    createsResult        = new OWorkLoadResult();
-  private OWorkLoadResult    readsResult          = new OWorkLoadResult();
-  private OWorkLoadResult    updatesResult        = new OWorkLoadResult();
-  private OWorkLoadResult    deletesResult        = new OWorkLoadResult();
-  private OWorkLoadResult    scansResult          = new OWorkLoadResult();
-  private int                creates;
-  private int                reads;
-  private int                updates;
-  private int                deletes;
-  private int                scans;
+  private OWorkLoadResult createsResult = new OWorkLoadResult();
+  private OWorkLoadResult readsResult   = new OWorkLoadResult();
+  private OWorkLoadResult updatesResult = new OWorkLoadResult();
+  private OWorkLoadResult deletesResult = new OWorkLoadResult();
+  private OWorkLoadResult scansResult   = new OWorkLoadResult();
+  private int creates;
+  private int reads;
+  private int updates;
+  private int deletes;
+  private int scans;
 
   public OCRUDWorkload() {
     connectionStrategy = OStorageRemote.CONNECTION_STRATEGY.ROUND_ROBIN_REQUEST;
@@ -110,65 +110,60 @@ public class OCRUDWorkload extends OBaseDocumentWorkload implements OCheckWorklo
   @Override
   public void execute(final OStressTesterSettings settings, final ODatabaseIdentifier databaseIdentifier) {
     createSchema(databaseIdentifier);
-    connectionStrategy =  settings.loadBalancing;
+    connectionStrategy = settings.loadBalancing;
 
     // PREALLOCATE THE LIST TO AVOID CONCURRENCY ISSUES
     final ORID[] records = new ORID[createsResult.total];
 
-    executeOperation(databaseIdentifier, createsResult, settings.concurrencyLevel, settings.operationsPerTransaction,
-        new OCallable<Void, OBaseWorkLoadContext>() {
-          @Override
-          public Void call(final OBaseWorkLoadContext context) {
-            final ODocument doc = createOperation(context.currentIdx);
-            records[context.currentIdx] = doc.getIdentity();
-            createsResult.current.incrementAndGet();
-            return null;
-          }
-        });
+    executeOperation(databaseIdentifier, createsResult, settings, new OCallable<Void, OBaseWorkLoadContext>() {
+      @Override
+      public Void call(final OBaseWorkLoadContext context) {
+        final ODocument doc = createOperation(context.currentIdx);
+        records[context.currentIdx] = doc.getIdentity();
+        createsResult.current.incrementAndGet();
+        return null;
+      }
+    });
 
     if (records.length != createsResult.total)
       throw new RuntimeException("Error on creating records: found " + records.length + " but expected " + createsResult.total);
 
-    executeOperation(databaseIdentifier, scansResult, settings.concurrencyLevel, settings.operationsPerTransaction,
-        new OCallable<Void, OBaseWorkLoadContext>() {
-          @Override
-          public Void call(final OBaseWorkLoadContext context) {
-            scanOperation(((OWorkLoadContext) context).getDb());
-            scansResult.current.incrementAndGet();
-            return null;
-          }
-        });
+    executeOperation(databaseIdentifier, scansResult, settings, new OCallable<Void, OBaseWorkLoadContext>() {
+      @Override
+      public Void call(final OBaseWorkLoadContext context) {
+        scanOperation(((OWorkLoadContext) context).getDb());
+        scansResult.current.incrementAndGet();
+        return null;
+      }
+    });
 
-    executeOperation(databaseIdentifier, readsResult, settings.concurrencyLevel, settings.operationsPerTransaction,
-        new OCallable<Void, OBaseWorkLoadContext>() {
-          @Override
-          public Void call(final OBaseWorkLoadContext context) {
-            readOperation(((OWorkLoadContext) context).getDb(), context.currentIdx);
-            readsResult.current.incrementAndGet();
-            return null;
-          }
-        });
+    executeOperation(databaseIdentifier, readsResult, settings, new OCallable<Void, OBaseWorkLoadContext>() {
+      @Override
+      public Void call(final OBaseWorkLoadContext context) {
+        readOperation(((OWorkLoadContext) context).getDb(), context.currentIdx);
+        readsResult.current.incrementAndGet();
+        return null;
+      }
+    });
 
-    executeOperation(databaseIdentifier, updatesResult, settings.concurrencyLevel, settings.operationsPerTransaction,
-        new OCallable<Void, OBaseWorkLoadContext>() {
-          @Override
-          public Void call(final OBaseWorkLoadContext context) {
-            updateOperation(((OWorkLoadContext) context).getDb(), records[context.currentIdx]);
-            updatesResult.current.incrementAndGet();
-            return null;
-          }
-        });
+    executeOperation(databaseIdentifier, updatesResult, settings, new OCallable<Void, OBaseWorkLoadContext>() {
+      @Override
+      public Void call(final OBaseWorkLoadContext context) {
+        updateOperation(((OWorkLoadContext) context).getDb(), records[context.currentIdx]);
+        updatesResult.current.incrementAndGet();
+        return null;
+      }
+    });
 
-    executeOperation(databaseIdentifier, deletesResult, settings.concurrencyLevel, settings.operationsPerTransaction,
-        new OCallable<Void, OBaseWorkLoadContext>() {
-          @Override
-          public Void call(final OBaseWorkLoadContext context) {
-            deleteOperation(((OWorkLoadContext) context).getDb(), records[context.currentIdx]);
-            records[context.currentIdx] = null;
-            deletesResult.current.incrementAndGet();
-            return null;
-          }
-        });
+    executeOperation(databaseIdentifier, deletesResult, settings, new OCallable<Void, OBaseWorkLoadContext>() {
+      @Override
+      public Void call(final OBaseWorkLoadContext context) {
+        deleteOperation(((OWorkLoadContext) context).getDb(), records[context.currentIdx]);
+        records[context.currentIdx] = null;
+        deletesResult.current.incrementAndGet();
+        return null;
+      }
+    });
   }
 
   protected void createSchema(ODatabaseIdentifier databaseIdentifier) {
@@ -189,15 +184,17 @@ public class OCRUDWorkload extends OBaseDocumentWorkload implements OCheckWorklo
 
   @Override
   public String getPartialResult() {
-    final long current = createsResult.current.get()+ scansResult.current.get() + readsResult.current.get() + updatesResult.current.get()
-        + deletesResult.current.get();
+    final long current =
+        createsResult.current.get() + scansResult.current.get() + readsResult.current.get() + updatesResult.current.get()
+            + deletesResult.current.get();
 
-    return String.format("%d%% [Creates: %d%% - Scans: %d%% - Reads: %d%% - Updates: %d%% - Deletes: %d%%]", ((int) (100 * current / total)),
-        createsResult.total > 0 ? 100 * createsResult.current.get() / createsResult.total : 0,
-        scansResult.total > 0 ? 100 * scansResult.current.get() / scansResult.total : 0,
-        readsResult.total > 0 ? 100 * readsResult.current.get() / readsResult.total : 0,
-        updatesResult.total > 0 ? 100 * updatesResult.current.get() / updatesResult.total : 0,
-        deletesResult.total > 0 ? 100 * deletesResult.current.get() / deletesResult.total : 0);
+    return String
+        .format("%d%% [Creates: %d%% - Scans: %d%% - Reads: %d%% - Updates: %d%% - Deletes: %d%%]", ((int) (100 * current / total)),
+            createsResult.total > 0 ? 100 * createsResult.current.get() / createsResult.total : 0,
+            scansResult.total > 0 ? 100 * scansResult.current.get() / scansResult.total : 0,
+            readsResult.total > 0 ? 100 * readsResult.current.get() / readsResult.total : 0,
+            updatesResult.total > 0 ? 100 * updatesResult.current.get() / updatesResult.total : 0,
+            deletesResult.total > 0 ? 100 * deletesResult.current.get() / deletesResult.total : 0);
   }
 
   @Override
@@ -210,8 +207,8 @@ public class OCRUDWorkload extends OBaseDocumentWorkload implements OCheckWorklo
     buffer.append(String.format("\n- Scanned %d records in %.3f secs%s", scansResult.total, (scansResult.totalTime / 1000f),
         scansResult.toOutput(1)));
 
-    buffer.append(String.format("\n- Read %d records in %.3f secs%s", readsResult.total, (readsResult.totalTime / 1000f),
-        readsResult.toOutput(1)));
+    buffer.append(String
+        .format("\n- Read %d records in %.3f secs%s", readsResult.total, (readsResult.totalTime / 1000f), readsResult.toOutput(1)));
 
     buffer.append(String.format("\n- Updated %d records in %.3f secs%s", updatesResult.total, (updatesResult.totalTime / 1000f),
         updatesResult.toOutput(1)));

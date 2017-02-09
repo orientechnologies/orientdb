@@ -25,6 +25,7 @@ import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.stresstest.ODatabaseIdentifier;
+import com.orientechnologies.orient.stresstest.OStressTesterSettings;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -50,18 +51,18 @@ public abstract class OBaseWorkload implements OWorkload {
   }
 
   public class OWorkLoadResult {
-    public AtomicInteger current   = new AtomicInteger();
-    public int           total     = 1;
-    public long          totalTime;
-    public long          totalTimeOperationsNs;
-    public long          throughputAvgNs;
+    public AtomicInteger current = new AtomicInteger();
+    public int           total   = 1;
+    public long totalTime;
+    public long totalTimeOperationsNs;
+    public long throughputAvgNs;
 
-    public long          latencyAvgNs;
-    public long          latencyMinNs;
-    public long          latencyMaxNs;
-    public int           latencyPercentileAvg;
-    public long          latencyPercentile99Ns;
-    public long          latencyPercentile99_9Ns;
+    public long latencyAvgNs;
+    public long latencyMinNs;
+    public long latencyMaxNs;
+    public int  latencyPercentileAvg;
+    public long latencyPercentile99Ns;
+    public long latencyPercentile99_9Ns;
 
     public AtomicInteger conflicts = new AtomicInteger();
 
@@ -97,13 +98,17 @@ public abstract class OBaseWorkload implements OWorkload {
     }
   }
 
-  protected static final long MAX_ERRORS = 100;
-  protected List<String>      errors     = new ArrayList<String>();
+  protected static final long         MAX_ERRORS = 100;
+  protected              List<String> errors     = new ArrayList<String>();
 
   protected List<OBaseWorkLoadContext> executeOperation(final ODatabaseIdentifier dbIdentifier, final OWorkLoadResult result,
-      final int concurrencyLevel, final int operationsPerTransaction, final OCallable<Void, OBaseWorkLoadContext> callback) {
+      final OStressTesterSettings settings, final OCallable<Void, OBaseWorkLoadContext> callback) {
+
     if (result.total == 0)
       return null;
+
+    final int concurrencyLevel = settings.concurrencyLevel;
+    final int operationsPerTransaction = settings.operationsPerTransaction;
 
     final int totalPerThread = result.total / concurrencyLevel;
     final int totalPerLastThread = totalPerThread + result.total % concurrencyLevel;
@@ -182,6 +187,13 @@ public abstract class OBaseWorkload implements OWorkload {
                   } finally {
                     operationTiming[context.currentIdx] = System.nanoTime() - startOp;
                   }
+
+                  if (settings.delay > 0)
+                    try {
+                      Thread.sleep(settings.delay);
+                    } catch (InterruptedException e) {
+                      Thread.currentThread().interrupt();
+                    }
 
                   return null;
                 }
