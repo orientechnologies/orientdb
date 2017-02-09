@@ -8,26 +8,57 @@
 
   <div *ngIf="true">
 
-    <form class="form-horizontal" id="teleporterForm" name="teleporterForm" novalidate> {{message}}
+    <form class="form-horizontal" id="teleporterForm" name="teleporterForm" #form="ngForm"> {{message}}
 
-      <div id="stepSwitch" [ngSwitch]="getConfigStep()">
+      <div id="stepSwitch" [ngSwitch]="getStep()">
 
-        <div class="stepOne" *ngSwitchCase="1">
+        <div class="stepOne" *ngSwitchCase="'1'">
           <h3>Step 1: Source Database connection</h3><br/>
 
           <div class="form-group">
-            <label class="col-sm-2 control-label">Driver</label>
+            <label class="col-sm-2 control-label">Database Driver</label>
 
             <div class="col-md-10">
-              <select ng-model="config.driver" class="form-control"
-                      ng-options="key as key for (key, value) in drivers" ng-change="changeDriver()"></select>
+              <select class="form-control" name="driver" [(ngModel)]="config.driver"
+                      (ngModelChange)="changeJurlAccordingToDriver()" required>
+                <option *ngFor="let driverName of driverNames" [value]="driverName"> {{driverName}} </option>
+              </select>
             </div>
           </div>
 
           <div class="form-group">
-            <label class="col-sm-2 control-label">Host</label>
+            <label class="col-sm-2 control-label">Database Host</label>
             <div class="col-md-10">
-              <input type="text" id="host" class="form-control"/>
+              <input type="text" id="host" class="form-control" name="host" [(ngModel)]="dbConnection.host"
+                     (ngModelChange)="updateJurl()"
+                     placeholder="Host" required ngControl="hostControl"/>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="col-sm-2 control-label">Port</label>
+            <div class="col-md-10">
+              <input type="text" id="port" class="form-control" name="port" [(ngModel)]="dbConnection.port"
+                     (ngModelChange)="updateJurl()"
+                     placeholder="Port" required ngControl="hostControl"/>
+            </div>
+          </div>
+
+          <div class="form-group" *ngIf="config.driver != 'Oracle'">
+            <label class="col-sm-2 control-label">Database Name</label>
+            <div class="col-md-10">
+              <input type="text" id="dbName" class="form-control" name="dbName" [(ngModel)]="dbConnection.dbName"
+                     (ngModelChange)="updateJurl()"
+                     placeholder="Database Name" required ngControl="hostControl"/>
+            </div>
+          </div>
+
+          <div class="form-group" *ngIf="config.driver == 'Oracle'">
+            <label class="col-sm-2 control-label">SID</label>
+            <div class="col-md-10">
+              <input type="text" id="sid" class="form-control" name="sid" [(ngModel)]="dbConnection.sid"
+                     (ngModelChange)="updateJurl()"
+                     placeholder="SID" required ngControl="hostControl"/>
             </div>
           </div>
 
@@ -38,7 +69,7 @@
                   <button type="button" class="btn btn-sm btn-primary disabled">Prev</button>
                 </div>
                 <div class="btn-group">
-                  <button type="button" class="btn btn-sm btn-primary" (click)="switchConfigStep(2)">Next</button>
+                  <button type="button" class="btn btn-sm btn-primary" (click)="switchConfigStep('2')" [disabled]="!form.valid">Next</button>
                 </div>
               </div>
             </div>
@@ -46,18 +77,20 @@
 
         </div>
 
-        <div class="stepTwo" *ngSwitchCase="2">
+        <div class="stepTwo" *ngSwitchCase="'2'">
           <h3>Step 2: Source Database Credentials</h3><br/>
           <div class="form-group">
-            <label class="col-sm-2 control-label">Username</label>
+            <label class="col-sm-2 control-label">User Name</label>
             <div class="col-md-10">
-              <input type="text" id="username" class="form-control" [(ngModel)]="username"/>
-            </div> Hai inserito lo username {{username}}
+              <input type="text" id="username" class="form-control" [(ngModel)]="config.username" name="username"
+                     placeholder="User Name" required/>
+            </div>
           </div>
           <div class="form-group">
             <label class="col-sm-2 control-label">Password</label>
             <div class="col-md-10">
-              <input type="text" id="password" class="form-control"/>
+              <input type="password" id="password" class="form-control" [(ngModel)]="config.password" name="password"
+                     placeholder="Password" required/>
             </div>
           </div>
 
@@ -65,7 +98,7 @@
             <div class="col-sm-offset-2 col-sm-10">
               <div class="btn-toolbar">
                 <div class="btn-group pull-right">
-                  <button type="button" class="btn btn-sm btn-primary" (click)="switchConfigStep(1)">Test connection</button>
+                  <button type="button" class="btn btn-sm btn-primary" (click)="testConnection()">Test connection</button>
                 </div>
               </div>
             </div>
@@ -75,10 +108,10 @@
             <div class="col-sm-offset-2 col-sm-10">
               <div class="btn-toolbar">
                 <div class="btn-group">
-                  <button type="button" class="btn btn-sm btn-primary" (click)="switchConfigStep(1)">Prev</button>
+                  <button type="button" class="btn btn-sm btn-primary" (click)="switchConfigStep('1')">Prev</button>
                 </div>
                 <div class="btn-group">
-                  <button type="button" class="btn btn-sm btn-primary" (click)="switchConfigStep(3)">Next</button>
+                  <button type="button" class="btn btn-sm btn-primary" (click)="switchConfigStep('3')" [disabled]="!form.valid">Next</button>
                 </div>
               </div>
             </div>
@@ -86,12 +119,24 @@
 
         </div>
 
-        <div class="stepThree" *ngSwitchCase="3">
+        <div class="stepThree" *ngSwitchCase="'3'">
           <h3>Step 3: Target OrientDB Database</h3><br/>
+
           <div class="form-group">
-            <label class="col-sm-2 control-label">Target URL</label>
+            <label class="col-sm-2 control-label">Connection Protocol</label>
+
             <div class="col-md-10">
-              <input type="text" id="outDBUrl" class="form-control"/>
+              <select class="form-control" [(ngModel)]="config.protocol" name="protocol" required>
+                <option *ngFor="let protocol of protocols" [value]="protocol"> {{protocol}} </option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="col-sm-2 control-label">OrientDB URL</label>
+            <div class="col-md-10">
+              <input type="text" id="outDBUrl" class="form-control" [(ngModel)]="config.url" name="outDbUrl"
+                     placeholder="OrientDB URL" required/>
             </div>
           </div>
 
@@ -99,13 +144,13 @@
             <div class="col-sm-offset-2 col-sm-10">
               <div class="btn-toolbar">
                 <div class="btn-group">
-                  <button type="button" class="btn btn-sm btn-primary" (click)="switchConfigStep(2)">Prev</button>
+                  <button type="button" class="btn btn-sm btn-primary" (click)="switchConfigStep('2')">Prev</button>
                 </div>
                 <div class="btn-group">
-                  <button type="button" class="btn btn-sm btn-primary" (click)="switchConfigStep(4)">Next (Advanced)</button>
+                  <button type="button" class="btn btn-sm btn-primary" (click)="switchConfigStep('4')" [disabled]="!form.valid">Next (Advanced)</button>
                 </div>
                 <div class="btn-group pull-right">
-                  <button type="button" class="btn btn-sm btn-warning">Start migration</button>
+                  <button type="button" class="btn btn-sm btn-warning" (click)="launch()" [disabled]="!form.valid">Start migration</button>
                 </div>
               </div>
             </div>
@@ -113,14 +158,20 @@
 
         </div>
 
-        <div class="stepAdvanced" *ngSwitchCase="4">
+        <div class="stepAdvanced" *ngSwitchCase="'4'">
           <h3>Step 4: Strategies (Advanced)</h3><br/>
 
           <div class="form-group">
             <label class="col-sm-2 control-label">Strategy</label>
 
             <div class="col-sm-10">
-              <select ng-options="s for s in strategies" class="form-control" ng-model="config.strategy"></select>
+              <!-- Enrico's code
+              <select ng-options="s for s in strategies" class="form-control" [(ngModel)]="config.strategy" name="strategy"></select>
+              -->
+              <select class="form-control" [(ngModel)]="config.strategy" name="strategy" required>
+                <option *ngFor="let strategy of strategies" selected> {{strategy}} </option>
+              </select>
+
             </div>
           </div>
 
@@ -128,7 +179,10 @@
             <label class="col-sm-2 control-label">Name Resolver</label>
 
             <div class="col-sm-10">
-              <select ng-options="s for s in nameResolvers" class="form-control" ng-model="config.nameResolver"></select>
+
+              <select class="form-control" [(ngModel)]="config.nameResolver" name="nameResolver">
+                <option *ngFor="let nr of nameResolvers" selected> {{nr}} </option>
+              </select>
             </div>
           </div>
 
@@ -136,13 +190,13 @@
             <div class="col-sm-offset-2 col-sm-10">
               <div class="btn-toolbar">
                 <div class="btn-group">
-                  <button type="button" class="btn btn-sm btn-primary" (click)="switchConfigStep(3)">Prev</button>
+                  <button type="button" class="btn btn-sm btn-primary" (click)="switchConfigStep('3')">Prev</button>
                 </div>
                 <div class="btn-group">
-                  <button type="button" class="btn btn-sm btn-primary" (click)="switchConfigStep(5)">Next</button>
+                  <button type="button" class="btn btn-sm btn-primary" (click)="switchConfigStep('5')">Next</button>
                 </div>
                 <div class="btn-group pull-right">
-                  <button type="button" class="btn btn-sm btn-warning">Start migration</button>
+                  <button type="button" class="btn btn-sm btn-warning" (click)="launch()">Start migration</button>
                 </div>
               </div>
             </div>
@@ -150,20 +204,22 @@
 
         </div>
 
-        <div class="stepAdvanced" *ngSwitchCase="5">
+        <div class="stepAdvanced" *ngSwitchCase="'5'">
           <h3>Step 5: Filters (Advanced)</h3><br/>
           <div class="form-group">
             <label class="col-sm-2 control-label">Included Tables</label>
 
             <div class="col-sm-10">
-              <input type="text" class="form-control" placeholder="Included Table" ng-model="includedClasses"/>
+              <input type="text" class="form-control" [(ngModel)]="config.includedTables" name="includedTables"
+                     placeholder="Included Tables" required/>
             </div>
           </div>
           <div class="form-group">
             <label class="col-sm-2 control-label">Excluded Tables</label>
 
             <div class="col-sm-10">
-              <input type="text" class="form-control" placeholder="Excluded Tables" ng-model="excludedClasses"/>
+              <input type="text" class="form-control" [(ngModel)]="config.excludedTables" name="ExcludedTables"
+                     placeholder="Excluded Tables" required/>
 
             </div>
           </div>
@@ -172,26 +228,27 @@
             <div class="col-sm-offset-2 col-sm-10">
               <div class="btn-toolbar">
                 <div class="btn-group">
-                  <button type="button" class="btn btn-sm btn-primary" (click)="switchConfigStep(4)">Prev</button>
+                  <button type="button" class="btn btn-sm btn-primary" (click)="switchConfigStep('4')">Prev</button>
                 </div>
                 <div class="btn-group">
-                  <button type="button" class="btn btn-sm btn-primary" (click)="switchConfigStep(6)">Next</button>
+                  <button type="button" class="btn btn-sm btn-primary" (click)="switchConfigStep('6')">Next</button>
                 </div>
                 <div class="btn-group pull-right">
-                  <button type="button" class="btn btn-sm btn-warning">Start migration</button>
+                  <button type="button" class="btn btn-sm btn-warning" (click)="launch()">Start migration</button>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div class="stepAdvanced" *ngSwitchCase="6">
+        <div class="stepAdvanced" *ngSwitchCase="'6'">
           <h3>Step 6: Inheritance (Advanced)</h3><br/>
           <div class="form-group">
             <label class="col-sm-2 control-label">XML Path</label>
 
             <div class="col-sm-10">
-              <input type="text" class="form-control" placeholder="XML Path">
+              <input type="text" class="form-control" [(ngModel)]="config.xmlPath" name="xmlPath"
+                     placeholder="XML Path" required>
             </div>
           </div>
 
@@ -199,27 +256,29 @@
             <div class="col-sm-offset-2 col-sm-10">
               <div class="btn-toolbar">
                 <div class="btn-group">
-                  <button type="button" class="btn btn-sm btn-primary" (click)="switchConfigStep(5)">Prev</button>
+                  <button type="button" class="btn btn-sm btn-primary" (click)="switchConfigStep('5')">Prev</button>
                 </div>
                 <div class="btn-group">
-                  <button type="button" class="btn btn-sm btn-primary" (click)="switchConfigStep(7)">Next</button>
+                  <button type="button" class="btn btn-sm btn-primary" (click)="switchConfigStep('7')">Next</button>
                 </div>
                 <div class="btn-group pull-right">
-                  <button type="button" class="btn btn-sm btn-warning">Start migration</button>
+                  <button type="button" class="btn btn-sm btn-warning" (click)="launch()">Start migration</button>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div class="stepAdvanced" *ngSwitchCase="7">
-          <h3>Step 7: Others (Advanced)</h3><br/>
+        <div class="stepAdvanced" *ngSwitchCase="'7'">
+          <h3>Step 7: Log Level (Advanced)</h3><br/>
           <div class="form-group">
             <label class="col-sm-2 control-label">Log Level</label>
 
             <div class="col-sm-10">
-              <select ng-options="key as value[key] for (key,value) in levels" class="form-control"
-                      ng-model="config.level"></select>
+              <select class="form-control" [(ngModel)]="config.level" name="logLevel" required>
+                <option *ngFor="let level of logLevels; let i = index" [value]="i">
+                  {{level}} </option>
+              </select>
             </div>
           </div>
 
@@ -227,17 +286,52 @@
             <div class="col-sm-offset-2 col-sm-10">
               <div class="btn-toolbar">
                 <div class="btn-group">
-                  <button type="button" class="btn btn-sm btn-primary" (click)="switchConfigStep(6)">Prev</button>
+                  <button type="button" class="btn btn-sm btn-primary" (click)="switchConfigStep('6')">Prev</button>
                 </div>
                 <div class="btn-group">
                   <button type="button" class="btn btn-sm btn-primary disabled">Next</button>
                 </div>
                 <div class="btn-group pull-right">
-                  <button type="button" class="btn btn-sm btn-warning">Start migration</button>
+                  <button type="button" class="btn btn-sm btn-warning" (click)="launch()">Start migration</button>
                 </div>
               </div>
             </div>
           </div>
+        </div>
+
+        <div class="running" *ngSwitchCase="'running'">
+          <h3>Migration to OrientDB</h3><br/>
+
+          <div class="row ">
+            <div class="col-md-12">
+              <div class="studio-well-tips-sm ">
+                <h5>
+            <span class="tab">
+              <b> Status</b>: {{ job.status }}
+            </span>
+                </h5>
+                <h5>
+            <span class="tab">
+               <b>From</b>: {{ job.cfg.jurl }}
+            </span>
+                </h5>
+                <h5>
+            <span class="tab">
+              <b>To</b>: {{job.cfg.outDbUrl }}
+            </span>
+                </h5>
+              </div>
+            </div>
+          </div>
+          <div class="row row-space-2x">
+            <div class="col-md-12">
+              <textarea ui-codemirror="editorOptions" ng-model="job.log"></textarea>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-12"></div>
+          </div>
+
         </div>
 
       </div>

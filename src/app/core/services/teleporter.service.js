@@ -1,19 +1,50 @@
+import {downgradeInjectable} from '@angular/upgrade/static';
+import {Http} from '@angular/http';
+import 'rxjs/add/operator/toPromise';
+
 import {API} from '../../../constants';
 
 
 class TeleporterService {
 
+  constructor(http) {
+    this.http = http;
+  }
+
   drivers() {
-    window.open(API + 'teleporter/drivers');
+    let url = API + 'teleporter/drivers';
+    return this.http.get(url).toPromise().then((data) => {
+      return data.json();
+    });
   }
 
-  launch(config) {
-    window.open(API + 'teleporter/job');
+  launch(params) {
+    let url = API + 'teleporter/job';
+    return this.http.post(url, params).toPromise().then((data) => {
+      return data.json();
+    });
   }
 
-  test(config) {
-    window.open(API + 'teleporter/test');
+  test(params) {
+    let url = API + 'teleporter/test';
+    return this.http.post(url, params).toPromise().then((data) => {
+      return data.json();
+    });
   }
+
+  status() {
+    let url = API + 'teleporter/status';
+    return this.http.get(url).toPromise().then((data) => {
+      return data.json();
+    });
+  }
+
 }
+
+TeleporterService.parameters = [[Http]];
+
+angular.module('command.services', []).factory(
+  `TeleporterService`,
+  downgradeInjectable(TeleporterService));
 
 export {TeleporterService};
