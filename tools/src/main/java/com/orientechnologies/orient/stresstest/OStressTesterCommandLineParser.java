@@ -58,8 +58,8 @@ public class OStressTesterCommandLineParser {
   public final static String OPTION_REMOTE_PORT                    = "remote-port";
 
   public final static String MAIN_OPTIONS =
-      OPTION_MODE + OPTION_CONCURRENCY + OPTION_WORKLOAD + OPTION_TRANSACTIONS + OPTION_DELAY+ OPTION_OUTPUT_FILE + OPTION_PLOCAL_PATH
-          + OPTION_KEEP_DATABASE_AFTER_TEST + OPTION_CHECK_DATABASE + OPTION_LOAD_BALANCING + OPTION_DBNAME;
+      OPTION_MODE + OPTION_CONCURRENCY + OPTION_WORKLOAD + OPTION_TRANSACTIONS + OPTION_DELAY + OPTION_OUTPUT_FILE
+          + OPTION_PLOCAL_PATH + OPTION_KEEP_DATABASE_AFTER_TEST + OPTION_CHECK_DATABASE + OPTION_LOAD_BALANCING + OPTION_DBNAME;
 
   public static final String SYNTAX =
       "StressTester " + "\n\t-m mode (can be any of these: [plocal|memory|remote|distributed] )" + "\n\t-w workloads"
@@ -223,7 +223,10 @@ public class OStressTesterCommandLineParser {
     return result;
   }
 
-  private static int getNumber(String value, String option) throws IllegalArgumentException {
+  private static int getNumber(final String value, final String option) throws IllegalArgumentException {
+    if (value == null)
+      return 0;
+
     try {
       int val = Integer.parseInt(value);
       if (val < 0) {
