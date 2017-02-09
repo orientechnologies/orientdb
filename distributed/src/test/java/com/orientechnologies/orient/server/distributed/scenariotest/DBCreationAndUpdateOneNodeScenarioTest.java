@@ -36,7 +36,7 @@ import static org.junit.Assert.*;
  * - check consistency: db with all the records are consistent
  *
  * @author Gabriele Ponzi
- * @email  <gabriele.ponzi--at--gmail.com>
+ * @email <gabriele.ponzi--at--gmail.com>
  */
 
 public class DBCreationAndUpdateOneNodeScenarioTest extends AbstractScenarioTest {
@@ -62,25 +62,29 @@ public class DBCreationAndUpdateOneNodeScenarioTest extends AbstractScenarioTest
 
     // checking the db was created both on server2 and server3
     ODatabaseRecordThreadLocal.INSTANCE.set(null);
+    ODatabaseDocumentTx dbServer2 = poolFactory.get(url2, "admin", "admin").acquire();
     try {
-      ODatabaseDocumentTx dbServer2 = poolFactory.get(url2,"admin","admin").acquire();
       assertNotNull(dbServer2);
       List<ODocument> result = dbServer2.query(new OSQLSynchQuery<OIdentifiable>("select from Person"));
       assertEquals(0, result.size());
     } catch (Exception e) {
       e.printStackTrace();
       fail();
+    } finally {
+      dbServer2.close();
     }
 
     ODatabaseRecordThreadLocal.INSTANCE.set(null);
+    ODatabaseDocumentTx dbServer3 = poolFactory.get(url3, "admin", "admin").acquire();
     try {
-      ODatabaseDocumentTx dbServer3 = poolFactory.get(url3,"admin","admin").acquire();
       assertNotNull(dbServer3);
       List<ODocument> result = dbServer3.query(new OSQLSynchQuery<OIdentifiable>("select from Person"));
       assertEquals(0, result.size());
     } catch (Exception e) {
       e.printStackTrace();
       fail();
+    } finally {
+      dbServer3.close();
     }
 
     // executing writes on server1

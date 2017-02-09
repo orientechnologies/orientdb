@@ -42,7 +42,7 @@ import java.util.Date;
  * are necessary to prevent concurrent modification of records before the transaction is finished. <br>
  * This task uses the same partition keys used by TxTask to avoid synchronizing all the worker threads (and queues).
  *
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
+ * @author Luca Garulli (l.garulli--at--orientdb.com)
  *
  */
 public class OHeartbeatTask extends OAbstractRemoteTask {
@@ -106,6 +106,11 @@ public class OHeartbeatTask extends OAbstractRemoteTask {
   }
 
   @Override
+  public boolean isIdempotent() {
+    return true;
+  }
+
+  @Override
   public long getSynchronousTimeout(final int iSynchNodes) {
     return getDistributedTimeout();
   }
@@ -113,11 +118,6 @@ public class OHeartbeatTask extends OAbstractRemoteTask {
   @Override
   public long getTotalTimeout(final int iTotalNodes) {
     return getDistributedTimeout();
-  }
-
-  @Override
-  public int[] getPartitionKey() {
-    return ANY;
   }
 
   @Override

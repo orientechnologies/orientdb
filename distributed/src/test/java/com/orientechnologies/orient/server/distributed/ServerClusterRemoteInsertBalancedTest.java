@@ -21,6 +21,7 @@ import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.OVertex;
+
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -113,7 +114,4 @@ public class ServerClusterRemoteInsertBalancedTest extends AbstractServerCluster
     return "distributed-insert-loadbalancing";
   }
 
-  protected String getDatabaseURL(final ServerRun server) {
-    return "remote:" + server.getBinaryProtocolAddress() + "/" + getDatabaseName();
-  }
 }

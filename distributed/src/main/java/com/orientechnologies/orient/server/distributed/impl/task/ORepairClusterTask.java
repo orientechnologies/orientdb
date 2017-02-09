@@ -36,7 +36,7 @@ import java.io.IOException;
  * Repairs a cluster through the distributed server. This task creates the missing records to realign all the servers to the same
  * clusterPosition, in order to guarantee the RID integrity.
  *
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
+ * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
 public class ORepairClusterTask extends OTxTask {
   public static final int FACTORYID = 18;
@@ -56,7 +56,7 @@ public class ORepairClusterTask extends OTxTask {
     final String clusterName = database.getClusterNameById(clusterId);
 
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.IN,
-        "Repairing cluster '%s' db=%s (reqId=%s)...", clusterName, database.getName(), requestId);
+        "Repair cluster: repairing cluster '%s' db=%s (reqId=%s)...", clusterName, database.getName(), requestId);
 
     ODatabaseRecordThreadLocal.INSTANCE.set(database);
     final ODistributedDatabase ddb = iManager.getMessageService().getDatabase(database.getName());
@@ -93,7 +93,7 @@ public class ORepairClusterTask extends OTxTask {
       // if (e instanceof ODistributedRecordLockedException)
       // ddb.dumpLocks();
       ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.IN,
-          "Rolling back transaction db=%s (reqId=%s error=%s)...", database.getName(), requestId, e);
+          "Repair cluster: rolling back transaction db=%s (reqId=%s error=%s)...", database.getName(), requestId, e);
 
       // ddb.popTxContext(requestId);
       reqContext.unlock();
@@ -101,13 +101,8 @@ public class ORepairClusterTask extends OTxTask {
       return e;
     } finally {
       ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.IN,
-          "Transaction completed db=%s (reqId=%s)...", database.getName(), requestId);
+          "Repair cluster: transaction completed db=%s (reqId=%s)...", database.getName(), requestId);
     }
-  }
-
-  @Override
-  public int[] getPartitionKey() {
-    return ANY;
   }
 
   @Override

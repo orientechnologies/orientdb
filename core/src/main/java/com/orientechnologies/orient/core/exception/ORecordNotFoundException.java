@@ -52,4 +52,8 @@ public class ORecordNotFoundException extends OCoreException implements OHighLev
 
     return rid != null ? rid.equals(((ORecordNotFoundException) obj).rid) : ((ORecordNotFoundException) obj).rid.equals(rid);
   }
+
+  public ORID getRid() {
+    return rid;
+  }
 }

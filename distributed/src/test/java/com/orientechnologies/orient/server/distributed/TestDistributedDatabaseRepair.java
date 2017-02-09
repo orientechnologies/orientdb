@@ -35,8 +35,8 @@ import java.util.Set;
 
 /**
  * Checks the distributed database repair feature is working.
- *
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
+ * 
+ * @author Luca Garulli
  */
 public class TestDistributedDatabaseRepair extends AbstractServerClusterTest {
 
@@ -140,7 +140,7 @@ public class TestDistributedDatabaseRepair extends AbstractServerClusterTest {
     }
 
     serverInstance.get(0).getServerInstance().getDistributedManager().getMessageService().getDatabase(getDatabaseName())
-        .getDatabaseRapairer().repairRecord((ORecordId) product.getIdentity());
+        .getDatabaseRepairer().repairRecord((ORecordId) product.getIdentity());
 
     Thread.sleep(3000);
 
@@ -200,7 +200,7 @@ public class TestDistributedDatabaseRepair extends AbstractServerClusterTest {
     }
 
     serverInstance.get(0).getServerInstance().getDistributedManager().getMessageService().getDatabase(getDatabaseName())
-        .getDatabaseRapairer().repairRecord((ORecordId) product.getIdentity());
+        .getDatabaseRepairer().repairRecord((ORecordId) product.getIdentity());
 
     Thread.sleep(3000);
 
@@ -276,7 +276,7 @@ public class TestDistributedDatabaseRepair extends AbstractServerClusterTest {
     }
 
     serverInstance.get(0).getServerInstance().getDistributedManager().getMessageService().getDatabase(getDatabaseName())
-        .getDatabaseRapairer().repairRecord((ORecordId) product.getIdentity());
+        .getDatabaseRepairer().repairRecord((ORecordId) product.getIdentity());
 
     Thread.sleep(3000);
 

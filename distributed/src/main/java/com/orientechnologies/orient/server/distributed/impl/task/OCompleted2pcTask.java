@@ -41,7 +41,7 @@ import java.util.List;
  * are necessary to prevent concurrent modification of records before the transaction is finished. <br>
  * This task uses the same partition keys used by TxTask to avoid synchronizing all the worker threads (and queues).
  *
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
+ * @author Luca Garulli (l.garulli--at--orientdb.com)
  *
  */
 public class OCompleted2pcTask extends OAbstractReplicatedTask {
@@ -54,13 +54,13 @@ public class OCompleted2pcTask extends OAbstractReplicatedTask {
   private int[]                 partitionKey;
 
   public OCompleted2pcTask() {
-    partitionKey = PK;
+    partitionKey = ALL;
   }
 
   public OCompleted2pcTask(final ODistributedRequestId iRequestId, final boolean iSuccess, final int[] partitionKey) {
     this.requestId = iRequestId;
     this.success = iSuccess;
-    this.partitionKey = partitionKey != null ? partitionKey : PK;
+    this.partitionKey = partitionKey != null ? partitionKey : ALL;
   }
 
   /**

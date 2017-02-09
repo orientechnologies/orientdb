@@ -19,9 +19,10 @@ package com.orientechnologies.orient.server.distributed.scenariotest;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
+import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.HashMap;
@@ -34,34 +35,30 @@ import java.util.concurrent.Future;
 import static org.junit.Assert.assertEquals;
 
 /**
- * Checks for consistency on the cluster with these steps:
- * - 2 server (quorum=2)
- * - a record is inserted on server1
- * - the record  (version 1) is present in full replica on all the servers
- * - a delay is inserted into tx of server0
- * - client c0 begins a tx on server1 and client c1 begins a tx on server2 at the same time
- *   (both txs for updating the same record)
- * - client c0 waits the delay
- * - client c1 tries to update the record, but server0 return a lockedrecord exception
- * - after c1 gives up, c0 tries the tx and succeeds
+ * Checks for consistency on the cluster with these steps: - 2 server (quorum=2) - a record is inserted on server1 - the record
+ * (version 1) is present in full replica on all the servers - a delay is inserted into tx of server0 - client c0 begins a tx on
+ * server1 and client c1 begins a tx on server2 at the same time (both txs for updating the same record) - client c0 waits the delay
+ * - client c1 tries to update the record, but server0 return a lockedrecord exception - after c1 gives up, c0 tries the tx and
+ * succeeds
  */
 public class TwoClientsRecordUpdateTxOnTwoServersWithQuorum2ScenarioTest extends AbstractScenarioTest {
 
-  private final String                  RECORD_ID   = "R001";
-  private       HashMap<String, Object> lukeFields  = new HashMap<String, Object>() {
-    {
-      put("firstName", "Luke");
-      put("lastName", "Skywalker");
-    }
-  };
-  private       HashMap<String, Object> darthFields = new HashMap<String, Object>() {
-    {
-      put("firstName", "Darth");
-      put("lastName", "Vader");
-    }
-  };
+  private final String            RECORD_ID   = "R001";
+  private HashMap<String, Object> lukeFields  = new HashMap<String, Object>() {
+                                                {
+                                                  put("firstName", "Luke");
+                                                  put("lastName", "Skywalker");
+                                                }
+                                              };
+  private HashMap<String, Object> darthFields = new HashMap<String, Object>() {
+                                                {
+                                                  put("firstName", "Darth");
+                                                  put("lastName", "Vader");
+                                                }
+                                              };
 
   @Test
+  @Ignore
   public void test() throws Exception {
     maxRetries = 10;
     init(2);
@@ -87,15 +84,16 @@ public class TwoClientsRecordUpdateTxOnTwoServersWithQuorum2ScenarioTest extends
     // retrieves record from server1 and checks they're equal
     ODocument recordServer1 = retrieveRecord(getDatabaseURL(serverInstance.get(1)), RECORD_ID);
     assertEquals(recordServer1.getVersion(), recordServer0.getVersion());
-    assertEquals(recordServer1.<String>field("id"), recordServer0.<String>field("id"));
-    assertEquals(recordServer1.<String>field("firstName"), recordServer0.<String>field("firstName"));
-    assertEquals(recordServer1.<String>field("lastName"), recordServer0.<String>field("lastName"));
+    assertEquals(recordServer1.field("id"), recordServer0.field("id"));
+    assertEquals(recordServer1.field("firstName"), recordServer0.field("firstName"));
+    assertEquals(recordServer1.field("lastName"), recordServer0.field("lastName"));
 
     // gets the actual version of record from server0
     int actualVersion = recordServer0.getVersion();
 
     // sets a delay for operations on distributed storage of server0
-    ((ODistributedStorage) dbServer0.getStorage()).setEventListener(new AfterRecordLockDelayer("server0", DOCUMENT_WRITE_TIMEOUT/4));
+    ((ODistributedStorage) dbServer0.getStorage())
+        .setEventListener(new AfterRecordLockDelayer("server0", DOCUMENT_WRITE_TIMEOUT / 4));
 
     // updates the same record from two different clients, each calling a different node
     List<Callable<Void>> clients = new LinkedList<Callable<Void>>();
@@ -123,10 +121,10 @@ public class TwoClientsRecordUpdateTxOnTwoServersWithQuorum2ScenarioTest extends
 
   private void setWriteQuorum(int quorum) throws InterruptedException {
     OHazelcastPlugin manager = (OHazelcastPlugin) serverInstance.get(0).getServerInstance().getDistributedManager();
-    ODistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration(getDatabaseName());
+    OModifiableDistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration(getDatabaseName()).modify();
     ODocument cfg = databaseConfiguration.getDocument();
     cfg.field("writeQuorum", quorum);
-    manager.updateCachedDatabaseConfiguration(getDatabaseName(), cfg, true, true);
+    manager.updateCachedDatabaseConfiguration(getDatabaseName(), databaseConfiguration, true);
     Thread.sleep(100);
   }
 }

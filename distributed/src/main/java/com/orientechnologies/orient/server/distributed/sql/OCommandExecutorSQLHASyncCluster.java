@@ -35,6 +35,8 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
+import com.orientechnologies.orient.core.sql.parser.OHaSyncClusterStatement;
+import com.orientechnologies.orient.core.sql.parser.OStatementCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
 import com.orientechnologies.orient.server.OServer;
@@ -55,50 +57,25 @@ import java.util.Map;
 /**
  * SQL HA SYNC CLUSTER command: synchronizes a cluster from distributed servers.
  * 
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
+ * @author Luca Garulli
  * 
  */
 @SuppressWarnings("unchecked")
 public class OCommandExecutorSQLHASyncCluster extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
   public static final String    NAME            = "HA SYNC CLUSTER";
-  public static final String    KEYWORD_HA      = "HA";
-  public static final String    KEYWORD_SYNC    = "SYNC";
-  public static final String    KEYWORD_CLUSTER = "CLUSTER";
 
-  private String                clusterName;
-  private OSyncClusterTask.MODE mode            = OSyncClusterTask.MODE.FULL_REPLACE;
+  private OHaSyncClusterStatement parsedStatement;
 
   public OCommandExecutorSQLHASyncCluster parse(final OCommandRequest iRequest) {
     init((OCommandRequestText) iRequest);
-
-    final StringBuilder word = new StringBuilder();
-
-    int oldPos = 0;
-    int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_HA))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_HA + " not found. Use " + getSyntax(), parserText, oldPos);
-
-    pos = nextWord(parserText, parserTextUpperCase, pos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_SYNC))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_SYNC + " not found. Use " + getSyntax(), parserText, oldPos);
-
-    pos = nextWord(parserText, parserTextUpperCase, pos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_CLUSTER))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_CLUSTER + " not found. Use " + getSyntax(), parserText, oldPos);
-
-    pos = nextWord(parserText, parserTextUpperCase, pos, word, false);
-    if (pos == -1)
-      throw new OCommandSQLParsingException("Expected <cluster>. Use " + getSyntax(), parserText, pos);
-
-    clusterName = word.toString();
-    if (clusterName == null)
-      throw new OCommandSQLParsingException("Cluster is null. Use " + getSyntax(), parserText, pos);
-
-    pos = nextWord(parserText, parserTextUpperCase, pos, word, true);
-    if (pos > -1) {
-      mode = OSyncClusterTask.MODE.valueOf(word.toString());
+    try {
+      parsedStatement = (OHaSyncClusterStatement) OStatementCache.get(this.parserText, getDatabase());
+      preParsedStatement = parsedStatement;
+    } catch (OCommandSQLParsingException sqlx) {
+      throw sqlx;
+    } catch (Exception e) {
+      throwParsingException("Error parsing query: \n" + this.parserText + "\n" + e.getMessage(), e);
     }
-
     return this;
   }
 
@@ -121,14 +98,13 @@ public class OCommandExecutorSQLHASyncCluster extends OCommandExecutorSQLAbstrac
     final String databaseName = database.getName();
 
     try {
-      switch (mode) {
-      case FULL_REPLACE:
-        return replaceCluster(dManager, database, serverInstance, databaseName, clusterName);
-
-      // case MERGE:
+      if(this.parsedStatement.modeFull) {
+        return replaceCluster(dManager, database, serverInstance, databaseName, this.parsedStatement.clusterName.getStringValue());
+      }
+      // else {
       // int merged = 0;
       // return String.format("Merged %d records", merged);
-      }
+      // }
     } catch (Exception e) {
       throw OException.wrapException(new OCommandExecutionException("Cannot execute synchronization of cluster"), e);
     }
@@ -275,7 +251,7 @@ public class OCommandExecutorSQLHASyncCluster extends OCommandExecutorSQLAbstrac
 
   @Override
   public long getDistributedTimeout() {
-    return getDatabase().getConfiguration().getValueAsLong(OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_SYNCH_TIMEOUT);
+    return getDatabase().getConfiguration().getValueAsLong(OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_SYNCH_TIMEOUT);    
   }
 
   @Override

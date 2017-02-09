@@ -39,7 +39,7 @@ import java.util.List;
  * Distributed two phase commit task. Operations can keep locks on records on the distributed servers. A second message of
  * {@link OCompleted2pcTask} is requested to unlock the records. Note that locks are freed after a (configurable) while anyway.
  *
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
+ * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
 public abstract class OAbstract2pcTask extends OAbstractReplicatedTask {
   protected static final long   serialVersionUID  = 1L;
@@ -171,11 +171,6 @@ public abstract class OAbstract2pcTask extends OAbstractReplicatedTask {
 
   public void setLocalUndoTasks(final List<OAbstractRemoteTask> undoTasks) {
     this.localUndoTasks = undoTasks;
-  }
-
-  @Override
-  public OLogSequenceNumber getLastLSN() {
-    return lastLSN;
   }
 
   public void setLastLSN(final OLogSequenceNumber lastLSN) {

@@ -35,7 +35,7 @@ import java.util.Map;
  * SQL DROP CLASS command: Drops a class from the database. Cluster associated are removed too if are used exclusively by the
  * deleting class.
  *
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
+ * @author Luca Garulli
  */
 @SuppressWarnings("unchecked")
 public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
@@ -44,8 +44,8 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLAbstract im
   public static final String KEYWORD_UNSAFE = "UNSAFE";
 
   private String             className;
-  private boolean            ifExists;
   private boolean            unsafe;
+  private boolean            ifExists       = false;
 
   public OCommandExecutorSQLDropClass parse(final OCommandRequest iRequest) {
     final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
@@ -58,8 +58,8 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLAbstract im
       final boolean strict = getDatabase().getStorage().getConfiguration().isStrictSql();
       if (strict) {
         this.className = ((ODropClassStatement) this.preParsedStatement).name.getStringValue();
-        this.ifExists = ((ODropClassStatement) this.preParsedStatement).ifExists;
         this.unsafe = ((ODropClassStatement) this.preParsedStatement).unsafe;
+        this.ifExists = ((ODropClassStatement) this.preParsedStatement).ifExists;
       } else {
         oldParsing((OCommandRequestText) iRequest);
       }
@@ -106,9 +106,9 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLAbstract im
 
   @Override
   public long getDistributedTimeout() {
-    if (className != null)
-      return getDatabase().getConfiguration().getValueAsLong(OGlobalConfiguration.DISTRIBUTED_COMMAND_QUICK_TASK_SYNCH_TIMEOUT)
-          + (2 * getDatabase().countClass(className));
+    final OClass cls = getDatabase().getMetadata().getSchema().getClass(className);
+    if (className != null && cls != null)
+      return getDatabase().getConfiguration().getValueAsLong(OGlobalConfiguration.DISTRIBUTED_COMMAND_QUICK_TASK_SYNCH_TIMEOUT) + (2 * cls.count());
 
     return getDatabase().getConfiguration().getValueAsLong(OGlobalConfiguration.DISTRIBUTED_COMMAND_QUICK_TASK_SYNCH_TIMEOUT);
   }
@@ -122,6 +122,9 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLAbstract im
     }
 
     final ODatabaseDocument database = getDatabase();
+    if (ifExists && !database.getMetadata().getSchema().existsClass(className)) {
+      return true;
+    }
     final OClass cls = database.getMetadata().getSchema().getClass(className);
     if (cls == null) {
       return null;
@@ -162,7 +165,8 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLAbstract im
     return true;
   }
 
-  @Override public String getSyntax() {
+  @Override
+  public String getSyntax() {
     return "DROP CLASS <class> [IF EXISTS] [UNSAFE]";
   }
 

@@ -125,7 +125,7 @@ public class HACrashTest extends AbstractServerClusterTxTest {
   protected void onAfterExecution() throws Exception {
     inserting = false;
 
-    waitFor(5000, new OCallable<Boolean, Void>() {
+    waitFor(20000, new OCallable<Boolean, Void>() {
       @Override
       public Boolean call(Void iArgument) {
         return serverRestarted;
@@ -137,7 +137,12 @@ public class HACrashTest extends AbstractServerClusterTxTest {
   }
 
   protected String getDatabaseURL(final ServerRun server) {
-    return "remote:" + server.getBinaryProtocolAddress() + "/" + getDatabaseName();
+    final String address = server.getBinaryProtocolAddress();
+
+    if( address == null )
+      return null;
+
+    return "remote:" + address + "/" + getDatabaseName();
   }
 
   @Override

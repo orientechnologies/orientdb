@@ -53,6 +53,40 @@ public class OCollections {
     return -1;
   }
 
+/**
+   * This method is used to find an item in an array.
+   *
+   * @param array  Array in which value should be found.
+   * @param object Object to find.
+   *
+   * @return Index of found item or <code>-1</code> otherwise.
+   */
+  public static int indexOf(final Object[] array, final Comparable object) {
+    for (int i = 0; i < array.length; ++i) {
+      if (object.compareTo(array[i]) == 0)
+        // FOUND
+        return i;
+    }
+    return -1;
+  }
+
+  /**
+   * This method is used to find a number in an array.
+   *
+   * @param array  Array of integers in which value should be found.
+   * @param object number to find.
+   *
+   * @return Index of found item or <code>-1</code> otherwise.
+   */
+  public static int indexOf(final int[] array, final int object) {
+    for (int i = 0; i < array.length; ++i) {
+      if (array[i] == object)
+        // FOUND
+        return i;
+    }
+    return -1;
+  }
+
   /**
    * Create a string representation of all objects in the given Iterable. example : [value1,value2,value3]
    * 

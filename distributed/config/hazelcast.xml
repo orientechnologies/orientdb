@@ -16,6 +16,7 @@
 		<password>orientdb</password>
 	</group>
 	<properties>
+		<property name="hazelcast.phone.home.enabled">false</property>
 		<property name="hazelcast.mancenter.enabled">false</property>
 		<property name="hazelcast.memcache.enabled">false</property>
 		<property name="hazelcast.rest.enabled">false</property>
@@ -29,6 +30,7 @@
 		<property name="hazelcast.icmp.enabled">true</property>
 		<property name="hazelcast.icmp.timeout">5000</property>
 		<property name="hazelcast.icmp.ttl">3</property>
+		<property name="hazelcast.merge.next.run.delay.seconds">15</property>
 	</properties>
 	<network>
 		<port auto-increment="true">2434</port>

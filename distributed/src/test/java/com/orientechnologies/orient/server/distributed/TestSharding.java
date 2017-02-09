@@ -416,8 +416,6 @@ public class TestSharding extends AbstractServerClusterTest {
         g.command(new OCommandSQL("create vertex `Client-Type` set `name-property` = 'temp2'")).execute();
         g.command(new OCommandSQL("create vertex `Client-Type` set `name-property` = 'temp3'")).execute();
 
-        g.command(new OCommandSQL("delete vertex `Client-Type`")).execute();
-
         Iterable<OVertex> countResultAfterFullDelete = g.command(new OCommandSQL("select from `Client-Type`")).execute();
         long totalAfterFullDelete = 0;
         for (OVertex v : countResultAfterFullDelete)

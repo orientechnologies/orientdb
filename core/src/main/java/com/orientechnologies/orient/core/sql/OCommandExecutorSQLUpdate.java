@@ -445,18 +445,19 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract
   }
 
   @Override public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
+  	 return DISTRIBUTED_EXECUTION_MODE.LOCAL;
+  	 // ALWAYS EXECUTE THE COMMAND LOCALLY BECAUSE THERE IS NO A DISTRIBUTED UNDO WITH SHARDING
+/*  	 
     if (distributedMode == null)
       // REPLICATE MODE COULD BE MORE EFFICIENT ON MASSIVE UPDATES
       distributedMode = upsertMode || query == null || getDatabase().getTransaction().isActive() ?
           DISTRIBUTED_EXECUTION_MODE.LOCAL :
           DISTRIBUTED_EXECUTION_MODE.REPLICATE;
-    return distributedMode;
+    return distributedMode;*/
   }
 
   @Override public DISTRIBUTED_RESULT_MGMT getDistributedResultManagement() {
-    return distributedMode == DISTRIBUTED_EXECUTION_MODE.LOCAL ?
-        DISTRIBUTED_RESULT_MGMT.CHECK_FOR_EQUALS :
-        DISTRIBUTED_RESULT_MGMT.MERGE;
+    return DISTRIBUTED_RESULT_MGMT.CHECK_FOR_EQUALS;
   }
 
   @Override public void end() {

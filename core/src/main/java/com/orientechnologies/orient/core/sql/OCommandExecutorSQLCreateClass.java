@@ -36,11 +36,8 @@ import java.util.Map;
 
 /**
  * SQL CREATE CLASS command: Creates a new property in the target class.
- * <p>
- * <<<<<<< HEAD
  *
- * @author Luca Garulli (l.garulli--(at)--orientdb.com) =======
- * @author Luca Garulli >>>>>>> a565f3e... Fixed Parsing of superclasses with backtick
+ * @author Luca Garulli
  */
 @SuppressWarnings("unchecked")
 public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
@@ -55,7 +52,6 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
   public static final String KEYWORD_EXISTS   = "EXISTS";
 
   private String className;
-
   private List<OClass> superClasses = new ArrayList<OClass>();
   private int[] clusterIds;
   private Integer clusters    = null;
@@ -218,6 +214,11 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
   }
 
   @Override
+  public boolean isDistributedExecutingOnLocalNodeFirst() {
+    return false;
+  }
+
+  @Override
   public QUORUM_TYPE getQuorumType() {
     return QUORUM_TYPE.ALL;
   }
@@ -238,7 +239,6 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
       else
         database.getMetadata().getSchema().createClass(className, clusterIds, superClasses.toArray(new OClass[0]));
     }
-
     return database.getMetadata().getSchema().getClasses().size();
   }
 

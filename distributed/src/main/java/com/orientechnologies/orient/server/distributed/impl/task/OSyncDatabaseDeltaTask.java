@@ -22,9 +22,7 @@ package com.orientechnologies.orient.server.distributed.impl.task;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -33,36 +31,31 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseChunk;
-import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedDatabaseDeltaSyncException;
 
 import java.io.*;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Ask for synchronization of delta of chanegs on database from a remote node.
  *
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
+ * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
-public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
-  public final static int      CHUNK_MAX_SIZE       = 4194304;              // 4MB
-  public static final String   DEPLOYDB             = "deploydb.";
+public class OSyncDatabaseDeltaTask extends OAbstractSyncDatabaseTask {
   public static final int      FACTORYID            = 13;
 
   protected OLogSequenceNumber startLSN;
-  protected long               random;
   protected Set<String>        excludedClusterNames = new HashSet<String>();
 
   public OSyncDatabaseDeltaTask() {
   }
 
-  public OSyncDatabaseDeltaTask(final OLogSequenceNumber iFirstLSN) {
-    startLSN = iFirstLSN;
-    random = UUID.randomUUID().getLeastSignificantBits();
+  public OSyncDatabaseDeltaTask(final OLogSequenceNumber iFirstLSN, final long lastOperationTimestamp) {
+    super(lastOperationTimestamp);
+    this.startLSN = iFirstLSN;
   }
 
   @Override
@@ -103,11 +96,12 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
 
     iManager.getConfigurationMap().put(DEPLOYDB + databaseName, random);
 
+    final ODistributedDatabase dDatabase = checkIfCurrentDatabaseIsNotOlder(iManager, databaseName, startLSN);
+
     iManager.setDatabaseStatus(getNodeSource(), databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
-//    iManager.setDatabaseStatus(iManager.getLocalNodeName(), databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
 
     ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-        "Deploying database %s with delta of changes...", databaseName);
+        "Deploying database '%s' with delta of changes...", databaseName);
 
     // CREATE A BACKUP OF DATABASE
     final File backupFile = new File(Orient.getTempPath() + "/backup_" + getNodeSource() + "_" + database.getName() + ".zip");
@@ -157,7 +151,7 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
         exception.set(new ODistributedDatabaseDeltaSyncException(startLSN));
       } else
         ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-            "Delta backup of database '%s' completed. range=%s-%s", databaseName, startLSN, endLSN);
+            "Delta backup of database '%s' completed. range=%s-%s", databaseName, startLSN, endLSN.get());
 
     } catch (Exception e) {
       // UNKNOWN ERROR, DELTA NOT AVAILABLE, TRY WITH FULL BACKUP
@@ -188,7 +182,11 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
     ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
         "Deploy delta database task completed");
 
-    final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(backupFile, 0, CHUNK_MAX_SIZE, endLSN.get(), false);
+    // GET THE MOMENTUM, BUT OVERWRITE THE LAST LSN RECEIVED FROM THE DELTA
+    final ODistributedMomentum momentum = dDatabase.getSyncConfiguration().getMomentum().copy();
+    momentum.setLSN(iManager.getLocalNodeName(), endLSN.get());
+
+    final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(backupFile, 0, CHUNK_MAX_SIZE, momentum, false);
 
     ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
         "- transferring chunk #%d offset=%d size=%s...", 1, 0, OFileUtils.getSizeAsNumber(chunk.buffer.length));
@@ -201,21 +199,6 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
   }
 
   @Override
-  public RESULT_STRATEGY getResultStrategy() {
-    return RESULT_STRATEGY.UNION;
-  }
-
-  @Override
-  public OCommandDistributedReplicateRequest.QUORUM_TYPE getQuorumType() {
-    return OCommandDistributedReplicateRequest.QUORUM_TYPE.NONE;
-  }
-
-  @Override
-  public long getDistributedTimeout() {
-    return OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_SYNCH_TIMEOUT.getValueAsLong();
-  }
-
-  @Override
   public String getName() {
     return "deploy_delta_db";
   }
@@ -223,6 +206,7 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
   @Override
   public void toStream(final DataOutput out) throws IOException {
     startLSN.toStream(out);
+    out.writeLong(lastOperationTimestamp);
     out.writeLong(random);
     out.writeInt(excludedClusterNames.size());
     for (String clName : excludedClusterNames) {
@@ -233,17 +217,13 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
   @Override
   public void fromStream(final DataInput in, final ORemoteTaskFactory factory) throws IOException {
     startLSN = new OLogSequenceNumber(in);
+    lastOperationTimestamp = in.readLong();
     random = in.readLong();
     excludedClusterNames.clear();
     final int total = in.readInt();
     for (int i = 0; i < total; ++i) {
       excludedClusterNames.add(in.readUTF());
     }
-  }
-
-  @Override
-  public boolean isNodeOnlineRequired() {
-    return false;
   }
 
   @Override

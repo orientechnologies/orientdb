@@ -36,6 +36,7 @@ import com.orientechnologies.orient.server.distributed.impl.OLocalClusterWrapper
 import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 import org.junit.Assert;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -51,7 +52,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
   protected OIndex<?> idx;
   protected int             maxRetries            = 5;
   protected boolean         useTransactions       = false;
-  protected List<ServerRun> executeTestsOnServers = serverInstance;
+  protected List<ServerRun> executeTestsOnServers = null;
   protected String          className             = "Person";
   protected String          indexName             = "Person.name";
 
@@ -118,7 +119,6 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
               if (retry >= maxRetries)
                 e.printStackTrace();
 
-              break;
             } catch (ODistributedException e) {
               if (!(e.getCause() instanceof ORecordDuplicatedException)) {
                 database.rollback();
@@ -162,8 +162,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
             // RETRY
             System.out.println("EXCEPTION " + e.getCause() + " RETRY " + retry + " ON CREATE RECORD");
             Thread.sleep(1000);
-          }
-          else
+          } else
             throw e;
         }
       }
@@ -303,6 +302,13 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
     executeMultipleTest(0);
   }
 
+  @Override
+  protected void prepare(boolean iCopyDatabaseToNodes, boolean iCreateDatabase) throws IOException {
+    super.prepare(iCopyDatabaseToNodes, iCreateDatabase);
+
+    executeTestsOnServers = new ArrayList<ServerRun>(serverInstance);
+  }
+
   protected void executeMultipleTest(final int serverNum) throws InterruptedException, java.util.concurrent.ExecutionException {
     poolFactory.reset();
     ODatabaseDocumentTx database = poolFactory.get(getDatabaseURL(serverInstance.get(serverNum)), "admin", "admin").acquire();
@@ -366,8 +372,8 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
     checkIndexedEntries();
   }
 
-  protected void computeExpected(final int serverId) {
-    expected = writerCount * count * serverId + baseCount;
+  protected void computeExpected(final int servers) {
+    expected = writerCount * count * servers + baseCount;
   }
 
   protected void onBeforeChecks() throws InterruptedException {
@@ -382,7 +388,14 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
     return new Reader(databaseURL);
   }
 
-  protected abstract String getDatabaseURL(ServerRun server);
+  @Override
+  protected String getDatabaseURL(ServerRun server) {
+    return getRemoteDatabaseURL(server);
+  }
+
+  protected String getRemoteDatabaseURL(final ServerRun server) {
+    return "remote:" + server.getBinaryProtocolAddress() + "/" + getDatabaseName();
+  }
 
   /**
    * Event called right after the database has been created and right before to be replicated to the X servers
@@ -493,17 +506,15 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
     if (indexName == null)
       return;
 
-    try {
-      Thread.sleep(2000);
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
-
     final Map<String, Long> result = new HashMap<String, Long>();
 
     for (ServerRun server : serverInstance) {
       if (server.isActive()) {
         final ODatabaseDocumentTx database = poolFactory.get(getDatabaseURL(server), "admin", "admin").acquire();
+
+        Assert.assertNotNull("server " + server + " has no index " + indexName + " defined",
+            database.getMetadata().getIndexManager().getIndex(indexName));
+
         try {
           final long indexSize = database.getMetadata().getIndexManager().getIndex(indexName).getSize();
 
@@ -547,6 +558,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
 
   private void printMissingIndexEntries(final ServerRun server, final ODatabaseDocumentTx database) {
     List<ODocument> qResult;// ERROR: CHECK WHAT'S MISSING
+    int missingKeys = 0;
     for (int s = 0; s < executeTestsOnServers.size(); ++s) {
       ServerRun srv = executeTestsOnServers.get(s);
       final int srvId = Integer.parseInt(srv.serverId);
@@ -559,11 +571,14 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
           qResult = database
               .query(new OSQLSynchQuery<OIdentifiable>("select from index:" + indexName + " where key='" + key + "'"));
 
-          if (qResult.isEmpty())
+          if (qResult.isEmpty()) {
+            missingKeys++;
             System.out.println("Missing key: " + key + " on server: " + server);
+          }
         }
       }
     }
+    System.out.println("Total missing keys " + missingKeys + " on server: " + server);
   }
 
   protected void checkInsertedEntries() {
@@ -573,13 +588,14 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
     }
   }
 
-  private void checkInsertedEntriesOnServer(final ServerRun server) {
+  protected void checkInsertedEntriesOnServer(final ServerRun server) {
     final ODatabaseDocumentTx database = poolFactory.get(getDatabaseURL(server), "admin", "admin").acquire();
     try {
       final int total = (int) database.countClass(className);
 
       if (total != expected) {
         // ERROR: CHECK WHAT'S MISSING
+        int missingRecords = 0;
         for (int s = 0; s < executeTestsOnServers.size(); ++s) {
           ServerRun srv = executeTestsOnServers.get(s);
           final int srvId = Integer.parseInt(srv.serverId);
@@ -590,13 +606,16 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
               final String key = "Billy" + srvId + "-" + threadId + "-" + i;
 
               final List<?> qResult = database
-                  .query(new OSQLSynchQuery<OIdentifiable>("select from index:" + indexName + " where key='" + key + "'"));
+                  .query(new OSQLSynchQuery<OIdentifiable>("select from " + className + " where name='" + key + "'"));
 
-              if (qResult.isEmpty())
+              if (qResult.isEmpty()) {
+                missingRecords++;
                 System.out.println("Missing record with key: " + key + " on server: " + server);
+              }
             }
           }
         }
+        System.out.println("Total missing records " + missingRecords + " on server: " + server);
       }
 
       Assert.assertEquals("Server " + server.getServerId() + " count is not what was expected", expected, total);

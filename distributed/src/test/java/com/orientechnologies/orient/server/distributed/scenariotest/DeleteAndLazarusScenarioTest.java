@@ -16,8 +16,7 @@
 
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
-import org.junit.Test;
-
+import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -29,11 +28,6 @@ import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
-
-import static junit.framework.TestCase.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 /**
  * It checks the consistency in the cluster with the following scenario: - 3 servers (writeQuorum=majority) - record r1 (version x)
@@ -79,9 +73,7 @@ public class DeleteAndLazarusScenarioTest extends AbstractScenarioTest {
     OHazelcastPlugin manager = (OHazelcastPlugin) server.getServerInstance().getDistributedManager();
     ODistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration(getDatabaseName());
     cfg = databaseConfiguration.getDocument();
-    cfg.field("autoDeploy", false);
-    cfg.field("version", (Integer) cfg.field("version") + 1);
-    manager.updateCachedDatabaseConfiguration(getDatabaseName(), cfg, true, true);
+
     System.out.println("\nConfiguration updated.");
 
     // inserting record r1 and checking consistency on all the servers
@@ -105,12 +97,12 @@ public class DeleteAndLazarusScenarioTest extends AbstractScenarioTest {
 
     final ORecordId r1Rid = (ORecordId) r1onServer1.getIdentity();
 
-    assertEquals((Integer)r1onServer1.field("@version"), (Integer)r1onServer2.field("@version"));
+    assertEquals(r1onServer1.field("@version"), r1onServer2.field("@version"));
     assertEquals(r1onServer1.field("id"), r1onServer2.field("id"));
     assertEquals(r1onServer1.field("firstName"), r1onServer2.field("firstName"));
     assertEquals(r1onServer1.field("lastName"), r1onServer2.field("lastName"));
 
-    assertEquals((Integer)r1onServer2.field("@version"),(Integer) r1onServer3.field("@version"));
+    assertEquals(r1onServer2.field("@version"), r1onServer3.field("@version"));
     assertEquals(r1onServer2.field("id"), r1onServer3.field("id"));
     assertEquals(r1onServer2.field("firstName"), r1onServer3.field("firstName"));
     assertEquals(r1onServer2.field("lastName"), r1onServer3.field("lastName"));
@@ -151,27 +143,29 @@ public class DeleteAndLazarusScenarioTest extends AbstractScenarioTest {
       r1onServer3 = retrieveRecord(getPlocalDatabaseURL(serverInstance.get(2)), "R001");
     } catch (Exception e) {
       e.printStackTrace();
+    } finally {
+      dbServer3.close();
     }
 
     // r1 was not modified both on server1 and server2
     r1onServer1 = retrieveRecord(getDatabaseURL(serverInstance.get(0)), "R001");
     r1onServer2 = retrieveRecord(getDatabaseURL(serverInstance.get(1)), "R001");
 
-    assertEquals((Integer) 1, r1onServer1.field("@version"));
-    assertEquals("R001", r1onServer1.field("id"));
-    assertEquals("Luke", r1onServer1.field("firstName"));
-    assertEquals("Skywalker", r1onServer1.field("lastName"));
+    assertEquals(1, (int)r1onServer1.field("@version"));
+    assertEquals("R001", (String)r1onServer1.field("id"));
+    assertEquals("Luke", (String)r1onServer1.field("firstName"));
+    assertEquals("Skywalker", (String)r1onServer1.field("lastName"));
 
-    assertEquals((Integer)r1onServer1.field("@version"), (Integer)r1onServer2.field("@version"));
+    assertEquals(r1onServer1.field("@version"), r1onServer2.field("@version"));
     assertEquals(r1onServer1.field("id"), r1onServer2.field("id"));
     assertEquals(r1onServer1.field("firstName"), r1onServer2.field("firstName"));
     assertEquals(r1onServer1.field("lastName"), r1onServer2.field("lastName"));
 
     // checking we have different values for r1* on server3
-    assertEquals("R001", r1onServer3.field("id"));
-    assertEquals("Darth", r1onServer3.field("firstName"));
-    assertEquals("Vader", r1onServer3.field("lastName"));
-    assertEquals(Integer.valueOf(initialVersion + 1),(Integer) r1onServer3.field("@version"));
+    assertEquals("R001", (String)r1onServer3.field("id"));
+    assertEquals("Darth", (String)r1onServer3.field("firstName"));
+    assertEquals("Vader", (String)r1onServer3.field("lastName"));
+    assertEquals(initialVersion + 1, (int)r1onServer3.field("@version"));
 
     // shutdown server1
     System.out.println("Network fault on server1.\n");
@@ -179,11 +173,13 @@ public class DeleteAndLazarusScenarioTest extends AbstractScenarioTest {
     assertFalse(serverInstance.get(0).isActive());
 
     // delete request on server3 for r1*
+    dbServer3 = poolFactory.get(getDatabaseURL(serverInstance.get(2)), "admin", "admin").acquire();
     try {
-      dbServer3 = poolFactory.get(getDatabaseURL(serverInstance.get(2)), "admin", "admin").acquire();
       dbServer3.command(new OCommandSQL("delete from Person where @rid=#27:0")).execute();
     } catch (Exception e) {
       System.out.println(e.getMessage());
+    } finally {
+      dbServer3.close();
     }
 
     // restarting server1
@@ -195,12 +191,12 @@ public class DeleteAndLazarusScenarioTest extends AbstractScenarioTest {
     r1onServer1 = retrieveRecord(getDatabaseURL(serverInstance.get(0)), "R001");
     r1onServer2 = retrieveRecord(getDatabaseURL(serverInstance.get(1)), "R001");
 
-    assertEquals((Integer) 1, r1onServer1.field("@version"));
-    assertEquals("R001", r1onServer1.field("id"));
-    assertEquals("Luke", r1onServer1.field("firstName"));
-    assertEquals("Skywalker", r1onServer1.field("lastName"));
+    assertEquals(1, (int)r1onServer1.field("@version"));
+    assertEquals("R001", (String)r1onServer1.field("id"));
+    assertEquals("Luke", (String)r1onServer1.field("firstName"));
+    assertEquals("Skywalker", (String)r1onServer1.field("lastName"));
 
-    assertEquals((Integer)r1onServer1.field("@version"), (Integer)r1onServer2.field("@version"));
+    assertEquals(r1onServer1.field("@version"), r1onServer2.field("@version"));
     assertEquals(r1onServer1.field("id"), r1onServer2.field("id"));
     assertEquals(r1onServer1.field("firstName"), r1onServer2.field("firstName"));
     assertEquals(r1onServer1.field("lastName"), r1onServer2.field("lastName"));
@@ -208,28 +204,43 @@ public class DeleteAndLazarusScenarioTest extends AbstractScenarioTest {
     // r1* is still present on server3
     r1onServer3 = retrieveRecord(getDatabaseURL(serverInstance.get(2)), "R001");
 
-    assertEquals((Integer) 2, r1onServer3.field("@version"));
-    assertEquals("R001", r1onServer3.field("id"));
-    assertEquals("Darth", r1onServer3.field("firstName"));
-    assertEquals("Vader", r1onServer3.field("lastName"));
+    assertEquals(2, (int)r1onServer3.field("@version"));
+    assertEquals("R001", (String)r1onServer3.field("id"));
+    assertEquals("Darth", (String)r1onServer3.field("firstName"));
+    assertEquals("Vader", (String)r1onServer3.field("lastName"));
 
     // delete request on server1 for r1
+    dbServer1 = poolFactory.get(getRemoteDatabaseURL(serverInstance.get(0)), "admin", "admin").acquire();
     try {
-      dbServer1 = poolFactory.get(getRemoteDatabaseURL(serverInstance.get(0)), "admin", "admin").acquire();
       Integer result = dbServer1.command(new OCommandSQL("delete from " + r1Rid)).execute();
     } catch (Exception e) {
       e.printStackTrace();
+    } finally {
+      dbServer1.close();
     }
 
     // r1 is no more present neither on server1, server2 nor server3
-    r1onServer1 = retrieveRecord(getDatabaseURL(serverInstance.get(0)), "R001", true);
-    r1onServer2 = retrieveRecord(getDatabaseURL(serverInstance.get(1)), "R001", true);
-    r1onServer3 = retrieveRecord(getDatabaseURL(serverInstance.get(2)), "R001", true);
-
-    assertEquals(MISSING_DOCUMENT, r1onServer1);
-    assertEquals(MISSING_DOCUMENT, r1onServer2);
-    assertEquals(MISSING_DOCUMENT, r1onServer3);
-
+    r1onServer1 = retrieveRecord(getDatabaseURL(serverInstance.get(0)), "R001", true, new OCallable<ODocument, ODocument>() {
+      @Override
+      public ODocument call(ODocument doc) {
+        assertEquals(MISSING_DOCUMENT, doc);
+        return null;
+      }
+    });
+    r1onServer2 = retrieveRecord(getDatabaseURL(serverInstance.get(1)), "R001", true, new OCallable<ODocument, ODocument>() {
+      @Override
+      public ODocument call(ODocument doc) {
+        assertEquals(MISSING_DOCUMENT, doc);
+        return null;
+      }
+    });
+    r1onServer3 = retrieveRecord(getDatabaseURL(serverInstance.get(2)), "R001", true, new OCallable<ODocument, ODocument>() {
+      @Override
+      public ODocument call(ODocument doc) {
+        assertEquals(MISSING_DOCUMENT, doc);
+        return null;
+      }
+    });
   }
 
   @Override

@@ -19,6 +19,11 @@
  */
 package com.orientechnologies.orient.server.distributed.impl.task;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.util.TimerTask;
+
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -30,15 +35,10 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
-import java.util.TimerTask;
-
 /**
  * Start the replication with a server. The command is executed to the target server that will require a SYNC DATABASE command.
  *
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
+ * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
 public class OStartReplicationTask extends OAbstractReplicatedTask {
   public static final int FACTORYID = 22;
@@ -63,7 +63,7 @@ public class OStartReplicationTask extends OAbstractReplicatedTask {
       return false;
 
     dManager.setDatabaseStatus(dManager.getLocalNodeName(), databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
-
+    
     final ODistributedConfiguration dCfg = dManager.getDatabaseConfiguration(databaseName);
 
     // EXECUTE THE INSTALL DATABASE ASYNCHRONOUSLY

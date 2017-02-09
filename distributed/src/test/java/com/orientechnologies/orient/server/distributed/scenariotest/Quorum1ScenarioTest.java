@@ -21,7 +21,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
+import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ServerRun;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import org.junit.Test;
@@ -48,7 +48,7 @@ public class Quorum1ScenarioTest extends AbstractScenarioTest {
 
   @Test
   public void test() throws Exception {
-    useTransactions = false;
+    useTransactions = true;
     maxRetries = 10;
     init(SERVERS);
     prepare(false);
@@ -75,12 +75,12 @@ public class Quorum1ScenarioTest extends AbstractScenarioTest {
     ODocument cfg = null;
     ServerRun server = serverInstance.get(0);
     OHazelcastPlugin manager = (OHazelcastPlugin) server.getServerInstance().getDistributedManager();
-    ODistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration(getDatabaseName());
+    OModifiableDistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration(getDatabaseName()).modify();
     cfg = databaseConfiguration.getDocument();
     cfg.field("writeQuorum", 1);
     cfg.field("autoDeploy", true);
     cfg.field("version", (Integer) cfg.field("version") + 1);
-    manager.updateCachedDatabaseConfiguration(getDatabaseName(), cfg, true, true);
+    manager.updateCachedDatabaseConfiguration(getDatabaseName(), databaseConfiguration, true);
     System.out.println("\nConfiguration updated.");
 
     // execute writes on server1 and server2

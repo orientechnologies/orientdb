@@ -21,8 +21,8 @@ package com.orientechnologies.orient.core.command;
 
 /**
  * Interface to know if the command must be distributed in clustered scenario.
- * 
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
+ *
+ * @author Luca Garulli
  */
 public interface OCommandDistributedReplicateRequest {
 
@@ -77,4 +77,9 @@ public interface OCommandDistributedReplicateRequest {
    * Returns the undo command if any.
    */
   String getUndoCommand();
+
+  /**
+   * Returns true if the command is executed on local node first and then distributed, or false if it's executed to all the servers at the same time.
+   */
+  boolean isDistributedExecutingOnLocalNodeFirst();
 }

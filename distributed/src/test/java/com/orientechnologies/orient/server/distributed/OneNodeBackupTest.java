@@ -162,10 +162,6 @@ public class OneNodeBackupTest extends AbstractServerClusterTxTest {
     Assert.assertEquals("Found some nodes has been restarted", 0, nodeLefts.get());
   }
 
-  protected String getDatabaseURL(final ServerRun server) {
-    return "remote:" + server.getBinaryProtocolAddress() + "/" + getDatabaseName();
-  }
-
   @Override
   public String getDatabaseName() {
     return "distributed-backup1node";

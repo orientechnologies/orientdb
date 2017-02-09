@@ -2309,6 +2309,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return deleteRecord(recordId, recordVersion, iMode, callback).getResult();
   }
 
+  public boolean isFrozen() {
+    return atomicOperationsManager.isFrozen();
+  }
+
   public void freeze(final boolean throwException) {
     checkOpenness();
     stateLock.acquireReadLock();
@@ -3307,6 +3311,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       configuration.update();
     }
+
+    if (OLogManager.instance().isDebugEnabled())
+      OLogManager.instance()
+          .debug(this, "Created cluster '%s' in database '%s' with id %d. Clusters: %s", clusterName, url, createdClusterId,
+              clusters);
 
     return createdClusterId;
   }

@@ -19,6 +19,10 @@
  */
 package com.orientechnologies.orient.server.distributed.impl.task;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -28,14 +32,10 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
-
 /**
  * Returns the range of positions for a cluster. This task is used by auto repairer.
  *
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
+ * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
 public class OClusterRepairInfoTask extends OAbstractReplicatedTask {
   private static final long serialVersionUID = 1L;
@@ -71,11 +71,6 @@ public class OClusterRepairInfoTask extends OAbstractReplicatedTask {
     // SEND BACK LAST RECORD POSITION
     final long nextPosition = database.getStorage().getUnderlying().getClusterById(clusterId).getNextPosition();
     return nextPosition - 1;
-  }
-
-  @Override
-  public int[] getPartitionKey() {
-    return ANY;
   }
 
   @Override

@@ -1,6 +1,6 @@
 /*
  *
- *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
+ *  *  Copyright 2016 Orient Technologies LTD (info(at)orientdb.com)
  *  *
  *  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  *  you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  *  *  See the License for the specific language governing permissions and
  *  *  limitations under the License.
  *  *
- *  * For more information: http://orientdb.com
+ *  * For more information: http://www.orientdb.com
  *
  */
 package com.orientechnologies.orient.server.distributed;
@@ -29,18 +29,17 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECU
 import com.orientechnologies.orient.server.distributed.conflict.ODistributedConflictResolverFactory;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.locks.Lock;
 
 /**
  * Server cluster interface to abstract cluster behavior.
  *
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- *
+ * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
 public interface ODistributedServerManager {
   String FILE_DISTRIBUTED_DB_CONFIG = "distributed-config.json";
@@ -68,7 +67,9 @@ public interface ODistributedServerManager {
      * The server is shutting down.
      */
     SHUTTINGDOWN
-  };
+  }
+
+  ;
 
   /**
    * Database status.
@@ -101,28 +102,28 @@ public interface ODistributedServerManager {
      * The database is ONLINE, but is not involved in the quorum.
      */
     BACKUP
-  };
+  }
 
   /**
    * Checks the node status if it's one of the statuses received as argument.
-   * 
-   * @param iNodeName
-   *          Node name
-   * @param iDatabaseName
-   *          Database name
-   * @param statuses
-   *          vararg of statuses
+   *
+   * @param iNodeName     Node name
+   * @param iDatabaseName Database name
+   * @param statuses      vararg of statuses
+   *
    * @return true if the node's status is equals to one of the passed statuses, otherwise false
    */
   boolean isNodeStatusEqualsTo(String iNodeName, String iDatabaseName, DB_STATUS... statuses);
 
-  boolean isNodeAvailable(final String iNodeName);
+  boolean isNodeAvailable(String iNodeName);
 
   Set<String> getAvailableNodeNames(String databaseName);
 
+  String getCoordinatorServer();
+
   void waitUntilNodeOnline() throws InterruptedException;
 
-  void waitUntilNodeOnline(final String nodeName, final String databaseName) throws InterruptedException;
+  void waitUntilNodeOnline(String nodeName, String databaseName) throws InterruptedException;
 
   OStorage getStorage(String databaseName);
 
@@ -136,7 +137,7 @@ public interface ODistributedServerManager {
 
   Object executeOnLocalNode(ODistributedRequestId reqId, ORemoteTask task, ODatabaseDocumentInternal database);
 
-  ORemoteServerController getRemoteServer(final String nodeName) throws IOException;
+  ORemoteServerController getRemoteServer(String nodeName) throws IOException;
 
   Map<String, Object> getConfigurationMap();
 
@@ -160,9 +161,10 @@ public interface ODistributedServerManager {
 
   ODistributedStrategy getDistributedStrategy();
 
-  void setDistributedStrategy(final ODistributedStrategy streatgy);
+  void setDistributedStrategy(ODistributedStrategy streatgy);
 
-  void updateCachedDatabaseConfiguration(String iDatabaseName, ODocument cfg, boolean iSaveToDisk, boolean iDeployToCluster);
+  boolean updateCachedDatabaseConfiguration(String iDatabaseName, OModifiableDistributedConfiguration cfg,
+      boolean iDeployToCluster);
 
   long getNextMessageIdCounter();
 
@@ -170,8 +172,7 @@ public interface ODistributedServerManager {
 
   void updateLastClusterChange();
 
-  boolean reassignClustersOwnership(String iNode, String databaseName, Set<String> clustersWithNotAvailableOwner,
-      boolean rebalance);
+  void reassignClustersOwnership(String iNode, String databaseName, OModifiableDistributedConfiguration cfg);
 
   /**
    * Available means not OFFLINE, so ONLINE or SYNCHRONIZING.
@@ -183,9 +184,9 @@ public interface ODistributedServerManager {
    */
   boolean isNodeOnline(String iNodeName, String databaseName);
 
-  int getAvailableNodes(final String iDatabaseName);
+  int getAvailableNodes(String iDatabaseName);
 
-  int getAvailableNodes(final Collection<String> iNodes, final String databaseName);
+  int getAvailableNodes(Collection<String> iNodes, String databaseName);
 
   boolean isOffline();
 
@@ -205,33 +206,22 @@ public interface ODistributedServerManager {
 
   void propagateSchemaChanges(ODatabaseInternal iStorage);
 
-  /**
-   * Gets a distributed lock
-   *
-   * @param iLockName
-   *          name of the lock
-   * @return
-   */
-  Lock getLock(String iLockName);
-
   ODistributedConfiguration getDatabaseConfiguration(String iDatabaseName);
 
   ODistributedConfiguration getDatabaseConfiguration(String iDatabaseName, boolean createIfNotPresent);
 
   /**
    * Sends a distributed request against multiple servers.
-   * 
+   *
    * @param iDatabaseName
    * @param iClusterNames
    * @param iTargetNodeNames
    * @param iTask
-   * @param messageId
-   *          Message Id as long
+   * @param messageId          Message Id as long
    * @param iExecutionMode
-   * @param localResult
-   *          It's the result of the request executed locally
-   *
+   * @param localResult        It's the result of the request executed locally
    * @param iAfterSentCallback
+   *
    * @return
    */
   ODistributedResponse sendRequest(String iDatabaseName, Collection<String> iClusterNames, Collection<String> iTargetNodeNames,
@@ -244,12 +234,36 @@ public interface ODistributedServerManager {
 
   List<String> getOnlineNodes(String iDatabaseName);
 
-  boolean installDatabase(boolean iStartup, String databaseName, ODocument config, boolean forceDeployment,
-      boolean tryWithDeltaFirst);
+  boolean installDatabase(boolean iStartup, String databaseName, ODocument config, boolean forceDeployment, boolean tryWithDeltaFirst);
 
   ORemoteTaskFactory getTaskFactory();
 
   Set<String> getActiveServers();
 
   ODistributedConflictResolverFactory getConflictResolverFactory();
+
+  /**
+   * Returns the cluster-wide time in milliseconds.
+   * <p/>
+   * Cluster tries to keep a cluster-wide time which might be different than the member's own system time. Cluster-wide time is
+   * -almost- the same on all members of the cluster.
+   */
+  long getClusterTime();
+
+  File getDefaultDatabaseConfigFile();
+
+  ODistributedLockManager getLockManagerRequester();
+
+  ODistributedLockManager getLockManagerExecutor();
+
+  /**
+   * Executes an operation protected by a distributed lock (one per database).
+   *
+   * @param <T>            Return type
+   * @param databaseName   Database name
+   * @param timeoutLocking
+   * @param iCallback      Operation @return The operation's result of type T
+   */
+  <T> T executeInDistributedDatabaseLock(String databaseName, long timeoutLocking, OModifiableDistributedConfiguration lastCfg,
+      OCallable<T, OModifiableDistributedConfiguration> iCallback);
 }

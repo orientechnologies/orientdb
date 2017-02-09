@@ -80,10 +80,10 @@ public class TestShardingManualSync extends AbstractServerClusterTest {
       Assert.assertEquals(1, graphNoTxEurope.getClass("V").count());
 
       // CHANGE THE WRITE QUORUM = 1
-      final ODistributedConfiguration dCfg = serverInstance.get(0).server.getDistributedManager()
-          .getDatabaseConfiguration(getDatabaseName());
+      final OModifiableDistributedConfiguration dCfg = serverInstance.get(0).server.getDistributedManager()
+          .getDatabaseConfiguration(getDatabaseName()).modify();
       ODocument newCfg = dCfg.getDocument().field("writeQuorum", 1);
-      serverInstance.get(0).server.getDistributedManager().updateCachedDatabaseConfiguration(getDatabaseName(), newCfg, true, true);
+      serverInstance.get(0).server.getDistributedManager().updateCachedDatabaseConfiguration(getDatabaseName(), dCfg, true);
 
       // CREATE A NEW RECORD ON SERVER 0 BYPASSING REPLICATION
       final ODocument v2 = new ODocument("Client");

@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.server.OSystemDatabase;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
@@ -37,19 +38,19 @@ import java.util.concurrent.atomic.AtomicLong;
  * Hazelcast implementation of distributed peer. There is one instance per database. Each node creates own instance to talk with
  * each others.
  *
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
+ * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
 public class ODistributedMessageServiceImpl implements ODistributedMessageService {
 
   private final OHazelcastPlugin                                     manager;
   private final ConcurrentHashMap<Long, ODistributedResponseManager> responsesByRequestIds;
   private final TimerTask                                            asynchMessageManager;
-  private Map<String, ODistributedDatabaseImpl> databases = new ConcurrentHashMap<String, ODistributedDatabaseImpl>();
-  private Thread responseThread;
-  private          long[]                      responseTimeMetrics = new long[10];
-  private volatile boolean                     running             = true;
-  private          Map<String, OProfilerEntry> latencies           = new HashMap<String, OProfilerEntry>();
-  private          Map<String, AtomicLong>     messagesStats       = new HashMap<String, AtomicLong>();
+  final ConcurrentHashMap<String, ODistributedDatabaseImpl>          databases           = new ConcurrentHashMap<String, ODistributedDatabaseImpl>();
+  private Thread                                                     responseThread;
+  private long[]                                                     responseTimeMetrics = new long[10];
+  private volatile boolean                                           running             = true;
+  private Map<String, OProfilerEntry>                                latencies           = new HashMap<String, OProfilerEntry>();
+  private Map<String, AtomicLong>                                    messagesStats       = new HashMap<String, AtomicLong>();
 
   public ODistributedMessageServiceImpl(final OHazelcastPlugin manager) {
     this.manager = manager;
@@ -124,10 +125,15 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
     return total > 0 ? total / involved : 0;
   }
 
-  public ODistributedDatabaseImpl registerDatabase(final String iDatabaseName) {
-    final ODistributedDatabaseImpl db = new ODistributedDatabaseImpl(manager, this, iDatabaseName);
-    databases.put(iDatabaseName, db);
-    return db;
+  /**
+   * Creates a distributed database instance if not defined yet.
+   */
+  public ODistributedDatabaseImpl registerDatabase(final String iDatabaseName, ODistributedConfiguration cfg) {
+    final ODistributedDatabaseImpl ddb = databases.get(iDatabaseName);
+    if (ddb != null)
+      return ddb;
+
+    return new ODistributedDatabaseImpl(manager, this, iDatabaseName, cfg);
   }
 
   public ODistributedDatabaseImpl unregisterDatabase(final String iDatabaseName) {
@@ -145,8 +151,19 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
   }
 
   @Override
-  public Set<String> getDatabases() {
-    return databases.keySet();
+  public Set<String> getDatabases() {    
+    // We assign the ConcurrentHashMap (databases) to the Map interface for this reason:
+    // ConcurrentHashMap.keySet() in Java 8 returns a ConcurrentHashMap.KeySetView.
+    // ConcurrentHashMap.keySet() in Java 7 returns a Set.
+    // If this code is compiled with Java 8 yet is run on Java 7, you'll receive a NoSuchMethodError:
+    // java.util.concurrent.ConcurrentHashMap.keySet()Ljava/util/concurrent/ConcurrentHashMap$KeySetView.
+    // By assigning the ConcurrentHashMap variable to a Map, the call to keySet() will return a Set
+    // and not the Java 8 type, KeySetView.
+    Map<String, ODistributedDatabaseImpl> map = databases;
+    
+    final Set<String> result = new HashSet<String>(map.keySet());
+    result.remove(OSystemDatabase.SYSTEM_DB_NAME);
+    return result;
   }
 
   /**
@@ -170,9 +187,8 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
 
       }
     } finally {
-      Orient.instance().getProfiler()
-          .updateCounter("distributed.node.msgReceived", "Number of replication messages received in current node", +1,
-              "distributed.node.msgReceived");
+      Orient.instance().getProfiler().updateCounter("distributed.node.msgReceived",
+          "Number of replication messages received in current node", +1, "distributed.node.msgReceived");
 
       Orient.instance().getProfiler().updateCounter("distributed.node." + response.getExecutorNodeName() + ".msgReceived",
           "Number of replication messages received in current node from a node", +1, "distributed.node.*.msgReceived");
@@ -232,7 +248,7 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
     final long timeout = manager.getServerInstance().getContextConfiguration()
         .getValueAsLong(OGlobalConfiguration.DISTRIBUTED_ASYNCH_RESPONSES_TIMEOUT);
 
-    for (Iterator<Entry<Long, ODistributedResponseManager>> it = responsesByRequestIds.entrySet().iterator(); it.hasNext(); ) {
+    for (Iterator<Entry<Long, ODistributedResponseManager>> it = responsesByRequestIds.entrySet().iterator(); it.hasNext();) {
       final Entry<Long, ODistributedResponseManager> item = it.next();
 
       final ODistributedResponseManager resp = item.getValue();
@@ -247,12 +263,11 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
             "%d missed response(s) for message %d by nodes %s after %dms when timeout is %dms", missingNodes.size(),
             resp.getMessageId(), missingNodes, timeElapsed, timeout);
 
-        Orient.instance().getProfiler()
-            .updateCounter("distributed.db." + resp.getDatabaseName() + ".timeouts", "Number of messages in timeouts", +1,
-                "distributed.db.*.timeouts");
+        Orient.instance().getProfiler().updateCounter("distributed.db." + resp.getDatabaseName() + ".timeouts",
+            "Number of messages in timeouts", +1, "distributed.db.*.timeouts");
 
-        Orient.instance().getProfiler()
-            .updateCounter("distributed.node.timeouts", "Number of messages in timeouts", +1, "distributed.node.timeouts");
+        Orient.instance().getProfiler().updateCounter("distributed.node.timeouts", "Number of messages in timeouts", +1,
+            "distributed.node.timeouts");
 
         resp.timeout();
         it.remove();

@@ -1,22 +1,22 @@
 /*
-     *
-     *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
-     *  *
-     *  *  Licensed under the Apache License, Version 2.0 (the "License");
-     *  *  you may not use this file except in compliance with the License.
-     *  *  You may obtain a copy of the License at
-     *  *
-     *  *       http://www.apache.org/licenses/LICENSE-2.0
-     *  *
-     *  *  Unless required by applicable law or agreed to in writing, software
-     *  *  distributed under the License is distributed on an "AS IS" BASIS,
-     *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-     *  *  See the License for the specific language governing permissions and
-     *  *  limitations under the License.
-     *  *
-     *  * For more information: http://orientdb.com
-     *
-     */
+ *
+ *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://orientdb.com
+ *
+ */
 package com.orientechnologies.orient.server.distributed.impl.task;
 
 import com.orientechnologies.orient.core.Orient;
@@ -29,19 +29,18 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 /**
  * Distributed task to fix delete record in conflict on synchronization.
  *
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- *
+ * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
 public class OResurrectRecordTask extends OUpdateRecordTask {
   private static final long serialVersionUID = 1L;
-  public static final int   FACTORYID        = 11;
+  public static final  int  FACTORYID        = 11;
 
   public OResurrectRecordTask() {
   }
@@ -53,8 +52,9 @@ public class OResurrectRecordTask extends OUpdateRecordTask {
   @Override
   public Object executeRecordTask(ODistributedRequestId requestId, final OServer iServer, ODistributedServerManager iManager,
       final ODatabaseDocumentInternal database) throws Exception {
-    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-        "resurrecting deleted record %s/%s v.%d", database.getName(), rid.toString(), version);
+    ODistributedServerLog
+        .debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "Resurrecting deleted record %s/%s v.%d reqId=%s",
+            database.getName(), rid.toString(), version, requestId);
 
     try {
       database.getStorage().recyclePosition(rid, new byte[] {}, version, recordType);
@@ -64,8 +64,8 @@ public class OResurrectRecordTask extends OUpdateRecordTask {
       ORecordInternal.fill(loadedRecordInstance, rid, version, content, true);
       loadedRecordInstance.save();
 
-      ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-          "+-> resurrected deleted record");
+      ODistributedServerLog
+          .debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "+-> resurrected deleted record");
       return Boolean.TRUE;
 
     } catch (OPaginatedClusterException e) {

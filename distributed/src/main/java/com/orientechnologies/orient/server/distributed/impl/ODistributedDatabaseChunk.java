@@ -19,28 +19,28 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
-import com.orientechnologies.orient.core.serialization.OStreamable;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-
 import java.io.*;
 import java.util.zip.GZIPInputStream;
 
+import com.orientechnologies.orient.core.serialization.OStreamable;
+import com.orientechnologies.orient.server.distributed.ODistributedMomentum;
+
 public class ODistributedDatabaseChunk implements OStreamable {
-  public String             filePath;
-  public long               offset;
-  public byte[]             buffer;
-  public OLogSequenceNumber lsn;
-  public boolean            gzipCompressed;
-  public boolean            last;
+  public String                filePath;
+  public long                  offset;
+  public byte[]                buffer;
+  public boolean               gzipCompressed;
+  public boolean               last;
+  private ODistributedMomentum momentum;
 
   public ODistributedDatabaseChunk() {
   }
 
-  public ODistributedDatabaseChunk(final File iFile, final long iOffset, final int iMaxSize, final OLogSequenceNumber iLSN,
+  public ODistributedDatabaseChunk(final File iFile, final long iOffset, final int iMaxSize, final ODistributedMomentum momentum,
       final boolean gzipCompressed) throws IOException {
     filePath = iFile.getAbsolutePath();
     offset = iOffset;
-    lsn = iLSN;
+    this.momentum = momentum;
     this.gzipCompressed = gzipCompressed;
 
     long fileSize = iFile.length();
@@ -99,9 +99,12 @@ public class ODistributedDatabaseChunk implements OStreamable {
     out.writeLong(offset);
     out.writeInt(buffer.length);
     out.write(buffer);
-    out.writeBoolean(lsn != null);
-    if (lsn != null)
-      lsn.toStream(out);
+    if (momentum != null) {
+      out.writeBoolean(true);
+      momentum.toStream(out);
+    } else
+      out.writeBoolean(false);
+
     out.writeBoolean(gzipCompressed);
     out.writeBoolean(last);
   }
@@ -113,9 +116,18 @@ public class ODistributedDatabaseChunk implements OStreamable {
     int size = in.readInt();
     buffer = new byte[size];
     in.readFully(buffer);
-    final boolean lsnNotNull = in.readBoolean();
-    lsn = lsnNotNull ? new OLogSequenceNumber(in) : null;
+
+    momentum = new ODistributedMomentum();
+    final boolean momentumPresent = in.readBoolean();
+    if (momentumPresent) {
+      momentum.fromStream(in);
+    }
+
     gzipCompressed = in.readBoolean();
     last = in.readBoolean();
+  }
+
+  public ODistributedMomentum getMomentum() {
+    return momentum;
   }
 }

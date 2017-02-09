@@ -28,6 +28,8 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
+import com.orientechnologies.orient.core.sql.parser.OHaRemoveServerStatement;
+import com.orientechnologies.orient.core.sql.parser.OStatementCache;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
@@ -36,44 +38,25 @@ import java.util.Map;
 /**
  * SQL HA REMOVE SERVER command: removes a server from ha configuration.
  * 
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
+ * @author Luca Garulli
  * 
  */
 @SuppressWarnings("unchecked")
 public class OCommandExecutorSQLHARemoveServer extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
   public static final String NAME           = "HA REMOVE SERVER";
-  public static final String KEYWORD_HA     = "HA";
-  public static final String KEYWORD_REMOVE = "REMOVE";
-  public static final String KEYWORD_SERVER = "SERVER";
 
-  private String             serverName;
+  OHaRemoveServerStatement parsedStatement;
 
   public OCommandExecutorSQLHARemoveServer parse(final OCommandRequest iRequest) {
     init((OCommandRequestText) iRequest);
-
-    final StringBuilder word = new StringBuilder();
-
-    int oldPos = 0;
-    int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_HA))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_HA + " not found. Use " + getSyntax(), parserText, oldPos);
-
-    pos = nextWord(parserText, parserTextUpperCase, pos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_REMOVE))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_REMOVE + " not found. Use " + getSyntax(), parserText, oldPos);
-
-    pos = nextWord(parserText, parserTextUpperCase, pos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_SERVER))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_SERVER + " not found. Use " + getSyntax(), parserText, oldPos);
-
-    pos = nextWord(parserText, parserTextUpperCase, pos, word, false);
-    if (pos == -1)
-      throw new OCommandSQLParsingException("Expected <server-name>. Use " + getSyntax(), parserText, pos);
-
-    serverName = word.toString();
-    if (serverName == null)
-      throw new OCommandSQLParsingException("Server name is null. Use " + getSyntax(), parserText, pos);
-
+    try {
+      parsedStatement = (OHaRemoveServerStatement) OStatementCache.get(this.parserText, getDatabase());
+      preParsedStatement = parsedStatement;
+    } catch (OCommandSQLParsingException sqlx) {
+      throw sqlx;
+    } catch (Exception e) {
+      throwParsingException("Error parsing query: \n" + this.parserText + "\n" + e.getMessage(), e);
+    }
     return this;
   }
 
@@ -95,7 +78,7 @@ public class OCommandExecutorSQLHARemoveServer extends OCommandExecutorSQLAbstra
 
     final String databaseName = database.getName();
 
-    return dManager.removeNodeFromConfiguration(serverName, databaseName, false, true);
+    return dManager.removeNodeFromConfiguration(parsedStatement.serverName.getStringValue(), databaseName, false, true);
   }
 
   @Override

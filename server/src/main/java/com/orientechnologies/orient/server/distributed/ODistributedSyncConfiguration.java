@@ -1,6 +1,6 @@
 /*
  *
- *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
+ *  *  Copyright 2016 Orient Technologies LTD (info(at)orientdb.com)
  *  *
  *  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  *  you may not use this file except in compliance with the License.
@@ -14,34 +14,38 @@
  *  *  See the License for the specific language governing permissions and
  *  *  limitations under the License.
  *  *
- *  * For more information: http://orientdb.com
+ *  * For more information: http://www.orientdb.com
  *
  */
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.exception.OSerializationException;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Immutable class to store and handle information about synchronization between nodes.
  *
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
+ * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
 public class ODistributedSyncConfiguration {
-  private ODocument configuration;
-  private File      file;
+  private final ODistributedServerManager       dManager;
+  private final Map<String, OLogSequenceNumber> lastLSN                = new ConcurrentHashMap<String, OLogSequenceNumber>();
+  private final String                          databaseName;
 
-  public ODistributedSyncConfiguration(final File file) throws IOException {
-    configuration = new ODocument();
+  private ODistributedMomentum                  momentum;
+  private File                                  file;
+  private long                                  lastOperationTimestamp = -1;
+  private long                                  lastLSNWrittenOnDisk   = 0l;
+
+  public ODistributedSyncConfiguration(final ODistributedServerManager manager, final String databaseName, final File file)
+      throws IOException {
+    this.dManager = manager;
+    this.databaseName = databaseName;
+    momentum = new ODistributedMomentum();
     this.file = file;
 
     if (!file.exists()) {
@@ -49,10 +53,48 @@ public class ODistributedSyncConfiguration {
       file.createNewFile();
       return;
     }
+    load();
+  }
 
+  public ODistributedMomentum getMomentum() {
+    updateInternalDocument();
+    return momentum;
+  }
+
+  public OLogSequenceNumber getLastLSN(final String server) {
+    return lastLSN.get(server);
+  }
+
+  public void setLastLSN(final String server, final OLogSequenceNumber lsn, final boolean updateLastOperationTimestamp)
+      throws IOException {
+    lastLSN.put(server, lsn);
+
+    if (updateLastOperationTimestamp) {
+      final long clusterTime = dManager.getClusterTime();
+      if (clusterTime > -1)
+        lastOperationTimestamp = clusterTime;
+    }
+
+    // if (updateLastOperationTimestamp)
+    // ODistributedServerLog.debug(this, dManager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.IN,
+    // "Updating LSN %s lastOperationTimestamp=%d", lsn, lastOperationTimestamp);
+
+    if (System.currentTimeMillis() - lastLSNWrittenOnDisk > 2000)
+      save();
+  }
+
+  public void load() throws IOException {
     final InputStream is = new FileInputStream(file);
     try {
-      configuration.fromJSON(is);
+      synchronized (momentum) {
+        momentum.fromJSON(is);
+
+        lastOperationTimestamp = momentum.getLastOperationTimestamp();
+        lastLSN.clear();
+        for (String server : momentum.getServers()) {
+          lastLSN.put(server, momentum.getLSN(server));
+        }
+      }
 
     } catch (OSerializationException e) {
       // CORRUPTED: RECREATE IT
@@ -64,20 +106,10 @@ public class ODistributedSyncConfiguration {
     }
   }
 
-  public OLogSequenceNumber getLSN(final String iNode) {
-    synchronized (configuration) {
-      final ODocument embedded = configuration.field(iNode);
-      if (embedded == null)
-        return null;
+  public void save() throws IOException {
+    updateInternalDocument();
 
-      return new OLogSequenceNumber((Long) embedded.field("segment"), (Long) embedded.field("position"));
-    }
-  }
-
-  public void setLSN(final String iNode, final OLogSequenceNumber iLSN) throws IOException {
-    final ODocument embedded = new ODocument();
-    embedded.field("segment", iLSN.getSegment(), OType.LONG);
-    embedded.field("position", iLSN.getPosition(), OType.LONG);
+    lastLSNWrittenOnDisk = System.currentTimeMillis();
 
     if (!file.exists()) {
       file.getParentFile().mkdirs();
@@ -86,28 +118,24 @@ public class ODistributedSyncConfiguration {
 
     final OutputStream os = new FileOutputStream(file, false);
     try {
-
-      synchronized (configuration) {
-        configuration.field(iNode, embedded, OType.EMBEDDED);
-        incrementVersion();
-        configuration.toJSON(os);
-      }
+      momentum.toJSON(os);
     } finally {
       os.close();
     }
   }
 
-  public boolean isEmpty() {
-    synchronized (configuration) {
-      return configuration.isEmpty();
-    }
+  public long getLastOperationTimestamp() {
+    return lastOperationTimestamp;
   }
 
-  private void incrementVersion() {
-    // INCREMENT VERSION
-    Integer oldVersion = configuration.field("version");
-    if (oldVersion == null)
-      oldVersion = 0;
-    configuration.field("version", oldVersion.intValue() + 1);
+  protected void updateInternalDocument() {
+    momentum.setLastOperationTimestamp(lastOperationTimestamp);
+    for (Map.Entry<String, OLogSequenceNumber> entry : lastLSN.entrySet())
+      momentum.setLSN(entry.getKey(), entry.getValue());
+  }
+
+  public void removeServer(final String nodeName) throws IOException {
+    if (lastLSN.remove(nodeName) != null)
+      save();
   }
 }

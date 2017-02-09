@@ -26,8 +26,11 @@ import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.OVertex;
-import junit.framework.Assert;
+
+import org.junit.Assert;
 import org.junit.Test;
+
+import java.util.Set;
 
 /**
  * Start 3 servers with only "europe" as master and the others as REPLICA
@@ -48,6 +51,9 @@ public class ReplicaServerTest extends AbstractServerClusterTest {
 
   @Override
   protected void executeTest() throws Exception {
+    // CHECK REPLICA SERVERS HAVE NO CLUSTER OWNED
+    checkReplicasDontOwnAnyClusters();
+
     for (int s = 0; s < SERVERS; ++s) {
       ODatabasePool factory = OrientDB.fromUrl("embedded:target/server" + s + "/databases/", OrientDBConfig.defaultConfig())
           .openPool(getDatabaseName(), "admin", "admin");
@@ -92,7 +98,6 @@ public class ReplicaServerTest extends AbstractServerClusterTest {
     for (int s = 0; s < SERVERS; ++s) {
       System.out.println("Add vertices in TX on server " + s + "...");
 
-
       ODatabasePool factory = OrientDB.fromUrl("embedded:target/server" + s + "/databases/", OrientDBConfig.defaultConfig())
           .openPool(getDatabaseName(), "admin", "admin");
 
@@ -101,7 +106,6 @@ public class ReplicaServerTest extends AbstractServerClusterTest {
 
       try {
         final OVertex v = g.newVertex("Client" + s).save();
-
         g.commit();
         Assert.assertTrue(s == 0);
 
@@ -111,6 +115,25 @@ public class ReplicaServerTest extends AbstractServerClusterTest {
       } finally {
         g.close();
       }
+    }
+
+    serverInstance.get(1).shutdownServer();
+
+    checkReplicasDontOwnAnyClusters();
+
+    serverInstance.get(2).shutdownServer();
+
+    checkReplicasDontOwnAnyClusters();
+  }
+
+  private void checkReplicasDontOwnAnyClusters() {
+    final ODistributedServerManager dMgr = serverInstance.get(0).getServerInstance().getDistributedManager();
+    final ODistributedConfiguration dCfg = dMgr.getDatabaseConfiguration(getDatabaseName());
+
+    for (int s = 1; s < SERVERS; ++s) {
+      final Set<String> clusters = dCfg
+          .getClustersOwnedByServer(serverInstance.get(s).getServerInstance().getDistributedManager().getLocalNodeName());
+      Assert.assertTrue(clusters.isEmpty());
     }
   }
 

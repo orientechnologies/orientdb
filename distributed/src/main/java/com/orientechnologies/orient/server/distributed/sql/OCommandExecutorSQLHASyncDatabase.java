@@ -29,6 +29,8 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
+import com.orientechnologies.orient.core.sql.parser.OHaSyncDatabaseStatement;
+import com.orientechnologies.orient.core.sql.parser.OStatementCache;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
@@ -38,34 +40,25 @@ import java.util.Map;
 
 /**
  * SQL HA SYNC DATABASE command: synchronizes database form distributed servers.
- * 
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
+ *
+ * @author Luca Garulli
  */
 @SuppressWarnings("unchecked")
 public class OCommandExecutorSQLHASyncDatabase extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
-  public static final String NAME             = "HA SYNC DATABASE";
-  public static final String KEYWORD_HA       = "HA";
-  public static final String KEYWORD_SYNC     = "SYNC";
-  public static final String KEYWORD_DATABASE = "DATABASE";
+  public static final String NAME = "HA SYNC DATABASE";
+  private OHaSyncDatabaseStatement parsedStatement;
 
   public OCommandExecutorSQLHASyncDatabase parse(final OCommandRequest iRequest) {
     init((OCommandRequestText) iRequest);
 
-    final StringBuilder word = new StringBuilder();
-
-    int oldPos = 0;
-    int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_HA))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_HA + " not found. Use " + getSyntax(), parserText, oldPos);
-
-    pos = nextWord(parserText, parserTextUpperCase, pos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_SYNC))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_SYNC + " not found. Use " + getSyntax(), parserText, oldPos);
-
-    pos = nextWord(parserText, parserTextUpperCase, pos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_DATABASE))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_DATABASE + " not found. Use " + getSyntax(), parserText, oldPos);
+    try {
+      parsedStatement = (OHaSyncDatabaseStatement) OStatementCache.get(this.parserText, getDatabase());
+      preParsedStatement = parsedStatement;
+    } catch (OCommandSQLParsingException sqlx) {
+      throw sqlx;
+    } catch (Exception e) {
+      throwParsingException("Error parsing query: \n" + this.parserText + "\n" + e.getMessage(), e);
+    }
 
     return this;
   }
@@ -89,7 +82,7 @@ public class OCommandExecutorSQLHASyncDatabase extends OCommandExecutorSQLAbstra
 
     final String databaseName = database.getName();
 
-    return dManager.installDatabase(true, databaseName, dStg.getDistributedConfiguration().getDocument(), false, true);
+   return dManager.installDatabase(true, databaseName, dStg.getDistributedConfiguration().getDocument(), false, true);
   }
 
   @Override

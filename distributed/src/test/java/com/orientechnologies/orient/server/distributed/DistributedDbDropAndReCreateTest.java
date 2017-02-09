@@ -45,6 +45,11 @@ public class DistributedDbDropAndReCreateTest extends AbstractServerClusterTxTes
       db.open("admin", "admin");
 
       banner("DROPPING DATABASE ON SERVERS");
+
+      waitForDatabaseIsOnline(0, "europe-0", getDatabaseName(), 5000);
+      waitForDatabaseIsOnline(0, "europe-1", getDatabaseName(), 5000);
+      waitForDatabaseIsOnline(0, "europe-2", getDatabaseName(), 5000);
+
       db.drop();
 
       Thread.sleep(2000);
@@ -71,6 +76,7 @@ public class DistributedDbDropAndReCreateTest extends AbstractServerClusterTxTes
         }
       }
 
+      db.activateOnCurrentThread();
       db.close();
 
     } while (++s < serverInstance.size());
