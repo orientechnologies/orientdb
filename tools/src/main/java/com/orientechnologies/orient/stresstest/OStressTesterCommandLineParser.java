@@ -34,56 +34,60 @@ import java.util.*;
  * @author Andrea Iacono
  */
 public class OStressTesterCommandLineParser {
-  public static final String TEMP_DATABASE_NAME                                  = "stress-test-db-";
-  public static final String CONSOLE_REMOTE_PASSWORD_PROMPT                      = "OrientDB Server (%s:%d) - Please insert the root password to create the test database: ";
+  public static final String TEMP_DATABASE_NAME             = "stress-test-db-";
+  public static final String CONSOLE_REMOTE_PASSWORD_PROMPT = "OrientDB Server (%s:%d) - Please insert the root password to create the test database: ";
 
-  public final static String OPTION_CONCURRENCY                                  = "c";
-  public final static String OPTION_MODE                                         = "m";
-  public final static String OPTION_WORKLOAD                                     = "w";
-  public final static String OPTION_TRANSACTIONS                                 = "tx";
-  public final static String OPTION_KEEP_DATABASE_AFTER_TEST                     = "k";
-  public final static String OPTION_OUTPUT_FILE                                  = "o";
-  public static final String OPTION_PLOCAL_PATH                                  = "d";
-  public final static String OPTION_LOAD_BALANCING                               = "lb";
-  public final static String OPTION_DBNAME                                       = "db";
-  public final static String OPTION_CHECK_DATABASE                               = "chk";
-  public final static String OPTION_ROOT_PASSWORD                                = "root-password";
-  public static final String ERROR_OPENING_CONSOLE                               = "An error has occurred opening the console. Please supply the root password as the -"
-      + OPTION_ROOT_PASSWORD + " parameter.";
-  public final static String OPTION_REMOTE_IP                                    = "remote-ip";
-  public final static String OPTION_HA_METRICS                                   = "ha-metrics";
-  public static final String COMMAND_LINE_PARSER_MISSING_REMOTE_IP               = "The mode is [" + OStressTester.OMode.REMOTE
-      + "] but the param --" + OPTION_REMOTE_IP + " wasn't passed.";
-  public final static String OPTION_REMOTE_PORT                                  = "remote-port";
+  public final static String OPTION_CONCURRENCY                    = "c";
+  public final static String OPTION_MODE                           = "m";
+  public final static String OPTION_WORKLOAD                       = "w";
+  public final static String OPTION_TRANSACTIONS                   = "tx";
+  public final static String OPTION_DELAY                          = "delay";
+  public final static String OPTION_KEEP_DATABASE_AFTER_TEST       = "k";
+  public final static String OPTION_OUTPUT_FILE                    = "o";
+  public static final String OPTION_PLOCAL_PATH                    = "d";
+  public final static String OPTION_LOAD_BALANCING                 = "lb";
+  public final static String OPTION_DBNAME                         = "db";
+  public final static String OPTION_CHECK_DATABASE                 = "chk";
+  public final static String OPTION_ROOT_PASSWORD                  = "root-password";
+  public static final String ERROR_OPENING_CONSOLE                 =
+      "An error has occurred opening the console. Please supply the root password as the -" + OPTION_ROOT_PASSWORD + " parameter.";
+  public final static String OPTION_REMOTE_IP                      = "remote-ip";
+  public final static String OPTION_HA_METRICS                     = "ha-metrics";
+  public static final String COMMAND_LINE_PARSER_MISSING_REMOTE_IP =
+      "The mode is [" + OStressTester.OMode.REMOTE + "] but the param --" + OPTION_REMOTE_IP + " wasn't passed.";
+  public final static String OPTION_REMOTE_PORT                    = "remote-port";
 
-  public final static String MAIN_OPTIONS                                        = OPTION_MODE + OPTION_CONCURRENCY
-      + OPTION_WORKLOAD + OPTION_TRANSACTIONS + OPTION_OUTPUT_FILE + OPTION_PLOCAL_PATH + OPTION_KEEP_DATABASE_AFTER_TEST
-      + OPTION_CHECK_DATABASE + OPTION_LOAD_BALANCING + OPTION_DBNAME;
+  public final static String MAIN_OPTIONS =
+      OPTION_MODE + OPTION_CONCURRENCY + OPTION_WORKLOAD + OPTION_TRANSACTIONS + OPTION_DELAY + OPTION_OUTPUT_FILE
+          + OPTION_PLOCAL_PATH + OPTION_KEEP_DATABASE_AFTER_TEST + OPTION_CHECK_DATABASE + OPTION_LOAD_BALANCING + OPTION_DBNAME;
 
-  public static final String SYNTAX                                              = "StressTester "
-      + "\n\t-m mode (can be any of these: [plocal|memory|remote|distributed] )" + "\n\t-w workloads" + "\n\t-c concurrency-level"
-      + "\n\t-x operations-per-transaction" + "\n\t-o result-output-file" + "\n\t-d database-directory" + "\n\t-k true|false"
-      + "\n\t-chk true|false" + "\n\t--root-password rootPassword" + "\n\t--remote-ip ipOrHostname" + "\n\t--remote-port portNumber"
-      + "\n\t-lb load-balancing-strategy" + "\n\t-db db-name" + "\n";
+  public static final String SYNTAX =
+      "StressTester " + "\n\t-m mode (can be any of these: [plocal|memory|remote|distributed] )" + "\n\t-w workloads"
+          + "\n\t-c concurrency-level" + "\n\t-x operations-per-transaction" + "\n\t-o result-output-file"
+          + "\n\t-d database-directory" + "\n\t-k true|false" + "\n\t-chk true|false" + "\n\t--root-password rootPassword"
+          + "\n\t--remote-ip ipOrHostname" + "\n\t--remote-port portNumber" + "\n\t-lb load-balancing-strategy" + "\n\t-db db-name"
+          + "\n";
 
-  static final String        COMMAND_LINE_PARSER_INVALID_NUMBER                  = "Invalid %s number [%s].";
-  static final String        COMMAND_LINE_PARSER_LESSER_THAN_ZERO_NUMBER         = "The %s value must be greater than 0.";
-  static final String        COMMAND_LINE_PARSER_INVALID_MODE                    = "Invalid mode [%s].";
-  static final String        COMMAND_LINE_PARSER_INVALID_OPTION                  = "Invalid option [%s]";
-  static final String        COMMAND_LINE_PARSER_EXPECTED_VALUE                  = "Expected value after argument [%s]";
-  static final String        COMMAND_LINE_PARSER_INVALID_REMOTE_PORT_NUMBER      = "Invalid remote port [%d]. The port number has to be lesser than 65536.";
-  static final String        COMMAND_LINE_PARSER_MODE_PARAM_MANDATORY            = "The mode param [-m] is mandatory.";
-  static final String        COMMAND_LINE_PARSER_NOT_EXISTING_OUTPUT_DIRECTORY   = "The directory where to write the resultOutputFile [%s] doesn't exist.";
-  static final String        COMMAND_LINE_PARSER_NOT_EXISTING_PLOCAL_PATH        = "The plocal directory (param -d) doesn't exist [%s].";
-  static final String        COMMAND_LINE_PARSER_NO_WRITE_PERMISSION_OUTPUT_FILE = "You don't have the permissions for writing on directory [%s] the resultOutputFile.";
-  static final String        COMMAND_LINE_PARSER_NO_WRITE_PERMISSION_PLOCAL_PATH = "You don't have the permissions for writing on plocal directory [%s].";
-  static final String        COMMAND_LINE_PARSER_PLOCAL_PATH_IS_NOT_DIRECTORY    = "The plocal path [%s] is not a directory.";
+  static final String COMMAND_LINE_PARSER_INVALID_NUMBER                  = "Invalid %s number [%s].";
+  static final String COMMAND_LINE_PARSER_LESSER_THAN_ZERO_NUMBER         = "The %s value must be greater than 0.";
+  static final String COMMAND_LINE_PARSER_INVALID_MODE                    = "Invalid mode [%s].";
+  static final String COMMAND_LINE_PARSER_INVALID_OPTION                  = "Invalid option [%s]";
+  static final String COMMAND_LINE_PARSER_EXPECTED_VALUE                  = "Expected value after argument [%s]";
+  static final String COMMAND_LINE_PARSER_INVALID_REMOTE_PORT_NUMBER      = "Invalid remote port [%d]. The port number has to be lesser than 65536.";
+  static final String COMMAND_LINE_PARSER_MODE_PARAM_MANDATORY            = "The mode param [-m] is mandatory.";
+  static final String COMMAND_LINE_PARSER_NOT_EXISTING_OUTPUT_DIRECTORY   = "The directory where to write the resultOutputFile [%s] doesn't exist.";
+  static final String COMMAND_LINE_PARSER_NOT_EXISTING_PLOCAL_PATH        = "The plocal directory (param -d) doesn't exist [%s].";
+  static final String COMMAND_LINE_PARSER_NO_WRITE_PERMISSION_OUTPUT_FILE = "You don't have the permissions for writing on directory [%s] the resultOutputFile.";
+  static final String COMMAND_LINE_PARSER_NO_WRITE_PERMISSION_PLOCAL_PATH = "You don't have the permissions for writing on plocal directory [%s].";
+  static final String COMMAND_LINE_PARSER_PLOCAL_PATH_IS_NOT_DIRECTORY    = "The plocal path [%s] is not a directory.";
 
   /**
    * builds a StressTester object using the command line arguments
    *
    * @param args
+   *
    * @return
+   *
    * @throws Exception
    */
   public static OStressTester getStressTester(String[] args) throws Exception {
@@ -101,12 +105,14 @@ public class OStressTesterCommandLineParser {
     settings.resultOutputFile = options.get(OPTION_OUTPUT_FILE);
     settings.plocalPath = options.get(OPTION_PLOCAL_PATH);
     settings.operationsPerTransaction = getNumber(options.get(OPTION_TRANSACTIONS), "transactions");
+    settings.delay = getNumber(options.get(OPTION_DELAY), "delay");
     settings.concurrencyLevel = getNumber(options.get(OPTION_CONCURRENCY), "concurrency");
     settings.remoteIp = options.get(OPTION_REMOTE_IP);
     settings.haMetrics = options.get(OPTION_HA_METRICS) != null ? Boolean.parseBoolean(options.get(OPTION_HA_METRICS)) : false;
     settings.workloadCfg = options.get(OPTION_WORKLOAD);
-    settings.keepDatabaseAfterTest = options.get(OPTION_KEEP_DATABASE_AFTER_TEST) != null
-        ? Boolean.parseBoolean(options.get(OPTION_KEEP_DATABASE_AFTER_TEST)) : false;
+    settings.keepDatabaseAfterTest = options.get(OPTION_KEEP_DATABASE_AFTER_TEST) != null ?
+        Boolean.parseBoolean(options.get(OPTION_KEEP_DATABASE_AFTER_TEST)) :
+        false;
     settings.remotePort = 2424;
     settings.checkDatabase = Boolean.parseBoolean(options.get(OPTION_CHECK_DATABASE));
     if (options.get(OPTION_LOAD_BALANCING) != null)
@@ -206,8 +212,9 @@ public class OStressTesterCommandLineParser {
 
       final OWorkload workload = OStressTester.getWorkloadFactory().get(workloadName);
       if (workload == null)
-        throw new IllegalArgumentException("Workload '" + workloadName + "' is not configured. Use one of the following: "
-            + OStressTester.getWorkloadFactory().getRegistered());
+        throw new IllegalArgumentException(
+            "Workload '" + workloadName + "' is not configured. Use one of the following: " + OStressTester.getWorkloadFactory()
+                .getRegistered());
       workload.parseParameters(workloadParams);
 
       result.add(workload);
@@ -216,7 +223,10 @@ public class OStressTesterCommandLineParser {
     return result;
   }
 
-  private static int getNumber(String value, String option) throws IllegalArgumentException {
+  private static int getNumber(final String value, final String option) throws IllegalArgumentException {
+    if (value == null)
+      return 0;
+
     try {
       int val = Integer.parseInt(value);
       if (val < 0) {
