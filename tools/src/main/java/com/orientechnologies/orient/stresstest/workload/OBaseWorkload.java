@@ -188,16 +188,16 @@ public abstract class OBaseWorkload implements OWorkload {
                     operationTiming[context.currentIdx] = System.nanoTime() - startOp;
                   }
 
-                  if (settings.delay > 0)
-                    try {
-                      Thread.sleep(settings.delay);
-                    } catch (InterruptedException e) {
-                      Thread.currentThread().interrupt();
-                    }
-
                   return null;
                 }
               }, 10);
+
+              if (settings.delay > 0)
+                try {
+                  Thread.sleep(settings.delay);
+                } catch (InterruptedException e) {
+                  Thread.currentThread().interrupt();
+                }
             }
 
             if (operationsPerTransaction > 0)
