@@ -104,7 +104,7 @@ public class OGraphShortestPathWorkload extends OBaseGraphWorkload {
     }
     result.total = startingVertices.size();
 
-    executeOperation(databaseIdentifier, result, settings.concurrencyLevel, settings.operationsPerTransaction, new OCallable<Void, OBaseWorkLoadContext>() {
+    executeOperation(databaseIdentifier, result, settings, new OCallable<Void, OBaseWorkLoadContext>() {
       @Override
       public Void call(final OBaseWorkLoadContext context) {
         final OWorkLoadContext graphContext = ((OWorkLoadContext) context);
