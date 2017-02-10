@@ -5,6 +5,7 @@ import {removeNgStyles, createNewHosts, createInputTransfer} from '@angularclass
 /*
  * Platform and Environment providers/directives/pipes
  */
+import {ENV_PROVIDERS} from './environment';
 import {APP_RESOLVER_PROVIDERS} from './app.resolver';
 import {APP_DECLARATIONS} from './app.declarations';
 import {APP_IMPORTS} from './app.imports';
@@ -12,7 +13,8 @@ import {platformBrowserDynamic} from "@angular/platform-browser-dynamic";
 import {UpgradeModule} from "@angular/upgrade/src/aot/upgrade_module";
 
 
-declare var angular: any;
+declare var angular: angular.IAngularStatic;
+
 // Application wide providers
 const APP_PROVIDERS = [
   ...APP_RESOLVER_PROVIDERS,
@@ -21,6 +23,7 @@ const APP_PROVIDERS = [
 /**
  * `AppModule` is the main entry point into Angular2's bootstraping process
  */
+
 @NgModule({
   declarations: [
     APP_DECLARATIONS
@@ -29,14 +32,20 @@ const APP_PROVIDERS = [
     APP_IMPORTS
   ],
   providers: [ // expose our Services and Providers into Angular's dependency injection
+    ENV_PROVIDERS,
     APP_PROVIDERS
-  ]
+  ],
+  entryComponents: [...APP_DECLARATIONS]
 })
 export class AppModule {
   constructor(public appRef: ApplicationRef) {
   }
 
   hmrOnInit(store) {
+
+  }
+
+  ngDoBootstrap(){
 
   }
 
@@ -49,6 +58,7 @@ export class AppModule {
   }
 
 }
+
 
 platformBrowserDynamic().bootstrapModule(AppModule).then(platformRef => {
   const upgrade = platformRef.injector.get(UpgradeModule);

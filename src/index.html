@@ -14,7 +14,6 @@
   <meta name="description" content="">
   <meta name="viewport" content="width=device-width">
 
-  <script src="bundle.js"></script>
 
 
   <!-- endbuild -->
@@ -90,6 +89,11 @@
     <!--<p class="text-muted">&copy; Copyright 2017 <a href="https://orientdb.com" target="_blank">OrientDB LTD</a>.</p>-->
   <!--</div>-->
 <!--</footer>-->
+
+<% if (htmlWebpackPlugin.options.metadata.isDevServer && htmlWebpackPlugin.options.metadata.HMR !== true) { %>
+<!-- Webpack Dev Server reload -->
+<script src="/webpack-dev-server.js"></script>
+<% } %>
 
 </body>
 </html>

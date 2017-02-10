@@ -7,7 +7,6 @@
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
     "sourceMap": true,
-    "noEmitHelpers": true,
     "strictNullChecks": false,
     "baseUrl": "./src",
     "paths": {
@@ -20,6 +19,7 @@
       "hammerjs",
       "jasmine",
       "node",
+      "angular",
       "protractor",
       "selenium-webdriver",
       "source-map",

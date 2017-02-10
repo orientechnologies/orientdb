@@ -2,14 +2,6 @@ import 'jquery';
 import angular from 'angular';
 
 
-import {UpgradeModule} from '@angular/upgrade/static';
-import {NgModule} from '@angular/core';
-import {FormsModule} from '@angular/forms'
-import {BrowserModule} from "@angular/platform-browser";
-import {HttpModule} from '@angular/http';
-import {platformBrowserDynamic} from '@angular/platform-browser-dynamic';
-
-
 
 import 'core-js';
 import 'babel-polyfill';
@@ -59,8 +51,7 @@ import 'fullcalendar/dist/fullcalendar.min.css';
 import 'angular-motion/dist/angular-motion.min.css';
 
 
-import {APP_DECLARATIONS} from './app/app.declarations';
-import {APP_RESOLVER_PROVIDERS} from './app/app.resolver';
+
 
 // Bundled Vendor
 

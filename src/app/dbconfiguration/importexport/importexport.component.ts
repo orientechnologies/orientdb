@@ -2,20 +2,20 @@ import {Component, Input} from '@angular/core';
 import {downgradeComponent} from '@angular/upgrade/static';
 import {DBService} from '../../core/services';
 
-declare var angular : any;
+import * as angular from 'angular';
+
 @Component({
   selector: 'import-export',
   templateUrl: "./import.export.component.html",
-  styleUrls: [
-  ]
+  styleUrls: []
 
 })
-export class ImportExport {
+class ImportExportComponent {
 
   @Input()
   protected db: string;
 
-  constructor(private dbService : DBService) {
+  constructor(private dbService: DBService) {
   }
 
   exportDatabase() {
@@ -28,6 +28,6 @@ export class ImportExport {
 
 angular.module('dbconfig.components', []).directive(
   `importExport`,
-  downgradeComponent({component: ImportExport, inputs: ["db"]}));
+  downgradeComponent({component: ImportExportComponent, inputs: ["db"]}));
 
-
+export  {ImportExportComponent};

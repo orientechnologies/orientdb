@@ -1,6 +1,7 @@
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const webpack = require("webpack");
 const path = require('path');
+const helpers = require('./helpers');
 var babelPresets = ["es2015"];
 
 
@@ -8,6 +9,11 @@ var oldPath = path.resolve(__dirname, './src/views');
 
 var newPath = path.resolve(__dirname, './src/app');
 
+const METADATA = {
+  title: 'OrientDB Studio',
+  baseUrl: '/',
+  isDevServer: true
+};
 
 module.exports = function (options) {
 
@@ -15,17 +21,32 @@ module.exports = function (options) {
   return {
 
     entry: {
-      "lagacy": "./src/app.js",
       'main': './src/main.browser.ts'
+
+    },
+    resolve: {
+
+      /*
+       * An array of extensions that should be used to resolve modules.
+       *
+       * See: http://webpack.github.io/docs/configuration.html#resolve-extensions
+       */
+      extensions: ['.ts', '.js', '.json'],
+
+      // An array of directory names to be resolved to the current directory
 
     },
     output: {
       path: path.join(__dirname, 'dist/www'),
-      filename: "bundle.js"
+      filename: "[name].js"
     },
     plugins: [
       new HtmlWebpackPlugin({
-        template: "src/index.html"
+        template: "src/index.html",
+        title: METADATA.title,
+        chunksSortMode: 'none',
+        metadata: METADATA,
+        inject: 'head'
       }),
       new webpack.ProvidePlugin({
         $: "jquery",
@@ -45,13 +66,8 @@ module.exports = function (options) {
       loaders: [
         {
           test: /\.ts$/,
-          use: [
-            '@angularclass/hmr-loader?pretty=' + !isProd + '&prod=' + isProd,
-            'awesome-typescript-loader',
-            'angular2-template-loader',
-            'angular2-router-loader'
-          ],
-          exclude: [/\.(spec|e2e)\.ts$/]
+          loaders: ['awesome-typescript-loader', 'angular2-template-loader', '@angularclass/hmr-loader'],
+          exclude: [ /\.(spec|e2e)\.ts$/, /node_modules\/(?!(ng2-.+))/]
         },
         {
           test: /\.js[x]?$/,

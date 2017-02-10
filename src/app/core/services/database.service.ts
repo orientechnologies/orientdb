@@ -4,10 +4,9 @@ import {Injectable} from "@angular/core";
 
 
 @Injectable()
-class DBService {
+export class DBService {
   exportDB(db) {
     window.open(API + 'export/' + db);
   }
 }
 
-export {DBService};
