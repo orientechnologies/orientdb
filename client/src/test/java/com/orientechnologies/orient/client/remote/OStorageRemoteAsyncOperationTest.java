@@ -252,10 +252,10 @@ public class OStorageRemoteAsyncOperationTest {
     // SBLCK THE CALLBAC THAT SHOULD BE IN ANOTHER THREAD
     callBackWait.countDown();
 
-    boolean called = readDone.await(10, TimeUnit.MILLISECONDS);
+    boolean called = readDone.await(200, TimeUnit.MILLISECONDS);
     if (!called)
       fail("Read not called");
-    called = callBackDone.await(10, TimeUnit.MILLISECONDS);
+    called = callBackDone.await(200, TimeUnit.MILLISECONDS);
     if (!called)
       fail("Callback not called");
   }
