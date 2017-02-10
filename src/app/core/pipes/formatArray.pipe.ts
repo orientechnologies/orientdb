@@ -1,6 +1,10 @@
 import {downgradeInjectable} from '@angular/upgrade/static';
+import {Injectable} from "@angular/core";
 
-class FormatArrayPipe {
+declare var angular: any;
+
+@Injectable()
+export class FormatArrayPipe {
 
   transform(input) {
     if (input instanceof Array) {
@@ -19,4 +23,3 @@ angular.module('legacy.filters', []).factory(
   `FormatArrayPipe`,
   downgradeInjectable(FormatArrayPipe));
 
-export {FormatArrayPipe};

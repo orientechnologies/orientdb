@@ -11,5 +11,5 @@ hooks
 *.jar
 *.war
 *.ear
-
+target
 studio-2.2.zip

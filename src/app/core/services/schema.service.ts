@@ -1,10 +1,17 @@
 import {downgradeInjectable} from '@angular/upgrade/static';
 import {CommandService} from './command.service';
 import {FormatArrayPipe} from '../pipes';
+import {Injectable} from "@angular/core";
 
+
+declare var angular : any;
+
+@Injectable()
 class SchemaService {
-  constructor(commandService, arrayPipe) {
-    this.commandService = commandService;
+
+  private systems;
+
+  constructor(private commandService : CommandService,private  arrayPipe: FormatArrayPipe) {
     this.arrayPipe = arrayPipe;
 
     this.systems = ["OUser",
@@ -240,9 +247,6 @@ class SchemaService {
     return sup == 'E';
   }
 }
-
-SchemaService
-  .parameters = [CommandService, FormatArrayPipe];
 
 
 angular.module('schema.services', []).factory(`SchemaService`, downgradeInjectable(SchemaService));

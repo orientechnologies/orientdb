@@ -6,6 +6,7 @@ import {downgradeInjectable} from '@angular/upgrade/static';
  *
  *  Holds the Graph Editor info in Memory (Query + Data)
  */
+declare var angular : any;
 let GraphService = Class({
   constructor: [function () {
     this.databases = {}

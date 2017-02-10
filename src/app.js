@@ -153,7 +153,6 @@ let deps = [HeaderController,
   'graph',
   'duScroll',
   'dbconfig.components',
-  'teleporter.components',
   'ui.select',
   'ngRoute',
   'ngAnimate',
@@ -245,27 +244,27 @@ $('body').on('keyup', function (e) {
 })
 
 
-let AppModule = NgModule({
-  imports: [BrowserModule, UpgradeModule, HttpModule, FormsModule],
-  providers: [...APP_RESOLVER_PROVIDERS],
-  declarations: [...APP_DECLARATIONS],
-  entryComponents: [...APP_DECLARATIONS]
-}).Class({
-  constructor: function () {
-  },
-  ngDoBootstrap: () => {
-
-  }
-});
-
-platformBrowserDynamic().bootstrapModule(AppModule).then(platformRef => {
-  const upgrade = platformRef.injector.get(UpgradeModule);
-
-  angular.element(document.body).ready(function () {
-    upgrade.bootstrap(document.body, ['OrientDBStudioApp']);
-  });
-
-});
+// let AppModule = NgModule({
+//   imports: [BrowserModule, UpgradeModule, HttpModule],
+//   providers: [...APP_RESOLVER_PROVIDERS],
+//   declarations: [...APP_DECLARATIONS],
+//   entryComponents: [...APP_DECLARATIONS]
+// }).Class({
+//   constructor: function () {
+//   },
+//   ngDoBootstrap: () => {
+//
+//   }
+// });
+//
+// platformBrowserDynamic().bootstrapModule(AppModule).then(platformRef => {
+//   const upgrade = platformRef.injector.get(UpgradeModule);
+//
+//   angular.element(document.body).ready(function () {
+//     upgrade.bootstrap(document.body, ['OrientDBStudioApp']);
+//   });
+//
+// });
 
 
 

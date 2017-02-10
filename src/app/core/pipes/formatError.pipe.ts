@@ -1,5 +1,9 @@
 import {downgradeInjectable} from '@angular/upgrade/static';
+import {Injectable} from "@angular/core";
 
+
+declare var angular : any;
+@Injectable()
 class FormatErrorPipe {
 
   transform(input) {
