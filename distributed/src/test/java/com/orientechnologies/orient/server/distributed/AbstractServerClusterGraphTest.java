@@ -160,9 +160,7 @@ public abstract class AbstractServerClusterGraphTest extends AbstractServerClust
     OClass provider = graph.createClass("Provider", person.getName());
     provider.createProperty("totalPurchased", OType.DECIMAL);
 
-    pool = new ODatabasePool(
-        graph.getURL().substring(0, graph.getURL().length() - (graph.getName().length() + 1)).replaceFirst("plocal", "embedded"),
-        graph.getName(), "admin", "admin", OrientDBConfig.defaultConfig());
+    pool = new ODatabasePool(graph.getURL(), "admin", "admin", OrientDBConfig.defaultConfig());
     setFactorySettings(pool);
   }
 

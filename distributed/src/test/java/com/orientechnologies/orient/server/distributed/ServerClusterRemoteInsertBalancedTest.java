@@ -49,7 +49,7 @@ public class ServerClusterRemoteInsertBalancedTest extends AbstractServerCluster
   }
 
   private void testRoundRobinOnConnect() {
-    ODatabasePool pool = new ODatabasePool("remote:localhost/", getDatabaseName(), "admin", "admin",
+    ODatabasePool pool = new ODatabasePool("remote:localhost/" + getDatabaseName(), "admin", "admin",
         OrientDBConfig.builder().addConfig(OGlobalConfiguration.CLIENT_CONNECTION_STRATEGY, "ROUND_ROBIN_CONNECT").build());
 
     ODatabaseDocument graph = pool.acquire();
@@ -81,7 +81,7 @@ public class ServerClusterRemoteInsertBalancedTest extends AbstractServerCluster
   }
 
   private void testRoundRobinOnRequest() {
-    ODatabasePool factory = new ODatabasePool("remote:localhost/", getDatabaseName(), "admin", "admin",
+    ODatabasePool factory = new ODatabasePool("remote:localhost/" + getDatabaseName(), "admin", "admin",
         OrientDBConfig.builder().addConfig(OGlobalConfiguration.CLIENT_CONNECTION_STRATEGY, "ROUND_ROBIN_CONNECT").build());
     ODatabaseDocument graph = factory.acquire();
 

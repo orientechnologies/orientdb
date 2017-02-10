@@ -131,9 +131,7 @@ public abstract class AbstractServerClusterSQLGraphTest extends AbstractServerCl
 
     OClass knows = graph.createEdgeClass("Knows");
 
-    pool = new ODatabasePool(
-        graph.getURL().substring(0, graph.getURL().length() - (graph.getName().length() + 1)).replaceFirst("plocal", "embedded"),
-        graph.getName(), "admin", "admin", OrientDBConfig.defaultConfig());
+    pool = new ODatabasePool(graph.getURL(), "admin", "admin", OrientDBConfig.defaultConfig());
   }
 
   @Override

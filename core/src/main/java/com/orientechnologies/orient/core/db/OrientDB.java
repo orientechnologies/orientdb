@@ -171,7 +171,22 @@ public class OrientDB implements AutoCloseable {
    * @return the opened database
    */
   public ODatabaseDocument open(String database, String user, String password) {
-    return internal.open(database, user, password);
+    return open(database, user, password, OrientDBConfig.defaultConfig());
+  }
+
+  /**
+   * Open a database
+   *
+   * @param database the database to open
+   * @param user     username of a database user or a server user allowed to open the database
+   * @param password related to the specified username
+   * @param config   custom configuration for current database
+   *
+   * @return the opened database
+   */
+
+  public ODatabaseDocument open(String database, String user, String password, OrientDBConfig config) {
+    return internal.open(database, user, password, config);
   }
 
   /**
@@ -181,7 +196,18 @@ public class OrientDB implements AutoCloseable {
    * @param type     can be plocal or memory
    */
   public void create(String database, ODatabaseType type) {
-    this.internal.create(database, serverUser, serverPassword, type);
+    create(database, type, OrientDBConfig.defaultConfig());
+  }
+
+  /**
+   * Create a new database
+   *
+   * @param database database name
+   * @param type     can be plocal or memory
+   * @param config   custom configuration for current database
+   */
+  public void create(String database, ODatabaseType type, OrientDBConfig config) {
+    this.internal.create(database, serverUser, serverPassword, type, config);
   }
 
   /**
@@ -193,8 +219,21 @@ public class OrientDB implements AutoCloseable {
    * @return true if the database has been created, false if already exists
    */
   public boolean createIfNotExists(String database, ODatabaseType type) {
+    return createIfNotExists(database, type, OrientDBConfig.defaultConfig());
+  }
+
+  /**
+   * Create a new database if not exists
+   *
+   * @param database database name
+   * @param type     can be plocal or memory
+   * @param config   custom configuration for current database
+   *
+   * @return true if the database has been created, false if already exists
+   */
+  public boolean createIfNotExists(String database, ODatabaseType type, OrientDBConfig config) {
     if (!this.internal.exists(database, serverUser, serverPassword)) {
-      this.internal.create(database, serverUser, serverPassword, type);
+      this.internal.create(database, serverUser, serverPassword, type, config);
       return true;
     }
     return false;

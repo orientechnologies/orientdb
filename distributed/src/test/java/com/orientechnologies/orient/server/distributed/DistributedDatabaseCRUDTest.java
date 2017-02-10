@@ -425,9 +425,7 @@ public final class DistributedDatabaseCRUDTest {
   private ODatabasePool getGraphFactory() {
     if (graphReadFactory == null) {
       log("Datastore pool created with size : 50, db location: " + getDBURL());
-      graphReadFactory = new ODatabasePool(
-          getDBURL().substring(0, getDBURL().length() - (dbName.length() + 1)).replaceFirst("plocal", "embedded"), dbName, "admin",
-          "admin", OrientDBConfig.defaultConfig());
+      graphReadFactory = new ODatabasePool(getDBURL(), "admin", "admin", OrientDBConfig.defaultConfig());
     }
     return graphReadFactory;
   }

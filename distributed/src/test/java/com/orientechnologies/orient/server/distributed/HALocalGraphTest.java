@@ -338,8 +338,7 @@ public class HALocalGraphTest extends AbstractServerClusterTxTest {
     if (graphReadFactory == null) {
       String dbUrl = getDatabaseURL(serverInstance.get(0));
       log("Datastore pool created with size : 10, db location: " + getDatabaseURL(serverInstance.get(0)));
-      graphReadFactory = new ODatabasePool(dbUrl.substring(0, dbUrl.length() - (getDatabaseName().length() + 1)), getDatabaseName(),
-          "admin", "admin", OrientDBConfig.defaultConfig());
+      graphReadFactory = new ODatabasePool(dbUrl, "admin", "admin", OrientDBConfig.defaultConfig());
 
     }
     return graphReadFactory;

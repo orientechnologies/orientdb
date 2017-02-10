@@ -281,8 +281,7 @@ public final class StandAloneDatabaseJavaThreadPoolTest {
   private ODatabasePool getGraphFactory() {
     if (graphReadFactory == null) {
       log("Datastore pool created with size : 10, db location: " + getDBURL());
-      graphReadFactory = new ODatabasePool("remote:localhost:2424;localhost:2425;localhost:2426", dbName, "admin", "admin",
-          OrientDBConfig.defaultConfig());
+      graphReadFactory = new ODatabasePool(getDBURL(), "admin", "admin", OrientDBConfig.defaultConfig());
 
 //      graphReadFactory.setupPool(10, 10);//TODO
     }

@@ -82,9 +82,8 @@ public class OrientdbEdgeTest {
 
     verifyDatabaseExists(conf);
 
-    ODatabasePool pool = new ODatabasePool(((String) conf.get("storage.url")).replaceFirst("plocal", "embedded"),
-        (String) conf.get("db.name"), (String) conf.get("storage.user"), (String) conf.get("storage.password"),
-        OrientDBConfig.defaultConfig());
+    ODatabasePool pool = new ODatabasePool(conf.get("storage.url") + "/" + (String) conf.get("db.name"),
+        (String) conf.get("storage.user"), (String) conf.get("storage.password"), OrientDBConfig.defaultConfig());
     return pool;
   }
 
