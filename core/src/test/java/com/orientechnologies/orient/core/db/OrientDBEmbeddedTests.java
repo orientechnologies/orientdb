@@ -50,7 +50,6 @@ public class OrientDBEmbeddedTests {
   @Test
   public void createDropEmbeddedDatabase() {
     OrientDB orientDb = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
-    // OrientDBInternal orientDb = OrientDBInternal.fromUrl("remote:localhost", null);
     try {
       orientDb.create("test", ODatabaseType.MEMORY);
       assertTrue(orientDb.exists("test"));
@@ -64,12 +63,11 @@ public class OrientDBEmbeddedTests {
   @Test
   public void testPool() {
     OrientDB orientDb = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
-    // OrientDBInternal orientDb = OrientDBInternal.fromUrl("local:.", null);
 
     if (!orientDb.exists("test"))
       orientDb.create("test", ODatabaseType.MEMORY);
 
-    ODatabasePoolInternal pool = orientDb.openPool("test", "admin", "admin");
+    ODatabasePool pool = new ODatabasePool(orientDb, "test", "admin", "admin");
     ODatabaseDocument db = pool.acquire();
     db.save(new ODocument());
     db.close();
@@ -85,7 +83,7 @@ public class OrientDBEmbeddedTests {
     if (!orientDb.exists("test"))
       orientDb.create("test", ODatabaseType.MEMORY);
 
-    ODatabasePoolInternal pool = orientDb.openPool("test", "admin", "admin");
+    ODatabasePool pool = new ODatabasePool(orientDb, "test", "admin", "admin");
 
     //do a query and assert on other thread
     Runnable acquirer = () -> {
