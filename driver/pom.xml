@@ -11,7 +11,6 @@
     <groupId>com.orientechnologies</groupId>
     <artifactId>orientdb-gremlin</artifactId>
 
-    <!--<version>3.2.3.1-SNAPSHOT</version>-->
     <name>Apache TinkerPop :: OrientDB Gremlin</name>
     <description>TinkerPop3 Graph Structure Implementation for OrientDB</description>
     <url>https://github.com/orientechnologies/orientdb-gremlin</url>
@@ -20,7 +19,6 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <gremlin.version>3.2.3</gremlin.version>
-        <!--<orientdb.version>3.0.0-SNAPSHOT</orientdb.version>-->
     </properties>
 
     <developers>
@@ -72,8 +70,22 @@
         <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-client</artifactId>
-            <version>${parent.version}</version>
+            <version>${project.parent.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-test-commons</artifactId>
+            <version>${project.parent.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-core</artifactId>
+            <version>${project.parent.version}</version>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+
         <!-- TESTING -->
         <dependency>
             <groupId>org.apache.tinkerpop</groupId>
@@ -106,30 +118,30 @@
         </dependency>
     </dependencies>
     <!--<distributionManagement>-->
-        <!--<repository>-->
-            <!--<id>sonatype-nexus-staging</id>-->
-            <!--<name>OrientDB Maven2 Repository</name>-->
-            <!--<url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>-->
-        <!--</repository>-->
-        <!--<snapshotRepository>-->
-            <!--<id>sonatype-nexus-snapshots</id>-->
-            <!--<name>OrientDB Maven2 Snapshot Repository</name>-->
-            <!--<url>https://oss.sonatype.org/content/repositories/snapshots</url>-->
-            <!--<uniqueVersion>false</uniqueVersion>-->
-        <!--</snapshotRepository>-->
+    <!--<repository>-->
+    <!--<id>sonatype-nexus-staging</id>-->
+    <!--<name>OrientDB Maven2 Repository</name>-->
+    <!--<url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>-->
+    <!--</repository>-->
+    <!--<snapshotRepository>-->
+    <!--<id>sonatype-nexus-snapshots</id>-->
+    <!--<name>OrientDB Maven2 Snapshot Repository</name>-->
+    <!--<url>https://oss.sonatype.org/content/repositories/snapshots</url>-->
+    <!--<uniqueVersion>false</uniqueVersion>-->
+    <!--</snapshotRepository>-->
     <!--</distributionManagement>-->
     <!--<repositories>-->
-        <!--<repository>-->
-            <!--<id>sonatype-nexus-snapshots</id>-->
-            <!--<name>Sonatype Nexus Snapshots</name>-->
-            <!--<url>https://oss.sonatype.org/content/repositories/snapshots</url>-->
-            <!--<releases>-->
-                <!--<enabled>false</enabled>-->
-            <!--</releases>-->
-            <!--<snapshots>-->
-                <!--<enabled>true</enabled>-->
-            <!--</snapshots>-->
-        <!--</repository>-->
+    <!--<repository>-->
+    <!--<id>sonatype-nexus-snapshots</id>-->
+    <!--<name>Sonatype Nexus Snapshots</name>-->
+    <!--<url>https://oss.sonatype.org/content/repositories/snapshots</url>-->
+    <!--<releases>-->
+    <!--<enabled>false</enabled>-->
+    <!--</releases>-->
+    <!--<snapshots>-->
+    <!--<enabled>true</enabled>-->
+    <!--</snapshots>-->
+    <!--</repository>-->
     <!--</repositories>-->
     <build>
         <directory>${basedir}/target</directory>
@@ -148,23 +160,6 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.eluder.coveralls</groupId>
-                <artifactId>coveralls-maven-plugin</artifactId>
-                <version>4.0.0</version>
-                <executions>
-                    <execution>
-                        <phase>verify</phase>
-                        <goals>
-                            <goal>report</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <skip>${skipTests}</skip>
-                    <repoToken>VydEbanRpaocFLETAHcF2qUZohD4tXJ6e</repoToken>
-                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
