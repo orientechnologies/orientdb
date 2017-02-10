@@ -1,5 +1,6 @@
 package com.orientechnologies.tinkerpop;
 
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.server.OServer;
@@ -35,7 +36,7 @@ public abstract class AbstractRemoteTest {
     server.startup(stream);
     server.activate();
 
-    server.createDatabase(name.getMethodName(), OrientDB.DatabaseType.MEMORY, OrientDBConfig.defaultConfig());
+    server.createDatabase(name.getMethodName(), ODatabaseType.MEMORY, OrientDBConfig.defaultConfig());
 
     factory = new OrientGraphFactory("remote:localhost/" + name.getMethodName());
   }

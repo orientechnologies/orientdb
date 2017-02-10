@@ -37,7 +37,7 @@ public final class OrientGraphFactory {
         this.password = password;
         this.labelAsClassName = true;
         initConnectionParameters(url);
-        factory = OrientDB.fromUrl(connectionURI, OrientDBConfig.defaultConfig());
+        factory = new OrientDB(connectionURI, OrientDBConfig.defaultConfig());
     }
 
     public OrientGraphFactory(Configuration config) {
