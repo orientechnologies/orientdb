@@ -473,6 +473,9 @@ public class OFileClassic implements OFile, OClosableItem {
   public boolean synch() throws IOException {
     acquireWriteLock();
     try {
+      if (!isOpen())
+        return false;
+
       flushHeader();
       return true;
     } finally {

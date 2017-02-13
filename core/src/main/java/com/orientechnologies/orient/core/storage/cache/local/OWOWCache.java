@@ -1795,6 +1795,9 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
           final long fileId = composeFileId(id, intId);
           final OClosableEntry<Long, OFileClassic> entry = files.acquire(fileId);
+          if (entry == null)
+            continue;
+
           try {
             final OFileClassic fileClassic = entry.get();
             fileClassic.synch();
