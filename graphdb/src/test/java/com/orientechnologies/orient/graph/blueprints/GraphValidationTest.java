@@ -18,6 +18,7 @@
 
 package com.orientechnologies.orient.graph.blueprints;
 
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -182,4 +183,29 @@ public class GraphValidationTest {
       graphNoTx.shutdown();
     }
   }
+
+  @Test(expected = OValidationException.class)
+  public void testPropertyReadOnly() {
+    OrientGraphNoTx graphNoTx = new OrientGraphNoTx(URL);
+    OrientVertexType testType = graphNoTx.createVertexType("Test");
+    OProperty prop;
+    prop = testType.createProperty("name", OType.STRING).setReadonly(true);
+    graphNoTx.shutdown();
+
+    Assert.assertTrue(prop.isReadonly()); //this one passes
+
+    OrientGraph graph = new OrientGraph(URL);
+    try {
+      OrientVertex vert1 = graph.addVertex("class:Test", "name", "Sam");
+      graph.commit();
+
+      vert1.setProperty("name", "Ben"); //should throw an exception
+      graph.commit();
+
+      Assert.assertEquals(vert1.getProperty("name"), "Sam");  //fails
+    } finally {
+      graph.drop();
+    }
+  }
+
 }

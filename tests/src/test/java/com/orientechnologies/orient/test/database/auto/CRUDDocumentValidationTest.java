@@ -197,6 +197,7 @@ public class CRUDDocumentValidationTest extends DocumentDBBaseTest {
     }
 
     database.command(new OCommandSQL("ALTER DATABASE " + ODatabase.ATTRIBUTES.VALIDATION.name() + " FALSE")).execute();
+    database.setValidationEnabled(false);
     try {
 
       ODocument doc = new ODocument("MyTestClass");
@@ -204,6 +205,7 @@ public class CRUDDocumentValidationTest extends DocumentDBBaseTest {
 
       doc.delete();
     } finally {
+      database.setValidationEnabled(true);
       database.command(new OCommandSQL("ALTER DATABASE " + ODatabase.ATTRIBUTES.VALIDATION.name() + " TRUE")).execute();
     }
   }
