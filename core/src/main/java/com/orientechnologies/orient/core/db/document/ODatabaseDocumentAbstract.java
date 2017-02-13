@@ -2411,7 +2411,12 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     ODocument doc = (ODocument) iRecord;
     ODocumentInternal.checkClass(doc, this);
     //  IN TX THE VALIDATION MAY BE RUN TWICE BUT IS CORRECT BECAUSE OF DIFFERENT RECORD STATUS
-    doc.validate();
+    try {
+      doc.validate();
+    } catch (OValidationException e) {
+      doc.undo();
+      throw e;
+    }
     ODocumentInternal.convertAllMultiValuesToTrackedVersions(doc);
 
     if (iForceCreate || !doc.getIdentity().isValid()) {
@@ -3069,14 +3074,13 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     return false;
   }
 
-  public void setUseLightweightEdges(boolean b){
+  public void setUseLightweightEdges(boolean b) {
     this.setCustom("useLightweightEdges", b);
   }
 
   public OEdge newLightweightEdge(String iClassName, OVertex from, OVertex to) {
     OClass clazz = getMetadata().getSchema().getClass(iClassName);
     OEdgeDelegate result = new OEdgeDelegate(from, to, clazz);
-
 
     return result;
   }
