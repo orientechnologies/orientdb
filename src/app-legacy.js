@@ -1,8 +1,6 @@
 import 'jquery';
 import angular from 'angular';
 
-
-
 import 'core-js';
 import 'babel-polyfill';
 import 'zone.js';
@@ -233,30 +231,6 @@ $('body').on('keyup', function (e) {
     $('.modal-backdrop').click()
   }
 })
-
-
-// let AppModule = NgModule({
-//   imports: [BrowserModule, UpgradeModule, HttpModule],
-//   providers: [...APP_RESOLVER_PROVIDERS],
-//   declarations: [...APP_DECLARATIONS],
-//   entryComponents: [...APP_DECLARATIONS]
-// }).Class({
-//   constructor: function () {
-//   },
-//   ngDoBootstrap: () => {
-//
-//   }
-// });
-//
-// platformBrowserDynamic().bootstrapModule(AppModule).then(platformRef => {
-//   const upgrade = platformRef.injector.get(UpgradeModule);
-//
-//   angular.element(document.body).ready(function () {
-//     upgrade.bootstrap(document.body, ['OrientDBStudioApp']);
-//   });
-//
-// });
-
 
 
 

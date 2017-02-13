@@ -44,6 +44,7 @@
     "moment": "^2.17.0",
     "ng-table": "^1.0.0",
     "ng-tags-input": "^3.1.1",
+    "ng2-codemirror": "^1.1.1",
     "noty": "^2.3.8",
     "nprogress": "^0.2.0",
     "raw-loader": "^0.5.1",

@@ -1,15 +1,17 @@
-import {Component} from '@angular/core';
+import {Component, NgZone} from '@angular/core';
+import {PopoverModule} from "ngx-popover";
 
 import {downgradeComponent} from '@angular/upgrade/static';
 import {TeleporterService} from '../../core/services';
-
-
 
 import template from './teleporter.component.html';
 
 class TeleporterComponent {
 
-  constructor(TeleporterService) {
+  constructor(TeleporterService, ngZone) {
+
+    this.zone = ngZone;
+
     this.teleporterService = TeleporterService;
 
     this.protocols = ["plocal", "remote"];
@@ -59,6 +61,19 @@ class TeleporterComponent {
       this.updateJurl();
     });
 
+    this.job = {};
+    this.jobRunning = false;
+
+    this.enablePopovers();
+
+  }
+
+  ngOnInit() {
+    $('[data-toggle="popover"]').popover();
+  }
+
+  enablePopovers() {
+    $('[data-toggle="popover"]').popover();
   }
 
   getStep() {
@@ -81,7 +96,7 @@ class TeleporterComponent {
 
   updateJurlSplit() {
     var regExp = new RegExp(/(<HOST>|<PORT>|<DB>|<SID>)/);
-      this.jurlSplit = this.jurlPattern.split(regExp, 6);
+    this.jurlSplit = this.jurlPattern.split(regExp, 6);
   }
 
   updateJurl() {
@@ -112,6 +127,7 @@ class TeleporterComponent {
 
     this.teleporterService.launch(this.config).then((data) => {
       this.step = "running";
+      this.jobRunning = true;
       this.status();
     }).catch(function (error) {
       alert("Error during migration!")
@@ -119,21 +135,41 @@ class TeleporterComponent {
   }
 
   status() {
-    this.teleporterService.status().then((data) => {
-      if (data.jobs.length > 0) {
-        this.job.status = data.jobs[0].status;
-      }
-      else {
-        if(this.job) {
-          this.job.finished = true;
+    console.log("Status call.")
+    if(this.jobRunning) {
+      this.teleporterService.status().then((data) => {
+        if (data.jobs.length > 0) {
+          this.job = data.jobs[0];
+          this.scrollLogAreaDown();
+        }
+        else {
+          if (this.job) {
+            this.job.finished = true;
+            this.jobRunning = false;
+            this.scrollLogAreaDown();
+          }
         }
 
-      }
-    });
+        // start status again after 3 secs
+        setTimeout(() => {
+          this.zone.run(() => {
+            this.status();
+          })
+        },3000);
+
+      });
+    }
   }
+
+  scrollLogAreaDown() {
+    console.log("ScrollDown");
+    var logArea = $("#logArea");
+    logArea.scrollTop(9999999);
+  }
+
 }
 
-TeleporterComponent.parameters = [TeleporterService];
+TeleporterComponent.parameters = [TeleporterService, NgZone];
 
 TeleporterComponent.annotations = [new Component({
   selector: "teleporter",
