@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.command;
 
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -19,9 +20,11 @@ public class OSqlScriptExecutorTest {
 
   @Test
   public void testPlain() {
-    OrientDB factory = OrientDB.fromUrl("embedded:./", OrientDBConfig.defaultConfig());
+    OrientDB factory = new OrientDB("embedded:./", "root", "root", OrientDBConfig.defaultConfig());
+    if (!factory.exists("test"))
+      factory.create("test", ODatabaseType.MEMORY);
     String dbName = getClass().getSimpleName() + "test";
-    factory.create(dbName, "root", "root", OrientDB.DatabaseType.MEMORY);
+    factory.create(dbName, ODatabaseType.MEMORY);
     ODatabaseDocument db = factory.open(dbName, "admin", "admin");
 
     String script = "insert into V set name ='a';";
@@ -41,14 +44,16 @@ public class OSqlScriptExecutorTest {
     Assert.assertEquals(4, list.size());
 
     db.close();
-    factory.drop(dbName, "root", "root");
+    factory.drop(dbName);
   }
 
   @Test
   public void testWithPositionalParams() {
-    OrientDB factory = OrientDB.fromUrl("embedded:./", OrientDBConfig.defaultConfig());
+    OrientDB factory = new OrientDB("embedded:./", "root", "root", OrientDBConfig.defaultConfig());
+    if (!factory.exists("test"))
+      factory.create("test", ODatabaseType.MEMORY);
     String dbName = getClass().getSimpleName() + "test";
-    factory.create(dbName, "root", "root", OrientDB.DatabaseType.MEMORY);
+    factory.create(dbName, ODatabaseType.MEMORY);
     ODatabaseDocument db = factory.open(dbName, "admin", "admin");
 
     String script = "insert into V set name ='a';";
@@ -66,14 +71,16 @@ public class OSqlScriptExecutorTest {
     Assert.assertEquals(1, list.size());
 
     db.close();
-    factory.drop(dbName, "root", "root");
+    factory.drop(dbName);
   }
 
   @Test
   public void testWithNamedParams() {
-    OrientDB factory = OrientDB.fromUrl("embedded:./", OrientDBConfig.defaultConfig());
+    OrientDB factory = new OrientDB("embedded:./", "root", "root", OrientDBConfig.defaultConfig());
+    if (!factory.exists("test"))
+      factory.create("test", ODatabaseType.MEMORY);
     String dbName = getClass().getSimpleName() + "test";
-    factory.create(dbName, "root", "root", OrientDB.DatabaseType.MEMORY);
+    factory.create(dbName, ODatabaseType.MEMORY);
     ODatabaseDocument db = factory.open(dbName, "admin", "admin");
 
     String script = "insert into V set name ='a';";
@@ -93,6 +100,6 @@ public class OSqlScriptExecutorTest {
     Assert.assertEquals(1, list.size());
 
     db.close();
-    factory.drop(dbName, "root", "root");
+    factory.drop(dbName);
   }
 }
