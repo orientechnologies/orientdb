@@ -1074,6 +1074,9 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
 
     Map<String, Long> result = new LinkedHashMap<String, Long>();
     for (String alias : allAliases) {
+      if(this.pattern.aliasToNode.get(alias).isOptionalNode()){
+        continue;
+      }
       String className = aliasClasses.get(alias);
       if (className == null) {
         continue;

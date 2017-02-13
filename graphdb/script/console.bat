@@ -53,7 +53,8 @@ set JAVA_MAX_DIRECT=-XX:MaxDirectMemorySize=512g
 
 
 
-set ORIENTDB_SETTINGS=%JAVA_MAX_DIRECT% -Xmx512m -Djava.util.logging.config.file="%ORIENTDB_HOME%\config\orientdb-client-log.properties" -Djava.awt.headless=true
+set ORIENTDB_SETTINGS=%JAVA_MAX_DIRECT% -Xmx1024m -Djava.util.logging.config.file="%ORIENTDB_HOME%\config\orientdb-client-log.properties" -Djava.awt.headless=true
+
 call %JAVA% -client %SSL_OPTS% %ORIENTDB_SETTINGS% -Dfile.encoding=utf-8 -Dorientdb.build.number="@BUILD@" -cp "%ORIENTDB_HOME%\lib\*;%ORIENTDB_HOME%\plugins\*" com.orientechnologies.orient.graph.console.OGremlinConsole %CMD_LINE_ARGS%
 
 :end
