@@ -33,7 +33,7 @@ fi
 export JAVA
 
 if [ -z "$ORIENTDB_OPTS_MEMORY" ] ; then
-    ORIENTDB_OPTS_MEMORY="-Xmx512m "
+    ORIENTDB_OPTS_MEMORY="-Xmx1024m "
 fi
 
 ORIENTDB_SETTINGS="-XX:MaxDirectMemorySize=512g -Djava.util.logging.config.file=\"$ORIENTDB_HOME/config/orientdb-client-log.properties\" -Djava.awt.headless=true"
