@@ -204,8 +204,23 @@ public class GraphValidationTest {
 
       Assert.assertEquals(vert1.getProperty("name"), "Sam");  //fails
     } finally {
-      graph.drop();
+      graph.shutdown();
     }
   }
 
+  @Test
+  public void testNoTxGraphConstraints() {
+    OrientGraphNoTx graphNoTx = new OrientGraphNoTx(URL);
+    OrientVertexType testType = graphNoTx.createVertexType("Test");
+    testType.createProperty("age", OType.INTEGER).setMax("3");
+    OrientVertex vert1 = graphNoTx.addVertex("class:Test", "age", 2);
+
+    try {
+      vert1.setProperty("age", 4);
+    } catch (OValidationException e) {
+      Assert.assertEquals(vert1.getProperty("age"), 2); //this fails
+    } finally {
+      graphNoTx.shutdown();
+    }
+  }
 }

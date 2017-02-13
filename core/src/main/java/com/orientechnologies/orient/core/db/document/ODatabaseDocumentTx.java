@@ -2672,7 +2672,12 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     ODocument doc = (ODocument) iRecord;
     ODocumentInternal.checkClass(doc, this);
     // IN TX THE VALIDATION MAY BE RUN TWICE BUT IS CORRECT BECAUSE OF DIFFERENT RECORD STATUS
-    doc.validate();
+    try {
+      doc.validate();
+    } catch (OValidationException ex) {
+      doc.undo();
+      throw ex;
+    }
     ODocumentInternal.convertAllMultiValuesToTrackedVersions(doc);
 
     if (iForceCreate || !doc.getIdentity().isValid()) {
