@@ -45,6 +45,7 @@ public class OSqlScriptExecutorTest {
 
     db.close();
     factory.drop(dbName);
+    factory.close();
   }
 
   @Test
@@ -72,6 +73,7 @@ public class OSqlScriptExecutorTest {
 
     db.close();
     factory.drop(dbName);
+    factory.close();
   }
 
   @Test
@@ -101,5 +103,6 @@ public class OSqlScriptExecutorTest {
 
     db.close();
     factory.drop(dbName);
+    factory.close();
   }
 }
