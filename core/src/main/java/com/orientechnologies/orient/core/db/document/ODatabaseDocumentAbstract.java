@@ -2410,9 +2410,8 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
     ODocument doc = (ODocument) iRecord;
     ODocumentInternal.checkClass(doc, this);
-    if (!getTransaction().isActive() && !getStorage().isRemote())
-      // EXECUTE VALIDATION ONLY IF NOT IN TX
-      doc.validate();
+    //  IN TX THE VALIDATION MAY BE RUN TWICE BUT IS CORRECT BECAUSE OF DIFFERENT RECORD STATUS
+    doc.validate();
     ODocumentInternal.convertAllMultiValuesToTrackedVersions(doc);
 
     if (iForceCreate || !doc.getIdentity().isValid()) {
