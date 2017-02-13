@@ -25,8 +25,11 @@ public abstract class ODDLStatement extends OStatement {
 
   public abstract OResultSet executeDDL(OCommandContext ctx);
 
-  public OResultSet execute(ODatabase db, Object[] args) {
+  public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx) {
     OBasicCommandContext ctx = new OBasicCommandContext();
+    if (parentCtx != null) {
+      ctx.setParentWithoutOverridingChild(parentCtx);
+    }
     ctx.setDatabase(db);
     Map<Object, Object> params = new HashMap<>();
     if (args != null) {
@@ -39,8 +42,11 @@ public abstract class ODDLStatement extends OStatement {
     return executionPlan.executeInternal(ctx);
   }
 
-  public OResultSet execute(ODatabase db, Map params) {
+  public OResultSet execute(ODatabase db, Map params, OCommandContext parentCtx) {
     OBasicCommandContext ctx = new OBasicCommandContext();
+    if (parentCtx != null) {
+      ctx.setParentWithoutOverridingChild(parentCtx);
+    }
     ctx.setDatabase(db);
     ctx.setInputParameters(params);
     ODDLExecutionPlan executionPlan = (ODDLExecutionPlan) createExecutionPlan(ctx);

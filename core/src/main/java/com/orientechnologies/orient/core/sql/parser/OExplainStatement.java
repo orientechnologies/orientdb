@@ -29,8 +29,11 @@ public class OExplainStatement extends OStatement {
     statement.toString(params, builder);
   }
 
-  @Override public OResultSet execute(ODatabase db, Object[] args) {
+  @Override public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx) {
     OBasicCommandContext ctx = new OBasicCommandContext();
+    if (parentCtx != null) {
+      ctx.setParentWithoutOverridingChild(parentCtx);
+    }
     ctx.setDatabase(db);
     Map<Object, Object> params = new HashMap<>();
     if (args != null) {
@@ -45,8 +48,11 @@ public class OExplainStatement extends OStatement {
     return result;
   }
 
-  @Override public OResultSet execute(ODatabase db, Map args) {
+  @Override public OResultSet execute(ODatabase db, Map args, OCommandContext parentCtx) {
     OBasicCommandContext ctx = new OBasicCommandContext();
+    if (parentCtx != null) {
+      ctx.setParentWithoutOverridingChild(parentCtx);
+    }
     ctx.setDatabase(db);
     ctx.setInputParameters(args);
 

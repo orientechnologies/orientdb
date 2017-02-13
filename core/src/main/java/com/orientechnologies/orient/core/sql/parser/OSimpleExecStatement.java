@@ -4,8 +4,8 @@ import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
-import com.orientechnologies.orient.core.sql.executor.OSingleOpExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.OSingleOpExecutionPlan;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -28,8 +28,11 @@ public abstract class OSimpleExecStatement extends OStatement {
 
   public abstract OResultSet executeSimple(OCommandContext ctx);
 
-  public OResultSet execute(ODatabase db, Object[] args) {
+  public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentContext) {
     OBasicCommandContext ctx = new OBasicCommandContext();
+    if (parentContext != null) {
+      ctx.setParentWithoutOverridingChild(parentContext);
+    }
     ctx.setDatabase(db);
     Map<Object, Object> params = new HashMap<>();
     if (args != null) {
@@ -42,8 +45,11 @@ public abstract class OSimpleExecStatement extends OStatement {
     return executionPlan.executeInternal(ctx);
   }
 
-  public OResultSet execute(ODatabase db, Map params) {
+  public OResultSet execute(ODatabase db, Map params, OCommandContext parentContext) {
     OBasicCommandContext ctx = new OBasicCommandContext();
+    if (parentContext != null) {
+      ctx.setParentWithoutOverridingChild(parentContext);
+    }
     ctx.setDatabase(db);
     ctx.setInputParameters(params);
     OSingleOpExecutionPlan executionPlan = (OSingleOpExecutionPlan) createExecutionPlan(ctx);

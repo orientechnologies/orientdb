@@ -40,8 +40,11 @@ public class OIfStatement extends OStatement {
     return true;
   }
 
-  @Override public OResultSet execute(ODatabase db, Object[] args) {
+  @Override public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx) {
     OBasicCommandContext ctx = new OBasicCommandContext();
+    if (parentCtx != null) {
+      ctx.setParentWithoutOverridingChild(parentCtx);
+    }
     ctx.setDatabase(db);
     Map<Object, Object> params = new HashMap<>();
     if (args != null) {
@@ -65,8 +68,11 @@ public class OIfStatement extends OStatement {
     }
   }
 
-  @Override public OResultSet execute(ODatabase db, Map params) {
+  @Override public OResultSet execute(ODatabase db, Map params, OCommandContext parentCtx) {
     OBasicCommandContext ctx = new OBasicCommandContext();
+    if (parentCtx != null) {
+      ctx.setParentWithoutOverridingChild(parentCtx);
+    }
     ctx.setDatabase(db);
     ctx.setInputParameters(params);
     OIfExecutionPlan executionPlan = createExecutionPlan(ctx);

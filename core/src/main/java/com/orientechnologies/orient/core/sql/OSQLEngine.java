@@ -46,8 +46,12 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorFactory;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
 import com.orientechnologies.orient.core.sql.parser.OStatementCache;
+import com.orientechnologies.orient.core.sql.parser.OrientSql;
+import com.orientechnologies.orient.core.sql.parser.ParseException;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.util.*;
 
 import static com.orientechnologies.common.util.OClassLoaderHelper.lookupProviderWithOrientClassLoader;
@@ -65,6 +69,21 @@ public class OSQLEngine {
 
   public static OStatement parse(String query, ODatabaseDocumentInternal db) {
     return OStatementCache.get(query, db);
+  }
+
+  public static List<OStatement> parseScript(String script, ODatabaseDocumentInternal db) {
+    final InputStream is = new ByteArrayInputStream(script.getBytes());
+    return parseScript(is, db);
+  }
+
+  public static List<OStatement> parseScript(InputStream script, ODatabaseDocumentInternal db) {
+    try {
+      final OrientSql osql = new OrientSql(script);
+      List<OStatement> result = osql.parseScript();
+      return result;
+    } catch (ParseException e) {
+      throw new OCommandSQLParsingException(e, "");
+    }
   }
 
   /**
