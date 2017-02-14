@@ -18,66 +18,67 @@
           <div class="form-group">
             <label class="col-sm-2 control-label">Database Driver</label>
 
-            <div class="col-md-8">
+            <div class="col-md-5">
               <select class="form-control" name="driver" [(ngModel)]="config.driver"
                       (ngModelChange)="changeJurlAccordingToDriver()" required>
                 <option *ngFor="let driverName of driverNames" [value]="driverName"> {{driverName}} </option>
               </select>
             </div>
-            <div class="col-md-2">
-              <button type="button" popover="Hello!" class="btn btn-sm btn-primary"><b>?</b></button>
+            <div class="col-md-5">
+              <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
+                      [attr.data-content]="hints.driver" data-animation="am-fade-and-scale"><b>?</b></button>
             </div>
           </div>
 
           <div class="form-group">
             <label class="col-sm-2 control-label">Database Host</label>
-            <div class="col-md-8">
+            <div class="col-md-5">
               <input type="text" id="host" class="form-control" name="host" [(ngModel)]="dbConnection.host"
                      (ngModelChange)="updateJurl()"
                      placeholder="Host" required ngControl="hostControl"/>
             </div>
-            <div class="col-md-2">
-              <button type="button" class="btn btn-sm btn-primary" data-toggle="popover"
-                      data-content="This is the 1st hint" data-placement="right"><b>?</b></button>
+            <div class="col-md-5">
+              <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
+                      [attr.data-content]="hints.host" data-animation="am-fade-and-scale"><b>?</b></button>
             </div>
           </div>
 
           <div class="form-group">
             <label class="col-sm-2 control-label">Port</label>
-            <div class="col-md-8">
+            <div class="col-md-5">
               <input type="text" id="port" class="form-control" name="port" [(ngModel)]="dbConnection.port"
                      (ngModelChange)="updateJurl()"
                      placeholder="Port" required ngControl="hostControl"/>
             </div>
-            <div class="col-md-2">
-              <button type="button" class="btn btn-sm btn-primary" data-toggle="popover"
-                      data-content="This is the 1st hint" data-placement="right"><b>?</b></button>
+            <div class="col-md-5">
+              <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
+                      [attr.data-content]="hints.port" data-animation="am-fade-and-scale"><b>?</b></button>
             </div>
           </div>
 
           <div class="form-group" *ngIf="config.driver != 'Oracle'">
             <label class="col-sm-2 control-label">Database Name</label>
-            <div class="col-md-8">
+            <div class="col-md-5">
               <input type="text" id="dbName" class="form-control" name="dbName" [(ngModel)]="dbConnection.dbName"
                      (ngModelChange)="updateJurl()"
                      placeholder="Database Name" required ngControl="hostControl"/>
             </div>
-            <div class="col-md-2">
-              <button type="button" class="btn btn-sm btn-primary" data-toggle="popover"
-                      data-content="This is the 1st hint" data-placement="right"><b>?</b></button>
+            <div class="col-md-5">
+              <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
+                      [attr.data-content]="hints.dbName" data-animation="am-fade-and-scale"><b>?</b></button>
             </div>
           </div>
 
           <div class="form-group" *ngIf="config.driver == 'Oracle'">
             <label class="col-sm-2 control-label">SID</label>
-            <div class="col-md-8">
+            <div class="col-md-5">
               <input type="text" id="sid" class="form-control" name="sid" [(ngModel)]="dbConnection.sid"
                      (ngModelChange)="updateJurl()"
                      placeholder="SID" required ngControl="hostControl"/>
             </div>
-            <div class="col-md-2">
-              <button type="button" class="btn btn-sm btn-primary" data-toggle="popover"
-                      data-content="This is the 1st hint" data-placement="right"><b>?</b></button>
+            <div class="col-md-5">
+              <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
+                      [attr.data-content]="hints.sid" data-animation="am-fade-and-scale"><b>?</b></button>
             </div>
           </div>
 
@@ -100,24 +101,24 @@
           <h3>Step 2: Source Database Credentials</h3><br/>
           <div class="form-group">
             <label class="col-sm-2 control-label">User Name</label>
-            <div class="col-md-8">
+            <div class="col-md-5">
               <input type="text" id="username" class="form-control" [(ngModel)]="config.username" name="username"
                      placeholder="User Name" required/>
             </div>
-            <div class="col-md-2">
-              <button type="button" class="btn btn-sm btn-primary" data-toggle="popover"
-                      data-content="This is the 1st hint" data-placement="right"><b>?</b></button>
+            <div class="col-md-5">
+              <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
+                      [attr.data-content]="hints.username" data-animation="am-fade-and-scale"><b>?</b></button>
             </div>
           </div>
           <div class="form-group">
             <label class="col-sm-2 control-label">Password</label>
-            <div class="col-md-8">
+            <div class="col-md-5">
               <input type="password" id="password" class="form-control" [(ngModel)]="config.password" name="password"
                      placeholder="Password" required/>
             </div>
-            <div class="col-md-2">
-              <button type="button" class="btn btn-sm btn-primary" data-toggle="popover"
-                      data-content="This is the 1st hint" data-placement="right"><b>?</b></button>
+            <div class="col-md-5">
+              <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
+                      [attr.data-content]="hints.password" data-animation="am-fade-and-scale"><b>?</b></button>
             </div>
           </div>
 
@@ -152,26 +153,26 @@
           <div class="form-group">
             <label class="col-sm-2 control-label">Connection Protocol</label>
 
-            <div class="col-md-8">
+            <div class="col-md-5">
               <select class="form-control" [(ngModel)]="config.protocol" name="protocol" required>
                 <option *ngFor="let protocol of protocols" [value]="protocol"> {{protocol}} </option>
               </select>
             </div>
-            <div class="col-md-2">
-              <button type="button" class="btn btn-sm btn-primary" data-toggle="popover"
-                      data-content="This is the 1st hint" data-placement="right"><b>?</b></button>
+            <div class="col-md-5">
+              <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
+                      [attr.data-content]="hints.protocol" data-animation="am-fade-and-scale"><b>?</b></button>
             </div>
           </div>
 
           <div class="form-group">
             <label class="col-sm-2 control-label">OrientDB URL</label>
-            <div class="col-md-8">
+            <div class="col-md-7">
               <input type="text" id="outDBUrl" class="form-control" [(ngModel)]="config.url" name="outDbUrl"
                      placeholder="OrientDB URL" required/>
             </div>
-            <div class="col-md-2">
-              <button type="button" class="btn btn-sm btn-primary" data-toggle="popover"
-                      data-content="This is the 1st hint" data-placement="right"><b>?</b></button>
+            <div class="col-md-3">
+              <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
+                      [attr.data-content]="hints.outDbUrl" data-animation="am-fade-and-scale"><b>?</b></button>
             </div>
           </div>
 
@@ -199,27 +200,27 @@
           <div class="form-group">
             <label class="col-sm-2 control-label">Strategy</label>
 
-            <div class="col-sm-8">
+            <div class="col-sm-5">
               <select class="form-control" [(ngModel)]="config.strategy" name="strategy" required>
                 <option *ngFor="let strategy of strategies" selected> {{strategy}} </option>
               </select>
             </div>
-            <div class="col-md-2">
-              <button type="button" class="btn btn-sm btn-primary" data-toggle="popover"
-                      data-content="This is the 1st hint" data-placement="right"><b>?</b></button>
+            <div class="col-md-5">
+              <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
+                      [attr.data-content]="hints.strategy" data-animation="am-fade-and-scale"><b>?</b></button>
             </div>
           </div>
 
           <div class="form-group">
             <label class="col-sm-2 control-label">Name Resolver</label>
-            <div class="col-sm-8">
+            <div class="col-sm-5">
               <select class="form-control" [(ngModel)]="config.nameResolver" name="nameResolver">
                 <option *ngFor="let nr of nameResolvers" selected> {{nr}} </option>
               </select>
             </div>
-            <div class="col-md-2">
-              <button type="button" class="btn btn-sm btn-primary" data-toggle="popover"
-                      data-content="This is the 1st hint" data-placement="right"><b>?</b></button>
+            <div class="col-md-5">
+              <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
+                      [attr.data-content]="hints.nameResolver" data-animation="am-fade-and-scale"><b>?</b></button>
             </div>
           </div>
 
@@ -246,25 +247,25 @@
           <div class="form-group">
             <label class="col-sm-2 control-label">Included Tables</label>
 
-            <div class="col-sm-8">
-              <input type="text" class="form-control" [(ngModel)]="config.includedTables" name="includedTables"
-                     placeholder="Included Tables" required/>
+            <div class="col-sm-7">
+              <tag-input [(ngModel)]="config.includedTables" name="includedTables"  separatorKeys="['13','32']"
+                     placeholder="Included Tables" secondaryPlaceholder="Add a new table name" required></tag-input>
             </div>
-            <div class="col-md-2">
-              <button type="button" class="btn btn-sm btn-primary" data-toggle="popover"
-                      data-content="This is the 1st hint" data-placement="right"><b>?</b></button>
+            <div class="col-md-3">
+              <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
+                      [attr.data-content]="hints.includedTables" data-animation="am-fade-and-scale"><b>?</b></button>
             </div>
           </div>
 
           <div class="form-group">
             <label class="col-sm-2 control-label">Excluded Tables</label>
-            <div class="col-sm-8">
-              <input type="text" class="form-control" [(ngModel)]="config.excludedTables" name="ExcludedTables"
-                     placeholder="Excluded Tables" required/>
+            <div class="col-sm-7">
+              <tag-input [(ngModel)]="config.excludedTables" name="excludedTables" separatorKeys="['13','32']"
+                         placeholder="Excluded Tables" secondaryPlaceholder="Add a new table name" required></tag-input>
             </div>
-            <div class="col-md-2">
-              <button type="button" class="btn btn-sm btn-primary" data-toggle="popover"
-                      data-content="This is the 1st hint" data-placement="right"><b>?</b></button>
+            <div class="col-md-3">
+              <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
+                      [attr.data-content]="hints.excludedTables" data-animation="am-fade-and-scale"><b>?</b></button>
             </div>
           </div>
 
@@ -289,13 +290,13 @@
           <h3>Step 6: Inheritance (Advanced)</h3><br/>
           <div class="form-group">
             <label class="col-sm-2 control-label">XML Path</label>
-            <div class="col-sm-8">
+            <div class="col-sm-7">
               <input type="text" class="form-control" [(ngModel)]="config.xmlPath" name="xmlPath"
                      placeholder="XML Path" required>
             </div>
-            <div class="col-md-2">
-              <button type="button" class="btn btn-sm btn-primary" data-toggle="popover"
-                      data-content="This is the 1st hint" data-placement="right"><b>?</b></button>
+            <div class="col-md-3">
+              <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
+                      [attr.data-content]="hints.XMLPath" data-animation="am-fade-and-scale"><b>?</b></button>
             </div>
           </div>
 
@@ -320,15 +321,15 @@
           <h3>Step 7: Log Level (Advanced)</h3><br/>
           <div class="form-group">
             <label class="col-sm-2 control-label">Log Level</label>
-            <div class="col-sm-8">
+            <div class="col-sm-5">
               <select class="form-control" [(ngModel)]="config.level" name="logLevel" required>
                 <option *ngFor="let level of logLevels; let i = index" [value]="i">
                   {{level}} </option>
               </select>
             </div>
-            <div class="col-md-2">
-              <button type="button" class="btn btn-sm btn-primary" data-toggle="popover"
-                      data-content="This is the 1st hint" data-placement="right"><b>?</b></button>
+            <div class="col-md-5">
+              <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
+                      [attr.data-content]="hints.logLevel" data-animation="am-fade-and-scale"><b>?</b></button>
             </div>
           </div>
 

@@ -1,6 +1,9 @@
 import {downgradeInjectable} from '@angular/upgrade/static';
 import {Pipe} from '@angular/core'
 
+@Pipe({
+  name: "objectKeys"
+})
 class ObjectKeysPipe {
 
   transform(input)  {
@@ -11,9 +14,5 @@ class ObjectKeysPipe {
     return keys;
   }
 }
-
-ObjectKeysPipe.annotations = [new Pipe({
-  name: "objectKeys"
-})]
 
 export {ObjectKeysPipe};

@@ -3,12 +3,13 @@ import {Http} from '@angular/http';
 import 'rxjs/add/operator/toPromise';
 
 import {API} from '../../../constants';
+import {Injectable} from "@angular/core";
+declare var angular:any
 
-
+@Injectable()
 class TeleporterService {
 
-  constructor(http) {
-    this.http = http;
+  constructor(private http: Http) {
   }
 
   drivers() {
@@ -41,7 +42,6 @@ class TeleporterService {
 
 }
 
-TeleporterService.parameters = [[Http]];
 
 angular.module('command.services', []).factory(
   `TeleporterService`,
