@@ -40,12 +40,8 @@ public interface OResult {
     return getElement().flatMap(x -> x.asEdge());
   }
 
-  default boolean isBlob() {
-    return getElement().map(x -> x instanceof OBlob).orElse(false);
-  }
+  boolean isBlob();
 
-  default Optional<OBlob> getBlob() {
-    return getElement().filter(x -> x instanceof OBlob).map(OBlob.class::cast);
-  }
+  Optional<OBlob> getBlob();
 
 }

@@ -15,15 +15,6 @@
  */
 package com.orientechnologies.orient.graph.console;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.List;
-import java.util.Map;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.ZipInputStream;
-
 import com.orientechnologies.common.console.TTYConsoleReader;
 import com.orientechnologies.common.console.annotation.ConsoleCommand;
 import com.orientechnologies.common.console.annotation.ConsoleParameter;
@@ -42,6 +33,15 @@ import com.tinkerpop.blueprints.impls.orient.OGraphRepair;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.util.io.graphml.GraphMLWriter;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
+import java.util.Map;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.ZipInputStream;
 
 /**
  * Gremlin specialized console.
@@ -126,8 +126,8 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
       // GRAPHML
       message("\nImporting GRAPHML database from " + fileName + " with options (" + optionsAsString + ")...");
 
+      final OrientGraph g = (OrientGraph) OrientGraphFactory.getTxGraphImplFactory().getGraph(currentDatabase);
       try {
-        final OrientGraph g = (OrientGraph) OrientGraphFactory.getTxGraphImplFactory().getGraph(currentDatabase);
         g.setUseLog(false);
         g.setWarnOnForceClosingTx(false);
 
@@ -162,6 +162,8 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
 
       } catch (ODatabaseImportException e) {
         printError(e);
+      }finally {
+        g.shutdown(false, true);
       }
     } else if ((format != null && format.equalsIgnoreCase("graphson")) || (fileName != null && (fileName.endsWith(".graphson")))) {
       // GRAPHSON
@@ -223,8 +225,8 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
     if (fileName != null && (fileName.endsWith(".graphml") || fileName.endsWith(".xml"))) {
       message("\nExporting database in GRAPHML format to " + iText + "...");
 
+      final OrientGraph g = (OrientGraph) OrientGraphFactory.getTxGraphImplFactory().getGraph(currentDatabase);
       try {
-        final OrientGraph g = (OrientGraph) OrientGraphFactory.getTxGraphImplFactory().getGraph(currentDatabase);
         g.setUseLog(false);
         g.setWarnOnForceClosingTx(false);
 
@@ -240,6 +242,8 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
 
       } catch (ODatabaseImportException e) {
         printError(e);
+      }finally {
+        g.shutdown(false, true);
       }
     } else
       // BASE EXPORT

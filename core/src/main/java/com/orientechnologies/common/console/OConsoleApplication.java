@@ -242,7 +242,7 @@ public class OConsoleApplication {
           // BUFFER IT
           commandBuffer.append(' ');
           commandBuffer.append(commandLine);
-          commandBuffer.append(';');
+          commandBuffer.append('\n');
           commandLine = null;
         }
 
@@ -254,6 +254,9 @@ public class OConsoleApplication {
             out.println();
           }
 
+          if(commandLine.endsWith(";")){
+            commandLine = commandLine.substring(0, commandLine.length()-1);
+          }
           final RESULT status = execute(commandLine);
           commandLine = null;
 

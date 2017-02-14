@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.*;
@@ -44,7 +45,8 @@ public class OResultInternal implements OResult {
     return result;
   }
 
-  @Override public boolean isElement() {
+  @Override
+  public boolean isElement() {
     return this.element != null;
   }
 
@@ -58,7 +60,8 @@ public class OResultInternal implements OResult {
     return Optional.empty();
   }
 
-  @Override public OElement toElement() {
+  @Override
+  public OElement toElement() {
     if (isElement()) {
       return getElement().get();
     }
@@ -75,40 +78,55 @@ public class OResultInternal implements OResult {
     return doc;
   }
 
+  @Override
+  public boolean isBlob() {
+    return this.element != null && this.element.getRecord() instanceof OBlob;
+  }
+
+  @Override
+  public Optional<OBlob> getBlob() {
+    if (isBlob()) {
+      return Optional.ofNullable(this.element.getRecord());
+    }
+    return null;
+  }
+
   private Object convertToElement(Object property) {
-    if(property instanceof OResult){
+    if (property instanceof OResult) {
       return ((OResult) property).toElement();
     }
-    if(property instanceof List){
-      return ((List) property).stream().map(x->convertToElement(x)).collect(Collectors.toList());
+    if (property instanceof List) {
+      return ((List) property).stream().map(x -> convertToElement(x)).collect(Collectors.toList());
     }
 
-    if(property instanceof Set){
-      return ((Set) property).stream().map(x->convertToElement(x)).collect(Collectors.toSet());
+    if (property instanceof Set) {
+      return ((Set) property).stream().map(x -> convertToElement(x)).collect(Collectors.toSet());
     }
 
     return property;
   }
 
   public void setElement(OIdentifiable element) {
-    if(element instanceof OElement) {
+    if (element instanceof OElement) {
       this.element = element;
-    }else if(element instanceof OIdentifiable){
+    } else if (element instanceof OIdentifiable) {
       this.element = element.getRecord();
-    }else{
+    } else {
       this.element = element;
     }
   }
 
-  @Override public String toString() {
+  @Override
+  public String toString() {
     if (element != null) {
       return element.toString();
     }
-    return "{\n" +
-        content.entrySet().stream().map(x -> x.getKey() + ": " + x.getValue()).reduce("", (a, b) -> a + b + "\n") + "}\n";
+    return "{\n" + content.entrySet().stream().map(x -> x.getKey() + ": " + x.getValue()).reduce("", (a, b) -> a + b + "\n")
+        + "}\n";
   }
 
-  @Override public boolean equals(Object obj) {
+  @Override
+  public boolean equals(Object obj) {
     if (this == obj) {
       return true;
     }
@@ -129,7 +147,8 @@ public class OResultInternal implements OResult {
     }
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     if (element != null) {
       return element.hashCode();
     }
