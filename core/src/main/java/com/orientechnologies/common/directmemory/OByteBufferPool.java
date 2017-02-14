@@ -39,12 +39,11 @@ import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.LogManager;
 
 /**
@@ -89,9 +88,9 @@ public class OByteBufferPool implements OOrientStartupListener, OOrientShutdownL
   private ByteBuffer zeroPage = null;
 
   /**
-   * Collections of chunks which are preallocated on demand when limit of currently allocated memory exceeds.
+   * Map which contains collection of preallocated chunks and their indexes. Indexes are numbered in order of their allocation.
    */
-  private final AtomicReference<BufferHolder> lastPreallocatedArea;
+  private final ConcurrentHashMap<Integer, BufferHolder> preallocatedAreas = new ConcurrentHashMap<Integer, BufferHolder>();
 
   /**
    * Index of next page which will be allocated if pool is empty.
@@ -156,10 +155,8 @@ public class OByteBufferPool implements OOrientStartupListener, OOrientShutdownL
       }
 
       maxPagesPerSingleArea = pagesPerArea;
-      lastPreallocatedArea = new AtomicReference<BufferHolder>();
     } else {
       maxPagesPerSingleArea = 1;
-      lastPreallocatedArea = null;
     }
 
     if (TRACK) {
@@ -254,84 +251,49 @@ public class OByteBufferPool implements OOrientStartupListener, OOrientShutdownL
       final int allocationSize = (int) Math
           .min(maxPagesPerSingleArea * pageSize, (preAllocationLimit - bufferIndex * maxPagesPerSingleArea) * pageSize);
 
-      BufferHolder bfh = null;
-      try {
-        while (true) {
-          // we cannot free chunk of allocated memory so we set place holder first
-          // if operation successful we allocate part of direct memory.
-          bfh = lastPreallocatedArea.get();
-          assert bfh == null || bfh.index <= bufferIndex;
+      // we cannot free chunk of allocated memory so we set place holder first
+      // if operation successful we allocate part of direct memory.
+      BufferHolder bfh = preallocatedAreas.get(bufferIndex);
 
-          if (bfh == null) {
-            bfh = new BufferHolder(bufferIndex);
+      if (bfh == null) {
+        bfh = new BufferHolder();
 
-            if (lastPreallocatedArea.compareAndSet(null, bfh)) {
-              allocateBuffer(bfh, allocationSize);
-            } else {
-              continue;
-            }
-          } else if (bfh.buffer == null) {
-            // if place holder is not null it means that byte buffer is allocated but not set yet in other thread
-            // so we wait till buffer instance will be shared by other thread
-            try {
-              bfh.latch.await();
-            } catch (InterruptedException e) {
-              throw OException.wrapException(new OInterruptedException("Wait of new preallocated memory area was interrupted"), e);
-            }
-          }
+        BufferHolder replacedBufferHolder = preallocatedAreas.putIfAbsent(bufferIndex, bfh);
 
-          if (bfh.index < bufferIndex) {
-            //we have to request page only from buffer with calculated index otherwise we may use memory already allocated
-            //to other page
-
-            final int requestedPages = bfh.requested.get();
-            //wait till all pending memory requests which use this buffer will be fulfilled
-            if (requestedPages < maxPagesPerSingleArea) {
-              try {
-                bfh.filled.await();
-              } catch (InterruptedException e) {
-                throw OException
-                    .wrapException(new OInterruptedException("Wait of new preallocated memory area was interrupted"), e);
-              }
-            }
-
-            final BufferHolder bufferHolder = new BufferHolder(bufferIndex);
-            if (lastPreallocatedArea.compareAndSet(bfh, bufferHolder)) {
-              bfh = bufferHolder;
-              allocateBuffer(bfh, allocationSize);
-            } else {
-              assert bufferHolder.index == bufferIndex;
-              continue;
-            }
-          }
-
-          final int rawPosition = position * pageSize;
-          // duplicate buffer to have thread local version of buffer position.
-          final ByteBuffer db = bfh.buffer.duplicate();
-
-          db.position(rawPosition);
-          db.limit(rawPosition + pageSize);
-
-          ByteBuffer slice = db.slice();
-          slice.order(ByteOrder.nativeOrder());
-
-          if (clear) {
-            slice.position(0);
-            slice.put(zeroPage.duplicate());
-          }
-
-          slice.position(0);
-          return trackBuffer(slice);
-        }
-      } finally {
-        //we put this in final block to be sure that indication about processed memory request was for sure reflected
-        //in buffer holder counter which contains amount of memory blocks already processed by given buffer
-        if (bfh != null) {
-          final int completedRequests = bfh.requested.incrementAndGet();
-          if (completedRequests == maxPagesPerSingleArea)
-            bfh.filled.countDown();
+        if (replacedBufferHolder == null) {
+          allocateBuffer(bfh, allocationSize);
+        } else {
+          bfh = replacedBufferHolder;
         }
       }
+
+      if (bfh.buffer == null) {
+        // if place holder is not null it means that byte buffer is allocated but not set yet in other thread
+        // so we wait till buffer instance will be shared by other thread
+        try {
+          bfh.latch.await();
+        } catch (InterruptedException e) {
+          throw OException.wrapException(new OInterruptedException("Wait of new preallocated memory area was interrupted"), e);
+        }
+      }
+
+      final int rawPosition = position * pageSize;
+      // duplicate buffer to have thread local version of buffer position.
+      final ByteBuffer db = bfh.buffer.duplicate();
+
+      db.position(rawPosition);
+      db.limit(rawPosition + pageSize);
+
+      ByteBuffer slice = db.slice();
+      slice.order(ByteOrder.nativeOrder());
+
+      if (clear) {
+        slice.position(0);
+        slice.put(zeroPage.duplicate());
+      }
+
+      slice.position(0);
+      return trackBuffer(slice);
     }
 
     // this should not happen if amount of pages is needed for storage is calculated correctly
@@ -523,8 +485,8 @@ public class OByteBufferPool implements OOrientStartupListener, OOrientShutdownL
     if (zeroPage == null) // already/still shutdown?
       return;
 
+    final Set<ByteBuffer> cleaned = Collections.newSetFromMap(new IdentityHashMap<ByteBuffer, Boolean>());
     try {
-      final Set<ByteBuffer> cleaned = Collections.newSetFromMap(new IdentityHashMap<ByteBuffer, Boolean>());
       clean(zeroPage, cleaned);
       for (ByteBuffer byteBuffer : pool)
         clean(byteBuffer, cleaned);
@@ -533,8 +495,13 @@ public class OByteBufferPool implements OOrientStartupListener, OOrientShutdownL
     }
 
     this.zeroPage = null;
-    if (this.lastPreallocatedArea != null)
-      this.lastPreallocatedArea.set(null);
+
+    if (this.preallocatedAreas != null) {
+      for (BufferHolder bufferHolder : preallocatedAreas.values()) {
+        clean(bufferHolder.buffer, cleaned);
+      }
+    }
+
     nextAllocationPosition.set(0);
     pool.clear();
     overflowBufferCount.set(0);
@@ -584,45 +551,6 @@ public class OByteBufferPool implements OOrientStartupListener, OOrientShutdownL
   private static final class BufferHolder {
     private volatile ByteBuffer buffer;
     private final CountDownLatch latch = new CountDownLatch(1);
-
-    /**
-     * Latch which is triggered when there is no any unused space in this buffer.
-     */
-    private final CountDownLatch filled = new CountDownLatch(1);
-
-    /**
-     * Amount of pages which were requested from this buffer.
-     * But not buffer size or index of last page in buffer.
-     * <p>
-     * This parameter is used to be sure that if we are going to allocate new buffer
-     * this buffer is served all page requests
-     */
-    private final AtomicInteger requested = new AtomicInteger();
-
-    /**
-     * Logical index of buffer.
-     * <p>
-     * Each buffer may contain only limited number of pages . Amount of pages is specified in
-     * {@link #maxPagesPerSingleArea} parameter.
-     * <p>
-     * Current field is allocation number of this buffer.
-     * Let say we requested 5-th page but buffer may contain only 4 pages.
-     * So first buffer will be created with index 0 and buffer which is needed for 5-th page will be created
-     * with index 1.
-     * <p>
-     * In general index of buffer is result of dividing of page index on number of pages which may be contained by
-     * buffer without reminder.
-     * <p>
-     * This index is used to check that buffer which is currently used to serve memory requests is one which should be used
-     * for page with given index.
-     */
-
-    private final int index;
-
-    public BufferHolder(int index) {
-      this.index = index;
-    }
-
   }
 
   private ByteBuffer trackBuffer(ByteBuffer buffer) {

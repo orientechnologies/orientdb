@@ -8,7 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
 
-@Test public class OByteBufferPoolTest {
+@Test
+public class OByteBufferPoolTest {
   public void testAcquireReleaseSinglePage() {
     OByteBufferPool pool = new OByteBufferPool(12);
     Assert.assertEquals(pool.getSize(), 0);
@@ -66,21 +67,25 @@ import java.util.concurrent.*;
     }
   }
 
-  @Test(enabled = false)
+  @Test
   public void testAcquireReleasePageWithPreallocationInMT() throws Exception {
     final OByteBufferPool pool = new OByteBufferPool(10, 300, 200);
 
     Assert.assertEquals(pool.getMaxPagesPerChunk(), 16);
 
-    final List<Future<Void>> futures = new ArrayList<Future<Void>>();
+    final List<Future<Long>> futures = new ArrayList<Future<Long>>();
     final CountDownLatch latch = new CountDownLatch(1);
     final ExecutorService executor = Executors.newFixedThreadPool(8);
 
     for (int i = 0; i < 5; i++) {
-      futures.add(executor.submit(new Callable<Void>() {
+      final int th = i;
+
+      futures.add(executor.submit(new Callable<Long>() {
         @Override
-        public Void call() throws Exception {
+        public Long call() throws Exception {
           latch.await();
+
+          final long startTs = System.nanoTime();
 
           try {
             for (int n = 0; n < 1000000; n++) {
@@ -101,16 +106,23 @@ import java.util.concurrent.*;
             throw e;
           }
 
-          return null;
+          final long ensTs = System.nanoTime();
+
+          return (ensTs - startTs);
         }
       }));
     }
 
     latch.countDown();
 
-    for (Future<Void> future : futures) {
-      future.get();
+    long sum = 0;
+    int counter = 0;
+    for (Future<Long> future : futures) {
+      sum += future.get();
+      counter++;
     }
+
+    System.out.printf("Avg. latency %d ", sum / (counter * 2000000000L));
 
   }
 
