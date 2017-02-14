@@ -188,10 +188,10 @@ public class OrientDBEmbeddedTests {
   }
 
   @Test(expected = ODatabaseException.class)
-  public void testUseAfterCloseOpenPool() {
+  public void testUseAfterCloseOpenPoolInternal() {
     OrientDB orientDb = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
     orientDb.close();
-    orientDb.openPool("", "", "");
+    orientDb.openPool("", "", "", OrientDBConfig.defaultConfig());
   }
 
   @Test(expected = ODatabaseException.class)

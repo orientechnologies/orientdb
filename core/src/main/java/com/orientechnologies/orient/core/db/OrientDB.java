@@ -29,21 +29,24 @@ import java.util.List;
  * <p>
  * Usage example:
  * <p>
- * remote ex:
+ * Remote Example:
+ * <pre>
  * <code>
  * OrientDB orientDb = new OrientDB("remote:localhost","root","root");
  * if(orientDb.createIfNotExists("test",ODatabaseType.MEMORY)){
- * ODatabaseDocument session = orientDb.open("test","admin","admin");
- * session.createClass("MyClass");
- * session.close();
+ *  ODatabaseDocument session = orientDb.open("test","admin","admin");
+ *  session.createClass("MyClass");
+ *  session.close();
  * }
  * ODatabaseDocument session = orientDb.open("test","writer","writer");
  * //...
  * session.close();
  * orientDb.close();
  * </code>
+ * </pre>
  * <p>
- * embedded ex:
+ * Embedded example:
+ * <pre>
  * <code>
  * OrientDB orientDb = new OrientDB("embedded:./databases/",null,null);
  * orientDb.create("test",ODatabaseType.PLOCAL);
@@ -52,21 +55,24 @@ import java.util.List;
  * session.close();
  * orientDb.close();
  * </code>
+ * </pre>
  * <p>
- * database manipulation ex:
+ * Database Manipulation Example:
  * <p>
+ * <pre>
  * <code>
  * OrientDB orientDb = ...
  * if(!orientDb.exists("one")){
- * orientDb.create("one",ODatabaseType.PLOCAL);
+ *  orientDb.create("one",ODatabaseType.PLOCAL);
  * }
  * if(orientDb.exists("two")){
- * orientDb.drop("two");
+ *  orientDb.drop("two");
  * }
  * List&ltString&gt databases = orientDb.list();
  * assertEquals(databases.size(),1);
  * assertEquals(databases.get("0"),"one");
  * </code>
+ * </pre>
  * <p>
  * <p>
  * <p>
@@ -84,7 +90,8 @@ public class OrientDB implements AutoCloseable {
    * possible kind of urls 'embedded','remote', for the case of remote and distributed can be specified multiple nodes
    * using comma.
    * <p>
-   * remote ex:
+   * Remote Example:
+   * <pre>
    * <code>
    * OrientDB orientDb = new OrientDB("remote:localhost");
    * ODatabaseDocument session = orientDb.open("test","admin","admin");
@@ -92,8 +99,10 @@ public class OrientDB implements AutoCloseable {
    * session.close();
    * orientDb.close();
    * </code>
+   * </pre>
    * <p>
-   * embedded ex:
+   * Embedded Example:
+   * <pre>
    * <code>
    * OrientDB orientDb = new OrientDB("embedded:./databases/");
    * ODatabaseDocument session = orientDb.open("test","admin","admin");
@@ -101,6 +110,7 @@ public class OrientDB implements AutoCloseable {
    * session.close();
    * orientDb.close();
    * </code>
+   * </pre>
    *
    * @param url           the url for the specific factory.
    * @param configuration configuration for the specific factory for the list of option {@see OGlobalConfiguration}.
@@ -117,7 +127,8 @@ public class OrientDB implements AutoCloseable {
    * possible kind of urls 'embedded','remote', for the case of remote and distributed can be specified multiple nodes
    * using comma.
    * <p>
-   * remote ex:
+   * Remote Example:
+   * <pre>
    * <code>
    * OrientDB orientDb = new OrientDB("remote:localhost","root","root");
    * orientDb.create("test",ODatabaseType.PLOCAL);
@@ -126,8 +137,10 @@ public class OrientDB implements AutoCloseable {
    * session.close();
    * orientDb.close();
    * </code>
+   * </pre>
    * <p>
-   * embedded ex:
+   * Embedded Example:
+   * <pre>
    * <code>
    * OrientDB orientDb = new OrientDB("embedded:./databases/",null,null);
    * orientDb.create("test",ODatabaseType.MEMORY);
@@ -136,6 +149,7 @@ public class OrientDB implements AutoCloseable {
    * session.close();
    * orientDb.close();
    * </code>
+   * </pre>
    *
    * @param url            the url for the specific factory.
    * @param serverUser     the server user allowed to manipulate databases.
@@ -276,8 +290,8 @@ public class OrientDB implements AutoCloseable {
     this.internal.close();
   }
 
-  ODatabasePoolInternal openPool(String database, String user, String password) {
-    return this.internal.openPool(database, user, password);
+  ODatabasePoolInternal openPool(String database, String user, String password, OrientDBConfig config) {
+    return this.internal.openPool(database, user, password, config);
   }
 
   OrientDBInternal getInternal() {
