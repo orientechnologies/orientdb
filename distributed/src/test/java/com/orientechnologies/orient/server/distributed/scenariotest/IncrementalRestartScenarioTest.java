@@ -16,16 +16,7 @@
 
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.ServerRun;
-import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
-import org.junit.Ignore;
-import org.junit.Test;
+import static org.junit.Assert.*;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -34,30 +25,29 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import static org.junit.Assert.*;
+import org.junit.Ignore;
+import org.junit.Test;
+
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
+import com.orientechnologies.orient.server.distributed.ServerRun;
+import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
 /**
- * It checks the consistency in the cluster with the following scenario:
- * - 3 server  (quorum=2)
- * - network fault on server2 and server3
- * - 5 threads for each running server write 100 records: writes on server2 and server3 are redirected on server1, writes on server1 don't succeed (due to the quorum)
- * - restart server2
- * - 5 threads for each running server write 100 records: writes server3 are redirected on server1 or server2, writes on server1 and server2 succeed
- * - check consistency
- * - restart server3
- * - 5 threads on server3 write 100 records
- * - check consistency
- * - changing quorum (quorum=1)
- * - network fault on server2 and server3
- * - 3 writes on server1 checking they succeed
- * - restart server2
- * - 5 threads for each running server write 100 records
- * - restart server3
- * - 5 threads on server3 write 100 records
- * - check consistency
+ * It checks the consistency in the cluster with the following scenario: - 3 server (quorum=2) - network fault on server2 and
+ * server3 - 5 threads for each running server write 100 records: writes on server2 and server3 are redirected on server1, writes on
+ * server1 don't succeed (due to the quorum) - restart server2 - 5 threads for each running server write 100 records: writes server3
+ * are redirected on server1 or server2, writes on server1 and server2 succeed - check consistency - restart server3 - 5 threads on
+ * server3 write 100 records - check consistency - changing quorum (quorum=1) - network fault on server2 and server3 - 3 writes on
+ * server1 checking they succeed - restart server2 - 5 threads for each running server write 100 records - restart server3 - 5
+ * threads on server3 write 100 records - check consistency
  *
  * @author Gabriele Ponzi
- * @email  <gabriele.ponzi--at--gmail.com>
+ * @email <gabriele.ponzi--at--gmail.com>
  */
 
 public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
@@ -73,28 +63,27 @@ public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
   @Override
   public void executeTest() throws Exception {
 
-    ODatabaseDocumentTx dbServer3 = new ODatabaseDocumentTx(getPlocalDatabaseURL(serverInstance.get(SERVERS-1))).open("admin", "admin");
+    ODatabaseDocumentTx dbServer3 = new ODatabaseDocumentTx(getPlocalDatabaseURL(serverInstance.get(SERVERS - 1))).open("admin",
+        "admin");
 
     try {
 
-      TestQuorum2 tq2 = new TestQuorum2(serverInstance);     // Connection to dbServer3
-      TestQuorum1 tq1 = new TestQuorum1(serverInstance);       // Connection to dbServer1
+      TestQuorum2 tq2 = new TestQuorum2(serverInstance); // Connection to dbServer3
+      TestQuorum1 tq1 = new TestQuorum1(serverInstance); // Connection to dbServer1
       ExecutorService exec = Executors.newSingleThreadExecutor();
       Future currentFuture = null;
-
 
       /*
        * Test with quorum = 2
        */
 
       try {
-//        currentFuture = exec.submit(tq2);
-//        currentFuture.get();
+        // currentFuture = exec.submit(tq2);
+        // currentFuture.get();
       } catch (Exception e) {
         e.printStackTrace();
         fail();
       }
-
 
       /*
        * Test with quorum = 1
@@ -116,10 +105,10 @@ public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
 
   private class TestQuorum2 implements Callable<Void> {
 
-    private final String databaseUrl;
+    private final String    databaseUrl;
     private List<ServerRun> serverInstances;
     private List<ServerRun> executeWritesOnServers;
-    private int initialCount = 0;
+    private int             initialCount = 0;
 
     public TestQuorum2(List<ServerRun> serverInstances) {
 
@@ -133,7 +122,8 @@ public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
     public Void call() throws Exception {
 
       List<ODocument> result = null;
-      final ODatabaseDocumentTx dbServer1 = new ODatabaseDocumentTx(getPlocalDatabaseURL(serverInstance.get(0))).open("admin", "admin");
+      final ODatabaseDocumentTx dbServer1 = new ODatabaseDocumentTx(getPlocalDatabaseURL(serverInstance.get(0))).open("admin",
+          "admin");
 
       try {
 
@@ -145,12 +135,12 @@ public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
 
         // checking distributed configuration
         OHazelcastPlugin manager = (OHazelcastPlugin) serverInstance.get(0).getServerInstance().getDistributedManager();
-        ODistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration(getDatabaseName());
+        OModifiableDistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration(getDatabaseName()).modify();
         ODocument cfg = databaseConfiguration.getDocument();
         cfg.field("writeQuorum", 2);
         cfg.field("version", (Integer) cfg.field("version") + 1);
-        manager.updateCachedDatabaseConfiguration(getDatabaseName(), cfg, true, true);
-        assertEquals(2, cfg.<Object>field("writeQuorum"));
+        manager.updateCachedDatabaseConfiguration(getDatabaseName(), databaseConfiguration, true);
+        assertEquals(2, (int)cfg.field("writeQuorum"));
 
         // network fault on server2
         System.out.println("Network fault on server2.\n");
@@ -221,7 +211,7 @@ public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
         e.printStackTrace();
         fail(e.getMessage());
       } finally {
-        if(dbServer1 != null) {
+        if (dbServer1 != null) {
           ODatabaseRecordThreadLocal.INSTANCE.set(dbServer1);
           dbServer1.close();
           ODatabaseRecordThreadLocal.INSTANCE.set(null);
@@ -232,13 +222,13 @@ public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
     }
   }
 
-  private class TestQuorum1 implements Callable<Void>  {
+  private class TestQuorum1 implements Callable<Void> {
 
-    private final String databaseUrl1;
-    private final String databaseUrl2;
+    private final String    databaseUrl1;
+    private final String    databaseUrl2;
     private List<ServerRun> serverInstances;
     private List<ServerRun> executeWritesOnServers;
-    private int initialCount = 0;
+    private int             initialCount = 0;
 
     public TestQuorum1(List<ServerRun> serverInstances) {
 
@@ -248,7 +238,6 @@ public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
       this.databaseUrl1 = getPlocalDatabaseURL(serverInstances.get(0));
       this.databaseUrl2 = getPlocalDatabaseURL(serverInstances.get(1));
     }
-
 
     @Override
     public Void call() throws Exception {
@@ -266,12 +255,12 @@ public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
 
         // checking distributed configuration
         OHazelcastPlugin manager = (OHazelcastPlugin) serverInstance.get(0).getServerInstance().getDistributedManager();
-        ODistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration(getDatabaseName());
+        OModifiableDistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration(getDatabaseName()).modify();
         ODocument cfg = databaseConfiguration.getDocument();
         cfg.field("writeQuorum", 1);
         cfg.field("version", (Integer) cfg.field("version") + 1);
-        manager.updateCachedDatabaseConfiguration(getDatabaseName(), cfg, true, true);
-        assertEquals(1, cfg.<Object>field("writeQuorum"));
+        manager.updateCachedDatabaseConfiguration(getDatabaseName(), databaseConfiguration, true);
+        assertEquals(1, (int)cfg.field("writeQuorum"));
 
         // network fault on server2
         System.out.println("Network fault on server2.\n");
@@ -336,12 +325,11 @@ public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
         // check consistency on server1, server2 and server3
         checkWritesAboveCluster(serverInstance, serverInstance);
 
-
       } catch (Exception e) {
         e.printStackTrace();
         fail(e.getMessage());
       } finally {
-        if(dbServer1 != null) {
+        if (dbServer1 != null) {
           ODatabaseRecordThreadLocal.INSTANCE.set(dbServer1);
           dbServer1.close();
           ODatabaseRecordThreadLocal.INSTANCE.set(null);

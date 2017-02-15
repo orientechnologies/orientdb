@@ -168,7 +168,7 @@ import java.util.stream.Collectors;
    * @param iClass OClass instance
    */
   public ODocument(final OClass iClass) {
-    this(iClass.getName());
+    this(iClass != null ? iClass.getName() : null);
   }
 
   /**
@@ -229,10 +229,6 @@ import java.util.stream.Collectors;
       return Optional.of(new OEdgeDelegate(this));
     }
     return Optional.empty();
-  }
-
-  @Override public boolean isDocument() {
-    return true;
   }
 
   @Override public boolean isVertex() {

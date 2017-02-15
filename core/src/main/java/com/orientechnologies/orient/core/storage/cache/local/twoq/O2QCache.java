@@ -35,6 +35,9 @@ import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionSt
 import java.io.*;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -321,9 +324,9 @@ public class O2QCache implements OReadCache {
         if (warnings < MAX_PERCENT_OF_PINED_PAGES) {
           pinnedPagesWarningsCache = (int) warnings;
 
-          OLogManager.instance().warn(this, "Maximum amount of pinned pages is reached , given page " + cacheEntry
-              + " will not be marked as pinned which may lead to performance degradation. You may consider to increase percent of pined pages "
-              + "by changing of property " + OGlobalConfiguration.DISK_CACHE_PINNED_PAGES.getKey());
+          OLogManager.instance().warn(this, "Maximum amount of pinned pages is reached, given page " + cacheEntry
+              + " will not be marked as pinned which may lead to performance degradation. You may consider to increase the percent of pinned pages "
+              + "by changing the property '" + OGlobalConfiguration.DISK_CACHE_PINNED_PAGES.getKey() + "'");
         }
       }
 
@@ -709,12 +712,10 @@ public class O2QCache implements OReadCache {
 
     cacheLock.acquireReadLock();
     try {
-      final File rootDirectory = writeCache.getRootDirectory();
-      final File stateFile = new File(rootDirectory, CACHE_STATE_FILE);
-      if (stateFile.exists()) {
-        try (RandomAccessFile cacheState = new RandomAccessFile(stateFile, "rw")) {
-          final FileChannel channel = cacheState.getChannel();
+      final Path statePath = writeCache.getRootDirectory().resolve(CACHE_STATE_FILE);
 
+      if (Files.exists(statePath)) {
+        try (FileChannel channel = FileChannel.open(statePath, StandardOpenOption.READ)) {
           final InputStream stream = Channels.newInputStream(channel);
           final BufferedInputStream bufferedInputStream = new BufferedInputStream(stream, 64 * 1024);
           try (DataInputStream dataInputStream = new DataInputStream(bufferedInputStream)) {
@@ -724,7 +725,7 @@ public class O2QCache implements OReadCache {
             if (maxCacheSize > currentMaxCacheSize) {
               OLogManager.instance().info(this,
                   "Previous maximum cache size was %d current maximum cache size is %d. Cache state for storage %s will not be restored.",
-                  maxCacheSize, currentMaxCacheSize, rootDirectory);
+                  maxCacheSize, currentMaxCacheSize, writeCache.getRootDirectory());
               return;
             }
 
@@ -905,19 +906,16 @@ public class O2QCache implements OReadCache {
 
     cacheLock.acquireWriteLock();
     try {
-      final File rootDirectory = writeCache.getRootDirectory();
-      final File stateFile = new File(rootDirectory, CACHE_STATE_FILE);
+      final Path rootDirectory = writeCache.getRootDirectory();
+      final Path stateFile = rootDirectory.resolve(CACHE_STATE_FILE);
 
-      if (stateFile.exists()) {
-        if (!stateFile.delete()) {
-          OLogManager.instance().warn(this, "Cannot delete cache state file %s", stateFile);
-        }
+      if (Files.exists(stateFile)) {
+        Files.delete(stateFile);
       }
 
       final Set<Long> filesToStore = new HashSet<>(writeCache.files().values());
 
-      try (RandomAccessFile cacheState = new RandomAccessFile(stateFile, "rw")) {
-        final FileChannel channel = cacheState.getChannel();
+      try (final FileChannel channel = FileChannel.open(stateFile, StandardOpenOption.WRITE, StandardOpenOption.CREATE)) {
         final OutputStream channelStream = Channels.newOutputStream(channel);
         final BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(channelStream, 64 * 1024);
 
@@ -986,12 +984,11 @@ public class O2QCache implements OReadCache {
       for (long fileId : filesToClear)
         clearFile(fileId);
 
-      final File rootDirectory = writeCache.getRootDirectory();
-      final File stateFile = new File(rootDirectory, CACHE_STATE_FILE);
-      if (stateFile.exists()) {
-        if (!stateFile.delete()) {
-          OLogManager.instance().error(this, "Cache state file %s cannot be deleted", stateFile);
-        }
+      final Path rootDirectory = writeCache.getRootDirectory();
+      final Path stateFile = rootDirectory.resolve(CACHE_STATE_FILE);
+
+      if (Files.exists(stateFile)) {
+        Files.delete(stateFile);
       }
 
     } finally {

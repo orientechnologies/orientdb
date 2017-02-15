@@ -17,10 +17,10 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabasePool;
-import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.OVertex;
+
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -49,18 +49,17 @@ public class ServerClusterRemoteInsertBalancedTest extends AbstractServerCluster
   }
 
   private void testRoundRobinOnConnect() {
-    ODatabasePool factory = OrientDB.fromUrl("remote:localhost/",
-        OrientDBConfig.builder().addConfig(OGlobalConfiguration.CLIENT_CONNECTION_STRATEGY, "ROUND_ROBIN_CONNECT").build())
-        .openPool(getDatabaseName(), "admin", "admin");
+    ODatabasePool pool = new ODatabasePool("remote:localhost/" + getDatabaseName(), "admin", "admin",
+        OrientDBConfig.builder().addConfig(OGlobalConfiguration.CLIENT_CONNECTION_STRATEGY, "ROUND_ROBIN_CONNECT").build());
 
-    ODatabaseDocument graph = factory.acquire();
+    ODatabaseDocument graph = pool.acquire();
     graph.createVertexClass("Client");
     graph.close();
 
     Map<Integer, Integer> clusterIds = new HashMap<Integer, Integer>();
 
     for (int i = 0; i < ITERATIONS; ++i) {
-      graph = factory.acquire();
+      graph = pool.acquire();
       try {
         final OVertex v = graph.newVertex("Client").save();
 
@@ -76,14 +75,14 @@ public class ServerClusterRemoteInsertBalancedTest extends AbstractServerCluster
         graph.close();
       }
     }
+    pool.close();
 
     Assert.assertTrue(clusterIds.size() > 1);
   }
 
   private void testRoundRobinOnRequest() {
-    ODatabasePool factory = OrientDB.fromUrl("remote:localhost/",
-        OrientDBConfig.builder().addConfig(OGlobalConfiguration.CLIENT_CONNECTION_STRATEGY, "ROUND_ROBIN_CONNECT").build())
-        .openPool(getDatabaseName(), "admin", "admin");
+    ODatabasePool factory = new ODatabasePool("remote:localhost/" + getDatabaseName(), "admin", "admin",
+        OrientDBConfig.builder().addConfig(OGlobalConfiguration.CLIENT_CONNECTION_STRATEGY, "ROUND_ROBIN_CONNECT").build());
     ODatabaseDocument graph = factory.acquire();
 
     Map<Integer, Integer> clusterIds = new HashMap<Integer, Integer>();
@@ -113,7 +112,4 @@ public class ServerClusterRemoteInsertBalancedTest extends AbstractServerCluster
     return "distributed-insert-loadbalancing";
   }
 
-  protected String getDatabaseURL(final ServerRun server) {
-    return "remote:" + server.getBinaryProtocolAddress() + "/" + getDatabaseName();
-  }
 }

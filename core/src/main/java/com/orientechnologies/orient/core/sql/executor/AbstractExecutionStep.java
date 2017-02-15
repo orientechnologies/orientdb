@@ -18,11 +18,13 @@ public abstract class AbstractExecutionStep implements OExecutionStepInternal {
     this.ctx = ctx;
   }
 
-  @Override public void setPrevious(OExecutionStepInternal step) {
+  @Override
+  public void setPrevious(OExecutionStepInternal step) {
     this.prev = Optional.ofNullable(step);
   }
 
-  @Override public void setNext(OExecutionStepInternal step) {
+  @Override
+  public void setNext(OExecutionStepInternal step) {
     this.next = Optional.ofNullable(step);
   }
 
@@ -38,12 +40,14 @@ public abstract class AbstractExecutionStep implements OExecutionStepInternal {
     return next;
   }
 
-  @Override public void sendTimeout() {
+  @Override
+  public void sendTimeout() {
     this.timedOut = true;
     prev.ifPresent(p -> p.sendTimeout());
   }
 
-  @Override public void close() {
+  @Override
+  public void close() {
     prev.ifPresent(p -> p.close());
   }
 

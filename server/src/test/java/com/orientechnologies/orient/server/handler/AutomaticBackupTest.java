@@ -4,7 +4,7 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.OrientDB.DatabaseType;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
@@ -75,7 +75,7 @@ public class AutomaticBackupTest {
     server.startup();
     if (server.existsDatabase(DBNAME))
       server.dropDatabase(DBNAME);
-    server.createDatabase(DBNAME, DatabaseType.PLOCAL, null);
+    server.createDatabase(DBNAME, ODatabaseType.PLOCAL, null);
     database = server.openDatabase(DBNAME, null, null, null, true);
 
     new ODocument("TestBackup").field("name", DBNAME).save();
@@ -129,7 +129,7 @@ public class AutomaticBackupTest {
 
     if (server.existsDatabase(DBNAME2))
       server.dropDatabase(DBNAME2);
-    server.createDatabase(DBNAME2, DatabaseType.PLOCAL, null);
+    server.createDatabase(DBNAME2, ODatabaseType.PLOCAL, null);
     ODatabaseDocument database2 = server.openDatabase(DBNAME2, null, null, null, true);
 
     database2.restore(new FileInputStream(BACKUPDIR + "/testautobackup.zip"), null, null, null);
@@ -273,7 +273,7 @@ public class AutomaticBackupTest {
 
     if (server.existsDatabase(DBNAME2))
       server.dropDatabase(DBNAME2);
-    server.createDatabase(DBNAME2, DatabaseType.PLOCAL, null);
+    server.createDatabase(DBNAME2, ODatabaseType.PLOCAL, null);
     
     ODatabaseDocumentInternal database2 = server.openDatabase(DBNAME2, null, null, null, true); 
     

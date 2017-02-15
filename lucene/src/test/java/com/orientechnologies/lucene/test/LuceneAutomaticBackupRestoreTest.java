@@ -21,6 +21,7 @@ package com.orientechnologies.lucene.test;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -52,13 +53,13 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 public class LuceneAutomaticBackupRestoreTest {
 
-  private final static String DBNAME    = "LuceneAutomaticBackupRestoreTest";
+  private final static String          DBNAME     = "LuceneAutomaticBackupRestoreTest";
   @Rule
-  public TemporaryFolder tempFolder = new TemporaryFolder();
-  private OrientDB factory;
-  private              String URL       = null;
-  private              String BACKUPDIR = null;
-  private              String BACKUFILE = null;
+  public               TemporaryFolder tempFolder = new TemporaryFolder();
+  private OrientDB orientDB;
+  private String URL       = null;
+  private String BACKUPDIR = null;
+  private String BACKUFILE = null;
 
   private OServer                   server;
   private ODatabaseDocumentInternal db;
@@ -79,7 +80,7 @@ public class LuceneAutomaticBackupRestoreTest {
     System.setProperty("ORIENTDB_HOME", tempFolder.getRoot().getAbsolutePath());
 
     String path = tempFolder.getRoot().getAbsolutePath() + File.separator + "databases";
-    factory = server.getDatabases();
+    orientDB = server.getContext();
 
     URL = "plocal:" + path + File.separator + DBNAME;
 
@@ -91,9 +92,9 @@ public class LuceneAutomaticBackupRestoreTest {
 
     dropIfExists();
 
-    factory.create(DBNAME, null, null, OrientDB.DatabaseType.PLOCAL);
+    orientDB.create(DBNAME, ODatabaseType.PLOCAL);
 
-    db = (ODatabaseDocumentInternal) factory.open(DBNAME, "admin", "admin");
+    db = (ODatabaseDocumentInternal) orientDB.open(DBNAME, "admin", "admin");
 
     db.command(new OCommandSQL("create class City ")).execute();
     db.command(new OCommandSQL("create property City.name string")).execute();
@@ -106,8 +107,8 @@ public class LuceneAutomaticBackupRestoreTest {
 
   private void dropIfExists() {
 
-    if (factory.exists(DBNAME, "admin", "admin")) {
-      factory.drop(DBNAME, "admin", "admin");
+    if (orientDB.exists(DBNAME)) {
+      orientDB.drop(DBNAME);
     }
   }
 
@@ -265,11 +266,11 @@ public class LuceneAutomaticBackupRestoreTest {
   }
 
   private ODatabaseDocumentInternal createAndOpen() {
-    factory.create(DBNAME, null, null, OrientDB.DatabaseType.PLOCAL);
+    orientDB.create(DBNAME, ODatabaseType.PLOCAL);
     return open();
   }
 
   private ODatabaseDocumentInternal open() {
-    return (ODatabaseDocumentInternal) factory.open(DBNAME, "admin", "admin");
+    return (ODatabaseDocumentInternal) orientDB.open(DBNAME, "admin", "admin");
   }
 }

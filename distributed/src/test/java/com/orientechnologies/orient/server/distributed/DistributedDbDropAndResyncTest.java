@@ -58,8 +58,6 @@ public class DistributedDbDropAndResyncTest extends AbstractServerClusterTxTest 
           currentStatus = status;
           break;
         }
-
-        Thread.sleep(100);
       }
 
       Assert.assertEquals(currentStatus, ODistributedServerManager.DB_STATUS.ONLINE);

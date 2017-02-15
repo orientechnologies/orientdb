@@ -15,9 +15,6 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.orient.core.db.ODatabasePool;
-import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -33,10 +30,10 @@ import org.junit.Test;
 
 public class TestSharding extends AbstractServerClusterTest {
 
-  protected final static int SERVERS     = 3;
+  protected final static int SERVERS = 3;
   protected OVertex[] vertices;
   protected int[]     versions;
-  protected long             totalAmount = 0;
+  protected long totalAmount = 0;
 
   @Test
   public void test() throws Exception {
@@ -70,7 +67,6 @@ public class TestSharding extends AbstractServerClusterTest {
     graphNoTx.command("create class `Product-Type` extends V clusters 1");
     graphNoTx.command("create class `Hobby-Type` extends V clusters 1");
 
-
     graphNoTx.command("create class `Knows-Type` extends V clusters 1");
     graphNoTx.command("create class `Buy-Type` extends V clusters 1");
     graphNoTx.command("create class `Loves-Type` extends V clusters 1");
@@ -79,14 +75,10 @@ public class TestSharding extends AbstractServerClusterTest {
   @Override
   protected void executeTest() throws Exception {
     try {
-      final ODatabasePool localFactory = OrientDB.fromUrl("embedded:target/server0/databases/", OrientDBConfig.defaultConfig())
-          .openPool(getDatabaseName(), "admin", "admin");
-
-
       final OVertex product;
       final OVertex fishing;
 
-      ODatabaseDocument graph = localFactory.acquire();
+      ODatabaseDocument graph = serverInstance.get(0).getServerInstance().openDatabase(getDatabaseName(),"admin","admin");
       graph.begin();
 
       try {
@@ -109,10 +101,7 @@ public class TestSharding extends AbstractServerClusterTest {
       for (int i = 0; i < vertices.length; ++i) {
         final String nodeName = serverInstance.get(i).getServerInstance().getDistributedManager().getLocalNodeName();
 
-        final ODatabasePool factory = OrientDB.fromUrl("embedded:target/server" + i + "/databases/", OrientDBConfig.defaultConfig())
-            .openPool(getDatabaseName(), "admin", "admin");
-
-        graph = factory.acquire();
+        graph = serverInstance.get(i).getServerInstance().openDatabase(getDatabaseName(),"admin","admin");
         try {
 
           vertices[i] = graph.newVertex("Client-Type");
@@ -132,8 +121,9 @@ public class TestSharding extends AbstractServerClusterTest {
 
           totalAmount += amount;
 
-          System.out
-              .println("Create vertex, class: " + vertices[i].getSchemaType().get().getName() + ", cluster: " + clId + " -> " + vertices[i].getRecord());
+          System.out.println(
+              "Create vertex, class: " + vertices[i].getSchemaType().get().getName() + ", cluster: " + clId + " -> " + vertices[i]
+                  .getRecord());
 
           if (i > 1) {
             // CREATE A LIGHT-WEIGHT EDGE
@@ -144,7 +134,7 @@ public class TestSharding extends AbstractServerClusterTest {
 
           // CREATE A REGULAR EDGE
           final OEdge edge = vertices[i].addEdge(product, "Buy-Type");
-          edge.setProperty("price", 1000 * i );
+          edge.setProperty("price", 1000 * i);
           edge.save();
 
         } finally {
@@ -159,7 +149,7 @@ public class TestSharding extends AbstractServerClusterTest {
         Assert.assertTrue(versions[i] > 1);
       }
 
-      graph = localFactory.acquire();
+      graph = serverInstance.get(0).getServerInstance().openDatabase(getDatabaseName(),"admin","admin");
       try {
         for (int i = 0; i < vertices.length; ++i)
           System.out.println("Created vertex " + i + ": " + vertices[i].getRecord());
@@ -168,10 +158,8 @@ public class TestSharding extends AbstractServerClusterTest {
       }
 
       for (int i = 0; i < vertices.length; ++i) {
-        final ODatabasePool factory = OrientDB.fromUrl("embedded:target/server" + i + "/databases/", OrientDBConfig.defaultConfig())
-            .openPool(getDatabaseName(), "admin", "admin");
 
-        graph = factory.acquire();
+        graph = serverInstance.get(i).getServerInstance().openDatabase(getDatabaseName(),"admin","admin");
         try {
 
           // CREATE A REGULAR EDGE
@@ -192,8 +180,8 @@ public class TestSharding extends AbstractServerClusterTest {
 
           final Iterable<OElement> explain = graph.command(new OCommandSQL("explain select from " + e.getIdentity())).execute();
 
-          System.out.println("explain select from " + e.getIdentity() + " -> "
-              + ((ODocument) explain.iterator().next().getRecord()).field("servers"));
+          System.out.println("explain select from " + e.getIdentity() + " -> " + ((ODocument) explain.iterator().next().getRecord())
+              .field("servers"));
 
           result = graph.command(new OCommandSQL("select from " + e.getIdentity())).execute();
 
@@ -208,10 +196,7 @@ public class TestSharding extends AbstractServerClusterTest {
 
       // FOR ALL THE DATABASES QUERY THE SINGLE CLUSTER TO TEST ROUTING
       for (int server = 0; server < vertices.length; ++server) {
-        final ODatabasePool f = OrientDB.fromUrl("embedded:target/server" + server + "/databases/", OrientDBConfig.defaultConfig())
-            .openPool(getDatabaseName(), "admin", "admin");
-
-        ODatabaseDocument g = f.acquire();
+        ODatabaseDocument g =serverInstance.get(server).getServerInstance().openDatabase(getDatabaseName(),"admin","admin");
 
         System.out.println("Query from server " + server + "...");
 
@@ -252,10 +237,8 @@ public class TestSharding extends AbstractServerClusterTest {
 
       // TEST DISTRIBUTED QUERY + AGGREGATION + SUB_QUERY AGAINST ALL 3 DATABASES TO TEST MAP/REDUCE
       for (int server = 0; server < vertices.length; ++server) {
-        final ODatabasePool f = OrientDB.fromUrl("embedded:target/server" + 0 + "/databases/", OrientDBConfig.defaultConfig())
-            .openPool(getDatabaseName(), "admin", "admin");
 
-        ODatabaseDocument g = f.acquire();
+        ODatabaseDocument g =serverInstance.get(0).getServerInstance().openDatabase(getDatabaseName(),"admin","admin");
         try {
           // MISC QUERIES
           Iterable<OVertex> result = g
@@ -267,8 +250,8 @@ public class TestSharding extends AbstractServerClusterTest {
 
             Assert.assertNotNull("set() function wasn't returned on server " + server, v.getProperty("set"));
 
-            Assert.assertEquals("Returned wrong sum of amount on server " + server, (Long) totalAmount,
-                (Long) v.getProperty("sum"));
+            Assert
+                .assertEquals("Returned wrong sum of amount on server " + server, (Long) totalAmount, (Long) v.getProperty("sum"));
 
             count++;
           }
@@ -282,9 +265,7 @@ public class TestSharding extends AbstractServerClusterTest {
 
       // TEST DISTRIBUTED QUERY AGAINST ALL 3 DATABASES TO TEST MAP/REDUCE
       for (int server = 0; server < vertices.length; ++server) {
-        final ODatabasePool f = OrientDB.fromUrl("embedded:target/server" + server + "/databases/", OrientDBConfig.defaultConfig())
-            .openPool(getDatabaseName(), "admin", "admin");
-        ODatabaseDocument g = f.acquire();
+        ODatabaseDocument g =serverInstance.get(server).getServerInstance().openDatabase(getDatabaseName(),"admin","admin");
         try {
 
           Iterable<OVertex> result = g.command(new OCommandSQL("select from `Client-Type`")).execute();
@@ -310,13 +291,11 @@ public class TestSharding extends AbstractServerClusterTest {
 
       // TEST DISTRIBUTED QUERY AGAINST ALL 3 DATABASES TO TEST AGGREGATION
       for (int server = 0; server < vertices.length; ++server) {
-        final ODatabasePool f = OrientDB.fromUrl("embedded:target/server" + server + "/databases/", OrientDBConfig.defaultConfig())
-            .openPool(getDatabaseName(), "admin", "admin");
-        ODatabaseDocument g = f.acquire();
+        ODatabaseDocument g =serverInstance.get(server).getServerInstance().openDatabase(getDatabaseName(),"admin","admin");
         try {
 
-          Iterable<OElement> result = g
-              .command(new OCommandSQL("select max(amount), avg(amount), sum(amount) from `Client-Type`")).execute();
+          Iterable<OElement> result = g.command(new OCommandSQL("select max(amount), avg(amount), sum(amount) from `Client-Type`"))
+              .execute();
 
           int count = 0;
           for (OElement v : result) {
@@ -333,9 +312,7 @@ public class TestSharding extends AbstractServerClusterTest {
 
       // TEST DISTRIBUTED QUERY AGAINST ALL 3 DATABASES TO TEST AGGREGATION + GROUP BY
       for (int server = 0; server < vertices.length; ++server) {
-        final ODatabasePool f = OrientDB.fromUrl("embedded:target/server" + server + "/databases/", OrientDBConfig.defaultConfig())
-            .openPool(getDatabaseName(), "admin", "admin");
-        ODatabaseDocument g = f.acquire();
+        ODatabaseDocument g =serverInstance.get(server).getServerInstance().openDatabase(getDatabaseName(),"admin","admin");
         try {
 
           Iterable<OElement> result = g
@@ -358,13 +335,10 @@ public class TestSharding extends AbstractServerClusterTest {
 
       // TEST DISTRIBUTED QUERY AGAINST ALL 3 DATABASES TO TEST AGGREGATION + ADDITIONAL FIELD
       for (int server = 0; server < vertices.length; ++server) {
-        final ODatabasePool f = OrientDB.fromUrl("embedded:target/server" + server + "/databases/", OrientDBConfig.defaultConfig())
-            .openPool(getDatabaseName(), "admin", "admin");
-        ODatabaseDocument g = f.acquire();
+        ODatabaseDocument g =serverInstance.get(server).getServerInstance().openDatabase(getDatabaseName(),"admin","admin");
         try {
 
-          Iterable<OElement> result = g.command(new OCommandSQL("select `name-property`, count(*) from `Client-Type`"))
-              .execute();
+          Iterable<OElement> result = g.command(new OCommandSQL("select `name-property`, count(*) from `Client-Type`")).execute();
 
           int count = 0;
           for (OElement v : result) {
@@ -384,9 +358,7 @@ public class TestSharding extends AbstractServerClusterTest {
       testQueryWithFilter();
 
       // TEST DISTRIBUTED DELETE WITH DIRECT COMMAND AND SQL
-      final ODatabasePool f = OrientDB.fromUrl("embedded:target/server" + 0 + "/databases/", OrientDBConfig.defaultConfig())
-          .openPool(getDatabaseName(), "admin", "admin");
-      ODatabaseDocument g = f.acquire();
+      ODatabaseDocument g =serverInstance.get(0).getServerInstance().openDatabase(getDatabaseName(),"admin","admin");
       try {
         Iterable<OVertex> countResultBeforeDelete = g.command(new OCommandSQL("select from `Client-Type`")).execute();
         long totalBeforeDelete = 0;
@@ -416,8 +388,6 @@ public class TestSharding extends AbstractServerClusterTest {
         g.command(new OCommandSQL("create vertex `Client-Type` set `name-property` = 'temp2'")).execute();
         g.command(new OCommandSQL("create vertex `Client-Type` set `name-property` = 'temp3'")).execute();
 
-        g.command(new OCommandSQL("delete vertex `Client-Type`")).execute();
-
         Iterable<OVertex> countResultAfterFullDelete = g.command(new OCommandSQL("select from `Client-Type`")).execute();
         long totalAfterFullDelete = 0;
         for (OVertex v : countResultAfterFullDelete)
@@ -430,7 +400,7 @@ public class TestSharding extends AbstractServerClusterTest {
       }
 
       OVertex v1, v2;
-      ODatabaseDocument gTx = f.acquire();
+      ODatabaseDocument gTx = serverInstance.get(0).getServerInstance().openDatabase(getDatabaseName(),"admin","admin");
       gTx.begin();
       try {
         v1 = gTx.newVertex("Client-Type");
@@ -445,7 +415,7 @@ public class TestSharding extends AbstractServerClusterTest {
         gTx.close();
       }
 
-      gTx = f.acquire();
+      gTx = serverInstance.get(0).getServerInstance().openDatabase(getDatabaseName(),"admin","admin");
       gTx.begin();
       try {
         // DELETE IN TX
@@ -456,7 +426,7 @@ public class TestSharding extends AbstractServerClusterTest {
         gTx.close();
       }
 
-      gTx = f.acquire();
+      gTx = serverInstance.get(0).getServerInstance().openDatabase(getDatabaseName(),"admin","admin");
       gTx.begin();
       try {
         Iterable<OVertex> countResultAfterFullDelete = gTx.command(new OCommandSQL("select from `Client-Type`")).execute();
@@ -482,10 +452,7 @@ public class TestSharding extends AbstractServerClusterTest {
   private void testQueryWithFilter() {
     // TEST DISTRIBUTED QUERY AGAINST ALL 3 DATABASES TO TEST AGGREGATION + ADDITIONAL FIELD
     for (int server = 0; server < vertices.length; ++server) {
-      final ODatabasePool f = OrientDB.fromUrl("embedded:target/server" + server + "/databases/", OrientDBConfig.defaultConfig())
-          .openPool(getDatabaseName(), "admin", "admin");
-
-      ODatabaseDocument g = f.acquire();
+      ODatabaseDocument g = serverInstance.get(server).getServerInstance().openDatabase(getDatabaseName(), "admin", "admin");
       try {
 
         Iterable<OVertex> result = g

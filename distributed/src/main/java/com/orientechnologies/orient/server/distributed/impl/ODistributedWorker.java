@@ -24,18 +24,22 @@ import com.hazelcast.spi.exception.DistributedObjectDestroyedException;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -55,10 +59,11 @@ public class ODistributedWorker extends Thread {
   protected final int                                     id;
 
   protected volatile ODatabaseDocumentInternal database;
-  protected volatile OUser                     lastUser;
+  protected volatile OUser               lastUser;
   protected volatile boolean running = true;
 
-  private AtomicLong processedRequests = new AtomicLong(0);
+  private AtomicLong    processedRequests     = new AtomicLong(0);
+  private AtomicBoolean waitingForNextRequest = new AtomicBoolean(true);
 
   private static final long MAX_SHUTDOWN_TIMEOUT = 5000l;
 
@@ -68,6 +73,7 @@ public class ODistributedWorker extends Thread {
     distributed = iDistributed;
     OContextConfiguration config = distributed.getManager().getServerInstance().getContextConfiguration();
     localQueue = new ArrayBlockingQueue<>(config.getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_LOCAL_QUEUESIZE));
+    
     databaseName = iDatabaseName;
     manager = distributed.getManager();
     msgService = distributed.msgService;
@@ -236,14 +242,20 @@ public class ODistributedWorker extends Thread {
     return req;
   }
 
+  public boolean isWaitingForNextRequest() {
+    return waitingForNextRequest.get();
+  }
+
   protected ODistributedRequest nextMessage() throws InterruptedException {
+    waitingForNextRequest.set(true);
     final ODistributedRequest req = localQueue.take();
+    waitingForNextRequest.set(false);
     processedRequests.incrementAndGet();
     return req;
   }
 
   /**
-   * Execute the remote call on the local node and send back the result
+   * Executes the remote call on the local node and send back the result
    */
   protected void onMessage(final ODistributedRequest iRequest) {
     String senderNodeName = null;
@@ -279,10 +291,16 @@ public class ODistributedWorker extends Thread {
     Object responsePayload = null;
     OSecurityUser origin = null;
     try {
-      task.setNodeSource(senderNodeName);
       waitNodeIsOnline();
-      if (task.isUsingDatabase())
+
+      distributed.waitIsReady(task);
+
+      if (task.isUsingDatabase()) {
         initDatabaseInstance();
+        if (database == null)
+          throw new ODistributedOperationException(
+              "Error on executing remote request because the database '" + databaseName + "' is not available");
+      }
 
       // keep original user in database, check the username passed in request and set new user in DB, after document saved,
       // reset to original user
@@ -371,13 +389,14 @@ public class ODistributedWorker extends Thread {
       final ORemoteServerController remoteSenderServer = manager.getRemoteServer(senderNodeName);
 
       ODistributedServerLog
-          .debug(current, localNodeName, senderNodeName, ODistributedServerLog.DIRECTION.OUT, "Sending response %s back", response);
+          .debug(current, localNodeName, senderNodeName, ODistributedServerLog.DIRECTION.OUT, "Sending response %s back (reqId=%s)",
+              response, iRequest);
 
       remoteSenderServer.sendResponse(response);
 
     } catch (Exception e) {
       ODistributedServerLog.debug(current, localNodeName, senderNodeName, ODistributedServerLog.DIRECTION.OUT,
-          "Error on sending response '%s' back: %s", response, e.toString());
+          "Error on sending response '%s' back (reqId=%s err=%s)", response, iRequest.getId(), e.toString());
     }
   }
 
@@ -412,6 +431,15 @@ public class ODistributedWorker extends Thread {
 
   public long getProcessedRequests() {
     return processedRequests.get();
+  }
+
+  public void reset() {
+    localQueue.clear();
+    if (database != null) {
+      database.activateOnCurrentThread();
+      database.close();
+      database = null;
+    }
   }
 
   public void sendShutdown() {

@@ -1,25 +1,23 @@
 package com.orientechnologies.orient.object.db;
 
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 
-import java.util.Set;
+import java.util.List;
 
 /**
  * Created by tglman on 13/01/17.
  */
 public class OrientDBObject implements AutoCloseable {
 
-  private OrientDB factory;
+  private OrientDB orientDB;
 
-  private OrientDBObject(OrientDB factory) {
-    this.factory = factory;
+  public OrientDBObject(String environment, OrientDBConfig config) {
+    this(environment, null, null, config);
   }
 
-  public static OrientDBObject fromUrl(String url, OrientDBConfig config) {
-    return new OrientDBObject(OrientDB.fromUrl(url, config));
+  public OrientDBObject(String environment, String serverUser, String serverPassword, OrientDBConfig config) {
+    this.orientDB = new OrientDB(environment, serverUser, serverPassword, config);
   }
 
   /**
@@ -32,7 +30,7 @@ public class OrientDBObject implements AutoCloseable {
    * @return the opened database
    */
   public ODatabaseObject open(String name, String user, String password) {
-    return new OObjectDatabaseTx((ODatabaseDocumentInternal) factory.open(name, user, password));
+    return new OObjectDatabaseTx((ODatabaseDocumentInternal) orientDB.open(name, user, password));
   }
 
   /**
@@ -41,109 +39,70 @@ public class OrientDBObject implements AutoCloseable {
    * @param name     of the database to open
    * @param user     the username allowed to open the database
    * @param password related to the specified username
-   * @param config   database specific configuration that override the factory global settings where needed.
+   * @param config   database specific configuration that override the orientDB global settings where needed.
    *
    * @return the opened database
    */
   public ODatabaseObject open(String name, String user, String password, OrientDBConfig config) {
-    return new OObjectDatabaseTx((ODatabaseDocumentInternal) factory.open(name, user, password, config));
+    return new OObjectDatabaseTx((ODatabaseDocumentInternal) orientDB.open(name, user, password, config));
   }
 
   /**
    * Create a new database
    *
-   * @param name     database name
-   * @param user     the username of a user allowed to create a database, in case of remote is a server user for embedded it can be
-   *                 left empty
-   * @param password the password relative to the user
-   * @param type     can be plocal or memory
+   * @param name database name
+   * @param type can be plocal or memory
    */
-  public void create(String name, String user, String password, OrientDB.DatabaseType type) {
-    factory.create(name, user, password, type);
+  public void create(String name, ODatabaseType type) {
+    orientDB.create(name, type);
   }
 
   /**
    * Create a new database
    *
-   * @param name     database name
-   * @param user     the username of a user allowed to create a database, in case of remote is a server user for embedded it can be
-   *                 left empty
-   * @param password the password relative to the user
-   * @param config   database specific configuration that override the factory global settings where needed.
-   * @param type     can be plocal or memory
+   * @param name   database name
+   * @param type   can be plocal or memory
+   * @param config database specific configuration that override the orientDB global settings where needed.
    */
-  public void create(String name, String user, String password, OrientDB.DatabaseType type, OrientDBConfig config) {
-    factory.create(name, user, password, type, config);
+  public void create(String name, ODatabaseType type, OrientDBConfig config) {
+    orientDB.create(name, type, config);
   }
 
   /**
    * Check if a database exists
    *
-   * @param name     database name to check
-   * @param user     the username of a user allowed to check the database existence, in case of remote is a server user for embedded
-   *                 it can be left empty.
-   * @param password the password relative to the user
+   * @param name database name to check
    *
    * @return boolean true if exist false otherwise.
    */
-  public boolean exists(String name, String user, String password) {
-    return factory.exists(name, user, password);
+  public boolean exists(String name) {
+    return orientDB.exists(name);
   }
 
   /**
    * Drop a database
    *
-   * @param name     database name
-   * @param user     the username of a user allowed to drop a database, in case of remote is a server user for embedded it can be
-   *                 left empty
-   * @param password the password relative to the user
+   * @param name database name
    */
-  public void drop(String name, String user, String password) {
-    factory.drop(name, user, password);
+  public void drop(String name) {
+    orientDB.drop(name);
   }
 
   /**
    * List of database exiting in the current environment
    *
-   * @param user     the username of a user allowed to list databases, in case of remote is a server user for embedded it can be
-   *                 left empty
-   * @param password the password relative to the user
-   *
    * @return a set of databases names.
    */
-  public Set<String> listDatabases(String user, String password) {
-    return factory.listDatabases(user, password);
+  public List<String> list() {
+    return orientDB.list();
   }
 
-  /**
-   * Open a pool of databases, similar to open but with multiple instances.
-   *
-   * @param name     database name
-   * @param user     the username allowed to open the database
-   * @param password the password relative to the user
-   *
-   * @return a new pool of databases.
-   */
-  public ODatabaseObjectPool openPool(String name, String user, String password) {
-    return new ODatabaseObjectPool(factory.openPool(name, user, password));
-  }
-
-  /**
-   * Open a pool of databases, similar to open but with multiple instances.
-   *
-   * @param name     database name
-   * @param user     the username allowed to open the database
-   * @param password the password relative to the user
-   * @param config   database specific configuration that override the factory global settings where needed.
-   *
-   * @return a new pool of databases.
-   */
-  public ODatabaseObjectPool openPool(String name, String user, String password, OrientDBConfig config) {
-    return new ODatabaseObjectPool(factory.openPool(name, user, password, config));
-  }
 
   public void close() {
-    factory.close();
+    orientDB.close();
   }
 
+  protected OrientDB getOrientDB() {
+    return orientDB;
+  }
 }

@@ -20,10 +20,7 @@
 
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.orient.core.db.ODatabasePool;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -40,7 +37,7 @@ import java.util.concurrent.Callable;
  * Test distributed TX
  */
 public abstract class AbstractServerClusterSQLGraphTest extends AbstractServerClusterInsertTest {
-  protected ODatabasePool factory;
+  protected ODatabasePool pool;
 
   class TxWriter implements Callable<Void> {
     private final String databaseUrl;
@@ -58,7 +55,7 @@ public abstract class AbstractServerClusterSQLGraphTest extends AbstractServerCl
       String name = Integer.toString(serverId);
 
       for (int i = 0; i < count; i += 2) {
-        final ODatabaseDocument graph = factory.acquire();
+        final ODatabaseDocument graph = pool.acquire();
         try {
           if ((i + 1) % 100 == 0)
             System.out.println("\nWriter " + databaseUrl + " managed " + (i + 1) + "/" + count + " vertices so far");
@@ -109,7 +106,7 @@ public abstract class AbstractServerClusterSQLGraphTest extends AbstractServerCl
   }
 
   protected void onAfterExecution() {
-    factory.close();
+    pool.close();
   }
 
   @Override
@@ -134,7 +131,7 @@ public abstract class AbstractServerClusterSQLGraphTest extends AbstractServerCl
 
     OClass knows = graph.createEdgeClass("Knows");
 
-    factory = OrientDB.fromUrl(graph.getURL().substring(0, graph.getURL().length() - (graph.getName().length() + 1)).replaceFirst("plocal", "embedded"), OrientDBConfig.defaultConfig()).openPool(graph.getName(), "admin", "admin");
+    pool = new ODatabasePool(graph.getURL(), "admin", "admin", OrientDBConfig.defaultConfig());
   }
 
   @Override
@@ -145,17 +142,16 @@ public abstract class AbstractServerClusterSQLGraphTest extends AbstractServerCl
   protected OVertex createVertex(ODatabaseDocument graph, int serverId, int threadId, int i) {
     final String uniqueId = serverId + "-" + threadId + "-" + i;
 
-    final Object result = graph.command(
-        new OCommandSQL("create vertex Person content {'id': '" + UUID.randomUUID().toString() + "', 'name': 'Billy" + uniqueId
-            + "', 'surname': 'Mayes" + uniqueId + "', 'birthday': '"
-            + ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getDateFormatInstance().format(new Date())
-            + "', 'children': '" + uniqueId + "'}")).execute();
+    final Object result = graph.command(new OCommandSQL(
+        "create vertex Person content {'id': '" + UUID.randomUUID().toString() + "', 'name': 'Billy" + uniqueId
+            + "', 'surname': 'Mayes" + uniqueId + "', 'birthday': '" + ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
+            .getConfiguration().getDateFormatInstance().format(new Date()) + "', 'children': '" + uniqueId + "'}")).execute();
     return (OVertex) result;
   }
 
   protected OEdge createEdge(ODatabaseDocument graph, OVertex v1, OVertex v2) {
-    final Iterable<OEdge> result = graph.command(
-        new OCommandSQL("create edge knows from " + v1.getIdentity() + " to " + v2.getIdentity())).execute();
+    final Iterable<OEdge> result = graph
+        .command(new OCommandSQL("create edge knows from " + v1.getIdentity() + " to " + v2.getIdentity())).execute();
     return result.iterator().next();
   }
 

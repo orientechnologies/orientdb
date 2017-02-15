@@ -29,7 +29,7 @@ public class OLuceneFunctionsFactory implements OSQLFunctionFactory {
   public static final Map<String, Object> FUNCTIONS = new HashMap<String, Object>();
 
   static {
-    register(OLuceneSearchFunction.NAME, new OLuceneSearchFunction());
+    register(OLuceneSearchOnIndexFunction.NAME, new OLuceneSearchOnIndexFunction());
   }
 
   public static void register(final String iName, final Object iImplementation) {

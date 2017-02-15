@@ -1,8 +1,5 @@
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.orient.core.db.ODatabasePool;
-import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -15,7 +12,7 @@ import org.junit.Test;
 
 /**
  * Tests with 2 servers the ability to resync a cluster manually.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class TestShardingManualSync extends AbstractServerClusterTest {
@@ -41,15 +38,10 @@ public class TestShardingManualSync extends AbstractServerClusterTest {
 
   @Override
   protected void executeTest() throws Exception {
-    ODatabasePool localFactoryEurope = OrientDB.fromUrl("embedded:target/server0/databases/", OrientDBConfig.defaultConfig())
-        .openPool(getDatabaseName(), "admin", "admin");
-    ODatabasePool localFactoryUsa = OrientDB.fromUrl("embedded:target/server1/databases/", OrientDBConfig.defaultConfig())
-        .openPool(getDatabaseName(), "admin", "admin");
-
 
     final ORID v1Identity;
 
-    ODatabaseDocument graphNoTxEurope = localFactoryEurope.acquire();
+    ODatabaseDocument graphNoTxEurope = serverInstance.get(0).getServerInstance().openDatabase(getDatabaseName(), "admin", "admin");
     try {
       final OClass clientType = graphNoTxEurope.createVertexClass("Client-Type");
       for (int i = 1; i < serverInstance.size(); ++i) {
@@ -65,25 +57,24 @@ public class TestShardingManualSync extends AbstractServerClusterTest {
       graphNoTxEurope.close();
     }
 
-    ODatabaseDocument graphNoTxUsa = localFactoryUsa.acquire();
+    ODatabaseDocument graphNoTxUsa = serverInstance.get(1).getServerInstance().openDatabase(getDatabaseName(), "admin", "admin");
     try {
       Assert.assertEquals(1, graphNoTxUsa.getClass("V").count());
     } finally {
       graphNoTxUsa.close();
-      localFactoryUsa.close();
     }
 
     final String clusterName;
 
-    graphNoTxEurope = localFactoryEurope.acquire();
+    graphNoTxEurope = serverInstance.get(0).getServerInstance().openDatabase(getDatabaseName(), "admin", "admin");
     try {
       Assert.assertEquals(1, graphNoTxEurope.getClass("V").count());
 
       // CHANGE THE WRITE QUORUM = 1
-      final ODistributedConfiguration dCfg = serverInstance.get(0).server.getDistributedManager()
-          .getDatabaseConfiguration(getDatabaseName());
+      final OModifiableDistributedConfiguration dCfg = serverInstance.get(0).server.getDistributedManager()
+          .getDatabaseConfiguration(getDatabaseName()).modify();
       ODocument newCfg = dCfg.getDocument().field("writeQuorum", 1);
-      serverInstance.get(0).server.getDistributedManager().updateCachedDatabaseConfiguration(getDatabaseName(), newCfg, true, true);
+      serverInstance.get(0).server.getDistributedManager().updateCachedDatabaseConfiguration(getDatabaseName(), dCfg, true);
 
       // CREATE A NEW RECORD ON SERVER 0 BYPASSING REPLICATION
       final ODocument v2 = new ODocument("Client");
@@ -104,10 +95,8 @@ public class TestShardingManualSync extends AbstractServerClusterTest {
     }
 
     // TEST SECOND VERTEX IS MISSING ON USA NODE
-    localFactoryUsa = OrientDB.fromUrl("embedded:target/server1/databases/", OrientDBConfig.defaultConfig())
-        .openPool(getDatabaseName(), "admin", "admin");
 
-    graphNoTxUsa = localFactoryUsa.acquire();
+    graphNoTxUsa = serverInstance.get(1).getServerInstance().openDatabase(getDatabaseName(), "admin", "admin");
     try {
       Assert.assertEquals(1, graphNoTxUsa.getClass("V").count());
 
@@ -119,9 +108,6 @@ public class TestShardingManualSync extends AbstractServerClusterTest {
     } finally {
       graphNoTxUsa.close();
     }
-
-    localFactoryEurope.close();
-    localFactoryUsa.close();
   }
 
 }

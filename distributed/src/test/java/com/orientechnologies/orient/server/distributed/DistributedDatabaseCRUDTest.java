@@ -3,7 +3,6 @@ package com.orientechnologies.orient.server.distributed;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.db.ODatabasePool;
-import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -260,7 +259,7 @@ public final class DistributedDatabaseCRUDTest {
                     tex = ex;
                     if (ex instanceof ONeedRetryException || ex.getCause() instanceof ONeedRetryException) {
                       // update is true. retry
-                      // log("[" + id + "][" + propertyValue + "][ Retry: " + k + "] OrientDB Exception [" + ex + "]");
+                      // log("[" + id + "][" + propertyValue + "][ Retry: " + k + "] OrientDBInternal Exception [" + ex + "]");
                       try {
                         Thread.sleep(new Random().nextInt(500));
                       } catch (InterruptedException e) {
@@ -426,7 +425,7 @@ public final class DistributedDatabaseCRUDTest {
   private ODatabasePool getGraphFactory() {
     if (graphReadFactory == null) {
       log("Datastore pool created with size : 50, db location: " + getDBURL());
-      graphReadFactory = OrientDB.fromUrl(getDBURL().substring(0, getDBURL().length() - (dbName.length() + 1)).replaceFirst("plocal", "embedded"), OrientDBConfig.defaultConfig()).openPool(dbName, "admin", "admin");
+      graphReadFactory = new ODatabasePool(getDBURL(), "admin", "admin", OrientDBConfig.defaultConfig());
     }
     return graphReadFactory;
   }
@@ -484,7 +483,7 @@ public final class DistributedDatabaseCRUDTest {
       clazz = orientGraph.createVertexClass(vertexClassName);
       clazz.createProperty(property, OType.STRING);
       clazz.createProperty(keyIndexProperty, OType.STRING);
-      clazz.createIndex(vertexClassName+"."+keyIndexProperty, INDEX_TYPE.NOTUNIQUE, keyIndexProperty);
+      clazz.createIndex(vertexClassName + "." + keyIndexProperty, INDEX_TYPE.NOTUNIQUE, keyIndexProperty);
       clazz.createIndex(vertexClassName + "_Index_" + property, INDEX_TYPE.NOTUNIQUE, property);
     } else {
       log("Class " + vertexClassName + " already exists");

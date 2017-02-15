@@ -45,7 +45,7 @@ import java.util.Arrays;
 /**
  * Distributed updated record task used for synchronization.
  *
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
+ * @author Luca Garulli (l.garulli--at--orientdb.com)
  *
  */
 public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
@@ -92,8 +92,8 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
   public Object executeRecordTask(ODistributedRequestId requestId, final OServer iServer, ODistributedServerManager iManager,
       final ODatabaseDocumentInternal database) throws Exception {
     if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "updating record %s/%s v.%d",
-          database.getName(), rid.toString(), version);
+      ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+          "Updating record %s/%s v.%d reqId=%s...", database.getName(), rid.toString(), version, requestId);
 
     prepareUndoOperation();
     if (previousRecord == null) {

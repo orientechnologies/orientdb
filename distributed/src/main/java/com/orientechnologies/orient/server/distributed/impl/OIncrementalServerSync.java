@@ -48,7 +48,7 @@ import java.util.concurrent.Callable;
 /**
  * Synchronizes a database from the wire.
  *
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
+ * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
 public class OIncrementalServerSync {
 
@@ -68,12 +68,11 @@ public class OIncrementalServerSync {
    * <li>Binary presentation of the record, only if record is not deleted - length of content is provided in above entity</li>
    * </ol>
    */
-  public void importDelta(final OServer serverInstance, String databaseName, final FileInputStream in,
+  public void importDelta(final OServer serverInstance, final String databaseName, final FileInputStream in,
       final String iNode) throws IOException {
     final String nodeName = serverInstance.getDistributedManager().getLocalNodeName();
 
     try {
-      
       final ODatabaseDocumentInternal db = serverInstance.openDatabase(databaseName);
 
       OScenarioThreadLocal.executeAsDistributed(new Callable<Object>() {

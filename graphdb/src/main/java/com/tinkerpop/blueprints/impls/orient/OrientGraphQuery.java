@@ -333,7 +333,7 @@ public class OrientGraphQuery extends DefaultGraphQuery {
           text.append(OPERATOR_NOT);
           text.append(PARENTHESIS_BEGIN);
         }
-        text.append(has.key);
+        text.append('`').append(has.key).append('`');
 
         if (has.value instanceof String) {
           text.append(OPERATOR_LIKE);
@@ -358,7 +358,7 @@ public class OrientGraphQuery extends DefaultGraphQuery {
           text.append(PARENTHESIS_END);
       } else {
         // ANY OTHER OPERATORS
-        text.append(has.key);
+        text.append('`').append(has.key).append('`');
         text.append(SPACE);
 
         if (has.predicate instanceof com.tinkerpop.blueprints.Compare) {

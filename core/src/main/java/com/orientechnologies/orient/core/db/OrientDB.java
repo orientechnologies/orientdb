@@ -17,187 +17,284 @@
  *  * For more information: http://orientdb.com
  *
  */
-
 package com.orientechnologies.orient.core.db;
 
-import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Created by tglman on 27/03/16.
+ * OrientDB management environment, it allow to connect to an environment and manipulate databases or open sessions.
+ * <p>
+ * Usage example:
+ * <p>
+ * Remote Example:
+ * <pre>
+ * <code>
+ * OrientDB orientDb = new OrientDB("remote:localhost","root","root");
+ * if(orientDb.createIfNotExists("test",ODatabaseType.MEMORY)){
+ *  ODatabaseDocument session = orientDb.open("test","admin","admin");
+ *  session.createClass("MyClass");
+ *  session.close();
+ * }
+ * ODatabaseDocument session = orientDb.open("test","writer","writer");
+ * //...
+ * session.close();
+ * orientDb.close();
+ * </code>
+ * </pre>
+ * <p>
+ * Embedded example:
+ * <pre>
+ * <code>
+ * OrientDB orientDb = new OrientDB("embedded:./databases/",null,null);
+ * orientDb.create("test",ODatabaseType.PLOCAL);
+ * ODatabaseDocument session = orientDb.open("test","admin","admin");
+ * //...
+ * session.close();
+ * orientDb.close();
+ * </code>
+ * </pre>
+ * <p>
+ * Database Manipulation Example:
+ * <p>
+ * <pre>
+ * <code>
+ * OrientDB orientDb = ...
+ * if(!orientDb.exists("one")){
+ *  orientDb.create("one",ODatabaseType.PLOCAL);
+ * }
+ * if(orientDb.exists("two")){
+ *  orientDb.drop("two");
+ * }
+ * List&ltString&gt databases = orientDb.list();
+ * assertEquals(databases.size(),1);
+ * assertEquals(databases.get("0"),"one");
+ * </code>
+ * </pre>
+ * <p>
+ * <p>
+ * <p>
+ * Created by tglman on 08/02/17.
  */
-public interface OrientDB extends AutoCloseable {
+public class OrientDB implements AutoCloseable {
+
+  private OrientDBInternal internal;
+  private String           serverUser;
+  private String           serverPassword;
 
   /**
-   * Create a new factory from a given url.
+   * Create a new OrientDb instance for a specific environment
    * <p/>
    * possible kind of urls 'embedded','remote', for the case of remote and distributed can be specified multiple nodes
    * using comma.
+   * <p>
+   * Remote Example:
+   * <pre>
+   * <code>
+   * OrientDB orientDb = new OrientDB("remote:localhost");
+   * ODatabaseDocument session = orientDb.open("test","admin","admin");
+   * //...
+   * session.close();
+   * orientDb.close();
+   * </code>
+   * </pre>
+   * <p>
+   * Embedded Example:
+   * <pre>
+   * <code>
+   * OrientDB orientDb = new OrientDB("embedded:./databases/");
+   * ODatabaseDocument session = orientDb.open("test","admin","admin");
+   * //...
+   * session.close();
+   * orientDb.close();
+   * </code>
+   * </pre>
    *
    * @param url           the url for the specific factory.
    * @param configuration configuration for the specific factory for the list of option {@see OGlobalConfiguration}.
    *
    * @return the new Orient Factory.
    */
-  static OrientDB fromUrl(String url, OrientDBConfig configuration) {
+  public OrientDB(String url, OrientDBConfig configuration) {
+    this(url, null, null, configuration);
+  }
+
+  /**
+   * Create a new OrientDb instance for a specific environment
+   * <p/>
+   * possible kind of urls 'embedded','remote', for the case of remote and distributed can be specified multiple nodes
+   * using comma.
+   * <p>
+   * Remote Example:
+   * <pre>
+   * <code>
+   * OrientDB orientDb = new OrientDB("remote:localhost","root","root");
+   * orientDb.create("test",ODatabaseType.PLOCAL);
+   * ODatabaseDocument session = orientDb.open("test","admin","admin");
+   * //...
+   * session.close();
+   * orientDb.close();
+   * </code>
+   * </pre>
+   * <p>
+   * Embedded Example:
+   * <pre>
+   * <code>
+   * OrientDB orientDb = new OrientDB("embedded:./databases/",null,null);
+   * orientDb.create("test",ODatabaseType.MEMORY);
+   * ODatabaseDocument session = orientDb.open("test","admin","admin");
+   * //...
+   * session.close();
+   * orientDb.close();
+   * </code>
+   * </pre>
+   *
+   * @param url            the url for the specific factory.
+   * @param serverUser     the server user allowed to manipulate databases.
+   * @param serverPassword relative to the server user.
+   * @param configuration  configuration for the specific factory for the list of option {@see OGlobalConfiguration}.
+   *
+   * @return the new Orient Factory.
+   */
+  public OrientDB(String url, String serverUser, String serverPassword, OrientDBConfig configuration) {
     String what = url.substring(0, url.indexOf(':'));
     if ("embedded".equals(what))
-      return embedded(url.substring(url.indexOf(':') + 1), configuration);
+      internal = OrientDBInternal.embedded(url.substring(url.indexOf(':') + 1), configuration);
     else if ("remote".equals(what))
-      return remote(url.substring(url.indexOf(':') + 1).split(","), configuration);
-    throw new ODatabaseException("not supported database type");
+      internal = OrientDBInternal.remote(url.substring(url.indexOf(':') + 1).split(","), configuration);
+
+    this.serverUser = serverUser;
+    this.serverPassword = serverPassword;
+  }
+
+  OrientDB(OrientDBInternal internal) {
+    this.internal = internal;
+    this.serverUser = null;
+    this.serverPassword = null;
   }
 
   /**
-   * Create a new remote factory
+   * Open a database
    *
-   * @param hosts         array of hosts
-   * @param configuration configuration for the specific factory for the list of option {@see OGlobalConfiguration}.
+   * @param database the database to open
+   * @param user     username of a database user or a server user allowed to open the database
+   * @param password related to the specified username
    *
-   * @return a new remote databases factory
+   * @return the opened database
    */
-  static OrientDB remote(String[] hosts, OrientDBConfig configuration) {
-    OrientDB factory;
+  public ODatabaseDocument open(String database, String user, String password) {
+    return open(database, user, password, OrientDBConfig.defaultConfig());
+  }
 
-    try {
-      Class<?> kass = Class.forName("com.orientechnologies.orient.core.db.OrientDBRemote");
-      Constructor<?> constructor = kass.getConstructor(String[].class, OrientDBConfig.class, Orient.class);
-      factory = (OrientDB) constructor.newInstance(hosts, configuration, Orient.instance());
-    } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InstantiationException e) {
-      throw new ODatabaseException("OrientDB client API missing");
-    } catch (InvocationTargetException e) {
-      throw OException.wrapException(new ODatabaseException("Error creating OrientDB remote factory"), e.getTargetException());
+  /**
+   * Open a database
+   *
+   * @param database the database to open
+   * @param user     username of a database user or a server user allowed to open the database
+   * @param password related to the specified username
+   * @param config   custom configuration for current database
+   *
+   * @return the opened database
+   */
+
+  public ODatabaseDocument open(String database, String user, String password, OrientDBConfig config) {
+    return internal.open(database, user, password, config);
+  }
+
+  /**
+   * Create a new database
+   *
+   * @param database database name
+   * @param type     can be plocal or memory
+   */
+  public void create(String database, ODatabaseType type) {
+    create(database, type, OrientDBConfig.defaultConfig());
+  }
+
+  /**
+   * Create a new database
+   *
+   * @param database database name
+   * @param type     can be plocal or memory
+   * @param config   custom configuration for current database
+   */
+  public void create(String database, ODatabaseType type, OrientDBConfig config) {
+    this.internal.create(database, serverUser, serverPassword, type, config);
+  }
+
+  /**
+   * Create a new database if not exists
+   *
+   * @param database database name
+   * @param type     can be plocal or memory
+   *
+   * @return true if the database has been created, false if already exists
+   */
+  public boolean createIfNotExists(String database, ODatabaseType type) {
+    return createIfNotExists(database, type, OrientDBConfig.defaultConfig());
+  }
+
+  /**
+   * Create a new database if not exists
+   *
+   * @param database database name
+   * @param type     can be plocal or memory
+   * @param config   custom configuration for current database
+   *
+   * @return true if the database has been created, false if already exists
+   */
+  public boolean createIfNotExists(String database, ODatabaseType type, OrientDBConfig config) {
+    if (!this.internal.exists(database, serverUser, serverPassword)) {
+      this.internal.create(database, serverUser, serverPassword, type, config);
+      return true;
     }
-    return factory;
+    return false;
   }
-
-  /**
-   * Create a new Embedded factory
-   *
-   * @param directoryPath base path where the database are hosted
-   * @param config        configuration for the specific factory for the list of option {@see OGlobalConfiguration}
-   *
-   * @return a new embedded databases factory
-   */
-  static OrientDB embedded(String directoryPath, OrientDBConfig config) {
-    return new OrientDBEmbedded(directoryPath, config, Orient.instance());
-  }
-
-  /**
-   * Open a database specified by name using the username and password if needed
-   *
-   * @param name     of the database to open
-   * @param user     the username allowed to open the database
-   * @param password related to the specified username
-   *
-   * @return the opened database
-   */
-  ODatabaseDocument open(String name, String user, String password);
-
-  /**
-   * Open a database specified by name using the username and password if needed, with specific configuration
-   *
-   * @param name     of the database to open
-   * @param user     the username allowed to open the database
-   * @param password related to the specified username
-   * @param config   database specific configuration that override the factory global settings where needed.
-   *
-   * @return the opened database
-   */
-  ODatabaseDocument open(String name, String user, String password, OrientDBConfig config);
-
-  /**
-   * Create a new database
-   *
-   * @param name     database name
-   * @param user     the username of a user allowed to create a database, in case of remote is a server user for embedded it can be
-   *                 left empty
-   * @param password the password relative to the user
-   * @param type     can be plocal or memory
-   */
-  void create(String name, String user, String password, DatabaseType type);
-
-  /**
-   * Create a new database
-   *
-   * @param name     database name
-   * @param user     the username of a user allowed to create a database, in case of remote is a server user for embedded it can be
-   *                 left empty
-   * @param password the password relative to the user
-   * @param config   database specific configuration that override the factory global settings where needed.
-   * @param type     can be plocal or memory
-   */
-  void create(String name, String user, String password, DatabaseType type, OrientDBConfig config);
-
-  /**
-   * Check if a database exists
-   *
-   * @param name     database name to check
-   * @param user     the username of a user allowed to check the database existence, in case of remote is a server user for embedded
-   *                 it can be left empty.
-   * @param password the password relative to the user
-   *
-   * @return boolean true if exist false otherwise.
-   */
-  boolean exists(String name, String user, String password);
 
   /**
    * Drop a database
    *
-   * @param name     database name
-   * @param user     the username of a user allowed to drop a database, in case of remote is a server user for embedded it can be
-   *                 left empty
-   * @param password the password relative to the user
+   * @param database database name
    */
-  void drop(String name, String user, String password);
-
-  /**
-   * List of database exiting in the current environment
-   *
-   * @param user     the username of a user allowed to list databases, in case of remote is a server user for embedded it can be
-   *                 left empty
-   * @param password the password relative to the user
-   *
-   * @return a set of databases names.
-   */
-  Set<String> listDatabases(String user, String password);
-
-  /**
-   * Open a pool of databases, similar to open but with multiple instances.
-   *
-   * @param name     database name
-   * @param user     the username allowed to open the database
-   * @param password the password relative to the user
-   *
-   * @return a new pool of databases.
-   */
-  ODatabasePool openPool(String name, String user, String password);
-
-  /**
-   * Open a pool of databases, similar to open but with multiple instances.
-   *
-   * @param name     database name
-   * @param user     the username allowed to open the database
-   * @param password the password relative to the user
-   * @param config   database specific configuration that override the factory global settings where needed.
-   *
-   * @return a new pool of databases.
-   */
-  ODatabasePool openPool(String name, String user, String password, OrientDBConfig config);
-
-  /**
-   * Close the factory with all related databases and pools.
-   */
-  void close();
-
-  enum DatabaseType {
-    PLOCAL, MEMORY
+  public void drop(String database) {
+    this.internal.drop(database, serverUser, serverPassword);
   }
 
+  /**
+   * Check if a database exists
+   *
+   * @param database database name to check
+   *
+   * @return boolean true if exist false otherwise.
+   */
+  public boolean exists(String database) {
+    return this.internal.exists(database, serverUser, serverPassword);
+  }
+
+  /**
+   * List exiting databases in the current environment
+   *
+   * @return a list of existing databases.
+   */
+  public List<String> list() {
+    return new ArrayList<>(this.internal.listDatabases(serverUser, serverPassword));
+  }
+
+  /**
+   * Close the current OrientDB context with all related databases and pools.
+   */
+  @Override
+  public void close() {
+    this.internal.close();
+  }
+
+  ODatabasePoolInternal openPool(String database, String user, String password, OrientDBConfig config) {
+    return this.internal.openPool(database, user, password, config);
+  }
+
+  OrientDBInternal getInternal() {
+    return internal;
+  }
 }

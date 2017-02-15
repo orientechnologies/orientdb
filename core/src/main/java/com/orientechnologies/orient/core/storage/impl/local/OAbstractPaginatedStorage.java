@@ -329,7 +329,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     open(iToken.getUserName(), "", configuration);
   }
 
-  public void create(OContextConfiguration contextConfiguration) {
+  public void create(OContextConfiguration contextConfiguration) throws IOException {
     stateLock.acquireWriteLock();
     try {
 
@@ -383,6 +383,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       postCreateSteps();
 
+    } catch (InterruptedException e) {
+      throw OException.wrapException(new OStorageException("Storage creation was interrupted"), e);
     } catch (OStorageException e) {
       close();
       throw e;
@@ -1764,7 +1766,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  public void putIndexValue(int indexId, Object key, Object value)  throws OInvalidIndexEngineIdException {
+  public void putIndexValue(int indexId, Object key, Object value) throws OInvalidIndexEngineIdException {
     if (transaction.get() != null) {
       doPutIndexValue(indexId, key, value);
       return;
@@ -1931,7 +1933,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   private OIndexCursor doIterateIndexEntriesMajor(int indexId, Object fromKey, boolean isInclusive, boolean ascSortOrder,
-      OIndexEngine.ValuesTransformer transformer)  throws OInvalidIndexEngineIdException {
+      OIndexEngine.ValuesTransformer transformer) throws OInvalidIndexEngineIdException {
     checkIndexId(indexId);
 
     final OIndexEngine engine = indexEngines.get(indexId);
@@ -2245,9 +2247,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       long size = 0;
 
-      for (OCluster c : clusters)
-        if (c != null)
-          size += c.getRecordsSize();
+      stateLock.acquireReadLock();
+      try {
+        for (OCluster c : clusters)
+          if (c != null)
+            size += c.getRecordsSize();
+      } finally {
+        stateLock.releaseReadLock();
+      }
 
       return size;
 
@@ -2300,6 +2307,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public boolean cleanOutRecord(final ORecordId recordId, final int recordVersion, final int iMode,
       final ORecordCallback<Boolean> callback) {
     return deleteRecord(recordId, recordVersion, iMode, callback).getResult();
+  }
+
+  public boolean isFrozen() {
+    return atomicOperationsManager.isFrozen();
   }
 
   public void freeze(final boolean throwException) {
@@ -2725,7 +2736,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   protected void preCreateSteps() throws IOException {
   }
 
-  protected abstract void initWalAndDiskCache() throws IOException;
+  protected abstract void initWalAndDiskCache() throws IOException, InterruptedException;
 
   protected void postCloseSteps(boolean onDelete) throws IOException {
   }
@@ -3301,6 +3312,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       configuration.update();
     }
 
+    if (OLogManager.instance().isDebugEnabled())
+      OLogManager.instance()
+          .debug(this, "Created cluster '%s' in database '%s' with id %d. Clusters: %s", clusterName, url, createdClusterId,
+              clusters);
+
     return createdClusterId;
   }
 
@@ -3869,7 +3885,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         archiveEntry(archiveZipOutputStream, walSegment);
       }
 
-      archiveEntry(archiveZipOutputStream, ((ODiskWriteAheadLog) writeAheadLog).getWMRFile());
+      archiveEntry(archiveZipOutputStream, ((ODiskWriteAheadLog) writeAheadLog).getWMRFile().toString());
 
       archiveZipOutputStream.close();
     } catch (IOException ioe) {
@@ -3996,6 +4012,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             }
           } else
             lowDiskSpace = null;
+        } catch (IOException e) {
+          throw OException.wrapException(new OStorageException("Error during low disk space handling"), e);
         } finally {
           checkpointInProgress.set(false);
         }

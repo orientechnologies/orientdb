@@ -996,8 +996,13 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
               } else {
                 localPage.deleteRecord(nextRecordPosition);
 
-                if (localPage.getFreeSpace() >= entrySize) {
+                if (localPage.getMaxRecordSize() >= entrySize) {
                   updatedEntryPosition = localPage.appendRecord(recordVersion, updateEntry);
+
+                  if (updatedEntryPosition < 0) {
+                    throw new IllegalStateException(
+                        "Page " + cacheEntry.getPageIndex() + " does not have enough free space to add record content");
+                  }
                 } else {
                   updatedEntryPosition = -1;
                 }
@@ -1015,7 +1020,10 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
               assert localPage.getFreeSpace() >= entrySize;
               updatedEntryPosition = localPage.appendRecord(recordVersion, updateEntry);
 
-              assert updatedEntryPosition >= 0;
+              if (updatedEntryPosition < 0) {
+                throw new IllegalStateException(
+                    "Page " + cacheEntry.getPageIndex() + " does not have enough free space to add record content");
+              }
 
               nextPageIndex = -1;
               nextRecordPosition = -1;
@@ -1820,7 +1828,11 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       int initialFreeSpace = localPage.getFreeSpace();
 
       position = localPage.appendRecord(recordVersion, entryContent);
-      assert position >= 0;
+
+      if (position < 0) {
+        throw new IllegalStateException(
+            "Page " + cacheEntry.getPageIndex() + " does not have enough free space to add record content");
+      }
 
       finalVersion = localPage.getRecordVersion(position);
 
@@ -1845,6 +1857,9 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       long pageIndex;
 
       final OCacheEntry pinnedStateEntry = loadPageForRead(atomicOperation, fileId, pinnedStateEntryIndex, true);
+      if (pinnedStateEntry == null) {
+        loadPageForRead(atomicOperation, fileId, pinnedStateEntryIndex, true);
+      }
       try {
         OPaginatedClusterState freePageLists = new OPaginatedClusterState(pinnedStateEntry);
         do {

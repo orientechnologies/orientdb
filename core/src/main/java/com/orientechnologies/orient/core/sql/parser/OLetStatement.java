@@ -2,9 +2,14 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
+
 import java.util.Map;
 
-public class OLetStatement extends OStatement {
+public class OLetStatement extends OSimpleExecStatement {
   protected OIdentifier name;
 
   protected OStatement  statement;
@@ -18,7 +23,30 @@ public class OLetStatement extends OStatement {
     super(p, id);
   }
 
-  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override
+  public OResultSet executeSimple(OCommandContext ctx) {
+    Object result;
+    if (expression != null) {
+      result = expression.execute((OResult) null, ctx);
+    } else {
+      result = statement.execute(ctx.getDatabase(), (Object[]) null);
+    }
+    if (result instanceof OResultSet) {
+      OInternalResultSet rs = new OInternalResultSet();
+      ((OResultSet) result).stream().forEach(x -> rs.add(x));
+      rs.setPlan(((OResultSet) result).getExecutionPlan().orElse(null));
+      ((OResultSet) result).close();
+      result = rs;
+    }
+
+    if (ctx != null && ctx.getParent() != null) {
+      ctx.getParent().setVariable(name.getStringValue(), result);
+    }
+    return new OInternalResultSet();
+  }
+
+  @Override
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("LET ");
     name.toString(params, builder);
     builder.append(" = ");
@@ -29,7 +57,8 @@ public class OLetStatement extends OStatement {
     }
   }
 
-  @Override public OLetStatement copy() {
+  @Override
+  public OLetStatement copy() {
     OLetStatement result = new OLetStatement(-1);
     result.name = name == null ? null : name.copy();
     result.statement = statement == null ? null : statement.copy();
@@ -37,7 +66,8 @@ public class OLetStatement extends OStatement {
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -55,7 +85,8 @@ public class OLetStatement extends OStatement {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = name != null ? name.hashCode() : 0;
     result = 31 * result + (statement != null ? statement.hashCode() : 0);
     result = 31 * result + (expression != null ? expression.hashCode() : 0);

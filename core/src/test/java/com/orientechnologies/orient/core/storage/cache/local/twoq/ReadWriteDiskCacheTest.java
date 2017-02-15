@@ -12,7 +12,6 @@ import com.orientechnologies.orient.core.exception.OAllCacheEntriesAreUsedExcept
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
-import com.orientechnologies.orient.core.storage.cache.OPageDataVerificationError;
 import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
@@ -24,9 +23,9 @@ import org.junit.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Random;
-import java.util.zip.CRC32;
 
 public class ReadWriteDiskCacheTest {
   public static final  int userDataSize            = 8;
@@ -95,7 +94,7 @@ public class ReadWriteDiskCacheTest {
   }
 
   @Before
-  public void beforeMethod() throws IOException {
+  public void beforeMethod() throws Exception {
     closeBufferAndDeleteFile();
 
     initBuffer();
@@ -135,7 +134,7 @@ public class ReadWriteDiskCacheTest {
     }
   }
 
-  private void initBuffer() throws IOException {
+  private void initBuffer() throws IOException, InterruptedException {
     writeBuffer = new OWOWCache(PAGE_SIZE, new OByteBufferPool(PAGE_SIZE), writeAheadLog, -1, WRITE_CACHE_MAX_SIZE, storageLocal,
         false, files, 1);
     writeBuffer.loadRegisteredFiles();
@@ -1016,9 +1015,7 @@ public class ReadWriteDiskCacheTest {
   }
 
   private void updateFilePage(long pageIndex, long offset, byte[] value) throws IOException {
-    String path = storageLocal.getConfiguration().getDirectory() + "/readWriteDiskCacheTest.tst";
-
-    OFileClassic fileClassic = new OFileClassic(path, "rw");
+    OFileClassic fileClassic = new OFileClassic(Paths.get(storageLocal.getConfiguration().getDirectory(), "readWriteDiskCacheTest.tst"));
     fileClassic.open();
 
     fileClassic.write(pageIndex * (8 + systemOffset) + offset, value, value.length, 0);
@@ -1027,9 +1024,7 @@ public class ReadWriteDiskCacheTest {
   }
 
   private void assertFile(long pageIndex, byte[] value, OLogSequenceNumber lsn) throws IOException {
-    String path = storageLocal.getConfiguration().getDirectory() + "/readWriteDiskCacheTest.tst";
-
-    OFileClassic fileClassic = new OFileClassic(path, "r");
+    OFileClassic fileClassic = new OFileClassic(Paths.get(storageLocal.getConfiguration().getDirectory(), "readWriteDiskCacheTest.tst"));
     fileClassic.open();
     byte[] content = new byte[userDataSize + systemOffset];
     fileClassic.read(pageIndex * (userDataSize + systemOffset), content, userDataSize + systemOffset);

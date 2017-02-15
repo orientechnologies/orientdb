@@ -19,23 +19,22 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
-import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 
 import java.util.*;
-import java.util.concurrent.Callable;
+
+import static java.util.Collections.EMPTY_LIST;
 
 /**
  * Interface to manage balancing of cluster ownership.
  *
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
+ * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
 public class ODefaultClusterOwnershipAssignmentStrategy implements OClusterOwnershipAssignmentStrategy {
   private final ODistributedAbstractPlugin manager;
@@ -45,41 +44,37 @@ public class ODefaultClusterOwnershipAssignmentStrategy implements OClusterOwner
   }
 
   @Override
-  public boolean assignClusterOwnershipOfClass(final ODatabaseInternal iDatabase, final ODistributedConfiguration cfg,
-      final OClass iClass, final Set<String> availableNodes, final Set<String> clustersToReassign, final boolean rebalance) {
+  public List<String> assignClusterOwnershipOfClass(final ODatabaseInternal iDatabase,
+      final OModifiableDistributedConfiguration cfg, final OClass iClass, final Set<String> availableNodes) {
+
+    // FILTER OUT NON MASTER SERVER
+    for (Iterator<String> it = availableNodes.iterator(); it.hasNext(); ) {
+      final String node = it.next();
+      if (cfg.getServerRole(node) != ODistributedConfiguration.ROLES.MASTER)
+        it.remove();
+    }
 
     if (availableNodes.isEmpty())
-      return false;
+      // NO MASTER, AVOID REASSIGNMENT
+      return EMPTY_LIST;
 
     if (!(iClass.getClusterSelection() instanceof OLocalClusterWrapperStrategy))
-      ((OClassImpl) iClass).setClusterSelectionInternal(new OLocalClusterWrapperStrategy(manager, iDatabase.getName(), iClass, iClass.getClusterSelection()));
+      ((OClassImpl) iClass).setClusterSelectionInternal(
+          new OLocalClusterWrapperStrategy(manager, iDatabase.getName(), iClass, iClass.getClusterSelection()));
 
     if (iClass.isAbstract())
-      return false;
-
-    final Set<String> clustersOfClassToReassign = new HashSet<String>();
+      return EMPTY_LIST;
 
     final int[] clusterIds = iClass.getClusterIds();
     final Set<String> clusterNames = new HashSet<String>(clusterIds.length);
     for (int clusterId : clusterIds) {
       final String clusterName = iDatabase.getClusterNameById(clusterId);
-      if( clusterName != null ) {
+      if (clusterName != null)
         clusterNames.add(clusterName);
-        if (clustersToReassign.remove(clusterName))
-          // MOVE THE CLUSTER TO THE REASSIGNMENT FOR THIS CLASS
-          clustersOfClassToReassign.add(clusterName);
-      }
     }
 
-    if (!rebalance && clustersOfClassToReassign.isEmpty())
-      // NO CLUSTER FOUND TO REASSIGN FOR THIS CLASS
-      return false;
-
     // RE-BALANCE THE CLUSTER BASED ON AN AVERAGE OF NUMBER OF NODES
-    final Map<String, String> clusterToAssignOwnership = reassignClusters(cfg, availableNodes, clustersOfClassToReassign,
-        clusterNames, rebalance);
-
-    boolean cfgChanged = !clusterToAssignOwnership.isEmpty();
+    final Map<String, String> clusterToAssignOwnership = reassignClusters(cfg, availableNodes, clusterNames);
 
     // FOUND CLUSTERS PREVIOUSLY ASSIGNED TO THE LOCAL ONE: CHANGE ASSIGNMENT TO LOCAL NODE AGAIN
     for (Map.Entry<String, String> entry : clusterToAssignOwnership.entrySet()) {
@@ -89,69 +84,37 @@ public class ODefaultClusterOwnershipAssignmentStrategy implements OClusterOwner
       assignClusterOwnership(iDatabase, cfg, iClass, cluster, node);
     }
 
-    // MOVE THE UNASSIGNED CLUSTERS TO THE ORIGINAL SET TO BE REALLOCATED FROM THE EXTERNAL (SHOULD NEVER HAPPEN)
-    clustersToReassign.addAll(clustersOfClassToReassign);
-
     Collection<String> allClusterNames = iDatabase.getClusterNames();
 
-    // CHECK OWNER AFTER RE-BALANCE AND CREATE NEW CLUSTERS IF NEEDED
+    final List<String> serversToCreateANewCluster = new ArrayList<String>();
     for (String server : availableNodes) {
       final List<String> ownedClusters = cfg.getOwnedClustersByServer(clusterNames, server);
       if (ownedClusters.isEmpty()) {
-        // CREATE A NEW CLUSTER WHERE LOCAL NODE IS THE MASTER
+        // CREATE A NEW CLUSTER WHERE THE LOCAL NODE IS THE MASTER
         String newClusterName;
-        for (int i = 0;; ++i) {
+        for (int i = 0; ; ++i) {
           newClusterName = iClass.getName().toLowerCase() + "_" + i;
           if (!allClusterNames.contains(newClusterName))
             break;
         }
 
-        ODistributedServerLog.info(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-            "Class '%s', creation of new local cluster '%s' (id=%d)", iClass, newClusterName,
-            iDatabase.getClusterIdByName(newClusterName));
-
-        final String finalNewClusterName = newClusterName;
-
-        OScenarioThreadLocal.executeAsDefault(new Callable<Object>() {
-          @Override
-          public Object call() throws Exception {
-            try {
-              iClass.addCluster(finalNewClusterName);
-            } catch (Exception e) {
-              if (!iDatabase.getClusterNames().contains(finalNewClusterName)) {
-                // NOT CREATED
-                ODistributedServerLog.error(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-                    "Error on creating cluster '%s' in class '%s': ", finalNewClusterName, iClass, e);
-                throw OException.wrapException(
-                    new ODistributedException("Error on creating cluster '" + finalNewClusterName + "' in class '" + iClass + "'"),
-                    e);
-              }
-            }
-
-            return null;
-          }
-        });
-
-        // RELOAD ALL THE CLUSTER NAMES
-        allClusterNames = iDatabase.getClusterNames();
-
+        serversToCreateANewCluster.add(newClusterName);
         assignClusterOwnership(iDatabase, cfg, iClass, newClusterName, server);
-        cfgChanged = true;
       }
     }
-
-    return cfgChanged;
+    return serversToCreateANewCluster;
   }
 
   protected Map<String, String> reassignClusters(final ODistributedConfiguration cfg, final Set<String> availableNodes,
-      final Set<String> clustersOfClassToReassign, final Set<String> clusterNames, final boolean rebalance) {
-    // ORDER OWNERSHIP BY SIZE
-    final List<OPair<String, List<String>>> nodeOwners = new ArrayList<OPair<String, List<String>>>(availableNodes.size());
-    for (String server : availableNodes) {
+      final Set<String> clusterNames) {
+    final Set<String> allConfiguredNodes = cfg.getServers(clusterNames);
+
+    final List<OPair<String, List<String>>> nodeOwners = new ArrayList<OPair<String, List<String>>>(allConfiguredNodes.size());
+    for (String server : allConfiguredNodes) {
       final List<String> ownedClusters = cfg.getOwnedClustersByServer(clusterNames, server);
 
       // FILTER ALL THE CLUSTERS WITH A STATIC OWNER CFG
-      for (Iterator<String> it = ownedClusters.iterator(); it.hasNext();) {
+      for (Iterator<String> it = ownedClusters.iterator(); it.hasNext(); ) {
         final String cluster = it.next();
         if (cfg.getConfiguredClusterOwner(cluster) != null)
           it.remove();
@@ -170,23 +133,34 @@ public class ODefaultClusterOwnershipAssignmentStrategy implements OClusterOwner
 
     final Map<String, String> clusterToAssignOwnership = new HashMap<String, String>();
 
+    final Set<String> clustersOfClassToReassign = new HashSet<String>();
+
+    // REASSIGN ALL THE CLUSTERS OF THE NOT AVAILABLE SERVERS
+    for (OPair<String, List<String>> owner : nodeOwners) {
+      final String server = owner.getKey();
+      final List<String> ownedClusters = owner.getValue();
+      if (!availableNodes.contains(server))
+        clustersOfClassToReassign.addAll(ownedClusters);
+    }
+
     int currentServerIndex = 0;
+    int clusterAssigned = 0;
     for (OPair<String, List<String>> owner : nodeOwners) {
       final String server = owner.getKey();
       final List<String> ownedClusters = owner.getValue();
 
       // AT EVERY ITERATION COMPUTE THE BEST NUMBER OF CLUSTER TO ASSIGN TO THE CURRENT NODE
-      int targetClustersPerNode =
-          (clusterNames.size() - clustersOfClassToReassign.size()) / (availableNodes.size() - currentServerIndex);
-      if (targetClustersPerNode == 0
-          || (clusterNames.size() - clustersOfClassToReassign.size()) % (availableNodes.size() - currentServerIndex) > 0)
-        targetClustersPerNode = 1;
+      final int nodesLeft = availableNodes.size() - currentServerIndex;
+      int targetClustersPerNode = nodesLeft < 1 ? 1 : (clusterNames.size() - clusterAssigned) / nodesLeft;
+      if (targetClustersPerNode == 0 || (nodesLeft > 0 && (clusterNames.size() - clusterAssigned) % nodesLeft > 0))
+        targetClustersPerNode++;
 
-      if (rebalance && ownedClusters.size() > targetClustersPerNode) {
+      if (ownedClusters.size() > targetClustersPerNode) {
         // REMOVE CLUSTERS IF THERE IS NO STATIC CFG OF THE OWNER
         while (ownedClusters.size() > targetClustersPerNode) {
           clustersOfClassToReassign.add(ownedClusters.remove(ownedClusters.size() - 1));
         }
+
       } else if (ownedClusters.size() < targetClustersPerNode) {
         // ADD CLUSTERS
         while (ownedClusters.size() < targetClustersPerNode && !clustersOfClassToReassign.isEmpty()) {
@@ -197,7 +171,7 @@ public class ODefaultClusterOwnershipAssignmentStrategy implements OClusterOwner
           while (it.hasNext()) {
             final String cluster = it.next();
 
-            final List<String> serverPerClusterList = cfg.getServers(cluster);
+            final List<String> serverPerClusterList = cfg.getConfiguredServers(cluster);
 
             if (serverPerClusterList != null && serverPerClusterList.contains(server)) {
               it.remove();
@@ -214,14 +188,14 @@ public class ODefaultClusterOwnershipAssignmentStrategy implements OClusterOwner
         }
       }
 
+      clusterAssigned += ownedClusters.size();
       currentServerIndex++;
     }
     return clusterToAssignOwnership;
-
   }
 
-  private void assignClusterOwnership(final ODatabaseInternal iDatabase, final ODistributedConfiguration cfg, final OClass iClass,
-      final String cluster, final String node) {
+  private void assignClusterOwnership(final ODatabaseInternal iDatabase, final OModifiableDistributedConfiguration cfg,
+      final OClass iClass, final String cluster, final String node) {
     ODistributedServerLog.info(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
         "Class '%s': change mastership of cluster '%s' (id=%d) to node '%s'", iClass, cluster,
         iDatabase.getClusterIdByName(cluster), node);

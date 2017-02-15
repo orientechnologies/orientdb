@@ -21,10 +21,14 @@ import com.hazelcast.instance.HazelcastInstanceImpl;
 import com.hazelcast.instance.HazelcastInstanceProxy;
 import com.hazelcast.instance.Node;
 import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
+import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 
 import java.io.File;
@@ -33,7 +37,7 @@ import java.io.IOException;
 /**
  * Running server instance.
  *
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
+ * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class ServerRun {
   protected final String  serverId;
@@ -63,7 +67,10 @@ public class ServerRun {
   }
 
   public String getBinaryProtocolAddress() {
-    return server.getListenerByProtocol(ONetworkProtocolBinary.class).getListeningAddress(true);
+    final OServerNetworkListener prot = server.getListenerByProtocol(ONetworkProtocolBinary.class);
+    if (prot == null)
+      return null;
+    return prot.getListeningAddress(true);
   }
 
   public void deleteNode() {
@@ -162,8 +169,14 @@ public class ServerRun {
       try {
         ((OHazelcastPlugin) server.getDistributedManager()).getHazelcastInstance().shutdown();
       } catch (Exception e) {
+        // IGNORE IT
       }
-      server.shutdown();
+
+      try {
+        server.shutdown();
+      } catch (Exception e) {
+        // IGNORE IT
+      }
     }
 
     closeStorages();
@@ -179,8 +192,14 @@ public class ServerRun {
         hz.getLifecycleService().terminate();
 
       } catch (Exception e) {
+        // IGNORE IT
       }
-      server.shutdown();
+
+      try {
+        server.shutdown();
+      } catch (Exception e) {
+        // IGNORE IT
+      }
     }
 
     closeStorages();
@@ -190,6 +209,17 @@ public class ServerRun {
     ODatabaseDocumentTx.closeAll();
   }
 
+/*
+  public void deleteStorages() {
+    for (OStorage s : Orient.instance().getStorages()) {
+      if (s instanceof OLocalPaginatedStorage && new File(((OLocalPaginatedStorage) s).getStoragePath()).getAbsolutePath()
+          .startsWith(getDatabasePath(""))) {
+        s.close(true, true);
+        Orient.instance().unregisterStorage(s);
+      }
+    }
+  }
+*/
   protected String getServerHome() {
     return getServerHome(serverId);
   }

@@ -104,4 +104,6 @@ public interface OBinaryRequestExecutor {
   OBinaryResponse executeCommit37(OCommit37Request request);
 
   OBinaryResponse executeFetchTransaction(OFetchTransactionRequest request);
+
+  OBinaryResponse executeRollback(ORollbackTransactionRequest request);
 }

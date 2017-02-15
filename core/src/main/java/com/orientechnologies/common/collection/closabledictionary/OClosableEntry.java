@@ -37,6 +37,11 @@ public class OClosableEntry<K, V extends OClosableItem> {
    */
   private static final long ACQUIRED_OFFSET = 32;
 
+  public static boolean isOpen(long state) {
+    return state == STATUS_OPEN;
+  }
+
+
   @GuardedBy("lruLock")
   private OClosableEntry<K, V> next;
 
@@ -138,13 +143,17 @@ public class OClosableEntry<K, V extends OClosableItem> {
     state = acquireCount << ACQUIRED_OFFSET;
   }
 
-  void makeRetired() {
+  long makeRetired() {
+    long oldSate = state;
+
     stateLock.lock();
     try {
       state = STATUS_RETIRED;
     } finally {
       stateLock.unlock();
     }
+
+    return oldSate;
   }
 
   void makeDead() {

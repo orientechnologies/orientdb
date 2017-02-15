@@ -149,7 +149,7 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterI
   }
 
   @Override
-  protected Callable createWriter(int i, final int threadId, String databaseURL) {
+  protected Callable createWriter(final int i, final int threadId, final String databaseURL) {
     return new TxWriter(i, threadId, databaseURL);
   }
 }

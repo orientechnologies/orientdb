@@ -65,8 +65,13 @@ public class OCommandManager {
   }
 
   public OScriptExecutor getScriptExecutor(String language) {
-
+    if (language == null) {
+      throw new IllegalArgumentException("Invalid script languange: null");
+    }
     OScriptExecutor scriptExecutor = this.scriptExecutors.get(language);
+    if (scriptExecutor == null) {
+      scriptExecutor = this.scriptExecutors.get(language.toLowerCase());
+    }
     if (scriptExecutor == null)
       throw new IllegalArgumentException("Cannot find a script executor requester for language: " + language);
 

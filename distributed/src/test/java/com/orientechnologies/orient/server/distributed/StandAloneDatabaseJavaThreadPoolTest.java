@@ -3,7 +3,6 @@ package com.orientechnologies.orient.server.distributed;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.db.ODatabasePool;
-import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -282,7 +281,7 @@ public final class StandAloneDatabaseJavaThreadPoolTest {
   private ODatabasePool getGraphFactory() {
     if (graphReadFactory == null) {
       log("Datastore pool created with size : 10, db location: " + getDBURL());
-      graphReadFactory = OrientDB.fromUrl("remote:" + "localhost:2424;localhost:2425;localhost:2426", OrientDBConfig.defaultConfig()).openPool(dbName,"admin", "admin");
+      graphReadFactory = new ODatabasePool(getDBURL(), "admin", "admin", OrientDBConfig.defaultConfig());
 
 //      graphReadFactory.setupPool(10, 10);//TODO
     }

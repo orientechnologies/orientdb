@@ -29,7 +29,7 @@ import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 /**
  * Repairs records through the distributed server.
  *
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
+ * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
 public class ORepairRecordsTask extends OTxTask {
   public static final int FACTORYID = 17;
@@ -48,11 +48,6 @@ public class ORepairRecordsTask extends OTxTask {
   @Override
   public long getSynchronousTimeout(final int iSynchNodes) {
     return 3000;
-  }
-
-  @Override
-  public int[] getPartitionKey() {
-    return ANY;
   }
 
   @Override

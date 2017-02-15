@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.server.tx;
 
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -22,7 +23,7 @@ public class RemoteTransactionSupportTest {
 
   private static final String SERVER_DIRECTORY = "./target/transaction";
   private OServer           server;
-  private OrientDB          factory;
+  private OrientDB          orientDB;
   private ODatabaseDocument database;
 
   @Before
@@ -32,9 +33,9 @@ public class RemoteTransactionSupportTest {
     server.startup(getClass().getResourceAsStream("orientdb-server-config.xml"));
     server.activate();
 
-    factory = OrientDB.remote(new String[] { "localhost" }, OrientDBConfig.defaultConfig());
-    factory.create(ORemoteImportTest.class.getSimpleName(), "root", "root", OrientDB.DatabaseType.MEMORY);
-    database = factory.open(ORemoteImportTest.class.getSimpleName(), "admin", "admin");
+    orientDB = new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
+    orientDB.create(ORemoteImportTest.class.getSimpleName(), ODatabaseType.MEMORY);
+    database = orientDB.open(ORemoteImportTest.class.getSimpleName(), "admin", "admin");
     database.createClass("SomeTx");
     database.createClass("SomeTx2");
   }
@@ -63,7 +64,7 @@ public class RemoteTransactionSupportTest {
 
     ODocument docx = new ODocument("SomeTx2");
     docx.setProperty("name", "Jane");
-    database.save(doc1);
+    database.save(docx);
 
     OResultSet result = database.command("update SomeTx set name='July' where name = 'Jane' ");
     assertTrue(result.hasNext());
@@ -73,10 +74,60 @@ public class RemoteTransactionSupportTest {
     assertFalse(result.hasNext());
   }
 
+  @Test
+  public void testRollbackTxTransaction() {
+    ODocument doc = new ODocument("SomeTx");
+    doc.setProperty("name", "Jane");
+    database.save(doc);
+
+    database.begin();
+    ODocument doc1 = new ODocument("SomeTx");
+    doc1.setProperty("name", "Jane");
+    database.save(doc1);
+
+    OResultSet result = database.command("update SomeTx set name='July' where name = 'Jane' ");
+    assertTrue(result.hasNext());
+    assertEquals((long) result.next().getProperty("count"), 2L);
+
+    database.rollback();
+
+    OResultSet result1 = database.command("select count(*) from SomeTx where name='Jane'");
+    assertTrue(result1.hasNext());
+    assertEquals((long) result1.next().getProperty("count(*)"), 1L);
+
+  }
+
+  @Test
+  public void testRollbackTxChekcStatusTransaction() {
+    ODocument doc = new ODocument("SomeTx");
+    doc.setProperty("name", "Jane");
+    database.save(doc);
+
+    database.begin();
+    ODocument doc1 = new ODocument("SomeTx");
+    doc1.setProperty("name", "Jane");
+    database.save(doc1);
+
+    OResultSet result = database.command("select count(*) from SomeTx where name='Jane' ");
+    assertTrue(result.hasNext());
+    assertEquals((long) result.next().getProperty("count(*)"), 2L);
+
+    assertTrue(database.getTransaction().isActive());
+
+    database.rollback();
+
+    OResultSet result1 = database.command("select count(*) from SomeTx where name='Jane'");
+    assertTrue(result1.hasNext());
+    assertEquals((long) result1.next().getProperty("count(*)"), 1L);
+
+    assertFalse(database.getTransaction().isActive());
+
+  }
+
   @After
   public void after() {
     database.close();
-    factory.close();
+    orientDB.close();
     server.shutdown();
     Orient.instance().startup();
   }

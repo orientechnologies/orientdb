@@ -36,8 +36,4 @@ public class ServerClusterRemoteSQLGraphTest extends AbstractServerClusterSQLGra
   public String getDatabaseName() {
     return "sql-distributed-graph";
   }
-
-  protected String getDatabaseURL(final ServerRun server) {
-    return "remote:" + server.getBinaryProtocolAddress() + "/" + getDatabaseName();
-  }
 }

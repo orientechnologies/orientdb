@@ -19,16 +19,18 @@
   */
 package com.orientechnologies.orient.core.command.script;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+
 import javax.script.Bindings;
+import javax.script.ScriptEngine;
 
 /**
  * Inject custom settings on Script execution.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public interface OScriptInjection {
-  public void bind(Bindings binding);
+  void bind(ScriptEngine engine, Bindings binding, ODatabaseDocument database);
 
-  public void unbind(Bindings binding);
+  void unbind(ScriptEngine engine, Bindings binding);
 }

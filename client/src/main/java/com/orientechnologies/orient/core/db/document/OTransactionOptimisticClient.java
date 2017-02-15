@@ -47,6 +47,6 @@ public class OTransactionOptimisticClient extends OTransactionOptimistic {
 
       indexEntries.put(change.getName(), change.getKeyChanges());
     }
-
   }
+
 }

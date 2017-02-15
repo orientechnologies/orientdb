@@ -447,7 +447,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OCloseable
       cmd.append(className);
       cmd.append(" unsafe");
 
-      if (isDistributedCommand()) {
+      if (executeThroughDistributedStorage()) {
         final OAutoshardedStorage autoshardedStorage = (OAutoshardedStorage) storage;
         OCommandSQL commandSQL = new OCommandSQL(cmd.toString());
         commandSQL.addExcludedNode(autoshardedStorage.getNodeId());
@@ -806,6 +806,9 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OCloseable
   @Override
   public void close() {
     classes.clear();
+    clustersToClasses.clear();
+    blobClusters.clear();
+    properties.clear();
     document.clear();
   }
 
@@ -885,7 +888,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OCloseable
     return global;
   }
 
-  private OClass doCreateClass(final String className, final int[] clusterIds, int retry, OClass... superClasses)
+  private OClass doCreateClass(final String className, int[] clusterIds, int retry, OClass... superClasses)
       throws ClusterIdsAreEmptyException {
     OClass result;
 
@@ -904,8 +907,12 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OCloseable
       if (classes.containsKey(key) && retry == 0)
         throw new OSchemaException("Class '" + className + "' already exists in current database");
 
-      if (!isDistributedCommand())
+      if (!executeThroughDistributedStorage())
         checkClustersAreAbsent(clusterIds);
+
+      if (clusterIds == null || clusterIds.length == 0) {
+        clusterIds = createClusters(className, getDatabase().getStorage().getConfiguration().getMinimumClusters());
+      }
 
       cmd = new StringBuilder("create class ");
       if (getDatabase().getStorage().getConfiguration().isStrictSql())
@@ -947,7 +954,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OCloseable
         }
       }
 
-      if (isDistributedCommand()) {
+      if (executeThroughDistributedStorage()) {
         createClassInternal(className, clusterIds, superClassesList);
 
         final OAutoshardedStorage autoshardedStorage = (OAutoshardedStorage) storage;
@@ -1027,7 +1034,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OCloseable
         cmd.append(clusters);
       }
 
-      if (isDistributedCommand()) {
+      if (executeThroughDistributedStorage()) {
 
         final int[] clusterIds = createClusters(className, clusters);
         createClassInternal(className, clusterIds, superClassesList);
@@ -1064,7 +1071,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OCloseable
     return result;
   }
 
-  private boolean isDistributedCommand() {
+  private boolean executeThroughDistributedStorage() {
     return getDatabase().getStorage() instanceof OAutoshardedStorage && !OScenarioThreadLocal.INSTANCE.isRunModeDistributed();
   }
 

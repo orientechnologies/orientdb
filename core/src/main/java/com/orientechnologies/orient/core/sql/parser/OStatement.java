@@ -51,10 +51,18 @@ public class OStatement extends SimpleNode {
   }
 
   public OResultSet execute(ODatabase db, Object[] args) {
+    return execute(db, args, null);
+  }
+
+  public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentContext){
     throw new UnsupportedOperationException();
   }
 
   public OResultSet execute(ODatabase db, Map args) {
+    return execute(db, args, null);
+  }
+
+  public OResultSet execute(ODatabase db, Map args, OCommandContext parentContext){
     throw new UnsupportedOperationException();
   }
 

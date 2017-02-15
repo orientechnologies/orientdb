@@ -8,7 +8,6 @@ import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
-import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
@@ -23,6 +22,7 @@ import org.junit.Before;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.zip.CRC32;
 
@@ -60,7 +60,7 @@ public class WOWCacheTest {
   }
 
   @Before
-  public void beforeMethod() throws IOException {
+  public void beforeMethod() throws Exception {
     closeCacheAndDeleteFile();
 
     initBuffer();
@@ -98,7 +98,7 @@ public class WOWCacheTest {
     Assert.assertTrue(file.delete());
   }
 
-  private void initBuffer() throws IOException {
+  private void initBuffer() throws IOException, InterruptedException {
     wowCache = new OWOWCache(pageSize, new OByteBufferPool(pageSize), writeAheadLog, 10, 100,
         storageLocal, false, files, 1);
     wowCache.loadRegisteredFiles();
@@ -281,7 +281,7 @@ public class WOWCacheTest {
     final long fileId = wowCache.addFile("removedFile.del");
 
     wowCache.deleteFile(fileId);
-    File deletedFile = new File(storageLocal.getStoragePath(), "removedFile.del");
+    File deletedFile = storageLocal.getStoragePath().resolve("removedFile.del").toFile();
     Assert.assertTrue(!deletedFile.exists());
 
     String fileName = wowCache.restoreFileById(fileId);
@@ -298,12 +298,12 @@ public class WOWCacheTest {
     Assert.assertTrue(!deletedFile.exists());
   }
 
-  public void testFileRestoreAfterClose() throws IOException {
+  public void testFileRestoreAfterClose() throws Exception {
     final long nonDelFileId = wowCache.addFile(fileName);
     final long fileId = wowCache.addFile("removedFile.del");
 
     wowCache.deleteFile(fileId);
-    File deletedFile = new File(storageLocal.getStoragePath(), "removedFile.del");
+    File deletedFile = storageLocal.getStoragePath().resolve("removedFile.del").toFile();
     Assert.assertTrue(!deletedFile.exists());
 
     wowCache.close();
@@ -325,9 +325,7 @@ public class WOWCacheTest {
   }
 
   private void assertFile(long pageIndex, byte[] value, OLogSequenceNumber lsn) throws IOException {
-    String path = storageLocal.getConfiguration().getDirectory() + File.separator + fileName;
-
-    OFileClassic fileClassic = new OFileClassic(path, "r");
+    OFileClassic fileClassic = new OFileClassic(Paths.get(storageLocal.getConfiguration().getDirectory(), fileName));
     fileClassic.open();
     byte[] content = new byte[8 + systemOffset];
     fileClassic.read(pageIndex * (8 + systemOffset), content, 8 + systemOffset);

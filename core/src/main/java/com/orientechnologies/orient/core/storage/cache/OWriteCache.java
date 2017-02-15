@@ -27,11 +27,10 @@ import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListene
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Future;
 
 public interface OWriteCache {
   void addLowDiskSpaceListener(OLowDiskSpaceListener listener);
@@ -68,7 +67,7 @@ public interface OWriteCache {
    */
   long fileIdByName(String fileName);
 
-  boolean checkLowDiskSpace();
+  boolean checkLowDiskSpace() throws IOException;
 
   void makeFuzzyCheckpoint(long segmentId) throws IOException;
 
@@ -143,7 +142,7 @@ public interface OWriteCache {
    *
    * @return Directory which contains all files managed by write cache or <code>null</code> in case of in memory database.
    */
-  File getRootDirectory();
+  Path getRootDirectory();
 
   /**
    * Returns internal file id which is unique and always the same for given file

@@ -29,8 +29,11 @@ public class OCreateVertexStatement extends OStatement {
     super(p, id);
   }
 
-  @Override public OResultSet execute(ODatabase db, Map params) {
+  @Override public OResultSet execute(ODatabase db, Map params, OCommandContext parentCtx) {
     OBasicCommandContext ctx = new OBasicCommandContext();
+    if (parentCtx != null) {
+      ctx.setParentWithoutOverridingChild(parentCtx);
+    }
     ctx.setDatabase(db);
     ctx.setInputParameters(params);
     OInsertExecutionPlan executionPlan = (OInsertExecutionPlan) createExecutionPlan(ctx);
@@ -38,8 +41,11 @@ public class OCreateVertexStatement extends OStatement {
     return new OLocalResultSet(executionPlan);
   }
 
-  @Override public OResultSet execute(ODatabase db, Object[] args) {
+  @Override public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx) {
     OBasicCommandContext ctx = new OBasicCommandContext();
+    if (parentCtx != null) {
+      ctx.setParentWithoutOverridingChild(parentCtx);
+    }
     ctx.setDatabase(db);
     Map<Object, Object> params = new HashMap<>();
     if (args != null) {

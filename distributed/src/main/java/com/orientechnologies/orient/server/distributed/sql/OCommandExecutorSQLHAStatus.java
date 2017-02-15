@@ -30,6 +30,8 @@ import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
+import com.orientechnologies.orient.core.sql.parser.OHaStatusStatement;
+import com.orientechnologies.orient.core.sql.parser.OStatementCache;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedOutput;
@@ -39,59 +41,27 @@ import java.util.Map;
 
 /**
  * SQL HA STATUS command: returns the high availability configuration.
- * 
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
+ *
+ * @author Luca Garulli
  */
-@SuppressWarnings("unchecked")
-public class OCommandExecutorSQLHAStatus extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
+@SuppressWarnings("unchecked") public class OCommandExecutorSQLHAStatus extends OCommandExecutorSQLAbstract
+    implements OCommandDistributedReplicateRequest {
   public static final String NAME           = "HA STATUS";
   public static final String KEYWORD_HA     = "HA";
   public static final String KEYWORD_STATUS = "STATUS";
 
-  private boolean            servers        = false;
-  private boolean            db             = false;
-  private boolean            latency        = false;
-  private boolean            messages = false;
-  private boolean            textOutput     = false;
+  OHaStatusStatement parsedStatement;
 
   public OCommandExecutorSQLHAStatus parse(final OCommandRequest iRequest) {
     init((OCommandRequestText) iRequest);
-
-    final StringBuilder word = new StringBuilder();
-
-    int oldPos = 0;
-    int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_HA))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_HA + " not found. Use " + getSyntax(), parserText, oldPos);
-
-    pos = nextWord(parserText, parserTextUpperCase, pos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_STATUS))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_STATUS + " not found. Use " + getSyntax(), parserText, oldPos);
-
-    pos = nextWord(parserText, parserTextUpperCase, pos, word, false, " \r\n");
-    if (pos == -1)
-      throw new OCommandSQLParsingException("Missing option. Use " + getSyntax(), parserText, oldPos);
-
-    while (pos > -1) {
-      final String option = word.toString();
-
-      if (option.equalsIgnoreCase("-servers"))
-        servers = true;
-      else if (option.equalsIgnoreCase("-db"))
-        db = true;
-      else if (option.equalsIgnoreCase("-latency"))
-        latency = true;
-      else if (option.equalsIgnoreCase("-messages"))
-        messages = true;
-      else if (option.equalsIgnoreCase("-all"))
-        servers = db = latency = messages = true;
-      else if (option.equalsIgnoreCase("-output=text"))
-        textOutput = true;
-
-      pos = nextWord(parserText, parserTextUpperCase, pos, word, false, " \r\n");
+    try {
+      parsedStatement = (OHaStatusStatement) OStatementCache.get(this.parserText, getDatabase());
+      preParsedStatement = parsedStatement;
+    } catch (OCommandSQLParsingException sqlx) {
+      throw sqlx;
+    } catch (Exception e) {
+      throwParsingException("Error parsing query: \n" + this.parserText + "\n" + e.getMessage(), e);
     }
-
     return this;
   }
 
@@ -115,40 +85,37 @@ public class OCommandExecutorSQLHAStatus extends OCommandExecutorSQLAbstract imp
 
     final ODistributedConfiguration cfg = dManager.getDatabaseConfiguration(databaseName);
 
-    if (textOutput) {
+    if (parsedStatement.outputText) {
       final StringBuilder output = new StringBuilder();
-      if (servers)
+      if (parsedStatement.servers)
         output.append(ODistributedOutput.formatServerStatus(dManager, dManager.getClusterConfiguration()));
-      if (db)
+      if (parsedStatement.db)
         output.append(ODistributedOutput.formatClusterTable(dManager, databaseName, cfg, dManager.getAvailableNodes(databaseName)));
-      if (latency)
+      if (parsedStatement.latency)
         output.append(ODistributedOutput.formatLatency(dManager, dManager.getClusterConfiguration()));
-      if (messages)
+      if (parsedStatement.messages)
         output.append(ODistributedOutput.formatMessages(dManager, dManager.getClusterConfiguration()));
       return output.toString();
     }
 
     final ODocument output = new ODocument();
-    if (servers)
+    if (parsedStatement.servers)
       output.field("servers", dManager.getClusterConfiguration(), OType.EMBEDDED);
-    if (db)
+    if (parsedStatement.db)
       output.field("database", cfg.getDocument(), OType.EMBEDDED);
 
     return output;
   }
 
-  @Override
-  public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
+  @Override public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
     return DISTRIBUTED_EXECUTION_MODE.LOCAL;
   }
 
-  @Override
-  public QUORUM_TYPE getQuorumType() {
+  @Override public QUORUM_TYPE getQuorumType() {
     return QUORUM_TYPE.NONE;
   }
 
-  @Override
-  public String getSyntax() {
+  @Override public String getSyntax() {
     return "HA STATUS [-servers] [-db] [-latency] [-messages] [-all] [-output=text]";
   }
 }

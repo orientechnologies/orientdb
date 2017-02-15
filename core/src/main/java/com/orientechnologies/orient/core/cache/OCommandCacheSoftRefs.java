@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPagi
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -89,7 +90,7 @@ public class OCommandCacheSoftRefs implements OCommandCache {
   public OCommandCacheSoftRefs(final OStorage storage) {
     databaseName = storage.getName();
     if (storage instanceof OLocalPaginatedStorage) {
-      fileConfigPath = ((OLocalPaginatedStorage) storage).getStoragePath() + File.separator + CONFIG_FILE;
+      fileConfigPath = ((OLocalPaginatedStorage) storage).getStoragePath().resolve(CONFIG_FILE).toString();
     } else
       fileConfigPath = null;
     OContextConfiguration configuration = storage.getConfiguration().getContextConfiguration();

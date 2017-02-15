@@ -54,6 +54,7 @@ import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
+import com.orientechnologies.orient.server.network.protocol.OBeforeDatabaseOpenNetworkEventListener;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
 
@@ -371,7 +372,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         connection.setTokenBytes(null);
         connection.acquire();
       } else {
-        // STANDAR FLOW
+        // STANDARD FLOW
         if (!tokenConnection) {
           // ARRIVED HERE FOR DIRECT TOKEN CONNECTION, BUT OLD STYLE SESSION.
           throw new OIOException("Found unknown session " + clientTxId);
@@ -407,9 +408,14 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   private void waitDistribuedIsOnline(OClientConnection connection) {
     if (requests == 0) {
       final ODistributedServerManager manager = server.getDistributedManager();
-      if (manager != null)
+      if (manager != null && connection.getDatabase() != null)
         try {
-          manager.waitUntilNodeOnline(manager.getLocalNodeName(), connection.getToken().getDatabase());
+          final ODistributedDatabase dDatabase = manager.getMessageService().getDatabase(connection.getDatabase().getName());
+          if (dDatabase != null) {
+            dDatabase.waitForOnline();
+          } else
+            manager.waitUntilNodeOnline(manager.getLocalNodeName(), connection.getToken().getDatabase());
+
         } catch (InterruptedException e) {
           Thread.currentThread().interrupt();
           throw new OInterruptedException("Request interrupted");
@@ -591,6 +597,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     case OChannelBinaryProtocol.REQUEST_TX_COMMIT:
       return new OCommit37Request();
 
+    case OChannelBinaryProtocol.REQUEST_TX_ROLLBACK:
+      return new ORollbackTransactionRequest();
+
     case OChannelBinaryProtocol.REQUEST_DB_OPEN:
       return new OOpenRequest();
 
@@ -769,8 +778,11 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       ddb = manager.getMessageService().getDatabase(dbName);
       if (ddb == null && req.getTask().isNodeOnlineRequired())
         throw new ODistributedException("Database configuration not found for database '" + req.getDatabaseName() + "'");
-
     }
+
+    // SET THE SENDER IN THE TASK
+    String senderNodeName = manager.getNodeNameById(req.getId().getNodeId());
+    req.getTask().setNodeSource(senderNodeName);
 
     if (ddb != null)
       ddb.processRequest(req);

@@ -11,13 +11,12 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
-import com.orientechnologies.orient.core.sql.executor.OSelectExecutionPlanner;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.OSelectExecutionPlanner;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 import java.util.HashMap;
 import java.util.Map;
-
 
 public class OSelectStatement extends OStatement {
 
@@ -227,8 +226,13 @@ public class OSelectStatement extends OStatement {
     }
   }
 
-  @Override public OResultSet execute(ODatabase db, Object[] args) {
+  @Override
+  public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx) {
+
     OBasicCommandContext ctx = new OBasicCommandContext();
+    if (parentCtx != null) {
+      ctx.setParentWithoutOverridingChild(parentCtx);
+    }
     ctx.setDatabase(db);
     Map<Object, Object> params = new HashMap<>();
     if (args != null) {
@@ -243,8 +247,12 @@ public class OSelectStatement extends OStatement {
     return result;
   }
 
-  @Override public OResultSet execute(ODatabase db, Map params) {
+  @Override
+  public OResultSet execute(ODatabase db, Map params, OCommandContext parentCtx) {
     OBasicCommandContext ctx = new OBasicCommandContext();
+    if (parentCtx != null) {
+      ctx.setParentWithoutOverridingChild(parentCtx);
+    }
     ctx.setDatabase(db);
     ctx.setInputParameters(params);
     OInternalExecutionPlan executionPlan = createExecutionPlan(ctx);
@@ -258,7 +266,8 @@ public class OSelectStatement extends OStatement {
     return planner.createExecutionPlan(ctx);
   }
 
-  @Override public OSelectStatement copy() {
+  @Override
+  public OSelectStatement copy() {
     OSelectStatement result = null;
     try {
       result = getClass().getConstructor(Integer.TYPE).newInstance(-1);
@@ -283,7 +292,8 @@ public class OSelectStatement extends OStatement {
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -323,7 +333,8 @@ public class OSelectStatement extends OStatement {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = target != null ? target.hashCode() : 0;
     result = 31 * result + (projection != null ? projection.hashCode() : 0);
     result = 31 * result + (whereClause != null ? whereClause.hashCode() : 0);
@@ -341,7 +352,8 @@ public class OSelectStatement extends OStatement {
     return result;
   }
 
-  @Override public boolean refersToParent() {
+  @Override
+  public boolean refersToParent() {
     //no FROM, if a subquery refers to parent it does not make sense, so that reference will be just ignored
 
     if (projection != null && projection.refersToParent()) {
@@ -366,7 +378,8 @@ public class OSelectStatement extends OStatement {
     return unwind;
   }
 
-  @Override public boolean isIdempotent() {
+  @Override
+  public boolean isIdempotent() {
     return true;
   }
 

@@ -28,7 +28,6 @@ import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
@@ -74,7 +73,7 @@ public class OCommandExecutorFunction extends OCommandExecutorAbstract {
     final OPartitionedObjectPool.PoolEntry<ScriptEngine> entry = scriptManager.acquireDatabaseEngine(db.getName(), f.getLanguage());
     final ScriptEngine scriptEngine = entry.object;
     try {
-      final Bindings binding = scriptManager.bind(scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE), db, iContext, iArgs);
+      final Bindings binding = scriptManager.bind(scriptEngine,scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE), db, iContext, iArgs);
 
       try {
         final Object result;
@@ -98,8 +97,7 @@ public class OCommandExecutorFunction extends OCommandExecutorAbstract {
           final Object[] args = iArgs == null ? null : iArgs.values().toArray();
           result = scriptEngine.eval(scriptManager.getFunctionInvoke(f, args), binding);
         }
-
-        return OCommandExecutorUtility.transformResult(result);
+        return OCommandExecutorUtility.transformResult(scriptManager.handleResult(f.getLanguage(),result,scriptEngine,binding,db));
 
       } catch (ScriptException e) {
         throw OException.wrapException(
@@ -111,7 +109,7 @@ public class OCommandExecutorFunction extends OCommandExecutorAbstract {
         throw e;
 
       } finally {
-        scriptManager.unbind(binding, iContext, iArgs);
+        scriptManager.unbind(scriptEngine,binding, iContext, iArgs);
       }
     } finally {
       scriptManager.releaseDatabaseEngine(f.getLanguage(), db.getName(), entry);

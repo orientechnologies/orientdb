@@ -13,6 +13,7 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.file.Paths;
 import java.util.*;
 
 import static org.mockito.Mockito.mock;
@@ -51,7 +52,7 @@ public class WriteAheadLogTest {
   private ODiskWriteAheadLog createWAL(int maxPagesCacheSize, int maxSegmentSize) throws IOException {
     OLocalPaginatedStorage paginatedStorage = mock(OLocalPaginatedStorage.class);
     when(paginatedStorage.getName()).thenReturn("WriteAheadLogTest");
-    when(paginatedStorage.getStoragePath()).thenReturn(testDir.getAbsolutePath());
+    when(paginatedStorage.getStoragePath()).thenReturn(Paths.get(testDir.getAbsolutePath()));
     OStorageConfiguration configurationMock = mock(OStorageConfiguration.class);
     when(configurationMock.getLocaleInstance()).thenReturn(Locale.getDefault());
     when(paginatedStorage.getConfiguration()).thenReturn(configurationMock);
@@ -825,7 +826,7 @@ public class WriteAheadLogTest {
     Assert.assertEquals(writeAheadLog.end(), end);
     writeAheadLog.close();
 
-    RandomAccessFile mrFile = new RandomAccessFile(new File(writeAheadLog.getWalLocation(), "WriteAheadLogTest.wmr"), "rw");
+    RandomAccessFile mrFile = new RandomAccessFile(writeAheadLog.getWalLocation().resolve("WriteAheadLogTest.wmr").toFile(), "rw");
     mrFile.seek(OIntegerSerializer.INT_SIZE + 1);
 
     int bt = mrFile.read();
@@ -853,7 +854,7 @@ public class WriteAheadLogTest {
     Assert.assertEquals(writeAheadLog.end(), end);
     writeAheadLog.close();
 
-    RandomAccessFile mrFile = new RandomAccessFile(new File(writeAheadLog.getWalLocation(), "WriteAheadLogTest.wmr"), "rw");
+    RandomAccessFile mrFile = new RandomAccessFile(writeAheadLog.getWalLocation().resolve("WriteAheadLogTest.wmr").toFile(), "rw");
     mrFile.seek(3 * OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE);
 
     int bt = mrFile.read();
@@ -885,7 +886,7 @@ public class WriteAheadLogTest {
 
     writeAheadLog.close();
 
-    RandomAccessFile mrFile = new RandomAccessFile(new File(writeAheadLog.getWalLocation(), "WriteAheadLogTest.wmr"), "rw");
+    RandomAccessFile mrFile = new RandomAccessFile(writeAheadLog.getWalLocation().resolve("WriteAheadLogTest.wmr").toFile(), "rw");
     mrFile.seek(0);
 
     int bt = mrFile.read();

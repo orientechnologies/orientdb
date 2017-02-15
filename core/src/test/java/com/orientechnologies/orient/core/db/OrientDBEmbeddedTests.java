@@ -1,12 +1,9 @@
 package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.OStorageExistsException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
@@ -27,11 +24,10 @@ public class OrientDBEmbeddedTests {
 
   @Test
   public void createAndUseEmbeddedDatabase() {
-    OrientDB orientDb = OrientDB.embedded(".", null);
-    // OrientDB orientDb = OrientDB.fromUrl("local:.", null);
+    OrientDB orientDb = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
 
-    if (!orientDb.exists("test", "", ""))
-      orientDb.create("test", "", "", OrientDB.DatabaseType.MEMORY);
+    if (!orientDb.exists("test"))
+      orientDb.create("test", ODatabaseType.MEMORY);
 
     ODatabaseDocument db = orientDb.open("test", "admin", "admin");
     db.save(new ODocument());
@@ -40,12 +36,12 @@ public class OrientDBEmbeddedTests {
 
   }
 
-  @Test(expected = OStorageExistsException.class)
+  @Test(expected = ODatabaseException.class)
   public void testEmbeddedDoubleCreate() {
-    OrientDB orientDb = OrientDB.embedded(".", null);
+    OrientDB orientDb = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
     try {
-      orientDb.create("test", "", "", OrientDB.DatabaseType.MEMORY);
-      orientDb.create("test", "", "", OrientDB.DatabaseType.MEMORY);
+      orientDb.create("test", ODatabaseType.MEMORY);
+      orientDb.create("test", ODatabaseType.MEMORY);
     } finally {
       orientDb.close();
     }
@@ -53,13 +49,12 @@ public class OrientDBEmbeddedTests {
 
   @Test
   public void createDropEmbeddedDatabase() {
-    OrientDB orientDb = OrientDB.embedded(".", null);
-    // OrientDB orientDb = OrientDB.fromUrl("remote:localhost", null);
+    OrientDB orientDb = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
     try {
-      orientDb.create("test", "", "", OrientDB.DatabaseType.MEMORY);
-      assertTrue(orientDb.exists("test", "", ""));
-      orientDb.drop("test", "", "");
-      assertFalse(orientDb.exists("test", "", ""));
+      orientDb.create("test", ODatabaseType.MEMORY);
+      assertTrue(orientDb.exists("test"));
+      orientDb.drop("test");
+      assertFalse(orientDb.exists("test"));
     } finally {
       orientDb.close();
     }
@@ -67,13 +62,12 @@ public class OrientDBEmbeddedTests {
 
   @Test
   public void testPool() {
-    OrientDB orientDb = OrientDB.embedded(".", null);
-    // OrientDB orientDb = OrientDB.fromUrl("local:.", null);
+    OrientDB orientDb = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
 
-    if (!orientDb.exists("test", "", ""))
-      orientDb.create("test", "", "", OrientDB.DatabaseType.MEMORY);
+    if (!orientDb.exists("test"))
+      orientDb.create("test", ODatabaseType.MEMORY);
 
-    ODatabasePool pool = orientDb.openPool("test", "admin", "admin");
+    ODatabasePool pool = new ODatabasePool(orientDb, "test", "admin", "admin");
     ODatabaseDocument db = pool.acquire();
     db.save(new ODocument());
     db.close();
@@ -84,13 +78,12 @@ public class OrientDBEmbeddedTests {
   @Test
   public void testMultiThread() {
 
-    OrientDB orientDb = OrientDB.embedded(".", null);
-    // OrientDB orientDb = OrientDB.fromUrl("local:.", null);
+    OrientDB orientDb = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
 
-    if (!orientDb.exists("test", "", ""))
-      orientDb.create("test", "", "", OrientDB.DatabaseType.MEMORY);
+    if (!orientDb.exists("test"))
+      orientDb.create("test", ODatabaseType.MEMORY);
 
-    ODatabasePool pool = orientDb.openPool("test", "admin", "admin");
+    ODatabasePool pool = new ODatabasePool(orientDb, "test", "admin", "admin");
 
     //do a query and assert on other thread
     Runnable acquirer = () -> {
@@ -124,18 +117,18 @@ public class OrientDBEmbeddedTests {
 
   @Test
   public void testListDatabases() {
-    OrientDB orientDb = OrientDB.embedded(".", null);
-    // OrientDB orientDb = OrientDB.fromUrl("local:.", null);
-    assertEquals(orientDb.listDatabases("", "").size(), 0);
-    orientDb.create("test", "", "", OrientDB.DatabaseType.MEMORY);
-    Set<String> databases = orientDb.listDatabases("", "");
+    OrientDB orientDb = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
+    // OrientDBInternal orientDb = OrientDBInternal.fromUrl("local:.", null);
+    assertEquals(orientDb.list().size(), 0);
+    orientDb.create("test", ODatabaseType.MEMORY);
+    List<String> databases = orientDb.list();
     assertEquals(databases.size(), 1);
     assertTrue(databases.contains("test"));
   }
 
   @Test
   public void testRegisterDatabase() {
-    OrientDBEmbedded orientDb = (OrientDBEmbedded) OrientDB.embedded(".", null);
+    OrientDBEmbedded orientDb = (OrientDBEmbedded) new OrientDB("embedded:", OrientDBConfig.defaultConfig()).getInternal();
     assertEquals(orientDb.listDatabases("", "").size(), 0);
     orientDb.initCustomStorage("database1", "./target/databases/database1", "", "");
     try (ODatabaseDocument db = orientDb.open("database1", "admin", "admin")) {
@@ -153,10 +146,9 @@ public class OrientDBEmbeddedTests {
 
   @Test
   public void testCopyOpenedDatabase() {
-    OrientDB orientDb = OrientDB.embedded(".", null);
-    // OrientDB orientDb = OrientDB.fromUrl("local:.", null);
+    OrientDB orientDb = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
 
-    orientDb.create("test", "", "", OrientDB.DatabaseType.MEMORY);
+    orientDb.create("test", ODatabaseType.MEMORY);
     ODatabaseDocument db1;
     try (ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) orientDb.open("test", "admin", "admin")) {
       db1 = db.copy();
@@ -167,12 +159,53 @@ public class OrientDBEmbeddedTests {
     orientDb.close();
   }
 
+  @Test(expected = ODatabaseException.class)
+  public void testUseAfterCloseCreate() {
+    OrientDB orientDb = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
+    orientDb.close();
+    orientDb.create("test", ODatabaseType.MEMORY);
+  }
+
+  @Test(expected = ODatabaseException.class)
+  public void testUseAfterCloseOpen() {
+    OrientDB orientDb = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
+    orientDb.close();
+    orientDb.open("test", "", "");
+  }
+
+  @Test(expected = ODatabaseException.class)
+  public void testUseAfterCloseList() {
+    OrientDB orientDb = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
+    orientDb.close();
+    orientDb.list();
+  }
+
+  @Test(expected = ODatabaseException.class)
+  public void testUseAfterCloseExists() {
+    OrientDB orientDb = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
+    orientDb.close();
+    orientDb.exists("");
+  }
+
+  @Test(expected = ODatabaseException.class)
+  public void testUseAfterCloseOpenPoolInternal() {
+    OrientDB orientDb = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
+    orientDb.close();
+    orientDb.openPool("", "", "", OrientDBConfig.defaultConfig());
+  }
+
+  @Test(expected = ODatabaseException.class)
+  public void testUseAfterCloseDrop() {
+    OrientDB orientDb = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
+    orientDb.close();
+    orientDb.drop("");
+  }
+
   @Test
   public void testOrientDBDatabaseOnlyMemory() {
-    OrientDB orientDb = OrientDB.embedded("", null);
-    // OrientDB orientDb = OrientDB.fromUrl("local:.", null);
+    OrientDB orientDb = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
 
-    orientDb.create("test", "", "", OrientDB.DatabaseType.MEMORY);
+    orientDb.create("test", ODatabaseType.MEMORY);
     ODatabaseDocument db = orientDb.open("test", "admin", "admin");
     db.save(new ODocument());
     db.close();
@@ -181,10 +214,8 @@ public class OrientDBEmbeddedTests {
 
   @Test(expected = ODatabaseException.class)
   public void testOrientDBDatabaseOnlyMemoryFailPlocal() {
-    try (OrientDB orientDb = OrientDB.embedded("", null)) {
-      // OrientDB orientDb = OrientDB.fromUrl("local:.", null);
-
-      orientDb.create("test", "", "", OrientDB.DatabaseType.PLOCAL);
+    try (OrientDB orientDb = new OrientDB("embedded:", OrientDBConfig.defaultConfig())) {
+      orientDb.create("test", ODatabaseType.PLOCAL);
     }
   }
 }

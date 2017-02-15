@@ -19,9 +19,9 @@
  */
 package com.orientechnologies.orient.core.storage.fs;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.file.Path;
 
 /**
  * Interface to represent low-level File access.
@@ -79,7 +79,7 @@ public interface OFile {
 
   void writeByte(long iOffset, byte iValue) throws IOException;
 
-  long write(long iOffset, byte[] iSourceBuffer) throws IOException;
+  void write(long iOffset, byte[] iSourceBuffer) throws IOException;
 
   /**
    * Shrink the file content (filledUpTo attribute only)
@@ -94,9 +94,7 @@ public interface OFile {
 
   String getPath();
 
-  String getAbsolutePath();
-
-  boolean renameTo(File newFile) throws IOException;
+  void renameTo(Path newFile) throws IOException;
 
   long allocateSpace(final long iSize) throws IOException;
 

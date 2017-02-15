@@ -42,10 +42,12 @@ import java.util.List;
 /**
  * Distributed transaction task.
  *
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
+ * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
 public class OTxTask extends OAbstract2pcTask {
   public static final int FACTORYID = 7;
+
+  transient ODistributedTxContext reqContext;
 
   public OTxTask() {
   }
@@ -53,15 +55,16 @@ public class OTxTask extends OAbstract2pcTask {
   @Override
   public Object execute(final ODistributedRequestId requestId, final OServer iServer, ODistributedServerManager iManager,
       final ODatabaseDocumentInternal database) throws Exception {
-    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-        "Committing transaction db=%s (reqId=%s)...", database.getName(), requestId);
+    ODistributedServerLog
+        .debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "Executing transaction db=%s (reqId=%s)...",
+            database.getName(), requestId);
 
     ODatabaseRecordThreadLocal.INSTANCE.set(database);
 
     final ODistributedDatabase ddb = iManager.getMessageService().getDatabase(database.getName());
 
     // CREATE A CONTEXT OF TX
-    final ODistributedTxContext reqContext = ddb.registerTxContext(requestId);
+    reqContext = ddb.registerTxContext(requestId);
 
     final ODistributedConfiguration dCfg = iManager.getDatabaseConfiguration(database.getName());
 
@@ -87,8 +90,8 @@ public class OTxTask extends OAbstract2pcTask {
               continue;
           }
 
-          final int clId = createRT.clusterId > -1 ? createRT.clusterId
-              : createRT.getRid().isValid() ? createRT.getRid().getClusterId() : -1;
+          final int clId =
+              createRT.clusterId > -1 ? createRT.clusterId : createRT.getRid().isValid() ? createRT.getRid().getClusterId() : -1;
           final String clusterName = clId > -1 ? database.getClusterNameById(clId) : null;
 
           if (dCfg.isServerContainingCluster(iManager.getLocalNodeName(), clusterName))
@@ -152,7 +155,7 @@ public class OTxTask extends OAbstract2pcTask {
       // if (e instanceof ODistributedRecordLockedException)
       // ddb.dumpLocks();
       ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-          "Rolling back transaction db=%s (reqId=%s error=%s)...", database.getName(), requestId, e);
+          "Rolling back transaction on local server db=%s (reqId=%s error=%s)...", database.getName(), requestId, e);
 
       database.rollback();
       // ddb.popTxContext(requestId);
@@ -164,9 +167,6 @@ public class OTxTask extends OAbstract2pcTask {
         ODistributedServerLog.info(this, getNodeSource(), null, DIRECTION.NONE, "Error on distributed transaction commit", e);
 
       return e;
-    } finally {
-      ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-          "Transaction completed db=%s (reqId=%s)...", database.getName(), requestId);
     }
   }
 

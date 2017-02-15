@@ -19,17 +19,6 @@
  */
 package com.orientechnologies.orient.core.db;
 
-import java.io.File;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -46,18 +35,26 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Paths;
+import java.util.*;
+import java.util.concurrent.Callable;
+
 /**
  * Created by tglman on 08/04/16.
  */
-public class OrientDBEmbedded implements OrientDB {
-  private final Map<String, OAbstractPaginatedStorage> storages = new HashMap<>();
-  private final Set<ODatabasePool>                     pools    = new HashSet<>();
-  private final    OrientDBConfig configurations;
-  private final    String         basePath;
-  private final    OEngine        memory;
-  private final    OEngine        disk;
-  private volatile Thread         shutdownThread;
-  private final    Orient         orient;
+public class OrientDBEmbedded implements OrientDBInternal {
+  protected final Map<String, OAbstractPaginatedStorage> storages = new HashMap<>();
+  protected final Set<ODatabasePoolInternal>             pools    = new HashSet<>();
+  protected final    OrientDBConfig configurations;
+  protected final    String         basePath;
+  protected final    OEngine        memory;
+  protected final    OEngine        disk;
+  protected volatile Thread         shutdownThread;
+  protected final    Orient         orient;
+  private volatile boolean open = true;
 
   public OrientDBEmbedded(String directoryPath, OrientDBConfig configurations, Orient orient) {
     super();
@@ -101,6 +98,7 @@ public class OrientDBEmbedded implements OrientDB {
 
   @Override
   public synchronized ODatabaseDocumentInternal open(String name, String user, String password, OrientDBConfig config) {
+    checkOpen();
     try {
       config = solveConfig(config);
       OAbstractPaginatedStorage storage = getStorage(name);
@@ -115,15 +113,20 @@ public class OrientDBEmbedded implements OrientDB {
     }
   }
 
-  private OrientDBConfig solveConfig(OrientDBConfig config) {
+  protected OrientDBConfig solveConfig(OrientDBConfig config) {
     if (config != null) {
       config.setParent(this.configurations);
       return config;
-    } else
-      return this.configurations;
+    } else {
+      OrientDBConfig cfg = OrientDBConfig.defaultConfig();
+      cfg.setParent(this.configurations);
+      return cfg;
+    }
+
   }
 
   public synchronized OEmbeddedDatabasePool poolOpen(String name, String user, String password, OEmbeddedPoolByFactory pool) {
+    checkOpen();
     OAbstractPaginatedStorage storage = getStorage(name);
     storage.open(pool.getConfig().getConfigurations());
     final OEmbeddedDatabasePool embedded = new OEmbeddedDatabasePool(pool, storage);
@@ -131,7 +134,7 @@ public class OrientDBEmbedded implements OrientDB {
     return embedded;
   }
 
-  private OAbstractPaginatedStorage getStorage(String name) {
+  protected OAbstractPaginatedStorage getStorage(String name) {
     OAbstractPaginatedStorage storage = storages.get(name);
     if (storage == null) {
       storage = (OAbstractPaginatedStorage) disk.createStorage(buildName(name), new HashMap<>());
@@ -140,24 +143,24 @@ public class OrientDBEmbedded implements OrientDB {
     return storage;
   }
 
-  private String buildName(String name) {
+  protected String buildName(String name) {
     if (basePath == null) {
       throw new ODatabaseException("OrientDB instanced created without physical path, only memory databases are allowed");
     }
     return basePath + "/" + name;
   }
 
-  public void create(String name, String user, String password, DatabaseType type) {
+  public void create(String name, String user, String password, ODatabaseType type) {
     create(name, user, password, type, null);
   }
 
   @Override
-  public synchronized void create(String name, String user, String password, DatabaseType type, OrientDBConfig config) {
+  public synchronized void create(String name, String user, String password, ODatabaseType type, OrientDBConfig config) {
     if (!exists(name, user, password)) {
       try {
         config = solveConfig(config);
         OAbstractPaginatedStorage storage;
-        if (type == DatabaseType.MEMORY) {
+        if (type == ODatabaseType.MEMORY) {
           storage = (OAbstractPaginatedStorage) memory.createStorage(name, new HashMap<>());
         } else {
           storage = (OAbstractPaginatedStorage) disk.createStorage(buildName(name), new HashMap<>());
@@ -196,8 +199,13 @@ public class OrientDBEmbedded implements OrientDB {
     }
   }
 
-  private void internalCreate(OrientDBConfig config, OAbstractPaginatedStorage storage) {
-    storage.create(config.getConfigurations());
+  protected void internalCreate(OrientDBConfig config, OAbstractPaginatedStorage storage) {
+    try {
+      storage.create(config.getConfigurations());
+    } catch (IOException e) {
+      throw OException.wrapException(new ODatabaseException("Error on database creation"), e);
+    }
+
     ORecordSerializer serializer = ORecordSerializerFactory.instance().getDefaultRecordSerializer();
     if (serializer.toString().equals("ORecordDocument2csv"))
       throw new ODatabaseException("Impossible to create the database with ORecordDocument2csv serializer");
@@ -217,9 +225,10 @@ public class OrientDBEmbedded implements OrientDB {
 
   @Override
   public synchronized boolean exists(String name, String user, String password) {
+    checkOpen();
     if (!storages.containsKey(name)) {
       if (basePath != null) {
-        return OLocalPaginatedStorage.exists(buildName(name));
+        return OLocalPaginatedStorage.exists(Paths.get(buildName(name)));
       } else
         return false;
     }
@@ -228,18 +237,20 @@ public class OrientDBEmbedded implements OrientDB {
 
   @Override
   public synchronized void drop(String name, String user, String password) {
+    checkOpen();
     if (exists(name, user, password)) {
       getStorage(name).delete();
       storages.remove(name);
     }
   }
 
-  private interface DatabaseFound {
+  protected interface DatabaseFound {
     void found(String name);
   }
 
   @Override
   public synchronized Set<String> listDatabases(String user, String password) {
+    checkOpen();
     // SEARCH IN CONFIGURED PATHS
     final Set<String> databases = new HashSet<>();
     // SEARCH IN DEFAULT DATABASE DIRECTORY
@@ -263,12 +274,13 @@ public class OrientDBEmbedded implements OrientDB {
     }
   }
 
-  public ODatabasePool openPool(String name, String user, String password) {
+  public ODatabasePoolInternal openPool(String name, String user, String password) {
     return openPool(name, user, password, null);
   }
 
   @Override
-  public ODatabasePool openPool(String name, String user, String password, OrientDBConfig config) {
+  public ODatabasePoolInternal openPool(String name, String user, String password, OrientDBConfig config) {
+    checkOpen();
     OEmbeddedPoolByFactory pool = new OEmbeddedPoolByFactory(this, name, user, password, solveConfig(config));
     pools.add(pool);
     return pool;
@@ -278,9 +290,10 @@ public class OrientDBEmbedded implements OrientDB {
   public synchronized void close() {
     removeShutdownHook();
     internalClose();
+    open = false;
   }
 
-  private synchronized void internalClose() {
+  protected synchronized void internalClose() {
     final List<OStorage> storagesCopy = new ArrayList<OStorage>(storages.values());
     for (OStorage stg : storagesCopy) {
       try {
@@ -307,7 +320,7 @@ public class OrientDBEmbedded implements OrientDB {
     T create(OAbstractPaginatedStorage storage);
   }
 
-  private void scanDatabaseDirectory(final File directory, DatabaseFound found) {
+  protected void scanDatabaseDirectory(final File directory, DatabaseFound found) {
     if (directory.exists() && directory.isDirectory()) {
       final File[] files = directory.listFiles();
       if (files != null)
@@ -325,7 +338,7 @@ public class OrientDBEmbedded implements OrientDB {
   }
 
   public synchronized void initCustomStorage(String name, String path, String userName, String userPassword) {
-    boolean exists = OLocalPaginatedStorage.exists(path);
+    boolean exists = OLocalPaginatedStorage.exists(Paths.get(path));
     OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) disk.createStorage(path, new HashMap<>());
     // TODO: Add Creation settings and parameters
     if (!exists) {
@@ -356,8 +369,13 @@ public class OrientDBEmbedded implements OrientDB {
   public String getDatabasePath(String iDatabaseName) {
     OAbstractPaginatedStorage storage = storages.get(iDatabaseName);
     if (storage != null && storage instanceof OLocalPaginatedStorage)
-      return ((OLocalPaginatedStorage) storage).getStoragePath();
+      return ((OLocalPaginatedStorage) storage).getStoragePath().toString();
     return null;
+  }
+
+  private void checkOpen() {
+    if (!open)
+      throw new ODatabaseException("OrientDB Instance is closed");
   }
 
 }

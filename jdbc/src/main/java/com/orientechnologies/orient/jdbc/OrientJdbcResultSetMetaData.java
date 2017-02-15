@@ -29,10 +29,7 @@ import java.math.BigDecimal;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.ListIterator;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Stream;
 
 /**
@@ -61,13 +58,13 @@ public class OrientJdbcResultSetMetaData implements ResultSetMetaData {
     // NOT SURE ABOUT THE FOLLOWING MAPPINGS
     typesSqlTypes.put(OType.BINARY, Types.BINARY);
     typesSqlTypes.put(OType.EMBEDDED, Types.JAVA_OBJECT);
-    typesSqlTypes.put(OType.EMBEDDEDLIST, Types.JAVA_OBJECT);
+    typesSqlTypes.put(OType.EMBEDDEDLIST, Types.ARRAY);
     typesSqlTypes.put(OType.EMBEDDEDMAP, Types.JAVA_OBJECT);
-    typesSqlTypes.put(OType.EMBEDDEDSET, Types.JAVA_OBJECT);
+    typesSqlTypes.put(OType.EMBEDDEDSET, Types.ARRAY);
     typesSqlTypes.put(OType.LINK, Types.JAVA_OBJECT);
-    typesSqlTypes.put(OType.LINKLIST, Types.JAVA_OBJECT);
+    typesSqlTypes.put(OType.LINKLIST, Types.ARRAY);
     typesSqlTypes.put(OType.LINKMAP, Types.JAVA_OBJECT);
-    typesSqlTypes.put(OType.LINKSET, Types.JAVA_OBJECT);
+    typesSqlTypes.put(OType.LINKSET, Types.ARRAY);
     typesSqlTypes.put(OType.TRANSIENT, Types.NULL);
   }
 
@@ -95,7 +92,7 @@ public class OrientJdbcResultSetMetaData implements ResultSetMetaData {
     Object value = this.resultSet.getObject(column);
     if (value == null)
       return null;
-    return value.getClass().getName();
+    return value.getClass().getCanonicalName();
   }
 
   public int getColumnDisplaySize(final int column) throws SQLException {
@@ -187,7 +184,8 @@ public class OrientJdbcResultSetMetaData implements ResultSetMetaData {
               return Types.BLOB;
             }
           } else {
-            return Types.JAVA_OBJECT;
+          return typesSqlTypes.get(otype);
+//            return Types.JAVA_OBJECT;
           }
         } else {
           return typesSqlTypes.get(otype);
@@ -225,6 +223,8 @@ public class OrientJdbcResultSetMetaData implements ResultSetMetaData {
       return typesSqlTypes.get(OType.SHORT);
     else if (value instanceof String)
       return typesSqlTypes.get(OType.STRING);
+    else if (value instanceof List)
+      return typesSqlTypes.get(OType.EMBEDDEDLIST);
     else
       return Types.JAVA_OBJECT;
   }

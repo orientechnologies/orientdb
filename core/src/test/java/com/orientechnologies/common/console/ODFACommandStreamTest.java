@@ -1,35 +1,32 @@
 package com.orientechnologies.common.console;
 
-import org.junit.Assert; import org.junit.Test;
-
-import java.util.Arrays;
-import java.util.List;
+import org.junit.Assert;
 
 /**
  * @author Artem Orobets (enisher-at-gmail.com)
  */
 public class ODFACommandStreamTest {
-  @Test
+
   public void testNextCommand() throws Exception {
     test("one;two", "one", "two");
   }
 
-  @Test
+
   public void testNextCommandQuotes() throws Exception {
     test("Select 'one;'; Select \"t;w;o\"", "Select 'one;'", "Select \"t;w;o\"");
   }
 
-  @Test
+
   public void testNextCommandSeparatorAtTheEnd() throws Exception {
     test("one;two;", "one", "two");
   }
 
-  @Test
+
   public void testNextCommandWhitespaces() throws Exception {
     test("\tone  ; two   ", "one", "two");
   }
 
-	@Test
+
   public void testEscaping() {
 			test("one \\\n two \\\r 'aaa \\' bbb';  \"ccc \\\" \"", "one \\\n two \\\r 'aaa \\' bbb'", "\"ccc \\\" \"");
   }

@@ -1,6 +1,6 @@
 /*
  *
- *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
+ *  *  Copyright 2016 Orient Technologies LTD (info(at)orientdb.com)
  *  *
  *  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  *  you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  *  *  See the License for the specific language governing permissions and
  *  *  limitations under the License.
  *  *
- *  * For more information: http://orientdb.com
+ *  * For more information: http://www.orientdb.com
  *
  */
 package com.orientechnologies.orient.server.distributed;
@@ -34,7 +34,7 @@ import java.util.concurrent.Executors;
 /**
  * Remote server channel.
  *
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
+ * @author Luca Garulli
  */
 public class ORemoteServerChannel {
   private final ODistributedServerManager manager;
@@ -44,18 +44,18 @@ public class ORemoteServerChannel {
   private final String                    userName;
   private final String                    userPassword;
   private final String                    server;
-  private OChannelBinarySynchClient       channel;
+  private       OChannelBinarySynchClient channel;
 
-  private static final int                MAX_RETRY              = 3;
-  private static final String             CLIENT_TYPE            = "OrientDB Server";
-  private static final boolean            COLLECT_STATS          = false;
-  private int                             sessionId              = -1;
-  private byte[]                          sessionToken;
-  private OContextConfiguration           contextConfig          = new OContextConfiguration();
-  private Date                            createdOn              = new Date();
+  private static final int     MAX_RETRY     = 3;
+  private static final String  CLIENT_TYPE   = "OrientDB Server";
+  private static final boolean COLLECT_STATS = false;
+  private              int     sessionId     = -1;
+  private byte[] sessionToken;
+  private OContextConfiguration contextConfig = new OContextConfiguration();
+  private Date                  createdOn     = new Date();
 
-  private volatile int                    totalConsecutiveErrors = 0;
-  private final static int                MAX_CONSECUTIVE_ERRORS = 10;
+  private volatile     int totalConsecutiveErrors = 0;
+  private final static int MAX_CONSECUTIVE_ERRORS = 10;
 
   public ORemoteServerChannel(final ODistributedServerManager manager, final String iServer, final String iURL, final String user,
       final String passwd) throws IOException {
@@ -141,7 +141,7 @@ public class ORemoteServerChannel {
   protected synchronized <T> T networkOperation(final byte operationId, final OStorageRemoteOperation<T> operation,
       final String errorMessage, final int maxRetry, final boolean autoReconnect) {
     Exception lastException = null;
-    for (int retry = 1; retry <= maxRetry; ++retry) {
+    for (int retry = 1; retry <= maxRetry && totalConsecutiveErrors < MAX_CONSECUTIVE_ERRORS; ++retry) {
       try {
         channel.setWaitResponseTimeout();
         channel.beginRequest(operationId, sessionId, sessionToken);
@@ -191,6 +191,9 @@ public class ORemoteServerChannel {
         }
       }
     }
+
+    if (lastException == null)
+      handleNewError();
 
     throw OException.wrapException(new ODistributedException(errorMessage), lastException);
   }

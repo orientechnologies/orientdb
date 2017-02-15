@@ -22,7 +22,8 @@ public class OReturnStatement extends OSimpleExecStatement {
     super(p, id);
   }
 
-  @Override public OResultSet executeSimple(OCommandContext ctx) {
+  @Override
+  public OResultSet executeSimple(OCommandContext ctx) {
     OInternalResultSet rs = new OInternalResultSet();
     Object result = expression.execute((OResult) null, ctx);
     if (result instanceof OResult) {
@@ -31,6 +32,18 @@ public class OReturnStatement extends OSimpleExecStatement {
       OResultInternal res = new OResultInternal();
       res.setElement((OIdentifiable) result);
       rs.add(res);
+    } else if (result instanceof OResultSet) {
+      if (!((OResultSet) result).hasNext()) {
+        try {
+          ((OResultSet) result).reset();
+        } catch (UnsupportedOperationException e) {
+          // just try to reset the RS, in case it was already used during the script execution already
+          // You can have two cases here:
+          // - a result stored in a LET, that is always resettable, as it's copied
+          // - a result from a direct query (eg. RETURN SELECT...), that is new or just empty, so this operation does not hurt
+        }
+      }
+      return (OResultSet) result;
     } else {
       OResultInternal res = new OResultInternal();
       res.setProperty("value", result);
@@ -39,7 +52,8 @@ public class OReturnStatement extends OSimpleExecStatement {
     return rs;
   }
 
-  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("RETURN");
     if (expression != null) {
       builder.append(" ");
@@ -47,13 +61,15 @@ public class OReturnStatement extends OSimpleExecStatement {
     }
   }
 
-  @Override public OReturnStatement copy() {
+  @Override
+  public OReturnStatement copy() {
     OReturnStatement result = new OReturnStatement(-1);
     result.expression = expression == null ? null : expression.copy();
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -67,7 +83,8 @@ public class OReturnStatement extends OSimpleExecStatement {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     return expression != null ? expression.hashCode() : 0;
   }
 }

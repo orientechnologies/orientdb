@@ -389,6 +389,7 @@ public enum OGlobalConfiguration {
       Integer.class, -1, true),
 
   // FILE
+  @Deprecated
   TRACK_FILE_CLOSE("file.trackFileClose",
       "Log all the cases when files are closed. This is needed only for internal debugging purposes", Boolean.class, false),
 
@@ -658,6 +659,9 @@ public enum OGlobalConfiguration {
   DISTRIBUTED_CRUD_TASK_SYNCH_TIMEOUT("distributed.crudTaskTimeout", "Maximum timeout (in ms) to wait for CRUD remote tasks",
       Long.class, 3000l, true),
 
+  DISTRIBUTED_MAX_STARTUP_DELAY("distributed.maxStartupDelay", "Maximum delay time (in ms) to wait for a server to start",
+      Long.class, 10000l, true),
+
   DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT("distributed.commandTaskTimeout",
       "Maximum timeout (in ms) to wait for command distributed tasks", Long.class, 2 * 60 * 1000l, true),
 
@@ -782,6 +786,12 @@ public enum OGlobalConfiguration {
   @OApi(maturity = OApi.MATURITY.NEW)DISTRIBUTED_BACKUP_DIRECTORY("distributed.backupDirectory",
       "Directory where the copy of an existent database is saved, before it is downloaded from the cluster. Leave it empty to avoid the backup.",
       String.class, "../backup/databases"),
+
+  /**
+   * @Since 2.2.15
+   */
+  @OApi(maturity = OApi.MATURITY.NEW)DISTRIBUTED_BACKUP_TRY_INCREMENTAL_FIRST("distributed.backupTryIncrementalFirst",
+      "Try to execute an incremental backup first.", Boolean.class, true),
 
   /**
    * @Since 2.1

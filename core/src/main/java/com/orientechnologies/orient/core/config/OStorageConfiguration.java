@@ -201,7 +201,7 @@ public class OStorageConfiguration implements OSerializableStream {
   }
 
   public String getDirectory() {
-    return fileTemplate.location != null ? fileTemplate.getLocation() : ((OLocalPaginatedStorage) storage).getStoragePath();
+    return fileTemplate.location != null ? fileTemplate.getLocation() : ((OLocalPaginatedStorage) storage).getStoragePath().toString();
   }
 
   public Locale getLocaleInstance() {

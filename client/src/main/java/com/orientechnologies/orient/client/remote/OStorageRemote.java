@@ -64,6 +64,7 @@ import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.orient.enterprise.channel.binary.ODistributedRedirectException;
 import com.orientechnologies.orient.enterprise.channel.binary.OTokenSecurityException;
 
 import javax.naming.NamingException;
@@ -87,16 +88,16 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   @Deprecated
-  public static final  String        PARAM_CONNECTION_STRATEGY = "connectionStrategy";
+  public static final String PARAM_CONNECTION_STRATEGY = "connectionStrategy";
 
-  private static final String        DEFAULT_HOST              = "localhost";
-  private static final int           DEFAULT_PORT              = 2424;
-  private static final int           DEFAULT_SSL_PORT          = 2434;
-  private static final String        ADDRESS_SEPARATOR         = ";";
-  public static final  String        DRIVER_NAME               = "OrientDB Java";
-  private static final String        LOCAL_IP                  = "127.0.0.1";
-  private static final String        LOCALHOST                 = "localhost";
-  private static       AtomicInteger sessionSerialId           = new AtomicInteger(-1);
+  private static final String        DEFAULT_HOST      = "localhost";
+  private static final int           DEFAULT_PORT      = 2424;
+  private static final int           DEFAULT_SSL_PORT  = 2434;
+  private static final String        ADDRESS_SEPARATOR = ";";
+  public static final  String        DRIVER_NAME       = "OrientDB Java";
+  private static final String        LOCAL_IP          = "127.0.0.1";
+  private static final String        LOCALHOST         = "localhost";
+  private static       AtomicInteger sessionSerialId   = new AtomicInteger(-1);
 
   public enum CONNECTION_STRATEGY {
     STICKY, ROUND_ROBIN_CONNECT, ROUND_ROBIN_REQUEST
@@ -245,11 +246,15 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     if (session.commandExecuting)
       throw new ODatabaseException(
           "Cannot execute the request because an asynchronous operation is in progress. Please use a different connection");
-
+    
+    String serverUrl = null;
     do {
       session.commandExecuting = true;
       OChannelBinaryAsynchClient network = null;
-      String serverUrl = getNextAvailableServerURL(false, session);
+      
+      if (serverUrl == null)
+        serverUrl = getNextAvailableServerURL(false, session);
+      
       do {
         try {
           network = getNetwork(serverUrl);
@@ -270,19 +275,30 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         }
 
         return operation.execute(network, session);
+      } catch (ODistributedRedirectException e) {
+        connectionManager.release(network);
+        OLogManager.instance()
+            .debug(this, "Redirecting the request from server '%s' to the server '%s' because %s", e.getFromServer(), e.toString(),
+                e.getMessage());
+
+        // RECONNECT TO THE SERVER SUGGESTED IN THE EXCEPTION
+        serverUrl = e.getToServerAddress();
       } catch (OModificationOperationProhibitedException mope) {
         connectionManager.release(network);
         handleDBFreeze();
+        serverUrl = null;
       } catch (OTokenException e) {
         connectionManager.release(network);
         session.removeServerSession(network.getServerURL());
         if (--retry <= 0)
           throw OException.wrapException(new OStorageException(errorMessage), e);
+        serverUrl = null;
       } catch (OTokenSecurityException e) {
         connectionManager.release(network);
         session.removeServerSession(network.getServerURL());
         if (--retry <= 0)
           throw OException.wrapException(new OStorageException(errorMessage), e);
+        serverUrl = null;
       } catch (OOfflineNodeException e) {
         connectionManager.release(network);
         // Remove the current url because the node is offline
@@ -293,13 +309,15 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           // Not thread Safe ...
           activeSession.removeServerSession(serverUrl);
         }
-
+        serverUrl = null;
       } catch (IOException e) {
         connectionManager.release(network);
         retry = handleIOException(retry, network, e);
+        serverUrl = null;        
       } catch (OIOException e) {
         connectionManager.release(network);
         retry = handleIOException(retry, network, e);
+        serverUrl = null;        
       } catch (OException e) {
         connectionManager.release(network);
         throw e;
@@ -875,6 +893,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   public void rollback(OTransaction iTx) {
+    if (((OTransactionOptimistic) iTx).isAlreadyCleared()) {
+      ORollbackTransactionRequest request = new ORollbackTransactionRequest(iTx.getId());
+      ORollbackTransactionResponse response = networkOperation(request, "Error on fetching next page for statment: " + request);
+    }
   }
 
   public int getClusterIdByName(final String iClusterName) {

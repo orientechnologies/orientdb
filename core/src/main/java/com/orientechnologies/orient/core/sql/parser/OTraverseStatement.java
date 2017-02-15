@@ -44,7 +44,6 @@ public class OTraverseStatement extends OStatement {
     super(p, id);
   }
 
-
   public void validate() throws OCommandSQLParsingException {
 //    for(OTraverseProjectionItem projection:projections) {
 //
@@ -54,13 +53,17 @@ public class OTraverseStatement extends OStatement {
 //        }
 //
 //    }
-    if(target.getItem().getStatement()!=null){
+    if (target.getItem().getStatement() != null) {
       target.getItem().getStatement().validate();
     }
   }
 
-  @Override public OResultSet execute(ODatabase db, Object[] args) {
+  @Override
+  public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx) {
     OBasicCommandContext ctx = new OBasicCommandContext();
+    if (parentCtx != null) {
+      ctx.setParentWithoutOverridingChild(parentCtx);
+    }
     ctx.setDatabase(db);
     Map<Object, Object> params = new HashMap<>();
     if (args != null) {
@@ -74,8 +77,12 @@ public class OTraverseStatement extends OStatement {
     return new OLocalResultSet(executionPlan);
   }
 
-  @Override public OResultSet execute(ODatabase db, Map params) {
+  @Override
+  public OResultSet execute(ODatabase db, Map params, OCommandContext parentCtx) {
     OBasicCommandContext ctx = new OBasicCommandContext();
+    if (parentCtx != null) {
+      ctx.setParentWithoutOverridingChild(parentCtx);
+    }
     ctx.setDatabase(db);
     ctx.setInputParameters(params);
     OInternalExecutionPlan executionPlan = createExecutionPlan(ctx);
@@ -87,7 +94,6 @@ public class OTraverseStatement extends OStatement {
     OTraverseExecutionPlanner planner = new OTraverseExecutionPlanner(this);
     return planner.createExecutionPlan(ctx);
   }
-
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("TRAVERSE ");
@@ -134,7 +140,8 @@ public class OTraverseStatement extends OStatement {
 
   }
 
-  @Override public OStatement copy() {
+  @Override
+  public OStatement copy() {
     OTraverseStatement result = new OTraverseStatement(-1);
     result.projections = projections == null ? null : projections.stream().map(x -> x.copy()).collect(Collectors.toList());
     result.target = target == null ? null : target.copy();
@@ -145,7 +152,8 @@ public class OTraverseStatement extends OStatement {
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -169,7 +177,8 @@ public class OTraverseStatement extends OStatement {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = projections != null ? projections.hashCode() : 0;
     result = 31 * result + (target != null ? target.hashCode() : 0);
     result = 31 * result + (whileClause != null ? whileClause.hashCode() : 0);
@@ -179,7 +188,8 @@ public class OTraverseStatement extends OStatement {
     return result;
   }
 
-  @Override public boolean isIdempotent() {
+  @Override
+  public boolean isIdempotent() {
     return true;
   }
 

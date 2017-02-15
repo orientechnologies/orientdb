@@ -302,11 +302,8 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
         return;
 
       document = database.load(new ORecordId(database.getStorage().getConfiguration().indexMgrRecordId));
-      final ODocument doc = new ODocument();
-      document.copyTo(doc);
 
-      Runnable recreateIndexesTask = new RecreateIndexesTask(getStorage(), doc);
-
+      Runnable recreateIndexesTask = new RecreateIndexesTask(database.getStorage());
       recreateIndexesThread = new Thread(recreateIndexesTask, "OrientDB rebuild indexes");
       recreateIndexesThread.start();
     } finally {
@@ -486,26 +483,37 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
   }
 
   private class RecreateIndexesTask implements Runnable {
-    private final OStorage  storage;
-    private final ODocument doc;
-    private       int       ok;
-    private       int       errors;
+    private final OStorage storage;
+    private       int      ok;
+    private       int      errors;
 
-    public RecreateIndexesTask(OStorage storage, ODocument doc) {
+    public RecreateIndexesTask(OStorage storage) {
       this.storage = storage;
-      this.doc = doc;
     }
 
     @Override
     public void run() {
       try {
-        ODatabaseDocumentEmbedded newDb = new ODatabaseDocumentEmbedded(storage);
-
+        final ODatabaseDocumentEmbedded newDb = new ODatabaseDocumentEmbedded(storage);
         newDb.activateOnCurrentThread();
         newDb.resetInitialization();
         newDb.internalOpen("admin", "nopass", null, false);
 
-        final Collection<ODocument> idxs = getConfiguration();
+        final Collection<ODocument> indexesToRebuild;
+        acquireExclusiveLock();
+        try {
+          final Collection<ODocument> knownIndexes = document.field(CONFIG_INDEXES);
+          if (knownIndexes == null) {
+            OLogManager.instance().warn(this, "List of indexes is empty");
+            indexesToRebuild = Collections.emptyList();
+          } else {
+            indexesToRebuild = new ArrayList<>();
+            for (ODocument index : knownIndexes)
+              indexesToRebuild.add(index.copy()); // make copies to safely iterate them later
+          }
+        } finally {
+          releaseExclusiveLock();
+        }
 
         if (storage instanceof OAbstractPaginatedStorage) {
           final OAbstractPaginatedStorage abstractPaginatedStorage = (OAbstractPaginatedStorage) storage;
@@ -513,7 +521,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
         }
 
         try {
-          recreateIndexes(storage, idxs);
+          recreateIndexes(storage, indexesToRebuild, newDb);
         } finally {
           if (storage instanceof OAbstractPaginatedStorage) {
             final OAbstractPaginatedStorage abstractPaginatedStorage = (OAbstractPaginatedStorage) storage;
@@ -528,7 +536,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
       }
     }
 
-    private void recreateIndexes(OStorage storage, Collection<ODocument> idxs) {
+    private void recreateIndexes(OStorage storage, Collection<ODocument> idxs, ODatabaseDocumentEmbedded db) {
       ok = 0;
       errors = 0;
       for (ODocument idx : idxs) {
@@ -541,7 +549,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
         }
       }
 
-      save();
+      db.getMetadata().getIndexManager().save();
 
       rebuildCompleted = true;
 
@@ -638,15 +646,6 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
       }
 
       return OIndexes.createIndex(storage, indexName, indexType, algorithm, valueContainerAlgorithm, metadata, -1);
-    }
-
-    private Collection<ODocument> getConfiguration() {
-      final Collection<ODocument> idxs = doc.field(CONFIG_INDEXES);
-      if (idxs == null) {
-        OLogManager.instance().warn(this, "List of indexes is empty");
-        return Collections.emptyList();
-      }
-      return idxs;
     }
   }
 

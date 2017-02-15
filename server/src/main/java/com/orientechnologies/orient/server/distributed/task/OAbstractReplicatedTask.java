@@ -27,7 +27,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 /**
  * Base class for Replicated tasks.
  *
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
+ * @author Luca Garulli (l.garulli--at--orientdb.com)
  *
  */
 public abstract class OAbstractReplicatedTask extends OAbstractRemoteTask {
@@ -44,6 +44,6 @@ public abstract class OAbstractReplicatedTask extends OAbstractRemoteTask {
   }
 
   public OLogSequenceNumber getLastLSN(){
-    return null;
+    return lastLSN;
   }
 }

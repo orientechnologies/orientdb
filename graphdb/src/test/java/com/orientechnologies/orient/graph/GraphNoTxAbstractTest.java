@@ -25,15 +25,11 @@ import org.junit.AfterClass;
 
 /**
  * Base class for tests against Non transactonal Graphs.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public abstract class GraphNoTxAbstractTest {
   protected static OrientGraphNoTx graph;
-
-  public static enum ENV {
-    DEV, RELEASE, CI
-  }
 
   public static ENV getEnvironment() {
     String envName = System.getProperty("orientdb.test.env", "dev").toUpperCase();
@@ -58,7 +54,7 @@ public abstract class GraphNoTxAbstractTest {
 
   public static void init(final String dbName) {
     final String storageType = getStorageType();
-    final String buildDirectory = System.getProperty("buildDirectory", ".");
+    final String buildDirectory = "./target/";
 
 //    OFileUtils.deleteRecursively(new File(buildDirectory + "/" + dbName));
 
@@ -75,5 +71,9 @@ public abstract class GraphNoTxAbstractTest {
       graph.shutdown();
       graph = null;
     }
+  }
+
+  public static enum ENV {
+    DEV, RELEASE, CI
   }
 }

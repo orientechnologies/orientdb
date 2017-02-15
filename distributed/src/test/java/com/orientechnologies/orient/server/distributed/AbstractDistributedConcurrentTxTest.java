@@ -22,10 +22,7 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.db.ODatabasePool;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -45,7 +42,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * Test distributed TX
  */
 public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistributedWriteTest {
-  protected ODatabasePool factory;
+  protected ODatabasePool pool;
   protected ORID          v;
   protected AtomicLong lockExceptions              = new AtomicLong(0l);
   protected boolean    expectedConcurrentException = true;
@@ -66,7 +63,7 @@ public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistri
       String name = Integer.toString(serverId);
 
       for (int i = 0; i < count; i++) {
-        final ODatabaseDocument graph = factory.acquire();
+        final ODatabaseDocument graph = pool.acquire();
 
         final OVertex localVertex = graph.load(v);
 
@@ -137,7 +134,7 @@ public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistri
     else
       Assert.assertTrue("lockExceptions are " + totalLockExceptions, totalLockExceptions == 0);
 
-    factory.close();
+    pool.close();
   }
 
   @Override
@@ -160,8 +157,7 @@ public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistri
     OClass provider = graph.createClass("Provider", person.getName());
     provider.createProperty("totalPurchased", OType.DECIMAL);
 
-    factory = OrientDB.fromUrl(graph.getURL().substring(0, graph.getURL().length() - (graph.getName().length() + 1)).replaceFirst("plocal", "embedded"),
-        OrientDBConfig.defaultConfig()).openPool(graph.getName(), "admin", "admin");
+    pool = new ODatabasePool(graph.getURL(), "admin", "admin", OrientDBConfig.defaultConfig());
 
     v = createVertex(graph, 0, 0, 0).getIdentity();
   }

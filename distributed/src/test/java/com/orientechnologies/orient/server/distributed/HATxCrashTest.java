@@ -70,45 +70,45 @@ public class HATxCrashTest extends AbstractHARemoveNode {
               }
             }, // ACTION
                 new Callable() {
-              @Override
-              public Object call() throws Exception {
-                Assert.assertTrue("Insert was too fast", inserting);
-                banner("SIMULATE FAILURE ON SERVER " + (SERVERS - 1));
-                delayWriter = 100;
-                serverInstance.get(SERVERS - 1).crashServer();
-                poolFactory.reset();
-                lastServerOn = false;
-
-                executeWhen(new Callable<Boolean>() {
-                  @Override
-                  public Boolean call() throws Exception {
-                    final ODatabaseDocumentTx database = poolFactory.get(getDatabaseURL(serverInstance.get(0)), "admin", "admin")
-                        .acquire();
-                    try {
-                      return database.countClass("Person") > (count * SERVERS) * 2 / 3;
-                    } finally {
-                      database.close();
-                    }
-                  }
-                }, new Callable() {
                   @Override
                   public Object call() throws Exception {
                     Assert.assertTrue("Insert was too fast", inserting);
+                    banner("SIMULATE FAILURE ON SERVER " + (SERVERS - 1));
+                    delayWriter = 100;
+                    serverInstance.get(SERVERS - 1).crashServer();
+                    poolFactory.reset();
+                    lastServerOn = false;
 
-                    banner("RESTARTING SERVER " + (SERVERS - 1) + "...");
-                    try {
-                      serverInstance.get(SERVERS - 1)
-                          .startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
-                      lastServerOn = true;
-                    } catch (Exception e) {
-                      e.printStackTrace();
-                    }
+                    executeWhen(new Callable<Boolean>() {
+                      @Override
+                      public Boolean call() throws Exception {
+                        final ODatabaseDocumentTx database = poolFactory
+                            .get(getDatabaseURL(serverInstance.get(0)), "admin", "admin").acquire();
+                        try {
+                          return database.countClass("Person") > (count * SERVERS) * 2 / 3;
+                        } finally {
+                          database.close();
+                        }
+                      }
+                    }, new Callable() {
+                      @Override
+                      public Object call() throws Exception {
+                        Assert.assertTrue("Insert was too fast", inserting);
+
+                        banner("RESTARTING SERVER " + (SERVERS - 1) + "...");
+                        try {
+                          serverInstance.get(SERVERS - 1)
+                              .startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
+                          lastServerOn = true;
+                        } catch (Exception e) {
+                          e.printStackTrace();
+                        }
+                        return null;
+                      }
+                    });
                     return null;
                   }
                 });
-                return null;
-              }
-            });
 
           } catch (Exception e) {
             e.printStackTrace();
@@ -134,7 +134,12 @@ public class HATxCrashTest extends AbstractHARemoveNode {
   }
 
   protected String getDatabaseURL(final ServerRun server) {
-    return "remote:" + server.getBinaryProtocolAddress() + "/" + getDatabaseName();
+    final String address = server.getBinaryProtocolAddress();
+
+    if (address == null)
+      return null;
+
+    return "remote:" + address + "/" + getDatabaseName();
   }
 
   @Override

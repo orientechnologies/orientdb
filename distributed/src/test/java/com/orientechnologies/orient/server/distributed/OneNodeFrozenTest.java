@@ -15,16 +15,15 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.orient.client.remote.OServerAdmin;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import org.junit.Assert;
+import org.junit.Test;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import org.junit.Assert;
-import org.junit.Test;
-
-import com.orientechnologies.orient.client.remote.OServerAdmin;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 /**
  * Starts 3 servers, freeze node3, check other nodes can work in the meanwhile and node3 is realigned once the frozen node is
@@ -143,10 +142,6 @@ public class OneNodeFrozenTest extends AbstractServerClusterTxTest {
     inserting = false;
     Assert.assertFalse(freezeInProgress);
     Assert.assertEquals("Found some nodes has been restarted", 0, nodeLefts.get());
-  }
-
-  protected String getDatabaseURL(final ServerRun server) {
-    return "remote:" + server.getBinaryProtocolAddress() + "/" + getDatabaseName();
   }
 
   @Override

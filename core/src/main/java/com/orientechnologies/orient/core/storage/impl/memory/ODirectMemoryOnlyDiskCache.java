@@ -32,9 +32,9 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -77,7 +77,7 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
    * {@inheritDoc}
    */
   @Override
-  public File getRootDirectory() {
+  public Path getRootDirectory() {
     return null;
   }
 
@@ -597,7 +597,7 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
-  public boolean checkLowDiskSpace() {
+  public boolean checkLowDiskSpace() throws IOException {
     return true;
   }
 

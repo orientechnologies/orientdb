@@ -20,13 +20,7 @@
 
 package com.orientechnologies.common.console;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.Reader;
-import java.io.StringReader;
+import java.io.*;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -35,12 +29,12 @@ import java.util.Set;
  * @author Artem Orobets (enisher-at-gmail.com)
  */
 public class ODFACommandStream implements OCommandStream {
-  public static final int      BUFFER_SIZE = 1024;
-  private final Set<Character> separators  = new HashSet<Character>(Arrays.asList(';', '\n'));
-  private Reader               reader;
+  public static final int            BUFFER_SIZE = 1024;
+  private final       Set<Character> separators  = new HashSet<Character>(Arrays.asList(';', '\n'));
+  private Reader reader;
 
-  private Character            nextCharacter;
-  private State                state;
+  private Character nextCharacter;
+  private State     state;
 
   private enum State {
     S, A, B, C, D, E, F
@@ -102,6 +96,7 @@ public class ODFACommandStream implements OCommandStream {
 
       StringBuilder stateWord = new StringBuilder();
 
+      Character lastSeparator = null;
       while (state != State.E) {
         Character c = nextCharacter();
         String sch = null;
@@ -113,9 +108,10 @@ public class ODFACommandStream implements OCommandStream {
           s = Symbol.AP;
         else if (c.equals('"'))
           s = Symbol.QT;
-        else if (separators.contains(c))
+        else if (separators.contains(c)) {
           s = Symbol.SEP;
-        else if (Character.isWhitespace(c))
+          lastSeparator = c;
+        } else if (Character.isWhitespace(c))
           s = Symbol.WS;
         else if (c == '\\') {
           final Character nextCharacter = nextCharacter();
@@ -151,6 +147,9 @@ public class ODFACommandStream implements OCommandStream {
         }
       }
 
+      if (lastSeparator != null) {
+        return result.toString() + lastSeparator;
+      }
       return result.toString();
     } catch (IOException e) {
       throw new RuntimeException(e);

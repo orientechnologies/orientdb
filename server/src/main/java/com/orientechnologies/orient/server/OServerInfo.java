@@ -29,7 +29,6 @@ import java.util.List;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
-import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
@@ -161,7 +160,7 @@ public class OServerInfo {
       writeField(json, 2, "name", s.getName());
       writeField(json, 2, "type", s.getClass().getSimpleName());
       writeField(json, 2, "path",
-          s instanceof OLocalPaginatedStorage ? ((OLocalPaginatedStorage) s).getStoragePath().replace('\\', '/') : "");
+          s instanceof OLocalPaginatedStorage ? ((OLocalPaginatedStorage) s).getStoragePath().toString().replace('\\', '/') : "");
       writeField(json, 2, "activeUsers", "n.a.");
       json.endObject(2);
     }

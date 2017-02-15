@@ -34,12 +34,12 @@ import java.io.IOException;
 /**
  * Base class for Tasks to be executed remotely.
  *
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
+ * @author Luca Garulli (l.garulli--at--orientdb.com)
  *
  */
 public abstract class OAbstractRemoteTask implements ORemoteTask {
-  private static final long    serialVersionUID = 1L;
-  protected static final int[] PK               = new int[] { -1 };
+  private static final   long  serialVersionUID = 1L;
+  public static final    int[] ALL              = new int[] { -1 };
   protected static final int[] ANY              = new int[] { -2 };
 
   protected transient String   nodeSource;
@@ -61,7 +61,7 @@ public abstract class OAbstractRemoteTask implements ORemoteTask {
 
   @Override
   public int[] getPartitionKey() {
-    return PK;
+    return ANY;
   }
 
   @Override

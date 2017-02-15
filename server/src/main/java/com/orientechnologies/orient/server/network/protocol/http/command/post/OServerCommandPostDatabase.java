@@ -22,7 +22,7 @@ package com.orientechnologies.orient.server.network.protocol.http.command.post;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.OrientDB.DatabaseType;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
@@ -72,7 +72,7 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
           iResponse.send(OHttpUtils.STATUS_CONFLICT_CODE, OHttpUtils.STATUS_CONFLICT_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
               "Database '" + databaseName + "' already exists.", null);
         } else {
-          server.createDatabase(databaseName, DatabaseType.valueOf(storageMode.toUpperCase()), null);
+          server.createDatabase(databaseName, ODatabaseType.valueOf(storageMode.toUpperCase()), null);
           try (ODatabaseDocumentInternal database = server.openDatabase(databaseName, serverUser, serverPassword, null, false)) {
             sendDatabaseInfo(iRequest, iResponse, database);
           }

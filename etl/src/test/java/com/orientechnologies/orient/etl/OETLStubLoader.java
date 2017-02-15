@@ -22,6 +22,7 @@ package com.orientechnologies.orient.etl;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabasePool;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -46,11 +47,11 @@ public class OETLStubLoader extends OETLAbstractLoader {
   @Override
   public void beginLoader(OETLPipeline pipeline) {
 
-    orient = OrientDB.embedded("memory", null);
+    orient = new OrientDB("embedded:", null);
 
-    orient.create("testDatabase", "admin", "admin", OrientDB.DatabaseType.MEMORY);
+    orient.create("testDatabase", ODatabaseType.MEMORY);
 
-    pool = orient.openPool("testDatabase", "admin", "admin");
+    pool = new ODatabasePool(orient, "testDatabase", "admin", "admin");
     pipeline.setPool(pool);
   }
 

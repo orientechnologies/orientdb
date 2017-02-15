@@ -49,13 +49,13 @@ public class DistributedSuperNodeTest extends AbstractServerClusterGraphTest {
   }
 
   @Override
-  protected void setFactorySettings(ODatabasePool factory) {
-//    factory.setConnectionStrategy(OStorageRemote.CONNECTION_STRATEGY.ROUND_ROBIN_REQUEST.toString());
+  protected void setFactorySettings(ODatabasePool pool) {
+//    pool.setConnectionStrategy(OStorageRemote.CONNECTION_STRATEGY.ROUND_ROBIN_REQUEST.toString());
   }
 
   @Override
   protected void onAfterExecution() {
-    ODatabaseDocument graph = factory.acquire();
+    ODatabaseDocument graph = pool.acquire();
     try {
       OVertex root = graph.load(rootVertexId);
       Assert.assertEquals(((OMultiCollectionIterator) root.getEdges(ODirection.OUT)).size(),

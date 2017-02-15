@@ -98,6 +98,7 @@ public class OServer {
   private ClassLoader              extensionClassLoader;
   private OTokenHandler            tokenHandler;
   private OSystemDatabase          systemDatabase;
+  private OrientDB                 context;
   private OrientDBEmbedded         databases;
 
   public OServer()
@@ -318,9 +319,10 @@ public class OServer {
     if (contextConfiguration.getValueAsBoolean(OGlobalConfiguration.SERVER_BACKWARD_COMPATIBILITY)) {
       databases = ODatabaseDocumentTxInternal.getOrCreateEmbeddedFactory(this.databaseDirectory, config);
     } else {
-      databases = (OrientDBEmbedded) OrientDB.embedded(this.databaseDirectory, config);
+      databases = (OrientDBEmbedded) OrientDBInternal.embedded(this.databaseDirectory, config);
     }
     databases.removeShutdownHook();
+    context = databases.newOrientDB();
 
     OLogManager.instance().info(this, "Databases directory: " + new File(databaseDirectory).getAbsolutePath());
 
@@ -1133,6 +1135,10 @@ public class OServer {
     return databases;
   }
 
+  public OrientDB getContext() {
+    return context;
+  }
+
   public void dropDatabase(String databaseName) {
     if (databases.exists(databaseName, null, null)) {
       databases.drop(databaseName, null, null);
@@ -1145,7 +1151,7 @@ public class OServer {
     return databases.exists(databaseName, null, null);
   }
 
-  public void createDatabase(String databaseName, OrientDB.DatabaseType type, OrientDBConfig config) {
+  public void createDatabase(String databaseName, ODatabaseType type, OrientDBConfig config) {
     databases.create(databaseName, null, null, type, config);
   }
 

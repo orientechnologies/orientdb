@@ -18,10 +18,9 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.OrientDB.DatabaseType;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
@@ -114,7 +113,7 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     if (request.getBackupPath() != null && !"".equals(request.getBackupPath().trim())) {
       server.restore(request.getDatabaseName(), request.getBackupPath());
     } else {
-      server.createDatabase(request.getDatabaseName(), DatabaseType.valueOf(request.getStorageMode().toUpperCase()), null);
+      server.createDatabase(request.getDatabaseName(), ODatabaseType.valueOf(request.getStorageMode().toUpperCase()), null);
     }
     OLogManager.instance().info(this, "Created database '%s' of type '%s'", request.getDatabaseName(), request.getStorageMode());
 
@@ -1113,5 +1112,14 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       throw new ODatabaseException("No Transaction Active");
     OTransactionOptimistic tx = (OTransactionOptimistic) database.getTransaction();
     return new OFetchTransactionResponse(tx.getId(), tx.getAllRecordEntries(), tx.getIndexEntries());
+  }
+
+  @Override
+  public OBinaryResponse executeRollback(ORollbackTransactionRequest request) {
+    ODatabaseDocumentInternal database = connection.getDatabase();
+    if (!database.getTransaction().isActive())
+      throw new ODatabaseException("No Transaction Active");
+    database.rollback(true);
+    return new ORollbackTransactionResponse();
   }
 }

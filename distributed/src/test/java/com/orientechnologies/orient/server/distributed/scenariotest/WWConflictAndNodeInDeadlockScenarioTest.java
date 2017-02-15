@@ -19,7 +19,7 @@ package com.orientechnologies.orient.server.distributed.scenariotest;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
+import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ServerRun;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import org.junit.Assert;
@@ -35,48 +35,43 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.Assert.*;
 
 /**
- * It checks the consistency in the cluster with the following scenario:
- * - 3 server (quorum=1)
- * - deadlock on server3
- * - record r1 inserted on server1
- * - record r1 (version x) is present in full replica on all the servers
- * - client c1 (connected to server1) updates r1 with the value v1, meanwhile client c2 (connected to server2) updates r1 with value v2
- *    - each server updates locally its version of r1 (writeQuorum=1)
- *    - when server1 and server2 receive the update message for r1 from the other server they ignore the message because, if the 2 versions are equal, each server maintains its own record.
- *    - no exception is thrown
- * - end of deadlock on server3
- *    - server3 accept and perform only one update between the two update messages
- *    - no exception is thrown
- * - check consistency on the nodes:
- *      - CASE 1
- *              - r1 on server1 has the values set by the client c1
- *              - r1 on server2 has the values set by the client c2
- *      - CASE 2
- *              - r1 and r2 have the same value (when the remote update message arrives on the current server before of the local update message, e.g. due to delay in the stack)
- *      - r1 on server3 has the values set by the client c1 or the values set by the client c2, but not the old one
- *      - r1 has version x+1 on all the servers
+ * It checks the consistency in the cluster with the following scenario: - 3 server (quorum=1) - deadlock on server3 - record r1
+ * inserted on server1 - record r1 (version x) is present in full replica on all the servers - client c1 (connected to server1)
+ * updates r1 with the value v1, meanwhile client c2 (connected to server2) updates r1 with value v2 - each server updates locally
+ * its version of r1 (writeQuorum=1) - when server1 and server2 receive the update message for r1 from the other server they ignore
+ * the message because, if the 2 versions are equal, each server maintains its own record. - no exception is thrown - end of
+ * deadlock on server3 - server3 accept and perform only one update between the two update messages - no exception is thrown - check
+ * consistency on the nodes: - CASE 1 - r1 on server1 has the values set by the client c1 - r1 on server2 has the values set by the
+ * client c2 - CASE 2 - r1 and r2 have the same value (when the remote update message arrives on the current server before of the
+ * local update message, e.g. due to delay in the stack) - r1 on server3 has the values set by the client c1 or the values set by
+ * the client c2, but not the old one - r1 has version x+1 on all the servers
  *
  * @author Gabriele Ponzi
- * @email  <gabriele.ponzi--at--gmail.com>
+ * @email <gabriele.ponzi--at--gmail.com>
  */
 
 public class WWConflictAndNodeInDeadlockScenarioTest extends AbstractScenarioTest {
 
-  volatile         int     serverStarted     = 0;
-  volatile         boolean backupInProgress  = false;
-  private volatile boolean server3inDeadlock = false;
-  private HashMap<String, Object> lukeFields = new HashMap<String, Object>() {{
-    put("firstName", "Luke");
-    put("lastName", "Skywalker");
-  }};
-  private HashMap<String, Object> darthFields = new HashMap<String, Object>() {{
-    put("firstName", "Darth");
-    put("lastName", "Vader");
-  }};
+  volatile int                    serverStarted     = 0;
+  volatile boolean                backupInProgress  = false;
+  private AtomicBoolean           server3inDeadlock = new AtomicBoolean(false);
+  private HashMap<String, Object> lukeFields        = new HashMap<String, Object>() {
+                                                      {
+                                                        put("firstName", "Luke");
+                                                        put("lastName", "Skywalker");
+                                                      }
+                                                    };
+  private HashMap<String, Object> darthFields       = new HashMap<String, Object>() {
+                                                      {
+                                                        put("firstName", "Darth");
+                                                        put("lastName", "Vader");
+                                                      }
+                                                    };
 
   @Test
   public void test() throws Exception {
@@ -107,16 +102,16 @@ public class WWConflictAndNodeInDeadlockScenarioTest extends AbstractScenarioTes
     ODocument cfg = null;
     ServerRun server = serverInstance.get(2);
     OHazelcastPlugin manager = (OHazelcastPlugin) server.getServerInstance().getDistributedManager();
-    ODistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration(getDatabaseName());
+    OModifiableDistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration(getDatabaseName()).modify();
     cfg = databaseConfiguration.getDocument();
     cfg.field("writeQuorum", 1);
     cfg.field("version", (Integer) cfg.field("version") + 1);
-    manager.updateCachedDatabaseConfiguration(getDatabaseName(), cfg, true, true);
+    manager.updateCachedDatabaseConfiguration(getDatabaseName(), databaseConfiguration, true);
     System.out.println("\nConfiguration updated.");
 
     // deadlock on server3
-    this.server3inDeadlock = true;
-    Thread.sleep(200);  // waiting for deadlock
+    this.server3inDeadlock.set(true);
+    Thread.sleep(200); // waiting for deadlock
 
     // inserting record r1 and checking consistency on server1 and server2
     System.out.print("Inserting record r1 and on server1 and checking consistency on both server1 and server2...");
@@ -162,8 +157,8 @@ public class WWConflictAndNodeInDeadlockScenarioTest extends AbstractScenarioTes
 
     // end of deadlock on server3 and sync
     try {
-      this.server3inDeadlock = false;
-      Thread.sleep(500);  // waiting for sync of server3
+      this.server3inDeadlock.set(false);
+      Thread.sleep(500); // waiting for sync of server3
     } catch (Exception e) {
       e.printStackTrace();
       fail("Exception was thrown!");
@@ -182,12 +177,9 @@ public class WWConflictAndNodeInDeadlockScenarioTest extends AbstractScenarioTes
     r1onServer3.reload();
 
     /**
-     * Checking records' values
-     * - CASE 1
-     *         - r1 on server1 has the values set by the client c1
-     *         - r1 on server2 has the values set by the client c2
-     * - CASE 2
-     *         - r1 and r2 have the same value (case: the "remote-update-message" arrives on the current server before of the "local-update-message", e.g. due to delay in the stack)
+     * Checking records' values - CASE 1 - r1 on server1 has the values set by the client c1 - r1 on server2 has the values set by
+     * the client c2 - CASE 2 - r1 and r2 have the same value (case: the "remote-update-message" arrives on the current server
+     * before of the "local-update-message", e.g. due to delay in the stack)
      **/
 
     boolean case11 = false;
@@ -206,9 +198,10 @@ public class WWConflictAndNodeInDeadlockScenarioTest extends AbstractScenarioTes
       System.out.println("The record on server1 has been updated by the client c2 without exceptions!");
     }
 
-    // r1 and r2 have the same value (when the remote update message arrives on the current server before of the local update message, e.g. due to delay in the stack)
-    if (r1onServer1.field("firstName").equals(r1onServer2.field("firstName")) && r1onServer1.field("lastName")
-        .equals(r1onServer2.field("lastName"))) {
+    // r1 and r2 have the same value (when the remote update message arrives on the current server before of the local update
+    // message, e.g. due to delay in the stack)
+    if (r1onServer1.field("firstName").equals(r1onServer2.field("firstName"))
+        && r1onServer1.field("lastName").equals(r1onServer2.field("lastName"))) {
       case2 = true;
       System.out.println("The record on server1 has been updated by the client c2 without exceptions!");
     }
@@ -244,7 +237,7 @@ public class WWConflictAndNodeInDeadlockScenarioTest extends AbstractScenarioTes
     super.onServerStarted(server);
 
     if (serverStarted++ == (2)) {
-      //      startQueueMonitorTask();
+      // startQueueMonitorTask();
       startCountMonitorTask("Person");
 
       // BACKUP LAST SERVER, RUN ASYNCHRONOUSLY
@@ -254,12 +247,12 @@ public class WWConflictAndNodeInDeadlockScenarioTest extends AbstractScenarioTes
           try {
             // CRASH LAST SERVER try {
             executeWhen(new Callable<Boolean>() {
-                          // CONDITION
-                          @Override
-                          public Boolean call() throws Exception {
-                            return server3inDeadlock;
-                          }
-                        }, // ACTION
+              // CONDITION
+              @Override
+              public Boolean call() throws Exception {
+                return server3inDeadlock.get();
+              }
+            }, // ACTION
                 new Callable() {
                   @Override
                   public Object call() throws Exception {
@@ -285,7 +278,7 @@ public class WWConflictAndNodeInDeadlockScenarioTest extends AbstractScenarioTes
                         public Object call() throws Exception {
 
                           // SIMULATE LONG BACKUP UNTIL SPECIFIED BY VARIABLE 'server3inDeadlock'
-                          while (server3inDeadlock) {
+                          while (server3inDeadlock.get()) {
                             Thread.sleep(1000);
                           }
 
@@ -323,38 +316,38 @@ public class WWConflictAndNodeInDeadlockScenarioTest extends AbstractScenarioTes
   }
 
   //
-  //  /*
-  //   * A task representing a client that updates the value of the record with a specific id.
-  //   */
+  // /*
+  // * A task representing a client that updates the value of the record with a specific id.
+  // */
   //
-  //  protected class RecordWriter implements Callable<Void> {
+  // protected class RecordWriter implements Callable<Void> {
   //
-  //    private String dbServerUrl;
-  //    private ODocument recordToUpdate;
-  //    private String firstName;
-  //    private String lastName;
+  // private String dbServerUrl;
+  // private ODocument recordToUpdate;
+  // private String firstName;
+  // private String lastName;
   //
-  //    protected RecordWriter(String dbServerUrl, ODocument recordToUpdate, String firstName, String lastName) {
-  //      this.dbServerUrl = dbServerUrl;
-  //      this.recordToUpdate = recordToUpdate;
-  //      this.firstName = firstName;
-  //      this.lastName = lastName;
-  //    }
+  // protected RecordWriter(String dbServerUrl, ODocument recordToUpdate, String firstName, String lastName) {
+  // this.dbServerUrl = dbServerUrl;
+  // this.recordToUpdate = recordToUpdate;
+  // this.firstName = firstName;
+  // this.lastName = lastName;
+  // }
   //
-  //    @Override
-  //    public Void call() throws Exception {
+  // @Override
+  // public Void call() throws Exception {
   //
-  //      // open server1 db
-  //      ODatabaseDocumentTx dbServer = poolFactory.get(dbServerUrl, "admin", "admin").acquire();
+  // // open server1 db
+  // ODatabaseDocumentTx dbServer = poolFactory.get(dbServerUrl, "admin", "admin").acquire();
   //
-  //      // updating the record
-  //      ODatabaseRecordThreadLocal.INSTANCE.set(dbServer);
-  //      this.recordToUpdate.field("firstName",this.firstName);
-  //      this.recordToUpdate.field("lastName",this.lastName);
-  //      this.recordToUpdate.save();
+  // // updating the record
+  // ODatabaseRecordThreadLocal.INSTANCE.set(dbServer);
+  // this.recordToUpdate.field("firstName",this.firstName);
+  // this.recordToUpdate.field("lastName",this.lastName);
+  // this.recordToUpdate.save();
   //
-  //      return null;
-  //    }
-  //  }
+  // return null;
+  // }
+  // }
 
 }

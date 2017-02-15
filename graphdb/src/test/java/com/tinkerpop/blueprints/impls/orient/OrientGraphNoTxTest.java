@@ -11,6 +11,8 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import java.io.File;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
@@ -135,30 +137,40 @@ public class OrientGraphNoTxTest extends GraphTest {
 
   @Test
   public void testRemoveUnlinked() {
-    Graph graph = generateGraph();
+    Graph graph = generateGraph("graph");
+    try {
+      Vertex x = graph.addVertex(null);
+      Vertex y = graph.addVertex(null);
 
-    Vertex x = graph.addVertex(null);
-    Vertex y = graph.addVertex(null);
+      graph.addEdge(null, x, y, "connected_to");
 
-    graph.addEdge(null, x, y, "connected_to");
+      for (Vertex v : graph.getVertices()) {
+        graph.removeVertex(v);
+      }
 
-    for (Vertex v : graph.getVertices()) {
-      graph.removeVertex(v);
+      for (Edge e : graph.getEdges()) {
+        System.out.println("e: " + e);
+      }
+
+      graph.shutdown();
+    } finally {
+      dropGraph("graph");
     }
 
-    for (Edge e : graph.getEdges()) {
-      System.out.println("e: " + e);
+
+    graph = generateGraph("graph");
+
+    try {
+      for (Edge e : graph.getEdges()) {
+        graph.removeEdge(e);
+      }
+
+      graph.shutdown();
+
+    } finally {
+      dropGraph("graph");
     }
 
-    graph.shutdown();
-
-    graph = generateGraph();
-
-    for (Edge e : graph.getEdges()) {
-      graph.removeEdge(e);
-    }
-
-    graph.shutdown();
   }
 
 

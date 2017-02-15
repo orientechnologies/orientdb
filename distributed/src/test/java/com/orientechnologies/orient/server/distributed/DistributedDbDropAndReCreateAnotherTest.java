@@ -15,15 +15,16 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.junit.Test;
+
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 /**
  * Distributed test on drop + recreate database with a different name.
  */
 public class DistributedDbDropAndReCreateAnotherTest extends AbstractServerClusterTxTest {
   final static int SERVERS       = 3;
-  private      int lastServerNum = 0;
+  private int      lastServerNum = 0;
 
   @Test
   public void test() throws Exception {
@@ -39,7 +40,15 @@ public class DistributedDbDropAndReCreateAnotherTest extends AbstractServerClust
       ServerRun server = serverInstance.get(0);
       ODatabaseDocumentTx db = new ODatabaseDocumentTx(getDatabaseURL(server));
       db.open("admin", "admin");
+      waitForDatabaseIsOnline(0, "europe-0", getDatabaseName(), 5000);
+      waitForDatabaseIsOnline(0, "europe-1", getDatabaseName(), 5000);
+      waitForDatabaseIsOnline(0, "europe-2", getDatabaseName(), 5000);
+
       db.drop();
+
+      waitForDatabaseIsOffline("europe-0", getDatabaseName(), 5000);
+      waitForDatabaseIsOffline("europe-1", getDatabaseName(), 5000);
+      waitForDatabaseIsOffline("europe-2", getDatabaseName(), 5000);
 
       server = serverInstance.get(lastServerNum);
 
@@ -55,14 +64,23 @@ public class DistributedDbDropAndReCreateAnotherTest extends AbstractServerClust
       }else {
         graph.create();
       }
+
+      waitForDatabaseIsOnline(0, "europe-0", getDatabaseName(), 15000);
+      waitForDatabaseIsOnline(0, "europe-1", getDatabaseName(), 15000);
+      waitForDatabaseIsOnline(0, "europe-2", getDatabaseName(), 15000);
+
+      checkSameClusters();
+
       onAfterDatabaseCreation(graph);
       graph.close();
 
-      Thread.sleep(2000);
+      checkThePersonClassIsPresentOnAllTheServers();
 
     } while (lastServerNum < serverInstance.size());
 
-    Thread.sleep(2000);
+    banner("EXECUTING FINAL TESTS");
+
+    dumpDistributedDatabaseCfgOfAllTheServers();
 
     executeMultipleTest(0);
   }

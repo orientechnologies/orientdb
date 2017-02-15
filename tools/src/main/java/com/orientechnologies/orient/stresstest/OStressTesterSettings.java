@@ -33,6 +33,7 @@ public class OStressTesterSettings {
   public String                             resultOutputFile;
   public String                             plocalPath;
   public int                                operationsPerTransaction;
+  public int                                delay;
   public int                                concurrencyLevel;
   public String                             remoteIp;
   public boolean                            haMetrics;

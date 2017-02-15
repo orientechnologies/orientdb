@@ -29,7 +29,8 @@ public class OExplainResultSet implements OResultSet {
       throw new IllegalStateException();
     }
     OResultInternal result = new OResultInternal();
-    getExecutionPlan().ifPresent(x -> result.setProperty("executionPlan", x.prettyPrint(0, 3)));
+    getExecutionPlan().ifPresent(x -> result.setProperty("executionPlan", x.toResult()));
+    getExecutionPlan().ifPresent(x -> result.setProperty("executionPlanAsString", x.prettyPrint(0, 3)));
     hasNext = false;
     return result;
   }

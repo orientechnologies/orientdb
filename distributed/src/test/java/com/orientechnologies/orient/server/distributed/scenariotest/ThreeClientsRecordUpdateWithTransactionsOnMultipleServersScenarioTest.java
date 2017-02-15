@@ -20,6 +20,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.HashMap;
@@ -75,6 +76,7 @@ public class ThreeClientsRecordUpdateWithTransactionsOnMultipleServersScenarioTe
                                           };
 
   @Test
+  @Ignore
   public void test() throws Exception {
     maxRetries = 10;
     init(SERVERS);
@@ -100,15 +102,15 @@ public class ThreeClientsRecordUpdateWithTransactionsOnMultipleServersScenarioTe
     // retrieves record1 from server2 and server 3 and checks they're equal
     ODocument record1Server2 = retrieveRecord(getDatabaseURL(serverInstance.get(1)), RECORD_ID);
     assertEquals(record1Server2.getVersion(), record1Server1.getVersion());
-    assertEquals(record1Server2.<String>field("id"), record1Server1.<String>field("id"));
-    assertEquals(record1Server2.<String>field("firstName"), record1Server1.<String>field("firstName"));
-    assertEquals(record1Server2.<String>field("lastName"), record1Server1.<String>field("lastName"));
+    assertEquals(record1Server2.field("id"), record1Server1.field("id"));
+    assertEquals(record1Server2.field("firstName"), record1Server1.field("firstName"));
+    assertEquals(record1Server2.field("lastName"), record1Server1.field("lastName"));
 
     ODocument record1Server3 = retrieveRecord(getDatabaseURL(serverInstance.get(2)), RECORD_ID);
     assertEquals(record1Server3.getVersion(), record1Server1.getVersion());
-    assertEquals(record1Server3.<String>field("id"), record1Server1.<String>field("id"));
-    assertEquals(record1Server3.<String>field("firstName"), record1Server1.<String>field("firstName"));
-    assertEquals(record1Server3.<String>field("lastName"), record1Server1.<String>field("lastName"));
+    assertEquals(record1Server3.field("id"), record1Server1.field("id"));
+    assertEquals(record1Server3.field("firstName"), record1Server1.field("firstName"));
+    assertEquals(record1Server3.field("lastName"), record1Server1.field("lastName"));
 
     // gets the actual version of the record1
     int actualVersion = record1Server1.getVersion();
@@ -116,10 +118,8 @@ public class ThreeClientsRecordUpdateWithTransactionsOnMultipleServersScenarioTe
 
     // sets a delay for operations on distributed storage of all servers
     ((ODistributedStorage) dbServer1.getStorage()).setEventListener(new AfterRecordLockDelayer("server1", DOCUMENT_WRITE_TIMEOUT));
-    ((ODistributedStorage) dbServer2.getStorage())
-        .setEventListener(new AfterRecordLockDelayer("server2", DOCUMENT_WRITE_TIMEOUT / 4));
-    ((ODistributedStorage) dbServer3.getStorage())
-        .setEventListener(new AfterRecordLockDelayer("server3", DOCUMENT_WRITE_TIMEOUT / 2));
+    ((ODistributedStorage) dbServer2.getStorage()).setEventListener(new AfterRecordLockDelayer("server2", DOCUMENT_WRITE_TIMEOUT / 4));
+    ((ODistributedStorage) dbServer3.getStorage()).setEventListener(new AfterRecordLockDelayer("server3", DOCUMENT_WRITE_TIMEOUT / 2));
 
     // updates the same record from three different clients, each calling a different server
     List<Callable<Void>> clients = new LinkedList<Callable<Void>>();

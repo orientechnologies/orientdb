@@ -20,9 +20,6 @@
 
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.orient.core.db.ODatabasePool;
-import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.ODirection;
 import com.orientechnologies.orient.core.record.OEdge;
@@ -36,9 +33,9 @@ import org.junit.Test;
  * Check vertex and edge creation are propagated across all the nodes.
  */
 public class ServerClusterGraphTest extends AbstractServerClusterTest {
-  final static int     SERVERS = 2;
-  private OVertex      v1;
-  private OVertex      v2;
+  final static int SERVERS = 2;
+  private OVertex v1;
+  private OVertex v2;
   private OVertex v3;
 
   public String getDatabaseName() {
@@ -55,9 +52,7 @@ public class ServerClusterGraphTest extends AbstractServerClusterTest {
   @Override
   protected void executeTest() throws Exception {
     {
-      ODatabasePool factory = OrientDB.fromUrl("embedded:target/server0/databases/", OrientDBConfig.defaultConfig()).openPool(getDatabaseName(), "admin", "admin");
-
-      ODatabaseDocument g = factory.acquire();
+      ODatabaseDocument g = serverInstance.get(0).getServerInstance().openDatabase(getDatabaseName(),"admin","admin");
 
       try {
         g.createVertexClass("Post");
@@ -74,9 +69,7 @@ public class ServerClusterGraphTest extends AbstractServerClusterTest {
 
     // CHECK VERTEX CREATION ON ALL THE SERVERS
     for (int s = 0; s < SERVERS; ++s) {
-      ODatabasePool factory2 = OrientDB.fromUrl("embedded:target/server" + s + "/databases/", OrientDBConfig.defaultConfig()).openPool(getDatabaseName(), "admin", "admin");
-
-      ODatabaseDocument g2 = factory2.acquire();
+      ODatabaseDocument g2 = serverInstance.get(s).getServerInstance().openDatabase(getDatabaseName(),"admin","admin");
 
       try {
 
@@ -90,9 +83,8 @@ public class ServerClusterGraphTest extends AbstractServerClusterTest {
     }
 
     {
-      ODatabasePool factory = OrientDB.fromUrl("embedded:target/server0/databases/", OrientDBConfig.defaultConfig()).openPool(getDatabaseName(), "admin", "admin");
 
-      ODatabaseDocument g = factory.acquire();
+      ODatabaseDocument g = serverInstance.get(0).getServerInstance().openDatabase(getDatabaseName(),"admin","admin");
       try {
         g.command(new OCommandSQL("create edge Own from (select from User) to (select from Post)")).execute();
       } finally {
@@ -102,9 +94,7 @@ public class ServerClusterGraphTest extends AbstractServerClusterTest {
 
     // CHECK VERTEX CREATION ON ALL THE SERVERS
     for (int s = 0; s < SERVERS; ++s) {
-      ODatabasePool factory2 = OrientDB.fromUrl("embedded:target/server" + s + "/databases/", OrientDBConfig.defaultConfig()).openPool(getDatabaseName(), "admin", "admin");
-
-      ODatabaseDocument g2 = factory2.acquire();
+      ODatabaseDocument g2 = serverInstance.get(s).getServerInstance().openDatabase(getDatabaseName(),"admin","admin");
 
       try {
 

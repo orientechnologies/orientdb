@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.command.script;
 
 import com.orientechnologies.common.io.OIOUtils;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -23,8 +24,8 @@ public class JSScriptTest {
   @Test
   public void jsSimpleTest() {
 
-    OrientDB orientDB = OrientDB.fromUrl("embedded:", OrientDBConfig.defaultConfig());
-    orientDB.create("test", null, null, OrientDB.DatabaseType.MEMORY);
+    OrientDB orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
+    orientDB.create("test", ODatabaseType.MEMORY);
     ODatabaseDocument db = orientDB.open("test", "admin", "admin");
     try {
       OResultSet resultSet = db.execute("javascript", "'foo'");
@@ -33,15 +34,16 @@ public class JSScriptTest {
       String ret = result.getProperty("value");
       Assert.assertEquals("foo", ret);
     } finally {
-      orientDB.drop("test", "admin", "admin");
+      orientDB.drop("test");
     }
+    orientDB.close();
   }
 
   @Test
   public void jsQueryTest() {
 
-    OrientDB orientDB = OrientDB.fromUrl("embedded:", OrientDBConfig.defaultConfig());
-    orientDB.create("test", null, null, OrientDB.DatabaseType.MEMORY);
+    OrientDB orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
+    orientDB.create("test", ODatabaseType.MEMORY);
     ODatabaseDocument db = orientDB.open("test", "admin", "admin");
     try {
 
@@ -57,15 +59,16 @@ public class JSScriptTest {
       });
 
     } finally {
-      orientDB.drop("test", "admin", "admin");
+      orientDB.drop("test");
     }
+    orientDB.close();
   }
 
   @Test
   public void jsScriptTest() throws IOException {
 
-    OrientDB orientDB = OrientDB.fromUrl("embedded:", OrientDBConfig.defaultConfig());
-    orientDB.create("test", null, null, OrientDB.DatabaseType.MEMORY);
+    OrientDB orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
+    orientDB.create("test", ODatabaseType.MEMORY);
     ODatabaseDocument db = orientDB.open("test", "admin", "admin");
     try {
 
@@ -83,16 +86,16 @@ public class JSScriptTest {
       });
 
     } finally {
-      orientDB.drop("test", "admin", "admin");
+      orientDB.drop("test");
     }
-
+    orientDB.close();
   }
 
   @Test
   public void jsScriptCountTest() throws IOException {
 
-    OrientDB orientDB = OrientDB.fromUrl("embedded:", OrientDBConfig.defaultConfig());
-    orientDB.create("test", null, null, OrientDB.DatabaseType.MEMORY);
+    OrientDB orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
+    orientDB.create("test", ODatabaseType.MEMORY);
     ODatabaseDocument db = orientDB.open("test", "admin", "admin");
     try {
 
@@ -106,7 +109,8 @@ public class JSScriptTest {
       Number value = results.get(0).getProperty("value");
       Assert.assertEquals(3, value.intValue());
     } finally {
-      orientDB.drop("test", "admin", "admin");
+      orientDB.drop("test");
     }
+    orientDB.close();
   }
 }

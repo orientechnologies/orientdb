@@ -303,6 +303,10 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     return id;
   }
 
+  public boolean isFrozen() {
+    return freezeRequests.get() > 0;
+  }
+  
   public void releaseAtomicOperations(long id) {
     if (id >= 0) {
       final FreezeParameters freezeParameters = freezeParametersIdMap.remove(id);

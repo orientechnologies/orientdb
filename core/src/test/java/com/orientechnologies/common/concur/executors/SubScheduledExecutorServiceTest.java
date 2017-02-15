@@ -254,11 +254,11 @@ public class SubScheduledExecutorServiceTest {
   }
 
   private static boolean fuzzyGreater(long actual, long expected) {
-    return actual > expected - (expected / 5.0); // 20% tolerance
+    return actual > expected - (expected / 4.0); // 25% tolerance
   }
 
   private static boolean fuzzyLess(long actual, long expected) {
-    return actual < expected + (expected / 5.0); // 20% tolerance
+    return actual < expected + (expected / 4.0); // 25% tolerance
   }
 
   private static boolean busyWait(Callable<Boolean> condition) throws Exception {

@@ -64,12 +64,12 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
-  private static ConcurrentMap<String, OrientDB> embedded = new ConcurrentHashMap<>();
-  private static ConcurrentMap<String, OrientDB> remote   = new ConcurrentHashMap<>();
+  private static ConcurrentMap<String, OrientDBInternal> embedded = new ConcurrentHashMap<>();
+  private static ConcurrentMap<String, OrientDBInternal> remote   = new ConcurrentHashMap<>();
 
   protected     ODatabaseDocumentInternal internal;
   private final String                    url;
-  private       OrientDB                  factory;
+  private       OrientDBInternal          factory;
   private final String                    type;
   private final String                    dbName;
   private final String                    baseUrl;
@@ -103,22 +103,22 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   }
 
   public static void closeAll() {
-    for (OrientDB factory : embedded.values()) {
+    for (OrientDBInternal factory : embedded.values()) {
       factory.close();
     }
     embedded.clear();
-    for (OrientDB factory : remote.values()) {
+    for (OrientDBInternal factory : remote.values()) {
       factory.close();
     }
     remote.clear();
   }
 
-  protected OrientDB getOrCreateRemoteFactory(String baseUrl) {
-    OrientDB factory;
+  protected OrientDBInternal getOrCreateRemoteFactory(String baseUrl) {
+    OrientDBInternal factory;
     synchronized (remote) {
       factory = remote.get(baseUrl);
       if (factory == null) {
-        factory = OrientDB.fromUrl("remote:" + baseUrl, null);
+        factory = OrientDBInternal.fromUrl("remote:" + baseUrl, null);
         remote.put(baseUrl, factory);
       }
     }
@@ -132,7 +132,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     synchronized (embedded) {
       factory = (OrientDBEmbedded) embedded.get(baseUrl);
       if (factory == null) {
-        factory = (OrientDBEmbedded) OrientDB.fromUrl("embedded:" + baseUrl, config);
+        factory = (OrientDBEmbedded) OrientDBInternal.fromUrl("embedded:" + baseUrl, config);
         embedded.put(baseUrl, factory);
       }
     }
@@ -489,7 +489,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   @Override
   public OVertex newVertex(OClass type) {
     if (type == null) {
-      return newVertex("E");
+      return newVertex("V");
     }
     return newVertex(type.getName());
   }
@@ -1095,7 +1095,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
         throw new UnsupportedOperationException();
       } else if ("memory".equals(type)) {
         factory = getOrCreateEmbeddedFactory(baseUrl, null);
-        factory.create(dbName, null, null, OrientDB.DatabaseType.MEMORY, config);
+        factory.create(dbName, null, null, ODatabaseType.MEMORY, config);
         OrientDBConfig openConfig = OrientDBConfig.builder().fromContext(config.getConfigurations()).build();
         internal = (ODatabaseDocumentInternal) factory.open(dbName, "admin", "admin", openConfig);
         for (Map.Entry<ATTRIBUTES, Object> attr : preopenAttributes.entrySet()) {
@@ -1108,7 +1108,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
       } else {
         factory = getOrCreateEmbeddedFactory(baseUrl, null);
-        factory.create(dbName, null, null, OrientDB.DatabaseType.PLOCAL, config);
+        factory.create(dbName, null, null, ODatabaseType.PLOCAL, config);
         OrientDBConfig openConfig = OrientDBConfig.builder().fromContext(config.getConfigurations()).build();
         internal = (ODatabaseDocumentInternal) factory.open(dbName, "admin", "admin", openConfig);
         for (Map.Entry<ATTRIBUTES, Object> attr : preopenAttributes.entrySet()) {

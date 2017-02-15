@@ -92,8 +92,7 @@ public class OETLVertexTransformerTest extends OETLBaseTest {
     configure(
         "{ config: { 'log': 'DEBUG' },  source: { content: { value: 'name,\nGregor\nGregor\nHans' } }, extractor : { csv: {} },"
             + " transformers: [ {vertex: {class:'Person', skipDuplicates:false}}," + "], loader: { orientdb: { dbURL: 'memory:"
-            + name
-            .getMethodName() + "', dbType:'graph', useLightweightEdges:false } } }");
+            + name.getMethodName() + "', dbType:'graph', useLightweightEdges:false } } }");
 
     ODatabasePool pool = proc.getLoader().getPool();
     ODatabaseDocument db = pool.acquire();

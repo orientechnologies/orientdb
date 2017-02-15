@@ -16,10 +16,7 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseInternal;
-import com.orientechnologies.orient.core.db.ODatabasePool;
-import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.OElement;
@@ -35,8 +32,8 @@ import java.util.Set;
 
 /**
  * Checks the distributed database repair feature is working.
- *
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
+ * 
+ * @author Luca Garulli
  */
 public class TestDistributedDatabaseRepair extends AbstractServerClusterTest {
 
@@ -75,14 +72,15 @@ public class TestDistributedDatabaseRepair extends AbstractServerClusterTest {
 
   @Override
   protected void executeTest() throws Exception {
-    final ODatabasePool localFactory0 = OrientDB.fromUrl("embedded:target/server0/databases/", OrientDBConfig.defaultConfig())
-        .openPool(getDatabaseName(), "admin", "admin");
 
-    final ODatabasePool localFactory1 = OrientDB.fromUrl("embedded:target/server1/databases/", OrientDBConfig.defaultConfig())
-        .openPool(getDatabaseName(), "admin", "admin");
+    final ODatabasePool localFactory0 = new ODatabasePool(serverInstance.get(0).getServerInstance().getContext(), getDatabaseName(),
+        "admin", "admin");
 
-    final ODatabasePool localFactory2 = OrientDB.fromUrl("embedded:target/server2/databases/", OrientDBConfig.defaultConfig())
-        .openPool(getDatabaseName(), "admin", "admin");
+    final ODatabasePool localFactory1 = new ODatabasePool(serverInstance.get(1).getServerInstance().getContext(), getDatabaseName(),
+        "admin", "admin");
+
+    final ODatabasePool localFactory2 = new ODatabasePool(serverInstance.get(2).getServerInstance().getContext(), getDatabaseName(),
+        "admin", "admin");
 
     try {
       final ODatabaseDocument graph = localFactory0.acquire();
@@ -140,7 +138,7 @@ public class TestDistributedDatabaseRepair extends AbstractServerClusterTest {
     }
 
     serverInstance.get(0).getServerInstance().getDistributedManager().getMessageService().getDatabase(getDatabaseName())
-        .getDatabaseRapairer().repairRecord((ORecordId) product.getIdentity());
+        .getDatabaseRepairer().repairRecord((ORecordId) product.getIdentity());
 
     Thread.sleep(3000);
 
@@ -200,7 +198,7 @@ public class TestDistributedDatabaseRepair extends AbstractServerClusterTest {
     }
 
     serverInstance.get(0).getServerInstance().getDistributedManager().getMessageService().getDatabase(getDatabaseName())
-        .getDatabaseRapairer().repairRecord((ORecordId) product.getIdentity());
+        .getDatabaseRepairer().repairRecord((ORecordId) product.getIdentity());
 
     Thread.sleep(3000);
 
@@ -276,7 +274,7 @@ public class TestDistributedDatabaseRepair extends AbstractServerClusterTest {
     }
 
     serverInstance.get(0).getServerInstance().getDistributedManager().getMessageService().getDatabase(getDatabaseName())
-        .getDatabaseRapairer().repairRecord((ORecordId) product.getIdentity());
+        .getDatabaseRepairer().repairRecord((ORecordId) product.getIdentity());
 
     Thread.sleep(3000);
 
@@ -314,8 +312,8 @@ public class TestDistributedDatabaseRepair extends AbstractServerClusterTest {
   /**
    * Breaks a cluster by creating new records only on certain servers
    */
-  private void testRepairClusters(ODatabasePool localFactory0, ODatabasePool localFactory1,
-      ODatabasePool localFactory2) throws Exception {
+  private void testRepairClusters(ODatabasePool localFactory0, ODatabasePool localFactory1, ODatabasePool localFactory2)
+      throws Exception {
 
     Thread.sleep(2000);
 
@@ -359,7 +357,7 @@ public class TestDistributedDatabaseRepair extends AbstractServerClusterTest {
         v.setProperty("status", "onlyServer0and1");
         v.save(localCluster);
         v.save();
-        ((ODatabaseInternal)graph).getStorage().getUnderlying()
+        ((ODatabaseInternal) graph).getStorage().getUnderlying()
             .createRecord((ORecordId) v.getRecord().getIdentity(), v.getRecord().toStream(), v.getRecord().getVersion(),
                 ODocument.RECORD_TYPE, 0, null);
 
@@ -379,7 +377,7 @@ public class TestDistributedDatabaseRepair extends AbstractServerClusterTest {
         OVertex v = graph.newVertex("Employee");
         v.setProperty("status", "onlyServer0and1");
         v.save(localCluster);
-        ((ODatabaseInternal)graph).getStorage().getUnderlying()
+        ((ODatabaseInternal) graph).getStorage().getUnderlying()
             .createRecord((ORecordId) v.getRecord().getIdentity(), v.getRecord().toStream(), v.getRecord().getVersion(),
                 ODocument.RECORD_TYPE, 0, null);
       }

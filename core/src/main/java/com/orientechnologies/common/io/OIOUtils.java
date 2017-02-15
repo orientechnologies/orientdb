@@ -22,6 +22,8 @@ package com.orientechnologies.common.io;
 import com.orientechnologies.common.util.OPatternConst;
 
 import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
@@ -278,8 +280,8 @@ public class OIOUtils {
     if (s == null)
       return false;
 
-    return s.length() > 1
-        && (s.charAt(0) == '\'' && s.charAt(s.length() - 1) == '\'' || s.charAt(0) == '"' && s.charAt(s.length() - 1) == '"');
+    return s.length() > 1 && (s.charAt(0) == '\'' && s.charAt(s.length() - 1) == '\''
+        || s.charAt(0) == '"' && s.charAt(s.length() - 1) == '"');
   }
 
   public static String getStringContent(final Object iValue) {
@@ -291,8 +293,8 @@ public class OIOUtils {
     if (s == null)
       return null;
 
-    if (s.length() > 1
-        && (s.charAt(0) == '\'' && s.charAt(s.length() - 1) == '\'' || s.charAt(0) == '"' && s.charAt(s.length() - 1) == '"'))
+    if (s.length() > 1 && (s.charAt(0) == '\'' && s.charAt(s.length() - 1) == '\''
+        || s.charAt(0) == '"' && s.charAt(s.length() - 1) == '"'))
       return s.substring(1, s.length() - 1);
 
     if (s.length() > 1 && (s.charAt(0) == '`' && s.charAt(s.length() - 1) == '`'))
@@ -343,6 +345,85 @@ public class OIOUtils {
       }
       off += n;
       len -= n;
+    }
+  }
+
+  public static void readByteBuffer(ByteBuffer buffer, FileChannel channel, long position) throws IOException {
+    int bytesToRead = buffer.limit();
+
+    int read = 0;
+    while (read < bytesToRead) {
+      buffer.position(read);
+
+      final int r = channel.read(buffer, position + read);
+      if (r < 0)
+        throw new EOFException("End of file  is reached");
+
+      read += r;
+    }
+  }
+
+  public static void readByteBuffer(ByteBuffer buffer, FileChannel channel) throws IOException {
+    int bytesToRead = buffer.limit();
+
+    int read = 0;
+
+    while (read < bytesToRead) {
+      buffer.position(read);
+      final int r = channel.read(buffer);
+
+      if (r < 0)
+        throw new EOFException("End of file  is reached");
+
+      read += r;
+    }
+  }
+
+  public static void writeByteBuffer(ByteBuffer buffer, FileChannel channel, long position) throws IOException {
+    int bytesToWrite = buffer.limit();
+
+    int written = 0;
+    while (written < bytesToWrite) {
+      buffer.position(written);
+
+      written += channel.write(buffer, position + written);
+    }
+  }
+
+  public static void writeByteBuffers(ByteBuffer[] buffers, FileChannel channel, long bytesToWrite) throws IOException {
+    long written = 0;
+
+    for (ByteBuffer buffer : buffers) {
+      buffer.position(0);
+    }
+
+    final int bufferLimit = buffers[0].limit();
+
+    while (written < bytesToWrite) {
+      final int bufferIndex = (int) written / bufferLimit;
+
+      written += channel.write(buffers, bufferIndex, buffers.length - bufferIndex);
+    }
+  }
+
+  public static void readByteBuffers(ByteBuffer[] buffers, FileChannel channel, long bytesToRead) throws IOException {
+    long read = 0;
+
+    for (ByteBuffer buffer : buffers) {
+      buffer.position(0);
+    }
+
+    final int bufferLimit = buffers[0].limit();
+
+    while (read < bytesToRead) {
+      final int bufferIndex = (int) read / bufferLimit;
+
+      final long r = channel.read(buffers, bufferIndex, buffers.length - bufferIndex);
+
+      if (r < 0)
+        throw new IllegalStateException("End of file is reached");
+
+      read += r;
     }
   }
 }

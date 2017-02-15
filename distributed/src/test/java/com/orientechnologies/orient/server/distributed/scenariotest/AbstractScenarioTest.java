@@ -108,7 +108,8 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
             writer = createWriter(serverId, threadId++, getPlocalDatabaseURL(server));
           } else if (storageType.equals("remote")) {
             writer = createWriter(serverId, threadId++, getRemoteDatabaseURL(server));
-          }
+          } else
+            throw new IllegalArgumentException("storageType " + storageType + " not supported");
           writerWorkers.add(writer);
         }
         serverId++;
@@ -162,11 +163,7 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
     checkIndexedEntries();
   }
 
-  /**
-   * Verifies the consistency in the cluster after the writes in a simple distributed scenario:
-   * checks that all the records written on the servers contained in the list 'writerServer' are consistent on the servers contained in the list 'checkConsistencyOnServers'.
-   */
-
+  // checks the consistency in the cluster after the writes in a simple distributed scenario
   protected void checkWritesAboveCluster(List<ServerRun> checkConsistencyOnServers, List<ServerRun> writerServer) {
 
     String checkOnServer = "";
@@ -194,9 +191,9 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
     int serverIndex = 0;
 
     for (ServerRun server : writerServer) {
-      serverIndex2thresholdThread.put(serverIndex, lastThread + writerCount);
+      serverIndex2thresholdThread.put(serverIndex, lastThread + 5);
       serverIndex++;
-      lastThread += writerCount;
+      lastThread += 5;
     }
 
     serverIndex = 0;
@@ -229,7 +226,7 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
           i = serverIndex2thresholdThread.get(serverId - 1);
 
         while (i < serverIndex2thresholdThread.get(serverId)) {
-          for (int j = 0; j < count; j++) {
+          for (int j = 0; j < 100; j++) {
 
             // load records to compare
             for (ODatabaseDocumentTx db : dbs) {
@@ -244,21 +241,21 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
             // checking that all the records have the same version and values (each record is equal to the next one)
             int k = 0;
             while (k <= docsToCompare.size() - 2) {
-              assertTrue(
+              assertEquals(
                   "Inconsistency detected. Record: " + docsToCompare.get(k).toString() + " ; Servers: " + (k + 1) + "," + (k + 2),
-                  docsToCompare.get(k).field("@version") == docsToCompare.get(k + 1).field("@version"));
-              assertTrue(
+                  docsToCompare.get(k).field("@version"), docsToCompare.get(k + 1).field("@version"));
+              assertEquals(
                   "Inconsistency detected. Record: " + docsToCompare.get(k).toString() + " ; Servers: " + (k + 1) + "," + (k + 2),
-                  docsToCompare.get(k).field("name").equals(docsToCompare.get(k + 1).field("name")));
-              assertTrue(
+                  docsToCompare.get(k).field("name"), docsToCompare.get(k + 1).field("name"));
+              assertEquals(
                   "Inconsistency detected. Record: " + docsToCompare.get(k).toString() + " ; Servers: " + (k + 1) + "," + (k + 2),
-                  docsToCompare.get(k).field("surname").equals(docsToCompare.get(k + 1).field("surname")));
-              assertTrue(
+                  docsToCompare.get(k).field("surname"), docsToCompare.get(k + 1).field("surname"));
+              assertEquals(
                   "Inconsistency detected. Record: " + docsToCompare.get(k).toString() + " ; Servers: " + (k + 1) + "," + (k + 2),
-                  docsToCompare.get(k).field("birthday").equals(docsToCompare.get(k + 1).field("birthday")));
-              assertTrue(
+                  docsToCompare.get(k).field("birthday"), docsToCompare.get(k + 1).field("birthday"));
+              assertEquals(
                   "Inconsistency detected. Record: " + docsToCompare.get(k).toString() + " ; Servers: " + (k + 1) + "," + (k + 2),
-                  docsToCompare.get(k).field("children").equals(docsToCompare.get(k + 1).field("children")));
+                  docsToCompare.get(k).field("children"), docsToCompare.get(k + 1).field("children"));
               k++;
             }
             docsToCompare.clear();
@@ -272,7 +269,6 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
 
     } catch (Exception e) {
       e.printStackTrace();
-      fail(e.getMessage());
     } finally {
 
       for (ODatabaseDocumentTx db : dbs) {
@@ -363,10 +359,14 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
     }, String.format("Expected value %s for field %s on record %s on all servers.", expectedFieldValue, fieldName, recordId));
   }
 
-  protected ODocument retrieveRecord(String dbUrl, String uniqueId, boolean returnsMissingDocument) {
+  protected ODocument retrieveRecord(String dbUrl, String uniqueId, boolean returnsMissingDocument,
+      OCallable<ODocument, ODocument> assertion) {
     ODatabaseDocumentTx dbServer = poolFactory.get(dbUrl, "admin", "admin").acquire();
     // dbServer.getLocalCache().invalidate();
     ODatabaseRecordThreadLocal.INSTANCE.set(dbServer);
+
+    dbServer.getMetadata().getSchema().reload();
+
     try {
       List<ODocument> result = dbServer.query(new OSQLSynchQuery<ODocument>("select from Person where id = '" + uniqueId + "'"));
       if (result.size() == 0) {
@@ -384,6 +384,10 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
       // } catch (ORecordNotFoundException e) {
       //// e.printStackTrace();
       // }
+
+      if (assertion != null)
+        assertion.call(doc);
+
       return doc;
     } finally {
       ODatabaseRecordThreadLocal.INSTANCE.set(null);
@@ -407,11 +411,11 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
   }
 
   protected ODocument retrieveRecordOrReturnMissing(String dbUrl, String uniqueId) {
-    return retrieveRecord(dbUrl, uniqueId, true);
+    return retrieveRecord(dbUrl, uniqueId, true, null);
   }
 
   protected ODocument retrieveRecord(String dbUrl, String uniqueId) {
-    return retrieveRecord(dbUrl, uniqueId, false);
+    return retrieveRecord(dbUrl, uniqueId, false, null);
   }
 
   @Override
@@ -425,10 +429,6 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
 
   protected String getPlocalDatabaseURL(final ServerRun server, String databaseName) {
     return "plocal:" + server.getDatabasePath(databaseName);
-  }
-
-  protected String getRemoteDatabaseURL(final ServerRun server) {
-    return "remote:" + server.getBinaryProtocolAddress() + "/" + getDatabaseName();
   }
 
   protected String getDatabaseURL(final ServerRun server, String storageType) {
@@ -478,12 +478,12 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
   private void printStats(final String databaseUrl) {
     final ODatabaseDocumentTx database = poolFactory.get(databaseUrl, "admin", "admin").acquire();
     try {
-      database.reload();
+      //database.reload();
       List<ODocument> result = database.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from Person"));
 
       final String name = database.getURL();
 
-      System.out.println("\nReader " + name + " sql count: " + result.get(0) + " counting class: " + database.countClass("Person")
+      System.out.println("\nReader " + name + "  sql count: " + result.get(0) + " counting class: " + database.countClass("Person")
           + " counting cluster: " + database.countClusterElements("Person"));
 
     } finally {

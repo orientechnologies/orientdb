@@ -24,7 +24,6 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabasePool;
-import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -83,8 +82,8 @@ public class OrientdbEdgeTest {
 
     verifyDatabaseExists(conf);
 
-    ODatabasePool pool = OrientDB.fromUrl(((String) conf.get("storage.url")).replaceFirst("plocal", "embedded"), OrientDBConfig.defaultConfig())
-        .openPool((String) conf.get("db.name"), (String) conf.get("storage.user"), (String) conf.get("storage.password"));
+    ODatabasePool pool = new ODatabasePool(conf.get("storage.url") + "/" + (String) conf.get("db.name"),
+        (String) conf.get("storage.user"), (String) conf.get("storage.password"), OrientDBConfig.defaultConfig());
     return pool;
   }
 
@@ -176,9 +175,9 @@ public class OrientdbEdgeTest {
 
   @Test
   public void testEdges() throws Exception {
-    ODatabasePool factory = getGraphFactory();
+    ODatabasePool pool = getGraphFactory();
 
-    ODatabaseDocument g = factory.acquire();
+    ODatabaseDocument g = pool.acquire();
     try {
       try {
         g.createEdgeClass("some-label");
@@ -199,7 +198,7 @@ public class OrientdbEdgeTest {
       g.close();
     }
 
-    ODatabaseDocument t = factory.acquire();
+    ODatabaseDocument t = pool.acquire();
     t.begin();
     try {
       OVertex v1 = t.newVertex("some-v-label");
@@ -215,7 +214,7 @@ public class OrientdbEdgeTest {
       t.commit();
       t.close();
 
-      t = factory.acquire();
+      t = pool.acquire();
       t.begin();
 
       assertEquals(2, t.getClass("some-v-label").count());
@@ -225,7 +224,7 @@ public class OrientdbEdgeTest {
       t.commit();
       t.close();
 
-      t = factory.acquire();
+      t = pool.acquire();
       t.begin();
 
       // works
@@ -237,7 +236,7 @@ public class OrientdbEdgeTest {
     } finally {
       t.close();
     }
-
+    pool.close();
   }
 
   private int count(Iterable<OEdge> edges) {

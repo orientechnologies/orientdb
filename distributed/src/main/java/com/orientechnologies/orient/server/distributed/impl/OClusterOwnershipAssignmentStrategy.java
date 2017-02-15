@@ -1,6 +1,6 @@
 /*
  *
- *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
+ *  *  Copyright 2016 OrientDB Ltd (info(at)orientdb.com)
  *  *
  *  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  *  you may not use this file except in compliance with the License.
@@ -14,25 +14,26 @@
  *  *  See the License for the specific language governing permissions and
  *  *  limitations under the License.
  *  *
- *  * For more information: http://orientdb.com
+ *  * For more information: http://www.orientdb.com
  *
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
+import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 
+import java.util.List;
 import java.util.Set;
 
 /**
  * Interface to manage balancing of cluster ownership.
  *
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
+ * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
 public interface OClusterOwnershipAssignmentStrategy {
 
-  boolean assignClusterOwnershipOfClass(final ODatabaseInternal iDatabase, final ODistributedConfiguration cfg, final OClass iClass,
-      final Set<String> availableNodes, final Set<String> clustersToReassign, boolean rebalance);
+  List<String> assignClusterOwnershipOfClass(final ODatabaseInternal iDatabase, final OModifiableDistributedConfiguration cfg,
+      final OClass iClass, final Set<String> availableNodes);
 
 }

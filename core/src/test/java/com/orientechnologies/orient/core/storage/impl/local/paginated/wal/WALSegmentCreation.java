@@ -8,6 +8,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -43,7 +44,7 @@ public class WALSegmentCreation {
       testDir.mkdir();
 
     localPaginatedStorage = mock(OLocalPaginatedStorage.class);
-    when(localPaginatedStorage.getStoragePath()).thenReturn(testDir.getAbsolutePath());
+    when(localPaginatedStorage.getStoragePath()).thenReturn(Paths.get(testDir.getAbsolutePath()));
     when(localPaginatedStorage.getName()).thenReturn("WALSegmentCreationTest");
 
     writeAheadLog = new ODiskWriteAheadLog(400, 500, 64 * 1024L * 1024L, null, false, localPaginatedStorage, 16 * OWALPage.PAGE_SIZE, 120);

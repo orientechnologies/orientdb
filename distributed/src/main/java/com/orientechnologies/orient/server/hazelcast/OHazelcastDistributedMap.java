@@ -19,9 +19,6 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
 import com.hazelcast.core.*;
 import com.hazelcast.map.listener.EntryAddedListener;
 import com.hazelcast.map.listener.EntryRemovedListener;
@@ -29,10 +26,13 @@ import com.hazelcast.map.listener.EntryUpdatedListener;
 import com.hazelcast.map.listener.MapClearedListener;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
 /**
  * Optimized concurrent hash map implementation on top of Hazelcast distributed map.
  *
- * @author Luca Garulli (l.garulli--(at)--orientdb.com)
+ * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
 public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object> implements EntryAddedListener<String, Object>,
     EntryRemovedListener<String, Object>, MapClearedListener, EntryUpdatedListener<String, Object> {
@@ -60,8 +60,17 @@ public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object> 
   }
 
   @Override
+  public boolean containsKey(final Object key) {
+    return hzMap.containsKey(key);
+  }
+
+  @Override
   public Set<Entry<String, Object>> entrySet() {
     return hzMap.entrySet();
+  }
+
+  public Set<Entry<String, Object>> localEntrySet() {
+    return super.entrySet();
   }
 
   public Object getLocalCachedValue(final Object key) {
@@ -85,6 +94,16 @@ public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object> 
       // IGNORE IT
     }
     return super.put(key, value);
+  }
+
+  @Override
+  public Object putIfAbsent(final String key, final Object value) {
+    try {
+      hzMap.putIfAbsent(key, value);
+    } catch (HazelcastInstanceNotActiveException e) {
+      // IGNORE IT
+    }
+    return super.putIfAbsent(key, value);
   }
 
   public Object putInLocalCache(final String key, final Object value) {
@@ -120,19 +139,20 @@ public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object> 
   }
 
   @Override
+  public void entryUpdated(final EntryEvent<String, Object> event) {
+    if (ODistributedServerLog.isDebugEnabled())
+      ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+          "Map entry updated key=" + event.getKey() + ": " + event.getValue());
+
+    super.put(event.getKey(), event.getValue());
+  }
+
+  @Override
   public void entryRemoved(final EntryEvent<String, Object> event) {
     if (ODistributedServerLog.isDebugEnabled())
       ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
           "Map entry removed key=" + event.getKey() + ": " + event.getValue());
     super.remove(event.getKey());
-  }
-
-  @Override
-  public void entryUpdated(final EntryEvent<String, Object> event) {
-    if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-          "Map entry updated key=" + event.getKey() + ": " + event.getValue());
-    super.put(event.getKey(), event.getValue());
   }
 
   @Override

@@ -21,7 +21,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
+import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ServerRun;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import org.junit.Test;
@@ -76,12 +76,12 @@ public class IsolatedNodeRejoinScenarioTest extends AbstractScenarioTest {
     ODocument cfg = null;
     ServerRun server = serverInstance.get(2);
     OHazelcastPlugin manager = (OHazelcastPlugin) server.getServerInstance().getDistributedManager();
-    ODistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration(getDatabaseName());
+    OModifiableDistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration(getDatabaseName()).modify();
     cfg = databaseConfiguration.getDocument();
     cfg.field("writeQuorum", 2);
     cfg.field("autoDeploy", true);
     cfg.field("version", (Integer) cfg.field("version") + 1);
-    manager.updateCachedDatabaseConfiguration(getDatabaseName(), cfg, true, true);
+    manager.updateCachedDatabaseConfiguration(getDatabaseName(), databaseConfiguration, true);
     System.out.println("\nConfiguration updated.");
 
     // isolating server3

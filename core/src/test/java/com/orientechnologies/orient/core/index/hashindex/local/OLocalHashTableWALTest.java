@@ -71,8 +71,8 @@ public class OLocalHashTableWALTest extends OLocalHashTableBase {
 
     expectedDatabaseDocumentTx.create();
 
-    actualStorageDir = ((OLocalPaginatedStorage) databaseDocumentTx.getStorage()).getStoragePath();
-    expectedStorageDir = ((OLocalPaginatedStorage) expectedDatabaseDocumentTx.getStorage()).getStoragePath();
+    actualStorageDir = ((OLocalPaginatedStorage) databaseDocumentTx.getStorage()).getStoragePath().toString();
+    expectedStorageDir = ((OLocalPaginatedStorage) expectedDatabaseDocumentTx.getStorage()).getStoragePath().toString();
 
     OLocalPaginatedStorage actualStorage = (OLocalPaginatedStorage) databaseDocumentTx.getStorage();
     ODiskWriteAheadLog diskWriteAheadLog = (ODiskWriteAheadLog) actualStorage.getWALInstance();

@@ -20,9 +20,6 @@
 
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.orient.core.db.ODatabasePool;
-import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
@@ -64,10 +61,7 @@ public class ServerClusterQueryTest extends AbstractServerClusterTest {
   }
 
   private void createDatabase() {
-    ODatabasePool factory = OrientDB.fromUrl("embedded:target/server0/databases/", OrientDBConfig.defaultConfig())
-        .openPool(getDatabaseName(), "admin", "admin");
-
-    ODatabaseDocument g = factory.acquire();
+    ODatabaseDocument g = serverInstance.get(0).getServerInstance().openDatabase(getDatabaseName(),"admin","admin");
 
     try {
       g.createVertexClass("V1");
@@ -95,10 +89,7 @@ public class ServerClusterQueryTest extends AbstractServerClusterTest {
 
   private void checkNestedQueryContext() {
     for (int s = 0; s < SERVERS; ++s) {
-      ODatabasePool factory = OrientDB.fromUrl("embedded:target/server" + s + "/databases/", OrientDBConfig.defaultConfig())
-          .openPool(getDatabaseName(), "admin", "admin");
-
-      ODatabaseDocument g = factory.acquire();
+      ODatabaseDocument g = serverInstance.get(s).getServerInstance().openDatabase(getDatabaseName(),"admin","admin");
 
       try {
         final Iterable<OElement> result = g.command(new OCommandSQL("select *, $depth as d from (traverse in('E1') from ?)"))
@@ -124,10 +115,7 @@ public class ServerClusterQueryTest extends AbstractServerClusterTest {
   private void checkSum() {
     for (int s = 0; s < SERVERS; ++s) {
 
-      ODatabasePool factory = OrientDB.fromUrl("embedded:target/server" + s + "/databases/", OrientDBConfig.defaultConfig())
-          .openPool(getDatabaseName(), "admin", "admin");
-
-      ODatabaseDocument g = factory.acquire();
+      ODatabaseDocument g = serverInstance.get(s).getServerInstance().openDatabase(getDatabaseName(),"admin","admin");
 
       try {
         final Iterable<OElement> result = g.command(new OCommandSQL("select sum(amount) as total from v"))
@@ -147,9 +135,7 @@ public class ServerClusterQueryTest extends AbstractServerClusterTest {
 
   private void checkShardedOrderBy() {
     for (int s = 0; s < SERVERS; ++s) {
-      ODatabasePool factory = OrientDB.fromUrl("embedded:target/server" + s + "/databases/", OrientDBConfig.defaultConfig())
-          .openPool(getDatabaseName(), "admin", "admin");
-      ODatabaseDocument g = factory.acquire();
+      ODatabaseDocument g = serverInstance.get(s).getServerInstance().openDatabase(getDatabaseName(),"admin","admin");
 
       try {
         Iterable<OElement> result = g.command(new OCommandSQL("select amount from v order by amount asc"))
@@ -193,9 +179,7 @@ public class ServerClusterQueryTest extends AbstractServerClusterTest {
 
   private void checkShardedGroupBy() {
     for (int s = 0; s < SERVERS; ++s) {
-      ODatabasePool factory = OrientDB.fromUrl("embedded:target/server" + s + "/databases/", OrientDBConfig.defaultConfig())
-          .openPool(getDatabaseName(), "admin", "admin");
-      ODatabaseDocument g = factory.acquire();
+      ODatabaseDocument g = serverInstance.get(s).getServerInstance().openDatabase(getDatabaseName(),"admin","admin");
 
       try {
         Iterable<OElement> result = g
