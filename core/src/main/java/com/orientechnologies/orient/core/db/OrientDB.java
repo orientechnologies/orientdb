@@ -159,11 +159,19 @@ public class OrientDB implements AutoCloseable {
    * @return the new Orient Factory.
    */
   public OrientDB(String url, String serverUser, String serverPassword, OrientDBConfig configuration) {
-    String what = url.substring(0, url.indexOf(':'));
-    if ("embedded".equals(what))
+    int pos;
+    String what;
+    if ((pos = url.indexOf(':')) > 0) {
+      what = url.substring(0, pos);
+    } else {
+      what = url;
+    }
+    if ("embedded".equals(what) || "memory".equals(what) || "plocal".equals(what))
       internal = OrientDBInternal.embedded(url.substring(url.indexOf(':') + 1), configuration);
     else if ("remote".equals(what))
       internal = OrientDBInternal.remote(url.substring(url.indexOf(':') + 1).split(","), configuration);
+    else
+      throw new IllegalArgumentException("Wrong url:`" + url + "`");
 
     this.serverUser = serverUser;
     this.serverPassword = serverPassword;

@@ -23,6 +23,19 @@ import static org.junit.Assert.assertTrue;
 public class OrientDBEmbeddedTests {
 
   @Test
+  public void testCompatibleUrl() {
+    try (OrientDB orientDb = new OrientDB("plocal:", OrientDBConfig.defaultConfig())) {
+    }
+    try (OrientDB orientDb = new OrientDB("memory:", OrientDBConfig.defaultConfig())) {
+    }
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testWrongUrlFalure() {
+    new OrientDB("wrong", OrientDBConfig.defaultConfig());
+  }
+
+  @Test
   public void createAndUseEmbeddedDatabase() {
     OrientDB orientDb = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
 
