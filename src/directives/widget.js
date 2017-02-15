@@ -20,6 +20,8 @@ import '../views/widget/integer.html';
 import '../views/widget/long.html';
 import '../views/widget/link.html';
 
+import '../vendor/moment-jdateformatparser';
+
 Widget.directive('docwidget', ["$compile", "$http", "Database", "CommandApi", "DocumentApi", "$timeout", function ($compile, $http, Database, CommandApi, DocumentApi, $timeout) {
 
 

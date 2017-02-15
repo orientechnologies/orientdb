@@ -41,6 +41,7 @@ module.exports = function (options) {
       filename: "[name].js"
     },
     plugins: [
+      new webpack.DefinePlugin({"global.GENTLY": false}),
       new HtmlWebpackPlugin({
         template: "src/index.html",
         title: METADATA.title,
@@ -67,7 +68,7 @@ module.exports = function (options) {
         {
           test: /\.ts$/,
           loaders: ['awesome-typescript-loader', 'angular2-template-loader', '@angularclass/hmr-loader'],
-          exclude: [ /\.(spec|e2e)\.ts$/, /node_modules\/(?!(ng2-.+))/]
+          exclude: [/\.(spec|e2e)\.ts$/, /node_modules\/(?!(ng2-.+))/]
         },
         {
           test: /\.js[x]?$/,

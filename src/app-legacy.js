@@ -21,6 +21,7 @@ import 'bootstrap-switch';
 import 'angular-smart-table';
 import 'ng-table';
 
+
 import 'd3';
 import 'c3';
 import 'spectrum-colorpicker';
