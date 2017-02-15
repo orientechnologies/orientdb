@@ -18,14 +18,15 @@
 
 package com.orientechnologies.orient.enterprise.channel.binary;
 
-import com.orientechnologies.common.exception.OSystemException;
+import com.orientechnologies.common.concur.ONeedRetryException;
+import com.orientechnologies.common.exception.OHighLevelException;
 
 /**
  * The operation will be redirect to another server.
  *
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
-public class ODistributedRedirectException extends OSystemException {
+public class ODistributedRedirectException extends ONeedRetryException implements OHighLevelException {
   private String fromServer;
   private String toServer;
   private String toServerAddress;
