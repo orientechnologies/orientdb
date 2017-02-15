@@ -114,7 +114,7 @@ public class OServerCommandPostSecurityReload extends OServerCommandAuthenticate
 
   protected void writeJSON(final OHttpResponse iResponse, final String json) {
     try {
-      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, json, null);
+      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, new ODocument().field("message",json).toJSON(), null);
     } catch (Exception ex) {
       OLogManager.instance().error(this, "OServerCommandPostSecurityReload.WriteJSON() Exception: " + ex);
     }
