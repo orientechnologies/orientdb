@@ -36,7 +36,6 @@ schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$locatio
     return SchemaService.isSystemClass(c);
   }
 
-
   let gMap = {};
   $scope.systemClasses = $scope.listClassesTotal.filter((c) => {
 

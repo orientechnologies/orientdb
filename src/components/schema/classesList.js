@@ -23,8 +23,7 @@ let SchemaClassesController = function ($scope, $element, $attrs, $location, $mo
   ctrl.$onChanges = (changes) => {
     ctrl.queryFilter = changes.query.currentValue;
     var elem = $element.find('input.form-control')[0];
-    elem.val = ctrl.queryFilter;
-    angular.element(elem).triggerHandler('input');
+    angular.element(elem).val(ctrl.queryFilter).triggerHandler('input');
   }
 
   ctrl.clusterStrategies = ['round-robin', "default", "balanced", "local"];
