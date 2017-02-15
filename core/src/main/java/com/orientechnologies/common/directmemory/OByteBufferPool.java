@@ -500,6 +500,7 @@ public class OByteBufferPool implements OOrientStartupListener, OOrientShutdownL
       for (BufferHolder bufferHolder : preallocatedAreas.values()) {
         clean(bufferHolder.buffer, cleaned);
       }
+      this.preallocatedAreas.clear();
     }
 
     nextAllocationPosition.set(0);
