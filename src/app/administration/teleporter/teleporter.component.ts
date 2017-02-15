@@ -4,6 +4,7 @@ import * as $ from "jquery"
 
 import {downgradeComponent} from '@angular/upgrade/static';
 import {TeleporterService} from '../../core/services';
+import {NotificationService} from "../../core/services/notification.service";
 
 declare var angular:any
 
@@ -38,7 +39,7 @@ class TeleporterComponent implements AfterViewChecked {
 
   private hints;
 
-  constructor(private teleporterService:TeleporterService, private zone: NgZone) {
+  constructor(private teleporterService: TeleporterService, private notification: NotificationService, private zone: NgZone) {
 
     this.protocols = ["plocal", "remote"];
     this.strategies = ["naive", "naive-aggregate"];
@@ -48,9 +49,9 @@ class TeleporterComponent implements AfterViewChecked {
     this.logLevels = ["NO","DEBUG","INFO","WARNING","ERROR"];
 
     this.dbConnection = {
-      "host": "",
-      "port": "",
-      "dbName": "",
+      "host": "localhost",
+      "port": "5432",
+      "dbName": "dvdrental",
       "sid": ""
     }
 
@@ -59,8 +60,8 @@ class TeleporterComponent implements AfterViewChecked {
     this.defaultConfig = {
       "driver": "PostgreSQL",
       "jurl": "",
-      "username": "",
-      "password": "",
+      "username": "postgres",
+      "password": "postgres",
       "protocol": "plocal",
       "url": "",
       "outDbUrl": "",
@@ -122,7 +123,7 @@ class TeleporterComponent implements AfterViewChecked {
 
   enablePopovers() {
     (<any>$('[data-toggle="popover"]')).popover({
-      title: ' ',
+      title: '',
       placement: 'right',
       trigger: 'focus'
     });
@@ -134,7 +135,6 @@ class TeleporterComponent implements AfterViewChecked {
 
   switchConfigStep(step) {
     this.step = step;
-    //this.enablePopovers();
   }
 
   drivers() {
@@ -165,12 +165,17 @@ class TeleporterComponent implements AfterViewChecked {
   }
 
   testConnection() {
-    this.teleporterService.test(this.config).then(function (data) {
-      alert("Connection is alive");
-      //Notification.push({content: "Connection is alive", autoHide: true});
-    }).catch(function (error) {
-      alert("Error!");
-      //Notification.push({content: error.data, error: true, autoHide: true});
+    this.teleporterService.testConnection(this.config).then((data) => {
+      //alert("Connection is alive");
+      this.notification.push({content: "Connection is alive", autoHide: true});
+    }).catch((error) => {
+      /*console.log("Error:");
+      console.log(error);
+      console.log("Error data:");
+      console.log(JSON.stringify(error.json()));*/
+
+      //alert("Error!");
+      this.notification.push({content: error.json(), error: true, autoHide: true});
     });
   }
 

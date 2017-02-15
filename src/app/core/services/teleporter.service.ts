@@ -26,7 +26,7 @@ class TeleporterService {
     });
   }
 
-  test(params) {
+  testConnection(params) {
     let url = API + 'teleporter/test';
     return this.http.post(url, params).toPromise().then((data) => {
       return data.json();
