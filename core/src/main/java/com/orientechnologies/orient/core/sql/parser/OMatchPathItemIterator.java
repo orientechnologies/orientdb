@@ -91,10 +91,14 @@ public class OMatchPathItemIterator implements Iterator<OIdentifiable> {
       //basic case, no traversal, discard level zero
       if (depth == 1) {
         Object prevMatch = ctx.getVariable("$currentMatch");
+        Object prevCurrent = ctx.getVariable("$current");
         ctx.setVariable("$currentMatch", startingPoint);
+        ctx.setVariable("$current", startingPoint);
+
         if (filter == null || filter.matchesFilters(startingPoint, ctx)) {
           nextElement = startingPoint;
         }
+        ctx.setVariable("$current", prevCurrent);
         ctx.setVariable("$currentMatch", prevMatch);
       }
     } else {
