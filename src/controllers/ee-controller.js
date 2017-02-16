@@ -843,6 +843,7 @@ ee.controller("AuditingController", ['$scope', 'Auditing', 'Cluster', 'Spinner',
   $scope.saveAuditing = function () {
 
 
+
     SecurityService.reload({"module": "auditing", "config": $scope.auditingCfg})
       .then(function () {
         return $scope.save();
@@ -887,6 +888,9 @@ ee.controller("AuditingController", ['$scope', 'Auditing', 'Cluster', 'Spinner',
       }
       if ($scope.enabled) {
         Auditing.getConfig({db: $scope.db}).then(function (data) {
+
+
+
 
           $scope.config = data;
 
