@@ -659,6 +659,8 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
     // FINAL SAVE
     doc.save();
 
+    this.rawElement = doc;
+
     return newIdentity;
   }
 
