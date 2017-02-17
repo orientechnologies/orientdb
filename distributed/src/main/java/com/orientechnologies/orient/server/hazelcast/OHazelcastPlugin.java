@@ -148,7 +148,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     registeredNodeByName.clear();
 
     try {
-      hazelcastInstance = configureHazelcast();
+      configureHazelcast();
+      hazelcastInstance = createHazelcastInstance();
 
       nodeUuid = hazelcastInstance.getCluster().getLocalMember().getUuid();
 
@@ -500,14 +501,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       }
     }
 
-    if (hazelcastInstance != null)
-      try {
-        hazelcastInstance.shutdown();
-      } catch (Exception e) {
-        OLogManager.instance().error(this, "Error on shutting down Hazelcast instance", e);
-      } finally {
-        hazelcastInstance = null;
-      }
+    shutdownHazelcast();
 
     OCallableUtils.executeIgnoringAnyExceptions(new OCallableNoParamNoReturn() {
       @Override
@@ -525,6 +519,17 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
     coordinatorServer = null;
     setNodeStatus(NODE_STATUS.OFFLINE);
+  }
+
+  protected void shutdownHazelcast() {
+    if (hazelcastInstance != null)
+      try {
+        hazelcastInstance.shutdown();
+      } catch (Exception e) {
+        OLogManager.instance().error(this, "Error on shutting down Hazelcast instance", e);
+      } finally {
+        hazelcastInstance = null;
+      }
   }
 
   public ORemoteServerController getRemoteServer(final String rNodeName) throws IOException {
@@ -623,7 +628,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     return hazelcastInstance;
   }
 
-  protected HazelcastInstance configureHazelcast() throws FileNotFoundException {
+  protected void configureHazelcast() throws FileNotFoundException {
 
     // If hazelcastConfig is null, use the file system XML config.
     if (hazelcastConfig == null) {
@@ -633,7 +638,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
     hazelcastConfig.getMapConfig(CONFIG_REGISTEREDNODES).setBackupCount(6);
     hazelcastConfig.getMapConfig(OHazelcastDistributedMap.ORIENTDB_MAP).setMergePolicy(OHazelcastMergeStrategy.class.getName());
+  }
 
+  protected HazelcastInstance createHazelcastInstance() {
     return Hazelcast.newHazelcastInstance(hazelcastConfig);
   }
 
