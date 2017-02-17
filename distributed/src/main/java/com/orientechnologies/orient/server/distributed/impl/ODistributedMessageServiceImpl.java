@@ -85,10 +85,10 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
       responseThread = null;
     }
 
-    // SHUTDOWN ALL DATABASES
+    // SET ALL DATABASES TO NOT_AVAILABLE
     for (Entry<String, ODistributedDatabaseImpl> m : databases.entrySet()) {
       try {
-        manager.setDatabaseStatus(manager.getLocalNodeName(), m.getKey(), ODistributedServerManager.DB_STATUS.OFFLINE);
+        manager.setDatabaseStatus(manager.getLocalNodeName(), m.getKey(), ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
       } catch (Throwable t) {
         // IGNORE IT
       }
