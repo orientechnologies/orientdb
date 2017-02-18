@@ -193,18 +193,20 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
    * Distributed requests against the available workers by using one queue per worker. This guarantee the sequence of the operations
    * against the same record cluster.
    */
-  public void processRequest(final ODistributedRequest request) {
+  public void processRequest(final ODistributedRequest request, final boolean waitForAcceptingRequests) {
     if (!running)
       // DISCARD IT
       return;
 
     final ORemoteTask task = request.getTask();
 
-    waitIsReady(task);
+    if (waitForAcceptingRequests) {
+      waitIsReady(task);
 
-    if (!running)
-      // DISCARD IT
-      return;
+      if (!running)
+        // DISCARD IT
+        return;
+    }
 
     totalReceivedRequests.incrementAndGet();
 
@@ -546,7 +548,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
     ORawBuffer originalRecord = null;
 
-    if( rid.isPersistent()) {
+    if (rid.isPersistent()) {
       final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
       if (db != null)
         originalRecord = db.getStorage().getUnderlying().readRecord((ORecordId) rid, null, false, true, null).getResult();
@@ -760,7 +762,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     final OUnreachableServerLocalTask task = new OUnreachableServerLocalTask(nodeName);
     final ODistributedRequest rollbackRequest = new ODistributedRequest(manager.getTaskFactory(), manager.getLocalNodeId(),
         manager.getNextMessageIdCounter(), null, task);
-    processRequest(rollbackRequest);
+    processRequest(rollbackRequest, false);
   }
 
   @Override
