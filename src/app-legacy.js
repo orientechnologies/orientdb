@@ -50,8 +50,6 @@ import 'fullcalendar/dist/fullcalendar.min.css';
 import 'angular-motion/dist/angular-motion.min.css';
 
 
-
-
 // Bundled Vendor
 
 import './vendor/jquery.fonticonpicker/jquery.fonticonpicker.css';
@@ -161,6 +159,8 @@ App.config(routing);
 
 App.run(["$rootScope", "$interval", "DatabaseApi", "Notification", "Spinner", "$templateCache", "Aside", function ($rootScope, $interval, DatabaseApi, Notification, Spinner, $templateCache, Aside) {
   $rootScope.$on('$routeChangeSuccess', function (event, currentRoute, oldRoute) {
+
+
     switch (currentRoute.templateUrl) {
       case 'views/login.html':
         $rootScope.bodyClass = 'landing-page';
@@ -177,13 +177,16 @@ App.run(["$rootScope", "$interval", "DatabaseApi", "Notification", "Spinner", "$
     if (oldRoute && currentRoute.originalPath != oldRoute.originalPath) {
       Notification.clear();
     }
+
     NProgress.done();
+
   });
   $rootScope.$on("$routeChangeStart", function (event, next, current) {
     Aside.destroy();
     NProgress.start();
     NProgress.set(0.2);
     NProgress.set(0.4);
+
 
   })
 
