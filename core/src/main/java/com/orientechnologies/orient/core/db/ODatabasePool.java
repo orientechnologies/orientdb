@@ -96,7 +96,7 @@ public class ODatabasePool implements AutoCloseable {
    */
   public ODatabasePool(String url, String user, String password, OrientDBConfig configuration) {
     OURLConnection val = OURLHelper.parseNew(url);
-    orientDb = new OrientDB(val.getPath(), configuration);
+    orientDb = new OrientDB(val.getType() + ":" + val.getPath(), configuration);
     autoclose = true;
     internal = orientDb.openPool(val.getDbName(), user, password, configuration);
   }
