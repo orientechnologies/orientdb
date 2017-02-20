@@ -116,16 +116,20 @@ public class OEdgeDelegate implements OEdge {
   }
 
   public OEdge delete() {
-    OVertexDelegate from = ((OVertexDelegate) getFrom());
-    from.detachOutgointEdge(this);
-    OVertexDelegate to = ((OVertexDelegate) getTo());
-    to.detachIncomingEdge(this);
-    from.save();
-    to.save();
+    deleteLinks(this);
     if (element != null) {
       element.delete();
     }
     return this;
+  }
+
+  public static void deleteLinks(OEdgeDelegate delegate) {
+    OVertexDelegate from = ((OVertexDelegate) delegate.getFrom());
+    from.detachOutgointEdge(delegate);
+    OVertexDelegate to = ((OVertexDelegate) delegate.getTo());
+    to.detachIncomingEdge(delegate);
+    from.save();
+    to.save();
   }
 
   @Override
@@ -175,7 +179,6 @@ public class OEdgeDelegate implements OEdge {
   public Optional<OEdge> asEdge() {
     return Optional.of(this);
   }
-
 
   @Override
   public boolean isVertex() {

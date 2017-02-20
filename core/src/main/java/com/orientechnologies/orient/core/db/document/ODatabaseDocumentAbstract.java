@@ -240,7 +240,9 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
    * Deletes the record checking the version.
    */
   public ODatabase<ORecord> delete(final ORID iRecord, final int iVersion) {
-    executeDeleteRecord(iRecord, iVersion, true, OPERATION_MODE.SYNCHRONOUS, false);
+    ORecord record = load(iRecord);
+    ORecordInternal.setVersion(record, iVersion);
+    delete(record);
     return this;
   }
 
@@ -257,7 +259,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
    * Deletes the record without checking the version.
    */
   public ODatabaseDocument delete(final ORID iRecord, final OPERATION_MODE iMode) {
-    ORecord record = iRecord.getRecord();
+    ORecord record = load(iRecord);
     if (record == null)
       return this;
 
@@ -1329,9 +1331,9 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     checkOpenness();
     checkIfActive();
 
-    final ORecord rec = iRecord.getRecord();
+    final ORecord rec = load(iRecord);
     if (rec != null)
-      rec.delete();
+      delete(rec);
     return this;
   }
 
@@ -2457,6 +2459,11 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     checkOpenness();
     if (record == null)
       throw new ODatabaseException("Cannot delete null document");
+    if (record instanceof OVertexDelegate) {
+      OVertexDelegate.deleteLinks((OVertexDelegate) record);
+    } else if (record instanceof OEdgeDelegate) {
+      OEdgeDelegate.deleteLinks((OEdgeDelegate) record);
+    }
 
     // CHECK ACCESS ON SCHEMA CLASS NAME (IF ANY)
     if (record instanceof ODocument && ((ODocument) record).getClassName() != null)
