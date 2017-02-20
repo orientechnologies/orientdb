@@ -2,6 +2,14 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.sql.executor.ODeleteExecutionPlan;
+import com.orientechnologies.orient.core.sql.executor.ODeleteVertexExecutionPlanner;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
+
+import java.util.HashMap;
 import java.util.Map;
 
 public class ODeleteVertexStatement extends OStatement {
@@ -19,6 +27,41 @@ public class ODeleteVertexStatement extends OStatement {
 
   public ODeleteVertexStatement(OrientSql p, int id) {
     super(p, id);
+  }
+
+  @Override public OResultSet execute(ODatabase db, Map params, OCommandContext parentCtx) {
+    OBasicCommandContext ctx = new OBasicCommandContext();
+    if (parentCtx != null) {
+      ctx.setParentWithoutOverridingChild(parentCtx);
+    }
+    ctx.setDatabase(db);
+    ctx.setInputParameters(params);
+    ODeleteExecutionPlan executionPlan = createExecutionPlan(ctx);
+    executionPlan.executeInternal();
+    return new OLocalResultSet(executionPlan);
+  }
+
+  @Override public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx) {
+    OBasicCommandContext ctx = new OBasicCommandContext();
+    if (parentCtx != null) {
+      ctx.setParentWithoutOverridingChild(parentCtx);
+    }
+    ctx.setDatabase(db);
+    Map<Object, Object> params = new HashMap<>();
+    if (args != null) {
+      for (int i = 0; i < args.length; i++) {
+        params.put(i, args[i]);
+      }
+    }
+    ctx.setInputParameters(params);
+    ODeleteExecutionPlan executionPlan = createExecutionPlan(ctx);
+    executionPlan.executeInternal();
+    return new OLocalResultSet(executionPlan);
+  }
+
+  public ODeleteExecutionPlan createExecutionPlan(OCommandContext ctx) {
+    ODeleteVertexExecutionPlanner planner = new ODeleteVertexExecutionPlanner(this);
+    return planner.createExecutionPlan(ctx);
   }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
@@ -85,6 +128,54 @@ public class ODeleteVertexStatement extends OStatement {
     result = 31 * result + (limit != null ? limit.hashCode() : 0);
     result = 31 * result + (batch != null ? batch.hashCode() : 0);
     return result;
+  }
+
+  public boolean isFrom() {
+    return from;
+  }
+
+  public void setFrom(boolean from) {
+    this.from = from;
+  }
+
+  public OFromClause getFromClause() {
+    return fromClause;
+  }
+
+  public void setFromClause(OFromClause fromClause) {
+    this.fromClause = fromClause;
+  }
+
+  public OWhereClause getWhereClause() {
+    return whereClause;
+  }
+
+  public void setWhereClause(OWhereClause whereClause) {
+    this.whereClause = whereClause;
+  }
+
+  public boolean isReturnBefore() {
+    return returnBefore;
+  }
+
+  public void setReturnBefore(boolean returnBefore) {
+    this.returnBefore = returnBefore;
+  }
+
+  public OLimit getLimit() {
+    return limit;
+  }
+
+  public void setLimit(OLimit limit) {
+    this.limit = limit;
+  }
+
+  public OBatch getBatch() {
+    return batch;
+  }
+
+  public void setBatch(OBatch batch) {
+    this.batch = batch;
   }
 }
 /* JavaCC - OriginalChecksum=b62d3046f4bd1b9c1f78ed4f125b06d3 (do not edit this line) */
