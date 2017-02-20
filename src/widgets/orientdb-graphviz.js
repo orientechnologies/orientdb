@@ -1147,11 +1147,6 @@ let OrientGraph = (function () {
 
       var padd = 5;
 
-      //if (typeof padding == 'number') {
-      //  padd = padding;
-      //}
-
-
       radiusTarget = parseInt(radiusTarget);
       radiusSource = parseInt(radiusSource);
       var deltaX = d.target.x - d.source.x,
@@ -1179,6 +1174,9 @@ let OrientGraph = (function () {
 
         var realPos = calculateRelPos(d);
 
+
+        console.log(realPos);
+
         if (realPos == 0) {
           var paddingSource = 5;
           var paddingTarget = 5;
@@ -1193,7 +1191,9 @@ let OrientGraph = (function () {
         var m = (d.target.y - d.source.y) / (d.target.x - d.source.x);
         var val = (Math.atan(m) * 180) / Math.PI;
         var trans = val * (Math.PI / 180) * -1;
-        var radiansConfig = angleRadiants(pos);
+        var edgesLength = countRel(d);
+        var radiansConfig = angleRadiants(pos, edgesLength);
+
         var angleSource;
         var angleTarget;
         var signSourceX;
@@ -1222,24 +1222,37 @@ let OrientGraph = (function () {
         sourceY = d.source.y + ( signSourceY * (sourcePadding * Math.sin(angleSource)));
         targetX = d.target.x + ( signTargetX * (targetPadding * Math.cos(angleTarget)));
         targetY = d.target.y + ( signTargetY * (targetPadding * Math.sin(angleTarget)));
-        var dr = 75 * rel;
+
+
+        // var mod = dist / 10;
+        // var dr = mod * rel;
+
+        var dr = calculateDR(targetX - sourceX, targetY - sourceY, pos, edgesLength);
+
         return "M" + sourceX + "," + sourceY + "A" + dr + "," + dr + " 0 0,1 " + targetX + "," + targetY;
       }
 
     }
 
-    function angleRadiants(pos) {
-      switch (pos) {
-        case 2:
-          return {source: Math.PI / 6, target: (5 * Math.PI) / 6}
-          break;
-        case 3:
-          return {source: Math.PI / 3, target: (2 * Math.PI) / 3}
-          break;
-        case 4:
-          return {source: Math.PI / 2, target: Math.PI / 2}
-          break;
-      }
+
+    function calculateDR(dx, dy, pos, length) {
+      pos = length - pos;
+      var dr = Math.sqrt(dx * dx + dy * dy);
+
+      dr = dr / (1 + (1 / length) * (pos - 1));
+
+      return dr;
+
+    }
+
+    function angleRadiants(pos, length) {
+
+
+      let sourceAngle = 90 - (90 / length) * pos;
+      let targetAngle = (180 - ( 90 - (90 / length) * pos));
+
+      return {source: sourceAngle * (Math.PI / 180), target: targetAngle * (Math.PI / 180)};
+
     }
 
     function bindRectColor(d) {

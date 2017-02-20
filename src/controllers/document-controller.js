@@ -210,7 +210,7 @@ DocController.controller("DocumentModalEdgeController", ['$scope', '$routeParams
       json: JSON.stringify($scope.doc)
     };
     var command = "CREATE EDGE {{label}} FROM {{source}} TO {{target}}"
-    command += "content {{json}}";
+    command += " content {{json}}";
 
     var queryText = S(command).template(params).s;
 
