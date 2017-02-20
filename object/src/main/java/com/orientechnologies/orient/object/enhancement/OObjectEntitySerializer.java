@@ -16,6 +16,7 @@
  */
 package com.orientechnologies.orient.object.enhancement;
 
+import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
@@ -1039,7 +1040,7 @@ public class OObjectEntitySerializer {
       return OType.DATETIME;
     } else {
       OType res = OType.getTypeByClass(f.getType());
-      if (res != null) {
+      if (res != null && !(OType.CUSTOM.equals(res) && Serializable.class.isAssignableFrom(f.getType()))) {
         return res;
       }
       return OType.getTypeByClass(OObjectEntitySerializer.getBoundClassTarget(f.getType()));
