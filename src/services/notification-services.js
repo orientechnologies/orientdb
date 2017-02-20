@@ -55,9 +55,13 @@ notification.factory('Notification', ["$timeout", "$rootScope", function ($timeo
       this.errors.splice(0, this.errors.length);
       this.warnings.splice(0, this.warnings.length);
 
-      if(this.current){
-        this.current.close();
-        this.current = null;
+      if (this.current) {
+
+        if (!(this.current.options.type === 'success')) {
+          this.current.close();
+          this.current = null;
+        }
+
       }
     }
 

@@ -1291,6 +1291,7 @@ GraphModule.controller("GraphController", ['$scope', '$routeParams', '$location'
       $scope.history = History.push(queryBuffer);
       $scope.currentIndex = -1;
       Spinner.stopSpinner();
+      Notification.clear();
       $timeout(function () {
         GraphService.query($scope.database, $scope.currentUser, $scope.queryText);
         GraphService.add($scope.database, $scope.currentUser,

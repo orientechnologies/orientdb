@@ -174,10 +174,7 @@ App.run(["$rootScope", "$interval", "DatabaseApi", "Notification", "Spinner", "$
     } else {
       $rootScope.$emit("servermgmt:close");
     }
-    if (oldRoute && currentRoute.originalPath != oldRoute.originalPath) {
-      Notification.clear();
-    }
-
+    Notification.clear();
     NProgress.done();
 
   });
