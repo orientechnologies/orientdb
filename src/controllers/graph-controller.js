@@ -592,7 +592,7 @@ GraphModule.controller("GraphController", ['$scope', '$routeParams', '$location'
       "Ctrl-Space": "autocomplete",
       'Cmd-/': 'toggleComment',
       'Ctrl-/': 'toggleComment',
-      "Cmd-Up": function (instance) {
+      "Alt-Up": function (instance) {
 
 
         if ($scope.currentIndex < $scope.history.length - 1) {
@@ -608,7 +608,7 @@ GraphModule.controller("GraphController", ['$scope', '$routeParams', '$location'
 
 
       },
-      "Cmd-Down": function (instance) {
+      "Alt-Down": function (instance) {
         if ($scope.currentIndex >= 0) {
 
           $scope.currentIndex--;

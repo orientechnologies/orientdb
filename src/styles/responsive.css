@@ -6,9 +6,7 @@
 }
 
 @media (max-width: 798px) {
-  .query-hint {
-    display: none;
-  }
+
 
   .hide-settings {
     display: none;
@@ -79,3 +77,5 @@ table.table-schema tbody > tr > td input {
     width: 60%;
   }
 }
+
+

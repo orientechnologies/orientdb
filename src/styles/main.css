@@ -1323,3 +1323,7 @@ a.disabled {
 .ui-select-bootstrap .ui-select-match .ui-select-match-item {
   background-color: #b8b8b8;
 }
+
+.query-hint {
+  padding-left: 15px;
+}

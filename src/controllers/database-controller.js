@@ -151,6 +151,38 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$route', '$l
 
   $scope.selectedRequestType = $scope.requestTypes[0];
   $scope.selectedContentType = $scope.contentType[0];
+
+
+  var up = function (instance) {
+
+
+    if ($scope.currentIndex < $scope.history.length - 1) {
+
+      var tmp = $scope.queryText;
+      if ($scope.currentIndex == -1) {
+        $scope.prevText = tmp;
+      }
+      $scope.currentIndex++;
+      $scope.queryText = $scope.history[$scope.currentIndex];
+      $scope.$apply();
+    }
+
+
+  }
+  var down = function (instance) {
+    if ($scope.currentIndex >= 0) {
+
+      $scope.currentIndex--;
+
+      if ($scope.currentIndex == -1) {
+        $scope.queryText = $scope.prevText
+      } else {
+        $scope.queryText = $scope.history[$scope.currentIndex];
+      }
+
+      $scope.$apply();
+    }
+  }
   $scope.editorOptions = {
     lineWrapping: true,
     lineNumbers: true,
@@ -169,36 +201,8 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$route', '$l
       "Ctrl-Space": "autocomplete",
       'Cmd-/': 'toggleComment',
       'Ctrl-/': 'toggleComment',
-      "Cmd-Up": function (instance) {
-
-
-        if ($scope.currentIndex < $scope.history.length - 1) {
-
-          var tmp = $scope.queryText;
-          if ($scope.currentIndex == -1) {
-            $scope.prevText = tmp;
-          }
-          $scope.currentIndex++;
-          $scope.queryText = $scope.history[$scope.currentIndex];
-          $scope.$apply();
-        }
-
-
-      },
-      "Cmd-Down": function (instance) {
-        if ($scope.currentIndex >= 0) {
-
-          $scope.currentIndex--;
-
-          if ($scope.currentIndex == -1) {
-            $scope.queryText = $scope.prevText
-          } else {
-            $scope.queryText = $scope.history[$scope.currentIndex];
-          }
-
-          $scope.$apply();
-        }
-      }
+      "Alt-Up": up,
+      "Alt-Down": down
 
     },
     onLoad: function (_cm) {
