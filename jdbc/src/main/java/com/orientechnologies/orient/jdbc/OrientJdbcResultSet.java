@@ -23,7 +23,9 @@ import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.functions.ODefaultSQLFunctionFactory;
+import com.orientechnologies.orient.core.sql.functions.OSQLFunctionFactory;
 import com.orientechnologies.orient.core.sql.parser.*;
 
 import java.io.ByteArrayInputStream;
@@ -40,7 +42,7 @@ import java.util.*;
  * @author Salvatore Piccione (TXT e-solutions SpA - salvo.picci--at--gmail.com)
  */
 public class OrientJdbcResultSet implements ResultSet {
-  private final List<String> fieldNames;
+  private final List<String>                fieldNames;
   private final OrientJdbcResultSetMetaData resultSetMetaData;
   private List<ODocument> records = null;
   private OrientJdbcStatement statement;
@@ -99,7 +101,8 @@ public class OrientJdbcResultSet implements ResultSet {
 
         if (select.getProjection() != null) {
 
-          ODefaultSQLFunctionFactory fc = new ODefaultSQLFunctionFactory();
+          Set<String> functionNames = OSQLEngine.getFunctionNames();
+
           List<OProjectionItem> items = select.getProjection().getItems();
 
           for (OProjectionItem item : items) {
@@ -107,7 +110,9 @@ public class OrientJdbcResultSet implements ResultSet {
             if (!item.isAll()) {
 
               if (item.getAlias() != null) {
-                fields.add(item.getAlias().getStringValue());
+
+                String aliasValue = item.getAlias().getStringValue();
+                fields.add(aliasValue);
               } else {
 
                 OIdentifier alias = item.getDefaultAlias();
@@ -115,7 +120,7 @@ public class OrientJdbcResultSet implements ResultSet {
                 int underscore = alias.getValue().indexOf('_');
                 if (underscore > 0) {
                   String maybeFunction = alias.getValue().substring(0, underscore);
-                  if (fc.hasFunction(maybeFunction)) {
+                  if (functionNames.contains(maybeFunction.toLowerCase())) {
                     fields.add(maybeFunction);
                   } else {
                     fields.add(alias.getValue());

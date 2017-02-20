@@ -25,19 +25,14 @@ import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.SQLSyntaxErrorException;
-import java.sql.SQLWarning;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
 
-import static java.lang.Boolean.*;
-import static java.util.Collections.*;
+import static java.lang.Boolean.parseBoolean;
+import static java.util.Collections.emptyList;
 
 /**
  * @author Roberto Franchini (CELI Srl - franchini@celi.it)
@@ -98,7 +93,6 @@ public class OrientJdbcStatement implements Statement {
   @Override
   public boolean execute(final String sqlCommand) throws SQLException {
 
-//    System.out.println("sqlCommand = " + sqlCommand);
     if ("".equals(sqlCommand))
       return false;
 
@@ -128,7 +122,6 @@ public class OrientJdbcStatement implements Statement {
       }
     }
     resultSet = new OrientJdbcResultSet(this, documents, resultSetType, resultSetConcurrency, resultSetHoldability);
-
 
     return true;
 
