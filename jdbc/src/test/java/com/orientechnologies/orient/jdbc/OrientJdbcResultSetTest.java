@@ -173,8 +173,56 @@ public class OrientJdbcResultSetTest extends OrientJdbcBaseTest {
     assertThat(rs.getLong(1)).isEqualTo(3438);
     assertThat(rs.getLong("totalScore")).isEqualTo(3438);
 
+    stmt.close();
+    stmt = conn.createStatement();
+
+    //double check in lowercase
+    assertThat(stmt.execute("SELECT sum(score) AS totalScore FROM Item ")).isTrue();
+
+    rs = stmt.getResultSet();
+    assertThat(rs).isNotNull();
+
+    assertThat(rs.getFetchSize()).isEqualTo(1);
+
+    assertThat(rs.getLong(1)).isEqualTo(3438);
+    assertThat(rs.getLong("totalScore")).isEqualTo(3438);
+
   }
 
+
+  @Test
+  public void shouldSelectWithCount() throws Exception {
+
+    Statement stmt = conn.createStatement();
+
+    assertThat(stmt.execute("SELECT count(*) FROM Item ")).isTrue();
+
+    ResultSet rs = stmt.getResultSet();
+    assertThat(rs).isNotNull();
+
+    assertThat(rs.getFetchSize()).isEqualTo(1);
+
+    assertThat(rs.getLong(1)).isEqualTo(20);
+    assertThat(rs.getLong("count")).isEqualTo(20);
+
+    stmt.close();
+
+    //
+    stmt = conn.createStatement();
+
+    assertThat(stmt.execute("SELECT COUNT(*) FROM Item ")).isTrue();
+
+    rs = stmt.getResultSet();
+    assertThat(rs).isNotNull();
+
+    assertThat(rs.getFetchSize()).isEqualTo(1);
+
+    assertThat(rs.getLong(1)).isEqualTo(20);
+    assertThat(rs.getLong("COUNT")).isEqualTo(20);
+
+    stmt.close();
+
+  }
   @Test
   public void shouldFetchEmbeddedList() throws Exception {
 
