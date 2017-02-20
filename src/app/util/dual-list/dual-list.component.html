@@ -1,0 +1,64 @@
+<div style="display:-webkit-box;display:flex;flex-direction:row;align-content:flex-start;">
+
+  <div class="col-md-5">
+    <h2>{{headerLeft}}</h2><br/>
+
+    <div class="record-picker">
+      <ul [ngStyle]="{'max-height': height, 'min-height': height}" [ngClass]="{over:available.dragOver}"
+          (drop)="drop($event, confirmed)" (dragover)="allowDrop($event, available)" (dragleave)="dragLeave()">
+        <li *ngFor="let item of available.list; let idx=index;"
+            (click)="selectItem(available.pick, item); shiftClick($event, idx, available, item)"
+            [ngClass]="{selected: isItemSelected(available.pick, item)}"
+            draggable="true" (dragstart)="drag($event, item, available)" (dragend)="dragEnd(available)"
+        ><label>{{item._name}}</label></li>
+      </ul>
+    </div>
+
+
+    <div style="margin-top:8px;">
+      <button type="button" class="btn btn-sm btn-primary"
+              style="width:47%;float:left;" (click)="selectAll(available)"
+              [disabled]="isAllSelected(available)">Select All</button>
+      <button type="button" class="btn btn-sm btn-default"
+              style="width:47%;float:right;margin-right:0px;" (click)="selectNone(available)"
+              [disabled]="!isAnySelected(available)">Unselect All</button>
+    </div>
+  </div>
+
+  <div class="col-md-2">
+    <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
+    <div class="btn-group-vertical">
+      <button type="button" name="addBtn" class="btn btn-sm btn-primary btn-default"
+              style="display:block;width:100%;margin-bottom:8px;"
+              (click)="moveItem(available, confirmed)"
+              [disabled]="available.pick.length === 0">{{addBtn}}&nbsp;&nbsp;&nbsp;&nbsp;&#9654;</button>
+      <button type="button" name="removeBtn" class="btn btn-sm btn-primary btn-default"
+              style="display:block;width:100%;margin-bottom:15px;"
+              (click)="moveItem(confirmed, available)"
+              [disabled]="confirmed.pick.length === 0">&#9664;&nbsp;&nbsp;&nbsp;&nbsp;{{removeBtn}}</button>
+    </div>
+  </div>
+
+  <div class="col-md-5">
+    <h2>{{headerRight}}</h2><br/>
+
+    <div class="record-picker">
+      <ul [ngStyle]="{'max-height': height, 'min-height': height}" [ngClass]="{over:confirmed.dragOver}"
+          (drop)="drop($event, available)" (dragover)="allowDrop($event, confirmed)" (dragleave)="dragLeave()">
+        <li *ngFor="let item of confirmed.list; let idx=index;"
+            (click)="selectItem(confirmed.pick, item); shiftClick($event, idx, confirmed, item)"
+            [ngClass]="{selected: isItemSelected(confirmed.pick, item)}"
+            draggable="true" (dragstart)="drag($event, item, confirmed)" (dragend)="dragEnd(confirmed)"
+        ><label>{{item._name}}</label></li>
+      </ul>
+    </div>
+    <div style="margin-top:8px;">
+      <button type="button" class="btn btn-sm btn-primary"
+              style="width:47%;float:left;" (click)="selectAll(confirmed)"
+              [disabled]="isAllSelected(confirmed)">Select All</button>
+      <button type="button" class="btn btn-sm btn-default"
+              style="width:47%;float:right;margin-right:0px;" (click)="selectNone(confirmed)"
+              [disabled]="!isAnySelected(confirmed)">Unselect All</button>
+    </div>
+  </div>
+</div>

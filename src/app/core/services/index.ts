@@ -4,3 +4,5 @@ export * from './schema.service';
 export * from './command.service';
 export * from './teleporter.service'
 export * from './notification.service'
+export * from './agent.service'
+export * from './profiler.service'

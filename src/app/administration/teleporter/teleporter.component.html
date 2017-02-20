@@ -1,12 +1,12 @@
 <div class="row" ng-controller="TeleporterController">
 
-  <div *ngIf="false">
+  <div *ngIf="!agentService.agent.active">
     <div class="col-md-12 studio-well-tips">
-      <h4 ng-bind-html=" 'agent.notFound' | translate:links "></h4>
+      <h4>"This feature is available in OrientDB Enterprise Edition. To download OrientDB Enterprise Edition click <a href="http://orientdb.com/orientdb-enterprise/?#matrix" target='_blank'>here</a>.</h4>
     </div>
   </div>
 
-  <div *ngIf="true">
+  <div *ngIf="agentService.agent.active">
 
     <form class="form-horizontal" id="teleporterForm" name="teleporterForm" #form="ngForm"> {{message}}
 
@@ -244,30 +244,17 @@
 
         <div class="stepAdvanced" *ngSwitchCase="'5'">
           <h3>Step 5: Filters (Advanced)</h3><br/>
-          <div class="form-group">
-            <label class="col-sm-2 control-label">Included Tables</label>
 
-            <div class="col-sm-7">
-              <tag-input [(ngModel)]="config.includedTables" name="includedTables"  separatorKeys="['13','32']"
-                     placeholder="Included Tables" secondaryPlaceholder="Add a new table name" required></tag-input>
-            </div>
-            <div class="col-md-3">
-              <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
-                      [attr.data-content]="hints.includedTables" data-animation="am-fade-and-scale"><b>?</b></button>
+          <div class="form-group">
+            <div class="col-md-offset-1 col-md-10">
+              <dual-list [sort]="keepSorted" [source]="sourceDBTables" [key]="key" [display]="fieldToDisplay" [(destination)]="includedTables"
+                         headerLeft="Source DB Tables" headerRight="Included Tables"
+                         addBtn="Include" removeBtn="Exclude"
+                         height="265px"></dual-list>
             </div>
           </div>
 
-          <div class="form-group">
-            <label class="col-sm-2 control-label">Excluded Tables</label>
-            <div class="col-sm-7">
-              <tag-input [(ngModel)]="config.excludedTables" name="excludedTables" separatorKeys="['13','32']"
-                         placeholder="Excluded Tables" secondaryPlaceholder="Add a new table name" required></tag-input>
-            </div>
-            <div class="col-md-3">
-              <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
-                      [attr.data-content]="hints.excludedTables" data-animation="am-fade-and-scale"><b>?</b></button>
-            </div>
-          </div>
+          <br><br><br><br>
 
           <div class="form-group">
             <div class="col-sm-offset-2 col-sm-10">

@@ -107,6 +107,8 @@ import './styles/fontello-codes.css';
 import './styles/fontello-embedded.css';
 import './styles/fontello.css';
 import './styles/animation.css';
+import './styles/record-picker.css';
+
 
 
 let deps = [HeaderController,

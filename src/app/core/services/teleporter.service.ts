@@ -40,6 +40,13 @@ class TeleporterService {
     });
   }
 
+  getTablesNames(params) {
+    let url = API + 'teleporter/tables'
+    return this.http.post(url, params).toPromise().then((data) => {
+      return data.json();
+    })
+  }
+
 }
 
 

@@ -5,6 +5,7 @@ import * as $ from "jquery"
 import {downgradeComponent} from '@angular/upgrade/static';
 import {TeleporterService} from '../../core/services';
 import {NotificationService} from "../../core/services/notification.service";
+import {AgentService} from "../../core/services/agent.service";
 
 declare var angular:any
 
@@ -19,8 +20,6 @@ class TeleporterComponent implements AfterViewChecked {
   private protocols;
   private strategies;
   private nameResolvers;
-  private includedClasses;
-  private excludedClasses;
   private logLevels;
   private dbConnection;
 
@@ -39,13 +38,28 @@ class TeleporterComponent implements AfterViewChecked {
 
   private hints;
 
-  constructor(private teleporterService: TeleporterService, private notification: NotificationService, private zone: NgZone) {
+  // dual list box
+  private keepSorted;
+  private key;
+  private fieldToDisplay;
+  private sourceDBTables = [];
+  private includedTables = [];
 
+  constructor(private teleporterService: TeleporterService, private notification: NotificationService,
+              private agentService: AgentService, private zone: NgZone) {
+
+    // agent
+    this.agentService.isActive().then(() => {
+      this.init();
+    });
+
+
+  }
+
+  init() {
     this.protocols = ["plocal", "remote"];
     this.strategies = ["naive", "naive-aggregate"];
     this.nameResolvers = ["original", "java"];
-    this.includedClasses = [];
-    this.excludedClasses = [];
     this.logLevels = ["NO","DEBUG","INFO","WARNING","ERROR"];
 
     this.dbConnection = {
@@ -63,7 +77,7 @@ class TeleporterComponent implements AfterViewChecked {
       "username": "postgres",
       "password": "postgres",
       "protocol": "plocal",
-      "url": "",
+      "url": "/Users/gabriele/orientdb-enterprise-2.2.16/databases/DVDRental",
       "outDbUrl": "",
       "strategy": "naive",
       "mapper": "basicDBMapper",
@@ -71,7 +85,6 @@ class TeleporterComponent implements AfterViewChecked {
       "nameResolver": "original",
       "level": "2",
       "includedTables": [],
-      "excludedTables": []
     }
 
     this.config = angular.copy(this.defaultConfig);
@@ -98,23 +111,28 @@ class TeleporterComponent implements AfterViewChecked {
       username: "The username to access the source database.",
       password: "The password to access the source database.",
       protocol: "The protocol to use during the migration in order to connect to OrientDB:<br>" +
-                "<li><b>plocal</b>: the dabase will run locally in the same JVM of your application.</li>" +
-                "<li><b>remote</b>: the database will be accessed via TCP/IP connection.</li>",
+      "<li><b>plocal</b>: the dabase will run locally in the same JVM of your application.</li>" +
+      "<li><b>remote</b>: the database will be accessed via TCP/IP connection.</li>",
       outDbUrl: "URL for the destination OrientDB graph database.",
       strategy: "Strategy adopted during the importing phase.<br> " +
-                        "<li><b>naive</b>: performs a 'naive' import of the data source. The data source schema is translated semi-directly in a correspondent and coherent graph model.</li> " +
-                        "<li><b>naive-aggregate</b>: performs a 'naive' import of the data source. The data source schema is translated semi-directly in a correspondent and coherent graph model " +
-                        "using an aggregation policy on the junction tables of dimension equals to 2.</li><br>" +
-                        "<a href='http://orientdb.com/docs/last/Teleporter-Execution-Strategies.html'>More info</a>",
+      "<li><b>naive</b>: performs a 'naive' import of the data source. The data source schema is translated semi-directly in a correspondent and coherent graph model.</li> " +
+      "<li><b>naive-aggregate</b>: performs a 'naive' import of the data source. The data source schema is translated semi-directly in a correspondent and coherent graph model " +
+      "using an aggregation policy on the junction tables of dimension equals to 2.</li><br>" +
+      "<a href='http://orientdb.com/docs/last/Teleporter-Execution-Strategies.html'>More info</a>",
       nameResolver: "Name of the resolver which transforms the names of all the elements of the source database according to a specific convention.<br>" +
-                          "<li><b>original</b>: maintains the original name convention.</li>" +
-                          "<li><b>java</b>: transforms all the elements' names according to the Java convention.</li>",
+      "<li><b>original</b>: maintains the original name convention.</li>" +
+      "<li><b>java</b>: transforms all the elements' names according to the Java convention.</li>",
       includedTables: "Allows you to import only the listed tables.<br><br><a href='http://orientdb.com/docs/last/Teleporter-Import-Filters.html'>More info</a>",
       excludedTables: "Excludes the listed tables from the importing process.<br><br><a href='http://orientdb.com/docs/last/Teleporter-Import-Filters.html'>More info</a>",
       XMLPath: "Executes the migration taking advantage of OrientDB's polymorphism according to the configuration in the specified XML file.<br><br>" +
-               "<a href='http://orientdb.com/docs/last/Teleporter-Inheritance.html'>More info</a>",
+      "<a href='http://orientdb.com/docs/last/Teleporter-Inheritance.html'>More info</a>",
       logLevel: "Level of verbosity printed to the output during the execution."
     }
+
+    // dual list box
+    this.keepSorted = true;
+    this.key = "id";
+    this.fieldToDisplay = "tableName";
   }
 
   ngAfterViewChecked() {
@@ -134,11 +152,23 @@ class TeleporterComponent implements AfterViewChecked {
   }
 
   switchConfigStep(step) {
+
+    if(step === '5') {
+
+      // fetching tables' names
+      this.getTablesNames().then((data) => {
+        this.sourceDBTables = data["tables"];
+      })
+    }
     this.step = step;
   }
 
   drivers() {
     return this.teleporterService.drivers();
+  }
+
+  getTablesNames() {
+    return this.teleporterService.getTablesNames(this.config);
   }
 
   changeJurlAccordingToDriver() {
@@ -166,15 +196,8 @@ class TeleporterComponent implements AfterViewChecked {
 
   testConnection() {
     this.teleporterService.testConnection(this.config).then((data) => {
-      //alert("Connection is alive");
       this.notification.push({content: "Connection is alive", autoHide: true});
     }).catch((error) => {
-      /*console.log("Error:");
-      console.log(error);
-      console.log("Error data:");
-      console.log(JSON.stringify(error.json()));*/
-
-      //alert("Error!");
       this.notification.push({content: error.json(), error: true, autoHide: true});
     });
   }
@@ -182,6 +205,13 @@ class TeleporterComponent implements AfterViewChecked {
   launch() {
 
     this.config.outDbUrl = this.config.protocol + ":" + this.config.url;
+
+    // transforming includedTables if set
+    if(this.includedTables.length > 0) {
+      for(var i=0; i < this.includedTables.length; i++) {
+        this.config.includedTables.push(this.includedTables[i].tableName);
+      }
+    }
 
     this.teleporterService.launch(this.config).then((data) => {
       this.step = "running";
@@ -193,7 +223,6 @@ class TeleporterComponent implements AfterViewChecked {
   }
 
   status() {
-    console.log("Status call.")
     if(this.jobRunning) {
       this.teleporterService.status().then((data) => {
         if (data.jobs.length > 0) {
@@ -220,7 +249,6 @@ class TeleporterComponent implements AfterViewChecked {
   }
 
   scrollLogAreaDown() {
-    console.log("ScrollDown");
     var logArea = $("#logArea");
     logArea.scrollTop(9999999);
   }
