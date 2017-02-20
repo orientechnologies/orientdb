@@ -33,7 +33,7 @@
 
     <properties>
         <orientdb.version>${project.version}</orientdb.version>
-        <lucene.version>6.3.0</lucene.version>
+        <lucene.version>6.4.1</lucene.version>
         <geotools.version>13.2</geotools.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <argLine>-ea -XX:MaxDirectMemorySize=512g -Xmx2048m
