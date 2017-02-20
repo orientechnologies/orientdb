@@ -470,9 +470,9 @@ TOKEN :
     (<MINUS>)? <INTEGER_LITERAL> <RANGE> (<MINUS>)?<INTEGER_LITERAL>
   >
   |
-  < TRUE: "true" >
+  < TRUE: ("T" | "t") ("R" | "r") ("U" | "u") ("E" | "e") >
   |
-  < FALSE: "false" >
+  < FALSE: ("F" | "f") ("A" | "a") ("L" | "l") ("S" | "s") ("E" | "e") >
 }
 
 
@@ -2196,6 +2196,10 @@ OExpression Expression():
     (
         <NULL> {jjtThis.isNull = true; jjtThis.value = null;}
         |
+        <TRUE> { jjtThis.booleanValue = true; jjtThis.value = true; }
+        |
+        <FALSE> { jjtThis.booleanValue = false; jjtThis.value = false; }
+        |
         LOOKAHEAD( Rid() )
         jjtThis.rid = Rid() { jjtThis.value = jjtThis.rid; }
         |
@@ -2203,10 +2207,7 @@ OExpression Expression():
         jjtThis.mathExpression = MathExpression() { jjtThis.value = jjtThis.mathExpression; }
         |
         jjtThis.json = Json() {jjtThis.value = jjtThis.json; }
-        |
-        <TRUE> { jjtThis.booleanValue = true; jjtThis.value = true; }
-        |
-        <FALSE> { jjtThis.booleanValue = false; jjtThis.value = false; }
+
 	)
 	{ return jjtThis; }
 }
