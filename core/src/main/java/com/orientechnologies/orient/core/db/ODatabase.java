@@ -173,8 +173,9 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   <DB extends ODatabase> DB setStatus(STATUS iStatus);
 
   /**
-   * Returns the total size of database as the real used space.
+   * Returns the total size of database as used space.
    */
+  @Deprecated
   long getSize();
 
   /**
@@ -253,6 +254,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    *
    * @return Total size of records contained.
    */
+  @Deprecated
   long getClusterRecordSizeByName(String iClusterName);
 
   /**
@@ -262,6 +264,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    *
    * @return The name of searched cluster.
    */
+  @Deprecated
   long getClusterRecordSizeById(int iClusterId);
 
   /**
@@ -374,6 +377,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    *
    * @return The previous value if any, otherwise null
    */
+  @Deprecated
   Object setProperty(String iName, Object iValue);
 
   /**
@@ -383,11 +387,13 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    *
    * @return The previous value if any, otherwise null
    */
+  @Deprecated
   Object getProperty(String iName);
 
   /**
    * Returns an iterator of the property entries
    */
+  @Deprecated
   Iterator<Map.Entry<String, Object>> getProperties();
 
   /**
@@ -740,25 +746,6 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
   ODatabase<T> delete(ORID iRID, int iVersion);
-
-  /**
-   * Hides records content by putting tombstone on the records position but does not delete record itself.
-   * <p>
-   * This method is used in case of record content itself is broken and cannot be read or deleted. So it is emergence method. This
-   * method can be used only if there is no active transaction in database.
-   *
-   * @param rid record id.
-   *
-   * @return <code>true</code> if record was hidden and <code>false</code> if record does not exits in database.
-   *
-   * @throws java.lang.UnsupportedOperationException                              In case current version of cluster does not
-   *                                                                              support given operation.
-   * @throws com.orientechnologies.orient.core.exception.ORecordNotFoundException if record is already deleted/hidden.
-   */
-
-  boolean hide(ORID rid);
-
-  ODatabase<T> cleanOutRecord(ORID rid, int version);
 
   /**
    * Return active transaction. Cannot be null. If no transaction is active, then a OTransactionNoTx instance is returned.

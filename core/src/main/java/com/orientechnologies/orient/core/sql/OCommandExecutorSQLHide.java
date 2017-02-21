@@ -23,6 +23,7 @@ package com.orientechnologies.orient.core.sql;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -63,7 +64,7 @@ public class OCommandExecutorSQLHide extends OCommandExecutorSQLAbstract {
 
   @Override
   public Object execute(Map<Object, Object> iArgs) {
-    final ODatabaseDocument database = getDatabase();
+    final ODatabaseDocumentInternal database = getDatabase();
     if (database.hide(recordIdToHide))
       return 1;
 

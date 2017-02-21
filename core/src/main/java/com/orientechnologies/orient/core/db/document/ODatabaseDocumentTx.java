@@ -828,7 +828,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   }
 
   @Override
-  public ODatabase<ORecord> cleanOutRecord(ORID rid, int version) {
+  public ODatabaseDocumentInternal cleanOutRecord(ORID rid, int version) {
     checkOpenness();
     internal.cleanOutRecord(rid, version);
     return this;

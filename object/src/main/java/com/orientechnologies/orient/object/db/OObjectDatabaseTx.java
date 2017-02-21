@@ -577,17 +577,6 @@ public class OObjectDatabaseTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
     return this;
   }
 
-  @Override
-  public boolean hide(ORID rid) {
-    throw new UnsupportedOperationException("hide");
-  }
-
-  @Override
-  public ODatabase<Object> cleanOutRecord(final ORID iRID, final int iVersion) {
-    deleteRecord(iRID, iVersion, true);
-    return this;
-  }
-
   public long countClass(final String iClassName) {
     checkOpenness();
     return underlying.countClass(iClassName);

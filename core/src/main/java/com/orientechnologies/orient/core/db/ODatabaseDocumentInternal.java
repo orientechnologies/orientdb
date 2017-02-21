@@ -107,7 +107,7 @@ public interface ODatabaseDocumentInternal extends ODatabaseDocument, ODatabaseI
 
   void callOnDropListeners();
 
-  public <DB extends ODatabase> DB setCustom(final String name, final Object iValue);
+  <DB extends ODatabase> DB setCustom(final String name, final Object iValue);
 
   void setPrefetchRecords(boolean prefetchRecords);
 
@@ -126,4 +126,24 @@ public interface ODatabaseDocumentInternal extends ODatabaseDocument, ODatabaseI
   OEdge newLightweightEdge(String iClassName, OVertex from, OVertex to);
 
   void setUseLightweightEdges(boolean b);
+
+  /**
+   * Hides records content by putting tombstone on the records position but does not delete record itself.
+   * <p>
+   * This method is used in case of record content itself is broken and cannot be read or deleted. So it is emergence method. This
+   * method can be used only if there is no active transaction in database.
+   *
+   * @param rid record id.
+   *
+   * @return <code>true</code> if record was hidden and <code>false</code> if record does not exits in database.
+   *
+   * @throws java.lang.UnsupportedOperationException                              In case current version of cluster does not
+   *                                                                              support given operation.
+   * @throws com.orientechnologies.orient.core.exception.ORecordNotFoundException if record is already deleted/hidden.
+   */
+
+  boolean hide(ORID rid);
+
+  ODatabaseDocumentInternal cleanOutRecord(ORID rid, int version);
+
 }

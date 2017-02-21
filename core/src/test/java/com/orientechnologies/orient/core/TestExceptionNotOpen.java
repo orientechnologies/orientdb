@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -17,7 +18,7 @@ public class TestExceptionNotOpen {
   @Test
   public void testExceptionNotOpenMemory() {
 
-    ODatabaseDocument db = new ODatabaseDocumentTx("memory:testExceptionNotOpenMemory");
+    ODatabaseDocumentInternal db = new ODatabaseDocumentTx("memory:testExceptionNotOpenMemory");
     try {
       db.save(new ODocument());
       Assert.fail();
@@ -75,7 +76,7 @@ public class TestExceptionNotOpen {
   @Test
   public void testExceptionNotOpenPlocal() {
 
-    ODatabaseDocument db = new ODatabaseDocumentTx("plocal:./target/databaseCheck");
+    ODatabaseDocumentInternal db = new ODatabaseDocumentTx("plocal:./target/databaseCheck");
     try {
       db.save(new ODocument());
       Assert.fail();
