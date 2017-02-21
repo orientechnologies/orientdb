@@ -70,7 +70,6 @@
     "@types/hammerjs": "^2.0.34",
     "@types/jasmine": "^2.5.41",
     "@types/node": "^7.0.5",
-    "@types/protractor": "^4.0.0",
     "@types/selenium-webdriver": "^2.53.39",
     "@types/source-map": "^0.5.0",
     "@types/uglify-js": "^2.6.28",
