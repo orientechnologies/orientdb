@@ -112,10 +112,9 @@ public class OrientDB implements AutoCloseable {
    * </code>
    * </pre>
    *
-   * @param url           the url for the specific factory.
-   * @param configuration configuration for the specific factory for the list of option {@see OGlobalConfiguration}.
+   * @param url           the url for the specific environment.
+   * @param configuration configuration for the specific environment for the list of option {@see OGlobalConfiguration}.
    *
-   * @return the new Orient Factory.
    */
   public OrientDB(String url, OrientDBConfig configuration) {
     this(url, null, null, configuration);
@@ -151,12 +150,11 @@ public class OrientDB implements AutoCloseable {
    * </code>
    * </pre>
    *
-   * @param url            the url for the specific factory.
+   * @param url            the url for the specific environment.
    * @param serverUser     the server user allowed to manipulate databases.
    * @param serverPassword relative to the server user.
-   * @param configuration  configuration for the specific factory for the list of option {@see OGlobalConfiguration}.
+   * @param configuration  configuration for the specific environment for the list of option {@see OGlobalConfiguration}.
    *
-   * @return the new Orient Factory.
    */
   public OrientDB(String url, String serverUser, String serverPassword, OrientDBConfig configuration) {
     int pos;

@@ -26,50 +26,48 @@ import com.orientechnologies.orient.core.iterator.object.OObjectIteratorClassInt
 import com.orientechnologies.orient.core.iterator.object.OObjectIteratorClusterInterface;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
 import com.orientechnologies.orient.object.metadata.OMetadataObject;
 
 /**
  * Generic interface for object based Database implementations. Binds to/from Document and POJOs.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public interface ODatabaseObject extends ODatabase<Object>, OUserObject2RecordHandler {
 
   /**
    * Sets as dirty a POJO. This is useful when you change the object and need to tell to the engine to treat as dirty.
-   * 
-   * @param iPojo
-   *          User object
+   *
+   * @param iPojo User object
    */
   void setDirty(final Object iPojo);
 
   /**
    * Sets as not dirty a POJO. This is useful when you change some other object and need to tell to the engine to treat this one as
    * not dirty.
-   * 
-   * @param iPojo
-   *          User object
+   *
+   * @param iPojo User object
    */
   void unsetDirty(final Object iPojo);
 
   /**
    * Browses all the records of the specified cluster.
-   * 
-   * @param iClusterName
-   *          Cluster name to iterate
+   *
+   * @param iClusterName Cluster name to iterate
+   *
    * @return Iterator of Object instances
    */
   <RET> OObjectIteratorClusterInterface<RET> browseCluster(String iClusterName);
 
   /**
    * Browses all the records of the specified class.
-   * 
-   * @param iClusterClass
-   *          Class name to iterate
+   *
+   * @param iClusterClass Class name to iterate
+   *
    * @return Iterator of Object instances
    */
   <RET> OObjectIteratorClassInterface<RET> browseClass(Class<RET> iClusterClass);
-
 
   /**
    * Creates a new entity instance. Each database implementation will return the right type.
@@ -81,8 +79,8 @@ public interface ODatabaseObject extends ODatabase<Object>, OUserObject2RecordHa
   /**
    * Counts the entities contained in the specified class and sub classes (polymorphic).
    *
-   * @param iClassName
-   *          Class name
+   * @param iClassName Class name
+   *
    * @return Total entities
    */
   long countClass(String iClassName);
@@ -90,29 +88,76 @@ public interface ODatabaseObject extends ODatabase<Object>, OUserObject2RecordHa
   /**
    * Counts the entities contained in the specified class.
    *
-   * @param iClassName
-   *          Class name
-   * @param iPolymorphic
-   *          True if consider also the sub classes, otherwise false
+   * @param iClassName   Class name
+   * @param iPolymorphic True if consider also the sub classes, otherwise false
+   *
    * @return Total entities
    */
   long countClass(String iClassName, final boolean iPolymorphic);
 
   /**
    * Creates a new entity of the specified class.
-   * 
-   * @param iType
-   *          Class name where to originate the instance
+   *
+   * @param iType Class name where to originate the instance
+   *
    * @return New instance
    */
   <T> T newInstance(Class<T> iType);
 
   /**
    * Returns the entity manager that handle the binding from ODocuments and POJOs.
-   * 
+   *
    * @return
    */
   OEntityManager getEntityManager();
+
+  /**
+   * Method that detaches all fields contained in the document to the given object. It returns by default a proxied instance. To get
+   * a detached non proxied instance @see {@link OObjectEntitySerializer.detach(T, ODatabaseObject)}
+   *
+   * @param iPojo :- the object to detach
+   *
+   * @return the detached object
+   */
+  <RET> RET detach(final Object iPojo);
+
+  /**
+   * Method that detaches all fields contained in the document to the given object.
+   *
+   * @param <RET>
+   * @param iPojo                    :- the object to detach
+   * @param returnNonProxiedInstance :- defines if the return object will be a proxied instance or not. If set to TRUE and the
+   *                                 object does not contains @Id and @Version fields it could procude data replication
+   *
+   * @return the object serialized or with detached data
+   */
+  <RET> RET detach(final Object iPojo, boolean returnNonProxiedInstance);
+
+  /**
+   * Method that detaches all fields contained in the document to the given object and recursively all object tree. This may throw a
+   * {@link StackOverflowError} with big objects tree. To avoid it set the stack size with -Xss java option
+   *
+   * @param <RET>
+   * @param iPojo :- the objects to detach
+   *
+   * @return the object serialized or with detached data
+   */
+  default <RET> RET detachAll(final Object iPojo) {
+    return detachAll(iPojo, false);
+  }
+
+  /**
+   * Method that detaches all fields contained in the document to the given object and recursively all object tree. This may throw a
+   * {@link StackOverflowError} with big objects tree. To avoid it set the stack size with -Xss java option
+   *
+   * @param <RET>
+   * @param iPojo                    :- the objects to detach
+   * @param returnNonProxiedInstance :- defines if the return object will be a proxied instance or not. If set to TRUE and the
+   *                                 object does not contains @Id and @Version fields it could procude data replication
+   *
+   * @return the object serialized or with detached data
+   */
+  <RET> RET detachAll(final Object iPojo, boolean returnNonProxiedInstance);
 
   boolean isRetainObjects();
 
