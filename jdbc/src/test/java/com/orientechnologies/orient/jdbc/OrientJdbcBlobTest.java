@@ -131,9 +131,7 @@ public class OrientJdbcBlobTest extends OrientJdbcBaseTest {
     try {
 
       assertThat(digest).isEqualTo(calculateMD5checksum(new FileInputStream(fileToBeChecked)));
-    } catch (NoSuchAlgorithmException e) {
-      fail(e.getMessage());
-    } catch (IOException e) {
+    } catch (NoSuchAlgorithmException | IOException e) {
       fail(e.getMessage());
     }
   }

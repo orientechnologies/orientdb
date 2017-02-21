@@ -27,6 +27,7 @@ import java.sql.Blob;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static java.util.Arrays.asList;
@@ -46,11 +47,11 @@ public class OrientBlob implements Blob {
   private int currentChunkIndex;
 
   protected OrientBlob(OBlob binaryDataChunk) throws IllegalArgumentException {
-    this(asList(binaryDataChunk));
+    this(Collections.singletonList(binaryDataChunk));
   }
 
   protected OrientBlob(List<OBlob> binaryDataChunks) throws IllegalArgumentException {
-    this.binaryDataChunks = new ArrayList<byte[]>(binaryDataChunks.size());
+    this.binaryDataChunks = new ArrayList<>(binaryDataChunks.size());
     for (OBlob binaryDataChunk : binaryDataChunks) {
       if (binaryDataChunk == null) {
         throw new IllegalArgumentException("The binary data chunks list cannot hold null chunks");

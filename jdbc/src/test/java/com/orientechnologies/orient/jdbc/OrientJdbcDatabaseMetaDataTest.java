@@ -118,14 +118,14 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
     ResultSetMetaData rsMetaData = rs.getMetaData();
 
     int cc = rsMetaData.getColumnCount();
-    Set<String> colset = new HashSet<String>();
-    List<Map<String, Object>> columns = new ArrayList<Map<String, Object>>(cc);
+    Set<String> colset = new HashSet<>();
+    List<Map<String, Object>> columns = new ArrayList<>(cc);
     for (int i = 1; i <= cc; i++) {
       String name = rsMetaData.getColumnLabel(i);
       //      if (colset.contains(name))
       //        continue;
       colset.add(name);
-      Map<String, Object> field = new HashMap<String, Object>();
+      Map<String, Object> field = new HashMap<>();
       field.put("name", name);
 
       try {
@@ -171,7 +171,7 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
   @Test
   public void shouldGetAllTablesFilteredByAllTypes() throws SQLException {
     ResultSet rs = metaData.getTableTypes();
-    List<String> tableTypes = new ArrayList<String>(2);
+    List<String> tableTypes = new ArrayList<>(2);
     while (rs.next()) {
       tableTypes.add(rs.getString(1));
     }

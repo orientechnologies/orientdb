@@ -132,7 +132,7 @@ public class OrientDataSourceTest extends OrientJdbcBaseTest {
         .map(i -> CompletableFuture.runAsync(dbClient))
         .collect(Collectors.toList());
 
-    futures.forEach(cf -> cf.join());
+    futures.forEach(CompletableFuture::join);
   }
 
 }

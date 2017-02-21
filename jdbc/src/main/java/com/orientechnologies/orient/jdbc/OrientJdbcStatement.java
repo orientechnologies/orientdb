@@ -44,18 +44,18 @@ public class OrientJdbcStatement implements Statement {
   protected final ODatabaseDocument    database;
 
   // protected OCommandSQL query;
-  protected OCommandRequest     query;
-  protected String              sql;
-  protected List<ODocument>     documents;
-  protected boolean             closed;
-  protected Object              rawResult;
-  protected OrientJdbcResultSet resultSet;
-  protected List<String>        batches;
+  protected       OCommandRequest     query;
+  protected       String              sql;
+  protected       List<ODocument>     documents;
+  protected       boolean             closed;
+  protected       Object              rawResult;
+  protected       OrientJdbcResultSet resultSet;
+  protected final List<String>        batches;
 
-  protected int        resultSetType;
-  protected int        resultSetConcurrency;
-  protected int        resultSetHoldability;
-  protected Properties info;
+  protected final int        resultSetType;
+  protected final int        resultSetConcurrency;
+  protected final int        resultSetHoldability;
+  protected final Properties info;
 
   public OrientJdbcStatement(final OrientJdbcConnection iConnection) {
     this(iConnection, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
@@ -67,7 +67,7 @@ public class OrientJdbcStatement implements Statement {
    * @param resultSetConcurrency
    * @throws SQLException
    */
-  public OrientJdbcStatement(OrientJdbcConnection iConnection, int resultSetType, int resultSetConcurrency) throws SQLException {
+  public OrientJdbcStatement(OrientJdbcConnection iConnection, int resultSetType, int resultSetConcurrency) {
     this(iConnection, resultSetType, resultSetConcurrency, resultSetType);
   }
 
@@ -83,7 +83,7 @@ public class OrientJdbcStatement implements Statement {
     this.database = iConnection.getDatabase();
     database.activateOnCurrentThread();
     documents = emptyList();
-    batches = new ArrayList<String>();
+    batches = new ArrayList<>();
     this.resultSetType = resultSetType;
     this.resultSetConcurrency = resultSetConcurrency;
     this.resultSetHoldability = resultSetHoldability;

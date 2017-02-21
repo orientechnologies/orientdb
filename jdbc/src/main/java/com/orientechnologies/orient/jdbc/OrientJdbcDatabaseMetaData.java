@@ -626,7 +626,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
 
   public ResultSet getProcedures(String catalog, String schemaPattern, String procedureNamePattern) throws SQLException {
     database.activateOnCurrentThread();
-    final List<ODocument> records = new ArrayList<ODocument>();
+    final List<ODocument> records = new ArrayList<>();
 
     OFunctionLibrary functionLibrary = database.getMetadata().getFunctionLibrary();
 
@@ -652,7 +652,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
   public ResultSet getProcedureColumns(String catalog, String schemaPattern, String procedureNamePattern, String columnNamePattern)
       throws SQLException {
     database.activateOnCurrentThread();
-    final List<ODocument> records = new ArrayList<ODocument>();
+    final List<ODocument> records = new ArrayList<>();
 
     OFunctionLibrary functionLibrary = database.getMetadata().getFunctionLibrary();
 
@@ -696,7 +696,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
   public ResultSet getTables(String catalog, String schemaPattern, String tableNamePattern, String[] types) throws SQLException {
     database.activateOnCurrentThread();
     final Collection<OClass> classes = database.getMetadata().getSchema().getClasses();
-    final List<ODocument> records = new ArrayList<ODocument>();
+    final List<ODocument> records = new ArrayList<>();
 
     final List tableTypes = types != null ? Arrays.asList(types) : TABLE_TYPES;
     for (OClass cls : classes) {
@@ -732,7 +732,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
   @Override
   public ResultSet getSchemas() throws SQLException {
     database.activateOnCurrentThread();
-    final List<ODocument> records = new ArrayList<ODocument>();
+    final List<ODocument> records = new ArrayList<>();
     records.add(new ODocument().field("TABLE_SCHEM", database.getName())
         .field("TABLE_CATALOG", database.getName()));
 
@@ -742,7 +742,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
 
   public ResultSet getCatalogs() throws SQLException {
     database.activateOnCurrentThread();
-    final List<ODocument> records = new ArrayList<ODocument>();
+    final List<ODocument> records = new ArrayList<>();
     records.add(new ODocument().field("TABLE_CAT", database.getName()));
 
     return new OrientJdbcResultSet(new OrientJdbcStatement(connection), records, ResultSet.TYPE_FORWARD_ONLY,
@@ -752,7 +752,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
   public ResultSet getTableTypes() throws SQLException {
     database.activateOnCurrentThread();
 
-    List<ODocument> records = new ArrayList<ODocument>();
+    List<ODocument> records = new ArrayList<>();
     for (String tableType : TABLE_TYPES) {
       records.add(new ODocument().field("TABLE_TYPE", tableType));
     }
@@ -767,7 +767,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
       final String columnNamePattern) throws SQLException {
     database.activateOnCurrentThread();
 
-    final List<ODocument> records = new ArrayList<ODocument>();
+    final List<ODocument> records = new ArrayList<>();
 
     OSchema schema = database.getMetadata().getSchema();
 
@@ -816,14 +816,14 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
     database.activateOnCurrentThread();
     final Set<OIndex<?>> classIndexes = database.getMetadata().getIndexManager().getClassIndexes(table);
 
-    final Set<OIndex<?>> uniqueIndexes = new HashSet<OIndex<?>>();
+    final Set<OIndex<?>> uniqueIndexes = new HashSet<>();
 
     for (OIndex<?> oIndex : classIndexes) {
       if (oIndex.getType().equals(INDEX_TYPE.UNIQUE.name()))
         uniqueIndexes.add(oIndex);
     }
 
-    final List<ODocument> records = new ArrayList<ODocument>();
+    final List<ODocument> records = new ArrayList<>();
 
     for (OIndex<?> unique : uniqueIndexes) {
       int keyFiledSeq = 1;
@@ -833,7 +833,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
             .field("TABLE_SCHEM", catalog)
             .field("TABLE_NAME", table)
             .field("COLUMN_NAME", keyFieldName)
-            .field("KEY_SEQ", Integer.valueOf(keyFiledSeq), OType.INTEGER)
+            .field("KEY_SEQ", keyFiledSeq, OType.INTEGER)
             .field("PK_NAME", unique.getName());
         keyFiledSeq++;
 
@@ -860,7 +860,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
   }
 
   public ResultSet getTypeInfo() throws SQLException {
-    final List<ODocument> info = new ArrayList<ODocument>();
+    final List<ODocument> info = new ArrayList<>();
 
     info.add(new ODocument()
         .field("TYPE_NAME", OType.BINARY.toString())
@@ -989,14 +989,14 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
 
     final Set<OIndex<?>> classIndexes = metadata.getIndexManager().getClassIndexes(table);
 
-    final Set<OIndex<?>> indexes = new HashSet<OIndex<?>>();
+    final Set<OIndex<?>> indexes = new HashSet<>();
 
     for (OIndex<?> oIndex : classIndexes) {
       if (!unique || oIndex.getType().equals(INDEX_TYPE.UNIQUE.name()))
         indexes.add(oIndex);
     }
 
-    final List<ODocument> records = new ArrayList<ODocument>();
+    final List<ODocument> records = new ArrayList<>();
 
     for (OIndex<?> idx : indexes) {
       boolean notUniqueIndex = !(idx.getType().equals(INDEX_TYPE.UNIQUE.name()));
@@ -1083,7 +1083,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
   public ResultSet getUDTs(String catalog, String schemaPattern, String typeNamePattern, int[] types) throws SQLException {
     database.activateOnCurrentThread();
     final Collection<OClass> classes = database.getMetadata().getSchema().getClasses();
-    final List<ODocument> records = new ArrayList<ODocument>();
+    final List<ODocument> records = new ArrayList<>();
 
     for (OClass cls : classes) {
       final ODocument doc = new ODocument()
@@ -1128,7 +1128,8 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
   public ResultSet getSuperTypes(String catalog, String schemaPattern, String typeNamePattern) throws SQLException {
     database.activateOnCurrentThread();
     final OClass cls = database.getMetadata().getSchema().getClass(typeNamePattern);
-    final List<ODocument> records = new ArrayList<ODocument>();
+    final List<ODocument> records = new ArrayList<>();
+
 
     if (cls != null && cls.getSuperClass() != null) {
       final ODocument doc = new ODocument();
@@ -1149,7 +1150,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
       throws SQLException {
     database.activateOnCurrentThread();
     final OClass cls = database.getMetadata().getSchema().getClass(tableNamePattern);
-    final List<ODocument> records = new ArrayList<ODocument>();
+    final List<ODocument> records = new ArrayList<>();
 
     if (cls != null && cls.getSuperClass() != null) {
       final ODocument doc = new ODocument()
@@ -1242,7 +1243,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
   public ResultSet getFunctions(String catalog, String schemaPattern, String functionNamePattern) throws SQLException {
 
     database.activateOnCurrentThread();
-    final List<ODocument> records = new ArrayList<ODocument>();
+    final List<ODocument> records = new ArrayList<>();
 
     for (String fName : database.getMetadata().getFunctionLibrary().getFunctionNames()) {
       final ODocument doc = new ODocument()
@@ -1263,7 +1264,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
   public ResultSet getFunctionColumns(String catalog, String schemaPattern, String functionNamePattern, String columnNamePattern)
       throws SQLException {
     database.activateOnCurrentThread();
-    final List<ODocument> records = new ArrayList<ODocument>();
+    final List<ODocument> records = new ArrayList<>();
 
     final OFunction f = database.getMetadata().getFunctionLibrary().getFunction(functionNamePattern);
 

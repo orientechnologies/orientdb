@@ -43,7 +43,7 @@ class OrientJdbcParameterMetadata implements ParameterMetaData {
   private final List<ParameterDefinition> definitions;
 
   public OrientJdbcParameterMetadata() {
-    this.definitions = new ArrayList<ParameterDefinition>();
+    this.definitions = new ArrayList<>();
   }
 
   @Override

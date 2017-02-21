@@ -38,7 +38,7 @@ import java.util.*;
 @SuppressWarnings("boxing")
 public class OrientJdbcResultSetMetaData implements ResultSetMetaData {
 
-  private final static Map<OType, Integer> typesSqlTypes = new HashMap<OType, Integer>();
+  private final static Map<OType, Integer> typesSqlTypes = new HashMap<>();
 
   static {
     typesSqlTypes.put(OType.STRING, Types.VARCHAR);

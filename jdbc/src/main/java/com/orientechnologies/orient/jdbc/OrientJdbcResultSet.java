@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.parser.OProjectionItem;
 import com.orientechnologies.orient.core.sql.parser.OSelectStatement;
 import com.orientechnologies.orient.core.sql.parser.OrientSql;
 import com.orientechnologies.orient.core.sql.parser.ParseException;
@@ -108,7 +109,7 @@ public class OrientJdbcResultSet implements ResultSet {
               .stream()
               .filter(i -> !i.isAggregate())
               .filter(i -> !i.isAll())
-              .map(i -> i.getProjectionAliasAsString())
+              .map(OProjectionItem::getProjectionAliasAsString)
               .collect(Collectors.toList()));
         }
 
@@ -274,10 +275,12 @@ public class OrientJdbcResultSet implements ResultSet {
     }
   }
 
+  @Override
   public BigDecimal getBigDecimal(final int columnIndex, final int scale) throws SQLException {
     return getBigDecimal(fieldNames.get(getFieldIndex(columnIndex)), scale);
   }
 
+  @Override
   public BigDecimal getBigDecimal(String columnLabel, int scale) throws SQLException {
     try {
       return ((BigDecimal) document.field(columnLabel, OType.DECIMAL)).setScale(scale);
@@ -315,7 +318,7 @@ public class OrientJdbcResultSet implements ResultSet {
         // check if all the list items are instances of ORecordBytes
         ListIterator<OIdentifiable> iterator = list.listIterator();
 
-        List<OBlob> binaryRecordList = new ArrayList<OBlob>(list.size());
+        List<OBlob> binaryRecordList = new ArrayList<>(list.size());
         while (iterator.hasNext()) {
           OIdentifiable listElement = iterator.next();
 

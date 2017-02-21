@@ -96,7 +96,7 @@ public class OrientDbCreationHelper {
     int articleSerial = 0;
     for (int a = 1; a <= totAuthors; ++a) {
       ODocument author = new ODocument("Author");
-      List<ODocument> articles = new ArrayList<ODocument>(totArticles);
+      List<ODocument> articles = new ArrayList<>(totArticles);
       author.field("articles", articles);
 
       author.field("uuid", a);
@@ -202,7 +202,7 @@ public class OrientDbCreationHelper {
     int remainder = (int) (binaryFileLength % bufferSize);
     if (remainder > 0)
       numberOfRecords++;
-    List<ORID> binaryChuncks = new ArrayList<ORID>(numberOfRecords);
+    List<ORID> binaryChuncks = new ArrayList<>(numberOfRecords);
     BufferedInputStream binaryStream = new BufferedInputStream(new FileInputStream(binaryFile));
     byte[] chunk;
 

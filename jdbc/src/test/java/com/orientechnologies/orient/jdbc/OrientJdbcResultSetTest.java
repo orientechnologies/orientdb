@@ -258,7 +258,7 @@ public class OrientJdbcResultSetTest extends OrientJdbcBaseTest {
       Object[] names = (Object[]) namesRef.getArray();
 
       assertThat(names).isNotNull();
-      System.out.println("names = " + (String)names[0]);
+      System.out.println("names = " + names[0]);
     }
   }
 }

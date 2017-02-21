@@ -59,7 +59,7 @@ public class OrientJdbcPreparedStatement extends OrientJdbcStatement implements 
       int resultSetHoldability, String sql) {
     super(iConnection, resultSetType, resultSetConcurrency, resultSetHoldability);
     this.sql = sql;
-    params = new HashMap<Integer, Object>();
+    params = new HashMap<>();
   }
 
   @SuppressWarnings("unchecked")
