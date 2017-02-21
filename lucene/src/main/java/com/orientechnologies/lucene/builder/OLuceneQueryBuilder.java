@@ -81,8 +81,12 @@ public class OLuceneQueryBuilder {
 
     return getQueryParser(index, query, analyzer);
   }
+  public Query query(OIndexDefinition index, String query, Analyzer analyzer) throws ParseException {
 
-  protected Query getQueryParser(OIndexDefinition index, String key, Analyzer analyzer) throws ParseException {
+    return getQueryParser(index, query, analyzer);
+  }
+
+  protected Query getQueryParser(OIndexDefinition index, String query, Analyzer analyzer) throws ParseException {
 
     String[] fields;
     if (index.isAutomatic()) {
@@ -102,13 +106,13 @@ public class OLuceneQueryBuilder {
       types.put(field, index.getTypes()[i]);
     }
 
-    final OLuceneMultiFieldQueryParser queryParser = new OLuceneMultiFieldQueryParser(types, fields, analyzer);
+    final OLuceneMultiFieldQueryParser queryParser = new OLuceneMultiFieldQueryParser(types, fields, analyzer, new HashMap<>());
     queryParser.setAllowLeadingWildcard(allowLeadingWildcard);
 
     queryParser.setLowercaseExpandedTerms(lowercaseExpandedTerms);
 
     try {
-      return queryParser.parse(key);
+      return queryParser.parse(query);
 
     } catch (org.apache.lucene.queryparser.classic.ParseException e) {
       throw new ParseException(e.getMessage());

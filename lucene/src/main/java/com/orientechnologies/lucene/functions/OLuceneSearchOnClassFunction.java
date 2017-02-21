@@ -4,7 +4,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.index.OLuceneFullTextIndex;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
@@ -15,24 +15,21 @@ import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.memory.MemoryIndex;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static com.orientechnologies.lucene.functions.OLuceneFunctionsUtils.getOrCreateMemoryIndex;
+
 /**
  * Created by frank on 15/01/2017.
  */
-public class OLuceneSearchOnIndexFunction extends OSQLFunctionAbstract implements OIndexableSQLFunction {
+public class OLuceneSearchOnClassFunction extends OSQLFunctionAbstract implements OIndexableSQLFunction {
 
-  public static final String MEMORY_INDEX = "_memoryIndex";
+  public static final String NAME = "search_class";
 
-  public static final String NAME = "search_index";
-
-  public static final ODocument EMPTY_METADATA = new ODocument();
-
-  public OLuceneSearchOnIndexFunction() {
-    super(NAME, 2, 3);
+  public OLuceneSearchOnClassFunction() {
+    super(NAME, 1, 2);
   }
 
   @Override
@@ -48,18 +45,23 @@ public class OLuceneSearchOnIndexFunction extends OSQLFunctionAbstract implement
       OCommandContext ctx) {
 
     OResult result = (OResult) iThis;
-    OElement doc = result.toElement();
 
-    String indexName = (String) params[0];
-    OLuceneFullTextIndex index = searchForIndex(doc.getSchemaType().get().getName(), ctx, indexName);
+    OElement element = result.toElement();
 
-    String query = (String) params[1];
+    String className = element.getSchemaType().get().getName();
+
+    OLuceneFullTextIndex index = searchForIndex(className, ctx);
+
+    if (index == null)
+      return false;
+
+    String query = (String) params[0];
 
     MemoryIndex memoryIndex = getOrCreateMemoryIndex(ctx);
 
     List<Object> key = index.getDefinition().getFields()
         .stream()
-        .map(s -> doc.getProperty(s))
+        .map(s -> element.getProperty(s))
         .collect(Collectors.toList());
 
     try {
@@ -74,17 +76,6 @@ public class OLuceneSearchOnIndexFunction extends OSQLFunctionAbstract implement
     }
     return null;
 
-  }
-
-  private MemoryIndex getOrCreateMemoryIndex(OCommandContext ctx) {
-    MemoryIndex memoryIndex = (MemoryIndex) ctx.getVariable(MEMORY_INDEX);
-    if (memoryIndex == null) {
-      memoryIndex = new MemoryIndex();
-      ctx.setVariable(MEMORY_INDEX, memoryIndex);
-    }
-
-    memoryIndex.reset();
-    return memoryIndex;
   }
 
   @Override
@@ -104,15 +95,15 @@ public class OLuceneSearchOnIndexFunction extends OSQLFunctionAbstract implement
       OCommandContext ctx,
       OExpression... args) {
 
-    String indexName = (String) args[0].execute((OIdentifiable) null, ctx);
+    OFromItem item = target.getItem();
+    String className = item.getIdentifier().getStringValue();
 
+    OLuceneFullTextIndex index = searchForIndex(className, ctx);
 
-    OLuceneFullTextIndex index = searchForIndex(target, ctx, indexName);
-
-    OExpression query = args[1];
+    OExpression query = args[0];
     if (index != null) {
 
-      if (args.length == 3) {
+      if (args.length == 2) {
         ODocument metadata = new ODocument().fromJSON(args[2].toString());
 
         //TODO handle metadata
@@ -125,28 +116,25 @@ public class OLuceneSearchOnIndexFunction extends OSQLFunctionAbstract implement
       return luceneResultSet;
     }
     return Collections.emptySet();
+
   }
 
-  protected OLuceneFullTextIndex searchForIndex(OFromClause target, OCommandContext ctx, String indexName) {
+  private OLuceneFullTextIndex searchForIndex(String className, OCommandContext ctx) {
+    OMetadata dbMetadata = ctx.getDatabase().activateOnCurrentThread().getMetadata();
 
-    OFromItem item = target.getItem();
-    OIdentifier identifier = item.getIdentifier();
-    return searchForIndex(identifier.getStringValue(), ctx, indexName);
-  }
-
-  protected OLuceneFullTextIndex searchForIndex(String className, OCommandContext ctx, String indexName) {
-
-    OIndex<?> index = ctx.getDatabase()
-        .getMetadata()
+    List<OLuceneFullTextIndex> indices = dbMetadata
         .getIndexManager()
-        .getClassIndex(className, indexName);
+        .getClassIndexes(className)
+        .stream()
+        .filter(idx -> idx instanceof OLuceneFullTextIndex)
+        .map(idx -> (OLuceneFullTextIndex) idx)
+        .collect(Collectors.toList());
 
-    if (index != null && index.getInternal() instanceof OLuceneFullTextIndex) {
-      return (OLuceneFullTextIndex) index;
+    if (indices.size() > 1) {
+      throw new IllegalArgumentException("too many full-text indices on given class: " + className);
     }
 
-    //TODO maybe better to trhow
-    return null;
+    return indices.size() == 0 ? null : indices.get(0);
   }
 
   @Override

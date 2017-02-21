@@ -94,10 +94,9 @@ public class LuceneRangeTest extends BaseLuceneTest {
 
     //name and age range
     Collection<ODocument> results = db
-        .command(new OCommandSQL("SELECT * FROM Person WHERE [name,surname,date,age] LUCENE 'age:[5 TO 6] name:robert  '")).execute();
+        .command(new OCommandSQL("SELECT * FROM Person WHERE [name,surname,date,age] LUCENE 'age:[5 TO 6] name:robert  '"))
+        .execute();
 
-    System.out.println("results = " + results);
-    results.stream().forEach(d-> System.out.println("d = " + d));
     assertThat(results).hasSize(3);
 
     //date range

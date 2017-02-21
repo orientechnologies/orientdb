@@ -69,26 +69,18 @@ public class OLuceneMultiFieldQueryParser extends MultiFieldQueryParser {
       case LONG:
         return Optional.of(LongPoint
             .newRangeQuery(field, Math.addExact(Long.parseLong(part1), start), Math.addExact(Long.parseLong(part2), end)));
-//            .newLongRange(field, Long.parseLong(part1), Long.parseLong(part2), startInclusive, endInclusive);
       case INTEGER:
         return Optional.of(IntPoint
             .newRangeQuery(field, Math.addExact(Integer.parseInt(part1), start), Math.addExact(Integer.parseInt(part2), end)));
-//            LegacyNumericRangeQuery
-//            .newIntRange(field, Integer.parseInt(part1), Integer.parseInt(part2), startInclusive, endInclusive);
       case DOUBLE:
         return Optional.of(DoublePoint
             .newRangeQuery(field, Double.parseDouble(part1) - start, Double.parseDouble(part2) + end));
-//        return LegacyNumericRangeQuery
-//            .newDoubleRange(field, Double.parseDouble(part1), Double.parseDouble(part2), startInclusive, endInclusive);
       case DATE:
       case DATETIME:
         try {
           return Optional.of(LongPoint
               .newRangeQuery(field, Math.addExact(DateTools.stringToTime(part1), start),
                   Math.addExact(DateTools.stringToTime(part2), end)));
-
-//          return LegacyNumericRangeQuery
-//              .newLongRange(field, DateTools.stringToTime(part1), DateTools.stringToTime(part2), startInclusive, endInclusive);
         } catch (java.text.ParseException e) {
           throw new ParseException(e.getMessage());
         }
