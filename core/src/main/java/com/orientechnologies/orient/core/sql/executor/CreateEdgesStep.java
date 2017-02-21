@@ -46,17 +46,20 @@ public class CreateEdgesStep extends AbstractExecutionStep {
 
   }
 
-  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override
+  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
     init();
     return new OResultSet() {
       int currentBatch = 0;
 
-      @Override public boolean hasNext() {
+      @Override
+      public boolean hasNext() {
         return (currentBatch < nRecords && (toIterator.hasNext() || (toList.size() > 0 && fromIter.hasNext())));
       }
 
-      @Override public OResult next() {
+      @Override
+      public OResult next() {
         if (!toIterator.hasNext()) {
           toIterator = toList.iterator();
           if (!fromIter.hasNext()) {
@@ -85,20 +88,21 @@ public class CreateEdgesStep extends AbstractExecutionStep {
         }
       }
 
-      @Override public void close() {
+      @Override
+      public void close() {
 
       }
 
-      @Override public Optional<OExecutionPlan> getExecutionPlan() {
+      @Override
+      public Optional<OExecutionPlan> getExecutionPlan() {
         return null;
       }
 
-      @Override public Map<String, Long> getQueryStats() {
+      @Override
+      public Map<String, Long> getQueryStats() {
         return null;
       }
-    }
-
-        ;
+    };
   }
 
   private void init() {
@@ -152,15 +156,18 @@ public class CreateEdgesStep extends AbstractExecutionStep {
     return null;
   }
 
-  @Override public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
+  @Override
+  public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
 
   }
 
-  @Override public void sendResult(Object o, Status status) {
+  @Override
+  public void sendResult(Object o, Status status) {
 
   }
 
-  @Override public String prettyPrint(int depth, int indent) {
+  @Override
+  public String prettyPrint(int depth, int indent) {
     String spaces = OExecutionStepInternal.getIndent(depth, indent);
     String result = spaces + "+ FOR EACH x in " + fromAlias + "\n";
     result += spaces + "    FOR EACH y in " + toAlias + "\n";

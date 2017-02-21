@@ -1303,73 +1303,10 @@ ODeleteEdgeStatement DeleteEdgeFromToStatement():
 
 
         <FROM>
-        (
-            jjtThis.leftRid = Rid()
-            |
-            (
-                <LBRACKET>
-                [
-                    lastRid = Rid()
-                    {
-                        jjtThis.leftRids=new ArrayList();
-                        jjtThis.leftRids.add(lastRid);
-                    }
-                    (
-                        <COMMA>
-                        lastRid = Rid() { jjtThis.leftRids.add(lastRid); }
-                    )*
-                ] <RBRACKET>
-            )
-            |
-            (
-                <LPAREN>
-                (
-                    LOOKAHEAD(SelectStatement()) jjtThis.leftStatement = SelectStatement()
-                    |
-                    LOOKAHEAD(SelectWithoutTargetStatement()) jjtThis.leftStatement = SelectWithoutTargetStatement()
-                )
-                <RPAREN>
-            )
-            |
-            jjtThis.leftParam = InputParameter()
-            |
-            jjtThis.leftIdentifier = Identifier()
-        )
-
+        jjtThis.leftExpression = Expression()
         [
             <TO>
-            (
-                 jjtThis.rightRid = Rid()
-                |
-                (
-                    <LBRACKET>
-                    [
-                        lastRid = Rid()
-                        {
-                            jjtThis.rightRids=new ArrayList();
-                            jjtThis.rightRids.add(lastRid);
-                        }
-                        (
-                            <COMMA>
-                            lastRid = Rid() { jjtThis.rightRids.add(lastRid); }
-                        )*
-                    ] <RBRACKET>
-                )
-                |
-                (
-                    <LPAREN>
-                    (
-                        LOOKAHEAD(SelectStatement()) jjtThis.rightStatement = SelectStatement()
-                        |
-                        LOOKAHEAD(SelectWithoutTargetStatement()) jjtThis.rightStatement = SelectWithoutTargetStatement()
-                    )
-                    <RPAREN>
-                )
-                |
-                jjtThis.rightParam = InputParameter()
-                |
-                jjtThis.rightIdentifier = Identifier()
-            )
+            jjtThis.rightExpression = Expression()
         ]
 
 
@@ -1394,38 +1331,7 @@ ODeleteEdgeStatement DeleteEdgeToStatement():
         jjtThis.className = Identifier()
 
         <TO>
-        (
-             jjtThis.rightRid = Rid()
-            |
-            (
-                <LBRACKET>
-                [
-                    lastRid = Rid()
-                    {
-                        jjtThis.rightRids=new ArrayList();
-                        jjtThis.rightRids.add(lastRid);
-                    }
-                    (
-                        <COMMA>
-                        lastRid = Rid() { jjtThis.rightRids.add(lastRid); }
-                    )*
-                ] <RBRACKET>
-            )
-            |
-            (
-                <LPAREN>
-                (
-                    LOOKAHEAD(SelectStatement()) jjtThis.rightStatement = SelectStatement()
-                    |
-                    LOOKAHEAD(SelectWithoutTargetStatement()) jjtThis.rightStatement = SelectWithoutTargetStatement()
-                )
-                <RPAREN>
-            )
-            |
-            jjtThis.rightParam = InputParameter()
-            |
-            jjtThis.rightIdentifier = Identifier()
-        )
+        jjtThis.rightExpression = Expression()
 
 
         [ <WHERE> jjtThis.whereClause = WhereClause() ]
@@ -1446,38 +1352,7 @@ ODeleteEdgeStatement DeleteEdgeVToStatement():
         <EDGE>
 
         <TO>
-        (
-             jjtThis.rightRid = Rid()
-            |
-            (
-                <LBRACKET>
-                [
-                    lastRid = Rid()
-                    {
-                        jjtThis.rightRids=new ArrayList();
-                        jjtThis.rightRids.add(lastRid);
-                    }
-                    (
-                        <COMMA>
-                        lastRid = Rid() { jjtThis.rightRids.add(lastRid); }
-                    )*
-                ] <RBRACKET>
-            )
-            |
-            (
-                <LPAREN>
-                (
-                    LOOKAHEAD(SelectStatement()) jjtThis.rightStatement = SelectStatement()
-                    |
-                    LOOKAHEAD(SelectWithoutTargetStatement()) jjtThis.rightStatement = SelectWithoutTargetStatement()
-                )
-                <RPAREN>
-            )
-            |
-            jjtThis.rightParam = InputParameter()
-            |
-            jjtThis.rightIdentifier = Identifier()
-        )
+        jjtThis.rightExpression = Expression()
 
 
         [ <WHERE> jjtThis.whereClause = WhereClause() ]

@@ -2,6 +2,14 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.sql.executor.ODeleteEdgeExecutionPlanner;
+import com.orientechnologies.orient.core.sql.executor.ODeleteExecutionPlan;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
+
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -15,19 +23,8 @@ public class ODeleteEdgeStatement extends OStatement {
   protected ORid       rid;
   protected List<ORid> rids;
 
-  protected ORid             leftRid;
-  protected List<ORid>       leftRids;
-  protected OSelectStatement leftStatement;
-  protected OInputParameter  leftParam;
-  protected Object leftParamValue = unset;
-  protected OIdentifier leftIdentifier;
-
-  protected ORid             rightRid;
-  protected List<ORid>       rightRids;
-  protected OSelectStatement rightStatement;
-  protected OInputParameter  rightParam;
-  protected Object rightParamValue = unset;
-  protected OIdentifier rightIdentifier;
+  protected OExpression leftExpression;
+  protected OExpression rightExpression;
 
   protected OWhereClause whereClause;
 
@@ -48,6 +45,35 @@ public class ODeleteEdgeStatement extends OStatement {
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
+
+
+  @Override public OResultSet execute(ODatabase db, Map params, OCommandContext parentCtx) {
+    OBasicCommandContext ctx = new OBasicCommandContext();
+    if (parentCtx != null) {
+      ctx.setParentWithoutOverridingChild(parentCtx);
+    }
+    ctx.setDatabase(db);
+    ctx.setInputParameters(params);
+    ODeleteExecutionPlan executionPlan = createExecutionPlan(ctx);
+    executionPlan.executeInternal();
+    return new OLocalResultSet(executionPlan);
+  }
+
+  @Override public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx) {
+    Map<Object, Object> params = new HashMap<>();
+    if (args != null) {
+      for (int i = 0; i < args.length; i++) {
+        params.put(i, args[i]);
+      }
+    }
+    return execute(db, params, parentCtx);
+  }
+
+  public ODeleteExecutionPlan createExecutionPlan(OCommandContext ctx) {
+    ODeleteEdgeExecutionPlanner planner = new ODeleteEdgeExecutionPlanner(this);
+    return planner.createExecutionPlan(ctx);
+  }
+
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("DELETE EDGE");
@@ -77,57 +103,13 @@ public class ODeleteEdgeStatement extends OStatement {
       }
       builder.append("]");
     }
-
-    if (leftRid != null || leftRids != null || leftStatement != null || leftParam != null || leftIdentifier != null) {
+    if(leftExpression!=null){
       builder.append(" FROM ");
-      if (leftRid != null) {
-        leftRid.toString(params, builder);
-      } else if (leftRids != null) {
-        builder.append("[");
-        boolean first = true;
-        for (ORid rid : leftRids) {
-          if (!first) {
-            builder.append(", ");
-          }
-          rid.toString(params, builder);
-          first = false;
-        }
-        builder.append("]");
-      } else if (leftStatement != null) {
-        builder.append("(");
-        leftStatement.toString(params, builder);
-        builder.append(")");
-      } else if (leftParam != null) {
-        leftParam.toString(params, builder);
-      } else if (leftIdentifier != null) {
-        leftIdentifier.toString(params, builder);
-      }
-
+      leftExpression.toString(params, builder);
     }
-    if (rightRid != null || rightRids != null || rightStatement != null || rightParam != null || rightIdentifier != null) {
+    if(rightExpression!=null){
       builder.append(" TO ");
-      if (rightRid != null) {
-        rightRid.toString(params, builder);
-      } else if (rightRids != null) {
-        builder.append("[");
-        boolean first = true;
-        for (ORid rid : rightRids) {
-          if (!first) {
-            builder.append(", ");
-          }
-          rid.toString(params, builder);
-          first = false;
-        }
-        builder.append("]");
-      } else if (rightStatement != null) {
-        builder.append("(");
-        rightStatement.toString(params, builder);
-        builder.append(")");
-      } else if (rightParam != null) {
-        rightParam.toString(params, builder);
-      } else if (rightIdentifier != null) {
-        rightIdentifier.toString(params, builder);
-      }
+      rightExpression.toString(params, builder);
     }
 
     if (whereClause != null) {
@@ -154,16 +136,8 @@ public class ODeleteEdgeStatement extends OStatement {
     result.targetClusterName = targetClusterName == null ? null : targetClusterName.copy();
     result.rid = rid == null ? null : rid.copy();
     result.rids = rids == null ? null : rids.stream().map(x -> x.copy()).collect(Collectors.toList());
-    result.leftRid = leftRid == null ? null : leftRid.copy();
-    result.leftRids = leftRids == null ? null : leftRids.stream().map(x -> x.copy()).collect(Collectors.toList());
-    result.leftStatement = leftStatement == null ? null : leftStatement.copy();
-    result.leftParam = leftParam == null ? null : leftParam.copy();
-    result.leftIdentifier = leftIdentifier == null ? null : leftIdentifier.copy();
-    result.rightRid = rightRid == null ? null : rightRid.copy();
-    result.rightRids = rightRids == null ? null : rightRids.stream().map(x -> x.copy()).collect(Collectors.toList());
-    result.rightStatement = rightStatement == null ? null : rightStatement.copy();
-    result.rightParam = rightParam == null ? null : rightParam.copy();
-    result.rightIdentifier = rightIdentifier == null ? null : rightIdentifier.copy();
+    result.leftExpression = leftExpression==null?null:leftExpression.copy();
+    result.rightExpression = rightExpression==null?null:rightExpression.copy();
     result.whereClause = whereClause == null ? null : whereClause.copy();
     result.limit = limit == null ? null : limit.copy();
     result.batch = batch == null ? null : batch.copy();
@@ -186,25 +160,9 @@ public class ODeleteEdgeStatement extends OStatement {
       return false;
     if (rids != null ? !rids.equals(that.rids) : that.rids != null)
       return false;
-    if (leftRid != null ? !leftRid.equals(that.leftRid) : that.leftRid != null)
+    if (leftExpression != null ? !leftExpression.equals(that.leftExpression) : that.leftExpression != null)
       return false;
-    if (leftRids != null ? !leftRids.equals(that.leftRids) : that.leftRids != null)
-      return false;
-    if (leftStatement != null ? !leftStatement.equals(that.leftStatement) : that.leftStatement != null)
-      return false;
-    if (leftParam != null ? !leftParam.equals(that.leftParam) : that.leftParam != null)
-      return false;
-    if (leftIdentifier != null ? !leftIdentifier.equals(that.leftIdentifier) : that.leftIdentifier != null)
-      return false;
-    if (rightRid != null ? !rightRid.equals(that.rightRid) : that.rightRid != null)
-      return false;
-    if (rightRids != null ? !rightRids.equals(that.rightRids) : that.rightRids != null)
-      return false;
-    if (rightStatement != null ? !rightStatement.equals(that.rightStatement) : that.rightStatement != null)
-      return false;
-    if (rightParam != null ? !rightParam.equals(that.rightParam) : that.rightParam != null)
-      return false;
-    if (rightIdentifier != null ? !rightIdentifier.equals(that.rightIdentifier) : that.rightIdentifier != null)
+    if (rightExpression != null ? !rightExpression.equals(that.rightExpression) : that.rightExpression != null)
       return false;
     if (whereClause != null ? !whereClause.equals(that.whereClause) : that.whereClause != null)
       return false;
@@ -221,20 +179,84 @@ public class ODeleteEdgeStatement extends OStatement {
     result = 31 * result + (targetClusterName != null ? targetClusterName.hashCode() : 0);
     result = 31 * result + (rid != null ? rid.hashCode() : 0);
     result = 31 * result + (rids != null ? rids.hashCode() : 0);
-    result = 31 * result + (leftRid != null ? leftRid.hashCode() : 0);
-    result = 31 * result + (leftRids != null ? leftRids.hashCode() : 0);
-    result = 31 * result + (leftStatement != null ? leftStatement.hashCode() : 0);
-    result = 31 * result + (leftParam != null ? leftParam.hashCode() : 0);
-    result = 31 * result + (leftIdentifier != null ? leftIdentifier.hashCode() : 0);
-    result = 31 * result + (rightRid != null ? rightRid.hashCode() : 0);
-    result = 31 * result + (rightRids != null ? rightRids.hashCode() : 0);
-    result = 31 * result + (rightStatement != null ? rightStatement.hashCode() : 0);
-    result = 31 * result + (rightParam != null ? rightParam.hashCode() : 0);
-    result = 31 * result + (rightIdentifier != null ? rightIdentifier.hashCode() : 0);
+    result = 31 * result + (leftExpression != null ? leftExpression.hashCode() : 0);
+    result = 31 * result + (rightExpression!= null ? rightExpression.hashCode() : 0);
     result = 31 * result + (whereClause != null ? whereClause.hashCode() : 0);
     result = 31 * result + (limit != null ? limit.hashCode() : 0);
     result = 31 * result + (batch != null ? batch.hashCode() : 0);
     return result;
+  }
+
+  public OIdentifier getClassName() {
+    return className;
+  }
+
+  public void setClassName(OIdentifier className) {
+    this.className = className;
+  }
+
+  public OIdentifier getTargetClusterName() {
+    return targetClusterName;
+  }
+
+  public void setTargetClusterName(OIdentifier targetClusterName) {
+    this.targetClusterName = targetClusterName;
+  }
+
+  public ORid getRid() {
+    return rid;
+  }
+
+  public void setRid(ORid rid) {
+    this.rid = rid;
+  }
+
+  public List<ORid> getRids() {
+    return rids;
+  }
+
+  public void setRids(List<ORid> rids) {
+    this.rids = rids;
+  }
+
+  public OWhereClause getWhereClause() {
+    return whereClause;
+  }
+
+  public void setWhereClause(OWhereClause whereClause) {
+    this.whereClause = whereClause;
+  }
+
+  public OLimit getLimit() {
+    return limit;
+  }
+
+  public void setLimit(OLimit limit) {
+    this.limit = limit;
+  }
+
+  public OBatch getBatch() {
+    return batch;
+  }
+
+  public void setBatch(OBatch batch) {
+    this.batch = batch;
+  }
+
+  public OExpression getLeftExpression() {
+    return leftExpression;
+  }
+
+  public void setLeftExpression(OExpression leftExpression) {
+    this.leftExpression = leftExpression;
+  }
+
+  public OExpression getRightExpression() {
+    return rightExpression;
+  }
+
+  public void setRightExpression(OExpression rightExpression) {
+    this.rightExpression = rightExpression;
   }
 }
 /* JavaCC - OriginalChecksum=8f4c5bafa99572d7d87a5d0a2c7d55a7 (do not edit this line) */
