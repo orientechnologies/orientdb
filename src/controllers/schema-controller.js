@@ -68,7 +68,9 @@ schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$locatio
   $scope.numberOfPage = new Array(Math.ceil($scope.listClassesTotal.length / $scope.countPage));
   $scope.listClasses = $scope.listClassesTotal.slice(0, $scope.countPage);
 
-  $scope.colors = d3.scale.category20();
+  // $scope.colors = d3.scale.category20();
+
+  $scope.colors = SchemaService.colors($scope.listClassesTotal);
 
   $scope.tab = 'user';
 
@@ -88,8 +90,8 @@ schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$locatio
     $scope.listClassesTotal.forEach(function (c) {
       if (!$scope.config.config.classes[c.name]) {
         $scope.config.config.classes[c.name] = {}
-        $scope.config.config.classes[c.name].fill = d3.rgb($scope.colors(c.name.toString(2))).toString();
-        $scope.config.config.classes[c.name].stroke = d3.rgb($scope.colors(c.name.toString(2))).darker().toString();
+        $scope.config.config.classes[c.name].fill = d3.rgb($scope.colors(SchemaService.hash(c.name))).toString();
+        $scope.config.config.classes[c.name].stroke = d3.rgb($scope.colors(SchemaService.hash(c.name))).darker().toString();
       }
     })
   })

@@ -30,7 +30,10 @@ let OrientGraph = (function () {
     this.nodes = [];
     this.classesLegends = [];
     this.force = d3.layout.force();
-    this.colors = d3.scale.category20();
+
+
+    this.colors = createColors(this.metadata.classes);
+    // this.colors = d3.scale.category20();
     var self = this;
     this.selected = null;
     this.dragNode = null;
@@ -54,6 +57,34 @@ let OrientGraph = (function () {
       }
 
       return ctoc;
+    }
+
+    function createColors(classes) {
+      let val = classes.map((c) => hashCode(c.name));
+      val.sort((a, b) => {
+        return a - b;
+      });
+      let color = d3.scale.category20()
+        .domain([val[0], val[val.length - 1]])
+      classes.forEach((c) => {
+        color(hash(c.name));
+      })
+      return color;
+    }
+
+    function hashCode(str) {
+      var hash = 0;
+      if (str.length == 0) return hash;
+      for (let i = 0; i < str.length; i++) {
+        let char = str.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // Convert to 32bit integer
+      }
+      return hash;
+    }
+
+    function hash(cls) {
+      return hashCode(cls);
     }
 
     function discoverVertex(clazz) {
@@ -1059,7 +1090,7 @@ let OrientGraph = (function () {
       var clsName = getClazzName(d);
       var fill = self.getClazzConfigVal(clsName, "fill");
       if (!fill) {
-        fill = d3.rgb(self.colors(clsName.toString(2))).toString();
+        fill = d3.rgb(self.colors(hash(clsName))).toString();
         self.changeClazzConfig(clsName, "fill", fill);
       }
       return fill;
@@ -1069,7 +1100,9 @@ let OrientGraph = (function () {
       var clsName = getClazzName(d);
       var stroke = self.getClazzConfigVal(clsName, "stroke");
       if (!stroke) {
-        stroke = d3.rgb(self.colors(clsName.toString(2))).darker().toString();
+
+        stroke = d3.rgb(self.colors(hash(clsName))).darker().toString();
+
         self.changeClazzConfig(clsName, "stroke", stroke);
       }
       return stroke;
@@ -1175,7 +1208,6 @@ let OrientGraph = (function () {
         var realPos = calculateRelPos(d);
 
 
-        console.log(realPos);
 
         if (realPos == 0) {
           var paddingSource = 5;

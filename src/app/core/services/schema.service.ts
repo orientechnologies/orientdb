@@ -4,14 +4,15 @@ import {FormatArrayPipe} from '../pipes';
 import {Injectable} from "@angular/core";
 
 
-declare var angular : any;
+declare var angular: any;
+declare var d3: any;
 
 @Injectable()
 class SchemaService {
 
   private systems;
 
-  constructor(private commandService : CommandService,private  arrayPipe: FormatArrayPipe) {
+  constructor(private commandService: CommandService, private  arrayPipe: FormatArrayPipe) {
     this.arrayPipe = arrayPipe;
 
     this.systems = ["OUser",
@@ -246,8 +247,35 @@ class SchemaService {
     }
     return sup == 'E';
   }
+
+
+  colors(classes) {
+    let val = classes.map((c) => hashCode(c.name));
+    val.sort((a, b) => {
+      return a - b;
+    });
+    let color = d3.scale.category20()
+      .domain([val[0], val[val.length - 1]])
+    return color;
+  }
+
+
+  hash(cls) {
+    return hashCode(cls);
+  }
 }
 
+
+function hashCode(str) {
+  var hash = 0;
+  if (str.length == 0) return hash;
+  for (let i = 0; i < str.length; i++) {
+    let char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  return hash;
+}
 
 angular.module('schema.services', []).factory(`SchemaService`, downgradeInjectable(SchemaService));
 
