@@ -23,8 +23,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import static java.sql.ResultSet.*;
-import static org.assertj.core.api.Assertions.*;
+import static java.sql.ResultSet.CONCUR_READ_ONLY;
+import static java.sql.ResultSet.TYPE_FORWARD_ONLY;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class OrientJdbcPreparedStatementTest extends OrientJdbcBaseTest {
 

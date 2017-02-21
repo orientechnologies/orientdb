@@ -20,15 +20,12 @@ package com.orientechnologies.orient.jdbc;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OConstants;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.DriverPropertyInfo;
-import java.sql.SQLException;
-import java.sql.SQLFeatureNotSupportedException;
+import java.sql.*;
 import java.util.Properties;
 import java.util.logging.Logger;
 
-import static com.orientechnologies.orient.core.OConstants.*;
+import static com.orientechnologies.orient.core.OConstants.ORIENT_VERSION_MAJOR;
+import static com.orientechnologies.orient.core.OConstants.ORIENT_VERSION_MINOR;
 
 public class OrientJdbcDriver implements java.sql.Driver {
 

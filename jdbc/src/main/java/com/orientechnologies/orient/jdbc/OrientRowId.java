@@ -17,9 +17,9 @@
  */
 package com.orientechnologies.orient.jdbc;
 
-import java.sql.RowId;
-
 import com.orientechnologies.orient.core.id.ORID;
+
+import java.sql.RowId;
 
 public class OrientRowId implements RowId {
 

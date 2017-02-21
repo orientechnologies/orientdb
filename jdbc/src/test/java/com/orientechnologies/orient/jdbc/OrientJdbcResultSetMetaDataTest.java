@@ -21,16 +21,12 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import org.junit.Test;
 
 import java.math.BigDecimal;
-import java.sql.Date;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.Statement;
-import java.sql.Types;
+import java.sql.*;
 import java.util.Calendar;
 import java.util.TimeZone;
 
-import static java.sql.Types.*;
-import static org.assertj.core.api.Assertions.*;
+import static java.sql.Types.BIGINT;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class OrientJdbcResultSetMetaDataTest extends OrientJdbcBaseTest {
 

@@ -25,19 +25,14 @@ import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.SQLSyntaxErrorException;
-import java.sql.SQLWarning;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
 
-import static java.lang.Boolean.*;
-import static java.util.Collections.*;
+import static java.lang.Boolean.parseBoolean;
+import static java.util.Collections.emptyList;
 
 /**
  * @author Roberto Franchini (CELI Srl - franchini@celi.it)

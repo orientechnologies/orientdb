@@ -26,7 +26,8 @@ import java.io.File;
 import java.sql.DriverManager;
 import java.util.Properties;
 
-import static com.orientechnologies.orient.jdbc.OrientDbCreationHelper.*;
+import static com.orientechnologies.orient.jdbc.OrientDbCreationHelper.createSchemaDB;
+import static com.orientechnologies.orient.jdbc.OrientDbCreationHelper.loadDB;
 
 public abstract class OrientJdbcBaseTest {
 
