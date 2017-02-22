@@ -18,7 +18,7 @@
 
 package com.orientechnologies.lucene;
 
-import com.orientechnologies.lucene.functions.OLuceneSearchFunction;
+import com.orientechnologies.lucene.functions.OLuceneSearchOnIndexFunction;
 import com.orientechnologies.lucene.test.BaseLuceneTest;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -84,7 +84,7 @@ public class LuceneCrossClassIndexTest extends BaseLuceneTest {
   private List<ODocument> fetchDocs(List<ODocument> docs) {
 
     List<ODocument> mappedDocs = new ArrayList<ODocument>();
-    Set<OIdentifiable> identifiables = docs.get(0).<Set<OIdentifiable>>field(OLuceneSearchFunction.NAME);
+    Set<OIdentifiable> identifiables = docs.get(0).<Set<OIdentifiable>>field(OLuceneSearchOnIndexFunction.NAME);
     if (identifiables != null) {
       for (OIdentifiable oid : identifiables) {
         docs.add(oid.<ODocument>getRecord());
