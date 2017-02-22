@@ -67,29 +67,6 @@
             <artifactId>orientdb-distributed</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <!--<dependency>-->
-            <!--<groupId>com.orientechnologies</groupId>-->
-            <!--<artifactId>orientdb-graphdb</artifactId>-->
-            <!--<version>${project.version}</version>-->
-        <!--</dependency>-->
-
-        <!-- #5256 removed dep from orientdb-graphdb -->
-        <!--<dependency>-->
-            <!--<groupId>com.tinkerpop.rexster</groupId>-->
-            <!--<artifactId>rexster-core</artifactId>-->
-            <!--<version>${blueprints.version}</version>-->
-        <!--</dependency>-->
-        <!--<dependency>-->
-            <!--<groupId>com.tinkerpop.gremlin</groupId>-->
-            <!--<artifactId>gremlin-java</artifactId>-->
-            <!--<version>${blueprints.version}</version>-->
-        <!--</dependency>-->
-        <!--<dependency>-->
-            <!--<groupId>com.tinkerpop.gremlin</groupId>-->
-            <!--<artifactId>gremlin-groovy</artifactId>-->
-            <!--<version>${blueprints.version}</version>-->
-        <!--</dependency>-->
-
         <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-etl</artifactId>
@@ -123,20 +100,19 @@
                 <executions>
                     <execution>
                         <id>build-db</id>
-                        <!--<phase>prepare-package</phase>-->
-                        <!--<goals>-->
-                            <!--<goal>exec</goal>-->
-                        <!--</goals>-->
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
                         <configuration>
                             <executable>${java.home}/bin/java</executable>
                             <workingDirectory>${project.basedir}</workingDirectory>
                             <arguments>
                                 <argument>-XX:MaxDirectMemorySize=512g</argument>
                                 <argument>-classpath</argument>
-                                <classpath />
-                                <argument>com.orientechnologies.orient.graph.console.OInternalGraphImporter</argument>
-                                <argument>${project.basedir}/../graphdb/src/test/resources/graph-example-2.xml</argument>
-                                <argument>plocal:${project.basedir}/target/databases/GratefulDeadConcerts</argument>
+                                <classpath/>
+                                <argument>com.orientechnologies.orient.console.OConsoleDatabaseApp</argument>
+                                <argument>./src/test/resources/demoDB.osql</argument>
                             </arguments>
                         </configuration>
                     </execution>
@@ -145,7 +121,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <version>2.4</version>
                 <executions>
                     <execution>
                         <id>distribution-package</id>
