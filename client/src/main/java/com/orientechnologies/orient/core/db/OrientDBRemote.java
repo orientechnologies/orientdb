@@ -60,7 +60,7 @@ public class OrientDBRemote implements OrientDBInternal {
   }
 
   private String buildUrl(String name) {
-    return hosts[0] + "/" + name;
+    return String.join(",", hosts) + "/" + name;
   }
 
   public ODatabaseDocument open(String name, String user, String password) {
