@@ -1231,7 +1231,7 @@ ee.controller('EEDashboardController', ["$scope", "$rootScope", "$routeParams", 
     {name: "backup", title: "Backup Management", template: 'backup', icon: 'fa-clock-o'},
     {name: "profiler", title: "Query Profiler", template: 'profiler', icon: 'fa-rocket'},
     {name: "security", title: "Security", template: 'security', icon: 'fa-lock'},
-    {name: "teleporter", title: "Teleporter", template: 'teleporter', icon: 'fa-usb'},
+    {name: "teleporter", title: "Teleporter", template: 'teleporterNew', icon: 'fa-usb'},
     {name: "alerts", title: "Alerts Management", template: 'events', icon: 'fa-bell'}
 
   ]
