@@ -51,4 +51,4 @@ exec "$JAVA" -client $JAVA_OPTS $ORIENTDB_OPTS_MEMORY $ORIENTDB_SETTINGS $SSL_OP
     "-Djavax.net.ssl.keyStorePassword=$KEYSTORE_PASS" \
     "-Djavax.net.ssl.trustStore=$TRUSTSTORE" \
     "-Djavax.net.ssl.trustStorePassword=$TRUSTSTORE_PASS" \
-    com.orientechnologies.orient.graph.console.OGremlinConsole $*
+    com.orientechnologies.orient.console.OConsoleDatabaseApp $*
