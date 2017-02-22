@@ -359,6 +359,10 @@ public class ODocumentHelper {
           final List<String> indexParts = OStringSerializerHelper.smartSplit(indexAsString, ',',
               OStringSerializerHelper.DEFAULT_IGNORE_CHARS);
           final List<String> indexRanges = OStringSerializerHelper.smartSplit(indexAsString, '-', ' ');
+          if (!allIntegers(indexRanges)) {
+            indexRanges.clear();
+            indexRanges.add(indexAsString);
+          }
           final List<String> indexCondition = OStringSerializerHelper.smartSplit(indexAsString, '=', ' ');
 
           final Map<String, ?> map = (Map<String, ?>) value;
@@ -562,6 +566,20 @@ public class ODocumentHelper {
     } while (nextSeparatorPos < fieldNameLength && value != null);
 
     return (RET) value;
+  }
+
+  private static boolean allIntegers(List<String> indexRanges) {
+    if(indexRanges==null){
+      return true;
+    }
+    for(String s:indexRanges){
+      try{
+        Integer.parseInt(s);
+      }catch (Exception e){
+        return false;
+      }
+    }
+    return true;
   }
 
   private static int findClosingBracketPosition(String iFieldName, int nextSeparatorPos) {

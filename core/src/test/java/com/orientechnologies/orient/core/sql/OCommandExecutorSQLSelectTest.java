@@ -1573,6 +1573,15 @@ public class OCommandExecutorSQLSelectTest {
 
   }
 
+  public void testDashedMapKey(){
+    db.command(new OCommandSQL("create class testDashedMapKey")).execute();
+    db.command(new OCommandSQL("create property testDashedMapKey.mapProperty EMBEDDEDMAP")).execute();
+    db.command(new OCommandSQL("insert into testDashedMapKey content {'mapProperty':{'dashed-key':'value'}}")).execute();
+    List<?> result = db.query(new OSQLSynchQuery("select from testDashedMapKey where mapProperty['dashed-key'] = 'value'"));
+    Assert.assertFalse(result.isEmpty());
+    db.command(new OCommandSQL("drop class testDashedMapKey")).execute();
+  }
+
   @Test
   public void testDoubleExponentNotation(){
     //issue #7013
