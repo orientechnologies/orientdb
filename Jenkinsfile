@@ -19,7 +19,7 @@ node("master") {
                         .inside("${env.VOLUMES}") {
                     try {
                         sh "${mvnHome}/bin/mvn  --batch-mode -V clean install   -Dsurefire.useFile=false"
-                        sh "${mvnHome}/bin/mvn  --batch-mode -V deploy -DskipTests"
+                        sh "${mvnHome}/bin/mvn  --batch-mode -V clean deploy -DskipTests"
                     } finally {
                         junit allowEmptyResults: true, testResults: '**/target/surefire-reports/TEST-*.xml'
 
@@ -47,15 +47,14 @@ node("master") {
             }
 
 
+
             if (currentBuild.previousBuild == null || currentBuild.previousBuild.result != currentBuild.result) {
                 slackSend(color: '#00FF00', message: "SUCCESS: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
             }
 
         } catch (e) {
             currentBuild.result = 'FAILURE'
-            if (currentBuild.previousBuild == null || currentBuild.previousBuild.result != currentBuild.result) {
-                slackSend(color: '#FF0000', message: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
-            }
+            slackSend(color: '#FF0000', message: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
             throw e;
         }
     }
