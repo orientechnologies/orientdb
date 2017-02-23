@@ -63,9 +63,9 @@ class TeleporterComponent implements AfterViewChecked {
     this.logLevels = ["NO","DEBUG","INFO","WARNING","ERROR"];
 
     this.dbConnection = {
-      "host": "localhost",
-      "port": "5432",
-      "dbName": "dvdrental",
+      "host": "",
+      "port": "",
+      "dbName": "",
       "sid": ""
     }
 
@@ -74,10 +74,10 @@ class TeleporterComponent implements AfterViewChecked {
     this.defaultConfig = {
       "driver": "PostgreSQL",
       "jurl": "",
-      "username": "postgres",
-      "password": "postgres",
+      "username": "",
+      "password": "",
       "protocol": "plocal",
-      "url": "/Users/gabriele/orientdb-enterprise-2.2.16/databases/DVDRental",
+      "url": "",
       "outDbUrl": "",
       "strategy": "naive",
       "mapper": "basicDBMapper",
@@ -122,8 +122,7 @@ class TeleporterComponent implements AfterViewChecked {
       nameResolver: "Name of the resolver which transforms the names of all the elements of the source database according to a specific convention.<br>" +
       "<li><b>original</b>: maintains the original name convention.</li>" +
       "<li><b>java</b>: transforms all the elements' names according to the Java convention.</li>",
-      includedTables: "Allows you to import only the listed tables.<br><br><a href='http://orientdb.com/docs/last/Teleporter-Import-Filters.html'>More info</a>",
-      excludedTables: "Excludes the listed tables from the importing process.<br><br><a href='http://orientdb.com/docs/last/Teleporter-Import-Filters.html'>More info</a>",
+      tableList: "Select the source database tables you want to import in OrientDB. If no tables are present try to connect with your source database again.",
       XMLPath: "Executes the migration taking advantage of OrientDB's polymorphism according to the configuration in the specified XML file.<br><br>" +
       "<a href='http://orientdb.com/docs/last/Teleporter-Inheritance.html'>More info</a>",
       logLevel: "Level of verbosity printed to the output during the execution."
