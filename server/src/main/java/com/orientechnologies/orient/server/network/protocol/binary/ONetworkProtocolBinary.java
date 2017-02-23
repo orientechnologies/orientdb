@@ -2715,7 +2715,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       path = server.getConfiguration().getStoragePath(dbName);
 
       if (path == null)
-        path = storageType + ":" + server.getDatabaseDirectory() + "/" + dbName;
+        path = storageType + ":" + server.getDatabaseDirectory() + dbName;
     } else if (storageType.equals(OEngineMemory.NAME)) {
       path = storageType + ":" + dbName;
     } else

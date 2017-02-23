@@ -46,7 +46,7 @@ public class OServerCommandPostInstallDatabase extends OServerCommandAuthenticat
       final String name = getDbName(url);
       if (name != null) {
 
-        final String folder = server.getDatabaseDirectory() + File.separator + name;
+        final String folder = server.getDatabaseDirectory() + name;
         final File f = new File(folder);
         if (f.exists() && OLocalPaginatedStorage.exists(folder)) {
           throw new ODatabaseException("Database named '" + name + "' already exists: ");
