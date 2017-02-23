@@ -60,7 +60,7 @@ GraphModule.controller("VertexEditController", ['$scope', '$injector', '$routePa
 
 
   $injector.invoke(BaseEditController, this, {$scope: $scope});
-  Database.setWiki("Edit-vertex.html");
+  Database.setWiki("Edit-Vertex.html");
   $scope.label = 'Vertex';
   $scope.fixed = Database.header;
   $scope.canSave = true;

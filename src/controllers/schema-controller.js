@@ -274,7 +274,7 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
   var clazz = $routeParams.clazz;
 
   $scope.links = {
-    properties: Database.getOWikiFor("Schema.html#property"),
+    properties: Database.getOWikiFor("Schema.html#properties"),
     indexes: Database.getOWikiFor("Indexes.html"),
     type: Database.getOWikiFor("Indexes.html#index-types"),
     engine: Database.getOWikiFor("Indexes.html")

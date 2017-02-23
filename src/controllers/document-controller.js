@@ -14,7 +14,7 @@ let DocController = angular.module('document.controller', []);
 DocController.controller("DocumentEditController", ['$scope', '$injector', '$routeParams', '$location', '$modal', '$q', 'DocumentApi', 'Database', 'Notification', function ($scope, $injector, $routeParams, $location, $modal, $q, DocumentApi, Database, Notification) {
 
   $injector.invoke(BaseEditController, this, {$scope: $scope});
-  Database.setWiki("Edit-document.html");
+  Database.setWiki("Edit-Document.html");
   $scope.fixed = Database.header;
   $scope.canSave = true;
   $scope.canDelete = true;
