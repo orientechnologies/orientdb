@@ -204,8 +204,8 @@ public class ODocumentHelper {
           // _fieldValues.put(iFieldName, newValue);
           return (RET) newValue;
         } catch (ParseException pe) {
-          final String dateFormat = ((String) iValue).length() > config.dateFormat.length() ? config.dateTimeFormat
-              : config.dateFormat;
+          final String dateFormat =
+              ((String) iValue).length() > config.dateFormat.length() ? config.dateTimeFormat : config.dateFormat;
           throw OException.wrapException(
               new OQueryParsingException("Error on conversion of date '" + iValue + "' using the format: " + dateFormat), pe);
         }
@@ -294,18 +294,25 @@ public class ODocumentHelper {
           value = ((OCommandContext) value).getVariables();
 
         if (value instanceof OIdentifiable) {
-          final ORecord record = currentRecord != null && currentRecord instanceof OIdentifiable
-              ? ((OIdentifiable) currentRecord).getRecord() : null;
+          final ORecord record =
+              currentRecord != null && currentRecord instanceof OIdentifiable ? ((OIdentifiable) currentRecord).getRecord() : null;
+
+          final boolean backtick;
+          if ((indexPart.startsWith("`") && indexPart.endsWith("`"))) {
+            indexPart = OIOUtils.getStringContent(indexPart);
+            backtick = true;
+          } else
+            backtick = false;
 
           final Object index = getIndexPart(iContext, indexPart);
           final String indexAsString = index != null ? index.toString() : null;
 
-          final List<String> indexParts = OStringSerializerHelper.smartSplit(indexAsString, ',',
-              OStringSerializerHelper.DEFAULT_IGNORE_CHARS);
+          final List<String> indexParts = OStringSerializerHelper
+              .smartSplit(indexAsString, ',', OStringSerializerHelper.DEFAULT_IGNORE_CHARS);
           final List<String> indexRanges = OStringSerializerHelper.smartSplit(indexAsString, '-', ' ');
           final List<String> indexCondition = OStringSerializerHelper.smartSplit(indexAsString, '=', ' ');
 
-          if (indexParts.size() == 1 && indexCondition.size() == 1 && indexRanges.size() == 1)
+          if (backtick || (indexParts.size() == 1 && indexCondition.size() == 1 && indexRanges.size() == 1))
             // SINGLE VALUE
             value = ((ODocument) record).field(indexAsString);
           else if (indexParts.size() > 1) {
@@ -325,8 +332,8 @@ public class ODocumentHelper {
 
             final String[] fieldNames = doc.fieldNames();
             final int rangeFrom = from != null && !from.isEmpty() ? Integer.parseInt(from) : 0;
-            final int rangeTo = to != null && !to.isEmpty() ? Math.min(Integer.parseInt(to), fieldNames.length - 1)
-                : fieldNames.length - 1;
+            final int rangeTo =
+                to != null && !to.isEmpty() ? Math.min(Integer.parseInt(to), fieldNames.length - 1) : fieldNames.length - 1;
 
             final Object[] values = new Object[rangeTo - rangeFrom + 1];
 
@@ -348,16 +355,23 @@ public class ODocumentHelper {
             if (conditionFieldValue != null && fieldValue != null)
               conditionFieldValue = OType.convert(conditionFieldValue, fieldValue.getClass());
 
-            if (fieldValue == null && !conditionFieldValue.equals("null")
-                || fieldValue != null && !fieldValue.equals(conditionFieldValue))
+            if (fieldValue == null && !conditionFieldValue.equals("null") || fieldValue != null && !fieldValue
+                .equals(conditionFieldValue))
               value = null;
           }
         } else if (value instanceof Map<?, ?>) {
+          final boolean backtick;
+          if ((indexPart.startsWith("`") && indexPart.endsWith("`"))) {
+            indexPart = OIOUtils.getStringContent(indexPart);
+            backtick = true;
+          } else
+            backtick = false;
+
           final Object index = getIndexPart(iContext, indexPart);
           final String indexAsString = index != null ? index.toString() : null;
 
-          final List<String> indexParts = OStringSerializerHelper.smartSplit(indexAsString, ',',
-              OStringSerializerHelper.DEFAULT_IGNORE_CHARS);
+          final List<String> indexParts = OStringSerializerHelper
+              .smartSplit(indexAsString, ',', OStringSerializerHelper.DEFAULT_IGNORE_CHARS);
           final List<String> indexRanges = OStringSerializerHelper.smartSplit(indexAsString, '-', ' ');
           if (!allIntegers(indexRanges)) {
             indexRanges.clear();
@@ -366,7 +380,7 @@ public class ODocumentHelper {
           final List<String> indexCondition = OStringSerializerHelper.smartSplit(indexAsString, '=', ' ');
 
           final Map<String, ?> map = (Map<String, ?>) value;
-          if (indexParts.size() == 1 && indexCondition.size() == 1 && indexRanges.size() == 1)
+          if (backtick || (indexParts.size() == 1 && indexCondition.size() == 1 && indexRanges.size() == 1))
             // SINGLE VALUE
             value = map.get(index);
           else if (indexParts.size() > 1) {
@@ -384,8 +398,8 @@ public class ODocumentHelper {
 
             final List<String> fieldNames = new ArrayList<String>(map.keySet());
             final int rangeFrom = from != null && !from.isEmpty() ? Integer.parseInt(from) : 0;
-            final int rangeTo = to != null && !to.isEmpty() ? Math.min(Integer.parseInt(to), fieldNames.size() - 1)
-                : fieldNames.size() - 1;
+            final int rangeTo =
+                to != null && !to.isEmpty() ? Math.min(Integer.parseInt(to), fieldNames.size() - 1) : fieldNames.size() - 1;
 
             final Object[] values = new Object[rangeTo - rangeFrom + 1];
 
@@ -407,8 +421,8 @@ public class ODocumentHelper {
             if (conditionFieldValue != null && fieldValue != null)
               conditionFieldValue = OType.convert(conditionFieldValue, fieldValue.getClass());
 
-            if (fieldValue == null && !conditionFieldValue.equals("null")
-                || fieldValue != null && !fieldValue.equals(conditionFieldValue))
+            if (fieldValue == null && !conditionFieldValue.equals("null") || fieldValue != null && !fieldValue
+                .equals(conditionFieldValue))
               value = null;
           }
 
@@ -450,8 +464,9 @@ public class ODocumentHelper {
             String to = indexRanges.get(1);
 
             final int rangeFrom = from != null && !from.isEmpty() ? Integer.parseInt(from) : 0;
-            final int rangeTo = to != null && !to.isEmpty() ? Math.min(Integer.parseInt(to), OMultiValue.getSize(value) - 1)
-                : OMultiValue.getSize(value) - 1;
+            final int rangeTo = to != null && !to.isEmpty() ?
+                Math.min(Integer.parseInt(to), OMultiValue.getSize(value) - 1) :
+                OMultiValue.getSize(value) - 1;
 
             int arraySize = rangeTo - rangeFrom + 1;
             if (arraySize < 0) {
@@ -569,13 +584,13 @@ public class ODocumentHelper {
   }
 
   private static boolean allIntegers(List<String> indexRanges) {
-    if(indexRanges==null){
+    if (indexRanges == null) {
       return true;
     }
-    for(String s:indexRanges){
-      try{
+    for (String s : indexRanges) {
+      try {
         Integer.parseInt(s);
-      }catch (Exception e){
+      } catch (Exception e) {
         return false;
       }
     }
@@ -660,6 +675,7 @@ public class ODocumentHelper {
 
   protected static Object getIndexPart(final OCommandContext iContext, final String indexPart) {
     Object index = indexPart;
+
     if (indexPart.indexOf(',') == -1 && (indexPart.charAt(0) == '"' || indexPart.charAt(0) == '\''))
       index = OIOUtils.getStringContent(indexPart);
     else if (indexPart.charAt(0) == '$') {
@@ -703,9 +719,9 @@ public class ODocumentHelper {
   /**
    * Retrieves the value crossing the map with the dotted notation
    *
-   * @param iKey
-   *          Field(s) to retrieve. If are multiple fields, then the dot must be used as separator
+   * @param iKey Field(s) to retrieve. If are multiple fields, then the dot must be used as separator
    * @param iMap
+   *
    * @return
    */
   @SuppressWarnings("unchecked")
@@ -999,9 +1015,10 @@ public class ODocumentHelper {
    * Makes a deep comparison field by field to check if the passed ODocument instance is identical as identity and content to the
    * current one. Instead equals() just checks if the RID are the same.
    *
-   * @param iOther
-   *          ODocument instance
+   * @param iOther ODocument instance
+   *
    * @return true if the two document are identical, otherwise false
+   *
    * @see #equals(Object)
    */
   @SuppressWarnings("unchecked")
@@ -1014,9 +1031,10 @@ public class ODocumentHelper {
    * Makes a deep comparison field by field to check if the passed ODocument instance is identical in the content to the current
    * one. Instead equals() just checks if the RID are the same.
    *
-   * @param iOther
-   *          ODocument instance
+   * @param iOther ODocument instance
+   *
    * @return true if the two document are identical, otherwise false
+   *
    * @see #equals(Object)
    */
   @SuppressWarnings("unchecked")
@@ -1453,8 +1471,8 @@ public class ODocumentHelper {
     if (myValue == null)
       return true;
 
-    if (myValue.getClass().isArray() && !otherValue.getClass().isArray()
-        || !myValue.getClass().isArray() && otherValue.getClass().isArray())
+    if (myValue.getClass().isArray() && !otherValue.getClass().isArray() || !myValue.getClass().isArray() && otherValue.getClass()
+        .isArray())
       return false;
 
     if (myValue.getClass().isArray() && otherValue.getClass().isArray()) {
@@ -1520,7 +1538,7 @@ public class ODocumentHelper {
           deleteCrossRefs(iRid, (ODocument) fieldValue);
         } else if (OMultiValue.isMultiValue(fieldValue)) {
           // MULTI-VALUE (COLLECTION, ARRAY OR MAP), CHECK THE CONTENT
-          for (final Iterator<?> it = OMultiValue.getMultiValueIterator(fieldValue); it.hasNext();) {
+          for (final Iterator<?> it = OMultiValue.getMultiValueIterator(fieldValue); it.hasNext(); ) {
             final Object item = it.next();
 
             if (fieldValue.equals(iRid)) {
