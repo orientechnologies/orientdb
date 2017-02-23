@@ -394,7 +394,6 @@ GraphModule.controller("VertexModalBrowseController", ['$scope', '$routeParams',
       $route.reload();
     });
 
-
   }
 
 

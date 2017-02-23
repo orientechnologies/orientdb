@@ -176,23 +176,29 @@ DocController.controller("DocumentModalController", ['$scope', '$routeParams', '
     $scope.selectClass = false;
     $scope.reload();
   } else {
-    $scope.selectClass = true;
-    $scope.listClasses = Database.getClazzVertex();
-    if ($scope.listClasses.length == 1) {
-      $scope.selectedClass = $scope.listClasses[0];
-    }
 
+    $scope.selectClass = true;
+    Database.refreshMetadata($scope.db, () => {
+      $scope.listClasses = Database.getClazzVertex();
+      if ($scope.listClasses.length == 1) {
+        $scope.selectedClass = $scope.listClasses[0];
+      }
+    });
   }
 
 }]);
 DocController.controller("DocumentModalEdgeController", ['$scope', '$routeParams', '$location', 'CommandApi', 'Database', 'Notification', '$controller', function ($scope, $routeParams, $location, CommandApi, Database, Notification, $controller) {
 
   $controller('DocumentModalController', {$scope: $scope});
-  $scope.listClasses = Database.getClazzEdge();
 
-  if ($scope.listClasses.length == 1) {
-    $scope.selectedClass = $scope.listClasses[0];
-  }
+
+  Database.refreshMetadata($routeParams.database, () => {
+    $scope.listClasses = Database.getClazzEdge();
+
+    if ($scope.listClasses.length == 1) {
+      $scope.selectedClass = $scope.listClasses[0];
+    }
+  })
   $scope.lightweight = false;
   $scope.save = function (cls) {
 
