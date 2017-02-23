@@ -31,6 +31,7 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
@@ -215,7 +216,9 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
     ODistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration(database);
     ODocument cfg = databaseConfiguration.getDocument().fromJSON(jsonContent, "noMap");
     cfg.field("version", (Integer) cfg.field("version") + 1);
-    manager.updateCachedDatabaseConfiguration(database, cfg, true, true);
+
+    OModifiableDistributedConfiguration config = new OModifiableDistributedConfiguration(cfg);
+    manager.updateCachedDatabaseConfiguration(database, config,true);
   }
 
   private void doGet(OHttpRequest iRequest, OHttpResponse iResponse, String[] parts) throws IOException {
