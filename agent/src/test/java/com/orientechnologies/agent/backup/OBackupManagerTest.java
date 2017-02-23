@@ -40,6 +40,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
+import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.fail;
 import static org.junit.Assert.*;
 
 /**
@@ -48,12 +50,13 @@ import static org.junit.Assert.*;
 
 public class OBackupManagerTest {
 
-  private final String DB_NAME     = "backupDB";
-  private final String BACKUP_PATH = System.getProperty("java.io.tmpdir") + File.separator + DB_NAME;
   private OServer             server;
+
+  private final String        DB_NAME     = "backupDB";
+  private final String        BACKUP_PATH = System.getProperty("java.io.tmpdir") + File.separator + DB_NAME;
   private ODatabaseDocumentTx db;
 
-  private OBackupManager manager;
+  private OBackupManager      manager;
 
   @Before
   public void bootOrientDB() {
@@ -312,19 +315,23 @@ public class OBackupManagerTest {
     long unitId = doc.field("unitId");
     long txId = doc.field("txId");
     manager.deleteBackup(uuid, unitId, txId);
-    checkExpected(expected);
+    checkExpected(expected, uuid);
   }
 
-  private void checkExpected(long expected) {
+  private void checkExpected(long expected, String uuid) {
+    String query;
+    if (uuid != null) {
+      query = "select count(*) from OBackupLog where uuid = ?";
+    } else {
+      query = "select count(*) from OBackupLog";
+    }
     List<ODocument> execute = (List<ODocument>) server.getSystemDatabase().execute(new OCallable<Object, Object>() {
       @Override
       public Object call(Object iArgument) {
         return iArgument;
       }
-    }, "select count(*) from OBackupLog");
-
-    long count = execute.get(0).field("count");
-    assertEquals(expected, count);
+    }, query, uuid);
+    assertEquals(expected, execute.get(0).field("count"));
   }
 
   private void checkSameUnitUids(Collection<ODocument> list) {
