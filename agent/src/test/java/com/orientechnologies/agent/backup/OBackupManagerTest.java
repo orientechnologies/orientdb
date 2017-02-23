@@ -331,7 +331,7 @@ public class OBackupManagerTest {
         return iArgument;
       }
     }, query, uuid);
-    assertEquals(expected, execute.get(0).field("count"));
+    assertEquals(expected, (long)execute.get(0).field("count"));
   }
 
   private void checkSameUnitUids(Collection<ODocument> list) {
