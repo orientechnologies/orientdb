@@ -42,12 +42,10 @@
 ---------------
 
 Before to download, compile and install the last version of OrientDB please
-assure to have Java installed. OrientDB needs Oracle Java JDK version 6 or major
+assure to have Java installed. OrientDB needs Oracle Java JDK version 8 or major
 to run the Server. JDK different by Oracle, like OpenJDK, could not work on some
 configuration. We noticed also Oracle JDK is generally faster than OpenJDK.
 
-We suggest to use Java version 8 because it's much faster than Java 6 and 7.
- 
 To download Java go to: http://www.java.com/en/download/
 
 Note: Please assure to download the JDK and not JRE.
