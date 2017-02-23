@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
+import org.assertj.core.api.Assertions;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -42,6 +43,7 @@ import java.util.concurrent.CountDownLatch;
 
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.fail;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 
 /**
@@ -331,7 +333,7 @@ public class OBackupManagerTest {
         return iArgument;
       }
     }, query, uuid);
-    assertEquals(expected, (long)execute.get(0).field("count"));
+    assertThat(execute.get(0).<Long>field("count")).isEqualTo(expected);
   }
 
   private void checkSameUnitUids(Collection<ODocument> list) {
