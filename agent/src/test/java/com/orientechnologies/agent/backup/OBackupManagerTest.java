@@ -259,7 +259,7 @@ public class OBackupManagerTest {
   @Test
   public void backupIncrementalTest() throws InterruptedException {
 
-    checkExpected(0);
+    checkExpected(0,null);
     ODocument modes = new ODocument();
 
     ODocument mode = new ODocument();
