@@ -1280,40 +1280,40 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   }
 
   protected void backupCurrentDatabase(final String iDatabaseName) {
-    orient.instance().unregisterstoragebyname(idatabasename);
+    Orient.instance().unregisterStorageByName(iDatabaseName);
 
     // move directory to ../backup/databases/<db-name>
-    final string backupdirectory = oglobalconfiguration.distributed_backup_directory.getvalueasstring();
-    if (backupdirectory == null || oioutils.getstringcontent(backupdirectory).trim().isempty())
+    final String backupdirectory = OGlobalConfiguration.DISTRIBUTED_BACKUP_DIRECTORY.getValueAsString();
+    if (backupdirectory == null || OIOUtils.getStringContent(backupdirectory).trim().isEmpty())
       // skip backup
       return;
 
-    string backuppath = backupdirectory.startswith("/") ? backupdirectory : serverinstance.getdatabasedirectory() + backupdirectory;
-    if (!backuppath.endswith("/"))
+    String backuppath = backupdirectory.startsWith("/") ? backupdirectory : serverInstance.getDatabaseDirectory() + backupdirectory;
+    if (!backuppath.endsWith("/"))
       backuppath += "/";
-    backuppath += idatabasename;
+    backuppath += iDatabaseName;
 
-    final file backupfullpath = new file(backuppath);
-    final file f = new file(backupdirectory);
+    final File backupfullpath = new File(backuppath);
+    final File f = new File(backupdirectory);
     if (f.exists())
-      ofileutils.deleterecursively(backupfullpath);
+      OFileUtils.deleteRecursively(backupfullpath);
     else
       f.mkdirs();
 
-    final string dbpath = serverinstance.getdatabasedirectory() + idatabasename;
+    final String dbpath = serverInstance.getDatabaseDirectory() + iDatabaseName;
 
     // move the database on current node
-    odistributedserverlog.warn(this, nodename, null, direction.none,
-        "moving existent database '%s' in '%s' to '%s' and get a fresh copy from a remote node...", idatabasename, dbpath,
+    ODistributedServerLog.warn(this, nodeName, null, DIRECTION.NONE,
+        "moving existent database '%s' in '%s' to '%s' and get a fresh copy from a remote node...", iDatabaseName, dbpath,
         backuppath);
 
-    final file olddirectory = new file(dbpath);
-    if (!olddirectory.renameto(backupfullpath)) {
-      odistributedserverlog.error(this, nodename, null, direction.none,
-          "error on moving existent database '%s' located in '%s' to '%s'. deleting old database...", idatabasename, dbpath,
+    final File olddirectory = new File(dbpath);
+    if (!olddirectory.renameTo(backupfullpath)) {
+      ODistributedServerLog.error(this, nodeName, null,  DIRECTION.NONE,
+          "error on moving existent database '%s' located in '%s' to '%s'. deleting old database...", iDatabaseName, dbpath,
           backupfullpath);
 
-      ofileutils.deleterecursively(olddirectory);
+      OFileUtils.deleteRecursively(olddirectory);
     }
   }
 
