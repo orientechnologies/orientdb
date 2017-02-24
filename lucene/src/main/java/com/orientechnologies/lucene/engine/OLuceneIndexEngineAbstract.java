@@ -354,8 +354,9 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
     try {
       reopenToken = mgrWriter.deleteDocuments(query);
       if (!mgrWriter.getIndexWriter().hasDeletions()) {
-        OLogManager.instance().error(this, "Error on deleting document by query '%s' to Lucene index",
-            new OIndexException("Error deleting document"), query);
+        OLogManager.instance()
+            .error(this, "Error on deleting document by query '%s' to Lucene index", new OIndexException("Error deleting document"),
+                query);
       }
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error on deleting document by query '%s' to Lucene index", e, query);
@@ -534,5 +535,10 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error on releasing Lucene index", e);
     }
+  }
+
+  @Override
+  public boolean isFrozen() {
+    return closed.get();
   }
 }

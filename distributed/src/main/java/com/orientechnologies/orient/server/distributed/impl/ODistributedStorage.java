@@ -1766,6 +1766,11 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   @Override
+  public boolean isFrozen() {
+    return getFreezableStorage().isFrozen();
+  }
+
+  @Override
   public void release() {
     final String localNode = dManager.getLocalNodeName();
 

@@ -21,7 +21,7 @@ package com.orientechnologies.orient.core.storage.impl.local;
 
 /**
  * Interface for storage components that support freeze/release operations.
- * 
+ *
  * @author Artem Orobets (enisher-at-gmail.com)
  * @since 1.5.1
  */
@@ -30,11 +30,10 @@ public interface OFreezableStorageComponent {
   /**
    * After this method finished it's execution, all threads that are going to perform data modifications in storage should wait till
    * {@link #release()} method will be called. This method will wait till all ongoing modifications will be finished.
-   * 
-   * @param throwException
-   *          If <code>true</code> {@link com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException}
-   *          exception will be thrown on call of methods that requires storage modification. Otherwise other threads will wait for
-   *          {@link #release()} method call.
+   *
+   * @param throwException If <code>true</code> {@link com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException}
+   *                       exception will be thrown on call of methods that requires storage modification. Otherwise other threads
+   *                       will wait for {@link #release()} method call.
    */
   void freeze(boolean throwException);
 
@@ -43,4 +42,9 @@ public interface OFreezableStorageComponent {
    * will be allowed to continue their execution.
    */
   void release();
+
+  /**
+   * Returns true if the storage is frozen, otherwise false.
+   */
+  boolean isFrozen();
 }

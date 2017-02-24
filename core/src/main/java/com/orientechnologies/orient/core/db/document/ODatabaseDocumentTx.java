@@ -79,7 +79,6 @@ import com.orientechnologies.orient.core.sql.parser.OStatement;
 import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorageComponent;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineClusterException;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.tx.OTransaction;
@@ -2436,6 +2435,18 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         .stopChrono("db." + getName() + ".freeze", "Time to freeze the database", startTime, "db.*.freeze");
   }
 
+  @Override
+  public boolean isFrozen() {
+    checkOpeness();
+    if (!(getStorage() instanceof OFreezableStorageComponent))
+      return false;
+
+    final OFreezableStorageComponent storage = getFreezableStorage();
+    if (storage != null)
+      return storage.isFrozen();
+    return false;
+  }
+
   /**
    * {@inheritDoc}
    */
@@ -3314,6 +3325,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         throws ORecordNotFoundException {
       return storage.readRecordIfVersionIsNotLatest(rid, fetchPlan, ignoreCache, recordVersion).getResult();
     }
+
   }
 
   public void checkIfActive() {
