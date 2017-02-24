@@ -398,7 +398,7 @@ let OrientGraph = (function () {
       self.nodes.splice(0, self.nodes.length)
       self.links.splice(0, self.links.length)
     }
-    this.simulate = function () {
+    this.simulate = function (forceTick) {
 
       var self = this;
 
@@ -413,6 +413,7 @@ let OrientGraph = (function () {
 
       this.force.tick = function () {
 
+
         var startTick = now()
         var step = mst
         while (step-- && (now() - startTick < mtct)) {
@@ -423,6 +424,10 @@ let OrientGraph = (function () {
         }
         var rnd = Math.floor((Math.random() * 100) + 1);
         if (rnd % 2 == 0) {
+          self.tick();
+        }
+
+        if(forceTick == true){
           self.tick();
         }
         return false;
@@ -439,16 +444,9 @@ let OrientGraph = (function () {
         .linkStrength(0.1)
         .charge(this.config.charge)
         .friction(this.config.friction)
-      this.simulate();
+
 
       this.svgContainer = this.viewport.append('svg');
-
-      //this.svgContainer
-      //  .attr("preserveAspectRatio", "xMinYMin meet")
-      //  .attr("viewBox", "0 0 1440 1024").style("cursor", "move")
-      //  //class to make it responsive
-      //  .classed("svg-content-responsive", true);
-
 
       // define arrow markers for graph links
       this.svgContainer.append('svg:defs').append('svg:marker')
@@ -2237,10 +2235,16 @@ let OrientGraph = (function () {
     },
     draw: function () {
       this.init();
+
+
+
       this.drawInternal();
       var radius = this.nodes.length * this.config.linkDistance / (Math.PI * 2)
       var center = {x: this.config.width / 2, y: this.config.height / 2}
-      this.update(this.nodes, center, radius)
+      this.update(this.nodes, center, radius);
+
+      this.simulate(true);
+
       this.force.start();
 
 

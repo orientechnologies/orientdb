@@ -115,6 +115,8 @@ graph.directive('ngOGraph', function () {
     function loadGraph() {
       var opts = angular.extend({}, scope.$eval(attrs.ngOGraph));
       var ograph = OrientGraph.create(element[0], opts.config, opts.metadata, opts.menu, opts.edgeMenu);
+
+
       ograph.data(opts.data).draw();
 
       if (opts.onLoad) {
