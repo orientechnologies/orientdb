@@ -103,7 +103,8 @@ public class OLuceneSearchOnFieldsFunction extends OSQLFunctionAbstract implemen
 
     OLuceneFullTextIndex index = searchForIndex(className, ctx, fieldNames);
 
-    OExpression query = args[1];
+    OExpression expression = args[1];
+    String query = (String) expression.execute((OIdentifiable) null, ctx);
     if (index != null) {
 
       if (args.length == 3) {

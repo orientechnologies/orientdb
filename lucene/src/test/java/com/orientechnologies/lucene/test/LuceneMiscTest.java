@@ -23,8 +23,8 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OVertex;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.junit.Assert;
 import org.junit.Test;
@@ -33,41 +33,43 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 /**
  * Created by Enrico Risa on 18/09/15.
  */
 public class LuceneMiscTest extends BaseLuceneTest {
 
-  // TODO Re-enable when removed check syntax on ODB
+  @Test
   public void testDoubleLucene() {
 
-    db.command(new OCommandSQL("create class Test extends V")).execute();
-    db.command(new OCommandSQL("create property Test.attr1 string")).execute();
-    db.command(new OCommandSQL("create index Test.attr1 on Test (attr1) fulltext engine lucene")).execute();
-    db.command(new OCommandSQL("create property Test.attr2 string")).execute();
-    db.command(new OCommandSQL("create index Test.attr2 on Test (attr2) fulltext engine lucene")).execute();
-    db.command(new OCommandSQL("insert into Test set attr1='foo', attr2='bar'")).execute();
-    db.command(new OCommandSQL("insert into Test set attr1='bar', attr2='foo'")).execute();
+    db.command("create class Test extends V");
+    db.command("create property Test.attr1 string");
+    db.command("create index Test.attr1 on Test(attr1) FULLTEXT ENGINE LUCENE");
+    db.command("create property Test.attr2 string");
+    db.command("create index Test.attr2 on Test(attr2) FULLTEXT ENGINE LUCENE");
+    db.command("insert into Test set attr1='foo', attr2='bar'");
+    db.command("insert into Test set attr1='bar', attr2='foo'");
 
-    List<ODocument> results = db.command(new OCommandSQL("select from Test where attr1 lucene 'foo*' OR attr2 lucene 'foo*'"))
-        .execute();
-    Assert.assertEquals(2, results.size());
+    OResultSet results = db
+        .query("select from Test where search_index('Test.attr1',\"foo*\") =true OR search_index('Test.attr2', \"foo*\")=true  ");
 
-    results = db.command(new OCommandSQL("select from Test where attr1 lucene 'bar*' OR attr2 lucene 'bar*'")).execute();
+    assertThat(results).hasSize(2);
 
-    Assert.assertEquals(2, results.size());
+    results = db.query("select from Test where search_fields( 'attr1', 'bar*') = true OR search_fields(' attr2', 'bar*') = true ");
+    assertThat(results).hasSize(2);
 
-    results = db.command(new OCommandSQL("select from Test where attr1 lucene 'foo*' AND attr2 lucene 'bar*'")).execute();
 
-    Assert.assertEquals(1, results.size());
+    results = db.query("select from Test where search_fields( 'attr1', 'foo*') = true AND search_fields(' attr2', 'bar*') = true");
 
-    results = db.command(new OCommandSQL("select from Test where attr1 lucene 'bar*' AND attr2 lucene 'foo*'")).execute();
+    assertThat(results).hasSize(1);
 
-    Assert.assertEquals(1, results.size());
+    results = db.query("select from Test where search_fields( 'attr1', 'bar*') = true AND search_fields(' attr2', 'foo*')= true");
+
+    assertThat(results).hasSize(1);
 
   }
 
-  // TODO Re-enable when removed check syntax on ODB
   @Test
   public void testSubLucene() {
 

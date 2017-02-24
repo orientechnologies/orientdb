@@ -23,7 +23,7 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -31,7 +31,8 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Created by Enrico Risa on 10/08/15.
@@ -57,15 +58,15 @@ public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
     db.begin();
     db.save(doc);
 
-    String query = "select from Foo where name = 'Test' and bar lucene \"abc\" ";
-    List<ODocument> vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
+    String query = "select from Foo where name = 'Test' and SEARCH_CLASS(\"abc\") =true ";
+    OResultSet vertices = db.command(query);
 
-    Assert.assertEquals(vertices.size(), 1);
+    assertThat(vertices).hasSize(1);
     db.rollback();
 
-    query = "select from Foo where name = 'Test' and bar lucene \"abc\" ";
-    vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
-    Assert.assertEquals(vertices.size(), 0);
+    query = "select from Foo where name = 'Test' and SEARCH_CLASS(\"abc\") = true ";
+    vertices = db.command(query);
+    assertThat(vertices).hasSize(0);
 
   }
 
@@ -87,29 +88,23 @@ public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
 
     db.delete(doc);
 
-    String query = "select from Foo where name = 'Test' and bar lucene \"abc\" ";
-    List<ODocument> vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
+    String query = "select from Foo where name = 'Test' and  SEARCH_CLASS(\"abc\") = true ";
+    OResultSet vertices = db.command(query);
 
     Collection coll = (Collection) index.get("abc");
 
-    Assert.assertEquals(vertices.size(), 0);
+    assertThat(vertices).hasSize(0);
+
     Assert.assertEquals(coll.size(), 0);
 
-    Iterator iterator = coll.iterator();
-    int i = 0;
-    while (iterator.hasNext()) {
-      iterator.next();
-      i++;
-    }
-    Assert.assertEquals(i, 0);
-    Assert.assertEquals(index.getSize(), 0);
+    Assert.assertEquals(0, index.getSize());
 
     db.rollback();
 
-    query = "select from Foo where name = 'Test' and bar lucene \"abc\" ";
-    vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
-
-    Assert.assertEquals(vertices.size(), 1);
+    query = "select from Foo where name = 'Test' and SEARCH_CLASS(\"abc\") = true ";
+    vertices = db.command(query);
+    ;
+    assertThat(vertices).hasSize(1);
 
     Assert.assertEquals(index.getSize(), 1);
 
@@ -143,11 +138,11 @@ public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
     doc.field("bar", "removed");
     db.save(doc);
 
-    String query = "select from Foo where name = 'Test' and bar lucene \"abc\" ";
-    List<ODocument> vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
+    String query = "select from Foo where name = 'Test' and SEARCH_CLASS(\"abc\") =true";
+    OResultSet vertices = db.query(query);
     Collection coll = (Collection) index.get("abc");
 
-    Assert.assertEquals(vertices.size(), 0);
+    assertThat(vertices).hasSize(0);
     Assert.assertEquals(coll.size(), 0);
 
     Iterator iterator = coll.iterator();
@@ -160,19 +155,19 @@ public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
 
     Assert.assertEquals(index.getSize(), 1);
 
-    query = "select from Foo where name = 'Test' and bar lucene \"removed\" ";
-    vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
+    query = "select from Foo where name = 'Test' and SEARCH_CLASS(\"removed\")=true ";
+    vertices = db.query(query);
     coll = (Collection) index.get("removed");
 
-    Assert.assertEquals(vertices.size(), 1);
+    assertThat(vertices).hasSize(1);
     Assert.assertEquals(coll.size(), 1);
 
     db.rollback();
 
-    query = "select from Foo where name = 'Test' and bar lucene \"abc\" ";
-    vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
+    query = "select from Foo where name = 'Test' and SEARCH_CLASS (\"abc\")=true ";
+    vertices = db.command(query);
 
-    Assert.assertEquals(vertices.size(), 1);
+    assertThat(vertices).hasSize(1);
 
     Assert.assertEquals(index.getSize(), 1);
 
@@ -211,11 +206,11 @@ public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
     doc.field("bar", "removed");
     db.save(doc);
 
-    String query = "select from Foo where name = 'Test' and bar lucene \"abc\" ";
-    List<ODocument> vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
+    String query = "select from Foo where name = 'Test' and SEARCH_CLASS(\"abc\")=true ";
+    OResultSet vertices = db.query(query);
     Collection coll = (Collection) index.get("abc");
 
-    Assert.assertEquals(1, vertices.size());
+    assertThat(vertices).hasSize(1);
     Assert.assertEquals(1, coll.size());
 
     Iterator iterator = coll.iterator();
@@ -230,19 +225,20 @@ public class LuceneTransactionCompositeQueryTest extends BaseLuceneTest {
     Assert.assertEquals(rid.getIdentity().toString(), doc1.getIdentity().toString());
     Assert.assertEquals(2, index.getSize());
 
-    query = "select from Foo where name = 'Test' and bar lucene \"removed\" ";
-    vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
+    query = "select from Foo where name = 'Test' and SEARCH_CLASS(\"removed\" )=true";
+    vertices = db.query(query);
     coll = (Collection) index.get("removed");
 
-    Assert.assertEquals(1, vertices.size());
+    assertThat(vertices).hasSize(1);
+
     Assert.assertEquals(1, coll.size());
 
     db.rollback();
 
-    query = "select from Foo where name = 'Test' and bar lucene \"abc\" ";
-    vertices = db.command(new OSQLSynchQuery<ODocument>(query)).execute();
+    query = "select from Foo where name = 'Test' and SEARCH_CLASS(\"abc\")=true ";
+    vertices = db.query(query);
 
-    Assert.assertEquals(2, vertices.size());
+    assertThat(vertices).hasSize(2);
 
     Assert.assertEquals(2, index.getSize());
 

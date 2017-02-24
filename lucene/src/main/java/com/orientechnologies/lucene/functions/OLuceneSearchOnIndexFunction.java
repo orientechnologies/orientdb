@@ -97,20 +97,20 @@ public class OLuceneSearchOnIndexFunction extends OSQLFunctionAbstract implement
 
     OLuceneFullTextIndex index = searchForIndex(target, ctx, indexName);
 
-    OExpression query = args[1];
-    Object queryVal = query.execute((OIdentifiable) null, ctx);
-    String queryValue = queryVal == null ? null : String.valueOf(queryVal);
-    if (index != null) {
+    OExpression expression = args[1];
+    String query = (String) expression.execute((OIdentifiable) null, ctx);
+//    String queryValue = query == null ? null : String.valueOf(query);
+    if (index != null && query != null) {
 
       if (args.length == 3) {
         ODocument metadata = new ODocument().fromJSON(args[2].toString());
 
         //TODO handle metadata
         System.out.println("metadata.toJSON() = " + metadata.toJSON());
-        Set<OIdentifiable> luceneResultSet = index.get(queryValue);
+        Set<OIdentifiable> luceneResultSet = index.get(query);
       }
 
-      Set<OIdentifiable> luceneResultSet = index.get(queryValue);
+      Set<OIdentifiable> luceneResultSet = index.get(query);
 
       return luceneResultSet;
     }

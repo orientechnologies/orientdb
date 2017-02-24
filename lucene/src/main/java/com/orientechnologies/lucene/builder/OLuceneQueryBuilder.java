@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.parser.ParseException;
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.search.MatchNoDocsQuery;
 import org.apache.lucene.search.Query;
 
 import java.util.HashMap;
@@ -79,10 +80,8 @@ public class OLuceneQueryBuilder {
       query = key.toString();
     }
 
-    return getQueryParser(index, query, analyzer);
-  }
-  public Query query(OIndexDefinition index, String query, Analyzer analyzer) throws ParseException {
-
+    if (query.isEmpty())
+      return new MatchNoDocsQuery();
     return getQueryParser(index, query, analyzer);
   }
 
@@ -100,7 +99,7 @@ public class OLuceneQueryBuilder {
       }
     }
 
-    Map<String, OType> types = new HashMap<String, OType>();
+    Map<String, OType> types = new HashMap<>();
     for (int i = 0; i < fields.length; i++) {
       String field = fields[i];
       types.put(field, index.getTypes()[i]);

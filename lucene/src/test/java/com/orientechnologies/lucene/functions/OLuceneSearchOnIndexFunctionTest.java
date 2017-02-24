@@ -40,18 +40,11 @@ public class OLuceneSearchOnIndexFunctionTest extends BaseLuceneTest {
 
     resultSet.close();
 
-
-    //with *
-    resultSet = db
-        .query("SELECT from Song where SEARCH_INDEX('Song.title', '(bel*)') = true");
-
-    assertThat(resultSet).hasSize(3);
-
-    
     resultSet = db
         .query("SELECT from Song where SEARCH_INDEX('Song.title', \"bel*\") = true");
 
     assertThat(resultSet).hasSize(3);
+    resultSet.close();
 
     resultSet = db
         .query("SELECT from Song where SEARCH_INDEX('Song.title', 'bel*') = true");
@@ -59,6 +52,19 @@ public class OLuceneSearchOnIndexFunctionTest extends BaseLuceneTest {
     assertThat(resultSet).hasSize(3);
 
     resultSet.close();
+  }
+
+  @Test
+  public void shouldFindNothingOnEmptyQuery() throws Exception {
+
+    OResultSet resultSet = db
+        .query("SELECT from Song where SEARCH_INDEX('Song.title', '') = true");
+
+//    resultSet.getExecutionPlan().ifPresent(x -> System.out.println(x.prettyPrint(0, 2)));
+    assertThat(resultSet).hasSize(0);
+
+    resultSet.close();
+
   }
 
   @Test

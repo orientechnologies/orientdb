@@ -100,7 +100,8 @@ public class OLuceneSearchOnClassFunction extends OSQLFunctionAbstract implement
 
     OLuceneFullTextIndex index = searchForIndex(className, ctx);
 
-    OExpression query = args[0];
+    OExpression expression = args[0];
+    String query = (String) expression.execute((OIdentifiable) null, ctx);
     if (index != null) {
 
       if (args.length == 2) {
