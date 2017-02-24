@@ -886,8 +886,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
           final ODistributedConfiguration dbCfg = ((ODistributedServerManager) plugin)
               .getDatabaseConfiguration(connection.getDatabase().getName());
           if (dbCfg != null) {
-            // ENHANCE SERVER CFG WITH DATABASE CFG
-            distributedCfg.field("database", dbCfg.getDocument(), OType.EMBEDDED);
+            // ENHANCE SERVER CFG WITH DATABASE CFG (COPY IT TO AVOID CONCURRENT ISSUES WITH DOCUMENT OWNERSHIP)
+            distributedCfg.field("database", dbCfg.getDocument().copy(), OType.EMBEDDED);
           }
         }
 
