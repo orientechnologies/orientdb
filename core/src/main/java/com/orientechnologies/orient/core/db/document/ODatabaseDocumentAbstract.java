@@ -817,7 +817,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       }
 
       try {
-        commit(true);
+        rollback(true);
       } catch (Exception e) {
         OLogManager.instance().error(this, "Exception during commit of active transaction", e);
       }

@@ -82,6 +82,7 @@ public class GraphDatabaseTest extends DocumentDBBaseTest {
       Assert.assertTrue(v.getSchemaClass().isSubClassOf(vehicleClass));
     }
 
+    database.commit();
     database.shutdown();
 
     database = new OrientGraph(url);
@@ -106,6 +107,7 @@ public class GraphDatabaseTest extends DocumentDBBaseTest {
         edge2 = database.getVertex(v).getEdges(Direction.IN).iterator().next();
       }
     }
+    database.commit();
 
     Assert.assertEquals(edge1, edge2);
   }

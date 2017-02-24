@@ -156,7 +156,8 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   boolean exists();
 
   /**
-   * Closes an opened database.
+   * Closes an opened database, if the database is already closed does nothing, if a transaction is active will be rollbacked.
+   *
    */
   void close();
 
