@@ -30,7 +30,7 @@ public class OLuceneOperatorFactory implements OQueryOperatorFactory {
   static {
     final Set<OQueryOperator> operators = new HashSet<OQueryOperator>();
 
-//    operators.add(new OLuceneTextOperator());
+    operators.add(new OLuceneTextOperator());
     OPERATORS = Collections.unmodifiableSet(operators);
   }
 
