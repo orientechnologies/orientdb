@@ -51,12 +51,12 @@ public class OLuceneSearchOnIndexFunctionTest extends BaseLuceneTest {
     resultSet = db
         .query("SELECT from Song where SEARCH_INDEX('Song.title', \"bel*\") = true");
 
-//    assertThat(resultSet).hasSize(3);
+    assertThat(resultSet).hasSize(3);
 
     resultSet = db
         .query("SELECT from Song where SEARCH_INDEX('Song.title', 'bel*') = true");
 
-//    assertThat(resultSet).hasSize(3);
+    assertThat(resultSet).hasSize(3);
 
     resultSet.close();
   }

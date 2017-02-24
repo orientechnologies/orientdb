@@ -15,7 +15,6 @@ import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.memory.MemoryIndex;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -41,11 +40,7 @@ public class OLuceneSearchOnIndexFunction extends OSQLFunctionAbstract implement
   }
 
   @Override
-  public Object execute(Object iThis,
-      OIdentifiable iCurrentRecord,
-      Object iCurrentResult,
-      Object[] params,
-      OCommandContext ctx) {
+  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] params, OCommandContext ctx) {
 
     OResult result = (OResult) iThis;
     OElement doc = result.toElement();
@@ -57,10 +52,7 @@ public class OLuceneSearchOnIndexFunction extends OSQLFunctionAbstract implement
 
     MemoryIndex memoryIndex = getOrCreateMemoryIndex(ctx);
 
-    List<Object> key = index.getDefinition().getFields()
-        .stream()
-        .map(s -> doc.getProperty(s))
-        .collect(Collectors.toList());
+    List<Object> key = index.getDefinition().getFields().stream().map(s -> doc.getProperty(s)).collect(Collectors.toList());
 
     try {
       for (IndexableField field : index.buildDocument(key).getFields()) {
@@ -98,18 +90,16 @@ public class OLuceneSearchOnIndexFunction extends OSQLFunctionAbstract implement
   }
 
   @Override
-  public Iterable<OIdentifiable> searchFromTarget(OFromClause target,
-      OBinaryCompareOperator operator,
-      Object rightValue,
-      OCommandContext ctx,
-      OExpression... args) {
+  public Iterable<OIdentifiable> searchFromTarget(OFromClause target, OBinaryCompareOperator operator, Object rightValue,
+      OCommandContext ctx, OExpression... args) {
 
     String indexName = (String) args[0].execute((OIdentifiable) null, ctx);
-
 
     OLuceneFullTextIndex index = searchForIndex(target, ctx, indexName);
 
     OExpression query = args[1];
+    Object queryVal = query.execute((OIdentifiable) null, ctx);
+    String queryValue = queryVal == null ? null : String.valueOf(queryVal);
     if (index != null) {
 
       if (args.length == 3) {
@@ -117,10 +107,10 @@ public class OLuceneSearchOnIndexFunction extends OSQLFunctionAbstract implement
 
         //TODO handle metadata
         System.out.println("metadata.toJSON() = " + metadata.toJSON());
-        Set<OIdentifiable> luceneResultSet = index.get(query.toString());
+        Set<OIdentifiable> luceneResultSet = index.get(queryValue);
       }
 
-      Set<OIdentifiable> luceneResultSet = index.get(query.toString());
+      Set<OIdentifiable> luceneResultSet = index.get(queryValue);
 
       return luceneResultSet;
     }
@@ -136,10 +126,7 @@ public class OLuceneSearchOnIndexFunction extends OSQLFunctionAbstract implement
 
   protected OLuceneFullTextIndex searchForIndex(String className, OCommandContext ctx, String indexName) {
 
-    OIndex<?> index = ctx.getDatabase()
-        .getMetadata()
-        .getIndexManager()
-        .getClassIndex(className, indexName);
+    OIndex<?> index = ctx.getDatabase().getMetadata().getIndexManager().getClassIndex(className, indexName);
 
     if (index != null && index.getInternal() instanceof OLuceneFullTextIndex) {
       return (OLuceneFullTextIndex) index;
