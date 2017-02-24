@@ -39,6 +39,26 @@ public class OLuceneSearchOnIndexFunctionTest extends BaseLuceneTest {
     assertThat(resultSet).hasSize(2);
 
     resultSet.close();
+
+
+    //with *
+    resultSet = db
+        .query("SELECT from Song where SEARCH_INDEX('Song.title', '(bel*)') = true");
+
+    assertThat(resultSet).hasSize(3);
+
+    
+    resultSet = db
+        .query("SELECT from Song where SEARCH_INDEX('Song.title', \"bel*\") = true");
+
+//    assertThat(resultSet).hasSize(3);
+
+    resultSet = db
+        .query("SELECT from Song where SEARCH_INDEX('Song.title', 'bel*') = true");
+
+//    assertThat(resultSet).hasSize(3);
+
+    resultSet.close();
   }
 
   @Test
@@ -68,7 +88,7 @@ public class OLuceneSearchOnIndexFunctionTest extends BaseLuceneTest {
   }
 
   @Test
-  public void shouldSearhOnTwoIndexesInOR() throws Exception {
+  public void shouldSearchOnTwoIndexesInOR() throws Exception {
 
     OResultSet resultSet = db
         .query("SELECT from Song where SEARCH_INDEX('Song.title', 'BELIEVE') = true OR SEARCH_INDEX('Song.author', 'Bob') = true ");
