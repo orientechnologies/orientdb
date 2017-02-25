@@ -3168,14 +3168,17 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         if (context != null)
           context.executeOperations(this);
         atomicOperationsManager.endAtomicOperation(false, null, (String) null);
+
+      } catch (RuntimeException e) {
+        atomicOperationsManager.endAtomicOperation(true, e, (String) null);
+        throw e;
       } catch (Exception e) {
         atomicOperationsManager.endAtomicOperation(true, e, (String) null);
 
         OLogManager.instance().error(this, "Error on recycling record " + rid + " (cluster: " + cluster + ")", e);
 
-        final int recordVersion = -1;
-
-        return new OStorageOperationResult<Integer>(recordVersion);
+        throw OException
+            .wrapException(new OStorageException("Error on recycling record " + rid + " (cluster: " + cluster + ")"), e);
       }
 
       if (OLogManager.instance().isDebugEnabled())
@@ -3187,10 +3190,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     } catch (IOException ioe) {
       OLogManager.instance().error(this, "Error on recycling record " + rid + " (cluster: " + cluster + ")", ioe);
-
-      final int recordVersion = -1;
-
-      return new OStorageOperationResult<Integer>(recordVersion);
+      throw OException
+          .wrapException(new OStorageException("Error on recycling record " + rid + " (cluster: " + cluster + ")"), ioe);
     }
   }
 
