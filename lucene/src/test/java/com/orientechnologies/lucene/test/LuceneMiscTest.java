@@ -48,47 +48,51 @@ public class LuceneMiscTest extends BaseLuceneTest {
     db.command("create index Test.attr1 on Test(attr1) FULLTEXT ENGINE LUCENE");
     db.command("create property Test.attr2 string");
     db.command("create index Test.attr2 on Test(attr2) FULLTEXT ENGINE LUCENE");
+
     db.command("insert into Test set attr1='foo', attr2='bar'");
     db.command("insert into Test set attr1='bar', attr2='foo'");
 
     OResultSet results = db
         .query("select from Test where search_index('Test.attr1',\"foo*\") =true OR search_index('Test.attr2', \"foo*\")=true  ");
-
     assertThat(results).hasSize(2);
+    results.close();
 
-    results = db.query("select from Test where search_fields( 'attr1', 'bar*') = true OR search_fields(' attr2', 'bar*') = true ");
+    results = db.query("select from Test where SEARCH_FIELDS( 'attr1', 'bar') = true OR SEARCH_FIELDS('attr2', 'bar*' )= true ");
     assertThat(results).hasSize(2);
+    results.close();
 
-
-    results = db.query("select from Test where search_fields( 'attr1', 'foo*') = true AND search_fields(' attr2', 'bar*') = true");
-
+    results = db.query("select from Test where SEARCH_FIELDS( 'attr1', 'foo*') = true AND SEARCH_FIELDS('attr2', 'bar*') = true");
     assertThat(results).hasSize(1);
+    results.close();
 
-    results = db.query("select from Test where search_fields( 'attr1', 'bar*') = true AND search_fields(' attr2', 'foo*')= true");
-
+    results = db.query("select from Test where SEARCH_FIELDS( 'attr1', 'bar*') = true AND SEARCH_FIELDS('attr2', 'foo*')= true");
     assertThat(results).hasSize(1);
+    results.close();
 
   }
 
   @Test
   public void testSubLucene() {
 
-    db.command(new OCommandSQL("create class Person extends V")).execute();
+    db.command("create class Person extends V");
 
-    db.command(new OCommandSQL("create property Person.name string")).execute();
+    db.command("create property Person.name string");
 
-    db.command(new OCommandSQL("create index Person.name on Person (name) fulltext engine lucene")).execute();
+    db.command("create index Person.name on Person(name) FULLTEXT ENGINE LUCENE");
 
-    db.command(new OCommandSQL("insert into Person set name='Enrico', age=18")).execute();
+    db.command("insert into Person set name='Enrico', age=18");
 
-    OSQLSynchQuery query = new OSQLSynchQuery("select  from (select from Person where age = 18) where name lucene 'Enrico'");
-    List results = db.command(query).execute();
-    Assert.assertEquals(1, results.size());
+    String query = "select  from (select from Person where age = 18) where search_fields('name','Enrico') = true";
+    OResultSet results = db.query(query);
 
-    // WITH PROJECTION does not work as the class is missing
-    query = new OSQLSynchQuery("select  from (select name  from Person where age = 18) where name lucene 'Enrico'");
-    results = db.command(query).execute();
-    Assert.assertEquals(0, results.size());
+    assertThat(results).hasSize(1);
+    results.close();
+
+    // WITH PROJECTION it works using index directly
+
+    query = "select  from (select name from Person where age = 18) where search_index('Person.name','Enrico') = true";
+    results = db.query(query);
+    assertThat(results).hasSize(1);
 
   }
 

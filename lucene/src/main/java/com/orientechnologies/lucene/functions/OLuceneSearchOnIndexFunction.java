@@ -43,16 +43,17 @@ public class OLuceneSearchOnIndexFunction extends OSQLFunctionAbstract implement
   public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] params, OCommandContext ctx) {
 
     OResult result = (OResult) iThis;
-    OElement doc = result.toElement();
+    OElement element = result.toElement();
 
     String indexName = (String) params[0];
-    OLuceneFullTextIndex index = searchForIndex(doc.getSchemaType().get().getName(), ctx, indexName);
+
+    OLuceneFullTextIndex index = searchForIndex(ctx, indexName);
 
     String query = (String) params[1];
 
     MemoryIndex memoryIndex = getOrCreateMemoryIndex(ctx);
 
-    List<Object> key = index.getDefinition().getFields().stream().map(s -> doc.getProperty(s)).collect(Collectors.toList());
+    List<Object> key = index.getDefinition().getFields().stream().map(s -> element.getProperty(s)).collect(Collectors.toList());
 
     try {
       for (IndexableField field : index.buildDocument(key).getFields()) {
@@ -135,6 +136,19 @@ public class OLuceneSearchOnIndexFunction extends OSQLFunctionAbstract implement
     //TODO maybe better to trhow
     return null;
   }
+
+  protected OLuceneFullTextIndex searchForIndex(OCommandContext ctx, String indexName) {
+
+    OIndex<?> index = ctx.getDatabase().getMetadata().getIndexManager().getIndex(indexName);
+
+    if (index != null && index.getInternal() instanceof OLuceneFullTextIndex) {
+      return (OLuceneFullTextIndex) index;
+    }
+
+    //TODO maybe better to trhow
+    return null;
+  }
+
 
   @Override
   public Object getResult() {

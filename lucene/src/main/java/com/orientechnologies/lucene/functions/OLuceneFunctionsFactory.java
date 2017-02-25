@@ -26,7 +26,7 @@ import java.util.Set;
 
 public class OLuceneFunctionsFactory implements OSQLFunctionFactory {
 
-  public static final Map<String, Object> FUNCTIONS = new HashMap<String, Object>();
+  private static final Map<String, Object> FUNCTIONS = new HashMap<String, Object>();
 
   static {
     register(OLuceneSearchOnIndexFunction.NAME, new OLuceneSearchOnIndexFunction());
@@ -34,13 +34,13 @@ public class OLuceneFunctionsFactory implements OSQLFunctionFactory {
     register(OLuceneSearchOnClassFunction.NAME, new OLuceneSearchOnClassFunction());
   }
 
-  public static void register(final String iName, final Object iImplementation) {
-    FUNCTIONS.put(iName.toLowerCase(), iImplementation);
+  public static void register(final String name, final Object function) {
+    FUNCTIONS.put(name.toLowerCase(), function);
   }
 
   @Override
-  public boolean hasFunction(String iName) {
-    return FUNCTIONS.containsKey(iName);
+  public boolean hasFunction(final String name) {
+    return FUNCTIONS.containsKey(name);
   }
 
   @Override
@@ -49,7 +49,7 @@ public class OLuceneFunctionsFactory implements OSQLFunctionFactory {
   }
 
   @Override
-  public OSQLFunction createFunction(String name) throws OCommandExecutionException {
+  public OSQLFunction createFunction(final String name) throws OCommandExecutionException {
     final Object obj = FUNCTIONS.get(name);
 
     if (obj == null)

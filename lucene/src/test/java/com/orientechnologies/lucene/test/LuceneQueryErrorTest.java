@@ -23,10 +23,12 @@ import com.orientechnologies.orient.core.index.OIndexEngineException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.InputStream;
+import java.util.List;
 
 /**
  * Created by enricorisa on 02/10/14.
@@ -47,10 +49,12 @@ public class LuceneQueryErrorTest extends BaseLuceneTest {
 
   }
 
-  @Test(expected = OIndexEngineException.class)
+  @Test
   public void testQueryError() {
 
     String query = "select * from Song where [title] LUCENE \"\" ";
-    db.query(new OSQLSynchQuery<ODocument>(query));
+    List<?> result = db.query(new OSQLSynchQuery<ODocument>(query));
+
+    Assertions.assertThat(result).isEmpty();
   }
 }
