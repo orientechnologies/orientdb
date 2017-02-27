@@ -147,6 +147,12 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    */
   boolean declareIntent(final OIntent iIntent);
 
+  /** Get the active intent in the current session.
+   *
+   * @return
+   */
+  OIntent getActiveIntent();
+
   /**
    * Checks if the database exists.
    *

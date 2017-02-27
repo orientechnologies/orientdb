@@ -69,7 +69,6 @@ import java.net.URLEncoder;
 import java.util.*;
 import java.util.logging.Level;
 
-
 /**
  * A Blueprints implementation of the graph database OrientDB (http://orientdb.com)
  *
@@ -719,6 +718,11 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     makeActive();
 
     getRawGraph().declareIntent(iIntent);
+  }
+
+  public OIntent getActiveIntent() {
+    makeActive();
+    return getRawGraph().getActiveIntent();
   }
 
   /**

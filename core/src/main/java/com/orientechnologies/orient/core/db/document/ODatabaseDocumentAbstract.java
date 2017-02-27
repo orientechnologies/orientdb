@@ -805,6 +805,11 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   }
 
   @Override
+  public OIntent getActiveIntent() {
+    return currentIntent;
+  }
+
+  @Override
   public void close() {
     checkIfActive();
 

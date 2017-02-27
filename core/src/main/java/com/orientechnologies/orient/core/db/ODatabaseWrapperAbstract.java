@@ -274,6 +274,11 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal, T> 
     return underlying.declareIntent(iIntent);
   }
 
+  @Override
+  public OIntent getActiveIntent() {
+    return underlying.getActiveIntent();
+  }
+
   public <DBTYPE extends ODatabase> DBTYPE getUnderlying() {
     return (DBTYPE) underlying;
   }

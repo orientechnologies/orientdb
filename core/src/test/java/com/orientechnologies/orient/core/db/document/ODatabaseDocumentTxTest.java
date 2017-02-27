@@ -4,6 +4,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.intent.OIntent;
+import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -21,21 +23,27 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 public class ODatabaseDocumentTxTest {
 
   private ODatabaseDocumentTx db;
 
-  @Before public void setUp() throws Exception {
+  @Before
+  public void setUp() throws Exception {
     String url = "memory:" + ODatabaseDocumentTxTest.class.getSimpleName();
     db = new ODatabaseDocumentTx(url).create();
 
   }
 
-  @After public void tearDown() throws Exception {
+  @After
+  public void tearDown() throws Exception {
     db.drop();
   }
 
-  @Test public void testMultipleReads() {
+  @Test
+  public void testMultipleReads() {
 
     db.getMetadata().getSchema().createClass("TestMultipleRead1");
     db.getMetadata().getSchema().createClass("TestMultipleRead2");
@@ -54,19 +62,20 @@ public class ODatabaseDocumentTxTest {
     Assert.assertEquals(result.size(), 200);
 
     for (ORecord rec : result) {
-      Assert.assertTrue(rec instanceof ODocument);
+      assertTrue(rec instanceof ODocument);
     }
 
     Set<ORecord> result2 = db.executeReadRecords(rids, true);
     Assert.assertEquals(result2.size(), 200);
 
     for (ORecord rec : result2) {
-      Assert.assertTrue(rec instanceof ODocument);
+      assertTrue(rec instanceof ODocument);
     }
 
   }
 
-  @Test public void testCountClass() throws Exception {
+  @Test
+  public void testCountClass() throws Exception {
 
     OClass testSuperclass = db.getMetadata().getSchema().createClass("TestSuperclass");
     db.getMetadata().getSchema().createClass("TestSubclass", testSuperclass);
@@ -103,7 +112,8 @@ public class ODatabaseDocumentTxTest {
 
   }
 
-  @Test public void testTimezone() {
+  @Test
+  public void testTimezone() {
 
     db.set(ODatabase.ATTRIBUTES.TIMEZONE, "Europe/Rome");
     Object newTimezone = db.get(ODatabase.ATTRIBUTES.TIMEZONE);
@@ -114,7 +124,8 @@ public class ODatabaseDocumentTxTest {
     Assert.assertEquals(newTimezone, "GMT");
   }
 
-  @Test(expected = ODatabaseException.class) public void testSaveInvalidRid() {
+  @Test(expected = ODatabaseException.class)
+  public void testSaveInvalidRid() {
     ODocument doc = new ODocument();
 
     doc.field("test", new ORecordId(-2, 10));
@@ -122,13 +133,14 @@ public class ODatabaseDocumentTxTest {
     db.save(doc);
   }
 
-  @Test public void testCreateClass() {
+  @Test
+  public void testCreateClass() {
     OClass clazz = db.createClass("TestCreateClass");
     Assert.assertNotNull(clazz);
     Assert.assertEquals("TestCreateClass", clazz.getName());
     List<OClass> superclasses = clazz.getSuperClasses();
     if (superclasses != null) {
-      Assert.assertTrue(superclasses.isEmpty());
+      assertTrue(superclasses.isEmpty());
     }
     Assert.assertNotNull(db.getMetadata().getSchema().getClass("TestCreateClass"));
     try {
@@ -138,15 +150,16 @@ public class ODatabaseDocumentTxTest {
     }
 
     OClass subclazz = db.createClass("TestCreateClass_subclass", "TestCreateClass");
-    Assert.assertNotNull(subclazz );
-    Assert.assertEquals("TestCreateClass_subclass", subclazz .getName());
-    List<OClass> sub_superclasses = subclazz .getSuperClasses();
+    Assert.assertNotNull(subclazz);
+    Assert.assertEquals("TestCreateClass_subclass", subclazz.getName());
+    List<OClass> sub_superclasses = subclazz.getSuperClasses();
     Assert.assertEquals(1, sub_superclasses.size());
     Assert.assertEquals("TestCreateClass", sub_superclasses.get(0).getName());
 
   }
 
-  @Test public void testGetClass() {
+  @Test
+  public void testGetClass() {
     db.createClass("TestGetClass");
 
     OClass clazz = db.getClass("TestGetClass");
@@ -154,7 +167,7 @@ public class ODatabaseDocumentTxTest {
     Assert.assertEquals("TestGetClass", clazz.getName());
     List<OClass> superclasses = clazz.getSuperClasses();
     if (superclasses != null) {
-      Assert.assertTrue(superclasses.isEmpty());
+      assertTrue(superclasses.isEmpty());
     }
 
     OClass clazz2 = db.getClass("TestGetClass_non_existing");
@@ -163,39 +176,37 @@ public class ODatabaseDocumentTxTest {
 
   @Test
   public void testDocFromJsonEmbedded() {
-      OSchema schema = db.getMetadata().getSchema();
+    OSchema schema = db.getMetadata().getSchema();
 
-      OClass c0 = schema.createClass("testDocFromJsonEmbedded_Class0");
+    OClass c0 = schema.createClass("testDocFromJsonEmbedded_Class0");
 
-      OClass c1 = schema.createClass("testDocFromJsonEmbedded_Class1");
-      c1.createProperty("account", OType.STRING);
-      c1.createProperty("meta", OType.EMBEDDED, c0);
+    OClass c1 = schema.createClass("testDocFromJsonEmbedded_Class1");
+    c1.createProperty("account", OType.STRING);
+    c1.createProperty("meta", OType.EMBEDDED, c0);
 
-      ODocument doc = new ODocument("testDocFromJsonEmbedded_Class1");
+    ODocument doc = new ODocument("testDocFromJsonEmbedded_Class1");
 
-      doc.fromJSON("{\n" + "    \"account\": \"#25:0\",\n" + "    "
-          + "\"meta\": {"
-          + "   \"created\": \"2016-10-03T21:10:21.77-07:00\",\n" + "        \"ip\": \"0:0:0:0:0:0:0:1\",\n"
-          + "   \"contentType\": \"application/x-www-form-urlencoded\","
-          + "   \"userAgent\": \"PostmanRuntime/2.5.2\""
-          + "},"
-          + "\"data\": \"firstName=Jessica&lastName=Smith\"\n" + "}");
+    doc.fromJSON(
+        "{\n" + "    \"account\": \"#25:0\",\n" + "    " + "\"meta\": {" + "   \"created\": \"2016-10-03T21:10:21.77-07:00\",\n"
+            + "        \"ip\": \"0:0:0:0:0:0:0:1\",\n" + "   \"contentType\": \"application/x-www-form-urlencoded\","
+            + "   \"userAgent\": \"PostmanRuntime/2.5.2\"" + "}," + "\"data\": \"firstName=Jessica&lastName=Smith\"\n" + "}");
 
-      db.save(doc);
+    db.save(doc);
 
-      List<ODocument> result = db.query(new OSQLSynchQuery<Object>("select from testDocFromJsonEmbedded_Class0"));
-      Assert.assertEquals(result.size(), 0);
+    List<ODocument> result = db.query(new OSQLSynchQuery<Object>("select from testDocFromJsonEmbedded_Class0"));
+    Assert.assertEquals(result.size(), 0);
 
-      result = db.query(new OSQLSynchQuery<Object>("select from testDocFromJsonEmbedded_Class1"));
-      Assert.assertEquals(result.size(), 1);
-      ODocument item = result.get(0);
-      ODocument meta = item.field("meta");
-      Assert.assertEquals(meta.getClassName(), "testDocFromJsonEmbedded_Class0");
-      Assert.assertEquals(meta.field("ip"), "0:0:0:0:0:0:0:1");
+    result = db.query(new OSQLSynchQuery<Object>("select from testDocFromJsonEmbedded_Class1"));
+    Assert.assertEquals(result.size(), 1);
+    ODocument item = result.get(0);
+    ODocument meta = item.field("meta");
+    Assert.assertEquals(meta.getClassName(), "testDocFromJsonEmbedded_Class0");
+    Assert.assertEquals(meta.field("ip"), "0:0:0:0:0:0:0:1");
 
   }
 
-  @Test public void testCreateClassIfNotExists() {
+  @Test
+  public void testCreateClassIfNotExists() {
     db.createClass("TestCreateClassIfNotExists");
 
     OClass clazz = db.createClassIfNotExist("TestCreateClassIfNotExists");
@@ -203,7 +214,7 @@ public class ODatabaseDocumentTxTest {
     Assert.assertEquals("TestCreateClassIfNotExists", clazz.getName());
     List<OClass> superclasses = clazz.getSuperClasses();
     if (superclasses != null) {
-      Assert.assertTrue(superclasses.isEmpty());
+      assertTrue(superclasses.isEmpty());
     }
 
     OClass clazz2 = db.createClassIfNotExist("TestCreateClassIfNotExists_non_existing");
@@ -211,11 +222,12 @@ public class ODatabaseDocumentTxTest {
     Assert.assertEquals("TestCreateClassIfNotExists_non_existing", clazz2.getName());
     List<OClass> superclasses2 = clazz2.getSuperClasses();
     if (superclasses2 != null) {
-      Assert.assertTrue(superclasses2.isEmpty());
+      assertTrue(superclasses2.isEmpty());
     }
   }
 
-  @Test public void testCreateVertexClass() {
+  @Test
+  public void testCreateVertexClass() {
     OClass clazz = db.createVertexClass("TestCreateVertexClass");
     Assert.assertNotNull(clazz);
 
@@ -227,7 +239,8 @@ public class ODatabaseDocumentTxTest {
     Assert.assertEquals("V", superclasses.get(0).getName());
   }
 
-  @Test public void testCreateEdgeClass() {
+  @Test
+  public void testCreateEdgeClass() {
     OClass clazz = db.createEdgeClass("TestCreateEdgeClass");
     Assert.assertNotNull(clazz);
 
@@ -237,6 +250,13 @@ public class ODatabaseDocumentTxTest {
     List<OClass> superclasses = clazz.getSuperClasses();
     Assert.assertEquals(1, superclasses.size());
     Assert.assertEquals("E", superclasses.get(0).getName());
+  }
+
+  @Test
+  public void testReturnDeclaredIntent() {
+    db.declareIntent(new OIntentMassiveInsert());
+    assertNotNull(db.getActiveIntent());
+    assertTrue(db.getActiveIntent() instanceof OIntentMassiveInsert);
   }
 
 }
