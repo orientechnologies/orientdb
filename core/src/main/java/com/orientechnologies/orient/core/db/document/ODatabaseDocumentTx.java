@@ -3412,4 +3412,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     throw lastException;
   }
 
+  public OIntent getActiveIntent() {
+    return currentIntent;
+  }
 }

@@ -68,7 +68,6 @@ import java.net.URLEncoder;
 import java.util.*;
 import java.util.logging.Level;
 
-
 /**
  * A Blueprints implementation of the graph database OrientDB (http://www.orientechnologies.com)
  *
@@ -2215,6 +2214,10 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
           doc.delete();
       }
     }
+  }
+
+  public OIntent getIntent() {
+    return getDatabase().getActiveIntent();
   }
 
   protected OrientVertex getVertexInstance(final OIdentifiable id) {
