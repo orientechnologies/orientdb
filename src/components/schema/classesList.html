@@ -6,7 +6,8 @@
   </div>
   <div class="col-md-6">
     <div class="btn-group pull-right">
-      <button href="javascript:void(0)" ng-show="$ctrl.label" class="btn btn-sm btn-default" ng-click="$ctrl.onCreate()"><i
+      <button href="javascript:void(0)" ng-show="$ctrl.label" class="btn btn-sm btn-default"
+              ng-click="$ctrl.onCreate()"><i
         class="fa fa-plus"></i> New {{$ctrl.label}}
       </button>
     </div>
@@ -69,12 +70,17 @@
         <tbody>
         <tr ng-repeat="result in displeyedClasses ">
           <td ng-click="$ctrl.openClass(result)">{{result['name']}}</td>
-          <td>
-
+          <td ng-if="!$ctrl.isE">
             <spectrum-colorpicker
               ng-model="$ctrl.config.config['classes'][result['name']].fill"
               options="{preferredFormat: 'hex'}"></spectrum-colorpicker>
           </td>
+          <td ng-if="$ctrl.isE">
+            <spectrum-colorpicker
+              ng-model="$ctrl.config.config['classes'][result['name']].stroke"
+              options="{preferredFormat: 'hex'}"></spectrum-colorpicker>
+          </td>
+
           <td ng-click="$ctrl.openClass(result)">{{result['superClasses'] | formatArray}}</td>
           <td ng-click="$ctrl.openClass(result)">{{result['alias']}}</td>
           <td ng-click="$ctrl.openClass(result)">

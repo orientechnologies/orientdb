@@ -18,6 +18,8 @@ let SchemaClassesController = function ($scope, $element, $attrs, $location, $mo
   };
 
 
+  ctrl.isE = ctrl.label == 'Edge';
+
   ctrl.strict = Database.isStrictSql();
   ctrl.queryFilter = null;
   ctrl.$onChanges = (changes) => {
@@ -132,6 +134,7 @@ let INIT = (module) => {
     bindings: {
       label: "@",
       classes: '<',
+      isE: '<',
       config: '=',
       query: '<',
       onCreate: '&'
