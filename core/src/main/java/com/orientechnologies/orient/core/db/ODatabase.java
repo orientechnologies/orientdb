@@ -448,6 +448,11 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   void freeze();
 
   /**
+   * Returns true if the database is frozen ({@link #freeze()} operation), otherwise false.
+   */
+  boolean isFrozen();
+
+  /**
    * Allows to execute write-related commands on DB. Called after {@link #freeze()} command.
    *
    * @see #freeze()

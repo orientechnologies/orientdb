@@ -466,6 +466,13 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     internal.freeze();
   }
 
+
+  @Override
+  public boolean isFrozen() {
+    checkOpenness();
+    return internal.isFrozen();
+  }
+
   @Override
   public void release() {
     checkOpenness();

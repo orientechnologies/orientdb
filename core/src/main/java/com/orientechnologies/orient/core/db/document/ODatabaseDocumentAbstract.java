@@ -2004,6 +2004,17 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
         .stopChrono("db." + getName() + ".freeze", "Time to freeze the database", startTime, "db.*.freeze");
   }
 
+  @Override
+  public boolean isFrozen() {
+    if (!(getStorage() instanceof OFreezableStorageComponent))
+      return false;
+
+    final OFreezableStorageComponent storage = getFreezableStorage();
+    if (storage != null)
+      return storage.isFrozen();
+    return false;
+  }
+
   /**
    * {@inheritDoc}
    */

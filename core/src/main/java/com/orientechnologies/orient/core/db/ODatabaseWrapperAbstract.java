@@ -101,13 +101,15 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal, T> 
   /**
    * Executes a backup of the database. During the backup the database will be frozen in read-only mode.
    *
-   * @param out              OutputStream used to write the backup content. Use a FileOutputStream to make the backup persistent on disk
+   * @param out              OutputStream used to write the backup content. Use a FileOutputStream to make the backup persistent on
+   *                         disk
    * @param options          Backup options as Map<String, Object> object
    * @param callable         Callback to execute when the database is locked
    * @param iListener        Listener called for backup messages
-   * @param compressionLevel ZIP Compression level between 0 (no compression) and 9 (maximum). The bigger is the compression, the smaller will be
-   *                         the final backup content, but will consume more CPU and time to execute
+   * @param compressionLevel ZIP Compression level between 0 (no compression) and 9 (maximum). The bigger is the compression, the
+   *                         smaller will be the final backup content, but will consume more CPU and time to execute
    * @param bufferSize       Buffer size in bytes, the bigger is the buffer, the more efficient will be the compression
+   *
    * @throws IOException
    */
   @Override
@@ -123,6 +125,7 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal, T> 
    * @param options   Backup options as Map<String, Object> object
    * @param callable  Callback to execute when the database is locked
    * @param iListener Listener called for backup messages
+   *
    * @throws IOException
    * @see ODatabaseImport
    */
@@ -337,18 +340,27 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal, T> 
     return underlying.getRecordMetadata(rid);
   }
 
+  @Override
   public long getSize() {
     return underlying.getSize();
   }
 
+  @Override
   public void freeze(boolean throwException) {
     underlying.freeze(throwException);
   }
 
+  @Override
   public void freeze() {
     underlying.freeze();
   }
 
+  @Override
+  public boolean isFrozen() {
+    return underlying.isFrozen();
+  }
+
+  @Override
   public void release() {
     underlying.release();
   }

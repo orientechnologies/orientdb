@@ -163,17 +163,17 @@ public class OQueryResponse implements OBinaryResponse {
 
   private void writeElement(OResult row, OChannelDataOutput channel, ORecordSerializer recordSerializer) throws IOException {
     channel.writeByte(RECORD_TYPE_ELEMENT);
-    writeDocument(channel, row.getElement().get().getRecord(), recordSerializer);
+    writeDocument(channel, (ODocument) row.getElement().get().getRecord(), recordSerializer);
   }
 
   private void writeEdge(OResult row, OChannelDataOutput channel, ORecordSerializer recordSerializer) throws IOException {
     channel.writeByte(RECORD_TYPE_EDGE);
-    writeDocument(channel, row.getElement().get().getRecord(), recordSerializer);
+    writeDocument(channel, (ODocument) row.getElement().get().getRecord(), recordSerializer);
   }
 
   private void writeVertex(OResult row, OChannelDataOutput channel, ORecordSerializer recordSerializer) throws IOException {
     channel.writeByte(RECORD_TYPE_VERTEX);
-    writeDocument(channel, row.getElement().get().getRecord(), recordSerializer);
+    writeDocument(channel, (ODocument) row.getElement().get().getRecord(), recordSerializer);
   }
 
   private void writeBlob(OResult row, OChannelDataOutput channel, ORecordSerializer recordSerializer) throws IOException {

@@ -499,6 +499,11 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
   }
 
   @Override
+  public boolean isFrozen() {
+    return closed.get();
+  }
+
+  @Override
   public void freeze(boolean throwException) {
 
     try {
