@@ -145,7 +145,7 @@ public class LocalPaginatedStorageUpdateCrashRestoreIT {
 
     long lastTs = System.currentTimeMillis();
     System.out.println("Wait for process to destroy");
-    process.destroy();
+    process.destroyForcibly();
     process.waitFor();
     System.out.println("Process was destroyed");
 

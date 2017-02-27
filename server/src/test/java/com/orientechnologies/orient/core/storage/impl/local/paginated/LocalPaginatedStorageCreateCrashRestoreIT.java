@@ -135,7 +135,7 @@ public class LocalPaginatedStorageCreateCrashRestoreIT {
 
     System.out.println("Wait for process to destroy");
 
-    process.destroy();
+    process.destroyForcibly();
     process.waitFor();
     System.out.println("Process was destroyed");
 

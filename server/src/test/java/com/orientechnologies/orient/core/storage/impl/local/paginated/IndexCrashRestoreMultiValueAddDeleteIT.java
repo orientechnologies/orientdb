@@ -49,7 +49,7 @@ public class IndexCrashRestoreMultiValueAddDeleteIT {
 
     System.setProperty("ORIENTDB_HOME", buildDir.getCanonicalPath());
 
-    ProcessBuilder processBuilder = new ProcessBuilder(javaExec,"-Xmx4096m", "-XX:MaxDirectMemorySize=512g", "-classpath",
+    ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-Xmx4096m", "-XX:MaxDirectMemorySize=512g", "-classpath",
         System.getProperty("java.class.path"), "-DmutexFile=" + mutexFile.getCanonicalPath(),
         "-DORIENTDB_HOME=" + buildDir.getCanonicalPath(), RemoteDBRunner.class.getName());
 
@@ -110,7 +110,7 @@ public class IndexCrashRestoreMultiValueAddDeleteIT {
 
     final OServerAdmin serverAdmin = new OServerAdmin("remote:localhost:3500");
     serverAdmin.connect("root", "root");
-    serverAdmin.createDatabase("testIndexCrashRestoreMultivalueAddDelete",  "graph", "plocal");
+    serverAdmin.createDatabase("testIndexCrashRestoreMultivalueAddDelete", "graph", "plocal");
     serverAdmin.close();
 
     testDocumentTx = new ODatabaseDocumentTx("remote:localhost:3500/testIndexCrashRestoreMultivalueAddDelete");
@@ -134,7 +134,7 @@ public class IndexCrashRestoreMultiValueAddDeleteIT {
     TimeUnit.MINUTES.sleep(5);
 
     System.out.println("Wait for process to destroy");
-    process.destroy();
+    process.destroyForcibly();
 
     process.waitFor();
     System.out.println("Process was destroyed");
@@ -147,7 +147,9 @@ public class IndexCrashRestoreMultiValueAddDeleteIT {
       }
     }
 
-    testDocumentTx = new ODatabaseDocumentTx("plocal:" + new File(new File(buildDir.getAbsolutePath(), "databases"), "testIndexCrashRestoreMultivalueAddDelete").getCanonicalPath());
+    testDocumentTx = new ODatabaseDocumentTx(
+        "plocal:" + new File(new File(buildDir.getAbsolutePath(), "databases"), "testIndexCrashRestoreMultivalueAddDelete")
+            .getCanonicalPath());
     testDocumentTx.open("admin", "admin");
     testDocumentTx.close();
 

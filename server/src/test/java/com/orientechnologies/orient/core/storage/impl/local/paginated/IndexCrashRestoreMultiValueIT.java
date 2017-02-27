@@ -29,7 +29,6 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.not;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -150,7 +149,7 @@ public class IndexCrashRestoreMultiValueIT {
     TimeUnit.MINUTES.sleep(5);
 
     System.out.println("Wait for process to destroy");
-    serverProcess.destroy();
+    serverProcess.destroyForcibly();
 
     serverProcess.waitFor();
     System.out.println("Process was destroyed");

@@ -53,7 +53,7 @@ public class LocalPaginatedStorageSmallCacheBigRecordsCrashRestoreIT {
 
     System.setProperty("ORIENTDB_HOME", buildDir.getCanonicalPath());
 
-    ProcessBuilder processBuilder = new ProcessBuilder(javaExec,  "-Xmx4096m", "-XX:MaxDirectMemorySize=512g", "-classpath",
+    ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-Xmx4096m", "-XX:MaxDirectMemorySize=512g", "-classpath",
         System.getProperty("java.class.path"), "-DmutexFile=" + mutexFile.getCanonicalPath(),
         "-DORIENTDB_HOME=" + buildDir.getCanonicalPath(), RemoteDBRunner.class.getName());
     processBuilder.inheritIO();
@@ -138,7 +138,7 @@ public class LocalPaginatedStorageSmallCacheBigRecordsCrashRestoreIT {
     TimeUnit.MINUTES.sleep(5);
 
     long lastTs = System.currentTimeMillis();
-    process.destroy();
+    process.destroyForcibly();
     process.waitFor();
 
     System.out.println("OrientDB server process was destroyed");

@@ -72,7 +72,7 @@ public class LocalPaginatedStorageLinkBagCrashRestoreIT {
 
     System.setProperty("ORIENTDB_HOME", buildDirectory);
 
-    ProcessBuilder processBuilder = new ProcessBuilder(javaExec,  "-Xmx4096m", "-XX:MaxDirectMemorySize=512g", "-classpath",
+    ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-Xmx4096m", "-XX:MaxDirectMemorySize=512g", "-classpath",
         System.getProperty("java.class.path"), "-DmutexFile=" + mutexFile.getCanonicalPath(), "-DORIENTDB_HOME=" + buildDirectory,
         RemoteDBRunner.class.getName());
     processBuilder.inheritIO();
@@ -133,7 +133,7 @@ public class LocalPaginatedStorageLinkBagCrashRestoreIT {
     test_db.close();
 
     System.out.println("Wait for process to destroy");
-    process.destroy();
+    process.destroyForcibly();
 
     process.waitFor();
     System.out.println("Process was destroyed");
@@ -156,8 +156,8 @@ public class LocalPaginatedStorageLinkBagCrashRestoreIT {
       base_db.drop();
     }
 
-    ODatabaseDocumentTx test_db = new ODatabaseDocumentTx("plocal:"
-        + new File(new File(buildDir, "databases"), "testLocalPaginatedStorageLinkBagCrashRestore").getCanonicalPath());
+    ODatabaseDocumentTx test_db = new ODatabaseDocumentTx(
+        "plocal:" + new File(new File(buildDir, "databases"), "testLocalPaginatedStorageLinkBagCrashRestore").getCanonicalPath());
     if (test_db.exists()) {
       test_db.open("admin", "admin");
       test_db.drop();

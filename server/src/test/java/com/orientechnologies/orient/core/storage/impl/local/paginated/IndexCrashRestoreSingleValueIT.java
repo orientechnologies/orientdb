@@ -136,7 +136,7 @@ public class IndexCrashRestoreSingleValueIT {
     TimeUnit.MINUTES.sleep(5);
 
     System.out.println("Wait for process to destroy");
-    serverProcess.destroy();
+    serverProcess.destroyForcibly();
 
     serverProcess.waitFor();
     System.out.println("Process was destroyed");

@@ -67,7 +67,7 @@ public class LocalPaginatedStorageMixCrashRestoreIT {
 
     System.setProperty("ORIENTDB_HOME", buildDir.getCanonicalPath());
 
-    ProcessBuilder processBuilder = new ProcessBuilder(javaExec,  "-Xmx4096m", "-XX:MaxDirectMemorySize=512g", "-classpath",
+    ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-Xmx4096m", "-XX:MaxDirectMemorySize=512g", "-classpath",
         System.getProperty("java.class.path"), "-DmutexFile=" + mutexFile.getCanonicalPath(),
         "-DORIENTDB_HOME=" + buildDir.getCanonicalPath(), RemoteDBRunner.class.getName());
 
@@ -154,7 +154,7 @@ public class LocalPaginatedStorageMixCrashRestoreIT {
 
     System.out.println("Wait for process to destroy");
 
-    process.destroy();
+    process.destroyForcibly();
 
     process.waitFor();
     System.out.println("Process was destroyed");
