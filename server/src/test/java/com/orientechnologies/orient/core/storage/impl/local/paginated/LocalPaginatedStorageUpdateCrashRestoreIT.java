@@ -69,12 +69,12 @@ public class LocalPaginatedStorageUpdateCrashRestoreIT {
 
     System.setProperty("ORIENTDB_HOME", buildDirectory);
 
-    ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-Xmx2048m", "-XX:MaxDirectMemorySize=512g", "-classpath", System.getProperty("java.class.path"),
-        "-DORIENTDB_HOME=" + buildDirectory, "-DmutexFile=" + mutexFile.getCanonicalPath(), RemoteDBRunner.class.getName());
-    processBuilder.inheritIO();
+    ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-Xmx2048m", "-XX:MaxDirectMemorySize=512g", "-classpath",
+        System.getProperty("java.class.path"), "-DORIENTDB_HOME=" + buildDirectory, "-DmutexFile=" + mutexFile.getCanonicalPath(),
+        RemoteDBRunner.class.getName());
+    CrashRestoreUtils.inheritIO(processBuilder);
 
     process = processBuilder.start();
-
 
     System.out.println(LocalPaginatedStorageUpdateCrashRestoreIT.class.getSimpleName() + ": Wait for server start");
     boolean started = false;
@@ -102,7 +102,6 @@ public class LocalPaginatedStorageUpdateCrashRestoreIT {
 
   @Before
   public void beforeMethod() throws Exception {
-
 
     spawnServer();
 
@@ -141,7 +140,7 @@ public class LocalPaginatedStorageUpdateCrashRestoreIT {
 
     long lastTs = System.currentTimeMillis();
     System.out.println("Wait for process to destroy");
-    process.destroy();
+    CrashRestoreUtils.destroyForcibly(process);
     process.waitFor();
     System.out.println("Process was destroyed");
 

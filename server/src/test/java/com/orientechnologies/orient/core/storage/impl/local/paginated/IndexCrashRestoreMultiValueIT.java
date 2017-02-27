@@ -94,9 +94,10 @@ public class IndexCrashRestoreMultiValueIT {
     javaExec = new File(javaExec).getCanonicalPath();
 
     ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-Xmx2048m", "-XX:MaxDirectMemorySize=512g", "-classpath",
-        System.getProperty("java.class.path"), "-DmutexFile=" + mutexFile.getCanonicalPath(), "-DORIENTDB_HOME=" + buildDirectory, RemoteDBRunner.class.getName());
+        System.getProperty("java.class.path"), "-DmutexFile=" + mutexFile.getCanonicalPath(), "-DORIENTDB_HOME=" + buildDirectory,
+        RemoteDBRunner.class.getName());
 
-    processBuilder.inheritIO();
+    CrashRestoreUtils.inheritIO(processBuilder);
 
     serverProcess = processBuilder.start();
 
@@ -141,7 +142,7 @@ public class IndexCrashRestoreMultiValueIT {
     TimeUnit.MINUTES.sleep(5);
 
     System.out.println("Wait for process to destroy");
-    serverProcess.destroy();
+    CrashRestoreUtils.destroyForcibly(serverProcess);
 
     serverProcess.waitFor();
     System.out.println("Process was destroyed");

@@ -71,19 +71,18 @@ public class IndexCrashRestoreSingleValueIT {
     mutex.seek(0);
     mutex.write(0);
 
-
     buildDirectory = buildDir.getCanonicalPath();
     buildDir = new File(buildDirectory);
 
     String javaExec = System.getProperty("java.home") + "/bin/java";
     javaExec = new File(javaExec).getCanonicalPath();
 
-
     System.setProperty("ORIENTDB_HOME", buildDirectory);
 
-    ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-Xmx2048m", "-XX:MaxDirectMemorySize=512g", "-classpath", System.getProperty("java.class.path"),
-        "-DORIENTDB_HOME=" + buildDirectory,  "-DmutexFile=" + mutexFile.getCanonicalPath(), RemoteDBRunner.class.getName());
-    processBuilder.inheritIO();
+    ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-Xmx2048m", "-XX:MaxDirectMemorySize=512g", "-classpath",
+        System.getProperty("java.class.path"), "-DORIENTDB_HOME=" + buildDirectory, "-DmutexFile=" + mutexFile.getCanonicalPath(),
+        RemoteDBRunner.class.getName());
+    CrashRestoreUtils.inheritIO(processBuilder);
 
     serverProcess = processBuilder.start();
 
@@ -128,7 +127,7 @@ public class IndexCrashRestoreSingleValueIT {
     TimeUnit.MINUTES.sleep(5);
 
     System.out.println("Wait for process to destroy");
-    serverProcess.destroy();
+    CrashRestoreUtils.destroyForcibly(serverProcess);
 
     serverProcess.waitFor();
     System.out.println("Process was destroyed");
