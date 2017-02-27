@@ -220,7 +220,7 @@ public class OETLCSVExtractor extends OETLAbstractSourceExtractor {
         final OType fieldType = typeEntry.getValue();
         String fieldValueAsString = recordAsMap.get(fieldName);
         try {
-          if (fieldType.getDefaultJavaType().equals(Date.class)) {
+          if (fieldType != null && fieldType.getDefaultJavaType() != null && fieldType.getDefaultJavaType().equals(Date.class)) {
             if (fieldType.equals(OType.DATE))
               doc.field(fieldName, transformToDate(fieldValueAsString));
             else
@@ -237,7 +237,7 @@ public class OETLCSVExtractor extends OETLAbstractSourceExtractor {
       }
     }
 
-    log(Level.FINE,"document=%s", doc);
+    log(Level.FINE, "document=%s", doc);
     current++;
     return new OETLExtractedItem(current, doc);
   }
