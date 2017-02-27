@@ -78,7 +78,7 @@ public class OBackupManagerTest {
         }
       });
 
-      db = new ODatabaseDocumentTx("plocal:" + server.getDatabaseDirectory() + File.separator + DB_NAME);
+      db = new ODatabaseDocumentTx("plocal:" + server.getDatabaseDirectory() + DB_NAME);
 
       if (db.exists()) {
 
