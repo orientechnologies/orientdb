@@ -487,10 +487,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   protected Object mergeResultByAggregation(final OCommandExecutorSQLSelect select, final Map<String, Object> iResults) {
-    final List<Object> list = new ArrayList<Object>();
-    final ODocument doc = new ODocument();
-    list.add(doc);
-
+    List<Object> list = null;
+    ODocument doc = null;
     boolean hasNonAggregates = false;
     final Map<String, Object> proj = select.getProjections();
     for (Map.Entry<String, Object> p : proj.entrySet()) {
@@ -504,15 +502,21 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       // MERGE NON AGGREGATED FIELDS
       for (Map.Entry<String, Object> entry : iResults.entrySet()) {
         final List<Object> resultSet = (List<Object>) entry.getValue();
+        if (resultSet != null) {
+          if (list == null) {
+            list = new ArrayList<Object>();
+            doc = new ODocument();
+            list.add(doc);
+          }
+          for (Object r : resultSet) {
+            if (r instanceof ODocument) {
+              final ODocument d = (ODocument) r;
 
-        for (Object r : resultSet) {
-          if (r instanceof ODocument) {
-            final ODocument d = (ODocument) r;
-
-            for (Map.Entry<String, Object> p : proj.entrySet()) {
-              // WRITE THE FIELD AS IS
-              if (!(p.getValue() instanceof OSQLFunctionRuntime))
-                doc.field(p.getKey(), ((ODocument) r).field(p.getKey()));
+              for (Map.Entry<String, Object> p : proj.entrySet()) {
+                // WRITE THE FIELD AS IS
+                if (!(p.getValue() instanceof OSQLFunctionRuntime))
+                  doc.field(p.getKey(), d.field(p.getKey()));
+              }
             }
           }
         }
@@ -530,18 +534,25 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
         toMerge.clear();
         for (Map.Entry<String, Object> entry : iResults.entrySet()) {
           final List<Object> resultSet = (List<Object>) entry.getValue();
+          if (resultSet != null) {
+            if (list == null) {
+              list = new ArrayList<Object>();
+              doc = new ODocument();
+              list.add(doc);
+            }
 
-          for (Object r : resultSet) {
-            if (r instanceof ODocument) {
-              final ODocument d = (ODocument) r;
-              toMerge.add(d.rawField(p.getKey()));
+            for (Object r : resultSet) {
+              if (r instanceof ODocument) {
+                final ODocument d = (ODocument) r;
+                toMerge.add(d.rawField(p.getKey()));
+              }
             }
           }
-
         }
-
-        // WRITE THE FINAL MERGED RESULT
-        doc.field(p.getKey(), f.getFunction().mergeDistributedResult(toMerge));
+        if (doc != null) {
+          // WRITE THE FINAL MERGED RESULT
+          doc.field(p.getKey(), f.getFunction().mergeDistributedResult(toMerge));
+        }
       }
     }
 
