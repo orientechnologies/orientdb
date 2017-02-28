@@ -3,18 +3,18 @@
     <ul class="nav nav-pills nav-justified nav-pills-aside">
       <li ng-class="{active : 'properties' == active }"><a href="javascript:void(0)"
                                                            ng-click="active = 'properties'"
-      ><i class="fa fa-bars"></i></a></li>
+      ><i class="fa fa-bars"></i> Properties</a></li>
       <li ng-class="{active : 'settings' == active }"><a href="javascript:void(0)"
                                                          ng-click="active = 'settings'"><i
-        class="fa fa-cog"></i></a>
+        class="fa fa-cog"></i> Settings</a>
       </li>
     </ul>
   </div>
-  <div class="row">
-    <h5 class="text-center title-tab">
-      {{ active | capitalize}}
-    </h5>
-  </div>
+  <!--<div class="row">-->
+  <!--<h5 class="text-center title-tab">-->
+  <!--{{ active | capitalize}}-->
+  <!--</h5>-->
+  <!--</div>-->
   <div class="row  aside-form" ng-show="active == 'properties'">
 
     <div class="col-md-12 ">
@@ -39,9 +39,26 @@
 
           <div class="col-md-6">
             <select ng-model="config.display" ng-change="setDirty()" id="inputDisplay"
-                    ng-options="h for h in headers">
-
+                    ng-options="h for h in headers" class="form-control input-sm">
             </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="inputDisplayExp" class="col-md-6 control-label">
+            Display Template
+            <i class="fa fa-question-circle pointer"
+               data-trigger="hover" data-placement="bottom-left"
+               data-animation="am-flip-x"
+               data-container="body"
+               data-template-url="views/hints/template-hint.html" bs-popover>
+            </i>
+            <!--</a>-->
+          </label>
+
+          <div class="col-md-6">
+
+            <input type="text" id="inputDisplayExp" ng-model="config.displayExpression" class="form-control input-sm"
+                   ng-change="setDirty()">
           </div>
         </div>
         <div class="form-group">
@@ -66,7 +83,7 @@
           <label for="inputIcon" class="col-md-6 control-label">Icon</label>
 
           <div class="col-md-6">
-            <select fontpicker id="inputIcon" class="form-control" ng-change="setDirty()"
+            <select fontpicker id="inputIcon" class="form-control input-sm" ng-change="setDirty()"
                     ng-model="config.iconCss">
               <option value=""></option>
               <option ng-repeat="icon in icons">{{icon.css}}</option>
@@ -77,13 +94,13 @@
         <div class="form-group">
           <label class="col-md-6 control-label">Icon Size</label>
           <div class="col-md-6">
-            <input type="number" ng-model="config.iconSize" ng-change="setDirty()" class="form-control">
+            <input type="number" ng-model="config.iconSize" ng-change="setDirty()" class="form-control input-sm">
           </div>
         </div>
         <div class="form-group">
           <label class="col-md-6 control-label">Icon Vertical Padding</label>
           <div class="col-md-6">
-            <input type="number" ng-model="config.iconVPadding" ng-change="setDirty()" class="form-control">
+            <input type="number" ng-model="config.iconVPadding" ng-change="setDirty()" class="form-control input-sm">
           </div>
         </div>
 
@@ -91,7 +108,7 @@
           <label for="inputRadius" class="col-md-6 control-label">Radius</label>
 
           <div class="col-md-6">
-            <input id="inputRadius" ng-model="config.r" ng-change="setDirty()" class="form-control">
+            <input id="inputRadius" ng-model="config.r" ng-change="setDirty()" class="form-control input-sm">
           </div>
         </div>
         <div class="form-group">

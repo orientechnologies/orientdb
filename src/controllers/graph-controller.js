@@ -18,6 +18,7 @@ import '../views/database/graph/asideVertex.html';
 import '../views/database/graphConfig.html';
 import '../views/vertex/modalConnection.html';
 import '../views/vertex/modalVertexSelect.html';
+import '../views/hints/template-hint.html';
 
 import angular from 'angular';
 
@@ -1261,6 +1262,7 @@ GraphModule.controller("GraphController", ['$scope', '$routeParams', '$location'
   };
   $scope.saveConfig = function () {
     $scope.gConfig.config = $scope.graph.getConfig();
+
     GraphConfig.set($scope.gConfig).then(function (data) {
       $scope.gConfig = data;
       Notification.push({content: 'Configuration Saved Correctly', autoHide: true});
@@ -1335,6 +1337,12 @@ GraphModule.controller("VertexAsideController", ['$scope', '$routeParams', '$loc
     $scope.$watch('config.display', function (val) {
       if (val) {
         $scope.graph.changeClazzConfig($scope.doc['@class'], 'display', val);
+      }
+    })
+
+    $scope.$watch('config.displayExpression', function (val) {
+      if (val != undefined) {
+        $scope.graph.changeClazzConfig($scope.doc['@class'], 'displayExpression', val);
       }
     })
 
@@ -1441,6 +1449,12 @@ GraphModule.controller("EdgeAsideController", ['$scope', '$routeParams', '$locat
     $scope.$watch('config.icon', function (val) {
       if (val) {
         $scope.graph.changeClazzConfig($scope.doc['@class'], 'icon', val);
+      }
+    })
+
+    $scope.$watch('config.displayExpression', function (val) {
+      if (val != undefined) {
+        $scope.graph.changeClazzConfig($scope.doc['@class'], 'displayExpression', val);
       }
     })
     $scope.$watch('config.fill', function (val) {

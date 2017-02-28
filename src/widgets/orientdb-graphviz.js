@@ -131,6 +131,24 @@ let OrientGraph = (function () {
           });
 
       }
+
+      change['displayExpression'] = function (clazz, prop, val) {
+        if (!self.config.classes[clazz]) {
+          self.config.classes[clazz] = {}
+        }
+        self.config.classes[clazz].displayExpression = val;
+        d3.selectAll('g.vertex-' + clazz.toLowerCase())
+          .selectAll('.vlabel-outside')
+          .attr('class', 'vlabel-outside')
+          .text(bindRealName);
+
+        d3.selectAll('text.elabel-' + clazz.toLowerCase())
+          .selectAll('textPath')
+          .text(function (e) {
+            return bindRealNameOrClazz(e.edge);
+          });
+
+      }
       change['displayColor'] = function (clazz, prop, val) {
         if (!self.config.classes[clazz]) {
           self.config.classes[clazz] = {}
@@ -427,7 +445,7 @@ let OrientGraph = (function () {
           self.tick();
         }
 
-        if(forceTick == true){
+        if (forceTick == true) {
           self.tick();
         }
         return false;
@@ -1135,8 +1153,14 @@ let OrientGraph = (function () {
     function bindRealName(d) {
 
 
-      var name = self.getClazzConfigVal(getClazzName(d), "display", d.source);
+      var name = self.getClazzConfigVal(getClazzName(d), "displayExpression");
 
+
+      if (name && name !== "") {
+        name = S(name).template(d.source);
+      } else {
+        name = self.getClazzConfigVal(getClazzName(d), "display", d.source);
+      }
       var rid;
       if (d['@rid'].startsWith("#-")) {
         var props = Object.keys(d.source).filter(function (e) {
@@ -1153,7 +1177,14 @@ let OrientGraph = (function () {
     function bindRealNameOrClazz(d) {
 
       var clazz = getClazzName(d);
-      var name = self.getClazzConfigVal(clazz, "display", d);
+
+      var name = self.getClazzConfigVal(getClazzName(d), "displayExpression");
+
+      if (name && name !== "") {
+        name = S(name).template(d);
+      } else {
+        name = self.getClazzConfigVal(clazz, "display", d);
+      }
       return name != null ? name : clazz;
     }
 
@@ -1204,7 +1235,6 @@ let OrientGraph = (function () {
       } else {
 
         var realPos = calculateRelPos(d);
-
 
 
         if (realPos == 0) {
@@ -2235,7 +2265,6 @@ let OrientGraph = (function () {
     },
     draw: function () {
       this.init();
-
 
 
       this.drawInternal();
