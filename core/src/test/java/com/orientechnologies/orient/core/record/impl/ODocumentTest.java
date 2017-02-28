@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.record.impl;
 
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import org.testng.annotations.Test;
 
 import java.util.*;
@@ -331,6 +332,20 @@ public class ODocumentTest {
     map.put(null, "dd");
     doc.field("testMap", map);
     doc.convertAllMultiValuesToTrackedVersions();
+  }
+
+  @Test
+  public void testNoDirtySameBytes() {
+    ODocument doc = new ODocument();
+    byte[] bytes = new byte[] { 0, 1, 2, 3, 4, 5 };
+    doc.field("bytes", bytes);
+    ODocumentInternal.clearTrackData(doc);
+    ORecordInternal.unsetDirty(doc);
+    assertFalse(doc.isDirty());
+    assertNull(doc.getOriginalValue("bytes"));
+    doc.field("bytes", bytes.clone());
+    assertFalse(doc.isDirty());
+    assertNull(doc.getOriginalValue("bytes"));
   }
 
 }
