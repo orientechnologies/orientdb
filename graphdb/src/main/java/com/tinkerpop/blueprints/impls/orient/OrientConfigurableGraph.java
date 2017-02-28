@@ -20,17 +20,22 @@
 
 package com.tinkerpop.blueprints.impls.orient;
 
+import com.orientechnologies.orient.client.remote.OStorageRemote;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import org.apache.commons.configuration.Configuration;
 
 import com.orientechnologies.orient.core.intent.OIntent;
 
+import java.util.Map;
+
 /**
  * Base class to manage graph settings.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com) (http://orientdb.com)
+ *
  */
 public abstract class OrientConfigurableGraph {
-  protected Settings                 settings                                         = new Settings();
+  protected Settings settings = new Settings();
 
   protected static final boolean     USE_LIGHTWEIGHT_EDGES_DEFAULT                    = false;
   protected static final boolean     USE_CLASS_FOR_EDGE_LABEL_DEFAULT                 = true;
@@ -308,7 +313,7 @@ public abstract class OrientConfigurableGraph {
     /**
      * Changes the setting about usage of transactions on graph modification for SQL commands (create/remove vertex, create/remove
      * edge).
-     * 
+     *
      * @since v2.2.0
      */
     public void setTxRequiredForSQLGraphOperations(final boolean iValue) {
@@ -318,7 +323,7 @@ public abstract class OrientConfigurableGraph {
     /**
      * Returns true if usage of transactions is needed on graph modification for SQL commands (create/remove vertex, create/remove
      * edge).
-     * 
+     *
      * @since v2.2.0
      */
     public boolean isTxRequiredForSQLGraphOperations() {
@@ -486,8 +491,9 @@ public abstract class OrientConfigurableGraph {
      * <li><b>ALWAYS_AUTOSET</b> each call assures the current graph instance is set in the Thread Local</li>
      * </ul>
      *
-     * @see #setThreadMode(THREAD_MODE)
      * @return Current Graph instance to allow calls in chain (fluent interface)
+     *
+     * @see #setThreadMode(THREAD_MODE)
      */
 
     public THREAD_MODE getThreadMode() {
@@ -507,10 +513,11 @@ public abstract class OrientConfigurableGraph {
      * <li><b>ALWAYS_AUTOSET</b> each call assures the current graph instance is set in the Thread Local</li>
      * </ul>
      *
-     * @param iControl
-     *          Value to set
-     * @see #getThreadMode()
+     * @param iControl Value to set
+     *
      * @return Current Graph instance to allow calls in chain (fluent interface)
+     *
+     * @see #getThreadMode()
      */
     public void setThreadMode(final THREAD_MODE iControl) {
       this.threadMode = iControl;
@@ -557,7 +564,7 @@ public abstract class OrientConfigurableGraph {
   /**
    * Returns true if usage of transactions is needed on graph modification for SQL commands (create/remove vertex, create/remove
    * edge).
-   * 
+   *
    * @since v2.2.0
    */
   public boolean isTxRequiredForSQLGraphOperations() {
@@ -567,7 +574,7 @@ public abstract class OrientConfigurableGraph {
   /**
    * Changes the setting about usage of transactions on graph modification for SQL commands (create/remove vertex, create/remove
    * edge).
-   * 
+   *
    * @since v2.2.0
    */
   public OrientConfigurableGraph setTxRequiredForSQLGraphOperations(final boolean useTransaction) {
@@ -792,9 +799,10 @@ public abstract class OrientConfigurableGraph {
    * set before</li>
    * <li><b>ALWAYS_AUTOSET</b> each call assures the current graph instance is set in the Thread Local</li>
    * </ul>
-   * 
-   * @see #setThreadMode(THREAD_MODE)
+   *
    * @return Current Graph instance to allow calls in chain (fluent interface)
+   *
+   * @see #setThreadMode(THREAD_MODE)
    */
 
   public THREAD_MODE getThreadMode() {
@@ -810,11 +818,12 @@ public abstract class OrientConfigurableGraph {
    * set before</li>
    * <li><b>ALWAYS_AUTOSET</b> each call assures the current graph instance is set in the Thread Local</li>
    * </ul>
-   * 
-   * @param iControl
-   *          Value to set
-   * @see #getThreadMode()
+   *
+   * @param iControl Value to set
+   *
    * @return Current Graph instance to allow calls in chain (fluent interface)
+   *
+   * @see #getThreadMode()
    */
   public OrientConfigurableGraph setThreadMode(final THREAD_MODE iControl) {
     this.settings.setThreadMode(iControl);
@@ -827,11 +836,13 @@ public abstract class OrientConfigurableGraph {
   }
 
   public String getConnectionStrategy() {
-    return this.settings.connectionStrategy;
+    Object val = getProperty(OGlobalConfiguration.CLIENT_CONNECTION_STRATEGY.getKey());
+    return val == null ? null : val.toString();
   }
 
   public void setConnectionStrategy(final String connectionStrategy) {
-    this.settings.connectionStrategy = connectionStrategy;
+    this.setProperty(OGlobalConfiguration.CLIENT_CONNECTION_STRATEGY.getKey(),connectionStrategy);
+    this.settings.setConnectionStrategy(connectionStrategy);
   }
 
   /**
@@ -923,8 +934,7 @@ public abstract class OrientConfigurableGraph {
    * </tr>
    * </table>
    *
-   * @param configuration
-   *          of graph
+   * @param configuration of graph
    */
   protected void init(final Configuration configuration) {
     final Boolean saveOriginalIds = configuration.getBoolean("blueprints.orientdb.saveOriginalIds", null);
@@ -959,8 +969,8 @@ public abstract class OrientConfigurableGraph {
     if (requireTransaction != null)
       setRequireTransaction(requireTransaction);
 
-    final Boolean txRequiredForSQLGraphOperations = configuration.getBoolean("blueprints.orientdb.txRequiredForSQLGraphOperations",
-        null);
+    final Boolean txRequiredForSQLGraphOperations = configuration
+        .getBoolean("blueprints.orientdb.txRequiredForSQLGraphOperations", null);
     if (txRequiredForSQLGraphOperations != null)
       setTxRequiredForSQLGraphOperations(txRequiredForSQLGraphOperations);
 
@@ -968,4 +978,11 @@ public abstract class OrientConfigurableGraph {
     if (maxRetries != null)
       setMaxRetries(maxRetries);
   }
+
+  protected abstract Object setProperty(final String iName, final Object iValue);
+
+  protected abstract Object getProperty(final String iName);
+
+  protected abstract Map<String,Object> getProperties();
+
 }
