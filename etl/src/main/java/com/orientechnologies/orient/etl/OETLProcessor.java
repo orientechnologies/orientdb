@@ -20,6 +20,7 @@ package com.orientechnologies.orient.etl;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
@@ -174,12 +175,8 @@ public class OETLProcessor {
   }
 
   public OETLProcessor parse(final ODocument cfg, final OCommandContext iContext) {
-    return parse(cfg.<Collection<ODocument>>field("begin"),
-        cfg.<ODocument>field("source"),
-        cfg.<ODocument>field("extractor"),
-        cfg.<Collection<ODocument>>field("transformers"),
-        cfg.<ODocument>field("loader"),
-        cfg.<Collection<ODocument>>field("end"),
+    return parse(cfg.<Collection<ODocument>>field("begin"), cfg.<ODocument>field("source"), cfg.<ODocument>field("extractor"),
+        cfg.<Collection<ODocument>>field("transformers"), cfg.<ODocument>field("loader"), cfg.<Collection<ODocument>>field("end"),
         iContext);
   }
 
@@ -196,12 +193,8 @@ public class OETLProcessor {
    *
    * @return Current OETProcessor instance
    **/
-  public OETLProcessor parse(final Collection<ODocument> iBeginBlocks,
-      final ODocument iSource,
-      final ODocument iExtractor,
-      final Collection<ODocument> iTransformers,
-      final ODocument iLoader,
-      final Collection<ODocument> iEndBlocks,
+  public OETLProcessor parse(final Collection<ODocument> iBeginBlocks, final ODocument iSource, final ODocument iExtractor,
+      final Collection<ODocument> iTransformers, final ODocument iLoader, final Collection<ODocument> iEndBlocks,
       final OCommandContext iContext) {
     if (iExtractor == null)
       throw new IllegalArgumentException("No Extractor configured");
@@ -394,17 +387,12 @@ public class OETLProcessor {
         tasks.add(executor.submit(task));
       }
 
-      Future<Boolean> extractorFuture = executor.submit(new OETLExtractorWorker(queue, counter));
-      Boolean extracted = extractorFuture.get();
+      final Future<Boolean> extractorFuture = executor.submit(new OETLExtractorWorker(queue, counter));
 
       for (Future<Boolean> future : tasks) {
-        Boolean result = future.get(1, TimeUnit.MINUTES);
-        out(LOG_LEVELS.DEBUG, "Pipeline worker done without errors:: " + result);
+        Boolean result = future.get();
+        out(LOG_LEVELS.DEBUG, "Pipeline worker done without errors: " + result);
       }
-
-      out(LOG_LEVELS.DEBUG, "all items extracted");
-
-      executor.shutdown();
     } catch (OETLProcessHaltedException e) {
       out(LOG_LEVELS.ERROR, "ETL process halted: %s", e);
 
@@ -413,6 +401,7 @@ public class OETLProcessor {
       out(LOG_LEVELS.ERROR, "ETL process has problem: %s", e);
       executor.shutdownNow();
     }
+    executor.shutdown();
   }
 
   protected void begin() {
@@ -587,10 +576,7 @@ public class OETLProcessor {
   }
 
   public enum LOG_LEVELS {
-    NONE(Level.OFF),
-    ERROR(Level.SEVERE),
-    INFO(Level.INFO),
-    DEBUG(Level.FINE);
+    NONE(Level.OFF), ERROR(Level.SEVERE), INFO(Level.INFO), DEBUG(Level.FINE);
 
     private final Level julLevel;
 
@@ -622,10 +608,19 @@ public class OETLProcessor {
 
       pipeline.getDocumentDatabase();
       OExtractedItem content;
-      while (!(content = queue.take()).finished) {
-        pipeline.execute(content);
+      try {
+        while (!(content = queue.take()).finished) {
+          pipeline.execute(content);
+        }
+      } catch (InterruptedException e) {
+        OLogManager.instance().error(this, "ETL process interrupted: " + e);
+        return Boolean.FALSE;
+      } catch (OETLProcessHaltedException e) {
+        OLogManager.instance().error(this, "ETL process halted: " + e);
+        return Boolean.FALSE;
+      } finally {
+        pipeline.end();
       }
-      pipeline.end();
       //RE-ADD END FLAG FOR OTHER THREADS
       queue.put(content);
       return Boolean.TRUE;
@@ -659,17 +654,25 @@ public class OETLProcessor {
 
     @Override
     public Boolean call() throws Exception {
-      out(LOG_LEVELS.DEBUG, "Start extracting");
-      while (extractor.hasNext()) {
-        // EXTRACTOR
-        final OExtractedItem current = extractor.next();
+      try {
+        out(LOG_LEVELS.DEBUG, "Start extracting");
+        while (extractor.hasNext()) {
+          // EXTRACTOR
+          final OExtractedItem current = extractor.next();
 
-        // TRANSFORM + LOAD
-        queue.put(current);
-        counter.incrementAndGet();
+          // TRANSFORM + LOAD
+          queue.put(current);
+          counter.incrementAndGet();
+        }
+
+        out(LOG_LEVELS.DEBUG, "Extraction completed");
+
+        queue.put(new OExtractedItem(true));
+        return Boolean.TRUE;
+      } catch (Throwable t) {
+        OLogManager.instance().error(this, "Error during extraction: " + t);
+        return Boolean.FALSE;
       }
-      queue.put(new OExtractedItem(true));
-      return Boolean.TRUE;
     }
   }
 }

@@ -34,7 +34,7 @@ public class OExtractedItem {
     finished = false;
   }
 
-  public OExtractedItem(boolean iFinished) {
+  public OExtractedItem(final boolean iFinished) {
     num = 0;
     payload = null;
     finished = iFinished;

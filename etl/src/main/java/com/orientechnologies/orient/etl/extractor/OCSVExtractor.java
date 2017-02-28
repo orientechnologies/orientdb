@@ -69,7 +69,7 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
   public void configure(OETLProcessor iProcessor, ODocument iConfiguration, OCommandContext iContext) {
     super.configure(iProcessor, iConfiguration, iContext);
 
-    csvFormat = CSVFormat.newFormat(',').withNullString(NULL_STRING).withEscape('\\').withQuote('"');
+    csvFormat = CSVFormat.newFormat(',').withNullString(NULL_STRING).withEscape('\\').withQuote('"').withCommentMarker('#');
 
     if (iConfiguration.containsField("predefinedFormat")) {
       csvFormat = CSVFormat.valueOf(iConfiguration.<String>field("predefinedFormat"));
@@ -215,7 +215,7 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
           }
         } catch (Exception e) {
           processor.getStats().incrementErrors();
-          log(OETLProcessor.LOG_LEVELS.ERROR, "Error on converting row %d field '%s' , value '%s' (class:%s) to type: %s",
+          log(OETLProcessor.LOG_LEVELS.ERROR, "Error on converting row %d field '%s' value '%s' (class:%s) to type: %s",
               csvRecord.getRecordNumber(), fieldName, fieldValueAsString, fieldValueAsString.getClass().getName(), fieldType);
         }
       }
