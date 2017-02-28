@@ -24,12 +24,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class OLuceneFunctionsFactory implements OSQLFunctionFactory {
+public class OLuceneCrossClassFunctionsFactory implements OSQLFunctionFactory {
 
   public static final Map<String, Object> FUNCTIONS = new HashMap<String, Object>();
 
   static {
-    register(OLuceneSearchOnIndexFunction.NAME, new OLuceneSearchOnIndexFunction());
+    register(OLuceneCrossClassSearchFunction.NAME, new OLuceneCrossClassSearchFunction());
   }
 
   public static void register(final String iName, final Object iImplementation) {

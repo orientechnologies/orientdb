@@ -22,11 +22,11 @@ import com.orientechnologies.lucene.index.OLuceneFullTextIndex;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -122,14 +122,13 @@ public class OLuceneCrossClassIndexFactory implements OIndexFactory, ODatabaseLi
 
   @Override
   public void onCreate(ODatabaseInternal db) {
-    OLogManager.instance().info(this, "onCreate:: create crossClassIndex");
-
     createCrossClassSearchIndex(db);
 
   }
 
   @Override
   public void onOpen(ODatabaseInternal db) {
+    createCrossClassSearchIndex(db);
   }
 
   @Override
@@ -170,13 +169,16 @@ public class OLuceneCrossClassIndexFactory implements OIndexFactory, ODatabaseLi
   }
 
   private void createCrossClassSearchIndex(ODatabaseInternal db) {
+
     OIndexManager indexManager = db.getMetadata().getIndexManager();
+
+    ODatabaseDocument dbd = (ODatabaseDocument) db;
     if (!indexManager.existsIndex("CrossClassSearchIndex")) {
 
-      OLogManager.instance().info(this, "index is no present:: creating cross class index");
+      OLogManager.instance().info(this, "creating cross class Lucene index");
 
-      db.command(new OCommandSQL(
-          "CREATE INDEX CrossClassSearchIndex FULLTEXT ENGINE LUCENE_CROSS_CLASS")).execute();
+      dbd.command(
+          "CREATE INDEX CrossClassSearchIndex FULLTEXT ENGINE LUCENE_CROSS_CLASS");
     }
   }
 }

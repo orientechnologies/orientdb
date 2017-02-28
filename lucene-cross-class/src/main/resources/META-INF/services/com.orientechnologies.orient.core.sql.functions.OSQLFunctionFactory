@@ -19,4 +19,4 @@
 
 
 
-com.orientechnologies.lucene.functions.OLuceneFunctionsFactory
+com.orientechnologies.lucene.functions.OLuceneCrossClassFunctionsFactory

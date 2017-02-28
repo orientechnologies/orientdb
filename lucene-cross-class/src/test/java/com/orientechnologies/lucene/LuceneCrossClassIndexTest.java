@@ -20,10 +20,9 @@ package com.orientechnologies.lucene;
 
 import com.orientechnologies.lucene.functions.OLuceneSearchOnIndexFunction;
 import com.orientechnologies.lucene.test.BaseLuceneTest;
-import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.junit.Before;
@@ -34,7 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Created by enricorisa on 26/09/14.
@@ -46,38 +45,38 @@ public class LuceneCrossClassIndexTest extends BaseLuceneTest {
   public void setUp() throws Exception {
     InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql");
 
-    db.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
+    db.execute("sql", getScriptFromStream(stream));
 
-    db.command(new OCommandSQL(
+    db.command(
         "create index Song.title on Song (title) FULLTEXT ENGINE LUCENE METADATA {\"analyzer\":\"" + StandardAnalyzer.class
-            .getName() + "\"}")).execute();
-    db.command(new OCommandSQL(
+            .getName() + "\"}");
+    db.command(
         "create index Song.author on Song (author) FULLTEXT ENGINE LUCENE METADATA {\"analyzer\":\"" + StandardAnalyzer.class
-            .getName() + "\"}")).execute();
-    db.command(new OCommandSQL(
+            .getName() + "\"}");
+    db.command(
         "create index Author.name on Author(name,score) FULLTEXT ENGINE LUCENE METADATA {\"analyzer\":\"" + StandardAnalyzer.class
-            .getName() + "\"}")).execute();
+            .getName() + "\"}");
 
   }
 
   @Test
   public void shouldSearchTermAcrossAllSubIndexes() throws Exception {
 
-    String query = "select SEARCH('mountain') ";
+    String query = "select SEARCH('mountain') AS res ";
 
-    List<ODocument> docs = db.query(new OSQLSynchQuery<ODocument>(query));
+    OResultSet docs = db.query(query);
 
-    assertThat(docs).hasSize(1);
+    System.out.println("docs = " + docs);
 
-    List<ODocument> results = fetchDocs(docs);
+    docs.stream().forEach(d -> System.out.println("d = " + d));
+    docs.stream()
+        .forEach(doc ->{
+      if (doc.getElement().get().getSchemaType().get().getName().equals("Song"))
+        assertThat(doc.<String>getProperty("title")).containsIgnoringCase("mountain");
+      if (doc.getElement().get().getSchemaType().get().getName().equals("Author"))
+        assertThat(doc.<String>getProperty("name")).containsIgnoringCase("mountain");
 
-    for (ODocument doc : results) {
-      if (doc.getClassName().equals("Song"))
-        assertThat(doc.<String>field("title")).containsIgnoringCase("mountain");
-      if (doc.getClassName().equals("Author"))
-        assertThat(doc.<String>field("name")).containsIgnoringCase("mountain");
-
-    }
+    });
 
   }
 

@@ -16,18 +16,18 @@ import com.orientechnologies.orient.core.sql.parser.OFromClause;
 
 import java.util.Collection;
 
-import static com.orientechnologies.lucene.OLuceneCrossClassIndexFactory.*;
+import static com.orientechnologies.lucene.OLuceneCrossClassIndexFactory.LUCENE_CROSS_CLASS;
 
 /**
  * This function uses the CrossClassIndex to search documents across all the Lucene indexes defined in a database
- *
+ * <p>
  * Created by frank on 19/02/2016.
  */
-public class OLuceneSearchFunction extends OSQLFunctionAbstract implements OIndexableSQLFunction {
+public class OLuceneCrossClassSearchFunction extends OSQLFunctionAbstract implements OIndexableSQLFunction {
 
   public static final String NAME = "SEARCH";
 
-  public OLuceneSearchFunction() {
+  public OLuceneCrossClassSearchFunction() {
     super(NAME, 1, 1);
   }
 
@@ -39,8 +39,10 @@ public class OLuceneSearchFunction extends OSQLFunctionAbstract implements OInde
 
     if (oIndex != null) {
 
-      OExpression exp = args[0];
-      return (OLuceneResultSet) oIndex.get(exp.toString());
+      OExpression expression = args[0];
+      String query = (String) expression.execute((OIdentifiable) null, ctx);
+
+      return (OLuceneResultSet) oIndex.get(query);
     }
     return null;
   }
