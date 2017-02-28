@@ -2,7 +2,6 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
@@ -25,72 +24,6 @@ import java.util.stream.Collectors;
 
 public class OCreateIndexStatement extends ODDLStatement {
 
-  public static class Property {
-    protected OIdentifier      name;
-    protected ORecordAttribute recordAttribute;
-    protected boolean byKey   = false;
-    protected boolean byValue = false;
-    protected OIdentifier collate;
-
-    public Property copy() {
-      Property result = new Property();
-      result.name = name == null ? null : name.copy();
-      result.recordAttribute = recordAttribute == null ? null : recordAttribute.copy();
-      result.byKey = byKey;
-      result.byValue = byValue;
-      result.collate = collate == null ? null : collate.copy();
-      return result;
-    }
-
-    @Override public boolean equals(Object o) {
-      if (this == o)
-        return true;
-      if (o == null || getClass() != o.getClass())
-        return false;
-
-      Property property = (Property) o;
-
-      if (byKey != property.byKey)
-        return false;
-      if (byValue != property.byValue)
-        return false;
-      if (name != null ? !name.equals(property.name) : property.name != null)
-        return false;
-      if (recordAttribute != null ? !recordAttribute.equals(property.recordAttribute) : property.recordAttribute != null)
-        return false;
-      if (collate != null ? !collate.equals(property.collate) : property.collate != null)
-        return false;
-
-      return true;
-    }
-
-    @Override public int hashCode() {
-      int result = name != null ? name.hashCode() : 0;
-      result = 31 * result + (recordAttribute != null ? recordAttribute.hashCode() : 0);
-      result = 31 * result + (byKey ? 1 : 0);
-      result = 31 * result + (byValue ? 1 : 0);
-      result = 31 * result + (collate != null ? collate.hashCode() : 0);
-      return result;
-    }
-
-    /**
-     * returns the complete key to index, eg. property name or "property by key/value"
-     *
-     * @return
-     */
-    public String getCompleteKey() {
-      StringBuilder result = new StringBuilder();
-      result.append(name.getStringValue());
-      if (byKey) {
-        result.append(" by key");
-      }
-      if (byValue) {
-        result.append(" by value");
-      }
-      return result.toString();
-    }
-  }
-
   protected OIndexName  name;
   protected OIdentifier className;
   protected List<Property> propertyList = new ArrayList<Property>();
@@ -107,7 +40,8 @@ public class OCreateIndexStatement extends ODDLStatement {
     super(p, id);
   }
 
-  @Override public OResultSet executeDDL(OCommandContext ctx) {
+  @Override
+  public OResultSet executeDDL(OCommandContext ctx) {
     execute(ctx);
     OInternalResultSet rs = new OInternalResultSet();
     OResultInternal result = new OResultInternal();
@@ -128,13 +62,18 @@ public class OCreateIndexStatement extends ODDLStatement {
       OIndexFactory factory = OIndexes.getFactory(type.getStringValue(), null);
 
       OType[] keyTypes = calculateKeyTypes(ctx);
-      if (keyTypes != null) {
-        idx = database.getMetadata().getIndexManager().createIndex(name.getValue(), type.getStringValue(),
-            new OSimpleKeyIndexDefinition(keyTypes, collatesList, factory.getLastVersion()), null, null, metadataDoc, engine);
-        //    } else if (serializerKeyId != 0) {
-        //        idx = database.getMetadata().getIndexManager()
-        //            .createIndex(indexName, indexType.toString(), new ORuntimeKeyIndexDefinition(serializerKeyId, factory.getLastVersion()),
-        //                null, null, metadataDoc, engine);
+
+      if (keyTypes != null && keyTypes.length > 0) {
+        idx = database.getMetadata().getIndexManager()
+            .createIndex(name.getValue(), type.getStringValue(),
+                new OSimpleKeyIndexDefinition(keyTypes, collatesList, factory.getLastVersion()), null, null, metadataDoc, engine);
+      } else if (keyTypes != null && keyTypes.length == 0 && "LUCENE_CROSS_CLASS".equalsIgnoreCase(engine)) {
+        //handle special case of cross class  Lucene index: awful but works
+        OIndexDefinition keyDef = new OSimpleKeyIndexDefinition(new OType[] { OType.STRING }, collatesList,
+            factory.getLastVersion());
+        idx = database.getMetadata().getIndexManager()
+            .createIndex(name.getValue(), type.getStringValue(), keyDef, null, null, metadataDoc, engine);
+
       } else {
         throw new ODatabaseException("Impossible to create an index without specify the key type or the associated property");
       }
@@ -146,7 +85,7 @@ public class OCreateIndexStatement extends ODDLStatement {
         idx = oClass.createIndex(name.getValue(), type.getStringValue(), null, metadataDoc, engine, fields);
       } else {
         final List<OType> fieldTypeList;
-        if (keyTypes == null || keyTypes.size()==0 && fields.length>0) {
+        if (keyTypes == null || keyTypes.size() == 0 && fields.length > 0) {
           for (final String fieldName : fields) {
             if (!fieldName.equals("@rid") && !oClass.existsProperty(fieldName))
               throw new OIndexException(
@@ -189,6 +128,7 @@ public class OCreateIndexStatement extends ODDLStatement {
    * calculates the indexed class based on the class name
    *
    * @param ctx
+   *
    * @return
    */
   private OClass getIndexClass(OCommandContext ctx) {
@@ -202,6 +142,7 @@ public class OCreateIndexStatement extends ODDLStatement {
    * returns index metadata as an ODocuemnt (as expected by Index API)
    *
    * @param ctx
+   *
    * @return
    */
   private ODocument calculateMetadata(OCommandContext ctx) {
@@ -232,7 +173,8 @@ public class OCreateIndexStatement extends ODDLStatement {
     return result;
   }
 
-  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("CREATE INDEX ");
     name.toString(params, builder);
     if (className != null) {
@@ -285,7 +227,8 @@ public class OCreateIndexStatement extends ODDLStatement {
     }
   }
 
-  @Override public OCreateIndexStatement copy() {
+  @Override
+  public OCreateIndexStatement copy() {
     OCreateIndexStatement result = new OCreateIndexStatement(-1);
     result.name = name == null ? null : name.copy();
     result.className = className == null ? null : className.copy();
@@ -297,7 +240,8 @@ public class OCreateIndexStatement extends ODDLStatement {
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -323,7 +267,8 @@ public class OCreateIndexStatement extends ODDLStatement {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = name != null ? name.hashCode() : 0;
     result = 31 * result + (className != null ? className.hashCode() : 0);
     result = 31 * result + (propertyList != null ? propertyList.hashCode() : 0);
@@ -332,6 +277,74 @@ public class OCreateIndexStatement extends ODDLStatement {
     result = 31 * result + (keyTypes != null ? keyTypes.hashCode() : 0);
     result = 31 * result + (metadata != null ? metadata.hashCode() : 0);
     return result;
+  }
+
+  public static class Property {
+    protected OIdentifier      name;
+    protected ORecordAttribute recordAttribute;
+    protected boolean byKey   = false;
+    protected boolean byValue = false;
+    protected OIdentifier collate;
+
+    public Property copy() {
+      Property result = new Property();
+      result.name = name == null ? null : name.copy();
+      result.recordAttribute = recordAttribute == null ? null : recordAttribute.copy();
+      result.byKey = byKey;
+      result.byValue = byValue;
+      result.collate = collate == null ? null : collate.copy();
+      return result;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o)
+        return true;
+      if (o == null || getClass() != o.getClass())
+        return false;
+
+      Property property = (Property) o;
+
+      if (byKey != property.byKey)
+        return false;
+      if (byValue != property.byValue)
+        return false;
+      if (name != null ? !name.equals(property.name) : property.name != null)
+        return false;
+      if (recordAttribute != null ? !recordAttribute.equals(property.recordAttribute) : property.recordAttribute != null)
+        return false;
+      if (collate != null ? !collate.equals(property.collate) : property.collate != null)
+        return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = name != null ? name.hashCode() : 0;
+      result = 31 * result + (recordAttribute != null ? recordAttribute.hashCode() : 0);
+      result = 31 * result + (byKey ? 1 : 0);
+      result = 31 * result + (byValue ? 1 : 0);
+      result = 31 * result + (collate != null ? collate.hashCode() : 0);
+      return result;
+    }
+
+    /**
+     * returns the complete key to index, eg. property name or "property by key/value"
+     *
+     * @return
+     */
+    public String getCompleteKey() {
+      StringBuilder result = new StringBuilder();
+      result.append(name.getStringValue());
+      if (byKey) {
+        result.append(" by key");
+      }
+      if (byValue) {
+        result.append(" by value");
+      }
+      return result.toString();
+    }
   }
 }
 /* JavaCC - OriginalChecksum=bd090e02c4346ad390a6b8c77f1b9dba (do not edit this line) */

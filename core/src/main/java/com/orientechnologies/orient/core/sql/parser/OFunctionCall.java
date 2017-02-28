@@ -34,6 +34,10 @@ public class OFunctionCall extends SimpleNode {
     super(p, id);
   }
 
+  public static ODatabaseDocumentInternal getDatabase() {
+    return ODatabaseRecordThreadLocal.INSTANCE.get();
+  }
+
   /**
    * Accept the visitor. *
    */
@@ -86,13 +90,13 @@ public class OFunctionCall extends SimpleNode {
 
   private Object execute(Object targetObjects, OCommandContext ctx, String name) {
     List<Object> paramValues = new ArrayList<Object>();
-    Object current = ctx==null?null: ctx.getVariable("$current");
+    Object current = ctx == null ? null : ctx.getVariable("$current");
     OIdentifiable record = null;
-    if(current!=null){
-      if(current instanceof OIdentifiable){
+    if (current != null) {
+      if (current instanceof OIdentifiable) {
         record = (OIdentifiable) current;
-      }else if(current instanceof OResult){
-        record = ((OResult)current).toElement();
+      } else if (current instanceof OResult) {
+        record = ((OResult) current).toElement();
       }
     }
     if (record == null && targetObjects instanceof OIdentifiable) {
@@ -125,10 +129,6 @@ public class OFunctionCall extends SimpleNode {
     }
   }
 
-  public static ODatabaseDocumentInternal getDatabase() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get();
-  }
-
   public boolean isIndexedFunctionCall() {
     OSQLFunction function = OSQLEngine.getInstance().getFunction(name.getStringValue());
     return (function instanceof OIndexableSQLFunction);
@@ -141,6 +141,7 @@ public class OFunctionCall extends SimpleNode {
    * @param ctx
    * @param operator
    * @param rightValue
+   *
    * @return
    */
   public Iterable<OIdentifiable> executeIndexedFunction(OFromClause target, OCommandContext ctx, OBinaryCompareOperator operator,
@@ -158,6 +159,7 @@ public class OFunctionCall extends SimpleNode {
    * @param ctx        execution context
    * @param operator   operator at the right of the function
    * @param rightValue value to compare to funciton result
+   *
    * @return the approximate number of items returned by the condition execution, -1 if the extimation cannot be executed
    */
   public long estimateIndexedFunction(OFromClause target, OCommandContext ctx, OBinaryCompareOperator operator, Object rightValue) {
@@ -176,7 +178,9 @@ public class OFunctionCall extends SimpleNode {
    * @param context  the execution context
    * @param operator
    * @param right
-   * @return true if current function is an indexed funciton AND that function can also be executed without using the index, false otherwise
+   *
+   * @return true if current function is an indexed funciton AND that function can also be executed without using the index, false
+   * otherwise
    */
   public boolean canExecuteIndexedFunctionWithoutIndex(OFromClause target, OCommandContext context, OBinaryCompareOperator operator,
       Object right) {
@@ -195,6 +199,7 @@ public class OFunctionCall extends SimpleNode {
    * @param context  the execution context
    * @param operator
    * @param right
+   *
    * @return true if current function is an indexed function AND that function can be used on this target, false otherwise
    */
   public boolean allowsIndexedFunctionExecutionOnTarget(OFromClause target, OCommandContext context,
@@ -214,6 +219,7 @@ public class OFunctionCall extends SimpleNode {
    *
    * @param target  the query target
    * @param context the execution context
+   *
    * @return true if current expression is an indexed function AND the function has also to be executed after the index search.
    */
   public boolean executeIndexedFunctionAfterIndexSearch(OFromClause target, OCommandContext context,
@@ -343,7 +349,8 @@ public class OFunctionCall extends SimpleNode {
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -359,7 +366,8 @@ public class OFunctionCall extends SimpleNode {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = name != null ? name.hashCode() : 0;
     result = 31 * result + (params != null ? params.hashCode() : 0);
     return result;

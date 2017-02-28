@@ -107,7 +107,7 @@ public interface OSQLFunction {
 	public int getMaxParams();
 
 	/**
-	 * Returns a convinient SQL String representation of the function.
+	 * Returns a convenient SQL String representation of the function.
 	 * <p>
 	 * Example :
 	 * 
