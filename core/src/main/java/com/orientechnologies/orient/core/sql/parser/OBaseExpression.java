@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.executor.AggregationContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
 import java.util.Collections;
 import java.util.List;
@@ -44,7 +45,7 @@ public class OBaseExpression extends OMathExpression {
 
   public OBaseExpression(String string) {
     super(-1);
-    this.string = "\""+OStringSerializerHelper.encode(string)+"\"";
+    this.string = "\"" + OStringSerializerHelper.encode(string) + "\"";
   }
 
   public OBaseExpression(OIdentifier identifier, OModifier modifier) {
@@ -69,7 +70,8 @@ public class OBaseExpression extends OMathExpression {
     return visitor.visit(this, data);
   }
 
-  @Override public String toString() {
+  @Override
+  public String toString() {
     return super.toString();
   }
 
@@ -126,11 +128,13 @@ public class OBaseExpression extends OMathExpression {
     return result;
   }
 
-  @Override protected boolean supportsBasicCalculation() {
+  @Override
+  protected boolean supportsBasicCalculation() {
     return true;
   }
 
-  @Override public boolean isIndexedFunctionCall() {
+  @Override
+  public boolean isIndexedFunctionCall() {
     if (this.identifier == null) {
       return false;
     }
@@ -159,7 +163,9 @@ public class OBaseExpression extends OMathExpression {
    * @param context  the execution context
    * @param operator
    * @param right
-   * @return true if current expression is an indexed funciton AND that function can also be executed without using the index, false otherwise
+   *
+   * @return true if current expression is an indexed funciton AND that function can also be executed without using the index, false
+   * otherwise
    */
   public boolean canExecuteIndexedFunctionWithoutIndex(OFromClause target, OCommandContext context, OBinaryCompareOperator operator,
       Object right) {
@@ -176,6 +182,7 @@ public class OBaseExpression extends OMathExpression {
    * @param context  the execution context
    * @param operator
    * @param right
+   *
    * @return true if current expression is an indexed function AND that function can be used on this target, false otherwise
    */
   public boolean allowsIndexedFunctionExecutionOnTarget(OFromClause target, OCommandContext context,
@@ -193,6 +200,7 @@ public class OBaseExpression extends OMathExpression {
    *
    * @param target  the query target
    * @param context the execution context
+   *
    * @return true if current expression is an indexed function AND the function has also to be executed after the index search.
    */
   public boolean executeIndexedFunctionAfterIndexSearch(OFromClause target, OCommandContext context,
@@ -203,7 +211,8 @@ public class OBaseExpression extends OMathExpression {
     return identifier.executeIndexedFunctionAfterIndexSearch(target, context, operator, right);
   }
 
-  @Override public boolean isBaseIdentifier() {
+  @Override
+  public boolean isBaseIdentifier() {
     return identifier != null && modifier == null && identifier.isBaseIdentifier();
   }
 
@@ -217,14 +226,16 @@ public class OBaseExpression extends OMathExpression {
     return false;
   }
 
-  @Override public boolean isExpand() {
+  @Override
+  public boolean isExpand() {
     if (identifier != null) {
       return identifier.isExpand();
     }
     return false;
   }
 
-  @Override public OExpression getExpandContent() {
+  @Override
+  public OExpression getExpandContent() {
     return this.identifier.getExpandContent();
   }
 
@@ -238,7 +249,8 @@ public class OBaseExpression extends OMathExpression {
     return false;
   }
 
-  @Override public boolean isAggregate() {
+  @Override
+  public boolean isAggregate() {
     if (identifier != null && identifier.isAggregate()) {
       return true;
     }
@@ -267,7 +279,8 @@ public class OBaseExpression extends OMathExpression {
     }
   }
 
-  @Override public OBaseExpression copy() {
+  @Override
+  public OBaseExpression copy() {
     OBaseExpression result = new OBaseExpression(-1);
     result.number = number == null ? null : number.copy();
     result.identifier = identifier == null ? null : identifier.copy();
@@ -287,7 +300,8 @@ public class OBaseExpression extends OMathExpression {
     return false;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -309,7 +323,8 @@ public class OBaseExpression extends OMathExpression {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = number != null ? number.hashCode() : 0;
     result = 31 * result + (identifier != null ? identifier.hashCode() : 0);
     result = 31 * result + (inputParam != null ? inputParam.hashCode() : 0);
@@ -337,6 +352,18 @@ public class OBaseExpression extends OMathExpression {
       }
     }
     return null;
+  }
+
+  @Override
+  public void applyRemove(OResultInternal result, OCommandContext ctx) {
+    if (identifier != null) {
+      if (modifier == null) {
+        identifier.applyRemove(result, ctx);
+      } else {
+        Object val = identifier.execute(result, ctx);
+        modifier.applyRemove(val, result, ctx);
+      }
+    }
   }
 }
 

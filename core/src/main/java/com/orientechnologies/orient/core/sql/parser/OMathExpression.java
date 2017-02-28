@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.AggregationContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -23,7 +24,8 @@ public class OMathExpression extends SimpleNode {
 
   public enum Operator {
     PLUS {
-      @Override public Number apply(Integer left, Integer right) {
+      @Override
+      public Number apply(Integer left, Integer right) {
         final Integer sum = left + right;
         if (sum < 0 && left.intValue() > 0 && right.intValue() > 0)
           // SPECIAL CASE: UPGRADE TO LONG
@@ -31,24 +33,28 @@ public class OMathExpression extends SimpleNode {
         return sum;
       }
 
-      @Override public Number apply(Long left, Long right) {
+      @Override
+      public Number apply(Long left, Long right) {
         return left + right;
       }
 
-      @Override public Number apply(Float left, Float right) {
+      @Override
+      public Number apply(Float left, Float right) {
         return left + right;
       }
 
-      @Override public Number apply(Double left, Double right) {
+      @Override
+      public Number apply(Double left, Double right) {
         return left + right;
       }
 
-      @Override public Number apply(BigDecimal left, BigDecimal right) {
+      @Override
+      public Number apply(BigDecimal left, BigDecimal right) {
         return left.add(right);
       }
-    },
-    MINUS {
-      @Override public Number apply(Integer left, Integer right) {
+    }, MINUS {
+      @Override
+      public Number apply(Integer left, Integer right) {
         int result = left - right;
         if (result > 0 && left.intValue() < 0 && right.intValue() > 0)
           // SPECIAL CASE: UPGRADE TO LONG
@@ -57,82 +63,98 @@ public class OMathExpression extends SimpleNode {
         return result;
       }
 
-      @Override public Number apply(Long left, Long right) {
+      @Override
+      public Number apply(Long left, Long right) {
         return left - right;
       }
 
-      @Override public Number apply(Float left, Float right) {
+      @Override
+      public Number apply(Float left, Float right) {
         return left - right;
       }
 
-      @Override public Number apply(Double left, Double right) {
+      @Override
+      public Number apply(Double left, Double right) {
         return left - right;
       }
 
-      @Override public Number apply(BigDecimal left, BigDecimal right) {
+      @Override
+      public Number apply(BigDecimal left, BigDecimal right) {
         return left.subtract(right);
       }
-    },
-    STAR {
-      @Override public Number apply(Integer left, Integer right) {
+    }, STAR {
+      @Override
+      public Number apply(Integer left, Integer right) {
         return left * right;
       }
 
-      @Override public Number apply(Long left, Long right) {
+      @Override
+      public Number apply(Long left, Long right) {
         return left * right;
       }
 
-      @Override public Number apply(Float left, Float right) {
+      @Override
+      public Number apply(Float left, Float right) {
         return left * right;
       }
 
-      @Override public Number apply(Double left, Double right) {
+      @Override
+      public Number apply(Double left, Double right) {
         return left * right;
       }
 
-      @Override public Number apply(BigDecimal left, BigDecimal right) {
+      @Override
+      public Number apply(BigDecimal left, BigDecimal right) {
         return left.multiply(right);
       }
-    },
-    SLASH {
-      @Override public Number apply(Integer left, Integer right) {
+    }, SLASH {
+      @Override
+      public Number apply(Integer left, Integer right) {
         return left / right;
       }
 
-      @Override public Number apply(Long left, Long right) {
+      @Override
+      public Number apply(Long left, Long right) {
         return left / right;
       }
 
-      @Override public Number apply(Float left, Float right) {
+      @Override
+      public Number apply(Float left, Float right) {
         return left / right;
       }
 
-      @Override public Number apply(Double left, Double right) {
+      @Override
+      public Number apply(Double left, Double right) {
         return left / right;
       }
 
-      @Override public Number apply(BigDecimal left, BigDecimal right) {
+      @Override
+      public Number apply(BigDecimal left, BigDecimal right) {
         return left.divide(right, BigDecimal.ROUND_HALF_UP);
       }
-    },
-    REM {
-      @Override public Number apply(Integer left, Integer right) {
+    }, REM {
+      @Override
+      public Number apply(Integer left, Integer right) {
         return left % right;
       }
 
-      @Override public Number apply(Long left, Long right) {
+      @Override
+      public Number apply(Long left, Long right) {
         return left % right;
       }
 
-      @Override public Number apply(Float left, Float right) {
+      @Override
+      public Number apply(Float left, Float right) {
         return left % right;
       }
 
-      @Override public Number apply(Double left, Double right) {
+      @Override
+      public Number apply(Double left, Double right) {
         return left % right;
       }
 
-      @Override public Number apply(BigDecimal left, BigDecimal right) {
+      @Override
+      public Number apply(BigDecimal left, BigDecimal right) {
         return left.remainder(right);
       }
     };
@@ -174,7 +196,6 @@ public class OMathExpression extends SimpleNode {
     }
     return nextValue;
   }
-
 
   public Object execute(OResult iCurrentRecord, OCommandContext ctx) {
     if (childExpressions.size() == 0) {
@@ -353,7 +374,9 @@ public class OMathExpression extends SimpleNode {
    * @param context  the execution context
    * @param operator
    * @param right
-   * @return true if current expression is an indexed funciton AND that function can also be executed without using the index, false otherwise
+   *
+   * @return true if current expression is an indexed funciton AND that function can also be executed without using the index, false
+   * otherwise
    */
   public boolean canExecuteIndexedFunctionWithoutIndex(OFromClause target, OCommandContext context, OBinaryCompareOperator operator,
       Object right) {
@@ -370,6 +393,7 @@ public class OMathExpression extends SimpleNode {
    * @param context  the execution context
    * @param operator
    * @param right
+   *
    * @return true if current expression is an indexed function AND that function can be used on this target, false otherwise
    */
   public boolean allowsIndexedFunctionExecutionOnTarget(OFromClause target, OCommandContext context,
@@ -387,6 +411,7 @@ public class OMathExpression extends SimpleNode {
    *
    * @param target  the query target
    * @param context the execution context
+   *
    * @return true if current expression is an indexed function AND the function has also to be executed after the index search.
    */
   public boolean executeIndexedFunctionAfterIndexSearch(OFromClause target, OCommandContext context,
@@ -501,7 +526,8 @@ public class OMathExpression extends SimpleNode {
     return false;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -517,7 +543,8 @@ public class OMathExpression extends SimpleNode {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = childExpressions != null ? childExpressions.hashCode() : 0;
     result = 31 * result + (operators != null ? operators.hashCode() : 0);
     return result;
@@ -535,6 +562,13 @@ public class OMathExpression extends SimpleNode {
       return null;
     }
     return result;
+  }
+
+  public void applyRemove(OResultInternal result, OCommandContext ctx) {
+    if (childExpressions.size() != 1) {
+      throw new OCommandExecutionException("cannot apply REMOVE " + toString());
+    }
+    childExpressions.get(0).applyRemove(result, ctx);
   }
 
 }

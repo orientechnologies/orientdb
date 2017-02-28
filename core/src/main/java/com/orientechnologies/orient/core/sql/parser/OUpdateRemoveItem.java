@@ -3,13 +3,14 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
 import java.util.Map;
 
 public class OUpdateRemoveItem extends SimpleNode {
 
-  OIdentifier left;
+  OExpression left;
   OExpression right;
 
   public OUpdateRemoveItem(int id) {
@@ -42,7 +43,8 @@ public class OUpdateRemoveItem extends SimpleNode {
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -58,14 +60,18 @@ public class OUpdateRemoveItem extends SimpleNode {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = left != null ? left.hashCode() : 0;
     result = 31 * result + (right != null ? right.hashCode() : 0);
     return result;
   }
 
   public void applyUpdate(OResultInternal result, OCommandContext ctx) {
-    result.removeProperty(left.getStringValue());
+    if (right != null) {
+      throw new OCommandExecutionException("cannot apply REMOVE " + right.toString() + " (not supported in V 3.0)");
+    }
+    left.applyRemove(result, ctx);
   }
 }
 /* JavaCC - OriginalChecksum=72e240d3dc1196fdea69e8fdc2bd69ca (do not edit this line) */

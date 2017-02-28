@@ -336,5 +336,11 @@ public class OSuffixIdentifier extends SimpleNode {
       throw new OCommandExecutionException("Cannot set property on unmodifiable target: " + target);
     }
   }
+
+  public void applyRemove(OResultInternal result, OCommandContext ctx) {
+    if(identifier!=null){
+      result.removeProperty(identifier.getStringValue());
+    }
+  }
 }
 /* JavaCC - OriginalChecksum=5d9be0188c7d6e2b67d691fb88a518f8 (do not edit this line) */

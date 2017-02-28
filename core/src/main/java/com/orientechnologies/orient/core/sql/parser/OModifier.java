@@ -5,7 +5,9 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
 import java.lang.reflect.Array;
 import java.util.*;
@@ -111,7 +113,7 @@ public class OModifier extends SimpleNode {
       }
       return result;
     }
-    if(iResult instanceof OIdentifiable){
+    if (iResult instanceof OIdentifiable) {
       iResult = Collections.singleton(iResult);
     }
     if (iResult instanceof Iterable) {
@@ -165,7 +167,8 @@ public class OModifier extends SimpleNode {
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -191,7 +194,8 @@ public class OModifier extends SimpleNode {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = (squareBrackets ? 1 : 0);
     result = 31 * result + (arrayRange != null ? arrayRange.hashCode() : 0);
     result = 31 * result + (condition != null ? condition.hashCode() : 0);
@@ -301,5 +305,24 @@ public class OModifier extends SimpleNode {
 
   }
 
+  public void applyRemove(Object currentValue, OResultInternal originalRecord, OCommandContext ctx) {
+    if (next != null) {
+      Object val = calculateLocal(originalRecord, currentValue, ctx);
+      next.applyRemove(val, originalRecord, ctx);
+    } else {
+      if (arrayRange != null) {
+//TODO
+      } else if (condition != null) {
+//TODO
+      } else if (arraySingleValues != null) {
+//TODO
+      } else if (suffix != null) {
+//TODO
+      } else {
+        throw new OCommandExecutionException("cannot apply REMOVE " + toString());
+      }
+    }
+
+  }
 }
 /* JavaCC - OriginalChecksum=39c21495d02f9b5007b4a2d6915496e1 (do not edit this line) */

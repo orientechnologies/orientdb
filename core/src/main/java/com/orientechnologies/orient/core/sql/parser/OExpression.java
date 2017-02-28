@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.sql.executor.AggregationContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
 import java.util.List;
 import java.util.Map;
@@ -475,6 +476,14 @@ public class OExpression extends SimpleNode {
     if (mathExpression != null)
       return mathExpression.getMatchPatternInvolvedAliases();
     return null;
+  }
+
+  public void applyRemove(OResultInternal result, OCommandContext ctx) {
+      if(mathExpression!=null){
+        mathExpression.applyRemove(result, ctx);
+      }else{
+        throw new OCommandExecutionException("Cannot apply REMOVE "+toString());
+      }
   }
 }
 /* JavaCC - OriginalChecksum=9c860224b121acdc89522ae97010be01 (do not edit this line) */

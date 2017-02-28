@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.AggregationContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
 import java.util.Map;
 import java.util.Set;
@@ -99,7 +100,9 @@ public class OBaseIdentifier extends SimpleNode {
    * @param context  the execution context
    * @param operator
    * @param right
-   * @return true if current expression is an indexed funciton AND that function can also be executed without using the index, false otherwise
+   *
+   * @return true if current expression is an indexed funciton AND that function can also be executed without using the index, false
+   * otherwise
    */
   public boolean canExecuteIndexedFunctionWithoutIndex(OFromClause target, OCommandContext context, OBinaryCompareOperator operator,
       Object right) {
@@ -111,14 +114,16 @@ public class OBaseIdentifier extends SimpleNode {
 
   /**
    * tests if current expression is an indexed function AND that function can be used on this target
-   * @param target the query target
-   * @param context the execution context
+   *
+   * @param target   the query target
+   * @param context  the execution context
    * @param operator
    * @param right
+   *
    * @return true if current expression involves an indexed function AND that function can be used on this target, false otherwise
    */
-  public boolean allowsIndexedFunctionExecutionOnTarget(OFromClause target, OCommandContext context, OBinaryCompareOperator operator,
-      Object right){
+  public boolean allowsIndexedFunctionExecutionOnTarget(OFromClause target, OCommandContext context,
+      OBinaryCompareOperator operator, Object right) {
     if (this.levelZero == null) {
       return false;
     }
@@ -129,12 +134,14 @@ public class OBaseIdentifier extends SimpleNode {
    * tests if current expression is an indexed function AND the function has also to be executed after the index search.
    * In some cases, the index search is accurate, so this condition can be excluded from further evaluation. In other cases
    * the result from the index is a superset of the expected result, so the function has to be executed anyway for further filtering
-   * @param target the query target
+   *
+   * @param target  the query target
    * @param context the execution context
+   *
    * @return true if current expression is an indexed function AND the function has also to be executed after the index search.
    */
-  public boolean executeIndexedFunctionAfterIndexSearch(OFromClause target, OCommandContext context, OBinaryCompareOperator operator,
-      Object right){
+  public boolean executeIndexedFunctionAfterIndexSearch(OFromClause target, OCommandContext context,
+      OBinaryCompareOperator operator, Object right) {
     if (this.levelZero == null) {
       return false;
     }
@@ -176,12 +183,11 @@ public class OBaseIdentifier extends SimpleNode {
     return false;
   }
 
-
   public boolean isEarlyCalculated() {
-    if(levelZero!=null && levelZero.isEarlyCalculated()){
+    if (levelZero != null && levelZero.isEarlyCalculated()) {
       return true;
     }
-    if(suffix!=null && suffix.isEarlyCalculated()){
+    if (suffix != null && suffix.isEarlyCalculated()) {
       return true;
     }
     return false;
@@ -192,9 +198,9 @@ public class OBaseIdentifier extends SimpleNode {
       OBaseIdentifier result = new OBaseIdentifier(-1);
       if (levelZero != null) {
         SimpleNode splitResult = levelZero.splitForAggregation(aggregateProj);
-        if(splitResult instanceof OLevelZeroIdentifier) {
+        if (splitResult instanceof OLevelZeroIdentifier) {
           result.levelZero = (OLevelZeroIdentifier) splitResult;
-        }else {
+        } else {
           return splitResult;
         }
       } else if (suffix != null) {
@@ -208,13 +214,11 @@ public class OBaseIdentifier extends SimpleNode {
     }
   }
 
-
-
   public AggregationContext getAggregationContext(OCommandContext ctx) {
     if (isAggregate()) {
 
       if (levelZero != null) {
-      return levelZero.getAggregationContext(ctx);
+        return levelZero.getAggregationContext(ctx);
       } else if (suffix != null) {
         return suffix.getAggregationContext(ctx);
       } else {
@@ -231,12 +235,13 @@ public class OBaseIdentifier extends SimpleNode {
 
   public OBaseIdentifier copy() {
     OBaseIdentifier result = new OBaseIdentifier(-1);
-    result.levelZero = levelZero==null?null:levelZero.copy();
-    result.suffix = suffix==null?null:suffix.copy();
+    result.levelZero = levelZero == null ? null : levelZero.copy();
+    result.suffix = suffix == null ? null : suffix.copy();
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -252,17 +257,18 @@ public class OBaseIdentifier extends SimpleNode {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = levelZero != null ? levelZero.hashCode() : 0;
     result = 31 * result + (suffix != null ? suffix.hashCode() : 0);
     return result;
   }
 
   public boolean refersToParent() {
-    if(levelZero!=null && levelZero.refersToParent()){
+    if (levelZero != null && levelZero.refersToParent()) {
       return true;
     }
-    if(suffix!=null && suffix.refersToParent()){
+    if (suffix != null && suffix.refersToParent()) {
       return true;
     }
     return false;
@@ -275,6 +281,14 @@ public class OBaseIdentifier extends SimpleNode {
   public OLevelZeroIdentifier getLevelZero() {
 
     return levelZero;
+  }
+
+  public void applyRemove(OResultInternal result, OCommandContext ctx) {
+    if (suffix != null) {
+      suffix.applyRemove(result, ctx);
+    } else {
+      throw new OCommandExecutionException("cannot apply REMOVE " + toString());
+    }
   }
 }
 /* JavaCC - OriginalChecksum=ed89af10d8be41a83428c5608a4834f6 (do not edit this line) */

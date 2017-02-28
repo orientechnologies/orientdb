@@ -3279,7 +3279,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
   jjtree.openNodeScope(jjtn000);
   jjtn000.jjtSetFirstToken(getToken(1));
     try {
-      jjtn000.left = Identifier();
+      jjtn000.left = Expression();
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
       case EQ:
         jj_consume_token(EQ);
@@ -26195,7 +26195,7 @@ Token token;
   }
 
   private boolean jj_3R_614() {
-    if (jj_3R_102()) return true;
+    if (jj_3R_108()) return true;
     Token xsp;
     xsp = jj_scanpos;
     if (jj_3R_722()) jj_scanpos = xsp;

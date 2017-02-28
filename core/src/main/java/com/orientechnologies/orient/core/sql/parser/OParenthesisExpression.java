@@ -4,8 +4,10 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +39,8 @@ public class OParenthesisExpression extends OMathExpression {
     return visitor.visit(this, data);
   }
 
-  @Override public Object execute(OIdentifiable iCurrentRecord, OCommandContext ctx) {
+  @Override
+  public Object execute(OIdentifiable iCurrentRecord, OCommandContext ctx) {
     if (expression != null) {
       return expression.execute(iCurrentRecord, ctx);
     }
@@ -47,7 +50,8 @@ public class OParenthesisExpression extends OMathExpression {
     return super.execute(iCurrentRecord, ctx);
   }
 
-  @Override public Object execute(OResult iCurrentRecord, OCommandContext ctx) {
+  @Override
+  public Object execute(OResult iCurrentRecord, OCommandContext ctx) {
     if (expression != null) {
       return expression.execute(iCurrentRecord, ctx);
     }
@@ -55,7 +59,7 @@ public class OParenthesisExpression extends OMathExpression {
       OInternalExecutionPlan execPlan = statement.createExecutionPlan(ctx);
       OLocalResultSet rs = new OLocalResultSet(execPlan);
       List<OResult> result = new ArrayList<>();
-      while(rs.hasNext()){
+      while (rs.hasNext()) {
         result.add(rs.next());
       }
 //      List<OResult> result = rs.stream().collect(Collectors.toList());//TODO streamed...
@@ -75,14 +79,16 @@ public class OParenthesisExpression extends OMathExpression {
     builder.append(")");
   }
 
-  @Override protected boolean supportsBasicCalculation() {
+  @Override
+  protected boolean supportsBasicCalculation() {
     if (expression != null) {
       return expression.supportsBasicCalculation();
     }
     return true;
   }
 
-  @Override public boolean isEarlyCalculated() {
+  @Override
+  public boolean isEarlyCalculated() {
     // TODO implement query execution and early calculation;
     return expression != null && expression.isEarlyCalculated();
   }
@@ -118,7 +124,8 @@ public class OParenthesisExpression extends OMathExpression {
     }
   }
 
-  @Override public OParenthesisExpression copy() {
+  @Override
+  public OParenthesisExpression copy() {
     OParenthesisExpression result = new OParenthesisExpression(-1);
     result.expression = expression == null ? null : expression.copy();
     result.statement = statement == null ? null : statement.copy();
@@ -149,7 +156,8 @@ public class OParenthesisExpression extends OMathExpression {
     return false;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -167,7 +175,8 @@ public class OParenthesisExpression extends OMathExpression {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = super.hashCode();
     result = 31 * result + (expression != null ? expression.hashCode() : 0);
     result = 31 * result + (statement != null ? statement.hashCode() : 0);
@@ -176,6 +185,16 @@ public class OParenthesisExpression extends OMathExpression {
 
   public List<String> getMatchPatternInvolvedAliases() {
     return expression.getMatchPatternInvolvedAliases();//TODO also check the statement...?
+  }
+
+  @Override
+  public void applyRemove(OResultInternal result, OCommandContext ctx) {
+    if (expression != null) {
+      expression.applyRemove(result, ctx);
+    } else {
+      throw new OCommandExecutionException("Cannot apply REMOVE " + toString());
+    }
+
   }
 }
 /* JavaCC - OriginalChecksum=4656e5faf4f54dc3fc45a06d8e375c35 (do not edit this line) */
