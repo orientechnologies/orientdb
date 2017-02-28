@@ -18,20 +18,17 @@
 
 package com.orientechnologies.lucene;
 
-import com.orientechnologies.lucene.functions.OLuceneSearchOnIndexFunction;
 import com.orientechnologies.lucene.test.BaseLuceneTest;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -62,74 +59,63 @@ public class LuceneCrossClassIndexTest extends BaseLuceneTest {
   @Test
   public void shouldSearchTermAcrossAllSubIndexes() throws Exception {
 
-    String query = "select SEARCH('mountain') AS res ";
+    String query = "select expand(search('mountain'))";
 
-    OResultSet docs = db.query(query);
+    OResultSet resultSet = db.query(query);
 
-    System.out.println("docs = " + docs);
+    fetchElements(resultSet)
+        .forEach(el -> {
 
-    docs.stream().forEach(d -> System.out.println("d = " + d));
-    docs.stream()
-        .forEach(doc ->{
-      if (doc.getElement().get().getSchemaType().get().getName().equals("Song"))
-        assertThat(doc.<String>getProperty("title")).containsIgnoringCase("mountain");
-      if (doc.getElement().get().getSchemaType().get().getName().equals("Author"))
-        assertThat(doc.<String>getProperty("name")).containsIgnoringCase("mountain");
+          if (el.getSchemaType().get().getName().equals("Song"))
+            assertThat(el.<String>getProperty("title")).containsIgnoringCase("mountain");
 
-    });
+          if (el.getSchemaType().get().getName().equals("Author"))
+            assertThat(el.<String>getProperty("name")).containsIgnoringCase("mountain");
+
+        });
 
   }
 
-  private List<ODocument> fetchDocs(List<ODocument> docs) {
+  private Stream<OElement> fetchElements(OResultSet resultSet) {
+    return resultSet.stream()
+        .map(OResult::getElement)
+        .filter(Optional::isPresent)
+        .map(Optional::get);
 
-    List<ODocument> mappedDocs = new ArrayList<ODocument>();
-    Set<OIdentifiable> identifiables = docs.get(0).<Set<OIdentifiable>>field(OLuceneSearchOnIndexFunction.NAME);
-    if (identifiables != null) {
-      for (OIdentifiable oid : identifiables) {
-        docs.add(oid.<ODocument>getRecord());
-
-      }
-    }
-    return mappedDocs;
   }
 
   @Test
   public void shouldSearchAcrossAllSubIndexesWithStrictQuery() {
 
-    String query = "select SEARCH('Song.title:mountain Author.name:Chuck') ";
-    List<ODocument> docs = db.query(new OSQLSynchQuery<ODocument>(query));
+    String query = "select expand(SEARCH('Song.title:mountain Author.name:Chuck') )";
+    OResultSet resultSet = db.query(query);
 
-    assertThat(docs).hasSize(1);
+    fetchElements(resultSet)
+        .forEach(el -> {
 
-    List<ODocument> results = fetchDocs(docs);
+          if (el.getSchemaType().get().getName().equals("Song"))
+            assertThat(el.<String>getProperty("title")).containsIgnoringCase("mountain");
 
-    for (ODocument doc : results) {
-      if (doc.getClassName().equals("Song"))
-        assertThat(doc.<String>field("title")).containsIgnoringCase("mountain");
-      if (doc.getClassName().equals("Author"))
-        assertThat(doc.<String>field("name")).containsIgnoringCase("chuck");
+          if (el.getSchemaType().get().getName().equals("Author"))
+            assertThat(el.<String>getProperty("name")).containsIgnoringCase("chuck");
 
-    }
+        });
   }
 
   @Test
   public void shouldSearchAcrossAllClassesWithRangeQuery() {
 
-    String query = "select SEARCH('Song.title:mountain Author.score:[4 TO 7]') ";
-    List<ODocument> docs = db.query(new OSQLSynchQuery<ODocument>(query));
+    String query = "select expand(SEARCH('Song.title:mountain Author.score:[4 TO 7]')) ";
+    OResultSet resultSet = db.query(query);
 
-    assertThat(docs).hasSize(1);
+    fetchElements(resultSet)
+        .forEach(el -> {
+          if (el.getSchemaType().get().getName().equals("Song"))
+            assertThat(el.<String>getProperty("title")).containsIgnoringCase("mountain");
 
-    List<ODocument> results = fetchDocs(docs);
-
-    for (ODocument doc : results) {
-      if (doc.getClassName().equals("Song")) {
-        assertThat(doc.<String>field("title")).containsIgnoringCase("mountain");
-      }
-      if (doc.getClassName().equals("Author")) {
-        assertThat(doc.<Integer>field("score")).isGreaterThan(4).isLessThan(7);
-      }
-    }
+          if (el.getSchemaType().get().getName().equals("Author"))
+            assertThat(el.<Integer>getProperty("score")).isGreaterThan(4).isLessThan(7);
+        });
   }
 
 }
