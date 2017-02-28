@@ -1403,6 +1403,9 @@ import java.util.stream.Collectors;
               // SAVE VALUE: UNCHANGED
               return this;
             }
+          } else if (iPropertyValue instanceof byte[] && Arrays.equals((byte[]) iPropertyValue, (byte[]) oldValue)) {
+            // SAVE VALUE: UNCHANGED
+            return this;
           }
         } catch (Exception e) {
           OLogManager.instance()

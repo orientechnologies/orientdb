@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
@@ -361,4 +362,19 @@ public class ODocumentTest {
     doc.setProperty("   ", "spaces");
     assertEquals(doc.getProperty("   "), "spaces");
   }
+
+  @Test
+  public void testNoDirtySameBytes() {
+    ODocument doc = new ODocument();
+    byte[] bytes = new byte[] { 0, 1, 2, 3, 4, 5 };
+    doc.field("bytes", bytes);
+    ODocumentInternal.clearTrackData(doc);
+    ORecordInternal.unsetDirty(doc);
+    assertFalse(doc.isDirty());
+    assertNull(doc.getOriginalValue("bytes"));
+    doc.field("bytes", bytes.clone());
+    assertFalse(doc.isDirty());
+    assertNull(doc.getOriginalValue("bytes"));
+  }
+
 }
