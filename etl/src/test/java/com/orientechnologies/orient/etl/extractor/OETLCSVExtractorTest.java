@@ -440,7 +440,7 @@ public class OETLCSVExtractorTest extends OETLBaseTest {
 
   @Test
   public void testLinkType() {
-    String cfgJson = "{source: { content: { value: 'id\n#1:1'} }, extractor : { csv : {'columns':['id:LINK']} }, loader : { test: {} } }";
+    String cfgJson = "{source: { content: { value: 'num,id\n3,#1:1'} }, extractor : { csv : {'columns':['num:INTEGER','id:LINK']} }, loader : { test: {} } }";
     configure(cfgJson);
     proc.execute();
 

@@ -85,7 +85,7 @@ public class OETLCSVExtractor extends OETLAbstractSourceExtractor {
   public void configure(ODocument iConfiguration, OCommandContext iContext) {
     super.configure(iConfiguration, iContext);
 
-    csvFormat = CSVFormat.newFormat(',').withNullString(NULL_STRING).withEscape('\\').withQuote('"');
+    csvFormat = CSVFormat.newFormat(',').withNullString(NULL_STRING).withEscape('\\').withQuote('"').withCommentMarker('#');
 
     if (iConfiguration.containsField("predefinedFormat")) {
       csvFormat = CSVFormat.valueOf(iConfiguration.<String>field("predefinedFormat"));

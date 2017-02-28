@@ -211,6 +211,7 @@ public class OETLProcessor {
       OLogManager.instance().error(this, "ETL process has problem: ", e);
       executor.shutdownNow();
     }
+    executor.shutdown();
   }
 
   protected void begin() {
@@ -388,10 +389,7 @@ public class OETLProcessor {
   }
 
   public enum LOG_LEVELS {
-    NONE(Level.OFF),
-    ERROR(Level.SEVERE),
-    INFO(Level.INFO),
-    DEBUG(Level.FINE);
+    NONE(Level.OFF), ERROR(Level.SEVERE), INFO(Level.INFO), DEBUG(Level.FINE);
 
     private final Level julLevel;
 
@@ -421,5 +419,4 @@ public class OETLProcessor {
       return errors.incrementAndGet();
     }
   }
-
 }

@@ -34,7 +34,7 @@ public class OETLExtractedItem {
     finished = false;
   }
 
-  public OETLExtractedItem(boolean iFinished) {
+  public OETLExtractedItem(final boolean iFinished) {
     num = 0;
     payload = null;
     finished = iFinished;
