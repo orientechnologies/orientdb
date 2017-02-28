@@ -1546,7 +1546,9 @@ OUpdateRemoveItem UpdateRemoveItem():
 {}
 {
     (
-	    jjtThis.left = Identifier() [ <EQ> jjtThis.right = Expression() ]
+	    jjtThis.left = Identifier()
+	    [ jjtThis.leftModifier = Modifier() ]
+	    [ <EQ> jjtThis.right = Expression() ]
 	)
     { return jjtThis; }
 }

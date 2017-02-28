@@ -10,6 +10,7 @@ import java.util.Map;
 public class OUpdateRemoveItem extends SimpleNode {
 
   OIdentifier left;
+  OModifier     leftModifier;
   OExpression right;
 
   public OUpdateRemoveItem(int id) {
@@ -29,6 +30,9 @@ public class OUpdateRemoveItem extends SimpleNode {
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     left.toString(params, builder);
+    if (leftModifier != null) {
+      leftModifier.toString(params, builder);
+    }
     if (right != null) {
       builder.append(" = ");
       right.toString(params, builder);
