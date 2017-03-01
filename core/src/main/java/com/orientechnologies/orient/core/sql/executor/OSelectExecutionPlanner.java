@@ -97,6 +97,7 @@ public class OSelectExecutionPlanner {
    * In new executor the distinct() function is not supported, so "distinct(expr)" is translated to "DISTINCT expr"
    *
    * @param item the projection
+   *
    * @return
    */
   private boolean isDistinct(OProjectionItem item) {
@@ -252,6 +253,7 @@ public class OSelectExecutionPlanner {
    * re-writes a list of flat AND conditions, moving left all the equality operations
    *
    * @param flattenedWhereClause
+   *
    * @return
    */
   private List<OAndBlock> moveFlattededEqualitiesLeft(List<OAndBlock> flattenedWhereClause) {
@@ -325,7 +327,9 @@ public class OSelectExecutionPlanner {
    *
    * @param allAliases existing aliases in the projection
    * @param orderBy    sorting clause
-   * @return a list of additional projections to add to the existing projections to allow ORDER BY calculation (empty if nothing has to be added).
+   *
+   * @return a list of additional projections to add to the existing projections to allow ORDER BY calculation (empty if nothing has
+   * to be added).
    */
   private List<OProjectionItem> calculateAdditionalOrderByProjections(Set<String> allAliases, OOrderBy orderBy) {
     List<OProjectionItem> result = new ArrayList<>();
@@ -773,13 +777,16 @@ public class OSelectExecutionPlanner {
   private void handleClassAsTarget(OSelectExecutionPlan plan, OFromClause queryTarget, OCommandContext ctx) {
     OIdentifier identifier = queryTarget.getItem().getIdentifier();
     if (handleClassAsTargetWithIndexedFunction(plan, queryTarget, flattenedWhereClause, ctx)) {
+      plan.chain(new FilterByClassStep(identifier, ctx));
       return;
     }
     if (handleClassAsTargetWithIndex(plan, identifier, ctx)) {
+      plan.chain(new FilterByClassStep(identifier, ctx));
       return;
     }
 
     if (orderBy != null && handleClassWithIndexForSortOnly(plan, identifier, orderBy, ctx)) {
+      plan.chain(new FilterByClassStep(identifier, ctx));
       return;
     }
 
@@ -869,7 +876,7 @@ public class OSelectExecutionPlanner {
         }
       }
     }
-    if(resultSubPlans.size()>0) {
+    if (resultSubPlans.size() > 0) {
       plan.chain(new ParallelExecStep(resultSubPlans, ctx));
     }
     //WHERE condition already applied
@@ -885,6 +892,7 @@ public class OSelectExecutionPlanner {
    * @param queryTarget the query target (class)
    * @param orderBy     ORDER BY clause
    * @param ctx         the current context
+   *
    * @return true if it succeeded to use an index to sort, false otherwise.
    */
 
@@ -968,6 +976,7 @@ public class OSelectExecutionPlanner {
    * checks if a class is the top of a diamond hierarchy
    *
    * @param clazz
+   *
    * @return
    */
   private boolean isDiamondHierarchy(OClass clazz) {
@@ -1167,11 +1176,13 @@ public class OSelectExecutionPlanner {
   }
 
   /**
-   * given a flat AND block and a set of indexes, returns the best index to be used to process it, with the complete description on how to use it
+   * given a flat AND block and a set of indexes, returns the best index to be used to process it, with the complete description on
+   * how to use it
    *
    * @param ctx
    * @param indexes
    * @param block
+   *
    * @return
    */
   private IndexSearchDescriptor findBestIndexFor(OCommandContext ctx, Set<OIndex<?>> indexes, OAndBlock block) {
@@ -1181,12 +1192,13 @@ public class OSelectExecutionPlanner {
   }
 
   /**
-   * given an index and a flat AND block, returns a descriptor on how to process it with an index (index, index key and additional filters
-   * to apply after index fetch
+   * given an index and a flat AND block, returns a descriptor on how to process it with an index (index, index key and additional
+   * filters to apply after index fetch
    *
    * @param ctx
    * @param index
    * @param block
+   *
    * @return
    */
   private IndexSearchDescriptor buildIndexSearchDescriptor(OCommandContext ctx, OIndex<?> index, OAndBlock block) {
@@ -1296,6 +1308,7 @@ public class OSelectExecutionPlanner {
    * aggregates multiple index conditions that refer to the same key search
    *
    * @param indexSearchDescriptors
+   *
    * @return
    */
   private List<IndexSearchDescriptor> commonFactor(List<IndexSearchDescriptor> indexSearchDescriptors) {
@@ -1408,8 +1421,8 @@ public class OSelectExecutionPlanner {
     if (orderBy.getItems().size() == 1) {
       OOrderByItem item = orderBy.getItems().get(0);
       String recordAttr = item.getRecordAttr();
-      if (recordAttr != null && recordAttr.equalsIgnoreCase("@rid") &&
-          (item.getType() == null || OOrderByItem.ASC.equals(item.getType()))) {
+      if (recordAttr != null && recordAttr.equalsIgnoreCase("@rid") && (item.getType() == null || OOrderByItem.ASC
+          .equals(item.getType()))) {
         return true;
       }
     }
