@@ -11,7 +11,6 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
 import com.orientechnologies.orient.core.sql.parser.*;
@@ -1187,7 +1186,7 @@ public class OSelectExecutionPlanner {
    * @return
    */
   private IndexSearchDescriptor findBestIndexFor(OCommandContext ctx, Set<OIndex<?>> indexes, OAndBlock block) {
-    return indexes.stream().filter(x -> ((OIndexInternal)x).canBeUsedInEqualityOperators()).map(index -> buildIndexSearchDescriptor(ctx, index, block))
+    return indexes.stream().filter(x -> x.getInternal().canBeUsedInEqualityOperators()).map(index -> buildIndexSearchDescriptor(ctx, index, block))
         .filter(Objects::nonNull).filter(x -> x.keyCondition != null).filter(x -> x.keyCondition.getSubBlocks().size() > 0)
         .min(Comparator.comparing(x -> x.cost(ctx))).orElse(null);
   }
