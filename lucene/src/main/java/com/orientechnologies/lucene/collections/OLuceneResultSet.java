@@ -85,6 +85,7 @@ public class OLuceneResultSet extends OLuceneAbstractResultSet {
         String rId = ret.get(OLuceneIndexEngineAbstract.RID);
         res = new OContextualRecordId(rId);
         engine.onRecordAddedToResultSet(queryContext, res, ret, score);
+
       } catch (IOException e) {
         //TODO handle in a proper way
         e.printStackTrace();

@@ -14,7 +14,10 @@ import com.orientechnologies.orient.core.sql.parser.*;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.memory.MemoryIndex;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.orientechnologies.lucene.functions.OLuceneFunctionsUtils.getOrCreateMemoryIndex;
@@ -49,7 +52,7 @@ public class OLuceneSearchOnFieldsFunction extends OSQLFunctionAbstract implemen
     OElement element = result.toElement();
 
     String className = element.getSchemaType().get().getName();
-    String[] fieldNames = ((String) params[0]).split(",");
+    List<String> fieldNames = (List<String>) params[0];
 
     OLuceneFullTextIndex index = searchForIndex(className, ctx, fieldNames);
 
@@ -96,7 +99,7 @@ public class OLuceneSearchOnFieldsFunction extends OSQLFunctionAbstract implemen
       OCommandContext ctx,
       OExpression... args) {
 
-    String[] fieldNames = ((String) args[0].execute((OIdentifiable) null, ctx)).split(",");
+    List<String> fieldNames = (List<String>) args[0].execute((OIdentifiable) null, ctx);
 
     OFromItem item = target.getItem();
     String className = item.getIdentifier().getStringValue();
@@ -123,7 +126,7 @@ public class OLuceneSearchOnFieldsFunction extends OSQLFunctionAbstract implemen
 
   }
 
-  private OLuceneFullTextIndex searchForIndex(String className, OCommandContext ctx, String[] fieldNames) {
+  private OLuceneFullTextIndex searchForIndex(String className, OCommandContext ctx, List<String> fieldNames) {
     OMetadata dbMetadata = ctx.getDatabase().activateOnCurrentThread().getMetadata();
 
     List<OLuceneFullTextIndex> indices = dbMetadata
@@ -132,7 +135,7 @@ public class OLuceneSearchOnFieldsFunction extends OSQLFunctionAbstract implemen
         .stream()
         .filter(idx -> idx instanceof OLuceneFullTextIndex)
         .map(idx -> (OLuceneFullTextIndex) idx)
-        .filter(idx -> intersect(idx.getDefinition().getFields(), Arrays.asList(fieldNames)))
+        .filter(idx -> intersect(idx.getDefinition().getFields(), fieldNames))
         .collect(Collectors.toList());
 
     if (indices.size() > 1) {

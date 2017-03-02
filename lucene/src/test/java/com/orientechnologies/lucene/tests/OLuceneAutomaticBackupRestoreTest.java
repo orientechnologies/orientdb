@@ -16,7 +16,7 @@
  *
  */
 
-package com.orientechnologies.lucene.test;
+package com.orientechnologies.lucene.tests;
 
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
@@ -51,7 +52,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Created by Enrico Risa on 07/07/15.
  */
-public class LuceneAutomaticBackupRestoreTest {
+public class OLuceneAutomaticBackupRestoreTest {
 
   private final static String          DBNAME     = "OLuceneAutomaticBackupRestoreTest";
   @Rule
@@ -123,9 +124,9 @@ public class LuceneAutomaticBackupRestoreTest {
   @Test
   public void shouldBackupAndRestore() throws IOException, InterruptedException {
 
-    List<?> query = db.query(new OSQLSynchQuery<Object>("select from City where name lucene 'Rome'"));
+    OResultSet query = db.query("select from City where search_class('Rome') = true ");
 
-    Assert.assertEquals(query.size(), 1);
+    assertThat(query).hasSize(1);
 
     String jsonConfig = OIOUtils.readStreamAsString(getClass().getClassLoader().getResourceAsStream("automatic-backup.json"));
 
@@ -187,16 +188,16 @@ public class LuceneAutomaticBackupRestoreTest {
     assertThat(index).isNotNull();
     assertThat(index.getType()).isEqualTo(OClass.INDEX_TYPE.FULLTEXT.name());
 
-    assertThat((List<?>) db.query(new OSQLSynchQuery<Object>("select from City where name lucene 'Rome'"))).hasSize(1);
+    assertThat(db.query("select from City where search_class('Rome') = true")).hasSize(1);
 
   }
 
   @Test
   public void shouldExportImport() throws IOException, InterruptedException {
 
-    List<?> query = db.query(new OSQLSynchQuery<Object>("select from City where name lucene 'Rome'"));
+    OResultSet query = db.query("select from City where search_class('Rome') = true");
 
-    Assert.assertEquals(query.size(), 1);
+    assertThat(query).hasSize(1);
 
     String jsonConfig = OIOUtils.readStreamAsString(getClass().getClassLoader().getResourceAsStream("automatic-backup.json"));
 
@@ -261,7 +262,7 @@ public class LuceneAutomaticBackupRestoreTest {
     assertThat(index).isNotNull();
     assertThat(index.getType()).isEqualTo(OClass.INDEX_TYPE.FULLTEXT.name());
 
-    assertThat((List<?>) db.query(new OSQLSynchQuery<Object>("select from City where name lucene 'Rome'"))).hasSize(1);
+    assertThat(db.query("select from City where search_class('Rome') = true")).hasSize(1);
 
   }
 

@@ -71,12 +71,12 @@ public class LuceneInsertReadMultithreadTest extends BaseLuceneTest {
     for (int i = 0; i < THREADS + RTHREADS; ++i)
       threads[i].start();
 
-    System.out.println("Started LuceneInsertReadMultithreadTest test, waiting for " + threads.length + " threads to complete...");
+    System.out.println("Started LuceneInsertReadMultithreadBaseTest test, waiting for " + threads.length + " threads to complete...");
 
     for (int i = 0; i < THREADS + RTHREADS; ++i)
       threads[i].join();
 
-    System.out.println("LuceneInsertReadMultithreadTest all threads completed");
+    System.out.println("LuceneInsertReadMultithreadBaseTest all threads completed");
 
     OIndex idx = schema.getClass("City").getClassIndex("City.name");
 
