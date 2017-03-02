@@ -100,7 +100,7 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
       final ScoreDoc score) {
     recordId.setContext(new HashMap<String, Object>() {
       {
-        put("score", score.score);
+        put("$score", score.score);
       }
     });
   }

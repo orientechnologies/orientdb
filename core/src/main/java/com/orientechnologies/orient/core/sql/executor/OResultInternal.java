@@ -126,10 +126,10 @@ public class OResultInternal implements OResult {
     if (values == null) {
       return;
     }
-    if (values == null) {
-      values = new HashMap<>();
+    if (this.metadata == null) {
+      this.metadata = new HashMap<>();
     }
-    values.putAll(values);
+    this.metadata.putAll(values);
   }
 
   @Override
