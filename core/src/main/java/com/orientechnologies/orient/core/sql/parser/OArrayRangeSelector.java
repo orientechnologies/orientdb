@@ -5,7 +5,9 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
 import java.lang.reflect.Array;
 import java.util.*;
@@ -149,7 +151,8 @@ public class OArrayRangeSelector extends SimpleNode {
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -171,7 +174,8 @@ public class OArrayRangeSelector extends SimpleNode {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = from != null ? from.hashCode() : 0;
     result = 31 * result + (to != null ? to.hashCode() : 0);
     result = 31 * result + (newRange ? 1 : 0);
@@ -203,6 +207,7 @@ public class OArrayRangeSelector extends SimpleNode {
    * @param target
    * @param value
    * @param ctx
+   *
    * @return
    */
   public void setValue(Object target, Object value, OCommandContext ctx) {
@@ -309,5 +314,59 @@ public class OArrayRangeSelector extends SimpleNode {
     }
   }
 
+  public void applyRemove(Object currentValue, OResultInternal originalRecord, OCommandContext ctx) {
+    if (currentValue == null) {
+      return;
+    }
+    Integer from = this.from;
+    if (fromSelector != null) {
+      from = fromSelector.getValue(originalRecord, null, ctx);
+    }
+    Integer to = this.to;
+    if (toSelector != null) {
+      to = toSelector.getValue(originalRecord, null, ctx);
+    }
+    if (from == null || to == null) {
+      throw new OCommandExecutionException("Invalid range expression: " + toString() + " one of the elements is null");
+    }
+    if (included) {
+      to++;
+    }
+    if (from < 0) {
+      from = 0;
+    }
+    if (from >= to) {
+      return;
+    }
+    int range = to - from;
+    if (currentValue instanceof List) {
+      List list = (List) currentValue;
+      for (int i = 0; i < range; i++) {
+        if (list.size() > from) {
+          list.remove(from);
+        } else {
+          break;
+        }
+      }
+    } else if (currentValue instanceof Set) {
+      Iterator iter = ((Set) currentValue).iterator();
+      int count = 0;
+      while (iter.hasNext()) {
+        iter.next();
+        if (count >= from) {
+          if (count < to) {
+            iter.remove();
+          } else {
+            break;
+          }
+        }
+        count++;
+      }
+    } else {
+      throw new OCommandExecutionException(
+          "Trying to remove elements from " + currentValue + " (" + currentValue.getClass().getSimpleName() + ")");
+    }
+
+  }
 }
 /* JavaCC - OriginalChecksum=594a372e31fcbcd3ed962c2260e76468 (do not edit this line) */

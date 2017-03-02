@@ -5,13 +5,12 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class OArraySingleValuesSelector extends SimpleNode {
@@ -143,5 +142,52 @@ public class OArraySingleValuesSelector extends SimpleNode {
       }
     }
   }
+
+  public void applyRemove(Object currentValue, OResultInternal originalRecord, OCommandContext ctx) {
+    if (currentValue == null) {
+      return;
+    }
+    List values = this.items.stream().map(x -> x.getValue(originalRecord, null, ctx)).collect(Collectors.toList());
+    if (currentValue instanceof List) {
+      List<Object> list = (List) currentValue;
+      Collections.sort(values, this::compareKeysForRemoval);
+      for (Object val : values) {
+        if (val instanceof Integer) {
+          list.remove((int) (Integer) val);
+        } else {
+          list.remove(val);
+        }
+      }
+    } else if (currentValue instanceof Set) {
+      Set set = (Set) currentValue;
+      Iterator iterator = set.iterator();
+      int count = 0;
+      while (iterator.hasNext()) {
+        Object item = iterator.next();
+        if (values.contains(count) || values.contains(item)) {
+          iterator.remove();
+        }
+      }
+    } else {
+      throw new OCommandExecutionException(
+          "Trying to remove elements from " + currentValue + " (" + currentValue.getClass().getSimpleName() + ")");
+    }
+
+  }
+
+  private int compareKeysForRemoval(Object o1, Object o2) {
+    if (o1 instanceof Integer) {
+      if (o2 instanceof Integer) {
+        return (int) o2 - (int) o1;
+      } else {
+        return -1;
+      }
+    } else if (o2 instanceof Integer) {
+      return 1;
+    } else {
+      return 0;
+    }
+  }
+
 }
 /* JavaCC - OriginalChecksum=991998c77a4831184b6dca572513fd8d (do not edit this line) */

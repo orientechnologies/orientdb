@@ -311,13 +311,13 @@ public class OModifier extends SimpleNode {
       next.applyRemove(val, originalRecord, ctx);
     } else {
       if (arrayRange != null) {
-//TODO
+        arrayRange.applyRemove(currentValue, originalRecord, ctx);
       } else if (condition != null) {
 //TODO
       } else if (arraySingleValues != null) {
-//TODO
+        arraySingleValues.applyRemove(currentValue, originalRecord, ctx);
       } else if (suffix != null) {
-//TODO
+        suffix.applyRemove(currentValue, ctx);
       } else {
         throw new OCommandExecutionException("cannot apply REMOVE " + toString());
       }
