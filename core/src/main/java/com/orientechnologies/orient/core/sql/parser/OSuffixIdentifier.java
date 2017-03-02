@@ -5,6 +5,7 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -62,7 +63,14 @@ public class OSuffixIdentifier extends SimpleNode {
       if (ctx != null && ctx.getVariable(varName) != null) {
         return ctx.getVariable(varName);
       }
+
       if (iCurrentRecord != null) {
+        if (iCurrentRecord instanceof OContextualRecordId) {
+          Map<String, Object> meta = ((OContextualRecordId) iCurrentRecord).getContext();
+          if (meta != null && meta.containsKey(varName)) {
+            return meta.get(varName);
+          }
+        }
         return ((ODocument) iCurrentRecord.getRecord()).field(varName);
       }
       return null;
@@ -86,6 +94,9 @@ public class OSuffixIdentifier extends SimpleNode {
         return ctx.getVariable(varName);
       }
       if (iCurrentRecord != null) {
+        if (iCurrentRecord.getMetadataKeys().contains(varName)) {
+          return iCurrentRecord.getMetadata(varName);
+        }
         return iCurrentRecord.getProperty(varName);
       }
       return null;
