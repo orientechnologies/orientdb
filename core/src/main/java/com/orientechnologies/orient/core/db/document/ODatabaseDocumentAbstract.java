@@ -2050,6 +2050,16 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     return new ODocument();
   }
 
+  @Override
+  public OBlob newBlob(byte[] bytes) {
+    return new ORecordBytes(bytes);
+  }
+
+  @Override
+  public OBlob newBlob() {
+    return new ORecordBytes();
+  }
+
   /**
    * Creates a document with specific class.
    *

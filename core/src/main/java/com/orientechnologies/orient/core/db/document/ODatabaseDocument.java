@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.OVertex;
+import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -78,6 +79,22 @@ public interface ODatabaseDocument extends ODatabase<ORecord> {
    * @return The new instance.
    */
   <RET extends Object> RET newInstance(String iClassName);
+
+  /**
+   * Create a new instance of a blob containing the given bytes.
+   *
+   * @param bytes content of the OBlob
+   *
+   * @return the OBlob instance.
+   */
+  OBlob newBlob(byte[] bytes);
+
+  /**
+   * Create a new empty instance of a blob.
+   *
+   * @return the OBlob instance.
+   */
+  OBlob newBlob();
 
   /**
    * Counts the entities contained in the specified class and sub classes (polymorphic).

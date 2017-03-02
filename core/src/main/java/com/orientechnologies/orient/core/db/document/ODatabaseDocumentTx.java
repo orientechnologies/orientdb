@@ -33,9 +33,7 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.*;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import com.orientechnologies.orient.core.record.impl.OVertexDelegate;
+import com.orientechnologies.orient.core.record.impl.*;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
@@ -1442,6 +1440,17 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   public ODocument newInstance(String iClassName) {
     checkOpenness();
     return internal.newInstance(iClassName);
+  }
+
+  @Override
+  public OBlob newBlob(byte[] bytes) {
+    checkOpenness();
+    return internal.newBlob(bytes);
+  }
+
+  @Override
+  public OBlob newBlob() {
+    return new ORecordBytes();
   }
 
   public OEdge newLightweightEdge(String iClassName, OVertex from, OVertex to) {
