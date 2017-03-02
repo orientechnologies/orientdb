@@ -15,7 +15,7 @@
     <name>OrientDB Gremlin Server Plugin</name>
     <artifactId>orientdb-gremlin-server</artifactId>
     <properties>
-        <tinkerpop.version>3.2.3</tinkerpop.version>
+        <tinkerpop.version>3.2.4</tinkerpop.version>
     </properties>
     <dependencies>
         <dependency>
