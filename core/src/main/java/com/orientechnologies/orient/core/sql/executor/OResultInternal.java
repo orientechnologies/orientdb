@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -158,6 +159,9 @@ public class OResultInternal implements OResult {
       this.element = element.getRecord();
     } else {
       this.element = element;
+    }
+    if (element instanceof OContextualRecordId) {
+      this.addMetadata(((OContextualRecordId) element).getContext());
     }
   }
 
