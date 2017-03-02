@@ -44,4 +44,17 @@ public interface OResult {
 
   Optional<OBlob> getBlob();
 
+  /**
+   * return metadata related to current result given a key
+   * @param key the metadata key
+   * @return metadata related to current result given a key
+   */
+  Object getMetadata(String key);
+
+  /**
+   * return all the metadata keys available
+   * @return all the metadata keys available
+   */
+  Set<String> getMetadataKeys();
+
 }

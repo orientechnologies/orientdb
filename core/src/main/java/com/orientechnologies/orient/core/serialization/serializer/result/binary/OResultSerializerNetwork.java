@@ -66,6 +66,8 @@ public class OResultSerializerNetwork {
     final OResultInternal document = new OResultInternal();
     String fieldName;
     OType type;
+
+    //fields
     while (true) {
       final int len = OVarIntSerializer.readAsInteger(bytes);
       if (len == 0) {
@@ -86,7 +88,29 @@ public class OResultSerializerNetwork {
         final Object value = deserializeValue(bytes, type);
         document.setProperty(fieldName, value);
       }
+    }
 
+    //metadata
+    while (true) {
+      final int len = OVarIntSerializer.readAsInteger(bytes);
+      if (len == 0) {
+        // SCAN COMPLETED
+        break;
+      } else if (len > 0) {
+        // PARSE FIELD NAME
+        fieldName = stringFromBytes(bytes.bytes, bytes.offset, len).intern();
+        bytes.skip(len);
+        type = readOType(bytes);
+      } else {
+        throw new OStorageException("property id not supported in network serialization");
+      }
+
+      if (type == null) {
+        document.setMetadata(fieldName, null);
+      } else {
+        final Object value = deserializeValue(bytes, type);
+        document.setMetadata(fieldName, value);
+      }
     }
 
     return document;
@@ -100,6 +124,29 @@ public class OResultSerializerNetwork {
     for (String field : fieldNames) {
       writeString(bytes, field);
       final Object value = document.getProperty(field);
+      if (value != null) {
+        if (value instanceof OResult) {
+          writeOType(bytes, bytes.alloc(1), OType.EMBEDDED);
+          serializeValue(bytes, value, OType.EMBEDDED, null);
+        } else {
+          final OType type = OType.getTypeByValue(value);
+          if (type == null) {
+            throw new OSerializationException(
+                "Impossible serialize value of type " + value.getClass() + " with the Result binary serializer");
+          }
+          writeOType(bytes, bytes.alloc(1), type);
+          serializeValue(bytes, value, type, null);
+        }
+      } else {
+        writeOType(bytes, bytes.alloc(1), null);
+      }
+    }
+    writeString(bytes, "");
+
+    Set<String> metadataKeys = document.getMetadataKeys();
+    for (String field : metadataKeys) {
+      writeString(bytes, field);
+      final Object value = document.getMetadata(field);
       if (value != null) {
         if (value instanceof OResult) {
           writeOType(bytes, bytes.alloc(1), OType.EMBEDDED);

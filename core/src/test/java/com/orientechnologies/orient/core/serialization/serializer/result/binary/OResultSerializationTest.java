@@ -20,15 +20,18 @@ public class OResultSerializationTest {
 
   protected OResultSerializerNetwork serializer;
 
-  @Before public void before() {
+  @Before
+  public void before() {
     serializer = new OResultSerializerNetwork();
   }
 
-  @After public void after() {
+  @After
+  public void after() {
 
   }
 
-  @Test public void testSimpleSerialization() {
+  @Test
+  public void testSimpleSerialization() {
     OResultInternal document = new OResultInternal();
 
     document.setProperty("name", "name");
@@ -68,7 +71,9 @@ public class OResultSerializationTest {
     return serializer.deserialize(bytes);
   }
 
-  @SuppressWarnings({ "rawtypes", "unchecked" }) @Test public void testSimpleLiteralList() {
+  @SuppressWarnings({ "rawtypes", "unchecked" })
+  @Test
+  public void testSimpleLiteralList() {
 
     OResultInternal document = new OResultInternal();
     List<String> strings = new ArrayList<String>();
@@ -156,7 +161,8 @@ public class OResultSerializationTest {
     assertEquals(extr.<String>getProperty("listMixed"), document.getProperty("listMixed"));
   }
 
-  @Test public void testSimpleMapStringLiteral() {
+  @Test
+  public void testSimpleMapStringLiteral() {
     OResultInternal document = new OResultInternal();
 
     Map<String, String> mapString = new HashMap<String, String>();
@@ -210,7 +216,8 @@ public class OResultSerializationTest {
     assertEquals(extr.<String>getProperty("bytesMap"), document.getProperty("bytesMap"));
   }
 
-  @Test public void testSimpleEmbeddedDoc() {
+  @Test
+  public void testSimpleEmbeddedDoc() {
     OResultInternal document = new OResultInternal();
     OResultInternal embedded = new OResultInternal();
     embedded.setProperty("name", "test");
@@ -227,7 +234,8 @@ public class OResultSerializationTest {
 
   }
 
-  @Test public void testMapOfEmbeddedDocument() {
+  @Test
+  public void testMapOfEmbeddedDocument() {
 
     OResultInternal document = new OResultInternal();
 
@@ -249,7 +257,8 @@ public class OResultSerializationTest {
 
   }
 
-  @Test public void testCollectionOfEmbeddedDocument() {
+  @Test
+  public void testCollectionOfEmbeddedDocument() {
 
     OResultInternal document = new OResultInternal();
 
@@ -286,4 +295,39 @@ public class OResultSerializationTest {
     assertEquals(inSet.<String>getProperty("surname"), embeddedInSet.getProperty("surname"));
   }
 
+  @Test
+  public void testMetadataSerialization() {
+    OResultInternal document = new OResultInternal();
+
+    document.setProperty("name", "foo");
+
+    document.setMetadata("name", "bar");
+    document.setMetadata("age", 20);
+    document.setMetadata("youngAge", (short) 20);
+    document.setMetadata("oldAge", (long) 20);
+    document.setMetadata("heigth", 12.5f);
+    document.setMetadata("bitHeigth", 12.5d);
+    document.setMetadata("class", (byte) 'C');
+    document.setMetadata("alive", true);
+    document.setMetadata("date", new Date());
+
+    OResultInternal extr = serializeDeserialize(document);
+
+    assertEquals(extr.getPropertyNames(), document.getPropertyNames());
+    assertEquals(extr.<String>getProperty("foo"), document.getProperty("foo"));
+    assertEquals("foo", extr.<String>getProperty("name"));
+
+    assertEquals(extr.getMetadataKeys(), document.getMetadataKeys());
+    assertEquals("bar", extr.<String>getMetadata("name"));
+    assertEquals(extr.<String>getMetadata("name"), document.getMetadata("name"));
+    assertEquals(extr.<String>getMetadata("age"), document.getMetadata("age"));
+    assertEquals(extr.<String>getMetadata("youngAge"), document.getMetadata("youngAge"));
+    assertEquals(extr.<String>getMetadata("oldAge"), document.getMetadata("oldAge"));
+    assertEquals(extr.<String>getMetadata("heigth"), document.getMetadata("heigth"));
+    assertEquals(extr.<String>getMetadata("bitHeigth"), document.getMetadata("bitHeigth"));
+    assertEquals(extr.<String>getMetadata("class"), document.getMetadata("class"));
+    assertEquals(extr.<String>getMetadata("alive"), document.getMetadata("alive"));
+    assertEquals(extr.<String>getMetadata("date"), document.getMetadata("date"));
+
+  }
 }
