@@ -1,32 +1,22 @@
 package com.orientechnologies.security.auditing;
 
-import com.orientechnologies.security.AbstractSecurityTest;
-
 import com.orientechnologies.orient.client.remote.OServerAdmin;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-//import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.server.OServer;
-
-import com.orientechnologies.orient.server.OServerMain;
-import com.orientechnologies.agent.OEnterpriseAgent;
-
-import org.junit.After;
+import com.orientechnologies.security.AbstractSecurityTest;
 import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.*;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+
+//import com.orientechnologies.orient.core.exception.OConfigurationException;
 
 /**
  * @author sdipro
@@ -55,7 +45,7 @@ public class SystemDbAuditingTest extends AbstractSecurityTest {
   	 createFile(SERVER_DIRECTORY + "/config/orientdb-server-config.xml", SystemDbAuditingTest.class.getResourceAsStream("/com/orientechnologies/security/auditing/orientdb-server-config.xml"));
   	 createFile(SERVER_DIRECTORY + "/config/security.json", SystemDbAuditingTest.class.getResourceAsStream("/com/orientechnologies/security/auditing/security.json"));
 
-    server = new OServer(false);
+    server = new OServer();
     server.setServerRootDirectory(SERVER_DIRECTORY);   
 
     server.startup(new File(SERVER_DIRECTORY + "/config/orientdb-server-config.xml"));
