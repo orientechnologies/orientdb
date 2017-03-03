@@ -19,7 +19,7 @@ node("master") {
                         .inside("${env.VOLUMES}") {
                     try {
                         sh "${mvnHome}/bin/mvn  --batch-mode -V clean install   -Dsurefire.useFile=false"
-                        sh "${mvnHome}/bin/mvn  --batch-mode -V clean deploy -DskipTests"
+                        sh "${mvnHome}/bin/mvn  --batch-mode -V deploy -DskipTests"
                     } finally {
                         junit allowEmptyResults: true, testResults: '**/target/surefire-reports/TEST-*.xml'
 
@@ -35,7 +35,7 @@ node("master") {
                 }
             }
 
-            stage("Run downstream projects") {
+            stage("Downstream projects") {
 
                 build job: "orientdb-spatial-multibranch/${env.BRANCH_NAME}", wait: false
                 //excluded: too long
