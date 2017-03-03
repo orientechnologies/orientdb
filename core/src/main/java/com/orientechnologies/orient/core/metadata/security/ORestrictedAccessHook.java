@@ -110,6 +110,11 @@ public class ORestrictedAccessHook extends ODocumentHookAbstract implements ORec
 
   @SuppressWarnings("unchecked")
   protected boolean isAllowed(final ODocument iDocument, final ORestrictedOperation iAllowOperation, final boolean iReadOriginal) {
+    return isAllowed(database,iDocument,iAllowOperation,iReadOriginal);
+  }
+
+  @SuppressWarnings("unchecked")
+  public static boolean isAllowed(ODatabaseDocument database, final ODocument iDocument, final ORestrictedOperation iAllowOperation, final boolean iReadOriginal) {
     final OImmutableClass cls = ODocumentInternal.getImmutableSchemaClass(iDocument);
     if (cls != null && cls.isRestricted()) {
 
