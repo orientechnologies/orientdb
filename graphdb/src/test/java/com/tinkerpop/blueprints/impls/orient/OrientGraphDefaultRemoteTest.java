@@ -16,7 +16,7 @@ import org.junit.runners.JUnit4;
 public class OrientGraphDefaultRemoteTest extends OrientGraphRemoteTest {
   @Before
   public void setUp() throws Exception {
-    Assume.assumeThat(getEnvironment(), AnyOf.anyOf(IsEqual.equalTo(ENV.CI), IsEqual.equalTo(ENV.RELEASE)));
+//    Assume.assumeThat(getEnvironment(), AnyOf.anyOf(IsEqual.equalTo(ENV.CI), IsEqual.equalTo(ENV.RELEASE)));
     super.setUp();
   }
 

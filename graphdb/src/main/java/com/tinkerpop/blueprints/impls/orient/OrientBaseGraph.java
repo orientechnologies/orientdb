@@ -1152,6 +1152,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
         if (storage instanceof OAbstractPaginatedStorage) {
           if (((OAbstractPaginatedStorage) storage).getWALInstance() != null)
             getDatabase().commit();
+        } else {
+          getDatabase().commit();
         }
 
       }
