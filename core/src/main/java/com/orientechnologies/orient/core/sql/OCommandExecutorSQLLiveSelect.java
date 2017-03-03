@@ -31,6 +31,8 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.security.ORestrictedAccessHook;
+import com.orientechnologies.orient.core.metadata.security.ORestrictedOperation;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
@@ -154,7 +156,7 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
     } catch (OSecurityException e) {
       return false;
     }
-    return true;
+    return ORestrictedAccessHook.isAllowed(execDb, (ODocument) value.getRecord(), ORestrictedOperation.ALLOW_READ, false);
   }
 
   private boolean matchesFilters(OIdentifiable value) {
