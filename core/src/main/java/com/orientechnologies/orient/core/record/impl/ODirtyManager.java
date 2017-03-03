@@ -82,15 +82,17 @@ public class ODirtyManager {
   public void merge(ODirtyManager toMerge) {
     if (isSame(toMerge))
       return;
-    if (toMerge.getNewRecords() != null) {
-      if (newRecords == null)
-        newRecords = Collections.newSetFromMap(new IdentityHashMap<ORecord, Boolean>());
-      this.newRecords.addAll(toMerge.getNewRecords());
+    final Set<ORecord> newRecords = toMerge.getNewRecords();
+    if (newRecords != null) {
+      if (this.newRecords == null)
+        this.newRecords = Collections.newSetFromMap(new IdentityHashMap<ORecord, Boolean>(newRecords.size()));
+      this.newRecords.addAll(newRecords);
     }
-    if (toMerge.getUpdateRecords() != null) {
-      if (updateRecords == null)
-        updateRecords = Collections.newSetFromMap(new IdentityHashMap<ORecord, Boolean>());
-      this.updateRecords.addAll(toMerge.getUpdateRecords());
+    final Set<ORecord> updateRecords = toMerge.getUpdateRecords();
+    if (updateRecords != null) {
+      if (this.updateRecords == null)
+        this.updateRecords = Collections.newSetFromMap(new IdentityHashMap<ORecord, Boolean>(updateRecords.size()));
+      this.updateRecords.addAll(updateRecords);
     }
     if (toMerge.getReferences() != null) {
       if (references == null)
