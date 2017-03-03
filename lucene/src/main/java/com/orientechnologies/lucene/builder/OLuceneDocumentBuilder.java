@@ -37,6 +37,11 @@ import static com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract.RID
  */
 public class OLuceneDocumentBuilder {
 
+  public Document newBuild(OIndexDefinition indexDefinition, OIdentifiable identifiable) {
+
+    return null;
+  }
+
   public Document build(OIndexDefinition definition,
       Object key,
       OIdentifiable value,
@@ -64,6 +69,7 @@ public class OLuceneDocumentBuilder {
       }
     }
 
+//    System.out.println("doc = " + doc);
     return doc;
   }
 

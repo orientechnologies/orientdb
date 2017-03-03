@@ -20,7 +20,6 @@ package com.orientechnologies.lucene.tests;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.lucene.analyzer.OLucenePerFieldAnalyzerWrapper;
-import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -63,7 +62,7 @@ public class OLuceneIndexVsLuceneTest extends OLuceneBaseTest {
   public void init() {
     InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql");
 
-    db.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
+    db.execute("sql", getScriptFromStream(stream));
 
     OSchema schema = db.getMetadata().getSchema();
 
@@ -93,8 +92,8 @@ public class OLuceneIndexVsLuceneTest extends OLuceneBaseTest {
     return NIOFSDirectory.open(getPath().toPath());
   }
 
-
-  @Test @Ignore
+  @Test
+  @Ignore
   public void testLuceneVsLucene() throws IOException, ParseException {
 
     for (ODocument oDocument : db.browseClass("Song")) {

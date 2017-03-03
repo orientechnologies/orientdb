@@ -32,6 +32,7 @@ public class OLuceneFullTextIndex extends OLuceneIndexNotUnique {
     super(name, typeId, algorithm, version, storage, valueContainerAlgorithm, metadata);
   }
 
+
   public Document buildDocument(final Object key) {
 
     while (true)

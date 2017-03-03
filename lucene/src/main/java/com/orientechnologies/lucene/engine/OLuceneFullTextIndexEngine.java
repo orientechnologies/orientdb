@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.parser.ParseException;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -230,6 +231,11 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
   @Override
   public Document buildDocument(Object key, OIdentifiable value) {
+//    ORecord record = getDatabase().load(value.getIdentity());
+
+//    System.out.println("record = " + record);
+//    System.out.println("key = " + key);
+//    System.out.println("collectionFields = " + collectionFields);
     return builder.build(index, key, value, collectionFields, metadata);
   }
 
