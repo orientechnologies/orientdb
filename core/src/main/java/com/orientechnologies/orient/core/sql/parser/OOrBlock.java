@@ -26,7 +26,8 @@ public class OOrBlock extends OBooleanExpression {
     super(p, id);
   }
 
-  @Override public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+  @Override
+  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
     if (getSubBlocks() == null) {
       return true;
     }
@@ -39,7 +40,8 @@ public class OOrBlock extends OBooleanExpression {
     return false;
   }
 
-  @Override public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
+  @Override
+  public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
     if (getSubBlocks() == null) {
       return true;
     }
@@ -92,7 +94,8 @@ public class OOrBlock extends OBooleanExpression {
     }
   }
 
-  @Override protected boolean supportsBasicCalculation() {
+  @Override
+  protected boolean supportsBasicCalculation() {
     for (OBooleanExpression expr : subBlocks) {
       if (!expr.supportsBasicCalculation()) {
         return false;
@@ -101,7 +104,8 @@ public class OOrBlock extends OBooleanExpression {
     return true;
   }
 
-  @Override protected int getNumberOfExternalCalculations() {
+  @Override
+  protected int getNumberOfExternalCalculations() {
     int result = 0;
     for (OBooleanExpression expr : subBlocks) {
       result += expr.getNumberOfExternalCalculations();
@@ -109,7 +113,8 @@ public class OOrBlock extends OBooleanExpression {
     return result;
   }
 
-  @Override protected List<Object> getExternalCalculationConditions() {
+  @Override
+  protected List<Object> getExternalCalculationConditions() {
     List<Object> result = new ArrayList<Object>();
     for (OBooleanExpression expr : subBlocks) {
       result.addAll(expr.getExternalCalculationConditions());
@@ -142,7 +147,8 @@ public class OOrBlock extends OBooleanExpression {
     return result;
   }
 
-  @Override public boolean needsAliases(Set<String> aliases) {
+  @Override
+  public boolean needsAliases(Set<String> aliases) {
     for (OBooleanExpression expr : subBlocks) {
       if (expr.needsAliases(aliases)) {
         return true;
@@ -151,13 +157,15 @@ public class OOrBlock extends OBooleanExpression {
     return false;
   }
 
-  @Override public OOrBlock copy() {
+  @Override
+  public OOrBlock copy() {
     OOrBlock result = new OOrBlock(-1);
     result.subBlocks = subBlocks.stream().map(x -> x.copy()).collect(Collectors.toList());
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -171,11 +179,13 @@ public class OOrBlock extends OBooleanExpression {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     return subBlocks != null ? subBlocks.hashCode() : 0;
   }
 
-  @Override public boolean isEmpty() {
+  @Override
+  public boolean isEmpty() {
     if (subBlocks.isEmpty()) {
       return true;
     }
@@ -187,13 +197,15 @@ public class OOrBlock extends OBooleanExpression {
     return true;
   }
 
-  @Override public void extractSubQueries(SubQueryCollector collector) {
+  @Override
+  public void extractSubQueries(SubQueryCollector collector) {
     for (OBooleanExpression block : subBlocks) {
       block.extractSubQueries(collector);
     }
   }
 
-  @Override public boolean refersToParent() {
+  @Override
+  public boolean refersToParent() {
     for (OBooleanExpression exp : subBlocks) {
       if (exp != null && exp.refersToParent()) {
         return true;
@@ -202,7 +214,8 @@ public class OOrBlock extends OBooleanExpression {
     return false;
   }
 
-  @Override public List<String> getMatchPatternInvolvedAliases() {
+  @Override
+  public List<String> getMatchPatternInvolvedAliases() {
     List<String> result = new ArrayList<String>();
     for (OBooleanExpression exp : subBlocks) {
       List<String> x = exp.getMatchPatternInvolvedAliases();
@@ -211,6 +224,11 @@ public class OOrBlock extends OBooleanExpression {
       }
     }
     return result.size() == 0 ? null : result;
+  }
+
+  @Override
+  public void translateLuceneOperator() {
+    subBlocks.forEach(x -> x.translateLuceneOperator());
   }
 
 }

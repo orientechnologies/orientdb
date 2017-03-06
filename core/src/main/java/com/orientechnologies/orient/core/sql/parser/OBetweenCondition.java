@@ -204,5 +204,9 @@ public class OBetweenCondition extends OBooleanExpression{
     }
     return result;
   }
+
+  @Override
+  public void translateLuceneOperator() {
+  }
 }
 /* JavaCC - OriginalChecksum=f94f4779c4a6c6d09539446045ceca89 (do not edit this line) */

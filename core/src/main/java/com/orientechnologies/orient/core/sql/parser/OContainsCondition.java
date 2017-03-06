@@ -269,5 +269,6 @@ public class OContainsCondition extends OBooleanExpression {
     return result.size() == 0 ? null : result;
   }
 
+
 }
 /* JavaCC - OriginalChecksum=bad1118296ea74860e88d66bfe9fa222 (do not edit this line) */

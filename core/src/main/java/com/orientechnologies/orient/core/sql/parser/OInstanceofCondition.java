@@ -178,5 +178,6 @@ public class OInstanceofCondition extends OBooleanExpression{
   @Override public List<String> getMatchPatternInvolvedAliases() {
     return left == null ? null : left.getMatchPatternInvolvedAliases();
   }
+
 }
 /* JavaCC - OriginalChecksum=0b5eb529744f307228faa6b26f0592dc (do not edit this line) */

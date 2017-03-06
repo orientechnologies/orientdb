@@ -48,6 +48,9 @@ public abstract class OBooleanExpression extends SimpleNode {
       return null;
     }
 
+    @Override
+    public void translateLuceneOperator() {}
+
     @Override public String toString() {
       return "true";
     }
@@ -101,6 +104,11 @@ public abstract class OBooleanExpression extends SimpleNode {
     }
     @Override public List<String> getMatchPatternInvolvedAliases() {
       return null;
+    }
+
+    @Override
+    public void translateLuceneOperator() {
+
     }
 
     @Override public String toString() {
@@ -206,4 +214,7 @@ public abstract class OBooleanExpression extends SimpleNode {
 
   public abstract List<String> getMatchPatternInvolvedAliases();
 
+  public void translateLuceneOperator(){
+
+  }
 }

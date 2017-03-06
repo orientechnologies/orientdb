@@ -25,7 +25,8 @@ public class ONotBlock extends OBooleanExpression {
     super(p, id);
   }
 
-  @Override public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+  @Override
+  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
     if (sub == null) {
       return true;
     }
@@ -36,7 +37,8 @@ public class ONotBlock extends OBooleanExpression {
     return result;
   }
 
-  @Override public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
+  @Override
+  public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
     if (sub == null) {
       return true;
     }
@@ -70,15 +72,18 @@ public class ONotBlock extends OBooleanExpression {
     sub.toString(params, builder);
   }
 
-  @Override public boolean supportsBasicCalculation() {
+  @Override
+  public boolean supportsBasicCalculation() {
     return true;
   }
 
-  @Override protected int getNumberOfExternalCalculations() {
+  @Override
+  protected int getNumberOfExternalCalculations() {
     return sub.getNumberOfExternalCalculations();
   }
 
-  @Override protected List<Object> getExternalCalculationConditions() {
+  @Override
+  protected List<Object> getExternalCalculationConditions() {
     return sub.getExternalCalculationConditions();
   }
 
@@ -92,33 +97,39 @@ public class ONotBlock extends OBooleanExpression {
     return sub.getIndexedFunctionConditions(iSchemaClass, database);
   }
 
-  @Override public List<OAndBlock> flatten() {
+  @Override
+  public List<OAndBlock> flatten() {
     if (!negate) {
       return sub.flatten();
     }
     return super.flatten();
   }
 
-  @Override public boolean needsAliases(Set<String> aliases) {
+  @Override
+  public boolean needsAliases(Set<String> aliases) {
     return sub.needsAliases(aliases);
   }
 
-  @Override public ONotBlock copy() {
+  @Override
+  public ONotBlock copy() {
     ONotBlock result = new ONotBlock(-1);
     result.sub = sub.copy();
     result.negate = negate;
     return result;
   }
 
-  @Override public void extractSubQueries(SubQueryCollector collector) {
+  @Override
+  public void extractSubQueries(SubQueryCollector collector) {
     sub.extractSubQueries(collector);
   }
 
-  @Override public boolean refersToParent() {
+  @Override
+  public boolean refersToParent() {
     return sub.refersToParent();
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -134,14 +145,21 @@ public class ONotBlock extends OBooleanExpression {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = sub != null ? sub.hashCode() : 0;
     result = 31 * result + (negate ? 1 : 0);
     return result;
   }
 
-  @Override public List<String> getMatchPatternInvolvedAliases() {
+  @Override
+  public List<String> getMatchPatternInvolvedAliases() {
     return sub.getMatchPatternInvolvedAliases();
+  }
+
+  @Override
+  public void translateLuceneOperator() {
+    sub.translateLuceneOperator();
   }
 }
 /* JavaCC - OriginalChecksum=1926313b3f854235aaa20811c22d583b (do not edit this line) */

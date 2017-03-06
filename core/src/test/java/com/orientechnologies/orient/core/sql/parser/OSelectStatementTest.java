@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.sql.parser;
 
+import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -187,7 +188,8 @@ public class OSelectStatementTest {
 
   @Test
   public void testIndex2() {
-    SimpleNode result = checkRightSyntax("select from index:collateCompositeIndexCS where key between ['VAL', 'VaL'] and ['zz', 'zz']");
+    SimpleNode result = checkRightSyntax(
+        "select from index:collateCompositeIndexCS where key between ['VAL', 'VaL'] and ['zz', 'zz']");
     assertTrue(result instanceof OSelectStatement);
     OSelectStatement select = (OSelectStatement) result;
 
@@ -349,14 +351,16 @@ public class OSelectStatementTest {
   @Test
   public void testSpatial() {
 
-    checkRightSyntax("select *,$distance from Place where [latitude,longitude,$spatial] NEAR [41.893056,12.482778,{\"maxDistance\": 0.5}]");
+    checkRightSyntax(
+        "select *,$distance from Place where [latitude,longitude,$spatial] NEAR [41.893056,12.482778,{\"maxDistance\": 0.5}]");
     checkRightSyntax("select * from Place where [latitude,longitude] WITHIN [[51.507222,-0.1275],[55.507222,-0.1275]]");
 
   }
 
   @Test
   public void testSubConditions() {
-    checkRightSyntax("SELECT @rid as rid, localName FROM Person WHERE ( 'milano' IN out('lives').localName OR 'roma' IN out('lives').localName ) ORDER BY age ASC");
+    checkRightSyntax(
+        "SELECT @rid as rid, localName FROM Person WHERE ( 'milano' IN out('lives').localName OR 'roma' IN out('lives').localName ) ORDER BY age ASC");
   }
 
   @Test
@@ -378,7 +382,8 @@ public class OSelectStatementTest {
 
     checkRightSyntax("select from Person where name matches 'a'");
 
-    checkRightSyntax("select from Person where name matches '(?i)(^\\\\Qname1\\\\E$)|(^\\\\Qname2\\\\E$)|(^\\\\Qname3\\\\E$)' and age=30");
+    checkRightSyntax(
+        "select from Person where name matches '(?i)(^\\\\Qname1\\\\E$)|(^\\\\Qname2\\\\E$)|(^\\\\Qname3\\\\E$)' and age=30");
   }
 
   @Test
@@ -458,11 +463,14 @@ public class OSelectStatementTest {
     checkRightSyntax("select from Foo where a lucene 'a'");
     checkWrongSyntax("select from Foo where a lucene 'a' and b lucene 'a'");
 
-    checkWrongSyntax("select union($a, $b) let $a = (select from Foo where a lucene 'a' and b lucene 'b'), $b = (select from Foo where b lucene 'b')");
-    checkRightSyntax("select union($a, $b) let $a = (select from Foo where a lucene 'a'), $b = (select from Foo where b lucene 'b')");
+    checkWrongSyntax(
+        "select union($a, $b) let $a = (select from Foo where a lucene 'a' and b lucene 'b'), $b = (select from Foo where b lucene 'b')");
+    checkRightSyntax(
+        "select union($a, $b) let $a = (select from Foo where a lucene 'a'), $b = (select from Foo where b lucene 'b')");
     checkWrongSyntax("select from (select from Foo) where a lucene 'a'");
 
-    checkWrongSyntax("select from Foo where (a=2 and b=3 and (a = 4 and (b=5 and d lucene 'foo')))) or select from Foo where (a=2 and b=3 and (a = 4 and (b=5 and d lucene 'foo'))))");
+    checkWrongSyntax(
+        "select from Foo where (a=2 and b=3 and (a = 4 and (b=5 and d lucene 'foo')))) or select from Foo where (a=2 and b=3 and (a = 4 and (b=5 and d lucene 'foo'))))");
 
     checkWrongSyntax("select from cluster:foo where a lucene 'b'");
     checkRightSyntax("select from index:foo where a lucene 'b'");
@@ -605,7 +613,7 @@ public class OSelectStatementTest {
 
   @Test
   public void testFlatten() {
-    OSelectStatement stm = (OSelectStatement)checkRightSyntax("select from ouser where name = 'foo'");
+    OSelectStatement stm = (OSelectStatement) checkRightSyntax("select from ouser where name = 'foo'");
     List<OAndBlock> flattended = stm.whereClause.flatten();
     assertTrue(((OBinaryCondition) flattended.get(0).subBlocks.get(0)).left.isBaseIdentifier());
     assertFalse(((OBinaryCondition) flattended.get(0).subBlocks.get(0)).right.isBaseIdentifier());
@@ -621,16 +629,15 @@ public class OSelectStatementTest {
   }
 
   @Test
-  public void testInstanceOfE(){
+  public void testInstanceOfE() {
     //issue #5212
     checkRightSyntax("select from Friend where @class instanceof 'E'");
   }
 
   @Test
-  public void testSelectFromClusterNumber(){
+  public void testSelectFromClusterNumber() {
     checkRightSyntax("select from cluster:12");
   }
-
 
   @Test
   public void testReservedWordsAsNamedParams() {
@@ -639,14 +646,14 @@ public class OSelectStatementTest {
   }
 
   @Test
-  public void testFetchPlanBracketStar(){
+  public void testFetchPlanBracketStar() {
     //issue #5689
     checkRightSyntax("SELECT FROM Def fetchplan *:2 [*]in_*:-2");
     checkRightSyntax("SELECT FROM Def fetchplan *:2 [1]in_*:-2");
   }
 
   @Test
-  public void testJsonQuoting(){
+  public void testJsonQuoting() {
     //issue #5911
     checkRightSyntax("SELECT '\\/\\/'");
     checkRightSyntax("SELECT \"\\/\\/\"");
@@ -665,7 +672,7 @@ public class OSelectStatementTest {
   }
 
   @Test
-  public void testSkipLimitInQueryWithNoTarget(){
+  public void testSkipLimitInQueryWithNoTarget() {
     //issue #5589
     checkRightSyntax("SELECT eval('$TotalListsQuery[0].Count') AS TotalLists\n"
         + "   LET $TotalListsQuery = ( SELECT Count(1) AS Count FROM ContactList WHERE Account=#20:1 AND EntityInfo.State=0)\n"
@@ -677,12 +684,12 @@ public class OSelectStatementTest {
   }
 
   @Test
-  public void testQuotedBacktick(){
+  public void testQuotedBacktick() {
     checkRightSyntax("SELECT \"\" as `bla\\`bla` from foo");
   }
 
   @Test
-  public void testParamConcat(){
+  public void testParamConcat() {
     //issue #6049
     checkRightSyntax("Select * From ACNodeAuthentication where acNodeID like ? ");
     checkRightSyntax("Select * From ACNodeAuthentication where acNodeID like ? + '%'");
@@ -690,13 +697,13 @@ public class OSelectStatementTest {
   }
 
   @Test
-  public void testAppendParams(){
+  public void testAppendParams() {
     checkRightSyntax("select from User where Account.Name like :name + '%'");
 
   }
 
   @Test
-  public void testLetMatch(){
+  public void testLetMatch() {
     checkRightSyntax("select $a let $a = (MATCH {class:Foo, as:bar, where:(name = 'foo')} return $elements)");
 
   }
@@ -707,6 +714,13 @@ public class OSelectStatementTest {
     checkRightSyntax("select distinct foo, bar, baz from V");
   }
 
+  @Test
+  public void testTranslateLucene() {
+    OSelectStatement stm = (OSelectStatement) checkRightSyntax("select from V where name LUCENE 'foo'");
+    stm.whereClause.getBaseExpression().translateLuceneOperator();
+    Assert.assertTrue(stm.whereClause.toString().contains("search_fields([\"name\"], 'foo') = true"));
+    Assert.assertFalse(stm.whereClause.toString().contains("LUCENE"));
+  }
 
   protected OrientSql getParserFor(String string) {
     InputStream is = new ByteArrayInputStream(string.getBytes());

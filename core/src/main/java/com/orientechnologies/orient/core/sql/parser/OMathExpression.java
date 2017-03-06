@@ -22,6 +22,8 @@ public class OMathExpression extends SimpleNode {
     throw new OCommandExecutionException("Invalid expand expression");
   }
 
+
+
   public enum Operator {
     PLUS {
       @Override

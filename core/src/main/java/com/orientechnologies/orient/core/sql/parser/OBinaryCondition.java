@@ -5,12 +5,13 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.util.*;
 
-public class OBinaryCondition extends OBooleanExpression{
+public class OBinaryCondition extends OBooleanExpression {
   protected OExpression            left;
   protected OBinaryCompareOperator operator;
   protected OExpression            right;
@@ -30,11 +31,13 @@ public class OBinaryCondition extends OBooleanExpression{
     return visitor.visit(this, data);
   }
 
-  @Override public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+  @Override
+  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
     return operator.execute(left.execute(currentRecord, ctx), right.execute(currentRecord, ctx));
   }
 
-  @Override public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
+  @Override
+  public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
     return operator.execute(left.execute(currentRecord, ctx), right.execute(currentRecord, ctx));
   }
 
@@ -54,7 +57,8 @@ public class OBinaryCondition extends OBooleanExpression{
 
   }
 
-  @Override protected int getNumberOfExternalCalculations() {
+  @Override
+  protected int getNumberOfExternalCalculations() {
     int total = 0;
     if (!operator.supportsBasicCalculation()) {
       total++;
@@ -68,7 +72,8 @@ public class OBinaryCondition extends OBooleanExpression{
     return total;
   }
 
-  @Override protected List<Object> getExternalCalculationConditions() {
+  @Override
+  protected List<Object> getExternalCalculationConditions() {
     List<Object> result = new ArrayList<Object>();
     if (!operator.supportsBasicCalculation()) {
       result.add(this);
@@ -102,6 +107,7 @@ public class OBinaryCondition extends OBooleanExpression{
    *
    * @param target  the query target
    * @param context the execution context
+   *
    * @return true if current expression involves an indexed function AND that function can be used on this target, false otherwise
    */
   public boolean canExecuteIndexedFunctionWithoutIndex(OFromClause target, OCommandContext context) {
@@ -113,6 +119,7 @@ public class OBinaryCondition extends OBooleanExpression{
    *
    * @param target  the query target
    * @param context the execution context
+   *
    * @return true if current expression involves an indexed function AND that function can be used on this target, false otherwise
    */
   public boolean allowsIndexedFunctionExecutionOnTarget(OFromClause target, OCommandContext context) {
@@ -126,7 +133,9 @@ public class OBinaryCondition extends OBooleanExpression{
    *
    * @param target  the query target
    * @param context the execution context
-   * @return true if current expression involves an indexed function AND the function has also to be executed after the index search.
+   *
+   * @return true if current expression involves an indexed function AND the function has also to be executed after the index
+   * search.
    */
   public boolean executeIndexedFunctionAfterIndexSearch(OFromClause target, OCommandContext context) {
     return left.executeIndexedFunctionAfterIndexSearch(target, context, operator, right.execute((OResult) null, context));
@@ -139,7 +148,8 @@ public class OBinaryCondition extends OBooleanExpression{
     return null;
   }
 
-  @Override public boolean needsAliases(Set<String> aliases) {
+  @Override
+  public boolean needsAliases(Set<String> aliases) {
     if (left.needsAliases(aliases)) {
       return true;
     }
@@ -149,7 +159,8 @@ public class OBinaryCondition extends OBooleanExpression{
     return false;
   }
 
-  @Override public OBinaryCondition copy() {
+  @Override
+  public OBinaryCondition copy() {
     OBinaryCondition result = new OBinaryCondition(-1);
     result.left = left.copy();
     result.operator = (OBinaryCompareOperator) operator.copy();
@@ -157,16 +168,19 @@ public class OBinaryCondition extends OBooleanExpression{
     return result;
   }
 
-  @Override public void extractSubQueries(SubQueryCollector collector) {
+  @Override
+  public void extractSubQueries(SubQueryCollector collector) {
     left.extractSubQueries(collector);
     right.extractSubQueries(collector);
   }
 
-  @Override public boolean refersToParent() {
+  @Override
+  public boolean refersToParent() {
     return left.refersToParent() || right.refersToParent();
   }
 
-  @Override public Optional<OUpdateItem> transformToUpdateItem() {
+  @Override
+  public Optional<OUpdateItem> transformToUpdateItem() {
     if (!checkCanTransformToUpdate()) {
       return Optional.empty();
     }
@@ -217,7 +231,8 @@ public class OBinaryCondition extends OBooleanExpression{
     this.right = right;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -235,14 +250,16 @@ public class OBinaryCondition extends OBooleanExpression{
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = left != null ? left.hashCode() : 0;
     result = 31 * result + (operator != null ? operator.hashCode() : 0);
     result = 31 * result + (right != null ? right.hashCode() : 0);
     return result;
   }
 
-  @Override public List<String> getMatchPatternInvolvedAliases() {
+  @Override
+  public List<String> getMatchPatternInvolvedAliases() {
     List<String> leftX = left.getMatchPatternInvolvedAliases();
     List<String> rightX = right.getMatchPatternInvolvedAliases();
     if (leftX == null) {
@@ -257,5 +274,78 @@ public class OBinaryCondition extends OBooleanExpression{
     result.addAll(rightX);
     return result;
   }
+
+  @Override
+  public void translateLuceneOperator() {
+    if (operator instanceof OLuceneOperator) {
+      OExpression newLeft = new OExpression(-1);
+      newLeft.mathExpression = new OBaseExpression(-1);
+      OBaseIdentifier identifirer = new OBaseIdentifier(-1);
+      ((OBaseExpression) newLeft.mathExpression).identifier = identifirer;
+      identifirer.levelZero = new OLevelZeroIdentifier(-1);
+      OFunctionCall function = new OFunctionCall(-1);
+      identifirer.levelZero.functionCall = function;
+      function.name = new OIdentifier("search_fields");
+      function.params = new ArrayList<>();
+      function.params.add(fieldNamesToStrings(left));
+      function.params.add(right);
+      left = newLeft;
+
+      operator = new OEqualsCompareOperator(-1);
+      right = new OExpression(-1);
+      right.booleanValue = true;
+    }
+  }
+
+  private OExpression fieldNamesToStrings(OExpression left) {
+    if (left.isBaseIdentifier()) {
+      OIdentifier identifier = ((OBaseExpression) left.mathExpression).identifier.suffix.identifier;
+      OCollection newColl = new OCollection(-1);
+      newColl.expressions = new ArrayList<>();
+      newColl.expressions.add(identifierToStringExpr(identifier));
+      OExpression result = new OExpression(-1);
+      OBaseExpression newBase = new OBaseExpression(-1);
+      result.mathExpression = newBase;
+      newBase.identifier = new OBaseIdentifier(-1);
+      newBase.identifier.levelZero = new OLevelZeroIdentifier(-1);
+      newBase.identifier.levelZero.collection = newColl;
+      return result;
+    } else if (left.mathExpression instanceof OBaseExpression) {
+      OBaseExpression base = (OBaseExpression) left.mathExpression;
+      if (base.identifier != null && base.identifier.levelZero != null && base.identifier.levelZero.collection != null) {
+        OCollection coll = base.identifier.levelZero.collection;
+
+        OCollection newColl = new OCollection(-1);
+        newColl.expressions = new ArrayList<>();
+
+        for (OExpression exp : coll.expressions) {
+          if (exp.isBaseIdentifier()) {
+            OIdentifier identifier = ((OBaseExpression) left.mathExpression).identifier.suffix.identifier;
+            OExpression val = identifierToStringExpr(identifier);
+            newColl.expressions.add(val);
+          } else {
+            throw new OCommandExecutionException("Cannot execute because of invalid LUCENE expression");
+          }
+        }
+        OExpression result = new OExpression(-1);
+        OBaseExpression newBase = new OBaseExpression(-1);
+        result.mathExpression = newBase;
+        newBase.identifier = new OBaseIdentifier(-1);
+        newBase.identifier.levelZero = new OLevelZeroIdentifier(-1);
+        newBase.identifier.levelZero.collection = newColl;
+        return result;
+      }
+    }
+    throw new OCommandExecutionException("Cannot execute because of invalid LUCENE expression");
+  }
+
+  private OExpression identifierToStringExpr(OIdentifier identifier) {
+    OBaseExpression bexp = new OBaseExpression(identifier.getStringValue());
+
+    OExpression result = new OExpression(-1);
+    result.mathExpression = bexp;
+    return result;
+  }
+
 }
 /* JavaCC - OriginalChecksum=99ed1dd2812eb730de8e1931b1764da5 (do not edit this line) */

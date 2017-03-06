@@ -57,12 +57,24 @@ public class OSelectExecutionPlanner {
 
     this.target = oSelectStatement.getTarget();
     this.whereClause = oSelectStatement.getWhereClause() == null ? null : oSelectStatement.getWhereClause().copy();
+    this.whereClause = translateLucene(whereClause);
     this.perRecordLetClause = oSelectStatement.getLetClause() == null ? null : oSelectStatement.getLetClause().copy();
     this.groupBy = oSelectStatement.getGroupBy() == null ? null : oSelectStatement.getGroupBy().copy();
     this.orderBy = oSelectStatement.getOrderBy() == null ? null : oSelectStatement.getOrderBy().copy();
     this.unwind = oSelectStatement.getUnwind() == null ? null : oSelectStatement.getUnwind().copy();
     this.skip = oSelectStatement.getSkip();
     this.limit = oSelectStatement.getLimit();
+  }
+
+  private OWhereClause translateLucene(OWhereClause whereClause) {
+    if (whereClause == null) {
+      return null;
+    }
+
+    if(whereClause.getBaseExpression()!=null){
+      whereClause.getBaseExpression().translateLuceneOperator();
+    }
+    return whereClause;
   }
 
   /**
@@ -1186,9 +1198,9 @@ public class OSelectExecutionPlanner {
    * @return
    */
   private IndexSearchDescriptor findBestIndexFor(OCommandContext ctx, Set<OIndex<?>> indexes, OAndBlock block) {
-    return indexes.stream().filter(x -> x.getInternal().canBeUsedInEqualityOperators()).map(index -> buildIndexSearchDescriptor(ctx, index, block))
-        .filter(Objects::nonNull).filter(x -> x.keyCondition != null).filter(x -> x.keyCondition.getSubBlocks().size() > 0)
-        .min(Comparator.comparing(x -> x.cost(ctx))).orElse(null);
+    return indexes.stream().filter(x -> x.getInternal().canBeUsedInEqualityOperators())
+        .map(index -> buildIndexSearchDescriptor(ctx, index, block)).filter(Objects::nonNull).filter(x -> x.keyCondition != null)
+        .filter(x -> x.keyCondition.getSubBlocks().size() > 0).min(Comparator.comparing(x -> x.cost(ctx))).orElse(null);
   }
 
   /**
