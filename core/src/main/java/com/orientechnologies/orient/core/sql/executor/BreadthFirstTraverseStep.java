@@ -39,6 +39,7 @@ public class BreadthFirstTraverseStep extends AbstractTraverseStep {
       res = new OTraverseResult();
       res.setElement(item.getElement().get());
       res.depth = 0;
+      res.setMetadata("$depth", 0);
     } else {
       return null;
     }
@@ -80,6 +81,7 @@ public class BreadthFirstTraverseStep extends AbstractTraverseStep {
     OTraverseResult res = new OTraverseResult();
     res.setElement(nextStep);
     res.depth = depth;
+    res.setMetadata("$depth", depth);
     tryAddEntryPoint(res, ctx);
 
   }
@@ -93,11 +95,13 @@ public class BreadthFirstTraverseStep extends AbstractTraverseStep {
     }
     if (nextStep instanceof OTraverseResult) {
       ((OTraverseResult) nextStep).depth = depth;
+      ((OTraverseResult) nextStep).setMetadata("$depth", depth);
       tryAddEntryPoint(nextStep, ctx);
     } else {
       OTraverseResult res = new OTraverseResult();
       res.setElement(nextStep.getElement().get());
       res.depth = depth;
+      res.setMetadata("$depth", depth);
       tryAddEntryPoint(res, ctx);
     }
   }

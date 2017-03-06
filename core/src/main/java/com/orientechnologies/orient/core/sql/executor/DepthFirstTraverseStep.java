@@ -17,10 +17,12 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
     super(projections, whileClause, ctx);
   }
 
-  @Override protected void fetchNextEntryPoints(OCommandContext ctx, int nRecords) {
+  @Override
+  protected void fetchNextEntryPoints(OCommandContext ctx, int nRecords) {
     OResultSet nextN = getPrev().get().syncPull(ctx, nRecords);
     while (nextN.hasNext()) {
       OResult item = toTraverseResult(nextN.next());
+      ((OResultInternal) item).setMetadata("$depth", 0);
       if (item != null && item.isElement() && !traversed.contains(item.getElement().get().getIdentity())) {
         tryAddEntryPoint(item, ctx);
         traversed.add(item.getElement().get().getIdentity());
@@ -36,6 +38,7 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
       res = new OTraverseResult();
       res.setElement(item.getElement().get());
       res.depth = 0;
+      res.setMetadata("$depth", 0);
     } else {
       return null;
     }
@@ -43,7 +46,8 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
     return res;
   }
 
-  @Override protected void fetchNextResults(OCommandContext ctx, int nRecords) {
+  @Override
+  protected void fetchNextResults(OCommandContext ctx, int nRecords) {
     if (!this.entryPoints.isEmpty()) {
       OTraverseResult item = (OTraverseResult) this.entryPoints.remove(0);
       this.results.add(item);
@@ -77,6 +81,7 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
     OTraverseResult res = new OTraverseResult();
     res.setElement(nextStep);
     res.depth = depth;
+    res.setMetadata("$depth", depth);
     tryAddEntryPoint(res, ctx);
   }
 
@@ -89,11 +94,13 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
     }
     if (nextStep instanceof OTraverseResult) {
       ((OTraverseResult) nextStep).depth = depth;
+      ((OTraverseResult)nextStep).setMetadata("$depth", depth);
       tryAddEntryPoint(nextStep, ctx);
     } else {
       OTraverseResult res = new OTraverseResult();
       res.setElement(nextStep.getElement().get());
       res.depth = depth;
+      res.setMetadata("$depth", depth);
       tryAddEntryPoint(res, ctx);
     }
   }
@@ -105,4 +112,16 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
     traversed.add(res.getElement().get().getIdentity());
   }
 
+  @Override
+  public String prettyPrint(int depth, int indent) {
+    String spaces = OExecutionStepInternal.getIndent(depth, indent);
+    StringBuilder result = new StringBuilder();
+    result.append(spaces);
+    result.append("+ DEPTH-FRIST TRAVERSE \n");
+    if (whileClause != null) {
+      result.append(spaces);
+      result.append("WHILE " + whileClause.toString());
+    }
+    return result.toString();
+  }
 }
