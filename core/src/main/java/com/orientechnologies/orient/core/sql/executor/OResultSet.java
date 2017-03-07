@@ -15,7 +15,7 @@ import java.util.stream.StreamSupport;
 /**
  * Created by luigidellaquila on 07/07/16.
  */
-public interface OResultSet extends Spliterator<OResult>, Iterator<OResult> {
+public interface OResultSet extends Spliterator<OResult>, Iterator<OResult>, AutoCloseable {
 
   @Override
   boolean hasNext();
