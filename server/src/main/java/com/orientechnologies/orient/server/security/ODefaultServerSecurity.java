@@ -548,10 +548,10 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
       public void run() {
         try {
           OClientConnectionManager ccm = server.getClientConnectionManager();
-
           if (ccm != null) {
             for (OClientConnection cc : ccm.getConnections()) {
               try {
+                cc.acquire();
                 ODatabaseDocumentInternal ccDB = cc.getDatabase();
                 if (ccDB != null) {
                   ccDB.activateOnCurrentThread();
@@ -563,6 +563,9 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
                 }
               } catch (Exception ex) {
                 OLogManager.instance().error(this, "securityRecordChange() Exception: ", ex);
+              }
+              finally {
+                cc.release();
               }
             }
           }
