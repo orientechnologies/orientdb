@@ -1446,7 +1446,7 @@ public class OMatchStatementExecutionNewTest {
     StringBuilder query = new StringBuilder();
     query.append("match ");
     query.append("{class:DiamondV, as: one, where: (uid = 0)}.out('DiamondE').out('DiamondE'){as: two} ");
-    query.append("return one, two");
+    query.append("return DISTINCT one, two");
 
     OResultSet result = db.query(query.toString());
     printExecutionPlan(result);
@@ -1457,11 +1457,46 @@ public class OMatchStatementExecutionNewTest {
     query = new StringBuilder();
     query.append("match ");
     query.append("{class:DiamondV, as: one, where: (uid = 0)}.out('DiamondE').out('DiamondE'){as: two} ");
-    query.append("return one.uid, two.uid");
+    query.append("return DISTINCT one.uid, two.uid");
 
     result.close();
 
     result = db.query(query.toString());
+    Assert.assertTrue(result.hasNext());
+    doc = result.next();
+    Assert.assertFalse(result.hasNext());
+    result.close();
+    //    ODocument doc = result.get(0);
+    //    assertEquals("foo", doc.field("name"));
+    //    assertEquals(0, doc.field("sub[0].uuid"));
+  }
+
+  @Test
+  public void testNotUnique() {
+    StringBuilder query = new StringBuilder();
+    query.append("match ");
+    query.append("{class:DiamondV, as: one, where: (uid = 0)}.out('DiamondE').out('DiamondE'){as: two} ");
+    query.append("return one, two");
+
+    OResultSet result = db.query(query.toString());
+    printExecutionPlan(result);
+    Assert.assertTrue(result.hasNext());
+    OResult doc = result.next();
+    Assert.assertTrue(result.hasNext());
+    doc = result.next();
+    Assert.assertFalse(result.hasNext());
+    result.close();
+
+    query = new StringBuilder();
+    query.append("match ");
+    query.append("{class:DiamondV, as: one, where: (uid = 0)}.out('DiamondE').out('DiamondE'){as: two} ");
+    query.append("return one.uid, two.uid");
+
+
+
+    result = db.query(query.toString());
+    Assert.assertTrue(result.hasNext());
+    doc = result.next();
     Assert.assertTrue(result.hasNext());
     doc = result.next();
     Assert.assertFalse(result.hasNext());
@@ -1501,7 +1536,7 @@ public class OMatchStatementExecutionNewTest {
     query.append("      while: ($depth = 0 or in('ManagerOf').size() = 0),");
     query.append("      where: ($depth = 0 or in('ManagerOf').size() = 0)");
     query.append("  }<-WorksAt-{as: managed}");
-    query.append("  return $elements");
+    query.append("  return distinct $elements");
 
     return db.query(query.toString());
   }
@@ -1588,7 +1623,7 @@ public class OMatchStatementExecutionNewTest {
     query.append("      while: ($depth = 0 or in('ManagerOf').size() = 0),");
     query.append("      where: ($depth = 0 or in('ManagerOf').size() = 0)");
     query.append("  }<-WorksAt-{as: managed}");
-    query.append("  return $pathElements");
+    query.append("  return distinct $pathElements");
 
     return db.query(query.toString());
   }

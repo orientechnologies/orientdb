@@ -158,4 +158,13 @@ public class FetchTemporaryFromTxStep extends AbstractExecutionStep {
   public void setOrder(Object order) {
     this.order = order;
   }
+
+  @Override
+  public String prettyPrint(int depth, int indent) {
+    String spaces = OExecutionStepInternal.getIndent(depth, indent);
+    StringBuilder result = new StringBuilder();
+    result.append(spaces);
+    result.append("+ FETCH NEW RECORDS FROM CURRENT TRANSACTION SCOPE (if any)\n");
+    return result.toString();
+  }
 }

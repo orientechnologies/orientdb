@@ -27,6 +27,7 @@ public class OMatchExecutionPlanner {
   boolean returnPaths        = false;
   boolean returnPatterns     = false;
   boolean returnPathElements = false;
+  boolean returnDistinct     = false;
   protected OSkip  skip;
   protected OLimit limit;
 
@@ -49,6 +50,7 @@ public class OMatchExecutionPlanner {
     this.returnPaths = stm.returnsPaths();
     this.returnPatterns = stm.returnsPatterns();
     this.returnPathElements = stm.returnsPathElements();
+    this.returnDistinct = stm.isReturnDistinct();
   }
 
   public OInternalExecutionPlan createExecutionPlan(OCommandContext context) {
@@ -79,12 +81,14 @@ public class OMatchExecutionPlanner {
       }
     }
 
-    if(foundOptional){
+    if (foundOptional) {
       result.chain(new RemoveEmptyOptionalsStep(context));
     }
     addReturnStep(result, context);
 
-    result.chain(new DistinctExecutionStep(context)); //TODO make it optional?
+    if (this.returnDistinct) {
+      result.chain(new DistinctExecutionStep(context));
+    }
 
     if (this.skip != null && skip.getValue(context) >= 0) {
       result.chain(new SkipExecutionStep(skip, context));
@@ -163,15 +167,15 @@ public class OMatchExecutionPlanner {
       select.setTarget(new OFromClause(-1));
       select.getTarget().setItem(new OFromItem(-1));
       select.getTarget().getItem().setIdentifier(new OIdentifier(clazz));
-      select.setWhereClause(where==null?null:where.copy());
+      select.setWhereClause(where == null ? null : where.copy());
       OBasicCommandContext subContxt = new OBasicCommandContext();
       subContxt.setParentWithoutOverridingChild(context);
       plan.chain(new MatchFirstStep(context, patternNode, select.createExecutionPlan(subContxt)));
     }
-    if(edge.edge.in.isOptionalNode()){
+    if (edge.edge.in.isOptionalNode()) {
       foundOptional = true;
       plan.chain(new OptionalMatchStep(context, edge));
-    }else {
+    } else {
       plan.chain(new MatchStep(context, edge));
     }
   }

@@ -88,6 +88,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
   protected           List<OMatchExpression> matchExpressions = new ArrayList<OMatchExpression>();
   protected           List<OExpression>      returnItems      = new ArrayList<OExpression>();
   protected           List<OIdentifier>      returnAliases    = new ArrayList<OIdentifier>();
+  protected           boolean                returnDistinct   = false;
   protected OLimit limit;
 
   // post-parsing generated data
@@ -112,8 +113,8 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     super(p, id);
   }
 
-
-  @Override public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx) {
+  @Override
+  public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
@@ -131,7 +132,8 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     return new OLocalResultSet(executionPlan);
   }
 
-  @Override public OResultSet execute(ODatabase db, Map params, OCommandContext parentCtx) {
+  @Override
+  public OResultSet execute(ODatabase db, Map params, OCommandContext parentCtx) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
@@ -164,9 +166,11 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
    *
    * @param iRequest Command request implementation.
    * @param <RET>
+   *
    * @return
    */
-  @Override public <RET extends OCommandExecutor> RET parse(OCommandRequest iRequest) {
+  @Override
+  public <RET extends OCommandExecutor> RET parse(OCommandRequest iRequest) {
     final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
     if (iRequest instanceof OSQLSynchQuery) {
       request = (OSQLSynchQuery<ODocument>) iRequest;
@@ -268,9 +272,11 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
    * in next releases
    *
    * @param iArgs Optional variable arguments to pass to the command.
+   *
    * @return
    */
-  @Override public Object execute(Map<Object, Object> iArgs) {
+  @Override
+  public Object execute(Map<Object, Object> iArgs) {
     this.context.setInputParameters(iArgs);
     return execute(this.request, this.context, this.progressListener);
   }
@@ -281,6 +287,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
    *
    * @param request
    * @param context
+   *
    * @return
    */
   public Object execute(OSQLAsynchQuery<ODocument> request, OCommandContext context, OProgressListener progressListener) {
@@ -310,17 +317,17 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
 
   /**
    * Start a depth-first traversal from the starting node, adding all viable unscheduled edges and vertices.
-   * @param startNode the node from which to start the depth-first traversal
-   * @param visitedNodes set of nodes that are already visited (mutated in this function)
-   * @param visitedEdges set of edges that are already visited and therefore don't need to be scheduled
-   *                     (mutated in this function)
-   * @param remainingDependencies dependency map including only the dependencies that haven't yet been satisfied
-   *                              (mutated in this function)
-   * @param resultingSchedule the schedule being computed i.e. appended to (mutated in this function)
+   *
+   * @param startNode             the node from which to start the depth-first traversal
+   * @param visitedNodes          set of nodes that are already visited (mutated in this function)
+   * @param visitedEdges          set of edges that are already visited and therefore don't need to be scheduled (mutated in this
+   *                              function)
+   * @param remainingDependencies dependency map including only the dependencies that haven't yet been satisfied (mutated in this
+   *                              function)
+   * @param resultingSchedule     the schedule being computed i.e. appended to (mutated in this function)
    */
-  private void updateScheduleStartingAt(PatternNode startNode, Set<PatternNode> visitedNodes,
-                                        Set<PatternEdge> visitedEdges, Map<String, Set<String>> remainingDependencies,
-                                        List<EdgeTraversal> resultingSchedule) {
+  private void updateScheduleStartingAt(PatternNode startNode, Set<PatternNode> visitedNodes, Set<PatternEdge> visitedEdges,
+      Map<String, Set<String>> remainingDependencies, List<EdgeTraversal> resultingSchedule) {
     // OrientDB requires the schedule to contain all edges present in the query, which is a stronger condition
     // than simply visiting all nodes in the query. Consider the following example query:
     //     MATCH {
@@ -396,8 +403,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
         // Instead, we'll allow the neighboring node to add the edge we failed to visit, via the above block.
         if (visitedEdges.contains(edge)) {
           // Should never happen.
-          throw new AssertionError("The edge was visited, but the neighboring vertex was not: " + edge +
-                  " " + neighboringNode);
+          throw new AssertionError("The edge was visited, but the neighboring vertex was not: " + edge + " " + neighboringNode);
         }
 
         visitedEdges.add(edge);
@@ -409,7 +415,9 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
 
   /**
    * Calculate the set of dependency aliases for each alias in the pattern.
+   *
    * @param pattern
+   *
    * @return map of alias to the set of aliases it depends on
    */
   private Map<String, Set<String>> getDependencies(Pattern pattern) {
@@ -484,8 +492,8 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
         // We didn't manage to find a valid root, and yet we haven't constructed a complete schedule.
         // This means there must be a cycle in our dependency graph, or all dependency-free nodes are optional.
         // Therefore, the query is invalid.
-        throw new OCommandExecutionException("This query contains MATCH conditions that cannot be evaluated, " +
-                "like an undefined alias or a circular dependency on a $matched condition.");
+        throw new OCommandExecutionException("This query contains MATCH conditions that cannot be evaluated, "
+            + "like an undefined alias or a circular dependency on a $matched condition.");
       }
 
       // 2. Having found a starting vertex, traverse its neighbors depth-first,
@@ -948,6 +956,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
    * @param request
    * @param ctx
    * @param record
+   *
    * @return false if limit was reached
    */
   private boolean addSingleResult(OSQLAsynchQuery<ODocument> request, OBasicCommandContext ctx, ORecord record) {
@@ -1206,65 +1215,80 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     return null;
   }
 
-  @Override public <RET extends OCommandExecutor> RET setProgressListener(OProgressListener progressListener) {
+  @Override
+  public <RET extends OCommandExecutor> RET setProgressListener(OProgressListener progressListener) {
     this.progressListener = progressListener;
     return (RET) this;
   }
 
-  @Override public <RET extends OCommandExecutor> RET setLimit(int iLimit) {
+  @Override
+  public <RET extends OCommandExecutor> RET setLimit(int iLimit) {
     limitFromProtocol = iLimit;
     return (RET) this;
   }
 
-  @Override public String getFetchPlan() {
+  @Override
+  public String getFetchPlan() {
     return null;
   }
 
-  @Override public Map<Object, Object> getParameters() {
+  @Override
+  public Map<Object, Object> getParameters() {
     return null;
   }
 
-  @Override public OCommandContext getContext() {
+  @Override
+  public OCommandContext getContext() {
     return context;
   }
 
-  @Override public void setContext(OCommandContext context) {
+  @Override
+  public void setContext(OCommandContext context) {
     this.context = context;
   }
 
-  @Override public boolean isIdempotent() {
+  @Override
+  public boolean isIdempotent() {
     return true;
   }
 
-  @Override public Set<String> getInvolvedClusters() {
+  @Override
+  public Set<String> getInvolvedClusters() {
     return Collections.EMPTY_SET;
   }
 
-  @Override public int getSecurityOperationType() {
+  @Override
+  public int getSecurityOperationType() {
     return ORole.PERMISSION_READ;
   }
 
-  @Override public boolean involveSchema() {
+  @Override
+  public boolean involveSchema() {
     return false;
   }
 
-  @Override public String getSyntax() {
+  @Override
+  public String getSyntax() {
     return "MATCH <match-statement> [, <match-statement] RETURN <alias>[, <alias>]";
   }
 
-  @Override public boolean isLocalExecution() {
+  @Override
+  public boolean isLocalExecution() {
     return true;
   }
 
-  @Override public boolean isCacheable() {
+  @Override
+  public boolean isCacheable() {
     return false;
   }
 
-  @Override public long getDistributedTimeout() {
+  @Override
+  public long getDistributedTimeout() {
     return -1;
   }
 
-  @Override public Object mergeResults(Map<String, Object> results) throws Exception {
+  @Override
+  public Object mergeResults(Map<String, Object> results) throws Exception {
     return results;
   }
 
@@ -1280,6 +1304,9 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       first = false;
     }
     builder.append(" RETURN ");
+    if(returnDistinct){
+      builder.append("DISTINCT ");
+    }
     first = true;
     int i = 0;
     for (OExpression expr : this.returnItems) {
@@ -1299,7 +1326,8 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     }
   }
 
-  @Override public Iterator<OIdentifiable> iterator(Map<Object, Object> iArgs) {
+  @Override
+  public Iterator<OIdentifiable> iterator(Map<Object, Object> iArgs) {
     if (context == null) {
       context = new OBasicCommandContext();
     }
@@ -1307,18 +1335,21 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     return ((Iterable) result).iterator();
   }
 
-  @Override public OMatchStatement copy() {
+  @Override
+  public OMatchStatement copy() {
     OMatchStatement result = new OMatchStatement(-1);
     result.matchExpressions =
         matchExpressions == null ? null : matchExpressions.stream().map(x -> x.copy()).collect(Collectors.toList());
     result.returnItems = returnItems == null ? null : returnItems.stream().map(x -> x.copy()).collect(Collectors.toList());
     result.returnAliases = returnAliases == null ? null : returnAliases.stream().map(x -> x.copy()).collect(Collectors.toList());
     result.limit = limit == null ? null : limit.copy();
+    result.returnDistinct = this.returnDistinct;
     result.buildPatterns();
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -1335,10 +1366,14 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     if (limit != null ? !limit.equals(that.limit) : that.limit != null)
       return false;
 
+    if (returnDistinct != that.returnDistinct)
+      return false;
+
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = matchExpressions != null ? matchExpressions.hashCode() : 0;
     result = 31 * result + (returnItems != null ? returnItems.hashCode() : 0);
     result = 31 * result + (returnAliases != null ? returnAliases.hashCode() : 0);
@@ -1376,6 +1411,14 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
 
   public void setMatchExpressions(List<OMatchExpression> matchExpressions) {
     this.matchExpressions = matchExpressions;
+  }
+
+  public boolean isReturnDistinct() {
+    return returnDistinct;
+  }
+
+  public void setReturnDistinct(boolean returnDistinct) {
+    this.returnDistinct = returnDistinct;
   }
 }
 /* JavaCC - OriginalChecksum=6ff0afbe9d31f08b72159fcf24070c9f (do not edit this line) */
