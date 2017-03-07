@@ -75,7 +75,8 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
 
     if (ownerUUID != null) {
       Map<UUID, OBonsaiCollectionPointer> changedPointers = collectionPointerChanges.get();
-      changedPointers.put(ownerUUID, pointer);
+      if(pointer != null && pointer.isValid())
+        changedPointers.put(ownerUUID, pointer);
     }
 
     return pointer;
@@ -124,7 +125,8 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
       final OBonsaiCollectionPointer pointer = collection.getPointer();
 
       Map<UUID, OBonsaiCollectionPointer> changedPointers = collectionPointerChanges.get();
-      changedPointers.put(ownerUUID, pointer);
+      if(pointer != null && pointer.isValid())
+        changedPointers.put(ownerUUID, pointer);
     }
 
     return null;
