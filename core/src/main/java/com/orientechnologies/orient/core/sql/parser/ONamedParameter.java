@@ -24,7 +24,8 @@ public class ONamedParameter extends OInputParameter {
     return visitor.visit(this, data);
   }
 
-  @Override public String toString() {
+  @Override
+  public String toString() {
     return ":" + paramName;
   }
 
@@ -43,6 +44,19 @@ public class ONamedParameter extends OInputParameter {
     }
   }
 
+  public Object getValue(Map<Object, Object> params) {
+    Object result = null;
+    if (params != null) {
+      String key = paramName;
+      if (params.containsKey(key)) {
+        result = params.get(key);
+      } else {
+        result = params.get(paramNumber);
+      }
+    }
+    return result;
+  }
+
   public Object bindFromInputParams(Map<Object, Object> params) {
     if (params != null) {
       String key = paramName;
@@ -54,14 +68,16 @@ public class ONamedParameter extends OInputParameter {
     return this;
   }
 
-  @Override public ONamedParameter copy() {
+  @Override
+  public ONamedParameter copy() {
     ONamedParameter result = new ONamedParameter(-1);
     result.paramName = paramName;
     result.paramNumber = paramNumber;
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -77,7 +93,8 @@ public class ONamedParameter extends OInputParameter {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = paramNumber;
     result = 31 * result + (paramName != null ? paramName.hashCode() : 0);
     return result;

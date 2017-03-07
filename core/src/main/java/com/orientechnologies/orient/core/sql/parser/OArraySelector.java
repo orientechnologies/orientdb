@@ -46,7 +46,7 @@ public class OArraySelector extends SimpleNode {
   public Integer getValue(OIdentifiable iCurrentRecord, Object iResult, OCommandContext ctx) {
     Object result = null;
     if (inputParam != null) {
-      result = inputParam.bindFromInputParams(ctx.getInputParameters());
+      result = inputParam.getValue(ctx.getInputParameters());
     } else if (expression != null) {
       result = expression.execute(iCurrentRecord, ctx);
     } else if (integer != null) {
@@ -65,7 +65,7 @@ public class OArraySelector extends SimpleNode {
   public Object getValue(OResult iCurrentRecord, Object iResult, OCommandContext ctx) {
     Object result = null;
     if (inputParam != null) {
-      result = inputParam.bindFromInputParams(ctx.getInputParameters());
+      result = inputParam.getValue(ctx.getInputParameters());
     } else if (expression != null) {
       result = expression.execute(iCurrentRecord, ctx);
     } else if (integer != null) {
@@ -145,7 +145,7 @@ public class OArraySelector extends SimpleNode {
     if (this.rid != null) {
       idx = this.rid.toRecordId();
     } else if (inputParam != null) {
-      idx = inputParam.bindFromInputParams(ctx.getInputParameters());
+      idx = inputParam.getValue(ctx.getInputParameters());
     } else if (expression != null) {
       idx = expression.execute(currentRecord, ctx);
     } else if (integer != null) {

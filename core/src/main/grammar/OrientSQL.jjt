@@ -470,6 +470,10 @@ TOKEN :
     (<MINUS>)? <INTEGER_LITERAL> <RANGE> (<MINUS>)?<INTEGER_LITERAL>
   >
   |
+  < ELLIPSIS_INTEGER_RANGE:
+    (<MINUS>)? <INTEGER_LITERAL> <ELLIPSIS> (<MINUS>)?<INTEGER_LITERAL>
+  >
+  |
   < TRUE: ("T" | "t") ("R" | "r") ("U" | "u") ("E" | "e") >
   |
   < FALSE: ("F" | "f") ("A" | "a") ("L" | "l") ("S" | "s") ("E" | "e") >
@@ -1917,18 +1921,39 @@ OArrayRangeSelector ArrayRangeSelector():
 {
     (
 
-    /* TODO for 3.0
-        token = <INTEGER_RANGE>
-        {
-            String img = token.image;
-            String[] splitted = img.split("..");
-            jjtThis.from = Integer.parseInt(splitted[0], 10);
-            jjtThis.to = Integer.parseInt(splitted[1], 10);
-        }
-        |
-        */
         (
-            jjtThis.fromSelector = ArrayNumberSelector() [ <MINUS> | <RANGE>  { jjtThis.newRange = true; } ] jjtThis.toSelector = ArrayNumberSelector()
+            token = <INTEGER_RANGE>
+            {
+                String img = token.image;
+                String[] splitted = img.split("\\.\\.");
+                jjtThis.from = Integer.parseInt(splitted[0], 10);
+                jjtThis.to = Integer.parseInt(splitted[1], 10);
+                jjtThis.newRange = true;
+            }
+        )
+        |
+        (
+            token = <ELLIPSIS_INTEGER_RANGE>
+            {
+                String img2 = token.image;
+                String[] splitted2 = img2.split("\\.\\.\\.");
+                jjtThis.from = Integer.parseInt(splitted2[0], 10);
+                jjtThis.to = Integer.parseInt(splitted2[1], 10);
+                jjtThis.newRange = true;
+                jjtThis.included = true;
+            }
+        )
+        |
+        (
+            jjtThis.fromSelector = ArrayNumberSelector()
+            (
+              (<MINUS>)
+              |
+              (<RANGE> {jjtThis.newRange = true;})
+              |
+              (<ELLIPSIS> {jjtThis.newRange = true; jjtThis.included = true;})
+            )
+            jjtThis.toSelector = ArrayNumberSelector()
         )
     )
     { return jjtThis; }

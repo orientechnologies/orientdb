@@ -16,7 +16,7 @@ public class OArrayRangeSelector extends SimpleNode {
   protected Integer from;
   protected Integer to;
   protected boolean newRange = false;
-  protected boolean included = false;//TODO implement ellipsis
+  protected boolean included = false;
 
   protected OArrayNumberSelector fromSelector;
   protected OArrayNumberSelector toSelector;
@@ -43,8 +43,10 @@ public class OArrayRangeSelector extends SimpleNode {
       fromSelector.toString(params, builder);
     }
     if (newRange) {
-      builder.append("-");
-      // TODO in 3.0 result.append("..");
+      builder.append("..");
+      if (included) {
+        builder.append('.');
+      }
     } else {
       builder.append("-");
     }
@@ -72,6 +74,9 @@ public class OArrayRangeSelector extends SimpleNode {
     Integer lTo = to;
     if (toSelector != null) {
       lTo = toSelector.getValue(iCurrentRecord, result, ctx);
+    }
+    if(included){
+      lTo++;
     }
     if (lFrom > lTo) {
       return null;
@@ -110,6 +115,9 @@ public class OArrayRangeSelector extends SimpleNode {
     if (toSelector != null) {
       lTo = toSelector.getValue(iCurrentRecord, result, ctx);
     }
+    if(included){
+      lTo++;
+    }
     if (lFrom > lTo) {
       return null;
     }
@@ -144,6 +152,7 @@ public class OArrayRangeSelector extends SimpleNode {
     result.from = from;
     result.to = to;
     result.newRange = newRange;
+    result.included = included;
 
     result.fromSelector = fromSelector == null ? null : fromSelector.copy();
     result.toSelector = toSelector == null ? null : toSelector.copy();
@@ -162,6 +171,8 @@ public class OArrayRangeSelector extends SimpleNode {
 
     if (newRange != that.newRange)
       return false;
+    if (included != that.included)
+      return false;
     if (from != null ? !from.equals(that.from) : that.from != null)
       return false;
     if (to != null ? !to.equals(that.to) : that.to != null)
@@ -179,6 +190,7 @@ public class OArrayRangeSelector extends SimpleNode {
     int result = from != null ? from.hashCode() : 0;
     result = 31 * result + (to != null ? to.hashCode() : 0);
     result = 31 * result + (newRange ? 1 : 0);
+    result = 31 * result + (included ? 1 : 0);
     result = 31 * result + (fromSelector != null ? fromSelector.hashCode() : 0);
     result = 31 * result + (toSelector != null ? toSelector.hashCode() : 0);
     return result;

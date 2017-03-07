@@ -15,14 +15,8 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.lang.reflect.Array;
+import java.util.*;
 
 import static com.orientechnologies.orient.core.sql.executor.ExecutionPlanPrintUtils.printExecutionPlan;
 
@@ -293,7 +287,7 @@ public class OSelectStatementExecutionTest {
   }
 
   @Test
-  public void   testSelectOrderByMassiveAsc() {
+  public void testSelectOrderByMassiveAsc() {
     String className = "testSelectOrderByMassiveAsc";
     db.getMetadata().getSchema().createClass(className);
     for (int i = 0; i < 100000; i++) {
@@ -556,8 +550,7 @@ public class OSelectStatementExecutionTest {
     db.getMetadata().getSchema().createClass(className);
 
     try {
-      OResultSet result = db
-          .query("select max(a + b) + (max(b + c * 2) + 1 + 2) * 3 as foo, max(d) + max(e), f from " + className);
+      OResultSet result = db.query("select max(a + b) + (max(b + c * 2) + 1 + 2) * 3 as foo, max(d) + max(e), f from " + className);
       printExecutionPlan(result);
     } catch (Exception e) {
       e.printStackTrace();
@@ -817,8 +810,7 @@ public class OSelectStatementExecutionTest {
       doc.save(targetClusterName2);
     }
 
-    OResultSet result = db
-        .query("select from cluster:[" + targetClusterName + ", " + targetClusterName2 + "] order by @rid asc");
+    OResultSet result = db.query("select from cluster:[" + targetClusterName + ", " + targetClusterName2 + "] order by @rid asc");
     printExecutionPlan(result);
 
     for (int i = 0; i < 20; i++) {
@@ -2922,15 +2914,165 @@ public class OSelectStatementExecutionTest {
       doc.setProperty("name", "name" + i);
       doc.save();
     }
-    OResultSet result = db.query("select from "+className+" where name matches 'name1'");
+    OResultSet result = db.query("select from " + className + " where name matches 'name1'");
     printExecutionPlan(result);
 
     for (int i = 0; i < 1; i++) {
       Assert.assertTrue(result.hasNext());
       OResult item = result.next();
       Assert.assertNotNull(item);
-      Assert.assertEquals(item.getProperty("name") , "name1");
+      Assert.assertEquals(item.getProperty("name"), "name1");
 
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test
+  public void testRange() {
+    String className = "testRange";
+    db.getMetadata().getSchema().createClass(className);
+
+    ODocument doc = db.newInstance(className);
+    doc.setProperty("name", new String[] { "a", "b", "c", "d" });
+    doc.save();
+
+    OResultSet result = db.query("select name[0..3] as names from " + className);
+    printExecutionPlan(result);
+
+    for (int i = 0; i < 1; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Object names = item.getProperty("names");
+      if (names == null) {
+        Assert.fail();
+      }
+      if (names instanceof Collection) {
+        Assert.assertEquals(3, ((Collection) names).size());
+        Iterator iter = ((Collection) names).iterator();
+        Assert.assertEquals("a", iter.next());
+        Assert.assertEquals("b", iter.next());
+        Assert.assertEquals("c", iter.next());
+      } else if (names.getClass().isArray()) {
+        Assert.assertEquals(3, Array.getLength(names));
+      } else {
+        Assert.fail();
+      }
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test
+  public void testRangeParams1() {
+    String className = "testRangeParams1";
+    db.getMetadata().getSchema().createClass(className);
+
+    ODocument doc = db.newInstance(className);
+    doc.setProperty("name", new String[] { "a", "b", "c", "d" });
+    doc.save();
+
+    OResultSet result = db.query("select name[?..?] as names from " + className, 0, 3);
+    printExecutionPlan(result);
+
+    for (int i = 0; i < 1; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Object names = item.getProperty("names");
+      if (names == null) {
+        Assert.fail();
+      }
+      if (names instanceof Collection) {
+        Assert.assertEquals(3, ((Collection) names).size());
+        Iterator iter = ((Collection) names).iterator();
+        Assert.assertEquals("a", iter.next());
+        Assert.assertEquals("b", iter.next());
+        Assert.assertEquals("c", iter.next());
+      } else if (names.getClass().isArray()) {
+        Assert.assertEquals(3, Array.getLength(names));
+      } else {
+        Assert.fail();
+      }
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test
+  public void testRangeParams2() {
+    String className = "testRangeParams2";
+    db.getMetadata().getSchema().createClass(className);
+
+    ODocument doc = db.newInstance(className);
+    doc.setProperty("name", new String[] { "a", "b", "c", "d" });
+    doc.save();
+
+    Map<String, Object> params = new HashMap<>();
+    params.put("a", 0);
+    params.put("b", 3);
+    OResultSet result = db.query("select name[:a..:b] as names from " + className, params);
+    printExecutionPlan(result);
+
+    for (int i = 0; i < 1; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Object names = item.getProperty("names");
+      if (names == null) {
+        Assert.fail();
+      }
+      if (names instanceof Collection) {
+        Assert.assertEquals(3, ((Collection) names).size());
+        Iterator iter = ((Collection) names).iterator();
+        Assert.assertEquals("a", iter.next());
+        Assert.assertEquals("b", iter.next());
+        Assert.assertEquals("c", iter.next());
+      } else if (names.getClass().isArray()) {
+        Assert.assertEquals(3, Array.getLength(names));
+      } else {
+        Assert.fail();
+      }
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test
+  public void testEllipsis() {
+    String className = "testEllipsis";
+    db.getMetadata().getSchema().createClass(className);
+
+    ODocument doc = db.newInstance(className);
+    doc.setProperty("name", new String[] { "a", "b", "c", "d" });
+    doc.save();
+
+    OResultSet result = db.query("select name[0...2] as names from " + className);
+    printExecutionPlan(result);
+
+    for (int i = 0; i < 1; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Object names = item.getProperty("names");
+      if (names == null) {
+        Assert.fail();
+      }
+      if (names instanceof Collection) {
+        Assert.assertEquals(3, ((Collection) names).size());
+        Iterator iter = ((Collection) names).iterator();
+        Assert.assertEquals("a", iter.next());
+        Assert.assertEquals("b", iter.next());
+        Assert.assertEquals("c", iter.next());
+      } else if (names.getClass().isArray()) {
+        Assert.assertEquals(3, Array.getLength(names));
+        Assert.assertEquals("a", Array.get(names, 0));
+        Assert.assertEquals("b", Array.get(names, 1));
+        Assert.assertEquals("c", Array.get(names, 2));
+      } else {
+        Assert.fail();
+      }
     }
     Assert.assertFalse(result.hasNext());
     result.close();

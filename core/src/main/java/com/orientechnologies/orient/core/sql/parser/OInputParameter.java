@@ -4,9 +4,13 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
+import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Map;
 
 public class OInputParameter extends SimpleNode {
 
@@ -32,13 +36,17 @@ public class OInputParameter extends SimpleNode {
     return null;
   }
 
+  public Object getValue(Map<Object, Object> params){
+    return null;
+  }
+
   protected Object toParsedTree(Object value) {
     if (value == null) {
       OExpression result = new OExpression(-1);
       result.isNull = true;
       return result;
     }
-    if(value instanceof Boolean){
+    if (value instanceof Boolean) {
       OExpression result = new OExpression(-1);
       result.booleanValue = (Boolean) value;
       return result;
@@ -48,6 +56,20 @@ public class OInputParameter extends SimpleNode {
       result.setValue((Integer) value);
       return result;
     }
+    if (value instanceof BigDecimal) {
+      OExpression result = new OExpression(-1);
+      OFunctionCall funct = new OFunctionCall(-1);
+      result.mathExpression = new OBaseExpression(-1);
+      ((OBaseExpression) result.mathExpression).identifier = new OBaseIdentifier(-1);
+      ((OBaseExpression) result.mathExpression).identifier.levelZero = new OLevelZeroIdentifier(-1);
+      ((OBaseExpression) result.mathExpression).identifier.levelZero.functionCall = funct;
+      funct.name = new OIdentifier("decimal");
+      OExpression stringExp = new OExpression(-1);
+      stringExp.mathExpression = new OBaseExpression(((BigDecimal) value).toPlainString());
+      funct.getParams().add(stringExp);
+      return result;
+    }
+
     if (value instanceof Number) {
       OFloatingPoint result = new OFloatingPoint(-1);
       result.sign = ((Number) value).doubleValue() >= 0 ? 1 : -1;

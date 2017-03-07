@@ -23,7 +23,8 @@ public class OPositionalParameter extends OInputParameter {
     return visitor.visit(this, data);
   }
 
-  @Override public String toString() {
+  @Override
+  public String toString() {
     return "?";
   }
 
@@ -42,6 +43,14 @@ public class OPositionalParameter extends OInputParameter {
     }
   }
 
+  public Object getValue(Map<Object, Object> params) {
+    Object result = null;
+    if (params != null) {
+      result = params.get(paramNumber);
+    }
+    return result;
+  }
+
   public Object bindFromInputParams(Map<Object, Object> params) {
     if (params != null) {
       Object value = params.get(paramNumber);
@@ -51,13 +60,15 @@ public class OPositionalParameter extends OInputParameter {
     return this;
   }
 
-  @Override public OPositionalParameter copy() {
+  @Override
+  public OPositionalParameter copy() {
     OPositionalParameter result = new OPositionalParameter(-1);
     result.paramNumber = paramNumber;
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -71,7 +82,8 @@ public class OPositionalParameter extends OInputParameter {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     return paramNumber;
   }
 }

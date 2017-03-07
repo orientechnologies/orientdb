@@ -46,7 +46,7 @@ public class ONotInCondition extends OBooleanExpression {
     if (rightStatement != null) {
       rightVal = OInCondition.executeQuery(rightStatement, ctx);
     } else if (rightParam != null) {
-      rightVal = rightParam.bindFromInputParams(ctx.getInputParameters());
+      rightVal = rightParam.getValue(ctx.getInputParameters());
     } else if (rightMathExpression != null) {
       rightVal = rightMathExpression.execute(currentRecord, ctx);
     }
@@ -63,7 +63,7 @@ public class ONotInCondition extends OBooleanExpression {
     if (rightStatement != null) {
       rightVal = OInCondition.executeQuery(rightStatement, ctx);
     } else if (rightParam != null) {
-      rightVal = rightParam.bindFromInputParams(ctx.getInputParameters());
+      rightVal = rightParam.getValue(ctx.getInputParameters());
     } else if (rightMathExpression != null) {
       rightVal = rightMathExpression.execute(currentRecord, ctx);
     }

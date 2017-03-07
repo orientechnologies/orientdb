@@ -603,7 +603,7 @@ public class OSelectExecutionPlanner {
   }
 
   private void handleInputParamAsTarget(OSelectExecutionPlan result, OInputParameter inputParam, OCommandContext ctx) {
-    Object paramValue = inputParam.bindFromInputParams(ctx.getInputParameters());
+    Object paramValue = inputParam.getValue(ctx.getInputParameters());
     if (paramValue == null) {
       result.chain(new EmptyStep(ctx));//nothing to return
     } else if (paramValue instanceof OClass) {

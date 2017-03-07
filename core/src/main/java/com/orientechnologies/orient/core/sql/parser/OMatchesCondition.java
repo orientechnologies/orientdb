@@ -37,7 +37,7 @@ public class OMatchesCondition extends OBooleanExpression {
     if (regex != null) {
       regex = regex.substring(1, regex.length()-1);
     }else{
-      Object paramVal = rightParam.bindFromInputParams(ctx.getInputParameters());
+      Object paramVal = rightParam.getValue(ctx.getInputParameters());
       if (paramVal instanceof String) {
         regex = (String) paramVal;
       } else {
@@ -70,7 +70,7 @@ public class OMatchesCondition extends OBooleanExpression {
     if (regex != null) {
       regex = regex.substring(1, regex.length()-1);
     }else{
-      Object paramVal = rightParam.bindFromInputParams(ctx.getInputParameters());
+      Object paramVal = rightParam.getValue(ctx.getInputParameters());
       if (paramVal instanceof String) {
         regex = (String) paramVal;
       } else {

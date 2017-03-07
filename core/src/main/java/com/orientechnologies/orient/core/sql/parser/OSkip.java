@@ -45,7 +45,7 @@ public class OSkip extends SimpleNode {
       return num.getValue().intValue();
     }
     if (inputParam != null) {
-      Object paramValue = inputParam.bindFromInputParams(ctx.getInputParameters());
+      Object paramValue = inputParam.getValue(ctx.getInputParameters());
       if (paramValue instanceof Number) {
         return ((Number) paramValue).intValue();
       } else {

@@ -715,6 +715,17 @@ public class OSelectStatementTest {
   }
 
   @Test
+  public void testRange() {
+    checkRightSyntax("select foo[1..5] from V");
+    checkRightSyntax("select foo[1...5] from V");
+    checkRightSyntax("select foo[?..?] from V");
+    checkRightSyntax("select foo[?...?] from V");
+    checkRightSyntax("select foo[:a..:b] from V");
+    checkRightSyntax("select foo[:a...:b] from V");
+    checkWrongSyntax("select foo[1....5] from V");
+  }
+
+  @Test
   public void testTranslateLucene() {
     OSelectStatement stm = (OSelectStatement) checkRightSyntax("select from V where name LUCENE 'foo'");
     stm.whereClause.getBaseExpression().translateLuceneOperator();

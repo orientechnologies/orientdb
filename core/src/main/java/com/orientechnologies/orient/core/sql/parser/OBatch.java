@@ -32,7 +32,7 @@ public class OBatch extends SimpleNode {
     if (this.num != null) {
       return num.getValue().intValue();
     } else if (inputParam != null) {
-      Object obj = inputParam.bindFromInputParams(ctx.getInputParameters());
+      Object obj = inputParam.getValue(ctx.getInputParameters());
       if (obj == null || !(obj instanceof Number)) {
         throw new OCommandExecutionException("" + obj + " is not a number (BATCH)");
       }
