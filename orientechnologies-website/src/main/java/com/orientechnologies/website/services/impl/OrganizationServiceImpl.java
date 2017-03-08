@@ -232,9 +232,9 @@ public class OrganizationServiceImpl implements OrganizationService {
       OUser developer = userRepository.findUserByLogin(username);
       if (developer == null) {
         developer = new OUser(username, null, null);
-        developer.setInvited(true);
-        developer = userRepository.save(developer);
       }
+      developer.setInvited(true);
+      developer = userRepository.save(developer);
       createClientMembership(client, developer);
       return developer;
     } else {
