@@ -11,7 +11,7 @@ import org.junit.runners.model.RunnerBuilder;
 public class OrientDBDebugSuite extends AbstractGremlinSuite {
 
     private static final Class<?>[] allTests = new Class<?>[] {
-            //            PropertyTest.class,
+//        GraphTest.class,
     };
 
     public OrientDBDebugSuite(final Class<?> klass, final RunnerBuilder builder) throws InitializationError {

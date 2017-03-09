@@ -23,7 +23,7 @@ public class MatcherStepTest {
 
     }
 
-    @Test
+//    @Test
     public void searchMatching() {
         graph = new OrientGraphFactory("memory:matching").getNoTx();
 

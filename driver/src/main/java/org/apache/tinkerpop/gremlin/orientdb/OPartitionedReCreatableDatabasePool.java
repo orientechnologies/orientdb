@@ -1,48 +1,43 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
-import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.ODatabasePool;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 
 public class OPartitionedReCreatableDatabasePool {
-    private OPartitionedDatabasePool pool;
-    private final String url;
-    private final String userName;
-    private final String password;
-    private final int maxSize;
-    private final boolean autoCreate;
-    private final int maxPartitionSize;
+  private final OrientDB      orientdb;
+  private       ODatabasePool pool;
+  private final String        dbName;
+  private final String        userName;
+  private final String        password;
+  private final int           maxSize;
 
-    @Deprecated
-    public OPartitionedReCreatableDatabasePool(String url, String userName, String password, int maxSize, boolean autoCreate) {
-        this(url, userName, password, 64, maxSize, autoCreate);
-    }
+  public OPartitionedReCreatableDatabasePool(OrientDB orientdb, String dbName, String userName, String password, int maxSize) {
+    this.orientdb = orientdb;
+    this.dbName = dbName;
+    this.userName = userName;
+    this.password = password;
+    this.maxSize = maxSize;
+    reCreatePool();
 
-    public OPartitionedReCreatableDatabasePool(String url, String userName, String password, int maxPartitionSize, int maxSize, boolean autoCreate) {
-        this.url = url;
-        this.userName = userName;
-        this.password = password;
-        this.maxPartitionSize = maxPartitionSize;
-        this.maxSize = maxSize;
-        this.autoCreate = autoCreate;
-        reCreatePool();
-    }
+  }
 
-    public void reCreatePool() {
-        close();
-        this.pool = new OPartitionedDatabasePool(this.url, this.userName, this.password, this.maxPartitionSize, this.maxSize).setAutoCreate(this.autoCreate);
-    }
 
-    public void close() {
-        if (this.pool != null)
-            this.pool.close();
+  public void reCreatePool() {
+    close();
+    this.pool = new ODatabasePool(this.orientdb, this.dbName, this.userName, this.password);
+  }
 
-        this.pool = null;
-    }
+  public void close() {
+    if (this.pool != null)
+      this.pool.close();
 
-    public ODatabaseDocumentTx acquire() {
-        if (this.pool != null)
-            return this.pool.acquire();
+    this.pool = null;
+  }
 
-        return null;
-    }
+  public ODatabaseDocument acquire() {
+    if (this.pool != null)
+      return this.pool.acquire();
+    return null;
+  }
 }

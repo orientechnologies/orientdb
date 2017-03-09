@@ -1,24 +1,35 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import org.junit.Test;
+
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 
 public class OPartitionedReCreatableDatabasePoolTest {
 
-    protected OPartitionedReCreatableDatabasePool pool() {
-        return new OPartitionedReCreatableDatabasePool("memory:" + Math.random(), "admin", "admin", 5, true);
-    }
+  protected OPartitionedReCreatableDatabasePool pool() {
 
-    @Test
-    public void testDatabaseAcquiredByOPartitionedReCreatableDatabasePool() throws Exception {
-        OPartitionedReCreatableDatabasePool pool = pool();
-        assertFalse(pool.acquire().isClosed());
+    OrientDB orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
 
-        pool.close();
-        assertNull(pool.acquire());
+    String dbName = "memorydb" + Math.random();
 
-        pool.reCreatePool();
-        assertFalse(pool.acquire().isClosed());
-    }
+    orientDB.create(dbName, ODatabaseType.MEMORY);
+
+    return new OPartitionedReCreatableDatabasePool(orientDB, dbName, "admin", "admin", 5);
+  }
+
+  @Test
+  public void testDatabaseAcquiredByOPartitionedReCreatableDatabasePool() throws Exception {
+    OPartitionedReCreatableDatabasePool pool = pool();
+    assertFalse(pool.acquire().isClosed());
+
+    pool.close();
+    assertNull(pool.acquire());
+
+    pool.reCreatePool();
+    assertFalse(pool.acquire().isClosed());
+  }
 }

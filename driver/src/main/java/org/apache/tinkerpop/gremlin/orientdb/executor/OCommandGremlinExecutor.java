@@ -53,127 +53,127 @@ import java.util.Map;
  */
 public class OCommandGremlinExecutor implements OScriptExecutor, OScriptInjection, OScriptResultHandler {
 
-    public static final String GREMLIN_GROOVY = "gremlin-groovy";
-    private final OScriptManager scriptManager;
-    private GremlinGroovyScriptEngineFactory factory;
+  public static final String GREMLIN_GROOVY = "gremlin-groovy";
+  private final OScriptManager                   scriptManager;
+  private       GremlinGroovyScriptEngineFactory factory;
 
-    public OCommandGremlinExecutor(OScriptManager scriptManager) {
+  public OCommandGremlinExecutor(OScriptManager scriptManager) {
 
-        factory = new GremlinGroovyScriptEngineFactory();
-        factory.setCustomizerManager(new CachedGremlinScriptEngineManager());
-        this.scriptManager = scriptManager;
+    factory = new GremlinGroovyScriptEngineFactory();
+    factory.setCustomizerManager(new CachedGremlinScriptEngineManager());
+    this.scriptManager = scriptManager;
 
-        initCustomTransformer(scriptManager);
+    initCustomTransformer(scriptManager);
 
-        scriptManager.registerInjection(this);
+    scriptManager.registerInjection(this);
 
-        scriptManager.registerFormatter(GREMLIN_GROOVY, new OGroovyScriptFormatter());
-        scriptManager.registerEngine(GREMLIN_GROOVY, factory);
+    scriptManager.registerFormatter(GREMLIN_GROOVY, new OGroovyScriptFormatter());
+    scriptManager.registerEngine(GREMLIN_GROOVY, factory);
 
-        scriptManager.registerResultHandler(GREMLIN_GROOVY, this);
+    scriptManager.registerResultHandler(GREMLIN_GROOVY, this);
+  }
+
+  private void initCustomTransformer(OScriptManager scriptManager) {
+
+    scriptManager.getTransformer().registerResultTransformer(OrientVertex.class, new OElementTransformer());
+    scriptManager.getTransformer().registerResultTransformer(OrientElement.class, new OElementTransformer());
+    scriptManager.getTransformer().registerResultTransformer(OrientVertexProperty.class, new OrientPropertyTransformer());
+  }
+
+  @Override
+  public OResultSet execute(ODatabaseDocumentInternal database, String script, Object... params) {
+    throw new UnsupportedOperationException("");
+  }
+
+  @Override
+  public OResultSet execute(final ODatabaseDocumentInternal iDatabase, final String iText, final Map params) {
+
+    OPartitionedObjectPool.PoolEntry<ScriptEngine> entry = null;
+    try {
+      entry = acquireGremlinEngine(acquireGraph(iDatabase));
+      ScriptEngine engine = entry.object;
+      bindParameters(engine, params);
+
+      final Traversal result = (Traversal) engine.eval(iText);
+
+      return new OGremlinResultSet(result, scriptManager.getTransformer(), true);
+
+    } catch (Exception e) {
+      throw OException.wrapException(new OCommandExecutionException("Error on execution of the GREMLIN script"), e);
+    } finally {
+      if (entry != null) {
+        releaseGremlinEngine(iDatabase.getName(), entry);
+      }
     }
+  }
 
-    private void initCustomTransformer(OScriptManager scriptManager) {
+  protected final OPartitionedObjectPool.PoolEntry<ScriptEngine> acquireGremlinEngine(final OrientGraph graph) {
 
-        scriptManager.getTransformer().registerResultTransformer(OrientVertex.class, new OElementTransformer());
-        scriptManager.getTransformer().registerResultTransformer(OrientElement.class, new OElementTransformer());
-        scriptManager.getTransformer().registerResultTransformer(OrientVertexProperty.class, new OrientPropertyTransformer());
-    }
+    final OPartitionedObjectPool.PoolEntry<ScriptEngine> entry = scriptManager
+        .acquireDatabaseEngine(graph.getRawDatabase().getName(), GREMLIN_GROOVY);
+    final ScriptEngine engine = entry.object;
+    Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
+    bindGraph(graph, bindings);
+    return entry;
+  }
 
-    @Override
-    public OResultSet execute(ODatabaseDocumentInternal database, String script, Object... params) {
-        throw new UnsupportedOperationException("");
-    }
+  protected void releaseGremlinEngine(String dbName, OPartitionedObjectPool.PoolEntry<ScriptEngine> engine) {
+    scriptManager.releaseDatabaseEngine(GREMLIN_GROOVY, dbName, engine);
+  }
 
-    @Override
-    public OResultSet execute(final ODatabaseDocumentInternal iDatabase, final String iText, final Map params) {
+  private void bindGraph(OrientGraph graph, Bindings bindings) {
+    bindings.put("graph", graph);
+    bindings.put("g", graph.traversal());
+  }
 
-        OPartitionedObjectPool.PoolEntry<ScriptEngine> entry = null;
-        try {
-            entry = acquireGremlinEngine(acquireGraph(iDatabase));
-            ScriptEngine engine = entry.object;
-            bindParameters(engine, params);
+  private void unbindGraph(Bindings bindings) {
+    bindings.put("graph", null);
+    bindings.put("g", null);
+  }
 
-            final Traversal result = (Traversal) engine.eval(iText);
+  public void bindParameters(final ScriptEngine iEngine, final Map<Object, Object> iParameters) {
+    if (iParameters != null && !iParameters.isEmpty())
+      // Every call to the function is a execution itself. Therefore, it requires a fresh set of input parameters.
+      // Therefore, clone the parameters map trying to recycle previous instances
+      for (Map.Entry<Object, Object> param : iParameters.entrySet()) {
+        final String paramName = param.getKey().toString().trim();
+        iEngine.getBindings(ScriptContext.ENGINE_SCOPE).put(paramName, param.getValue());
+      }
 
-            return new OGremlinResultSet(result, scriptManager.getTransformer(), true);
+  }
 
-        } catch (Exception e) {
-            throw OException.wrapException(new OCommandExecutionException("Error on execution of the GREMLIN script"), e);
-        } finally {
-            if (entry != null) {
-                releaseGremlinEngine(iDatabase.getName(), entry);
-            }
-        }
-    }
+  public OrientGraph acquireGraph(final ODatabaseDocument database) {
+    return new OrientGraph(null, database, new BaseConfiguration() {
+      {
+        setProperty(OrientGraph.CONFIG_TRANSACTIONAL, true);
+      }
+    }, null, null);
+  }
 
-    protected final OPartitionedObjectPool.PoolEntry<ScriptEngine> acquireGremlinEngine(final OrientGraph graph) {
+  public String getEngineVersion() {
+    return factory.getEngineVersion();
+  }
 
-        final OPartitionedObjectPool.PoolEntry<ScriptEngine> entry = scriptManager.acquireDatabaseEngine(graph.getRawDatabase().getName(),
-                GREMLIN_GROOVY);
-        final ScriptEngine engine = entry.object;
-        Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
-        bindGraph(graph, bindings);
-        return entry;
-    }
+  @Override
+  public void bind(ScriptEngine engine, Bindings binding, ODatabaseDocument database) {
 
-    protected void releaseGremlinEngine(String dbName, OPartitionedObjectPool.PoolEntry<ScriptEngine> engine) {
-        scriptManager.releaseDatabaseEngine(GREMLIN_GROOVY, dbName, engine);
-    }
+    OrientGraph graph = acquireGraph(database);
 
-    private void bindGraph(OrientGraph graph, Bindings bindings) {
-        bindings.put("graph", graph);
-        bindings.put("g", graph.traversal());
-    }
+    bindGraph(graph, binding);
+  }
 
-    private void unbindGraph(Bindings bindings) {
-        bindings.put("graph", null);
-        bindings.put("g", null);
-    }
+  @Override
+  public void unbind(ScriptEngine engine, Bindings binding) {
+    unbindGraph(binding);
+  }
 
-    public void bindParameters(final ScriptEngine iEngine, final Map<Object, Object> iParameters) {
-        if (iParameters != null && !iParameters.isEmpty())
-            // Every call to the function is a execution itself. Therefore, it requires a fresh set of input parameters.
-            // Therefore, clone the parameters map trying to recycle previous instances
-            for (Map.Entry<Object, Object> param : iParameters.entrySet()) {
-            final String paramName = param.getKey().toString().trim();
-            iEngine.getBindings(ScriptContext.ENGINE_SCOPE).put(paramName, param.getValue());
-            }
+  @Override
+  public Object handle(Object result, ScriptEngine engine, Bindings binding, ODatabaseDocument database) {
 
-    }
+    //        if(result instanceof Traversal){
+    //            return new OGremlinResultSet((Traversal) result, scriptManager.getTransformer(), false);
+    //        }
+    return result;
 
-    public OrientGraph acquireGraph(final ODatabaseDocument database) {
-        return new OrientGraph(database, new BaseConfiguration() {
-            {
-                setProperty(OrientGraph.CONFIG_TRANSACTIONAL, true);
-            }
-        }, null, null);
-    }
-
-    public String getEngineVersion() {
-        return factory.getEngineVersion();
-    }
-
-    @Override
-    public void bind(ScriptEngine engine, Bindings binding, ODatabaseDocument database) {
-
-        OrientGraph graph = acquireGraph(database);
-
-        bindGraph(graph, binding);
-    }
-
-    @Override
-    public void unbind(ScriptEngine engine, Bindings binding) {
-        unbindGraph(binding);
-    }
-
-    @Override
-    public Object handle(Object result, ScriptEngine engine, Bindings binding, ODatabaseDocument database) {
-
-        //        if(result instanceof Traversal){
-        //            return new OGremlinResultSet((Traversal) result, scriptManager.getTransformer(), false);
-        //        }
-        return result;
-
-    }
+  }
 }

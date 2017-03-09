@@ -58,7 +58,7 @@ public class OrientGraphProvider extends AbstractGraphProvider {
         configs.put(Graph.GRAPH, OrientGraph.class.getName());
         configs.put("name", graphName);
         if (testMethodName.equals("shouldPersistDataOnClose"))
-            configs.put(OrientGraph.CONFIG_URL, "memory:test-" + graphName + "-" + test.getSimpleName() + "-" + testMethodName);
+            configs.put(OrientGraph.CONFIG_URL, "plocal:./target/databases/test-" + graphName + "-" + test.getSimpleName() + "-" + testMethodName);
 
         Random random = new Random();
         if (random.nextBoolean())

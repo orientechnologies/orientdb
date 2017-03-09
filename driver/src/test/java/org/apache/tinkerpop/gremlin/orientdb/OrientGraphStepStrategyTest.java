@@ -15,7 +15,7 @@ public class OrientGraphStepStrategyTest {
 
     @Test
     public void shouldFoldInHasContainers() {
-        OrientGraph graph = new OrientGraphFactory(URL, "root", "root").getNoTx();
+        OrientGraph graph = new OrientGraphFactory(URL, "admin", "admin").getNoTx();
         GraphTraversalSource g = graph.traversal();
         ////
         GraphTraversal.Admin traversal = g.V().has("name", "marko").asAdmin();

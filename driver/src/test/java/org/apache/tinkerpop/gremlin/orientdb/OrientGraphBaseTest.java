@@ -32,7 +32,8 @@ public abstract class OrientGraphBaseTest {
 
     @After
     public void dropDB() {
-        factory.getNoTx().drop();
+
+        factory.drop();
     }
 
 }

@@ -28,10 +28,9 @@ import static org.apache.tinkerpop.gremlin.structure.T.label;
 public class OrientGraphIndexTest {
 
     public static final String URL = "memory:" + OrientGraphIndexTest.class.getSimpleName();
-    //    public static final String URL = "remote:localhost/test";
 
     private OrientGraph newGraph() {
-        return new OrientGraphFactory(URL + UUID.randomUUID(), "root", "root").getNoTx();
+        return new OrientGraphFactory(URL + UUID.randomUUID(), "admin", "admin").getNoTx();
     }
 
     String vertexLabel1 = "SomeVertexLabel1";

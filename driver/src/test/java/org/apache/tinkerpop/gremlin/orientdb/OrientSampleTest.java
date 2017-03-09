@@ -13,7 +13,7 @@ public class OrientSampleTest {
         String graphUri = "memory:test";
         //        String graphUri = "plocal:target/graph" + Math.random();
         //        String graphUri = "remote:localhost/test";
-        OrientGraph graph = new OrientGraphFactory(graphUri, "root", "root").getNoTx();
+        OrientGraph graph = new OrientGraphFactory(graphUri, "admin", "admin").getNoTx();
 
         OrientVertex v1 = (OrientVertex) graph.addVertex();
         OrientVertex v2 = (OrientVertex) graph.addVertex();
