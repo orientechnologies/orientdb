@@ -322,6 +322,7 @@ angular.module('webappApp')
 
     $scope.carriage = true;
 
+
     $scope.placeholder = "Leave a comment (Supports Markdown)";
     $scope.types = {
       'Bug': 'bug',
@@ -331,6 +332,9 @@ angular.module('webappApp')
       'Question': 'question'
     }
     $scope.issue = {}
+
+    $scope.issue.confidential = true;
+
     $scope.save = function () {
       $scope.issue.scope = $scope.scope.number;
       Organization.all("issues").post($scope.issue).then(function (data) {
@@ -348,9 +352,7 @@ angular.module('webappApp')
       $scope.isSupport = User.isSupport(ORGANIZATION);
       $scope.client = User.getClient(ORGANIZATION);
 
-      if ($scope.isClient && !$scope.isSupport) {
-        $scope.issue.confidential = true;
-      }
+
       User.environments().then(function (data) {
         $scope.environments = data.plain();
       });
