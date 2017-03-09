@@ -21,16 +21,43 @@ public class OInteger extends ONumber {
   }
 
   public void setValue(int sign, String stringValue) {
+    int radix = radix(stringValue);
+    stringValue = convertToJavaByRadix(stringValue, radix);
+
     if (stringValue.endsWith("L") || stringValue.endsWith("l")) {
-      value = Long.parseLong(stringValue.substring(0, stringValue.length()-1)) * sign;
+      value = Long.parseLong(stringValue.substring(0, stringValue.length() - 1), radix) * sign;
     } else {
-      long longValue = Long.parseLong(stringValue) * sign;
+      long longValue = Long.parseLong(stringValue, radix) * sign;
       if (longValue > Integer.MAX_VALUE || longValue < Integer.MIN_VALUE) {
         value = longValue;
       } else {
         value = (int) longValue;
       }
     }
+  }
+
+  private String convertToJavaByRadix(String stringValue, int radix) {
+    if (radix == 16) {
+      if (stringValue.charAt(0) == '-') {
+        return "-" + stringValue.substring(3);
+      } else {
+        return stringValue.substring(2);
+      }
+    }
+    return stringValue;
+  }
+
+  private int radix(String stringValue) {
+    if (stringValue.startsWith("-")) {
+      stringValue = stringValue.substring(1);
+    }
+    if (stringValue.length() > 2 && stringValue.substring(0, 2).equalsIgnoreCase("0x")) {
+      return 16;
+    }
+    if (stringValue.length() > 1 && stringValue.charAt(0) == '0') {
+      return 8;
+    }
+    return 10;
   }
 
   public void setValue(Number value) {
@@ -47,7 +74,8 @@ public class OInteger extends ONumber {
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -61,7 +89,8 @@ public class OInteger extends ONumber {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     return value != null ? value.hashCode() : 0;
   }
 }
