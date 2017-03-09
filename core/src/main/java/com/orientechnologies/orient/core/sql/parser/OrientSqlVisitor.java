@@ -55,7 +55,6 @@ public interface OrientSqlVisitor
   public Object visit(OModifier node, Object data);
   public Object visit(OExpression node, Object data);
   public Object visit(OMathExpression node, Object data);
-  public Object visit(OMultExpression node, Object data);
   public Object visit(OFirstLevelExpression node, Object data);
   public Object visit(OParenthesisExpression node, Object data);
   public Object visit(OBaseExpression node, Object data);

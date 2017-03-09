@@ -540,6 +540,8 @@ TOKEN :
 | < LSHIFTASSIGN: "<<=" >
 | < RSIGNEDSHIFTASSIGN: ">>=" >
 | < RUNSIGNEDSHIFTASSIGN: ">>>=" >
+| < RSHIFT: ">>" >
+| < RUNSIGNEDSHIFT: ">>>" >
 | < ELLIPSIS: "..." >
 | < RANGE: ".." >
 | < NOT: ( "N" | "n") ( "O" | "o") ( "T" | "t")  >
@@ -2130,43 +2132,36 @@ OMathExpression MathExpression():
 }
 {
     (
-	    sub = MultExpression() { jjtThis.getChildExpressions().add(sub); }
+	    sub = FirstLevelExpression() { jjtThis.getChildExpressions().add(sub); }
 	    (
-	        LOOKAHEAD( 2 ) ( <PLUS> { jjtThis.operators.add( OMathExpression.Operator.PLUS); } | <MINUS> { jjtThis.operators.add(OMathExpression.Operator.MINUS); })
-	        sub = MultExpression() { jjtThis.getChildExpressions().add(sub); }
-	    )*
-	)
-	{
-	    if(jjtThis.getChildExpressions().size() != 1){
-	        return jjtThis;
-	    }else{
-	        return jjtThis.getChildExpressions().get(0);
-	    }
-	}
-}
-
-
-OMathExpression MultExpression():
-{
-    OMathExpression sub;
-    jjtThis.setChildExpressions(new java.util.ArrayList());
-}
-{
-    (
-        sub = FirstLevelExpression()  { jjtThis.getChildExpressions().add(sub); }
-        (
-            LOOKAHEAD( 2 )
-            (
+	        LOOKAHEAD( 2 )
+	        (
                 <STAR> { jjtThis.operators.add( OMathExpression.Operator.STAR); }
                 |
                 <SLASH> { jjtThis.operators.add( OMathExpression.Operator.SLASH); }
                 |
                 <REM> { jjtThis.operators.add( OMathExpression.Operator.REM); }
-            )
-            sub = FirstLevelExpression()  { jjtThis.getChildExpressions().add(sub); }
-        )*
-    )
-    {
+                |
+	            <PLUS> { jjtThis.operators.add( OMathExpression.Operator.PLUS); }
+	            |
+	            <MINUS> { jjtThis.operators.add(OMathExpression.Operator.MINUS); }
+	            |
+	            <LSHIFT> { jjtThis.operators.add(OMathExpression.Operator.LSHIFT); }
+	            |
+	            <RSHIFT> { jjtThis.operators.add(OMathExpression.Operator.RSHIFT); }
+	            |
+	            <RUNSIGNEDSHIFT> { jjtThis.operators.add(OMathExpression.Operator.RUNSIGNEDSHIFT); }
+	            |
+	            <BIT_AND> { jjtThis.operators.add(OMathExpression.Operator.BIT_AND); }
+	            |
+	            <BIT_OR> { jjtThis.operators.add(OMathExpression.Operator.BIT_OR); }
+	            |
+	            <XOR> { jjtThis.operators.add(OMathExpression.Operator.XOR); }
+	        )
+	        sub = FirstLevelExpression() { jjtThis.getChildExpressions().add(sub); }
+	    )*
+	)
+	{
 	    if(jjtThis.getChildExpressions().size() != 1){
 	        return jjtThis;
 	    }else{

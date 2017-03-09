@@ -10,22 +10,94 @@ import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class OMathExpression extends SimpleNode {
+
+  private static final Object NULL_VALUE = new Object();
 
   public OExpression getExpandContent() {
     throw new OCommandExecutionException("Invalid expand expression");
   }
 
-
-
   public enum Operator {
-    PLUS {
+    STAR(10) {
+      @Override
+      public Number apply(Integer left, Integer right) {
+        return left * right;
+      }
+
+      @Override
+      public Number apply(Long left, Long right) {
+        return left * right;
+      }
+
+      @Override
+      public Number apply(Float left, Float right) {
+        return left * right;
+      }
+
+      @Override
+      public Number apply(Double left, Double right) {
+        return left * right;
+      }
+
+      @Override
+      public Number apply(BigDecimal left, BigDecimal right) {
+        return left.multiply(right);
+      }
+    }, SLASH(10) {
+      @Override
+      public Number apply(Integer left, Integer right) {
+        return left / right;
+      }
+
+      @Override
+      public Number apply(Long left, Long right) {
+        return left / right;
+      }
+
+      @Override
+      public Number apply(Float left, Float right) {
+        return left / right;
+      }
+
+      @Override
+      public Number apply(Double left, Double right) {
+        return left / right;
+      }
+
+      @Override
+      public Number apply(BigDecimal left, BigDecimal right) {
+        return left.divide(right, BigDecimal.ROUND_HALF_UP);
+      }
+    }, REM(10) {
+      @Override
+      public Number apply(Integer left, Integer right) {
+        return left % right;
+      }
+
+      @Override
+      public Number apply(Long left, Long right) {
+        return left % right;
+      }
+
+      @Override
+      public Number apply(Float left, Float right) {
+        return left % right;
+      }
+
+      @Override
+      public Number apply(Double left, Double right) {
+        return left % right;
+      }
+
+      @Override
+      public Number apply(BigDecimal left, BigDecimal right) {
+        return left.remainder(right);
+      }
+    }, PLUS(20) {
       @Override
       public Number apply(Integer left, Integer right) {
         final Integer sum = left + right;
@@ -54,7 +126,7 @@ public class OMathExpression extends SimpleNode {
       public Number apply(BigDecimal left, BigDecimal right) {
         return left.add(right);
       }
-    }, MINUS {
+    }, MINUS(20) {
       @Override
       public Number apply(Integer left, Integer right) {
         int result = left - right;
@@ -84,82 +156,163 @@ public class OMathExpression extends SimpleNode {
       public Number apply(BigDecimal left, BigDecimal right) {
         return left.subtract(right);
       }
-    }, STAR {
+    }, LSHIFT(30) {
       @Override
       public Number apply(Integer left, Integer right) {
-        return left * right;
+        return left << right;
       }
 
       @Override
       public Number apply(Long left, Long right) {
-        return left * right;
+        return left << right;
       }
 
       @Override
       public Number apply(Float left, Float right) {
-        return left * right;
+        return null;
       }
 
       @Override
       public Number apply(Double left, Double right) {
-        return left * right;
+        return null;
       }
 
       @Override
       public Number apply(BigDecimal left, BigDecimal right) {
-        return left.multiply(right);
+        return null;
       }
-    }, SLASH {
+    }, RSHIFT(30) {
       @Override
       public Number apply(Integer left, Integer right) {
-        return left / right;
+        return left >> right;
       }
 
       @Override
       public Number apply(Long left, Long right) {
-        return left / right;
+        return left >> right;
       }
 
       @Override
       public Number apply(Float left, Float right) {
-        return left / right;
+        return null;
       }
 
       @Override
       public Number apply(Double left, Double right) {
-        return left / right;
+        return null;
       }
 
       @Override
       public Number apply(BigDecimal left, BigDecimal right) {
-        return left.divide(right, BigDecimal.ROUND_HALF_UP);
+        return null;
       }
-    }, REM {
+    }, RUNSIGNEDSHIFT(30) {
       @Override
       public Number apply(Integer left, Integer right) {
-        return left % right;
+        return left >>> right;
       }
 
       @Override
       public Number apply(Long left, Long right) {
-        return left % right;
+        return left >>> right;
       }
 
       @Override
       public Number apply(Float left, Float right) {
-        return left % right;
+        return null;
       }
 
       @Override
       public Number apply(Double left, Double right) {
-        return left % right;
+        return null;
       }
 
       @Override
       public Number apply(BigDecimal left, BigDecimal right) {
-        return left.remainder(right);
+        return null;
+      }
+    }, BIT_AND(40) {
+      @Override
+      public Number apply(Integer left, Integer right) {
+        return left & right;
+      }
+
+      @Override
+      public Number apply(Long left, Long right) {
+        return left & right;
+      }
+
+      @Override
+      public Number apply(Float left, Float right) {
+        return null;
+      }
+
+      @Override
+      public Number apply(Double left, Double right) {
+        return null;
+      }
+
+      @Override
+      public Number apply(BigDecimal left, BigDecimal right) {
+        return null;
+      }
+    }, XOR(50) {
+      @Override
+      public Number apply(Integer left, Integer right) {
+        return left ^ right;
+      }
+
+      @Override
+      public Number apply(Long left, Long right) {
+        return left ^ right;
+      }
+
+      @Override
+      public Number apply(Float left, Float right) {
+        return null;
+      }
+
+      @Override
+      public Number apply(Double left, Double right) {
+        return null;
+      }
+
+      @Override
+      public Number apply(BigDecimal left, BigDecimal right) {
+        return null;
+      }
+    }, BIT_OR(60) {
+      @Override
+      public Number apply(Integer left, Integer right) {
+        return left | right;
+      }
+
+      @Override
+      public Number apply(Long left, Long right) {
+        return left | right;
+      }
+
+      @Override
+      public Number apply(Float left, Float right) {
+        return null;
+      }
+
+      @Override
+      public Number apply(Double left, Double right) {
+        return null;
+      }
+
+      @Override
+      public Number apply(BigDecimal left, BigDecimal right) {
+        return null;
       }
     };
+
+    private final int priority;
+
+    Operator(int priority) {
+      this.priority = priority;
+    }
 
     public abstract Number apply(Integer left, Integer right);
 
@@ -171,6 +324,9 @@ public class OMathExpression extends SimpleNode {
 
     public abstract Number apply(BigDecimal left, BigDecimal right);
 
+    public int getPriority() {
+      return priority;
+    }
   }
 
   protected List<OMathExpression> childExpressions = new ArrayList<OMathExpression>();
@@ -188,30 +344,133 @@ public class OMathExpression extends SimpleNode {
     if (childExpressions.size() == 0) {
       return null;
     }
-
-    OMathExpression nextExpression = childExpressions.get(0);
-    Object nextValue = nextExpression.execute(iCurrentRecord, ctx);
-    for (int i = 0; i < operators.size() && i + 1 < childExpressions.size(); i++) {
-      Operator nextOperator = operators.get(i);
-      Object rightValue = childExpressions.get(i + 1).execute(iCurrentRecord, ctx);
-      nextValue = apply(nextValue, nextOperator, rightValue);
+    if (childExpressions.size() == 1) {
+      return childExpressions.get(0).execute(iCurrentRecord, ctx);
     }
-    return nextValue;
+
+    if (childExpressions.size() == 2) {
+      Object leftValue = childExpressions.get(0).execute(iCurrentRecord, ctx);
+      Object rightValue = childExpressions.get(1).execute(iCurrentRecord, ctx);
+      return apply(leftValue, operators.get(0), rightValue);
+    }
+
+    return calculateWithOpPriority(iCurrentRecord, ctx);
   }
 
   public Object execute(OResult iCurrentRecord, OCommandContext ctx) {
     if (childExpressions.size() == 0) {
       return null;
     }
+    if (childExpressions.size() == 1) {
+      return childExpressions.get(0).execute(iCurrentRecord, ctx);
+    }
+
+    if (childExpressions.size() == 2) {
+      Object leftValue = childExpressions.get(0).execute(iCurrentRecord, ctx);
+      Object rightValue = childExpressions.get(1).execute(iCurrentRecord, ctx);
+      return apply(leftValue, operators.get(0), rightValue);
+    }
+
+    return calculateWithOpPriority(iCurrentRecord, ctx);
+  }
+
+  private Object calculateWithOpPriority(OResult iCurrentRecord, OCommandContext ctx) {
+    Deque valuesStack = new ArrayDeque<>();
+    Deque<Operator> operatorsStack = new ArrayDeque<Operator>();
 
     OMathExpression nextExpression = childExpressions.get(0);
-    Object nextValue = nextExpression.execute(iCurrentRecord, ctx);
+    Object val = nextExpression.execute(iCurrentRecord, ctx);
+    valuesStack.push(val == null ? NULL_VALUE : val);
+
     for (int i = 0; i < operators.size() && i + 1 < childExpressions.size(); i++) {
       Operator nextOperator = operators.get(i);
       Object rightValue = childExpressions.get(i + 1).execute(iCurrentRecord, ctx);
-      nextValue = apply(nextValue, nextOperator, rightValue);
+
+      if (!operatorsStack.isEmpty() && operatorsStack.peek().getPriority() <= nextOperator.getPriority()) {
+        Object right = valuesStack.poll();
+        right = right == NULL_VALUE ? null : right;
+        Object left = valuesStack.poll();
+        left = left == NULL_VALUE ? null : left;
+        Object calculatedValue = apply(left, operatorsStack.poll(), right);
+        valuesStack.push(calculatedValue == null ? NULL_VALUE : calculatedValue);
+      }
+      operatorsStack.push(nextOperator);
+
+      valuesStack.push(rightValue == null ? NULL_VALUE : rightValue);
     }
-    return nextValue;
+
+    return iterateOnPriorities(valuesStack, operatorsStack);
+  }
+
+  private Object calculateWithOpPriority(OIdentifiable iCurrentRecord, OCommandContext ctx) {
+    Deque valuesStack = new ArrayDeque<>();
+    Deque<Operator> operatorsStack = new ArrayDeque<Operator>();
+
+    OMathExpression nextExpression = childExpressions.get(0);
+    Object val = nextExpression.execute(iCurrentRecord, ctx);
+    valuesStack.push(val == null ? NULL_VALUE : val);
+
+    for (int i = 0; i < operators.size() && i + 1 < childExpressions.size(); i++) {
+      Operator nextOperator = operators.get(i);
+      Object rightValue = childExpressions.get(i + 1).execute(iCurrentRecord, ctx);
+
+      if (!operatorsStack.isEmpty() && operatorsStack.peek().getPriority() <= nextOperator.getPriority()) {
+        Object right = valuesStack.poll();
+        right = right == NULL_VALUE ? null : right;
+        Object left = valuesStack.poll();
+        left = left == NULL_VALUE ? null : left;
+        Object calculatedValue = apply(left, operatorsStack.poll(), right);
+        valuesStack.push(calculatedValue == null ? NULL_VALUE : calculatedValue);
+      }
+      operatorsStack.push(nextOperator);
+
+      valuesStack.push(rightValue == null ? NULL_VALUE : rightValue);
+    }
+
+    return iterateOnPriorities(valuesStack, operatorsStack);
+  }
+
+  private Object iterateOnPriorities(Deque values, Deque<Operator> operators) {
+    while (true) {
+      if (values.size() == 0) {
+        return null;
+      }
+      if (values.size() == 1) {
+        return values.getFirst();
+      }
+
+      Deque valuesStack = new ArrayDeque<>();
+      Deque<OMathExpression.Operator> operatorsStack = new ArrayDeque<OMathExpression.Operator>();
+
+      valuesStack.push(values.removeLast());
+
+      while (!operators.isEmpty()) {
+        Operator nextOperator = operators.removeLast();
+        Object rightValue = values.removeLast();
+
+        if (!operatorsStack.isEmpty() && operatorsStack.peek().getPriority() <= nextOperator.getPriority()) {
+          Object right = valuesStack.poll();
+          right = right == NULL_VALUE ? null : right;
+          Object left = valuesStack.poll();
+          left = left == NULL_VALUE ? null : left;
+          Object calculatedValue = apply(left, operatorsStack.poll(), right);
+          valuesStack.push(calculatedValue == null ? NULL_VALUE : calculatedValue);
+        }
+        operatorsStack.push(nextOperator);
+        valuesStack.push(rightValue == null ? NULL_VALUE : rightValue);
+      }
+      if (!operatorsStack.isEmpty()) {
+        Object right = valuesStack.poll();
+        right = right == NULL_VALUE ? null : right;
+        Object left = valuesStack.poll();
+        left = left == NULL_VALUE ? null : left;
+        Object val = apply(left, operatorsStack.poll(), right);
+        valuesStack.push(val == null ? NULL_VALUE : val);
+      }
+
+      values = valuesStack;
+      operators = operatorsStack;
+    }
   }
 
   /**
@@ -252,6 +511,24 @@ public class OMathExpression extends SimpleNode {
           break;
         case REM:
           builder.append("%");
+          break;
+        case LSHIFT:
+          builder.append("<<");
+          break;
+        case RSHIFT:
+          builder.append(">>");
+          break;
+        case RUNSIGNEDSHIFT:
+          builder.append(">>>");
+          break;
+        case BIT_AND:
+          builder.append("&");
+          break;
+        case BIT_OR:
+          builder.append("|");
+          break;
+        case XOR:
+          builder.append("^");
           break;
         }
         builder.append(" ");
