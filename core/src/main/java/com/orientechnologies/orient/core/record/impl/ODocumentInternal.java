@@ -21,7 +21,6 @@
 package com.orientechnologies.orient.core.record.impl;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
@@ -83,5 +82,12 @@ public class ODocumentInternal {
   public static void autoConvertValueToClass(ODatabaseDocumentInternal database, ODocument doc) {
     doc.autoConvertFieldsToClass(database);
   }
-  
+
+  public static Object getRawProperty(ODocument doc, String propertyName) {
+    if (doc == null) {
+      return null;
+    }
+    return doc.getRawProperty(propertyName);
+  }
+
 }

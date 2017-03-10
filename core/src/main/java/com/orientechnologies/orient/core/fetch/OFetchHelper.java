@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
 import java.io.IOException;
@@ -136,7 +137,7 @@ public class OFetchHelper {
       return;
 
     Object fieldValue;
-    for (String fieldName : record.fieldNames()) {
+    for (String fieldName : record.getPropertyNames()) {
       int depthLevel;
       final String fieldPath = !iFieldPathFromRoot.isEmpty() ? iFieldPathFromRoot + "." + fieldName : fieldName;
 
@@ -146,7 +147,7 @@ public class OFetchHelper {
       if (iFieldDepthLevel > -1)
         depthLevel = iFieldDepthLevel;
 
-      fieldValue = record.rawField(fieldName);
+      fieldValue = ODocumentInternal.getRawProperty(record, fieldName);
       if (fieldValue == null || !(fieldValue instanceof OIdentifiable)
           && (!(fieldValue instanceof ORecordLazyMultiValue) || !((ORecordLazyMultiValue) fieldValue).rawIterator().hasNext()
               || !(((ORecordLazyMultiValue) fieldValue).rawIterator().next() instanceof OIdentifiable))
@@ -287,7 +288,7 @@ public class OFetchHelper {
     iContext.onBeforeFetch(record);
     Set<String> toRemove = new HashSet<String>();
 
-    for (String fieldName : record.fieldNames()) {
+    for (String fieldName : record.getPropertyNames()) {
       String fieldPath = !iFieldPathFromRoot.isEmpty() ? iFieldPathFromRoot + "." + fieldName : fieldName;
       int depthLevel;
       depthLevel = getDepthLevel(iFetchPlan, fieldPath, iCurrentLevel);
@@ -298,7 +299,7 @@ public class OFetchHelper {
       if (iFieldDepthLevel > -1)
         depthLevel = iFieldDepthLevel;
 
-      fieldValue = record.rawField(fieldName);
+      fieldValue = ODocumentInternal.getRawProperty(record, fieldName);
       OType fieldType = record.fieldType(fieldName);
 
       boolean fetch = !iFormat.contains("shallow") && (!(fieldValue instanceof OIdentifiable) || depthLevel == -1

@@ -61,7 +61,8 @@ import java.util.stream.Collectors;
  * Document representation to handle values dynamically. Can be used in schema-less, schema-mixed and schema-full modes. Fields can
  * be added at run-time. Instances can be reused across calls by using the reset() before to re-use.
  */
-@SuppressWarnings({ "unchecked" }) public class ODocument extends ORecordAbstract
+@SuppressWarnings({ "unchecked" })
+public class ODocument extends ORecordAbstract
     implements Iterable<Entry<String, Object>>, ORecordSchemaAware, ODetachable, Externalizable, OElement {
 
   public static final    byte     RECORD_TYPE      = 'd';
@@ -205,7 +206,8 @@ import java.util.stream.Collectors;
     field(iFieldName, iFieldValue);
   }
 
-  @Override public Optional<OVertex> asVertex() {
+  @Override
+  public Optional<OVertex> asVertex() {
     if (this instanceof OVertex)
       return Optional.of((OVertex) this);
     OClass type = this.getSchemaClass();
@@ -218,7 +220,8 @@ import java.util.stream.Collectors;
     return Optional.empty();
   }
 
-  @Override public Optional<OEdge> asEdge() {
+  @Override
+  public Optional<OEdge> asEdge() {
     if (this instanceof OVertex)
       return Optional.of((OEdge) this);
     OClass type = this.getSchemaClass();
@@ -231,7 +234,8 @@ import java.util.stream.Collectors;
     return Optional.empty();
   }
 
-  @Override public boolean isVertex() {
+  @Override
+  public boolean isVertex() {
     if (this instanceof OVertex)
       return true;
     OClass type = this.getSchemaClass();
@@ -244,7 +248,8 @@ import java.util.stream.Collectors;
     return false;
   }
 
-  @Override public boolean isEdge() {
+  @Override
+  public boolean isEdge() {
     if (this instanceof OEdge)
       return true;
     OClass type = this.getSchemaClass();
@@ -257,11 +262,13 @@ import java.util.stream.Collectors;
     return false;
   }
 
-  @Override public Optional<OClass> getSchemaType() {
+  @Override
+  public Optional<OClass> getSchemaType() {
     return Optional.ofNullable(getSchemaClass());
   }
 
-  @Override public Set<String> getPropertyNames() {
+  @Override
+  public Set<String> getPropertyNames() {
     checkForLoading();
 
     if (_status == ORecordElement.STATUS.LOADED && _source != null && ODatabaseRecordThreadLocal.INSTANCE.isDefined()
@@ -282,10 +289,7 @@ import java.util.stream.Collectors;
     if (_fields == null || _fields.size() == 0)
       return Collections.EMPTY_SET;
 
-    return _fields.entrySet().stream()
-        .filter(s -> s.getValue().exist())
-        .map(s -> s.getKey())
-        .collect(Collectors.toSet());
+    return _fields.entrySet().stream().filter(s -> s.getValue().exist()).map(s -> s.getKey()).collect(Collectors.toSet());
   }
 
   /**
@@ -293,6 +297,7 @@ import java.util.stream.Collectors;
    *
    * @param iFieldName The field name, it can contain any character (it's not evaluated as an expression, as in #eval()
    * @param <RET>
+   *
    * @return the field value. Null if the field does not exist.
    */
   public <RET> RET getProperty(final String iFieldName) {
@@ -310,7 +315,7 @@ import java.util.stream.Collectors;
         unTrack((ORID) value);
         track((OIdentifiable) newValue);
         value = newValue;
-        if(isTrackingChanges()) {
+        if (isTrackingChanges()) {
           ORecordInternal.setDirtyManager((ORecord) value, this.getDirtyManager());
         }
         ODocumentEntry entry = _fields.get(iFieldName);
@@ -321,6 +326,23 @@ import java.util.stream.Collectors;
     }
 
     return value;
+  }
+
+  /**
+   * retrieves a property value from the current document, without evaluating it (eg. no conversion from RID to document)
+   *
+   * @param iFieldName The field name, it can contain any character (it's not evaluated as an expression, as in #eval()
+   * @param <RET>
+   *
+   * @return the field value. Null if the field does not exist.
+   */
+  protected <RET> RET getRawProperty(final String iFieldName) {
+    if (iFieldName == null)
+      return null;
+
+
+    checkForLoading();
+    return (RET) ODocumentHelper.getIdentifiableValue(this, iFieldName);
   }
 
   /**
@@ -805,7 +827,8 @@ import java.util.stream.Collectors;
   /**
    * Copies all the fields into iDestination document.
    */
-  @Override public ORecordAbstract copyTo(final ORecordAbstract iDestination) {
+  @Override
+  public ORecordAbstract copyTo(final ORecordAbstract iDestination) {
     // TODO: REMOVE THIS
     checkForFields();
 
@@ -925,7 +948,8 @@ import java.util.stream.Collectors;
     return (ODocument) result;
   }
 
-  @Deprecated public ODocument load(final String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone) {
+  @Deprecated
+  public ODocument load(final String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone) {
     Object result;
     try {
       result = getDatabase().load(this, iFetchPlan, iIgnoreCache, loadTombstone, OStorage.LOCKING_STRATEGY.DEFAULT);
@@ -939,7 +963,8 @@ import java.util.stream.Collectors;
     return (ODocument) result;
   }
 
-  @Override public ODocument reload(final String fetchPlan, final boolean ignoreCache) {
+  @Override
+  public ODocument reload(final String fetchPlan, final boolean ignoreCache) {
     super.reload(fetchPlan, ignoreCache);
     if (!_lazyLoad) {
       checkForLoading();
@@ -953,7 +978,8 @@ import java.util.stream.Collectors;
     return ODocumentHelper.hasSameContentOf(this, currentDb, iOther, currentDb, null);
   }
 
-  @Override public byte[] toStream() {
+  @Override
+  public byte[] toStream() {
     if (_recordFormat == null)
       setup();
     return toStream(false);
@@ -984,26 +1010,21 @@ import java.util.stream.Collectors;
   /**
    * Dumps the instance as string.
    */
-  @Override public String toString() {
+  @Override
+  public String toString() {
     return toString(new HashSet<ORecord>());
   }
 
   /**
    * Fills the ODocument directly with the string representation of the document itself. Use it for faster insertion but pay
-   * attention to respect the OrientDB record format.
-   * <p>
-   * <code>
-   * record.reset();<br>
-   * record.setClassName("Account");<br>
-   * record.fromString(new String("Account@id:" + data.getCyclesDone() + ",name:'Luca',surname:'Garulli',birthDate:" + date.getTime()<br>
-   * + ",salary:" + 3000f + i));<br>
-   * record.save();<br>
-   * </code>
-   * </p>
+   * attention to respect the OrientDB record format. <p> <code> record.reset();<br> record.setClassName("Account");<br>
+   * record.fromString(new String("Account@id:" + data.getCyclesDone() + ",name:'Luca',surname:'Garulli',birthDate:" +
+   * date.getTime()<br> + ",salary:" + 3000f + i));<br> record.save();<br> </code> </p>
    *
    * @param iValue String representation of the record.
    */
-  @Deprecated public void fromString(final String iValue) {
+  @Deprecated
+  public void fromString(final String iValue) {
     _dirty = true;
     _contentChanged = true;
     try {
@@ -1092,7 +1113,9 @@ import java.util.stream.Collectors;
    * Evaluates a SQL expression against current document. Example: <code>long amountPlusVat = doc.eval("amount * 120 / 100");</code>
    *
    * @param iExpression SQL expression to evaluate.
+   *
    * @return The result of expression
+   *
    * @throws OQueryParsingException in case the expression is not valid
    */
   public Object eval(final String iExpression) {
@@ -1107,7 +1130,9 @@ import java.util.stream.Collectors;
    * </code>
    *
    * @param iExpression SQL expression to evaluate.
+   *
    * @return The result of expression
+   *
    * @throws OQueryParsingException in case the expression is not valid
    */
   public Object eval(final String iExpression, final OCommandContext iContext) {
@@ -1118,6 +1143,7 @@ import java.util.stream.Collectors;
    * Reads the field value.
    *
    * @param iFieldName field name
+   *
    * @return field value if defined, otherwise null
    */
   public <RET> RET field(final String iFieldName) {
@@ -1131,7 +1157,7 @@ import java.util.stream.Collectors;
         unTrack((ORID) value);
         track((OIdentifiable) newValue);
         value = newValue;
-        if(this.isTrackingChanges()) {
+        if (this.isTrackingChanges()) {
           ORecordInternal.setDirtyManager((ORecord) value, this.getDirtyManager());
         }
         if (!iFieldName.contains(".")) {
@@ -1152,6 +1178,7 @@ import java.util.stream.Collectors;
    *
    * @param iFieldName field name
    * @param iFieldType Forced type.
+   *
    * @return field value if defined, otherwise null
    */
   public <RET> RET field(final String iFieldName, final Class<?> iFieldType) {
@@ -1168,6 +1195,7 @@ import java.util.stream.Collectors;
    *
    * @param iFieldName field name
    * @param iFieldType Forced type.
+   *
    * @return field value if defined, otherwise null
    */
   public <RET> RET field(final String iFieldName, final OType iFieldType) {
@@ -1206,9 +1234,10 @@ import java.util.stream.Collectors;
   /**
    * Writes the field value. This method sets the current document as dirty.
    *
-   * @param iFieldName     field name. If contains dots (.) the change is applied to the nested documents in chain. To disable this feature call
-   *                       {@link #setAllowChainedAccess(boolean)} to false.
+   * @param iFieldName     field name. If contains dots (.) the change is applied to the nested documents in chain. To disable this
+   *                       feature call {@link #setAllowChainedAccess(boolean)} to false.
    * @param iPropertyValue field value
+   *
    * @return The Record instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
   public ODocument field(final String iFieldName, Object iPropertyValue) {
@@ -1237,7 +1266,8 @@ import java.util.stream.Collectors;
    *
    * @see #fromMap(Map)
    */
-  @Deprecated public ODocument fields(final Map<String, Object> iMap) {
+  @Deprecated
+  public ODocument fields(final Map<String, Object> iMap) {
     return fromMap(iMap);
   }
 
@@ -1262,13 +1292,14 @@ import java.util.stream.Collectors;
    * if the type defined in the schema support less precision than the iPropertyValue provided, the iPropertyValue will be converted
    * following the java casting rules with possible precision loss.
    *
-   * @param iFieldName     field name. If contains dots (.) the change is applied to the nested documents in chain. To disable this feature call
-   *                       {@link #setAllowChainedAccess(boolean)} to false.
+   * @param iFieldName     field name. If contains dots (.) the change is applied to the nested documents in chain. To disable this
+   *                       feature call {@link #setAllowChainedAccess(boolean)} to false.
    * @param iPropertyValue field value.
    * @param iFieldType     Forced type (not auto-determined)
+   *
    * @return The Record instance itself giving a "fluent interface". Useful to call multiple methods in chain. If the updated
-   * document is another document (using the dot (.) notation) then the document returned is the changed one or NULL if no
-   * document has been found in chain
+   * document is another document (using the dot (.) notation) then the document returned is the changed one or NULL if no document
+   * has been found in chain
    */
   public ODocument field(String iFieldName, Object iPropertyValue, OType... iFieldType) {
     if (iFieldName == null)
@@ -1512,9 +1543,11 @@ import java.util.stream.Collectors;
    * on the value of the parameter 'iUpdateOnlyMode'.
    *
    * @param iOther                              Other ODocument instance to merge
-   * @param iUpdateOnlyMode                     if true, the other document properties will always be added or overwritten. If false, the missed properties in the
-   *                                            "other" document will be removed by original document
+   * @param iUpdateOnlyMode                     if true, the other document properties will always be added or overwritten. If
+   *                                            false, the missed properties in the "other" document will be removed by original
+   *                                            document
    * @param iMergeSingleItemsOfMultiValueFields If true, merges single items of multi field fields (collections, maps, arrays, etc)
+   *
    * @return
    */
   public ODocument merge(final ODocument iOther, boolean iUpdateOnlyMode, boolean iMergeSingleItemsOfMultiValueFields) {
@@ -1532,9 +1565,11 @@ import java.util.stream.Collectors;
    * on the value of the parameter 'iUpdateOnlyMode'.
    *
    * @param iOther                              Other ODocument instance to merge
-   * @param iUpdateOnlyMode                     if true, the other document properties will always be added or overwritten. If false, the missed properties in the
-   *                                            "other" document will be removed by original document
+   * @param iUpdateOnlyMode                     if true, the other document properties will always be added or overwritten. If
+   *                                            false, the missed properties in the "other" document will be removed by original
+   *                                            document
    * @param iMergeSingleItemsOfMultiValueFields If true, merges single items of multi field fields (collections, maps, arrays, etc)
+   *
    * @return
    */
   public ODocument merge(final Map<String, Object> iOther, final boolean iUpdateOnlyMode,
@@ -1617,15 +1652,18 @@ import java.util.stream.Collectors;
         final Entry<String, Object> toRet = new Entry<String, Object>() {
           private Entry<String, ODocumentEntry> intern = current;
 
-          @Override public Object setValue(Object value) {
+          @Override
+          public Object setValue(Object value) {
             throw new UnsupportedOperationException();
           }
 
-          @Override public Object getValue() {
+          @Override
+          public Object getValue() {
             return intern.getValue().value;
           }
 
-          @Override public String getKey() {
+          @Override
+          public String getKey() {
             return intern.getKey();
           }
         };
@@ -1671,7 +1709,8 @@ import java.util.stream.Collectors;
     return _owners != null && !_owners.isEmpty();
   }
 
-  @Override public ORecordElement getOwner() {
+  @Override
+  public ORecordElement getOwner() {
     if (_owners == null)
       return null;
 
@@ -1700,7 +1739,8 @@ import java.util.stream.Collectors;
   /**
    * Propagates the dirty status to the owner, if any. This happens when the object is embedded in another one.
    */
-  @Override public ORecordAbstract setDirty() {
+  @Override
+  public ORecordAbstract setDirty() {
     if (_owners != null) {
       // PROPAGATES TO THE OWNER
       ORecordElement e;
@@ -1748,7 +1788,8 @@ import java.util.stream.Collectors;
     return this;
   }
 
-  @Override public void setDirtyNoChanged() {
+  @Override
+  public void setDirtyNoChanged() {
     if (_owners != null) {
       // PROPAGATES TO THE OWNER
       ORecordElement e;
@@ -1767,7 +1808,8 @@ import java.util.stream.Collectors;
     super.setDirtyNoChanged();
   }
 
-  @Override public ODocument fromStream(final byte[] iRecordBuffer) {
+  @Override
+  public ODocument fromStream(final byte[] iRecordBuffer) {
     removeAllCollectionChangeListeners();
 
     _fields = null;
@@ -1801,7 +1843,8 @@ import java.util.stream.Collectors;
     return null;
   }
 
-  @Override public ODocument unload() {
+  @Override
+  public ODocument unload() {
     super.unload();
     internalReset();
     return this;
@@ -1821,9 +1864,11 @@ import java.util.stream.Collectors;
    * </code>
    *
    * @return this
+   *
    * @see #reset()
    */
-  @Override public ODocument clear() {
+  @Override
+  public ODocument clear() {
     super.clear();
     internalReset();
     _owners = null;
@@ -1849,10 +1894,12 @@ import java.util.stream.Collectors;
    * </p>
    *
    * @return this
+   *
    * @throws IllegalStateException if transaction is begun.
    * @see #clear()
    */
-  @Override public ODocument reset() {
+  @Override
+  public ODocument reset() {
     ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     if (db != null && db.getTransaction().isActive())
       throw new IllegalStateException("Cannot reset documents during a transaction. Create a new one each time");
@@ -1944,6 +1991,7 @@ import java.util.stream.Collectors;
    * {@link com.orientechnologies.orient.core.index.OClassIndexManager} to determine what fields are changed to update indexes.
    *
    * @param iTrackingChanges True to enable it, otherwise false
+   *
    * @return this
    */
   public ODocument setTrackingChanges(final boolean iTrackingChanges) {
@@ -2000,14 +2048,16 @@ import java.util.stream.Collectors;
     return this;
   }
 
-  @Override public boolean equals(Object obj) {
+  @Override
+  public boolean equals(Object obj) {
     if (!super.equals(obj))
       return false;
 
     return this == obj || _recordId.isValid();
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     if (_recordId.isValid())
       return super.hashCode();
 
@@ -2029,19 +2079,23 @@ import java.util.stream.Collectors;
     return _fields == null || _fields.isEmpty();
   }
 
-  @Override public ODocument fromJSON(final String iSource, final String iOptions) {
+  @Override
+  public ODocument fromJSON(final String iSource, final String iOptions) {
     return (ODocument) super.fromJSON(iSource, iOptions);
   }
 
-  @Override public ODocument fromJSON(final String iSource) {
+  @Override
+  public ODocument fromJSON(final String iSource) {
     return (ODocument) super.fromJSON(iSource);
   }
 
-  @Override public ODocument fromJSON(final InputStream iContentResult) throws IOException {
+  @Override
+  public ODocument fromJSON(final InputStream iContentResult) throws IOException {
     return (ODocument) super.fromJSON(iContentResult);
   }
 
-  @Override public ODocument fromJSON(final String iSource, final boolean needReload) {
+  @Override
+  public ODocument fromJSON(final String iSource, final boolean needReload) {
     return (ODocument) super.fromJSON(iSource, needReload);
   }
 
@@ -2075,11 +2129,13 @@ import java.util.stream.Collectors;
     return this;
   }
 
-  @Override public ODocument save() {
+  @Override
+  public ODocument save() {
     return (ODocument) save(null, false);
   }
 
-  @Override public ODocument save(final String iClusterName) {
+  @Override
+  public ODocument save(final String iClusterName) {
     return (ODocument) save(iClusterName, false);
   }
 
@@ -2160,8 +2216,8 @@ import java.util.stream.Collectors;
     return true;
   }
 
-
-  @Override public void writeExternal(ObjectOutput stream) throws IOException {
+  @Override
+  public void writeExternal(ObjectOutput stream) throws IOException {
     ORecordSerializer serializer = ORecordSerializerFactory.instance().getFormat(ORecordSerializerNetwork.NAME);
     final byte[] idBuffer = _recordId.toStream();
     stream.writeInt(-1);
@@ -2177,7 +2233,8 @@ import java.util.stream.Collectors;
     stream.writeObject(serializer.toString());
   }
 
-  @Override public void readExternal(ObjectInput stream) throws IOException, ClassNotFoundException {
+  @Override
+  public void readExternal(ObjectInput stream) throws IOException, ClassNotFoundException {
     int i = stream.readInt();
     int size;
     if (i < 0)
@@ -2457,13 +2514,15 @@ import java.util.stream.Collectors;
     return this;
   }
 
-  @Override protected ORecordAbstract fill(final ORID iRid, final int iVersion, final byte[] iBuffer, final boolean iDirty) {
+  @Override
+  protected ORecordAbstract fill(final ORID iRid, final int iVersion, final byte[] iBuffer, final boolean iDirty) {
     _schema = null;
     fetchSchemaIfCan();
     return super.fill(iRid, iVersion, iBuffer, iDirty);
   }
 
-  @Override protected void clearSource() {
+  @Override
+  protected void clearSource() {
     super.clearSource();
     _schema = null;
   }
@@ -2551,7 +2610,7 @@ import java.util.stream.Collectors;
         OType type = prop.getType();
         OType linkedType = prop.getLinkedType();
         OClass linkedClass = prop.getLinkedClass();
-        if(type == OType.EMBEDDED && linkedClass!=null){
+        if (type == OType.EMBEDDED && linkedClass != null) {
           convertToEmbeddedType(prop);
           continue;
         }
@@ -2907,7 +2966,8 @@ import java.util.stream.Collectors;
   /**
    * Internal.
    */
-  @Override protected void setup() {
+  @Override
+  protected void setup() {
     super.setup();
 
     final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
@@ -2982,10 +3042,11 @@ import java.util.stream.Collectors;
   protected void autoConvertFieldsToClass(final ODatabaseDocumentInternal database) {
     if (_className != null) {
       OClass klazz = database.getMetadata().getImmutableSchemaSnapshot().getClass(_className);
-      if(klazz != null)
+      if (klazz != null)
         convertFieldsToClass(klazz);
     }
   }
+
   /**
    * Checks and convert the field of the document matching the types specified by the class.
    **/
