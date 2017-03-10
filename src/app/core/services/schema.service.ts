@@ -194,15 +194,7 @@ class SchemaService {
   }
 
   isGraphClass(classes, clazz) {
-    let sup = clazz;
-    let iterator = clazz;
-    while ((iterator = this.getSuperClazz(classes, iterator)) != "") {
-      sup = iterator;
-      if (sup == 'V' || sup == 'E') {
-        return true;
-      }
-    }
-    return sup == 'V' || sup == 'E';
+    return this.hasSuperClass(classes, clazz, "V") || this.hasSuperClass(classes, clazz, "E");
   }
 
   getSuperClazz(classes, clazz) {
@@ -217,14 +209,33 @@ class SchemaService {
     return clazzReturn;
   }
 
+  getSuperClasses(classes, name) {
+    return classes.filter((c) => {
+      return name == c.name;
+    }).map((c) => {
+      return c.superClasses;
+    }).reduce((a, b) => a.concat(b), []);
+  }
+
+
+  hasSuperClass(classes, source, target) {
+    if (source === target) return true;
+    let superclasses = this.getSuperClasses(classes, source);
+    let found = superclasses.filter((c) => {
+        return c === target;
+      }).length === 1
+    if (!found) {
+      found = superclasses.map((c) => {
+        return this.hasSuperClass(classes, c, target)
+      }).reduce((a, b) => {
+        return a || b;
+      }, false)
+    }
+    return found
+  }
 
   isVertexClass(classes, clazz) {
-    var sup = clazz;
-    var iterator = clazz;
-    while ((iterator = this.getSuperClazz(classes, iterator)) != "") {
-      sup = iterator;
-    }
-    return sup == 'V';
+    return this.hasSuperClass(classes, clazz, "V");
   }
 
   vertexClasses(classes) {
@@ -240,12 +251,7 @@ class SchemaService {
   }
 
   isEdgeClass(classes, clazz) {
-    var sup = clazz;
-    var iterator = clazz;
-    while ((iterator = this.getSuperClazz(classes, iterator)) != "") {
-      sup = iterator;
-    }
-    return sup == 'E';
+    return this.hasSuperClass(classes, clazz, "E");
   }
 
 

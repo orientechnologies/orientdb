@@ -21,8 +21,8 @@ let NewVertexModalController = function ($scope, $element, $attrs, $location, $m
 
   ctrl.strict = Database.isStrictSql();
 
-  ctrl.listClasses = ctrl.database.listNameOfClasses().filter((c) => {
-    return ctrl.database.isVertex(c);
+  ctrl.listClasses = SchemaService.vertexClasses(ctrl.database.listClasses()).map((c) => {
+    return c.name;
   });
 
 

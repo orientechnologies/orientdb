@@ -99,7 +99,7 @@ DocController.controller("DocumentCreateController", ['$scope', '$routeParams', 
 
   }
 }]);
-DocController.controller("DocumentModalController", ['$scope', '$routeParams', '$location', 'DocumentApi', 'Database', 'Notification', function ($scope, $routeParams, $location, DocumentApi, Database, Notification) {
+DocController.controller("DocumentModalController", ['$scope', '$routeParams', '$location', 'DocumentApi', 'Database', 'Notification', 'SchemaService', function ($scope, $routeParams, $location, DocumentApi, Database, Notification, SchemaService) {
 
   $scope.types = Database.getSupportedTypes();
 
@@ -179,7 +179,7 @@ DocController.controller("DocumentModalController", ['$scope', '$routeParams', '
 
     $scope.selectClass = true;
     Database.refreshMetadata($scope.db, () => {
-      $scope.listClasses = Database.getClazzVertex();
+      $scope.listClasses = SchemaService.vertexClasses(Database.listClasses()).map((c) => c.name);
       if ($scope.listClasses.length == 1) {
         $scope.selectedClass = $scope.listClasses[0];
       }
@@ -187,13 +187,13 @@ DocController.controller("DocumentModalController", ['$scope', '$routeParams', '
   }
 
 }]);
-DocController.controller("DocumentModalEdgeController", ['$scope', '$routeParams', '$location', 'CommandApi', 'Database', 'Notification', '$controller', function ($scope, $routeParams, $location, CommandApi, Database, Notification, $controller) {
+DocController.controller("DocumentModalEdgeController", ['$scope', '$routeParams', '$location', 'CommandApi', 'Database', 'Notification', '$controller', 'SchemaService', function ($scope, $routeParams, $location, CommandApi, Database, Notification, $controller, SchemaService) {
 
   $controller('DocumentModalController', {$scope: $scope});
 
 
   Database.refreshMetadata($routeParams.database, () => {
-    $scope.listClasses = Database.getClazzEdge();
+    $scope.listClasses = SchemaService.edgeClasses(Database.listClasses()).map((c) => c.name);
 
     if ($scope.listClasses.length == 1) {
       $scope.selectedClass = $scope.listClasses[0];
@@ -215,7 +215,7 @@ DocController.controller("DocumentModalEdgeController", ['$scope', '$routeParams
       target: $scope.target["@rid"],
       json: JSON.stringify($scope.doc)
     };
-    var command = "CREATE EDGE {{label}} FROM {{source}} TO {{target}}"
+    var command = "CREATE EDGE `{{label}}` FROM {{source}} TO {{target}}"
     command += " content {{json}}";
 
     var queryText = S(command).template(params).s;
@@ -241,15 +241,16 @@ DocController.controller("DocumentModalEdgeController", ['$scope', '$routeParams
     return $scope.selectClass && !$scope.lightweight;
   }
 }]);
-DocController.controller("EditController", ['$scope', '$routeParams', '$location', 'DocumentApi', 'Database', 'Notification', function ($scope, $routeParams, $location, DocumentApi, Database, Notification) {
+DocController.controller("EditController", ['$scope', '$routeParams', '$location', 'DocumentApi', 'Database', 'Notification', 'SchemaService', function ($scope, $routeParams, $location, DocumentApi, Database, Notification, SchemaService) {
 
   var database = $routeParams.database;
   var rid = $routeParams.rid;
   $scope.doc = DocumentApi.get({database: database, document: rid}, function () {
 
-    if (Database.isVertex($scope.doc['@class'])) {
+    let classes = Database.listClasses();
+    if (SchemaService.isVertexClass(classes, $scope.doc['@class'])) {
       $scope.template = 'views/database/editVertex.html';
-    } else if (Database.isEdge($scope.doc['@class'])) {
+    } else if (SchemaService.isEdgeClass(classes, $scope.doc['@class'])) {
       $scope.template = 'views/database/editEdge.html';
     } else {
       $scope.template = 'views/database/editDocument.html';
@@ -261,7 +262,7 @@ DocController.controller("EditController", ['$scope', '$routeParams', '$location
 
 
 }]);
-DocController.controller("CreateController", ['$scope', '$routeParams', '$location', 'DocumentApi', 'Database', 'Notification', '$timeout', function ($scope, $routeParams, $location, DocumentApi, Database, Notification, $timeout) {
+DocController.controller("CreateController", ['$scope', '$routeParams', '$location', 'DocumentApi', 'Database', 'Notification', '$timeout', 'SchemaService', function ($scope, $routeParams, $location, DocumentApi, Database, Notification, $timeout, SchemaService) {
 
   var database = $routeParams.database;
   var clazz = $routeParams.clazz
@@ -270,9 +271,10 @@ DocController.controller("CreateController", ['$scope', '$routeParams', '$locati
   $scope.headers = Database.getPropertyFromDoc($scope.doc);
   $scope.isNew = true;
 
-  if (Database.isVertex(clazz)) {
+  let classes = Database.listClasses();
+  if (SchemaService.isVertexClass(classes, clazz)) {
     $scope.template = 'views/database/editVertex.html';
-  } else if (Database.isEdge(clazz)) {
+  } else if (SchemaService.isEdgeClass(classes, clazz)) {
     $scope.template = 'views/database/editEdge.html';
   } else {
     $scope.template = 'views/database/editDocument.html';

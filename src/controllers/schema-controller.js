@@ -46,14 +46,14 @@ schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$locatio
     return system;
   })
   $scope.vClasses = $scope.listClassesTotal.filter((c) => {
-    let vertex = Database.isVertex(c.name);
+    let vertex = SchemaService.isVertexClass($scope.listClassesTotal, c.name);
     if (vertex) {
       gMap[c.name] = true;
     }
     return vertex;
   })
   $scope.eClasses = $scope.listClassesTotal.filter((c) => {
-    let edge = Database.isEdge(c.name);
+    let edge = SchemaService.isEdgeClass($scope.listClassesTotal, c.name);
     if (edge) {
       gMap[c.name] = true;
     }

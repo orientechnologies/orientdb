@@ -7,7 +7,7 @@ import angular from 'angular';
 let database = angular.module('database.services', ['ngResource', SpinnerService]);
 
 
-database.factory('Database', ["DatabaseApi", "localStorageService", function (DatabaseApi, localStorageService) {
+database.factory('Database', ["DatabaseApi", "localStorageService", "SchemaService", function (DatabaseApi, localStorageService, SchemaService) {
 
 
   var version = STUDIO_VERSION.indexOf("SNAPSHOT") == -1 ? STUDIO_VERSION : "last";
@@ -320,57 +320,19 @@ database.factory('Database', ["DatabaseApi", "localStorageService", function (Da
       return clazzReturn;
     },
     isGraph: function (clazz) {
-      var sup = clazz;
-
-      var iterator = clazz;
-      while ((iterator = this.getSuperClazz(iterator)) != "") {
-        sup = iterator;
-        if (sup == 'V' || sup == 'E') {
-          return true;
-        }
-      }
-      return sup == 'V' || sup == 'E';
+      return SchemaService.isGraphClass(this.listClasses(), clazz);
     },
     isVertex: function (clazz) {
-      var sup = clazz;
-      var iterator = clazz;
-
-      while ((iterator = this.getSuperClazz(iterator)) != "") {
-        sup = iterator;
-      }
-      return sup == 'V';
+      return SchemaService.isEdgeClass(this.listClasses(), clazz);
     },
     isEdge: function (clazz) {
-      var sup = clazz;
-      var iterator = clazz;
-      while ((iterator = this.getSuperClazz(iterator)) != "") {
-        sup = iterator;
-      }
-      return sup == 'E';
+      return SchemaService.isEdgeClass(this.listClasses(), clazz);
     },
     getClazzEdge: function () {
-      var metadata = this.getMetadata();
-      var classes = metadata['classes'];
-      var clazzes = new Array;
-      for (var entry in classes) {
-        var name = classes[entry]['name'];
-        if (this.isEdge(name)) {
-          clazzes.push(name);
-        }
-      }
-      return clazzes;
+      return SchemaService.edgeClasses(this.listClasses()).map((c) => c.name);
     },
     getClazzVertex: function () {
-      var metadata = this.getMetadata();
-      var classes = metadata['classes'];
-      var clazzes = new Array;
-      for (var entry in classes) {
-        var name = classes[entry]['name'];
-        if (this.isVertex(name)) {
-          clazzes.push(name);
-        }
-      }
-      return clazzes;
+      return SchemaService.vertexClasses(this.listClasses()).map((c) => c.name);
     },
     /**
      * Creates a new Array from a document with property name.
