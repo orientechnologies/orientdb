@@ -250,7 +250,7 @@ public enum OGlobalConfiguration {
 
   DISK_CACHE_FREE_SPACE_LIMIT("storage.diskCache.diskFreeSpaceLimit", "Minimum amount of space on disk, which, when exceeded, "
       + "will cause the database to switch to read-only mode (in megabytes)", Long.class,
-      2 * WAL_MAX_SEGMENT_SIZE.getValueAsLong()),
+      8 * WAL_MAX_SEGMENT_SIZE.getValueAsLong()),
 
   PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY("storage.lowestFreeListBound",
       "The least amount of free space (in kb) in a page, which is tracked in paginated storage", Integer.class, 16),
