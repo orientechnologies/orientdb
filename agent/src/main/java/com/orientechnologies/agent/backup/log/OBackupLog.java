@@ -35,6 +35,7 @@ public abstract class OBackupLog {
   public static final String DBNAME      = "dbName";
   public static final String MODE        = "mode";
   public static final String TIMESTAMP   = "timestamp";
+  public static final String TIMESTAMP_UNIX   = "timestampUnix";
 
   private String internalId;
   private long   unitId;
@@ -59,6 +60,7 @@ public abstract class OBackupLog {
     log.field(UNITID, unitId);
     log.field(TXID, txId);
     log.field(TIMESTAMP, timestamp);
+    log.field(TIMESTAMP_UNIX, timestamp.getTime());
     log.field(UUID, uuid);
     log.field(MODE, mode);
     log.field(DBNAME, dbName);
