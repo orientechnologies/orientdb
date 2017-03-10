@@ -1,4 +1,4 @@
-# SQL to add spatial data to the SocialTravelAgency DemoDB - Generated on: Thu Mar 09 12:48:12 CET 2017
+# SQL to add spatial data to the SocialTravelAgency DemoDB - Generated on: Fri Mar 10 01:12:53 CET 2017
 CREATE PROPERTY Locations.Location EMBEDDED OPoint;
 CREATE INDEX Locations.Location on Locations(Location) SPATIAL ENGINE LUCENE;
 UPDATE Hotels SET Location = ST_GeomFromText("POINT (9.1913321 45.458109)") WHERE Id=1;
