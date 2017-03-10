@@ -2168,7 +2168,7 @@ ee.controller("BackupConfigController", ["$scope", "AgentService", "$rootScope",
 /**
  *  Single Backup Controller
  */
-ee.controller("SingleBackupController", ["$scope", "BackupService", "Notification", "$modal", function ($scope, BackupService, Notification, $modal) {
+ee.controller("SingleBackupController", ["$scope", "BackupService", "Notification", "$modal","DatabaseApi", function ($scope, BackupService, Notification, $modal,DatabaseApi) {
 
   $scope.eventsType = [
     {name: "Backup Finished", type: "BACKUP_FINISHED", clazz: 'log-finished-icon'},
@@ -2232,7 +2232,7 @@ ee.controller("SingleBackupController", ["$scope", "BackupService", "Notificatio
     return logs.filter(function (e) {
       return $scope.selectedEvents.indexOf(e.op) != -1;
     }).map(function (e, idx, arr) {
-      var date = new Date(e.timestamp);
+      var date = new Date(e.timestampUnix);
       return {
         id: idx,
         title: $scope.info(e),
@@ -2281,7 +2281,6 @@ ee.controller("SingleBackupController", ["$scope", "BackupService", "Notificatio
       BackupService.logs($scope.backup.uuid, {from: $scope.from, to: $scope.to}).then(function (data) {
         $scope.logs = data.logs;
         $scope.currentUnitLogs = data.logs;
-
         $scope.refreshEvents();
       })
     }
