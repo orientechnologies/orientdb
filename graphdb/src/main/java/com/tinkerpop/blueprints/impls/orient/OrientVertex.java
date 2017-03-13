@@ -1027,7 +1027,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
         for (String fieldName : doc.fieldNames()) {
           final OPair<Direction, String> connection = getConnection(iDirection, fieldName, iClassNames);
           if (connection != null)
-            result.add(new OTriple<>(fieldName, connection.getKey(), connection.getValue()));
+            result.add(new OTriple<String, Direction, String>(fieldName, connection.getKey(), connection.getValue()));
         }
       } else {
         OSchema schema = getGraph().getRawGraph().getMetadata().getSchema();
@@ -1047,35 +1047,34 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
         for (String className : allClassNames) {
           switch (iDirection) {
             case OUT:
-              result.add(new OTriple<>(CONNECTION_OUT_PREFIX + className, Direction.OUT, className));
+              result.add(new OTriple<String, Direction, String>(CONNECTION_OUT_PREFIX + className, Direction.OUT, className));
               break;
             case IN:
-              result.add(new OTriple<>(CONNECTION_IN_PREFIX + className, Direction.IN, className));
+              result.add(new OTriple<String, Direction, String>(CONNECTION_IN_PREFIX + className, Direction.IN, className));
               break;
             case BOTH:
-              result.add(new OTriple<>(CONNECTION_OUT_PREFIX + className, Direction.OUT, className));
-              result.add(new OTriple<>(CONNECTION_IN_PREFIX + className, Direction.IN, className));
+              result.add(new OTriple<String, Direction, String>(CONNECTION_OUT_PREFIX + className, Direction.OUT, className));
+              result.add(new OTriple<String, Direction, String>(CONNECTION_IN_PREFIX + className, Direction.IN, className));
               break;
           }
         }
       }
     } else {
       if (iDirection == Direction.OUT)
-        result.add(new OTriple<>(OrientBaseGraph.CONNECTION_OUT, Direction.OUT, null));
+        result.add(new OTriple<String, Direction, String>(OrientBaseGraph.CONNECTION_OUT, Direction.OUT, null));
       else if (iDirection == Direction.IN)
-        result.add(new OTriple<>(OrientBaseGraph.CONNECTION_IN, Direction.IN, null));
+        result.add(new OTriple<String, Direction, String>(OrientBaseGraph.CONNECTION_IN, Direction.IN, null));
       else {
-        result.add(new OTriple<>(OrientBaseGraph.CONNECTION_OUT, Direction.OUT, null));
-        result.add(new OTriple<>(OrientBaseGraph.CONNECTION_IN, Direction.IN, null));
+        result.add(new OTriple<String, Direction, String>(OrientBaseGraph.CONNECTION_OUT, Direction.OUT, null));
+        result.add(new OTriple<String, Direction, String>(OrientBaseGraph.CONNECTION_IN, Direction.IN, null));
       }
     }
 
     // EARLY FETCH ALL THE FIELDS THAT MATTERS
     String[] fieldNames = new String[result.size()];
     int i = 0;
-        for (OTriple<String, Direction, String> connectionField : result) {
+    for (OTriple<String, Direction, String> connectionField : result)
       fieldNames[i++] = connectionField.getKey();
-    }
     doc.deserializeFields(fieldNames);
 
     return result;
