@@ -19,7 +19,7 @@ node("master") {
                         .inside("${env.VOLUMES}") {
                     try {
                         sh "${mvnHome}/bin/mvn  --batch-mode -V clean install   -Dsurefire.useFile=false"
-                        sh "rm -rf ./distribution/target/databases/demodb"
+                        sh "${mvnHome}/bin/mvn -f distribution/pom.xml clean"
                         sh "${mvnHome}/bin/mvn  --batch-mode -V deploy -DskipTests"
                     } finally {
                         junit allowEmptyResults: true, testResults: '**/target/surefire-reports/TEST-*.xml'
