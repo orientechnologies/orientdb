@@ -1020,7 +1020,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
    */
   private List<OTriple<String, Direction, String>> getConnectionFields(final Direction iDirection, String... iClassNames) {
     final ODocument doc = getRecord();
-    List<OTriple<String, Direction, String>> result = new ArrayList<>();
+    List<OTriple<String, Direction, String>> result = new ArrayList<OTriple<String, Direction, String>>();
 
     if (settings.isUseVertexFieldsForEdgeLabels()) {
       if (iClassNames == null || iClassNames.length == 0 || (iClassNames.length == 1 && iClassNames[0].equalsIgnoreCase("E"))) {
