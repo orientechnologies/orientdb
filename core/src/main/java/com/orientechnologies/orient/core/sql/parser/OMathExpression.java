@@ -2,6 +2,7 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -47,6 +48,14 @@ public class OMathExpression extends SimpleNode {
       public Number apply(BigDecimal left, BigDecimal right) {
         return left.multiply(right);
       }
+
+      @Override
+      public Object apply(Object left, Object right) {
+        if (left == null || right == null) {
+          return null;
+        }
+        return super.apply(left, right);
+      }
     }, SLASH(10) {
       @Override
       public Number apply(Integer left, Integer right) {
@@ -72,6 +81,15 @@ public class OMathExpression extends SimpleNode {
       public Number apply(BigDecimal left, BigDecimal right) {
         return left.divide(right, BigDecimal.ROUND_HALF_UP);
       }
+
+      @Override
+      public Object apply(Object left, Object right) {
+        if (left == null || right == null) {
+          return null;
+        }
+        return super.apply(left, right);
+      }
+
     }, REM(10) {
       @Override
       public Number apply(Integer left, Integer right) {
@@ -97,6 +115,15 @@ public class OMathExpression extends SimpleNode {
       public Number apply(BigDecimal left, BigDecimal right) {
         return left.remainder(right);
       }
+
+      @Override
+      public Object apply(Object left, Object right) {
+        if (left == null || right == null) {
+          return null;
+        }
+        return super.apply(left, right);
+      }
+
     }, PLUS(20) {
       @Override
       public Number apply(Integer left, Integer right) {
@@ -125,6 +152,23 @@ public class OMathExpression extends SimpleNode {
       @Override
       public Number apply(BigDecimal left, BigDecimal right) {
         return left.add(right);
+      }
+
+      @Override
+      public Object apply(Object left, Object right) {
+        if (left == null && right == null) {
+          return null;
+        }
+        if (left == null) {
+          return right;
+        }
+        if (right == null) {
+          return left;
+        }
+        if (left instanceof Number && right instanceof Number) {
+          return super.apply(left, right);
+        }
+        return String.valueOf(left) + String.valueOf(right);
       }
     }, MINUS(20) {
       @Override
@@ -156,6 +200,26 @@ public class OMathExpression extends SimpleNode {
       public Number apply(BigDecimal left, BigDecimal right) {
         return left.subtract(right);
       }
+
+      @Override
+      public Object apply(Object left, Object right) {
+        if (left == null && right == null) {
+          return null;
+        }
+        if (left instanceof Number && right == null) {
+          return left;
+        }
+        if (right instanceof Number && left == null) {
+          return apply(0, this, (Number) right);
+        }
+
+        if (left instanceof Number && right instanceof Number) {
+          return apply((Number) left, this, (Number) right);
+        }
+
+        return null;
+      }
+
     }, LSHIFT(30) {
       @Override
       public Number apply(Integer left, Integer right) {
@@ -180,6 +244,14 @@ public class OMathExpression extends SimpleNode {
       @Override
       public Number apply(BigDecimal left, BigDecimal right) {
         return null;
+      }
+
+      @Override
+      public Object apply(Object left, Object right) {
+        if (left == null || right == null) {
+          return null;
+        }
+        return super.apply(left, right);
       }
     }, RSHIFT(30) {
       @Override
@@ -206,6 +278,15 @@ public class OMathExpression extends SimpleNode {
       public Number apply(BigDecimal left, BigDecimal right) {
         return null;
       }
+
+      @Override
+      public Object apply(Object left, Object right) {
+        if (left == null || right == null) {
+          return null;
+        }
+        return super.apply(left, right);
+      }
+
     }, RUNSIGNEDSHIFT(30) {
       @Override
       public Number apply(Integer left, Integer right) {
@@ -231,6 +312,15 @@ public class OMathExpression extends SimpleNode {
       public Number apply(BigDecimal left, BigDecimal right) {
         return null;
       }
+
+      @Override
+      public Object apply(Object left, Object right) {
+        if (left == null || right == null) {
+          return null;
+        }
+        return super.apply(left, right);
+      }
+
     }, BIT_AND(40) {
       @Override
       public Number apply(Integer left, Integer right) {
@@ -255,6 +345,13 @@ public class OMathExpression extends SimpleNode {
       @Override
       public Number apply(BigDecimal left, BigDecimal right) {
         return null;
+      }
+
+      public Object apply(Object left, Object right) {
+        if (left == null || right == null) {
+          return null;
+        }
+        return super.apply(left, right);
       }
     }, XOR(50) {
       @Override
@@ -281,6 +378,26 @@ public class OMathExpression extends SimpleNode {
       public Number apply(BigDecimal left, BigDecimal right) {
         return null;
       }
+
+      @Override
+      public Object apply(Object left, Object right) {
+        if (left == null && right == null) {
+          return null;
+        }
+        if (left instanceof Number && right == null) {
+          return apply((Number) left, this, 0);
+        }
+        if (right instanceof Number && left == null) {
+          return apply(0, this, (Number) right);
+        }
+
+        if (left instanceof Number && right instanceof Number) {
+          return apply((Number) left, this, (Number) right);
+        }
+
+        return null;
+      }
+
     }, BIT_OR(60) {
       @Override
       public Number apply(Integer left, Integer right) {
@@ -306,6 +423,84 @@ public class OMathExpression extends SimpleNode {
       public Number apply(BigDecimal left, BigDecimal right) {
         return null;
       }
+
+      public Object apply(Object left, Object right) {
+        if (left == null && right == null) {
+          return null;
+        }
+        return super.apply(left == null ? 0 : left, right == null ? 0 : right);
+      }
+
+    }, SC_OR(100) {
+      @Override
+      public Number apply(Integer left, Integer right) {
+        return null;
+      }
+
+      @Override
+      public Number apply(Long left, Long right) {
+        return null;
+      }
+
+      @Override
+      public Number apply(Float left, Float right) {
+        return null;
+      }
+
+      @Override
+      public Number apply(Double left, Double right) {
+        return null;
+      }
+
+      @Override
+      public Number apply(BigDecimal left, BigDecimal right) {
+        return null;
+      }
+
+      @Override
+      public Object apply(Object left, Object right) {
+
+        if (left == null && right == null) {
+          return null;
+        }
+
+        if (right == null) {
+          if (OMultiValue.isMultiValue(left)) {
+            return left;
+          } else {
+            return Collections.singletonList(left);
+          }
+        }
+
+        if (left == null) {
+          if (OMultiValue.isMultiValue(right)) {
+            return right;
+          } else {
+            return Collections.singletonList(right);
+          }
+        }
+
+        List<Object> result = new ArrayList<>();
+        if (OMultiValue.isMultiValue(left)) {
+          Iterator<Object> leftIter = OMultiValue.getMultiValueIterator(left);
+          while (leftIter.hasNext()) {
+            result.add(leftIter.next());
+          }
+        } else {
+          result.add(left);
+        }
+
+        if (OMultiValue.isMultiValue(right)) {
+          Iterator<Object> rigthIter = OMultiValue.getMultiValueIterator(right);
+          while (rigthIter.hasNext()) {
+            result.add(rigthIter.next());
+          }
+        } else {
+          result.add(right);
+        }
+
+        return result;
+      }
     };
 
     private final int priority;
@@ -323,6 +518,78 @@ public class OMathExpression extends SimpleNode {
     public abstract Number apply(Double left, Double right);
 
     public abstract Number apply(BigDecimal left, BigDecimal right);
+
+    public Object apply(Object left, Object right) {
+      if (left == null) {
+        return right;
+      }
+      if (right == null) {
+        return left;
+      }
+      if (left instanceof Number && right instanceof Number) {
+        return apply((Number) left, this, (Number) right);
+      }
+
+      return null;
+    }
+
+    public Number apply(final Number a, final Operator operation, final Number b) {
+      if (a == null || b == null)
+        throw new IllegalArgumentException("Cannot increment a null value");
+
+      if (a instanceof Integer || a instanceof Short) {
+        if (b instanceof Integer || b instanceof Short) {
+          return operation.apply(a.intValue(), b.intValue());
+        } else if (b instanceof Long) {
+          return operation.apply(a.longValue(), b.longValue());
+        } else if (b instanceof Float)
+          return operation.apply(a.floatValue(), b.floatValue());
+        else if (b instanceof Double)
+          return operation.apply(a.doubleValue(), b.doubleValue());
+        else if (b instanceof BigDecimal)
+          return operation.apply(new BigDecimal((Integer) a), (BigDecimal) b);
+      } else if (a instanceof Long) {
+        if (b instanceof Integer || b instanceof Long || b instanceof Short)
+          return operation.apply(a.longValue(), b.longValue());
+        else if (b instanceof Float)
+          return operation.apply(a.floatValue(), b.floatValue());
+        else if (b instanceof Double)
+          return operation.apply(a.doubleValue(), b.doubleValue());
+        else if (b instanceof BigDecimal)
+          return operation.apply(new BigDecimal((Long) a), (BigDecimal) b);
+      } else if (a instanceof Float) {
+        if (b instanceof Short || b instanceof Integer || b instanceof Long || b instanceof Float)
+          return operation.apply(a.floatValue(), b.floatValue());
+        else if (b instanceof Double)
+          return operation.apply(a.doubleValue(), b.doubleValue());
+        else if (b instanceof BigDecimal)
+          return operation.apply(new BigDecimal((Float) a), (BigDecimal) b);
+
+      } else if (a instanceof Double) {
+        if (b instanceof Short || b instanceof Integer || b instanceof Long || b instanceof Float || b instanceof Double)
+          return operation.apply(a.doubleValue(), b.doubleValue());
+        else if (b instanceof BigDecimal)
+          return operation.apply(new BigDecimal((Double) a), (BigDecimal) b);
+
+      } else if (a instanceof BigDecimal) {
+        if (b instanceof Integer)
+          return operation.apply((BigDecimal) a, new BigDecimal((Integer) b));
+        else if (b instanceof Long)
+          return operation.apply((BigDecimal) a, new BigDecimal((Long) b));
+        else if (b instanceof Short)
+          return operation.apply((BigDecimal) a, new BigDecimal((Short) b));
+        else if (b instanceof Float)
+          return operation.apply((BigDecimal) a, new BigDecimal((Float) b));
+        else if (b instanceof Double)
+          return operation.apply((BigDecimal) a, new BigDecimal((Double) b));
+        else if (b instanceof BigDecimal)
+          return operation.apply((BigDecimal) a, (BigDecimal) b);
+      }
+
+      throw new IllegalArgumentException(
+          "Cannot increment value '" + a + "' (" + a.getClass() + ") with '" + b + "' (" + b.getClass() + ")");
+
+    }
 
     public int getPriority() {
       return priority;
@@ -351,7 +618,7 @@ public class OMathExpression extends SimpleNode {
     if (childExpressions.size() == 2) {
       Object leftValue = childExpressions.get(0).execute(iCurrentRecord, ctx);
       Object rightValue = childExpressions.get(1).execute(iCurrentRecord, ctx);
-      return apply(leftValue, operators.get(0), rightValue);
+      return operators.get(0).apply(leftValue, rightValue);
     }
 
     return calculateWithOpPriority(iCurrentRecord, ctx);
@@ -368,7 +635,7 @@ public class OMathExpression extends SimpleNode {
     if (childExpressions.size() == 2) {
       Object leftValue = childExpressions.get(0).execute(iCurrentRecord, ctx);
       Object rightValue = childExpressions.get(1).execute(iCurrentRecord, ctx);
-      return apply(leftValue, operators.get(0), rightValue);
+      return operators.get(0).apply(leftValue, rightValue);
     }
 
     return calculateWithOpPriority(iCurrentRecord, ctx);
@@ -391,7 +658,7 @@ public class OMathExpression extends SimpleNode {
         right = right == NULL_VALUE ? null : right;
         Object left = valuesStack.poll();
         left = left == NULL_VALUE ? null : left;
-        Object calculatedValue = apply(left, operatorsStack.poll(), right);
+        Object calculatedValue = operatorsStack.poll().apply(left, right);
         valuesStack.push(calculatedValue == null ? NULL_VALUE : calculatedValue);
       }
       operatorsStack.push(nextOperator);
@@ -419,7 +686,7 @@ public class OMathExpression extends SimpleNode {
         right = right == NULL_VALUE ? null : right;
         Object left = valuesStack.poll();
         left = left == NULL_VALUE ? null : left;
-        Object calculatedValue = apply(left, operatorsStack.poll(), right);
+        Object calculatedValue = operatorsStack.poll().apply(left, right);
         valuesStack.push(calculatedValue == null ? NULL_VALUE : calculatedValue);
       }
       operatorsStack.push(nextOperator);
@@ -453,7 +720,7 @@ public class OMathExpression extends SimpleNode {
           right = right == NULL_VALUE ? null : right;
           Object left = valuesStack.poll();
           left = left == NULL_VALUE ? null : left;
-          Object calculatedValue = apply(left, operatorsStack.poll(), right);
+          Object calculatedValue = operatorsStack.poll().apply(left, right);
           valuesStack.push(calculatedValue == null ? NULL_VALUE : calculatedValue);
         }
         operatorsStack.push(nextOperator);
@@ -464,7 +731,7 @@ public class OMathExpression extends SimpleNode {
         right = right == NULL_VALUE ? null : right;
         Object left = valuesStack.poll();
         left = left == NULL_VALUE ? null : left;
-        Object val = apply(left, operatorsStack.poll(), right);
+        Object val = operatorsStack.poll().apply(left, right);
         valuesStack.push(val == null ? NULL_VALUE : val);
       }
 
@@ -530,88 +797,14 @@ public class OMathExpression extends SimpleNode {
         case XOR:
           builder.append("^");
           break;
+        case SC_OR:
+          builder.append("||");
+          break;
         }
         builder.append(" ");
       }
       childExpressions.get(i).toString(params, builder);
     }
-  }
-
-  public Object apply(final Object a, final Operator operation, final Object b) {
-    if (b == null) {
-      return a;
-    }
-    if (a == null) {
-      return b;
-    }
-    if (a instanceof Number && b instanceof Number) {
-      return apply((Number) a, operation, (Number) b);
-    }
-    if (a instanceof String || b instanceof String) {
-      return "" + a + b;
-    }
-    throw new IllegalArgumentException(
-        "Cannot apply operaton " + operation + " to value '" + a + "' (" + a.getClass() + ") with '" + b + "' (" + b.getClass()
-            + ")");
-
-  }
-
-  public Number apply(final Number a, final Operator operation, final Number b) {
-    if (a == null || b == null)
-      throw new IllegalArgumentException("Cannot increment a null value");
-
-    if (a instanceof Integer || a instanceof Short) {
-      if (b instanceof Integer || b instanceof Short) {
-        return operation.apply(a.intValue(), b.intValue());
-      } else if (b instanceof Long) {
-        return operation.apply(a.longValue(), b.longValue());
-      } else if (b instanceof Float)
-        return operation.apply(a.floatValue(), b.floatValue());
-      else if (b instanceof Double)
-        return operation.apply(a.doubleValue(), b.doubleValue());
-      else if (b instanceof BigDecimal)
-        return operation.apply(new BigDecimal((Integer) a), (BigDecimal) b);
-    } else if (a instanceof Long) {
-      if (b instanceof Integer || b instanceof Long || b instanceof Short)
-        return operation.apply(a.longValue(), b.longValue());
-      else if (b instanceof Float)
-        return operation.apply(a.floatValue(), b.floatValue());
-      else if (b instanceof Double)
-        return operation.apply(a.doubleValue(), b.doubleValue());
-      else if (b instanceof BigDecimal)
-        return operation.apply(new BigDecimal((Long) a), (BigDecimal) b);
-    } else if (a instanceof Float) {
-      if (b instanceof Short || b instanceof Integer || b instanceof Long || b instanceof Float)
-        return operation.apply(a.floatValue(), b.floatValue());
-      else if (b instanceof Double)
-        return operation.apply(a.doubleValue(), b.doubleValue());
-      else if (b instanceof BigDecimal)
-        return operation.apply(new BigDecimal((Float) a), (BigDecimal) b);
-
-    } else if (a instanceof Double) {
-      if (b instanceof Short || b instanceof Integer || b instanceof Long || b instanceof Float || b instanceof Double)
-        return operation.apply(a.doubleValue(), b.doubleValue());
-      else if (b instanceof BigDecimal)
-        return operation.apply(new BigDecimal((Double) a), (BigDecimal) b);
-
-    } else if (a instanceof BigDecimal) {
-      if (b instanceof Integer)
-        return operation.apply((BigDecimal) a, new BigDecimal((Integer) b));
-      else if (b instanceof Long)
-        return operation.apply((BigDecimal) a, new BigDecimal((Long) b));
-      else if (b instanceof Short)
-        return operation.apply((BigDecimal) a, new BigDecimal((Short) b));
-      else if (b instanceof Float)
-        return operation.apply((BigDecimal) a, new BigDecimal((Float) b));
-      else if (b instanceof Double)
-        return operation.apply((BigDecimal) a, new BigDecimal((Double) b));
-      else if (b instanceof BigDecimal)
-        return operation.apply((BigDecimal) a, (BigDecimal) b);
-    }
-
-    throw new IllegalArgumentException(
-        "Cannot increment value '" + a + "' (" + a.getClass() + ") with '" + b + "' (" + b.getClass() + ")");
-
   }
 
   protected boolean supportsBasicCalculation() {
@@ -653,7 +846,6 @@ public class OMathExpression extends SimpleNode {
    * @param context  the execution context
    * @param operator
    * @param right
-   *
    * @return true if current expression is an indexed funciton AND that function can also be executed without using the index, false
    * otherwise
    */
@@ -672,7 +864,6 @@ public class OMathExpression extends SimpleNode {
    * @param context  the execution context
    * @param operator
    * @param right
-   *
    * @return true if current expression is an indexed function AND that function can be used on this target, false otherwise
    */
   public boolean allowsIndexedFunctionExecutionOnTarget(OFromClause target, OCommandContext context,
@@ -690,7 +881,6 @@ public class OMathExpression extends SimpleNode {
    *
    * @param target  the query target
    * @param context the execution context
-   *
    * @return true if current expression is an indexed function AND the function has also to be executed after the index search.
    */
   public boolean executeIndexedFunctionAfterIndexSearch(OFromClause target, OCommandContext context,

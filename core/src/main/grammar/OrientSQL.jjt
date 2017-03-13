@@ -2157,6 +2157,8 @@ OMathExpression MathExpression():
 	            <BIT_OR> { jjtThis.operators.add(OMathExpression.Operator.BIT_OR); }
 	            |
 	            <XOR> { jjtThis.operators.add(OMathExpression.Operator.XOR); }
+	            |
+	            <SC_OR> { jjtThis.operators.add(OMathExpression.Operator.SC_OR); }
 	        )
 	        sub = FirstLevelExpression() { jjtThis.getChildExpressions().add(sub); }
 	    )*
