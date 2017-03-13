@@ -131,7 +131,7 @@ public class OETLProcessorConfigurator {
   private List<OETLBlock> configureEndBlocks(ODocument cfg, OCommandContext iContext)
 
       throws IllegalAccessException, InstantiationException {
-    List<OETLBlock> endBlocks = new ArrayList<OETLBlock>();
+    List<OETLBlock> endBlocks = new ArrayList();
     Collection<ODocument> endBlocksConf = cfg.field("end");
     if (endBlocksConf != null) {
       for (ODocument blockConf : endBlocksConf) {
