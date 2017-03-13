@@ -10,26 +10,26 @@ import static org.junit.Assert.assertNull;
 
 public class OPartitionedReCreatableDatabasePoolTest {
 
-  protected OPartitionedReCreatableDatabasePool pool() {
+    protected OPartitionedReCreatableDatabasePool pool() {
 
-    OrientDB orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
+        OrientDB orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
 
-    String dbName = "memorydb" + Math.random();
+        String dbName = "memorydb" + Math.random();
 
-    orientDB.create(dbName, ODatabaseType.MEMORY);
+        orientDB.create(dbName, ODatabaseType.MEMORY);
 
-    return new OPartitionedReCreatableDatabasePool(orientDB, dbName, "admin", "admin", 5);
-  }
+        return new OPartitionedReCreatableDatabasePool(orientDB, dbName, "admin", "admin", 5);
+    }
 
-  @Test
-  public void testDatabaseAcquiredByOPartitionedReCreatableDatabasePool() throws Exception {
-    OPartitionedReCreatableDatabasePool pool = pool();
-    assertFalse(pool.acquire().isClosed());
+    @Test
+    public void testDatabaseAcquiredByOPartitionedReCreatableDatabasePool() throws Exception {
+        OPartitionedReCreatableDatabasePool pool = pool();
+        assertFalse(pool.acquire().isClosed());
 
-    pool.close();
-    assertNull(pool.acquire());
+        pool.close();
+        assertNull(pool.acquire());
 
-    pool.reCreatePool();
-    assertFalse(pool.acquire().isClosed());
-  }
+        pool.reCreatePool();
+        assertFalse(pool.acquire().isClosed());
+    }
 }

@@ -14,8 +14,3 @@ import org.junit.runner.RunWith;
 @GraphProviderClass(provider = OrientGraphProvider.class, graph = OrientGraph.class)
 public class OrientDebugGraphStructure {
 }
-
-
-
-
-
