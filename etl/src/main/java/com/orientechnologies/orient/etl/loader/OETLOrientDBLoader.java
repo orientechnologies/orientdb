@@ -104,7 +104,6 @@ public class OETLOrientDBLoader extends OETLAbstractLoader implements OETLLoader
     if (input instanceof OVertex) {
       final OVertex v = (OVertex) input;
 
-      log(Level.FINE, "v::" + v.getSchemaType().get());
       try {
         v.save(clusterName);
       } catch (ORecordDuplicatedException e) {
