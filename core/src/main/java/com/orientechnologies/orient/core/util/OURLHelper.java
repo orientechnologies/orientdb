@@ -1,9 +1,11 @@
 package com.orientechnologies.orient.core.util;
 
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 
 import java.io.File;
+import java.util.Optional;
 
 /**
  * Created by Enrico Risa on 17/11/16.
@@ -22,6 +24,7 @@ public class OURLHelper {
 
     String databaseReference = url.substring(typeIndex + 1);
     String type = url.substring(0, typeIndex);
+
     if (!"remote".equals(type) && !"plocal".equals(type) && !"memory".equals(type))
       throw new OConfigurationException("Error on opening database: the engine '" + type + "' was not found. URL was: " + url
           + ". Registered engines are: [\"memory\",\"remote\",\"plocal\"]");
@@ -57,7 +60,16 @@ public class OURLHelper {
 
     String databaseReference = url.substring(typeIndex + 1);
     String type = url.substring(0, typeIndex);
+    Optional<ODatabaseType> dbType = Optional.empty();
     if ("plocal".equals(type) || "memory".equals(type)) {
+      switch (type){
+      case "plocal":
+        dbType = Optional.of(ODatabaseType.PLOCAL);
+        break;
+      case "memory":
+        dbType = Optional.of(ODatabaseType.MEMORY);
+        break;
+      }
       type = "embedded";
     }
 
@@ -81,6 +93,6 @@ public class OURLHelper {
     } else {
       baseUrl = path;
     }
-    return new OURLConnection(url, type, baseUrl, dbName);
+    return new OURLConnection(url, type, baseUrl, dbName,dbType);
   }
 }
