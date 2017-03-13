@@ -139,7 +139,7 @@ public class OETLOrientDBLoader extends OETLAbstractLoader implements OETLLoader
     if (tx && batchCommitSize > 0 && batchCounter.get() > batchCommitSize) {
       synchronized (this) {
         if (batchCommitSize > 0 && batchCounter.get() > batchCommitSize) {
-          log(Level.FINE, "committing document batch %d", progress.get());
+          log(logLevel, "committing document batch %d", progress.get());
           db.commit();
           db.begin();
           db.getTransaction().setUsingLog(txUseLog);
