@@ -146,8 +146,8 @@ public final class OrientGraphFactory implements AutoCloseable {
      */
     protected ODatabaseDocument getDatabase(boolean create, boolean open) {
 
-        if (create) {
-            this.factory.createIfNotExists(dbName, type.orElse(ODatabaseType.MEMORY));
+        if (create && type.isPresent()) {
+            this.factory.createIfNotExists(dbName, type.get());
         }
         return this.factory.open(dbName, user, password);
 
