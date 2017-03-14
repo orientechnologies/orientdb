@@ -10,7 +10,7 @@ import org.junit.Test;
 /**
  * Created by Enrico Risa on 26/01/17.
  */
-public class OrientGraphExecuteQueryRemoteTest extends AbstractRemoteTest {
+public class OrientGraphExecuteQueryRemoteGraphFactoryTest extends AbstractRemoteGraphFactoryTest {
 
 
   @Test

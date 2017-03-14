@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 /**
  * Created by Enrico Risa on 14/11/16.
  */
-public class OrientGraphExecuteFunctionTest extends AbstractRemoteTest {
+public class OrientGraphExecuteFunctionGraphFactoryTest extends AbstractRemoteGraphFactoryTest {
 
   @Test
   public void testExecuteGremlinSimpleFunctionTest() {

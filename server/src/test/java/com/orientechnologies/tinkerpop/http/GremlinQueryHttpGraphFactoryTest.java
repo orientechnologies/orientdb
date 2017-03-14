@@ -14,7 +14,7 @@ import java.util.Optional;
 /**
  * Created by Enrico Risa on 07/02/17.
  */
-public class GremlinQueryHttpTest extends BaseGremlinHttpTest {
+public class GremlinQueryHttpGraphFactoryTest extends BaseGremlinHttpGraphFactoryTest {
 
   @Test
   public void simpleHttpGremlinQuery() throws IOException {

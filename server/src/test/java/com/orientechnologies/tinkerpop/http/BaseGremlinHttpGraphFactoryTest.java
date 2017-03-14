@@ -2,7 +2,7 @@ package com.orientechnologies.tinkerpop.http;
 
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.tinkerpop.AbstractRemoteTest;
+import com.orientechnologies.tinkerpop.AbstractRemoteGraphFactoryTest;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
@@ -26,7 +26,7 @@ import java.util.Optional;
 /**
  * Created by Enrico Risa on 07/02/17.
  */
-public abstract class BaseGremlinHttpTest extends AbstractRemoteTest {
+public abstract class BaseGremlinHttpGraphFactoryTest extends AbstractRemoteGraphFactoryTest {
 
   private String protocol     = "http";
   private String host         = "localhost";
