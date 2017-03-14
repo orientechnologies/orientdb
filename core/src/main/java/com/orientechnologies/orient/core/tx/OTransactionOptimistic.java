@@ -58,10 +58,10 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class OTransactionOptimistic extends OTransactionRealAbstract {
-  private static AtomicInteger txSerial = new AtomicInteger();
-  private boolean changed = false;
-  private boolean alreadyCleared = false;
-  private boolean usingLog = true;
+  private static AtomicInteger txSerial       = new AtomicInteger();
+  private        boolean       changed        = true;
+  private        boolean       alreadyCleared = false;
+  private        boolean       usingLog       = true;
   private int txStartCounter;
 
   private ORecordCallback<Long>    recordCreatedCallback = null;
@@ -536,7 +536,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     status = TXSTATUS.COMMITTING;
 
     if (!allEntries.isEmpty() || !indexEntries.isEmpty()) {
-        database.getStorage().commit(this, null);
+      database.getStorage().commit(this, null);
     }
 
     invokeCallbacks();

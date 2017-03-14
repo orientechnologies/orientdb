@@ -22,9 +22,9 @@ import static org.junit.Assert.*;
 public class RemoteTransactionSupportTest {
 
   private static final String SERVER_DIRECTORY = "./target/transaction";
-  private OServer             server;
-  private OrientDB            orientDB;
-  private ODatabaseDocument   database;
+  private OServer           server;
+  private OrientDB          orientDB;
+  private ODatabaseDocument database;
 
   @Before
   public void before() throws Exception {
@@ -122,6 +122,14 @@ public class RemoteTransactionSupportTest {
 
     assertFalse(database.getTransaction().isActive());
 
+  }
+
+  @Test
+  public void testDownloadTransactionAtStart() {
+    database.begin();
+
+    database.command("insert into SomeTx set name ='Jane' ");
+    assertEquals(database.getTransaction().getEntryCount(), 1);
   }
 
   @Test
