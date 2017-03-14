@@ -221,6 +221,19 @@ public class OrientDBEmbeddedTests {
   }
 
   @Test
+  public void testOpenKeepClean() {
+    OrientDB orientDb = new OrientDB("embedded:./", OrientDBConfig.defaultConfig());
+    try {
+      orientDb.open("test", "admin", "admin");
+    } catch (Exception e) {
+      //ignore
+    }
+    assertFalse(orientDb.exists("test"));
+
+    orientDb.close();
+  }
+
+  @Test
   public void testOrientDBDatabaseOnlyMemory() {
     OrientDB orientDb = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
 

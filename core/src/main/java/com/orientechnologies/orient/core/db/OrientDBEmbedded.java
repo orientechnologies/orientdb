@@ -138,7 +138,8 @@ public class OrientDBEmbedded implements OrientDBInternal {
     OAbstractPaginatedStorage storage = storages.get(name);
     if (storage == null) {
       storage = (OAbstractPaginatedStorage) disk.createStorage(buildName(name), new HashMap<>());
-      storages.put(name, storage);
+      if (storage.exists())
+        storages.put(name, storage);
     }
     return storage;
   }
