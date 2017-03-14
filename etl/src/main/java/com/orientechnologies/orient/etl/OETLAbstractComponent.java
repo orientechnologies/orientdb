@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
-import com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS;
 
 import java.util.logging.Level;
 
@@ -40,10 +39,9 @@ import static com.orientechnologies.common.parser.OSystemVariableResolver.VAR_EN
 public abstract class OETLAbstractComponent implements OETLComponent {
   protected OETLProcessor   processor;
   protected OCommandContext context;
-  protected Level logLevel = Level.INFO;
-  protected String    output;
-  protected String    ifExpression;
-  protected ODocument configuration;
+  protected String          output;
+  protected String          ifExpression;
+  protected ODocument       configuration;
 
   @Override
   public ODocument getConfiguration() {
@@ -59,11 +57,6 @@ public abstract class OETLAbstractComponent implements OETLComponent {
 
   @Override
   public void begin(ODatabaseDocument db) {
-    if (configuration.containsField("log"))
-      logLevel = LOG_LEVELS.valueOf(configuration.field("log").toString().toUpperCase()).toJulLevel();
-    else
-      logLevel = processor.getLogLevel();
-
     if (configuration.containsField("output"))
       output = configuration.field("output");
 
@@ -119,12 +112,13 @@ public abstract class OETLAbstractComponent implements OETLComponent {
 
   protected void log(final Level iLevel, String iText, Exception exception, final Object... iArgs) {
     final Long extractedNum = context != null ? (Long) context.getVariable("extractedNum") : null;
+
     if (extractedNum != null) {
       OLogManager.instance()
-          .log(this, iLevel, "[" + extractedNum + ":" + getName() + "] " + iLevel + " " + iText, exception, iArgs);
+          .log(this, iLevel, "[" + extractedNum + ":" + getName() + "]  " + iText, exception, iArgs);
     } else {
       OLogManager.instance()
-          .log(this, iLevel, "[" + getName() + "] " + iLevel + " " + iText, exception, iArgs);
+          .log(this, iLevel, "[" + getName() + "] " + iText, exception, iArgs);
     }
   }
 

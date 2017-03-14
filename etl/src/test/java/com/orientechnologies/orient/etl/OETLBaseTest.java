@@ -76,6 +76,5 @@ public abstract class OETLBaseTest {
 
     proc = configurator.parse(cfg, iContext);
 
-//    proc.execute();
   }
 }

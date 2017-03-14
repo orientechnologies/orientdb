@@ -51,7 +51,7 @@ public class OETLLogTransformerTest extends OETLBaseTest {
   }
 
   @After
-  public void redirecByteBuffToSysout() {
+  public void redirecyByteBuffToSysout() {
     System.setErr(sysOut);
   }
 
@@ -62,10 +62,10 @@ public class OETLLogTransformerTest extends OETLBaseTest {
     configure(cfgJson);
     proc.execute();
 
-    String[] stringList = output.toString().split(System.getProperty("line.separator"));
+    String out = output.toString();
 
-    assertThat(stringList[3]).contains("-> {id:1,text:Hello}");
-    assertThat(stringList[4]).contains("-> {id:2,text:Bye}");
+    assertThat(out).contains("-> {id:1,text:Hello}");
+    assertThat(out).contains("-> {id:2,text:Bye}");
 
   }
 

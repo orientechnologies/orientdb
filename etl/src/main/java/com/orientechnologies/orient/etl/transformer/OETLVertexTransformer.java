@@ -52,6 +52,7 @@ public class OETLVertexTransformer extends OETLAbstractTransformer {
 
   @Override
   public void begin(ODatabaseDocument db) {
+    super.begin(db);
     if (vertexClass != null) {
       final OClass cls = db.getClass(vertexClass);
       if (cls == null) {

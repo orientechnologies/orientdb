@@ -139,7 +139,7 @@ public class OETLOrientDBLoader extends OETLAbstractLoader implements OETLLoader
     if (tx && batchCommitSize > 0 && batchCounter.get() > batchCommitSize) {
       synchronized (this) {
         if (batchCommitSize > 0 && batchCounter.get() > batchCommitSize) {
-          log(logLevel, "committing document batch %d", progress.get());
+          log(Level.FINE, "committing document batch %d", progress.get());
           db.commit();
           db.begin();
           db.getTransaction().setUsingLog(txUseLog);
@@ -239,7 +239,7 @@ public class OETLOrientDBLoader extends OETLAbstractLoader implements OETLLoader
     if (clusterName != null) {
       int clusterIdByName = db.getClusterIdByName(clusterName);
       if (clusterIdByName == -1) {
-        log(logLevel, "add cluster :: " + clusterName);
+        log(Level.FINE, "add cluster :: " + clusterName);
         cls.addCluster(clusterName);
       }
     }
@@ -264,19 +264,16 @@ public class OETLOrientDBLoader extends OETLAbstractLoader implements OETLLoader
           // VERTEX
 
           cls = db.createVertexClass(iClassName).setSuperClasses(Arrays.asList(superClass));
-//          cls = schema1.createClass(iClassName, superClass);
           log(Level.FINE, "- OrientDBLoader: created vertex class '%s' extends '%s'", iClassName, iSuperClass);
         } else {
           // EDGE
           cls = db.createEdgeClass(iClassName).setSuperClasses(Arrays.asList(superClass));
 
-//          cls = graphDatabase.createEdgeType(iClassName, superClass);
           log(Level.FINE, "- OrientDBLoader: created edge class '%s' extends '%s'", iClassName, iSuperClass);
         }
       } else {
         // ALWAYS CREATE SUB-VERTEX
         cls = db.createVertexClass(iClassName);
-//        cls = graphDatabase.createVertexType(iClassName);
         log(Level.FINE, "- OrientDBLoader: created vertex class '%s'", iClassName);
       }
     }

@@ -86,6 +86,7 @@ public class OETLEdgeTransformer extends OETLAbstractLookupTransformer {
 
   @Override
   public void begin(ODatabaseDocument db) {
+    super.begin(db);
     final OClass cls = db.getClass(edgeClass);
     if (cls == null)
       db.createEdgeClass(edgeClass);
