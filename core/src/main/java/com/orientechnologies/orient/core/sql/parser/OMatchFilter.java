@@ -3,6 +3,8 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -101,6 +103,15 @@ public class OMatchFilter extends SimpleNode {
         } else {
           return item.className.value.toString();
         }
+      }
+    }
+    return null;
+  }
+
+  public ORID getRid(OCommandContext ctx) {
+    for (OMatchFilterItem item : items) {
+      if (item.rid != null) {
+        return new ORecordId(item.rid.cluster.getValue().intValue(), item.rid.position.getValue().longValue());
       }
     }
     return null;

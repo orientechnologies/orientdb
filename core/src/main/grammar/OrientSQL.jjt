@@ -358,6 +358,10 @@ TOKEN:
 	|
 	< EXISTS: ( "E" | "e") ( "X" | "x") ( "I" | "i") ( "S" | "s") ( "T" | "t") ( "S" | "s") >
 	|
+	< RID: ( "R" | "r") ( "I" | "i") ( "D" | "d") >
+	|
+	< RIDS: ( "R" | "r") ( "I" | "i") ( "D" | "d") ( "S" | "s") >
+	|
 	< THIS: "@" ( ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "s" | "S" ) ) >
 	|
 	< RECORD_ATTRIBUTE: <RID_ATTR> | <CLASS_ATTR> | <VERSION_ATTR> | <SIZE_ATTR> | <TYPE_ATTR> | <RAW_ATTR> | <RID_ID_ATTR> | <RID_POS_ATTR> | <FIELDS_ATTR> >
@@ -816,6 +820,10 @@ OIdentifier Identifier():
     token = <SYNC>
     |
     token = <EXISTS>
+    |
+    token = <RID>
+    |
+    token = <RIDS>
     |
     quotedToken = <QUOTED_IDENTIFIER>
 ) {
@@ -3440,6 +3448,10 @@ OMatchFilterItem MatchFilterItem():
     (
         (
             <CLASS> <COLON> jjtThis.className = Expression()
+        )
+        |
+        (
+            <RID> <COLON> jjtThis.rid = Rid()
         )
         |
         (
