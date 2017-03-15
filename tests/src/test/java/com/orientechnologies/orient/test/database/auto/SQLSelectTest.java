@@ -1867,4 +1867,25 @@ import java.util.concurrent.atomic.AtomicBoolean;
     Assert.assertEquals(item.field("encoded"), OBase64Utils.encodeBytes(param));
   }
 
+  @Test
+  public void testNamedParams(){
+    //issue #7236
+
+    database.command(new OCommandSQL("create class testNamedParams extends V")).execute();
+    database.command(new OCommandSQL("create class testNamedParams_permission extends V")).execute();
+    database.command(new OCommandSQL("create class testNamedParams_HasPermission extends E")).execute();
+
+    database.command(new OCommandSQL("insert into testNamedParams_permission set type = ['USER']")).execute();
+    database.command(new OCommandSQL("insert into testNamedParams set login = 20")).execute();
+    database.command(new OCommandSQL("CREATE EDGE testNamedParams_HasPermission from (select from testNamedParams) to (select from testNamedParams_permission)")).execute();
+
+    Map<String, Object> params = new HashMap<String, Object>();
+    params.put("key", 10);
+    params.put("permissions", new String[]{"USER"});
+    params.put("limit", 1);
+    List<ODocument> results = database.query(new OSQLSynchQuery<ODocument>("SELECT *, out('testNamedParams_HasPermission').type as permissions FROM testNamedParams WHERE login >= :key AND out('testNamedParams_HasPermission').type IN :permissions ORDER BY login ASC LIMIT :limit"), params);
+    Assert.assertEquals(results.size(), 1);
+  }
+
+
 }
