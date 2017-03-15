@@ -687,6 +687,9 @@ public class OFileClassic implements OFile, OClosableItem {
 
   private void init() throws IOException {
     size = getSize();
+    if (size == 0) {
+      size = channel.size() - HEADER_SIZE;
+    }
     assert size >= 0;
 
     final ByteBuffer buffer = ByteBuffer.allocate(1);
