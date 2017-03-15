@@ -133,7 +133,7 @@ public class OFilterAnalyzer {
     case INDEX_INTERSECTION:
       return analyzeIntersection(iSchemaClass, condition, iIndexSearchResults, iContext);
     case INDEX_METHOD:
-      return analyzeIndexMethod(iSchemaClass, condition, iIndexSearchResults);
+      return analyzeIndexMethod(iSchemaClass, condition, iIndexSearchResults, iContext);
     case INDEX_OPERATOR:
       return analyzeOperator(iSchemaClass, condition, iIndexSearchResults, iContext);
     default:
@@ -147,10 +147,10 @@ public class OFilterAnalyzer {
   }
 
   private OIndexSearchResult analyzeIndexMethod(OClass iSchemaClass, OSQLFilterCondition condition,
-      List<OIndexSearchResult> iIndexSearchResults) {
-    OIndexSearchResult result = createIndexedProperty(condition, condition.getLeft());
+      List<OIndexSearchResult> iIndexSearchResults, OCommandContext ctx) {
+    OIndexSearchResult result = createIndexedProperty(condition, condition.getLeft(), ctx);
     if (result == null) {
-      result = createIndexedProperty(condition, condition.getRight());
+      result = createIndexedProperty(condition, condition.getRight(), ctx);
     }
 
     if (result == null) {
@@ -202,7 +202,7 @@ public class OFilterAnalyzer {
    * @param iItem      Value to search
    * @return true if the property was indexed and found, otherwise false
    */
-  private OIndexSearchResult createIndexedProperty(final OSQLFilterCondition iCondition, final Object iItem) {
+  private OIndexSearchResult createIndexedProperty(final OSQLFilterCondition iCondition, final Object iItem, OCommandContext ctx) {
     if (iItem == null || !(iItem instanceof OSQLFilterItemField)) {
       return null;
     }
@@ -234,7 +234,7 @@ public class OFilterAnalyzer {
       return new OIndexSearchResult(operator, item.getFieldChain(), origValue);
     }
 
-    final Object value = OSQLHelper.getValue(origValue);
+    final Object value = OSQLHelper.getValue(origValue, null, ctx);
     return new OIndexSearchResult(operator, item.getFieldChain(), value);
   }
 
