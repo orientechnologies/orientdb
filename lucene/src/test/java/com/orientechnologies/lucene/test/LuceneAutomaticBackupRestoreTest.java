@@ -1,6 +1,6 @@
 /*
  *
- *  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
+   *  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
  *  *
  *  * Licensed under the Apache License, Version 2.0 (the "License");
  *  * you may not use this file except in compliance with the License.
@@ -136,7 +136,7 @@ public class LuceneAutomaticBackupRestoreTest {
 
     doc.field("targetDirectory", BACKUPDIR);
 
-    doc.field("dbInclude", new String[] { "OLuceneAutomaticBackupRestoreTest" });
+    doc.field("dbInclude", new String[] { DBNAME });
 
     doc.field("firstTime", new SimpleDateFormat("HH:mm:ss").format(new Date(System.currentTimeMillis() + 2000)));
 
