@@ -1591,6 +1591,18 @@ public class OCommandExecutorSQLSelectTest {
     Assert.assertEquals(results.get(0).field("a"), 0.01d);
   }
 
+
+  @Test
+  public void testConvertDouble(){
+    //issue #7234
+
+    db.command(new OCommandSQL("create class testConvertDouble")).execute();
+    db.command(new OCommandSQL("insert into testConvertDouble set num = 100000")).execute();
+
+    List<ODocument> results = db.query(new OSQLSynchQuery<ODocument>("SELECT FROM testConvertDouble WHERE num >= 50000 AND num <=300000000"));
+    Assert.assertEquals(results.size(), 1);
+  }
+
   private long indexUsages(ODatabaseDocumentTx db) {
     final long oldIndexUsage;
     try {
