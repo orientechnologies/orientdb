@@ -33,12 +33,12 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Proxied index.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 @SuppressWarnings("unchecked")
 public class OIndexRemoteMultiValue extends OIndexRemote<Collection<OIdentifiable>> {
@@ -50,9 +50,8 @@ public class OIndexRemoteMultiValue extends OIndexRemote<Collection<OIdentifiabl
   }
 
   public Collection<OIdentifiable> get(final Object iKey) {
-    final OCommandRequest cmd = formatCommand(QUERY_GET, name);
-    return new HashSet<OIdentifiable>((Collection<OIdentifiable>) getDatabase().command(cmd).execute(iKey));
-    // return null; return (Collection<OIdentifiable>) ((OStorageProxy) getDatabase().getStorage()).indexGet(name, iKey, null);
+    return getDatabase().command(String.format(QUERY_GET, name), iKey).stream().map((res) -> getIdentity())
+        .collect(Collectors.toSet());
   }
 
   public Iterator<Entry<Object, Collection<OIdentifiable>>> iterator() {
@@ -79,7 +78,7 @@ public class OIndexRemoteMultiValue extends OIndexRemote<Collection<OIdentifiabl
     final List<ODocument> result = getDatabase().command(cmd).execute();
 
     final Map<Object, Collection<OIdentifiable>> map = new LinkedHashMap<Object, Collection<OIdentifiable>>();
-    for (ListIterator<ODocument> it = result.listIterator(); it.hasPrevious();) {
+    for (ListIterator<ODocument> it = result.listIterator(); it.hasPrevious(); ) {
       ODocument d = it.previous();
       d.setLazyLoad(false);
       Collection<OIdentifiable> rids = map.get(d.field("key"));

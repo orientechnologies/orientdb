@@ -1046,7 +1046,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OCloseable
         final Object res = db.command(commandSQL).execute();
 
       } else if (storage instanceof OStorageProxy) {
-        db.command(new OCommandSQL(cmd.toString())).execute();
+        db.command(cmd.toString());
         reload();
       } else {
         final int[] clusterIds = createClusters(className, clusters);

@@ -1177,7 +1177,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           .equalsIgnoreCase(OMetadataDefault.CLUSTER_INTERNAL_NAME) || name
           .equalsIgnoreCase(OMetadataDefault.CLUSTER_INDEX_NAME))) {
         if (!merge)
-          database.command(new OCommandSQL("truncate cluster `" + name + "`")).execute();
+          database.command("truncate cluster `" + name + "`");
 
         for (OIndex existingIndex : database.getMetadata().getIndexManager().getIndexes()) {
           if (existingIndex.getClusters().contains(name)) {

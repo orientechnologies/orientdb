@@ -86,7 +86,7 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
     acquireExclusiveLock();
     try {
       final String text = String.format(QUERY_DROP, iIndexName);
-      getDatabase().command(new OCommandSQL(text)).execute();
+      getDatabase().command(text);
 
       // REMOVE THE INDEX LOCALLY
       final Locale locale = getServerLocale();

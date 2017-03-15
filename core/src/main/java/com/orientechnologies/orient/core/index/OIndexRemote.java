@@ -29,8 +29,11 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Proxied abstract index.
@@ -93,8 +96,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   }
 
   public OIndexRemote<T> delete() {
-    final OCommandRequest cmd = formatCommand(QUERY_DROP, name);
-    getDatabase().command(cmd).execute();
+    getDatabase().command(String.format(QUERY_DROP, name));
     return this;
   }
 
@@ -138,8 +140,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     if (maxValuesToFetch > 0)
       query.append(QUERY_GET_VALUES_LIMIT).append(maxValuesToFetch);
 
-    final OCommandRequest cmd = formatCommand(query.toString());
-    return (Long) getDatabase().command(cmd).execute(iRangeFrom, iRangeTo);
+    return (Long) getDatabase().command(query.toString(),  iRangeFrom, iRangeTo).next().getProperty("value");
   }
 
   public OIndexRemote<T> put(final Object iKey, final OIdentifiable iValue) {
@@ -179,8 +180,8 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   }
 
   public int remove(final OIdentifiable iRecord) {
-    final OCommandRequest cmd = formatCommand(QUERY_REMOVE3, name, iRecord.getIdentity());
-    return (Integer) getDatabase().command(cmd).execute(iRecord);
+    return (Integer) getDatabase().command(String.format(QUERY_REMOVE3, name, iRecord.getIdentity()), iRecord).next()
+        .getProperty("value");
   }
 
   @Override
@@ -200,26 +201,22 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   }
 
   public long rebuild() {
-    final OCommandRequest cmd = formatCommand(QUERY_REBUILD, name);
-    return (Long) getDatabase().command(cmd).execute();
+    return (Long) getDatabase().command(String.format(QUERY_REBUILD, name)).next().getProperty("value");
   }
 
   public OIndexRemote<T> clear() {
-    final OCommandRequest cmd = formatCommand(QUERY_CLEAR, name);
-    getDatabase().command(cmd).execute();
+    getDatabase().command(String.format(QUERY_CLEAR, name));
     return this;
   }
 
   public long getSize() {
-    final OCommandRequest cmd = formatCommand(QUERY_SIZE, name);
-    final List<ODocument> result = getDatabase().command(cmd).execute();
-    return (Long) result.get(0).field("size");
+    OResultSet result = getDatabase().command(String.format(QUERY_SIZE, name));
+    return (Long) result.next().getProperty("size");
   }
 
   public long getKeySize() {
-    final OCommandRequest cmd = formatCommand(QUERY_KEY_SIZE, name);
-    final List<ODocument> result = getDatabase().command(cmd).execute();
-    return (Long) result.get(0).field("size");
+    OResultSet result = getDatabase().command(String.format(QUERY_KEY_SIZE, name));
+    return (Long) result.next().getProperty("size");
   }
 
   public boolean isAutomatic() {
@@ -286,8 +283,8 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
       }
     }
 
-    final OCommandRequest cmd = formatCommand(QUERY_GET_ENTRIES, name, params.toString());
-    return (Collection<ODocument>) getDatabase().command(cmd).execute(iKeys.toArray());
+    return getDatabase().command(String.format(QUERY_GET_ENTRIES, name, params.toString()), iKeys.toArray()).stream()
+        .map((res) -> (ODocument) res.toElement()).collect(Collectors.toList());
   }
 
   public OIndexDefinition getDefinition() {
