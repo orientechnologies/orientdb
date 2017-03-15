@@ -1,6 +1,6 @@
 # SQL to recreate the SocialTravelAgency DemoDB - Generated on: Wed Mar 15 12:31:40 CET 2017
 
-CREATE DATABASE plocal:./target/databases/demodb
+CREATE DATABASE plocal:./target/databases/DemoDB
 
 CREATE CLASS DBInfo;
 INSERT INTO DBInfo SET Name='SocialTravelAgency', Version='0.72';
