@@ -785,7 +785,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     req.getTask().setNodeSource(senderNodeName);
 
     if (ddb != null)
-      ddb.processRequest(req);
+      ddb.processRequest(req, true);
     else
       manager.executeOnLocalNode(req.getId(), req.getTask(), null);
   }

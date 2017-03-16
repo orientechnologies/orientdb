@@ -91,7 +91,7 @@ public interface ODistributedDatabase {
 
   void waitForOnline();
 
-  void processRequest(ODistributedRequest request);
+  void processRequest(ODistributedRequest request, boolean waitForAcceptingRequests);
 
   ODistributedTxContext registerTxContext(ODistributedRequestId reqId);
 
