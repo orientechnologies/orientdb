@@ -2309,7 +2309,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     if (!hasClusterId(clusterId))
       return;
 
-    database.command("alter cluster `" + oldName + "` name `" + newName + "`");
+    database.command("alter cluster `" + oldName + "` NAME \"" + newName + "\"");
   }
 
   private void setShortNameInternal(final String iShortName) {

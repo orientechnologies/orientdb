@@ -4,6 +4,7 @@ import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentRemote;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTxInternal;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.OEdgeDelegate;
@@ -61,7 +62,8 @@ public class OQueryResponse implements OBinaryResponse {
 
   @Override
   public void read(OChannelDataInput network, OStorageRemoteSession session) throws IOException {
-    ORemoteResultSet rs = new ORemoteResultSet((ODatabaseDocumentRemote) ODatabaseRecordThreadLocal.INSTANCE.get());
+    ORemoteResultSet rs = new ORemoteResultSet(
+        (ODatabaseDocumentRemote) ODatabaseDocumentTxInternal.getInternal(ODatabaseRecordThreadLocal.INSTANCE.get()));
     doRead(network, rs);
     this.result = rs;
   }
