@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import org.junit.After;
 import org.junit.Before;
 
+import java.net.Inet4Address;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -30,8 +31,9 @@ public abstract class OIntegrationTestTemplate {
       firstTime = false;
     }
 
+    String localhost = Inet4Address.getLocalHost().getHostAddress();
     //root's user password is defined inside the pom
-    orientDB = new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
+    orientDB = new OrientDB("remote:" + localhost, "root", "root", OrientDBConfig.defaultConfig());
 
     db = orientDB.open("demodb", "admin", "admin");
 
