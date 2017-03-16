@@ -1,5 +1,8 @@
 # SQL to recreate the SocialTravelAgency DemoDB - Generated on: Wed Mar 15 12:31:40 CET 2017
 
+SET echo FALSE
+SET verbose 0
+
 CREATE DATABASE plocal:./target/databases/demodb
 
 CREATE CLASS DBInfo;
