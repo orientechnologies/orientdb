@@ -150,10 +150,10 @@
                             <goal>run</goal>
                         </goals>
                         <configuration>
-                            <target name="start">
+                            <target name="start OrientDB server on localhost">
                                 <exec executable="${project.build.directory}/${project.build.finalName}.dir/${project.build.finalName}/bin/server.sh"
                                       spawn="true">
-                                    <env key="ORIENTDB_ROOT_PASSWORD" value="rootpasswd"/>
+                                    <env key="ORIENTDB_ROOT_PASSWORD" value="root"/>
                                 </exec>
                             </target>
                         </configuration>
@@ -166,12 +166,10 @@
                             <goal>run</goal>
                         </goals>
                         <configuration>
-                            <target>
+                            <target name="stop the running OrientDB server on localhost">
                                 <exec executable="${project.build.directory}/${project.build.finalName}.dir/${project.build.finalName}/bin/shutdown.sh"
                                       spawn="false">
-                                    <!--<env key="ORIENTDB_ROOT_PASSWORD" value="rootpasswd"/>-->
                                 </exec>
-
                             </target>
                         </configuration>
 

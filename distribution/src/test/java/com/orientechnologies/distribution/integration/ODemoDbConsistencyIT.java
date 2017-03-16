@@ -1,13 +1,15 @@
 package com.orientechnologies.distribution.integration;
 
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import org.assertj.core.api.Assertions;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -26,9 +28,6 @@ public class ODemoDbConsistencyIT extends OIntegrationTestTemplate {
     int monumentNumbers = 137;
     int theatreNumbers = 117;
 
-    List<ODocument> qResult = null;
-    String sqlQuery = "";
-
     // total number of vertices
     //assertEquals(0, db.getMetadata().getSchema().getClass("V").count());
 
@@ -37,65 +36,65 @@ public class ODemoDbConsistencyIT extends OIntegrationTestTemplate {
 
     // vertex class existence
     OSchema schema = db.getMetadata().getSchema();
-    Assertions.assertThat(schema.getClass("V")).isNotNull();
-    assertEquals(14, schema.getClass("V").getSubclasses().size());
+    assertThat(schema.getClass("V")).isNotNull();
+    assertThat(schema.getClass("V").getSubclasses()).hasSize(14);
 
-    Assertions.assertThat(schema.getClass("Locations")).isNotNull();
-    assertEquals(3541, schema.getClass("Locations").count());
+    assertThat(schema.getClass("Locations")).isNotNull();
+    assertThat(schema.getClass("Locations").count()).isEqualTo(3541);
 
-    Assertions.assertThat(schema.getClass("Attractions")).isNotNull();
-    assertEquals(436, schema.getClass("Attractions").count());
+    assertThat(schema.getClass("Attractions")).isNotNull();
+    assertThat(schema.getClass("Attractions").count()).isEqualTo(436);
 
-    Assertions.assertThat(schema.getClass("Castles")).isNotNull();
-    assertEquals(casteNumbers, schema.getClass("Castles").count());
+    assertThat(schema.getClass("Castles")).isNotNull();
+    assertThat(schema.getClass("Castles").count()).isEqualTo(casteNumbers);
 
-    Assertions.assertThat(schema.getClass("Theatres")).isNotNull();
-    assertEquals(theatreNumbers, schema.getClass("Theatres").count());
+    assertThat(schema.getClass("Theatres")).isNotNull();
+    assertThat(schema.getClass("Theatres").count()).isEqualTo(theatreNumbers);
 
-    Assertions.assertThat(schema.getClass("Monuments")).isNotNull();
-    assertEquals(monumentNumbers, schema.getClass("Monuments").count());
+    assertThat(schema.getClass("Monuments")).isNotNull();
+    assertThat(schema.getClass("Monuments").count()).isEqualTo(monumentNumbers);
 
-    Assertions.assertThat(schema.getClass("ArchaeologicalSites")).isNotNull();
-    assertEquals(archSiteNumbers, schema.getClass("ArchaeologicalSites").count());
+    assertThat(schema.getClass("ArchaeologicalSites")).isNotNull();
+    assertThat(schema.getClass("ArchaeologicalSites").count()).isEqualTo(archSiteNumbers);
 
-    Assertions.assertThat(schema.getClass("Services")).isNotNull();
-    assertEquals(3105, schema.getClass("Services").count());
+    assertThat(schema.getClass("Services")).isNotNull();
+    assertThat(schema.getClass("Services").count()).isEqualTo(3105);
 
-    Assertions.assertThat(schema.getClass("Hotels")).isNotNull();
-    assertEquals(hotelNumbers, schema.getClass("Hotels").count());
+    assertThat(schema.getClass("Hotels")).isNotNull();
+    assertThat(schema.getClass("Hotels").count()).isEqualTo(hotelNumbers);
 
-    Assertions.assertThat(schema.getClass("Restaurants")).isNotNull();
-    assertEquals(restaurantsNumbers, schema.getClass("Restaurants").count());
+    assertThat(schema.getClass("Restaurants")).isNotNull();
+    assertThat(schema.getClass("Restaurants").count()).isEqualTo(restaurantsNumbers);
 
-    Assertions.assertThat(schema.getClass("Profiles")).isNotNull();
+    assertThat(schema.getClass("Profiles")).isNotNull();
     //assertEquals(0, db.getMetadata().getSchema().getClass("Profiles").count());
 
-    Assertions.assertThat(schema.getClass("Customers")).isNotNull();
-    assertEquals(400, schema.getClass("Customers").count());
+    assertThat(schema.getClass("Customers")).isNotNull();
+    assertThat(schema.getClass("Customers").count()).isEqualTo(400);
 
-    Assertions.assertThat(schema.getClass("Orders")).isNotNull();
+    assertThat(schema.getClass("Orders")).isNotNull();
     //assertEquals(0, db.getMetadata().getSchema().getClass("Orders").count());
 
-    Assertions.assertThat(schema.getClass("Countries")).isNotNull();
-    assertEquals(249, schema.getClass("Countries").count());
+    assertThat(schema.getClass("Countries")).isNotNull();
+    assertThat(schema.getClass("Countries").count()).isEqualTo(249);
 
-    Assertions.assertThat(schema.getClass("Reviews")).isNotNull();
+    assertThat(schema.getClass("Reviews")).isNotNull();
     //assertEquals(0, db.getMetadata().getSchema().getClass("Reviews").count());
 
     // edge class existence
-    Assertions.assertThat(schema.getClass("E")).isNotNull();
-    assertEquals(10, schema.getClass("E").getSubclasses().size());
+    assertThat(schema.getClass("E")).isNotNull();
+    assertThat(schema.getClass("E").getSubclasses()).hasSize(10);
 
-    Assertions.assertThat(schema.getClass("HasCustomer")).isNotNull();
-    Assertions.assertThat(schema.getClass("HasVisited")).isNotNull();
-    Assertions.assertThat(schema.getClass("IsFromCountry")).isNotNull();
-    Assertions.assertThat(schema.getClass("HasStayed")).isNotNull();
-    Assertions.assertThat(schema.getClass("MadeReview")).isNotNull();
-    Assertions.assertThat(schema.getClass("HasReview")).isNotNull();
-    Assertions.assertThat(schema.getClass("HasEaten")).isNotNull();
-    Assertions.assertThat(schema.getClass("HasProfile")).isNotNull();
-    Assertions.assertThat(schema.getClass("HasFriend")).isNotNull();
-    Assertions.assertThat(schema.getClass("HasUsedService")).isNotNull();
+    assertThat(schema.getClass("HasCustomer")).isNotNull();
+    assertThat(schema.getClass("HasVisited")).isNotNull();
+    assertThat(schema.getClass("IsFromCountry")).isNotNull();
+    assertThat(schema.getClass("HasStayed")).isNotNull();
+    assertThat(schema.getClass("MadeReview")).isNotNull();
+    assertThat(schema.getClass("HasReview")).isNotNull();
+    assertThat(schema.getClass("HasEaten")).isNotNull();
+    assertThat(schema.getClass("HasProfile")).isNotNull();
+    assertThat(schema.getClass("HasFriend")).isNotNull();
+    assertThat(schema.getClass("HasUsedService")).isNotNull();
 
     // Vertex inheritance
     // to do
@@ -108,11 +107,12 @@ public class ODemoDbConsistencyIT extends OIntegrationTestTemplate {
     assertEquals("HasUsedService", schema.getClass("HasStayed").getSuperClassesNames().get(1));
 
     //method 2
-    sqlQuery = "SELECT DISTINCT(@class) AS className from `HasUsedService` ORDER BY className ASC";
-    qResult = db.command(new OCommandSQL(sqlQuery)).execute();
-    assertEquals(2, qResult.size());
-    assertEquals("HasEaten", qResult.get(0).field("className"));
-    assertEquals("HasStayed", qResult.get(1).field("className"));
+
+    List<OResult> results = db.query("SELECT DISTINCT(@class) AS className from `HasUsedService` ORDER BY className ASC").stream()
+        .collect(Collectors.toList());
+    assertEquals(2, results.size());
+    assertEquals("HasEaten", results.get(0).getProperty("className"));
+    assertEquals("HasStayed", results.get(1).getProperty("className"));
 
     //method 3 - fails, to ask Luigi why
     //sqlQuery = "SELECT COUNT(*) as edgeCount, DISTINCT(@class) AS edgeClassName from `HasUsedService` GROUP BY edgeClassName ORDER BY edgeClassName ASC";
@@ -124,26 +124,22 @@ public class ODemoDbConsistencyIT extends OIntegrationTestTemplate {
   }
 
   @Test
+  @Ignore
   public void testMatchQueries() throws Exception {
-
-    List<ODocument> qResult = null;
-    String sqlQuery = "";
 
     // MATCH QUERIES TESTS
     // all customers have a country
-    sqlQuery = "MATCH {class: Customers, as: customer}-IsFromCountry->{class: Countries, as: country} RETURN customer";
-    qResult = db.command(new OCommandSQL(sqlQuery)).execute();
-    assertEquals(400, qResult.size());
+    OResultSet resultSet = db
+        .query("MATCH {class: Customers, as: customer}-IsFromCountry->{class: Countries, as: country} RETURN customer");
+    assertThat(resultSet).hasSize(400);
 
     // all customers have a profile
-    sqlQuery = "MATCH {class: Customers, as: customer}-HasProfile->{class: Profiles, as: profile} RETURN customer";
-    qResult = db.command(new OCommandSQL(sqlQuery)).execute();
-    assertEquals(400, qResult.size());
+    resultSet = db.query("MATCH {class: Customers, as: customer}-HasProfile->{class: Profiles, as: profile} RETURN customer");
+    assertThat(resultSet).hasSize(400);
 
     // all customers have at least 1 order
-    sqlQuery = "MATCH {class: Orders, as: order}-HasCustomer->{class: Customers, as:customer} RETURN order";
-    qResult = db.command(new OCommandSQL(sqlQuery)).execute();
-    assertEquals(true, qResult.size() >= 60);
+    resultSet = db.query("MATCH {class: Orders, as: order}-HasCustomer->{class: Customers, as:customer} RETURN order");
+    assertThat(resultSet.stream().count()).isGreaterThan(60);
 
   }
 }
