@@ -126,56 +126,6 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>integration-test</goal>
-                            <goal>verify</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <version>1.8</version>
-                <executions>
-                    <execution>
-                        <id>start-orient</id>
-                        <phase>pre-integration-test</phase>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                        <configuration>
-                            <target name="start OrientDB server on localhost">
-                                <exec executable="${project.build.directory}/${project.build.finalName}.dir/${project.build.finalName}/bin/server.sh"
-                                      spawn="true">
-                                    <env key="ORIENTDB_ROOT_PASSWORD" value="root"/>
-                                </exec>
-                            </target>
-                        </configuration>
-                    </execution>
-
-                    <execution>
-                        <id>stop-orient</id>
-                        <phase>post-integration-test</phase>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                        <configuration>
-                            <target name="stop the running OrientDB server on localhost">
-                                <exec executable="${project.build.directory}/${project.build.finalName}.dir/${project.build.finalName}/bin/shutdown.sh"
-                                      spawn="false">
-                                </exec>
-                            </target>
-                        </configuration>
-
-                    </execution>
-                </executions>
-            </plugin>
 
 
             <plugin>
@@ -225,4 +175,66 @@
         </plugins>
     </build>
 
+    <profiles>
+        <profile>
+            <id>qa</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>integration-test</goal>
+                                    <goal>verify</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <plugin>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>1.8</version>
+                        <executions>
+                            <execution>
+                                <id>start-orient</id>
+                                <phase>pre-integration-test</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <target name="start OrientDB server on localhost">
+                                        <exec executable="${project.build.directory}/${project.build.finalName}.dir/${project.build.finalName}/bin/server.sh"
+                                              spawn="true">
+                                            <env key="ORIENTDB_ROOT_PASSWORD" value="root"/>
+                                        </exec>
+                                    </target>
+                                </configuration>
+                            </execution>
+
+                            <execution>
+                                <id>stop-orient</id>
+                                <phase>post-integration-test</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <target name="stop the running OrientDB server on localhost">
+                                        <exec executable="${project.build.directory}/${project.build.finalName}.dir/${project.build.finalName}/bin/shutdown.sh"
+                                              spawn="false">
+                                        </exec>
+                                    </target>
+                                </configuration>
+
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                </plugins>
+            </build>
+
+        </profile>
+
+    </profiles>
 </project>

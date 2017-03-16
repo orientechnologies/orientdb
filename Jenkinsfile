@@ -34,7 +34,7 @@ node("master") {
                         .inside("${env.VOLUMES}") {
                     try {
                         //skip integration test for now
-                        sh "${mvnHome}/bin/mvn -f distribution/pom.xml clean install"
+                        sh "${mvnHome}/bin/mvn -f distribution/pom.xml clean install -Pqa"
                     } finally {
                         junit allowEmptyResults: true, testResults: '**/target/surefire-reports/TEST-*.xml'
 
