@@ -19,8 +19,8 @@ package com.orientechnologies.lucene.engine;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.lucene.builder.OLuceneIndexType;
 import com.orientechnologies.lucene.builder.OLuceneDocumentBuilder;
+import com.orientechnologies.lucene.builder.OLuceneIndexType;
 import com.orientechnologies.lucene.builder.OLuceneQueryBuilder;
 import com.orientechnologies.lucene.collections.OLuceneCompositeKey;
 import com.orientechnologies.lucene.collections.OLuceneResultSet;
@@ -31,7 +31,6 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.index.*;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.parser.ParseException;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -209,20 +208,9 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
     return null;
   }
 
-  @Override
-  public OIndexCursor cursor(ValuesTransformer valuesTransformer) {
-    return null;
-  }
 
-  @Override
-  public OIndexKeyCursor keyCursor() {
-    return new OIndexKeyCursor() {
-      @Override
-      public Object next(int prefetchSize) {
-        return null;
-      }
-    };
-  }
+
+
 
   @Override
   public boolean hasRangeQuerySupport() {
