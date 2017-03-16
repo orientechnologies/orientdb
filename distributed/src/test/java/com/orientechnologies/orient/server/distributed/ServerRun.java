@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import com.hazelcast.cluster.impl.ClusterServiceImpl;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.instance.HazelcastInstanceImpl;
 import com.hazelcast.instance.HazelcastInstanceProxy;
@@ -96,8 +95,8 @@ public class ServerRun {
     final Node currentNode = getHazelcastNode(((OHazelcastPlugin) server.getDistributedManager()).getHazelcastInstance());
     for (ServerRun s : serverIds) {
       final Node otherNode = getHazelcastNode(((OHazelcastPlugin) s.server.getDistributedManager()).getHazelcastInstance());
-      currentNode.clusterService.removeAddress(otherNode.address);
-      otherNode.clusterService.removeAddress(currentNode.address);
+      currentNode.clusterService.removeAddress(otherNode.address, "no reason");
+      otherNode.clusterService.removeAddress(currentNode.address, "no reason");
     }
   }
 
@@ -106,8 +105,7 @@ public class ServerRun {
     for (ServerRun s : serverIds) {
       final Node otherNode = getHazelcastNode(((OHazelcastPlugin) s.server.getDistributedManager()).getHazelcastInstance());
 
-      final ClusterServiceImpl clusterService = currentNode.getClusterService();
-      clusterService.merge(otherNode.address);
+      currentNode.getClusterService().merge(otherNode.address);
     }
   }
 
