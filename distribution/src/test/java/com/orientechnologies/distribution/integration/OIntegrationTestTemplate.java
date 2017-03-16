@@ -1,19 +1,25 @@
 package com.orientechnologies.distribution.integration;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import org.junit.After;
 import org.junit.Before;
 
 import java.util.concurrent.TimeUnit;
 
 /**
+ * This abstract class is a template to be extended to implements integration tests.
+ * <p>
+ * <p>
  * Created by frank on 15/03/2017.
  */
 public abstract class OIntegrationTestTemplate {
 
   public static boolean firstTime = true;
 
-  protected ODatabaseDocumentTx db;
+  protected ODatabaseDocument db;
+  protected OrientDB          orientDB;
 
   @Before
   public void setUp() throws Exception {
@@ -24,12 +30,16 @@ public abstract class OIntegrationTestTemplate {
       firstTime = false;
     }
 
-    db = new ODatabaseDocumentTx("remote:localhost/demodb");
-    db.open("admin", "admin");
+    //root's user password is defined inside the pom
+    orientDB = new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
+
+    db = orientDB.open("demodb", "admin", "admin");
+
   }
 
   @After
   public void tearDown() throws Exception {
     db.close();
+    orientDB.close();
   }
 }
