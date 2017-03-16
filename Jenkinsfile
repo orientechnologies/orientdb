@@ -29,6 +29,19 @@ node("master") {
                 }
             }
 
+            stage('Run QA/Integration tests on Java8') {
+                docker.image("${mvnJdk8Image}")
+                        .inside("${env.VOLUMES}") {
+                    try {
+                        //skip integration test for now
+                        sh "${mvnHome}/bin/mvn -f distribution/pom.xml clean install"
+                    } finally {
+                        junit allowEmptyResults: true, testResults: '**/target/surefire-reports/TEST-*.xml'
+
+                    }
+                }
+            }
+
             stage('Publish Javadoc') {
                 docker.image("${mvnJdk8Image}")
                         .inside("${env.VOLUMES}") {
