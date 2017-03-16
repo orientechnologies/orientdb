@@ -23,6 +23,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
   private boolean inited = false;
   private OIndexCursor cursor;
+  private Map.Entry<Object, OIdentifiable> nextEntry = null;
 
   public FetchFromIndexStep(OIndex<?> index, OBooleanExpression condition, OBinaryCondition additionalRangeCondition,
       OCommandContext ctx) {
@@ -38,36 +39,45 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     this.orderAsc = orderAsc;
   }
 
-  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override
+  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     init();
     getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
     return new OResultSet() {
       int localCount = 0;
 
-      @Override public boolean hasNext() {
-        return (localCount < nRecords && cursor.hasNext());
+      @Override
+      public boolean hasNext() {
+        return (localCount < nRecords && nextEntry != null);
       }
 
-      @Override public OResult next() {
+      @Override
+      public OResult next() {
         if (!hasNext()) {
           throw new IllegalStateException();
         }
-        OIdentifiable record = cursor.next();
+        Map.Entry<Object, OIdentifiable> currentEntry = nextEntry;
+        nextEntry = cursor.nextEntry();
+
         localCount++;
         OResultInternal result = new OResultInternal();
-        result.setElement(record);
+        result.setProperty("key", currentEntry.getKey());
+        result.setProperty("rid", currentEntry.getValue());
         ctx.setVariable("$current", result);
         return result;
       }
 
-      @Override public void close() {
+      @Override
+      public void close() {
       }
 
-      @Override public Optional<OExecutionPlan> getExecutionPlan() {
+      @Override
+      public Optional<OExecutionPlan> getExecutionPlan() {
         return null;
       }
 
-      @Override public Map<String, Long> getQueryStats() {
+      @Override
+      public Map<String, Long> getQueryStats() {
         return null;
       }
     };
@@ -111,6 +121,9 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
   private void processFlatIteration() {
     cursor = isOrderAsc() ? index.cursor() : index.descCursor();
+    if(cursor!=null){
+      nextEntry = cursor.nextEntry();
+    }
   }
 
   private void init(OCollection fromKey, boolean fromKeyIncluded, OCollection toKey, boolean toKeyIncluded) {
@@ -125,6 +138,9 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
       cursor = index.iterateEntries(toIndexKey(indexDef, secondValue), isOrderAsc());
     } else {
       throw new UnsupportedOperationException("Cannot evaluate " + this.condition + " on index " + index);
+    }
+    if (cursor != null) {
+      nextEntry = cursor.nextEntry();
     }
   }
 
@@ -158,6 +174,9 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     cursor = index
         .iterateEntriesBetween(toBetweenIndexKey(definition, secondValue), true, toBetweenIndexKey(definition, thirdValue), true,
             isOrderAsc());
+    if (cursor != null) {
+      nextEntry = cursor.nextEntry();
+    }
   }
 
   private void processBinaryCondition() {
@@ -169,6 +188,9 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     }
     Object rightValue = ((OBinaryCondition) condition).getRight().execute((OResult) null, ctx);
     cursor = createCursor(operator, definition, rightValue, ctx);
+    if (cursor != null) {
+      nextEntry = cursor.nextEntry();
+    }
   }
 
   private Collection toIndexKey(OIndexDefinition definition, Object rightValue) {
@@ -221,11 +243,13 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     return orderAsc;
   }
 
-  @Override public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
+  @Override
+  public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
 
   }
 
-  @Override public void sendResult(Object o, Status status) {
+  @Override
+  public void sendResult(Object o, Status status) {
 
   }
 
@@ -330,11 +354,13 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     }
   }
 
-  @Override public String prettyPrint(int depth, int indent) {
+  @Override
+  public String prettyPrint(int depth, int indent) {
     return OExecutionStepInternal.getIndent(depth, indent) + "+ FETCH FROM INDEX " + index.getName() + (condition == null ?
         "" :
-        ("\n" +
-            OExecutionStepInternal.getIndent(depth, indent) + "  " + condition + (additional == null ? "" : " and " + additional)));
+        ("\n" + OExecutionStepInternal.getIndent(depth, indent) + "  " + condition + (additional == null ?
+            "" :
+            " and " + additional)));
   }
 
 }

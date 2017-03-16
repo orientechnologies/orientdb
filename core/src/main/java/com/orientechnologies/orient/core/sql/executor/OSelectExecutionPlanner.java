@@ -694,12 +694,14 @@ public class OSelectExecutionPlanner {
         throw new OCommandExecutionException("Index " + indexName + " does not allow iteration on values");
       }
       result.chain(new FetchFromIndexValuesStep(index, true, ctx));
+      result.chain(new GetValueFromIndexEntryStep(ctx));
       break;
     case VALUESDESC:
       if (!index.supportsOrderedIterations()) {
         throw new OCommandExecutionException("Index " + indexName + " does not allow iteration on values");
       }
       result.chain(new FetchFromIndexValuesStep(index, false, ctx));
+      result.chain(new GetValueFromIndexEntryStep(ctx));
       break;
     }
   }
@@ -941,6 +943,7 @@ public class OSelectExecutionPlanner {
       }
       if (indexFound && orderType != null) {
         plan.chain(new FetchFromIndexValuesStep(idx, orderType.equals(OOrderByItem.ASC), ctx));
+        plan.chain(new GetValueFromIndexEntryStep(ctx));
         orderApplied = true;
         return true;
       }
@@ -1067,6 +1070,7 @@ public class OSelectExecutionPlanner {
       Boolean orderAsc = getOrderDirection();
       result.add(
           new FetchFromIndexStep(desc.idx, desc.keyCondition, desc.additionalRangeCondition, !Boolean.FALSE.equals(orderAsc), ctx));
+      result.add(new GetValueFromIndexEntryStep(ctx));
       if (orderAsc != null && orderBy != null && fullySorted(orderBy, desc.keyCondition, desc.idx)) {
         orderApplied = true;
       }
@@ -1173,6 +1177,7 @@ public class OSelectExecutionPlanner {
     for (IndexSearchDescriptor desc : indexSearchDescriptors) {
       OSelectExecutionPlan subPlan = new OSelectExecutionPlan(ctx);
       subPlan.chain(new FetchFromIndexStep(desc.idx, desc.keyCondition, desc.additionalRangeCondition, ctx));
+      subPlan.chain(new GetValueFromIndexEntryStep(ctx));
       if (desc.remainingCondition != null && !desc.remainingCondition.isEmpty()) {
         subPlan.chain(new FilterStep(createWhereFrom(desc.remainingCondition), ctx));
       }

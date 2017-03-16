@@ -182,6 +182,7 @@ public class OTraverseExecutionPlanner {
       }
 
       result.chain(new FetchFromIndexStep(index, null, null, ctx));
+      result.chain(new GetValueFromIndexEntryStep(ctx));
       break;
     case VALUES:
     case VALUESASC:
@@ -189,12 +190,14 @@ public class OTraverseExecutionPlanner {
         throw new OCommandExecutionException("Index " + indexName + " does not allow iteration on values");
       }
       result.chain(new FetchFromIndexValuesStep(index, true, ctx));
+      result.chain(new GetValueFromIndexEntryStep(ctx));
       break;
     case VALUESDESC:
       if (!index.supportsOrderedIterations()) {
         throw new OCommandExecutionException("Index " + indexName + " does not allow iteration on values");
       }
       result.chain(new FetchFromIndexValuesStep(index, false, ctx));
+      result.chain(new GetValueFromIndexEntryStep(ctx));
       break;
     }
   }
