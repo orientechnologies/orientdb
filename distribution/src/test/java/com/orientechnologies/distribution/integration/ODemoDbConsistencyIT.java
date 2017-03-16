@@ -3,7 +3,6 @@ package com.orientechnologies.distribution.integration;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
@@ -121,7 +120,6 @@ public class ODemoDbConsistencyIT extends OIntegrationTestTemplate {
   }
 
   @Test
-  @Ignore
   public void testMatchQueries() throws Exception {
 
     // all customers have a country

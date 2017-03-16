@@ -21,7 +21,11 @@ public class OResultInternal implements OResult {
     if (value instanceof Optional) {
       value = ((Optional) value).orElse(null);
     }
-    content.put(name, value);
+    if (value instanceof OResult && ((OResult) value).isElement()) {
+      content.put(name, ((OResult) value).getElement().get());
+    } else {
+      content.put(name, value);
+    }
   }
 
   public void removeProperty(String name) {

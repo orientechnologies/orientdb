@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
@@ -126,8 +127,15 @@ public class OResultSerializerNetwork {
       final Object value = document.getProperty(field);
       if (value != null) {
         if (value instanceof OResult) {
-          writeOType(bytes, bytes.alloc(1), OType.EMBEDDED);
-          serializeValue(bytes, value, OType.EMBEDDED, null);
+
+          if (((OResult) value).isElement()) {
+            OElement elem = ((OResult) value).getElement().get();
+            writeOType(bytes, bytes.alloc(1), OType.LINK);
+            serializeValue(bytes, elem.getIdentity(), OType.LINK, null);
+          } else {
+            writeOType(bytes, bytes.alloc(1), OType.EMBEDDED);
+            serializeValue(bytes, value, OType.EMBEDDED, null);
+          }
         } else {
           final OType type = OType.getTypeByValue(value);
           if (type == null) {
@@ -357,8 +365,8 @@ public class OResultSerializerNetwork {
     //    return null;
   }
 
-  @SuppressWarnings("unchecked") public void serializeValue(final BytesContainer bytes, Object value, final OType type,
-      final OType linkedType) {
+  @SuppressWarnings("unchecked")
+  public void serializeValue(final BytesContainer bytes, Object value, final OType type, final OType linkedType) {
 
     final int pointer;
     switch (type) {
@@ -492,7 +500,8 @@ public class OResultSerializerNetwork {
     }
   }
 
-  @SuppressWarnings("unchecked") private void writeEmbeddedMap(BytesContainer bytes, Map<Object, Object> map) {
+  @SuppressWarnings("unchecked")
+  private void writeEmbeddedMap(BytesContainer bytes, Map<Object, Object> map) {
     Set fieldNames = map.keySet();
 
     for (Object f : fieldNames) {
@@ -590,7 +599,7 @@ public class OResultSerializerNetwork {
   }
 
   private OType getTypeFromValueEmbedded(final Object fieldValue) {
-    OType type = fieldValue instanceof OResult? OType.EMBEDDED:OType.getTypeByValue(fieldValue);
+    OType type = fieldValue instanceof OResult ? OType.EMBEDDED : OType.getTypeByValue(fieldValue);
     if (type == OType.LINK && fieldValue instanceof ODocument && !((ODocument) fieldValue).getIdentity().isValid())
       type = OType.EMBEDDED;
     return type;
