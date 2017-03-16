@@ -17,25 +17,23 @@ import static org.junit.Assert.assertEquals;
  */
 public class ODemoDbConsistencyIT extends OIntegrationTestTemplate {
 
+  private int customerNumber     = 400;
+  private int hotelNumbers       = 1154;
+  private int restaurantsNumbers = 1951;
+  private int casteNumbers       = 127;
+  private int archSiteNumbers    = 55;
+  private int monumentNumbers    = 137;
+  private int theatreNumbers     = 117;
+
   @Test
   public void testMetadata() throws Exception {
-	
-	int customerNumber = 400;
-	
-    int hotelNumbers = 1154;
-    int restaurantsNumbers = 1951;
 
-    int casteNumbers = 127;
-    int archSiteNumbers = 55;
-    int monumentNumbers = 137;
-    int theatreNumbers = 117;
-	
-	OSchema schema = db.getMetadata().getSchema();
+    OSchema schema = db.getMetadata().getSchema();
 
     // vertex class existence    
     assertThat(schema.getClass("V")).isNotNull();
     assertThat(schema.getClass("V").getSubclasses()).hasSize(14);
-	//assertThat(schema.getClass("V").count()).isEqualTo();
+    //assertThat(schema.getClass("V").count()).isEqualTo();
 
     assertThat(schema.getClass("Locations")).isNotNull();
     assertThat(schema.getClass("Locations").count()).isEqualTo(3541);
@@ -82,7 +80,7 @@ public class ODemoDbConsistencyIT extends OIntegrationTestTemplate {
     // edge class existence
     assertThat(schema.getClass("E")).isNotNull();
     assertThat(schema.getClass("E").getSubclasses()).hasSize(10);
-	//assertThat(schema.getClass("E").count()).isEqualTo();
+    //assertThat(schema.getClass("E").count()).isEqualTo();
 
     assertThat(schema.getClass("HasCustomer")).isNotNull();
     assertThat(schema.getClass("HasVisited")).isNotNull();
