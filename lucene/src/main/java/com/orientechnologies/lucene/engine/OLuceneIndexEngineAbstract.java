@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexException;
+import com.orientechnologies.orient.core.index.OIndexKeyCursor;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -471,7 +472,16 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
 
   @Override
   public OIndexCursor descCursor(ValuesTransformer valuesTransformer) {
-    return null;
+    throw new UnsupportedOperationException("Cannot iterate over a lucene index");
+  }
+  @Override
+  public OIndexCursor cursor(ValuesTransformer valuesTransformer) {
+    throw new UnsupportedOperationException("Cannot iterate over a lucene index");
+  }
+
+  @Override
+  public OIndexKeyCursor keyCursor() {
+    throw new UnsupportedOperationException("Cannot iterate over a lucene index");
   }
 
   public long size(final ValuesTransformer transformer) {

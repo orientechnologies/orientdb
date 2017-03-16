@@ -207,20 +207,8 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
     return null;
   }
 
-  @Override
-  public OIndexCursor cursor(ValuesTransformer valuesTransformer) {
-    return null;
-  }
 
-  @Override
-  public OIndexKeyCursor keyCursor() {
-    return new OIndexKeyCursor() {
-      @Override
-      public Object next(int prefetchSize) {
-        return null;
-      }
-    };
-  }
+
 
   @Override
   public boolean hasRangeQuerySupport() {
