@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.sql.executor;
 
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
@@ -15,6 +16,8 @@ public interface OResult {
   <T> T getProperty(String name);
 
   Set<String> getPropertyNames();
+
+  Optional<ORID> getIdentity();
 
   boolean isElement();
 
