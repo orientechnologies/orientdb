@@ -24,6 +24,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
   private boolean inited = false;
   private OIndexCursor cursor;
+  private Iterator     nullKeyIterator;
   private Map.Entry<Object, OIdentifiable> nextEntry = null;
 
   public FetchFromIndexStep(OIndex<?> index, OBooleanExpression condition, OBinaryCondition additionalRangeCondition,
@@ -58,7 +59,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
           throw new IllegalStateException();
         }
         Map.Entry<Object, OIdentifiable> currentEntry = nextEntry;
-        nextEntry = cursor.nextEntry();
+        fetchNextEntry();
 
         localCount++;
         OResultInternal result = new OResultInternal();
@@ -82,6 +83,27 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
         return null;
       }
     };
+  }
+
+  private void fetchNextEntry() {
+    nextEntry = cursor.nextEntry();
+    if (nextEntry == null && nullKeyIterator != null && nullKeyIterator.hasNext()) {
+      OIdentifiable nextValue = (OIdentifiable) nullKeyIterator.next();
+      nextEntry = new Map.Entry<Object, OIdentifiable>() {
+        @Override
+        public Object getKey() {
+          return null;
+        }
+        @Override
+        public OIdentifiable getValue() {
+          return nextValue;
+        }
+        @Override
+        public OIdentifiable setValue(OIdentifiable value) {
+          return null;
+        }
+      };
+    }
   }
 
   private synchronized void init() {
@@ -122,8 +144,23 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
   private void processFlatIteration() {
     cursor = isOrderAsc() ? index.cursor() : index.descCursor();
+
+    fetchNullKeys();
     if (cursor != null) {
-      nextEntry = cursor.nextEntry();
+      fetchNextEntry();
+    }
+  }
+
+  private void fetchNullKeys() {
+    Object nullIter = index.get(null);
+    if (nullIter instanceof OIdentifiable) {
+      nullKeyIterator = Collections.singleton(nullIter).iterator();
+    } else if (nullIter instanceof Iterable) {
+      nullKeyIterator = ((Iterable) nullIter).iterator();
+    } else if (nullIter instanceof Iterator) {
+      nullKeyIterator = (Iterator) nullIter;
+    } else {
+      nullKeyIterator = Collections.emptyIterator();
     }
   }
 
@@ -141,7 +178,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
       throw new UnsupportedOperationException("Cannot evaluate " + this.condition + " on index " + index);
     }
     if (cursor != null) {
-      nextEntry = cursor.nextEntry();
+      fetchNextEntry();
     }
   }
 
@@ -176,7 +213,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
         .iterateEntriesBetween(toBetweenIndexKey(definition, secondValue), true, toBetweenIndexKey(definition, thirdValue), true,
             isOrderAsc());
     if (cursor != null) {
-      nextEntry = cursor.nextEntry();
+      fetchNextEntry();
     }
   }
 
@@ -190,7 +227,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     Object rightValue = ((OBinaryCondition) condition).getRight().execute((OResult) null, ctx);
     cursor = createCursor(operator, definition, rightValue, ctx);
     if (cursor != null) {
-      nextEntry = cursor.nextEntry();
+      fetchNextEntry();
     }
   }
 
