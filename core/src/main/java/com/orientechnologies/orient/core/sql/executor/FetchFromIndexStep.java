@@ -4,6 +4,7 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
@@ -121,7 +122,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
   private void processFlatIteration() {
     cursor = isOrderAsc() ? index.cursor() : index.descCursor();
-    if(cursor!=null){
+    if (cursor != null) {
       nextEntry = cursor.nextEntry();
     }
   }
@@ -199,7 +200,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     }
     if (rightValue instanceof List) {
       rightValue = definition.createValue((List<?>) rightValue);
-    } else {
+    } else if (!(rightValue instanceof OCompositeKey)) {
       rightValue = definition.createValue(rightValue);
     }
     if (!(rightValue instanceof Collection)) {

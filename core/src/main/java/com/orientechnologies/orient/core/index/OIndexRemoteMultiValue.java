@@ -50,7 +50,7 @@ public class OIndexRemoteMultiValue extends OIndexRemote<Collection<OIdentifiabl
   }
 
   public Collection<OIdentifiable> get(final Object iKey) {
-    return getDatabase().command(String.format(QUERY_GET, name), iKey).stream().map((res) -> getIdentity())
+    return getDatabase().command(String.format(QUERY_GET, name), iKey).stream().map((res) -> res.toElement().getIdentity())
         .collect(Collectors.toSet());
   }
 

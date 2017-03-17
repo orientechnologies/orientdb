@@ -180,12 +180,12 @@ public class OQueryResponse implements OBinaryResponse {
 
   private void writeBlob(OResult row, OChannelDataOutput channel, ORecordSerializer recordSerializer) throws IOException {
     channel.writeByte(RECORD_TYPE_BLOB);
-    row.getBlob().get().toOutputStream(channel.getDataOutput());
+    channel.writeBytes(row.getBlob().get().toStream());
   }
 
   private OResult readBlob(OChannelDataInput channel) throws IOException {
     ORecordBytes bytes = new ORecordBytes();
-    bytes.fromInputStream(channel.getDataInput());
+    bytes.fromStream(channel.readBytes());
     OResultInternal result = new OResultInternal();
     result.setElement(bytes);
     return result;

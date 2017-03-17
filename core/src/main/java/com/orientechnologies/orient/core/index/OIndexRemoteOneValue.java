@@ -45,10 +45,9 @@ public class OIndexRemoteOneValue extends OIndexRemote<OIdentifiable> {
 
   public OIdentifiable get(final Object iKey) {
     final OResultSet result = getDatabase().command(String.format(QUERY_GET, name), iKey);
-    if (result != null && !result.hasNext())
+    if (result != null && result.hasNext())
       return ((OIdentifiable) result.next().getProperty("rid"));
     return null;
-    // return (OIdentifiable) ((OStorageProxy) getDatabase().getStorage()).indexGet(name, iKey, null);
   }
 
   public Iterator<Entry<Object, OIdentifiable>> iterator() {

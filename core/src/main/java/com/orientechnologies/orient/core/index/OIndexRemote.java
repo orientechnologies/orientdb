@@ -211,12 +211,16 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 
   public long getSize() {
     OResultSet result = getDatabase().command(String.format(QUERY_SIZE, name));
-    return (Long) result.next().getProperty("size");
+    if (result.hasNext())
+      return (Long) result.next().getProperty("size");
+    return 0;
   }
 
   public long getKeySize() {
     OResultSet result = getDatabase().command(String.format(QUERY_KEY_SIZE, name));
-    return (Long) result.next().getProperty("size");
+    if (result.hasNext())
+      return (Long) result.next().getProperty("size");
+    return 0;
   }
 
   public boolean isAutomatic() {
