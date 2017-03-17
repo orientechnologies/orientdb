@@ -93,7 +93,7 @@ public class OSQLMethodRuntime extends OSQLFilterItemAbstract implements Compara
             runtimeParameters[i] = ((OSQLMethodRuntime) configuredParameters[i]).execute(iThis, iCurrentRecord, iCurrentResult,
                 iContext);
           else if (configuredParameters[i] instanceof OSQLFunctionRuntime)
-            runtimeParameters[i] = ((OSQLFunctionRuntime) configuredParameters[i]).execute(iThis, iCurrentRecord, iCurrentResult,
+            runtimeParameters[i] = ((OSQLFunctionRuntime) configuredParameters[i]).execute(iCurrentRecord, iCurrentRecord, iCurrentResult,
                 iContext);
           else if (configuredParameters[i] instanceof OSQLFilterItemVariable) {
             runtimeParameters[i] = ((OSQLFilterItemVariable) configuredParameters[i]).getValue(iCurrentRecord, iCurrentResult,
