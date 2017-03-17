@@ -243,7 +243,7 @@ public class OConsoleApplication {
         }
 
         if (commandLine != null) {
-          if ((iBatchMode && isEchoEnabled()) || isEchoEnabled()) {
+          if (isEchoEnabled()) {
             out.println();
             out.print(getPrompt());
             out.print(commandLine);
@@ -262,21 +262,19 @@ public class OConsoleApplication {
         }
       }
 
-//      if (commandBuffer.length() == 0) {
-        if (commandBuffer.length() > 0) {
-          if (iBatchMode && isEchoEnabled()) {
-            out.println();
-            out.print(getPrompt());
-            out.print(commandBuffer);
-            out.println();
-          }
-
-          final RESULT status = execute(commandBuffer.toString());
-          if (status == RESULT.EXIT
-              || (status == RESULT.ERROR && !Boolean.parseBoolean(properties.get("ignoreErrors"))) && iBatchMode)
-            return false;
+      if (commandBuffer.length() > 0) {
+        if (iBatchMode && isEchoEnabled()) {
+          out.println();
+          out.print(getPrompt());
+          out.print(commandBuffer);
+          out.println();
         }
-//      }
+
+        final RESULT status = execute(commandBuffer.toString());
+        if (status == RESULT.EXIT
+            || (status == RESULT.ERROR && !Boolean.parseBoolean(properties.get("ignoreErrors"))) && iBatchMode)
+          return false;
+      }
     } finally {
       commandStream.close();
     }
