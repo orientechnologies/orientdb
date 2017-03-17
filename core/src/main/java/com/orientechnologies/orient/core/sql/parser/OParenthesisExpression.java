@@ -114,6 +114,13 @@ public class OParenthesisExpression extends OMathExpression {
     return false;
   }
 
+  public boolean isCount() {
+    if (expression != null) {
+      return expression.isCount();
+    }
+    return false;
+  }
+
   public SimpleNode splitForAggregation(AggregateProjectionSplit aggregateProj) {
     if (isAggregate()) {
       OParenthesisExpression result = new OParenthesisExpression(-1);

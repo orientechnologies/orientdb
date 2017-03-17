@@ -183,6 +183,16 @@ public class OBaseIdentifier extends SimpleNode {
     return false;
   }
 
+  public boolean isCount(){
+    if (levelZero != null && levelZero.isCount()) {
+      return true;
+    }
+    if (suffix != null && suffix.isCount()) {
+      return true;
+    }
+    return false;
+  }
+
   public boolean isEarlyCalculated() {
     if (levelZero != null && levelZero.isEarlyCalculated()) {
       return true;
@@ -290,5 +300,6 @@ public class OBaseIdentifier extends SimpleNode {
       throw new OCommandExecutionException("cannot apply REMOVE " + toString());
     }
   }
+
 }
 /* JavaCC - OriginalChecksum=ed89af10d8be41a83428c5608a4834f6 (do not edit this line) */

@@ -7,7 +7,6 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.AggregationContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
 import java.util.Map;
 import java.util.Set;
@@ -172,6 +171,10 @@ public class OLevelZeroIdentifier extends SimpleNode {
       return true;
     }
     return false;
+  }
+
+  public boolean isCount() {
+    return functionCall!=null && functionCall.name.getStringValue().equalsIgnoreCase("count");
   }
 
   public boolean isEarlyCalculated() {

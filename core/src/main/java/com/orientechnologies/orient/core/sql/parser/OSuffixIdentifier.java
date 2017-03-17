@@ -231,6 +231,10 @@ public class OSuffixIdentifier extends SimpleNode {
     return false;
   }
 
+  public boolean isCount() {
+    return false;
+  }
+
   public OSuffixIdentifier splitForAggregation(AggregateProjectionSplit aggregateProj) {
     return this;
   }
@@ -367,5 +371,6 @@ public class OSuffixIdentifier extends SimpleNode {
       }
     }
   }
+
 }
 /* JavaCC - OriginalChecksum=5d9be0188c7d6e2b67d691fb88a518f8 (do not edit this line) */

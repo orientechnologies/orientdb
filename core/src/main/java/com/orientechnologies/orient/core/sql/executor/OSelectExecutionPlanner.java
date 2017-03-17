@@ -71,7 +71,7 @@ public class OSelectExecutionPlanner {
       return null;
     }
 
-    if(whereClause.getBaseExpression()!=null){
+    if (whereClause.getBaseExpression() != null) {
       whereClause.getBaseExpression().translateLuceneOperator();
     }
     return whereClause;
@@ -151,6 +151,10 @@ public class OSelectExecutionPlanner {
 
     optimizeQuery();
 
+    if (handleHardwiredOptimizations(result, ctx)) {
+      return result;
+    }
+
     handleGlobalLet(result, globalLetClause, ctx);
     handleFetchFromTarger(result, ctx);
     handleLet(result, perRecordLetClause, ctx);
@@ -192,6 +196,87 @@ public class OSelectExecutionPlanner {
       }
     }
     return result;
+  }
+
+  private boolean handleHardwiredOptimizations(OSelectExecutionPlan result, OCommandContext ctx) {
+    return handleHardwiredCountOnIndex(result, ctx) || handleHardwiredCountOnClass(result, ctx);
+  }
+
+  private boolean handleHardwiredCountOnClass(OSelectExecutionPlan result, OCommandContext ctx) {
+    OIdentifier targetClass = this.target == null ? null : this.target.getItem().getIdentifier();
+    if (targetClass == null) {
+      return false;
+    }
+    if (distinct || expand) {
+      return false;
+    }
+    if (preAggregateProjection != null) {
+      return false;
+    }
+    if (!isCountStar(aggregateProjection, projection)) {
+      return false;
+    }
+    if (!isMinimalQuery()) {
+      return false;
+    }
+    result.chain(new CountFromClassStep(targetClass, projection.getAllAliases().iterator().next(), ctx));
+    return true;
+  }
+
+  private boolean handleHardwiredCountOnIndex(OSelectExecutionPlan result, OCommandContext ctx) {
+    OIndexIdentifier targetIndex = this.target == null ? null : this.target.getItem().getIndex();
+    if (targetIndex == null) {
+      return false;
+    }
+    if (distinct || expand) {
+      return false;
+    }
+    if (preAggregateProjection != null) {
+      return false;
+    }
+    if (!isCountStar(aggregateProjection, projection)) {
+      return false;
+    }
+    if (!isMinimalQuery()) {
+      return false;
+    }
+    result.chain(new CountFromIndexStep(targetIndex, projection.getAllAliases().iterator().next(), ctx));
+    return true;
+  }
+
+  /**
+   * returns true if the query is minimal, ie. no WHERE condition, no SKIP/LIMIT, no UNWIND, no GROUP/ORDER BY, no LET
+   *
+   * @return
+   */
+  private boolean isMinimalQuery() {
+    if (projectionAfterOrderBy != null || globalLetClause != null || perRecordLetClause != null || whereClause != null
+        || flattenedWhereClause != null || groupBy != null || orderBy != null || unwind != null || skip != null || limit != null) {
+      return false;
+    }
+    return true;
+  }
+
+  private boolean isCountStar(OProjection aggregateProjection, OProjection projection) {
+    if (aggregateProjection == null || projection == null || aggregateProjection.getItems().size() != 1
+        || projection.getItems().size() != 1) {
+      return false;
+    }
+    OProjectionItem item = aggregateProjection.getItems().get(0);
+    if (!item.getExpression().toString().equalsIgnoreCase("count(*)")) {
+      return false;
+    }
+
+    return true;
+  }
+
+  private boolean isCount(OProjection aggregateProjection, OProjection projection) {
+    if (aggregateProjection == null || projection == null || aggregateProjection.getItems().size() != 1
+        || projection.getItems().size() != 1) {
+      return false;
+    }
+    OProjectionItem item = aggregateProjection.getItems().get(0);
+    return item.getExpression().isCount();
   }
 
   private void handleUnwind(OSelectExecutionPlan result, OUnwind unwind, OCommandContext ctx) {
