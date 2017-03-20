@@ -87,10 +87,10 @@ public final class OrientGraph implements Graph {
     protected OrientGraphFactory factory;
     protected boolean shouldCloseFactory = false;
 
-
     public static OrientGraph open() {
         return open("memory:orientdb-" + Math.random(), "admin", "admin");
     }
+
     public static OrientGraph open(String url) {
         return open(url, "admin", "admin");
     }
@@ -701,7 +701,7 @@ public final class OrientGraph implements Graph {
 
     @Override
     public String toString() {
-        return StringFactory.graphString(this, database.toString());
+        return StringFactory.graphString(this, database.getURL());
     }
 
 }
