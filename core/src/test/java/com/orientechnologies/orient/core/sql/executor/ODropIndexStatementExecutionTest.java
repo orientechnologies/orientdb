@@ -73,6 +73,21 @@ public class ODropIndexStatementExecutionTest {
 
     try {
       OResultSet result = db.command("drop index " + indexName);
+      Assert.fail();
+    } catch (OCommandExecutionException ex) {
+    } catch (Exception e) {
+      Assert.fail();
+    }
+  }
+
+  @Test
+  public void testIfExists() {
+
+    String indexName = "nonexistingindex";
+    Assert.assertNull(db.getMetadata().getIndexManager().reload().getIndex(indexName));
+
+    try {
+      OResultSet result = db.command("drop index " + indexName + " if exists");
     } catch (Exception e) {
       Assert.fail();
     }

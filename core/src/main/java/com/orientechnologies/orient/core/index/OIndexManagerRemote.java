@@ -35,7 +35,7 @@ import java.util.Locale;
 import java.util.Set;
 
 public class OIndexManagerRemote extends OIndexManagerAbstract {
-  private static final String QUERY_DROP       = "drop index `%s`";
+  private static final String QUERY_DROP       = "drop index `%s` if exists";
   private static final long   serialVersionUID = -6570577338095096235L;
 
   public OIndexManagerRemote() {
