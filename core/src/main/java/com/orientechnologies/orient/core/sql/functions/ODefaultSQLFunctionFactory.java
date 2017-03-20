@@ -80,6 +80,7 @@ public final class ODefaultSQLFunctionFactory implements OSQLFunctionFactory {
     register(OSQLFunctionDecimal.NAME, OSQLFunctionDecimal.class);
     register(OSQLFunctionSequence.NAME, new OSQLFunctionSequence());
     register(OSQLFunctionAbsoluteValue.NAME, OSQLFunctionAbsoluteValue.class);
+    register(OSQLFunctionIndexKeySize.NAME, OSQLFunctionIndexKeySize.class);
     //graph
     register(OSQLFunctionOut.NAME, OSQLFunctionOut.class);
     register(OSQLFunctionIn.NAME, OSQLFunctionIn.class);
