@@ -37,8 +37,7 @@ public class OInsertExecutionPlanner {
     OInsertExecutionPlan result = new OInsertExecutionPlan(ctx);
 
     if (targetIndex != null) {
-      //TODO handle insert INSERT INTO INDEX SET key = foo, rid = #12:0
-      throw new UnsupportedOperationException("Implement insert into index:");
+      result.chain(new InsertIntoIndexStep(targetIndex, insertBody, ctx));
     } else {
       if (selectStatement != null) {
         handleInsertSelect(result, this.selectStatement, ctx);
