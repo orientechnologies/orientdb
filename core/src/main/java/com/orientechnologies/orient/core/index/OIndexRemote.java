@@ -63,7 +63,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   private final static String QUERY_COUNT       = "select count(*) as size from index:%s where key = ?";
   private final static String QUERY_COUNT_RANGE = "select count(*) as size from index:%s where ";
   private final static String QUERY_SIZE        = "select count(*) as size from index:%s";
-  private final static String QUERY_KEY_SIZE    = "select count(distinct( key )) as size from index:%s";
+  private final static String QUERY_KEY_SIZE    = "select indexKeySize('%s') as size";
   private final static String QUERY_KEYS        = "select key from index:%s";
   private final static String QUERY_REBUILD     = "rebuild index %s";
   private final static String QUERY_CLEAR       = "delete from index:%s";
@@ -201,7 +201,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   }
 
   public long rebuild() {
-    return (Long) getDatabase().command(String.format(QUERY_REBUILD, name)).next().getProperty("value");
+    return (Long) getDatabase().command(String.format(QUERY_REBUILD, name)).next().getProperty("totalIndexed");
   }
 
   public OIndexRemote<T> clear() {

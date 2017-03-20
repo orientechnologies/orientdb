@@ -61,8 +61,8 @@ public class OAlterPropertyStatement extends ODDLStatement {
 
       result.setProperty("operation", "alter property custom");
       result.setProperty("customAttribute", customPropertyName.getStringValue());
-      result.setProperty("oldValue", oldValue);
-      result.setProperty("newValue", finalValue);
+      result.setProperty("oldValue", oldValue != null ? oldValue.toString() : null);
+      result.setProperty("newValue", finalValue != null ? finalValue.toString() : null);
     } else {
       String setting = settingName.getStringValue();
       Object finalValue = settingValue.execute((OIdentifiable) null, ctx);
@@ -80,8 +80,8 @@ public class OAlterPropertyStatement extends ODDLStatement {
 
       result.setProperty("operation", "alter property");
       result.setProperty("attribute", setting);
-      result.setProperty("oldValue", oldValue);
-      result.setProperty("newValue", finalValue);
+      result.setProperty("oldValue", oldValue != null ? oldValue.toString() : null);
+      result.setProperty("newValue", finalValue != null ? finalValue.toString() : null);
     }
     OInternalResultSet rs = new OInternalResultSet();
     rs.add(result);

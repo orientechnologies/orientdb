@@ -41,9 +41,6 @@ public class ODropIndexStatement extends ODDLStatement {
       }
 
     } else {
-      if (!idxMgr.existsIndex(name.getValue())) {
-        throw new OCommandExecutionException("Index not found: " + name.getValue());
-      }
       idxMgr.dropIndex(name.getValue());
       OResultInternal result = new OResultInternal();
       result.setProperty("operation", "drop index");
