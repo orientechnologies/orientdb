@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.core.sql.executor;
 
+import com.orientechnologies.common.collection.OMultiCollectionIterator;
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -24,7 +26,8 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
   private boolean inited = false;
   private OIndexCursor cursor;
-  private Iterator     nullKeyIterator;
+  OMultiCollectionIterator<Map.Entry<Object, OIdentifiable>> customIterator;
+  private Iterator nullKeyIterator;
   private Map.Entry<Object, OIdentifiable> nextEntry = null;
 
   public FetchFromIndexStep(OIndex<?> index, OBooleanExpression condition, OBinaryCondition additionalRangeCondition,
@@ -86,7 +89,14 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
   }
 
   private void fetchNextEntry() {
-    nextEntry = cursor.nextEntry();
+    nextEntry = null;
+    if (cursor != null) {
+      nextEntry = cursor.nextEntry();
+    }
+    if (nextEntry == null && customIterator != null && customIterator.hasNext()) {
+      nextEntry = customIterator.next();
+    }
+
     if (nextEntry == null && nullKeyIterator != null && nullKeyIterator.hasNext()) {
       OIdentifiable nextValue = (OIdentifiable) nullKeyIterator.next();
       nextEntry = new Map.Entry<Object, OIdentifiable>() {
@@ -94,10 +104,12 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
         public Object getKey() {
           return null;
         }
+
         @Override
         public OIdentifiable getValue() {
           return nextValue;
         }
+
         @Override
         public OIdentifiable setValue(OIdentifiable value) {
           return null;
@@ -126,9 +138,68 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
       processBetweenCondition();
     } else if (condition instanceof OAndBlock) {
       processAndBlock();
+    } else if (condition instanceof OInCondition) {
+      //TODO
+      processInCondition();
+
     } else {
       throw new OCommandExecutionException("search for index for " + condition + " is not supported yet");
     }
+  }
+
+  private void processInCondition() {
+    OIndexDefinition definition = index.getDefinition();
+    OInCondition inCondition = (OInCondition) condition;
+
+    OExpression left = inCondition.getLeft();
+    if (!left.toString().equalsIgnoreCase("key")) {
+      throw new OCommandExecutionException("search for index for " + condition + " is not supported yet");
+    }
+    Object rightValue = inCondition.evaluateRight((OResult) null, ctx);
+    OEqualsCompareOperator equals = new OEqualsCompareOperator(-1);
+    if (OMultiValue.isMultiValue(rightValue)) {
+      customIterator = new OMultiCollectionIterator<>();
+      for (Object item : OMultiValue.getMultiValueIterable(rightValue)) {
+        OIndexCursor localCursor = createCursor(equals, definition, item, ctx);
+
+        customIterator.add(new Iterator<Map.Entry>() {
+          @Override
+          public boolean hasNext() {
+            return localCursor.hasNext();
+          }
+
+          @Override
+          public Map.Entry next() {
+            if (!localCursor.hasNext()) {
+              throw new IllegalStateException();
+            }
+            OIdentifiable value = localCursor.next();
+            return new Map.Entry() {
+
+              @Override
+              public Object getKey() {
+                return item;
+              }
+
+              @Override
+              public Object getValue() {
+
+                return value;
+              }
+
+              @Override
+              public Object setValue(Object value) {
+                return null;
+              }
+            };
+          }
+        });
+      }
+      customIterator.reset();
+    } else {
+      cursor = createCursor(equals, definition, rightValue, ctx);
+    }
+    fetchNextEntry();
   }
 
   /**
