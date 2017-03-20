@@ -147,48 +147,40 @@ public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E> imple
 
             classLabels.forEach(label -> indexedKeys.addAll(graph.getIndexedKeys(this.returnClass, label)));
 
-            Optional<Pair<String, Iterator<Object>>> requestedKeyValue = this.hasContainers.stream()
+            this.hasContainers.stream()
                     .filter(c -> indexedKeys.contains(c.getKey()) && (c.getPredicate().getBiPredicate() == Compare.eq ||
                             c.getPredicate().getBiPredicate() == Contains.within))
                     .findAny()
-                    .map(c -> getValuePair(c))
-                    .orElseGet(Optional::empty);
+                    .ifPresent(requestedKeyValue -> {
 
-            if (requestedKeyValue.isPresent()) {
-                String key = requestedKeyValue.get().getValue0();
-                Iterator<Object> values = requestedKeyValue.get().getValue1();
+                        String key = requestedKeyValue.getKey();
 
-                classLabels.forEach(classLabel -> {
-                    String className = graph.labelToClassName(classLabel, isVertexStep() ? OClass.VERTEX_CLASS_NAME : OClass.EDGE_CLASS_NAME);
-                    Set<OIndex<?>> classIndexes = indexManager.getClassIndexes(className);
-                    Iterator<OIndex<?>> keyIndexes = classIndexes.stream().filter(idx -> idx.getDefinition().getFields().contains(key)).iterator();
+                        classLabels.forEach(classLabel -> {
+                            Iterator<Object> values = getValueIterator(requestedKeyValue);
+                            String className = graph.labelToClassName(classLabel, isVertexStep() ? OClass.VERTEX_CLASS_NAME : OClass.EDGE_CLASS_NAME);
+                            Set<OIndex<?>> classIndexes = indexManager.getClassIndexes(className);
+                            Iterator<OIndex<?>> keyIndexes = classIndexes.stream().filter(idx -> idx.getDefinition().getFields().contains(key)).iterator();
 
-                    if (keyIndexes.hasNext()) {
-                        // TODO: select best index if there are multiple options
-                        indexedQueries.add(new OrientIndexQuery(keyIndexes.next(), values));
-                    } else {
-                        OLogManager.instance().warn(this, "no index found for class=[" + className + "] and key=[" + key + "]");
-                    }
-
-                });
-
-                return indexedQueries;
-            }
+                            if (keyIndexes.hasNext()) {
+                                // TODO: select best index if there are multiple options
+                                indexedQueries.add(new OrientIndexQuery(keyIndexes.next(), values));
+                            } else {
+                                OLogManager.instance().warn(this, "no index found for class=[" + className + "] and key=[" + key + "]");
+                            }
+                        });
+                    });
         }
 
         return indexedQueries;
     }
 
-    /** gets the requested values from the Has step. If it's a single value, wrap it in an array, otherwise return the array
-     *  */
-    private Optional<Pair<String, Iterator<Object>>> getValuePair(HasContainer c) {
-        Iterator<Object> values;
-        if (c.getPredicate().getBiPredicate() == Contains.within)
-            values = ((Iterable<Object>) c.getValue()).iterator();
-        else
-            values = IteratorUtils.of(c.getValue());
-        return Optional.of(new Pair<>(c.getKey(), values));
-
+    /**
+     * gets the requested values from the Has step. If it's a single value, wrap it in an array, otherwise return the array
+     */
+    private Iterator<Object> getValueIterator(HasContainer c) {
+        return c.getPredicate().getBiPredicate() == Contains.within
+                ? ((Iterable<Object>) c.getValue()).iterator()
+                : IteratorUtils.of(c.getValue());
     }
 
     @Override
