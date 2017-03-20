@@ -90,6 +90,7 @@ public class OURLHelper {
     }
     if ("embedded".equals(type) && !path.isEmpty()) {
       baseUrl = new File(path).getAbsolutePath();
+      dbType = Optional.of(ODatabaseType.PLOCAL);
     } else {
       baseUrl = path;
     }
