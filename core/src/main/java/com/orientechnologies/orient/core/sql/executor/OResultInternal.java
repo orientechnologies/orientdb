@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
  * Created by luigidellaquila on 06/07/16.
  */
 public class OResultInternal implements OResult {
-  protected Map<String, Object> content = new HashMap<>();
+  protected Map<String, Object> content = new LinkedHashMap<>();
   protected Map<String, Object> metadata;
   protected OIdentifiable       element;
 
