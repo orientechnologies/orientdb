@@ -43,7 +43,8 @@ public class OProjection extends SimpleNode {
     this.items = items;
   }
 
-  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (items == null) {
       return;
     }
@@ -92,8 +93,14 @@ public class OProjection extends SimpleNode {
         for (String alias : iRecord.getPropertyNames()) {
           result.setProperty(alias, iRecord.getProperty(alias));
         }
+        iRecord.getElement().ifPresent(x -> {
+          result.setProperty("@rid", x.getIdentity());
+          result.setProperty("@version", x.getVersion());
+//          result.setProperty("@class", x.getSchemaType().orElse(null));
+        });
+      } else {
+        result.setProperty(item.getProjectionAliasAsString(), item.execute(iRecord, iContext));
       }
-      result.setProperty(item.getProjectionAliasAsString(), item.execute(iRecord, iContext));
     }
     return result;
   }
@@ -139,7 +146,8 @@ public class OProjection extends SimpleNode {
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -153,7 +161,8 @@ public class OProjection extends SimpleNode {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     return items != null ? items.hashCode() : 0;
   }
 
