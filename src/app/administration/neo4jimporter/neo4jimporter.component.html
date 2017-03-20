@@ -1,0 +1,244 @@
+<div class="row">
+
+  <div *ngIf="!agentService.agent.active">
+    <div class="col-md-12 studio-well-tips">
+      <h4>"This feature is available in OrientDB Enterprise Edition. To download OrientDB Enterprise Edition click <a href="http://orientdb.com/orientdb-enterprise/?#matrix" target='_blank'>here</a>.</h4>
+    </div>
+  </div>
+
+  <div *ngIf="agentService.agent.active">
+
+    <form class="form-horizontal" id="teleporterForm" name="teleporterForm" #form="ngForm">
+
+      <div id="stepSwitch" [ngSwitch]="getStep()">
+
+        <div class="stepOne" *ngSwitchCase="'1'">
+          <h3>Step 1: Neo4j Server</h3><br/>
+
+          <div class="form-group">
+            <label class="col-sm-2 control-label">Database Host</label>
+            <div class="col-md-5">
+              <input type="text" id="host" class="form-control" name="host" [(ngModel)]="dbConnection.host"
+                     (ngModelChange)="updateNeo4jUrl()"
+                     placeholder="Host" required ngControl="hostControl"/>
+            </div>
+            <div class="col-md-5">
+              <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
+                      [attr.data-content]="hints.host" data-animation="am-fade-and-scale"><b>?</b></button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="col-sm-2 control-label">Port</label>
+            <div class="col-md-5">
+              <input type="text" id="port" class="form-control" name="port" [(ngModel)]="dbConnection.port"
+                     (ngModelChange)="updateNeo4jUrl()"
+                     placeholder="Port" required ngControl="hostControl"/>
+            </div>
+            <div class="col-md-5">
+              <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
+                      [attr.data-content]="hints.port" data-animation="am-fade-and-scale"><b>?</b></button>
+            </div>
+          </div>
+
+          <br><br>
+
+          <div class="form-group">
+            <div class="col-sm-offset-2 col-sm-10">
+              <div class="btn-toolbar">
+                <div class="btn-group">
+                  <button type="button" class="btn btn-sm btn-primary disabled">Prev</button>
+                </div>
+                <div class="btn-group">
+                  <button type="button" class="btn btn-sm btn-primary" (click)="switchConfigStep('2')" [disabled]="!form.valid">Next</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="stepTwo" *ngSwitchCase="'2'">
+          <h3>Step 2: Neo4j Server Credentials</h3><br/>
+          <div class="form-group">
+            <label class="col-sm-2 control-label">User Name</label>
+            <div class="col-md-5">
+              <input type="text" id="username" class="form-control" [(ngModel)]="config.neo4jUsername" name="username"
+                     placeholder="User Name" required/>
+            </div>
+            <div class="col-md-5">
+              <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
+                      [attr.data-content]="hints.neo4jUsername" data-animation="am-fade-and-scale"><b>?</b></button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="col-sm-2 control-label">Password</label>
+            <div class="col-md-5">
+              <input type="password" id="password" class="form-control" [(ngModel)]="config.neo4jPassword" name="password"
+                     placeholder="Password" required/>
+            </div>
+            <div class="col-md-5">
+              <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
+                      [attr.data-content]="hints.neo4jPassword" data-animation="am-fade-and-scale"><b>?</b></button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="col-sm-offset-2 col-sm-10">
+              <div class="btn-toolbar">
+                <div class="btn-group pull-right">
+                  <button type="button" class="btn btn-sm btn-primary" (click)="testConnection()">Test connection</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <br><br>
+
+          <div class="form-group">
+            <div class="col-sm-offset-2 col-sm-10">
+              <div class="btn-toolbar">
+                <div class="btn-group">
+                  <button type="button" class="btn btn-sm btn-primary" (click)="switchConfigStep('1')">Prev</button>
+                </div>
+                <div class="btn-group">
+                  <button type="button" class="btn btn-sm btn-primary" (click)="switchConfigStep('3')" [disabled]="!form.valid">Next</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="stepThree" *ngSwitchCase="'3'">
+          <h3>Step 3: Target OrientDB Database</h3><br/>
+
+          <div class="form-group">
+            <label class="col-sm-2 control-label">Connection Protocol</label>
+
+            <div class="col-md-5">
+              <select class="form-control" [(ngModel)]="config.odbProtocol" name="protocol" required>
+                <option *ngFor="let protocol of protocols" [value]="protocol"> {{protocol}} </option>
+              </select>
+            </div>
+            <div class="col-md-5">
+              <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
+                      [attr.data-content]="hints.protocol" data-animation="am-fade-and-scale"><b>?</b></button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="col-sm-2 control-label">Database Name</label>
+            <div class="col-md-5">
+              <input type="text" id="outDBUrl" class="form-control" [(ngModel)]="config.odbName" name="odbName"
+                     placeholder="OrientDB Database Name" required/>
+            </div>
+            <div class="col-md-5">
+              <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
+                      [attr.data-content]="hints.outDbUrl" data-animation="am-fade-and-scale"><b>?</b></button>
+            </div>
+          </div>
+
+          <br><br>
+          <hr>
+
+          <h3>Additional options</h3><br/>
+
+          <div class="form-group">
+            <label class="col-sm-2 control-label">Log Level</label>
+            <div class="col-sm-5">
+              <select class="form-control" [(ngModel)]="config.logLevel" name="logLevel" required>
+                <option *ngFor="let level of logLevels; let i = index" [value]="i">
+                  {{level}} </option>
+              </select>
+            </div>
+            <div class="col-md-5">
+              <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
+                      [attr.data-content]="hints.logLevel" data-animation="am-fade-and-scale"><b>?</b></button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="col-sm-2 control-label">Overwrite OrientDB Database</label>
+            <div class="col-md-1">
+              <input type="checkbox" id="overwriteTargetDB" name="overrideTargetDB" class="checkbox" [(ngModel)]="config.overwriteDB"/>
+            </div>
+            <div class="col-md-3">
+              <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
+                      [attr.data-content]="hints.overwriteOrientDB" data-animation="am-fade-and-scale"><b>?</b></button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="col-sm-2 control-label">Create indices on edges</label>
+            <div class="col-md-1">
+              <input type="checkbox" id="createIndicesOnRelationhips" name="overrideTargetDB" class="checkbox" [(ngModel)]="config.indexesOnRelationships"/>
+            </div>
+            <div class="col-md-3">
+              <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
+                      [attr.data-content]="hints.createIndicesOnRelationhips" data-animation="am-fade-and-scale"><b>?</b></button>
+            </div>
+          </div>
+
+          <br><br>
+
+          <div class="form-group">
+            <div class="col-sm-offset-2 col-sm-10">
+              <div class="btn-toolbar">
+                <div class="btn-group">
+                  <button type="button" class="btn btn-sm btn-primary" (click)="switchConfigStep('2')">Prev</button>
+                </div>
+                <div class="btn-group">
+                  <button type="button" class="btn btn-sm btn-primary disabled">Next</button>
+                </div>
+                <div class="btn-group pull-right">
+                  <button type="button" class="btn btn-sm btn-warning" (click)="launch()" [disabled]="!form.valid">Start migration</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="running" *ngSwitchCase="'running'">
+          <h3>Migration to OrientDB</h3><br/>
+
+          <div class="row ">
+            <div class="col-md-12">
+              <div class="studio-well-tips-sm ">
+                <h5>
+            <span class="tab">
+              <b> Status</b>: {{ job.status }}
+            </span>
+                </h5>
+                <h5>
+            <span class="tab">
+               <b>From</b>: {{ job.cfg.neo4jUrl }}
+            </span>
+                </h5>
+                <h5>
+            <span class="tab">
+              <b>To</b>: {{job.cfg.outDbUrl }}
+            </span>
+                </h5>
+              </div>
+            </div>
+          </div>
+          <div class="row row-space-2x">
+            <div class="col-md-12">
+              <textarea  #logArea class="form-control" id="logArea" name="logArea" [(ngModel)]="job.log"
+                         rows="15" readonly></textarea>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-12"></div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </form>
+  </div>
+
+</div>

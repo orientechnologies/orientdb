@@ -19,6 +19,7 @@ import '../views/server/general/threads.html';
 import '../views/server/general/singleServer.html';
 import '../views/widget/restartButton.html';
 import '../views/server/stats/teleporterNew.html';
+import '../views/server/stats/neo4jImporter.html';
 import angular from 'angular';
 
 
@@ -443,6 +444,7 @@ ServerModule.controller("ServerDashboardController", ['$scope', '$routeParams', 
     },
     {name: "security", title: "Security", template: 'security', icon: 'fa-lock', wiki: "Security-Config.html"},
     {name: "teleporter", title: "Teleporter", template: 'teleporterNew', icon: 'fa-usb', wiki: "Studio-Teleporter.html"},
+    {name: "neo4jimporter", title: "Neo4j Importer", template: 'neo4jImporter', icon: 'fa-arrow-circle-right'},
     {name: "plugins", title: "Plugins Management", template: 'plugins', icon: 'fa-plug'},
     {
       name: "alerts",

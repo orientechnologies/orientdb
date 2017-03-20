@@ -115,7 +115,7 @@ class TeleporterComponent implements AfterViewChecked {
     this.hints = {
       driver: "Driver name of the DBMS from which you want to execute the migration.",
       host: "Address of the host where the DBMS is available.",
-      port: "The port where your DBMS is listening for connections.",
+      port: "The port where your DBMS is listening for new connections.",
       dbName: "The source database name.",
       sid: "SID is a unique name for an Oracle database instance.",
       username: "The username to access the source database.",

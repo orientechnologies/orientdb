@@ -1,5 +1,5 @@
 import {DBService, GraphService, SchemaService, CommandService, TeleporterService, NotificationService,
-        AgentService, ProfilerService} from './core/services';
+        AgentService, ProfilerService, Neo4jImporterService} from './core/services';
 import {FormatArrayPipe, FormatErrorPipe} from './core/pipes';
 
 const APP_PIPES = [
@@ -16,6 +16,7 @@ const APP_SERVICES = [
   NotificationService,
   AgentService,
   ProfilerService,
+  Neo4jImporterService,
   GraphService
 ]
 
