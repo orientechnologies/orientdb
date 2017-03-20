@@ -478,7 +478,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       }
 
       listener.onMessage("\nStart rebuild index " + indexName);
-      database.command(new OCommandSQL("rebuild index " + indexName)).execute();
+      database.command("rebuild index " + indexName);
       listener.onMessage("\nRebuild  of index " + indexName + " is completed.");
     }
     listener.onMessage("\nStale indexes were rebuilt...");
@@ -487,7 +487,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   public ODatabaseImport removeExportImportRIDsMap() {
     listener.onMessage("\nDeleting RID Mapping table...");
     if (exportImportHashTable != null) {
-      database.command(new OCommandSQL("drop index " + EXPORT_IMPORT_MAP_NAME));
+      database.command("drop index " + EXPORT_IMPORT_MAP_NAME);
       exportImportHashTable = null;
     }
 

@@ -23,6 +23,8 @@ import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -55,41 +57,10 @@ public class OIndexRemoteMultiValue extends OIndexRemote<Collection<OIdentifiabl
   }
 
   public Iterator<Entry<Object, Collection<OIdentifiable>>> iterator() {
-    final OCommandRequest cmd = formatCommand(QUERY_ENTRIES, name);
-    final Collection<ODocument> result = getDatabase().command(cmd).execute();
+    final OResultSet result = getDatabase().command(String.format(QUERY_ENTRIES, name));
 
-    final Map<Object, Collection<OIdentifiable>> map = new LinkedHashMap<Object, Collection<OIdentifiable>>();
-    for (final ODocument d : result) {
-      d.setLazyLoad(false);
-      Collection<OIdentifiable> rids = map.get(d.field("key"));
-      if (rids == null) {
-        rids = new HashSet<OIdentifiable>();
-        map.put(d.field("key"), rids);
-      }
-
-      rids.add((OIdentifiable) d.field("rid"));
-    }
-
-    return map.entrySet().iterator();
-  }
-
-  public Iterator<Entry<Object, Collection<OIdentifiable>>> inverseIterator() {
-    final OCommandRequest cmd = formatCommand(QUERY_ENTRIES, name);
-    final List<ODocument> result = getDatabase().command(cmd).execute();
-
-    final Map<Object, Collection<OIdentifiable>> map = new LinkedHashMap<Object, Collection<OIdentifiable>>();
-    for (ListIterator<ODocument> it = result.listIterator(); it.hasPrevious(); ) {
-      ODocument d = it.previous();
-      d.setLazyLoad(false);
-      Collection<OIdentifiable> rids = map.get(d.field("key"));
-      if (rids == null) {
-        rids = new HashSet<OIdentifiable>();
-        map.put(d.field("key"), rids);
-      }
-
-      rids.add((OIdentifiable) d.field("rid"));
-    }
-
+    final Map<Object, Collection<OIdentifiable>> map = result.stream()
+        .collect(Collectors.toMap((r) -> r.getProperty("key"), (r) -> r.getProperty("rid")));
     return map.entrySet().iterator();
   }
 

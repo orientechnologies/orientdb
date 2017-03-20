@@ -455,8 +455,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OCloseable
 
         dropClassInternal(className);
       } else if (storage instanceof OStorageProxy) {
-        final OCommandSQL commandSQL = new OCommandSQL(cmd.toString());
-        db.command(commandSQL).execute();
+        db.command(cmd.toString());
         final OClass classToDrop = getClass(className);
         reload();
         if (getClass(className) == null) // really dropped, for example there may be no rights to drop a class

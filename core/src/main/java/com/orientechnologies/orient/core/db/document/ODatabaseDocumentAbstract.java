@@ -365,7 +365,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
    */
   @Override
   public void truncateCluster(String clusterName) {
-    command(new OCommandSQL("truncate cluster " + clusterName)).execute();
+    command("truncate cluster " + clusterName);
   }
 
   /**
