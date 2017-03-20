@@ -583,9 +583,15 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
   @ConsoleCommand(splitInWords = false, description = "Explain how a command is executed profiling it", onlineHelp = "SQL-Explain")
   public void explain(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
-    Object result = sqlCommand("explain", iCommandText, "\nProfiled command '%s' in %f sec(s):\n", true);
+    Object result = sqlCommand("explain", iCommandText, "\n", false);
     if (result != null && result instanceof ODocument) {
-      message(((ODocument) result).toJSON());
+      message(((ODocument) result).getProperty("executionPlanAsString"));
+    } else if (result != null && result instanceof List && ((List) result).size() == 1 && ((List) result)
+        .get(0) instanceof OResult) {
+      message(((OResult) (((List) result).get(0))).getProperty("executionPlanAsString"));
+    } else if (result != null && result instanceof List && ((List) result).size() == 1 && ((List) result)
+        .get(0) instanceof ODocument) {
+      message(((ODocument) (((List) result).get(0))).getProperty("executionPlanAsString"));
     }
   }
 
