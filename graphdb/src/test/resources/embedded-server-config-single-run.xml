@@ -1,4 +1,12 @@
 <orient-server>
+    <handlers>
+        <handler class="com.orientechnologies.orient.server.handler.OServerSideScriptInterpreter">
+            <parameters>
+                <parameter value="true" name="enabled"/>
+                <parameter value="SQL" name="allowedLanguages"/>
+            </parameters>
+        </handler>
+    </handlers>
     <network>
         <protocols>
             <protocol name="binary"

@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.test.server.network.http;
 
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -23,6 +24,7 @@ public class HttpGephiTest extends BaseHttpDatabaseTest {
         .getResponse().getStatusLine().getStatusCode(), 200);
   }
 
+  @Before
   @Override
   public void createDatabase() throws Exception {
     super.createDatabase();

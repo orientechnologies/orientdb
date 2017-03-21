@@ -3,9 +3,12 @@ package com.tinkerpop.blueprints.impls.orient;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.test.server.network.http.BaseHttpTest;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -13,6 +16,7 @@ import javax.management.InstanceAlreadyExistsException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
@@ -25,6 +29,9 @@ import static org.junit.Assert.assertTrue;
  * Created by tglman on 24/05/16.
  */
 public class TestBatchRemoteResultSet {
+  private String serverHome;
+  private String oldOrientDBHome;
+
 
   private OServer server;
 
@@ -33,6 +40,18 @@ public class TestBatchRemoteResultSet {
       throws ClassNotFoundException, MalformedObjectNameException, InstanceAlreadyExistsException, NotCompliantMBeanException,
       MBeanRegistrationException, InvocationTargetException, NoSuchMethodException, InstantiationException, IOException,
       IllegalAccessException {
+
+    final String buildDirectory = System.getProperty("buildDirectory", ".");
+    serverHome = buildDirectory + File.separator + BaseHttpTest.class.getSimpleName();
+
+    File file = new File(serverHome);
+    deleteDirectory(file);
+    file = new File(serverHome);
+    Assert.assertTrue(file.mkdir());
+
+    oldOrientDBHome = System.getProperty("ORIENTDB_HOME");
+    System.setProperty("ORIENTDB_HOME", serverHome);
+
     server = new OServer(false);
     server.startup(OrientGraphRemoteTest.class.getResourceAsStream("/embedded-server-config-single-run.xml"));
     server.activate();
@@ -61,9 +80,43 @@ public class TestBatchRemoteResultSet {
   }
 
   @After
-  public void after() {
+  public void after() throws Exception {
     server.shutdown();
+
+    if (oldOrientDBHome != null)
+      System.setProperty("ORIENTDB_HOME", oldOrientDBHome);
+    else
+      System.clearProperty("ORIENTDB_HOME");
+
+    Thread.sleep(1000);
+    ODatabaseDocumentTx.closeAll();
+
+    File file = new File(serverHome);
+    deleteDirectory(file);
+
     Orient.instance().startup();
+  }
+
+  protected static void deleteDirectory(File directory) {
+    if (directory.exists()) {
+      File[] files = directory.listFiles();
+      int len = files.length;
+
+      for (int i = 0; i < len; ++i) {
+        File file = files[i];
+        if (file.isDirectory()) {
+          deleteDirectory(file);
+        } else {
+          file.delete();
+        }
+      }
+
+      directory.delete();
+    }
+
+    if (directory.exists()) {
+      throw new RuntimeException("unable to delete directory " + directory.getAbsolutePath());
+    }
   }
 
 }
