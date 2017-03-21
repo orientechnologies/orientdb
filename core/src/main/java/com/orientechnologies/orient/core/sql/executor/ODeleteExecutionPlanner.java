@@ -95,7 +95,7 @@ public class ODeleteExecutionPlanner {
           throw new OCommandExecutionException("Index queries with this kind of condition are not supported yet: " + whereClause);
         }
       }
-      result.chain(new DeleteFromIndexStep(index, keyCondition, null, ctx));
+      result.chain(new DeleteFromIndexStep(index, keyCondition, null, ridCondition, ctx));
       if (ridCondition != null) {
         OWhereClause where = new OWhereClause(-1);
         where.setBaseExpression(ridCondition);
