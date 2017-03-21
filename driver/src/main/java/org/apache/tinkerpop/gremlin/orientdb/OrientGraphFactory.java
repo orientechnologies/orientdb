@@ -58,7 +58,8 @@ public final class OrientGraphFactory implements AutoCloseable {
     }
 
     public OrientGraphFactory(Configuration config) {
-        this(config.getString(OrientGraph.CONFIG_URL, "memory:test-" + Math.random()));
+        this(config.getString(OrientGraph.CONFIG_URL, "memory:test-" + Math.random()), config.getString(OrientGraph.CONFIG_USER, ADMIN),
+                config.getString(OrientGraph.CONFIG_PASS, ADMIN));
         this.configuration = config;
     }
 

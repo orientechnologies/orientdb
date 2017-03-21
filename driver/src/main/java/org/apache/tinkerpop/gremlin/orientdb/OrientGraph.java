@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -399,22 +400,23 @@ public final class OrientGraph implements Graph {
             Iterator<ODocument> itty = database.browseClass(elementClass, polymorphic).iterator();
             return asStream(itty).map(toA).iterator();
         } else {
-            Stream<ORID> ids = Stream.of(elementIds).map(OrientGraph::createRecordId).peek(id -> checkId(id));
-            Stream<ORecord> records = ids.filter(ORID::isValid).map(id -> (ORecord) id.getRecord()).filter(r -> r != null);
+            Stream<ORID> ids = Stream.of(elementIds).map(OrientGraph::createRecordId);
+            Stream<ORecord> records = ids.filter(ORID::isValid).map(id -> getRecord(id)).filter(r -> r != null);
             return records.map(toA).iterator();
+        }
+    }
+
+    protected ORecord getRecord(ORID id) {
+        try {
+            return id.getRecord();
+        } catch (ORecordNotFoundException e) {
+            throw new NoSuchElementException("The " + getClass().getSimpleName().toLowerCase() + " with id " + id + " of type " + id.getClass().getSimpleName() + " does not exist in the graph");
         }
     }
 
     private ORID checkId(ORID id) {
         if (!id.isValid())
             throw new IllegalArgumentException("Invalid id " + id);
-        try {
-            database.getRecordMetadata(id);
-        } catch (IllegalArgumentException e) {
-            // bummer, the API force me to break the chain =((
-            // https://github.com/apache/incubator-tinkerpop/commit/34ec9e7f60f15b5dbfa684a8e96668d9bbcb6752#commitcomment-14235497
-            throw Graph.Exceptions.elementNotFound(Edge.class, id);
-        }
         return id;
     }
 
