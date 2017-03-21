@@ -155,10 +155,10 @@ var DEFAULT_REPO = 'orientdb';
 var GITHUB = "https://github.com"
 
 if (location.hostname == 'localhost') {
-  var WEBSOCKET = "ws://" + location.host + "/chat"
+  var WEBSOCKET = "wss://" + location.host + "/chat"
 }
 else {
-  var WEBSOCKET = "ws://" + location.hostname + "/chat";
+  var WEBSOCKET = "wss://" + location.hostname + "/chat";
 }
 
 String.prototype.capitalize = function () {

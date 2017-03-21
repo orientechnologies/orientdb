@@ -36,10 +36,10 @@ public class GithubController {
   private GitHubConfiguration gitHubConfiguration;
 
   @Autowired
-  private UserService         userService;
+  private UserService userService;
 
   @Autowired
-  private Reactor             reactor;
+  private Reactor reactor;
 
   @RequestMapping(value = ApiUrls.LOGIN, method = RequestMethod.GET)
   public RedirectView login() {
@@ -54,10 +54,11 @@ public class GithubController {
   }
 
   @RequestMapping(value = ApiUrls.AUTHORIZE, method = RequestMethod.GET, params = { "code" })
-  public RedirectView authorize(@RequestParam("code") String code, HttpServletResponse res) {
+  public void authorize(@RequestParam("code") String code, HttpServletResponse res) throws IOException {
 
-    String locationUrl = gitHubConfiguration.getLoginUrl() + "/access_token?client_id=" + gitHubConfiguration.getClientId()
-        + "&client_secret=" + gitHubConfiguration.getClientSecret() + "&code=" + code;
+    String locationUrl =
+        gitHubConfiguration.getLoginUrl() + "/access_token?client_id=" + gitHubConfiguration.getClientId() + "&client_secret="
+            + gitHubConfiguration.getClientSecret() + "&code=" + code;
 
     RedirectView view = new RedirectView();
     view.setUrl("/");
@@ -84,14 +85,17 @@ public class GithubController {
         cookie.setMaxAge(2000);
         cookie.setPath("/");
         res.addCookie(cookie);
+        res.addHeader("Location", "/");
       } catch (Exception e) {
         view.setUrl("/404");
+        res.addHeader("Location", "/404");
       }
     } catch (java.io.IOException e) {
-      view.setUrl("/500");
+      res.addHeader("Location", "/500");
     }
 
-    return view;
+    res.setStatus(HttpServletResponse.SC_FOUND);
+
   }
 
   @RequestMapping(value = ApiUrls.EVENTS, method = RequestMethod.POST)
