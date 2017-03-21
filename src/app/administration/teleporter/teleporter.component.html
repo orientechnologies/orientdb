@@ -165,14 +165,14 @@
           </div>
 
           <div class="form-group">
-            <label class="col-sm-2 control-label">OrientDB URL</label>
-            <div class="col-md-7">
-              <input type="text" id="outDBUrl" class="form-control" [(ngModel)]="config.url" name="outDbUrl"
-                     placeholder="OrientDB URL" required/>
+            <label class="col-sm-2 control-label">OrientDB Database Name</label>
+            <div class="col-md-5">
+              <input type="text" id="outDBName" class="form-control" [(ngModel)]="config.outDBName" name="outDBName"
+                     placeholder="Database Name" required/>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-5">
               <button type="button" class="btn btn-sm btn-primary" data-toggle="popover" data-html="true"
-                      [attr.data-content]="hints.outDbUrl" data-animation="am-fade-and-scale"><b>?</b></button>
+                      [attr.data-content]="hints.outDBName" data-animation="am-fade-and-scale"><b>?</b></button>
             </div>
           </div>
 
@@ -265,7 +265,7 @@
 
           <div class="form-group">
             <div class="col-sm-offset-9 col-sm-3">
-                <button type="button" class="btn btn-sm btn-primary" (click)="testConnection()">Test connection</button>
+              <button type="button" class="btn btn-sm btn-primary" (click)="testConnection()">Test connection</button>
             </div>
           </div>
 
@@ -369,8 +369,11 @@
             </span>
                 </h5>
                 <h5>
-            <span class="tab">
-              <b>To</b>: {{job.cfg.outDbUrl }}
+            <span class="tab" *ngIf="config.protocol === 'plocal'">
+              <b>To</b>: {{job.cfg.protocol}}:$ORIENTDB_HOME/databases/{{job.cfg.outDBName}}
+            </span>
+                  <span class="tab" *ngIf="config.protocol === 'memory'">
+              <b>To</b>: {{job.cfg.protocol}}:{{job.cfg.outDBName}}
             </span>
                 </h5>
               </div>
