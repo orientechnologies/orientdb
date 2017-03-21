@@ -165,14 +165,19 @@ public class OCreateIndexStatement extends ODDLStatement {
 
   private List<OCollate> calculateCollates(OCommandContext ctx) {
     List<OCollate> result = new ArrayList<>();
+    boolean found = false;
     for (Property prop : this.propertyList) {
       String collate = prop.collate == null ? null : prop.collate.getStringValue();
       if (collate != null) {
         final OCollate col = OSQLEngine.getCollate(collate);
         result.add(col);
+        found = true;
       } else {
         result.add(null);
       }
+    }
+    if(!found){
+      return null;
     }
     return result;
   }
