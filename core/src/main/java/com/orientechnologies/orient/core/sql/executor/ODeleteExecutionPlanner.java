@@ -65,22 +65,42 @@ public class ODeleteExecutionPlanner {
 
     switch (indexIdentifier.getType()) {
     case INDEX:
-      OBooleanExpression condition = null;
+      OBooleanExpression keyCondition = null;
+      OBooleanExpression ridCondition = null;
       if (flattenedWhereClause == null || flattenedWhereClause.size() == 0) {
         if (!index.supportsOrderedIterations()) {
           throw new OCommandExecutionException("Index " + indexName + " does not allow iteration without a condition");
         }
-      } else if (flattenedWhereClause.size() > 1) {
+      } else if (flattenedWhereClause.size() > 2) {
         throw new OCommandExecutionException("Index queries with this kind of condition are not supported yet: " + whereClause);
       } else {
         OAndBlock andBlock = flattenedWhereClause.get(0);
-        if (andBlock.getSubBlocks().size() != 1) {
+        if (andBlock.getSubBlocks().size() == 1) {
+
+          whereClause = null;//The WHERE clause won't be used anymore, the index does all the filtering
+          flattenedWhereClause = null;
+          keyCondition = getKeyCondition(andBlock);
+          if (keyCondition == null) {
+            throw new OCommandExecutionException("Index queries with this kind of condition are not supported yet: " + whereClause);
+          }
+        } else if (andBlock.getSubBlocks().size() == 2) {
+          whereClause = null;//The WHERE clause won't be used anymore, the index does all the filtering
+          flattenedWhereClause = null;
+          keyCondition = getKeyCondition(andBlock);
+          ridCondition = getRidCondition(andBlock);
+          if (keyCondition == null || ridCondition == null) {
+            throw new OCommandExecutionException("Index queries with this kind of condition are not supported yet: " + whereClause);
+          }
+        } else {
           throw new OCommandExecutionException("Index queries with this kind of condition are not supported yet: " + whereClause);
         }
-
-        condition = andBlock.getSubBlocks().get(0);
       }
-      result.chain(new DeleteFromIndexStep(index, condition, null, ctx));
+      result.chain(new DeleteFromIndexStep(index, keyCondition, null, ctx));
+      if (ridCondition != null) {
+        OWhereClause where = new OWhereClause(-1);
+        where.setBaseExpression(ridCondition);
+        result.chain(new FilterStep(where, ctx));
+      }
       return true;
     case VALUES:
     case VALUESASC:
@@ -130,4 +150,31 @@ public class ODeleteExecutionPlanner {
     OSelectExecutionPlanner planner = new OSelectExecutionPlanner(sourceStatement);
     result.chain(new SubQueryStep(planner.createExecutionPlan(ctx), ctx, ctx));
   }
+
+  private OBooleanExpression getKeyCondition(OAndBlock andBlock) {
+    for (OBooleanExpression exp : andBlock.getSubBlocks()) {
+      String str = exp.toString();
+      if (str.length() < 5) {
+        continue;
+      }
+      if (str.substring(0, 4).equalsIgnoreCase("key ")) {
+        return exp;
+      }
+    }
+    return null;
+  }
+
+  private OBooleanExpression getRidCondition(OAndBlock andBlock) {
+    for (OBooleanExpression exp : andBlock.getSubBlocks()) {
+      String str = exp.toString();
+      if (str.length() < 5) {
+        continue;
+      }
+      if (str.substring(0, 4).equalsIgnoreCase("rid ")) {
+        return exp;
+      }
+    }
+    return null;
+  }
+
 }

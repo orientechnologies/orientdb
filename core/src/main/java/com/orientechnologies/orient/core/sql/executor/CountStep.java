@@ -28,6 +28,7 @@ public class CountStep extends AbstractExecutionStep {
       OResultSet prevResult = getPrev().get().syncPull(ctx, nRecords);
       if (!prevResult.hasNext()) {
         OInternalResultSet result = new OInternalResultSet();
+        resultRecord.setProperty("count", count);
         result.add(resultRecord);
         return result;
       }
