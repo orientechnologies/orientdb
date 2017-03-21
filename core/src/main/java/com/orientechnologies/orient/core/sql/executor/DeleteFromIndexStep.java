@@ -116,6 +116,7 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
       if (ridCondition.evaluate(res, commandContext)) {
         return result;
       }
+      result = cursor.nextEntry();
     }
   }
 
