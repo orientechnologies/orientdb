@@ -1,5 +1,8 @@
 package com.orientechnologies.orient.graph;
 
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.command.OCommandManager;
+import com.orientechnologies.orient.core.command.script.OCommandExecutorScript;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -25,6 +28,7 @@ public class TestGraphTransactionOnBatch {
 
   @Before
   public void before() {
+    OCommandManager.instance().registerExecutor(OCommandScript.class, OCommandExecutorScript.class);
     db = new ODatabaseDocumentTx("memory:" + TestGraphTransactionOnBatch.class.getSimpleName());
     db.create();
     V = db.getMetadata().getSchema().getClass("V");
