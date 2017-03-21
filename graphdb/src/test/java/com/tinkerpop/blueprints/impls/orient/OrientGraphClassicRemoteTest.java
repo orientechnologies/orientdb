@@ -22,7 +22,6 @@ public class OrientGraphClassicRemoteTest extends OrientGraphRemoteTest {
 	public Graph generateGraph(final String graphDirectoryName) {
 		final OrientGraph graph = (OrientGraph) super.generateGraph(graphDirectoryName);
 		graph.setUseLightweightEdges(false);
-		graph.setUseClassForEdgeLabel(false);
 		graph.setUseClassForVertexLabel(false);
 		graph.setUseVertexFieldsForEdgeLabels(false);
 		return graph;

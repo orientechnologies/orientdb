@@ -21,7 +21,6 @@ public class OrientGraphCustomEdgesRemoteTest extends OrientGraphRemoteTest {
 
   public Graph generateGraph(final String graphDirectoryName) {
     final OrientGraph graph = (OrientGraph) super.generateGraph(graphDirectoryName);
-    graph.setUseClassForEdgeLabel(true);
 
     if (graph.getEdgeType("friend") == null)
       graph.createEdgeType("friend");

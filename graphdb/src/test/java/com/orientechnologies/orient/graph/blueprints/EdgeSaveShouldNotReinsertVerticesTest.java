@@ -39,7 +39,6 @@ public class EdgeSaveShouldNotReinsertVerticesTest {
   public void before() {
     factory = new OrientGraphFactory("memory:" + EdgeSaveShouldNotReinsertVerticesTest.class.getSimpleName());
     factory.setAutoStartTx(false);
-    factory.setUseClassForEdgeLabel(false);
   }
 
   @After

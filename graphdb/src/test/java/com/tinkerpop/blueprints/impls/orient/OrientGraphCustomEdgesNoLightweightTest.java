@@ -23,7 +23,6 @@ public class OrientGraphCustomEdgesNoLightweightTest extends OrientGraphTest {
 
   public Graph generateGraph(final String graphDirectoryName) {
     final OrientGraph graph = (OrientGraph) super.generateGraph(graphDirectoryName);
-    graph.setUseClassForEdgeLabel(true);
     graph.setUseLightweightEdges(false);
 
     if (graph.getEdgeType("friend") == null)

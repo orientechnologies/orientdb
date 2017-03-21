@@ -24,7 +24,6 @@ public class OrientGraphLightweightEdgesTest extends OrientGraphTest {
   public Graph generateGraph(final String graphDirectoryName) {
     OrientGraph graph = (OrientGraph) super.generateGraph(graphDirectoryName);
     graph.setUseLightweightEdges(true);
-    graph.setUseClassForEdgeLabel(false);
     graph.setUseClassForVertexLabel(false);
     return graph;
   }

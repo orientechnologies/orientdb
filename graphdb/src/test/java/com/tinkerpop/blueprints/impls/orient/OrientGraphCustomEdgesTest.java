@@ -23,7 +23,6 @@ public class OrientGraphCustomEdgesTest extends OrientGraphTest {
 
   public Graph generateGraph(final String graphDirectoryName) {
     OrientGraph graph = (OrientGraph) super.generateGraph(graphDirectoryName);
-    graph.setUseClassForEdgeLabel(true);
 
     if (graph.getEdgeType("friend") == null)
       graph.createEdgeType("friend");

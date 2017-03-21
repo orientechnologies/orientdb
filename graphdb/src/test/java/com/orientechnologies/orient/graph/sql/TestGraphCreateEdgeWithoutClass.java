@@ -15,7 +15,6 @@ public class TestGraphCreateEdgeWithoutClass {
   @Test
   public void testCreateEdgeWithoutClass() {
     OrientGraph graph = new OrientGraph("memory:" + TestGraphCreateEdgeWithoutClass.class.getSimpleName());
-    graph.setUseClassForEdgeLabel(false);
     graph.setUseVertexFieldsForEdgeLabels(true);
     try {
 
