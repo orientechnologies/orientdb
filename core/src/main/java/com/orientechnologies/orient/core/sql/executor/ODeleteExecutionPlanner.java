@@ -71,7 +71,7 @@ public class ODeleteExecutionPlanner {
         if (!index.supportsOrderedIterations()) {
           throw new OCommandExecutionException("Index " + indexName + " does not allow iteration without a condition");
         }
-      } else if (flattenedWhereClause.size() > 2) {
+      } else if (flattenedWhereClause.size() > 1) {
         throw new OCommandExecutionException("Index queries with this kind of condition are not supported yet: " + whereClause);
       } else {
         OAndBlock andBlock = flattenedWhereClause.get(0);
