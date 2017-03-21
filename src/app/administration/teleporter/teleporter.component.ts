@@ -57,7 +57,7 @@ class TeleporterComponent implements AfterViewChecked {
   }
 
   init() {
-    this.protocols = ["plocal", "remote"];
+    this.protocols = ["plocal", "memory"];
     this.strategies = ["naive", "naive-aggregate"];
     this.nameResolvers = ["original", "java"];
     this.logLevels = ["NO","DEBUG","INFO","WARNING","ERROR"];
@@ -77,7 +77,7 @@ class TeleporterComponent implements AfterViewChecked {
       "username": "",
       "password": "",
       "protocol": "plocal",
-      "url": "",
+      "outDBName": "",
       "outDbUrl": "",
       "strategy": "naive",
       "mapper": "basicDBMapper",
@@ -113,7 +113,7 @@ class TeleporterComponent implements AfterViewChecked {
       protocol: "The protocol to use during the migration in order to connect to OrientDB:<br>" +
       "<li><b>plocal</b>: the dabase will run locally in the same JVM of your application.</li>" +
       "<li><b>remote</b>: the database will be accessed via TCP/IP connection.</li>",
-      outDbUrl: "URL for the destination OrientDB graph database.",
+      outDBName: "The name for the destination OrientDB graph database.",
       strategy: "Strategy adopted during the importing phase.<br> " +
       "<li><b>naive</b>: performs a 'naive' import of the data source. The data source schema is translated semi-directly in a correspondent and coherent graph model.</li> " +
       "<li><b>naive-aggregate</b>: performs a 'naive' import of the data source. The data source schema is translated semi-directly in a correspondent and coherent graph model " +
@@ -203,7 +203,7 @@ class TeleporterComponent implements AfterViewChecked {
 
   launch() {
 
-    this.config.outDbUrl = this.config.protocol + ":" + this.config.url;
+    this.config.outDbUrl = this.config.protocol + ":" + this.config.outDBName;
 
     // transforming includedTables if set
     if(this.includedTables.length > 0) {
