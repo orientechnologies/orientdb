@@ -19,9 +19,13 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
+import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.parser.*;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
@@ -39,7 +43,7 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
     // TRY TO GET THE COMMAND FROM THE URL, THEN FROM THE CONTENT
     final String language = urlParts.length > 2 ? urlParts[2].trim() : "sql";
     String text = urlParts.length > 3 ? urlParts[3].trim() : iRequest.content;
-    final int limit = urlParts.length > 4 ? Integer.parseInt(urlParts[4].trim()) : -1;
+    int limit = urlParts.length > 4 ? Integer.parseInt(urlParts[4].trim()) : -1;
     String fetchPlan = urlParts.length > 5 ? urlParts[5] : null;
     final String accept = iRequest.getHeader("accept");
 
@@ -76,7 +80,8 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
 
     try {
       db = getProfiledDatabaseInstance(iRequest);
-      OResultSet result = executeStatement(language,text, params, db);
+      OResultSet result = executeStatement(language, text, params, db);
+      limit = getLimitFromStatement(language, text, limit, db);
       int i = 0;
       List response = new ArrayList();
       while (result.hasNext()) {
@@ -104,6 +109,27 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
     }
 
     return false;
+  }
+
+  private int getLimitFromStatement(String language, String text, int previousLimit, ODatabaseDocument db) {
+    try {
+      if (language != null && language.equalsIgnoreCase("sql")) {
+        OStatement statement = OSQLEngine.parse(text, (ODatabaseDocumentInternal) db);
+        OLimit limit = null;
+        if (statement instanceof OSelectStatement) {
+          limit = ((OSelectStatement) statement).getLimit();
+        } else if (statement instanceof OMatchStatement) {
+          limit = ((OMatchStatement) statement).getLimit();
+        } else if (statement instanceof OTraverseStatement) {
+          limit = ((OTraverseStatement) statement).getLimit();
+        }
+        if (limit != null) {
+          return limit.getValue(new OBasicCommandContext());
+        }
+      }
+    } catch (Exception e) {
+    }
+    return previousLimit;
   }
 
   protected OResultSet executeStatement(String language, String text, Object params, ODatabaseDocument db) {
