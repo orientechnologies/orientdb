@@ -345,7 +345,11 @@ public class OCreateIndexStatement extends ODDLStatement {
      */
     public String getCompleteKey() {
       StringBuilder result = new StringBuilder();
-      result.append(name.getStringValue());
+      if (name != null)
+        result.append(name.getStringValue());
+      else if (recordAttribute != null)
+        result.append(recordAttribute.getName());
+
       if (byKey) {
         result.append(" by key");
       }
