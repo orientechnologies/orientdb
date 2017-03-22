@@ -19,14 +19,12 @@
 package com.orientechnologies.orient.etl.loader;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabasePool;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -36,7 +34,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.etl.OETLPipeline;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -402,64 +399,6 @@ public class OETLOrientDBLoader extends OETLAbstractLoader implements OETLLoader
     OGlobalConfiguration.USE_WAL.setValue(wal);
 
     createDatabasePool();
-    if (dbURL.startsWith("remote")) {
-
-      manageRemoteDatabase();
-
-    } else {
-
-      configureDocumentDB();
-    }
-  }
-
-  private void configureDocumentDB() {
-    ODatabaseDocument documentDatabase = pool.acquire();
-
-//    if (documentDatabase.exists() && dbAutoDropIfExists) {
-//      log(Level.INFO, "Dropping existent database '%s'...", dbURL);
-//      documentDatabase.open(dbUser, dbPassword);
-//      documentDatabase.drop();
-//    }
-//
-//    if (documentDatabase.exists()) {
-//      log(Level.INFO, "Opening database '%s'...", dbURL);
-//      documentDatabase.open(dbUser, dbPassword);
-//    } else if (dbAutoCreate) {
-//      documentDatabase.create();
-//    } else {
-//      throw new IllegalArgumentException("Database '" + dbURL + "' not exists and 'dbAutoCreate' setting is false");
-//    }
-    documentDatabase.close();
-  }
-
-  private void manageRemoteDatabase() {
-    if (!dbAutoCreate && !dbAutoDropIfExists) {
-      log(Level.INFO, "Nothing setup on remote database " + dbURL);
-      return;
-    }
-
-    if (dbAutoCreate) {
-      if (NOT_DEF.equals(serverPassword) || NOT_DEF.equals(serverUser)) {
-        log(Level.SEVERE, "Please provide server administrator credentials");
-        throw new OETLLoaderException("unable to manage remote db without server admin credentials");
-      }
-
-      ODatabaseDocument documentDatabase = new ODatabaseDocumentTx(dbURL);
-      try {
-        OServerAdmin admin = new OServerAdmin(documentDatabase.getURL()).connect(serverUser, serverPassword);
-        boolean exists = admin.existsDatabase();
-        if (!exists && dbAutoCreate) {
-          admin.createDatabase(documentDatabase.getName(), dbType.name(), "plocal");
-        } else if (exists && dbAutoDropIfExists) {
-          admin.dropDatabase(documentDatabase.getName(), documentDatabase.getType());
-        }
-        admin.close();
-
-      } catch (IOException e) {
-        throw new OETLLoaderException(e);
-      }
-      documentDatabase.close();
-    }
   }
 
   @Override
@@ -509,7 +448,7 @@ public class OETLOrientDBLoader extends OETLAbstractLoader implements OETLLoader
       }
       pool = new ODatabasePool(orient, dbName, dbUser, dbPassword);
     } else {
-      orient = new OrientDB("remote:" + dbCtx, dbUser, dbPassword, null);
+      orient = new OrientDB("remote:" + dbCtx, serverUser, serverPassword, null);
       String dbName = dbCtx.substring(dbCtx.lastIndexOf("/"));
       if (orient.exists(dbName) && dbAutoDropIfExists) {
         orient.drop(dbName);
