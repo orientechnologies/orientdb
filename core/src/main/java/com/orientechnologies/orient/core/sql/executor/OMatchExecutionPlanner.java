@@ -131,6 +131,10 @@ public class OMatchExecutionPlanner {
     boolean first = true;
     if (sortedEdges.size() > 0) {
       for (EdgeTraversal edge : sortedEdges) {
+        if(edge.edge.out.alias!=null) {
+          edge.setLeftClass(aliasClasses.get(edge.edge.out.alias));
+          edge.setLeftFilter(aliasFilters.get(edge.edge.out.alias));
+        }
         addStepsFor(plan, edge, context, first);
         first = false;
       }

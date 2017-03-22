@@ -99,10 +99,10 @@ public class MatchEdgeTraverser {
     Integer maxDepth = null;
     String className = null;
     if (item.getFilter() != null) {
-      filter = item.getFilter().getFilter();
+      filter = getTargetFilter(item);
       whileCondition = item.getFilter().getWhileCondition();
       maxDepth = item.getFilter().getMaxDepth();
-      className = item.getFilter().getClassName(iCommandContext);
+      className = targetClassName(item, iCommandContext);
     }
 
     Set<OIdentifiable> result = new HashSet<OIdentifiable>();
@@ -154,6 +154,14 @@ public class MatchEdgeTraverser {
       iCommandContext.setVariable("$currentMatch", previousMatch);
     }
     return result;
+  }
+
+  protected OWhereClause getTargetFilter(OMatchPathItem item) {
+    return item.getFilter().getFilter();
+  }
+
+  protected String targetClassName(OMatchPathItem item, OCommandContext iCommandContext) {
+    return item.getFilter().getClassName(iCommandContext);
   }
 
   private boolean matchesClass(OCommandContext iCommandContext, String className, OIdentifiable origin) {
