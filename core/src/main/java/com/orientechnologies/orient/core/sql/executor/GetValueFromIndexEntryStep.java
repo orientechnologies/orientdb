@@ -64,4 +64,10 @@ public class GetValueFromIndexEntryStep extends AbstractExecutionStep {
   public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
 
   }
+
+  @Override
+  public String prettyPrint(int depth, int indent) {
+    String spaces = OExecutionStepInternal.getIndent(depth, indent);
+    return spaces + "+ EXTRACT VALUE FROM INDEX ENTRY";
+  }
 }

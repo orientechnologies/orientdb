@@ -2,6 +2,8 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.parser.OMatchPathItem;
 import com.orientechnologies.orient.core.sql.parser.OWhereClause;
 
@@ -95,10 +97,12 @@ public class MatchEdgeTraverser {
     OWhereClause filter = null;
     OWhereClause whileCondition = null;
     Integer maxDepth = null;
+    String className = null;
     if (item.getFilter() != null) {
       filter = item.getFilter().getFilter();
       whileCondition = item.getFilter().getWhileCondition();
       maxDepth = item.getFilter().getMaxDepth();
+      className = item.getFilter().getClassName(iCommandContext);
     }
 
     Set<OIdentifiable> result = new HashSet<OIdentifiable>();
@@ -107,14 +111,14 @@ public class MatchEdgeTraverser {
       // evaluated
       Iterable<OIdentifiable> queryResult = traversePatternEdge(startingPoint, iCommandContext);
 
-      if (item.getFilter() == null || item.getFilter().getFilter() == null) {
+      if ((item.getFilter() == null || item.getFilter().getFilter() == null) && className == null) {
         return queryResult;
       }
 
       for (OIdentifiable origin : queryResult) {
         Object previousMatch = iCommandContext.getVariable("$currentMatch");
         iCommandContext.setVariable("$currentMatch", origin);
-        if (matchesFilters(iCommandContext, filter, origin)) {
+        if (matchesFilters(iCommandContext, filter, origin) && matchesClass(iCommandContext, className, origin)) {
           result.add(origin);
         }
         iCommandContext.setVariable("$currentMatch", previousMatch);
@@ -123,7 +127,7 @@ public class MatchEdgeTraverser {
       iCommandContext.setVariable("$depth", depth);
       Object previousMatch = iCommandContext.getVariable("$currentMatch");
       iCommandContext.setVariable("$currentMatch", startingPoint);
-      if (matchesFilters(iCommandContext, filter, startingPoint)) {
+      if (matchesFilters(iCommandContext, filter, startingPoint) && matchesClass(iCommandContext, className, startingPoint)) {
         result.add(startingPoint);
       }
 
@@ -150,6 +154,29 @@ public class MatchEdgeTraverser {
       iCommandContext.setVariable("$currentMatch", previousMatch);
     }
     return result;
+  }
+
+  private boolean matchesClass(OCommandContext iCommandContext, String className, OIdentifiable origin) {
+    if (className == null) {
+      return true;
+    }
+    OElement element = null;
+    if (origin instanceof OElement) {
+      element = (OElement) origin;
+    } else {
+      Object record = origin.getRecord();
+      if (record instanceof OElement) {
+        element = (OElement) record;
+      }
+    }
+    if (element != null) {
+      Optional<OClass> clazz = element.getSchemaType();
+      if (!clazz.isPresent()) {
+        return false;
+      }
+      return clazz.get().isSubClassOf(className);
+    }
+    return false;
   }
 
   protected boolean matchesFilters(OCommandContext iCommandContext, OWhereClause filter, OIdentifiable origin) {
