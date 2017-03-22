@@ -131,10 +131,12 @@ public class OFunction extends ODocumentWrapper {
     return this;
   }
 
+  @Deprecated
   public Object execute(final Object... iArgs) {
     return executeInContext(null, iArgs);
   }
 
+  @Deprecated
   public Object executeInContext(final OCommandContext iContext, final Object... iArgs) {
     final List<String> params = getParameters();
 
@@ -165,6 +167,7 @@ public class OFunction extends ODocumentWrapper {
     return command.executeInContext(iContext, args);
   }
 
+  @Deprecated
   public Object executeInContext(final OCommandContext iContext, final Map<String, Object> iArgs) {
     // CONVERT PARAMETERS IN A MAP
     final Map<Object, Object> args = new LinkedHashMap<Object, Object>();
@@ -188,6 +191,7 @@ public class OFunction extends ODocumentWrapper {
     return command.executeInContext(iContext, args);
   }
 
+  @Deprecated
   public Object execute(final Map<Object, Object> iArgs) {
     final long start = Orient.instance().getProfiler().startChrono();
 
