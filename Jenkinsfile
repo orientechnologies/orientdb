@@ -36,7 +36,7 @@ node("master") {
                         //skip integration test for now
                         sh "${mvnHome}/bin/mvn -f distribution/pom.xml clean install -Pqa"
                     } finally {
-                        junit allowEmptyResults: true, testResults: '**/target/surefire-reports/TEST-*.xml'
+                        junit allowEmptyResults: true, testResults: '**/target/failsafe-reports/TEST-*.xml'
 
                     }
                 }
