@@ -2,12 +2,14 @@ package com.orientechnologies.distribution.integration;
 
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -92,13 +94,10 @@ public class OGitHubIssuesIT extends OIntegrationTestTemplate {
     db.command(
         "CREATE EDGE t7265IsFromCountry FROM (SELECT FROM t7265Customers WHERE OrderedId=1) TO (SELECT FROM t7265Countries WHERE Id=1);");
 
-    List<OResult> results = db.query(
-        "MATCH {class: t7265Customers, as: customer, where: (OrderedId=1)}--{Class: t7265Services, as: service} RETURN service.Name")
-        .stream().collect(Collectors.toList());
+    OResultSet results = db.query(
+        "MATCH {class: t7265Customers, as: customer, where: (OrderedId=1)}--{Class: t7265Services, as: service} RETURN service.Name");
 
-    //TODO check this
-    assertEquals(3, results.size());
-
+    assertThat(results).hasSize(2);
   }
 
 }
