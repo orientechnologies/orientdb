@@ -105,6 +105,14 @@ public class OResultInternal implements OResult {
   }
 
   @Override
+  public Optional<ORID> getIdentity() {
+    if (element != null) {
+      return Optional.of(element.getIdentity());
+    }
+    return Optional.empty();
+  }
+
+  @Override
   public boolean isBlob() {
     return this.element != null && this.element.getRecord() instanceof OBlob;
   }

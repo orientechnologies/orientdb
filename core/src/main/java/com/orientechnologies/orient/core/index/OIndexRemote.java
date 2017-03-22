@@ -29,8 +29,12 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
+import java.sql.ResultSet;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Proxied abstract index.
@@ -60,7 +64,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   private final static String QUERY_COUNT       = "select count(*) as size from index:%s where key = ?";
   private final static String QUERY_COUNT_RANGE = "select count(*) as size from index:%s where ";
   private final static String QUERY_SIZE        = "select count(*) as size from index:%s";
-  private final static String QUERY_KEY_SIZE    = "select count(distinct( key )) as size from index:%s";
+  private final static String QUERY_KEY_SIZE    = "select indexKeySize('%s') as size";
   private final static String QUERY_KEYS        = "select key from index:%s";
   private final static String QUERY_REBUILD     = "rebuild index %s";
   private final static String QUERY_CLEAR       = "delete from index:%s";
@@ -93,8 +97,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   }
 
   public OIndexRemote<T> delete() {
-    final OCommandRequest cmd = formatCommand(QUERY_DROP, name);
-    getDatabase().command(cmd).execute();
+    getDatabase().command(String.format(QUERY_DROP, name));
     return this;
   }
 
@@ -108,15 +111,19 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   }
 
   public boolean contains(final Object iKey) {
-    final OCommandRequest cmd = formatCommand(QUERY_CONTAINS, name);
-    final List<ODocument> result = getDatabase().command(cmd).execute(iKey);
-    return (Long) result.get(0).field("size") > 0;
+    final OResultSet result = getDatabase().command(String.format(QUERY_CONTAINS, name), iKey);
+    if (!result.hasNext()) {
+      return false;
+    }
+    return (Long) result.next().getProperty("size") > 0;
   }
 
   public long count(final Object iKey) {
-    final OCommandRequest cmd = formatCommand(QUERY_COUNT, name);
-    final List<ODocument> result = getDatabase().command(cmd).execute(iKey);
-    return (Long) result.get(0).field("size");
+    final OResultSet result = getDatabase().command(String.format(QUERY_COUNT, name), iKey);
+    if (!result.hasNext()) {
+      return 0;
+    }
+    return (Long) result.next().getProperty("size");
   }
 
   public long count(final Object iRangeFrom, final boolean iFromInclusive, final Object iRangeTo, final boolean iToInclusive,
@@ -138,8 +145,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     if (maxValuesToFetch > 0)
       query.append(QUERY_GET_VALUES_LIMIT).append(maxValuesToFetch);
 
-    final OCommandRequest cmd = formatCommand(query.toString());
-    return (Long) getDatabase().command(cmd).execute(iRangeFrom, iRangeTo);
+    return (Long) getDatabase().command(query.toString(),  iRangeFrom, iRangeTo).next().getProperty("value");
   }
 
   public OIndexRemote<T> put(final Object iKey, final OIdentifiable iValue) {
@@ -151,36 +157,44 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
       throw new OIndexException(
           "Cannot insert values in manual indexes against remote protocol during a transaction. Temporary RID cannot be managed at server side");
 
-    final OCommandRequest cmd = formatCommand(QUERY_PUT, name);
-    getDatabase().command(cmd).execute(iKey, iValue.getIdentity());
+    getDatabase().command(String.format(QUERY_PUT,name),iKey, iValue.getIdentity());
     return this;
   }
 
   public boolean remove(final Object key) {
-    final OCommandRequest cmd = formatCommand(QUERY_REMOVE, name);
-    return ((Integer) getDatabase().command(cmd).execute(key)) > 0;
+    OResultSet result=  getDatabase().command(String.format(QUERY_REMOVE, name),key);
+    if(!result.hasNext()){
+      return false;
+    }
+    return ((long) result.next().getProperty("count")) > 0;
   }
 
   public boolean remove(final Object iKey, final OIdentifiable iRID) {
-    final int deleted;
+    final long deleted;
     if (iRID != null) {
 
       if (iRID.getIdentity().isNew())
         throw new OIndexException(
             "Cannot remove values in manual indexes against remote protocol during a transaction. Temporary RID cannot be managed at server side");
 
-      final OCommandRequest cmd = formatCommand(QUERY_REMOVE2, name);
-      deleted = (Integer) getDatabase().command(cmd).execute(iKey, iRID);
+      OResultSet result = getDatabase().command(String.format(QUERY_REMOVE2, name), iKey, iRID);
+      if (!result.hasNext()) {
+        deleted = 0;
+      } else
+        deleted = result.next().getProperty("count");
     } else {
-      final OCommandRequest cmd = formatCommand(QUERY_REMOVE, name);
-      deleted = (Integer) getDatabase().command(cmd).execute(iKey);
+      OResultSet result = getDatabase().command(String.format(QUERY_REMOVE, name), iKey);
+      if (!result.hasNext()) {
+        deleted = 0;
+      } else
+        deleted =  result.next().getProperty("count");
     }
     return deleted > 0;
   }
 
   public int remove(final OIdentifiable iRecord) {
-    final OCommandRequest cmd = formatCommand(QUERY_REMOVE3, name, iRecord.getIdentity());
-    return (Integer) getDatabase().command(cmd).execute(iRecord);
+    return (Integer) getDatabase().command(String.format(QUERY_REMOVE3, name, iRecord.getIdentity()), iRecord).next()
+        .getProperty("value");
   }
 
   @Override
@@ -200,26 +214,26 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   }
 
   public long rebuild() {
-    final OCommandRequest cmd = formatCommand(QUERY_REBUILD, name);
-    return (Long) getDatabase().command(cmd).execute();
+    return (Long) getDatabase().command(String.format(QUERY_REBUILD, name)).next().getProperty("totalIndexed");
   }
 
   public OIndexRemote<T> clear() {
-    final OCommandRequest cmd = formatCommand(QUERY_CLEAR, name);
-    getDatabase().command(cmd).execute();
+    getDatabase().command(String.format(QUERY_CLEAR, name));
     return this;
   }
 
   public long getSize() {
-    final OCommandRequest cmd = formatCommand(QUERY_SIZE, name);
-    final List<ODocument> result = getDatabase().command(cmd).execute();
-    return (Long) result.get(0).field("size");
+    OResultSet result = getDatabase().command(String.format(QUERY_SIZE, name));
+    if (result.hasNext())
+      return (Long) result.next().getProperty("size");
+    return 0;
   }
 
   public long getKeySize() {
-    final OCommandRequest cmd = formatCommand(QUERY_KEY_SIZE, name);
-    final List<ODocument> result = getDatabase().command(cmd).execute();
-    return (Long) result.get(0).field("size");
+    OResultSet result = getDatabase().command(String.format(QUERY_KEY_SIZE, name));
+    if (result.hasNext())
+      return (Long) result.next().getProperty("size");
+    return 0;
   }
 
   public boolean isAutomatic() {
@@ -286,8 +300,8 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
       }
     }
 
-    final OCommandRequest cmd = formatCommand(QUERY_GET_ENTRIES, name, params.toString());
-    return (Collection<ODocument>) getDatabase().command(cmd).execute(iKeys.toArray());
+    return getDatabase().command(String.format(QUERY_GET_ENTRIES, name, params.toString()), iKeys.toArray()).stream()
+        .map((res) -> (ODocument) res.toElement()).collect(Collectors.toList());
   }
 
   public OIndexDefinition getDefinition() {
@@ -309,23 +323,6 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   @Override
   public int hashCode() {
     return name.hashCode();
-  }
-
-  public Collection<ODocument> getEntries(final Collection<?> iKeys, int maxEntriesToFetch) {
-    if (maxEntriesToFetch < 0)
-      return getEntries(iKeys);
-
-    final StringBuilder params = new StringBuilder(128);
-    if (!iKeys.isEmpty()) {
-      params.append("?");
-      for (int i = 1; i < iKeys.size(); i++) {
-        params.append(", ?");
-      }
-    }
-
-    final OCommandRequest cmd = formatCommand(QUERY_GET_ENTRIES + QUERY_GET_VALUES_LIMIT + maxEntriesToFetch, name,
-        params.toString());
-    return getDatabase().command(cmd).execute(iKeys.toArray());
   }
 
   public Set<String> getClusters() {
@@ -378,26 +375,24 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
       }
     }
 
-    final OCommandRequest cmd = formatCommand(QUERY_ITERATE_ENTRIES, name, params.toString(), ascSortOrder ? "ASC" : "DESC");
-    final List<ODocument> res = getDatabase().command(cmd).execute(keys.toArray());
+    final OResultSet res = getDatabase().command(String.format(QUERY_ITERATE_ENTRIES, name, params.toString(), ascSortOrder ? "ASC" : "DESC"),keys.toArray());
 
     return new OIndexAbstractCursor() {
-      private Iterator<ODocument> entries = res.iterator();
 
       @Override
       public Map.Entry<Object, OIdentifiable> nextEntry() {
-        if (!entries.hasNext())
+        if (!res.hasNext())
           return null;
-        final ODocument next = entries.next();
+        final OResult next = res.next();
         return new Map.Entry<Object, OIdentifiable>() {
           @Override
           public Object getKey() {
-            return next.field("key");
+            return next.getProperty("key");
           }
 
           @Override
           public OIdentifiable getValue() {
-            return next.field("rid");
+            return next.getProperty("rid");
           }
 
           @Override
@@ -417,28 +412,26 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 
   @Override
   public OIndexCursor cursor() {
-    final OCommandRequest cmd = formatCommand(QUERY_ENTRIES, name);
-    final Collection<ODocument> result = getDatabase().command(cmd).execute();
+    final OResultSet result = getDatabase().command(String.format(QUERY_ENTRIES, name));
 
     return new OIndexAbstractCursor() {
-      private final Iterator<ODocument> documentIterator = result.iterator();
 
       @Override
       public Map.Entry<Object, OIdentifiable> nextEntry() {
-        if (!documentIterator.hasNext())
+        if (!result.hasNext())
           return null;
 
-        final ODocument value = documentIterator.next();
+        final OResult value = result.next();
 
         return new Map.Entry<Object, OIdentifiable>() {
           @Override
           public Object getKey() {
-            return value.field("key");
+            return value.getProperty("key");
           }
 
           @Override
           public OIdentifiable getValue() {
-            return value.field("rid");
+            return value.getProperty("rid");
           }
 
           @Override
@@ -453,28 +446,26 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 
   @Override
   public OIndexCursor descCursor() {
-    final OCommandRequest cmd = formatCommand(QUERY_ENTRIES_DESC, name);
-    final Collection<ODocument> result = getDatabase().command(cmd).execute();
+    final OResultSet result = getDatabase().command(String.format(QUERY_ENTRIES_DESC, name));
 
     return new OIndexAbstractCursor() {
-      private final Iterator<ODocument> documentIterator = result.iterator();
 
       @Override
       public Map.Entry<Object, OIdentifiable> nextEntry() {
-        if (!documentIterator.hasNext())
+        if (!result.hasNext())
           return null;
 
-        final ODocument value = documentIterator.next();
+        final OResult value = result.next();
 
         return new Map.Entry<Object, OIdentifiable>() {
           @Override
           public Object getKey() {
-            return value.field("key");
+            return value.getProperty("key");
           }
 
           @Override
           public OIdentifiable getValue() {
-            return value.field("rid");
+            return value.getProperty("rid");
           }
 
           @Override
@@ -488,20 +479,18 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 
   @Override
   public OIndexKeyCursor keyCursor() {
-    final OCommandRequest cmd = formatCommand(QUERY_KEYS, name);
-    final Collection<ODocument> result = getDatabase().command(cmd).execute();
+    final OResultSet result = getDatabase().command(String.format(QUERY_KEYS, name));
 
     return new OIndexKeyCursor() {
-      private final Iterator<ODocument> documentIterator = result.iterator();
 
       @Override
       public Object next(int prefetchSize) {
-        if (!documentIterator.hasNext())
+        if (!result.hasNext())
           return null;
 
-        final ODocument value = documentIterator.next();
+        final OResult value = result.next();
 
-        return value.field("key");
+        return value.getProperty("key");
       }
     };
   }
@@ -510,11 +499,6 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   public int compareTo(OIndex<T> index) {
     final String name = index.getName();
     return this.name.compareTo(name);
-  }
-
-  protected OCommandRequest formatCommand(final String iTemplate, final Object... iArgs) {
-    final String text = String.format(iTemplate, iArgs);
-    return new OCommandSQL(text);
   }
 
   protected ODatabaseDocumentInternal getDatabase() {

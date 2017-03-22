@@ -44,24 +44,15 @@ public class OInCondition extends OBooleanExpression {
 
   @Override
   public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
-    Object leftVal = left.execute(currentRecord, ctx);
-    Object rightVal = null;
-    if (rightStatement != null) {
-      rightVal = executeQuery(rightStatement, ctx);
-    } else if (rightParam != null) {
-      rightVal = rightParam.getValue(ctx.getInputParameters());
-    } else if (rightMathExpression != null) {
-      rightVal = rightMathExpression.execute(currentRecord, ctx);
-    }
+    Object leftVal = evaluateLeft(currentRecord, ctx);
+    Object rightVal = evaluateRight(currentRecord, ctx);
     if (rightVal == null) {
       return false;
     }
     return evaluateExpression(leftVal, rightVal);
   }
 
-  @Override
-  public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
-    Object leftVal = left.execute(currentRecord, ctx);
+  public Object evaluateRight(OIdentifiable currentRecord, OCommandContext ctx) {
     Object rightVal = null;
     if (rightStatement != null) {
       rightVal = executeQuery(rightStatement, ctx);
@@ -70,10 +61,37 @@ public class OInCondition extends OBooleanExpression {
     } else if (rightMathExpression != null) {
       rightVal = rightMathExpression.execute(currentRecord, ctx);
     }
+    return rightVal;
+  }
+
+  public Object evaluateLeft(OIdentifiable currentRecord, OCommandContext ctx) {
+    return left.execute(currentRecord, ctx);
+  }
+
+  @Override
+  public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
+    Object leftVal = evaluateLeft(currentRecord, ctx);
+    Object rightVal = evaluateRight(currentRecord, ctx);
     if (rightVal == null) {
       return false;
     }
     return evaluateExpression(leftVal, rightVal);
+  }
+
+  public Object evaluateRight(OResult currentRecord, OCommandContext ctx) {
+    Object rightVal = null;
+    if (rightStatement != null) {
+      rightVal = executeQuery(rightStatement, ctx);
+    } else if (rightParam != null) {
+      rightVal = rightParam.getValue(ctx.getInputParameters());
+    } else if (rightMathExpression != null) {
+      rightVal = rightMathExpression.execute(currentRecord, ctx);
+    }
+    return rightVal;
+  }
+
+  public Object evaluateLeft(OResult currentRecord, OCommandContext ctx) {
+    return left.execute(currentRecord, ctx);
   }
 
   protected static Object executeQuery(OSelectStatement rightStatement, OCommandContext ctx) {
@@ -288,6 +306,13 @@ public class OInCondition extends OBooleanExpression {
     return result.size() == 0 ? null : result;
   }
 
+  public OExpression getLeft() {
+    return left;
+  }
+
+  public void setLeft(OExpression left) {
+    this.left = left;
+  }
 }
 /* JavaCC - OriginalChecksum=00df7cb1877c0a12d24205c1700653c7 (do not edit this line) */
 

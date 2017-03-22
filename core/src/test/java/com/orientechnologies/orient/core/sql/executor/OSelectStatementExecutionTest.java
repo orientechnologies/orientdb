@@ -1289,7 +1289,7 @@ public class OSelectStatementExecutionTest {
     OExecutionPlan p2 = p.get();
     Assert.assertTrue(p2 instanceof OSelectExecutionPlan);
     OSelectExecutionPlan plan = (OSelectExecutionPlan) p2;
-    Assert.assertEquals(2, plan.getSteps().size());
+    Assert.assertEquals(3, plan.getSteps().size());
     Assert.assertEquals(FetchFromIndexStep.class, plan.getSteps().get(0).getClass());
     result.close();
   }
@@ -1680,7 +1680,7 @@ public class OSelectStatementExecutionTest {
     }
     Assert.assertFalse(result.hasNext());
     OSelectExecutionPlan plan = (OSelectExecutionPlan) result.getExecutionPlan().get();
-    Assert.assertEquals(2, plan.getSteps().size());
+    Assert.assertEquals(3, plan.getSteps().size());
     result.close();
   }
 
@@ -1705,7 +1705,7 @@ public class OSelectStatementExecutionTest {
     printExecutionPlan(result);
     Assert.assertFalse(result.hasNext());
     OSelectExecutionPlan plan = (OSelectExecutionPlan) result.getExecutionPlan().get();
-    Assert.assertEquals(3, plan.getSteps().size());
+    Assert.assertEquals(4, plan.getSteps().size());
     result.close();
   }
 
@@ -1735,7 +1735,7 @@ public class OSelectStatementExecutionTest {
     }
     Assert.assertFalse(result.hasNext());
     OSelectExecutionPlan plan = (OSelectExecutionPlan) result.getExecutionPlan().get();
-    Assert.assertEquals(2, plan.getSteps().size());
+    Assert.assertEquals(3, plan.getSteps().size());
     result.close();
   }
 
@@ -2439,7 +2439,7 @@ public class OSelectStatementExecutionTest {
       lastSurname = surname;
     }
     Assert.assertFalse(result.hasNext());
-    Assert.assertEquals(2, result.getExecutionPlan().get().getSteps().size());//index used, no ORDER BY step
+    Assert.assertEquals(3, result.getExecutionPlan().get().getSteps().size());//index used, no ORDER BY step
     result.close();
   }
 
@@ -2475,7 +2475,7 @@ public class OSelectStatementExecutionTest {
       lastSurname = surname;
     }
     Assert.assertFalse(result.hasNext());
-    Assert.assertEquals(2, result.getExecutionPlan().get().getSteps().size());//index used, no ORDER BY step
+    Assert.assertEquals(3, result.getExecutionPlan().get().getSteps().size());//index used, no ORDER BY step
     result.close();
   }
 
@@ -2511,7 +2511,7 @@ public class OSelectStatementExecutionTest {
       lastSurname = surname;
     }
     Assert.assertFalse(result.hasNext());
-    Assert.assertEquals(2, result.getExecutionPlan().get().getSteps().size());//index used, no ORDER BY step
+    Assert.assertEquals(3, result.getExecutionPlan().get().getSteps().size());//index used, no ORDER BY step
     result.close();
   }
 
@@ -2548,7 +2548,7 @@ public class OSelectStatementExecutionTest {
 
     }
     Assert.assertFalse(result.hasNext());
-    Assert.assertEquals(2, result.getExecutionPlan().get().getSteps().size());//index used, no ORDER BY step
+    Assert.assertEquals(3, result.getExecutionPlan().get().getSteps().size());//index used, no ORDER BY step
     result.close();
   }
 
@@ -2585,7 +2585,7 @@ public class OSelectStatementExecutionTest {
       lastSurname = surname;
     }
     Assert.assertFalse(result.hasNext());
-    Assert.assertEquals(2, result.getExecutionPlan().get().getSteps().size());//index used, no ORDER BY step
+    Assert.assertEquals(3, result.getExecutionPlan().get().getSteps().size());//index used, no ORDER BY step
     result.close();
   }
 
@@ -2622,7 +2622,7 @@ public class OSelectStatementExecutionTest {
       lastSurname = surname;
     }
     Assert.assertFalse(result.hasNext());
-    Assert.assertEquals(2, result.getExecutionPlan().get().getSteps().size());//index used, no ORDER BY step
+    Assert.assertEquals(3, result.getExecutionPlan().get().getSteps().size());//index used, no ORDER BY step
     result.close();
   }
 

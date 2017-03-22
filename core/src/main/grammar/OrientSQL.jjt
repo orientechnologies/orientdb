@@ -4129,6 +4129,7 @@ ODropIndexStatement DropIndexStatement():
             |
             <STAR> { jjtThis.all = true; }
         )
+        [ <IF> <EXISTS> { jjtThis.ifExists = true; }]
 	)
 	{ return jjtThis; }
 }

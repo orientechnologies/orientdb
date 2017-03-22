@@ -36,21 +36,21 @@ import java.util.Map;
 public final class OQueryRequest implements OBinaryRequest<OQueryResponse> {
 
   private int recordsPerPage = 100;
-  private ORecordSerializer serializer;
-  private String            language;
-  private String            statement;
-  private boolean           idempotent;
-  Map<Object, Object> params;
-  private boolean namedParams;
+  private ORecordSerializer   serializer;
+  private String              language;
+  private String              statement;
+  private boolean             idempotent;
+  private Map<String, Object> params;
+  private boolean             namedParams;
 
   public OQueryRequest(String language, String iCommand, Object[] positionalParams, boolean idempotent,
       ORecordSerializer serializer, int recordsPerPage) {
     this.language = language;
     this.statement = iCommand;
     params = new HashMap<>();
-    if (positionalParams == null) {
+    if (positionalParams != null) {
       for (int i = 0; i < positionalParams.length; i++) {
-        params.put(i, positionalParams[i]);
+        params.put(Integer.toString(i), positionalParams[i]);
       }
     }
     namedParams = false;
@@ -131,7 +131,7 @@ public final class OQueryRequest implements OBinaryRequest<OQueryResponse> {
     return statement;
   }
 
-  public Map<Object, Object> getParams() {
+  public Map<String, Object> getParams() {
     return params;
   }
 
@@ -150,7 +150,7 @@ public final class OQueryRequest implements OBinaryRequest<OQueryResponse> {
   public Object[] getPositionalParameters() {
     Object[] result = new Object[params.size()];
     params.entrySet().forEach(e -> {
-      result[(int) e.getKey()] = e.getValue();
+      result[Integer.parseInt(e.getKey())] = e.getValue();
     });
     return result;
   }

@@ -71,7 +71,7 @@ public class OSelectExecutionPlanner {
       return null;
     }
 
-    if(whereClause.getBaseExpression()!=null){
+    if (whereClause.getBaseExpression() != null) {
       whereClause.getBaseExpression().translateLuceneOperator();
     }
     return whereClause;
@@ -151,6 +151,10 @@ public class OSelectExecutionPlanner {
 
     optimizeQuery();
 
+    if (handleHardwiredOptimizations(result, ctx)) {
+      return result;
+    }
+
     handleGlobalLet(result, globalLetClause, ctx);
     handleFetchFromTarger(result, ctx);
     handleLet(result, perRecordLetClause, ctx);
@@ -192,6 +196,87 @@ public class OSelectExecutionPlanner {
       }
     }
     return result;
+  }
+
+  private boolean handleHardwiredOptimizations(OSelectExecutionPlan result, OCommandContext ctx) {
+    return handleHardwiredCountOnIndex(result, ctx) || handleHardwiredCountOnClass(result, ctx);
+  }
+
+  private boolean handleHardwiredCountOnClass(OSelectExecutionPlan result, OCommandContext ctx) {
+    OIdentifier targetClass = this.target == null ? null : this.target.getItem().getIdentifier();
+    if (targetClass == null) {
+      return false;
+    }
+    if (distinct || expand) {
+      return false;
+    }
+    if (preAggregateProjection != null) {
+      return false;
+    }
+    if (!isCountStar(aggregateProjection, projection)) {
+      return false;
+    }
+    if (!isMinimalQuery()) {
+      return false;
+    }
+    result.chain(new CountFromClassStep(targetClass, projection.getAllAliases().iterator().next(), ctx));
+    return true;
+  }
+
+  private boolean handleHardwiredCountOnIndex(OSelectExecutionPlan result, OCommandContext ctx) {
+    OIndexIdentifier targetIndex = this.target == null ? null : this.target.getItem().getIndex();
+    if (targetIndex == null) {
+      return false;
+    }
+    if (distinct || expand) {
+      return false;
+    }
+    if (preAggregateProjection != null) {
+      return false;
+    }
+    if (!isCountStar(aggregateProjection, projection)) {
+      return false;
+    }
+    if (!isMinimalQuery()) {
+      return false;
+    }
+    result.chain(new CountFromIndexStep(targetIndex, projection.getAllAliases().iterator().next(), ctx));
+    return true;
+  }
+
+  /**
+   * returns true if the query is minimal, ie. no WHERE condition, no SKIP/LIMIT, no UNWIND, no GROUP/ORDER BY, no LET
+   *
+   * @return
+   */
+  private boolean isMinimalQuery() {
+    if (projectionAfterOrderBy != null || globalLetClause != null || perRecordLetClause != null || whereClause != null
+        || flattenedWhereClause != null || groupBy != null || orderBy != null || unwind != null || skip != null || limit != null) {
+      return false;
+    }
+    return true;
+  }
+
+  private boolean isCountStar(OProjection aggregateProjection, OProjection projection) {
+    if (aggregateProjection == null || projection == null || aggregateProjection.getItems().size() != 1
+        || projection.getItems().size() != 1) {
+      return false;
+    }
+    OProjectionItem item = aggregateProjection.getItems().get(0);
+    if (!item.getExpression().toString().equalsIgnoreCase("count(*)")) {
+      return false;
+    }
+
+    return true;
+  }
+
+  private boolean isCount(OProjection aggregateProjection, OProjection projection) {
+    if (aggregateProjection == null || projection == null || aggregateProjection.getItems().size() != 1
+        || projection.getItems().size() != 1) {
+      return false;
+    }
+    OProjectionItem item = aggregateProjection.getItems().get(0);
+    return item.getExpression().isCount();
   }
 
   private void handleUnwind(OSelectExecutionPlan result, OUnwind unwind, OCommandContext ctx) {
@@ -670,7 +755,8 @@ public class OSelectExecutionPlanner {
 
     switch (indexIdentifier.getType()) {
     case INDEX:
-      OBooleanExpression condition = null;
+      OBooleanExpression keyCondition = null;
+      OBooleanExpression ridCondition = null;
       if (flattenedWhereClause == null || flattenedWhereClause.size() == 0) {
         if (!index.supportsOrderedIterations()) {
           throw new OCommandExecutionException("Index " + indexName + " does not allow iteration without a condition");
@@ -679,14 +765,32 @@ public class OSelectExecutionPlanner {
         throw new OCommandExecutionException("Index queries with this kind of condition are not supported yet: " + whereClause);
       } else {
         OAndBlock andBlock = flattenedWhereClause.get(0);
-        if (andBlock.getSubBlocks().size() != 1) {
+        if (andBlock.getSubBlocks().size() == 1) {
+
+          this.whereClause = null;//The WHERE clause won't be used anymore, the index does all the filtering
+          this.flattenedWhereClause = null;
+          keyCondition = getKeyCondition(andBlock);
+          if (keyCondition == null) {
+            throw new OCommandExecutionException("Index queries with this kind of condition are not supported yet: " + whereClause);
+          }
+        } else if (andBlock.getSubBlocks().size() == 2) {
+          this.whereClause = null;//The WHERE clause won't be used anymore, the index does all the filtering
+          this.flattenedWhereClause = null;
+          keyCondition = getKeyCondition(andBlock);
+          ridCondition = getRidCondition(andBlock);
+          if (keyCondition == null || ridCondition == null) {
+            throw new OCommandExecutionException("Index queries with this kind of condition are not supported yet: " + whereClause);
+          }
+        } else {
           throw new OCommandExecutionException("Index queries with this kind of condition are not supported yet: " + whereClause);
         }
-        this.whereClause = null;//The WHERE clause won't be used anymore, the index does all the filtering
-        this.flattenedWhereClause = null;
-        condition = andBlock.getSubBlocks().get(0);
       }
-      result.chain(new FetchFromIndexStep(index, condition, null, ctx));
+      result.chain(new FetchFromIndexStep(index, keyCondition, null, ctx));
+      if (ridCondition != null) {
+        OWhereClause where = new OWhereClause(-1);
+        where.setBaseExpression(ridCondition);
+        result.chain(new FilterStep(where, ctx));
+      }
       break;
     case VALUES:
     case VALUESASC:
@@ -694,14 +798,42 @@ public class OSelectExecutionPlanner {
         throw new OCommandExecutionException("Index " + indexName + " does not allow iteration on values");
       }
       result.chain(new FetchFromIndexValuesStep(index, true, ctx));
+      result.chain(new GetValueFromIndexEntryStep(ctx));
       break;
     case VALUESDESC:
       if (!index.supportsOrderedIterations()) {
         throw new OCommandExecutionException("Index " + indexName + " does not allow iteration on values");
       }
       result.chain(new FetchFromIndexValuesStep(index, false, ctx));
+      result.chain(new GetValueFromIndexEntryStep(ctx));
       break;
     }
+  }
+
+  private OBooleanExpression getKeyCondition(OAndBlock andBlock) {
+    for (OBooleanExpression exp : andBlock.getSubBlocks()) {
+      String str = exp.toString();
+      if (str.length() < 5) {
+        continue;
+      }
+      if (str.substring(0, 4).equalsIgnoreCase("key ")) {
+        return exp;
+      }
+    }
+    return null;
+  }
+
+  private OBooleanExpression getRidCondition(OAndBlock andBlock) {
+    for (OBooleanExpression exp : andBlock.getSubBlocks()) {
+      String str = exp.toString();
+      if (str.length() < 5) {
+        continue;
+      }
+      if (str.substring(0, 4).equalsIgnoreCase("rid ")) {
+        return exp;
+      }
+    }
+    return null;
   }
 
   private void handleMetadataAsTarget(OSelectExecutionPlan plan, OMetadataIdentifier metadata, OCommandContext ctx) {
@@ -941,6 +1073,7 @@ public class OSelectExecutionPlanner {
       }
       if (indexFound && orderType != null) {
         plan.chain(new FetchFromIndexValuesStep(idx, orderType.equals(OOrderByItem.ASC), ctx));
+        plan.chain(new GetValueFromIndexEntryStep(ctx));
         orderApplied = true;
         return true;
       }
@@ -1067,6 +1200,7 @@ public class OSelectExecutionPlanner {
       Boolean orderAsc = getOrderDirection();
       result.add(
           new FetchFromIndexStep(desc.idx, desc.keyCondition, desc.additionalRangeCondition, !Boolean.FALSE.equals(orderAsc), ctx));
+      result.add(new GetValueFromIndexEntryStep(ctx));
       if (orderAsc != null && orderBy != null && fullySorted(orderBy, desc.keyCondition, desc.idx)) {
         orderApplied = true;
       }
@@ -1173,6 +1307,7 @@ public class OSelectExecutionPlanner {
     for (IndexSearchDescriptor desc : indexSearchDescriptors) {
       OSelectExecutionPlan subPlan = new OSelectExecutionPlan(ctx);
       subPlan.chain(new FetchFromIndexStep(desc.idx, desc.keyCondition, desc.additionalRangeCondition, ctx));
+      subPlan.chain(new GetValueFromIndexEntryStep(ctx));
       if (desc.remainingCondition != null && !desc.remainingCondition.isEmpty()) {
         subPlan.chain(new FilterStep(createWhereFrom(desc.remainingCondition), ctx));
       }

@@ -23,6 +23,8 @@ import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -33,16 +35,16 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Proxied index.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 @SuppressWarnings("unchecked")
 public class OIndexRemoteMultiValue extends OIndexRemote<Collection<OIdentifiable>> {
-  protected final static String QUERY_GET = "select EXPAND( rid ) from index:%s where key = ?";
+  protected final static String QUERY_GET = "select expand( rid ) from index:%s where key = ?";
 
   public OIndexRemoteMultiValue(final String iName, final String iWrappedType, final String algorithm, final ORID iRid,
       final OIndexDefinition iIndexDefinition, final ODocument iConfiguration, final Set<String> clustersToIndex) {
@@ -50,47 +52,15 @@ public class OIndexRemoteMultiValue extends OIndexRemote<Collection<OIdentifiabl
   }
 
   public Collection<OIdentifiable> get(final Object iKey) {
-    final OCommandRequest cmd = formatCommand(QUERY_GET, name);
-    return new HashSet<OIdentifiable>((Collection<OIdentifiable>) getDatabase().command(cmd).execute(iKey));
-    // return null; return (Collection<OIdentifiable>) ((OStorageProxy) getDatabase().getStorage()).indexGet(name, iKey, null);
+    return getDatabase().command(String.format(QUERY_GET, name), iKey).stream().map((res) -> res.getIdentity().orElse(null))
+        .collect(Collectors.toSet());
   }
 
   public Iterator<Entry<Object, Collection<OIdentifiable>>> iterator() {
-    final OCommandRequest cmd = formatCommand(QUERY_ENTRIES, name);
-    final Collection<ODocument> result = getDatabase().command(cmd).execute();
+    final OResultSet result = getDatabase().command(String.format(QUERY_ENTRIES, name));
 
-    final Map<Object, Collection<OIdentifiable>> map = new LinkedHashMap<Object, Collection<OIdentifiable>>();
-    for (final ODocument d : result) {
-      d.setLazyLoad(false);
-      Collection<OIdentifiable> rids = map.get(d.field("key"));
-      if (rids == null) {
-        rids = new HashSet<OIdentifiable>();
-        map.put(d.field("key"), rids);
-      }
-
-      rids.add((OIdentifiable) d.field("rid"));
-    }
-
-    return map.entrySet().iterator();
-  }
-
-  public Iterator<Entry<Object, Collection<OIdentifiable>>> inverseIterator() {
-    final OCommandRequest cmd = formatCommand(QUERY_ENTRIES, name);
-    final List<ODocument> result = getDatabase().command(cmd).execute();
-
-    final Map<Object, Collection<OIdentifiable>> map = new LinkedHashMap<Object, Collection<OIdentifiable>>();
-    for (ListIterator<ODocument> it = result.listIterator(); it.hasPrevious();) {
-      ODocument d = it.previous();
-      d.setLazyLoad(false);
-      Collection<OIdentifiable> rids = map.get(d.field("key"));
-      if (rids == null) {
-        rids = new HashSet<OIdentifiable>();
-        map.put(d.field("key"), rids);
-      }
-
-      rids.add((OIdentifiable) d.field("rid"));
-    }
-
+    final Map<Object, Collection<OIdentifiable>> map = result.stream()
+        .collect(Collectors.toMap((r) -> r.getProperty("key"), (r) -> r.getProperty("rid")));
     return map.entrySet().iterator();
   }
 

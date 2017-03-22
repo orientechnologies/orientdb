@@ -257,6 +257,14 @@ public class OBaseExpression extends OMathExpression {
     return false;
   }
 
+  @Override
+  public boolean isCount() {
+    if (identifier != null && identifier.isCount()) {
+      return true;
+    }
+    return false;
+  }
+
   public SimpleNode splitForAggregation(AggregateProjectionSplit aggregateProj) {
     if (isAggregate()) {
       SimpleNode splitResult = identifier.splitForAggregation(aggregateProj);

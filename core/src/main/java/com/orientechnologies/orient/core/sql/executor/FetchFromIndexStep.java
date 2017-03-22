@@ -1,9 +1,12 @@
 package com.orientechnologies.orient.core.sql.executor;
 
+import com.orientechnologies.common.collection.OMultiCollectionIterator;
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
@@ -23,6 +26,9 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
   private boolean inited = false;
   private OIndexCursor cursor;
+  OMultiCollectionIterator<Map.Entry<Object, OIdentifiable>> customIterator;
+  private Iterator nullKeyIterator;
+  private Map.Entry<Object, OIdentifiable> nextEntry = null;
 
   public FetchFromIndexStep(OIndex<?> index, OBooleanExpression condition, OBinaryCondition additionalRangeCondition,
       OCommandContext ctx) {
@@ -38,39 +44,78 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     this.orderAsc = orderAsc;
   }
 
-  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override
+  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     init();
     getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
     return new OResultSet() {
       int localCount = 0;
 
-      @Override public boolean hasNext() {
-        return (localCount < nRecords && cursor.hasNext());
+      @Override
+      public boolean hasNext() {
+        return (localCount < nRecords && nextEntry != null);
       }
 
-      @Override public OResult next() {
+      @Override
+      public OResult next() {
         if (!hasNext()) {
           throw new IllegalStateException();
         }
-        OIdentifiable record = cursor.next();
+        Map.Entry<Object, OIdentifiable> currentEntry = nextEntry;
+        fetchNextEntry();
+
         localCount++;
         OResultInternal result = new OResultInternal();
-        result.setElement(record);
+        result.setProperty("key", currentEntry.getKey());
+        result.setProperty("rid", currentEntry.getValue());
         ctx.setVariable("$current", result);
         return result;
       }
 
-      @Override public void close() {
+      @Override
+      public void close() {
       }
 
-      @Override public Optional<OExecutionPlan> getExecutionPlan() {
+      @Override
+      public Optional<OExecutionPlan> getExecutionPlan() {
         return null;
       }
 
-      @Override public Map<String, Long> getQueryStats() {
+      @Override
+      public Map<String, Long> getQueryStats() {
         return null;
       }
     };
+  }
+
+  private void fetchNextEntry() {
+    nextEntry = null;
+    if (cursor != null) {
+      nextEntry = cursor.nextEntry();
+    }
+    if (nextEntry == null && customIterator != null && customIterator.hasNext()) {
+      nextEntry = customIterator.next();
+    }
+
+    if (nextEntry == null && nullKeyIterator != null && nullKeyIterator.hasNext()) {
+      OIdentifiable nextValue = (OIdentifiable) nullKeyIterator.next();
+      nextEntry = new Map.Entry<Object, OIdentifiable>() {
+        @Override
+        public Object getKey() {
+          return null;
+        }
+
+        @Override
+        public OIdentifiable getValue() {
+          return nextValue;
+        }
+
+        @Override
+        public OIdentifiable setValue(OIdentifiable value) {
+          return null;
+        }
+      };
+    }
   }
 
   private synchronized void init() {
@@ -93,9 +138,68 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
       processBetweenCondition();
     } else if (condition instanceof OAndBlock) {
       processAndBlock();
+    } else if (condition instanceof OInCondition) {
+      //TODO
+      processInCondition();
+
     } else {
       throw new OCommandExecutionException("search for index for " + condition + " is not supported yet");
     }
+  }
+
+  private void processInCondition() {
+    OIndexDefinition definition = index.getDefinition();
+    OInCondition inCondition = (OInCondition) condition;
+
+    OExpression left = inCondition.getLeft();
+    if (!left.toString().equalsIgnoreCase("key")) {
+      throw new OCommandExecutionException("search for index for " + condition + " is not supported yet");
+    }
+    Object rightValue = inCondition.evaluateRight((OResult) null, ctx);
+    OEqualsCompareOperator equals = new OEqualsCompareOperator(-1);
+    if (OMultiValue.isMultiValue(rightValue)) {
+      customIterator = new OMultiCollectionIterator<>();
+      for (Object item : OMultiValue.getMultiValueIterable(rightValue)) {
+        OIndexCursor localCursor = createCursor(equals, definition, item, ctx);
+
+        customIterator.add(new Iterator<Map.Entry>() {
+          @Override
+          public boolean hasNext() {
+            return localCursor.hasNext();
+          }
+
+          @Override
+          public Map.Entry next() {
+            if (!localCursor.hasNext()) {
+              throw new IllegalStateException();
+            }
+            OIdentifiable value = localCursor.next();
+            return new Map.Entry() {
+
+              @Override
+              public Object getKey() {
+                return item;
+              }
+
+              @Override
+              public Object getValue() {
+
+                return value;
+              }
+
+              @Override
+              public Object setValue(Object value) {
+                return null;
+              }
+            };
+          }
+        });
+      }
+      customIterator.reset();
+    } else {
+      cursor = createCursor(equals, definition, rightValue, ctx);
+    }
+    fetchNextEntry();
   }
 
   /**
@@ -111,6 +215,24 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
   private void processFlatIteration() {
     cursor = isOrderAsc() ? index.cursor() : index.descCursor();
+
+    fetchNullKeys();
+    if (cursor != null) {
+      fetchNextEntry();
+    }
+  }
+
+  private void fetchNullKeys() {
+    Object nullIter = index.get(null);
+    if (nullIter instanceof OIdentifiable) {
+      nullKeyIterator = Collections.singleton(nullIter).iterator();
+    } else if (nullIter instanceof Iterable) {
+      nullKeyIterator = ((Iterable) nullIter).iterator();
+    } else if (nullIter instanceof Iterator) {
+      nullKeyIterator = (Iterator) nullIter;
+    } else {
+      nullKeyIterator = Collections.emptyIterator();
+    }
   }
 
   private void init(OCollection fromKey, boolean fromKeyIncluded, OCollection toKey, boolean toKeyIncluded) {
@@ -125,6 +247,9 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
       cursor = index.iterateEntries(toIndexKey(indexDef, secondValue), isOrderAsc());
     } else {
       throw new UnsupportedOperationException("Cannot evaluate " + this.condition + " on index " + index);
+    }
+    if (cursor != null) {
+      fetchNextEntry();
     }
   }
 
@@ -158,6 +283,9 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     cursor = index
         .iterateEntriesBetween(toBetweenIndexKey(definition, secondValue), true, toBetweenIndexKey(definition, thirdValue), true,
             isOrderAsc());
+    if (cursor != null) {
+      fetchNextEntry();
+    }
   }
 
   private void processBinaryCondition() {
@@ -169,6 +297,9 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     }
     Object rightValue = ((OBinaryCondition) condition).getRight().execute((OResult) null, ctx);
     cursor = createCursor(operator, definition, rightValue, ctx);
+    if (cursor != null) {
+      fetchNextEntry();
+    }
   }
 
   private Collection toIndexKey(OIndexDefinition definition, Object rightValue) {
@@ -177,7 +308,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     }
     if (rightValue instanceof List) {
       rightValue = definition.createValue((List<?>) rightValue);
-    } else {
+    } else if (!(rightValue instanceof OCompositeKey)) {
       rightValue = definition.createValue(rightValue);
     }
     if (!(rightValue instanceof Collection)) {
@@ -221,11 +352,13 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     return orderAsc;
   }
 
-  @Override public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
+  @Override
+  public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
 
   }
 
-  @Override public void sendResult(Object o, Status status) {
+  @Override
+  public void sendResult(Object o, Status status) {
 
   }
 
@@ -330,11 +463,13 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     }
   }
 
-  @Override public String prettyPrint(int depth, int indent) {
+  @Override
+  public String prettyPrint(int depth, int indent) {
     return OExecutionStepInternal.getIndent(depth, indent) + "+ FETCH FROM INDEX " + index.getName() + (condition == null ?
         "" :
-        ("\n" +
-            OExecutionStepInternal.getIndent(depth, indent) + "  " + condition + (additional == null ? "" : " and " + additional)));
+        ("\n" + OExecutionStepInternal.getIndent(depth, indent) + "  " + condition + (additional == null ?
+            "" :
+            " and " + additional)));
   }
 
 }

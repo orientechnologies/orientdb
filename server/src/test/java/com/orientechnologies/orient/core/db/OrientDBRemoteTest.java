@@ -96,7 +96,7 @@ public class OrientDBRemoteTest {
   @Test
   public void testMultiThread() {
 
-    OrientDB orientDb = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
+    OrientDB orientDb = new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
 
     if (!orientDb.exists("test"))
       orientDb.create("test", ODatabaseType.MEMORY);

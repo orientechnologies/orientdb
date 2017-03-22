@@ -119,14 +119,17 @@
         <fileSet>
             <directory>${basedir}/config</directory>
             <outputDirectory>config</outputDirectory>
+            <fileMode>600</fileMode>
         </fileSet>
         <fileSet>
             <directory>${basedir}/../etl/config</directory>
             <outputDirectory>config</outputDirectory>
+            <fileMode>600</fileMode>
         </fileSet>
         <fileSet>
             <directory>${basedir}/config/cert</directory>
             <outputDirectory>config/cert</outputDirectory>
+            <fileMode>600</fileMode>
         </fileSet>
 
         <!--

@@ -18,21 +18,24 @@ import org.junit.Test;
 public class ODropIndexStatementExecutionTest {
   static ODatabaseDocument db;
 
-  @BeforeClass public static void beforeClass() {
+  @BeforeClass
+  public static void beforeClass() {
     db = new ODatabaseDocumentTx("memory:ODropIndexStatementExecutionTest");
     db.create();
   }
 
-  @AfterClass public static void afterClass() {
+  @AfterClass
+  public static void afterClass() {
     db.close();
   }
 
-  @Test public void testPlain() {
+  @Test
+  public void testPlain() {
     OIndex<?> index = db.getMetadata().getSchema().createClass("testPlain").createProperty("bar", OType.STRING)
         .createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
     String indexName = index.getName();
 
-    Assert.assertNotNull(((OIndexManager)db.getMetadata().getIndexManager().reload()).getIndex(indexName));
+    Assert.assertNotNull(((OIndexManager) db.getMetadata().getIndexManager().reload()).getIndex(indexName));
 
     OResultSet result = db.command("drop index " + indexName);
     Assert.assertTrue(result.hasNext());
@@ -44,7 +47,8 @@ public class ODropIndexStatementExecutionTest {
     Assert.assertNull(db.getMetadata().getIndexManager().reload().getIndex(indexName));
   }
 
-  @Test public void testAll() {
+  @Test
+  public void testAll() {
     OIndex<?> index = db.getMetadata().getSchema().createClass("testAll").createProperty("baz", OType.STRING)
         .createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
     String indexName = index.getName();
@@ -61,7 +65,8 @@ public class ODropIndexStatementExecutionTest {
     Assert.assertTrue(db.getMetadata().getIndexManager().getIndexes().isEmpty());
   }
 
-  @Test public void testWrongName() {
+  @Test
+  public void testWrongName() {
 
     String indexName = "nonexistingindex";
     Assert.assertNull(db.getMetadata().getIndexManager().reload().getIndex(indexName));
@@ -69,7 +74,20 @@ public class ODropIndexStatementExecutionTest {
     try {
       OResultSet result = db.command("drop index " + indexName);
       Assert.fail();
-    } catch (OCommandExecutionException e) {
+    } catch (OCommandExecutionException ex) {
+    } catch (Exception e) {
+      Assert.fail();
+    }
+  }
+
+  @Test
+  public void testIfExists() {
+
+    String indexName = "nonexistingindex";
+    Assert.assertNull(db.getMetadata().getIndexManager().reload().getIndex(indexName));
+
+    try {
+      OResultSet result = db.command("drop index " + indexName + " if exists");
     } catch (Exception e) {
       Assert.fail();
     }

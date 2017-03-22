@@ -22,6 +22,7 @@ public class ORemoteDatabasePool extends ODatabaseDocumentRemote {
   }
 
   public void reuse() {
+    activateOnCurrentThread();
     setStatus(ODatabase.STATUS.OPEN);
   }
 

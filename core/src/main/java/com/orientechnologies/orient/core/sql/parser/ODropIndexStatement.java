@@ -7,7 +7,6 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManager;
-import com.orientechnologies.orient.core.index.OIndexManagerProxy;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -18,6 +17,7 @@ public class ODropIndexStatement extends ODDLStatement {
 
   protected boolean all = false;
   protected OIndexName name;
+  protected boolean ifExists = false;
 
   public ODropIndexStatement(int id) {
     super(id);
@@ -27,7 +27,8 @@ public class ODropIndexStatement extends ODDLStatement {
     super(p, id);
   }
 
-  @Override public OResultSet executeDDL(OCommandContext ctx) {
+  @Override
+  public OResultSet executeDDL(OCommandContext ctx) {
     OInternalResultSet rs = new OInternalResultSet();
     ODatabase db = ctx.getDatabase();
     OIndexManager idxMgr = db.getMetadata().getIndexManager();
@@ -41,7 +42,7 @@ public class ODropIndexStatement extends ODDLStatement {
       }
 
     } else {
-      if (!idxMgr.existsIndex(name.getValue())) {
+      if (!idxMgr.existsIndex(name.getValue()) && !ifExists) {
         throw new OCommandExecutionException("Index not found: " + name.getValue());
       }
       idxMgr.dropIndex(name.getValue());
@@ -54,23 +55,29 @@ public class ODropIndexStatement extends ODDLStatement {
     return rs;
   }
 
-  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("DROP INDEX ");
     if (all) {
       builder.append("*");
     } else {
       name.toString(params, builder);
     }
+    if (ifExists) {
+      builder.append(" IF EXISTS");
+    }
   }
 
-  @Override public ODropIndexStatement copy() {
+  @Override
+  public ODropIndexStatement copy() {
     ODropIndexStatement result = new ODropIndexStatement(-1);
     result.all = all;
     result.name = name == null ? null : name.copy();
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -86,7 +93,8 @@ public class ODropIndexStatement extends ODDLStatement {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = (all ? 1 : 0);
     result = 31 * result + (name != null ? name.hashCode() : 0);
     return result;

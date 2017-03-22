@@ -35,7 +35,7 @@ import java.util.Locale;
 import java.util.Set;
 
 public class OIndexManagerRemote extends OIndexManagerAbstract {
-  private static final String QUERY_DROP       = "drop index %s";
+  private static final String QUERY_DROP       = "drop index `%s` if exists";
   private static final long   serialVersionUID = -6570577338095096235L;
 
   public OIndexManagerRemote() {
@@ -59,7 +59,7 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
       if (progressListener != null)
         progressListener.onBegin(this, 0, false);
 
-      getDatabase().command(new OCommandSQL(createIndexDDL)).execute();
+      getDatabase().command(createIndexDDL);
 
       ORecordInternal.setIdentity(document,
           new ORecordId(getDatabase().getStorage().getConfiguration().indexMgrRecordId));
@@ -86,7 +86,7 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
     acquireExclusiveLock();
     try {
       final String text = String.format(QUERY_DROP, iIndexName);
-      getDatabase().command(new OCommandSQL(text)).execute();
+      getDatabase().command(text);
 
       // REMOVE THE INDEX LOCALLY
       final Locale locale = getServerLocale();

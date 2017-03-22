@@ -879,7 +879,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       final ODatabaseDocumentInternal database = getDatabase();
       final OStorage storage = database.getStorage();
       if (storage instanceof OStorageProxy) {
-        database.command(new OCommandSQL("drop property " + name + '.' + propertyName)).execute();
+        database.command("drop property " + name + '.' + propertyName);
       } else if (isDistributedCommand()) {
         OScenarioThreadLocal.executeAsDistributed(new Callable<OProperty>() {
           @Override
@@ -2309,7 +2309,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     if (!hasClusterId(clusterId))
       return;
 
-    database.command(new OCommandSQL("alter cluster `" + oldName + "` name `" + newName + "`")).execute();
+    database.command("alter cluster `" + oldName + "` NAME \"" + newName + "\"");
   }
 
   private void setShortNameInternal(final String iShortName) {
@@ -2573,7 +2573,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       final OStorage storage = database.getStorage();
 
       if (storage instanceof OStorageProxy) {
-        database.command(new OCommandSQL(cmd.toString())).execute();
+        database.command(cmd.toString());
         reload();
 
         return getProperty(propertyName);

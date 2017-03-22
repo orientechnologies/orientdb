@@ -937,6 +937,13 @@ public class OMathExpression extends SimpleNode {
     return false;
   }
 
+  public boolean isCount() {
+    if(this.childExpressions.size()!=1){
+      return false;
+    }
+    return this.childExpressions.get(0).isCount();
+  }
+
   public SimpleNode splitForAggregation(AggregateProjectionSplit aggregateProj) {
     if (isAggregate()) {
       OMathExpression result = new OMathExpression(-1);

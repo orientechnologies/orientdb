@@ -4,14 +4,13 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import static com.orientechnologies.orient.core.sql.executor.ExecutionPlanPrintUtils.*;
+import static com.orientechnologies.orient.core.sql.executor.ExecutionPlanPrintUtils.printExecutionPlan;
 
 /**
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
@@ -173,66 +172,6 @@ public class ODeleteStatementExecutionTest {
       Assert.assertTrue(result.hasNext());
       OResult item = result.next();
       Assert.assertNotNull(item);
-    }
-    Assert.assertFalse(result.hasNext());
-    result.close();
-  }
-
-  @Test
-  public void testIndex1() {
-    String className = "testIndex1";
-    OClass clazz = db.getMetadata().getSchema().createClass(className);
-    clazz.createProperty("name", OType.STRING);
-    clazz.createIndex(className + ".name", OClass.INDEX_TYPE.NOTUNIQUE, "name");
-
-    for (int i = 0; i < 10; i++) {
-      ODocument doc = db.newInstance(className);
-      doc.setProperty("name", "name" + i);
-      doc.save();
-    }
-    OResultSet result = db.command("delete from  index:" + className + ".name");
-    printExecutionPlan(result);
-    for (int i = 0; i < 1; i++) {
-      Assert.assertTrue(result.hasNext());
-      OResult item = result.next();
-      Assert.assertNotNull(item);
-      Assert.assertEquals((Object) 10L, item.getProperty("count"));
-    }
-    Assert.assertFalse(result.hasNext());
-
-    result = db.query("select from " + className);
-    Assert.assertFalse(result.hasNext());
-    result.close();
-  }
-
-  @Test
-  public void testIndex2() {
-    String className = "testIndex2";
-    OClass clazz = db.getMetadata().getSchema().createClass(className);
-    clazz.createProperty("name", OType.STRING);
-    clazz.createIndex(className + ".name", OClass.INDEX_TYPE.NOTUNIQUE, "name");
-
-    for (int i = 0; i < 10; i++) {
-      ODocument doc = db.newInstance(className);
-      doc.setProperty("name", "name" + i);
-      doc.save();
-    }
-    OResultSet result = db.command("delete from  index:" + className + ".name where key = 'name1'");
-    printExecutionPlan(result);
-    for (int i = 0; i < 1; i++) {
-      Assert.assertTrue(result.hasNext());
-      OResult item = result.next();
-      Assert.assertNotNull(item);
-      Assert.assertEquals((Object) 1L, item.getProperty("count"));
-    }
-    Assert.assertFalse(result.hasNext());
-
-    result = db.query("select from " + className);
-    for (int i = 0; i < 9; i++) {
-      Assert.assertTrue(result.hasNext());
-      OResult item = result.next();
-      Assert.assertNotNull(item);
-      Assert.assertNotEquals("name1", item.getProperty("name"));
     }
     Assert.assertFalse(result.hasNext());
     result.close();

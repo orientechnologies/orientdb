@@ -7,7 +7,6 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.sql.parser.*;
 
 import java.util.*;
@@ -18,6 +17,7 @@ import java.util.*;
 public class DeleteFromIndexStep extends AbstractExecutionStep {
   protected final OIndex           index;
   private final   OBinaryCondition additional;
+  private final   OBooleanExpression ridCondition;
   private final   boolean          orderAsc;
 
   Map.Entry<Object, OIdentifiable> nextEntry = null;
@@ -28,55 +28,66 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
   private OIndexCursor cursor;
 
   public DeleteFromIndexStep(OIndex<?> index, OBooleanExpression condition, OBinaryCondition additionalRangeCondition,
-      OCommandContext ctx) {
-    this(index, condition, additionalRangeCondition, true, ctx);
+      OBooleanExpression ridCondition, OCommandContext ctx) {
+    this(index, condition, additionalRangeCondition, ridCondition, true, ctx);
   }
 
   public DeleteFromIndexStep(OIndex<?> index, OBooleanExpression condition, OBinaryCondition additionalRangeCondition,
-      boolean orderAsc, OCommandContext ctx) {
+      OBooleanExpression ridCondition, boolean orderAsc, OCommandContext ctx) {
     super(ctx);
     this.index = index;
     this.condition = condition;
     this.additional = additionalRangeCondition;
+    this.ridCondition = ridCondition;
     this.orderAsc = orderAsc;
   }
 
-  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override
+  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
     init();
 
     return new OResultSet() {
       int localCount = 0;
 
-      @Override public boolean hasNext() {
+      @Override
+      public boolean hasNext() {
         return (localCount < nRecords && nextEntry != null);
       }
 
-      @Override public OResult next() {
+      @Override
+      public OResult next() {
         if (!hasNext()) {
           throw new IllegalStateException();
         }
         Map.Entry<Object, OIdentifiable> entry = nextEntry;
         OResultInternal result = new OResultInternal();
         OIdentifiable value = entry.getValue();
-        index.remove(entry.getKey(), value);
-        ORecord record = value.getRecord();
-        if (record != null) {
-          ctx.getDatabase().delete(record);
-        }
+
+//        if(index.isAutomatic()) {
+//          ORecord record = value.getRecord();
+//          if (record != null) {
+//            ctx.getDatabase().delete(record);
+//          }
+//        }else{
+          index.remove(entry.getKey(), value);
+//        }
         localCount++;
-        nextEntry = cursor.nextEntry();
+        nextEntry = loadNextEntry(ctx);
         return result;
       }
 
-      @Override public void close() {
+      @Override
+      public void close() {
       }
 
-      @Override public Optional<OExecutionPlan> getExecutionPlan() {
+      @Override
+      public Optional<OExecutionPlan> getExecutionPlan() {
         return null;
       }
 
-      @Override public Map<String, Long> getQueryStats() {
+      @Override
+      public Map<String, Long> getQueryStats() {
         return null;
       }
     };
@@ -88,7 +99,25 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
     }
     inited = true;
     init(condition);
-    nextEntry = cursor.nextEntry();
+    nextEntry = loadNextEntry(ctx);
+  }
+
+  private Map.Entry<Object, OIdentifiable> loadNextEntry(OCommandContext commandContext) {
+    Map.Entry<Object, OIdentifiable> result = cursor.nextEntry();
+    while (true) {
+      if (result == null) {
+        return null;
+      }
+      if (ridCondition == null) {
+        return result;
+      }
+      OResultInternal res = new OResultInternal();
+      res.setProperty("rid", result.getValue());
+      if (ridCondition.evaluate(res, commandContext)) {
+        return result;
+      }
+      result = cursor.nextEntry();
+    }
   }
 
   private void init(OBooleanExpression condition) {
@@ -231,11 +260,13 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
     return orderAsc;
   }
 
-  @Override public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
+  @Override
+  public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
 
   }
 
-  @Override public void sendResult(Object o, Status status) {
+  @Override
+  public void sendResult(Object o, Status status) {
 
   }
 
@@ -340,11 +371,13 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
     }
   }
 
-  @Override public String prettyPrint(int depth, int indent) {
+  @Override
+  public String prettyPrint(int depth, int indent) {
     return OExecutionStepInternal.getIndent(depth, indent) + "+ DELETE FROM INDEX " + index.getName() + (condition == null ?
         "" :
-        ("\n" +
-            OExecutionStepInternal.getIndent(depth, indent) + "  " + condition + (additional == null ? "" : " and " + additional)));
+        ("\n" + OExecutionStepInternal.getIndent(depth, indent) + "  " + condition + (additional == null ?
+            "" :
+            " and " + additional)));
   }
 
 }

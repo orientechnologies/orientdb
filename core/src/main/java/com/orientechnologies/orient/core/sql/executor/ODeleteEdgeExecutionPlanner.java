@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.sql.parser.*;
 
 import java.util.ArrayList;
@@ -120,47 +119,7 @@ public class ODeleteEdgeExecutionPlanner {
     if (indexIdentifier == null) {
       return false;
     }
-    String indexName = indexIdentifier.getIndexName();
-    OIndex<?> index = ctx.getDatabase().getMetadata().getIndexManager().getIndex(indexName);
-    if (index == null) {
-      throw new OCommandExecutionException("Index not found: " + indexName);
-    }
-    List<OAndBlock> flattenedWhereClause = whereClause == null ? null : whereClause.flatten();
-
-    switch (indexIdentifier.getType()) {
-    case INDEX:
-      OBooleanExpression condition = null;
-      if (flattenedWhereClause == null || flattenedWhereClause.size() == 0) {
-        if (!index.supportsOrderedIterations()) {
-          throw new OCommandExecutionException("Index " + indexName + " does not allow iteration without a condition");
-        }
-      } else if (flattenedWhereClause.size() > 1) {
-        throw new OCommandExecutionException("Index queries with this kind of condition are not supported yet: " + whereClause);
-      } else {
-        OAndBlock andBlock = flattenedWhereClause.get(0);
-        if (andBlock.getSubBlocks().size() != 1) {
-          throw new OCommandExecutionException("Index queries with this kind of condition are not supported yet: " + whereClause);
-        }
-
-        condition = andBlock.getSubBlocks().get(0);
-      }
-      result.chain(new DeleteFromIndexStep(index, condition, null, ctx));
-      return true;
-    case VALUES:
-    case VALUESASC:
-      if (!index.supportsOrderedIterations()) {
-        throw new OCommandExecutionException("Index " + indexName + " does not allow iteration on values");
-      }
-      result.chain(new FetchFromIndexValuesStep(index, true, ctx));
-      break;
-    case VALUESDESC:
-      if (!index.supportsOrderedIterations()) {
-        throw new OCommandExecutionException("Index " + indexName + " does not allow iteration on values");
-      }
-      result.chain(new FetchFromIndexValuesStep(index, false, ctx));
-      break;
-    }
-    return false;
+    throw new OCommandExecutionException("DELETE VERTEX FROM INDEX is not supported");
   }
 
   private void handleDelete(ODeleteExecutionPlan result, OCommandContext ctx) {
