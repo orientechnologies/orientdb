@@ -91,7 +91,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
     @Override
     public int getPriority() {
-      return 10000;
+      return 1000;
     }
   };
 
