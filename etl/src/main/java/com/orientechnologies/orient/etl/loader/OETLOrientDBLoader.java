@@ -32,6 +32,8 @@ import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
+import com.orientechnologies.orient.core.util.OURLConnection;
+import com.orientechnologies.orient.core.util.OURLHelper;
 import com.orientechnologies.orient.etl.OETLPipeline;
 
 import java.util.Arrays;
@@ -415,6 +417,7 @@ public class OETLOrientDBLoader extends OETLAbstractLoader implements OETLLoader
     pipeline.setPool(pool);
   }
 
+
   private void createDatabasePool() {
     if (pool != null)
       return;
@@ -437,6 +440,8 @@ public class OETLOrientDBLoader extends OETLAbstractLoader implements OETLLoader
     } else if ("plocal".equalsIgnoreCase(kind)) {
 
       String dbName = dbCtx.substring(dbCtx.lastIndexOf("/"));
+      dbCtx = dbCtx.substring(0, dbCtx.lastIndexOf("/"));
+
       orient = new OrientDB("embedded:" + dbCtx, dbUser, dbPassword, null);
 
       if (orient.exists(dbName) && dbAutoDropIfExists) {
@@ -450,6 +455,9 @@ public class OETLOrientDBLoader extends OETLAbstractLoader implements OETLLoader
     } else {
       orient = new OrientDB("remote:" + dbCtx, serverUser, serverPassword, null);
       String dbName = dbCtx.substring(dbCtx.lastIndexOf("/"));
+
+      dbName = dbName.replace("/", "").trim();
+      System.out.println("dbName = " + dbName);
       if (orient.exists(dbName) && dbAutoDropIfExists) {
         orient.drop(dbName);
       }
