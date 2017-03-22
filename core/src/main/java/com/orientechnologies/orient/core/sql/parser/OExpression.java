@@ -20,10 +20,11 @@ public class OExpression extends SimpleNode {
   protected Boolean doubleQuotes;
 
   protected boolean isNull = false;
-  protected ORid            rid;
-  protected OMathExpression mathExpression;
-  protected OJson           json;
-  protected Boolean         booleanValue;
+  protected ORid                   rid;
+  protected OMathExpression        mathExpression;
+  protected OArrayConcatExpression arrayConcatExpression;
+  protected OJson                  json;
+  protected Boolean                booleanValue;
 
   public OExpression(int id) {
     super(id);
@@ -63,6 +64,9 @@ public class OExpression extends SimpleNode {
     if (mathExpression != null) {
       return mathExpression.execute(iCurrentRecord, ctx);
     }
+    if (arrayConcatExpression != null) {
+      return arrayConcatExpression.execute(iCurrentRecord, ctx);
+    }
     if (json != null) {
       return json.toMap(iCurrentRecord, ctx);
     }
@@ -79,6 +83,8 @@ public class OExpression extends SimpleNode {
       return new ORecordId(v.cluster.getValue().intValue(), v.position.getValue().longValue());
     } else if (value instanceof OMathExpression) {
       return ((OMathExpression) value).execute(iCurrentRecord, ctx);
+    } else if (value instanceof OArrayConcatExpression) {
+      return ((OArrayConcatExpression) value).execute(iCurrentRecord, ctx);
     } else if (value instanceof OJson) {
       return ((OJson) value).toMap(iCurrentRecord, ctx);
     } else if (value instanceof String) {
@@ -100,6 +106,9 @@ public class OExpression extends SimpleNode {
     if (mathExpression != null) {
       return mathExpression.execute(iCurrentRecord, ctx);
     }
+    if (arrayConcatExpression != null) {
+      return arrayConcatExpression.execute(iCurrentRecord, ctx);
+    }
     if (json != null) {
       return json.toMap(iCurrentRecord, ctx);
     }
@@ -116,6 +125,8 @@ public class OExpression extends SimpleNode {
       return new ORecordId(v.cluster.getValue().intValue(), v.position.getValue().longValue());
     } else if (value instanceof OMathExpression) {
       return ((OMathExpression) value).execute(iCurrentRecord, ctx);
+    } else if (value instanceof OArrayConcatExpression) {
+      return ((OArrayConcatExpression) value).execute(iCurrentRecord, ctx);
     } else if (value instanceof OJson) {
       return ((OJson) value).toMap(iCurrentRecord, ctx);
     } else if (value instanceof String) {
@@ -142,6 +153,10 @@ public class OExpression extends SimpleNode {
     if (this.mathExpression != null) {
       return this.mathExpression.isEarlyCalculated();
     }
+    if (this.arrayConcatExpression != null) {
+      return this.arrayConcatExpression.isEarlyCalculated();
+    }
+
     if (value instanceof Number) {
       return true;
     }
@@ -182,6 +197,8 @@ public class OExpression extends SimpleNode {
       rid.toString(params, builder);
     } else if (mathExpression != null) {
       mathExpression.toString(params, builder);
+    } else if (arrayConcatExpression != null) {
+      arrayConcatExpression.toString(params, builder);
     } else if (json != null) {
       json.toString(params, builder);
     } else if (booleanValue != null) {
@@ -222,6 +239,9 @@ public class OExpression extends SimpleNode {
   public boolean supportsBasicCalculation() {
     if (mathExpression != null) {
       return mathExpression.supportsBasicCalculation();
+    }
+    if (arrayConcatExpression != null) {
+      return arrayConcatExpression.supportsBasicCalculation();
     }
     return true;
   }
@@ -275,7 +295,9 @@ public class OExpression extends SimpleNode {
    * @param context  the execution context
    * @param operator
    * @param right
-   * @return true if current expression is an indexed funciton AND that function can also be executed without using the index, false otherwise
+   *
+   * @return true if current expression is an indexed funciton AND that function can also be executed without using the index, false
+   * otherwise
    */
   public boolean canExecuteIndexedFunctionWithoutIndex(OFromClause target, OCommandContext context, OBinaryCompareOperator operator,
       Object right) {
@@ -292,6 +314,7 @@ public class OExpression extends SimpleNode {
    * @param context  the execution context
    * @param operator
    * @param right
+   *
    * @return true if current expression involves an indexed function AND that function can be used on this target, false otherwise
    */
   public boolean allowsIndexedFunctionExecutionOnTarget(OFromClause target, OCommandContext context,
@@ -309,7 +332,9 @@ public class OExpression extends SimpleNode {
    *
    * @param target  the query target
    * @param context the execution context
-   * @return true if current expression involves an indexed function AND the function has also to be executed after the index search.
+   *
+   * @return true if current expression involves an indexed function AND the function has also to be executed after the index
+   * search.
    */
   public boolean executeIndexedFunctionAfterIndexSearch(OFromClause target, OCommandContext context,
       OBinaryCompareOperator operator, Object right) {
@@ -334,6 +359,9 @@ public class OExpression extends SimpleNode {
     if (mathExpression != null) {
       return mathExpression.needsAliases(aliases);
     }
+    if (arrayConcatExpression != null) {
+      return arrayConcatExpression.needsAliases(aliases);
+    }
     if (json != null) {
       return json.needsAliases(aliases);
     }
@@ -342,6 +370,9 @@ public class OExpression extends SimpleNode {
 
   public boolean isAggregate() {
     if (mathExpression != null && mathExpression.isAggregate()) {
+      return true;
+    }
+    if (arrayConcatExpression != null && arrayConcatExpression.isAggregate()) {
       return true;
     }
     if (json != null && json.isAggregate()) {
@@ -363,6 +394,16 @@ public class OExpression extends SimpleNode {
           throw new IllegalStateException("something went wrong while splitting expression for aggregate " + toString());
         }
       }
+      if (arrayConcatExpression != null) {
+        SimpleNode splitResult = arrayConcatExpression.splitForAggregation(aggregateSplit);
+        if (splitResult instanceof OArrayConcatExpression) {
+          result.arrayConcatExpression = (OArrayConcatExpression) splitResult;
+        } else if (splitResult instanceof OExpression) {
+          return (OExpression) splitResult;
+        } else {
+          throw new IllegalStateException("something went wrong while splitting expression for aggregate " + toString());
+        }
+      }
       if (json != null) {
         result.json = json.splitForAggregation(aggregateSplit);
       }
@@ -375,6 +416,8 @@ public class OExpression extends SimpleNode {
   public AggregationContext getAggregationContext(OCommandContext ctx) {
     if (mathExpression != null) {
       return mathExpression.getAggregationContext(ctx);
+    } else if (arrayConcatExpression != null) {
+      return arrayConcatExpression.getAggregationContext(ctx);
     } else {
       throw new OCommandExecutionException("Cannot aggregate on " + toString());
     }
@@ -388,13 +431,15 @@ public class OExpression extends SimpleNode {
     result.isNull = isNull;
     result.rid = rid == null ? null : rid.copy();
     result.mathExpression = mathExpression == null ? null : mathExpression.copy();
+    result.arrayConcatExpression = arrayConcatExpression == null ? null : arrayConcatExpression.copy();
     result.json = json == null ? null : json.copy();
     result.booleanValue = booleanValue;
 
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -412,6 +457,10 @@ public class OExpression extends SimpleNode {
       return false;
     if (mathExpression != null ? !mathExpression.equals(that.mathExpression) : that.mathExpression != null)
       return false;
+    if (arrayConcatExpression != null ?
+        !arrayConcatExpression.equals(that.arrayConcatExpression) :
+        that.arrayConcatExpression != null)
+      return false;
     if (json != null ? !json.equals(that.json) : that.json != null)
       return false;
     if (booleanValue != null ? !booleanValue.equals(that.booleanValue) : that.booleanValue != null)
@@ -420,12 +469,14 @@ public class OExpression extends SimpleNode {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = singleQuotes != null ? singleQuotes.hashCode() : 0;
     result = 31 * result + (doubleQuotes != null ? doubleQuotes.hashCode() : 0);
     result = 31 * result + (isNull ? 1 : 0);
     result = 31 * result + (rid != null ? rid.hashCode() : 0);
     result = 31 * result + (mathExpression != null ? mathExpression.hashCode() : 0);
+    result = 31 * result + (arrayConcatExpression != null ? arrayConcatExpression.hashCode() : 0);
     result = 31 * result + (json != null ? json.hashCode() : 0);
     result = 31 * result + (booleanValue != null ? booleanValue.hashCode() : 0);
     return result;
@@ -439,6 +490,9 @@ public class OExpression extends SimpleNode {
     if (mathExpression != null) {
       mathExpression.extractSubQueries(collector);
     }
+    if (arrayConcatExpression != null) {
+      arrayConcatExpression.extractSubQueries(collector);
+    }
     if (json != null) {
       json.extractSubQueries(collector);
     }
@@ -446,6 +500,9 @@ public class OExpression extends SimpleNode {
 
   public boolean refersToParent() {
     if (mathExpression != null && mathExpression.refersToParent()) {
+      return true;
+    }
+    if (arrayConcatExpression != null && arrayConcatExpression.refersToParent()) {
       return true;
     }
     if (json != null && json.refersToParent()) {
@@ -475,22 +532,32 @@ public class OExpression extends SimpleNode {
   List<String> getMatchPatternInvolvedAliases() {
     if (mathExpression != null)
       return mathExpression.getMatchPatternInvolvedAliases();
+    if (arrayConcatExpression != null)
+      return arrayConcatExpression.getMatchPatternInvolvedAliases();
     return null;
   }
 
   public void applyRemove(OResultInternal result, OCommandContext ctx) {
-      if(mathExpression!=null){
-        mathExpression.applyRemove(result, ctx);
-      }else{
-        throw new OCommandExecutionException("Cannot apply REMOVE "+toString());
-      }
+    if (mathExpression != null) {
+      mathExpression.applyRemove(result, ctx);
+    } else {
+      throw new OCommandExecutionException("Cannot apply REMOVE " + toString());
+    }
   }
 
   public boolean isCount() {
-    if(mathExpression==null){
+    if (mathExpression == null) {
       return false;
     }
     return mathExpression.isCount();
+  }
+
+  public OArrayConcatExpression getArrayConcatExpression() {
+    return arrayConcatExpression;
+  }
+
+  public void setArrayConcatExpression(OArrayConcatExpression arrayConcatExpression) {
+    this.arrayConcatExpression = arrayConcatExpression;
   }
 }
 /* JavaCC - OriginalChecksum=9c860224b121acdc89522ae97010be01 (do not edit this line) */

@@ -2107,6 +2107,9 @@ OExpression Expression():
 {Token token; }
 {
     (
+        LOOKAHEAD( ArrayConcatExpression() )
+        jjtThis.arrayConcatExpression = ArrayConcatExpression() { jjtThis.value = jjtThis.arrayConcatExpression; }
+        |
         <NULL> {jjtThis.isNull = true; jjtThis.value = null;}
         |
         <TRUE> { jjtThis.booleanValue = true; jjtThis.value = true; }
@@ -2124,6 +2127,47 @@ OExpression Expression():
 	)
 	{ return jjtThis; }
 }
+
+OArrayConcatExpression ArrayConcatExpression():
+{
+    OArrayConcatExpressionElement sub;
+    jjtThis.setChildExpressions(new java.util.ArrayList());
+}
+{
+    (
+	    sub = ArrayConcatExpressionElement() { jjtThis.getChildExpressions().add(sub); }
+	    (
+            <SC_OR>
+	        sub = ArrayConcatExpressionElement() { jjtThis.getChildExpressions().add(sub); }
+	    )+
+	)
+	{
+	    return jjtThis;
+	}
+}
+
+OArrayConcatExpressionElement ArrayConcatExpressionElement():
+{Token token; }
+{
+    (
+        <NULL> {jjtThis.isNull = true; jjtThis.value = null;}
+        |
+        <TRUE> { jjtThis.booleanValue = true; jjtThis.value = true; }
+        |
+        <FALSE> { jjtThis.booleanValue = false; jjtThis.value = false; }
+        |
+        LOOKAHEAD( Rid() )
+        jjtThis.rid = Rid() { jjtThis.value = jjtThis.rid; }
+        |
+        LOOKAHEAD( MathExpression() )
+        jjtThis.mathExpression = MathExpression() { jjtThis.value = jjtThis.mathExpression; }
+        |
+        jjtThis.json = Json() {jjtThis.value = jjtThis.json; }
+
+	)
+	{ return jjtThis; }
+}
+
 
 OMathExpression MathExpression():
 {
@@ -2157,8 +2201,6 @@ OMathExpression MathExpression():
 	            <BIT_OR> { jjtThis.operators.add(OMathExpression.Operator.BIT_OR); }
 	            |
 	            <XOR> { jjtThis.operators.add(OMathExpression.Operator.XOR); }
-	            |
-	            <SC_OR> { jjtThis.operators.add(OMathExpression.Operator.SC_OR); }
 	        )
 	        sub = FirstLevelExpression() { jjtThis.getChildExpressions().add(sub); }
 	    )*

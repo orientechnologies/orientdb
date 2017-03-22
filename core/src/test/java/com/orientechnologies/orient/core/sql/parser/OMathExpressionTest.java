@@ -24,7 +24,6 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 /**
  * Created by luigidellaquila on 02/07/15.
@@ -174,74 +173,6 @@ public class OMathExpressionTest {
     Object result = exp.execute((OResult) null, null);
     Assert.assertTrue(result instanceof Integer);
     Assert.assertEquals(5, result);
-  }
-
-  @Test
-  public void testArrayConcat() {
-    OMathExpression exp = new OMathExpression(-1);
-    exp.childExpressions.add(integer(4));
-    exp.operators.add(OMathExpression.Operator.SC_OR);
-    exp.childExpressions.add(integer(1));
-
-    Object result = exp.execute((OResult) null, null);
-    Assert.assertTrue(result instanceof List);
-    List list = (List) result;
-    Assert.assertEquals(2, list.size());
-    Assert.assertEquals(4, list.get(0));
-    Assert.assertEquals(1, list.get(1));
-  }
-
-  @Test
-  public void testArrayConcat2() {
-    OMathExpression exp = new OMathExpression(-1);
-
-    exp.childExpressions.add(list(5, 19));
-    exp.operators.add(OMathExpression.Operator.SC_OR);
-    exp.childExpressions.add(integer(1));
-
-    Object result = exp.execute((OResult) null, null);
-    Assert.assertTrue(result instanceof List);
-    List list = (List) result;
-    Assert.assertEquals(3, list.size());
-    Assert.assertEquals(5, list.get(0));
-    Assert.assertEquals(19, list.get(1));
-    Assert.assertEquals(1, list.get(2));
-  }
-
-  @Test
-  public void testArrayConcat3() {
-    OMathExpression exp = new OMathExpression(-1);
-
-    exp.childExpressions.add(integer(1));
-    exp.operators.add(OMathExpression.Operator.SC_OR);
-    exp.childExpressions.add(list(5, 19));
-
-    Object result = exp.execute((OResult) null, null);
-    Assert.assertTrue(result instanceof List);
-    List list = (List) result;
-    Assert.assertEquals(3, list.size());
-    Assert.assertEquals(1, list.get(0));
-    Assert.assertEquals(5, list.get(1));
-    Assert.assertEquals(19, list.get(2));
-  }
-
-
-  @Test
-  public void testArrayConcat4() {
-    OMathExpression exp = new OMathExpression(-1);
-
-    exp.childExpressions.add(list(1, 8));
-    exp.operators.add(OMathExpression.Operator.SC_OR);
-    exp.childExpressions.add(list(5, 19));
-
-    Object result = exp.execute((OResult) null, null);
-    Assert.assertTrue(result instanceof List);
-    List list = (List) result;
-    Assert.assertEquals(4, list.size());
-    Assert.assertEquals(1, list.get(0));
-    Assert.assertEquals(8, list.get(1));
-    Assert.assertEquals(5, list.get(2));
-    Assert.assertEquals(19, list.get(3));
   }
 
   private OMathExpression integer(Number i) {

@@ -2,7 +2,6 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -431,76 +430,6 @@ public class OMathExpression extends SimpleNode {
         return super.apply(left == null ? 0 : left, right == null ? 0 : right);
       }
 
-    }, SC_OR(100) {
-      @Override
-      public Number apply(Integer left, Integer right) {
-        return null;
-      }
-
-      @Override
-      public Number apply(Long left, Long right) {
-        return null;
-      }
-
-      @Override
-      public Number apply(Float left, Float right) {
-        return null;
-      }
-
-      @Override
-      public Number apply(Double left, Double right) {
-        return null;
-      }
-
-      @Override
-      public Number apply(BigDecimal left, BigDecimal right) {
-        return null;
-      }
-
-      @Override
-      public Object apply(Object left, Object right) {
-
-        if (left == null && right == null) {
-          return null;
-        }
-
-        if (right == null) {
-          if (OMultiValue.isMultiValue(left)) {
-            return left;
-          } else {
-            return Collections.singletonList(left);
-          }
-        }
-
-        if (left == null) {
-          if (OMultiValue.isMultiValue(right)) {
-            return right;
-          } else {
-            return Collections.singletonList(right);
-          }
-        }
-
-        List<Object> result = new ArrayList<>();
-        if (OMultiValue.isMultiValue(left)) {
-          Iterator<Object> leftIter = OMultiValue.getMultiValueIterator(left);
-          while (leftIter.hasNext()) {
-            result.add(leftIter.next());
-          }
-        } else {
-          result.add(left);
-        }
-
-        if (OMultiValue.isMultiValue(right)) {
-          Iterator<Object> rigthIter = OMultiValue.getMultiValueIterator(right);
-          while (rigthIter.hasNext()) {
-            result.add(rigthIter.next());
-          }
-        } else {
-          result.add(right);
-        }
-
-        return result;
-      }
     };
 
     private final int priority;
@@ -797,9 +726,6 @@ public class OMathExpression extends SimpleNode {
         case XOR:
           builder.append("^");
           break;
-        case SC_OR:
-          builder.append("||");
-          break;
         }
         builder.append(" ");
       }
@@ -814,7 +740,6 @@ public class OMathExpression extends SimpleNode {
       }
     }
     return true;
-
   }
 
   public boolean isIndexedFunctionCall() {
