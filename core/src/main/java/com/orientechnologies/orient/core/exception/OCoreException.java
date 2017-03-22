@@ -41,13 +41,18 @@ public abstract class OCoreException extends OException {
       this.componentName = null;
     }
 
-    final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-    if (database != null) {
-      dbName = database.getName();
+    final ODatabaseRecordThreadLocal instance = ODatabaseRecordThreadLocal.INSTANCE;
+
+    if (instance != null) {
+      final ODatabaseDocumentInternal database = instance.getIfDefined();
+      if (database != null) {
+        dbName = database.getName();
+      } else {
+        dbName = null;
+      }
     } else {
       dbName = null;
     }
-
   }
 
   public OErrorCode getErrorCode() {
