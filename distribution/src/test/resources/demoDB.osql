@@ -8,6 +8,7 @@ CREATE DATABASE plocal:./target/databases/demodb
 CREATE CLASS DBInfo;
 INSERT INTO DBInfo SET Name='SocialTravelAgency', Version='0.75';
 
+
 CREATE CLASS Countries EXTENDS V;
 CREATE PROPERTY Countries.Id LONG;
 CREATE INDEX Countries.Id ON Countries(Id) UNIQUE;
