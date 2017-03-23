@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.command.script.OCommandScriptException;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
@@ -147,7 +148,8 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    */
   boolean declareIntent(final OIntent iIntent);
 
-  /** Get the active intent in the current session.
+  /**
+   * Get the active intent in the current session.
    *
    * @return
    */
@@ -163,7 +165,6 @@ public interface ODatabase<T> extends OBackupable, Closeable {
 
   /**
    * Closes an opened database, if the database is already closed does nothing, if a transaction is active will be rollbacked.
-   *
    */
   void close();
 
@@ -821,7 +822,10 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * @param iArgs    Optional parameters to bind to the query
    *
    * @return List of POJOs
+   *
+   * @deprecated use {@link #query(String, Map)} or {@link #query(String, Object...)} instead
    */
+  @Deprecated
   <RET extends List<?>> RET query(final OQuery<?> iCommand, final Object... iArgs);
 
   /**
@@ -831,8 +835,166 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * @param iCommand Command request to execute.
    *
    * @return The same Command request received as parameter.
+   *
+   * @deprecated use {@link #command(String, Map)}, {@link #command(String, Object...)}, {@link #execute(String, String, Map)},
+   * {@link #execute(String, String, Object...)} instead
    */
+  @Deprecated
   <RET extends OCommandRequest> RET command(OCommandRequest iCommand);
+
+  /**
+   * Executes an SQL query. The result set has to be closed after usage
+   * <br><br>
+   * Sample usage:
+   *
+   * <code>
+   *   OResultSet rs = db.query("SELECT FROM V where name = ?", "John");
+   *   while(rs.hasNext()){
+   *     OResult item = rs.next();
+   *     ...
+   *   }
+   *   rs.close();
+   * </code>
+   *
+   * @param query the query string
+   * @param args  query parameters (positional)
+   *
+   * @return the query result set
+   */
+  default OResultSet query(String query, Object... args) throws OCommandSQLParsingException, OCommandExecutionException {
+    throw new UnsupportedOperationException();
+  }
+
+  /**
+   * Executes an SQL query (idempotent). The result set has to be closed after usage
+   * <br><br>
+   * Sample usage:
+   *
+   * <code>
+   *   Map&lt;String, Object&gt params = new HashMapMap&lt;&gt();
+   *   params.put("name", "John");
+   *   OResultSet rs = db.query("SELECT FROM V where name = :name", params);
+   *   while(rs.hasNext()){
+   *     OResult item = rs.next();
+   *     ...
+   *   }
+   *   rs.close();
+   * </code>
+   *
+   * @param query the query string
+   * @param args  query parameters (named)
+   *
+   * @return
+   */
+  default OResultSet query(String query, Map args) throws OCommandSQLParsingException, OCommandExecutionException {
+    throw new UnsupportedOperationException();
+  }
+
+  /**
+   * Executes a generic (idempotent or non idempotent) command.
+   * The result set has to be closed after usage
+   * <br><br>
+   * Sample usage:
+   *
+   * <code>
+   *   OResultSet rs = db.command("INSERT INTO Person SET name = ?", "John");
+   *   ...
+   *   rs.close();
+   * </code>
+   *
+   * @param query
+   * @param args  query arguments
+   *
+   * @return
+   */
+  default OResultSet command(String query, Object... args) throws OCommandSQLParsingException, OCommandExecutionException {
+    throw new UnsupportedOperationException();
+  }
+
+  /**
+   * Executes a generic (idempotent or non idempotent) command.
+   * The result set has to be closed after usage
+   * <br><br>
+   * Sample usage:
+   *
+   * <code>
+   *   Map&lt;String, Object&gt params = new HashMapMap&lt;&gt();
+   *   params.put("name", "John");
+   *   OResultSet rs = db.query("INSERT INTO Person SET name = :name", params);
+   *   ...
+   *   rs.close();
+   * </code>
+   *
+   * @param query
+   * @param args
+   *
+   * @return
+   */
+  default OResultSet command(String query, Map args) throws OCommandSQLParsingException, OCommandExecutionException {
+    throw new UnsupportedOperationException();
+  }
+
+  /**
+   * Execute a script in a specified query language.
+   * The result set has to be closed after usage
+   * <br><br>
+   * Sample usage:
+   *
+   * <code>
+   *   String script =
+   *     "INSERT INTO Person SET name = 'foo', surname = ?;"+
+   *     "INSERT INTO Person SET name = 'bar', surname = ?;"+
+   *     "INSERT INTO Person SET name = 'baz', surname = ?;";
+   *
+   *   OResultSet rs = db.execute("sql", script, "Surname1", "Surname2", "Surname3");
+   *   ...
+   *   rs.close();
+   * </code>
+   *
+   *
+   * @param language
+   * @param script
+   * @param args
+   *
+   * @return
+   */
+  default OResultSet execute(String language, String script, Object... args)
+      throws OCommandExecutionException, OCommandScriptException {
+    throw new UnsupportedOperationException();
+  }
+
+  /**
+   * Execute a script of a specified query language
+   * The result set has to be closed after usage
+   * <br><br>
+   * Sample usage:
+   *
+   * <code>
+   *   Map&lt;String, Object&gt params = new HashMapMap&lt;&gt();
+   *   params.put("surname1", "Jones");
+   *   params.put("surname2", "May");
+   *   params.put("surname3", "Ali");
+   *
+   *   String script =
+   *     "INSERT INTO Person SET name = 'foo', surname = :surname1;"+
+   *     "INSERT INTO Person SET name = 'bar', surname = :surname2;"+
+   *     "INSERT INTO Person SET name = 'baz', surname = :surname3;";
+   *
+   *   OResultSet rs = db.execute("sql", script, params);
+   *   ...
+   *   rs.close();
+   * </code>
+   *
+   * @param language
+   * @param script
+   * @param args
+   *
+   * @return
+   */
+  default OResultSet execute(String language, String script, Map<String, ?> args)
+      throws OCommandExecutionException, OCommandScriptException {
+    throw new UnsupportedOperationException();
+  }
 
   /**
    * Return the OMetadata instance. Cannot be null.

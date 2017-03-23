@@ -20,10 +20,8 @@
 
 package com.orientechnologies.orient.core.db.document;
 
-import com.orientechnologies.orient.core.command.script.OCommandScriptException;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
@@ -36,10 +34,6 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
-
-import java.util.Map;
 
 /**
  * Generic interface for document based Database implementations.
@@ -446,72 +440,5 @@ public interface ODatabaseDocument extends ODatabase<ORecord> {
     }
     return result;
   }
-
-  /**
-   * Experimental. Executes an SQL query.
-   *
-   * @param query the query string
-   * @param args  query parameters (positional)
-   *
-   * @return
-   */
-  OResultSet query(String query, Object... args) throws OCommandSQLParsingException, OCommandExecutionException;
-
-  /**
-   * Experimental. Executes an SQL query (idempotent)
-   *
-   * @param query the query string
-   * @param args  query parameters (named)
-   *
-   * @return
-   */
-  OResultSet query(String query, Map args) throws OCommandSQLParsingException, OCommandExecutionException;
-
-  /**
-   * Experimental. Executes
-   *
-   * @param query
-   * @param args  query arguments
-   *
-   * @return
-   */
-  OResultSet command(String query, Object... args) throws OCommandSQLParsingException, OCommandExecutionException;
-
-  /**
-   * Experimental
-   *
-   * @param query
-   * @param args
-   *
-   * @return
-   */
-  OResultSet command(String query, Map args) throws OCommandSQLParsingException, OCommandExecutionException;
-
-  /**
-   * Execute a script of a specified query language
-   * <p>
-   * Experimental
-   *
-   * @param language
-   * @param script
-   * @param args
-   *
-   * @return
-   */
-  OResultSet execute(String language, String script, Object... args) throws OCommandExecutionException, OCommandScriptException;
-
-  /**
-   * Execute a script of a specified query language
-   * <p>
-   * Experimental
-   *
-   * @param language
-   * @param script
-   * @param args
-   *
-   * @return
-   */
-  OResultSet execute(String language, String script, Map<String, ?> args)
-      throws OCommandExecutionException, OCommandScriptException;
 
 }
