@@ -126,7 +126,7 @@ UserModule.controller("UsersController", ['$scope', '$routeParams', '$location',
   }
   $scope.tagAdded = function (tag, user) {
 
-    var query = 'update {{rid}} add roles = {{role}}';
+    var query = 'update {{rid}} set roles = roles || {{role}}';
     query = S(query).template({rid: user['@rid'], role: tag['@rid']}).s;
 
     CommandApi.queryText({
