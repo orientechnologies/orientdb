@@ -774,17 +774,17 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         final String nodeName = dbNode.substring(0, dbNode.indexOf("."));
         final String databaseName = dbNode.substring(dbNode.indexOf(".") + 1);
 
-        final ODocument cfg = (ODocument)iEvent.getValue();
+        final DB_STATUS dbStatus = (DB_STATUS)iEvent.getValue();
 
-        onDatabaseEvent(nodeName, databaseName, (DB_STATUS) iEvent.getValue());
-        invokeOnDatabaseStatusChange(nodeName, databaseName, (DB_STATUS) iEvent.getValue());
+        onDatabaseEvent(nodeName, databaseName, dbStatus);
+        invokeOnDatabaseStatusChange(nodeName, databaseName, dbStatus);
 
         if (!iEvent.getMember().equals(hazelcastInstance.getCluster().getLocalMember()) && DB_STATUS.ONLINE
-            .equals(iEvent.getValue())) {
+            .equals(dbStatus)) {
           final DB_STATUS s = getDatabaseStatus(getLocalNodeName(), databaseName);
           if (s == DB_STATUS.NOT_AVAILABLE) {
             // INSTALL THE DATABASE
-            installDatabase(false, databaseName, cfg, false,
+            installDatabase(false, databaseName, null, false,
                 OGlobalConfiguration.DISTRIBUTED_BACKUP_TRY_INCREMENTAL_FIRST.getValueAsBoolean());
           }
         }
@@ -832,17 +832,17 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         final String nodeName = dbNode.substring(0, dbNode.indexOf("."));
         final String databaseName = dbNode.substring(dbNode.indexOf(".") + 1);
         
-        final ODocument cfg = (ODocument)iEvent.getValue();
+        final DB_STATUS dbStatus = (DB_STATUS)iEvent.getValue();
 
-        onDatabaseEvent(nodeName, databaseName, (DB_STATUS) iEvent.getValue());
-        invokeOnDatabaseStatusChange(nodeName, databaseName, (DB_STATUS) iEvent.getValue());
+        onDatabaseEvent(nodeName, databaseName, dbStatus);
+        invokeOnDatabaseStatusChange(nodeName, databaseName, dbStatus);
 
         if (!iEvent.getMember().equals(hazelcastInstance.getCluster().getLocalMember()) && DB_STATUS.ONLINE
-            .equals(iEvent.getValue())) {
+            .equals(dbStatus)) {
           final DB_STATUS s = getDatabaseStatus(getLocalNodeName(), databaseName);
           if (s == DB_STATUS.NOT_AVAILABLE) {
             // INSTALL THE DATABASE
-            installDatabase(false, databaseName, cfg, false,
+            installDatabase(false, databaseName, null, false,
                 OGlobalConfiguration.DISTRIBUTED_BACKUP_TRY_INCREMENTAL_FIRST.getValueAsBoolean());
           }
         }
