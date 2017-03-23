@@ -372,7 +372,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     final Thread o = owner.get();
 
     if (o != null || !owner.compareAndSet(null, current)) {
-      throw new IllegalStateException("Current instance is owned by other thread" + (o != null ? " : '" + o.getName() + "'" : ""));
+      throw new IllegalStateException("Current instance is owned by other thread '" + (o != null ? o.getName() : "?") + "'");
     }
   }
 

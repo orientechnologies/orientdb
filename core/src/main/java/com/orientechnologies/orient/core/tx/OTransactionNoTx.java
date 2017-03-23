@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.tx;
 
+import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.ODatabase.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -45,9 +46,8 @@ import java.util.Set;
 
 /**
  * No operation transaction.
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * 
  */
 public class OTransactionNoTx extends OTransactionAbstract {
   public OTransactionNoTx(final ODatabaseDocumentTx iDatabase) {
@@ -83,8 +83,9 @@ public class OTransactionNoTx extends OTransactionAbstract {
     if (iRid.isNew())
       return null;
 
-    return database.executeReadRecord((ORecordId) iRid, iRecord, -1, iFetchPlan, ignoreCache, !ignoreCache, loadTombstone,
-        iLockingStrategy, new ODatabaseDocumentTx.SimpleRecordReader(database.isPrefetchRecords()));
+    return database
+        .executeReadRecord((ORecordId) iRid, iRecord, -1, iFetchPlan, ignoreCache, !ignoreCache, loadTombstone, iLockingStrategy,
+            new ODatabaseDocumentTx.SimpleRecordReader(database.isPrefetchRecords()));
   }
 
   @Deprecated
@@ -93,8 +94,9 @@ public class OTransactionNoTx extends OTransactionAbstract {
     if (iRid.isNew())
       return null;
 
-    return database.executeReadRecord((ORecordId) iRid, iRecord, -1, iFetchPlan, ignoreCache, iUpdateCache, loadTombstone,
-        iLockingStrategy, new ODatabaseDocumentTx.SimpleRecordReader(database.isPrefetchRecords()));
+    return database
+        .executeReadRecord((ORecordId) iRid, iRecord, -1, iFetchPlan, ignoreCache, iUpdateCache, loadTombstone, iLockingStrategy,
+            new ODatabaseDocumentTx.SimpleRecordReader(database.isPrefetchRecords()));
   }
 
   public ORecord loadRecord(final ORID iRid, final ORecord iRecord, final String iFetchPlan, final boolean ignoreCache) {
@@ -122,8 +124,9 @@ public class OTransactionNoTx extends OTransactionAbstract {
       recordReader = new ODatabaseDocumentTx.LatestVersionRecordReader();
     }
 
-    final ORecord loadedRecord = database.executeReadRecord((ORecordId) rid, record, -1, fetchPlan, ignoreCache, !ignoreCache,
-        false, OStorage.LOCKING_STRATEGY.NONE, recordReader);
+    final ORecord loadedRecord = database
+        .executeReadRecord((ORecordId) rid, record, -1, fetchPlan, ignoreCache, !ignoreCache, false, OStorage.LOCKING_STRATEGY.NONE,
+            recordReader);
 
     if (force) {
       return loadedRecord;
@@ -193,6 +196,9 @@ public class OTransactionNoTx extends OTransactionAbstract {
       if (rid.isValid())
         database.getLocalCache().freeRecord(rid);
 
+      if (e instanceof ONeedRetryException)
+        throw (ONeedRetryException) e;
+
       throw OException.wrapException(
           new ODatabaseException("Error during saving of record" + (iRecord != null ? " with rid " + iRecord.getIdentity() : "")),
           e);
@@ -235,8 +241,8 @@ public class OTransactionNoTx extends OTransactionAbstract {
             toRet = database.executeSaveRecord(next, iClusterName, next.getVersion(), iMode, iForceCreate, iRecordCreatedCallback,
                 iRecordUpdatedCallback);
           else
-            database.executeSaveRecord(next, getClusterName(next), next.getVersion(), OPERATION_MODE.SYNCHRONOUS, false, null,
-                null);
+            database
+                .executeSaveRecord(next, getClusterName(next), next.getVersion(), OPERATION_MODE.SYNCHRONOUS, false, null, null);
           next = path.pollFirst();
         }
 
