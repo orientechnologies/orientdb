@@ -2,8 +2,8 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
 import java.util.Map;
@@ -69,9 +69,14 @@ public class OUpdateRemoveItem extends SimpleNode {
 
   public void applyUpdate(OResultInternal result, OCommandContext ctx) {
     if (right != null) {
-      throw new OCommandExecutionException("cannot apply REMOVE " + right.toString() + " (not supported in V 3.0)");
+      Object leftVal = left.execute(result, ctx);
+      Object rightVal = right.execute(result, ctx);
+      if (OMultiValue.isMultiValue(leftVal)) {
+        OMultiValue.remove(leftVal, rightVal, false);
+      }
+    } else {
+      left.applyRemove(result, ctx);
     }
-    left.applyRemove(result, ctx);
   }
 }
 /* JavaCC - OriginalChecksum=72e240d3dc1196fdea69e8fdc2bd69ca (do not edit this line) */
