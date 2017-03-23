@@ -80,8 +80,13 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
 
     try {
       db = getProfiledDatabaseInstance(iRequest);
+      OStatement stm = parseStatement(language, text, db);
       OResultSet result = executeStatement(language, text, params, db);
-      limit = getLimitFromStatement(language, text, limit, db);
+      limit = getLimitFromStatement(stm, limit);
+      String localFetchPlan = getFetchPlanFromStatement(stm);
+      if (localFetchPlan != null) {
+        fetchPlan = localFetchPlan;
+      }
       int i = 0;
       List response = new ArrayList();
       while (result.hasNext()) {
@@ -94,6 +99,10 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
       result.close();
 
       String format = null;
+      if (fetchPlan != null) {
+        format = "fetchPlan:" + fetchPlan;
+      }
+
       Map<String, Object> additionalContent = new HashMap<>();
 
       if (iRequest.getHeader("TE") != null)
@@ -111,22 +120,42 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
     return false;
   }
 
-  private int getLimitFromStatement(String language, String text, int previousLimit, ODatabaseDocument db) {
+  private String getFetchPlanFromStatement(OStatement statement) {
+    if (statement instanceof OSelectStatement) {
+      OFetchPlan fp = ((OSelectStatement) statement).getFetchPlan();
+      if (fp != null) {
+        return fp.toString().substring("FETCHPLAN ".length());
+      }
+    } else if (statement instanceof OMatchStatement) {
+      return ((OMatchStatement) statement).getFetchPlan();
+    }
+    return null;
+  }
+
+  private OStatement parseStatement(String language, String text, ODatabaseDocument db) {
     try {
       if (language != null && language.equalsIgnoreCase("sql")) {
-        OStatement statement = OSQLEngine.parse(text, (ODatabaseDocumentInternal) db);
-        OLimit limit = null;
-        if (statement instanceof OSelectStatement) {
-          limit = ((OSelectStatement) statement).getLimit();
-        } else if (statement instanceof OMatchStatement) {
-          limit = ((OMatchStatement) statement).getLimit();
-        } else if (statement instanceof OTraverseStatement) {
-          limit = ((OTraverseStatement) statement).getLimit();
-        }
-        if (limit != null) {
-          return limit.getValue(new OBasicCommandContext());
-        }
+        return OSQLEngine.parse(text, (ODatabaseDocumentInternal) db);
       }
+    } catch (Exception e) {
+    }
+    return null;
+  }
+
+  private int getLimitFromStatement(OStatement statement, int previousLimit) {
+    try {
+      OLimit limit = null;
+      if (statement instanceof OSelectStatement) {
+        limit = ((OSelectStatement) statement).getLimit();
+      } else if (statement instanceof OMatchStatement) {
+        limit = ((OMatchStatement) statement).getLimit();
+      } else if (statement instanceof OTraverseStatement) {
+        limit = ((OTraverseStatement) statement).getLimit();
+      }
+      if (limit != null) {
+        return limit.getValue(new OBasicCommandContext());
+      }
+
     } catch (Exception e) {
     }
     return previousLimit;
