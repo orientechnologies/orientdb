@@ -966,6 +966,9 @@ public class OSelectExecutionPlanner {
     for (OAndBlock block : flattenedWhereClause) {
       List<OBinaryCondition> indexedFunctionConditions = block
           .getIndexedFunctionConditions(clazz, (ODatabaseDocumentInternal) ctx.getDatabase());
+
+      indexedFunctionConditions = filterIndexedFunctionsWithoutIndex(indexedFunctionConditions, fromClause, ctx);
+
       if (indexedFunctionConditions == null || indexedFunctionConditions.size() == 0) {
         return false;//no indexed functions for this block
       } else {
@@ -1027,6 +1030,23 @@ public class OSelectExecutionPlanner {
     this.whereClause = null;
     this.flattenedWhereClause = null;
     return true;
+  }
+
+  private List<OBinaryCondition> filterIndexedFunctionsWithoutIndex(List<OBinaryCondition> indexedFunctionConditions,
+      OFromClause fromClause, OCommandContext ctx) {
+    if (indexedFunctionConditions == null) {
+      return null;
+    }
+    List<OBinaryCondition> result = new ArrayList<>();
+    for (OBinaryCondition cond : indexedFunctionConditions) {
+      long thisEstimate = cond.estimateIndexed(fromClause, ctx);
+      if (thisEstimate >= 0) {
+        result.add(cond);
+      } else if (!cond.canExecuteIndexedFunctionWithoutIndex(fromClause, ctx)) {
+        throw new OCommandExecutionException("Cannot evaluate " + cond + ": no index defined");
+      }
+    }
+    return result;
   }
 
   /**
