@@ -59,7 +59,10 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Created by tglman on 20/07/16.
+ *
+ * @Deprecated use {@link OrientDB} instead.
  */
+@Deprecated
 public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   private static ConcurrentMap<String, OrientDBInternal> embedded = new ConcurrentHashMap<>();
@@ -137,6 +140,12 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     return factory;
   }
 
+  /**
+   * @param url
+   *
+   * @Deprecated use {{@link OrientDB}} instead.
+   */
+  @Deprecated
   public ODatabaseDocumentTx(String url) {
     this(url, true);
   }
