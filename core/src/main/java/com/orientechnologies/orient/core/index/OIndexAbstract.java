@@ -643,21 +643,11 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
   }
 
   public String getName() {
-    acquireSharedLock();
-    try {
-      return name;
-    } finally {
-      releaseSharedLock();
-    }
+    return name;
   }
 
   public String getType() {
-    acquireSharedLock();
-    try {
-      return type;
-    } finally {
-      releaseSharedLock();
-    }
+    return type;
   }
 
   @Override
