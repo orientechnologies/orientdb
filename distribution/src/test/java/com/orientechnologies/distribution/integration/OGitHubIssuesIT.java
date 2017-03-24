@@ -1,6 +1,11 @@
 package com.orientechnologies.distribution.integration;
 
+import com.orientechnologies.orient.core.collate.OCaseInsensitiveCollate;
+import com.orientechnologies.orient.core.collate.ODefaultCollate;
 import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.Before;
@@ -28,6 +33,113 @@ public class OGitHubIssuesIT extends OIntegrationTestTemplate {
     }
 
     db = orientDB.open(database, "admin", "admin");
+  }
+
+  @Test
+  public void Issue7264() throws Exception {
+
+    OClass oOtherClass = db.createVertexClass("OtherClass");
+
+    OProperty oPropertyOtherCI = oOtherClass.createProperty("OtherCI", OType.STRING);
+    oPropertyOtherCI.setCollate(OCaseInsensitiveCollate.NAME);
+
+    OProperty oPropertyOtherCS = oOtherClass.createProperty("OtherCS", OType.STRING);
+    oPropertyOtherCS.setCollate(ODefaultCollate.NAME);
+
+    oOtherClass.createIndex("other_ci_idx", OClass.INDEX_TYPE.NOTUNIQUE, "OtherCI");
+    oOtherClass.createIndex("other_cs_idx", OClass.INDEX_TYPE.NOTUNIQUE, "OtherCS");
+
+    db.command("INSERT INTO OtherClass SET OtherCS='abc', OtherCI='abc';");
+    db.command("INSERT INTO OtherClass SET OtherCS='ABC', OtherCI='ABC';");
+    db.command("INSERT INTO OtherClass SET OtherCS='Abc', OtherCI='Abc';");
+    db.command("INSERT INTO OtherClass SET OtherCS='aBc', OtherCI='aBc';");
+    db.command("INSERT INTO OtherClass SET OtherCS='abC', OtherCI='abC';");
+    db.command("INSERT INTO OtherClass SET OtherCS='ABc', OtherCI='ABc';");
+    db.command("INSERT INTO OtherClass SET OtherCS='aBC', OtherCI='aBC';");
+    db.command("INSERT INTO OtherClass SET OtherCS='AbC', OtherCI='AbC';");
+
+    OResultSet results = db.query("SELECT FROM OtherClass WHERE OtherCS='abc'");
+    assertThat(results).hasSize(1);
+
+    results = db.query("SELECT FROM OtherClass WHERE OtherCI='abc'");
+    assertThat(results).hasSize(8);
+
+    OClass oClassCS = db.createVertexClass("CaseSensitiveCollationIndex");
+
+    OProperty oPropertyGroupCS = oClassCS.createProperty("Group", OType.STRING);
+    oPropertyGroupCS.setCollate(ODefaultCollate.NAME);
+    OProperty oPropertyNameCS = oClassCS.createProperty("Name", OType.STRING);
+    oPropertyNameCS.setCollate(ODefaultCollate.NAME);
+    OProperty oPropertyVersionCS = oClassCS.createProperty("Version", OType.STRING);
+    oPropertyVersionCS.setCollate(ODefaultCollate.NAME);
+
+    oClassCS.createIndex("group_name_version_cs_idx", OClass.INDEX_TYPE.NOTUNIQUE, "Group", "Name", "Version");
+
+    db.command("INSERT INTO CaseSensitiveCollationIndex SET `Group`='1', Name='abc', Version='1';");
+    db.command("INSERT INTO CaseSensitiveCollationIndex SET `Group`='1', Name='ABC', Version='1';");
+    db.command("INSERT INTO CaseSensitiveCollationIndex SET `Group`='1', Name='Abc', Version='1';");
+    db.command("INSERT INTO CaseSensitiveCollationIndex SET `Group`='1', Name='aBc', Version='1';");
+    db.command("INSERT INTO CaseSensitiveCollationIndex SET `Group`='1', Name='abC', Version='1';");
+    db.command("INSERT INTO CaseSensitiveCollationIndex SET `Group`='1', Name='ABc', Version='1';");
+    db.command("INSERT INTO CaseSensitiveCollationIndex SET `Group`='1', Name='aBC', Version='1';");
+    db.command("INSERT INTO CaseSensitiveCollationIndex SET `Group`='1', Name='AbC', Version='1';");
+
+    results = db.query("SELECT FROM CaseSensitiveCollationIndex WHERE Version='1' AND `Group` = 1 AND Name='abc'");
+    assertThat(results).hasSize(1);
+
+    results = db.query("SELECT FROM CaseSensitiveCollationIndex WHERE Version='1' AND Name='abc' AND `Group` = 1");
+    assertThat(results).hasSize(1);
+
+    results = db.query("SELECT FROM CaseSensitiveCollationIndex WHERE `Group` = 1 AND Name='abc' AND Version='1'");
+    assertThat(results).hasSize(1);
+
+    results = db.query("SELECT FROM CaseSensitiveCollationIndex WHERE `Group` = 1 AND Version='1' AND Name='abc'");
+    assertThat(results).hasSize(1);
+
+    results = db.query("SELECT FROM CaseSensitiveCollationIndex WHERE Name='abc' AND Version='1' AND `Group` = 1");
+    assertThat(results).hasSize(1);
+
+    results = db.query("SELECT FROM CaseSensitiveCollationIndex WHERE Name='abc' AND `Group` = 1 AND Version='1'");
+    assertThat(results).hasSize(1);
+
+    OClass oClassCI = db.createVertexClass("CaseInsensitiveCollationIndex");
+
+    OProperty oPropertyGroupCI = oClassCI.createProperty("Group", OType.STRING);
+    oPropertyGroupCI.setCollate(OCaseInsensitiveCollate.NAME);
+    OProperty oPropertyNameCI = oClassCI.createProperty("Name", OType.STRING);
+    oPropertyNameCI.setCollate(OCaseInsensitiveCollate.NAME);
+    OProperty oPropertyVersionCI = oClassCI.createProperty("Version", OType.STRING);
+    oPropertyVersionCI.setCollate(OCaseInsensitiveCollate.NAME);
+
+    oClassCI.createIndex("group_name_version_ci_idx", OClass.INDEX_TYPE.NOTUNIQUE, "Group", "Name", "Version");
+
+    db.command("INSERT INTO CaseInsensitiveCollationIndex SET `Group`='1', Name='abc', Version='1';");
+    db.command("INSERT INTO CaseInsensitiveCollationIndex SET `Group`='1', Name='ABC', Version='1';");
+    db.command("INSERT INTO CaseInsensitiveCollationIndex SET `Group`='1', Name='Abc', Version='1';");
+    db.command("INSERT INTO CaseInsensitiveCollationIndex SET `Group`='1', Name='aBc', Version='1';");
+    db.command("INSERT INTO CaseInsensitiveCollationIndex SET `Group`='1', Name='abC', Version='1';");
+    db.command("INSERT INTO CaseInsensitiveCollationIndex SET `Group`='1', Name='ABc', Version='1';");
+    db.command("INSERT INTO CaseInsensitiveCollationIndex SET `Group`='1', Name='aBC', Version='1';");
+    db.command("INSERT INTO CaseInsensitiveCollationIndex SET `Group`='1', Name='AbC', Version='1';");
+
+    results = db.query("SELECT FROM CaseInsensitiveCollationIndex WHERE Version='1' AND `Group` = 1 AND Name='abc'");
+    assertThat(results).hasSize(8);
+
+    results = db.query("SELECT FROM CaseInsensitiveCollationIndex WHERE Version='1' AND Name='abc' AND `Group` = 1");
+    assertThat(results).hasSize(8);
+
+    results = db.query("SELECT FROM CaseInsensitiveCollationIndex WHERE `Group` = 1 AND Name='abc' AND Version='1'");
+    assertThat(results).hasSize(8);
+
+    results = db.query("SELECT FROM CaseInsensitiveCollationIndex WHERE `Group` = 1 AND Version='1' AND Name='abc'");
+    assertThat(results).hasSize(8);
+
+    results = db.query("SELECT FROM CaseInsensitiveCollationIndex WHERE Name='abc' AND Version='1' AND `Group` = 1");
+    assertThat(results).hasSize(8);
+
+    results = db.query("SELECT FROM CaseInsensitiveCollationIndex WHERE Name='abc' AND `Group` = 1 AND Version='1'");
+    assertThat(results).hasSize(8);
+
   }
 
   @Test
