@@ -9,6 +9,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
@@ -35,6 +36,7 @@ public class OGitHubIssuesIT extends OIntegrationTestTemplate {
     db = orientDB.open(database, "admin", "admin");
   }
 
+  @Ignore
   @Test
   public void Issue7264() throws Exception {
 
