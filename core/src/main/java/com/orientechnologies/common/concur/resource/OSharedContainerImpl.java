@@ -19,62 +19,72 @@
  */
 package com.orientechnologies.common.concur.resource;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.Callable;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
+
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Shared container that works with callbacks like closures. If the resource implements the {@link OSharedResource} interface then
  * the resource is locked until is removed.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  * 
  */
 @SuppressWarnings("unchecked")
 public class OSharedContainerImpl implements OSharedContainer {
-  protected Map<String, Object> sharedResources = new HashMap<String, Object>();
+  protected Map<String, Object> sharedResources = new ConcurrentHashMap<String, Object>();
 
-  public synchronized boolean existsResource(final String iName) {
+  public boolean existsResource(final String iName) {
+    // BYPASS THE SYNCHRONIZED BLOCK BECAUSE THE MAP IS ALREADY SYNCHRONIZED
     return sharedResources.containsKey(iName);
   }
 
-  public synchronized <T> T removeResource(final String iName) {
-    T resource = (T) sharedResources.remove(iName);
+  public <T> T removeResource(final String iName) {
+    synchronized (this) {
+      T resource = (T) sharedResources.remove(iName);
 
-    if (resource instanceof OSharedResource)
-      ((OSharedResource) resource).releaseExclusiveLock();
-
-    return resource;
+      if (resource instanceof OSharedResource)
+        ((OSharedResource) resource).releaseExclusiveLock();
+      return resource;
+    }
   }
 
-  public synchronized <T> T getResource(final String iName, final Callable<T> iCallback) {
+  public <T> T getResource(final String iName, final Callable<T> iCallback) {
     T value = (T) sharedResources.get(iName);
     if (value == null) {
-      // CREATE IT
-      try {
-        value = iCallback.call();
-      } catch (Exception e) {
-        throw OException.wrapException(new OStorageException("Error on creation of shared resource"), e);
+      // THE SYNCHRONIZED BLOCK I CREATES NEEDED ONLY TO PREVENT MULTIPLE CALL TO THE CALLBACK IN CASE OF CONCURRENT
+      synchronized (this) {
+        if (value == null) {
+          // CREATE IT
+          try {
+            value = iCallback.call();
+          } catch (Exception e) {
+            throw OException.wrapException(new ODatabaseException("Error on creation of shared resource"), e);
+          }
+          
+          if (value instanceof OSharedResource)
+            ((OSharedResource) value).acquireExclusiveLock();
+
+          sharedResources.put(iName, value);
+        }
       }
-
-      if (value instanceof OSharedResource)
-        ((OSharedResource) value).acquireExclusiveLock();
-
-      sharedResources.put(iName, value);
     }
 
     return value;
   }
 
-  public synchronized void clearResources() {
-    for (Object resource : sharedResources.values()) {
-      if (resource instanceof OCloseable)
-        (((OCloseable) resource)).close();
-    }
+  public void clearResources() {
+    synchronized (this) {
+      for (Object resource : sharedResources.values()) {
+        if (resource instanceof OCloseable)
+          (((OCloseable) resource)).close();
+      }
 
-    sharedResources.clear();
+      sharedResources.clear();
+    }
   }
 }
