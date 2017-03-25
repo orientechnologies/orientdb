@@ -1,5 +1,6 @@
 package com.orientechnologies.distribution.integration;
 
+import com.orientechnologies.orient.core.db.ODatabasePool;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -20,6 +21,7 @@ public abstract class OIntegrationTestTemplate {
 
   protected ODatabaseDocument db;
   protected OrientDB          orientDB;
+  private   ODatabasePool     pool;
 
   @Before
   public void setUp() throws Exception {
@@ -33,13 +35,16 @@ public abstract class OIntegrationTestTemplate {
     //root's user password is defined inside the pom
     orientDB = new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
 
-    db = orientDB.open("demodb", "admin", "admin");
+    pool = new ODatabasePool(orientDB, "demodb", "admin", "admin");
 
+    db = pool.acquire();
   }
 
   @After
   public void tearDown() throws Exception {
+    db.activateOnCurrentThread();
     db.close();
+    pool.close();
     orientDB.close();
   }
 }

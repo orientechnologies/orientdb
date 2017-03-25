@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -16,9 +17,11 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
 
 /**
+ * This integration test keeps track of issues to avoid regressions.
+ * It creates a database called ad the class name that it is dropped at the end of the work.
+ *
  * Created by santo-it on 03/22/2017.
  */
 public class OGitHubIssuesIT extends OIntegrationTestTemplate {
@@ -28,12 +31,28 @@ public class OGitHubIssuesIT extends OIntegrationTestTemplate {
   public void setUp() throws Exception {
     super.setUp();
 
+    dropTestDatabase();
+
     String database = this.getClass().getName();
     if (!orientDB.exists(database)) {
       orientDB.create(database, ODatabaseType.PLOCAL);
     }
 
     db = orientDB.open(database, "admin", "admin");
+  }
+
+  private void dropTestDatabase() {
+    String database = this.getClass().getName();
+    if (orientDB.exists(database)) {
+      orientDB.drop(database);
+    }
+  }
+
+  @Override
+  @After
+  public void tearDown() throws Exception {
+    dropTestDatabase();
+    super.tearDown();
   }
 
   @Ignore
@@ -166,19 +185,24 @@ public class OGitHubIssuesIT extends OIntegrationTestTemplate {
         "CREATE EDGE t7249HasFriend FROM (SELECT FROM t7249Profiles WHERE Name='Enrico') TO (SELECT FROM t7249Profiles WHERE Name='Santo');");
 
     List<OResult> results = db.query("SELECT in('t7249HasFriend').size() as InFriendsNumber FROM t7249Profiles WHERE Name='Santo'")
-        .stream().collect(Collectors.toList());
-    assertEquals(1, results.size());
-    assertEquals((Object) 1, results.get(0).getProperty("InFriendsNumber"));
-
-    results = db.query("SELECT out('t7249HasFriend').size() as OutFriendsNumber FROM t7249Profiles WHERE Name='Santo'").stream()
+        .stream()
         .collect(Collectors.toList());
-    assertEquals(1, results.size());
-    assertEquals((Object) 3, results.get(0).getProperty("OutFriendsNumber"));
+    assertThat(results).hasSize(1);
+    assertThat(results.get(0).<Integer>getProperty("InFriendsNumber")).isEqualTo(1);
 
-    results = db.query("SELECT both('t7249HasFriend').size() as TotalFriendsNumber FROM t7249Profiles WHERE Name='Santo'").stream()
+    results = db.query("SELECT out('t7249HasFriend').size() as OutFriendsNumber FROM t7249Profiles WHERE Name='Santo'")
+        .stream()
         .collect(Collectors.toList());
-    assertEquals(1, results.size());
-    assertEquals((Object) 4, results.get(0).getProperty("TotalFriendsNumber"));
+
+    assertThat(results).hasSize(1);
+    assertThat(results.get(0).<Integer>getProperty("OutFriendsNumber")).isEqualTo(3);
+
+    results = db.query("SELECT both('t7249HasFriend').size() as TotalFriendsNumber FROM t7249Profiles WHERE Name='Santo'")
+        .stream()
+        .collect(Collectors.toList());
+
+    assertThat(results).hasSize(1);
+    assertThat(results.get(0).<Integer>getProperty("TotalFriendsNumber")).isEqualTo(4);
 
   }
 

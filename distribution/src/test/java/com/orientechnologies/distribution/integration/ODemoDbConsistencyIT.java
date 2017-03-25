@@ -124,7 +124,7 @@ public class ODemoDbConsistencyIT extends OIntegrationTestTemplate {
 
     // all customers have a country
     OResultSet resultSet = db
-        .query("MATCH {class: Customers, as: customer}-IsFromCountry->{class: Countries, as: country} RETURN customer");
+        .query("MATCH {class: Customers, as: customer}-IsFromCountry->{class: Countries, as: country} RETURN  customer");
     assertThat(resultSet).hasSize(customerNumber);
 
     // all customers have a profile
