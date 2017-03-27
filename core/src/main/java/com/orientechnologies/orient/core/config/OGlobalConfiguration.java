@@ -707,8 +707,8 @@ public enum OGlobalConfiguration {
   /**
    * @Since 2.2.7
    */
-  DISTRIBUTED_CONFLICT_RESOLVER_REPAIRER_BATCH("distributed.conflictResolverRepairerBatch", "Number of record to repair in batch",
-      Integer.class, 100, true),
+  DISTRIBUTED_CONFLICT_RESOLVER_REPAIRER_BATCH("distributed.conflictResolverRepairerBatch", "Maximum number of records to repair in batch",
+      Integer.class, 1000, true),
 
   /**
    * @Since 2.2.7
