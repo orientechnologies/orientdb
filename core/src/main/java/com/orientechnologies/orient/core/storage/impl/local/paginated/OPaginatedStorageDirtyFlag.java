@@ -45,6 +45,7 @@ public class OPaginatedStorageDirtyFlag {
   private FileLock         fileLock;
 
   private volatile boolean dirtyFlag;
+  private volatile boolean indexRebuildScheduled;
 
   private final Lock lock = new ReentrantLock();
 
@@ -75,16 +76,10 @@ public class OPaginatedStorageDirtyFlag {
         lockFile();
       }
 
-      channel.position(0);
-
-      ByteBuffer buffer = ByteBuffer.allocate(1);
-      buffer.position(0);
-      buffer.put((byte) 1);
-
-      buffer.position(0);
-      channel.write(buffer);
-
       dirtyFlag = true;
+      indexRebuildScheduled = false;
+
+      writeState(dirtyFlag, indexRebuildScheduled);
     } finally {
       lock.unlock();
     }
@@ -114,6 +109,7 @@ public class OPaginatedStorageDirtyFlag {
     lock.lock();
     try {
       dirtyFile = new File(dirtyFilePath);
+
       if (!dirtyFile.exists()) {
         final boolean fileCreated = dirtyFile.createNewFile();
 
@@ -123,9 +119,7 @@ public class OPaginatedStorageDirtyFlag {
         dirtyFileData = new RandomAccessFile(dirtyFile, "rwd");
         channel = dirtyFileData.getChannel();
 
-        channel.position(0);
-        ByteBuffer buffer = ByteBuffer.allocate(1);
-        channel.write(buffer);
+        writeState(false, false);
       }
 
       dirtyFileData = new RandomAccessFile(dirtyFile, "rwd");
@@ -136,13 +130,14 @@ public class OPaginatedStorageDirtyFlag {
       }
 
       channel.position(0);
-      ByteBuffer buffer = ByteBuffer.allocate(1);
-      buffer.position(0);
 
-      channel.read(buffer);
+      ByteBuffer buffer = ByteBuffer.allocate(2);
+      readByteBuffer(buffer, channel);
+
       buffer.position(0);
 
       dirtyFlag = buffer.get() > 0;
+      indexRebuildScheduled = buffer.get() > 0;
     } finally {
       lock.unlock();
     }
@@ -204,14 +199,9 @@ public class OPaginatedStorageDirtyFlag {
       if (dirtyFlag)
         return;
 
-      channel.position(0);
-
-      ByteBuffer buffer = ByteBuffer.allocate(1);
-      buffer.put((byte) 1);
-      buffer.position(0);
-      channel.write(buffer);
-
       dirtyFlag = true;
+
+      writeState(dirtyFlag, indexRebuildScheduled);
     } finally {
       lock.unlock();
     }
@@ -226,13 +216,43 @@ public class OPaginatedStorageDirtyFlag {
       if (!dirtyFlag)
         return;
 
-      channel.position(0);
-      ByteBuffer buffer = ByteBuffer.allocate(1);
-      buffer.put((byte) 0);
-      buffer.position(0);
-      channel.write(buffer);
-
       dirtyFlag = false;
+
+      writeState(dirtyFlag, indexRebuildScheduled);
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  public void scheduleIndexRebuild() throws IOException {
+    if (indexRebuildScheduled)
+      return;
+
+    lock.lock();
+    try {
+      if (indexRebuildScheduled)
+        return;
+
+      indexRebuildScheduled = true;
+
+      writeState(dirtyFlag, indexRebuildScheduled);
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  public void clearIndexRebuild() throws IOException {
+    if (!indexRebuildScheduled)
+      return;
+
+    lock.lock();
+    try {
+      if (!indexRebuildScheduled)
+        return;
+
+      indexRebuildScheduled = false;
+
+      writeState(dirtyFlag, indexRebuildScheduled);
     } finally {
       lock.unlock();
     }
@@ -240,6 +260,44 @@ public class OPaginatedStorageDirtyFlag {
 
   public boolean isDirty() {
     return dirtyFlag;
+  }
+
+  public boolean isIndexRebuildScheduled() {
+    return indexRebuildScheduled;
+  }
+
+  private void writeByteBuffer(ByteBuffer buffer, FileChannel channel) throws IOException {
+    int bytesToWrite = buffer.limit();
+
+    int written = 0;
+    while (written < bytesToWrite) {
+      written += channel.write(buffer, written);
+    }
+  }
+
+  private void readByteBuffer(ByteBuffer buffer, FileChannel channel) throws IOException {
+    int bytesToRead = buffer.limit();
+
+    int read = 0;
+    while (read < bytesToRead) {
+      int r = channel.read(buffer);
+
+      if (r == -1)
+        throw new EOFException("End of file is reached");
+
+      read += r;
+    }
+  }
+
+  private void writeState(boolean dirtyFlag, boolean indexRebuildScheduled) throws IOException {
+    ByteBuffer buffer = ByteBuffer.allocate(2);
+    buffer.put(dirtyFlag ? (byte) 1 : 0);
+    buffer.put(indexRebuildScheduled ? (byte) 1 : 0);
+
+    channel.position(0);
+    buffer.position(0);
+
+    writeByteBuffer(buffer, channel);
   }
 
 }
