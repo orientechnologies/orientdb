@@ -5,6 +5,7 @@ package com.orientechnologies.orient.core.sql.parser;
 import java.util.Map;
 
 public class OMatchFilterItem extends SimpleNode {
+  protected ORid                rid;
   protected OExpression         className;
   protected OExpression         classNames;
   protected OIdentifier         alias;
@@ -30,6 +31,11 @@ public class OMatchFilterItem extends SimpleNode {
   }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
+    if (rid != null) {
+      builder.append("rid: ");
+      rid.toString(params, builder);
+      return;
+    }
     if (className != null) {
       builder.append("class: ");
       className.toString(params, builder);
@@ -73,5 +79,7 @@ public class OMatchFilterItem extends SimpleNode {
       return;
     }
   }
+
+
 }
 /* JavaCC - OriginalChecksum=74bf4765509f102180cac29f2295031e (do not edit this line) */

@@ -1103,6 +1103,9 @@ public class ODocument extends ORecordAbstract
               // SAVE VALUE: UNCHANGED
               return this;
             }
+          } else if (iPropertyValue instanceof byte[] && Arrays.equals((byte[]) iPropertyValue, (byte[]) oldValue)) {
+            // SAVE VALUE: UNCHANGED
+            return this;
           }
         } catch (Exception e) {
           OLogManager.instance()

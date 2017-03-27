@@ -77,6 +77,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
   protected final Set<ORID>            orphans = new HashSet<ORID>();
   protected ODocument                  doc;
   protected ProxyObject                parentObject;
+  protected boolean                    reading;
 
   public OObjectProxyMethodHandler(ODocument iDocument) {
     doc = iDocument;
@@ -287,6 +288,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
   protected Object manageGetMethod(final Object self, final Method m, final Method proceed, final Object[] args)
       throws IllegalAccessException, InvocationTargetException, NoSuchMethodException, SecurityException, IllegalArgumentException,
       NoSuchFieldException {
+    this.reading =true;
     final String fieldName = OObjectEntityEnhancer.getInstance().getMethodFilter(self.getClass()).getFieldName(m);
 
     final ORID docRID = doc.getIdentity();
@@ -309,7 +311,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
       loadedFields.put(fieldName, doc.getVersion());
     else
       loadedFields.put(fieldName, 0);
-
+    this.reading= false;
     return value;
   }
 
@@ -756,8 +758,10 @@ public class OObjectProxyMethodHandler implements MethodHandler {
   protected Object manageSetMethod(final Object self, final Method m, final Method proceed, final Object[] args)
       throws IllegalAccessException, InvocationTargetException {
     final String fieldName;
-    fieldName = OObjectEntityEnhancer.getInstance().getMethodFilter(self.getClass()).getFieldName(m);
-    args[0] = setValue(self, fieldName, args[0]);
+    if(!reading) {
+      fieldName = OObjectEntityEnhancer.getInstance().getMethodFilter(self.getClass()).getFieldName(m);
+      args[0] = setValue(self, fieldName, args[0]);
+    }
     return proceed.invoke(self, args);
   }
 

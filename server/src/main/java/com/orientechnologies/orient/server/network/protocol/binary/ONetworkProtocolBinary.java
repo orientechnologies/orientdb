@@ -886,8 +886,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
           final ODistributedConfiguration dbCfg = ((ODistributedServerManager) plugin)
               .getDatabaseConfiguration(connection.getDatabase().getName());
           if (dbCfg != null) {
-            // ENHANCE SERVER CFG WITH DATABASE CFG
-            distributedCfg.field("database", dbCfg.getDocument(), OType.EMBEDDED);
+            // ENHANCE SERVER CFG WITH DATABASE CFG (COPY IT TO AVOID CONCURRENT ISSUES WITH DOCUMENT OWNERSHIP)
+            distributedCfg.field("database", dbCfg.getDocument().copy(), OType.EMBEDDED);
           }
         }
 
@@ -975,7 +975,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     req.getTask().setNodeSource(senderNodeName);
 
     if (ddb != null)
-      ddb.processRequest(req);
+      ddb.processRequest(req, true);
     else {
       manager.executeOnLocalNode(req.getId(), req.getTask(), null);
     }
@@ -2715,7 +2715,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       path = server.getConfiguration().getStoragePath(dbName);
 
       if (path == null)
-        path = storageType + ":" + server.getDatabaseDirectory() + "/" + dbName;
+        path = storageType + ":" + server.getDatabaseDirectory() + dbName;
     } else if (storageType.equals(OEngineMemory.NAME)) {
       path = storageType + ":" + dbName;
     } else

@@ -132,10 +132,9 @@ public class LuceneRangeTest extends BaseLuceneTest {
     int cluster = db.getMetadata().getSchema().getClass("Person").getClusterIds()[1];
     db.commit();
 
-//age and date range with MUST
     Collection<ODocument> results = db.command(
         new OCommandSQL(
-            "SELECT FROM Person WHERE name LUCENE '+_CLUSTER:" + cluster +"'"))
+            "SELECT FROM Person WHERE name LUCENE '+_CLUSTER:" + cluster + "'"))
         .execute();
 
     assertThat(results).hasSize(2);

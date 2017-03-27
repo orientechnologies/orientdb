@@ -84,7 +84,7 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
       return new OrientGraph(pool, settings);
     }
 
-    public OrientBaseGraph getGraph(final ODatabaseDocumentTx database, final boolean autoCreateTx){
+    public OrientBaseGraph getGraph(final ODatabaseDocumentTx database, final boolean autoCreateTx) {
       return new OrientGraph(database, autoCreateTx);
     }
   };
@@ -116,7 +116,7 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
       return new OrientGraphNoTx(pool, settings);
     }
 
-    public OrientBaseGraph getGraph(final ODatabaseDocumentTx database, final boolean autoCreateTx){
+    public OrientBaseGraph getGraph(final ODatabaseDocumentTx database, final boolean autoCreateTx) {
       return new OrientGraphNoTx(database);
     }
   };
@@ -280,6 +280,7 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
    *
    * @param iCreate if true automatically creates database if database with given URL does not exist
    * @param iOpen   if true automatically opens the database
+   *
    * @return database
    */
   public ODatabaseDocumentTx getDatabase(final boolean iCreate, final boolean iOpen) {
@@ -287,9 +288,6 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
       return pool.acquire();
 
     final ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
-
-    final String connMode = settings.getConnectionStrategy();
-    db.setProperty(OStorageRemote.PARAM_CONNECTION_STRATEGY, connMode);
 
     for (Map.Entry<String, Object> entry : properties.entrySet()) {
       db.setProperty(entry.getKey(), entry.getValue());
@@ -327,6 +325,7 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
    *
    * @param iMin minimum size of pool
    * @param iMax maximum size of pool
+   *
    * @return this
    */
   public OrientGraphFactory setupPool(final int iMin, final int iMax) {
@@ -394,6 +393,7 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
    *
    * @param iName  Property name
    * @param iValue new value to set
+   *
    * @return The previous value if any, otherwise null
    */
   public Object setProperty(final String iName, final Object iValue) {
@@ -411,10 +411,15 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
    * Gets the property value.
    *
    * @param iName Property name
+   *
    * @return The previous value if any, otherwise null
    */
   public Object getProperty(final String iName) {
     return properties.get(iName.toLowerCase());
   }
 
+  @Override
+  protected Map<String, Object> getProperties() {
+    return properties;
+  }
 }

@@ -25,6 +25,8 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OPaginatedClusterException;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
@@ -32,6 +34,8 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
+
+import java.util.Arrays;
 
 /**
  * Distributed task to fix delete record in conflict on synchronization.
@@ -71,7 +75,10 @@ public class OResurrectRecordTask extends OUpdateRecordTask {
     } catch (OPaginatedClusterException e) {
       ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
           "+-> no resurrection, because the record was not deleted");
-      return Boolean.TRUE;
+
+      // CHECK THE RECORD CONTENT IS THE SAME
+      final OStorageOperationResult<ORawBuffer> storedRecord = database.getStorage().readRecord(rid, null, true, false, null);
+      return Arrays.equals(content, storedRecord.getResult().getBuffer());
 
     } catch (Exception e) {
       ODistributedServerLog.error(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,

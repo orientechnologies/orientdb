@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexException;
+import com.orientechnologies.orient.core.index.OIndexKeyCursor;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -354,8 +355,9 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
     try {
       reopenToken = mgrWriter.deleteDocuments(query);
       if (!mgrWriter.getIndexWriter().hasDeletions()) {
-        OLogManager.instance().error(this, "Error on deleting document by query '%s' to Lucene index",
-            new OIndexException("Error deleting document"), query);
+        OLogManager.instance()
+            .error(this, "Error on deleting document by query '%s' to Lucene index", new OIndexException("Error deleting document"),
+                query);
       }
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error on deleting document by query '%s' to Lucene index", e, query);
@@ -470,7 +472,16 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
 
   @Override
   public OIndexCursor descCursor(ValuesTransformer valuesTransformer) {
-    return null;
+    throw new UnsupportedOperationException("Cannot iterate over a lucene index");
+  }
+  @Override
+  public OIndexCursor cursor(ValuesTransformer valuesTransformer) {
+    throw new UnsupportedOperationException("Cannot iterate over a lucene index");
+  }
+
+  @Override
+  public OIndexKeyCursor keyCursor() {
+    throw new UnsupportedOperationException("Cannot iterate over a lucene index");
   }
 
   public long size(final ValuesTransformer transformer) {
@@ -534,5 +545,10 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error on releasing Lucene index", e);
     }
+  }
+
+  @Override
+  public boolean isFrozen() {
+    return closed.get();
   }
 }

@@ -1212,7 +1212,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
             endAtomicOperation(false, null);
 
           } catch (Exception e) {
-            endAtomicOperation(true, e);
             throw OException.wrapException(new OPaginatedClusterException("Error during record recycling", this), e);
           }
         } else {
@@ -1294,7 +1293,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
             endAtomicOperation(false, null);
 
           } catch (RuntimeException e) {
-            endAtomicOperation(true, e);
             if (e instanceof OPaginatedClusterException)
               throw e;
             else

@@ -6,9 +6,11 @@ import com.orientechnologies.common.exception.OErrorCode;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.*;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -91,6 +93,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
 
   private Map<String, OWhereClause> aliasFilters;
   private Map<String, String>       aliasClasses;
+  private Map<String, ORID>         aliasRids;
 
   // execution data
   private OCommandContext   context;
@@ -124,9 +127,11 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
    *
    * @param iRequest Command request implementation.
    * @param <RET>
+   *
    * @return
    */
-  @Override public <RET extends OCommandExecutor> RET parse(OCommandRequest iRequest) {
+  @Override
+  public <RET extends OCommandExecutor> RET parse(OCommandRequest iRequest) {
     final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
     if (iRequest instanceof OSQLSynchQuery) {
       request = (OSQLSynchQuery<ODocument>) iRequest;
@@ -163,12 +168,14 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
 
     Map<String, OWhereClause> aliasFilters = new LinkedHashMap<String, OWhereClause>();
     Map<String, String> aliasClasses = new LinkedHashMap<String, String>();
+    Map<String, ORID> aliasRids = new LinkedHashMap<String, ORID>();
     for (OMatchExpression expr : this.matchExpressions) {
-      addAliases(expr, aliasFilters, aliasClasses, context);
+      addAliases(expr, aliasFilters, aliasClasses, aliasRids, context);
     }
 
     this.aliasFilters = aliasFilters;
     this.aliasClasses = aliasClasses;
+    this.aliasRids = aliasRids;
 
     rebindFilters(aliasFilters);
 
@@ -226,9 +233,11 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
    * in next releases
    *
    * @param iArgs Optional variable arguments to pass to the command.
+   *
    * @return
    */
-  @Override public Object execute(Map<Object, Object> iArgs) {
+  @Override
+  public Object execute(Map<Object, Object> iArgs) {
     this.context.setInputParameters(iArgs);
     return execute(this.request, this.context, this.progressListener);
   }
@@ -239,13 +248,14 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
    *
    * @param request
    * @param context
+   *
    * @return
    */
   public Object execute(OSQLAsynchQuery<ODocument> request, OCommandContext context, OProgressListener progressListener) {
     Map<Object, Object> iArgs = context.getInputParameters();
     try {
 
-      Map<String, Long> estimatedRootEntries = estimateRootEntries(aliasClasses, aliasFilters, context);
+      Map<String, Long> estimatedRootEntries = estimateRootEntries(aliasClasses, aliasFilters, aliasRids, context);
       if (estimatedRootEntries.values().contains(0l)) {
         return new OBasicResultSet();// some aliases do not match on any classes
       }
@@ -254,7 +264,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       MatchExecutionPlan executionPlan = new MatchExecutionPlan();
       executionPlan.sortedEdges = sortedEdges;
 
-      calculateMatch(pattern, estimatedRootEntries, new MatchContext(), aliasClasses, aliasFilters, context, request,
+      calculateMatch(pattern, estimatedRootEntries, new MatchContext(), aliasClasses, aliasFilters, aliasRids, context, request,
           executionPlan);
 
       return getResult(request);
@@ -268,17 +278,17 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
 
   /**
    * Start a depth-first traversal from the starting node, adding all viable unscheduled edges and vertices.
-   * @param startNode the node from which to start the depth-first traversal
-   * @param visitedNodes set of nodes that are already visited (mutated in this function)
-   * @param visitedEdges set of edges that are already visited and therefore don't need to be scheduled
-   *                     (mutated in this function)
-   * @param remainingDependencies dependency map including only the dependencies that haven't yet been satisfied
-   *                              (mutated in this function)
-   * @param resultingSchedule the schedule being computed i.e. appended to (mutated in this function)
+   *
+   * @param startNode             the node from which to start the depth-first traversal
+   * @param visitedNodes          set of nodes that are already visited (mutated in this function)
+   * @param visitedEdges          set of edges that are already visited and therefore don't need to be scheduled (mutated in this
+   *                              function)
+   * @param remainingDependencies dependency map including only the dependencies that haven't yet been satisfied (mutated in this
+   *                              function)
+   * @param resultingSchedule     the schedule being computed i.e. appended to (mutated in this function)
    */
-  private void updateScheduleStartingAt(PatternNode startNode, Set<PatternNode> visitedNodes,
-                                        Set<PatternEdge> visitedEdges, Map<String, Set<String>> remainingDependencies,
-                                        List<EdgeTraversal> resultingSchedule) {
+  private void updateScheduleStartingAt(PatternNode startNode, Set<PatternNode> visitedNodes, Set<PatternEdge> visitedEdges,
+      Map<String, Set<String>> remainingDependencies, List<EdgeTraversal> resultingSchedule) {
     // OrientDB requires the schedule to contain all edges present in the query, which is a stronger condition
     // than simply visiting all nodes in the query. Consider the following example query:
     //     MATCH {
@@ -354,8 +364,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
         // Instead, we'll allow the neighboring node to add the edge we failed to visit, via the above block.
         if (visitedEdges.contains(edge)) {
           // Should never happen.
-          throw new AssertionError("The edge was visited, but the neighboring vertex was not: " + edge +
-                  " " + neighboringNode);
+          throw new AssertionError("The edge was visited, but the neighboring vertex was not: " + edge + " " + neighboringNode);
         }
 
         visitedEdges.add(edge);
@@ -367,7 +376,9 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
 
   /**
    * Calculate the set of dependency aliases for each alias in the pattern.
+   *
    * @param pattern
+   *
    * @return map of alias to the set of aliases it depends on
    */
   private Map<String, Set<String>> getDependencies(Pattern pattern) {
@@ -442,8 +453,8 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
         // We didn't manage to find a valid root, and yet we haven't constructed a complete schedule.
         // This means there must be a cycle in our dependency graph, or all dependency-free nodes are optional.
         // Therefore, the query is invalid.
-        throw new OCommandExecutionException("This query contains MATCH conditions that cannot be evaluated, " +
-                "like an undefined alias or a circular dependency on a $matched condition.");
+        throw new OCommandExecutionException("This query contains MATCH conditions that cannot be evaluated, "
+            + "like an undefined alias or a circular dependency on a $matched condition.");
       }
 
       // 2. Having found a starting vertex, traverse its neighbors depth-first,
@@ -466,15 +477,15 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
   }
 
   private boolean calculateMatch(Pattern pattern, Map<String, Long> estimatedRootEntries, MatchContext matchContext,
-      Map<String, String> aliasClasses, Map<String, OWhereClause> aliasFilters, OCommandContext iCommandContext,
-      OSQLAsynchQuery<ODocument> request, MatchExecutionPlan executionPlan) {
+      Map<String, String> aliasClasses, Map<String, OWhereClause> aliasFilters, Map<String, ORID> aliasRids,
+      OCommandContext iCommandContext, OSQLAsynchQuery<ODocument> request, MatchExecutionPlan executionPlan) {
 
     boolean rootFound = false;
     // find starting nodes with few entries
     for (Map.Entry<String, Long> entryPoint : estimatedRootEntries.entrySet()) {
       if (entryPoint.getValue() < threshold) {
         String nextAlias = entryPoint.getKey();
-        Iterable<OIdentifiable> matches = fetchAliasCandidates(nextAlias, aliasFilters, iCommandContext, aliasClasses);
+        Iterable<OIdentifiable> matches = fetchAliasCandidates(nextAlias, aliasFilters, iCommandContext, aliasClasses, aliasRids);
 
         Set<OIdentifiable> ids = new HashSet<OIdentifiable>();
         if (!matches.iterator().hasNext()) {
@@ -492,7 +503,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     // no nodes under threshold, guess the smallest one
     if (!rootFound) {
       String nextAlias = getNextAlias(estimatedRootEntries, matchContext);
-      Iterable<OIdentifiable> matches = fetchAliasCandidates(nextAlias, aliasFilters, iCommandContext, aliasClasses);
+      Iterable<OIdentifiable> matches = fetchAliasCandidates(nextAlias, aliasFilters, iCommandContext, aliasClasses, aliasRids);
       if (!matches.iterator().hasNext()) {
         return true;
       }
@@ -516,20 +527,21 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       allCandidates = (Iterable) getDatabase().query(new OSQLSynchQuery<Object>(select.toString()));
     }
 
-    if (!processContextFromCandidates(pattern, executionPlan, matchContext, aliasClasses, aliasFilters, iCommandContext, request,
-        allCandidates, smallestAlias, 0)) {
+    if (!processContextFromCandidates(pattern, executionPlan, matchContext, aliasClasses, aliasFilters, aliasRids, iCommandContext,
+        request, allCandidates, smallestAlias, 0)) {
       return false;
     }
     return true;
   }
 
   private boolean processContextFromCandidates(Pattern pattern, MatchExecutionPlan executionPlan, MatchContext matchContext,
-      Map<String, String> aliasClasses, Map<String, OWhereClause> aliasFilters, OCommandContext iCommandContext,
-      OSQLAsynchQuery<ODocument> request, Iterable<OIdentifiable> candidates, String alias, int startFromEdge) {
+      Map<String, String> aliasClasses, Map<String, OWhereClause> aliasFilters, Map<String, ORID> aliasRids,
+      OCommandContext iCommandContext, OSQLAsynchQuery<ODocument> request, Iterable<OIdentifiable> candidates, String alias,
+      int startFromEdge) {
     for (OIdentifiable id : candidates) {
       MatchContext childContext = matchContext.copy(alias, id);
       childContext.currentEdgeNumber = startFromEdge;
-      if (!processContext(pattern, executionPlan, childContext, aliasClasses, aliasFilters, iCommandContext, request)) {
+      if (!processContext(pattern, executionPlan, childContext, aliasClasses, aliasFilters, aliasRids, iCommandContext, request)) {
         return false;
       }
     }
@@ -537,8 +549,9 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
   }
 
   private Iterable<OIdentifiable> fetchAliasCandidates(String nextAlias, Map<String, OWhereClause> aliasFilters,
-      OCommandContext iCommandContext, Map<String, String> aliasClasses) {
-    Iterator<OIdentifiable> it = query(aliasClasses.get(nextAlias), aliasFilters.get(nextAlias), iCommandContext);
+      OCommandContext iCommandContext, Map<String, String> aliasClasses, Map<String, ORID> aliasRids) {
+    Iterator<OIdentifiable> it = query(aliasClasses.get(nextAlias), aliasFilters.get(nextAlias), aliasRids.get(nextAlias),
+        iCommandContext);
     Set<OIdentifiable> result = new HashSet<OIdentifiable>();
     while (it.hasNext()) {
       result.add(it.next().getIdentity());
@@ -548,8 +561,8 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
   }
 
   private boolean processContext(Pattern pattern, MatchExecutionPlan executionPlan, MatchContext matchContext,
-      Map<String, String> aliasClasses, Map<String, OWhereClause> aliasFilters, OCommandContext iCommandContext,
-      OSQLAsynchQuery<ODocument> request) {
+      Map<String, String> aliasClasses, Map<String, OWhereClause> aliasFilters, Map<String, ORID> aliasRids,
+      OCommandContext iCommandContext, OSQLAsynchQuery<ODocument> request) {
 
     iCommandContext.setVariable("$matched", matchContext.matched);
 
@@ -559,7 +572,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     }
     if (executionPlan.sortedEdges.size() == matchContext.currentEdgeNumber) {
       // false if limit reached
-      return expandCartesianProduct(pattern, matchContext, aliasClasses, aliasFilters, iCommandContext, request);
+      return expandCartesianProduct(pattern, matchContext, aliasClasses, aliasFilters, aliasRids, iCommandContext, request);
     }
     EdgeTraversal currentEdge = executionPlan.sortedEdges.get(matchContext.currentEdgeNumber);
     PatternNode rootNode = currentEdge.out ? currentEdge.edge.out : currentEdge.edge.in;
@@ -574,8 +587,8 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
           //restart from candidates (disjoint patterns? optional? just could not proceed from last node?)
           Iterable rightCandidates = matchContext.candidates.get(outEdge.out.alias);
           if (rightCandidates != null) {
-            if (!processContextFromCandidates(pattern, executionPlan, matchContext, aliasClasses, aliasFilters, iCommandContext,
-                request, rightCandidates, outEdge.out.alias, matchContext.currentEdgeNumber)) {
+            if (!processContextFromCandidates(pattern, executionPlan, matchContext, aliasClasses, aliasFilters, aliasRids,
+                iCommandContext, request, rightCandidates, outEdge.out.alias, matchContext.currentEdgeNumber)) {
               return false;
             }
           }
@@ -590,7 +603,8 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
           childContext.currentEdgeNumber = matchContext.currentEdgeNumber + 1; //TODO testOptional 3 match passa con +1
           childContext.matchedEdges.put(outEdge, true);
 
-          if (!processContext(pattern, executionPlan, childContext, aliasClasses, aliasFilters, iCommandContext, request)) {
+          if (!processContext(pattern, executionPlan, childContext, aliasClasses, aliasFilters, aliasRids, iCommandContext,
+              request)) {
             return false;
           }
         }
@@ -613,7 +627,8 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
               MatchContext childContext = matchContext.copy(outEdge.in.alias, rightValue.getIdentity());
               childContext.currentEdgeNumber = matchContext.currentEdgeNumber + 1;
               childContext.matchedEdges.put(outEdge, true);
-              if (!processContext(pattern, executionPlan, childContext, aliasClasses, aliasFilters, iCommandContext, request)) {
+              if (!processContext(pattern, executionPlan, childContext, aliasClasses, aliasFilters, aliasRids, iCommandContext,
+                  request)) {
                 return false;
               }
               break;
@@ -626,7 +641,8 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
                 MatchContext childContext = matchContext.copy(outEdge.in.alias, id);
                 childContext.currentEdgeNumber = matchContext.currentEdgeNumber + 1;
                 childContext.matchedEdges.put(outEdge, true);
-                if (!processContext(pattern, executionPlan, childContext, aliasClasses, aliasFilters, iCommandContext, request)) {
+                if (!processContext(pattern, executionPlan, childContext, aliasClasses, aliasFilters, aliasRids, iCommandContext,
+                    request)) {
                   return false;
                 }
               }
@@ -635,7 +651,8 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
             MatchContext childContext = matchContext.copy(outEdge.in.alias, rightValue.getIdentity());
             childContext.currentEdgeNumber = matchContext.currentEdgeNumber + 1;
             childContext.matchedEdges.put(outEdge, true);
-            if (!processContext(pattern, executionPlan, childContext, aliasClasses, aliasFilters, iCommandContext, request)) {
+            if (!processContext(pattern, executionPlan, childContext, aliasClasses, aliasFilters, aliasRids, iCommandContext,
+                request)) {
               return false;
             }
           }
@@ -655,7 +672,8 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
             childContext.matched.put(inEdge.out.alias, null);
             childContext.currentEdgeNumber = matchContext.currentEdgeNumber + 1;
             childContext.matchedEdges.put(inEdge, true);
-            if (!processContext(pattern, executionPlan, childContext, aliasClasses, aliasFilters, iCommandContext, request)) {
+            if (!processContext(pattern, executionPlan, childContext, aliasClasses, aliasFilters, aliasRids, iCommandContext,
+                request)) {
               return false;
             }
           }
@@ -680,7 +698,8 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
                 MatchContext childContext = matchContext.copy(inEdge.out.alias, leftValue.getIdentity());
                 childContext.currentEdgeNumber = matchContext.currentEdgeNumber + 1;
                 childContext.matchedEdges.put(inEdge, true);
-                if (!processContext(pattern, executionPlan, childContext, aliasClasses, aliasFilters, iCommandContext, request)) {
+                if (!processContext(pattern, executionPlan, childContext, aliasClasses, aliasFilters, aliasRids, iCommandContext,
+                    request)) {
                   return false;
                 }
                 break;
@@ -694,7 +713,8 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
                   childContext.currentEdgeNumber = matchContext.currentEdgeNumber + 1;
                   childContext.matchedEdges.put(inEdge, true);
 
-                  if (!processContext(pattern, executionPlan, childContext, aliasClasses, aliasFilters, iCommandContext, request)) {
+                  if (!processContext(pattern, executionPlan, childContext, aliasClasses, aliasFilters, aliasRids, iCommandContext,
+                      request)) {
                     return false;
                   }
                 }
@@ -708,7 +728,8 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
                 MatchContext childContext = matchContext.copy(inEdge.out.alias, leftValue.getIdentity());
                 childContext.currentEdgeNumber = matchContext.currentEdgeNumber + 1;
                 childContext.matchedEdges.put(inEdge, true);
-                if (!processContext(pattern, executionPlan, childContext, aliasClasses, aliasFilters, iCommandContext, request)) {
+                if (!processContext(pattern, executionPlan, childContext, aliasClasses, aliasFilters, aliasRids, iCommandContext,
+                    request)) {
                   return false;
                 }
               }
@@ -789,7 +810,8 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
   }
 
   private boolean expandCartesianProduct(Pattern pattern, MatchContext matchContext, Map<String, String> aliasClasses,
-      Map<String, OWhereClause> aliasFilters, OCommandContext iCommandContext, OSQLAsynchQuery<ODocument> request) {
+      Map<String, OWhereClause> aliasFilters, Map<String, ORID> aliasRids, OCommandContext iCommandContext,
+      OSQLAsynchQuery<ODocument> request) {
     for (String alias : pattern.aliasToNode.keySet()) {
       if (!matchContext.matched.containsKey(alias)) {
         String target = aliasClasses.get(alias);
@@ -797,7 +819,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
           throw new OCommandExecutionException("Cannot execute MATCH statement on alias " + alias + ": class not defined");
         }
 
-        Iterable<OIdentifiable> values = fetchAliasCandidates(alias, aliasFilters, iCommandContext, aliasClasses);
+        Iterable<OIdentifiable> values = fetchAliasCandidates(alias, aliasFilters, iCommandContext, aliasClasses, aliasRids);
         for (OIdentifiable id : values) {
           MatchContext childContext = matchContext.copy(alias, id);
           if (allNodesCalculated(childContext, pattern)) {
@@ -808,7 +830,8 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
             }
           } else {
             // false if limit reached
-            boolean added = expandCartesianProduct(pattern, childContext, aliasClasses, aliasFilters, iCommandContext, request);
+            boolean added = expandCartesianProduct(pattern, childContext, aliasClasses, aliasFilters, aliasRids, iCommandContext,
+                request);
             if (!added) {
               return false;
             }
@@ -904,6 +927,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
    * @param request
    * @param ctx
    * @param record
+   *
    * @return false if limit was reached
    */
   private boolean addSingleResult(OSQLAsynchQuery<ODocument> request, OBasicCommandContext ctx, ORecord record) {
@@ -984,26 +1008,32 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     return true;
   }
 
-  private Iterator<OIdentifiable> query(String className, OWhereClause oWhereClause, OCommandContext ctx) {
+  private Iterator<OIdentifiable> query(String className, OWhereClause oWhereClause, ORID rid, OCommandContext ctx) {
     final ODatabaseDocument database = getDatabase();
-    OClass schemaClass = database.getMetadata().getSchema().getClass(className);
-    database.checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_READ, schemaClass.getName().toLowerCase());
-
-    Iterable<ORecord> baseIterable = fetchFromIndex(schemaClass, oWhereClause);
+    if(className!=null) {
+      OClass schemaClass = database.getMetadata().getSchema().getClass(className);
+      database.checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_READ, schemaClass.getName().toLowerCase());
+//      Iterable<ORecord> baseIterable = fetchFromIndex(schemaClass, oWhereClause);
+    }
 
     // OSelectStatement stm = buildSelectStatement(className, oWhereClause);
     // return stm.execute(ctx);
 
     String text;
     if (oWhereClause == null) {
-      text = "(select from " + className + ")";
+      if (rid != null) {
+        text = "(select from " + rid + ")";
+      } else {
+        text = "(select from " + className + ")";
+      }
     } else {
       StringBuilder builder = new StringBuilder();
       oWhereClause.toString(ctx.getInputParameters(), builder);
 
       synchronized (oWhereClause) { //this instance is shared...
         replaceIdentifier(oWhereClause, "$currentMatch", "@this");
-        text = "(select from " + className + " where " + builder.toString().replaceAll("\\$currentMatch", "@this") + ")";
+        text = "(select from " + (rid != null ? rid : className) + " where " + builder.toString()
+            .replaceAll("\\$currentMatch", "@this") + ")";
         replaceIdentifier(oWhereClause, "@this", "$currentMatch");
       }
     }
@@ -1065,19 +1095,38 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
   }
 
   private Map<String, Long> estimateRootEntries(Map<String, String> aliasClasses, Map<String, OWhereClause> aliasFilters,
-      OCommandContext ctx) {
+      Map<String, ORID> aliasRids, OCommandContext ctx) {
     Set<String> allAliases = new LinkedHashSet<String>();
     allAliases.addAll(aliasClasses.keySet());
     allAliases.addAll(aliasFilters.keySet());
+    allAliases.addAll(aliasRids.keySet());
 
-    OSchema schema = getDatabase().getMetadata().getSchema();
+    ODatabaseDocumentInternal db = getDatabase();
+    OSchema schema = db.getMetadata().getSchema();
 
     Map<String, Long> result = new LinkedHashMap<String, Long>();
     for (String alias : allAliases) {
-      if(this.pattern.aliasToNode.get(alias).isOptionalNode()){
+      if (this.pattern.aliasToNode.get(alias).isOptionalNode()) {
         continue;
       }
+      ORID rid = aliasRids.get(alias);
       String className = aliasClasses.get(alias);
+      if (rid != null) {
+        if (className != null) {
+          OClass ridClass = db.getMetadata().getSchema().getClassByClusterId(rid.getClusterId());
+          if (!ridClass.isSubClassOf(className)) {
+            result.put(alias, 0l);//RID and class don't match
+            continue;
+          }
+        }
+        ORecord doc = db.load(rid);
+        if (doc == null) {
+          result.put(alias, 0l);
+        } else {
+          result.put(alias, 1l);
+        }
+        continue;
+      }
       if (className == null) {
         continue;
       }
@@ -1104,17 +1153,17 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
   }
 
   private void addAliases(OMatchExpression expr, Map<String, OWhereClause> aliasFilters, Map<String, String> aliasClasses,
-      OCommandContext context) {
-    addAliases(expr.origin, aliasFilters, aliasClasses, context);
+      Map<String, ORID> aliasRids, OCommandContext context) {
+    addAliases(expr.origin, aliasFilters, aliasClasses, aliasRids, context);
     for (OMatchPathItem item : expr.items) {
       if (item.filter != null) {
-        addAliases(item.filter, aliasFilters, aliasClasses, context);
+        addAliases(item.filter, aliasFilters, aliasClasses, aliasRids, context);
       }
     }
   }
 
   private void addAliases(OMatchFilter matchFilter, Map<String, OWhereClause> aliasFilters, Map<String, String> aliasClasses,
-      OCommandContext context) {
+      Map<String, ORID> aliasRids, OCommandContext context) {
     String alias = matchFilter.getAlias();
     OWhereClause filter = matchFilter.getFilter();
     if (alias != null) {
@@ -1145,6 +1194,11 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
           aliasClasses.put(alias, lower);
         }
       }
+
+      ORID rid = matchFilter.getRid(context);
+      if (rid != null) {
+        aliasRids.put(alias, rid);
+      }
     }
   }
 
@@ -1167,65 +1221,80 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     return null;
   }
 
-  @Override public <RET extends OCommandExecutor> RET setProgressListener(OProgressListener progressListener) {
+  @Override
+  public <RET extends OCommandExecutor> RET setProgressListener(OProgressListener progressListener) {
     this.progressListener = progressListener;
     return (RET) this;
   }
 
-  @Override public <RET extends OCommandExecutor> RET setLimit(int iLimit) {
+  @Override
+  public <RET extends OCommandExecutor> RET setLimit(int iLimit) {
     limitFromProtocol = iLimit;
     return (RET) this;
   }
 
-  @Override public String getFetchPlan() {
+  @Override
+  public String getFetchPlan() {
     return null;
   }
 
-  @Override public Map<Object, Object> getParameters() {
+  @Override
+  public Map<Object, Object> getParameters() {
     return null;
   }
 
-  @Override public OCommandContext getContext() {
+  @Override
+  public OCommandContext getContext() {
     return context;
   }
 
-  @Override public void setContext(OCommandContext context) {
+  @Override
+  public void setContext(OCommandContext context) {
     this.context = context;
   }
 
-  @Override public boolean isIdempotent() {
+  @Override
+  public boolean isIdempotent() {
     return true;
   }
 
-  @Override public Set<String> getInvolvedClusters() {
+  @Override
+  public Set<String> getInvolvedClusters() {
     return Collections.EMPTY_SET;
   }
 
-  @Override public int getSecurityOperationType() {
+  @Override
+  public int getSecurityOperationType() {
     return ORole.PERMISSION_READ;
   }
 
-  @Override public boolean involveSchema() {
+  @Override
+  public boolean involveSchema() {
     return false;
   }
 
-  @Override public String getSyntax() {
+  @Override
+  public String getSyntax() {
     return "MATCH <match-statement> [, <match-statement] RETURN <alias>[, <alias>]";
   }
 
-  @Override public boolean isLocalExecution() {
+  @Override
+  public boolean isLocalExecution() {
     return true;
   }
 
-  @Override public boolean isCacheable() {
+  @Override
+  public boolean isCacheable() {
     return false;
   }
 
-  @Override public long getDistributedTimeout() {
+  @Override
+  public long getDistributedTimeout() {
     return -1;
   }
 
-  @Override public Object mergeResults(Map<String, Object> results) throws Exception {
+  @Override
+  public Object mergeResults(Map<String, Object> results) throws Exception {
     return results;
   }
 
@@ -1260,7 +1329,8 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     }
   }
 
-  @Override public Iterator<OIdentifiable> iterator(Map<Object, Object> iArgs) {
+  @Override
+  public Iterator<OIdentifiable> iterator(Map<Object, Object> iArgs) {
     if (context == null) {
       context = new OBasicCommandContext();
     }

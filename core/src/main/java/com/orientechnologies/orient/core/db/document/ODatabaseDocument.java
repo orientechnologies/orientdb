@@ -23,6 +23,7 @@ package com.orientechnologies.orient.core.db.document;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseSchemaAware;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.security.ORule;
@@ -287,8 +288,16 @@ public interface ODatabaseDocument extends ODatabase<ORecord>, ODatabaseSchemaAw
    *
    * @param iClusterName Cluster name
    * @param iParameters  Additional parameters to pass to the factories
+   *
    * @return Cluster id
    */
   int addBlobCluster(String iClusterName, Object... iParameters);
+
+  /**
+   * Return the active intent.
+   *
+   * @return
+   */
+  OIntent getActiveIntent();
 
 }

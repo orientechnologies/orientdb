@@ -169,6 +169,14 @@ public class OMatchStatementTest {
     checkRightSyntax("MATCH {class: 'V', as: foo}-->{}<-foo-{}-bar-{}-->{as: bar, optional:false} RETURN foo");
   }
 
+  @Test
+  public void testTargetRid() {
+    checkRightSyntax("MATCH {rid:#12:0, as: foo}-->{} RETURN foo");
+    checkRightSyntax("MATCH {class:Foo, rid:#12:0, as: foo}-->{} RETURN foo");
+    checkWrongSyntax("MATCH {rid:foo, as: foo}-->{} RETURN foo");
+    checkWrongSyntax("MATCH {rid:'foo', as: foo}-->{} RETURN foo");
+  }
+
   private void printTree(String s) {
     OrientSql osql = getParserFor(s);
     try {

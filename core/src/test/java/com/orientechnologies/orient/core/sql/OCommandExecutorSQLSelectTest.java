@@ -1573,6 +1573,15 @@ public class OCommandExecutorSQLSelectTest {
 
   }
 
+  public void testDashedMapKey(){
+    db.command(new OCommandSQL("create class testDashedMapKey")).execute();
+    db.command(new OCommandSQL("create property testDashedMapKey.mapProperty EMBEDDEDMAP")).execute();
+    db.command(new OCommandSQL("insert into testDashedMapKey content {'mapProperty':{'dashed-key':'value'}}")).execute();
+    List<?> result = db.query(new OSQLSynchQuery("select from testDashedMapKey where mapProperty['dashed-key'] = 'value'"));
+    Assert.assertFalse(result.isEmpty());
+    db.command(new OCommandSQL("drop class testDashedMapKey")).execute();
+  }
+
   @Test
   public void testDoubleExponentNotation(){
     //issue #7013
@@ -1580,6 +1589,18 @@ public class OCommandExecutorSQLSelectTest {
     List<ODocument> results = db.query(new OSQLSynchQuery<ODocument>("select 1e-2 as a"));
     Assert.assertEquals(results.size(), 1);
     Assert.assertEquals(results.get(0).field("a"), 0.01d);
+  }
+
+
+  @Test
+  public void testConvertDouble(){
+    //issue #7234
+
+    db.command(new OCommandSQL("create class testConvertDouble")).execute();
+    db.command(new OCommandSQL("insert into testConvertDouble set num = 100000")).execute();
+
+    List<ODocument> results = db.query(new OSQLSynchQuery<ODocument>("SELECT FROM testConvertDouble WHERE num >= 50000 AND num <=300000000"));
+    Assert.assertEquals(results.size(), 1);
   }
 
   private long indexUsages(ODatabaseDocumentTx db) {

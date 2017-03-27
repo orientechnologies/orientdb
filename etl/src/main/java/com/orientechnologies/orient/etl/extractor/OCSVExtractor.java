@@ -14,14 +14,9 @@ import java.io.Reader;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.*;
+import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.DEBUG;
 
 /**
  * An extractor based on Apache Commons CSV
@@ -74,7 +69,7 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
   public void configure(OETLProcessor iProcessor, ODocument iConfiguration, OCommandContext iContext) {
     super.configure(iProcessor, iConfiguration, iContext);
 
-    csvFormat = CSVFormat.newFormat(',').withNullString(NULL_STRING).withEscape('\\').withQuote('"');
+    csvFormat = CSVFormat.newFormat(',').withNullString(NULL_STRING).withEscape('\\').withQuote('"').withCommentMarker('#');
 
     if (iConfiguration.containsField("predefinedFormat")) {
       csvFormat = CSVFormat.valueOf(iConfiguration.<String>field("predefinedFormat"));
@@ -209,7 +204,7 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
         final OType fieldType = typeEntry.getValue();
         String fieldValueAsString = recordAsMap.get(fieldName);
         try {
-          if (fieldType.getDefaultJavaType().equals(Date.class)) {
+          if (fieldType != null && fieldType.getDefaultJavaType() != null && fieldType.getDefaultJavaType().equals(Date.class)) {
             if (fieldType.equals(OType.DATE))
               doc.field(fieldName, transformToDate(fieldValueAsString));
             else
@@ -220,7 +215,7 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
           }
         } catch (Exception e) {
           processor.getStats().incrementErrors();
-          log(OETLProcessor.LOG_LEVELS.ERROR, "Error on converting row %d field '%s' , value '%s' (class:%s) to type: %s",
+          log(OETLProcessor.LOG_LEVELS.ERROR, "Error on converting row %d field '%s' value '%s' (class:%s) to type: %s",
               csvRecord.getRecordNumber(), fieldName, fieldValueAsString, fieldValueAsString.getClass().getName(), fieldType);
         }
       }

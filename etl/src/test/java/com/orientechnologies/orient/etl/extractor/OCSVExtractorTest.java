@@ -395,7 +395,7 @@ public class OCSVExtractorTest extends OETLBaseTest {
 
   @Test
   public void testLinkType() {
-    String cfgJson = "{source: { content: { value: 'id\n#1:1'} }, extractor : { csv : {'columns':['id:LINK']} }, loader : { test: {} } }";
+    String cfgJson = "{source: { content: { value: 'num,id\n3,#1:1'} }, extractor : { csv : {'columns':['num:INTEGER','id:LINK']} }, loader : { test: {} } }";
     process(cfgJson);
     List<ODocument> res = getResult();
     assertThat(res).hasSize(1);

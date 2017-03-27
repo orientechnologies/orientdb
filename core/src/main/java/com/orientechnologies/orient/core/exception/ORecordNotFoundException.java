@@ -29,6 +29,7 @@ public class ORecordNotFoundException extends OCoreException implements OHighLev
 
   public ORecordNotFoundException(final ORecordNotFoundException exception) {
     super(exception);
+    this.rid = exception.rid;
   }
 
   public ORecordNotFoundException(final ORID iRID) {

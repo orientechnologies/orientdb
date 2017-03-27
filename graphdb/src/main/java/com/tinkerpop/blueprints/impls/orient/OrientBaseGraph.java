@@ -47,6 +47,7 @@ import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.hashindex.local.OHashIndexBucket;
 import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -68,7 +69,6 @@ import java.net.URLEncoder;
 import java.util.*;
 import java.util.logging.Level;
 
-
 /**
  * A Blueprints implementation of the graph database OrientDB (http://www.orientechnologies.com)
  *
@@ -82,6 +82,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   public static final     String                              ADMIN               = "admin";
   private static volatile ThreadLocal<OrientBaseGraph>        activeGraph         = new ThreadLocal<OrientBaseGraph>();
   private static volatile ThreadLocal<Deque<OrientBaseGraph>> initializationStack = new InitializationStackThreadLocal();
+  private Map<String, Object> properties;
 
   static {
     Orient.instance().registerListener(new OOrientListenerAbstract() {
@@ -1939,9 +1940,11 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     if (pool == null) {
       database = new ODatabaseDocumentTx(url);
 
-      final String connMode = settings.getConnectionStrategy();
-      getDatabase().setProperty(OStorageRemote.PARAM_CONNECTION_STRATEGY, connMode);
-
+      if (properties != null) {
+        for (Map.Entry<String, Object> entry : properties.entrySet()) {
+          database.setProperty(entry.getKey(), entry.getValue());
+        }
+      }
       if (getDatabase().getStorage().getUnderlying() instanceof OAbstractPaginatedStorage)
         ((OAbstractPaginatedStorage) getDatabase().getStorage().getUnderlying()).registerRecoverListener(this);
 
@@ -2217,6 +2220,10 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     }
   }
 
+  public OIntent getIntent() {
+    return getDatabase().getActiveIntent();
+  }
+
   protected OrientVertex getVertexInstance(final OIdentifiable id) {
     return new OrientVertex(this, id);
   }
@@ -2235,5 +2242,26 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
 
   protected OrientEdge getEdgeInstance(final OIdentifiable from, final OIdentifiable to, final String label) {
     return new OrientEdge(this, from, to, label);
+  }
+
+  @Override
+  protected Object setProperty(String iName, Object iValue) {
+    if (properties == null)
+      properties = new HashMap<String, Object>();
+
+    return properties.put(iName, iValue);
+  }
+
+  @Override
+  protected Object getProperty(String iName) {
+    if (properties == null) {
+      return null;
+    }
+    return properties.get(iName);
+  }
+
+  @Override
+  public Map<String, Object> getProperties() {
+    return properties;
   }
 }

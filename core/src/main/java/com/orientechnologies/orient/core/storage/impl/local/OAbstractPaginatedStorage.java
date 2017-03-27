@@ -3160,23 +3160,29 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final OCluster cluster, final byte recordType) {
 
     try {
+      final int recycledVersion = version < -2 ? ORecordVersionHelper.clearRollbackMode(version) : version;
+
       makeStorageDirty();
       atomicOperationsManager.startAtomicOperation((String) null, true);
       try {
-        cluster.recycleRecord(rid.getClusterPosition(), content, version, recordType);
+        // correct version in case of distributed fix tasks before recycling the storage entry
+        cluster.recycleRecord(rid.getClusterPosition(), content, recycledVersion, recordType);
 
         final ORecordSerializationContext context = ORecordSerializationContext.getContext();
         if (context != null)
           context.executeOperations(this);
         atomicOperationsManager.endAtomicOperation(false, null, (String) null);
+
+      } catch (RuntimeException e) {
+        atomicOperationsManager.endAtomicOperation(true, e, (String) null);
+        throw e;
       } catch (Exception e) {
         atomicOperationsManager.endAtomicOperation(true, e, (String) null);
 
         OLogManager.instance().error(this, "Error on recycling record " + rid + " (cluster: " + cluster + ")", e);
 
-        final int recordVersion = -1;
-
-        return new OStorageOperationResult<Integer>(recordVersion);
+        throw OException
+            .wrapException(new OStorageException("Error on recycling record " + rid + " (cluster: " + cluster + ")"), e);
       }
 
       if (OLogManager.instance().isDebugEnabled())
@@ -3184,14 +3190,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       recordRecycled.incrementAndGet();
 
-      return new OStorageOperationResult<Integer>(version, content, false);
+      return new OStorageOperationResult<Integer>(recycledVersion, content, false);
 
     } catch (IOException ioe) {
       OLogManager.instance().error(this, "Error on recycling record " + rid + " (cluster: " + cluster + ")", ioe);
-
-      final int recordVersion = -1;
-
-      return new OStorageOperationResult<Integer>(recordVersion);
+      throw OException
+          .wrapException(new OStorageException("Error on recycling record " + rid + " (cluster: " + cluster + ")"), ioe);
     }
   }
 

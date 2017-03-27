@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.etl.OETLPipeline;
+import com.orientechnologies.orient.etl.OETLProcessHaltedException;
 import com.orientechnologies.orient.etl.OETLProcessor;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientElement;
@@ -73,6 +74,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
   protected boolean    wal                        = true;
   protected boolean    txUseLog                   = false;
   private   boolean    skipDuplicates             = false;
+
   public OOrientDBLoader() {
   }
 
@@ -116,6 +118,9 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
       if (className != null) {
         doc.setClassName(className);
       }
+
+      if (doc.getClassName() == null)
+        throw new OETLProcessHaltedException("Cannot insert new document " + doc + " because it has not class");
 
       if (clusterName != null) {
         doc.save(clusterName);
@@ -345,26 +350,28 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
       return;
     }
 
-    if (NOT_DEF.equals(serverPassword) || NOT_DEF.equals(serverUser)) {
-      log(ERROR, "please provide server administrator credentials");
-      throw new OLoaderException("unable to manage remote db without server admin credentials");
-    }
-
-    ODatabaseDocument documentDatabase = new ODatabaseDocumentTx(dbURL);
-    try {
-      OServerAdmin admin = new OServerAdmin(documentDatabase.getURL()).connect(serverUser, serverPassword);
-      boolean exists = admin.existsDatabase();
-      if (!exists && dbAutoCreate) {
-        admin.createDatabase(documentDatabase.getName(), dbType.name(), "plocal");
-      } else if (exists && dbAutoDropIfExists) {
-        admin.dropDatabase(documentDatabase.getName(), documentDatabase.getType());
+    if (dbAutoCreate) {
+      if (NOT_DEF.equals(serverPassword) || NOT_DEF.equals(serverUser)) {
+        log(ERROR, "please provide server administrator credentials");
+        throw new OLoaderException("unable to manage remote db without server admin credentials");
       }
-      admin.close();
 
-    } catch (IOException e) {
-      throw new OLoaderException(e);
+      ODatabaseDocument documentDatabase = new ODatabaseDocumentTx(dbURL);
+      try {
+        OServerAdmin admin = new OServerAdmin(documentDatabase.getURL()).connect(serverUser, serverPassword);
+        boolean exists = admin.existsDatabase();
+        if (!exists && dbAutoCreate) {
+          admin.createDatabase(documentDatabase.getName(), dbType.name(), "plocal");
+        } else if (exists && dbAutoDropIfExists) {
+          admin.dropDatabase(documentDatabase.getName(), documentDatabase.getType());
+        }
+        admin.close();
+
+      } catch (IOException e) {
+        throw new OLoaderException(e);
+      }
+      documentDatabase.close();
     }
-    documentDatabase.close();
   }
 
   private void configureDocumentDB() {

@@ -2,14 +2,15 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.Map;
 
 public class OInputParameter extends SimpleNode {
@@ -60,10 +61,12 @@ public class OInputParameter extends SimpleNode {
     if (value instanceof String) {
       return value;
     }
-    if (value instanceof Collection) {
+    if (OMultiValue.isMultiValue(value) && !(value instanceof byte[]) && !(value instanceof Byte[])) {
       OCollection coll = new OCollection(-1);
       coll.expressions = new ArrayList<OExpression>();
-      for (Object o : (Collection) value) {
+      Iterator iterator = OMultiValue.getMultiValueIterator(value);
+      while (iterator.hasNext()) {
+        Object o = iterator.next();
         OExpression exp = new OExpression(-1);
         exp.value = toParsedTree(o);
         coll.expressions.add(exp);

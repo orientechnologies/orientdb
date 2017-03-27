@@ -78,6 +78,9 @@ public class OCommandExecutorSQLHARemoveServer extends OCommandExecutorSQLAbstra
 
     final String databaseName = database.getName();
 
+    // The last parameter (true) indicates to set the node's database status to OFFLINE.
+    // If this is changed to false, the node will be set to NOT_AVAILABLE, and then the auto-repairer will
+    // re-synchronize the database on the node, and then set it to ONLINE.
     return dManager.removeNodeFromConfiguration(parsedStatement.serverName.getStringValue(), databaseName, false, true);
   }
 
