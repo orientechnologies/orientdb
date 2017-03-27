@@ -47,7 +47,10 @@ import java.util.Set;
  * Shortest path algorithm to find the shortest path from one node to another node in a directed graph.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
+ * @deprecated see {@link com.orientechnologies.orient.core.sql.functions.graph.OSQLFunctionShortestPath} instead
+ *
  */
+@Deprecated
 public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
   public static final String NAME = "shortestPath";
   public static final String PARAM_MAX_DEPTH = "maxDepth";

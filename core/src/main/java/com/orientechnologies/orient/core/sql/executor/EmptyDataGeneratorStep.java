@@ -29,7 +29,9 @@ public class EmptyDataGeneratorStep extends AbstractExecutionStep {
       @Override public OResult next() {
         if (served < size) {
           served++;
-          return new OResultInternal();
+          OResultInternal result = new OResultInternal();
+          ctx.setVariable("$current", result);
+          return result;
         }
         throw new IllegalStateException();
       }

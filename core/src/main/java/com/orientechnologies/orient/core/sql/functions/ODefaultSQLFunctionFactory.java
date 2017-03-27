@@ -91,6 +91,7 @@ public final class ODefaultSQLFunctionFactory implements OSQLFunctionFactory {
     register(OSQLFunctionInV.NAME, OSQLFunctionInV.class);
     register(OSQLFunctionBothE.NAME, OSQLFunctionBothE.class);
     register(OSQLFunctionBothV.NAME, OSQLFunctionBothV.class);
+    register(OSQLFunctionShortestPath.NAME, OSQLFunctionShortestPath.class);
 
   }
 
