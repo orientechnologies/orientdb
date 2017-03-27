@@ -289,7 +289,7 @@ public class ODocument extends ORecordAbstract
     if (_fields == null || _fields.size() == 0)
       return Collections.EMPTY_SET;
 
-    return _fields.entrySet().stream().filter(s -> s.getValue().exist()).map(s -> s.getKey()).collect(Collectors.toCollection(LinkedHashSet::new));
+    return _fields.entrySet().stream().filter(s -> s.getValue().exist()).map(s -> s.getKey()).collect(Collectors.toSet());
   }
 
   /**

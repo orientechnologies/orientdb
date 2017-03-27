@@ -46,7 +46,7 @@ public class OResultInternal implements OResult {
   }
 
   public Set<String> getPropertyNames() {
-    Set<String> result = new LinkedHashSet<>();
+    Set<String> result = new HashSet<>();
     if (element != null) {
       result.addAll(((ODocument) element.getRecord()).getPropertyNames());
     }
