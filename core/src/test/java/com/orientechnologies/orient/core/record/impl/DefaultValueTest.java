@@ -66,8 +66,6 @@ public class DefaultValueTest {
     OProperty some = classA.createProperty("id", OType.STRING);
     some.setDefaultValue("uuid()");
 
-    System.out.println(prop.getDefaultValue());
-
     ODocument doc = new ODocument(classA);
     ODocument saved = database.save(doc);
     assertNotNull(saved.field("date"));
@@ -80,6 +78,96 @@ public class DefaultValueTest {
     assertNotNull(seved1.field("id"));
     assertTrue(seved1.field("date") instanceof Date);
 
+  }
+
+  @Test
+  public void testDefaultValueFromJson() {
+    OSchema schema = database.getMetadata().getSchema();
+    OClass classA = schema.createClass("ClassA");
+
+    OProperty prop = classA.createProperty("date", OType.DATE);
+    prop.setDefaultValue(ODateHelper.getDateTimeFormatInstance().format(new Date()));
+
+    ODocument doc = new ODocument().fromJSON("{'@class':'ClassA','other':'other'}");
+    ODocument saved = database.save(doc);
+    assertNotNull(saved.field("date"));
+    assertTrue(saved.field("date") instanceof Date);
+    assertNotNull(saved.field("other"));
+  }
+
+  @Test
+  public void testDefaultValueProvidedFromJson() {
+    OSchema schema = database.getMetadata().getSchema();
+    OClass classA = schema.createClass("ClassA");
+
+    OProperty prop = classA.createProperty("date", OType.DATETIME);
+    prop.setDefaultValue(ODateHelper.getDateTimeFormatInstance().format(new Date()));
+
+    String value1 = ODateHelper.getDateTimeFormatInstance().format(new Date());
+    ODocument doc = new ODocument().fromJSON("{'@class':'ClassA','date':'" + value1 + "','other':'other'}");
+    ODocument saved = database.save(doc);
+    assertNotNull(saved.field("date"));
+    assertEquals(ODateHelper.getDateTimeFormatInstance().format(saved.field("date")), value1);
+    assertNotNull(saved.field("other"));
+  }
+
+  @Test
+  public void testDefaultValueMandatoryReadonlyFromJson() {
+    OSchema schema = database.getMetadata().getSchema();
+    OClass classA = schema.createClass("ClassA");
+
+    OProperty prop = classA.createProperty("date", OType.DATE);
+    prop.setMandatory(true);
+    prop.setReadonly(true);
+    prop.setDefaultValue(ODateHelper.getDateTimeFormatInstance().format(new Date()));
+
+    ODocument doc = new ODocument().fromJSON("{'@class':'ClassA','other':'other'}");
+    ODocument saved = database.save(doc);
+    assertNotNull(saved.field("date"));
+    assertTrue(saved.field("date") instanceof Date);
+    assertNotNull(saved.field("other"));
+  }
+
+  @Test
+  public void testDefaultValueProvidedMandatoryReadonlyFromJson() {
+    OSchema schema = database.getMetadata().getSchema();
+    OClass classA = schema.createClass("ClassA");
+
+    OProperty prop = classA.createProperty("date", OType.DATETIME);
+    prop.setMandatory(true);
+    prop.setReadonly(true);
+    prop.setDefaultValue(ODateHelper.getDateTimeFormatInstance().format(new Date()));
+
+    String value1 = ODateHelper.getDateTimeFormatInstance().format(new Date());
+    ODocument doc = new ODocument().fromJSON("{'@class':'ClassA','date':'" + value1 + "','other':'other'}");
+    ODocument saved = database.save(doc);
+    assertNotNull(saved.field("date"));
+    assertEquals(ODateHelper.getDateTimeFormatInstance().format(saved.field("date")), value1);
+    assertNotNull(saved.field("other"));
+  }
+
+  @Test
+  public void testDefaultValueUpdateMandatoryReadonlyFromJson() {
+    OSchema schema = database.getMetadata().getSchema();
+    OClass classA = schema.createClass("ClassA");
+
+    OProperty prop = classA.createProperty("date", OType.DATETIME);
+    prop.setMandatory(true);
+    prop.setReadonly(true);
+    prop.setDefaultValue(ODateHelper.getDateTimeFormatInstance().format(new Date()));
+
+    ODocument doc = new ODocument().fromJSON("{'@class':'ClassA','other':'other'}");
+    ODocument saved = database.save(doc);
+    assertNotNull(saved.field("date"));
+    assertTrue(saved.field("date") instanceof Date);
+    assertNotNull(saved.field("other"));
+    String val = ODateHelper.getDateTimeFormatInstance().format(doc.field("date"));
+    ODocument doc1 = new ODocument().fromJSON("{'@class':'ClassA','date':'" + val + "','other':'other1'}");
+    saved.merge(doc1, true, true);
+    saved = database.save(saved);
+    assertNotNull(saved.field("date"));
+    assertEquals(ODateHelper.getDateTimeFormatInstance().format(saved.field("date")), val);
+    assertEquals(saved.field("other"), "other1");
   }
 
 }

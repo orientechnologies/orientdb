@@ -165,6 +165,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
   public ORecord fromString(String iSource, ORecord iRecord, final String[] iFields, final String iOptions, boolean needReload) {
     iSource = unwrapSource(iSource);
 
+    String className = null;
     boolean noMap = false;
     if (iOptions != null) {
       final String[] format = iOptions.split(",");
@@ -207,8 +208,9 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
               iRecord = localRecord;
           }
         } else if (fieldName.equals(ODocumentHelper.ATTRIBUTE_CLASS) && iRecord instanceof ODocument) {
-          ODocumentInternal.fillClassNameIfNeeded(((ODocument) iRecord),
-              "null".equals(fieldValueAsString) ? null : fieldValueAsString);
+          className = "null".equals(fieldValueAsString) ? null : fieldValueAsString;
+          ODocumentInternal.fillClassNameIfNeeded(((ODocument) iRecord),className);
+
         }
       }
 
@@ -226,7 +228,9 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
             ORecordInternal.setIdentity(iRecord, new ORecordId(fieldValueAsString));
           else if (fieldName.equals(ODocumentHelper.ATTRIBUTE_VERSION))
             ORecordInternal.setVersion(iRecord, Integer.parseInt(fieldValue));
-          else if (fieldName.equals(ODocumentHelper.ATTRIBUTE_TYPE)) {
+          else if (fieldName.equals(ODocumentHelper.ATTRIBUTE_CLASS)) {
+            continue;
+          } else if (fieldName.equals(ODocumentHelper.ATTRIBUTE_TYPE)) {
             continue;
           } else if (fieldName.equals(ATTRIBUTE_FIELD_TYPES) && iRecord instanceof ODocument) {
             continue;
@@ -275,8 +279,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
                   continue;
                 }
               } else if (v instanceof ODocument && type != null && type.isLink()) {
-                String className = ((ODocument) v).getClassName();
-                if (className != null && className.length() > 0)
+                String className1 = ((ODocument) v).getClassName();
+                if (className1 != null && className1.length() > 0)
                   ((ODocument) v).save();
               }
 
@@ -298,6 +302,10 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
           }
 
         }
+        if (className != null) {
+          //Trigger the default value
+          ((ODocument) iRecord).setClassName(className);
+        }
       } catch (Exception e) {
         if (iRecord.getIdentity().isValid())
           throw OException.wrapException(
@@ -306,6 +314,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
           throw OException.wrapException(new OSerializationException("Error on unmarshalling JSON content for record: " + iSource),
               e);
       }
+
     }
 
     return iRecord;
