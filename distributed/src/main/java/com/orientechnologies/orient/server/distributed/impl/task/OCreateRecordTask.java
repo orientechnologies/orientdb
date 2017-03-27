@@ -208,7 +208,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
       // SAME CONTENT
       return loadedRecordInstance;
 
-    ODistributedServerLog.info(this, manager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+    ODistributedServerLog.debug(this, manager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
         "Error on creating record in an existent position. toStore=%s stored=%s reqId=%s", getRecord(), loadedRecordInstance,
         requestId);
 
