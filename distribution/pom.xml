@@ -134,7 +134,8 @@
                                 <argument>-classpath</argument>
                                 <classpath/>
                                 <argument>com.orientechnologies.orient.console.OConsoleDatabaseApp</argument>
-                                <argument>./src/test/resources/demoDB.osql</argument>
+                                <argument>CREATE DATABASE plocal:./target/databases/demodb;</argument>
+                                <argument>LOAD SCRIPT ./src/test/resources/demoDB.osql;</argument>
                             </arguments>
                         </configuration>
                     </execution>

@@ -87,8 +87,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginated
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedClusterDebug;
 import com.orientechnologies.orient.server.config.OServerConfigurationManager;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
-import sun.misc.Signal;
-import sun.misc.SignalHandler;
 
 import java.io.*;
 import java.lang.reflect.Array;
@@ -123,22 +121,12 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         if (setTerminalToCBreak())
           tty = true;
 
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-          @Override
-          public void run() {
-            restoreTerminal();
-          }
-        });
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> restoreTerminal()));
 
       } catch (Exception ignored) {
       }
 
-      new OSignalHandler().installDefaultSignals(new SignalHandler() {
-
-        public void handle(Signal signal) {
-          restoreTerminal();
-        }
-      });
+      new OSignalHandler().installDefaultSignals(signal -> restoreTerminal());
 
       final OConsoleDatabaseApp console = new OConsoleDatabaseApp(args);
       if (tty)
@@ -2137,6 +2125,18 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     } catch (ODatabaseExportException e) {
       printError(e);
     }
+  }
+
+  @ConsoleCommand(description = "Load a sql script into the current database", splitInWords = true, onlineHelp = "Console-Command-Load-Script")
+  public void loadScript(@ConsoleParameter(name = "scripPath", description = "load script scriptPath") final String scriptPath)
+      throws IOException {
+
+    checkForDatabase();
+
+    message("\nLoading script " + scriptPath + "...");
+
+    executeBatch(scriptPath);
+
   }
 
   @ConsoleCommand(description = "Import a database into the current one", splitInWords = false, onlineHelp = "Console-Command-Import")

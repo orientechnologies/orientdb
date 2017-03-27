@@ -3,7 +3,6 @@
 SET echo FALSE
 SET verbose 0
 
-CREATE DATABASE plocal:./target/databases/demodb
 
 CREATE CLASS DBInfo;
 INSERT INTO DBInfo SET Name='SocialTravelAgency', Version='0.75';
