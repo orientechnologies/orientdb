@@ -18,6 +18,7 @@
         <module>agent</module>
         <module>lucene-cross-class</module>
         <module>distribution</module>
+        <module>distribution-spatial</module>
         <!--<module>lucene-performance</module>-->
     </modules>
 
