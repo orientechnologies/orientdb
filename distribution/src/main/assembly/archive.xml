@@ -161,27 +161,22 @@
         <fileSet>
             <directory>${basedir}/../server/config</directory>
             <outputDirectory>config</outputDirectory>
-            <fileMode>644</fileMode>
         </fileSet>
         <fileSet>
             <directory>${basedir}/../tools/config</directory>
             <outputDirectory>config</outputDirectory>
-            <fileMode>644</fileMode>
         </fileSet>
         <fileSet>
             <directory>${basedir}/../distributed/config</directory>
             <outputDirectory>config</outputDirectory>
-            <fileMode>644</fileMode>
         </fileSet>
         <fileSet>
             <directory>${basedir}/../graphdb/config</directory>
             <outputDirectory>config</outputDirectory>
-            <fileMode>644</fileMode>
         </fileSet>
         <fileSet>
             <directory>${basedir}/../server/config/cert</directory>
             <outputDirectory>config/cert</outputDirectory>
-            <fileMode>644</fileMode>
         </fileSet>
 
         <!--
@@ -247,22 +242,12 @@
             <includes>
                 <include>*:jar:*</include>
             </includes>
-            <excludes>
-                <exclude>*:ant:*</exclude>
-                <exclude>*:ant-launcher:*</exclude>
-                <exclude>*:ivy:*</exclude>
-            </excludes>
         </dependencySet>
         <dependencySet>
             <outputDirectory>plugins</outputDirectory>
             <includes>
                 <include>*:zip:*</include>
             </includes>
-            <excludes>
-                <exclude>*:ant:*</exclude>
-                <exclude>*:ant-launcher:*</exclude>
-                <exclude>*:ivy:*</exclude>
-            </excludes>
         </dependencySet>
     </dependencySets>
 
