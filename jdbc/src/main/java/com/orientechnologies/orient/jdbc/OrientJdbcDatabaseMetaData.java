@@ -703,7 +703,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
       final String className = cls.getName();
       final String type;
 
-      if (OMetadataInternal.SYSTEM_CLUSTER.contains(cls.getName()))
+      if (OMetadataInternal.SYSTEM_CLUSTER.contains(cls.getName().toLowerCase()))
         type = "SYSTEM TABLE";
       else
         type = "TABLE";
