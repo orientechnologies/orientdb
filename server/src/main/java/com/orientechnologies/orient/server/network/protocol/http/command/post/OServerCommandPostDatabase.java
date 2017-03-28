@@ -69,7 +69,7 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
       final String type = urlParts.length > 3 ? urlParts[3] : "document";
       if (url != null) {
         if (server.existsDatabase(databaseName)) {
-          iResponse.send(OHttpUtils.STATUS_CONFLICT_CODE, OHttpUtils.STATUS_CONFLICT_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
+          sendJsonError(iResponse,OHttpUtils.STATUS_CONFLICT_CODE, OHttpUtils.STATUS_CONFLICT_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
               "Database '" + databaseName + "' already exists.", null);
         } else {
           server.createDatabase(databaseName, ODatabaseType.valueOf(storageMode.toUpperCase()), null);
