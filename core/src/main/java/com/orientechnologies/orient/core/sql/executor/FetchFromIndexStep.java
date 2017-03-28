@@ -10,6 +10,7 @@ import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.parser.*;
 
 import java.util.*;
@@ -239,6 +240,8 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     Object secondValue = fromKey.execute((OResult) null, ctx);
     Object thirdValue = toKey.execute((OResult) null, ctx);
     OIndexDefinition indexDef = index.getDefinition();
+    secondValue = convertToIndexDefinitionTypes(secondValue, indexDef.getTypes());
+    thirdValue = convertToIndexDefinitionTypes(thirdValue, indexDef.getTypes());
     if (index.supportsOrderedIterations()) {
       cursor = index
           .iterateEntriesBetween(toBetweenIndexKey(indexDef, secondValue), fromKeyIncluded, toBetweenIndexKey(indexDef, thirdValue),
@@ -251,6 +254,21 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     if (cursor != null) {
       fetchNextEntry();
     }
+  }
+
+  private Object convertToIndexDefinitionTypes(Object val, OType[] types) {
+    if (val == null) {
+      return null;
+    }
+    if (OMultiValue.isMultiValue(val)) {
+      List<Object> result = new ArrayList<>();
+      int i = 0;
+      for (Object o : OMultiValue.getMultiValueIterable(val)) {
+        result.add(OType.convert(o, types[i++].getDefaultJavaType()));
+      }
+      return result;
+    }
+    return OType.convert(val, types[0].getDefaultJavaType());
   }
 
   private boolean allEqualities(OAndBlock condition) {

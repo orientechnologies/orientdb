@@ -105,22 +105,22 @@ public class OGitHubIssuesIT extends OIntegrationTestTemplate {
     db.command("INSERT INTO CaseSensitiveCollationIndex SET `Group`='1', Name='aBC', Version='1';");
     db.command("INSERT INTO CaseSensitiveCollationIndex SET `Group`='1', Name='AbC', Version='1';");
 
-    results = db.query("SELECT FROM CaseSensitiveCollationIndex WHERE Version='1' AND `Group` = 1 AND Name='abc'");
+    results = db.query("SELECT FROM CaseSensitiveCollationIndex WHERE Version='1' AND `Group` = '1' AND Name='abc'");
     assertThat(results).hasSize(1);
 
-    results = db.query("SELECT FROM CaseSensitiveCollationIndex WHERE Version='1' AND Name='abc' AND `Group` = 1");
+    results = db.query("SELECT FROM CaseSensitiveCollationIndex WHERE Version='1' AND Name='abc' AND `Group` = '1'");
     assertThat(results).hasSize(1);
 
-    results = db.query("SELECT FROM CaseSensitiveCollationIndex WHERE `Group` = 1 AND Name='abc' AND Version='1'");
+    results = db.query("SELECT FROM CaseSensitiveCollationIndex WHERE `Group` = '1' AND Name='abc' AND Version='1'");
     assertThat(results).hasSize(1);
 
-    results = db.query("SELECT FROM CaseSensitiveCollationIndex WHERE `Group` = 1 AND Version='1' AND Name='abc'");
+    results = db.query("SELECT FROM CaseSensitiveCollationIndex WHERE `Group` = '1' AND Version='1' AND Name='abc'");
     assertThat(results).hasSize(1);
 
-    results = db.query("SELECT FROM CaseSensitiveCollationIndex WHERE Name='abc' AND Version='1' AND `Group` = 1");
+    results = db.query("SELECT FROM CaseSensitiveCollationIndex WHERE Name='abc' AND Version='1' AND `Group` = '1'");
     assertThat(results).hasSize(1);
 
-    results = db.query("SELECT FROM CaseSensitiveCollationIndex WHERE Name='abc' AND `Group` = 1 AND Version='1'");
+    results = db.query("SELECT FROM CaseSensitiveCollationIndex WHERE Name='abc' AND `Group` = '1' AND Version='1'");
     assertThat(results).hasSize(1);
 
     OClass oClassCI = db.createVertexClass("CaseInsensitiveCollationIndex");
@@ -143,21 +143,25 @@ public class OGitHubIssuesIT extends OIntegrationTestTemplate {
     db.command("INSERT INTO CaseInsensitiveCollationIndex SET `Group`='1', Name='aBC', Version='1';");
     db.command("INSERT INTO CaseInsensitiveCollationIndex SET `Group`='1', Name='AbC', Version='1';");
 
-    results = db.query("SELECT FROM CaseInsensitiveCollationIndex WHERE Version='1' AND `Group` = 1 AND Name='abc'");
+    results = db.query("SELECT FROM CaseInsensitiveCollationIndex WHERE Version='1' AND `Group` = '1' AND Name='abc'");
     assertThat(results).hasSize(8);
 
-    results = db.query("SELECT FROM CaseInsensitiveCollationIndex WHERE Version='1' AND Name='abc' AND `Group` = 1");
+    results = db.query("SELECT FROM CaseInsensitiveCollationIndex WHERE Version='1' AND Name='abc' AND `Group` = '1'");
     assertThat(results).hasSize(8);
 
-    results = db.query("SELECT FROM CaseInsensitiveCollationIndex WHERE `Group` = 1 AND Name='abc' AND Version='1'");
+    results = db.query("SELECT FROM CaseInsensitiveCollationIndex WHERE `Group` = '1' AND Name='abc' AND Version='1'");
     assertThat(results).hasSize(8);
 
-    results = db.query("SELECT FROM CaseInsensitiveCollationIndex WHERE `Group` = 1 AND Version='1' AND Name='abc'");
+    results = db.query("SELECT FROM CaseInsensitiveCollationIndex WHERE `Group` = '1' AND Version='1' AND Name='abc'");
     assertThat(results).hasSize(8);
 
-    results = db.query("SELECT FROM CaseInsensitiveCollationIndex WHERE Name='abc' AND Version='1' AND `Group` = 1");
+    results = db.query("SELECT FROM CaseInsensitiveCollationIndex WHERE Name='abc' AND Version='1' AND `Group` = '1'");
     assertThat(results).hasSize(8);
 
+    results = db.query("SELECT FROM CaseInsensitiveCollationIndex WHERE Name='abc' AND `Group` = '1' AND Version='1'");
+    assertThat(results).hasSize(8);
+
+    //test that Group = 1 (integer) is correctly converted to String
     results = db.query("SELECT FROM CaseInsensitiveCollationIndex WHERE Name='abc' AND `Group` = 1 AND Version='1'");
     assertThat(results).hasSize(8);
 

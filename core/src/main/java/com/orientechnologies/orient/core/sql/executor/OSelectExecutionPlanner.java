@@ -1205,8 +1205,8 @@ public class OSelectExecutionPlanner {
 
     Set<OIndex<?>> indexes = clazz.getIndexes();
 
-    List<IndexSearchDescriptor> indexSearchDescriptors = flattenedWhereClause.stream().map(x -> findBestIndexFor(ctx, indexes, x))
-        .filter(Objects::nonNull).collect(Collectors.toList());
+    List<IndexSearchDescriptor> indexSearchDescriptors = flattenedWhereClause.stream()
+        .map(x -> findBestIndexFor(ctx, indexes, x, clazz)).filter(Objects::nonNull).collect(Collectors.toList());
     if (indexSearchDescriptors.size() != flattenedWhereClause.size()) {
       return null; //some blocks could not be managed with an index
     }
@@ -1352,10 +1352,11 @@ public class OSelectExecutionPlanner {
    *
    * @return
    */
-  private IndexSearchDescriptor findBestIndexFor(OCommandContext ctx, Set<OIndex<?>> indexes, OAndBlock block) {
+  private IndexSearchDescriptor findBestIndexFor(OCommandContext ctx, Set<OIndex<?>> indexes, OAndBlock block, OClass clazz) {
     return indexes.stream().filter(x -> x.getInternal().canBeUsedInEqualityOperators())
-        .map(index -> buildIndexSearchDescriptor(ctx, index, block)).filter(Objects::nonNull).filter(x -> x.keyCondition != null)
-        .filter(x -> x.keyCondition.getSubBlocks().size() > 0).min(Comparator.comparing(x -> x.cost(ctx))).orElse(null);
+        .map(index -> buildIndexSearchDescriptor(ctx, index, block, clazz)).filter(Objects::nonNull)
+        .filter(x -> x.keyCondition != null).filter(x -> x.keyCondition.getSubBlocks().size() > 0)
+        .min(Comparator.comparing(x -> x.cost(ctx))).orElse(null);
   }
 
   /**
@@ -1365,10 +1366,11 @@ public class OSelectExecutionPlanner {
    * @param ctx
    * @param index
    * @param block
+   * @param clazz
    *
    * @return
    */
-  private IndexSearchDescriptor buildIndexSearchDescriptor(OCommandContext ctx, OIndex<?> index, OAndBlock block) {
+  private IndexSearchDescriptor buildIndexSearchDescriptor(OCommandContext ctx, OIndex<?> index, OAndBlock block, OClass clazz) {
     List<String> indexFields = index.getDefinition().getFields();
     OBinaryCondition keyCondition = new OBinaryCondition(-1);
     OIdentifier key = new OIdentifier(-1);
@@ -1378,13 +1380,14 @@ public class OSelectExecutionPlanner {
     boolean found = false;
 
     OAndBlock blockCopy = block.copy();
-    Iterator<OBooleanExpression> blockIterator = blockCopy.getSubBlocks().iterator();
+    Iterator<OBooleanExpression> blockIterator;
 
     OAndBlock indexKeyValue = new OAndBlock(-1);
     IndexSearchDescriptor result = new IndexSearchDescriptor();
     result.idx = index;
     result.keyCondition = indexKeyValue;
     for (String indexField : indexFields) {
+      blockIterator = blockCopy.getSubBlocks().iterator();
       boolean breakHere = false;
       while (blockIterator.hasNext()) {
         OBooleanExpression singleExp = blockIterator.next();

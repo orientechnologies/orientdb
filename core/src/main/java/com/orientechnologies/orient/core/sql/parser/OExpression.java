@@ -172,7 +172,11 @@ public class OExpression extends SimpleNode {
 
   public OIdentifier getDefaultAlias() {
     OIdentifier identifier = new OIdentifier(-1);
-    identifier.setValue(this.toString());
+    if(isBaseIdentifier()){
+      identifier.setValue(((OBaseExpression)mathExpression).identifier.getSuffix().identifier.getStringValue());
+    }else {
+      identifier.setValue(this.toString());
+    }
     return identifier;
   }
 
