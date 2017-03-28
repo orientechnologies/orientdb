@@ -17,11 +17,11 @@
  *  * For more information: http://orientdb.com
  *
  */
-package com.orientechnologies.orient.graph.sql.functions;
+package com.orientechnologies.orient.core.sql.functions.graph;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import com.orientechnologies.orient.core.record.OVertex;
 
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -36,9 +36,7 @@ import java.util.Map;
  * If property is not defined in edge or is null, distance between vertexes are 0.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * @deprecated see {@link com.orientechnologies.orient.core.sql.functions.graph.OSQLFunctionDijkstra} instead
  */
-@Deprecated
 public class OSQLFunctionDijkstra extends OSQLFunctionPathFinder {
   public static final String NAME = "dijkstra";
 
@@ -48,7 +46,7 @@ public class OSQLFunctionDijkstra extends OSQLFunctionPathFinder {
     super(NAME, 3, 4);
   }
 
-  public LinkedList<OrientVertex> execute(final Object iThis, final OIdentifiable iCurrentRecord, final Object iCurrentResult,
+  public LinkedList<OVertex> execute(final Object iThis, final OIdentifiable iCurrentRecord, final Object iCurrentResult,
       final Object[] iParams, final OCommandContext iContext) {
     return new OSQLFunctionAstar().execute(this, iCurrentRecord, iCurrentResult, toAStarParams(iParams), iContext);
   }
@@ -67,7 +65,7 @@ public class OSQLFunctionDijkstra extends OSQLFunctionPathFinder {
     return result;
   }
 
-  private LinkedList<OrientVertex> internalExecute(final OCommandContext iContext) {
+  private LinkedList<OVertex> internalExecute(final OCommandContext iContext) {
     return super.execute(iContext);
   }
 
@@ -75,7 +73,7 @@ public class OSQLFunctionDijkstra extends OSQLFunctionPathFinder {
     return "dijkstra(<sourceVertex>, <destinationVertex>, <weightEdgeFieldName>, [<direction>])";
   }
 
-  protected float getDistance(final OrientVertex node, final OrientVertex target) {
+  protected float getDistance(final OVertex node, final OVertex target) {
     return -1;//not used anymore
   }
 

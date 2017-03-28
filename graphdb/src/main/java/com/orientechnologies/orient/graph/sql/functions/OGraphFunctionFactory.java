@@ -35,8 +35,8 @@ public class OGraphFunctionFactory implements OSQLFunctionFactory {
   private static final Map<String, Object> FUNCTIONS = new HashMap<String, Object>();
   static {
     register(OSQLFunctionGremlin.NAME, OSQLFunctionGremlin.class);
-    register(OSQLFunctionDijkstra.NAME, new OSQLFunctionDijkstra());
-    register(OSQLFunctionAstar.NAME, OSQLFunctionAstar.class);
+//    register(OSQLFunctionDijkstra.NAME, new OSQLFunctionDijkstra());
+//    register(OSQLFunctionAstar.NAME, OSQLFunctionAstar.class);
 //    register(OSQLFunctionShortestPath.NAME, new OSQLFunctionShortestPath());
 
     register(OSQLFunctionLabel.NAME, new OSQLFunctionLabel());

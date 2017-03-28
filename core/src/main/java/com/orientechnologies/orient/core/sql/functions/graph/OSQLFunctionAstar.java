@@ -17,26 +17,23 @@
  *  * For more information: http://orientdb.com
  *
  */
-package com.orientechnologies.orient.graph.sql.functions;
+package com.orientechnologies.orient.core.sql.functions.graph;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.*;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
-import com.orientechnologies.orient.graph.sql.OGraphCommandExecutorSQLFactory;
-import com.tinkerpop.blueprints.Direction;
-import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientEdge;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.util.*;
 
 /**
- * A*'s algorithm describes how to find the cheapest path from one node to another node in a directed weighted graph with husrestic function.
+ * A*'s algorithm describes how to find the cheapest path from one node to another node in a directed weighted graph with husrestic
+ * function.
  * <p>
  * The first parameter is source record. The second parameter is destination record. The third parameter is a name of property that
  * represents 'weight' and fourth represnts the map of options.
@@ -44,22 +41,20 @@ import java.util.*;
  * If property is not defined in edge or is null, distance between vertexes are 0 .
  *
  * @author Saeed Tabrizi (saeed a_t  nowcando.com)
- * @deprecated see {@link com.orientechnologies.orient.core.sql.functions.graph.OSQLFunctionAstar} instead
  */
-@Deprecated
 public class OSQLFunctionAstar extends OSQLFunctionHeuristicPathFinderAbstract {
   public static final String NAME = "astar";
 
-  private   String                          paramWeightFieldName = "weight";
-  private   long                            currentDepth         = 0;
-  protected Set<OrientVertex>               closedSet            = new HashSet<OrientVertex>();
-  protected Map<OrientVertex, OrientVertex> cameFrom             = new HashMap<OrientVertex, OrientVertex>();
+  private   String                paramWeightFieldName = "weight";
+  private   long                  currentDepth         = 0;
+  protected Set<OVertex>          closedSet            = new HashSet<OVertex>();
+  protected Map<OVertex, OVertex> cameFrom             = new HashMap<OVertex, OVertex>();
 
-  protected Map<OrientVertex, Double>   gScore = new HashMap<OrientVertex, Double>();
-  protected Map<OrientVertex, Double>   fScore = new HashMap<OrientVertex, Double>();
-  protected PriorityQueue<OrientVertex> open   = new PriorityQueue<OrientVertex>(1, new Comparator<OrientVertex>() {
+  protected Map<OVertex, Double>   gScore = new HashMap<OVertex, Double>();
+  protected Map<OVertex, Double>   fScore = new HashMap<OVertex, Double>();
+  protected PriorityQueue<OVertex> open   = new PriorityQueue<OVertex>(1, new Comparator<OVertex>() {
 
-    public int compare(OrientVertex nodeA, OrientVertex nodeB) {
+    public int compare(OVertex nodeA, OVertex nodeB) {
       return Double.compare(fScore.get(nodeA), fScore.get(nodeB));
     }
   });
@@ -68,57 +63,77 @@ public class OSQLFunctionAstar extends OSQLFunctionHeuristicPathFinderAbstract {
     super(NAME, 3, 4);
   }
 
-  public LinkedList<OrientVertex> execute(final Object iThis, final OIdentifiable iCurrentRecord, final Object iCurrentResult,
+  public LinkedList<OVertex> execute(final Object iThis, final OIdentifiable iCurrentRecord, final Object iCurrentResult,
       final Object[] iParams, final OCommandContext iContext) {
     context = iContext;
     final OSQLFunctionAstar context = this;
-    return OGraphCommandExecutorSQLFactory
-        .runWithAnyGraph(new OGraphCommandExecutorSQLFactory.GraphCallBack<LinkedList<OrientVertex>>() {
-          @Override public LinkedList<OrientVertex> call(final OrientBaseGraph graph) {
 
-            final ORecord record = iCurrentRecord != null ? iCurrentRecord.getRecord() : null;
+    final ORecord record = iCurrentRecord != null ? iCurrentRecord.getRecord() : null;
 
-            Object source = iParams[0];
-            if (OMultiValue.isMultiValue(source)) {
-              if (OMultiValue.getSize(source) > 1)
-                throw new IllegalArgumentException("Only one sourceVertex is allowed");
-              source = OMultiValue.getFirstValue(source);
-            }
-            paramSourceVertex = graph.getVertex(OSQLHelper.getValue(source, record, iContext));
+    Object source = iParams[0];
+    if (OMultiValue.isMultiValue(source)) {
+      if (OMultiValue.getSize(source) > 1)
+        throw new IllegalArgumentException("Only one sourceVertex is allowed");
+      source = OMultiValue.getFirstValue(source);
+      if (source instanceof OResult && ((OResult) source).isElement()) {
+        source = ((OResult) source).getElement().get();
+      }
+    }
+    source = OSQLHelper.getValue(source, record, iContext);
+    if (source instanceof OIdentifiable) {
+      OElement elem = ((OIdentifiable) source).getRecord();
+      if (!elem.isVertex()) {
+        throw new IllegalArgumentException("The sourceVertex must be a vertex record");
+      }
+      paramSourceVertex = elem.asVertex().get();
+    } else {
+      throw new IllegalArgumentException("The sourceVertex must be a vertex record");
+    }
 
-            Object dest = iParams[1];
-            if (OMultiValue.isMultiValue(dest)) {
-              if (OMultiValue.getSize(dest) > 1)
-                throw new IllegalArgumentException("Only one destinationVertex is allowed");
-              dest = OMultiValue.getFirstValue(dest);
-            }
-            paramDestinationVertex = graph.getVertex(OSQLHelper.getValue(dest, record, iContext));
+    Object dest = iParams[1];
+    if (OMultiValue.isMultiValue(dest)) {
+      if (OMultiValue.getSize(dest) > 1)
+        throw new IllegalArgumentException("Only one destinationVertex is allowed");
+      dest = OMultiValue.getFirstValue(dest);
+      if (dest instanceof OResult && ((OResult) dest).isElement()) {
+        dest = ((OResult) dest).getElement().get();
+      }
+    }
+    dest = OSQLHelper.getValue(dest, record, iContext);
+    if (dest instanceof OIdentifiable) {
+      OElement elem = ((OIdentifiable) dest).getRecord();
+      if (!elem.isVertex()) {
+        throw new IllegalArgumentException("The destinationVertex must be a vertex record");
+      }
+      paramDestinationVertex = elem.asVertex().get();
+    } else {
+      throw new IllegalArgumentException("The destinationVertex must be a vertex record");
+    }
 
-            paramWeightFieldName = OIOUtils.getStringContent(iParams[2]);
+    paramWeightFieldName = OIOUtils.getStringContent(iParams[2]);
 
-            if (iParams.length > 3) {
-              bindAdditionalParams(iParams[3], context);
-            }
-            iContext.setVariable("getNeighbors", 0);
-            return internalExecute(iContext, graph);
-          }
-        });
+    if (iParams.length > 3) {
+      bindAdditionalParams(iParams[3], context);
+    }
+    iContext.setVariable("getNeighbors", 0);
+    return internalExecute(iContext, iContext.getDatabase());
+
   }
 
-  private LinkedList<OrientVertex> internalExecute(final OCommandContext iContext, OrientBaseGraph graph) {
+  private LinkedList<OVertex> internalExecute(final OCommandContext iContext, ODatabase graph) {
 
-    OrientVertex start = paramSourceVertex;
-    OrientVertex goal = paramDestinationVertex;
+    OVertex start = paramSourceVertex;
+    OVertex goal = paramDestinationVertex;
 
     open.add(start);
 
     // The cost of going from start to start is zero.
     gScore.put(start, 0.0);
     // For the first node, that value is completely heuristic.
-    fScore.put(start, getHeuristicCost(start, null, goal));
+    fScore.put(start, getHeuristicCost(start, null, goal, iContext));
 
     while (!open.isEmpty()) {
-      OrientVertex current = open.poll();
+      OVertex current = open.poll();
 
       // we discussed about this feature in https://github.com/orientechnologies/orientdb/pull/6002#issuecomment-212492687
       if (paramEmptyIfMaxDepth == true && currentDepth >= paramMaxDepth) {
@@ -136,9 +151,9 @@ public class OSQLFunctionAstar extends OSQLFunctionHeuristicPathFinderAbstract {
       }
 
       closedSet.add(current);
-      for (OrientEdge neighborEdge : getNeighborEdges(current)) {
+      for (OEdge neighborEdge : getNeighborEdges(current)) {
 
-        OrientVertex neighbor = getNeighbor(current, neighborEdge, graph);
+        OVertex neighbor = getNeighbor(current, neighborEdge, graph);
         // Ignore the neighbor which is already evaluated.
         if (closedSet.contains(neighbor)) {
           continue;
@@ -149,7 +164,7 @@ public class OSQLFunctionAstar extends OSQLFunctionHeuristicPathFinderAbstract {
 
         if (!contains || tentative_gScore < gScore.get(neighbor)) {
           gScore.put(neighbor, tentative_gScore);
-          fScore.put(neighbor, tentative_gScore + getHeuristicCost(neighbor, current, goal));
+          fScore.put(neighbor, tentative_gScore + getHeuristicCost(neighbor, current, goal, iContext));
 
           if (contains) {
             open.remove(neighbor);
@@ -167,30 +182,30 @@ public class OSQLFunctionAstar extends OSQLFunctionHeuristicPathFinderAbstract {
     return getPath();
   }
 
-  private OrientVertex getNeighbor(OrientVertex current, OrientEdge neighborEdge, OrientBaseGraph graph) {
-    if (neighborEdge.getOutVertex().equals(current)) {
-      return toVertex(neighborEdge.getInVertex(), graph);
+  private OVertex getNeighbor(OVertex current, OEdge neighborEdge, ODatabase graph) {
+    if (neighborEdge.getFrom().equals(current)) {
+      return toVertex(neighborEdge.getTo());
     }
-    return toVertex(neighborEdge.getOutVertex(), graph);
+    return toVertex(neighborEdge.getFrom());
   }
 
-  private OrientVertex toVertex(OIdentifiable outVertex, OrientBaseGraph graph) {
-    if(outVertex==null){
+  private OVertex toVertex(OIdentifiable outVertex) {
+    if (outVertex == null) {
       return null;
     }
-    if (outVertex instanceof OrientVertex){
-      return (OrientVertex) outVertex;
+    if (!(outVertex instanceof OElement)) {
+      outVertex = outVertex.getRecord();
     }
-    return graph.getVertex(outVertex);
+    return ((OElement) outVertex).asVertex().orElse(null);
   }
 
-  protected Set<OrientEdge> getNeighborEdges(final OrientVertex node) {
+  protected Set<OEdge> getNeighborEdges(final OVertex node) {
     context.incrementVariable("getNeighbors");
 
-    final Set<OrientEdge> neighbors = new HashSet<OrientEdge>();
+    final Set<OEdge> neighbors = new HashSet<OEdge>();
     if (node != null) {
-      for (Edge v : node.getEdges(paramDirection, paramEdgeTypeNames)) {
-        final OrientEdge ov = (OrientEdge) v;
+      for (OEdge v : node.getEdges(paramDirection, paramEdgeTypeNames)) {
+        final OEdge ov = v;
         if (ov != null)
           neighbors.add(ov);
       }
@@ -213,10 +228,10 @@ public class OSQLFunctionAstar extends OSQLFunctionHeuristicPathFinderAbstract {
       ctx.paramVertexAxisNames = stringArray(mapParams.get(OSQLFunctionAstar.PARAM_VERTEX_AXIS_NAMES));
       if (mapParams.get(OSQLFunctionAstar.PARAM_DIRECTION) != null) {
         if (mapParams.get(OSQLFunctionAstar.PARAM_DIRECTION) instanceof String) {
-          ctx.paramDirection = Direction
+          ctx.paramDirection = ODirection
               .valueOf(stringOrDefault(mapParams.get(OSQLFunctionAstar.PARAM_DIRECTION), "OUT").toUpperCase());
         } else {
-          ctx.paramDirection = (Direction) mapParams.get(OSQLFunctionAstar.PARAM_DIRECTION);
+          ctx.paramDirection = (ODirection) mapParams.get(OSQLFunctionAstar.PARAM_DIRECTION);
         }
       }
 
@@ -243,27 +258,35 @@ public class OSQLFunctionAstar extends OSQLFunctionHeuristicPathFinderAbstract {
     return "astar(<sourceVertex>, <destinationVertex>, <weightEdgeFieldName>, [<options>]) \n // options  : {direction:\"OUT\",edgeTypeNames:[] , vertexAxisNames:[] , parallel : false , tieBreaker:true,maxDepth:99999,dFactor:1.0,customHeuristicFormula:'custom_Function_Name_here'  }";
   }
 
-  @Override public Object getResult() {
+  @Override
+  public Object getResult() {
     return getPath();
   }
 
-  @Override protected double getDistance(final OrientVertex node, final OrientVertex parent, final OrientVertex target) {
-    final Iterator<Edge> edges = node.getEdges(target, paramDirection).iterator();
-    if (edges.hasNext()) {
-      final Edge e = edges.next();
-      if (e != null) {
-        final Object fieldValue = e.getProperty(paramWeightFieldName);
-        if (fieldValue != null)
-          if (fieldValue instanceof Float)
-            return (Float) fieldValue;
-          else if (fieldValue instanceof Number)
-            return ((Number) fieldValue).doubleValue();
+  @Override
+  protected double getDistance(final OVertex node, final OVertex parent, final OVertex target) {
+    final Iterator<OEdge> edges = node.getEdges(paramDirection).iterator();
+    OEdge e = null;
+    while (edges.hasNext()) {
+      OEdge next = edges.next();
+      if (next.getFrom().equals(target) || next.getTo().equals(target)) {
+        e = next;
+        break;
       }
     }
+    if (e != null) {
+      final Object fieldValue = e.getProperty(paramWeightFieldName);
+      if (fieldValue != null)
+        if (fieldValue instanceof Float)
+          return (Float) fieldValue;
+        else if (fieldValue instanceof Number)
+          return ((Number) fieldValue).doubleValue();
+    }
+
     return MIN;
   }
 
-  protected double getDistance(final OrientEdge edge) {
+  protected double getDistance(final OEdge edge) {
     if (edge != null) {
       final Object fieldValue = edge.getProperty(paramWeightFieldName);
       if (fieldValue != null)
@@ -276,11 +299,13 @@ public class OSQLFunctionAstar extends OSQLFunctionHeuristicPathFinderAbstract {
     return MIN;
   }
 
-  @Override public boolean aggregateResults() {
+  @Override
+  public boolean aggregateResults() {
     return false;
   }
 
-  @Override protected double getHeuristicCost(final OrientVertex node, OrientVertex parent, final OrientVertex target) {
+  @Override
+  protected double getHeuristicCost(final OVertex node, OVertex parent, final OVertex target, OCommandContext iContext) {
     double hresult = 0.0;
 
     if (paramVertexAxisNames.length == 0) {
@@ -319,7 +344,7 @@ public class OSQLFunctionAstar extends OSQLFunctionHeuristicPathFinderAbstract {
         break;
       case CUSTOM:
         hresult = getCustomHeuristicCost(paramCustomHeuristicFormula, paramVertexAxisNames, paramSourceVertex,
-            paramDestinationVertex, node, parent, currentDepth, paramDFactor);
+            paramDestinationVertex, node, parent, currentDepth, paramDFactor, iContext);
         break;
       }
       if (paramTieBreaker) {
@@ -364,7 +389,7 @@ public class OSQLFunctionAstar extends OSQLFunctionHeuristicPathFinderAbstract {
         break;
       case CUSTOM:
         hresult = getCustomHeuristicCost(paramCustomHeuristicFormula, paramVertexAxisNames, paramSourceVertex,
-            paramDestinationVertex, node, parent, currentDepth, paramDFactor);
+            paramDestinationVertex, node, parent, currentDepth, paramDFactor, iContext);
         break;
       }
       if (paramTieBreaker) {
@@ -377,7 +402,8 @@ public class OSQLFunctionAstar extends OSQLFunctionHeuristicPathFinderAbstract {
 
   }
 
-  @Override protected boolean isVariableEdgeWeight() {
+  @Override
+  protected boolean isVariableEdgeWeight() {
     return true;
   }
 

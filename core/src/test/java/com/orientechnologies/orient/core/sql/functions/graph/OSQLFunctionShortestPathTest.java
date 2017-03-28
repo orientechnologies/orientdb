@@ -40,8 +40,8 @@ public class OSQLFunctionShortestPathTest {
   private void setUpDatabase() {
 
     orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
-    orientDB.createIfNotExists("test", ODatabaseType.MEMORY);
-    graph = orientDB.open("test", "admin", "admin");
+    orientDB.createIfNotExists("OSQLFunctionShortestPath", ODatabaseType.MEMORY);
+    graph = orientDB.open("OSQLFunctionShortestPath", "admin", "admin");
 
     graph.createEdgeClass("Edge1");
     graph.createEdgeClass("Edge2");
