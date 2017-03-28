@@ -73,7 +73,8 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
       if (url != null) {
         final ODatabaseDocumentInternal database = new ODatabaseDocumentTx(url);
         if (database.exists()) {
-          iResponse.send(OHttpUtils.STATUS_CONFLICT_CODE, OHttpUtils.STATUS_CONFLICT_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
+
+          sendJsonError(iResponse,OHttpUtils.STATUS_CONFLICT_CODE, OHttpUtils.STATUS_CONFLICT_DESCRIPTION, OHttpUtils.CONTENT_JSON,
               "Database '" + database.getURL() + "' already exists.", null);
         } else {
           for (OStorage stg : Orient.instance().getStorages()) {
