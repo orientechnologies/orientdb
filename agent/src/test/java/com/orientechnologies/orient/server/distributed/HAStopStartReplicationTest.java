@@ -6,7 +6,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import org.junit.Assert;
-import org.junit.Test;
 
 /**
  * Tests stop and start of replication.
@@ -98,7 +97,7 @@ public class HAStopStartReplicationTest extends AbstractServerClusterTest {
     db.command(new OCommandSQL("CREATE PROPERTY Item.map EMBEDDEDMAP")).execute();
   }
 
-  @Test
+//  @Test
   public void test() throws Exception {
     init(SERVERS);
     prepare(false);
