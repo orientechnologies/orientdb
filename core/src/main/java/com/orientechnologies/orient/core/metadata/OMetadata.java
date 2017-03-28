@@ -18,12 +18,14 @@ package com.orientechnologies.orient.core.metadata;
 
 import com.orientechnologies.orient.core.cache.OCommandCache;
 import com.orientechnologies.orient.core.index.OIndexManagerProxy;
+import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.function.OFunctionLibrary;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.security.OIdentity;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.metadata.security.OUser;
+import com.orientechnologies.orient.core.metadata.sequence.OSequence;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibrary;
 import com.orientechnologies.orient.core.schedule.OScheduler;
 
@@ -38,10 +40,10 @@ import java.util.Set;
  * 
  */
 public interface OMetadata {
-  Set<String> SYSTEM_CLUSTER = Collections.unmodifiableSet(
-      new HashSet<String>(Arrays.asList(new String[] { OUser.CLASS_NAME.toLowerCase(), ORole.CLASS_NAME.toLowerCase(),
-          OIdentity.CLASS_NAME.toLowerCase(), "ORIDs".toLowerCase(), OSecurity.RESTRICTED_CLASSNAME.toLowerCase(),
-          "OFunction".toLowerCase(), "OTriggered".toLowerCase(), "OSchedule".toLowerCase() })));
+  Set<String> SYSTEM_CLUSTER = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
+      new String[] { OUser.CLASS_NAME.toLowerCase(), ORole.CLASS_NAME.toLowerCase(), OIdentity.CLASS_NAME.toLowerCase(),
+          OSecurity.RESTRICTED_CLASSNAME.toLowerCase(), OFunction.CLASS_NAME.toLowerCase(), "OTriggered".toLowerCase(),
+          "OSchedule".toLowerCase(), "internal"})));
 
   void load();
 
