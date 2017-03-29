@@ -119,7 +119,7 @@ class SchemaService {
       clazz = `\`${clazz}\``;
       name = `\`${name}\``;
     }
-    let query = `ALTER PROPERTY ${clazz}.${name} ${entry} ${value}`;
+    let query = `ALTER PROPERTY ${clazz}.${name} ${entry} "${value}"`;
     return this.commandService.command({
       db,
       query

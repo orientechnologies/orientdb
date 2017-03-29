@@ -991,7 +991,7 @@ database.factory('PropertyAlterApi', ["$http", "$resource", "$q", function ($htt
 
     var deferred = $q.defer();
     var text = API + 'command/' + database + '/sql/-/-1?format=rid,type,version,class,graph';
-    var query = "alter property {{clazz}}.{{property}} {{name}} {{value}}"
+    var query = "alter property {{clazz}}.{{property}} {{name}} \"{{value}}\""
     var queryText = S(query).template(props).s;
     $http.post(text, queryText).success(function (data) {
       deferred.resolve(data)
@@ -1012,7 +1012,7 @@ database.factory('ClusterAlterApi', ["$http", "$resource", "$q", function ($http
 
     var deferred = $q.defer();
     var text = API + 'command/' + database + '/sql/-/-1?format=rid,type,version,class,graph';
-    var query = "alter cluster {{cluster}} {{name}} {{value}}"
+    var query = "alter cluster {{cluster}} {{name}} \"{{value}}\""
     var queryText = S(query).template(props).s;
     $http.post(text, queryText).success(function (data) {
       deferred.resolve(data)
