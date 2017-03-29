@@ -44,9 +44,11 @@ public class OLuceneDocumentBuilder {
     if (value != null) {
       doc.add(createField(RID, value.getIdentity().toString(), Field.Store.YES));
       doc.add(createField("_CLUSTER", "" + value.getIdentity().getClusterId(), Field.Store.YES));
-      doc.add(createField("_CLASS", definition.getClassName(), Field.Store.YES));
-
+      if (definition.getClassName() != null) {
+        doc.add(createField("_CLASS", definition.getClassName(), Field.Store.YES));
+      }
     }
+
     List<Object> formattedKey = formatKeys(definition, key);
 
     int i = 0;

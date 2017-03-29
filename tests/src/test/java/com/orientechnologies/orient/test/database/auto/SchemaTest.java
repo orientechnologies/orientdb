@@ -41,6 +41,8 @@ import org.testng.annotations.Test;
 import java.io.IOException;
 import java.util.List;
 
+import static org.testng.Assert.assertEquals;
+
 @Test(groups = "schema")
 public class SchemaTest extends DocumentDBBaseTest {
   @Parameters(value = "url")
@@ -211,23 +213,23 @@ public class SchemaTest extends DocumentDBBaseTest {
     database.getMetadata().getSchema().reload();
     dropTestClass = database.getMetadata().getSchema().getClass(testClassName);
     Assert.assertNotNull(dropTestClass);
-    Assert.assertEquals(database.getStorage().getClusterIdByName(testClassName), clusterId);
+    assertEquals(database.getStorage().getClusterIdByName(testClassName), clusterId);
     Assert.assertNotNull(database.getClusterNameById(clusterId));
 
     dropTestClass = database.getMetadata().getSchema().getClass(testClassName);
     Assert.assertNotNull(dropTestClass);
-    Assert.assertEquals(database.getStorage().getClusterIdByName(testClassName), clusterId);
+    assertEquals(database.getStorage().getClusterIdByName(testClassName), clusterId);
     Assert.assertNotNull(database.getClusterNameById(clusterId));
     database.getMetadata().getSchema().dropClass(testClassName);
     database.getMetadata().getSchema().reload();
     dropTestClass = database.getMetadata().getSchema().getClass(testClassName);
     Assert.assertNull(dropTestClass);
-    Assert.assertEquals(database.getStorage().getClusterIdByName(testClassName), -1);
+    assertEquals(database.getStorage().getClusterIdByName(testClassName), -1);
     Assert.assertNull(database.getClusterNameById(clusterId));
 
     dropTestClass = database.getMetadata().getSchema().getClass(testClassName);
     Assert.assertNull(dropTestClass);
-    Assert.assertEquals(database.getStorage().getClusterIdByName(testClassName), -1);
+    assertEquals(database.getStorage().getClusterIdByName(testClassName), -1);
     Assert.assertNull(database.getClusterNameById(clusterId));
 
   }
@@ -242,23 +244,23 @@ public class SchemaTest extends DocumentDBBaseTest {
     database.getMetadata().getSchema().reload();
     dropTestClass = database.getMetadata().getSchema().getClass(testClassName);
     Assert.assertNotNull(dropTestClass);
-    Assert.assertEquals(database.getStorage().getClusterIdByName(testClassName), clusterId);
+    assertEquals(database.getStorage().getClusterIdByName(testClassName), clusterId);
     Assert.assertNotNull(database.getClusterNameById(clusterId));
 
     dropTestClass = database.getMetadata().getSchema().getClass(testClassName);
     Assert.assertNotNull(dropTestClass);
-    Assert.assertEquals(database.getStorage().getClusterIdByName(testClassName), clusterId);
+    assertEquals(database.getStorage().getClusterIdByName(testClassName), clusterId);
     Assert.assertNotNull(database.getClusterNameById(clusterId));
     database.command(new OCommandSQL("drop class " + testClassName)).execute();
     database.reload();
     dropTestClass = database.getMetadata().getSchema().getClass(testClassName);
     Assert.assertNull(dropTestClass);
-    Assert.assertEquals(database.getStorage().getClusterIdByName(testClassName), -1);
+    assertEquals(database.getStorage().getClusterIdByName(testClassName), -1);
     Assert.assertNull(database.getClusterNameById(clusterId));
 
     dropTestClass = database.getMetadata().getSchema().getClass(testClassName);
     Assert.assertNull(dropTestClass);
-    Assert.assertEquals(database.getStorage().getClusterIdByName(testClassName), -1);
+    assertEquals(database.getStorage().getClusterIdByName(testClassName), -1);
     Assert.assertNull(database.getClusterNameById(clusterId));
 
   }
@@ -269,36 +271,36 @@ public class SchemaTest extends DocumentDBBaseTest {
     // TEST CUSTOM PROPERTY CREATION
     database.getMetadata().getSchema().getClass("Profile").getProperty("nick").setCustom("stereotype", "icon");
 
-    Assert.assertEquals(database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getCustom("stereotype"), "icon");
+    assertEquals(database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getCustom("stereotype"), "icon");
 
     // TEST CUSTOM PROPERTY EXISTS EVEN AFTER REOPEN
 
-    Assert.assertEquals(database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getCustom("stereotype"), "icon");
+    assertEquals(database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getCustom("stereotype"), "icon");
 
     // TEST CUSTOM PROPERTY REMOVAL
     database.getMetadata().getSchema().getClass("Profile").getProperty("nick").setCustom("stereotype", null);
-    Assert.assertEquals(database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getCustom("stereotype"), null);
+    assertEquals(database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getCustom("stereotype"), null);
 
     // TEST CUSTOM PROPERTY UPDATE
     database.getMetadata().getSchema().getClass("Profile").getProperty("nick").setCustom("stereotype", "polygon");
-    Assert.assertEquals(database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getCustom("stereotype"),
+    assertEquals(database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getCustom("stereotype"),
         "polygon");
 
     // TEST CUSTOM PROPERTY UDPATED EVEN AFTER REOPEN
 
-    Assert.assertEquals(database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getCustom("stereotype"),
+    assertEquals(database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getCustom("stereotype"),
         "polygon");
 
     // TEST CUSTOM PROPERTY WITH =
 
     database.getMetadata().getSchema().getClass("Profile").getProperty("nick").setCustom("equal", "this = that");
 
-    Assert.assertEquals(database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getCustom("equal"),
+    assertEquals(database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getCustom("equal"),
         "this = that");
 
     // TEST CUSTOM PROPERTY WITH = AFTER REOPEN
 
-    Assert.assertEquals(database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getCustom("equal"),
+    assertEquals(database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getCustom("equal"),
         "this = that");
 
   }
@@ -317,7 +319,7 @@ public class SchemaTest extends DocumentDBBaseTest {
         break;
       }
     }
-    Assert.assertEquals(found, true);
+    assertEquals(found, true);
 
     company.setSuperClass(null);
     Assert.assertNull(company.getSuperClass());
@@ -339,7 +341,7 @@ public class SchemaTest extends DocumentDBBaseTest {
         break;
       }
     }
-    Assert.assertEquals(found, true);
+    assertEquals(found, true);
 
   }
 
@@ -378,6 +380,13 @@ public class SchemaTest extends DocumentDBBaseTest {
   }
 
   @Test
+  public void testSetDescription(){
+    OClass oClass = database.getMetadata().getSchema().createClass("SetDescription");
+    oClass.setDescription("Some Desc");
+    assertEquals(oClass.getDescription(),"Some Desc");
+  }
+
+  @Test
   public void testRenameClass() {
 
     OClass oClass = database.getMetadata().getSchema().createClass("RenameClassTest");
@@ -391,14 +400,14 @@ public class SchemaTest extends DocumentDBBaseTest {
     document.save();
 
     List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from RenameClassTest"));
-    Assert.assertEquals(result.size(), 2);
+    assertEquals(result.size(), 2);
 
     oClass.set(OClass.ATTRIBUTES.NAME, "RenameClassTest2");
 
     database.getLocalCache().clear();
 
     result = database.query(new OSQLSynchQuery<ODocument>("select from RenameClassTest2"));
-    Assert.assertEquals(result.size(), 2);
+    assertEquals(result.size(), 2);
 
   }
 
@@ -422,14 +431,14 @@ public class SchemaTest extends DocumentDBBaseTest {
       }
 
       // CHECK THERE ARE 2 RECORDS IN EACH CLUSTER (ROUND-ROBIN STRATEGY)
-      Assert.assertEquals(database.countClusterElements(database.getClusterIdByName("multipleclusters")), 2);
+      assertEquals(database.countClusterElements(database.getClusterIdByName("multipleclusters")), 2);
       for (int i = 1; i < 3; ++i) {
-        Assert.assertEquals(database.countClusterElements(database.getClusterIdByName("multipleclusters_" + i)), 2);
+        assertEquals(database.countClusterElements(database.getClusterIdByName("multipleclusters_" + i)), 2);
       }
 
       // DELETE ALL THE RECORDS
       int deleted = database.command(new OCommandSQL("delete from cluster:multipleclusters_2")).execute();
-      Assert.assertEquals(deleted, 2);
+      assertEquals(deleted, 2);
 
       // CHANGE CLASS STRATEGY to BALANCED
       database.command(new OCommandSQL("alter class multipleclusters clusterselection balanced")).execute();
@@ -440,7 +449,7 @@ public class SchemaTest extends DocumentDBBaseTest {
         new ODocument("multipleclusters").field("num", i).save();
       }
 
-      Assert.assertEquals(database.countClusterElements(database.getClusterIdByName("multipleclusters_2")), 2);
+      assertEquals(database.countClusterElements(database.getClusterIdByName("multipleclusters_2")), 2);
 
     } finally {
       // RESTORE DEFAULT
@@ -492,10 +501,10 @@ public class SchemaTest extends DocumentDBBaseTest {
     // TEST SAVING OF OFFLINE STATUS
 
     // TEST UPDATE - NO EFFECT
-    Assert.assertEquals(database.command(new OCommandSQL("update TestOffline set name = 'yeah'")).execute(), 0);
+    assertEquals(database.command(new OCommandSQL("update TestOffline set name = 'yeah'")).execute(), 0);
 
     // TEST DELETE - NO EFFECT
-    Assert.assertEquals(database.command(new OCommandSQL("delete from TestOffline")).execute(), 0);
+    assertEquals(database.command(new OCommandSQL("delete from TestOffline")).execute(), 0);
 
     // TEST CREATE -> EXCEPTION
     try {
@@ -656,9 +665,9 @@ public class SchemaTest extends DocumentDBBaseTest {
     databaseDocumentTx.getLocalCache().clear();
 
     List<ODocument> result = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>("select * from TestRenameClusterOriginal"));
-    Assert.assertEquals(result.size(), 1);
+    assertEquals(result.size(), 1);
 
     ODocument document = result.get(0);
-    Assert.assertEquals(document.field("iteration"), i);
+    assertEquals(document.field("iteration"), i);
   }
 }
