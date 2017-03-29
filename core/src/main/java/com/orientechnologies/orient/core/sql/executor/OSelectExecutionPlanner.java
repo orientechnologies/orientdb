@@ -1039,8 +1039,7 @@ public class OSelectExecutionPlanner {
     }
     List<OBinaryCondition> result = new ArrayList<>();
     for (OBinaryCondition cond : indexedFunctionConditions) {
-      long thisEstimate = cond.estimateIndexed(fromClause, ctx);
-      if (thisEstimate >= 0) {
+      if (cond.allowsIndexedFunctionExecutionOnTarget(fromClause, ctx)) {
         result.add(cond);
       } else if (!cond.canExecuteIndexedFunctionWithoutIndex(fromClause, ctx)) {
         throw new OCommandExecutionException("Cannot evaluate " + cond + ": no index defined");
