@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.collection.OMultiValue;
-import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.lock.OOneEntryPerKeyLockManager;
 import com.orientechnologies.common.concur.lock.OPartitionedLockManager;
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
@@ -28,9 +27,6 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -57,7 +53,6 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.Lock;
 
 /**
  * Handles indexing when records change. The underlying lock manager for keys can be the {@link OPartitionedLockManager}, the
@@ -71,7 +66,6 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
   protected static final String CONFIG_MAP_RID  = "mapRid";
   protected static final String CONFIG_CLUSTERS = "clusters";
   protected final String                    type;
-  protected final OLockManager<Object>      keyLockManager;
   protected final ODocument                 metadata;
   protected final OAbstractPaginatedStorage storage;
   private final   String                    databaseName;
@@ -101,11 +95,6 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
       this.metadata = metadata;
       this.valueContainerAlgorithm = valueContainerAlgorithm;
       this.storage = (OAbstractPaginatedStorage) storage.getUnderlying();
-      this.keyLockManager = Orient.instance().isRunningDistributed() ?
-          new OOneEntryPerKeyLockManager<Object>(true, -1,
-              storage.getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.COMPONENTS_LOCK_CACHE)) :
-          new OPartitionedLockManager<Object>();
-
     } finally {
       releaseExclusiveLock();
     }
@@ -355,28 +344,18 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
   public boolean contains(Object key) {
     key = getCollatingValue(key);
 
-    final ODatabase database = getDatabase();
-    final boolean txIsActive = database.getTransaction().isActive();
-
-    if (!txIsActive)
-      keyLockManager.acquireSharedLock(key);
+    acquireSharedLock();
     try {
-      acquireSharedLock();
-      try {
-        assert indexId >= 0;
+      assert indexId >= 0;
 
-        while (true)
-          try {
-            return storage.indexContainsKey(indexId, key);
-          } catch (OInvalidIndexEngineIdException e) {
-            doReloadIndexEngine();
-          }
-      } finally {
-        releaseSharedLock();
-      }
+      while (true)
+        try {
+          return storage.indexContainsKey(indexId, key);
+        } catch (OInvalidIndexEngineIdException e) {
+          doReloadIndexEngine();
+        }
     } finally {
-      if (!txIsActive)
-        keyLockManager.releaseSharedLock(key);
+      releaseSharedLock();
     }
   }
 
@@ -541,81 +520,32 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
   public boolean remove(Object key) {
     key = getCollatingValue(key);
 
-    final ODatabase database = getDatabase();
-    final boolean txIsActive = database.getTransaction().isActive();
-
-    if (!txIsActive)
-      keyLockManager.acquireExclusiveLock(key);
+    acquireSharedLock();
     try {
-      acquireSharedLock();
-      try {
-        while (true)
-          try {
-            return storage.removeKeyFromIndex(indexId, key);
-          } catch (OInvalidIndexEngineIdException e) {
-            doReloadIndexEngine();
-          }
-      } finally {
-        releaseSharedLock();
-      }
-
+      while (true)
+        try {
+          return storage.removeKeyFromIndex(indexId, key);
+        } catch (OInvalidIndexEngineIdException e) {
+          doReloadIndexEngine();
+        }
     } finally {
-      if (!txIsActive)
-        keyLockManager.releaseExclusiveLock(key);
+      releaseSharedLock();
     }
   }
 
-  @Override
-  public void lockKeysForUpdate(Object... key) {
-    if (key == null || key.length == 0)
-      return;
-
-    keyLockManager.acquireExclusiveLocksInBatch(key);
-  }
-
-  @Override
-  public Lock[] lockKeysForUpdate(final Collection<Object> keys) {
-    if (keys == null || keys.isEmpty())
-      return new Lock[0];
-
-    return keyLockManager.acquireExclusiveLocksInBatch(keys);
-  }
-
-  @Override
-  public void releaseKeysForUpdate(Object... key) {
-    if (key == null || key.length == 0)
-      return;
-
-    for (Object k : key)
-      keyLockManager.releaseExclusiveLock(k);
-  }
-
   public OIndex<T> clear() {
-    final ODatabase database = getDatabase();
-    final boolean txIsActive = database.getTransaction().isActive();
-
-    if (!txIsActive)
-      keyLockManager.lockAllExclusive();
-
+    acquireSharedLock();
     try {
-
-      acquireSharedLock();
-      try {
-        while (true)
-          try {
-            storage.clearIndex(indexId);
-            break;
-          } catch (OInvalidIndexEngineIdException e) {
-            doReloadIndexEngine();
-          }
-        return this;
-      } finally {
-        releaseSharedLock();
-      }
-
+      while (true)
+        try {
+          storage.clearIndex(indexId);
+          break;
+        } catch (OInvalidIndexEngineIdException e) {
+          doReloadIndexEngine();
+        }
+      return this;
     } finally {
-      if (!txIsActive)
-        keyLockManager.unlockAllExclusive();
+      releaseSharedLock();
     }
   }
 
@@ -723,10 +653,6 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
   public int getVersion() {
     final IndexConfiguration conf = this.configuration;
     return version;
-  }
-
-  public ODocument checkEntry(final OIdentifiable iRecord, final Object iKey) {
-    return null;
   }
 
   public ODocument updateConfiguration() {

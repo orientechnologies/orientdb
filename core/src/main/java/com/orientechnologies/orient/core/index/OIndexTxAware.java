@@ -71,7 +71,7 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
   public long getSize() {
     long tot = delegate.getSize();
 
-    final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
+    final OTransactionIndexChanges indexChanges = database.getMicroOrRegularTransaction().getIndexChanges(delegate.getName());
     if (indexChanges != null) {
       if (indexChanges.cleared)
         // BEGIN FROM 0
@@ -113,7 +113,7 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
 
     iKey = getCollatingValue(iKey);
 
-    database.getTransaction().addIndexEntry(delegate, super.getName(), OPERATION.PUT, iKey, iValue);
+    database.getMicroOrRegularTransaction().addIndexEntry(delegate, super.getName(), OPERATION.PUT, iKey, iValue);
     return this;
   }
 
@@ -137,14 +137,14 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
   @Override
   public boolean remove(Object key) {
     key = getCollatingValue(key);
-    database.getTransaction().addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, key, null);
+    database.getMicroOrRegularTransaction().addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, key, null);
     return true;
   }
 
   @Override
   public boolean remove(Object iKey, final OIdentifiable iRID) {
     iKey = getCollatingValue(iKey);
-    database.getTransaction().addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, iKey, iRID);
+    database.getMicroOrRegularTransaction().addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, iKey, iRID);
     return true;
   }
 
@@ -157,13 +157,13 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
 
   @Override
   public OIndexTxAware<T> clear() {
-    database.getTransaction().addIndexEntry(delegate, super.getName(), OPERATION.CLEAR, null, null);
+    database.getMicroOrRegularTransaction().addIndexEntry(delegate, super.getName(), OPERATION.CLEAR, null, null);
     return this;
   }
 
   @Override
   public Object getFirstKey() {
-    final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
+    final OTransactionIndexChanges indexChanges = database.getMicroOrRegularTransaction().getIndexChanges(delegate.getName());
     if (indexChanges == null)
       return delegate.getFirstKey();
 
@@ -202,7 +202,7 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
 
   @Override
   public Object getLastKey() {
-    final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
+    final OTransactionIndexChanges indexChanges = database.getMicroOrRegularTransaction().getIndexChanges(delegate.getName());
     if (indexChanges == null)
       return delegate.getLastKey();
 

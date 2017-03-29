@@ -172,8 +172,11 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
   protected OIndex<?> preProcessBeforeReturn(ODatabaseDocumentInternal database, final OIndex<?> index) {
     if (index instanceof OIndexRemoteMultiValue)
       return new OIndexTxAwareMultiValue(database, (OIndex<Set<OIdentifiable>>) index);
+    else if (index instanceof OIndexDictionary)
+      return new OIndexTxAwareDictionary(database, (OIndex<OIdentifiable>) index);
     else if (index instanceof OIndexRemoteOneValue)
       return new OIndexTxAwareOneValue(database, (OIndex<OIdentifiable>) index);
+
     return index;
   }
 

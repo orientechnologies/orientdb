@@ -40,9 +40,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.shutdown.OShutdownHandler;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.storage.ORecordMetadata;
-import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.util.OURLConnection;
 import com.orientechnologies.orient.core.util.OURLHelper;
@@ -392,6 +390,12 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     if (internal == null)
       return delegateStorage;
     return internal.getStorage();
+  }
+
+  @Override
+  public OBasicTransaction getMicroOrRegularTransaction() {
+    checkOpenness();
+    return internal.getMicroOrRegularTransaction();
   }
 
   @Override

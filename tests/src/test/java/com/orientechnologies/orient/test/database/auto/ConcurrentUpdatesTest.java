@@ -16,16 +16,12 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
-import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
@@ -39,9 +35,9 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
   private final static int PESSIMISTIC_CYCLES = 100;
   private final static int THREADS            = 10;
 
-  private final AtomicLong counter            = new AtomicLong();
-  private final AtomicLong totalRetries       = new AtomicLong();
-  private boolean          mvccEnabled;
+  private final AtomicLong counter      = new AtomicLong();
+  private final AtomicLong totalRetries = new AtomicLong();
+  private boolean mvccEnabled;
 
   @Parameters(value = "url")
   public ConcurrentUpdatesTest(@Optional String url) {
@@ -50,8 +46,8 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
 
   class OptimisticUpdateField implements Runnable {
 
-    ORID   rid1;
-    ORID   rid2;
+    ORID rid1;
+    ORID rid2;
     String fieldValue = null;
     String threadName;
     String url;
@@ -112,7 +108,7 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
   }
 
   class PessimisticUpdate implements Runnable {
-    String  fieldValue = null;
+    String fieldValue = null;
     ORID    rid;
     String  threadName;
     boolean lock;
@@ -170,7 +166,7 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
     }
   }
 
-  @Test
+  @Test(enabled = false)
   public void concurrentOptimisticUpdates() throws Exception {
     counter.set(0);
 

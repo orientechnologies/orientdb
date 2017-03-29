@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdExceptio
 import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerSBTreeIndexRIDContainer;
+import com.orientechnologies.orient.core.storage.OBasicTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OIndexEngineCallback;
 import com.orientechnologies.orient.core.tx.OTransaction;
@@ -46,13 +47,8 @@ import java.util.Set;
 
 public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> implements OLuceneIndex {
 
-  public OLuceneIndexNotUnique(String name,
-      String typeId,
-      String algorithm,
-      int version,
-      OAbstractPaginatedStorage storage,
-      String valueContainerAlgorithm,
-      ODocument metadata) {
+  public OLuceneIndexNotUnique(String name, String typeId, String algorithm, int version, OAbstractPaginatedStorage storage,
+      String valueContainerAlgorithm, ODocument metadata) {
     super(name, typeId, algorithm, valueContainerAlgorithm, metadata, version, storage);
   }
 
@@ -65,7 +61,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
   public boolean remove(final Object key, final OIdentifiable value) {
 
     if (key != null) {
-      OTransaction transaction = getDatabase().getTransaction();
+      OBasicTransaction transaction = getDatabase().getMicroOrRegularTransaction();
       if (transaction.isActive()) {
 
         transaction.addIndexEntry(this, super.getName(), OTransactionIndexChanges.OPERATION.REMOVE, encodeKey(key), value);
@@ -148,7 +144,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
             indexEngine.put(decodeKey(key), operations.added);
 
           }
-          OTransaction transaction = getDatabase().getTransaction();
+          OBasicTransaction transaction = getDatabase().getMicroOrRegularTransaction();
           resetTransactionChanges(transaction);
           return null;
         });
@@ -163,7 +159,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
     return key;
   }
 
-  private void resetTransactionChanges(OTransaction transaction) {
+  private void resetTransactionChanges(OBasicTransaction transaction) {
     transaction.setCustomData(getName(), null);
   }
 
@@ -219,7 +215,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
     return key;
   }
 
-  private OLuceneTxChanges getTransactionChanges(OTransaction transaction) {
+  private OLuceneTxChanges getTransactionChanges(OBasicTransaction transaction) {
 
     OLuceneTxChanges changes = (OLuceneTxChanges) transaction.getCustomData(getName());
     if (changes == null) {
@@ -252,7 +248,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
 
   @Override
   public Set<OIdentifiable> get(final Object key) {
-    final OTransaction transaction = getDatabase().getTransaction();
+    final OBasicTransaction transaction = getDatabase().getMicroOrRegularTransaction();
     if (transaction.isActive()) {
       while (true) {
         try {
@@ -280,7 +276,8 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
   public OLuceneIndexNotUnique put(final Object key, final OIdentifiable singleValue) {
 
     if (key != null) {
-      OTransaction transaction = getDatabase().getTransaction();
+      OBasicTransaction transaction = getDatabase().getMicroOrRegularTransaction();
+
       if (transaction.isActive()) {
         OLuceneTxChanges transactionChanges = getTransactionChanges(transaction);
         transaction.addIndexEntry(this, super.getName(), OTransactionIndexChanges.OPERATION.PUT, encodeKey(key), singleValue);
@@ -323,7 +320,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
           // TODO apply current TX
           @Override
           public Long callEngine(OIndexEngine engine) {
-            OTransaction transaction = getDatabase().getTransaction();
+            OBasicTransaction transaction = getDatabase().getMicroOrRegularTransaction();
             OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
             return indexEngine.sizeInTx(getTransactionChanges(transaction));
           }

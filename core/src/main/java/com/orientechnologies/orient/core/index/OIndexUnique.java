@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -64,31 +63,18 @@ public class OIndexUnique extends OIndexOneValue {
   public OIndexOneValue put(Object key, final OIdentifiable iSingleValue) {
     key = getCollatingValue(key);
 
-    final ODatabase database = getDatabase();
-    final boolean txIsActive = database.getTransaction().isActive();
-
-    if (!txIsActive) {
-      keyLockManager.acquireExclusiveLock(key);
-    }
-
+    acquireSharedLock();
     try {
-
-      acquireSharedLock();
-      try {
-        while (true)
-          try {
-            storage.validatedPutIndexValue(indexId, key, iSingleValue, UNIQUE_VALIDATOR);
-            break;
-          } catch (OInvalidIndexEngineIdException e) {
-            doReloadIndexEngine();
-          }
-        return this;
-      } finally {
-        releaseSharedLock();
-      }
+      while (true)
+        try {
+          storage.validatedPutIndexValue(indexId, key, iSingleValue, UNIQUE_VALIDATOR);
+          break;
+        } catch (OInvalidIndexEngineIdException e) {
+          doReloadIndexEngine();
+        }
+      return this;
     } finally {
-      if (!txIsActive)
-        keyLockManager.releaseExclusiveLock(key);
+      releaseSharedLock();
     }
   }
 

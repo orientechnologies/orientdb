@@ -40,6 +40,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ONonTx
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
+import com.orientechnologies.orient.core.tx.OTransaction;
 
 import javax.management.*;
 import java.io.IOException;
@@ -159,6 +160,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
    *                             During storage restore procedure this record is monitored and if given record is present then
    *                             rebuild of all indexes is performed.
    * @param lockName             Name of lock (usually name of component) which is going participate in atomic operation.
+   *
    * @return Instance of active atomic operation.
    */
   public OAtomicOperation startAtomicOperation(String lockName, boolean trackNonTxOperations) throws IOException {
@@ -306,7 +308,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   public boolean isFrozen() {
     return freezeRequests.get() > 0;
   }
-  
+
   public void releaseAtomicOperations(long id) {
     if (id >= 0) {
       final FreezeParameters freezeParameters = freezeParametersIdMap.remove(id);
@@ -458,7 +460,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   public void acquireExclusiveLockTillOperationComplete(ODurableComponent durableComponent) {
     final OAtomicOperation operation = currentOperation.get();
     assert operation != null;
-    acquireExclusiveLockTillOperationComplete(operation, durableComponent.getFullName());
+    acquireExclusiveLockTillOperationComplete(operation, durableComponent.getLockName());
   }
 
   public void acquireReadLock(ODurableComponent durableComponent) {
@@ -598,6 +600,11 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       return false;
 
     final OStorageTransaction storageTransaction = storage.getStorageTransaction();
-    return storageTransaction == null || storageTransaction.getClientTx().isUsingLog();
+    if (storageTransaction == null)
+      return true;
+
+    final OTransaction clientTx = storageTransaction.getClientTx();
+    return clientTx == null || clientTx.isUsingLog();
+
   }
 }

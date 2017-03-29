@@ -56,6 +56,7 @@ import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.metadata.security.*;
@@ -70,9 +71,13 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorageComponent;
+import com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineClusterException;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
-import com.orientechnologies.orient.core.tx.*;
+import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.core.tx.OTransactionAbstract;
+import com.orientechnologies.orient.core.tx.OTransactionNoTx;
+import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -111,6 +116,8 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   protected OSharedContext sharedContext;
 
   private boolean prefetchRecords;
+
+  private OMicroTransaction microTransaction = null;
 
   protected ODatabaseDocumentAbstract() {
     // DO NOTHING IS FOR EXTENDED OBJECTS
@@ -1217,6 +1224,11 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     return currentTx;
   }
 
+  @Override
+  public OBasicTransaction getMicroOrRegularTransaction() {
+    return microTransaction != null && microTransaction.isActive() ? microTransaction : getTransaction();
+  }
+
   @SuppressWarnings("unchecked")
   @Override
   public <RET extends ORecord> RET load(final ORecord iRecord, final String iFetchPlan) {
@@ -1413,7 +1425,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
         // SEARCH IN LOCAL TX
         ORecord record = getTransaction().getRecord(rid);
-        if (record == OTransactionRealAbstract.DELETED_RECORD) {
+        if (record == OBasicTransaction.DELETED_RECORD) {
           // DELETED IN TX
           it.remove();
           continue;
@@ -1475,9 +1487,17 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
       // SEARCH IN LOCAL TX
       ORecord record = getTransaction().getRecord(rid);
-      if (record == OTransactionRealAbstract.DELETED_RECORD)
+      if (record == OBasicTransaction.DELETED_RECORD)
         // DELETED IN TX
         return null;
+
+      if (record == null) {
+        if (microTransaction != null && microTransaction.isActive()) {
+          record = microTransaction.getRecord(rid);
+          if (record == OBasicTransaction.DELETED_RECORD)
+            return null;
+        }
+      }
 
       if (record == null && !ignoreCache)
         // SEARCH INTO THE CACHE
@@ -1651,6 +1671,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   public <RET extends ORecord> RET executeSaveRecord(final ORecord record, String clusterName, final int ver,
       final OPERATION_MODE mode, boolean forceCreate, final ORecordCallback<? extends Number> recordCreatedCallback,
       ORecordCallback<Integer> recordUpdatedCallback) {
+
     checkOpenness();
     checkIfActive();
     if (!record.isDirty())
@@ -1661,6 +1682,20 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     if (rid == null)
       throw new ODatabaseException(
           "Cannot create record because it has no identity. Probably is not a regular record or contains projections of fields rather than a full record");
+
+    if (supportsMicroTransactions(record)) {
+      final OMicroTransaction microTx = beginMicroTransaction();
+      if (microTx != null) {
+        try {
+          microTx.saveRecord(record, clusterName, mode, forceCreate, recordCreatedCallback, recordUpdatedCallback);
+        } catch (Exception e) {
+          endMicroTransaction(false);
+          throw e;
+        }
+        endMicroTransaction(true);
+        return (RET) record;
+      }
+    }
 
     record.setInternalStatus(ORecordElement.STATUS.MARSHALLING);
     try {
@@ -1795,6 +1830,18 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     record = record.getRecord();
     if (record == null)
       return;
+
+    final OMicroTransaction microTx = beginMicroTransaction();
+    if (microTx != null) {
+      try {
+        microTx.deleteRecord(record.getRecord(), iMode);
+      } catch (Exception e) {
+        endMicroTransaction(false);
+        throw e;
+      }
+      endMicroTransaction(true);
+      return;
+    }
 
     checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_DELETE, getClusterNameById(rid.getClusterId()));
 
@@ -3111,6 +3158,54 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     OEdgeDelegate result = new OEdgeDelegate(from, to, clazz);
 
     return result;
+  }
+
+  private boolean supportsMicroTransactions(ORecord record) {
+    if (!(record instanceof ODocument))
+      return true;
+
+    final OImmutableClass class_ = ODocumentInternal.getImmutableSchemaClass((ODocument) record);
+
+    // XXX: Function library is force reloading functions from disk on every change, see OFunctionLibraryImpl.load. This conflicts
+    // with the data stored in a micro-transaction. Likely, functions have no indexes, so we may handle them w/o micro-transactions.
+    //noinspection RedundantIfStatement
+    if (class_ != null && class_.isFunction())
+      return false;
+
+    return true;
+  }
+
+  private OMicroTransaction beginMicroTransaction() {
+    final OStorage storage = getStorage();
+    if (!(storage instanceof OAbstractPaginatedStorage))
+      return null;
+
+    final OAbstractPaginatedStorage abstractPaginatedStorage = (OAbstractPaginatedStorage) storage;
+
+    if (microTransaction == null)
+      microTransaction = new OMicroTransaction(abstractPaginatedStorage, this);
+
+    microTransaction.begin();
+    return microTransaction;
+  }
+
+  private void endMicroTransaction(boolean success) {
+    assert microTransaction != null;
+
+    try {
+      if (success)
+        try {
+          microTransaction.commit();
+        } catch (Exception e) {
+          microTransaction.rollbackAfterFailedCommit();
+          throw e;
+        }
+      else
+        microTransaction.rollback();
+    } finally {
+      if (!microTransaction.isActive())
+        microTransaction = null;
+    }
   }
 
 }

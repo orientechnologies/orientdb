@@ -28,11 +28,9 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.util.*;
-import java.util.concurrent.locks.Lock;
 
 @SuppressFBWarnings("EQ_COMPARETO_USE_OBJECT_EQUALS")
 public class OIndexRecorder implements OIndex<OIdentifiable>, OIndexInternal<OIdentifiable> {
-  private static final Lock[] NO_LOCKS = new Lock[0];
 
   private final OIndexInternal<OIdentifiable> delegate;
 
@@ -158,11 +156,6 @@ public class OIndexRecorder implements OIndex<OIdentifiable>, OIndexInternal<OId
 
   @Override
   public long getKeySize() {
-    throw new UnsupportedOperationException("Not allowed operation");
-  }
-
-  @Override
-  public ODocument checkEntry(OIdentifiable iRecord, Object iKey) {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
@@ -340,19 +333,6 @@ public class OIndexRecorder implements OIndex<OIdentifiable>, OIndexInternal<OId
   @Override
   public boolean hasRangeQuerySupport() {
     return delegate.hasRangeQuerySupport();
-  }
-
-  @Override
-  public void lockKeysForUpdate(Object... key) {
-  }
-
-  @Override
-  public Lock[] lockKeysForUpdate(Collection<Object> keys) {
-    return NO_LOCKS;
-  }
-
-  @Override
-  public void releaseKeysForUpdate(Object... key) {
   }
 
   @Override

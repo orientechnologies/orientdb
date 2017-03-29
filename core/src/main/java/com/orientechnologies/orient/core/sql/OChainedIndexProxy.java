@@ -427,10 +427,6 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
     }
   }
 
-  public ODocument checkEntry(final OIdentifiable iRecord, final Object iKey) {
-    return firstIndex.checkEntry(iRecord, iKey);
-  }
-
   //
   // Following methods are not allowed for proxy.
   //

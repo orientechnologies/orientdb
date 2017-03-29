@@ -329,10 +329,6 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     return Collections.unmodifiableSet(clustersToIndex);
   }
 
-  public ODocument checkEntry(final OIdentifiable iRecord, final Object iKey) {
-    return null;
-  }
-
   @Override
   public boolean isRebuilding() {
     return false;

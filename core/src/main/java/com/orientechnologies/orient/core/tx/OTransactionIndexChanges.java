@@ -31,7 +31,6 @@ import java.util.TreeMap;
  * Collects the changes to an index for a certain key
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- *
  */
 public class OTransactionIndexChanges {
 
@@ -39,12 +38,12 @@ public class OTransactionIndexChanges {
     PUT, REMOVE, CLEAR
   }
 
-  public NavigableMap<Object, OTransactionIndexChangesPerKey> changesPerKey  = new TreeMap<Object, OTransactionIndexChangesPerKey>(
-                                                                                 ODefaultComparator.INSTANCE);
+  public NavigableMap<Object, OTransactionIndexChangesPerKey> changesPerKey = new TreeMap<Object, OTransactionIndexChangesPerKey>(
+      ODefaultComparator.INSTANCE);
 
-  public OTransactionIndexChangesPerKey                       nullKeyChanges = new OTransactionIndexChangesPerKey(null);
+  public OTransactionIndexChangesPerKey nullKeyChanges = new OTransactionIndexChangesPerKey(null);
 
-  public boolean                                              cleared        = false;
+  public boolean cleared = false;
 
   private OIndexInternal<?> resolvedIndex = null;
 
@@ -52,13 +51,7 @@ public class OTransactionIndexChanges {
     if (key == null)
       return nullKeyChanges;
 
-    OTransactionIndexChangesPerKey changes = changesPerKey.get(key);
-    if (changes == null) {
-      changes = new OTransactionIndexChangesPerKey(key);
-      changesPerKey.put(key, changes);
-    }
-
-    return changes;
+    return changesPerKey.computeIfAbsent(key, OTransactionIndexChangesPerKey::new);
   }
 
   public void setCleared() {
@@ -67,7 +60,6 @@ public class OTransactionIndexChanges {
 
     cleared = true;
   }
-
 
   public Object getFirstKey() {
     return changesPerKey.firstKey();

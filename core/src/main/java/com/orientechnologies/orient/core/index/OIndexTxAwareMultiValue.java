@@ -301,7 +301,8 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Set<OIdentifiable>> {
 
   @Override
   public Set<OIdentifiable> get(Object key) {
-    final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChangesInternal(delegate.getName());
+    final OTransactionIndexChanges indexChanges = database.getMicroOrRegularTransaction()
+        .getIndexChangesInternal(delegate.getName());
     if (indexChanges == null) {
       Set<OIdentifiable> res = super.get(key);
       //In case of active transaction we use to return null instead of empty list, make check to be backward compatible
@@ -349,7 +350,8 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Set<OIdentifiable>> {
   public OIndexCursor iterateEntriesBetween(Object fromKey, final boolean fromInclusive, Object toKey, final boolean toInclusive,
       final boolean ascOrder) {
 
-    final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChangesInternal(delegate.getName());
+    final OTransactionIndexChanges indexChanges = database.getMicroOrRegularTransaction()
+        .getIndexChangesInternal(delegate.getName());
     if (indexChanges == null)
       return super.iterateEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascOrder);
 
@@ -372,7 +374,8 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Set<OIdentifiable>> {
 
   @Override
   public OIndexCursor iterateEntriesMajor(Object fromKey, boolean fromInclusive, boolean ascOrder) {
-    final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChangesInternal(delegate.getName());
+    final OTransactionIndexChanges indexChanges = database.getMicroOrRegularTransaction()
+        .getIndexChangesInternal(delegate.getName());
     if (indexChanges == null)
       return super.iterateEntriesMajor(fromKey, fromInclusive, ascOrder);
 
@@ -396,7 +399,8 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Set<OIdentifiable>> {
 
   @Override
   public OIndexCursor iterateEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder) {
-    final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChangesInternal(delegate.getName());
+    final OTransactionIndexChanges indexChanges = database.getMicroOrRegularTransaction()
+        .getIndexChangesInternal(delegate.getName());
     if (indexChanges == null)
       return super.iterateEntriesMinor(toKey, toInclusive, ascOrder);
 
@@ -419,7 +423,8 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Set<OIdentifiable>> {
 
   @Override
   public OIndexCursor iterateEntries(Collection<?> keys, boolean ascSortOrder) {
-    final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChangesInternal(delegate.getName());
+    final OTransactionIndexChanges indexChanges = database.getMicroOrRegularTransaction()
+        .getIndexChangesInternal(delegate.getName());
     if (indexChanges == null)
       return super.iterateEntries(keys, ascSortOrder);
 

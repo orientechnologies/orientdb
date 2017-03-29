@@ -15,8 +15,7 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
+import com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
 /**
@@ -24,13 +23,32 @@ import com.orientechnologies.orient.core.tx.OTransaction;
  * @since 12.06.13
  */
 public class OStorageTransaction {
-  private final OTransaction clientTx;
+  private final OTransaction      clientTx;
+  private final OMicroTransaction microTransaction;
 
   public OStorageTransaction(OTransaction clientTx) {
     this.clientTx = clientTx;
+    this.microTransaction = null;
+  }
+
+  /**
+   * Instantiates a new storage transaction for the given micro-transaction.
+   *
+   * @param microTransaction the micro-transaction.
+   */
+  public OStorageTransaction(OMicroTransaction microTransaction) {
+    this.microTransaction = microTransaction;
+    this.clientTx = null;
   }
 
   public OTransaction getClientTx() {
     return clientTx;
+  }
+
+  /**
+   * @return the micro-transaction associated with this storage transaction or {@code null} if there are no such transaction.
+   */
+  public OMicroTransaction getMicroTransaction() {
+    return microTransaction;
   }
 }

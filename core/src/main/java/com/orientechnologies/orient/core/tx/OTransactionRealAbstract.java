@@ -35,7 +35,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import com.orientechnologies.orient.core.record.impl.ORecordBytes;
+import com.orientechnologies.orient.core.storage.OBasicTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
 
@@ -43,14 +43,10 @@ import java.util.*;
 import java.util.Map.Entry;
 
 public abstract class OTransactionRealAbstract extends OTransactionAbstract {
-  /**
-   * USE THIS AS RESPONSE TO REPORT A DELETED RECORD IN TX
-   */
-  public static final ORecord                                           DELETED_RECORD        = new ORecordBytes();
-  protected           Map<ORID, ORID>                                   updatedRids           = new HashMap<ORID, ORID>();
-  protected           Map<ORID, ORecordOperation>                       allEntries            = new LinkedHashMap<ORID, ORecordOperation>();
-  protected           Map<String, OTransactionIndexChanges>             indexEntries          = new LinkedHashMap<String, OTransactionIndexChanges>();
-  protected           Map<ORID, List<OTransactionRecordIndexOperation>> recordIndexOperations = new HashMap<ORID, List<OTransactionRecordIndexOperation>>();
+  protected Map<ORID, ORID>                                   updatedRids           = new HashMap<ORID, ORID>();
+  protected Map<ORID, ORecordOperation>                       allEntries            = new LinkedHashMap<ORID, ORecordOperation>();
+  protected Map<String, OTransactionIndexChanges>             indexEntries          = new LinkedHashMap<String, OTransactionIndexChanges>();
+  protected Map<ORID, List<OTransactionRecordIndexOperation>> recordIndexOperations = new HashMap<ORID, List<OTransactionRecordIndexOperation>>();
   protected int id;
   protected int                 newObjectCounter = -2;
   protected Map<String, Object> userData         = new HashMap<String, Object>();
@@ -60,21 +56,6 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
    * during tx will be undone.
    */
   protected final Set<ODocument> changedDocuments = new HashSet<ODocument>();
-
-  /**
-   * Represents information for each index operation for each record in DB.
-   */
-  public static final class OTransactionRecordIndexOperation {
-    public String    index;
-    public Object    key;
-    public OPERATION operation;
-
-    public OTransactionRecordIndexOperation(String index, Object key, OPERATION operation) {
-      this.index = index;
-      this.key = key;
-      this.operation = operation;
-    }
-  }
 
   protected OTransactionRealAbstract(ODatabaseDocumentInternal database, int id) {
     super(database);
@@ -167,7 +148,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
     final ORecordOperation e = getRecordEntry(rid);
     if (e != null)
       if (e.type == ORecordOperation.DELETED)
-        return DELETED_RECORD;
+        return OBasicTransaction.DELETED_RECORD;
       else
         return e.getRecord();
     return null;
@@ -486,7 +467,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
   private static Dependency[] getIndexFieldRidDependencies(OIndex<?> index) {
     final OIndexDefinition definition = index.getDefinition();
 
-    if (definition == null) // type for untyped index it still no resolved
+    if (definition == null) // type for untyped index is still not resolved
       return null;
 
     final OType[] types = definition.getTypes();

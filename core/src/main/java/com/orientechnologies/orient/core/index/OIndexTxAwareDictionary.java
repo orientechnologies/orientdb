@@ -33,9 +33,4 @@ public class OIndexTxAwareDictionary extends OIndexTxAwareOneValue {
   public OIndexTxAwareDictionary(ODatabaseDocumentInternal iDatabase, OIndex<OIdentifiable> iDelegate) {
     super(iDatabase, iDelegate);
   }
-
-  @Override
-  public ODocument checkEntry(final OIdentifiable iRecord, final Object iKey) {
-    return null;
-  }
 }
