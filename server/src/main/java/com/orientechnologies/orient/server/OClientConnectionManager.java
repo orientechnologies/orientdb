@@ -464,8 +464,12 @@ public class OClientConnectionManager {
             OLogManager.instance().debug(this, "Sending interrupt signal to thread %s", protocol);
             protocol.interrupt();
           }
+          try {
+            protocol.join();
+          } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+          }
 
-          // protocol.join();
         }
       }
     }
