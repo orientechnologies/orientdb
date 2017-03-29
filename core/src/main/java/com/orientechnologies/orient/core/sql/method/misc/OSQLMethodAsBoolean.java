@@ -38,15 +38,7 @@ public class OSQLMethodAsBoolean extends OAbstractSQLMethod {
             if (ioResult instanceof String) {
                 ioResult = Boolean.valueOf(((String) ioResult).trim());
             } else if (ioResult instanceof Number) {
-                final int bValue = ((Number) ioResult).intValue();
-                if (bValue == 0) {
-                    ioResult = Boolean.FALSE;
-                } else if (bValue == 1) {
-                    ioResult = Boolean.TRUE;
-                } else {
-                    // IGNORE OTHER VALUES
-                    ioResult = null;
-                }
+                return ((Number) ioResult).intValue() != 0;
             }
         }
         return ioResult;
