@@ -76,7 +76,7 @@
             <!-- Use an OSGi ready dependency https://hibernate.onjira.com/browse/JPA-42 -->
             <groupId>org.hibernate.javax.persistence</groupId>
             <artifactId>hibernate-jpa-2.0-api</artifactId>
-            <version>1.0.0.Final</version>
+            <version>1.0.1.Final</version>
             <type>jar</type>
         </dependency>
         <dependency>
