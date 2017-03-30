@@ -19,9 +19,7 @@
 package com.orientechnologies.lucene.tests;
 
 import com.orientechnologies.lucene.OLuceneIndexFactory;
-import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -29,7 +27,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.Assert;
 import org.junit.Before;
@@ -54,7 +51,7 @@ public class OLuceneExportImportTest extends OLuceneBaseTest {
     OClass city = schema.createClass("City");
     city.createProperty("name", OType.STRING);
 
-    db.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE")).execute();
+    db.command("create index City.name on City (name) FULLTEXT ENGINE LUCENE");
 
     ODocument doc = new ODocument("City");
     doc.field("name", "Rome");
@@ -71,24 +68,21 @@ public class OLuceneExportImportTest extends OLuceneBaseTest {
     assertThat(query).hasSize(1);
 
     query.close();
+
     try {
 
       //export
-      new ODatabaseExport((ODatabaseDocumentInternal) db, file, new OCommandOutputListener() {
-        @Override
-        public void onMessage(String s) {
-        }
+      new ODatabaseExport((ODatabaseDocumentInternal) db, file, s -> {
       }).exportDatabase();
 
       //import
+      dropDatabase();
       setupDatabase();
 
-       GZIPInputStream stream = new GZIPInputStream(new FileInputStream(file + ".gz"));
-      new ODatabaseImport((ODatabaseDocumentInternal) db, stream, new OCommandOutputListener() {
-        @Override
-        public void onMessage(String s) {
-        }
+      GZIPInputStream stream = new GZIPInputStream(new FileInputStream(file + ".gz"));
+      new ODatabaseImport((ODatabaseDocumentInternal) db, stream, s -> {
       }).importDatabase();
+
     } catch (IOException e) {
       Assert.fail(e.getMessage());
     }

@@ -47,10 +47,15 @@ public abstract class OLuceneBaseTest {
   protected ODatabasePool pool;
 
   @Before
-  public void setupDatabase() throws Throwable {
+  public void setupDatabase() {
 
     String config = System.getProperty("orientdb.test.env", "memory");
 
+    setupDatabase(config);
+
+  }
+
+  protected void setupDatabase(String config) {
     if ("ci".equals(config) || "release".equals(config)) {
       orient = new OrientDB("embedded:./target/databases/", OrientDBConfig.defaultConfig());
       if (orient.exists(name.getMethodName()))
@@ -62,13 +67,13 @@ public abstract class OLuceneBaseTest {
       orient = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
       if (orient.exists(name.getMethodName()))
         orient.drop(name.getMethodName());
+
       orient.create(name.getMethodName(), ODatabaseType.MEMORY);
 
     }
 
     pool = new ODatabasePool(orient, name.getMethodName(), "admin", "admin");
     db = pool.acquire();
-
   }
 
   @After
