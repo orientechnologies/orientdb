@@ -255,7 +255,6 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
 
   @Override
   public Set<OIdentifiable> get(final Object key) {
-
     final OTransaction transaction = getDatabase().getTransaction();
     if (transaction.isActive()) {
       while (true) {

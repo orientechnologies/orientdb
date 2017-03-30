@@ -219,12 +219,11 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
   @Override
   public Document buildDocument(Object key, OIdentifiable value) {
-//    ORecord record = getDatabase().load(value.getIdentity());
-
-//    System.out.println("record = " + record);
-//    System.out.println("key = " + key);
-//    System.out.println("collectionFields = " + collectionFields);
+    if (index.isAutomatic()) {
     return builder.build(index, key, value, collectionFields, metadata);
+    } else {
+      return putInManualindex(key, value);
+    }
   }
 
   private Document putInManualindex(Object key, OIdentifiable oIdentifiable) {
@@ -237,7 +236,7 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
       int k = 0;
       for (Object o : keys) {
-        doc.add(OLuceneIndexType.createField("k" + k, o, Field.Store.NO));
+        doc.add(OLuceneIndexType.createField("k" + k, o, Field.Store.YES));
         k++;
       }
     } else if (key instanceof Collection) {
@@ -245,7 +244,7 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
       int k = 0;
       for (Object o : keys) {
-        doc.add(OLuceneIndexType.createField("k" + k, o, Field.Store.NO));
+        doc.add(OLuceneIndexType.createField("k" + k, o, Field.Store.YES));
         k++;
       }
     } else {

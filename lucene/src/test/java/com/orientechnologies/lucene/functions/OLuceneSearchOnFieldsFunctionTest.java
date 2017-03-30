@@ -1,6 +1,7 @@
 package com.orientechnologies.lucene.functions;
 
 import com.orientechnologies.lucene.test.BaseLuceneTest;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -102,15 +103,29 @@ public class OLuceneSearchOnFieldsFunctionTest extends BaseLuceneTest {
 
   }
 
+  @Test(expected = OCommandExecutionException.class)
+  public void shouldFailWithWrongFieldName() throws Exception {
+
+    db.query("SELECT from Song where SEARCH_FIELDS(['wrongName'], '(description:happiness) (lyrics:sad)  ') = true ");
+
+  }
+
   @Test
-  public void shouldFindNothingWithWrongFieldName() throws Exception {
+  @Ignore
+  public void shouldSearchWithHesitance() throws Exception {
+
+    db.command("create class RockSong extends Song");
+    db.command("create vertex RockSong set title=\"This is only rock\", author=\"A cool rocker\"");
 
     OResultSet resultSet = db
         .query(
-            "SELECT from Song where SEARCH_FIELDS(['wrongName'], '(description:happiness) (lyrics:sad)  ') = true ");
+            "SELECT from RockSong where SEARCH_FIELDS(['title'], '+only +rock') = true ");
 
-    assertThat(resultSet).hasSize(0);
+    assertThat(resultSet).hasSize(1);
     resultSet.close();
+
+
+
 
   }
 }

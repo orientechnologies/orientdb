@@ -49,6 +49,9 @@ public class OLuceneSearchOnIndexFunction extends OSQLFunctionAbstract implement
 
     OLuceneFullTextIndex index = searchForIndex(ctx, indexName);
 
+    if (index == null)
+      return false;
+
     String query = (String) params[1];
 
     MemoryIndex memoryIndex = getOrCreateMemoryIndex(ctx);
@@ -94,13 +97,10 @@ public class OLuceneSearchOnIndexFunction extends OSQLFunctionAbstract implement
   public Iterable<OIdentifiable> searchFromTarget(OFromClause target, OBinaryCompareOperator operator, Object rightValue,
       OCommandContext ctx, OExpression... args) {
 
-    String indexName = (String) args[0].execute((OIdentifiable) null, ctx);
-
-    OLuceneFullTextIndex index = searchForIndex(target, ctx, indexName);
+    OLuceneFullTextIndex index = searchForIndex(target, ctx, args);
 
     OExpression expression = args[1];
     String query = (String) expression.execute((OIdentifiable) null, ctx);
-//    String queryValue = query == null ? null : String.valueOf(query);
     if (index != null && query != null) {
 
       if (args.length == 3) {
@@ -118,14 +118,16 @@ public class OLuceneSearchOnIndexFunction extends OSQLFunctionAbstract implement
     return Collections.emptySet();
   }
 
-  protected OLuceneFullTextIndex searchForIndex(OFromClause target, OCommandContext ctx, String indexName) {
+  protected OLuceneFullTextIndex searchForIndex(OFromClause target, OCommandContext ctx, OExpression... args) {
 
     OFromItem item = target.getItem();
     OIdentifier identifier = item.getIdentifier();
-    return searchForIndex(identifier.getStringValue(), ctx, indexName);
+    return searchForIndex(identifier.getStringValue(), ctx, args);
   }
 
-  protected OLuceneFullTextIndex searchForIndex(String className, OCommandContext ctx, String indexName) {
+  protected OLuceneFullTextIndex searchForIndex(String className, OCommandContext ctx, OExpression... args) {
+
+    String indexName = (String) args[0].execute((OIdentifiable) null, ctx);
 
     OIndex<?> index = ctx.getDatabase().getMetadata().getIndexManager().getClassIndex(className, indexName);
 
@@ -133,7 +135,6 @@ public class OLuceneSearchOnIndexFunction extends OSQLFunctionAbstract implement
       return (OLuceneFullTextIndex) index;
     }
 
-    //TODO maybe better to trhow
     return null;
   }
 
@@ -145,33 +146,39 @@ public class OLuceneSearchOnIndexFunction extends OSQLFunctionAbstract implement
       return (OLuceneFullTextIndex) index;
     }
 
-    //TODO maybe better to trhow
     return null;
   }
 
-
   @Override
   public Object getResult() {
-    System.out.println("getResult");
     return super.getResult();
   }
 
   @Override
   public long estimate(OFromClause target, OBinaryCompareOperator operator, Object rightValue, OCommandContext ctx,
       OExpression... args) {
+
+    OLuceneFullTextIndex index = searchForIndex(target, ctx, args);
+    if (index != null)
+      return index.getSize();
+
     return 0;
   }
 
   @Override
   public boolean canExecuteWithoutIndex(OFromClause target, OBinaryCompareOperator operator, Object rightValue, OCommandContext ctx,
       OExpression... args) {
-    return true;
+    return allowsIndexedExecution(target, operator, rightValue, ctx, args);
   }
 
   @Override
   public boolean allowsIndexedExecution(OFromClause target, OBinaryCompareOperator operator, Object rightValue, OCommandContext ctx,
       OExpression... args) {
-    return true;
+
+    OLuceneFullTextIndex index = searchForIndex(target, ctx, args);
+    if (index != null)
+      return true;
+    return false;
   }
 
   @Override

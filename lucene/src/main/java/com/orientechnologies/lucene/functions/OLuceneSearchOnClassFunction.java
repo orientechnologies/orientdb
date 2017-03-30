@@ -50,7 +50,7 @@ public class OLuceneSearchOnClassFunction extends OSQLFunctionAbstract implement
 
     String className = element.getSchemaType().get().getName();
 
-    OLuceneFullTextIndex index = searchForIndex(className, ctx);
+    OLuceneFullTextIndex index = searchForIndex(ctx, className);
 
     if (index == null)
       return false;
@@ -95,10 +95,7 @@ public class OLuceneSearchOnClassFunction extends OSQLFunctionAbstract implement
       OCommandContext ctx,
       OExpression... args) {
 
-    OFromItem item = target.getItem();
-    String className = item.getIdentifier().getStringValue();
-
-    OLuceneFullTextIndex index = searchForIndex(className, ctx);
+    OLuceneFullTextIndex index = searchForIndex(target, ctx);
 
     OExpression expression = args[0];
     String query = (String) expression.execute((OIdentifiable) null, ctx);
@@ -120,7 +117,15 @@ public class OLuceneSearchOnClassFunction extends OSQLFunctionAbstract implement
 
   }
 
-  private OLuceneFullTextIndex searchForIndex(String className, OCommandContext ctx) {
+  private OLuceneFullTextIndex searchForIndex(OFromClause target, OCommandContext ctx) {
+    OFromItem item = target.getItem();
+
+    String className = item.getIdentifier().getStringValue();
+
+    return searchForIndex(ctx, className);
+  }
+
+  private OLuceneFullTextIndex searchForIndex(OCommandContext ctx, String className) {
     OMetadata dbMetadata = ctx.getDatabase().activateOnCurrentThread().getMetadata();
 
     List<OLuceneFullTextIndex> indices = dbMetadata
@@ -147,19 +152,29 @@ public class OLuceneSearchOnClassFunction extends OSQLFunctionAbstract implement
   @Override
   public long estimate(OFromClause target, OBinaryCompareOperator operator, Object rightValue, OCommandContext ctx,
       OExpression... args) {
+    OLuceneFullTextIndex index = searchForIndex(target, ctx);
+
+    if (index != null)
+      return index.getSize();
     return 0;
+
   }
 
   @Override
   public boolean canExecuteWithoutIndex(OFromClause target, OBinaryCompareOperator operator, Object rightValue, OCommandContext ctx,
       OExpression... args) {
-    return true;
+    return allowsIndexedExecution(target, operator, rightValue, ctx, args);
   }
 
   @Override
   public boolean allowsIndexedExecution(OFromClause target, OBinaryCompareOperator operator, Object rightValue, OCommandContext ctx,
       OExpression... args) {
-    return true;
+
+    OLuceneFullTextIndex index = searchForIndex(target, ctx);
+
+    if (index != null)
+      return true;
+    return false;
   }
 
   @Override

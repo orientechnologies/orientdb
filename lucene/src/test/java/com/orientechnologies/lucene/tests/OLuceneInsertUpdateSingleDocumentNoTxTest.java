@@ -50,8 +50,6 @@ public class OLuceneInsertUpdateSingleDocumentNoTxTest extends OLuceneBaseTest {
   @Test
   public void testInsertUpdateTransactionWithIndex() throws Exception {
 
-    db.close();
-    db.open("admin", "admin");
     OSchema schema = db.getMetadata().getSchema();
     schema.reload();
     ODocument doc = new ODocument("City");

@@ -18,19 +18,25 @@
 
 package com.orientechnologies.lucene.tests;
 
+import com.orientechnologies.orient.core.db.ODatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Created by enricorisa on 28/06/14.
@@ -39,71 +45,68 @@ import org.junit.Test;
 public class OLuceneInsertReadMultiThreadTest extends OLuceneBaseTest {
 
   private final static int THREADS  = 10;
-  private final static int RTHREADS = 1;
+  private final static int RTHREADS = 10;
   private final static int CYCLE    = 100;
-
-  protected String url = "";
 
   @Before
   public void init() {
 
-    url = db.getURL();
     OSchema schema = db.getMetadata().getSchema();
     OClass oClass = schema.createClass("City");
 
     oClass.createProperty("name", OType.STRING);
-    db.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE")).execute();
+    db.command("create index City.name on City (name) FULLTEXT ENGINE LUCENE");
   }
 
   @Test
   public void testConcurrentInsertWithIndex() throws Exception {
 
-    db.getMetadata().reload();
-    OSchema schema = db.getMetadata().getSchema();
+    List<CompletableFuture<Void>> futures = IntStream.range(0, THREADS).boxed()
+        .map(i -> CompletableFuture.runAsync(new LuceneInsert(pool, CYCLE)))
+        .collect(Collectors.toList());
 
-    Thread[] threads = new Thread[THREADS + RTHREADS];
-    for (int i = 0; i < THREADS; ++i)
-      threads[i] = new Thread(new LuceneInsertThread(CYCLE), "ConcurrentWriteTest" + i);
+    futures.addAll(
+        IntStream.range(0, 1).boxed()
+            .map(i -> CompletableFuture.runAsync(new LuceneReader(pool, CYCLE)))
+            .collect(Collectors.toList())
+    );
 
-    for (int i = THREADS; i < THREADS + RTHREADS; ++i)
-      threads[i] = new Thread(new LuceneReadThread(CYCLE), "ConcurrentReadTest" + i);
+    futures.forEach(cf -> cf.join());
 
-    for (int i = 0; i < THREADS + RTHREADS; ++i)
-      threads[i].start();
-
-    System.out.println("Started OLuceneInsertReadMultiThreadTest test, waiting for " + threads.length + " threads to complete...");
-
-    for (int i = 0; i < THREADS + RTHREADS; ++i)
-      threads[i].join();
-
-    System.out.println("OLuceneInsertReadMultiThreadTest all threads completed");
+    ODatabaseDocument db1 = pool.acquire();
+    db1.getMetadata().reload();
+    OSchema schema = db1.getMetadata().getSchema();
 
     OIndex idx = schema.getClass("City").getClassIndex("City.name");
 
     Assert.assertEquals(idx.getSize(), THREADS * CYCLE);
   }
 
-  public class LuceneInsertThread implements Runnable {
+  public class LuceneInsert implements Runnable {
 
-    private ODatabaseDocumentTx db;
-    private int cycle     = 0;
-    private int commitBuf = 500;
+    private final ODatabasePool pool;
+    private final int           cycle;
+    private final int           commitBuf;
 
-    public LuceneInsertThread(int cycle) {
+    public LuceneInsert(ODatabasePool pool, int cycle) {
+      this.pool = pool;
       this.cycle = cycle;
+
+      this.commitBuf = cycle / 10;
     }
 
     @Override
     public void run() {
 
-      db = new ODatabaseDocumentTx(url);
-      db.open("admin", "admin");
+      final ODatabaseDocument db = pool.acquire();
+      db.activateOnCurrentThread();
       db.declareIntent(new OIntentMassiveInsert());
       db.begin();
-      for (int i = 0; i < cycle; i++) {
-        ODocument doc = new ODocument("City");
+      int i = 0;
+      for (; i < cycle; i++) {
+        OElement doc = db.newElement("City");
 
-        doc.field("name", "Rome");
+        doc.setProperty("name", "Rome");
 
         db.save(doc);
         if (i % commitBuf == 0) {
@@ -112,32 +115,37 @@ public class OLuceneInsertReadMultiThreadTest extends OLuceneBaseTest {
         }
 
       }
-
+      db.commit();
       db.close();
     }
   }
 
-  public class LuceneReadThread implements Runnable {
-    private final int               cycle;
-    private       ODatabaseDocument databaseDocumentTx;
+  public class LuceneReader implements Runnable {
+    private final int           cycle;
+    private final ODatabasePool pool;
 
-    public LuceneReadThread(int cycle) {
+    public LuceneReader(ODatabasePool pool, int cycle) {
+      this.pool = pool;
       this.cycle = cycle;
     }
 
     @Override
     public void run() {
 
-      databaseDocumentTx = new ODatabaseDocumentTx(url);
-      databaseDocumentTx.open("admin", "admin");
-      OSchema schema = databaseDocumentTx.getMetadata().getSchema();
+      final ODatabaseDocument db = pool.acquire();
+      db.activateOnCurrentThread();
+      OSchema schema = db.getMetadata().getSchema();
       OIndex idx = schema.getClass("City").getClassIndex("City.name");
 
       for (int i = 0; i < cycle; i++) {
 
-        databaseDocumentTx.command(new OSQLSynchQuery<ODocument>("select from city where name LUCENE 'Rome'")).execute();
+        OResultSet resultSet = db.query("select from City where SEARCH_FIELDS(['name'], 'Rome') =true ");
 
+        if (resultSet.hasNext()) {
+          assertThat(resultSet.next().toElement().<String>getProperty("name")).isEqualToIgnoringCase("rome");
+        }
       }
+      db.close();
 
     }
   }

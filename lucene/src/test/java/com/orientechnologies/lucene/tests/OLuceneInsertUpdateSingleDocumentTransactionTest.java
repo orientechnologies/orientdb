@@ -50,8 +50,6 @@ public class OLuceneInsertUpdateSingleDocumentTransactionTest extends OLuceneBas
   @Test
   public void testInsertUpdateTransactionWithIndex() throws Exception {
 
-    db.close();
-    db.open("admin", "admin");
     OSchema schema = db.getMetadata().getSchema();
     schema.reload();
     db.begin();

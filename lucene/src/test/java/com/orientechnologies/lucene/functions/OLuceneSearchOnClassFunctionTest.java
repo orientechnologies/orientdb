@@ -1,6 +1,7 @@
 package com.orientechnologies.lucene.functions;
 
 import com.orientechnologies.lucene.test.BaseLuceneTest;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -73,15 +74,13 @@ public class OLuceneSearchOnClassFunctionTest extends BaseLuceneTest {
 
   }
 
-  @Test
+  @Test(expected = OCommandExecutionException.class)
   public void shouldFindNothingWithWrongClass() throws Exception {
 
     OResultSet resultSet = db
         .query(
             "SELECT from Author where SEARCH_CLASS('(description:happiness) (lyrics:sad)  ') = true ");
 
-    assertThat(resultSet).hasSize(0);
-    resultSet.close();
 
   }
 
@@ -95,4 +94,7 @@ public class OLuceneSearchOnClassFunctionTest extends BaseLuceneTest {
             "SELECT from Song where SEARCH_CLASS('not important, will fail') = true ");
 
   }
+
+
+
 }

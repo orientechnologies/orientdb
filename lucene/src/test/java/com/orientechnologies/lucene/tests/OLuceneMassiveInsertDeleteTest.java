@@ -67,7 +67,8 @@ public class OLuceneMassiveInsertDeleteTest extends OLuceneBaseTest {
     Assertions.assertThat(docs).hasSize(size);
 
     db.close();
-    db.open("admin", "admin");
+
+    db = pool.acquire();
     docs = db.query(query);
     Assertions.assertThat(docs).hasSize(size);
 
@@ -77,7 +78,7 @@ public class OLuceneMassiveInsertDeleteTest extends OLuceneBaseTest {
     Assertions.assertThat(docs).hasSize(0);
 
     db.close();
-    db.open("admin", "admin");
+    db = pool.acquire();
     docs = db.query(query);
     Assertions.assertThat(docs).hasSize(0);
 

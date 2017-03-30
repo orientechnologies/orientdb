@@ -1,6 +1,7 @@
 package com.orientechnologies.lucene.functions;
 
 import com.orientechnologies.lucene.test.BaseLuceneTest;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -67,17 +68,6 @@ public class OLuceneSearchOnIndexFunctionTest extends BaseLuceneTest {
 
   }
 
-  @Test
-  public void shouldFindEmptyResultOnWrongIndexName() throws Exception {
-
-    //search on Song providing index on Author
-    OResultSet resultSet = db
-        .query("SELECT from Song where SEARCH_INDEX('Author.name', 'BELIEVE') = true");
-
-    assertThat(resultSet).hasSize(0);
-
-    resultSet.close();
-  }
 
   @Test
   @Ignore
@@ -115,5 +105,13 @@ public class OLuceneSearchOnIndexFunctionTest extends BaseLuceneTest {
     resultSet.close();
 
   }
+
+  @Test(expected = OCommandExecutionException.class)
+  public void shouldFailWithWrongIndexName() throws Exception {
+
+    db.query("SELECT from Song where SEARCH_INDEX('Song.wrongName', 'tambourine') = true ");
+
+  }
+
 
 }

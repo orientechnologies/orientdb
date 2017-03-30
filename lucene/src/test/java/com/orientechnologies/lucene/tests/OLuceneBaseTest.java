@@ -19,6 +19,11 @@
 package com.orientechnologies.lucene.tests;
 
 import com.orientechnologies.common.io.OIOUtils;
+import com.orientechnologies.orient.core.db.ODatabasePool;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.junit.After;
 import org.junit.Before;
@@ -36,27 +41,44 @@ public abstract class OLuceneBaseTest {
   @Rule
   public TestName name = new TestName();
 
-  protected ODatabaseDocumentTx db;
+  protected ODatabaseDocument db;
+
+  protected OrientDB      orient;
+  protected ODatabasePool pool;
 
   @Before
   public void setupDatabase() throws Throwable {
 
     String config = System.getProperty("orientdb.test.env", "memory");
 
-
     if ("ci".equals(config) || "release".equals(config)) {
-      db = new ODatabaseDocumentTx("plocal:./target/databases/" + name.getMethodName());
+      orient = new OrientDB("embedded:./target/databases/", OrientDBConfig.defaultConfig());
+      if (orient.exists(name.getMethodName()))
+        orient.drop(name.getMethodName());
+
+      orient.create(name.getMethodName(), ODatabaseType.PLOCAL);
+
     } else {
-      db = new ODatabaseDocumentTx("memory:" + name.getMethodName());
+      orient = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
+      if (orient.exists(name.getMethodName()))
+        orient.drop(name.getMethodName());
+      orient.create(name.getMethodName(), ODatabaseType.MEMORY);
+
     }
 
-    db.create();
+    pool = new ODatabasePool(orient, name.getMethodName(), "admin", "admin");
+    db = pool.acquire();
+
   }
 
   @After
   public void dropDatabase() {
+
     db.activateOnCurrentThread();
-    db.drop();
+    db.close();
+    pool.close();
+    orient.drop(name.getMethodName());
+    orient.close();
   }
 
   protected ODatabaseDocumentTx dropOrCreate(String url, boolean drop) {
