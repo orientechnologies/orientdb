@@ -4,7 +4,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.index.OLuceneFullTextIndex;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -133,8 +132,9 @@ public class OLuceneSearchOnFieldsFunction extends OSQLFunctionAbstract implemen
     OMetadata dbMetadata = ctx.getDatabase().activateOnCurrentThread().getMetadata();
 
     List<OLuceneFullTextIndex> indices = dbMetadata
-        .getIndexManager()
-        .getClassIndexes(className)
+        .getSchema()
+        .getClass(className)
+        .getIndexes()
         .stream()
         .filter(idx -> idx instanceof OLuceneFullTextIndex)
         .map(idx -> (OLuceneFullTextIndex) idx)

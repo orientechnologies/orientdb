@@ -111,7 +111,6 @@ public class OLuceneSearchOnFieldsFunctionTest extends BaseLuceneTest {
   }
 
   @Test
-  @Ignore
   public void shouldSearchWithHesitance() throws Exception {
 
     db.command("create class RockSong extends Song");
@@ -123,9 +122,6 @@ public class OLuceneSearchOnFieldsFunctionTest extends BaseLuceneTest {
 
     assertThat(resultSet).hasSize(1);
     resultSet.close();
-
-
-
 
   }
 }

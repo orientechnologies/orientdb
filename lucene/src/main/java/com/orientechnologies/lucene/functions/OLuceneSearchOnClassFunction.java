@@ -129,8 +129,9 @@ public class OLuceneSearchOnClassFunction extends OSQLFunctionAbstract implement
     OMetadata dbMetadata = ctx.getDatabase().activateOnCurrentThread().getMetadata();
 
     List<OLuceneFullTextIndex> indices = dbMetadata
-        .getIndexManager()
-        .getClassIndexes(className)
+        .getSchema()
+        .getClass(className)
+        .getIndexes()
         .stream()
         .filter(idx -> idx instanceof OLuceneFullTextIndex)
         .map(idx -> (OLuceneFullTextIndex) idx)
