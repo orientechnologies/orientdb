@@ -624,19 +624,33 @@ public class OFileClassic implements OFile, OClosableItem {
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#close()
    */
   public void close() {
-    acquireWriteLock();
-    try {
-      if (channel != null && channel.isOpen()) {
-        channel.close();
-        channel = null;
+    int attempts = 0;
+
+    while (true) {
+      try {
+        acquireWriteLock();
+        try {
+          if (channel != null && channel.isOpen()) {
+            channel.close();
+            channel = null;
+          }
+        } finally {
+          releaseWriteLock();
+          attempts++;
+        }
+
+        break;
+      } catch (IOException ioe) {
+        OLogManager.instance().error(this, "Error during closing of file '" + getName() + "' " + attempts + "-th attempt", ioe);
+
+        try {
+          reopenFile(attempts, ioe);
+        } catch (IOException e) {
+          throw OException.wrapException(new OIOException("Error during file close"), e);
+        }
       }
-    } catch (Exception e) {
-      final String message = "Error on closing file " + osFile;
-      OLogManager.instance().error(this, message, e);
-      throw OException.wrapException(new OIOException(message), e);
-    } finally {
-      releaseWriteLock();
     }
+
   }
 
   /*
@@ -645,15 +659,28 @@ public class OFileClassic implements OFile, OClosableItem {
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#delete()
    */
   public void delete() throws IOException {
-    acquireWriteLock();
-    try {
-      close();
-      if (osFile != null) {
-        Files.deleteIfExists(osFile);
+    int attempts = 0;
+
+    while (true) {
+      try {
+        acquireWriteLock();
+        try {
+          close();
+          if (osFile != null) {
+            Files.deleteIfExists(osFile);
+          }
+        } finally {
+          releaseWriteLock();
+          attempts++;
+        }
+
+        break;
+      } catch (IOException ioe) {
+        OLogManager.instance().error(this, "Error during deletion of file '" + getName() + "' " + attempts + "-th attempt", ioe);
+        reopenFile(attempts, ioe);
       }
-    } finally {
-      releaseWriteLock();
     }
+
   }
 
   private void openChannel() throws IOException {
@@ -843,8 +870,6 @@ public class OFileClassic implements OFile, OClosableItem {
       releaseWriteLock();
     }
   }
-
-
 
 }
 
