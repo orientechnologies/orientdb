@@ -607,27 +607,38 @@ public class OFileClassic implements OFile, OClosableItem {
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#close()
    */
   public void close() {
-    acquireWriteLock();
-    try {
-      if (accessFile != null && (accessFile.length() - HEADER_SIZE) < getFileSize())
-        accessFile.setLength(getFileSize() + HEADER_SIZE);
+    int attempts = 0;
 
-      if (channel != null && channel.isOpen()) {
-        channel.close();
-        channel = null;
+    while (true) {
+      try {
+        acquireWriteLock();
+        try {
+          if (accessFile != null && (accessFile.length() - HEADER_SIZE) < getFileSize())
+            accessFile.setLength(getFileSize() + HEADER_SIZE);
+
+          if (channel != null && channel.isOpen()) {
+            channel.close();
+            channel = null;
+          }
+
+          if (accessFile != null) {
+            accessFile.close();
+            accessFile = null;
+          }
+
+        } finally {
+          releaseWriteLock();
+        }
+
+        break;
+      } catch (IOException e) {
+        OLogManager.instance().error(this, "Error during closing of file '" + getName() + "' " + attempts + "-th attempt", e);
+        try {
+          reopenFile(attempts, e);
+        } catch (IOException ioe) {
+          throw OException.wrapException(new OIOException("Error during file close"), ioe);
+        }
       }
-
-      if (accessFile != null) {
-        accessFile.close();
-        accessFile = null;
-      }
-
-    } catch (Exception e) {
-      final String message = "Error on closing file " + osFile.getAbsolutePath();
-      OLogManager.instance().error(this, message, e);
-      throw OException.wrapException(new OIOException(message), e);
-    } finally {
-      releaseWriteLock();
     }
   }
 
@@ -637,24 +648,37 @@ public class OFileClassic implements OFile, OClosableItem {
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#delete()
    */
   public void delete() throws IOException {
-    acquireWriteLock();
-    try {
-      close();
-      if (osFile != null) {
-        boolean deleted = OFileUtils.delete(osFile);
-        int retryCount = 0;
+    int attempts = 0;
 
-        while (!deleted) {
-          deleted = OFileUtils.delete(osFile);
-          retryCount++;
+    while (true) {
+      try {
+        acquireWriteLock();
+        try {
+          close();
+          if (osFile != null) {
+            boolean deleted = OFileUtils.delete(osFile);
+            int retryCount = 0;
 
-          if (retryCount > 10)
-            throw new IOException("Cannot delete file " + osFile.getAbsolutePath() + ". Retry limit exceeded");
+            while (!deleted) {
+              deleted = OFileUtils.delete(osFile);
+              retryCount++;
+
+              if (retryCount > 10)
+                throw new IOException("Cannot delete file " + osFile.getAbsolutePath() + ". Retry limit exceeded");
+            }
+          }
+        } finally {
+          releaseWriteLock();
         }
+        break;
+
+      } catch (IOException ioe) {
+        OLogManager.instance().error(this, "Error during deletion of file '" + getName() + "' " + attempts + "-th attempt", ioe);
+
+        reopenFile(attempts, ioe);
       }
-    } finally {
-      releaseWriteLock();
     }
+
   }
 
   private void openChannel() throws IOException {
