@@ -628,6 +628,7 @@ public class OFileClassic implements OFile, OClosableItem {
 
         } finally {
           releaseWriteLock();
+          attempts++;
         }
 
         break;
@@ -669,6 +670,7 @@ public class OFileClassic implements OFile, OClosableItem {
           }
         } finally {
           releaseWriteLock();
+          attempts++;
         }
         break;
 
