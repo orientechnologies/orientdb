@@ -181,8 +181,8 @@ public class ODocumentHelper {
       else
         iValue = iValue.toString();
       if (!(iValue instanceof String) && !iFieldType.isAssignableFrom(iValue.getClass()))
-        throw new IllegalArgumentException("Property '" + iFieldName + "' of type '" + iFieldType
-            + "' cannot accept value of type: " + iValue.getClass());
+        throw new IllegalArgumentException(
+            "Property '" + iFieldName + "' of type '" + iFieldType + "' cannot accept value of type: " + iValue.getClass());
     } else if (Date.class.isAssignableFrom(iFieldType)) {
       if (iValue instanceof String && ODatabaseRecordThreadLocal.INSTANCE.isDefined()) {
         final OStorageConfiguration config = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration();
@@ -199,8 +199,8 @@ public class ODocumentHelper {
           // _fieldValues.put(iFieldName, newValue);
           return (RET) newValue;
         } catch (ParseException pe) {
-          final String dateFormat = ((String) iValue).length() > config.dateFormat.length() ? config.dateTimeFormat
-              : config.dateFormat;
+          final String dateFormat =
+              ((String) iValue).length() > config.dateFormat.length() ? config.dateTimeFormat : config.dateFormat;
           throw new OQueryParsingException("Error on conversion of date '" + iValue + "' using the format: " + dateFormat, pe);
         }
       }
@@ -211,12 +211,13 @@ public class ODocumentHelper {
     return (RET) iValue;
   }
 
-  @SuppressWarnings("unchecked") public static <RET> RET getFieldValue(Object value, final String iFieldName) {
+  @SuppressWarnings("unchecked")
+  public static <RET> RET getFieldValue(Object value, final String iFieldName) {
     return (RET) getFieldValue(value, iFieldName, null);
   }
 
-  @SuppressWarnings("unchecked") public static <RET> RET getFieldValue(Object value, final String iFieldName,
-      final OCommandContext iContext) {
+  @SuppressWarnings("unchecked")
+  public static <RET> RET getFieldValue(Object value, final String iFieldName, final OCommandContext iContext) {
     if (value == null)
       return null;
 
@@ -287,8 +288,8 @@ public class ODocumentHelper {
           value = ((OCommandContext) value).getVariables();
 
         if (value instanceof OIdentifiable) {
-          final ORecord record = currentRecord != null && currentRecord instanceof OIdentifiable ? ((OIdentifiable) currentRecord)
-              .getRecord() : null;
+          final ORecord record =
+              currentRecord != null && currentRecord instanceof OIdentifiable ? ((OIdentifiable) currentRecord).getRecord() : null;
 
           final Object index = getIndexPart(iContext, indexPart);
           final String indexAsString = index != null ? index.toString() : null;
@@ -341,8 +342,8 @@ public class ODocumentHelper {
             if (conditionFieldValue != null && fieldValue != null)
               conditionFieldValue = OType.convert(conditionFieldValue, fieldValue.getClass());
 
-            if (fieldValue == null && !conditionFieldValue.equals("null") || fieldValue != null
-                && !fieldValue.equals(conditionFieldValue))
+            if (fieldValue == null && !conditionFieldValue.equals("null") || fieldValue != null && !fieldValue
+                .equals(conditionFieldValue))
               value = null;
           }
         } else if (value instanceof Map<?, ?>) {
@@ -373,8 +374,8 @@ public class ODocumentHelper {
 
             final List<String> fieldNames = new ArrayList<String>(map.keySet());
             final int rangeFrom = from != null && !from.isEmpty() ? Integer.parseInt(from) : 0;
-            final int rangeTo = to != null && !to.isEmpty() ? Math.min(Integer.parseInt(to), fieldNames.size() - 1) : fieldNames
-                .size() - 1;
+            final int rangeTo =
+                to != null && !to.isEmpty() ? Math.min(Integer.parseInt(to), fieldNames.size() - 1) : fieldNames.size() - 1;
 
             final Object[] values = new Object[rangeTo - rangeFrom + 1];
 
@@ -396,8 +397,8 @@ public class ODocumentHelper {
             if (conditionFieldValue != null && fieldValue != null)
               conditionFieldValue = OType.convert(conditionFieldValue, fieldValue.getClass());
 
-            if (fieldValue == null && !conditionFieldValue.equals("null") || fieldValue != null
-                && !fieldValue.equals(conditionFieldValue))
+            if (fieldValue == null && !conditionFieldValue.equals("null") || fieldValue != null && !fieldValue
+                .equals(conditionFieldValue))
               value = null;
           }
 
@@ -645,8 +646,8 @@ public class ODocumentHelper {
     return index;
   }
 
-  @SuppressWarnings("unchecked") protected static Object filterItem(final String iConditionFieldName,
-      final Object iConditionFieldValue, final Object iValue) {
+  @SuppressWarnings("unchecked")
+  protected static Object filterItem(final String iConditionFieldName, final Object iConditionFieldValue, final Object iValue) {
     if (iValue instanceof OIdentifiable) {
       final ORecord rec = ((OIdentifiable) iValue).getRecord();
       if (rec instanceof ODocument) {
@@ -677,9 +678,11 @@ public class ODocumentHelper {
    *
    * @param iKey Field(s) to retrieve. If are multiple fields, then the dot must be used as separator
    * @param iMap
+   *
    * @return
    */
-  @SuppressWarnings("unchecked") public static Object getMapEntry(final Map<String, ?> iMap, final Object iKey) {
+  @SuppressWarnings("unchecked")
+  public static Object getMapEntry(final Map<String, ?> iMap, final Object iKey) {
     if (iMap == null || iKey == null)
       return null;
 
@@ -740,6 +743,9 @@ public class ODocumentHelper {
       return null;
 
     final ODocument doc = ((ODocument) iCurrent.getRecord());
+    if (doc == null) {
+      return null;
+    }
     doc.checkForFields(iFieldName);
     ODocumentEntry entry = doc._fields.get(iFieldName);
     return entry != null ? entry.value : null;
@@ -825,8 +831,8 @@ public class ODocumentHelper {
         if (args.size() == 1)
           result = currentValue.toString().indexOf(OStringSerializerHelper.getStringContent(args.get(0)));
         else
-          result = currentValue.toString().indexOf(OStringSerializerHelper.getStringContent(args.get(0)),
-              Integer.parseInt(args.get(1)));
+          result = currentValue.toString()
+              .indexOf(OStringSerializerHelper.getStringContent(args.get(0)), Integer.parseInt(args.get(1)));
       else if (function.startsWith("SUBSTRING("))
         if (args.size() == 1)
           result = currentValue.toString().substring(Integer.parseInt(args.get(0)));
@@ -859,7 +865,8 @@ public class ODocumentHelper {
     return result;
   }
 
-  @SuppressWarnings("unchecked") public static Object cloneValue(ODocument iCloned, final Object fieldValue) {
+  @SuppressWarnings("unchecked")
+  public static Object cloneValue(ODocument iCloned, final Object fieldValue) {
 
     if (fieldValue != null) {
       if (fieldValue instanceof ODocument && !((ODocument) fieldValue).getIdentity().isValid()) {
@@ -955,12 +962,14 @@ public class ODocumentHelper {
    * current one. Instead equals() just checks if the RID are the same.
    *
    * @param iOther ODocument instance
+   *
    * @return true if the two document are identical, otherwise false
+   *
    * @see #equals(Object)
    */
-  @SuppressWarnings("unchecked") public static boolean hasSameContentOf(final ODocument iCurrent,
-      final ODatabaseDocumentInternal iMyDb, final ODocument iOther, final ODatabaseDocumentInternal iOtherDb,
-      RIDMapper ridMapper) {
+  @SuppressWarnings("unchecked")
+  public static boolean hasSameContentOf(final ODocument iCurrent, final ODatabaseDocumentInternal iMyDb, final ODocument iOther,
+      final ODatabaseDocumentInternal iOtherDb, RIDMapper ridMapper) {
     return hasSameContentOf(iCurrent, iMyDb, iOther, iOtherDb, ridMapper, true);
   }
 
@@ -969,12 +978,14 @@ public class ODocumentHelper {
    * one. Instead equals() just checks if the RID are the same.
    *
    * @param iOther ODocument instance
+   *
    * @return true if the two document are identical, otherwise false
+   *
    * @see #equals(Object)
    */
-  @SuppressWarnings("unchecked") public static boolean hasSameContentOf(final ODocument iCurrent,
-      final ODatabaseDocumentInternal iMyDb, final ODocument iOther, final ODatabaseDocumentInternal iOtherDb, RIDMapper ridMapper,
-      final boolean iCheckAlsoIdentity) {
+  @SuppressWarnings("unchecked")
+  public static boolean hasSameContentOf(final ODocument iCurrent, final ODatabaseDocumentInternal iMyDb, final ODocument iOther,
+      final ODatabaseDocumentInternal iOtherDb, RIDMapper ridMapper, final boolean iCheckAlsoIdentity) {
     if (iOther == null)
       return false;
 
@@ -1405,8 +1416,8 @@ public class ODocumentHelper {
     if (myValue == null)
       return true;
 
-    if (myValue.getClass().isArray() && !otherValue.getClass().isArray() || !myValue.getClass().isArray()
-        && otherValue.getClass().isArray())
+    if (myValue.getClass().isArray() && !otherValue.getClass().isArray() || !myValue.getClass().isArray() && otherValue.getClass()
+        .isArray())
       return false;
 
     if (myValue.getClass().isArray() && otherValue.getClass().isArray()) {
