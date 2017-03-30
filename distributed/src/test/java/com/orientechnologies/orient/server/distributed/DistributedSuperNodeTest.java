@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.db.ODatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.ODirection;
 import com.orientechnologies.orient.core.record.OVertex;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -55,13 +56,17 @@ public class DistributedSuperNodeTest extends AbstractServerClusterGraphTest {
 
   @Override
   protected void onAfterExecution() {
-    ODatabaseDocument graph = pool.acquire();
-    try {
-      OVertex root = graph.load(rootVertexId);
+    ODatabaseDocument graph = null;
+    try {   	
+      graph = serverInstance.get(0).getServerInstance().openDatabase(getDatabaseName(), "admin","admin");    	
+      
+      ODocument rootDoc = graph.load(rootVertexId);
+      final OVertex root = rootDoc.asVertex().get();
+      
       Assert.assertEquals(((OMultiCollectionIterator) root.getEdges(ODirection.OUT)).size(),
           count * serverInstance.size() * writerCount);
     } finally {
-      graph.close();
+      if(graph != null) graph.close();
     }
     super.onAfterExecution();
   }

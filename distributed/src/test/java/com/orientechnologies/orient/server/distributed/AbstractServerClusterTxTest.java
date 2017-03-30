@@ -17,7 +17,7 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -40,8 +40,8 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterI
   }
 
   class TxWriter extends BaseWriter {
-    public TxWriter(final int iServerId, final int iThreadId, final String db) {
-      super(iServerId, iThreadId, db);
+    public TxWriter(final int iServerId, final int iThreadId, final ServerRun serverRun) {
+      super(iServerId, iThreadId, serverRun);
     }
 
     @Override
@@ -50,7 +50,7 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterI
       Set<Integer> clusters = new LinkedHashSet<Integer>();
       LinkedHashMap<String, Long> clusterNames = new LinkedHashMap<String, Long>();
       for (int i = 0; i < count; i++) {
-        final ODatabaseDocumentTx database = poolFactory.get(databaseUrl, "admin", "admin").acquire();
+        final ODatabaseDocument database = getDatabase(serverRun);
 
         try {
           final int id = baseCount + i;
@@ -149,7 +149,7 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterI
   }
 
   @Override
-  protected Callable createWriter(final int i, final int threadId, final String databaseURL) {
-    return new TxWriter(i, threadId, databaseURL);
+  protected Callable createWriter(final int i, final int threadId, final ServerRun serverRun) {
+    return new TxWriter(i, threadId, serverRun);
   }
 }

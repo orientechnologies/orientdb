@@ -16,7 +16,7 @@
 
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
@@ -71,47 +71,51 @@ public class TwoClientsRecordUpdateTxOnTwoServersWithQuorum2ScenarioTest extends
 
     setWriteQuorum(2);
 
-    ODatabaseDocumentTx dbServer0 = poolFactory.get(getDatabaseURL(serverInstance.get(0)), "admin", "admin").acquire();
-
-    // inserts record
-    ODatabaseRecordThreadLocal.INSTANCE.set(dbServer0);
-    ODocument recordServer0 = new ODocument("Person").fields("id", RECORD_ID, "firstName", "Han", "lastName", "Solo");
-    recordServer0.save();
-
-    // waits for propagation of the record on all the servers
-    waitForInsertedRecordPropagation(RECORD_ID);
-
-    // retrieves record from server1 and checks they're equal
-    ODocument recordServer1 = retrieveRecord(getDatabaseURL(serverInstance.get(1)), RECORD_ID);
-    assertEquals(recordServer1.getVersion(), recordServer0.getVersion());
-    assertEquals(recordServer1.field("id"), recordServer0.field("id"));
-    assertEquals(recordServer1.field("firstName"), recordServer0.field("firstName"));
-    assertEquals(recordServer1.field("lastName"), recordServer0.field("lastName"));
-
-    // gets the actual version of record from server0
-    int actualVersion = recordServer0.getVersion();
-
-    // sets a delay for operations on distributed storage of server0
-    ((ODistributedStorage) dbServer0.getStorage())
-        .setEventListener(new AfterRecordLockDelayer("server0", DOCUMENT_WRITE_TIMEOUT / 4));
-
-    // updates the same record from two different clients, each calling a different node
-    List<Callable<Void>> clients = new LinkedList<Callable<Void>>();
-    clients.add(new RecordUpdater(getDatabaseURL(serverInstance.get(0)), recordServer0, lukeFields, true));
-    clients.add(new RecordUpdater(getDatabaseURL(serverInstance.get(1)), recordServer1, darthFields, true));
-    List<Future<Void>> futures = Executors.newCachedThreadPool().invokeAll(clients);
-    executeFutures(futures);
-
-    // checks that record on server1 is discarded in favour of record present on server0
-    waitForUpdatedRecordPropagation(RECORD_ID, "firstName", lukeFields.get("firstName").toString());
-
-    recordServer0 = retrieveRecord(getDatabaseURL(serverInstance.get(0)), RECORD_ID);
-    recordServer1 = retrieveRecord(getDatabaseURL(serverInstance.get(1)), RECORD_ID);
-
-    int finalVersionServer0 = recordServer0.getVersion();
-    int finalVersionServer1 = recordServer1.getVersion();
-    assertEquals(finalVersionServer0, actualVersion + 1);
-    assertEquals(finalVersionServer1, actualVersion + 1);
+    ODatabaseDocument dbServer0 = getDatabase(0);
+    
+    try {
+  
+      // inserts record
+      ODocument recordServer0 = new ODocument("Person").fields("id", RECORD_ID, "firstName", "Han", "lastName", "Solo");
+      recordServer0.save();
+  
+      // waits for propagation of the record on all the servers
+      waitForInsertedRecordPropagation(RECORD_ID);
+  
+      // retrieves record from server1 and checks they're equal
+      ODocument recordServer1 = retrieveRecord(serverInstance.get(1), RECORD_ID);
+      assertEquals(recordServer1.getVersion(), recordServer0.getVersion());
+      assertEquals(recordServer1.field("id"), recordServer0.field("id"));
+      assertEquals(recordServer1.field("firstName"), recordServer0.field("firstName"));
+      assertEquals(recordServer1.field("lastName"), recordServer0.field("lastName"));
+  
+      // gets the actual version of record from server0
+      int actualVersion = recordServer0.getVersion();
+  
+      // sets a delay for operations on distributed storage of server0
+      ((ODistributedStorage) ((ODatabaseDocumentTx)dbServer0).getStorage())
+          .setEventListener(new AfterRecordLockDelayer("server0", DOCUMENT_WRITE_TIMEOUT / 4));
+  
+      // updates the same record from two different clients, each calling a different node
+      List<Callable<Void>> clients = new LinkedList<Callable<Void>>();
+      clients.add(new RecordUpdater(serverInstance.get(0), recordServer0, lukeFields, true));
+      clients.add(new RecordUpdater(serverInstance.get(1), recordServer1, darthFields, true));
+      List<Future<Void>> futures = Executors.newCachedThreadPool().invokeAll(clients);
+      executeFutures(futures);
+  
+      // checks that record on server1 is discarded in favour of record present on server0
+      waitForUpdatedRecordPropagation(RECORD_ID, "firstName", lukeFields.get("firstName").toString());
+  
+      recordServer0 = retrieveRecord(serverInstance.get(0), RECORD_ID);
+      recordServer1 = retrieveRecord(serverInstance.get(1), RECORD_ID);
+  
+      int finalVersionServer0 = recordServer0.getVersion();
+      int finalVersionServer1 = recordServer1.getVersion();
+      assertEquals(finalVersionServer0, actualVersion + 1);
+      assertEquals(finalVersionServer1, actualVersion + 1);
+    } finally {
+     	dbServer0.close();
+    }
   }
 
   @Override

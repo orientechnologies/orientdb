@@ -76,8 +76,8 @@ public class HALocalGraphTest extends AbstractServerClusterTxTest {
   protected void onServerStarted(ServerRun server) {
     if (serverStarted++ == 0) {
       // START THE TEST DURING 2ND NODE STARTUP
-      createSchemaAndFirstVertices();
-      startTest();
+      createSchemaAndFirstVertices(server);
+      startTest(server);
 
       task = new TimerTask() {
         @Override
@@ -125,7 +125,8 @@ public class HALocalGraphTest extends AbstractServerClusterTxTest {
   }
 
   protected String getDatabaseURL(final ServerRun server) {
-    return "plocal:" + server.getDatabasePath(getDatabaseName());
+//    return "plocal:" + server.getDatabasePath(getDatabaseName());
+    return "remote:" + server.getDatabasePath(getDatabaseName());
   }
 
   @Override
@@ -135,15 +136,23 @@ public class HALocalGraphTest extends AbstractServerClusterTxTest {
 
   @Override
   public void executeTest() throws Exception {
+
+log("waitForEndOfTest()");
+
     waitForEndOfTest();
 
     if (task != null)
       task.cancel();
 
+log("Assert.assertEquals(serverDown.get(), true);");
+
     Assert.assertEquals(serverDown.get(), true);
+
+log("Assert.assertEquals(serverRestarting.get(), true);");
 
     Assert.assertEquals(serverRestarting.get(), true);
 
+log("waitFor");
     waitFor(20000, new OCallable<Boolean, Void>() {
       @Override
       public Boolean call(Void iArgument) {
@@ -154,9 +163,9 @@ public class HALocalGraphTest extends AbstractServerClusterTxTest {
     Assert.assertEquals(serverRestarted.get(), true);
   }
 
-  private void startTest() {
+  private void startTest(final ServerRun server) {
     for (int i = 0; i < CONCURRENCY_LEVEL; i++) {
-      Future<?> future = getExecutorService().submit(startThread(i, getGraphFactory()));
+      Future<?> future = getExecutorService().submit(startThread(i, getGraphFactory(server)));
       ths.add(future);
     }
   }
@@ -177,6 +186,7 @@ public class HALocalGraphTest extends AbstractServerClusterTxTest {
     Runnable th = new Runnable() {
       @Override
       public void run() {
+System.out.println("\n\n ----------- startThread()");      	
         // OrientBaseGraph graph = new OrientGraph(getDBURL());
         // OrientGraph graph = graphFactory.getTx();
         boolean useSQL = false;
@@ -201,6 +211,10 @@ public class HALocalGraphTest extends AbstractServerClusterTxTest {
 
             ODatabaseDocument graph = graphFactory.acquire();
             graph.begin();
+
+System.out.println("\n\n ----------- graph.getURL() = " + graph.getURL());
+
+System.out.println("\n\n ----------- getClusterSelection() = " + graph.getClass("Test").getClusterSelection());
 
             if (!graph.getURL().startsWith("remote:"))
               Assert.assertTrue(graph.getClass("Test").getClusterSelection() instanceof OLocalClusterWrapperStrategy);
@@ -334,11 +348,11 @@ public class HALocalGraphTest extends AbstractServerClusterTxTest {
     return th;
   }
 
-  private ODatabasePool getGraphFactory() {
+  private ODatabasePool getGraphFactory(final ServerRun server) {
     if (graphReadFactory == null) {
-      String dbUrl = getDatabaseURL(serverInstance.get(0));
-      log("Datastore pool created with size : 10, db location: " + getDatabaseURL(serverInstance.get(0)));
-      graphReadFactory = new ODatabasePool(dbUrl, "admin", "admin", OrientDBConfig.defaultConfig());
+//      String dbUrl = getDatabaseURL(serverInstance.get(0));
+//      log("Datastore pool created with size : 10, db location: " + getDatabaseURL(server));
+      graphReadFactory = new ODatabasePool(server.getServerInstance().getContext(), getDatabaseName(), "admin", "admin", OrientDBConfig.defaultConfig());
 
     }
     return graphReadFactory;
@@ -359,18 +373,23 @@ public class HALocalGraphTest extends AbstractServerClusterTxTest {
     return executorService;
   }
 
-  private void createSchemaAndFirstVertices() {
-    ODatabaseDocumentTx orientGraph = new ODatabaseDocumentTx(getDatabaseURL(serverInstance.get(0)));
+  private void createSchemaAndFirstVertices(final ServerRun server) {
+//    ODatabaseDocumentTx orientGraph = new ODatabaseDocumentTx(getDatabaseURL(serverInstance.get(0)));
+
+    final ODatabaseDocument orientGraph = server.getServerInstance().openDatabase(getDatabaseName(), "admin", "admin");
+
+/*
     if (orientGraph.exists()) {
       orientGraph.open("admin", "admin");
     } else {
       orientGraph.create();
-    }
+    } */
+    
     createVertexType(orientGraph, "Test");
     createVertexType(orientGraph, "Test1");
     orientGraph.close();
 
-    ODatabaseDocument graph = getGraphFactory().acquire();
+    ODatabaseDocument graph = getGraphFactory(server).acquire();
 
     for (int i = 1; i <= 1; i++) {
       OVertex vertex = graph.newVertex("Test");
@@ -385,7 +404,7 @@ public class HALocalGraphTest extends AbstractServerClusterTxTest {
       }
     }
     for (int i = 1; i <= 200; i++) {
-      OVertex vertex = graph.newVertex("class:Test1");
+      OVertex vertex = graph.newVertex("Test1");
       vertex.setProperty("prop1", "v1-" + i);
       vertex.setProperty("prop2", "v2-1");
       vertex.setProperty("prop3", "v3-1");

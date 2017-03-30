@@ -17,6 +17,7 @@
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
@@ -87,61 +88,67 @@ public class ThreeClientsRecordUpdateWithTransactionsOnMultipleServersScenarioTe
   @Override
   public void executeTest() throws Exception {
 
-    ODatabaseDocumentTx dbServer1 = poolFactory.get(getDatabaseURL(serverInstance.get(0)), "admin", "admin").acquire();
-    ODatabaseDocumentTx dbServer2 = poolFactory.get(getDatabaseURL(serverInstance.get(1)), "admin", "admin").acquire();
-    ODatabaseDocumentTx dbServer3 = poolFactory.get(getDatabaseURL(serverInstance.get(2)), "admin", "admin").acquire();
+    ODatabaseDocument dbServer1 = getDatabase(0);
 
     // inserts record1
-    ODatabaseRecordThreadLocal.INSTANCE.set(dbServer1);
     ODocument record1Server1 = new ODocument("Person").fromMap(hanFields);
     record1Server1.save();
 
     // waits for propagation of the record on all the servers
     waitForInsertedRecordPropagation(RECORD_ID);
 
-    // retrieves record1 from server2 and server 3 and checks they're equal
-    ODocument record1Server2 = retrieveRecord(getDatabaseURL(serverInstance.get(1)), RECORD_ID);
-    assertEquals(record1Server2.getVersion(), record1Server1.getVersion());
-    assertEquals(record1Server2.field("id"), record1Server1.field("id"));
-    assertEquals(record1Server2.field("firstName"), record1Server1.field("firstName"));
-    assertEquals(record1Server2.field("lastName"), record1Server1.field("lastName"));
+    ODatabaseDocument dbServer2 = getDatabase(1);
+    ODatabaseDocument dbServer3 = getDatabase(2);
 
-    ODocument record1Server3 = retrieveRecord(getDatabaseURL(serverInstance.get(2)), RECORD_ID);
-    assertEquals(record1Server3.getVersion(), record1Server1.getVersion());
-    assertEquals(record1Server3.field("id"), record1Server1.field("id"));
-    assertEquals(record1Server3.field("firstName"), record1Server1.field("firstName"));
-    assertEquals(record1Server3.field("lastName"), record1Server1.field("lastName"));
-
-    // gets the actual version of the record1
-    int actualVersion = record1Server1.getVersion();
-    System.out.println("Actual version: " + actualVersion);
-
-    // sets a delay for operations on distributed storage of all servers
-    ((ODistributedStorage) dbServer1.getStorage()).setEventListener(new AfterRecordLockDelayer("server1", DOCUMENT_WRITE_TIMEOUT));
-    ((ODistributedStorage) dbServer2.getStorage()).setEventListener(new AfterRecordLockDelayer("server2", DOCUMENT_WRITE_TIMEOUT / 4));
-    ((ODistributedStorage) dbServer3.getStorage()).setEventListener(new AfterRecordLockDelayer("server3", DOCUMENT_WRITE_TIMEOUT / 2));
-
-    // updates the same record from three different clients, each calling a different server
-    List<Callable<Void>> clients = new LinkedList<Callable<Void>>();
-    clients.add(new RecordUpdater(getDatabaseURL(serverInstance.get(0)), record1Server1, lukeFields, true));
-    clients.add(new RecordUpdater(getDatabaseURL(serverInstance.get(1)), record1Server2, darthFields, true));
-    clients.add(new RecordUpdater(getDatabaseURL(serverInstance.get(2)), record1Server3, leiaFields, true));
-    List<Future<Void>> futures = Executors.newCachedThreadPool().invokeAll(clients);
-    executeFutures(futures);
-
-    // checks that record on server3 is the one which wins over the others
-    waitForUpdatedRecordPropagation(RECORD_ID, "firstName", "Leia");
-
-    record1Server1 = retrieveRecord(getDatabaseURL(serverInstance.get(0)), RECORD_ID);
-    record1Server2 = retrieveRecord(getDatabaseURL(serverInstance.get(1)), RECORD_ID);
-    record1Server3 = retrieveRecord(getDatabaseURL(serverInstance.get(2)), RECORD_ID);
-
-    int finalVersionServer1 = record1Server1.getVersion();
-    int finalVersionServer2 = record1Server2.getVersion();
-    int finalVersionServer3 = record1Server3.getVersion();
-    assertEquals(actualVersion + 1, finalVersionServer1);
-    assertEquals(actualVersion + 1, finalVersionServer2);
-    assertEquals(actualVersion + 1, finalVersionServer3);
+    try {
+      // retrieves record1 from server2 and server 3 and checks they're equal
+      ODocument record1Server2 = retrieveRecord(serverInstance.get(1), RECORD_ID);
+      assertEquals(record1Server2.getVersion(), record1Server1.getVersion());
+      assertEquals(record1Server2.field("id"), record1Server1.field("id"));
+      assertEquals(record1Server2.field("firstName"), record1Server1.field("firstName"));
+      assertEquals(record1Server2.field("lastName"), record1Server1.field("lastName"));
+  
+      ODocument record1Server3 = retrieveRecord(serverInstance.get(2), RECORD_ID);
+      assertEquals(record1Server3.getVersion(), record1Server1.getVersion());
+      assertEquals(record1Server3.field("id"), record1Server1.field("id"));
+      assertEquals(record1Server3.field("firstName"), record1Server1.field("firstName"));
+      assertEquals(record1Server3.field("lastName"), record1Server1.field("lastName"));
+  
+      // gets the actual version of the record1
+      int actualVersion = record1Server1.getVersion();
+      System.out.println("Actual version: " + actualVersion);
+  
+      // sets a delay for operations on distributed storage of all servers
+      ((ODistributedStorage) ((ODatabaseDocumentTx)dbServer1).getStorage()).setEventListener(new AfterRecordLockDelayer("server1", DOCUMENT_WRITE_TIMEOUT));
+      ((ODistributedStorage) ((ODatabaseDocumentTx)dbServer2).getStorage()).setEventListener(new AfterRecordLockDelayer("server2", DOCUMENT_WRITE_TIMEOUT / 4));
+      ((ODistributedStorage) ((ODatabaseDocumentTx)dbServer3).getStorage()).setEventListener(new AfterRecordLockDelayer("server3", DOCUMENT_WRITE_TIMEOUT / 2));
+  
+      // updates the same record from three different clients, each calling a different server
+      List<Callable<Void>> clients = new LinkedList<Callable<Void>>();
+      clients.add(new RecordUpdater(serverInstance.get(0), record1Server1, lukeFields, true));
+      clients.add(new RecordUpdater(serverInstance.get(1), record1Server2, darthFields, true));
+      clients.add(new RecordUpdater(serverInstance.get(2), record1Server3, leiaFields, true));
+      List<Future<Void>> futures = Executors.newCachedThreadPool().invokeAll(clients);
+      executeFutures(futures);
+  
+      // checks that record on server3 is the one which wins over the others
+      waitForUpdatedRecordPropagation(RECORD_ID, "firstName", "Leia");
+  
+      record1Server1 = retrieveRecord(serverInstance.get(0), RECORD_ID);
+      record1Server2 = retrieveRecord(serverInstance.get(1), RECORD_ID);
+      record1Server3 = retrieveRecord(serverInstance.get(2), RECORD_ID);
+  
+      int finalVersionServer1 = record1Server1.getVersion();
+      int finalVersionServer2 = record1Server2.getVersion();
+      int finalVersionServer3 = record1Server3.getVersion();
+      assertEquals(actualVersion + 1, finalVersionServer1);
+      assertEquals(actualVersion + 1, finalVersionServer2);
+      assertEquals(actualVersion + 1, finalVersionServer3);
+    } finally {
+     	dbServer1.close();
+     	dbServer2.close();
+     	dbServer3.close();
+    }
   }
 
   @Override

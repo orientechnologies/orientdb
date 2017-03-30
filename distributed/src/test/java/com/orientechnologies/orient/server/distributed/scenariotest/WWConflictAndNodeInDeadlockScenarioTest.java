@@ -16,8 +16,7 @@
 
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ServerRun;
@@ -92,144 +91,149 @@ public class WWConflictAndNodeInDeadlockScenarioTest extends AbstractScenarioTes
 
     banner("Test with quorum = 1");
 
-    ODatabaseDocumentTx dbServer1 = poolFactory.get(getDatabaseURL(serverInstance.get(0)), "admin", "admin").acquire();
-    ODatabaseDocumentTx dbServer2 = poolFactory.get(getDatabaseURL(serverInstance.get(1)), "admin", "admin").acquire();
-    ODatabaseDocumentTx dbServer3 = poolFactory.get(getDatabaseURL(serverInstance.get(2)), "admin", "admin").acquire();
-
-    // changing configuration: writeQuorum=1, autoDeploy=false
-    System.out.print("\nChanging configuration (writeQuorum=1, autoDeploy=false)...");
-
-    ODocument cfg = null;
-    ServerRun server = serverInstance.get(2);
-    OHazelcastPlugin manager = (OHazelcastPlugin) server.getServerInstance().getDistributedManager();
-    OModifiableDistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration(getDatabaseName()).modify();
-    cfg = databaseConfiguration.getDocument();
-    cfg.field("writeQuorum", 1);
-    cfg.field("version", (Integer) cfg.field("version") + 1);
-    manager.updateCachedDatabaseConfiguration(getDatabaseName(), databaseConfiguration, true);
-    System.out.println("\nConfiguration updated.");
-
-    // deadlock on server3
-    this.server3inDeadlock.set(true);
-    Thread.sleep(200); // waiting for deadlock
-
-    // inserting record r1 and checking consistency on server1 and server2
-    System.out.print("Inserting record r1 and on server1 and checking consistency on both server1 and server2...");
-    ODatabaseRecordThreadLocal.INSTANCE.set(dbServer1);
-    ODocument r1onServer1 = new ODocument("Person").fields("id", "R001", "firstName", "Han", "lastName", "Solo");
-    r1onServer1.save();
-    Thread.sleep(200);
-    r1onServer1 = retrieveRecord(getDatabaseURL(serverInstance.get(1)), "R001");
-    ODocument r1onServer2 = retrieveRecord(getDatabaseURL(serverInstance.get(1)), "R001");
-
-    assertEquals(r1onServer1.field("@version"), r1onServer2.field("@version"));
-    assertEquals(r1onServer1.field("id"), r1onServer2.field("id"));
-    assertEquals(r1onServer1.field("firstName"), r1onServer2.field("firstName"));
-    assertEquals(r1onServer1.field("lastName"), r1onServer2.field("lastName"));
-
-    System.out.println("\tDone.");
-
-    // initial version of the record r1
-    int initialVersion = r1onServer1.field("@version");
-
-    // creating and executing two clients c1 and c2 (updating r1)
-    System.out.print("Building client c1 and client c2...");
-    List<Callable<Void>> clients = new LinkedList<Callable<Void>>();
-    clients.add(new RecordUpdater(getDatabaseURL(serverInstance.get(0)), r1onServer1, lukeFields, false));
-    clients.add(new RecordUpdater(getDatabaseURL(serverInstance.get(1)), r1onServer2, darthFields, false));
-    System.out.println("\tDone.");
-    ExecutorService executor = Executors.newCachedThreadPool();
-    System.out.println("Concurrent update:");
-    List<Future<Void>> futures = executor.invokeAll(clients);
+    ODatabaseDocument dbServer1 = getDatabase(0);
+    ODatabaseDocument dbServer2 = getDatabase(1);
+    ODatabaseDocument dbServer3 = getDatabase(2);
 
     try {
-      for (Future f : futures) {
-        f.get();
+      // changing configuration: writeQuorum=1, autoDeploy=false
+      System.out.print("\nChanging configuration (writeQuorum=1, autoDeploy=false)...");
+  
+      ODocument cfg = null;
+      ServerRun server = serverInstance.get(2);
+      OHazelcastPlugin manager = (OHazelcastPlugin) server.getServerInstance().getDistributedManager();
+      OModifiableDistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration(getDatabaseName()).modify();
+      cfg = databaseConfiguration.getDocument();
+      cfg.field("writeQuorum", 1);
+      cfg.field("version", (Integer) cfg.field("version") + 1);
+      manager.updateCachedDatabaseConfiguration(getDatabaseName(), databaseConfiguration, true);
+      System.out.println("\nConfiguration updated.");
+  
+      // deadlock on server3
+      this.server3inDeadlock.set(true);
+      Thread.sleep(200); // waiting for deadlock
+  
+      // inserting record r1 and checking consistency on server1 and server2
+      System.out.print("Inserting record r1 and on server1 and checking consistency on both server1 and server2...");
+      dbServer1.activateOnCurrentThread();
+      ODocument r1onServer1 = new ODocument("Person").fields("id", "R001", "firstName", "Han", "lastName", "Solo");
+      r1onServer1.save();
+      Thread.sleep(200);
+      r1onServer1 = retrieveRecord(serverInstance.get(0), "R001"); // This was set to get(1), but shouldn't it be get(0) for Server1?
+      ODocument r1onServer2 = retrieveRecord(serverInstance.get(1), "R001");
+  
+      assertEquals(r1onServer1.field("@version"), r1onServer2.field("@version"));
+      assertEquals(r1onServer1.field("id"), r1onServer2.field("id"));
+      assertEquals(r1onServer1.field("firstName"), r1onServer2.field("firstName"));
+      assertEquals(r1onServer1.field("lastName"), r1onServer2.field("lastName"));
+  
+      System.out.println("\tDone.");
+  
+      // initial version of the record r1
+      int initialVersion = r1onServer1.field("@version");
+  
+      // creating and executing two clients c1 and c2 (updating r1)
+      System.out.print("Building client c1 and client c2...");
+      List<Callable<Void>> clients = new LinkedList<Callable<Void>>();
+      clients.add(new RecordUpdater(serverInstance.get(0), r1onServer1, lukeFields, false));
+      clients.add(new RecordUpdater(serverInstance.get(1), r1onServer2, darthFields, false));
+      System.out.println("\tDone.");
+      ExecutorService executor = Executors.newCachedThreadPool();
+      System.out.println("Concurrent update:");
+      List<Future<Void>> futures = executor.invokeAll(clients);
+  
+      try {
+        for (Future f : futures) {
+          f.get();
+        }
+        assertTrue("Concurrent update correctly managed!", true);
+      } catch (Exception e) {
+        e.printStackTrace();
+        fail("Concurrent update NOT correctly managed!");
+        System.out.println("Exception was thrown!");
       }
-      assertTrue("Concurrent update correctly managed!", true);
-    } catch (Exception e) {
-      e.printStackTrace();
-      fail("Concurrent update NOT correctly managed!");
-      System.out.println("Exception was thrown!");
+      // wait for propagation
+      Thread.sleep(500);
+  
+      // end of deadlock on server3 and sync
+      try {
+        this.server3inDeadlock.set(false);
+        Thread.sleep(500); // waiting for sync of server3
+      } catch (Exception e) {
+        e.printStackTrace();
+        fail("Exception was thrown!");
+      }
+  
+      // check consistency
+      r1onServer1 = retrieveRecord(serverInstance.get(0), "R001");
+      r1onServer2 = retrieveRecord(serverInstance.get(1), "R001");
+      ODocument r1onServer3 = retrieveRecord(serverInstance.get(2), "R001");
+  
+      dbServer1.activateOnCurrentThread();
+      r1onServer1.reload();
+      dbServer2.activateOnCurrentThread();
+      r1onServer2.reload();
+      dbServer3.activateOnCurrentThread();
+      r1onServer3.reload();
+  
+      /**
+       * Checking records' values - CASE 1 - r1 on server1 has the values set by the client c1 - r1 on server2 has the values set by
+       * the client c2 - CASE 2 - r1 and r2 have the same value (case: the "remote-update-message" arrives on the current server
+       * before of the "local-update-message", e.g. due to delay in the stack)
+       **/
+  
+      boolean case11 = false;
+      boolean case12 = false;
+      boolean case2 = false;
+  
+      // r1 on server1 has the values set by the client c1
+      if (r1onServer1.field("firstName").equals("Luke") && r1onServer1.field("lastName").equals("Skywalker")) {
+        case11 = true;
+        System.out.println("The record on server1 has been updated by the client c1 without exceptions!");
+      }
+  
+      // r1 on server2 has the values set by the client c2
+      if (r1onServer2.field("firstName").equals("Darth") && r1onServer2.field("lastName").equals("Vader")) {
+        case12 = true;
+        System.out.println("The record on server1 has been updated by the client c2 without exceptions!");
+      }
+  
+      // r1 and r2 have the same value (when the remote update message arrives on the current server before of the local update
+      // message, e.g. due to delay in the stack)
+      if (r1onServer1.field("firstName").equals(r1onServer2.field("firstName"))
+          && r1onServer1.field("lastName").equals(r1onServer2.field("lastName"))) {
+        case2 = true;
+        System.out.println("The record on server1 has been updated by the client c2 without exceptions!");
+      }
+  
+      if ((case11 && case12) || case2) {
+        assertTrue("Condition for the records' values satisfied", true);
+      } else {
+        fail("Condition for the records' values NOT satisfied");
+      }
+  
+      // r1 on server3 has the values set by the client c1 or the values set by the client c2, but not the old one
+      if ((r1onServer3.field("firstName").equals("Luke") && r1onServer3.field("lastName").equals("Skywalker"))
+          || r1onServer3.field("firstName").equals("Darth") && r1onServer3.field("lastName").equals("Vader")) {
+        assertTrue("The record on server3 has been updated by a client without exceptions!", true);
+      } else {
+        fail("The record on server3 has not been updated by any client!");
+      }
+  
+      // r1 has version x+1 on all the servers
+      System.out.printf("Checking version consistency among servers...");
+  
+      int finalVersion = r1onServer1.field("@version");
+      assertEquals(finalVersion, initialVersion + 1);
+  
+      assertEquals(r1onServer1.field("@version"), r1onServer2.field("@version"));
+      assertEquals(r1onServer2.field("@version"), r1onServer3.field("@version"));
+      System.out.println("Done.");
+    } finally {
+     	dbServer1.close();
+     	dbServer2.close();
+     	dbServer3.close();
     }
-    // wait for propagation
-    Thread.sleep(500);
-
-    // end of deadlock on server3 and sync
-    try {
-      this.server3inDeadlock.set(false);
-      Thread.sleep(500); // waiting for sync of server3
-    } catch (Exception e) {
-      e.printStackTrace();
-      fail("Exception was thrown!");
-    }
-
-    // check consistency
-    r1onServer1 = retrieveRecord(getDatabaseURL(serverInstance.get(0)), "R001");
-    r1onServer2 = retrieveRecord(getDatabaseURL(serverInstance.get(1)), "R001");
-    ODocument r1onServer3 = retrieveRecord(getDatabaseURL(serverInstance.get(2)), "R001");
-
-    ODatabaseRecordThreadLocal.INSTANCE.set(dbServer1);
-    r1onServer1.reload();
-    ODatabaseRecordThreadLocal.INSTANCE.set(dbServer2);
-    r1onServer2.reload();
-    ODatabaseRecordThreadLocal.INSTANCE.set(dbServer3);
-    r1onServer3.reload();
-
-    /**
-     * Checking records' values - CASE 1 - r1 on server1 has the values set by the client c1 - r1 on server2 has the values set by
-     * the client c2 - CASE 2 - r1 and r2 have the same value (case: the "remote-update-message" arrives on the current server
-     * before of the "local-update-message", e.g. due to delay in the stack)
-     **/
-
-    boolean case11 = false;
-    boolean case12 = false;
-    boolean case2 = false;
-
-    // r1 on server1 has the values set by the client c1
-    if (r1onServer1.field("firstName").equals("Luke") && r1onServer1.field("lastName").equals("Skywalker")) {
-      case11 = true;
-      System.out.println("The record on server1 has been updated by the client c1 without exceptions!");
-    }
-
-    // r1 on server2 has the values set by the client c2
-    if (r1onServer2.field("firstName").equals("Darth") && r1onServer2.field("lastName").equals("Vader")) {
-      case12 = true;
-      System.out.println("The record on server1 has been updated by the client c2 without exceptions!");
-    }
-
-    // r1 and r2 have the same value (when the remote update message arrives on the current server before of the local update
-    // message, e.g. due to delay in the stack)
-    if (r1onServer1.field("firstName").equals(r1onServer2.field("firstName"))
-        && r1onServer1.field("lastName").equals(r1onServer2.field("lastName"))) {
-      case2 = true;
-      System.out.println("The record on server1 has been updated by the client c2 without exceptions!");
-    }
-
-    if ((case11 && case12) || case2) {
-      assertTrue("Condition for the records' values satisfied", true);
-    } else {
-      fail("Condition for the records' values NOT satisfied");
-    }
-
-    // r1 on server3 has the values set by the client c1 or the values set by the client c2, but not the old one
-    if ((r1onServer3.field("firstName").equals("Luke") && r1onServer3.field("lastName").equals("Skywalker"))
-        || r1onServer3.field("firstName").equals("Darth") && r1onServer3.field("lastName").equals("Vader")) {
-      assertTrue("The record on server3 has been updated by a client without exceptions!", true);
-    } else {
-      fail("The record on server3 has not been updated by any client!");
-    }
-
-    // r1 has version x+1 on all the servers
-    System.out.printf("Checking version consistency among servers...");
-
-    int finalVersion = r1onServer1.field("@version");
-    assertEquals(finalVersion, initialVersion + 1);
-
-    assertEquals(r1onServer1.field("@version"), r1onServer2.field("@version"));
-    assertEquals(r1onServer2.field("@version"), r1onServer3.field("@version"));
-    System.out.println("Done.");
-
   }
 
   @Override
@@ -259,7 +263,7 @@ public class WWConflictAndNodeInDeadlockScenarioTest extends AbstractScenarioTes
 
                     banner("STARTING BACKUP SERVER " + (2));
 
-                    ODatabaseDocumentTx g = new ODatabaseDocumentTx("plocal:target/server2/databases/" + getDatabaseName());
+                    ODatabaseDocument g = getDatabase(2);
                     if(g.exists()){
                       g.open("admin", "admin");
                     }else{

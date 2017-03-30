@@ -17,7 +17,7 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import org.junit.Assert;
 import org.junit.Test;
@@ -59,6 +59,14 @@ public class HARemoveNodeFromCfgTest extends AbstractServerClusterTxTest {
         .containsKey("dbstatus." + removedServer + "." + getDatabaseName()));
 
     banner("SIMULATE SOFT SHUTDOWN OF SERVER " + (SERVERS - 1));
+    
+//    ODatabaseDocument database = serverInstance.get(SERVERS - 1).getEmbeddedDatabase(getDatabaseName());
+    
+// System.out.println("---- database isClosed = " + database.isClosed());
+
+
+    
+    
     serverInstance.get(SERVERS - 1).shutdownServer();
 
     lastNodeIsUp.set(false);
@@ -93,9 +101,9 @@ public class HARemoveNodeFromCfgTest extends AbstractServerClusterTxTest {
   @Override
   protected void onBeforeChecks() throws InterruptedException {
     // // WAIT UNTIL THE END
-    waitFor(0, new OCallable<Boolean, ODatabaseDocumentTx>() {
+    waitFor(0, new OCallable<Boolean, ODatabaseDocument>() {
       @Override
-      public Boolean call(ODatabaseDocumentTx db) {
+      public Boolean call(ODatabaseDocument db) {
         final boolean ok = db.countClass("Person") >= expected;
         if (!ok)
           System.out.println("FOUND " + db.countClass("Person") + " people instead of expected " + expected);
@@ -103,9 +111,9 @@ public class HARemoveNodeFromCfgTest extends AbstractServerClusterTxTest {
       }
     }, 10000);
 
-    waitFor(2, new OCallable<Boolean, ODatabaseDocumentTx>() {
+    waitFor(2, new OCallable<Boolean, ODatabaseDocument>() {
       @Override
-      public Boolean call(ODatabaseDocumentTx db) {
+      public Boolean call(ODatabaseDocument db) {
         final long node2Expected = lastNodeIsUp.get() ? expected : expected - (count * writerCount * (SERVERS - 1));
 
         final boolean ok = db.countClass("Person") >= node2Expected;

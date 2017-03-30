@@ -16,8 +16,7 @@
 
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -56,13 +55,12 @@ public class DBCreationAndUpdateOneNodeScenarioTest extends AbstractScenarioTest
     String url3 = "plocal:target/server2/databases/distributed-dbcreation-update";
 
     // creating new database on server1
-    ODatabaseDocumentTx dbServer1 = new ODatabaseDocumentTx(url1);
+    createDatabase(0);
 
     Thread.sleep(1000);
 
     // checking the db was created both on server2 and server3
-    ODatabaseRecordThreadLocal.INSTANCE.set(null);
-    ODatabaseDocumentTx dbServer2 = poolFactory.get(url2, "admin", "admin").acquire();
+    ODatabaseDocument dbServer2 = getDatabase(1);
     try {
       assertNotNull(dbServer2);
       List<ODocument> result = dbServer2.query(new OSQLSynchQuery<OIdentifiable>("select from Person"));
@@ -74,8 +72,7 @@ public class DBCreationAndUpdateOneNodeScenarioTest extends AbstractScenarioTest
       dbServer2.close();
     }
 
-    ODatabaseRecordThreadLocal.INSTANCE.set(null);
-    ODatabaseDocumentTx dbServer3 = poolFactory.get(url3, "admin", "admin").acquire();
+    ODatabaseDocument dbServer3 = getDatabase(2);
     try {
       assertNotNull(dbServer3);
       List<ODocument> result = dbServer3.query(new OSQLSynchQuery<OIdentifiable>("select from Person"));

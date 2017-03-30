@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OVertex;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.junit.Assert;
 
 import java.util.Date;
@@ -38,7 +39,7 @@ import java.util.concurrent.Callable;
  * Test distributed TX
  */
 public abstract class AbstractServerClusterGraphTest extends AbstractServerClusterInsertTest {
-  protected ODatabasePool pool;
+//  protected ODatabasePool pool;
   protected ORID          rootVertexId;
   protected Object lock = new Object();
 
@@ -46,36 +47,57 @@ public abstract class AbstractServerClusterGraphTest extends AbstractServerClust
     private final String databaseUrl;
     private final int    serverId;
     private final int    threadId;
+    
+    private ODatabasePool dbPool;
 
     public TxWriter(final int iServerId, final int iThreadId, final String db) {
       serverId = iServerId;
       threadId = iThreadId;
       databaseUrl = db;
+      
+      dbPool = new ODatabasePool(serverInstance.get(iServerId).getServerInstance().getContext(), getDatabaseName(), "admin", "admin", OrientDBConfig.defaultConfig());
+      setFactorySettings(dbPool);
+
+System.out.println("------ new TxWriter() serverId = " + iServerId + ", threadId = " + iThreadId);
     }
 
     @Override
     public Void call() throws Exception {
       String name = Integer.toString(serverId);
 
+System.out.println("------ TxWriter().call serverId = " + serverId + ", threadId = " + threadId);
+
       synchronized (lock) {
         if (rootVertexId == null) {
           // ONLY THE FIRST TIME CREATE THE ROOT
-          ODatabaseDocument graph = pool.acquire();
-          graph.begin();
+System.out.println("------ pool.acquire()");
+          ODatabaseDocument graph = dbPool.acquire();
+System.out.println("------ graph.begin()");
           try {
+            graph.begin();
+System.out.println("------ createVertex()");
             OVertex root = createVertex(graph, serverId, threadId, 0);
             root.save();
+            
+            graph.commit();
 
             rootVertexId = root.getIdentity();
+            
+System.out.println("------ rootVertexId =" + rootVertexId);
+            
           } finally {
             graph.close();
           }
         }
       }
 
+System.out.println("------ ");
+
       int itemInTx = 0;
-      final ODatabaseDocument graph = pool.acquire();
+      final ODatabaseDocument graph = dbPool.acquire();
       try {
+        graph.begin();
+      	
         for (int i = 1; i <= count; i++) {
           if (i % 100 == 0)
             System.out.println("\nWriter " + databaseUrl + " managed " + i + "/" + count + " vertices so far");
@@ -86,8 +108,17 @@ public abstract class AbstractServerClusterGraphTest extends AbstractServerClust
               updateVertex(graph, person);
               checkVertex(graph, person);
 
-              final OVertex root = graph.load(rootVertexId);
+              ODocument rootDoc = graph.load(rootVertexId);
+              
+if(rootDoc == null) System.out.println("!!!!!!!! rootDoc is null");
+  
+              final OVertex root = rootDoc.asVertex().get();
+              
+if(root == null) System.out.println("!!!!!!!! rootis null");
+
+              
               root.addEdge(person).save();
+              
 
               // checkIndex(database, (String) person.field("name"), person.getIdentity());
 
@@ -101,7 +132,11 @@ public abstract class AbstractServerClusterGraphTest extends AbstractServerClust
               break;
 
             } catch (ONeedRetryException e) {
+
+System.out.println("---------- ONeedRetryException for serverId = " + serverId + ", threadId = " + threadId);
+System.out.println("---------- ONeedRetryException e = " + e.getMessage());
               graph.rollback();
+              graph.begin();
               i -= itemInTx;
               itemInTx = 0;
               // RETRY
@@ -124,6 +159,7 @@ public abstract class AbstractServerClusterGraphTest extends AbstractServerClust
       } finally {
         runningWriters.countDown();
         graph.close();
+        dbPool.close();
       }
 
       System.out.println("\nWriter " + name + " END");
@@ -136,8 +172,13 @@ public abstract class AbstractServerClusterGraphTest extends AbstractServerClust
     expected = writerCount * count * servers + baseCount + 1;
   }
 
+  @Override
+  protected void onBeforeExecution() {
+  }
+
+  @Override
   protected void onAfterExecution() {
-    pool.close();
+//    pool.close();
   }
 
   @Override
@@ -151,17 +192,14 @@ public abstract class AbstractServerClusterGraphTest extends AbstractServerClust
     personClass.createProperty("birthday", OType.DATE);
     personClass.createProperty("children", OType.STRING);
 
-    OClass person = graph.createVertexClass("Person");
+    OClass person = graph.getClass("Person");
     idx = person.createIndex("Person.name", OClass.INDEX_TYPE.UNIQUE, "name");
 
-    OClass customer = graph.createClass("Customer", person.getName());
+    OClass customer = graph.createClass("Customer", personClass.getName());
     customer.createProperty("totalSold", OType.DECIMAL);
 
-    OClass provider = graph.createClass("Provider", person.getName());
-    provider.createProperty("totalPurchased", OType.DECIMAL);
-
-    pool = new ODatabasePool(graph.getURL(), "admin", "admin", OrientDBConfig.defaultConfig());
-    setFactorySettings(pool);
+    OClass provider = graph.createClass("Provider", personClass.getName());
+    provider.createProperty("totalPurchased", OType.DECIMAL);    
   }
 
   protected void setFactorySettings(ODatabasePool pool) {
@@ -174,6 +212,8 @@ public abstract class AbstractServerClusterGraphTest extends AbstractServerClust
 
   protected OVertex createVertex(ODatabaseDocument graph, int serverId, int threadId, int i) {
     final String uniqueId = serverId + "-" + threadId + "-" + i;
+    
+System.out.println("--createVertex() uniqueId = " + uniqueId);    
 
     OVertex result = graph.newVertex("Person");
     result.setProperty("id", UUID.randomUUID().toString());

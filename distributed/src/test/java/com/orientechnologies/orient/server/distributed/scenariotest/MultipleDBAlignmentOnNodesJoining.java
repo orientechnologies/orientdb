@@ -17,7 +17,7 @@
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -110,11 +110,11 @@ public class MultipleDBAlignmentOnNodesJoining extends AbstractScenarioTest {
     ServerRun master = serverInstance.get(0);
 
     if (iCreateDatabase) {
-      final ODatabaseDocumentTx graph1 = master.createDatabase(dbA);
-      final ODatabaseDocumentTx graph2 = master.createDatabase(dbB);
+      final ODatabaseDocument graph1 = master.createDatabase(dbA);
+      final ODatabaseDocument graph2 = master.createDatabase(dbB);
       try {
-        onAfterDatabaseCreation(graph1, "plocal:" + serverInstance.get(0).getDatabasePath(dbA));
-        onAfterDatabaseCreation(graph2, "plocal:" + serverInstance.get(0).getDatabasePath(dbB));
+        onAfterDatabaseCreation(graph1);
+        onAfterDatabaseCreation(graph2);
       } finally {
         if(!graph1.isClosed()) {
           graph1.close();
@@ -133,9 +133,9 @@ public class MultipleDBAlignmentOnNodesJoining extends AbstractScenarioTest {
     master = serverInstance.get(1);
 
     if (iCreateDatabase) {
-      ODatabaseDocumentTx graph1 = master.createDatabase(dbC);
+      ODatabaseDocument graph1 = master.createDatabase(dbC);
       try {
-        onAfterDatabaseCreation(graph1, "plocal:" + serverInstance.get(1).getDatabasePath(dbC));
+        onAfterDatabaseCreation(graph1);
       } finally {
         if(!graph1.isClosed()) {
           graph1.close();
@@ -149,12 +149,12 @@ public class MultipleDBAlignmentOnNodesJoining extends AbstractScenarioTest {
    *
    * @param db Current database
    */
-  protected void onAfterDatabaseCreation(final ODatabaseDocumentTx db, String databaseURL) {
+  protected void onAfterDatabaseCreation(final ODatabaseDocument db) {
 
     String databaseName = db.getName();
     System.out.println("Creating database schema for " + databaseName + "...");
 
-    ODatabaseRecordThreadLocal.INSTANCE.set(db);
+    db.activateOnCurrentThread();
 
     // building basic schema
     OClass personClass = db.getMetadata().getSchema().createClass("Person");
@@ -172,7 +172,7 @@ public class MultipleDBAlignmentOnNodesJoining extends AbstractScenarioTest {
     // populating db
     try {
       ExecutorService executor = Executors.newSingleThreadExecutor();
-      Callable writer = createWriter(databaseName, databaseURL);
+      Callable writer = createWriter(db);
       Future f = executor.submit(writer);
       f.get();
       assertTrue(f.isDone());
@@ -192,11 +192,10 @@ public class MultipleDBAlignmentOnNodesJoining extends AbstractScenarioTest {
     // database must be present on all the servers
 
     String checkOnServer = "";
-    List<ODatabaseDocumentTx> dbs = new LinkedList<ODatabaseDocumentTx>();
+    List<ODatabaseDocument> dbs = new LinkedList<ODatabaseDocument>();
     for (ServerRun server : checkConsistencyOnServers) {
-
       try {
-        dbs.add(poolFactory.get(getPlocalDatabaseURL(server, databaseName), "admin", "admin").acquire());
+        dbs.add(getDatabase(server));
         checkOnServer += server.getServerInstance().getDistributedManager().getLocalNodeName() + ",";
       } catch(Exception e) {
         fail(databaseName + " is not present on server" + server.getServerId());
@@ -206,7 +205,7 @@ public class MultipleDBAlignmentOnNodesJoining extends AbstractScenarioTest {
     super.banner("Checking " + databaseName + " consistency among servers...\nChecking on servers {" + checkOnServer + "}.");
 
     // class person is Present in each database
-    for(ODatabaseDocumentTx db: dbs) {
+    for(ODatabaseDocument db: dbs) {
       assertTrue(db.getMetadata().getSchema().existsClass("Person"));
     }
 
@@ -233,7 +232,7 @@ public class MultipleDBAlignmentOnNodesJoining extends AbstractScenarioTest {
       for (int i = 0; i < count; i++) {
 
         // load records to compare
-        for (ODatabaseDocumentTx db : dbs) {
+        for (ODatabaseDocument db : dbs) {
           docsToCompare.add(loadRecord(db, i + baseCount));
         }
 
@@ -271,77 +270,72 @@ public class MultipleDBAlignmentOnNodesJoining extends AbstractScenarioTest {
       e.printStackTrace();
     } finally {
 
-      for (ODatabaseDocumentTx db : dbs) {
-        ODatabaseRecordThreadLocal.INSTANCE.set(db);
+      for (ODatabaseDocument db : dbs) {
         db.close();
-        ODatabaseRecordThreadLocal.INSTANCE.set(null);
       }
     }
 
   }
 
-  protected ODocument loadRecord(ODatabaseDocumentTx database, int i) {
+  protected ODocument loadRecord(ODatabaseDocument database, int i) {
     final String uniqueId = database.getName() + "-" + i;
-    ODatabaseRecordThreadLocal.INSTANCE.set(database);
+    database.activateOnCurrentThread();
     List<ODocument> result = database
         .query(new OSQLSynchQuery<ODocument>("select from Person where name = 'Billy" + uniqueId + "'"));
     if (result.size() == 0)
       assertTrue("No record found with name = 'Billy" + uniqueId + "'!", false);
     else if (result.size() > 1)
       assertTrue(result.size() + " records found with name = 'Billy" + uniqueId + "'!", false);
-    ODatabaseRecordThreadLocal.INSTANCE.set(null);
     return result.get(0);
   }
 
-  protected Callable<Void> createWriter(String databaseName, String databaseURL) {
-    return new DBStartupWriter(databaseName, databaseURL);
+  protected Callable<Void> createWriter(ODatabaseDocument database) {
+    return new DBStartupWriter(database);
   }
 
 
   class DBStartupWriter implements Callable<Void> {
-    private final String databaseUrl;
-    private String databaseName;
+    private final ODatabaseDocument db;
 
-    public DBStartupWriter(String databaseName, final String db) {
-      this.databaseName = databaseName;
-      databaseUrl = db;
+    public DBStartupWriter(final ODatabaseDocument db) {
+      this.db = db;
     }
 
     @Override
     public Void call() throws Exception {
+
+      db.activateOnCurrentThread();
+      
       for (int i = 0; i < count; i++) {
-        final ODatabaseDocumentTx database = poolFactory.get(databaseUrl, "admin", "admin").acquire();
         try {
           if ((i + 1) % 100 == 0)
-            System.out.println("\nDBStartupWriter '" + databaseName + "' (" + database.getURL() + ") managed " + (i + 1) + "/" + count + " records so far");
+            System.out.println("\nDBStartupWriter '" + db.getName() + "' (" + db.getURL() + ") managed " + (i + 1) + "/" + count + " records so far");
 
-          final ODocument person = createRecord(database, i);
-          updateRecord(database, i);
-          checkRecord(database, i);
-          checkIndex(database, (String) person.field("name"), person.getIdentity());
+          final ODocument person = createRecord(db, i);
+          updateRecord(db, i);
+          checkRecord(db, i);
+          checkIndex(db, (String) person.field("name"), person.getIdentity());
 
           if (delayWriter > 0)
             Thread.sleep(delayWriter);
 
         } catch (InterruptedException e) {
-          System.out.println("DBStartupWriter received interrupt (db=" + database.getURL());
+          System.out.println("DBStartupWriter received interrupt (db=" + db.getURL());
           Thread.currentThread().interrupt();
           break;
         } catch (Exception e) {
-          System.out.println("DBStartupWriter received exception (db=" + database.getURL());
+          System.out.println("DBStartupWriter received exception (db=" + db.getURL());
           e.printStackTrace();
           break;
-        } finally {
-          database.close();
         }
       }
 
-      System.out.println("\nDBStartupWriter '" + databaseName + "' END");
+      System.out.println("\nDBStartupWriter '" + db.getName() + "' END");
       return null;
     }
 
-    private ODocument createRecord(ODatabaseDocumentTx database, int i) {
-      final String uniqueId = databaseName + "-" + i;
+    private ODocument createRecord(ODatabaseDocument database, int i) {
+      final String uniqueId = database.getName() + "-" + i;
 
       ODocument person = new ODocument("Person").fields("id", UUID.randomUUID().toString(), "name", "Billy" + uniqueId, "birthday", new Date(), "children", uniqueId);
       database.save(person);
@@ -351,18 +345,18 @@ public class MultipleDBAlignmentOnNodesJoining extends AbstractScenarioTest {
       return person;
     }
 
-    private void updateRecord(ODatabaseDocumentTx database, int i) {
+    private void updateRecord(ODatabaseDocument database, int i) {
       ODocument doc = loadRecord(database, i);
       doc.field("updated", true);
       doc.save();
     }
 
-    private void checkRecord(ODatabaseDocumentTx database, int i) {
+    private void checkRecord(ODatabaseDocument database, int i) {
       ODocument doc = loadRecord(database, i);
       assertEquals(doc.field("updated"), Boolean.TRUE);
     }
 
-    private void checkIndex(ODatabaseDocumentTx database, final String key, final ORID rid) {
+    private void checkIndex(ODatabaseDocument database, final String key, final ORID rid) {
       final List<OIdentifiable> result = database.command(new OCommandSQL("select from index:Person.name where key = ?"))
           .execute(key);
       assertNotNull(result);
@@ -371,8 +365,8 @@ public class MultipleDBAlignmentOnNodesJoining extends AbstractScenarioTest {
       assertEquals(((ODocument) result.get(0)).field("rid"), rid);
     }
 
-    private ODocument loadRecord(ODatabaseDocumentTx database, int i) {
-      final String uniqueId = databaseName + "-" + i;
+    private ODocument loadRecord(ODatabaseDocument database, int i) {
+      final String uniqueId = database.getName() + "-" + i;
 
       List<ODocument> result = database
           .query(new OSQLSynchQuery<ODocument>("select from Person where name = 'Billy" + uniqueId + "'"));
@@ -384,8 +378,4 @@ public class MultipleDBAlignmentOnNodesJoining extends AbstractScenarioTest {
       return result.get(0);
     }
   }
-
-
-
-
 }

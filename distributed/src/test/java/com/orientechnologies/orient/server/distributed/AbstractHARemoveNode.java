@@ -16,7 +16,7 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.util.OCallable;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -29,24 +29,26 @@ public abstract class AbstractHARemoveNode extends AbstractServerClusterTxTest {
   @Override
   protected void onBeforeChecks() throws InterruptedException {
     // // WAIT UNTIL THE END
-    waitFor(0, new OCallable<Boolean, ODatabaseDocumentTx>() {
+    waitFor(0, new OCallable<Boolean, ODatabaseDocument>() {
       @Override
-      public Boolean call(ODatabaseDocumentTx db) {
+      public Boolean call(ODatabaseDocument db) {
         final boolean ok = db.countClass("Person") >= expected;
         if (!ok)
           System.out.println("Server 0: FOUND " + db.countClass("Person") + " people instead of expected " + expected);
+        else System.out.println("Server 0: FOUND " + db.countClass("Person") + ", expected " + expected);
         return ok;
       }
     }, 10000);
 
-    waitFor(2, new OCallable<Boolean, ODatabaseDocumentTx>() {
+    waitFor(2, new OCallable<Boolean, ODatabaseDocument>() {
       @Override
-      public Boolean call(ODatabaseDocumentTx db) {
+      public Boolean call(ODatabaseDocument db) {
         final long node2Expected = lastNodeIsUp.get() ? expected : expected - (count * writerCount * (serverInstance.size() - 1));
 
         final boolean ok = db.countClass("Person") >= node2Expected;
         if (!ok)
           System.out.println("Server 2: FOUND " + db.countClass("Person") + " people instead of expected " + node2Expected);
+        else System.out.println("Server 2: FOUND " + db.countClass("Person") + ", expected " + expected);
         return ok;
       }
     }, 10000);

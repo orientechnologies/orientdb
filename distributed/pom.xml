@@ -65,7 +65,7 @@
                 <activeByDefault>true</activeByDefault>
             </activation>
             <properties>
-                <skipTests>true</skipTests>
+                <skipTests>false</skipTests>
             </properties>
         </profile>
         <profile>

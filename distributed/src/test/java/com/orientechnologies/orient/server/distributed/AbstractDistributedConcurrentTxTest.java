@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OVertex;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 import org.junit.Assert;
@@ -42,7 +43,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * Test distributed TX
  */
 public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistributedWriteTest {
-  protected ODatabasePool pool;
+//  protected ODatabasePool pool;
   protected ORID          v;
   protected AtomicLong lockExceptions              = new AtomicLong(0l);
   protected boolean    expectedConcurrentException = true;
@@ -63,9 +64,11 @@ public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistri
       String name = Integer.toString(serverId);
 
       for (int i = 0; i < count; i++) {
-        final ODatabaseDocument graph = pool.acquire();
+//        final ODatabaseDocument graph = pool.acquire();
 
-        final OVertex localVertex = graph.load(v);
+        final ODatabaseDocument graph = getDatabase(serverId);
+
+        final OVertex localVertex = getVertex(graph, v);
 
         try {
           if ((i + 1) % 100 == 0)
@@ -129,12 +132,18 @@ public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistri
   protected void onAfterExecution() {
 
     final long totalLockExceptions = lockExceptions.get();
+    
+System.out.println("totalLockExceptions = " + totalLockExceptions);
+System.out.println("expectedConcurrentException = " + expectedConcurrentException);
+    
     if (expectedConcurrentException)
+    {
       Assert.assertTrue("lockExceptions are " + totalLockExceptions, totalLockExceptions > 0);
+    }
     else
+    {
       Assert.assertTrue("lockExceptions are " + totalLockExceptions, totalLockExceptions == 0);
-
-    pool.close();
+    }
   }
 
   @Override
@@ -148,7 +157,7 @@ public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistri
     personClass.createProperty("birthday", OType.DATE);
     personClass.createProperty("children", OType.STRING);
 
-    OClass person = graph.createVertexClass("Person");
+    OClass person = graph.getClass("Person");
     person.createIndex("Person.name", OClass.INDEX_TYPE.UNIQUE, "name");
 
     OClass customer = graph.createClass("Customer", person.getName());
@@ -157,7 +166,7 @@ public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistri
     OClass provider = graph.createClass("Provider", person.getName());
     provider.createProperty("totalPurchased", OType.DECIMAL);
 
-    pool = new ODatabasePool(graph.getURL(), "admin", "admin", OrientDBConfig.defaultConfig());
+//    pool = new ODatabasePool(graph.getURL(), "admin", "admin", OrientDBConfig.defaultConfig());
 
     v = createVertex(graph, 0, 0, 0).getIdentity();
   }
@@ -175,7 +184,8 @@ public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistri
             + "', 'surname': 'Mayes" + uniqueId + "', 'birthday': '" + ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
             .getConfiguration().getDateFormatInstance().format(new Date()) + "', 'children': '" + uniqueId + "', 'saved': 0}"))
         .execute();
-    return (OVertex) result;
+        
+    return getVertex((ODocument)result);
   }
 
   protected void updateVertex(OVertex v) {

@@ -18,7 +18,7 @@ package com.orientechnologies.orient.server.distributed.scenariotest;
 
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
@@ -98,9 +98,9 @@ public class Quorum1ScenarioTest extends AbstractScenarioTest {
     // // WAIT UNTIL THE END
     final long e = count * writerCount * executeTestsOnServers.size();
 
-    waitFor(0, new OCallable<Boolean, ODatabaseDocumentTx>() {
+    waitFor(0, new OCallable<Boolean, ODatabaseDocument>() {
       @Override
-      public Boolean call(ODatabaseDocumentTx db) {
+      public Boolean call(ODatabaseDocument db) {
         final boolean ok = db.countClass("Person") >= e;
         if (!ok)
           System.out.println("FOUND " + db.countClass("Person") + " people on server 0 instead of expected " + e);
@@ -108,9 +108,9 @@ public class Quorum1ScenarioTest extends AbstractScenarioTest {
       }
     }, 10000);
 
-    waitFor(1, new OCallable<Boolean, ODatabaseDocumentTx>() {
+    waitFor(1, new OCallable<Boolean, ODatabaseDocument>() {
       @Override
-      public Boolean call(ODatabaseDocumentTx db) {
+      public Boolean call(ODatabaseDocument db) {
         final boolean ok = db.countClass("Person") >= e;
         if (!ok)
           System.out.println("FOUND " + db.countClass("Person") + " people on server 1 instead of expected " + e);
@@ -122,16 +122,19 @@ public class Quorum1ScenarioTest extends AbstractScenarioTest {
   }
 
   @Override
-  protected ODocument retrieveRecord(String dbUrl, String uniqueId) {
-    ODatabaseDocumentTx dbServer = poolFactory.get(dbUrl, "admin", "admin").acquire();
-    ODatabaseRecordThreadLocal.INSTANCE.set(dbServer);
-    List<ODocument> result = dbServer.query(new OSQLSynchQuery<ODocument>("select from Hero where id = '" + uniqueId + "'"));
-    if (result.size() == 0)
-      fail("No record found with id = '" + uniqueId + "'!");
-    else if (result.size() > 1)
-      fail(result.size() + " records found with id = '" + uniqueId + "'!");
-    ODatabaseRecordThreadLocal.INSTANCE.set(null);
-    return result.get(0);
+  protected ODocument retrieveRecord(ServerRun serverRun, String uniqueId) {
+    ODatabaseDocument dbServer = getDatabase(serverRun);
+    try {
+      List<ODocument> result = dbServer.query(new OSQLSynchQuery<ODocument>("select from Hero where id = '" + uniqueId + "'"));
+      if (result.size() == 0)
+        fail("No record found with id = '" + uniqueId + "'!");
+      else if (result.size() > 1)
+        fail(result.size() + " records found with id = '" + uniqueId + "'!");
+
+      return result.get(0);
+    } finally {
+     	dbServer.close();
+    }    
   }
 
   @Override

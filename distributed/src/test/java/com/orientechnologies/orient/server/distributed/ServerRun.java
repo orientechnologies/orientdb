@@ -21,7 +21,12 @@ import com.hazelcast.instance.HazelcastInstanceImpl;
 import com.hazelcast.instance.HazelcastInstanceProxy;
 import com.hazelcast.instance.Node;
 import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
@@ -123,22 +128,46 @@ public class ServerRun {
     return impl;
   }
 
-  public ODatabaseDocumentTx createDatabase(final String iName) {
+  protected OrientDB orientDB; 
+
+  public ODatabaseDocument createDatabase(final String iName) {
     String dbPath = getDatabasePath(iName);
 
-    new File(dbPath).mkdirs();
+    String databasesPath = getServerHome() + "/databases";
 
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("plocal:" + dbPath);
-    if (db.exists()) {
+    new File(databasesPath).mkdirs();
+
+    orientDB = new OrientDB("embedded:" + databasesPath, OrientDBConfig.defaultConfig());
+    
+    if(orientDB.exists(iName)) {
       System.out.println("Dropping previous database '" + iName + "' under: " + dbPath + "...");
-      db.drop();
+
+      orientDB.drop(iName);
       OFileUtils.deleteRecursively(new File(dbPath));
 
-      db = new ODatabaseDocumentTx("plocal:" + dbPath);
+      orientDB.create(iName, ODatabaseType.PLOCAL);
+    } else {
+      orientDB.create(iName, ODatabaseType.PLOCAL);
     }
 
-    return db;
+    return orientDB.open(iName, "admin", "admin");
   }
+  
+/*
+  protected ODatabaseDocument getEmbeddedDatabase(final String dbName) {
+    String databasesPath = getServerHome() + "/databases";
+
+  	 orientDB = new OrientDB("embedded:" + databasesPath, OrientDBConfig.defaultConfig());
+  	 
+System.out.println("----- dbPath = " + databasesPath + ", dbName = " + dbName);
+System.out.println("----- dbPath exists() = " + new File(databasesPath + "/fred/" + dbName).exists());
+
+System.out.println("----- db exists = " + orientDB.exists(dbName));
+  	 
+  	 return orientDB.open(dbName, "admin", "admin");
+  }*/
+  
+  public void closeOrientDB() { if(orientDB != null) orientDB.close(); }
 
   public void copyDatabase(final String iDatabaseName, final String iDestinationDirectory) throws IOException {
     // COPY THE DATABASE TO OTHER DIRECTORIES
@@ -158,7 +187,7 @@ public class ServerRun {
       server = OServerMain.create();
 
     server.setServerRootDirectory(getServerHome());
-    server.startup(getClass().getClassLoader().getResourceAsStream(iServerConfigFile));
+    server.startup(getClass().getClassLoader().getResourceAsStream(iServerConfigFile));    
     server.activate();
 
     return server;
@@ -179,7 +208,7 @@ public class ServerRun {
       }
     }
 
-    closeStorages();
+//    closeStorages();
   }
 
   public void terminateServer() {
@@ -202,7 +231,7 @@ public class ServerRun {
       }
     }
 
-    closeStorages();
+//    closeStorages();
   }
 
   public void closeStorages() {

@@ -19,7 +19,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.orientechnologies.common.util.OCallable;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 
 /**
  * Distributed non TX test against "remote" protocol. It starts 3 servers and during a stress test, kill last server. The test
@@ -54,30 +54,30 @@ public class HACrashTest extends AbstractServerClusterTxTest {
         public void run() {
           try {
             // CRASH LAST SERVER try {
-            executeWhen(0, new OCallable<Boolean, ODatabaseDocumentTx>() {
+            executeWhen(0, new OCallable<Boolean, ODatabaseDocument>() {
               // CONDITION
               @Override
-              public Boolean call(ODatabaseDocumentTx db) {
+              public Boolean call(ODatabaseDocument db) {
                 return db.countClass("Person") > (count * SERVERS * writerCount + baseCount) * 1 / 3;
               }
             }, // ACTION
-                new OCallable<Boolean, ODatabaseDocumentTx>() {
+                new OCallable<Boolean, ODatabaseDocument>() {
                   @Override
-                  public Boolean call(ODatabaseDocumentTx db) {
+                  public Boolean call(ODatabaseDocument db) {
                     Assert.assertTrue("Insert was too fast", inserting);
                     banner("SIMULATE FAILURE ON SERVER " + (SERVERS - 1));
 
                     delayWriter = 50;
                     serverInstance.get(SERVERS - 1).crashServer();
 
-                    executeWhen(db, new OCallable<Boolean, ODatabaseDocumentTx>() {
+                    executeWhen(db, new OCallable<Boolean, ODatabaseDocument>() {
                       @Override
-                      public Boolean call(ODatabaseDocumentTx db) {
+                      public Boolean call(ODatabaseDocument db) {
                         return db.countClass("Person") > (count * writerCount * SERVERS) * 2 / 4;
                       }
-                    }, new OCallable<Boolean, ODatabaseDocumentTx>() {
+                    }, new OCallable<Boolean, ODatabaseDocument>() {
                       @Override
-                      public Boolean call(ODatabaseDocumentTx db) {
+                      public Boolean call(ODatabaseDocument db) {
                         Assert.assertTrue("Insert was too fast", inserting);
 
                         banner("RESTARTING SERVER " + (SERVERS - 1) + "...");
@@ -109,9 +109,9 @@ public class HACrashTest extends AbstractServerClusterTxTest {
   @Override
   protected void onBeforeChecks() throws InterruptedException {
     // // WAIT UNTIL THE END
-    waitFor(2, new OCallable<Boolean, ODatabaseDocumentTx>() {
+    waitFor(2, new OCallable<Boolean, ODatabaseDocument>() {
       @Override
-      public Boolean call(ODatabaseDocumentTx db) {
+      public Boolean call(ODatabaseDocument db) {
         final boolean ok = db.countClass("Person") >= count * writerCount * SERVERS + baseCount;
         if (!ok)
           System.out.println(

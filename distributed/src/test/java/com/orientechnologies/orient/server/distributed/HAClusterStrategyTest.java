@@ -36,12 +36,8 @@ public class HAClusterStrategyTest extends AbstractHARemoveNode {
 
   @Override
   public void executeTest() throws Exception {
-    String dbUrl = getDatabaseURL(serverInstance.get(0));
-    OrientDB orientDB = new OrientDB(dbUrl.substring(0, dbUrl.length() - (getDatabaseName().length() + 1)), "root", "root",
-        OrientDBConfig.defaultConfig());
-    final ODatabasePool pool = new ODatabasePool(orientDB, getDatabaseName(), "admin", "admin");
-
-    final ODatabaseDocument g = pool.acquire();
+    final ODatabaseDocument g = serverInstance.get(0).getServerInstance().openDatabase(getDatabaseName(), "admin", "admin");
+    
     g.createVertexClass("Test");
     g.close();
 
@@ -49,7 +45,7 @@ public class HAClusterStrategyTest extends AbstractHARemoveNode {
       // pressing 'return' 2 to 10 times should trigger the described behavior
       Thread.sleep(100);
 
-      final ODatabaseDocument graph = pool.acquire();
+      final ODatabaseDocument graph = serverInstance.get(0).getServerInstance().openDatabase(getDatabaseName(), "admin", "admin");
       graph.begin();
 
       // should always be 'local', but eventually changes to 'round-robin'
@@ -66,14 +62,13 @@ public class HAClusterStrategyTest extends AbstractHARemoveNode {
       v.setProperty("firstName", "Roger");
       v.setProperty("lastName", "Smith");
       v.save();
+      
       graph.commit();
 
       graph.close();
     }
 
-    pool.close();
-    orientDB.drop(getDatabaseName());
-    orientDB.close();
+    serverInstance.get(0).getServerInstance().dropDatabase(getDatabaseName());
   }
 
   protected String getDatabaseURL(final ServerRun server) {

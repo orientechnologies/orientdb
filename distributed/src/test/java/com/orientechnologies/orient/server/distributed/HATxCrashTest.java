@@ -16,7 +16,7 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.util.OCallable;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -60,8 +60,9 @@ public class HATxCrashTest extends AbstractHARemoveNode {
               // CONDITION
               @Override
               public Boolean call() throws Exception {
-                final ODatabaseDocumentTx database = poolFactory.get(getDatabaseURL(serverInstance.get(0)), "admin", "admin")
-                    .acquire();
+              	 // Why did this in the poolFactory version always use serverInstance.get(0)...?
+              	 // Does it affect the test to use a specific server?
+                final ODatabaseDocument database = getDatabase(server);
                 try {
                   return database.countClass("Person") > (count * SERVERS) * 1 / 3;
                 } finally {
@@ -76,14 +77,16 @@ public class HATxCrashTest extends AbstractHARemoveNode {
                     banner("SIMULATE FAILURE ON SERVER " + (SERVERS - 1));
                     delayWriter = 100;
                     serverInstance.get(SERVERS - 1).crashServer();
-                    poolFactory.reset();
+//                    poolFactory.reset();
                     lastServerOn = false;
 
                     executeWhen(new Callable<Boolean>() {
                       @Override
                       public Boolean call() throws Exception {
-                        final ODatabaseDocumentTx database = poolFactory
-                            .get(getDatabaseURL(serverInstance.get(0)), "admin", "admin").acquire();
+              	         // Why did this in the poolFactory version always use serverInstance.get(0)...?
+              	         // Does it affect the test to use a specific server?
+                        final ODatabaseDocument database = getDatabase(server);
+                            
                         try {
                           return database.countClass("Person") > (count * SERVERS) * 2 / 3;
                         } finally {

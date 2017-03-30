@@ -23,11 +23,15 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+//import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
@@ -119,6 +123,7 @@ public abstract class AbstractServerClusterTest {
       banner("Executing test...");
 
       try {
+        onBeforeExecution();
         executeTest();
       } finally {
         onAfterExecution();
@@ -139,8 +144,10 @@ public abstract class AbstractServerClusterTest {
           server.terminateServer();
         else
           server.shutdownServer();
+          
+        server.closeStorages();
       }
-
+      
       onTestEnded();
 
       banner("Terminate HZ...");
@@ -155,6 +162,8 @@ public abstract class AbstractServerClusterTest {
 
       banner("Clean server directories...");
       deleteServers();
+      
+      banner("--End--");
     }
 
   }
@@ -256,7 +265,56 @@ public abstract class AbstractServerClusterTest {
   protected void onTestEnded() {
   }
 
+  protected void onBeforeExecution() throws Exception {
+  }
+
   protected void onAfterExecution() throws Exception {
+  }
+
+  protected void createDatabase(final int serverNum) {
+  	 if(serverInstance.size() > serverNum)
+      serverInstance.get(serverNum).getServerInstance().createDatabase(getDatabaseName(), 
+        ODatabaseType.PLOCAL, OrientDBConfig.defaultConfig());
+  }
+
+  protected boolean databaseExists(final int serverNum) {
+  	 if(serverInstance.size() > serverNum)
+      return serverInstance.get(0).getServerInstance().existsDatabase(getDatabaseName());
+      
+    return false;
+  }
+
+  protected ODatabaseDocument getDatabase() {
+    return getDatabase(0);
+  }
+
+  protected ODatabaseDocument getDatabase(final int serverNum) {
+    if(serverInstance.size() > serverNum)
+      return getDatabase(serverInstance.get(serverNum));
+    
+    return null;
+  }
+
+  protected ODatabaseDocument getDatabase(final ServerRun serverRun) {
+    if(serverRun != null)
+    {
+    	if(!serverRun.getServerInstance().isActive())
+System.out.println("------------ getDatabase server is not active!");
+    	
+      return serverRun.getServerInstance().openDatabase(getDatabaseName(), "admin", "admin");
+    }
+    
+    return null;
+  }
+
+  protected OVertex getVertex(final ODatabaseDocument db, final ORID orid) {
+    return getVertex(db.load(orid));
+  }
+  
+  protected OVertex getVertex(final ODocument doc) {
+    if(doc != null) return doc.asVertex().get();
+    
+    return null;
   }
 
   protected abstract String getDatabaseName();
@@ -286,12 +344,17 @@ public abstract class AbstractServerClusterTest {
     final ServerRun master = it.next();
 
     if (iCreateDatabase) {
-      final ODatabaseDocumentTx graph = master.createDatabase(getDatabaseName());
+      final ODatabaseDocument graph = master.createDatabase(getDatabaseName());
       try {
         onAfterDatabaseCreation(graph);
       } finally {
         graph.close();
-        ODatabaseDocumentTx.closeAll();
+
+System.out.println("------- ASCT closeOrientDB()");
+
+master.closeOrientDB();
+        
+//        ODatabaseDocumentTx.closeAll();
       }
     }
 
@@ -332,22 +395,21 @@ public abstract class AbstractServerClusterTest {
     }
   }
 
-  protected void executeWhen(int serverId, OCallable<Boolean, ODatabaseDocumentTx> condition,
-      OCallable<Boolean, ODatabaseDocumentTx> action) throws Exception {
-    final ODatabaseDocumentTx db = new ODatabaseDocumentTx(getDatabaseURL(serverInstance.get(serverId))).open("admin", "admin");
+  protected void executeWhen(int serverId, OCallable<Boolean, ODatabaseDocument> condition,
+      OCallable<Boolean, ODatabaseDocument> action) throws Exception {
+    final ODatabaseDocument db = getDatabase(serverId);
     try {
       executeWhen(db, condition, action);
     } finally {
       if (!db.isClosed()) {
-        ODatabaseRecordThreadLocal.INSTANCE.set(db);
+        db.activateOnCurrentThread();
         db.close();
-        ODatabaseRecordThreadLocal.INSTANCE.set(null);
       }
     }
   }
 
-  protected void executeWhen(final ODatabaseDocumentTx db, OCallable<Boolean, ODatabaseDocumentTx> condition,
-      OCallable<Boolean, ODatabaseDocumentTx> action) {
+  protected void executeWhen(final ODatabaseDocument db, OCallable<Boolean, ODatabaseDocument> condition,
+      OCallable<Boolean, ODatabaseDocument> action) {
     while (true) {
       db.activateOnCurrentThread();
       if (condition.call(db)) {
@@ -423,9 +485,9 @@ public abstract class AbstractServerClusterTest {
 
   }
 
-  protected void waitFor(final int serverId, final OCallable<Boolean, ODatabaseDocumentTx> condition, final long timeout) {
+  protected void waitFor(final int serverId, final OCallable<Boolean, ODatabaseDocument> condition, final long timeout) {
     try {
-      ODatabaseDocumentTx db = new ODatabaseDocumentTx(getDatabaseURL(serverInstance.get(serverId))).open("admin", "admin");
+      ODatabaseDocument db = getDatabase(serverId);
       try {
 
         final long startTime = System.currentTimeMillis();
@@ -449,9 +511,8 @@ public abstract class AbstractServerClusterTest {
 
       } finally {
         if (!db.isClosed()) {
-          ODatabaseRecordThreadLocal.INSTANCE.set(db);
+          db.activateOnCurrentThread();
           db.close();
-          ODatabaseRecordThreadLocal.INSTANCE.set(null);
         }
       }
     } catch (Exception e) {
@@ -485,54 +546,80 @@ public abstract class AbstractServerClusterTest {
 
   protected ODocument readRemoteRecord(final int serverId, final ORecordId rid, final String[] servers) {
     final ODistributedServerManager dManager = serverInstance.get(serverId).getServerInstance().getDistributedManager();
+    
+    final ODatabaseDocument db = getDatabase(serverId);
 
-    final Collection<String> clusterNames = new ArrayList<String>(1);
-    clusterNames.add(ODatabaseRecordThreadLocal.INSTANCE.get().getClusterNameById(rid.getClusterId()));
-
-    ODistributedResponse response = dManager
-        .sendRequest(getDatabaseName(), clusterNames, Arrays.asList(servers), new OReadRecordTask(rid),
-            dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
-
-    if (response != null) {
-      final ORawBuffer buffer = (ORawBuffer) response.getPayload();
-      return new ODocument().fromStream(buffer.getBuffer());
+    try {
+      final Collection<String> clusterNames = new ArrayList<String>(1);
+//    clusterNames.add(ODatabaseRecordThreadLocal.INSTANCE.get().getClusterNameById(rid.getClusterId()));
+      clusterNames.add(db.getClusterNameById(rid.getClusterId()));
+  
+      ODistributedResponse response = dManager
+          .sendRequest(getDatabaseName(), clusterNames, Arrays.asList(servers), new OReadRecordTask(rid),
+              dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
+  
+      if (response != null) {
+        final ORawBuffer buffer = (ORawBuffer) response.getPayload();
+        return new ODocument().fromStream(buffer.getBuffer());
+      }
+    } finally {
+     	db.close();
     }
-
+    
     return null;
   }
 
   protected ODistributedResponse createRemoteRecord(final int serverId, final ORecord record, final String[] servers) {
     final ODistributedServerManager dManager = serverInstance.get(serverId).getServerInstance().getDistributedManager();
 
-    final Collection<String> clusterNames = new ArrayList<String>(1);
-    clusterNames.add(ODatabaseRecordThreadLocal.INSTANCE.get().getClusterNameById(record.getIdentity().getClusterId()));
+    final ODatabaseDocument db = getDatabase(serverId);
 
-    return dManager.sendRequest(getDatabaseName(), clusterNames, Arrays.asList(servers),
-        new OCreateRecordTask((ORecordId) record.getIdentity(), record.toStream(), record.getVersion(),
-            ORecordInternal.getRecordType(record)), dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE,
-        null, null);
+    try {
+      final Collection<String> clusterNames = new ArrayList<String>(1);
+//    clusterNames.add(ODatabaseRecordThreadLocal.INSTANCE.get().getClusterNameById(record.getIdentity().getClusterId()));
+      clusterNames.add(db.getClusterNameById(record.getIdentity().getClusterId()));
+  
+      return dManager.sendRequest(getDatabaseName(), clusterNames, Arrays.asList(servers),
+          new OCreateRecordTask((ORecordId) record.getIdentity(), record.toStream(), record.getVersion(),
+              ORecordInternal.getRecordType(record)), dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE,
+          null, null);
+    } finally {
+     	db.close();
+    }
   }
 
   protected ODistributedResponse updateRemoteRecord(final int serverId, final ORecord record, final String[] servers) {
     final ODistributedServerManager dManager = serverInstance.get(serverId).getServerInstance().getDistributedManager();
+    final ODatabaseDocument db = getDatabase(serverId);
 
-    final Collection<String> clusterNames = new ArrayList<String>(1);
-    clusterNames.add(ODatabaseRecordThreadLocal.INSTANCE.get().getClusterNameById(record.getIdentity().getClusterId()));
-
-    return dManager.sendRequest(getDatabaseName(), clusterNames, Arrays.asList(servers),
-        new OFixUpdateRecordTask((ORecordId) record.getIdentity(), record.toStream(), record.getVersion(),
-            ORecordInternal.getRecordType(record)), dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE,
-        null, null);
+    try {
+      final Collection<String> clusterNames = new ArrayList<String>(1);
+//    clusterNames.add(ODatabaseRecordThreadLocal.INSTANCE.get().getClusterNameById(record.getIdentity().getClusterId()));
+      clusterNames.add(db.getClusterNameById(record.getIdentity().getClusterId()));
+  
+      return dManager.sendRequest(getDatabaseName(), clusterNames, Arrays.asList(servers),
+          new OFixUpdateRecordTask((ORecordId) record.getIdentity(), record.toStream(), record.getVersion(),
+              ORecordInternal.getRecordType(record)), dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE,
+          null, null);
+    } finally {
+     	db.close();
+    }
   }
 
   protected ODistributedResponse deleteRemoteRecord(final int serverId, final ORecordId rid, final String[] servers) {
     final ODistributedServerManager dManager = serverInstance.get(serverId).getServerInstance().getDistributedManager();
+    final ODatabaseDocument db = getDatabase(serverId);
 
-    final Collection<String> clusterNames = new ArrayList<String>(1);
-    clusterNames.add(ODatabaseRecordThreadLocal.INSTANCE.get().getClusterNameById(rid.getClusterId()));
+    try {
+      final Collection<String> clusterNames = new ArrayList<String>(1);
+//    clusterNames.add(ODatabaseRecordThreadLocal.INSTANCE.get().getClusterNameById(rid.getClusterId()));
+      clusterNames.add(db.getClusterNameById(rid.getClusterId()));
 
-    return dManager.sendRequest(getDatabaseName(), clusterNames, Arrays.asList(servers), new OFixCreateRecordTask(rid, -1),
-        dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
+      return dManager.sendRequest(getDatabaseName(), clusterNames, Arrays.asList(servers), new OFixCreateRecordTask(rid, -1),
+          dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
+    } finally {
+     	db.close();
+    }
   }
 
   protected List<ServerRun> createServerList(final int... serverIds) {
@@ -545,7 +632,7 @@ public abstract class AbstractServerClusterTest {
   protected void checkSameClusters() {
     List<String> clusters = null;
     for (ServerRun s : serverInstance) {
-      ODatabaseDocumentTx d = new ODatabaseDocumentTx(getDatabaseURL(s));
+      ODatabaseDocument d = getDatabase(s);
       try {
         d.open("admin", "admin");
         d.reload();

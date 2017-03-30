@@ -17,7 +17,7 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import org.junit.Assert;
 import org.junit.Test;
@@ -103,8 +103,7 @@ public class StopNodeTest extends AbstractServerClusterTxTest {
               // CONDITION
               @Override
               public Boolean call() throws Exception {
-                final ODatabaseDocumentTx database = poolFactory.get(getDatabaseURL(serverInstance.get(0)), "admin", "admin")
-                    .acquire();
+                final ODatabaseDocument database = getDatabase(0);
                 try {
                   return database.countClass("Person") > (count * writerCount * SERVERS) * 1 / 3;
                 } finally {

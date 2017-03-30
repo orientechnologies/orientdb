@@ -16,8 +16,7 @@
 
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -74,7 +73,7 @@ public class FaultDuringWritingWithOperationRedirectScenarioTest extends Abstrac
   public void executeTest() throws Exception {    //  TO-CHANGE
 
     List<ODocument> result = null;
-    ODatabaseDocumentTx dbServer3 = new ODatabaseDocumentTx(getRemoteDatabaseURL(serverInstance.get(2))).open("admin", "admin");
+    ODatabaseDocument dbServer3 = getDatabase(2);
     String dbServerUrl1 = getRemoteDatabaseURL(serverInstance.get(0));
 
     try {
@@ -87,7 +86,6 @@ public class FaultDuringWritingWithOperationRedirectScenarioTest extends Abstrac
 
       // writes on server3 (remote access) while a task is monitoring the inserted records amount and shutdown server
       // after 1/3 of total number of records to insert, and restarting it when 2/3 of records were inserted.
-      ODatabaseRecordThreadLocal.INSTANCE.set(null);
       Callable shutdownAndRestartTask = new ShutdownAndRestartServer(serverInstance.get(2), dbServerUrl1, "net-fault");
       final ExecutorService executor = Executors.newSingleThreadExecutor();
       Future f = executor.submit(shutdownAndRestartTask);
@@ -99,7 +97,7 @@ public class FaultDuringWritingWithOperationRedirectScenarioTest extends Abstrac
       waitForMultipleInsertsInClassPropagation(500L, "Person", 5000L);
 
       // preliminar check
-      ODatabaseRecordThreadLocal.INSTANCE.set(dbServer3);
+      dbServer3.activateOnCurrentThread();
       result = dbServer3.query(new OSQLSynchQuery<OIdentifiable>("select from Person"));
       assertEquals(500, result.size());
 
@@ -113,9 +111,7 @@ public class FaultDuringWritingWithOperationRedirectScenarioTest extends Abstrac
     } finally {
 
       if(!dbServer3.isClosed()) {
-        ODatabaseRecordThreadLocal.INSTANCE.set(dbServer3);
         dbServer3.close();
-        ODatabaseRecordThreadLocal.INSTANCE.set(null);
       }
     }
   }
@@ -139,33 +135,38 @@ public class FaultDuringWritingWithOperationRedirectScenarioTest extends Abstrac
       long totalNumberOfRecordsToInsert = count * writerCount;
 
       // open server1 db
-      ODatabaseDocumentTx dbServer1 = poolFactory.get(dbServerUrl1, "admin", "admin").acquire();
+      ODatabaseDocument dbServer1 = getDatabase(server);
 
-      while (true) {
+      try {
 
-        // check inserted record amount
-        long insertedRecords = dbServer1.countClass("Person");
-
-        if(insertedRecords > totalNumberOfRecordsToInsert/3) {
-          System.out.println("Fault on server3: " + faultType);
-          simulateServerFault(server,this.faultType);
-          assertFalse(server.isActive());
-          break;
+        while (true) {
+  
+          // check inserted record amount
+          long insertedRecords = dbServer1.countClass("Person");
+  
+          if(insertedRecords > totalNumberOfRecordsToInsert/3) {
+            System.out.println("Fault on server3: " + faultType);
+            simulateServerFault(server,this.faultType);
+            assertFalse(server.isActive());
+            break;
+          }
         }
-      }
-
-      while (true) {
-
-        // check inserted record amount
-        ODatabaseRecordThreadLocal.INSTANCE.set(dbServer1);
-        long insertedRecords = dbServer1.countClass("Person");
-
-        if(insertedRecords > 2*totalNumberOfRecordsToInsert/3) {
-          server.startServer(getDistributedServerConfiguration(server));
-          System.out.println("Server 3 restarted.");
-          assertTrue(server.isActive());
-          break;
+  
+        while (true) {
+  
+          // check inserted record amount
+  //        ODatabaseRecordThreadLocal.INSTANCE.set(dbServer1);
+          long insertedRecords = dbServer1.countClass("Person");
+  
+          if(insertedRecords > 2*totalNumberOfRecordsToInsert/3) {
+            server.startServer(getDistributedServerConfiguration(server));
+            System.out.println("Server 3 restarted.");
+            assertTrue(server.isActive());
+            break;
+          }
         }
+      } finally {
+        dbServer1.close();
       }
 
       return null;

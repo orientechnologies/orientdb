@@ -17,7 +17,9 @@ package com.orientechnologies.orient.server.distributed;
 
 import org.junit.Test;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 
 /**
  * Distributed test on drop + recreate database with a different name.
@@ -38,13 +40,14 @@ public class DistributedDbDropAndReCreateAnotherTest extends AbstractServerClust
   protected void onAfterExecution() throws Exception {
     do {
       ServerRun server = serverInstance.get(0);
-      ODatabaseDocumentTx db = new ODatabaseDocumentTx(getDatabaseURL(server));
-      db.open("admin", "admin");
+
+      ODatabaseDocument db = server.getServerInstance().openDatabase(getDatabaseName(), "admin", "admin");
+
       waitForDatabaseIsOnline(0, "europe-0", getDatabaseName(), 5000);
       waitForDatabaseIsOnline(0, "europe-1", getDatabaseName(), 5000);
       waitForDatabaseIsOnline(0, "europe-2", getDatabaseName(), 5000);
 
-      db.drop();
+      server.getServerInstance().dropDatabase(getDatabaseName());
 
       waitForDatabaseIsOffline("europe-0", getDatabaseName(), 5000);
       waitForDatabaseIsOffline("europe-1", getDatabaseName(), 5000);
@@ -58,11 +61,8 @@ public class DistributedDbDropAndReCreateAnotherTest extends AbstractServerClust
 
       banner("(RE)CREATING DATABASE " + dbName + " ON SERVER " + server.getServerId());
 
-      final ODatabaseDocumentTx graph = new ODatabaseDocumentTx(dbName);
-      if(graph.exists()) {
-        graph.open("admin", "admin");
-      }else {
-        graph.create();
+      if(!server.getServerInstance().existsDatabase(getDatabaseName())) {
+        server.getServerInstance().createDatabase(getDatabaseName(), ODatabaseType.PLOCAL, OrientDBConfig.defaultConfig());
       }
 
       waitForDatabaseIsOnline(0, "europe-0", getDatabaseName(), 15000);
@@ -71,8 +71,10 @@ public class DistributedDbDropAndReCreateAnotherTest extends AbstractServerClust
 
       checkSameClusters();
 
-      onAfterDatabaseCreation(graph);
-      graph.close();
+      try(ODatabaseDocument graph = server.getServerInstance().openDatabase(getDatabaseName(), "admin", "admin"))
+      {
+      	onAfterDatabaseCreation(graph);
+      }
 
       checkThePersonClassIsPresentOnAllTheServers();
 

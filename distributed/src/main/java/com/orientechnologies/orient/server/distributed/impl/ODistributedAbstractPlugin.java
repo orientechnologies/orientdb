@@ -866,7 +866,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         // INIT STORAGE + UPDATE LOCAL FILE ONLY
         final ODistributedStorage stg = getStorage(databaseName);
         stg.setDistributedConfiguration(cfg);
-
+        
         // DISCARD MESSAGES DURING THE REQUEST OF DATABASE INSTALLATION
         distrDatabase.suspend();
 
@@ -875,7 +875,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         boolean databaseInstalled;
 
         try {
-
           // CREATE THE DISTRIBUTED QUEUE
           if (!distrDatabase.exists() || distrDatabase.getSyncConfiguration().getMomentum().isEmpty()) {
 
@@ -1412,8 +1411,11 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       // OVERWRITE THE MOMENTUM FROM THE ORIGINAL SERVER AND ADD LAST LOCAL LSN
       try {
         distrDatabase.getSyncConfiguration().load();
+        
         distrDatabase.getSyncConfiguration()
             .setLastLSN(localNodeName, ((OLocalPaginatedStorage) db.getStorage().getUnderlying()).getLSN(), false);
+            
+
       } catch (IOException e) {
         ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE, "Error on loading %s file for database '%s'", e,
             DISTRIBUTED_SYNC_JSON_FILENAME, databaseName);

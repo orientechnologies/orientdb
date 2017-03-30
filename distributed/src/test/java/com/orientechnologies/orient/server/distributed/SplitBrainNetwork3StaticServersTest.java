@@ -124,7 +124,7 @@ public class SplitBrainNetwork3StaticServersTest extends AbstractHARemoveNode {
 
     banner("NETWORK FOR THE ISOLATED NODE " + (SERVERS - 1) + " HAS BEEN RESTORED");
 
-    poolFactory.reset();
+//    poolFactory.reset();
 
     checkInsertedEntries();
     checkIndexedEntries();

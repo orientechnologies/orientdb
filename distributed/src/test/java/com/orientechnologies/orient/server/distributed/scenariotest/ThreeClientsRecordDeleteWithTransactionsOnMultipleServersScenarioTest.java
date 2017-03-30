@@ -17,6 +17,7 @@
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
@@ -64,36 +65,42 @@ public class ThreeClientsRecordDeleteWithTransactionsOnMultipleServersScenarioTe
   @Override
   public void executeTest() throws Exception {
 
-    ODatabaseDocumentTx dbServer1 = poolFactory.get(getDatabaseURL(serverInstance.get(0)), "admin", "admin").acquire();
-    ODatabaseDocumentTx dbServer2 = poolFactory.get(getDatabaseURL(serverInstance.get(1)), "admin", "admin").acquire();
-    ODatabaseDocumentTx dbServer3 = poolFactory.get(getDatabaseURL(serverInstance.get(2)), "admin", "admin").acquire();
+    ODatabaseDocument dbServer1 = getDatabase(0);
 
     // inserts record1
-    ODatabaseRecordThreadLocal.INSTANCE.set(dbServer1);
     ODocument record1Server1 = new ODocument("Person").fromMap(hanFields);
     record1Server1.save();
 
     // waits for propagation of the record on all the servers
     waitForInsertedRecordPropagation(RECORD_ID);
 
-    // sets a delay for operations on distributed storage of all servers
-    ((ODistributedStorage) dbServer1.getStorage()).setEventListener(new AfterRecordLockDelayer("server1", DOCUMENT_WRITE_TIMEOUT));
-    ((ODistributedStorage) dbServer2.getStorage()).setEventListener(new AfterRecordLockDelayer("server2", DOCUMENT_WRITE_TIMEOUT / 4));
-    ((ODistributedStorage) dbServer3.getStorage()).setEventListener(new AfterRecordLockDelayer("server3", DOCUMENT_WRITE_TIMEOUT / 2));
+    ODatabaseDocument dbServer2 = getDatabase(1);
+    ODatabaseDocument dbServer3 = getDatabase(2);
 
-    // updates the same record from three different clients, each calling a different server
-    List<Callable<Void>> clients = new LinkedList<Callable<Void>>();
-    clients.add(new RecordDeleter(getDatabaseURL(serverInstance.get(0)), RECORD_ID, true));
-    clients.add(new RecordDeleter(getDatabaseURL(serverInstance.get(1)), RECORD_ID, true));
-    clients.add(new RecordDeleter(getDatabaseURL(serverInstance.get(2)), RECORD_ID, true));
-    List<Future<Void>> futures = Executors.newCachedThreadPool().invokeAll(clients);
-    executeFutures(futures);
-
-    waitForDeletedRecordPropagation(RECORD_ID);
-
-    assertTrue(retrieveRecordOrReturnMissing(getDatabaseURL(serverInstance.get(0)), RECORD_ID) == MISSING_DOCUMENT);
-    assertTrue(retrieveRecordOrReturnMissing(getDatabaseURL(serverInstance.get(1)), RECORD_ID) == MISSING_DOCUMENT);
-    assertTrue(retrieveRecordOrReturnMissing(getDatabaseURL(serverInstance.get(2)), RECORD_ID) == MISSING_DOCUMENT);
+    try {
+      // sets a delay for operations on distributed storage of all servers
+      ((ODistributedStorage) ((ODatabaseDocumentTx)dbServer1).getStorage()).setEventListener(new AfterRecordLockDelayer("server1", DOCUMENT_WRITE_TIMEOUT));
+      ((ODistributedStorage) ((ODatabaseDocumentTx)dbServer2).getStorage()).setEventListener(new AfterRecordLockDelayer("server2", DOCUMENT_WRITE_TIMEOUT / 4));
+      ((ODistributedStorage) ((ODatabaseDocumentTx)dbServer3).getStorage()).setEventListener(new AfterRecordLockDelayer("server3", DOCUMENT_WRITE_TIMEOUT / 2));
+  
+      // updates the same record from three different clients, each calling a different server
+      List<Callable<Void>> clients = new LinkedList<Callable<Void>>();
+      clients.add(new RecordDeleter(serverInstance.get(0), RECORD_ID, true));
+      clients.add(new RecordDeleter(serverInstance.get(1), RECORD_ID, true));
+      clients.add(new RecordDeleter(serverInstance.get(2), RECORD_ID, true));
+      List<Future<Void>> futures = Executors.newCachedThreadPool().invokeAll(clients);
+      executeFutures(futures);
+  
+      waitForDeletedRecordPropagation(RECORD_ID);
+  
+      assertTrue(retrieveRecordOrReturnMissing(serverInstance.get(0), RECORD_ID) == MISSING_DOCUMENT);
+      assertTrue(retrieveRecordOrReturnMissing(serverInstance.get(1), RECORD_ID) == MISSING_DOCUMENT);
+      assertTrue(retrieveRecordOrReturnMissing(serverInstance.get(2), RECORD_ID) == MISSING_DOCUMENT);
+    } finally {
+     	dbServer1.close();
+     	dbServer2.close();
+     	dbServer3.close();
+    }
   }
 
   @Override

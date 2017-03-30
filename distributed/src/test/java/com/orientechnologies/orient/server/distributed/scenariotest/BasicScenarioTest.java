@@ -31,7 +31,7 @@
 
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.junit.Test;
 
@@ -60,7 +60,7 @@ public class BasicScenarioTest extends AbstractScenarioTest {
   @Override
   public void executeTest() throws Exception {
 
-    ODatabaseDocumentTx database = poolFactory.get(getPlocalDatabaseURL(serverInstance.get(0)), "admin", "admin").acquire();
+    ODatabaseDocument database = getDatabase(0);
     try {
       new ODocument("Customer").fields("name", "Jay", "surname", "Miner").save();
       new ODocument("Customer").fields("name", "Luke", "surname", "Skywalker").save();

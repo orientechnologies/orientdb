@@ -15,7 +15,7 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -92,8 +92,7 @@ public class OneNodeBackupTest extends AbstractServerClusterTxTest {
               // CONDITION
               @Override
               public Boolean call() throws Exception {
-                final ODatabaseDocumentTx database = poolFactory.get(getDatabaseURL(serverInstance.get(0)), "admin", "admin")
-                    .acquire();
+                final ODatabaseDocument database = getDatabase(0);
                 try {
                   return database.countClass("Person") > (count * SERVERS) * 1 / 3;
                 } finally {
@@ -108,11 +107,11 @@ public class OneNodeBackupTest extends AbstractServerClusterTxTest {
 
                 banner("STARTING BACKUP SERVER " + (SERVERS - 1));
 
-                ODatabaseDocumentTx g = new ODatabaseDocumentTx("plocal:target/server" + (SERVERS - 1) + "/databases/" + getDatabaseName());
-                if(g.exists()){
-                  g.open("admin", "admin");
+                ODatabaseDocument g = getDatabase(SERVERS - 1);
+                if(databaseExists(SERVERS - 1)){
+                  g = getDatabase(SERVERS - 1);
                 }else{
-                  g.create();
+                  createDatabase(SERVERS - 1);
                 }
 
                 backupInProgress = true;
@@ -141,6 +140,8 @@ public class OneNodeBackupTest extends AbstractServerClusterTxTest {
 
                   if (file != null)
                     file.delete();
+                    
+                  g.close();
                 }
                 return null;
               }

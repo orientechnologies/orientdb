@@ -17,8 +17,7 @@
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
 import com.orientechnologies.common.util.OCallable;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.ServerRun;
 import org.junit.Assert;
@@ -73,7 +72,7 @@ public class NodeInDeadlockScenarioTest extends AbstractScenarioTest {
   public void executeTest() throws Exception {
 
     List<ODocument> result = null;
-    ODatabaseDocumentTx dbServer3 = new ODatabaseDocumentTx(getRemoteDatabaseURL(serverInstance.get(2))).open("admin", "admin");
+    ODatabaseDocument dbServer3 = getDatabase(2);
 
     try {
 
@@ -84,7 +83,6 @@ public class NodeInDeadlockScenarioTest extends AbstractScenarioTest {
       banner("Test with quorum = 2");
 
       // writes on server1 and server2
-      ODatabaseRecordThreadLocal.INSTANCE.set(null);
       executeMultipleWrites(this.executeTestsOnServers, "remote");
 
       // check consistency on server1 and server2
@@ -104,9 +102,8 @@ public class NodeInDeadlockScenarioTest extends AbstractScenarioTest {
     } finally {
 
       if (!dbServer3.isClosed()) {
-        ODatabaseRecordThreadLocal.INSTANCE.set(dbServer3);
+        dbServer3.activateOnCurrentThread();
         dbServer3.close();
-        ODatabaseRecordThreadLocal.INSTANCE.set(null);
       }
     }
   }
@@ -129,8 +126,7 @@ public class NodeInDeadlockScenarioTest extends AbstractScenarioTest {
               // CONDITION
               @Override
               public Boolean call() throws Exception {
-                final ODatabaseDocumentTx database = poolFactory.get(getDatabaseURL(serverInstance.get(0)), "admin", "admin")
-                    .acquire();
+                final ODatabaseDocument database = getDatabase(0);
                 try {
                   long recordCount = database.countClass("Person");
                   boolean condition = recordCount > (count * writerCount * (SERVERS - 1) + baseCount) * 1 / 3;
@@ -147,12 +143,12 @@ public class NodeInDeadlockScenarioTest extends AbstractScenarioTest {
 
                 banner("STARTING BACKUP SERVER " + (SERVERS - 1));
 
-                ODatabaseDocumentTx g = new ODatabaseDocumentTx(
-                    "plocal:target/server" + (SERVERS - 1) + "/databases/" + getDatabaseName());
-                if(g.exists()){
-                  g.open("admin", "admin");
+                ODatabaseDocument g = null;
+                if(databaseExists(SERVERS - 1)){
+                  g = getDatabase(SERVERS - 1);
                 }else{
-                  g.create();
+                  createDatabase(SERVERS - 1);
+                  g = getDatabase(SERVERS - 1);
                 }
 
 
@@ -200,9 +196,9 @@ public class NodeInDeadlockScenarioTest extends AbstractScenarioTest {
   @Override
   protected void onBeforeChecks() throws InterruptedException {
     // // WAIT UNTIL THE END
-    waitFor(2, new OCallable<Boolean, ODatabaseDocumentTx>() {
+    waitFor(2, new OCallable<Boolean, ODatabaseDocument>() {
       @Override
-      public Boolean call(ODatabaseDocumentTx db) {
+      public Boolean call(ODatabaseDocument db) {
         final boolean ok = db.countClass("Person") >= count * writerCount * (SERVERS - 1) + baseCount;
         if (!ok)
           System.out.println("FOUND " + db.countClass("Person") + " people instead of expected "
