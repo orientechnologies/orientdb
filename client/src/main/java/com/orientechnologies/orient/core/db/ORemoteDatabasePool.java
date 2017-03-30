@@ -8,9 +8,9 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentRemote;
  */
 public class ORemoteDatabasePool extends ODatabaseDocumentRemote {
 
-  private ORemotePoolByFactory pool;
+  private ODatabasePoolInternal pool;
 
-  public ORemoteDatabasePool(ORemotePoolByFactory pool, OStorageRemote storage) {
+  public ORemoteDatabasePool(ODatabasePoolInternal pool, OStorageRemote storage) {
     super(storage);
     this.pool = pool;
   }
@@ -19,6 +19,11 @@ public class ORemoteDatabasePool extends ODatabaseDocumentRemote {
   public void close() {
     super.setStatus(ODatabase.STATUS.CLOSED);
     pool.release(this);
+  }
+
+  @Override
+  public ODatabaseDocumentInternal copy() {
+    return (ODatabaseDocumentInternal) pool.acquire();
   }
 
   public void reuse() {

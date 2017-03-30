@@ -103,7 +103,7 @@ public class OrientDBRemote implements OrientDBInternal {
     });
   }
 
-  public synchronized ORemoteDatabasePool poolOpen(String name, String user, String password, ORemotePoolByFactory pool) {
+  public synchronized ORemoteDatabasePool poolOpen(String name, String user, String password, ODatabasePoolInternal pool) {
     OStorageRemote storage = storages.get(name);
     if (storage == null) {
       storage = remote.createStorage(buildUrl(name), new HashMap<>());
@@ -161,12 +161,12 @@ public class OrientDBRemote implements OrientDBInternal {
 
   @Override
   public ODatabasePoolInternal openPool(String name, String user, String password, OrientDBConfig config) {
-    ORemotePoolByFactory pool = new ORemotePoolByFactory(this, name, user, password, solveConfig(config));
+    ODatabasePoolImpl pool = new ODatabasePoolImpl(this, name, user, password, solveConfig(config));
     pools.add(pool);
     return pool;
   }
 
-  public void removePool(ORemotePoolByFactory pool) {
+  public void removePool(ODatabasePoolInternal pool) {
     pools.remove(pool);
   }
 

@@ -146,4 +146,13 @@ public interface ODatabaseDocumentInternal extends ODatabaseDocument, ODatabaseI
 
   ODatabaseDocumentInternal cleanOutRecord(ORID rid, int version);
 
+  default void realClose() {
+    //Only implemented by pooled instances
+    throw new UnsupportedOperationException();
+  }
+
+  default void reuse() {
+    //Only implemented by pooled instances
+    throw new UnsupportedOperationException();
+  }
 }

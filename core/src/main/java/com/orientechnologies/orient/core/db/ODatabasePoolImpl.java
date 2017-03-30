@@ -17,7 +17,6 @@
  *  * For more information: http://orientdb.com
  *
  */
-
 package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.common.concur.resource.OResourcePool;
@@ -28,21 +27,22 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 /**
  * Created by tglman on 07/07/16.
  */
-public class ORemotePoolByFactory implements ODatabasePoolInternal {
-  private final OResourcePool<Void, ORemoteDatabasePool> pool;
-  private final OrientDBRemote                           factory;
-  private final OrientDBConfig                           config;
+public class ODatabasePoolImpl implements ODatabasePoolInternal {
+  private final OResourcePool<Void, ODatabaseDocumentInternal> pool;
+  private final OrientDBInternal                               factory;
+  private final OrientDBConfig                                 config;
 
-  public ORemotePoolByFactory(OrientDBRemote factory, String database, String user, String password, OrientDBConfig config) {
-    int max = factory.getConfigurations().getConfigurations().getValueAsInteger(OGlobalConfiguration.DB_POOL_MAX);
-    pool = new OResourcePool(max, new OResourcePoolListener<Void, ORemoteDatabasePool>() {
+  public ODatabasePoolImpl(OrientDBInternal factory, String database, String user, String password, OrientDBConfig config) {
+    int max = config.getConfigurations().getValueAsInteger(OGlobalConfiguration.DB_POOL_MAX);
+    // TODO use configured max
+    pool = new OResourcePool(max, new OResourcePoolListener<Void, ODatabaseDocumentInternal>() {
       @Override
-      public ORemoteDatabasePool createNewResource(Void iKey, Object... iAdditionalArgs) {
-        return factory.poolOpen(database, user, password, ORemotePoolByFactory.this);
+      public ODatabaseDocumentInternal createNewResource(Void iKey, Object... iAdditionalArgs) {
+        return factory.poolOpen(database, user, password, ODatabasePoolImpl.this);
       }
 
       @Override
-      public boolean reuseResource(Void iKey, Object[] iAdditionalArgs, ORemoteDatabasePool iValue) {
+      public boolean reuseResource(Void iKey, Object[] iAdditionalArgs, ODatabaseDocumentInternal iValue) {
         iValue.reuse();
         return true;
       }
@@ -59,18 +59,18 @@ public class ORemotePoolByFactory implements ODatabasePoolInternal {
 
   @Override
   public synchronized void close() {
-    for (ORemoteDatabasePool res : pool.getAllResources()) {
+    for (ODatabaseDocumentInternal res : pool.getAllResources()) {
       res.realClose();
     }
     pool.close();
     factory.removePool(this);
   }
 
-  public OrientDBConfig getConfig() {
-    return config;
+  public synchronized void release(ODatabaseDocumentInternal database) {
+    pool.returnResource(database);
   }
 
-  public synchronized void release(ORemoteDatabasePool oPoolDatabaseDocument) {
-    pool.returnResource(oPoolDatabaseDocument);
+  public OrientDBConfig getConfig() {
+    return config;
   }
 }

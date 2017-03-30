@@ -12,4 +12,8 @@ public interface ODatabasePoolInternal extends AutoCloseable {
   ODatabaseDocument acquire();
 
   void close();
+
+  void release(ODatabaseDocumentInternal database);
+
+  OrientDBConfig getConfig();
 }
