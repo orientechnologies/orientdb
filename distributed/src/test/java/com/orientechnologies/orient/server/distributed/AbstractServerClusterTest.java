@@ -634,7 +634,6 @@ master.closeOrientDB();
     for (ServerRun s : serverInstance) {
       ODatabaseDocument d = getDatabase(s);
       try {
-        d.open("admin", "admin");
         d.reload();
 
         final List<String> dbClusters = new ArrayList<String>(d.getClusterNames());

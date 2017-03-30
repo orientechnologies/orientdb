@@ -169,14 +169,15 @@ public class OServerInfo {
 
   public static void getDatabases(final OServer server, final OJSONWriter json) throws IOException {
     json.beginCollection(1, true, "dbs");
-    if (!server.getDatabasePoolFactory().isClosed()) {
-      Collection<OPartitionedDatabasePool> dbPools = server.getDatabasePoolFactory().getPools();
-      for (OPartitionedDatabasePool pool : dbPools) {
-        writeField(json, 2, "db", pool.getUrl());
-        writeField(json, 2, "user", pool.getUserName());
-        json.endObject(2);
-      }
-    }
+    //TODO:get this info from somewhere else
+//    if (!server.getDatabasePoolFactory().isClosed()) {
+//      Collection<OPartitionedDatabasePool> dbPools = server.getDatabasePoolFactory().getPools();
+//      for (OPartitionedDatabasePool pool : dbPools) {
+//        writeField(json, 2, "db", pool.getUrl());
+//        writeField(json, 2, "user", pool.getUserName());
+//        json.endObject(2);
+//      }
+//    }
     json.endCollection(1, false);
   }
 
