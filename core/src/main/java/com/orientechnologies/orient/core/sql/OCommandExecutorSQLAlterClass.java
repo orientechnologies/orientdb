@@ -101,6 +101,13 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
       if("addcluster".equalsIgnoreCase(attributeAsString) || "removecluster".equalsIgnoreCase(attributeAsString) ){
         value = decodeClassName(value);
       }
+      if("description".equalsIgnoreCase(attributeAsString) ){
+        if(value.length() >1 && '"' == value.charAt(0) && '"' == value.charAt(value.length() -1) ) {
+          value = value.substring(1);
+          value = value.substring(0, value.length() - 1);
+        }
+      }
+
       OAlterClassStatement stm = (OAlterClassStatement) preParsedStatement;
       if (this.preParsedStatement != null && stm.property == ATTRIBUTES.CUSTOM) {
         value = "" + stm.customKey.getStringValue() + "=" + stm.customValue.toString();

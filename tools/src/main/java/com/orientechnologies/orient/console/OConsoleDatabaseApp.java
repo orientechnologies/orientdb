@@ -2133,6 +2133,18 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         }
     }
 
+  @ConsoleCommand(description = "Load a sql script into the current database", splitInWords = true, onlineHelp = "Console-Command-Load-Script")
+  public void loadScript(@ConsoleParameter(name = "scripPath", description = "load script scriptPath") final String scriptPath)
+      throws IOException {
+
+    checkForDatabase();
+
+    message("\nLoading script " + scriptPath + "...");
+
+    executeBatch(scriptPath);
+
+  }
+
     @ConsoleCommand(description = "Import a database into the current one", splitInWords = false, onlineHelp = "Console-Command-Import")
     public void importDatabase(@ConsoleParameter(name = "options", description = "Import options") final String text)
             throws IOException {

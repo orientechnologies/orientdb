@@ -3922,9 +3922,7 @@ OAlterClassStatement AlterClassStatement():
 		(
 			<DESCRIPTION> { jjtThis.property = com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES.DESCRIPTION; }
 			(
-				jjtThis.identifierValue = Identifier()
-				|
-            	<NULL>
+                jjtThis.expression = Expression()
             )
 		)
 		|

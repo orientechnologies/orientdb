@@ -112,4 +112,25 @@ public class LuceneManualIndexTest extends BaseLuceneTest {
 
   }
 
+  @Test
+  public void testManualIndexInsideTransaction() throws Exception {
+
+    // refs https://github.com/orientechnologies/orientdb/issues/7255
+    OIndex<?> index = db.getMetadata().getIndexManager().createIndex("test", OClass.INDEX_TYPE.FULLTEXT.toString(),
+        new OSimpleKeyIndexDefinition(1, OType.STRING), null, null, null,
+        OLuceneIndexFactory.LUCENE_ALGORITHM);
+
+    db.begin();
+    ODocument document = db.newInstance();
+    document.field("name","Rob");
+    db.save(document);
+
+    index.put("Rob", document.getIdentity() );
+    index.flush();
+
+    List<ODocument> docs = db.command(new OSQLSynchQuery("select from index:test where key LUCENE 'k0:rob'")).execute();
+    Assert.assertEquals(docs.size(), 1);
+
+    db.commit();
+  }
 }

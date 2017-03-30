@@ -963,19 +963,25 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
 
     final OrientBaseGraph graph = getGraph();
     if (iDirection == Direction.OUT || iDirection == Direction.BOTH) {
-      if (settings.isUseVertexFieldsForEdgeLabels()) {
-        // FIELDS THAT STARTS WITH "out_"
-        if (iFieldName.startsWith(CONNECTION_OUT_PREFIX)) {
-          String connClass = getConnectionClass(Direction.OUT, iFieldName);
-          if (iClassNames == null || iClassNames.length == 0)
-            return new OPair<Direction, String>(Direction.OUT, connClass);
+      if (iFieldName.startsWith(CONNECTION_OUT_PREFIX)) {
+        if (iClassNames == null || iClassNames.length == 0)
+          return new OPair<Direction, String>(Direction.OUT, getConnectionClass(Direction.OUT, iFieldName));
 
-          // CHECK AGAINST ALL THE CLASS NAMES
-          OrientEdgeType edgeType = graph.getEdgeType(connClass);
-          if (edgeType != null) {
-            for (String clsName : iClassNames) {
-              if (edgeType.isSubClassOf(clsName))
-                return new OPair<Direction, String>(Direction.OUT, connClass);
+        // CHECK AGAINST ALL THE CLASS NAMES
+        for (String clsName : iClassNames) {
+          clsName = OrientBaseGraph.encodeClassName(clsName);
+
+          if (iFieldName.equals(CONNECTION_OUT_PREFIX + clsName))
+            return new OPair<Direction, String>(Direction.OUT, clsName);
+
+          // GO DOWN THROUGH THE INHERITANCE TREE
+          OrientEdgeType type = graph.getEdgeType(clsName);
+          if (type != null) {
+            for (OClass subType : type.getAllSubclasses()) {
+              clsName = subType.getName();
+
+              if (iFieldName.equals(CONNECTION_OUT_PREFIX + clsName))
+                return new OPair<Direction, String>(Direction.OUT, clsName);
             }
           }
         }
@@ -988,16 +994,24 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
       if (settings.isUseVertexFieldsForEdgeLabels()) {
         // FIELDS THAT STARTS WITH "in_"
         if (iFieldName.startsWith(CONNECTION_IN_PREFIX)) {
-          String connClass = getConnectionClass(Direction.IN, iFieldName);
           if (iClassNames == null || iClassNames.length == 0)
-            return new OPair<Direction, String>(Direction.IN, connClass);
+            return new OPair<Direction, String>(Direction.IN, getConnectionClass(Direction.IN, iFieldName));
 
           // CHECK AGAINST ALL THE CLASS NAMES
-          OrientEdgeType edgeType = graph.getEdgeType(connClass);
-          if (edgeType != null) {
-            for (String clsName : iClassNames) {
-              if (edgeType.isSubClassOf(clsName))
-                return new OPair<Direction, String>(Direction.IN, connClass);
+          for (String clsName : iClassNames) {
+
+            if (iFieldName.equals(CONNECTION_IN_PREFIX + clsName))
+              return new OPair<Direction, String>(Direction.IN, clsName);
+
+            // GO DOWN THROUGH THE INHERITANCE TREE
+            OrientEdgeType type = graph.getEdgeType(clsName);
+            if (type != null) {
+              for (OClass subType : type.getAllSubclasses()) {
+                clsName = subType.getName();
+
+                if (iFieldName.equals(CONNECTION_IN_PREFIX + clsName))
+                  return new OPair<Direction, String>(Direction.IN, clsName);
+              }
             }
           }
         }

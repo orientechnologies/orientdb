@@ -61,18 +61,6 @@ public class OInputParameter extends SimpleNode {
     if (value instanceof String) {
       return value;
     }
-    if (OMultiValue.isMultiValue(value) && !(value instanceof byte[]) && !(value instanceof Byte[])) {
-      OCollection coll = new OCollection(-1);
-      coll.expressions = new ArrayList<OExpression>();
-      Iterator iterator = OMultiValue.getMultiValueIterator(value);
-      while (iterator.hasNext()) {
-        Object o = iterator.next();
-        OExpression exp = new OExpression(-1);
-        exp.value = toParsedTree(o);
-        coll.expressions.add(exp);
-      }
-      return coll;
-    }
     if (value instanceof Map) {
       OJson json = new OJson(-1);
       json.items = new ArrayList<OJsonItem>();
@@ -85,6 +73,18 @@ public class OInputParameter extends SimpleNode {
         json.items.add(item);
       }
       return json;
+    }
+    if (OMultiValue.isMultiValue(value) && !(value instanceof byte[]) && !(value instanceof Byte[])) {
+      OCollection coll = new OCollection(-1);
+      coll.expressions = new ArrayList<OExpression>();
+      Iterator iterator = OMultiValue.getMultiValueIterator(value);
+      while (iterator.hasNext()) {
+        Object o = iterator.next();
+        OExpression exp = new OExpression(-1);
+        exp.value = toParsedTree(o);
+        coll.expressions.add(exp);
+      }
+      return coll;
     }
     if (value instanceof OIdentifiable) {
       // TODO if invalid build a JSON

@@ -50,12 +50,18 @@ public class OAlterClassStatement extends OStatement {
     case SHORTNAME:
     case ADDCLUSTER:
     case REMOVECLUSTER:
-    case DESCRIPTION:
     case ENCRYPTION:
       if (numberValue != null) {
         numberValue.toString(params, builder);//clusters only
       } else if (identifierValue != null) {
         identifierValue.toString(params, builder);
+      } else {
+        builder.append("null");
+      }
+      break;
+    case DESCRIPTION:
+      if (expression != null) {
+        expression.toString(params, builder);
       } else {
         builder.append("null");
       }
