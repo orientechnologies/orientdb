@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -78,6 +79,9 @@ public class OMatchPathItemIterator implements Iterator<OIdentifiable> {
     ctx.setVariable("$depth", depth);
 
     final OWhereClause filter = this.item.filter == null ? null : this.item.filter.getFilter();
+    final String className = this.item.filter == null ? null : this.item.filter.getClassName(ctx);
+    final OClass clazz =
+        className == null ? null : ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema().getClass(className);
     final OWhereClause whileCondition = this.item.filter == null ? null : this.item.filter.getWhileCondition();
     final Integer maxDepth = maxDepth(this.item.filter);
     final OClass oClass =
@@ -95,7 +99,8 @@ public class OMatchPathItemIterator implements Iterator<OIdentifiable> {
         ctx.setVariable("$currentMatch", startingPoint);
         ctx.setVariable("$current", startingPoint);
 
-        if (filter == null || filter.matchesFilters(startingPoint, ctx)) {
+        if ((filter == null || filter.matchesFilters(startingPoint, ctx)) && (clazz == null || clazz
+            .isSuperClassOf(((ODocument) startingPoint.getRecord()).getSchemaClass()))) {
           nextElement = startingPoint;
         }
         ctx.setVariable("$current", prevCurrent);
@@ -115,7 +120,9 @@ public class OMatchPathItemIterator implements Iterator<OIdentifiable> {
       stack.add(0, item.traversePatternEdge(matchContext, startingPoint, ctx).iterator());
     }
     ctx.setVariable("$depth", oldDepth);
-  }  @Override
+  }
+
+  @Override
   public boolean hasNext() {
     while (stack.size() > 0 && nextElement == null) {
       loadNext();
@@ -149,7 +156,9 @@ public class OMatchPathItemIterator implements Iterator<OIdentifiable> {
       return false;
     }
     return clazz.isSubClassOf(oClass);
-  }  @Override
+  }
+
+  @Override
   public OIdentifiable next() {
     if (nextElement == null) {
       throw new IllegalStateException();
@@ -162,13 +171,9 @@ public class OMatchPathItemIterator implements Iterator<OIdentifiable> {
     return result;
   }
 
-
-
   @Override
   public void remove() {
 
   }
-
-
 
 }
