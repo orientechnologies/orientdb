@@ -111,7 +111,7 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
 
     if (preLoadedFields != null && preLoadedFields.size() == 1) {
       if ("@rid".equalsIgnoreCase(preLoadedFields.iterator().next()))
-        return iRecord.getIdentity();
+        return transformValue(iRecord, iContext, iRecord.getIdentity());
     }
 
     final ODocument doc = (ODocument) iRecord.getRecord();
