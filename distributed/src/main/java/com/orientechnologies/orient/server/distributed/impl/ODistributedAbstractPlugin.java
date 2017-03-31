@@ -107,6 +107,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected       List<ODistributedLifecycleListener>            listeners                         = new ArrayList<ODistributedLifecycleListener>();
   protected final ConcurrentMap<String, ORemoteServerController> remoteServers                     = new ConcurrentHashMap<String, ORemoteServerController>();
   protected       TimerTask                                      publishLocalNodeConfigurationTask = null;
+  protected       TimerTask                                      haStatsTask = null;
   protected       OClusterHealthChecker                          healthCheckerTask                 = null;
   protected String coordinatorServer;
 
@@ -232,6 +233,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
     if (healthCheckerTask != null)
       healthCheckerTask.cancel();
+
+    if (haStatsTask != null)
+      haStatsTask.cancel();
 
     if (messageService != null)
       messageService.shutdown();
