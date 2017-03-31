@@ -127,6 +127,7 @@ public class ODistributedTransactionManager {
                   "Error on updating local LSN configuration for database '%s'", storage.getName());
         }
 
+        final OTxTask txTask = createTxTask(uResult);
         // REMOVE THE TX OBJECT FROM DATABASE TO AVOID UND OPERATIONS ARE "LOST IN TRANSACTION"
         database.setDefaultTransactionMode();
 
@@ -147,7 +148,6 @@ public class ODistributedTransactionManager {
 
         final OTxTaskResult localResult = createLocalTxResult(uResult);
 
-        final OTxTask txTask = createTxTask(uResult);
         txTask.setLocalUndoTasks(undoTasks);
 
         try {
