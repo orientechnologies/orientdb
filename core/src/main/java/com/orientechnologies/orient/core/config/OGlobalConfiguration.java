@@ -368,8 +368,7 @@ public enum OGlobalConfiguration {
   PREFER_SBTREE_SET("collections.preferSBTreeSet", "This configuration setting is experimental", Boolean.class, false),
 
   // FILE
-  @Deprecated
-  TRACK_FILE_CLOSE("file.trackFileClose",
+  @Deprecated TRACK_FILE_CLOSE("file.trackFileClose",
       "Log all the cases when files are closed. This is needed only for internal debugging purposes", Boolean.class, false),
 
   FILE_LOCK("file.lock", "Locks files when used. Default is true", boolean.class, true),
@@ -632,6 +631,12 @@ public enum OGlobalConfiguration {
 
   // DISTRIBUTED
 
+  /**
+   * @Since 2.2.18
+   */
+  DISTRIBUTED_DUMP_STATS_EVERY("distributed.dumpStatsEvery", "Time in ms to dump the cluster stats. Set to 0 to disable such dump",
+      Long.class, 60000l, true),
+
   DISTRIBUTED_CRUD_TASK_SYNCH_TIMEOUT("distributed.crudTaskTimeout", "Maximum timeout (in ms) to wait for CRUD remote tasks",
       Long.class, 10000l, true),
 
@@ -683,8 +688,8 @@ public enum OGlobalConfiguration {
   /**
    * @Since 2.2.7
    */
-  DISTRIBUTED_CONFLICT_RESOLVER_REPAIRER_BATCH("distributed.conflictResolverRepairerBatch", "Maximum number of records to repair in batch",
-      Integer.class, 1000, true),
+  DISTRIBUTED_CONFLICT_RESOLVER_REPAIRER_BATCH("distributed.conflictResolverRepairerBatch",
+      "Maximum number of records to repair in batch", Integer.class, 1000, true),
 
   /**
    * @Since 2.2.7
@@ -735,7 +740,7 @@ public enum OGlobalConfiguration {
    */
   DISTRIBUTED_PUBLISH_NODE_STATUS_EVERY("distributed.publishNodeStatusEvery",
       "Time in ms to publish the node status on distributed map. Set to 0 to disable such refresh of node configuration",
-      Long.class, 5000l, true),
+      Long.class, 10000l, true),
 
   /**
    * @Since 2.2.0

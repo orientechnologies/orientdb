@@ -257,14 +257,21 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         publishLocalNodeConfigurationTask = new TimerTask() {
           @Override
           public void run() {
-            try {
-              publishLocalNodeConfiguration();
-            } catch (Throwable e) {
-              OLogManager.instance().debug(this, "Error on distributed configuration node updater", e);
-            }
+            publishLocalNodeConfiguration();
           }
         };
         Orient.instance().scheduleTask(publishLocalNodeConfigurationTask, delay, delay);
+      }
+
+      final long statsDelay = OGlobalConfiguration.DISTRIBUTED_DUMP_STATS_EVERY.getValueAsLong();
+      if (delay > 0) {
+        haStatsTask = new TimerTask() {
+          @Override
+          public void run() {
+            printStats();
+          }
+        };
+        Orient.instance().scheduleTask(haStatsTask, statsDelay, statsDelay);
       }
 
       final long healthChecker = OGlobalConfiguration.DISTRIBUTED_CHECK_HEALTH_EVERY.getValueAsLong();
@@ -422,6 +429,28 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       configurationMap.put(CONFIG_NODE_PREFIX + nodeUuid, cfg);
     } catch (Throwable t) {
       ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE, "Error on publishing local server configuration");
+    }
+  }
+
+  protected void printStats() {
+    try {
+      final ODocument clusterCfg = getClusterConfiguration();
+
+      final Set<String> dbs = getManagedDatabases();
+
+      final StringBuilder buffer = new StringBuilder(8192);
+
+      buffer.append(ODistributedOutput.formatLatency(this, clusterCfg));
+      buffer.append(ODistributedOutput.formatMessages(this, clusterCfg));
+
+      for (String db : dbs)
+        buffer.append(ODistributedOutput.formatLocks(this, db));
+
+      // DUMP HA STATS
+      ODistributedServerLog.debug(this, getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE, "%s", buffer);
+
+    } catch (Throwable t) {
+      ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE, "Error on printing HA stats");
     }
   }
 

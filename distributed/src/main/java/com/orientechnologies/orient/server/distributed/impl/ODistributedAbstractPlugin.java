@@ -107,6 +107,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected       List<ODistributedLifecycleListener>            listeners                         = new ArrayList<ODistributedLifecycleListener>();
   protected final ConcurrentMap<String, ORemoteServerController> remoteServers                     = new ConcurrentHashMap<String, ORemoteServerController>();
   protected       TimerTask                                      publishLocalNodeConfigurationTask = null;
+  protected       TimerTask                                      haStatsTask = null;
   protected       OClusterHealthChecker                          healthCheckerTask                 = null;
   protected String coordinatorServer;
 
@@ -232,6 +233,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
     if (healthCheckerTask != null)
       healthCheckerTask.cancel();
+
+    if (haStatsTask != null)
+      haStatsTask.cancel();
 
     if (messageService != null)
       messageService.shutdown();
@@ -1309,7 +1313,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
     final File olddirectory = new File(dbpath);
     if (!olddirectory.renameTo(backupfullpath)) {
-      ODistributedServerLog.error(this, nodeName, null,  DIRECTION.NONE,
+      ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE,
           "error on moving existent database '%s' located in '%s' to '%s'. deleting old database...", iDatabaseName, dbpath,
           backupfullpath);
 
