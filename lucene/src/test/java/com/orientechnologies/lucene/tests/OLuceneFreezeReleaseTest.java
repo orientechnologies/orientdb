@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import org.junit.Before;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -13,6 +14,13 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Created by Enrico Risa on 23/09/16.
  */
 public class OLuceneFreezeReleaseTest extends OLuceneBaseTest {
+
+  @Before
+  public void setUp() throws Exception {
+
+    dropDatabase();
+    super.setupDatabase("ci");
+  }
 
   @Test
   public void freezeReleaseTest() {
@@ -25,7 +33,7 @@ public class OLuceneFreezeReleaseTest extends OLuceneBaseTest {
 
     db.save(new ODocument("Person").field("name", "John"));
 
-    OResultSet results = db.command("select from Person where search_class('John')=true");
+    OResultSet results = db.query("select from Person where search_class('John')=true");
 
     assertThat(results).hasSize(1);
     results.close();
@@ -38,9 +46,11 @@ public class OLuceneFreezeReleaseTest extends OLuceneBaseTest {
 
     db.release();
 
-    db.save(new ODocument("Person").field("name", "John"));
+    ODocument doc = db.newInstance("Person");
+    doc.field("name", "John");
+    db.save(doc);
 
-    results = db.command("select from Person where search_class('John')=true");
+    results = db.query("select from Person where search_class('John')=true");
     assertThat(results).hasSize(2);
     results.close();
 

@@ -176,9 +176,7 @@ public class OLuceneSearchOnIndexFunction extends OSQLFunctionAbstract implement
       OExpression... args) {
 
     OLuceneFullTextIndex index = searchForIndex(target, ctx, args);
-    if (index != null)
-      return true;
-    return false;
+    return index != null;
   }
 
   @Override

@@ -175,9 +175,7 @@ public class OLuceneSearchOnFieldsFunction extends OSQLFunctionAbstract implemen
   public boolean allowsIndexedExecution(OFromClause target, OBinaryCompareOperator operator, Object rightValue, OCommandContext ctx,
       OExpression... args) {
     OLuceneFullTextIndex index = searchForIndex(target, ctx, args);
-    if (index != null)
-      return true;
-    return false;
+    return index != null;
   }
 
   @Override

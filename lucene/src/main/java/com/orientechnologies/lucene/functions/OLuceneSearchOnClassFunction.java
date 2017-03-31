@@ -173,9 +173,7 @@ public class OLuceneSearchOnClassFunction extends OSQLFunctionAbstract implement
 
     OLuceneFullTextIndex index = searchForIndex(target, ctx);
 
-    if (index != null)
-      return true;
-    return false;
+    return index != null;
   }
 
   @Override
