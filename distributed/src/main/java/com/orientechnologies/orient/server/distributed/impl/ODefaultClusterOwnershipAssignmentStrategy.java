@@ -196,7 +196,7 @@ public class ODefaultClusterOwnershipAssignmentStrategy implements OClusterOwner
 
   private void assignClusterOwnership(final ODatabaseInternal iDatabase, final OModifiableDistributedConfiguration cfg,
       final OClass iClass, final String cluster, final String node) {
-    ODistributedServerLog.info(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+    ODistributedServerLog.debug(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
         "Class '%s': change mastership of cluster '%s' (id=%d) to node '%s'", iClass, cluster,
         iDatabase.getClusterIdByName(cluster), node);
     cfg.setServerOwner(cluster, node);
