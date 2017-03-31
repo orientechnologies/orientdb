@@ -131,13 +131,23 @@ public class OPaginatedStorageDirtyFlag {
 
       channel.position(0);
 
-      ByteBuffer buffer = ByteBuffer.allocate(2);
-      readByteBuffer(buffer, channel);
+      if (channel.size() < 2) {
+        ByteBuffer buffer = ByteBuffer.allocate(1);
+        readByteBuffer(buffer, channel);
 
-      buffer.position(0);
+        buffer.position(0);
+        dirtyFlag = buffer.get() > 0;
+        writeState(dirtyFlag, indexRebuildScheduled);
+      } else {
+        ByteBuffer buffer = ByteBuffer.allocate(2);
+        readByteBuffer(buffer, channel);
 
-      dirtyFlag = buffer.get() > 0;
-      indexRebuildScheduled = buffer.get() > 0;
+        buffer.position(0);
+
+        dirtyFlag = buffer.get() > 0;
+        indexRebuildScheduled = buffer.get() > 0;
+      }
+
     } finally {
       lock.unlock();
     }
