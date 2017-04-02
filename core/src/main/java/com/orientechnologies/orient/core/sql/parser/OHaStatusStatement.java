@@ -2,12 +2,22 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-public
-class OHaStatusStatement extends OStatement {
-  public boolean servers = false;
-  public boolean db = false;
-  public boolean latency = false;
-  public boolean messages = false;
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
+
+import java.util.Map;
+
+public class OHaStatusStatement extends OSimpleExecStatement {
+  public boolean servers    = false;
+  public boolean db         = false;
+  public boolean latency    = false;
+  public boolean messages   = false;
   public boolean outputText = false;
 
   public OHaStatusStatement(int id) {
@@ -18,8 +28,30 @@ class OHaStatusStatement extends OStatement {
     super(p, id);
   }
 
+  @Override
+  public OResultSet executeSimple(OCommandContext ctx) {
+    if (outputText) {
+      OLogManager.instance().info(this, "HA STATUS with text output is deprecated");
+    }
+    final ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
 
-  /** Accept the visitor. **/
+    OInternalResultSet rs = new OInternalResultSet();
+    try {
+      Map<String, Object> res = database.getHaStatus(servers, db, latency, messages);
+      if (res != null) {
+        OResultInternal row = new OResultInternal();
+        res.entrySet().forEach(x -> row.setProperty(x.getKey(), x.getValue()));
+        rs.add(row);
+      }
+      return rs;
+    } catch (Exception x) {
+      throw OException.wrapException(new OCommandExecutionException("Cannot execute HA STATUS"), x);
+    }
+  }
+
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }

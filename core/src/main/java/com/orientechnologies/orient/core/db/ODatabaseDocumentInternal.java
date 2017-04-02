@@ -40,6 +40,7 @@ import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
+import java.util.Map;
 import java.util.Set;
 
 public interface ODatabaseDocumentInternal extends ODatabaseDocument, ODatabaseInternal<ORecord> {
@@ -154,5 +155,31 @@ public interface ODatabaseDocumentInternal extends ODatabaseDocument, ODatabaseI
   default void reuse() {
     //Only implemented by pooled instances
     throw new UnsupportedOperationException();
+  }
+
+  /**
+   * synchronizes current database instance with the rest of the cluster (if in distributed mode).
+   *
+   * @return true if the database was synchronized, false otherwise
+   */
+  default boolean sync() {
+    return false;
+  }
+
+  /**
+   * synchronizes a cluster with the rest of the network (if in distributed mode).
+   *
+   * @return true if the database was synchronized, false otherwise
+   */
+  default Map<String, Object> syncCluster(String clusterName) {
+    return null;
+  }
+
+  default Map<String, Object> getHaStatus(boolean servers, boolean db, boolean latency, boolean messages){
+    return null;
+  }
+
+  default boolean removeHaServer(String serverName){
+    return false;
   }
 }

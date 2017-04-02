@@ -441,12 +441,4 @@ public interface ODatabaseDocument extends ODatabase<ORecord> {
     return result;
   }
 
-  /**
-   * synchronizes current database instance with the rest of the cluster (if in distributed mode).
-   *
-   * @return true if the database was synchronized, false otherwise
-   */
-  default boolean sync() {
-    return false;
-  }
 }
