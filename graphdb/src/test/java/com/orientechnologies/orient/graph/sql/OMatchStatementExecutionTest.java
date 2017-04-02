@@ -1638,6 +1638,97 @@ public class OMatchStatementExecutionTest {
     assertEquals("a", doc2.field("name"));
   }
 
+  @Test
+  public void testOptionalWithClass() {
+    //issue #7225
+    db.command(new OCommandSQL("CREATE CLASS testOptionalWithClass_Base EXTENDS V")).execute();
+    db.command(new OCommandSQL("CREATE CLASS testOptionalWithClass_Foo EXTENDS testOptionalWithClass_Base")).execute();
+    db.command(new OCommandSQL("CREATE CLASS testOptionalWithClass_Bar EXTENDS testOptionalWithClass_Base")).execute();
+
+    db.command(new OCommandSQL("CREATE VERTEX testOptionalWithClass_Foo SET name = 'testOptionalWithClass_Foo1'")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX testOptionalWithClass_Foo SET name = 'testOptionalWithClass_Foo2'")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX testOptionalWithClass_Foo SET name = 'testOptionalWithClass_Foo3'")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX testOptionalWithClass_Bar SET name = 'testOptionalWithClass_Bar1'")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX testOptionalWithClass_Bar SET name = 'testOptionalWithClass_Bar2'")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX testOptionalWithClass_Bar SET name = 'testOptionalWithClass_Bar3'")).execute();
+
+    db.command(new OCommandSQL(
+        "CREATE EDGE E FROM (SELECT FROM testOptionalWithClass_Foo WHERE name = 'testOptionalWithClass_Foo1') TO (SELECT FROM testOptionalWithClass_Bar WHERE name = 'testOptionalWithClass_Bar2')"))
+        .execute();
+    db.command(new OCommandSQL(
+        "CREATE EDGE E FROM (SELECT FROM testOptionalWithClass_Foo WHERE name = 'testOptionalWithClass_Foo2') TO (SELECT FROM testOptionalWithClass_Bar WHERE name = 'testOptionalWithClass_Bar3')"))
+        .execute();
+    db.command(new OCommandSQL(
+        "CREATE EDGE E FROM (SELECT FROM testOptionalWithClass_Bar WHERE name = 'testOptionalWithClass_Bar1') TO (SELECT FROM testOptionalWithClass_Foo WHERE name = 'testOptionalWithClass_Foo2')"))
+        .execute();
+    db.command(new OCommandSQL(
+        "CREATE EDGE E FROM (SELECT FROM testOptionalWithClass_Bar WHERE name = 'testOptionalWithClass_Bar2') TO (SELECT FROM testOptionalWithClass_Foo WHERE name = 'testOptionalWithClass_Foo3')"))
+        .execute();
+
+    OSQLSynchQuery query = new OSQLSynchQuery(
+        "MATCH {class: testOptionalWithClass_Foo, where: (name = 'testOptionalWithClass_Foo1'), as: start}.out('E') {where: (name = 'testOptionalWithClass_Bar2'),as: mid}.out('E') "
+            + "{optional: true,    where: (@this INSTANCEOF testOptionalWithClass_Bar), as: end} RETURN $matches");
+
+    List<ODocument> result = db.query(query);
+
+    assertEquals(1, result.size());
+
+    query = new OSQLSynchQuery(
+        "MATCH {class: testOptionalWithClass_Foo,where: (name = 'testOptionalWithClass_Foo1'),as: start}.out('E') {where: (name = 'testOptionalWithClass_Bar2'),as: mid\n"
+            + "}.out('E') {class: testOptionalWithClass_Bar,optional: true,as: end} RETURN $matches");
+
+    result = db.query(query);
+
+    assertEquals(1, result.size());
+
+  }
+
+  @Test
+  public void testWhileWithClass() {
+    //issue #7225
+    db.command(new OCommandSQL("CREATE CLASS testWhileWithClass_Base EXTENDS V")).execute();
+    db.command(new OCommandSQL("CREATE CLASS testWhileWithClass_Foo EXTENDS testWhileWithClass_Base")).execute();
+    db.command(new OCommandSQL("CREATE CLASS testWhileWithClass_Bar EXTENDS testWhileWithClass_Base")).execute();
+
+    db.command(new OCommandSQL("CREATE VERTEX testWhileWithClass_Foo SET name = 'testWhileWithClass_Foo1'")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX testWhileWithClass_Foo SET name = 'testWhileWithClass_Foo2'")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX testWhileWithClass_Foo SET name = 'testWhileWithClass_Foo3'")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX testWhileWithClass_Bar SET name = 'testWhileWithClass_Bar1'")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX testWhileWithClass_Bar SET name = 'testWhileWithClass_Bar2'")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX testWhileWithClass_Bar SET name = 'testWhileWithClass_Bar3'")).execute();
+
+    db.command(new OCommandSQL(
+        "CREATE EDGE E FROM (SELECT FROM testWhileWithClass_Foo WHERE name = 'testWhileWithClass_Foo1') TO (SELECT FROM testWhileWithClass_Bar WHERE name = 'testWhileWithClass_Bar2')"))
+        .execute();
+    db.command(new OCommandSQL(
+        "CREATE EDGE E FROM (SELECT FROM testWhileWithClass_Foo WHERE name = 'testWhileWithClass_Foo2') TO (SELECT FROM testWhileWithClass_Bar WHERE name = 'testWhileWithClass_Bar3')"))
+        .execute();
+    db.command(new OCommandSQL(
+        "CREATE EDGE E FROM (SELECT FROM testWhileWithClass_Bar WHERE name = 'testWhileWithClass_Bar1') TO (SELECT FROM testWhileWithClass_Foo WHERE name = 'testWhileWithClass_Foo2')"))
+        .execute();
+    db.command(new OCommandSQL(
+        "CREATE EDGE E FROM (SELECT FROM testWhileWithClass_Bar WHERE name = 'testWhileWithClass_Bar2') TO (SELECT FROM testWhileWithClass_Foo WHERE name = 'testWhileWithClass_Foo3')"))
+        .execute();
+
+    OSQLSynchQuery query = new OSQLSynchQuery(
+        "MATCH {class: testWhileWithClass_Foo,where: (name = 'testWhileWithClass_Foo1'),as: start}.out('E') {while: ($depth < 4),where: (@this INSTANCEOF testWhileWithClass_Foo),as: mid}\n"
+            + "RETURN $matches");
+
+    List<ODocument> result = db.query(query);
+
+    assertEquals(2, result.size());
+
+    query = new OSQLSynchQuery(
+
+        "MATCH {class: testWhileWithClass_Foo,where: (name = 'testWhileWithClass_Foo1'),as: start}.out('E') {class: testWhileWithClass_Foo,while: ($depth < 4),as: mid}\n"
+            + "RETURN $matches");
+
+    result = db.query(query);
+
+    assertEquals(2, result.size());
+
+  }
+
   private List<OIdentifiable> getManagedPathElements(String managerName) {
     StringBuilder query = new StringBuilder();
     query.append("  match {class:Employee, as:boss, where: (name = '" + managerName + "')}");

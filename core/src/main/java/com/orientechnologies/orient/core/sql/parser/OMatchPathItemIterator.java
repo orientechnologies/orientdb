@@ -109,14 +109,17 @@ public class OMatchPathItemIterator implements Iterator<OIdentifiable> {
     } else {
       Object prevMatch = ctx.getVariable("$currentMatch");
       ctx.setVariable("$currentMatch", startingPoint);
-      if (filter == null || filter.matchesFilters(startingPoint, ctx)) {
+      if ((filter == null || filter.matchesFilters(startingPoint, ctx)) && (clazz == null || clazz
+          .isSuperClassOf(((ODocument) startingPoint.getRecord()).getSchemaClass()))) {
         nextElement = startingPoint;
       }
       ctx.setVariable("$currentMatch", prevMatch);
     }
 
     if ((notDeep && depth == 0) || ((maxDepth == null || depth < maxDepth) && (whileCondition == null || whileCondition
-        .matchesFilters(startingPoint, ctx)) && (oClass == null || matchesClass(oClass, startingPoint)))) {
+        .matchesFilters(startingPoint, ctx))
+//        && (oClass == null || matchesClass(oClass, startingPoint))
+    )) {
       stack.add(0, item.traversePatternEdge(matchContext, startingPoint, ctx).iterator());
     }
     ctx.setVariable("$depth", oldDepth);
