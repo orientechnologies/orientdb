@@ -27,7 +27,6 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
-import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.common.util.OPatternConst;
 import com.orientechnologies.common.util.OSizeable;
@@ -76,11 +75,8 @@ import com.orientechnologies.orient.core.sql.operator.*;
 import com.orientechnologies.orient.core.sql.parser.*;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
-import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -2164,8 +2160,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
               }
             }
 
-            metricRecorder.recordInvolvedIndexesMetric(index);
-
             OIndexCursor cursor;
 
             indexIsUsedInOrderBy =
@@ -2182,6 +2176,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
               context.setVariable("$limit", limit);
 
               cursor = operator.executeIndexQuery(context, index, keyParams, ascSortOrder);
+              if(cursor!=null){
+                metricRecorder.recordInvolvedIndexesMetric(index);
+              }
 
               if (!iSchemaClass.getName().equals(index.getDefinition().getClassName())) {
                 indexOnExactClass = false;
