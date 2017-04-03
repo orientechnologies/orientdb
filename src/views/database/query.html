@@ -169,6 +169,14 @@
       </div>
     </div>
 
+    <div ng-show="current == 'explain'" >
+      <div class="row">
+        <div jsontext ui-codemirror="viewerOptions" ng-model="item.results[0].executionPlanAsString"
+             style="width: 100%; height: 100px;"></div>
+        <!--<input type="text" ng-model="item.rawData"/>-->
+      </div>
+    </div>
+
   </div>
   <div class="query-info">
     <div class="row vertical-align">
@@ -186,6 +194,9 @@
           </li>
           <li ng-class="{active : current == 'raw' }">
             <a href="javascript:void(0)" ng-click="current = 'raw'">Raw</a>
+          </li>
+          <li ng-class="{active : current == 'explain' }">
+            <a href="javascript:void(0)" ng-click="current = 'explain'">Explain</a>
           </li>
         </ul>
       </div>
