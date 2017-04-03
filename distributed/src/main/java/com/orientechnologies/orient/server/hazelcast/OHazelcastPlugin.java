@@ -1047,11 +1047,16 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   }
 
   @Override
+  public boolean isOffline() {
+    return status != NODE_STATUS.ONLINE || !getHazelcastInstance().getLifecycleService().isRunning();
+  }
+
+  @Override
   public void onCreate(final ODatabaseInternal iDatabase) {
     if (!isRelatedToLocalServer(iDatabase))
       return;
 
-    if (status != NODE_STATUS.ONLINE)
+    if (isOffline())
       return;
 
     final ODatabaseDocumentInternal currDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
