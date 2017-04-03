@@ -3085,6 +3085,9 @@ public class OSelectStatementExecutionTest {
     OResult item = result.next();
     Object rid = item.getProperty("theRid");
     Assert.assertTrue(rid instanceof OIdentifiable);
+    OIdentifiable id = (OIdentifiable) rid;
+    Assert.assertEquals(12, id.getIdentity().getClusterId());
+    Assert.assertEquals(0L, id.getIdentity().getClusterPosition());
     Assert.assertFalse(result.hasNext());
     result.close();
   }
