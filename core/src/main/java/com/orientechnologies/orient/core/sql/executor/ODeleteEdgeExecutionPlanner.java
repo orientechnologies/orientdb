@@ -93,7 +93,8 @@ public class ODeleteEdgeExecutionPlanner {
 
   private void handleTargetRids(ODeleteExecutionPlan result, OCommandContext ctx, List<ORid> rids) {
     if (rids != null) {
-      result.chain(new FetchFromRidsStep(rids.stream().map(x -> x.toRecordId()).collect(Collectors.toList()), ctx));
+      result.chain(
+          new FetchFromRidsStep(rids.stream().map(x -> x.toRecordId((OResult) null, ctx)).collect(Collectors.toList()), ctx));
     }
   }
 

@@ -59,7 +59,7 @@ public class OExpression extends SimpleNode {
       return null;
     }
     if (rid != null) {
-      return new ORecordId(rid.cluster.getValue().intValue(), rid.position.getValue().longValue());
+      return rid.toRecordId(iCurrentRecord, ctx);
     }
     if (mathExpression != null) {
       return mathExpression.execute(iCurrentRecord, ctx);
@@ -101,7 +101,7 @@ public class OExpression extends SimpleNode {
       return null;
     }
     if (rid != null) {
-      return new ORecordId(rid.cluster.getValue().intValue(), rid.position.getValue().longValue());
+      return rid.toRecordId(iCurrentRecord, ctx);
     }
     if (mathExpression != null) {
       return mathExpression.execute(iCurrentRecord, ctx);

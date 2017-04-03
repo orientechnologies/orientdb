@@ -3078,6 +3078,17 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
+  @Test
+  public void testNewRid() {
+    OResultSet result = db.query("select {\"@rid\":\"#12:0\"} as theRid ");
+    Assert.assertTrue(result.hasNext());
+    OResult item = result.next();
+    Object rid = item.getProperty("theRid");
+    Assert.assertTrue(rid instanceof OIdentifiable);
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
   public void stressTestNew() {
     String className = "stressTestNew";
     db.getMetadata().getSchema().createClass(className);
