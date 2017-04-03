@@ -63,11 +63,6 @@
             <includes>
                 <include>*:jar:*</include>
             </includes>
-            <excludes>
-                <exclude>*:ant:*</exclude>
-                <exclude>*:ant-launcher:*</exclude>
-                <exclude>*:ivy:*</exclude>
-            </excludes>
         </dependencySet>
 
     </dependencySets>

@@ -84,7 +84,7 @@
                         <configuration>
                             <appendAssemblyId>false</appendAssemblyId>
                             <descriptors>
-                                <descriptor>${basedir}/src/main/assembly/bin.xml</descriptor>
+                                <descriptor>${basedir}/src/main/assembly/archive.xml</descriptor>
                             </descriptors>
                             <filters>
                                 <filter></filter>
