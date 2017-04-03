@@ -71,12 +71,12 @@ public class ServerClusterQueryTest extends AbstractServerClusterTest {
       v1.setProperty("kind", "a");
       v1.save();
 
-      v2 = g.newVertex("V2");
+      v2 = g.newVertex("V1");
       v2.setProperty("amount", 15);
       v2.setProperty("kind", "b");
       v2.save();
 
-      v3 = g.newVertex("V2");
+      v3 = g.newVertex("V1");
       v3.setProperty("amount", 21);
       v3.setProperty("kind", "b");
       v3.save();

@@ -4,6 +4,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
 
 public class TestAsyncReplMode2ServersAddEdge extends BareBoneBase2ServerTest {
@@ -84,7 +85,7 @@ public class TestAsyncReplMode2ServersAddEdge extends BareBoneBase2ServerTest {
 
       try {
         sleep(500);
-        OVertex parentV1 = graph.load((ORID) parentV1Id);
+        OElement parentV1 = graph.load((ORID) parentV1Id);
         assertEquals(NUM_OF_LOOP_ITERATIONS + 1, parentV1.getRecord().getVersion());
       } catch (Throwable e) {
         if (exceptionInThread == null) {
