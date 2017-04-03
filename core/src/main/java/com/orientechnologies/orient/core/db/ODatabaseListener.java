@@ -30,16 +30,13 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
  */
 public interface ODatabaseListener {
 
+  @Deprecated
   void onCreate(final ODatabase iDatabase);
 
   @Deprecated
-  default void onDelete(final ODatabase iDatabase) {
-  }
+  void onDelete(final ODatabase iDatabase);
 
-  default void onDrop(final ODatabase database) {
-    onDelete(database);
-  }
-
+  @Deprecated
   void onOpen(final ODatabase iDatabase);
 
   void onBeforeTxBegin(final ODatabase iDatabase);

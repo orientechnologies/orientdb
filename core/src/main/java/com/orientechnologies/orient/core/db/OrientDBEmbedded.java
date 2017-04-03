@@ -24,6 +24,7 @@ import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.engine.OEngine;
 import com.orientechnologies.orient.core.engine.OMemoryAndLocalPaginatedEnginesInitializer;
@@ -82,7 +83,9 @@ public class OrientDBEmbedded implements OrientDBInternal {
 
     OMemoryAndLocalPaginatedEnginesInitializer.INSTANCE.initialize();
 
-    shutdownThread = new Thread(() -> OrientDBEmbedded.this.internalClose());
+    shutdownThread = new Thread(() -> {
+      OrientDBEmbedded.this.internalClose();
+    });
 
     Runtime.getRuntime().addShutdownHook(shutdownThread);
 
@@ -238,19 +241,25 @@ public class OrientDBEmbedded implements OrientDBInternal {
   @Override
   public synchronized boolean exists(String name, String user, String password) {
     checkOpen();
-    if (!storages.containsKey(name)) {
+    OStorage storage = storages.get(name);
+    if (storage == null) {
       if (basePath != null) {
         return OLocalPaginatedStorage.exists(Paths.get(buildName(name)));
       } else
         return false;
     }
-    return true;
+    return storage.exists();
   }
 
   @Override
   public synchronized void drop(String name, String user, String password) {
     checkOpen();
     if (exists(name, user, password)) {
+      ODatabaseDocumentInternal db = openNoAuthenticate(name,user);
+      for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext(); ) {
+        it.next().onDrop(db);
+      }
+      db.close();
       getStorage(name).delete();
       storages.remove(name);
     }
@@ -374,7 +383,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   public synchronized void forceDatabaseClose(String iDatabaseName) {
     OAbstractPaginatedStorage storage = storages.remove(iDatabaseName);
     if (storage != null) {
-      storage.close();
+      storage.shutdown();
     }
   }
 

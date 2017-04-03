@@ -192,17 +192,12 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   }
 
   public void callOnDropListeners() {
-    // WAKE UP DB LIFECYCLE LISTENER
-    for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext(); ) {
-      activateOnCurrentThread();
-      it.next().onDrop(getDatabaseOwner());
-    }
 
     // WAKE UP LISTENERS
     for (ODatabaseListener listener : getListenersCopy())
       try {
         activateOnCurrentThread();
-        listener.onDrop(getDatabaseOwner());
+        listener.onDelete(getDatabaseOwner());
       } catch (Throwable t) {
         t.printStackTrace();
       }

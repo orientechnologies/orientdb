@@ -2,6 +2,9 @@ package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.junit.Test;
@@ -250,4 +253,17 @@ public class OrientDBEmbeddedTests {
       orientDb.create("test", ODatabaseType.PLOCAL);
     }
   }
+
+  @Test
+  public void createForceCloseOpen() throws InterruptedException {
+    OrientDB orientDB = new OrientDB("embedded:./target/", OrientDBConfig.defaultConfig());
+    orientDB.create("test", ODatabaseType.PLOCAL);
+    ((OrientDBEmbedded) orientDB.getInternal()).forceDatabaseClose("test");
+    ODatabaseDocument db1 = orientDB.open("test", "admin", "admin");
+    assertFalse(db1.isClosed());
+    db1.close();
+    orientDB.drop("test");
+    orientDB.close();
+  }
+
 }

@@ -35,7 +35,7 @@ public class OConsoleDatabaseListener implements ODatabaseListener {
   public void onCreate(ODatabase iDatabase) {
   }
 
-  public void onDrop(ODatabase database) {
+  public void onDelete(ODatabase database) {
   }
 
   public void onOpen(ODatabase iDatabase) {

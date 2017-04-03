@@ -113,7 +113,7 @@ public class OLiveQueryHook extends ODocumentHookAbstract implements ODatabaseLi
   }
 
   @Override
-  public void onDrop(ODatabase iDatabase) {
+  public void onDelete(ODatabase iDatabase) {
     if(Boolean.FALSE.equals(database.getConfiguration().getValue(OGlobalConfiguration.QUERY_LIVE_SUPPORT)))
       return ;
     OLiveQueryOps ops = getOpsReference((ODatabaseInternal) iDatabase);
