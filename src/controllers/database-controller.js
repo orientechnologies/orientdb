@@ -484,8 +484,12 @@ dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$l
     $scope.item.rawData = JSON.stringify($scope.item.rawData);
   }
 
-  if($scope.item.executedQuery.startsWith('explain')) {
+  $scope.showExplain = function () {
     $scope.current = 'explain';
+  }
+
+  if($scope.item.results[0].executionPlanAsString && $scope.item.executedQuery.startsWith('explain')) {
+    $scope.showExplain();
   }
 
   $scope.indexes = []
@@ -504,7 +508,6 @@ dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$l
     onLoad: function (_cm) {
       $scope.vcm = _cm;
     }
-
   };
 
 

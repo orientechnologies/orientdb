@@ -889,9 +889,6 @@ ee.controller("AuditingController", ['$scope', 'Auditing', 'Cluster', 'Spinner',
       if ($scope.enabled) {
         Auditing.getConfig({db: $scope.db}).then(function (data) {
 
-
-
-
           $scope.config = data;
 
           if ($scope.config && !$scope.config.schema) {
