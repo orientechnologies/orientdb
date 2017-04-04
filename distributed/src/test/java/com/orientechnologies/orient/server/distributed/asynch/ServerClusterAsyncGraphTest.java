@@ -143,20 +143,20 @@ public class ServerClusterAsyncGraphTest extends AbstractServerClusterTest {
         result = g2.command(new OCommandSQL("select from Post")).execute();
         Assert.assertTrue(result.iterator().hasNext());
 
-        final OVertex v = result.iterator().next();
+        final OElement v = result.iterator().next();
         Assert.assertNotNull(v);
 
-        final Iterable<OEdge> inEdges = v.getEdges(ODirection.IN);
+        final Iterable<OEdge> inEdges = v.asVertex().get().getEdges(ODirection.IN);
         Assert.assertTrue(inEdges.iterator().hasNext());
         Assert.assertNotNull(inEdges.iterator().next());
 
         result = g2.command(new OCommandSQL("select from User")).execute();
         Assert.assertTrue(result.iterator().hasNext());
 
-        final OVertex v2 = result.iterator().next();
+        final OElement v2 = result.iterator().next();
         Assert.assertNotNull(v2);
 
-        final Iterable<OEdge> outEdges = v2.getEdges(ODirection.OUT);
+        final Iterable<OEdge> outEdges = v2.asVertex().get().getEdges(ODirection.OUT);
         Assert.assertTrue(outEdges.iterator().hasNext());
         Assert.assertNotNull(outEdges.iterator().next());
 

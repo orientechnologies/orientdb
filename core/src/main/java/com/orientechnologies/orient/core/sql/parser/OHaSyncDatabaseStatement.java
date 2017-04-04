@@ -2,8 +2,15 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-public
-class OHaSyncDatabaseStatement extends OStatement {
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
+
+public class OHaSyncDatabaseStatement extends OSimpleExecStatement {
   public OHaSyncDatabaseStatement(int id) {
     super(id);
   }
@@ -12,8 +19,25 @@ class OHaSyncDatabaseStatement extends OStatement {
     super(p, id);
   }
 
+  @Override
+  public OResultSet executeSimple(OCommandContext ctx) {
+    final ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
 
-  /** Accept the visitor. **/
+    try {
+      boolean result = database.sync();
+      OResultInternal r = new OResultInternal();
+      r.setProperty("result", result);
+      OInternalResultSet rs = new OInternalResultSet();
+      rs.add(r);
+      return rs;
+    } catch (Exception e) {
+      throw OException.wrapException(new OCommandExecutionException("Cannot execute HA SYNC DATABASE"), e);
+    }
+  }
+
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }

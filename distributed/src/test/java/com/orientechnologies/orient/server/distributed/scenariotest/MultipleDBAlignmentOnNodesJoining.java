@@ -117,9 +117,11 @@ public class MultipleDBAlignmentOnNodesJoining extends AbstractScenarioTest {
         onAfterDatabaseCreation(graph2);
       } finally {
         if(!graph1.isClosed()) {
+          graph1.activateOnCurrentThread();
           graph1.close();
         }
-        if(!graph1.isClosed()) {
+        if(!graph2.isClosed()) {
+          graph2.activateOnCurrentThread();
           graph2.close();
         }
       }

@@ -143,7 +143,7 @@ public class OArraySelector extends SimpleNode {
   public void setValue(OResult currentRecord, Object target, Object value, OCommandContext ctx) {
     Object idx = null;
     if (this.rid != null) {
-      idx = this.rid.toRecordId();
+      idx = this.rid.toRecordId(currentRecord, ctx);
     } else if (inputParam != null) {
       idx = inputParam.getValue(ctx.getInputParameters());
     } else if (expression != null) {

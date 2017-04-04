@@ -67,9 +67,9 @@ public class TestSharding extends AbstractServerClusterTest {
     graphNoTx.command("create class `Product-Type` extends V clusters 1");
     graphNoTx.command("create class `Hobby-Type` extends V clusters 1");
 
-    graphNoTx.command("create class `Knows-Type` extends V clusters 1");
-    graphNoTx.command("create class `Buy-Type` extends V clusters 1");
-    graphNoTx.command("create class `Loves-Type` extends V clusters 1");
+    graphNoTx.command("create class `Knows-Type` extends E clusters 1");
+    graphNoTx.command("create class `Buy-Type` extends E clusters 1");
+    graphNoTx.command("create class `Loves-Type` extends E clusters 1");
   }
 
   @Override
@@ -186,7 +186,7 @@ public class TestSharding extends AbstractServerClusterTest {
           result = graph.command(new OCommandSQL("select from " + e.getIdentity())).execute();
 
           Assert.assertTrue(result.iterator().hasNext());
-          OEdge e2 = result.iterator().next();
+          OElement e2 = result.iterator().next();
           Assert.assertEquals(e2.getProperty("real"), true);
 
         } finally {
@@ -231,7 +231,7 @@ public class TestSharding extends AbstractServerClusterTest {
             Assert.assertNotNull(boughtE.iterator().next().getProperty("price"));
           }
         } finally {
-          graph.close();
+          g.close();
         }
       }
 

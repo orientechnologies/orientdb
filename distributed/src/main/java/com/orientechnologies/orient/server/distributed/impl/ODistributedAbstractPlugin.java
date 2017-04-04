@@ -107,6 +107,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected       List<ODistributedLifecycleListener>            listeners                         = new ArrayList<ODistributedLifecycleListener>();
   protected final ConcurrentMap<String, ORemoteServerController> remoteServers                     = new ConcurrentHashMap<String, ORemoteServerController>();
   protected       TimerTask                                      publishLocalNodeConfigurationTask = null;
+  protected       TimerTask                                      haStatsTask = null;
   protected       OClusterHealthChecker                          healthCheckerTask                 = null;
   protected String coordinatorServer;
 
@@ -233,6 +234,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     if (healthCheckerTask != null)
       healthCheckerTask.cancel();
 
+    if (haStatsTask != null)
+      haStatsTask.cancel();
+
     if (messageService != null)
       messageService.shutdown();
 
@@ -272,7 +276,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     if (!isRelatedToLocalServer(iDatabase))
       return;
 
-    if (status != NODE_STATUS.ONLINE && status != NODE_STATUS.STARTING)
+    if (isOffline() && status != NODE_STATUS.STARTING)
       return;
 
     final ODatabaseDocumentInternal currDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
@@ -634,7 +638,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     if (OScenarioThreadLocal.INSTANCE.isRunModeDistributed())
       return;
 
-    if (status != NODE_STATUS.ONLINE && status != NODE_STATUS.STARTING)
+    if (isOffline() && status != NODE_STATUS.STARTING)
       return;
 
     // RUN ONLY IN NON-DISTRIBUTED MODE

@@ -1173,7 +1173,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   @Override
   public void drop() {
     checkOpenness();
-    this.internal.callOnDropListeners();
+    internal.callOnDropListeners();
     ODatabaseRecordThreadLocal.INSTANCE.remove();
     factory.drop(this.getName(), null, null);
     this.internal = null;

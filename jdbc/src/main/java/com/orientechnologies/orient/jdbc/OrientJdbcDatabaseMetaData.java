@@ -102,7 +102,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
   }
 
   public String getDatabaseProductVersion() throws SQLException {
-    return OConstants.getVersion();
+    return OConstants.ORIENT_VERSION;
   }
 
   public String getDriverName() throws SQLException {

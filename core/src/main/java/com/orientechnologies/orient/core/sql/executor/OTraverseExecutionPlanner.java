@@ -134,6 +134,7 @@ public class OTraverseExecutionPlanner {
       cluster.setValue(orid.getClusterId());
       OInteger position = new OInteger(-1);
       position.setValue(orid.getClusterPosition());
+      rid.setLegacy(true);
       rid.setCluster(cluster);
       rid.setPosition(position);
 
@@ -220,7 +221,7 @@ public class OTraverseExecutionPlanner {
   private void handleRidsAsTarget(OSelectExecutionPlan plan, List<ORid> rids, OCommandContext ctx) {
     List<ORecordId> actualRids = new ArrayList<>();
     for (ORid rid : rids) {
-      actualRids.add(rid.toRecordId());
+      actualRids.add(rid.toRecordId((OResult) null, ctx));
     }
     plan.chain(new FetchFromRidsStep(actualRids, ctx));
   }

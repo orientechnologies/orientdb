@@ -89,7 +89,6 @@ public class OServer {
   protected OConfigurableHooksManager       hookManager;
   protected ODistributedServerManager       distributedManager;
   protected OServerSecurity                 serverSecurity;
-  private   OPartitionedDatabasePoolFactory dbPoolFactory;
   private SecureRandom        random    = new SecureRandom();
   private Map<String, Object> variables = new HashMap<String, Object>();
   private String                   serverRootDirectory;
@@ -300,9 +299,6 @@ public class OServer {
       System.out.println("Dumping environment after server startup...");
       OGlobalConfiguration.dumpConfiguration(System.out);
     }
-
-    dbPoolFactory = new OPartitionedDatabasePoolFactory();
-    dbPoolFactory.setMaxPoolSize(contextConfiguration.getValueAsInteger(OGlobalConfiguration.DB_POOL_MAX));
 
     databaseDirectory = contextConfiguration.getValue("server.database.path", serverRootDirectory + "/databases/");
     databaseDirectory = OFileUtils.getPath(OSystemVariableResolver.resolveSystemVariables(databaseDirectory));
@@ -877,10 +873,6 @@ public class OServer {
 
   public ODistributedServerManager getDistributedManager() {
     return distributedManager;
-  }
-
-  public OPartitionedDatabasePoolFactory getDatabasePoolFactory() {
-    return dbPoolFactory;
   }
 
   public void setServerRootDirectory(final String rootDirectory) {

@@ -435,4 +435,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     return activeQueries.get(id);
   }
 
+  public OrientDBConfig getConfig() {
+    return config;
+  }
 }

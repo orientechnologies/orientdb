@@ -54,7 +54,7 @@ public class OFindReferencesExecutionPlanner {
 
   private void handleRidSource(OSelectExecutionPlan plan, OCommandContext ctx) {
     if (rid != null) {
-      plan.chain(new FetchFromRidsStep(Collections.singleton(rid.toRecordId()), ctx));
+      plan.chain(new FetchFromRidsStep(Collections.singleton(rid.toRecordId((OResult) null, ctx)), ctx));
     }
   }
 

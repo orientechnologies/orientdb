@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -90,7 +91,7 @@ public class FetchTemporaryFromTxStep extends AbstractExecutionStep {
       if (iterable != null) {
         for (ORecordOperation op : iterable) {
           ORecord record = op.getRecord();
-          if (matchesClass(record, className))
+          if (matchesClass(record, className) && !hasCluster(record))
             records.add(record);
         }
       }
@@ -127,6 +128,17 @@ public class FetchTemporaryFromTxStep extends AbstractExecutionStep {
       }
       this.txEntries = records.iterator();
     }
+  }
+
+  private boolean hasCluster(ORecord record) {
+    ORID rid = record.getIdentity();
+    if (rid == null) {
+      return false;
+    }
+    if (rid.getClusterId() < 0) {
+      return false;
+    }
+    return true;
   }
 
   private boolean matchesClass(ORecord record, String className) {

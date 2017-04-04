@@ -2,13 +2,19 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.util.Map;
 
 public class ORid extends SimpleNode {
   protected OInteger cluster;
   protected OInteger position;
+
+  protected OExpression expression;
+  protected boolean     legacy;
 
   public ORid(int id) {
     super(id);
@@ -25,26 +31,68 @@ public class ORid extends SimpleNode {
     return visitor.visit(this, data);
   }
 
-  @Override public String toString(String prefix) {
+  @Override
+  public String toString(String prefix) {
     return "#" + cluster.getValue() + ":" + position.getValue();
   }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
-    builder.append("#" + cluster.getValue() + ":" + position.getValue());
+    if (legacy) {
+      builder.append("#" + cluster.getValue() + ":" + position.getValue());
+    } else {
+      builder.append("{\"@rid\":");
+      expression.toString(params, builder);
+      builder.append("}");
+    }
   }
 
-  public ORecordId toRecordId() {
-    return new ORecordId(cluster.value.intValue(), position.value.longValue());
+  public ORecordId toRecordId(OResult target, OCommandContext ctx) {
+    if (legacy) {
+      return new ORecordId(cluster.value.intValue(), position.value.longValue());
+    } else {
+      Object result = expression.execute(target, ctx);
+      if (result == null) {
+        return null;
+      }
+      if (result instanceof OIdentifiable) {
+        return (ORecordId) ((OIdentifiable) result).getIdentity();
+      }
+      if (result instanceof String) {
+        return new ORecordId((String) result);
+      }
+      return null;
+    }
+  }
+
+  public ORecordId toRecordId(OIdentifiable target, OCommandContext ctx) {
+    if (legacy) {
+      return new ORecordId(cluster.value.intValue(), position.value.longValue());
+    } else {
+      Object result = expression.execute(target, ctx);
+      if (result == null) {
+        return null;
+      }
+      if (result instanceof OIdentifiable) {
+        return (ORecordId) ((OIdentifiable) result).getIdentity();
+      }
+      if (result instanceof String) {
+        return new ORecordId((String) result);
+      }
+      return null;
+    }
   }
 
   public ORid copy() {
     ORid result = new ORid(-1);
-    result.cluster = cluster;
-    result.position = position;
+    result.cluster = cluster==null?null:cluster.copy();
+    result.position = position==null?null:position.copy();
+    result.expression = expression==null?null:expression.copy();
+    result.legacy = legacy;
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -56,13 +104,20 @@ public class ORid extends SimpleNode {
       return false;
     if (position != null ? !position.equals(oRid.position) : oRid.position != null)
       return false;
+    if (expression != null ? !expression.equals(oRid.expression) : oRid.expression != null)
+      return false;
+    if (legacy != oRid.legacy)
+      return false;
+
 
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = cluster != null ? cluster.hashCode() : 0;
     result = 31 * result + (position != null ? position.hashCode() : 0);
+    result = 31 * result + (expression != null ? expression.hashCode() : 0);
     return result;
   }
 
@@ -73,5 +128,9 @@ public class ORid extends SimpleNode {
   public void setPosition(OInteger position) {
     this.position = position;
   }
+  public void setLegacy(boolean b){
+    this.legacy = b;
+  }
+
 }
 /* JavaCC - OriginalChecksum=c2c6d67d7722e29212e438574698d7cd (do not edit this line) */

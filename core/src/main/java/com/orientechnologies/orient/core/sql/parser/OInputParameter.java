@@ -119,6 +119,7 @@ public class OInputParameter extends SimpleNode {
       OInteger p = new OInteger(-1);
       p.setValue(Integer.parseInt(splitted[1]));
       rid.position = p;
+      rid.setLegacy(true);
       return rid;
     }
     if (value instanceof Date) {

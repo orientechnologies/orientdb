@@ -35,15 +35,14 @@ import com.orientechnologies.common.util.OCallableNoParamNoReturn;
 import com.orientechnologies.common.util.OCallableUtils;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
+import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OSystemDatabase;
@@ -113,6 +112,17 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         hazelcastConfigFile = OFileUtils.getPath(hazelcastConfigFile);
       }
     }
+    iServer.getDatabases().replaceFactory(new OEmbeddedDatabaseInstanceFactory() {
+      @Override
+      public ODatabaseDocumentEmbedded newInstance(OStorage storage) {
+        return new ODatabaseDocumentDistributed(storage, OHazelcastPlugin.this);
+      }
+
+      @Override
+      public ODatabaseDocumentEmbedded newPoolInstance(ODatabasePoolInternal pool, OStorage storage) {
+        return new ODatabaseDocumentDistributedPooled(pool, storage, OHazelcastPlugin.this);
+      }
+    });
   }
 
   @Override
@@ -253,25 +263,32 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       setNodeStatus(NODE_STATUS.ONLINE);
 
       final long delay = serverInstance.getContextConfiguration().
-        getValueAsLong(OGlobalConfiguration.DISTRIBUTED_PUBLISH_NODE_STATUS_EVERY);
-      
+          getValueAsLong(OGlobalConfiguration.DISTRIBUTED_PUBLISH_NODE_STATUS_EVERY);
+
       if (delay > 0) {
         publishLocalNodeConfigurationTask = new TimerTask() {
           @Override
           public void run() {
-            try {
-              publishLocalNodeConfiguration();
-            } catch (Throwable e) {
-              OLogManager.instance().debug(this, "Error on distributed configuration node updater", e);
-            }
+            publishLocalNodeConfiguration();
           }
         };
         Orient.instance().scheduleTask(publishLocalNodeConfigurationTask, delay, delay);
       }
 
+      final long statsDelay = serverInstance.getContextConfiguration()
+          .getValueAsLong(OGlobalConfiguration.DISTRIBUTED_DUMP_STATS_EVERY);
+      if (delay > 0) {
+        haStatsTask = new TimerTask() {
+          @Override
+          public void run() {
+            printStats();
+          }
+        };
+        Orient.instance().scheduleTask(haStatsTask, statsDelay, statsDelay);
+      }
+
       final long healthChecker = serverInstance.getContextConfiguration()
           .getValueAsLong(OGlobalConfiguration.DISTRIBUTED_CHECK_HEALTH_EVERY);
-
       if (healthChecker > 0) {
         healthCheckerTask = new OClusterHealthChecker(this);
         Orient.instance().scheduleTask(healthCheckerTask, healthChecker, healthChecker);
@@ -426,6 +443,28 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       configurationMap.put(CONFIG_NODE_PREFIX + nodeUuid, cfg);
     } catch (Throwable t) {
       ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE, "Error on publishing local server configuration");
+    }
+  }
+
+  protected void printStats() {
+    try {
+      final ODocument clusterCfg = getClusterConfiguration();
+
+      final Set<String> dbs = getManagedDatabases();
+
+      final StringBuilder buffer = new StringBuilder(8192);
+
+      buffer.append(ODistributedOutput.formatLatency(this, clusterCfg));
+      buffer.append(ODistributedOutput.formatMessages(this, clusterCfg));
+
+      for (String db : dbs)
+        buffer.append(ODistributedOutput.formatLocks(this, db));
+
+      // DUMP HA STATS
+      ODistributedServerLog.debug(this, getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE, "%s", buffer);
+
+    } catch (Throwable t) {
+      ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE, "Error on printing HA stats");
     }
   }
 
@@ -774,13 +813,12 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         final String nodeName = dbNode.substring(0, dbNode.indexOf("."));
         final String databaseName = dbNode.substring(dbNode.indexOf(".") + 1);
 
-        final DB_STATUS dbStatus = (DB_STATUS)iEvent.getValue();
+        final DB_STATUS dbStatus = (DB_STATUS) iEvent.getValue();
 
         onDatabaseEvent(nodeName, databaseName, dbStatus);
         invokeOnDatabaseStatusChange(nodeName, databaseName, dbStatus);
 
-        if (!iEvent.getMember().equals(hazelcastInstance.getCluster().getLocalMember()) && DB_STATUS.ONLINE
-            .equals(dbStatus)) {
+        if (!iEvent.getMember().equals(hazelcastInstance.getCluster().getLocalMember()) && DB_STATUS.ONLINE.equals(dbStatus)) {
           final DB_STATUS s = getDatabaseStatus(getLocalNodeName(), databaseName);
           if (s == DB_STATUS.NOT_AVAILABLE) {
             // INSTALL THE DATABASE
@@ -831,14 +869,13 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         final String dbNode = key.substring(CONFIG_DBSTATUS_PREFIX.length());
         final String nodeName = dbNode.substring(0, dbNode.indexOf("."));
         final String databaseName = dbNode.substring(dbNode.indexOf(".") + 1);
-        
-        final DB_STATUS dbStatus = (DB_STATUS)iEvent.getValue();
+
+        final DB_STATUS dbStatus = (DB_STATUS) iEvent.getValue();
 
         onDatabaseEvent(nodeName, databaseName, dbStatus);
         invokeOnDatabaseStatusChange(nodeName, databaseName, dbStatus);
 
-        if (!iEvent.getMember().equals(hazelcastInstance.getCluster().getLocalMember()) && DB_STATUS.ONLINE
-            .equals(dbStatus)) {
+        if (!iEvent.getMember().equals(hazelcastInstance.getCluster().getLocalMember()) && DB_STATUS.ONLINE.equals(dbStatus)) {
           final DB_STATUS s = getDatabaseStatus(getLocalNodeName(), databaseName);
           if (s == DB_STATUS.NOT_AVAILABLE) {
             // INSTALL THE DATABASE
@@ -1010,11 +1047,16 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   }
 
   @Override
+  public boolean isOffline() {
+    return status != NODE_STATUS.ONLINE || !getHazelcastInstance().getLifecycleService().isRunning();
+  }
+
+  @Override
   public void onCreate(final ODatabaseInternal iDatabase) {
     if (!isRelatedToLocalServer(iDatabase))
       return;
 
-    if (status != NODE_STATUS.ONLINE)
+    if (isOffline())
       return;
 
     final ODatabaseDocumentInternal currDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
@@ -1209,8 +1251,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           setDatabaseStatus(nodeName, databaseName, DB_STATUS.NOT_AVAILABLE);
 
         try {
-          installDatabase(true, databaseName, (ODocument) entry.getValue(), false, 
-            OGlobalConfiguration.DISTRIBUTED_BACKUP_TRY_INCREMENTAL_FIRST.getValueAsBoolean());
+          installDatabase(true, databaseName, (ODocument) entry.getValue(), false,
+              OGlobalConfiguration.DISTRIBUTED_BACKUP_TRY_INCREMENTAL_FIRST.getValueAsBoolean());
         } catch (Exception e) {
           ODistributedServerLog
               .error(this, getLocalNodeName(), null, DIRECTION.IN, "Error on installing database '%s' on local node", databaseName);

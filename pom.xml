@@ -24,7 +24,7 @@
     <inceptionYear>2009</inceptionYear>
     <organization>
         <name>OrientDB</name>
-        <url>http://orientdb.com</url>
+        <url>https://www.orientdb.com</url>
     </organization>
     <licenses>
         <license>
@@ -483,7 +483,8 @@
                             <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
                         </manifest>
                         <manifestEntries>
-                            <Implementation-Build>${implementation.build}</Implementation-Build>
+                            <Implementation-Build>${buildNumber}</Implementation-Build>
+                            <Implementation-Url>${project.organization.url}</Implementation-Url>
                             <Implementation-Build-Date>${maven.build.timestamp}</Implementation-Build-Date>
                             <X-Compile-Source-JDK>${maven.compiler.source}</X-Compile-Source-JDK>
                             <X-Compile-Target-JDK>${maven.compiler.target}</X-Compile-Target-JDK>

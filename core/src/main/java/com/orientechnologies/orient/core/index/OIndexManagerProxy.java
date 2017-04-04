@@ -24,12 +24,19 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.record.OProxedResource;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandExecutorSQLCreateIndex;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 
 import java.util.Collection;
+import java.util.Locale;
 import java.util.Set;
+
+import static com.orientechnologies.orient.core.index.OIndexManagerAbstract.getDatabase;
 
 public class OIndexManagerProxy extends OProxedResource<OIndexManagerAbstract> implements OIndexManager {
 
@@ -80,12 +87,44 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManagerAbstract> i
   public OIndex<?> createIndex(final String iName, final String iType, final OIndexDefinition iIndexDefinition,
       final int[] iClusterIdsToIndex, final OProgressListener progressListener, final ODocument metadata, final String algorithm) {
     if (isDistributedCommand()) {
-      final OIndexManagerRemote remoteIndexManager = new OIndexManagerRemote();
-      return remoteIndexManager
-          .createIndex(iName, iType, iIndexDefinition, iClusterIdsToIndex, progressListener, metadata, algorithm);
+      return distributedCreateIndex(iName, iType, iIndexDefinition, iClusterIdsToIndex, progressListener, metadata, algorithm);
     }
 
     return delegate.createIndex(iName, iType, iIndexDefinition, iClusterIdsToIndex, progressListener, metadata, algorithm);
+  }
+
+  public OIndex<?> distributedCreateIndex(final String iName, final String iType, final OIndexDefinition iIndexDefinition,
+      final int[] iClusterIdsToIndex, final OProgressListener progressListener, ODocument metadata, String engine) {
+
+    String createIndexDDL;
+    if (iIndexDefinition != null)
+      createIndexDDL = iIndexDefinition.toCreateIndexDDL(iName, iType, engine);
+    else
+      createIndexDDL = new OSimpleKeyIndexDefinition().toCreateIndexDDL(iName, iType, engine);
+
+    if (metadata != null)
+      createIndexDDL += " " + OCommandExecutorSQLCreateIndex.KEYWORD_METADATA + " " + metadata.toJSON();
+
+    delegate.acquireExclusiveLock();
+    try {
+      if (progressListener != null)
+        progressListener.onBegin(this, 0, false);
+
+      getDatabase().command(new OCommandSQL(createIndexDDL)).execute();
+
+      ORecordInternal
+          .setIdentity(delegate.getDocument(), new ORecordId(getDatabase().getStorage().getConfiguration().indexMgrRecordId));
+
+      if (progressListener != null)
+        progressListener.onCompletition(this, true);
+
+      reload();
+
+      final Locale locale = delegate.getServerLocale();
+      return delegate.preProcessBeforeReturn(getDatabase(), delegate.getIndex(iName.toLowerCase(locale)));
+    } finally {
+      delegate.releaseExclusiveLock();
+    }
   }
 
   public ODocument getConfiguration() {

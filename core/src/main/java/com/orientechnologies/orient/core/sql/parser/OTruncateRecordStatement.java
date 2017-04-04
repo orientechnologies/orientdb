@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
@@ -29,7 +30,8 @@ public class OTruncateRecordStatement extends OSimpleExecStatement {
     super(p, id);
   }
 
-  @Override public OResultSet executeSimple(OCommandContext ctx) {
+  @Override
+  public OResultSet executeSimple(OCommandContext ctx) {
     List<ORid> recs = new ArrayList<>();
     if (record != null) {
       recs.add(record);
@@ -41,7 +43,7 @@ public class OTruncateRecordStatement extends OSimpleExecStatement {
     final ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
     for (ORid rec : recs) {
       try {
-        final ORecordId rid = rec.toRecordId();
+        final ORecordId rid = rec.toRecordId((OResult) null, ctx);
         final OStorageOperationResult<Boolean> result = database.getStorage().deleteRecord(rid, -1, 0, null);
         database.getLocalCache().deleteRecord(rid);
 
@@ -59,7 +61,8 @@ public class OTruncateRecordStatement extends OSimpleExecStatement {
     return rs;
   }
 
-  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("TRUNCATE RECORD ");
     if (record != null) {
       record.toString(params, builder);
@@ -77,14 +80,16 @@ public class OTruncateRecordStatement extends OSimpleExecStatement {
     }
   }
 
-  @Override public OTruncateRecordStatement copy() {
+  @Override
+  public OTruncateRecordStatement copy() {
     OTruncateRecordStatement result = new OTruncateRecordStatement(-1);
     result.record = record == null ? null : record.copy();
     result.records = records == null ? null : records.stream().map(x -> x.copy()).collect(Collectors.toList());
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -100,7 +105,8 @@ public class OTruncateRecordStatement extends OSimpleExecStatement {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = record != null ? record.hashCode() : 0;
     result = 31 * result + (records != null ? records.hashCode() : 0);
     return result;

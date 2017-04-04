@@ -24,6 +24,7 @@ import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.engine.OEngine;
 import com.orientechnologies.orient.core.engine.OMemoryAndLocalPaginatedEnginesInitializer;
@@ -54,7 +55,18 @@ public class OrientDBEmbedded implements OrientDBInternal {
   protected final    OEngine        disk;
   protected volatile Thread         shutdownThread;
   protected final    Orient         orient;
-  private volatile boolean open = true;
+  private volatile boolean                          open    = true;
+  private volatile OEmbeddedDatabaseInstanceFactory factory = new OEmbeddedDatabaseInstanceFactory() {
+    @Override
+    public ODatabaseDocumentEmbedded newInstance(OStorage storage) {
+      return new ODatabaseDocumentEmbedded(storage);
+    }
+
+    @Override
+    public ODatabaseDocumentEmbedded newPoolInstance(ODatabasePoolInternal pool, OStorage storage) {
+      return new OEmbeddedDatabasePool(pool, storage);
+    }
+  };
 
   public OrientDBEmbedded(String directoryPath, OrientDBConfig configurations, Orient orient) {
     super();
@@ -71,7 +83,9 @@ public class OrientDBEmbedded implements OrientDBInternal {
 
     OMemoryAndLocalPaginatedEnginesInitializer.INSTANCE.initialize();
 
-    shutdownThread = new Thread(() -> OrientDBEmbedded.this.internalClose());
+    shutdownThread = new Thread(() -> {
+      OrientDBEmbedded.this.internalClose();
+    });
 
     Runtime.getRuntime().addShutdownHook(shutdownThread);
 
@@ -88,7 +102,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
       OAbstractPaginatedStorage storage = getStorage(name);
       // THIS OPEN THE STORAGE ONLY THE FIRST TIME
       storage.open(config.getConfigurations());
-      final ODatabaseDocumentEmbedded embedded = new ODatabaseDocumentEmbedded(storage);
+      final ODatabaseDocumentEmbedded embedded = factory.newInstance(storage);
       embedded.internalOpen(user, "nopwd", config, false);
       return embedded;
     } catch (Exception e) {
@@ -104,7 +118,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
       OAbstractPaginatedStorage storage = getStorage(name);
       // THIS OPEN THE STORAGE ONLY THE FIRST TIME
       storage.open(config.getConfigurations());
-      final ODatabaseDocumentEmbedded embedded = new ODatabaseDocumentEmbedded(storage);
+      final ODatabaseDocumentEmbedded embedded = factory.newInstance(storage);
       embedded.internalOpen(user, password, config);
 
       return embedded;
@@ -125,11 +139,11 @@ public class OrientDBEmbedded implements OrientDBInternal {
 
   }
 
-  public synchronized OEmbeddedDatabasePool poolOpen(String name, String user, String password, OEmbeddedPoolByFactory pool) {
+  public synchronized ODatabaseDocumentInternal poolOpen(String name, String user, String password, ODatabasePoolInternal pool) {
     checkOpen();
     OAbstractPaginatedStorage storage = getStorage(name);
     storage.open(pool.getConfig().getConfigurations());
-    final OEmbeddedDatabasePool embedded = new OEmbeddedDatabasePool(pool, storage);
+    final ODatabaseDocumentEmbedded embedded = factory.newPoolInstance(pool, storage);
     embedded.internalOpen(user, password, pool.getConfig());
     return embedded;
   }
@@ -218,7 +232,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     storage.getConfiguration().update();
 
     // No need to close
-    final ODatabaseDocumentEmbedded embedded = new ODatabaseDocumentEmbedded(storage);
+    final ODatabaseDocumentEmbedded embedded = factory.newInstance(storage);
     embedded.setSerializer(serializer);
     embedded.internalCreate(config);
 
@@ -227,19 +241,25 @@ public class OrientDBEmbedded implements OrientDBInternal {
   @Override
   public synchronized boolean exists(String name, String user, String password) {
     checkOpen();
-    if (!storages.containsKey(name)) {
+    OStorage storage = storages.get(name);
+    if (storage == null) {
       if (basePath != null) {
         return OLocalPaginatedStorage.exists(Paths.get(buildName(name)));
       } else
         return false;
     }
-    return true;
+    return storage.exists();
   }
 
   @Override
   public synchronized void drop(String name, String user, String password) {
     checkOpen();
     if (exists(name, user, password)) {
+      ODatabaseDocumentInternal db = openNoAuthenticate(name,user);
+      for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext(); ) {
+        it.next().onDrop(db);
+      }
+      db.close();
       getStorage(name).delete();
       storages.remove(name);
     }
@@ -282,7 +302,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   @Override
   public ODatabasePoolInternal openPool(String name, String user, String password, OrientDBConfig config) {
     checkOpen();
-    OEmbeddedPoolByFactory pool = new OEmbeddedPoolByFactory(this, name, user, password, solveConfig(config));
+    ODatabasePoolImpl pool = new ODatabasePoolImpl(this, name, user, password, solveConfig(config));
     pools.add(pool);
     return pool;
   }
@@ -313,7 +333,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     return configurations;
   }
 
-  public void removePool(OEmbeddedPoolByFactory pool) {
+  public void removePool(ODatabasePoolInternal pool) {
     pools.remove(pool);
   }
 
@@ -363,7 +383,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   public synchronized void forceDatabaseClose(String iDatabaseName) {
     OAbstractPaginatedStorage storage = storages.remove(iDatabaseName);
     if (storage != null) {
-      storage.close();
+      storage.shutdown();
     }
   }
 
@@ -377,6 +397,10 @@ public class OrientDBEmbedded implements OrientDBInternal {
   private void checkOpen() {
     if (!open)
       throw new ODatabaseException("OrientDB Instance is closed");
+  }
+
+  public synchronized void replaceFactory(OEmbeddedDatabaseInstanceFactory factory) {
+    this.factory = factory;
   }
 
 }

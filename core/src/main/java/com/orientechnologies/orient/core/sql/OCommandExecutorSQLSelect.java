@@ -2153,8 +2153,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
               }
             }
 
-            metricRecorder.recordInvolvedIndexesMetric(index);
-
             OIndexCursor cursor;
             indexIsUsedInOrderBy =
                 orderByOptimizer.canBeUsedByOrderBy(index, orderedFields) && !(index.getInternal() instanceof OChainedIndexProxy);
@@ -2169,6 +2167,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
               context.setVariable("$limit", limit);
 
               cursor = operator.executeIndexQuery(context, index, keyParams, ascSortOrder);
+              if(cursor!=null){
+                metricRecorder.recordInvolvedIndexesMetric(index);
+              }
 
             } catch (OIndexEngineException e) {
               throw e;

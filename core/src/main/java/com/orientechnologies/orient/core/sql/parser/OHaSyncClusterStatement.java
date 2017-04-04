@@ -2,10 +2,19 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-public
-class OHaSyncClusterStatement extends OStatement {
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
+
+import java.util.Map;
+
+public class OHaSyncClusterStatement extends OSimpleExecStatement {
   public OIdentifier clusterName;
-  public boolean modeFull = false;
+  public boolean modeFull  = false;
   public boolean modeMerge = false;
 
   public OHaSyncClusterStatement(int id) {
@@ -16,8 +25,30 @@ class OHaSyncClusterStatement extends OStatement {
     super(p, id);
   }
 
+  @Override
+  public OResultSet executeSimple(OCommandContext ctx) {
+    if (modeMerge) {
+      throw new OCommandExecutionException("Cannot execute HA SYNC CLUSTER: mode MERGE not supported");
+    }
+    ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) ctx.getDatabase();
 
-  /** Accept the visitor. **/
+    try {
+      Map<String, Object> res = db.syncCluster(clusterName.getStringValue());
+      OInternalResultSet rs = new OInternalResultSet();
+      if (res != null) {
+        OResultInternal row = new OResultInternal();
+        res.entrySet().forEach(x -> row.setProperty(x.getKey(), x.getValue()));
+        rs.add(row);
+      }
+      return rs;
+    } catch (Exception e) {
+      throw OException.wrapException(new OCommandExecutionException("Cannot execute HA SYNC CLUSTER"), e);
+    }
+  }
+
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }

@@ -99,15 +99,15 @@ public class DeleteAndLazarusScenarioTest extends AbstractScenarioTest {
 
     final ORecordId r1Rid = (ORecordId) r1onServer1.getIdentity();
 
-    assertEquals(r1onServer1.field("@version"), r1onServer2.field("@version"));
-    assertEquals(r1onServer1.field("id"), r1onServer2.field("id"));
-    assertEquals(r1onServer1.field("firstName"), r1onServer2.field("firstName"));
-    assertEquals(r1onServer1.field("lastName"), r1onServer2.field("lastName"));
+    assertEquals((Integer)r1onServer1.field("@version"), (Integer)r1onServer2.field("@version"));
+    assertEquals((String)r1onServer1.field("id"), (String)r1onServer2.field("id"));
+    assertEquals((String)r1onServer1.field("firstName"), (String)r1onServer2.field("firstName"));
+    assertEquals((String)r1onServer1.field("lastName"), (String)r1onServer2.field("lastName"));
 
-    assertEquals(r1onServer2.field("@version"), r1onServer3.field("@version"));
-    assertEquals(r1onServer2.field("id"), r1onServer3.field("id"));
-    assertEquals(r1onServer2.field("firstName"), r1onServer3.field("firstName"));
-    assertEquals(r1onServer2.field("lastName"), r1onServer3.field("lastName"));
+    assertEquals((Integer)r1onServer2.field("@version"),(Integer) r1onServer3.field("@version"));
+    assertEquals((String)r1onServer2.field("id"), (String)r1onServer3.field("id"));
+    assertEquals((String)r1onServer2.field("firstName"), (String)r1onServer3.field("firstName"));
+    assertEquals((String)r1onServer2.field("lastName"),(String) r1onServer3.field("lastName"));
 
     System.out.println("\tDone.");
 
@@ -148,6 +148,7 @@ public class DeleteAndLazarusScenarioTest extends AbstractScenarioTest {
     } catch (Exception e) {
       e.printStackTrace();
     } finally {
+      dbServer3.activateOnCurrentThread();
       dbServer3.close();
     }
 
@@ -160,10 +161,10 @@ public class DeleteAndLazarusScenarioTest extends AbstractScenarioTest {
     assertEquals("Luke", (String)r1onServer1.field("firstName"));
     assertEquals("Skywalker", (String)r1onServer1.field("lastName"));
 
-    assertEquals(r1onServer1.field("@version"), r1onServer2.field("@version"));
-    assertEquals(r1onServer1.field("id"), r1onServer2.field("id"));
-    assertEquals(r1onServer1.field("firstName"), r1onServer2.field("firstName"));
-    assertEquals(r1onServer1.field("lastName"), r1onServer2.field("lastName"));
+    assertEquals((Integer)r1onServer1.field("@version"), (Integer)r1onServer2.field("@version"));
+    assertEquals((String)r1onServer1.field("id"), r1onServer2.field("id"));
+    assertEquals((String)r1onServer1.field("firstName"), r1onServer2.field("firstName"));
+    assertEquals((String)r1onServer1.field("lastName"), r1onServer2.field("lastName"));
 
     // checking we have different values for r1* on server3
     assertEquals("R001", (String)r1onServer3.field("id"));

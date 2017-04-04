@@ -26,14 +26,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * This operator can work as aggregate or inline. If only one argument is passed than aggregates, otherwise executes, and returns,
@@ -70,7 +63,13 @@ public class OSQLFunctionIntersect extends OSQLFunctionMultiValueAbstract<Object
           context = Arrays.asList(value).iterator();
         }
       } else {
-        context = intersectWith((Iterator) context, value);
+        Iterator contextIterator = null;
+        if (context instanceof Iterator) {
+          contextIterator = (Iterator) context;
+        } else if (OMultiValue.isMultiValue(context)) {
+          contextIterator = OMultiValue.getMultiValueIterator(context);
+        }
+        context = intersectWith(contextIterator, value);
       }
       return null;
     }
@@ -106,7 +105,7 @@ public class OSQLFunctionIntersect extends OSQLFunctionMultiValueAbstract<Object
     if (!(value instanceof Set) && (!(value instanceof OSupportsContains) || !((OSupportsContains) value).supportsFastContains()))
       value = OMultiValue.toSet(value);
 
-    for (Iterator it = current; it.hasNext();) {
+    for (Iterator it = current; it.hasNext(); ) {
       final Object curr = it.next();
       if (value instanceof ORidBag) {
         if (((ORidBag) value).contains((OIdentifiable) curr))

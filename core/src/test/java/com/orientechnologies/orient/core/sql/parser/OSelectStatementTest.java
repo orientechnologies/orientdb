@@ -726,6 +726,13 @@ public class OSelectStatementTest {
   }
 
   @Test
+  public void testRidString() {
+    checkRightSyntax("select \"@rid\" as v from V");
+    SimpleNode stm2 = checkRightSyntax("select {\"@rid\": \"#12:0\"} as v from V");
+    System.out.println(stm2);
+  }
+
+  @Test
   public void testTranslateLucene() {
     OSelectStatement stm = (OSelectStatement) checkRightSyntax("select from V where name LUCENE 'foo'");
     stm.whereClause.getBaseExpression().translateLuceneOperator();

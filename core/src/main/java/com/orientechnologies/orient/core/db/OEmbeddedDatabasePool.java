@@ -27,9 +27,9 @@ import com.orientechnologies.orient.core.storage.OStorage;
  */
 public class OEmbeddedDatabasePool extends ODatabaseDocumentEmbedded {
 
-  private OEmbeddedPoolByFactory pool;
+  private ODatabasePoolInternal pool;
 
-  public OEmbeddedDatabasePool(OEmbeddedPoolByFactory pool, OStorage storage) {
+  public OEmbeddedDatabasePool(ODatabasePoolInternal pool, OStorage storage) {
     super(storage);
     this.pool = pool;
   }
@@ -45,6 +45,11 @@ public class OEmbeddedDatabasePool extends ODatabaseDocumentEmbedded {
   public void reuse() {
     activateOnCurrentThread();
     setStatus(STATUS.OPEN);
+  }
+
+  @Override
+  public ODatabaseDocumentInternal copy() {
+    return (ODatabaseDocumentInternal) pool.acquire();
   }
 
   public void realClose() {

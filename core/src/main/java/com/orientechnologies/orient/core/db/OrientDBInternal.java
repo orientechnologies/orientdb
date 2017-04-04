@@ -196,8 +196,26 @@ public interface OrientDBInternal extends AutoCloseable {
   ODatabasePoolInternal openPool(String name, String user, String password, OrientDBConfig config);
 
   /**
+   * Internal api for request to open a database with a pool
+   *
+   * @param name
+   * @param user
+   * @param password
+   * @param pool
+   *
+   * @return
+   */
+  ODatabaseDocumentInternal poolOpen(String name, String user, String password, ODatabasePoolInternal pool);
+
+  /**
    * Close the factory with all related databases and pools.
    */
   void close();
 
+  /**
+   * Internal API for pool close
+   *
+   * @param toRemove
+   */
+  void removePool(ODatabasePoolInternal toRemove);
 }
