@@ -2863,6 +2863,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return false;
   }
 
+  protected boolean isIndexRebuildScheduledInternal() {
+    return false;
+  }
+
   protected void scheduleIndexRebuild() throws IOException {
   }
 
@@ -3919,7 +3923,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
           operationList.add(operationUnitRecord);
         } else if (walRecord instanceof ONonTxOperationPerformedWALRecord) {
-          if (!isIndexRebuildScheduled()) {
+          if (!isIndexRebuildScheduledInternal()) {
             OLogManager.instance().warn(this, "Non tx operation was used during data modification we will need index rebuild.");
             scheduleIndexRebuild();
           }
