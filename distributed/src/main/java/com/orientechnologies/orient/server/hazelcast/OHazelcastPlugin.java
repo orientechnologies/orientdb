@@ -33,6 +33,7 @@ import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OCallableNoParamNoReturn;
 import com.orientechnologies.common.util.OCallableUtils;
+import com.orientechnologies.orient.core.OSignalHandler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -57,6 +58,7 @@ import com.orientechnologies.orient.server.distributed.impl.task.OUpdateDatabase
 import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.OBeforeDatabaseOpenNetworkEventListener;
+import sun.misc.Signal;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -85,7 +87,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   protected volatile HazelcastInstance hazelcastInstance;
 
   // THIS MAP IS BACKED BY HAZELCAST EVENTS. IN THIS WAY WE AVOID TO USE HZ MAP DIRECTLY
-  protected OHazelcastDistributedMap configurationMap;
+  protected OHazelcastDistributedMap       configurationMap;
+  private   OSignalHandler.OSignalListener signalListener;
 
   public OHazelcastPlugin() {
   }
@@ -268,7 +271,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         haStatsTask = new TimerTask() {
           @Override
           public void run() {
-            printStats();
+            dumpStats();
           }
         };
         Orient.instance().scheduleTask(haStatsTask, statsDelay, statsDelay);
@@ -285,6 +288,15 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
       // WAIT ALL THE MESSAGES IN QUEUE ARE PROCESSED OR MAX 10 SECONDS
       waitStartupIsCompleted();
+
+      signalListener = new OSignalHandler.OSignalListener() {
+        @Override
+        public void onSignal(final Signal signal) {
+          if (signal.toString().trim().equalsIgnoreCase("SIGTRAP"))
+            dumpStats();
+        }
+      };
+      Orient.instance().getSignalHandler().registerListener(signalListener);
 
     } catch (Exception e) {
       ODistributedServerLog.error(this, localNodeName, null, DIRECTION.NONE, "Error on starting distributed plugin", e);
@@ -432,7 +444,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     }
   }
 
-  protected void printStats() {
+  protected void dumpStats() {
     try {
       final ODocument clusterCfg = getClusterConfiguration();
 
@@ -443,11 +455,13 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       buffer.append(ODistributedOutput.formatLatency(this, clusterCfg));
       buffer.append(ODistributedOutput.formatMessages(this, clusterCfg));
 
-      for (String db : dbs)
-        buffer.append(ODistributedOutput.formatLocks(this, db));
+      OLogManager.instance().flush();
+      for (String db : dbs) {
+        buffer.append(messageService.getDatabase(db).dump());
+      }
 
       // DUMP HA STATS
-      ODistributedServerLog.debug(this, getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE, "%s", buffer);
+      ODistributedServerLog.info(this, getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE, "%s", buffer);
 
     } catch (Throwable t) {
       ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE, "Error on printing HA stats");
@@ -482,6 +496,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   public void shutdown() {
     if (!enabled)
       return;
+
+    Orient.instance().getSignalHandler().unregisterListener(signalListener);
 
     for (OServerNetworkListener nl : serverInstance.getNetworkListeners())
       nl.unregisterBeforeConnectNetworkEventListener(this);

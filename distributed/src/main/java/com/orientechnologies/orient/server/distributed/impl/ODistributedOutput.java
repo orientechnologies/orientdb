@@ -642,7 +642,7 @@ public class ODistributedOutput {
         .getDatabase(db).lockManager;
 
     final StringBuilder buffer = new StringBuilder();
-    buffer.append("\nHA LOCKS FOR DATABASE '" + db + "'");
+    buffer.append("HA LOCKS FOR DATABASE '" + db + "'");
     final OTableFormatter table = new OTableFormatter(new OTableFormatter.OTableOutput() {
       @Override
       public void onMessage(final String text, final Object... args) {
@@ -674,6 +674,7 @@ public class ODistributedOutput {
         row.field("server", manager.getNodeNameById(lock.reqId.getNodeId()));
         row.field("acquiredOn", dateFormat.format(new Date(lock.acquiredOn)));
         row.field("reqId", lock.reqId);
+        row.field("threadCount", lock.lock.getCount());
       }
     }
 

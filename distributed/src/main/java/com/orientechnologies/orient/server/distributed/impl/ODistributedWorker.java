@@ -64,6 +64,7 @@ public class ODistributedWorker extends Thread {
   private AtomicBoolean waitingForNextRequest = new AtomicBoolean(true);
 
   private static final long MAX_SHUTDOWN_TIMEOUT = 5000l;
+  private volatile ODistributedRequest currentExecuting;
 
   public ODistributedWorker(final ODistributedDatabaseImpl iDistributed, final String iDatabaseName, final int i) {
     id = i;
@@ -95,11 +96,15 @@ public class ODistributedWorker extends Thread {
       try {
         message = readRequest();
 
+        currentExecuting = message;
+
         if (message != null) {
           message.getId();
           reqId = message.getId();
           onMessage(message);
         }
+
+        currentExecuting = null;
 
       } catch (InterruptedException e) {
         // EXIT CURRENT THREAD
@@ -443,5 +448,9 @@ public class ODistributedWorker extends Thread {
   public void sendShutdown() {
     running = false;
     this.interrupt();
+  }
+
+  public ODistributedRequest getProcessing() {
+    return currentExecuting;
   }
 }

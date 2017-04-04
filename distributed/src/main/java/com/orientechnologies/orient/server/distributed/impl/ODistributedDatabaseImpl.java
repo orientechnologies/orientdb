@@ -1071,11 +1071,23 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   @Override
-  public void dumpLocks() {
-    OLogManager.instance().info(this, "Current locks database '%s' server '%s'", databaseName, manager.getLocalNodeName());
-    for (Map.Entry<ORID, ODistributedLock> entry : lockManager.entrySet()) {
-      OLogManager.instance()
-          .info(this, "- %s = %s (count=%d)", entry.getKey(), entry.getValue().reqId, entry.getValue().lock.getCount());
+  public String dump() {
+    final StringBuilder buffer = new StringBuilder(1024);
+
+    buffer.append("\n\nDATABASE '" + databaseName + "' ON SERVER '" + manager.getLocalNodeName() + "'");
+
+    buffer.append("\n- "+ODistributedOutput.formatLocks(manager, databaseName));
+
+    buffer.append("\n- MESSAGES IN QUEUES:");
+
+    for (ODistributedWorker t : workerThreads) {
+      buffer.append("\n - QUEUE " + t.id +" EXECUTING: " +t.getProcessing() );
+      int i = 0;
+      for (ODistributedRequest m : t.localQueue) {
+        if (m != null)
+          buffer.append("\n  - " + i + " = " + m.toString());
+      }
     }
+    return buffer.toString();
   }
 }

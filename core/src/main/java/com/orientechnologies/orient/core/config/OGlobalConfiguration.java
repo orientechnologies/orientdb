@@ -635,7 +635,7 @@ public enum OGlobalConfiguration {
    * @Since 2.2.18
    */
   DISTRIBUTED_DUMP_STATS_EVERY("distributed.dumpStatsEvery", "Time in ms to dump the cluster stats. Set to 0 to disable such dump",
-      Long.class, 60000l, true),
+      Long.class, 0, true),
 
   DISTRIBUTED_CRUD_TASK_SYNCH_TIMEOUT("distributed.crudTaskTimeout", "Maximum timeout (in ms) to wait for CRUD remote tasks",
       Long.class, 10000l, true),
