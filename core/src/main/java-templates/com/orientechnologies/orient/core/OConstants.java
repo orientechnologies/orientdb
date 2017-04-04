@@ -20,17 +20,16 @@
 package com.orientechnologies.orient.core;
 
 public class OConstants {
-  public static final String  ORIENT_URL           = "https://www.orientdb.com";
-  public static final String  COPYRIGHT            = "Copyrights (c) 2017 OrientDB LTD";
-  public static final String  ORIENT_VERSION       = "${project.version}";
-  public static final String  GROUPID              = "${project.groupId}";
-  public static final String  ARTIFACTID           = "${project.artifactId}";
-  public static final String  REVISION             = "${buildNumber}";
+  public static final String ORIENT_URL           = "https://www.orientdb.com";
+  public static final String COPYRIGHT            = "Copyrights (c) 2017 OrientDB LTD";
+  public static final String ORIENT_VERSION       = "${project.version}";
+  public static final String GROUPID              = "${project.groupId}";
+  public static final String ARTIFACTID           = "${project.artifactId}";
+  public static final String REVISION             = "${buildNumber}";
   //deprecated properties
-  public static final int     ORIENT_VERSION_MAJOR = 3;
-  public static final int     ORIENT_VERSION_MINOR = 0;
-  public static final int     ORIENT_VERSION_HOFIX = 0;
-  public static final boolean SNAPSHOT             = false;
+  public static final int    ORIENT_VERSION_MAJOR = 2;
+  public static final int    ORIENT_VERSION_MINOR = 2;
+  public static final int    ORIENT_VERSION_HOFIX = 18;
 
   /**
    * Returns the complete text of the current OrientDB version.
