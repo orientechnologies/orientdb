@@ -132,10 +132,7 @@ public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistri
   protected void onAfterExecution() {
 
     final long totalLockExceptions = lockExceptions.get();
-    
-System.out.println("totalLockExceptions = " + totalLockExceptions);
-System.out.println("expectedConcurrentException = " + expectedConcurrentException);
-    
+
     if (expectedConcurrentException)
     {
       Assert.assertTrue("lockExceptions are " + totalLockExceptions, totalLockExceptions > 0);

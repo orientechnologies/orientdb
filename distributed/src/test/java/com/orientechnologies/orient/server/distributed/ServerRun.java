@@ -229,7 +229,7 @@ System.out.println("----- db exists = " + orientDB.exists(dbName));
     }
   }
 */
-  protected String getServerHome() {
+  public String getServerHome() {
     return getServerHome(serverId);
   }
 

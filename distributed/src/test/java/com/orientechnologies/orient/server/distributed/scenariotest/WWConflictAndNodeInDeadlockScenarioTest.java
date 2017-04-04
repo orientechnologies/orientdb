@@ -122,10 +122,10 @@ public class WWConflictAndNodeInDeadlockScenarioTest extends AbstractScenarioTes
       r1onServer1 = retrieveRecord(serverInstance.get(0), "R001"); // This was set to get(1), but shouldn't it be get(0) for Server1?
       ODocument r1onServer2 = retrieveRecord(serverInstance.get(1), "R001");
   
-      assertEquals(r1onServer1.field("@version"), r1onServer2.field("@version"));
-      assertEquals(r1onServer1.field("id"), r1onServer2.field("id"));
-      assertEquals(r1onServer1.field("firstName"), r1onServer2.field("firstName"));
-      assertEquals(r1onServer1.field("lastName"), r1onServer2.field("lastName"));
+      assertEquals((Integer)r1onServer1.field("@version"), r1onServer2.field("@version"));
+      assertEquals((String)r1onServer1.field("id"), r1onServer2.field("id"));
+      assertEquals((String)r1onServer1.field("firstName"), r1onServer2.field("firstName"));
+      assertEquals((String)r1onServer1.field("lastName"), r1onServer2.field("lastName"));
   
       System.out.println("\tDone.");
   
@@ -226,12 +226,15 @@ public class WWConflictAndNodeInDeadlockScenarioTest extends AbstractScenarioTes
       int finalVersion = r1onServer1.field("@version");
       assertEquals(finalVersion, initialVersion + 1);
   
-      assertEquals(r1onServer1.field("@version"), r1onServer2.field("@version"));
-      assertEquals(r1onServer2.field("@version"), r1onServer3.field("@version"));
+      assertEquals((Integer)r1onServer1.field("@version"), r1onServer2.field("@version"));
+      assertEquals((Integer)r1onServer2.field("@version"), r1onServer3.field("@version"));
       System.out.println("Done.");
     } finally {
+      dbServer1.activateOnCurrentThread();
      	dbServer1.close();
+     	dbServer2.activateOnCurrentThread();
      	dbServer2.close();
+     	dbServer3.activateOnCurrentThread();
      	dbServer3.close();
     }
   }

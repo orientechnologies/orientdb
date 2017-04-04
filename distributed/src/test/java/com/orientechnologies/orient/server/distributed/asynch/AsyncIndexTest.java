@@ -57,10 +57,10 @@ public class AsyncIndexTest extends BareBoneBase2ServerTest {
 
     // CHECK ON THE OTHER NODE
     ODatabaseDocumentTx graph2 = new ODatabaseDocumentTx(getLocalURL2());
-    if(graph.exists()){
-      graph.open("admin", "admin");
+    if(graph2.exists()){
+      graph2.open("admin", "admin");
     }else{
-      graph.create();
+      graph2.create();
     }
     try {
       try {

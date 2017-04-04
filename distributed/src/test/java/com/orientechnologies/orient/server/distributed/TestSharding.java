@@ -216,18 +216,18 @@ public class TestSharding extends AbstractServerClusterTest {
             Assert.assertTrue("Error on query against '" + clusterName + "' on server '" + server + "': " + query,
                 result.iterator().hasNext());
 
-            OVertex v = result.iterator().next();
+            OElement v = result.iterator().next();
 
             Assert.assertEquals("Returned vertices name property is != shard_" + i + " on server " + server, "shard_" + i,
                 v.getProperty("name-property"));
 
-            final Iterable<OVertex> knows = v.getVertices(ODirection.OUT, "Knows-Type");
+            final Iterable<OVertex> knows = v.asVertex().get().getVertices(ODirection.OUT, "Knows-Type");
 
-            final Iterable<OVertex> boughtV = v.getVertices(ODirection.OUT, "Buy-Type");
+            final Iterable<OVertex> boughtV =  v.asVertex().get().getVertices(ODirection.OUT, "Buy-Type");
             Assert.assertTrue(boughtV.iterator().hasNext());
             Assert.assertEquals(boughtV.iterator().next(), product);
 
-            final Iterable<OEdge> boughtE = v.getEdges(ODirection.OUT, "Buy-Type");
+            final Iterable<OEdge> boughtE = v.asVertex().get().getEdges(ODirection.OUT, "Buy-Type");
             Assert.assertNotNull(boughtE.iterator().next().getProperty("price"));
           }
         } finally {
@@ -241,11 +241,11 @@ public class TestSharding extends AbstractServerClusterTest {
         ODatabaseDocument g =serverInstance.get(0).getServerInstance().openDatabase(getDatabaseName(),"admin","admin");
         try {
           // MISC QUERIES
-          Iterable<OVertex> result = g
+          Iterable<OElement> result = g
               .command(new OCommandSQL("select sum(amount), set(amount) from ( select from `Client-type` )")).execute();
 
           int count = 0;
-          for (OVertex v : result) {
+          for (OElement v : result) {
             System.out.println("select sum(amount), set(amount) from ( select from `Client-Type` ) -> " + v.getRecord());
 
             Assert.assertNotNull("set() function wasn't returned on server " + server, v.getProperty("set"));

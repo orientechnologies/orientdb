@@ -147,11 +147,7 @@ public class TestAsyncReplMode extends BareBoneBase2ClientTest {
   protected void dbClient2() {
     synchronized (LOCK) {
       ODatabaseDocumentTx graph = new ODatabaseDocumentTx(getRemoteURL());
-      if(graph.exists()){
-        graph.open("admin", "admin");
-      }else{
-        graph.create();
-      }
+      graph.open("admin", "admin");
       graph.begin();
       OVertex parentV1 = null;
       OVertex parentV2 = null;

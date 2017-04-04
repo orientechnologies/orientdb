@@ -16,6 +16,7 @@
 
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -79,9 +80,9 @@ public class ThreeClientsRecordDeleteWithTransactionsOnMultipleServersScenarioTe
 
     try {
       // sets a delay for operations on distributed storage of all servers
-      ((ODistributedStorage) ((ODatabaseDocumentTx)dbServer1).getStorage()).setEventListener(new AfterRecordLockDelayer("server1", DOCUMENT_WRITE_TIMEOUT));
-      ((ODistributedStorage) ((ODatabaseDocumentTx)dbServer2).getStorage()).setEventListener(new AfterRecordLockDelayer("server2", DOCUMENT_WRITE_TIMEOUT / 4));
-      ((ODistributedStorage) ((ODatabaseDocumentTx)dbServer3).getStorage()).setEventListener(new AfterRecordLockDelayer("server3", DOCUMENT_WRITE_TIMEOUT / 2));
+      ((ODistributedStorage) ((ODatabaseDocumentInternal)dbServer1).getStorage()).setEventListener(new AfterRecordLockDelayer("server1", DOCUMENT_WRITE_TIMEOUT));
+      ((ODistributedStorage) ((ODatabaseDocumentInternal)dbServer2).getStorage()).setEventListener(new AfterRecordLockDelayer("server2", DOCUMENT_WRITE_TIMEOUT / 4));
+      ((ODistributedStorage) ((ODatabaseDocumentInternal)dbServer3).getStorage()).setEventListener(new AfterRecordLockDelayer("server3", DOCUMENT_WRITE_TIMEOUT / 2));
   
       // updates the same record from three different clients, each calling a different server
       List<Callable<Void>> clients = new LinkedList<Callable<Void>>();
@@ -97,8 +98,11 @@ public class ThreeClientsRecordDeleteWithTransactionsOnMultipleServersScenarioTe
       assertTrue(retrieveRecordOrReturnMissing(serverInstance.get(1), RECORD_ID) == MISSING_DOCUMENT);
       assertTrue(retrieveRecordOrReturnMissing(serverInstance.get(2), RECORD_ID) == MISSING_DOCUMENT);
     } finally {
+      dbServer1.activateOnCurrentThread();
      	dbServer1.close();
+     	dbServer2.activateOnCurrentThread();
      	dbServer2.close();
+     	dbServer3.activateOnCurrentThread();
      	dbServer3.close();
     }
   }

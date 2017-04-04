@@ -17,6 +17,9 @@
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
@@ -108,10 +111,14 @@ public class MultipleDBAlignmentOnNodesJoining extends AbstractScenarioTest {
 
     // creating databases on server1
     ServerRun master = serverInstance.get(0);
+    OrientDB orientDB = new OrientDB("embedded:" + master.getServerHome() + "/databases/", OrientDBConfig.defaultConfig());
+
 
     if (iCreateDatabase) {
-      final ODatabaseDocument graph1 = master.createDatabase(dbA);
-      final ODatabaseDocument graph2 = master.createDatabase(dbB);
+      orientDB.create(dbA, ODatabaseType.PLOCAL);
+      orientDB.create(dbB, ODatabaseType.PLOCAL);
+      final ODatabaseDocument graph1 = orientDB.open(dbA,"admin","admin");
+      final ODatabaseDocument graph2 = orientDB.open(dbB,"admin","admin");
       try {
         onAfterDatabaseCreation(graph1);
         onAfterDatabaseCreation(graph2);
@@ -124,6 +131,7 @@ public class MultipleDBAlignmentOnNodesJoining extends AbstractScenarioTest {
           graph2.activateOnCurrentThread();
           graph2.close();
         }
+        orientDB.close();
       }
     }
 
@@ -133,17 +141,20 @@ public class MultipleDBAlignmentOnNodesJoining extends AbstractScenarioTest {
 
     // creating db-C on server2
     master = serverInstance.get(1);
-
+    OrientDB orientDB1 = new OrientDB("embedded:" + master.getServerHome() + "/databases/", OrientDBConfig.defaultConfig());
     if (iCreateDatabase) {
-      ODatabaseDocument graph1 = master.createDatabase(dbC);
+      orientDB1.create(dbC, ODatabaseType.PLOCAL);
+      final ODatabaseDocument graph1 = orientDB1.open(dbC,"admin","admin");
       try {
         onAfterDatabaseCreation(graph1);
       } finally {
         if(!graph1.isClosed()) {
           graph1.close();
         }
+        orientDB1.close();
       }
     }
+
   }
 
   /**

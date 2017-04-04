@@ -514,7 +514,6 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    */
   default OClass getClass(String className) {
     OSchema schema = getMetadata().getSchema();
-    schema.reload();
     return schema.getClass(className);
   }
 
