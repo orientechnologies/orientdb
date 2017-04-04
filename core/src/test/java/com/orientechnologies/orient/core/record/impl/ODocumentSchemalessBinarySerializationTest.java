@@ -13,7 +13,6 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 import org.assertj.core.api.Assertions;
-import org.assertj.core.api.ObjectArrayAssert;
 import org.junit.Test;
 
 import java.math.BigDecimal;
@@ -88,7 +87,7 @@ public class ODocumentSchemalessBinarySerializationTest {
     assertEquals(extr.<Object>field("dateTime"), document.field("dateTime"));
     assertEquals(extr.field("date"), c.getTime());
     assertEquals(extr.field("date1"), c1.getTime());
-//    assertEquals(extr.<String>field("bytes"), document.field("bytes"));
+    //    assertEquals(extr.<String>field("bytes"), document.field("bytes"));
     Assertions.assertThat(extr.<Object>field("bytes")).isEqualTo(document.field("bytes"));
     assertEquals(extr.<String>field("utf8String"), document.field("utf8String"));
     assertEquals(extr.<Object>field("recordId"), document.field("recordId"));
@@ -815,6 +814,40 @@ public class ODocumentSchemalessBinarySerializationTest {
     assertEquals(fields[1], "b");
     assertEquals(fields[2], "c");
   }
+
+  @Test
+  public void testFieldNamesRaw() {
+    ODocument document = new ODocument();
+    document.fields("a", 1, "b", 2, "c", 3);
+    byte[] res = serializer.toStream(document, false);
+    final String[] fields = serializer.getFieldNames(document, res);
+
+    assertNotNull(fields);
+    assertEquals(fields.length, 3);
+    assertEquals(fields[0], "a");
+    assertEquals(fields[1], "b");
+    assertEquals(fields[2], "c");
+  }
+
+  @Test
+  public void testPartial() {
+    ODocument document = new ODocument();
+    document.field("name", "name");
+    document.field("age", 20);
+    document.field("youngAge", (short) 20);
+    document.field("oldAge", (long) 20);
+
+    byte[] res = serializer.toStream(document, false);
+    ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] { "name", "age" });
+
+    assertEquals(document.field("name"), extr.<Object>field("name"));
+    assertEquals(document.<Object>field("age"), extr.field("age"));
+    assertNull(extr.field("youngAge"));
+    assertNull(extr.field("oldAge"));
+
+  }
+
+
 
   public static class Custom implements OSerializableStream {
     byte[] bytes = new byte[10];
