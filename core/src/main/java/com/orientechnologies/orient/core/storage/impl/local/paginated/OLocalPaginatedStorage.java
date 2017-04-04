@@ -448,6 +448,11 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
   }
 
   @Override
+  protected boolean isIndexRebuildScheduledInternal() {
+    return dirtyFlag.isIndexRebuildScheduled();
+  }
+
+  @Override
   protected void scheduleIndexRebuild() throws IOException {
     dirtyFlag.scheduleIndexRebuild();
   }
