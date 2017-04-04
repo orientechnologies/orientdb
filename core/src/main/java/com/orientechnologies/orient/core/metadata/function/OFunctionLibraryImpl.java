@@ -72,6 +72,11 @@ public class OFunctionLibraryImpl implements OFunctionLibrary {
       List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from OFunction order by name"));
       for (ODocument d : result) {
         d.reload();
+
+        //skip the function records which do not contain real data
+        if (d.fields() == 0)
+          continue;
+
         final OFunction f = new OFunction(d);
 
         // RESTORE CALLBACK IF ANY
