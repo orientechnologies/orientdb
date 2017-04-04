@@ -435,8 +435,9 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
       // CREATE THE RESPONSE MANAGER
       final ODistributedResponseManager currentResponseMgr = new ODistributedResponseManager(manager, iRequest, iNodes,
-          nodesConcurToTheQuorum, expectedResponses, quorum, waitLocalNode, task.getSynchronousTimeout(expectedResponses),
-          task.getTotalTimeout(availableNodes), groupByResponse);
+          nodesConcurToTheQuorum, expectedResponses, quorum, waitLocalNode,
+          adjustTimeoutWithLatency(iNodes, task.getSynchronousTimeout(expectedResponses)),
+          adjustTimeoutWithLatency(iNodes, task.getTotalTimeout(availableNodes)), groupByResponse);
 
       if (localResult != null)
         // COLLECT LOCAL RESULT
@@ -520,6 +521,20 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       if (iAfterSentCallback != null && !afterSendCallBackCalled)
         iAfterSentCallback.call(iRequest.getId());
     }
+  }
+
+  private long adjustTimeoutWithLatency(final Collection<String> iNodes, final long timeout) {
+    int delta = 0;
+    if (iNodes != null)
+      for (String n : iNodes)
+        // UPDATE THE TIMEOUT WITH THE CURRENT SERVER LATENCY
+        delta += msgService.getCurrentLatency(n);
+
+    if (delta > 1000)
+      ODistributedServerLog.debug(this, localNodeName, iNodes.toString(), DIRECTION.OUT,
+          "Adjusted timeouts by adding +%dms because the average latency recorded against servers %s", delta, iNodes);
+
+    return timeout + delta;
   }
 
   @Override
@@ -1076,12 +1091,14 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
     buffer.append("\n\nDATABASE '" + databaseName + "' ON SERVER '" + manager.getLocalNodeName() + "'");
 
-    buffer.append("\n- "+ODistributedOutput.formatLocks(manager, databaseName));
+    buffer.append("\n- " + manager.getLockManagerExecutor().dumpLocks());
+
+    buffer.append("\n- " + ODistributedOutput.formatRecordLocks(manager, databaseName));
 
     buffer.append("\n- MESSAGES IN QUEUES:");
 
     for (ODistributedWorker t : workerThreads) {
-      buffer.append("\n - QUEUE " + t.id +" EXECUTING: " +t.getProcessing() );
+      buffer.append("\n - QUEUE " + t.id + " EXECUTING: " + t.getProcessing());
       int i = 0;
       for (ODistributedRequest m : t.localQueue) {
         if (m != null)

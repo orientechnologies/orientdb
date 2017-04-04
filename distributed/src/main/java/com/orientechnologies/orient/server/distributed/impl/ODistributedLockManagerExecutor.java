@@ -160,11 +160,17 @@ public class ODistributedLockManagerExecutor implements ODistributedLockManager 
     }
   }
 
-  public void dumpLocks() {
-    OLogManager.instance().info(this, "Current distributed locks for database '%s' server '%s'", manager.getLocalNodeName());
+  public String dumpLocks() {
+    final StringBuilder buffer = new StringBuilder();
+
+    buffer.append("HA RESOURCE LOCKS FOR SERVER '" + manager.getLocalNodeName() + "'");
+
+    final long now = System.currentTimeMillis();
     for (Map.Entry<String, ODistributedLock> entry : lockManager.entrySet()) {
-      OLogManager.instance()
-          .info(this, "- %s = %s (count=%d)", entry.getKey(), entry.getValue().server, entry.getValue().lock.getCount());
+      buffer.append("\n  - '" + entry.getKey() + "' by server " + entry.getValue().server + " (acquiredOn=" + (now - entry
+          .getValue().acquiredOn) + "ms ago - count=" + entry.getValue().lock.getCount() + ")");
     }
+
+    return buffer.toString();
   }
 }
