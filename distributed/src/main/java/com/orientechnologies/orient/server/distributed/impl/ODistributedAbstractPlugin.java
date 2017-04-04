@@ -107,7 +107,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected       List<ODistributedLifecycleListener>            listeners                         = new ArrayList<ODistributedLifecycleListener>();
   protected final ConcurrentMap<String, ORemoteServerController> remoteServers                     = new ConcurrentHashMap<String, ORemoteServerController>();
   protected       TimerTask                                      publishLocalNodeConfigurationTask = null;
-  protected       TimerTask                                      haStatsTask = null;
+  protected       TimerTask                                      haStatsTask                       = null;
   protected       OClusterHealthChecker                          healthCheckerTask                 = null;
   protected String coordinatorServer;
 
@@ -1645,7 +1645,22 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       throw new RuntimeException(e);
 
     } finally {
-      lockManagerRequester.releaseExclusiveLock(databaseName, nodeName);
+      for (int retry = 0; retry < 10; ++retry)
+        try {
+          lockManagerRequester.releaseExclusiveLock(databaseName, nodeName);
+          // RELEASED
+          break;
+        } catch (Throwable t) {
+          // ERROR: RETRY IN A BIT
+          ODistributedServerLog.error(this, nodeName, databaseName, DIRECTION.OUT,
+              "Cannot release distributed lock against database '%s' coordinator server '%s' (error: %s)", databaseName,
+              lockManagerRequester.getCoordinatorServer(), t);
+          try {
+            Thread.sleep(1000);
+          } catch (InterruptedException e) {
+            break;
+          }
+        }
     }
   }
 
