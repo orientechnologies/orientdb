@@ -34,7 +34,6 @@ import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -134,28 +133,16 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
     if (className.length() != 0)
       ODocumentInternal.fillClassNameIfNeeded(document, className);
 
-    int last = 0;
     String fieldName;
-    int valuePos;
     OType type;
-    while (true) {
-      final int len = OVarIntSerializer.readAsInteger(bytes);
-      if (len == 0) {
-        // SCAN COMPLETED
-        break;
-      } else if (len > 0) {
-        // PARSE FIELD NAME
-        fieldName = stringFromBytes(bytes.bytes, bytes.offset, len).intern();
-        bytes.skip(len);
-        type = readOType(bytes);
-      } else {
-        throw new OStorageException("property id not supported in network serialization");
-      }
-
+    int size = OVarIntSerializer.readAsInteger(bytes);
+    while ((size--) > 0) {
+      // PARSE FIELD NAME
+      fieldName = readString(bytes);
+      type = readOType(bytes);
       if (ODocumentInternal.rawContainsField(document, fieldName)) {
         continue;
       }
-
       if (type == null) {
         document.setProperty(fieldName, null);
       } else {
@@ -178,6 +165,7 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
       return;
     }
     final Set<Entry<String, ODocumentEntry>> fields = ODocumentInternal.rawEntries(document);
+    OVarIntSerializer.write(bytes, fields.size());
     for (Entry<String, ODocumentEntry> entry : fields) {
       ODocumentEntry docEntry = entry.getValue();
       if (!docEntry.exist())
@@ -196,7 +184,6 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
         writeOType(bytes, bytes.alloc(1), null);
       }
     }
-    writeString(bytes, "");
   }
 
   public String[] getFieldNames(ODocument reference, final BytesContainer bytes) {
@@ -206,29 +193,14 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
 
     final List<String> result = new ArrayList<String>();
 
+    int size = OVarIntSerializer.readAsInteger(bytes);  
     String fieldName;
-    while (true) {
-      OGlobalProperty prop = null;
-      final int len = OVarIntSerializer.readAsInteger(bytes);
-      if (len == 0) {
-        // SCAN COMPLETED
-        break;
-      } else if (len > 0) {
-        // PARSE FIELD NAME
-        fieldName = stringFromBytes(bytes.bytes, bytes.offset, len).intern();
-        result.add(fieldName);
-
-        // SKIP THE REST
-        bytes.skip(len + OIntegerSerializer.INT_SIZE + 1);
-      } else {
-        // LOAD GLOBAL PROPERTY BY ID
-        final int id = (len * -1) - 1;
-        prop = ODocumentInternal.getGlobalPropertyById(reference, id);
-        result.add(prop.getName());
-
-        // SKIP THE REST
-        bytes.skip(OIntegerSerializer.INT_SIZE + (prop.getType() != OType.ANY ? 0 : 1));
-      }
+    OType type;
+    while ((size--) > 0) {
+      fieldName = readString(bytes);
+      type = readOType(bytes);
+      deserializeValue(bytes, type, new ODocument());
+      result.add(fieldName);
     }
 
     return result.toArray(new String[result.size()]);
@@ -400,7 +372,7 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
       String key = readString(bytes);
       OType valType = readOType(bytes);
       Object value = null;
-      if(valType!=null) {
+      if (valType != null) {
         value = deserializeValue(bytes, valType, document);
       }
       result.put(key, value);
@@ -851,7 +823,7 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
     if (iSource == null || iSource.length == 0)
       return new String[0];
 
-    final BytesContainer container = new BytesContainer(iSource).skip(1);
+    final BytesContainer container = new BytesContainer(iSource);
 
     try {
       return getFieldNames(reference, container);

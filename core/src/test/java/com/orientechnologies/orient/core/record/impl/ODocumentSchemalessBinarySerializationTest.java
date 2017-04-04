@@ -13,7 +13,6 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 import org.assertj.core.api.Assertions;
-import org.assertj.core.api.ObjectArrayAssert;
 import org.junit.Test;
 
 import java.math.BigDecimal;
@@ -808,6 +807,20 @@ public class ODocumentSchemalessBinarySerializationTest {
     ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
 
     final String[] fields = extr.fieldNames();
+
+    assertNotNull(fields);
+    assertEquals(fields.length, 3);
+    assertEquals(fields[0], "a");
+    assertEquals(fields[1], "b");
+    assertEquals(fields[2], "c");
+  }
+
+  @Test
+  public void testFieldNamesRaw() {
+    ODocument document = new ODocument();
+    document.fields("a", 1, "b", 2, "c", 3);
+    byte[] res = serializer.toStream(document, false);
+    final String[] fields = serializer.getFieldNames(document,res);
 
     assertNotNull(fields);
     assertEquals(fields.length, 3);

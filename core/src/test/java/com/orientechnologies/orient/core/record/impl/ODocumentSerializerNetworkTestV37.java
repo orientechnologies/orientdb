@@ -6,7 +6,7 @@ import org.junit.Before;
 /**
  * Created by tglman on 05/10/15.
  */
-public class ODocumentSerializerNetworkTestV1 extends ODocumentSchemalessBinarySerializationTest {
+public class ODocumentSerializerNetworkTestV37 extends ODocumentSchemalessBinarySerializationTest {
 
 
 
