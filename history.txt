@@ -28,6 +28,11 @@ This document contains the last changes of OrientDB Community Edition.
 
 
 -----------------------------------------------------------------------------------------------------------------------------------
+VERSION 2.2.18 - (Apr, 5 2017)
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-2.2-Release-Notes#2218
+- Issues: https://github.com/orientechnologies/orientdb/issues?q=is%3Aissue+milestone%3A2.2.18+is%3Acloseda
+
+-----------------------------------------------------------------------------------------------------------------------------------
 VERSION 2.2.17 - (Feb, 16 2017)
 - Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-2.2-Release-Notes#2217
 - Issues: https://github.com/orientechnologies/orientdb/issues?q=is%3Aissue+milestone%3A2.2.17+is%3Acloseda
