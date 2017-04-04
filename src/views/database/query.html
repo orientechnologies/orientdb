@@ -165,13 +165,13 @@
     <div ng-show="current == 'raw'" class="jsonView">
       <div class="row">
         <div jsontext ui-codemirror="viewerOptions" ng-model="item.rawData"
-             style="width: 100%; height: 100px;"></div>
+             style="width: 100%; height: 230px;"></div>
       </div>
     </div>
 
     <div ng-show="current == 'explain'">
       <div class="row">
-        <pre style="overflow: auto; width: 100%; height: 100px;">{{item.results[0].executionPlanAsString}}</pre>
+        <pre style="overflow: auto; width: 100%; height: 230px; font-size: smaller">{{item.rawData.executionPlan.prettyPrint}}</pre>
       </div>
     </div>
 
@@ -193,7 +193,7 @@
           <li ng-class="{active : current == 'raw' }">
             <a href="javascript:void(0)" ng-click="current = 'raw'">Raw</a>
           </li>
-          <li ng-class="{active : current == 'explain' }" ng-show="item.results[0].executionPlanAsString">
+          <li ng-class="{active : current == 'explain' }" ng-show="item.rawData.executionPlan">
             <a href="javascript:void(0)" ng-click="showExplain()">Explain</a>
           </li>
         </ul>
