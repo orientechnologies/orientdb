@@ -57,23 +57,21 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
 
   protected class BaseWriter implements Callable<Void> {
     protected final ServerRun serverRun;
-    protected final int    serverId;
-    protected final int    threadId;
+    protected final int       serverId;
+    protected final int       threadId;
 
     protected BaseWriter(final int iServerId, final int iThreadId, final ServerRun serverRun) {
       serverId = iServerId;
       threadId = iThreadId;
       this.serverRun = serverRun;
-      
-System.out.println("---- BaseWriter()");      
+
+      System.out.println("---- BaseWriter()");
     }
 
     @Override
     public Void call() throws Exception {
       int j = 0;
       String name = Integer.toString(threadId);
-
-System.out.println("---- call() count = " + count);
 
       for (int i = 0; i < count; i++) {
 
@@ -233,8 +231,8 @@ System.out.println("---- call() count = " + count);
 
     private void checkClusterStrategy(ODatabaseDocument database) {
 //      if (!databaseUrl.startsWith("remote:"))
-        Assert.assertTrue(
-            database.getMetadata().getSchema().getClass("Person").getClusterSelection() instanceof OLocalClusterWrapperStrategy);
+      Assert.assertTrue(
+          database.getMetadata().getSchema().getClass("Person").getClusterSelection() instanceof OLocalClusterWrapperStrategy);
     }
 
     protected void deleteRecord(ODatabaseDocument database, ODocument doc) {
@@ -308,27 +306,21 @@ System.out.println("---- call() count = " + count);
   }
 
   @Override
-  protected void prepare(boolean iCopyDatabaseToNodes, boolean iCreateDatabase) throws IOException {
+  protected void prepare(boolean iCopyDatabaseToNodes, boolean iCreateDatabase) throws Exception {
     super.prepare(iCopyDatabaseToNodes, iCreateDatabase);
 
     executeTestsOnServers = new ArrayList<ServerRun>(serverInstance);
   }
 
   protected void executeMultipleTest(final int serverNum) throws InterruptedException, java.util.concurrent.ExecutionException {
-//    poolFactory.reset();
-//    ODatabaseDocumentTx database = poolFactory.get(getDatabaseURL(serverInstance.get(serverNum)), "admin", "admin").acquire();
-//    ODatabaseDocument database = getDatabase(serverNum);
-    
     ODatabaseDocument database = getDatabase(serverNum); // serverInstance.get(serverNum).getEmbeddedDatabase(getDatabaseName());
-    
-System.out.println("---- database isClosed = " + database.isClosed());
+
 
     try {
       List<ODocument> result = database.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from Person"));
       baseCount = ((Number) result.get(0).field("count")).intValue();
     } finally {
       database.close();
-      serverInstance.get(serverNum).closeOrientDB();
     }
 
     System.out.println("Creating Writers and Readers threads...");
@@ -344,14 +336,10 @@ System.out.println("---- database isClosed = " + database.isClosed());
     for (ServerRun server : executeTestsOnServers) {
       if (server.isActive()) {
         for (int j = 0; j < writerCount; j++) {
-
-System.out.println("------ ASCIT createWriter()");
-
           Callable writer = createWriter(serverId, threadId++, server);
           workers.add(writer);
         }
 
-System.out.println("------ ASCIT createReader()");
         Callable<Void> reader = createReader(server);
         workers.add(reader);
 
@@ -643,7 +631,7 @@ System.out.println("------ ASCIT createReader()");
 
   private void printStats(final ServerRun serverRun) {
     final ODatabaseDocument database = getDatabase(serverRun);
-    
+
     try {
       List<ODocument> result = database.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from " + className));
 

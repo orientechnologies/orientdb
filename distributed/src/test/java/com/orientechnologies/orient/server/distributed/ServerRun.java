@@ -128,29 +128,9 @@ public class ServerRun {
     return impl;
   }
 
-  protected OrientDB orientDB; 
-
   public ODatabaseDocument createDatabase(final String iName) {
-    String dbPath = getDatabasePath(iName);
-
-    String databasesPath = getServerHome() + "/databases";
-
-    new File(databasesPath).mkdirs();
-
-    orientDB = new OrientDB("embedded:" + databasesPath, OrientDBConfig.defaultConfig());
-    
-    if(orientDB.exists(iName)) {
-      System.out.println("Dropping previous database '" + iName + "' under: " + dbPath + "...");
-
-      orientDB.drop(iName);
-      OFileUtils.deleteRecursively(new File(dbPath));
-
-      orientDB.create(iName, ODatabaseType.PLOCAL);
-    } else {
-      orientDB.create(iName, ODatabaseType.PLOCAL);
-    }
-
-    return orientDB.open(iName, "admin", "admin");
+    server.createDatabase(iName,ODatabaseType.PLOCAL,OrientDBConfig.defaultConfig());
+    return server.openDatabase(iName, "admin", "admin");
   }
   
 /*
@@ -167,7 +147,6 @@ System.out.println("----- db exists = " + orientDB.exists(dbName));
   	 return orientDB.open(dbName, "admin", "admin");
   }*/
   
-  public void closeOrientDB() { if(orientDB != null) orientDB.close(); }
 
   public void copyDatabase(final String iDatabaseName, final String iDestinationDirectory) throws IOException {
     // COPY THE DATABASE TO OTHER DIRECTORIES
@@ -204,6 +183,7 @@ System.out.println("----- db exists = " + orientDB.exists(dbName));
       try {
         server.shutdown();
       } catch (Exception e) {
+        e.printStackTrace();
         // IGNORE IT
       }
     }
@@ -235,7 +215,7 @@ System.out.println("----- db exists = " + orientDB.exists(dbName));
   }
 
   public void closeStorages() {
-    ODatabaseDocumentTx.closeAll();
+    server.getDatabases().close();
   }
 
 /*
@@ -259,5 +239,9 @@ System.out.println("----- db exists = " + orientDB.exists(dbName));
 
   public static String getDatabasePath(final String iServerId, final String iDatabaseName) {
     return new File(getServerHome(iServerId) + "/databases/" + iDatabaseName).getAbsolutePath();
+  }
+
+  public void forceClose(String databaseName) {
+    server.getDatabases().forceDatabaseClose(databaseName);
   }
 }

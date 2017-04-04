@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
 
 public class TestAsyncReplMode2Servers extends BareBoneBase2ServerTest {
@@ -25,12 +26,7 @@ public class TestAsyncReplMode2Servers extends BareBoneBase2ServerTest {
 
     synchronized (LOCK) {
       ODatabaseDocumentTx graph = new ODatabaseDocumentTx(getRemoteURL());
-      if(graph.exists()){
-        graph.open("admin", "admin");
-      }else{
-        graph.create();
-        graph.createClass("vertextype", "V");
-      }
+      graph.open("admin", "admin");
       graph.begin();
       try {
         OVertex parentV1 = graph.newVertex("vertextype");
@@ -101,18 +97,14 @@ public class TestAsyncReplMode2Servers extends BareBoneBase2ServerTest {
 
     synchronized (LOCK) {
       ODatabaseDocumentTx graph = new ODatabaseDocumentTx(getRemoteURL2());
-      if(graph.exists()){
-        graph.open("admin", "admin");
-      }else{
-        graph.create();
-      }
+      graph.open("admin", "admin");
       graph.begin();
 
       try {
-        OVertex parentV1 = graph.load((ORID)parentV1Id);
+        OElement parentV1 = graph.load((ORID)parentV1Id);
         assertEquals(1, parentV1.getRecord().getVersion());
 
-        OVertex parentV2 = graph.load((ORID)parentV2Id);
+        OElement parentV2 = graph.load((ORID)parentV2Id);
         assertEquals(1, parentV2.getRecord().getVersion());
 
         int countPropValue = 0;

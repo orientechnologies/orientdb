@@ -56,30 +56,19 @@ public abstract class AbstractDistributedWriteTest extends AbstractServerCluster
     @Override
     public Void call() throws Exception {
       String name = Integer.toString(threadId);
-      
-System.out.println("-----call name = " + name);
-      
       for (int i = 0; i < count; i++) {
       	final ODatabaseDocument database = getDatabase(serverId);
-//        final ODatabaseDocumentTx database = poolFactory.get(databaseUrl, "admin", "admin").acquire();
 
-System.out.println("-----db");
 
         try {
           if ((i + 1) % 100 == 0)
             System.out.println(
                 "\nWriter " + threadId + "(" + database.getURL() + ") managed " + (i + 1) + "/" + count + " records so far");
 
-System.out.println("-----createRecord()");
           final ODocument person = createRecord(database, i);
-System.out.println("-----updateRecord()");          
           updateRecord(database, i);
-System.out.println("-----checkRecord()");          
           checkRecord(database, i);
-System.out.println("-----createIndex()");          
           checkIndex(database, (String) person.field("name"), person.getIdentity());
-
-System.out.println("-----done()");
 
           if (delayWriter > 0)
             Thread.sleep(delayWriter);
@@ -155,7 +144,6 @@ System.out.println("-----done()");
   @Override
   public void executeTest() throws Exception {
 
-//    ODatabaseDocumentTx database = poolFactory.get(getDatabaseURL(serverInstance.get(0)), "admin", "admin").acquire();
     System.out.println("Creating Writers and Readers threads...");
 
     final ExecutorService writerExecutors = Executors.newCachedThreadPool();

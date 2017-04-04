@@ -40,7 +40,10 @@ public class DistributedDbDropAndReCreateTest extends AbstractServerClusterTxTes
   protected void onAfterExecution() throws Exception {
     int s = 0;
     do {
-      ServerRun server = serverInstance.get(0);
+      ServerRun server = serverInstance.get(s);
+
+      Thread.sleep(10000);
+
       ODatabaseDocumentTx db = new ODatabaseDocumentTx(getDatabaseURL(server));
       db.open("admin", "admin");
 
@@ -52,7 +55,7 @@ public class DistributedDbDropAndReCreateTest extends AbstractServerClusterTxTes
 
       db.drop();
 
-      Thread.sleep(2000);
+      Thread.sleep(10000);
 
       Assert.assertFalse(server.getServerInstance().getDistributedManager().getConfigurationMap()
           .containsKey(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + getDatabaseName()));

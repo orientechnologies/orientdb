@@ -24,7 +24,9 @@ import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 //import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -123,7 +125,6 @@ public abstract class AbstractServerClusterTest {
       banner("Executing test...");
 
       try {
-        onBeforeExecution();
         executeTest();
       } finally {
         onAfterExecution();
@@ -144,10 +145,8 @@ public abstract class AbstractServerClusterTest {
           server.terminateServer();
         else
           server.shutdownServer();
-          
-        server.closeStorages();
       }
-      
+
       onTestEnded();
 
       banner("Terminate HZ...");
@@ -162,8 +161,6 @@ public abstract class AbstractServerClusterTest {
 
       banner("Clean server directories...");
       deleteServers();
-      
-      banner("--End--");
     }
 
   }
@@ -272,15 +269,15 @@ public abstract class AbstractServerClusterTest {
   }
 
   protected void createDatabase(final int serverNum) {
-  	 if(serverInstance.size() > serverNum)
-      serverInstance.get(serverNum).getServerInstance().createDatabase(getDatabaseName(), 
-        ODatabaseType.PLOCAL, OrientDBConfig.defaultConfig());
+    if (serverInstance.size() > serverNum)
+      serverInstance.get(serverNum).getServerInstance()
+          .createDatabase(getDatabaseName(), ODatabaseType.PLOCAL, OrientDBConfig.defaultConfig());
   }
 
   protected boolean databaseExists(final int serverNum) {
-  	 if(serverInstance.size() > serverNum)
+    if (serverInstance.size() > serverNum)
       return serverInstance.get(0).getServerInstance().existsDatabase(getDatabaseName());
-      
+
     return false;
   }
 
@@ -289,31 +286,31 @@ public abstract class AbstractServerClusterTest {
   }
 
   protected ODatabaseDocument getDatabase(final int serverNum) {
-    if(serverInstance.size() > serverNum)
+    if (serverInstance.size() > serverNum)
       return getDatabase(serverInstance.get(serverNum));
-    
+
     return null;
   }
 
   protected ODatabaseDocument getDatabase(final ServerRun serverRun) {
-    if(serverRun != null)
-    {
-    	if(!serverRun.getServerInstance().isActive())
-System.out.println("------------ getDatabase server is not active!");
-    	
+    if (serverRun != null) {
+      if (!serverRun.getServerInstance().isActive())
+        System.out.println("------------ getDatabase server is not active!");
+
       return serverRun.getServerInstance().openDatabase(getDatabaseName(), "admin", "admin");
     }
-    
+
     return null;
   }
 
   protected OVertex getVertex(final ODatabaseDocument db, final ORID orid) {
     return getVertex(db.load(orid));
   }
-  
+
   protected OVertex getVertex(final ODocument doc) {
-    if(doc != null) return doc.asVertex().get();
-    
+    if (doc != null)
+      return doc.asVertex().get();
+
     return null;
   }
 
@@ -329,7 +326,7 @@ System.out.println("------------ getDatabase server is not active!");
 
   protected abstract void executeTest() throws Exception;
 
-  protected void prepare(final boolean iCopyDatabaseToNodes) throws IOException {
+  protected void prepare(final boolean iCopyDatabaseToNodes) throws Exception {
     prepare(iCopyDatabaseToNodes, true);
   }
 
@@ -338,23 +335,20 @@ System.out.println("------------ getDatabase server is not active!");
    *
    * @throws IOException
    */
-  protected void prepare(final boolean iCopyDatabaseToNodes, final boolean iCreateDatabase) throws IOException {
+  protected void prepare(final boolean iCopyDatabaseToNodes, final boolean iCreateDatabase) throws Exception {
     // CREATE THE DATABASE
     final Iterator<ServerRun> it = serverInstance.iterator();
     final ServerRun master = it.next();
 
     if (iCreateDatabase) {
-      final ODatabaseDocument graph = master.createDatabase(getDatabaseName());
+      OrientDB orientDB = new OrientDB("embedded:" + master.getServerHome() + "/databases/", OrientDBConfig.defaultConfig());
+      orientDB.create(getDatabaseName(), ODatabaseType.PLOCAL);
+      final ODatabaseDocument graph = orientDB.open(getDatabaseName(), "admin", "admin");
       try {
         onAfterDatabaseCreation(graph);
       } finally {
         graph.close();
-
-System.out.println("------- ASCT closeOrientDB()");
-
-master.closeOrientDB();
-        
-//        ODatabaseDocumentTx.closeAll();
+        orientDB.close();
       }
     }
 
@@ -368,7 +362,7 @@ master.closeOrientDB();
         master.copyDatabase(getDatabaseName(), replicaSrv.getDatabasePath(getDatabaseName()));
     }
   }
-  
+
   protected void deleteServers() {
     for (ServerRun s : serverInstance)
       s.deleteNode();
@@ -546,80 +540,53 @@ master.closeOrientDB();
 
   protected ODocument readRemoteRecord(final int serverId, final ORecordId rid, final String[] servers) {
     final ODistributedServerManager dManager = serverInstance.get(serverId).getServerInstance().getDistributedManager();
-    
-    final ODatabaseDocument db = getDatabase(serverId);
 
-    try {
-      final Collection<String> clusterNames = new ArrayList<String>(1);
-//    clusterNames.add(ODatabaseRecordThreadLocal.INSTANCE.get().getClusterNameById(rid.getClusterId()));
-      clusterNames.add(db.getClusterNameById(rid.getClusterId()));
-  
-      ODistributedResponse response = dManager
-          .sendRequest(getDatabaseName(), clusterNames, Arrays.asList(servers), new OReadRecordTask(rid),
-              dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
-  
-      if (response != null) {
-        final ORawBuffer buffer = (ORawBuffer) response.getPayload();
-        return new ODocument().fromStream(buffer.getBuffer());
-      }
-    } finally {
-     	db.close();
+    final Collection<String> clusterNames = new ArrayList<String>(1);
+    clusterNames.add(ODatabaseRecordThreadLocal.INSTANCE.get().getClusterNameById(rid.getClusterId()));
+
+    ODistributedResponse response = dManager
+        .sendRequest(getDatabaseName(), clusterNames, Arrays.asList(servers), new OReadRecordTask(rid),
+            dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
+
+    if (response != null) {
+      final ORawBuffer buffer = (ORawBuffer) response.getPayload();
+      return new ODocument().fromStream(buffer.getBuffer());
     }
-    
+
     return null;
   }
 
   protected ODistributedResponse createRemoteRecord(final int serverId, final ORecord record, final String[] servers) {
     final ODistributedServerManager dManager = serverInstance.get(serverId).getServerInstance().getDistributedManager();
 
-    final ODatabaseDocument db = getDatabase(serverId);
+    final Collection<String> clusterNames = new ArrayList<String>(1);
+    clusterNames.add(ODatabaseRecordThreadLocal.INSTANCE.get().getClusterNameById(record.getIdentity().getClusterId()));
 
-    try {
-      final Collection<String> clusterNames = new ArrayList<String>(1);
-//    clusterNames.add(ODatabaseRecordThreadLocal.INSTANCE.get().getClusterNameById(record.getIdentity().getClusterId()));
-      clusterNames.add(db.getClusterNameById(record.getIdentity().getClusterId()));
-  
-      return dManager.sendRequest(getDatabaseName(), clusterNames, Arrays.asList(servers),
-          new OCreateRecordTask((ORecordId) record.getIdentity(), record.toStream(), record.getVersion(),
-              ORecordInternal.getRecordType(record)), dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE,
-          null, null);
-    } finally {
-     	db.close();
-    }
+    return dManager.sendRequest(getDatabaseName(), clusterNames, Arrays.asList(servers),
+        new OCreateRecordTask((ORecordId) record.getIdentity(), record.toStream(), record.getVersion(),
+            ORecordInternal.getRecordType(record)), dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE,
+        null, null);
   }
 
   protected ODistributedResponse updateRemoteRecord(final int serverId, final ORecord record, final String[] servers) {
     final ODistributedServerManager dManager = serverInstance.get(serverId).getServerInstance().getDistributedManager();
-    final ODatabaseDocument db = getDatabase(serverId);
 
-    try {
-      final Collection<String> clusterNames = new ArrayList<String>(1);
-//    clusterNames.add(ODatabaseRecordThreadLocal.INSTANCE.get().getClusterNameById(record.getIdentity().getClusterId()));
-      clusterNames.add(db.getClusterNameById(record.getIdentity().getClusterId()));
-  
-      return dManager.sendRequest(getDatabaseName(), clusterNames, Arrays.asList(servers),
-          new OFixUpdateRecordTask((ORecordId) record.getIdentity(), record.toStream(), record.getVersion(),
-              ORecordInternal.getRecordType(record)), dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE,
-          null, null);
-    } finally {
-     	db.close();
-    }
+    final Collection<String> clusterNames = new ArrayList<String>(1);
+    clusterNames.add(ODatabaseRecordThreadLocal.INSTANCE.get().getClusterNameById(record.getIdentity().getClusterId()));
+
+    return dManager.sendRequest(getDatabaseName(), clusterNames, Arrays.asList(servers),
+        new OFixUpdateRecordTask((ORecordId) record.getIdentity(), record.toStream(), record.getVersion(),
+            ORecordInternal.getRecordType(record)), dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE,
+        null, null);
   }
 
   protected ODistributedResponse deleteRemoteRecord(final int serverId, final ORecordId rid, final String[] servers) {
     final ODistributedServerManager dManager = serverInstance.get(serverId).getServerInstance().getDistributedManager();
-    final ODatabaseDocument db = getDatabase(serverId);
+    final Collection<String> clusterNames = new ArrayList<String>(1);
+    clusterNames.add(ODatabaseRecordThreadLocal.INSTANCE.get().getClusterNameById(rid.getClusterId()));
 
-    try {
-      final Collection<String> clusterNames = new ArrayList<String>(1);
-//    clusterNames.add(ODatabaseRecordThreadLocal.INSTANCE.get().getClusterNameById(rid.getClusterId()));
-      clusterNames.add(db.getClusterNameById(rid.getClusterId()));
-
-      return dManager.sendRequest(getDatabaseName(), clusterNames, Arrays.asList(servers), new OFixCreateRecordTask(rid, -1),
-          dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
-    } finally {
-     	db.close();
-    }
+    return dManager.sendRequest(getDatabaseName(), clusterNames, Arrays.asList(servers), new OFixCreateRecordTask(rid, -1),
+        dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
   }
 
   protected List<ServerRun> createServerList(final int... serverIds) {

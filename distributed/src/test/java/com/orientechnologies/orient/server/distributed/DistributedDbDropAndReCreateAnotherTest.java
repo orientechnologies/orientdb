@@ -41,8 +41,6 @@ public class DistributedDbDropAndReCreateAnotherTest extends AbstractServerClust
     do {
       ServerRun server = serverInstance.get(0);
 
-      ODatabaseDocument db = server.getServerInstance().openDatabase(getDatabaseName(), "admin", "admin");
-
       waitForDatabaseIsOnline(0, "europe-0", getDatabaseName(), 5000);
       waitForDatabaseIsOnline(0, "europe-1", getDatabaseName(), 5000);
       waitForDatabaseIsOnline(0, "europe-2", getDatabaseName(), 5000);

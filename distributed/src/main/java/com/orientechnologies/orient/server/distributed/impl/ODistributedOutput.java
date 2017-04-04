@@ -293,9 +293,9 @@ public class ODistributedOutput {
       rowTotals.field("Servers", "TOTAL");
       for (String fromServer : orderedServers) {
         fromServer = formatServerName(manager, fromServer);
-        rowTotals.field(fromServer, String.format("%,d", rowTotals.field(fromServer)));
+        rowTotals.field(fromServer, String.format("%,d", (long)rowTotals.field(fromServer)));
       }
-      rowTotals.field("TOTAL", String.format("%,d", rowTotals.field("TOTAL")));
+      rowTotals.field("TOTAL", String.format("%,d", (long)rowTotals.field("TOTAL")));
 
       table.setColumnAlignment("TOTAL", OTableFormatter.ALIGNMENT.RIGHT);
     }
@@ -393,9 +393,9 @@ public class ODistributedOutput {
 
       rowTotals.field("Servers", "TOTAL");
       for (String opName : operations) {
-        rowTotals.field(opName, String.format("%,d", rowTotals.field(opName)));
+        rowTotals.field(opName, String.format("%,d", (Long) rowTotals.field(opName)));
       }
-      rowTotals.field("TOTAL", String.format("%,d", rowTotals.field("TOTAL")));
+      rowTotals.field("TOTAL", String.format("%,d", (Long) rowTotals.field("TOTAL")));
     }
 
     table.setColumnAlignment("TOTAL", OTableFormatter.ALIGNMENT.RIGHT);

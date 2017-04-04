@@ -109,7 +109,7 @@ public class FaultDuringWritingWithOperationRedirectScenarioTest extends Abstrac
       e.printStackTrace();
       fail();
     } finally {
-
+      dbServer3.activateOnCurrentThread();
       if(!dbServer3.isClosed()) {
         dbServer3.close();
       }
