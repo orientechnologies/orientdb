@@ -3,6 +3,7 @@ package com.orientechnologies.orient.server.distributed.asynch;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import org.junit.Ignore;
 
 import java.io.File;
 
@@ -34,6 +35,8 @@ public abstract class BareBoneBase2ServerTest extends BareBoneBase2ClientTest {
     OFileUtils.deleteRecursively(new File(DB2_DIR));
   }
 
+
+  @Ignore
   public void testReplication() throws Throwable {
     Orient.setRegisterDatabaseByPath(true);
 
