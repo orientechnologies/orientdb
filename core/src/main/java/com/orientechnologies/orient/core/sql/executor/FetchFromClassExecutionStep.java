@@ -5,10 +5,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Created by luigidellaquila on 08/07/16.
@@ -17,7 +14,7 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
 
   private final String className;
   AbstractExecutionStep[] subSteps;
-  OResultSet                      currentResultSet;
+  OResultSet              currentResultSet;
   private boolean orderByRidAsc  = false;
   private boolean orderByRidDesc = false;
 
@@ -203,4 +200,11 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
     return builder.toString();
   }
 
+  @Override
+  public List<OExecutionStep> getSubSteps() {
+    if (subSteps == null) {
+      return super.getSubSteps();
+    }
+    return Arrays.asList(subSteps);
+  }
 }

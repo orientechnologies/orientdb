@@ -96,14 +96,17 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
         response.add(result.next().toElement());
         i++;
       }
+
+      Map<String, Object> additionalContent = new HashMap<>();
+
+      result.getExecutionPlan().ifPresent(x -> additionalContent.put("executionPlan", x.toResult().toElement()));
+
       result.close();
 
       String format = null;
       if (fetchPlan != null) {
         format = "fetchPlan:" + fetchPlan;
       }
-
-      Map<String, Object> additionalContent = new HashMap<>();
 
       if (iRequest.getHeader("TE") != null)
         iResponse.setStreaming(true);
