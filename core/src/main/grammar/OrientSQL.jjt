@@ -1074,6 +1074,18 @@ OStatement StatementInternal():
                 result = ConsoleStatement()
                 |
                 result = IfStatement()
+                |
+                LOOKAHEAD(HaRemoveServerStatement())
+                result = HaRemoveServerStatement()
+                |
+                LOOKAHEAD(HaStatusStatement())
+                result = HaStatusStatement()
+                |
+                LOOKAHEAD(HaSyncDatabaseStatement())
+                result = HaSyncDatabaseStatement()
+                |
+                LOOKAHEAD(HaSyncClusterStatement())
+                result = HaSyncClusterStatement()
             )
         )
         |
