@@ -29,7 +29,6 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OSerializationException;
-import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -64,67 +63,30 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
     if (className.length() != 0)
       ODocumentInternal.fillClassNameIfNeeded(document, className);
 
-    // TRANSFORMS FIELDS FOM STRINGS TO BYTE[]
-    final byte[][] fields = new byte[iFields.length][];
-    for (int i = 0; i < iFields.length; ++i)
-      fields[i] = iFields[i].getBytes();
-
-    String fieldName = null;
-    int valuePos;
+    String fieldName;
     OType type;
-    int unmarshalledFields = 0;
+    int size = OVarIntSerializer.readAsInteger(bytes);
 
-    while (true) {
-      final int len = OVarIntSerializer.readAsInteger(bytes);
-
-      if (len == 0) {
-        // SCAN COMPLETED
-        break;
-      } else if (len > 0) {
-        // CHECK BY FIELD NAME SIZE: THIS AVOID EVEN THE UNMARSHALLING OF FIELD NAME
-        boolean match = false;
-        for (int i = 0; i < iFields.length; ++i) {
-          if (iFields[i].length() == len) {
-            boolean matchField = true;
-            for (int j = 0; j < len; ++j) {
-              if (bytes.bytes[bytes.offset + j] != fields[i][j]) {
-                matchField = false;
-                break;
-              }
-            }
-            if (matchField) {
-              fieldName = iFields[i];
-              unmarshalledFields++;
-              bytes.skip(len);
-              match = true;
-              break;
-            }
-          }
-        }
-
-        if (!match) {
-          // SKIP IT
-          bytes.skip(len + OIntegerSerializer.INT_SIZE + 1);
-          continue;
-        }
-        valuePos = readInteger(bytes);
-        type = readOType(bytes);
+    int matched = 0;
+    while ((size--) > 0) {
+      fieldName = readString(bytes);
+      type = readOType(bytes);
+      Object value;
+      if (type == null) {
+        value = null;
       } else {
-        throw new OStorageException("property id not supported in network serialization");
+        value = deserializeValue(bytes, type, document);
       }
+      document.setProperty(fieldName, value);
 
-      if (valuePos != 0) {
-        int headerCursor = bytes.offset;
-        bytes.offset = valuePos;
-        final Object value = deserializeValue(bytes, type, document);
-        bytes.offset = headerCursor;
-        document.field(fieldName, value, type);
-      } else
-        document.field(fieldName, null, (OType[]) null);
-
-      if (unmarshalledFields == iFields.length)
-        // ALL REQUESTED FIELDS UNMARSHALLED: EXIT
+      for (String field : iFields) {
+        if (field.equals(fieldName)) {
+          matched++;
+        }
+      }
+      if (matched == iFields.length) {
         break;
+      }
     }
   }
 
@@ -193,13 +155,15 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
 
     final List<String> result = new ArrayList<String>();
 
-    int size = OVarIntSerializer.readAsInteger(bytes);  
+    int size = OVarIntSerializer.readAsInteger(bytes);
     String fieldName;
     OType type;
     while ((size--) > 0) {
       fieldName = readString(bytes);
       type = readOType(bytes);
-      deserializeValue(bytes, type, new ODocument());
+      if (type != null) {
+        deserializeValue(bytes, type, new ODocument());
+      }
       result.add(fieldName);
     }
 
