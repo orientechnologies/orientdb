@@ -92,7 +92,8 @@ public class ODistributedLockManagerExecutor implements ODistributedLockManager 
         do {
           try {
             ODistributedServerLog.info(this, manager.getLocalNodeName(), nodeSource, ODistributedServerLog.DIRECTION.IN,
-                "Waiting to acquire distributed lock on resource '%s' (timeout=%d)...", resource, timeout);
+                "Waiting to acquire distributed lock on resource '%s' (threadId=%d timeout=%d)...", resource,
+                Thread.currentThread().getId(), timeout);
 
             if (timeout > 0) {
               if (!currentLock.lock.await(timeout, TimeUnit.MILLISECONDS))
@@ -125,16 +126,18 @@ public class ODistributedLockManagerExecutor implements ODistributedLockManager 
     if (ODistributedServerLog.isDebugEnabled())
       if (currentLock == null) {
         ODistributedServerLog
-            .debug(this, manager.getLocalNodeName(), nodeSource, DIRECTION.IN, "Resource '%s' locked by server '%s'", resource,
-                nodeSource);
+            .debug(this, manager.getLocalNodeName(), nodeSource, DIRECTION.IN, "Resource '%s' locked by server '%s' (threadId=%d)",
+                resource, nodeSource, Thread.currentThread().getId());
       } else {
         ODistributedServerLog.debug(this, manager.getLocalNodeName(), nodeSource, DIRECTION.IN,
-            "Cannot lock resource '%s' owned by server '%s' (timeout=%d)", resource, nodeSource, timeout);
+            "Cannot lock resource '%s' owned by server '%s' (timeout=%d threadId=%d)", resource, nodeSource, timeout,
+            Thread.currentThread().getId());
       }
 
     if (currentLock != null)
       throw new OLockException(
-          "Cannot lock resource '" + resource + "' owned by server '" + nodeSource + "' (timeout=" + timeout + ")");
+          "Cannot lock resource '" + resource + "' owned by server '" + nodeSource + "' (timeout=" + timeout + " threadId=" + Thread
+              .currentThread().getId() + ")");
   }
 
   public void releaseExclusiveLock(final String resource, final String nodeSource) {
