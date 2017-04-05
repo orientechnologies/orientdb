@@ -54,12 +54,10 @@ public class DBCreationAndUpdateOneNodeScenarioTest extends AbstractScenarioTest
     String url2 = "plocal:target/server1/databases/distributed-dbcreation-update";
     String url3 = "plocal:target/server2/databases/distributed-dbcreation-update";
 
-    // creating new database on server1
-    createDatabase(0);
+    // creating new database on server0
+    Thread.sleep(20000);
 
-    Thread.sleep(1000);
-
-    // checking the db was created both on server2 and server3
+    // checking the db was created both on server1 and server2
     ODatabaseDocument dbServer2 = getDatabase(1);
     try {
       assertNotNull(dbServer2);
