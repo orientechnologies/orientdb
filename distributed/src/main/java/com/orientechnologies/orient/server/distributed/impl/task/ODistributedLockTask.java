@@ -78,7 +78,7 @@ public class ODistributedLockTask extends OAbstractReplicatedTask {
 
   @Override
   public int[] getPartitionKey() {
-    return ANY;
+    return SERVICE;
   }
 
   @Override
