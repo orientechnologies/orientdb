@@ -85,11 +85,6 @@ public abstract class OAbstractSyncDatabaseTask extends OAbstractReplicatedTask 
   }
 
   @Override
-  public int[] getPartitionKey() {
-    return SERVICE;
-  }
-
-  @Override
   public boolean isNodeOnlineRequired() {
     return false;
   }
