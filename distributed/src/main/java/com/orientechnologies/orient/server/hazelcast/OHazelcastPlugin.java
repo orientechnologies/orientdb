@@ -1190,12 +1190,26 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
   @Override
   public DB_STATUS getDatabaseStatus(final String iNode, final String iDatabaseName) {
+    if (OSystemDatabase.SYSTEM_DB_NAME.equals(iDatabaseName)) {
+      // CHECK THE SERVER STATUS
+      return getActiveServers().contains(iNode) ?
+          ODistributedServerManager.DB_STATUS.ONLINE :
+          ODistributedServerManager.DB_STATUS.NOT_AVAILABLE;
+    }
+
     final DB_STATUS status = (DB_STATUS) configurationMap
         .getLocalCachedValue(OHazelcastPlugin.CONFIG_DBSTATUS_PREFIX + iNode + "." + iDatabaseName);
     return status != null ? status : DB_STATUS.NOT_AVAILABLE;
   }
 
   public DB_STATUS getDatabaseStatus(final String iNode, final String iDatabaseName, final boolean useCache) {
+    if (OSystemDatabase.SYSTEM_DB_NAME.equals(iDatabaseName)) {
+      // CHECK THE SERVER STATUS
+      return getActiveServers().contains(iNode) ?
+          ODistributedServerManager.DB_STATUS.ONLINE :
+          ODistributedServerManager.DB_STATUS.NOT_AVAILABLE;
+    }
+
     final String key = OHazelcastPlugin.CONFIG_DBSTATUS_PREFIX + iNode + "." + iDatabaseName;
     final DB_STATUS status = (DB_STATUS) (useCache ? configurationMap.getLocalCachedValue(key) : configurationMap.get(key));
     return status != null ? status : DB_STATUS.NOT_AVAILABLE;
@@ -1234,6 +1248,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     for (Map.Entry<String, Object> entry : configurationMap.entrySet()) {
       if (entry.getKey().startsWith(CONFIG_DATABASE_PREFIX)) {
         final String databaseName = entry.getKey().substring(CONFIG_DATABASE_PREFIX.length());
+
+        if( OSystemDatabase.SYSTEM_DB_NAME.equals(databaseName))
+          continue;
 
         final Set<String> availableServers = getAvailableNodeNames(databaseName);
         if (availableServers.isEmpty())

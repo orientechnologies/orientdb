@@ -79,7 +79,7 @@ public class ODistributedLockTask extends OAbstractReplicatedTask {
   @Override
   public int[] getPartitionKey() {
     // RELEASE MUST TO ALWAYS TO THE SERVICE QUEUE
-    return acquire ? ANY : SERVICE;
+    return acquire ? LOCK : UNLOCK;
   }
 
   @Override

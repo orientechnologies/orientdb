@@ -78,7 +78,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   protected       ConcurrentHashMap<ODistributedRequestId, ODistributedTxContext> activeTxContexts = new ConcurrentHashMap<ODistributedRequestId, ODistributedTxContext>(
       64);
   protected final List<ODistributedWorker>                                        workerThreads    = new ArrayList<ODistributedWorker>();
-  protected ODistributedWorker serviceThread;
+  protected ODistributedWorker lockThread;
+  protected ODistributedWorker unlockThread;
 
   private          AtomicLong                            totalSentRequests     = new AtomicLong();
   private          AtomicLong                            totalReceivedRequests = new AtomicLong();
@@ -356,9 +357,16 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     } else if (partitionKeys.length == 1 && partitionKeys[0] == -3) {
       // SERVICE
       ODistributedServerLog.debug(this, localNodeName, request.getTask().getNodeSource(), DIRECTION.IN,
-          "Request %s on database '%s' dispatched to the service worker", request, databaseName);
+          "Request %s on database '%s' dispatched to the lock worker", request, databaseName);
 
-      serviceThread.processRequest(request);
+      lockThread.processRequest(request);
+
+    } else if (partitionKeys.length == 1 && partitionKeys[0] == -4) {
+      // SERVICE
+      ODistributedServerLog.debug(this, localNodeName, request.getTask().getNodeSource(), DIRECTION.IN,
+          "Request %s on database '%s' dispatched to the unlock worker", request, databaseName);
+
+      unlockThread.processRequest(request);
 
     } else {
       processRequest(partitionKeys[0], request);
@@ -424,7 +432,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       final boolean checkNodesAreOnline = task.isNodeOnlineRequired();
 
       final Set<String> nodesConcurToTheQuorum = manager.getDistributedStrategy()
-          .getNodesConcurInQuorum(manager, cfg, iRequest, iNodes, localResult);
+          .getNodesConcurInQuorum(manager, cfg, iRequest, iNodes, databaseName, localResult);
 
       // AFTER COMPUTED THE QUORUM, REMOVE THE OFFLINE NODES TO HAVE THE LIST OF REAL AVAILABLE NODES
       final int availableNodes = checkNodesAreOnline ?
@@ -807,8 +815,11 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   public long getProcessedRequests() {
     long total = 0;
 
-    if (serviceThread != null)
-      total += serviceThread.getProcessedRequests();
+    if (lockThread != null)
+      total += lockThread.getProcessedRequests();
+
+    if (unlockThread != null)
+      total += unlockThread.getProcessedRequests();
 
     for (ODistributedWorker workerThread : workerThreads) {
       if (workerThread != null)
@@ -829,17 +840,25 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         repairer.shutdown();
 
       // SEND THE SHUTDOWN TO ALL THE WORKER THREADS
-      if (serviceThread != null)
-        serviceThread.sendShutdown();
+      if (lockThread != null)
+        lockThread.sendShutdown();
+      if (unlockThread != null)
+        unlockThread.sendShutdown();
       for (ODistributedWorker workerThread : workerThreads) {
         if (workerThread != null)
           workerThread.sendShutdown();
       }
 
       // WAIT A BIT FOR PROPER SHUTDOWN
-      if (serviceThread != null)
+      if (lockThread != null)
         try {
-          serviceThread.join(2000);
+          lockThread.join(2000);
+        } catch (InterruptedException e) {
+        }
+
+      if (unlockThread != null)
+        try {
+          unlockThread.join(2000);
         } catch (InterruptedException e) {
         }
 
@@ -851,7 +870,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
           }
         }
       }
-      serviceThread = null;
+      lockThread = null;
+      unlockThread = null;
       workerThreads.clear();
 
       // SAVE SYNC CONFIGURATION
@@ -959,8 +979,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
     if (checkNodesAreOnline && quorum > allAvailableNodes)
       throw new ODistributedException(
-          "Quorum (" + quorum + ") cannot be reached on server '" + localNodeName + "' because it is major than available nodes ("
-              + allAvailableNodes + ")");
+          "Quorum (" + quorum + ") cannot be reached on server '" + localNodeName + "' database '" + databaseName
+              + "' because it is major than available nodes (" + allAvailableNodes + ")");
 
     return quorum;
   }
@@ -1011,8 +1031,11 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     if (totalWorkers < 1)
       throw new ODistributedException("Cannot create configured distributed workers (" + totalWorkers + ")");
 
-    serviceThread = new ODistributedWorker(this, databaseName, -3);
-    serviceThread.start();
+    lockThread = new ODistributedWorker(this, databaseName, -3);
+    lockThread.start();
+
+    unlockThread = new ODistributedWorker(this, databaseName, -4);
+    unlockThread.start();
 
     for (int i = 0; i < totalWorkers; ++i) {
       final ODistributedWorker workerThread = new ODistributedWorker(this, databaseName, i);
@@ -1099,8 +1122,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   public void suspend() {
     if (this.parsing.get()) {
       // RESET THE DATABASE
-      if (serviceThread != null)
-        serviceThread.reset();
+      if (unlockThread != null)
+        unlockThread.reset();
       for (ODistributedWorker w : workerThreads) {
         if (w != null)
           w.reset();
@@ -1126,9 +1149,16 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
     buffer.append("\n- MESSAGES IN QUEUES:");
 
-    buffer.append("\n - QUEUE SERVICE EXECUTING: " + serviceThread.getProcessing());
+    buffer.append("\n - QUEUE LOCK EXECUTING: " + lockThread.getProcessing());
     int i = 0;
-    for (ODistributedRequest m : serviceThread.localQueue) {
+    for (ODistributedRequest m : lockThread.localQueue) {
+      if (m != null)
+        buffer.append("\n  - " + i + " = " + m.toString());
+    }
+
+    buffer.append("\n - QUEUE UNLOCK EXECUTING: " + unlockThread.getProcessing());
+    i = 0;
+    for (ODistributedRequest m : unlockThread.localQueue) {
       if (m != null)
         buffer.append("\n  - " + i + " = " + m.toString());
     }

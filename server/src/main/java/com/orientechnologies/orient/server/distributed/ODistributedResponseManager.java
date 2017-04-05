@@ -281,10 +281,15 @@ public class ODistributedResponseManager {
 
         Map<String, ODistributedServerManager.DB_STATUS> missingResponseNodeStatuses = new HashMap<String, ODistributedServerManager.DB_STATUS>(
             responses.size());
+
+        int missingResponses = 0;
+
         for (Iterator<Map.Entry<String, Object>> iter = responses.entrySet().iterator(); iter.hasNext(); ) {
           final Map.Entry<String, Object> curr = iter.next();
 
           if (curr.getValue() == NO_RESPONSE) {
+            missingResponses++;
+
             // ANALYZE THE NODE WITHOUT A RESPONSE
             final ODistributedServerManager.DB_STATUS dbStatus = dManager.getDatabaseStatus(curr.getKey(), getDatabaseName());
 
@@ -301,6 +306,13 @@ public class ODistributedResponseManager {
               break;
             }
           }
+        }
+
+        if (missingResponses == 0) {
+          // ALL RESPONSE COLLECTED, BUT NO QUORUM REACHED
+          ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
+              "All responses collected %s, but no quorum reached (reqId=%s)", responses, request.getId());
+          break;
         }
 
         if (missingActiveNodes == 0) {

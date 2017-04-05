@@ -37,9 +37,10 @@ import java.io.IOException;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public abstract class OAbstractRemoteTask implements ORemoteTask {
-  public static final    int[] ALL              = new int[] { -1 };
-  protected static final int[] ANY              = new int[] { -2 };
-  protected static final int[] SERVICE          = new int[] { -3 };
+  public static final    int[] ALL    = new int[] { -1 };
+  protected static final int[] ANY    = new int[] { -2 };
+  protected static final int[] LOCK   = new int[] { -3 };
+  protected static final int[] UNLOCK = new int[] { -4 };
 
   protected transient String nodeSource;
 
