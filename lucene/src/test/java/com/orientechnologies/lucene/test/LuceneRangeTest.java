@@ -123,6 +123,42 @@ public class LuceneRangeTest extends BaseLuceneTest {
   }
 
   @Test
+  public void shouldUseRangeQueryMultipleFieldWithDirectIndexAccess() throws Exception {
+    db.command(new OCommandSQL("create index Person.composite on Person(name,surname,date,age) FULLTEXT ENGINE LUCENE")).execute();
+
+    assertThat(db.getMetadata().getIndexManager().getIndex("Person.composite").getSize()).isEqualTo(10);
+
+    db.commit();
+
+    String today = DateTools.timeToString(System.currentTimeMillis(), DateTools.Resolution.MINUTE);
+    String fiveDaysAgo = DateTools.timeToString(System.currentTimeMillis() - (5 * 3600 * 24 * 1000), DateTools.Resolution.MINUTE);
+
+    //anme and age range
+    Collection<ODocument> results = db.command(
+        new OCommandSQL("SELECT * FROM index:Person.composite WHERE key ='name:luke  age:[5 TO 6]'"))
+        .execute();
+
+    assertThat(results).hasSize(2);
+
+    //date range
+    results = db.command(
+        new OCommandSQL("SELECT FROM index:Person.composite WHERE key = 'date:[" + fiveDaysAgo + " TO " + today + "]'"))
+        .execute();
+
+    assertThat(results).hasSize(5);
+
+    //age and date range with MUST
+    results = db.command(
+        new OCommandSQL(
+            "SELECT FROM index:Person.composite WHERE key = '+age:[4 TO 7]  +date:[" + fiveDaysAgo + " TO " + today
+                + "]'"))
+        .execute();
+
+    assertThat(results).hasSize(2);
+
+  }
+
+  @Test
   public void shouldFetchOnlyFromACluster() throws Exception {
 
     db.command(new OCommandSQL("create index Person.name on Person(name) FULLTEXT ENGINE LUCENE")).execute();
