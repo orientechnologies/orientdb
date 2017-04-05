@@ -15,10 +15,10 @@ import java.util.*;
  * Created by luigidellaquila on 11/08/16.
  */
 public class DeleteFromIndexStep extends AbstractExecutionStep {
-  protected final OIndex           index;
-  private final   OBinaryCondition additional;
+  protected final OIndex             index;
+  private final   OBinaryCondition   additional;
   private final   OBooleanExpression ridCondition;
-  private final   boolean          orderAsc;
+  private final   boolean            orderAsc;
 
   Map.Entry<Object, OIdentifiable> nextEntry = null;
 
@@ -26,6 +26,8 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
 
   private boolean inited = false;
   private OIndexCursor cursor;
+
+  private long cost = 0;
 
   public DeleteFromIndexStep(OIndex<?> index, OBooleanExpression condition, OBinaryCondition additionalRangeCondition,
       OBooleanExpression ridCondition, OCommandContext ctx) {
@@ -57,12 +59,14 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
 
       @Override
       public OResult next() {
-        if (!hasNext()) {
-          throw new IllegalStateException();
-        }
-        Map.Entry<Object, OIdentifiable> entry = nextEntry;
-        OResultInternal result = new OResultInternal();
-        OIdentifiable value = entry.getValue();
+        long begin = System.nanoTime();
+        try {
+          if (!hasNext()) {
+            throw new IllegalStateException();
+          }
+          Map.Entry<Object, OIdentifiable> entry = nextEntry;
+          OResultInternal result = new OResultInternal();
+          OIdentifiable value = entry.getValue();
 
 //        if(index.isAutomatic()) {
 //          ORecord record = value.getRecord();
@@ -72,9 +76,12 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
 //        }else{
           index.remove(entry.getKey(), value);
 //        }
-        localCount++;
-        nextEntry = loadNextEntry(ctx);
-        return result;
+          localCount++;
+          nextEntry = loadNextEntry(ctx);
+          return result;
+        } finally {
+          cost += (System.nanoTime() - begin);
+        }
       }
 
       @Override
@@ -98,8 +105,13 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
       return;
     }
     inited = true;
-    init(condition);
-    nextEntry = loadNextEntry(ctx);
+    long begin = System.nanoTime();
+    try {
+      init(condition);
+      nextEntry = loadNextEntry(ctx);
+    } finally {
+      cost += (System.nanoTime() - begin);
+    }
   }
 
   private Map.Entry<Object, OIdentifiable> loadNextEntry(OCommandContext commandContext) {
@@ -380,4 +392,8 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
             " and " + additional)));
   }
 
+  @Override
+  public long getCost() {
+    return cost;
+  }
 }

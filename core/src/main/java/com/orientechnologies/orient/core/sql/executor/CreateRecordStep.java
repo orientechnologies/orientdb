@@ -11,6 +11,9 @@ import java.util.Optional;
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
 public class CreateRecordStep extends AbstractExecutionStep {
+
+  private long cost = 0;
+
   int created = 0;
   int total   = 0;
 
@@ -19,50 +22,64 @@ public class CreateRecordStep extends AbstractExecutionStep {
     this.total = total;
   }
 
-  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override
+  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
     return new OResultSet() {
       int locallyCreated = 0;
 
-      @Override public boolean hasNext() {
+      @Override
+      public boolean hasNext() {
         if (locallyCreated >= nRecords) {
           return false;
         }
         return created < total;
       }
 
-      @Override public OResult next() {
-        if (!hasNext()) {
-          throw new IllegalStateException();
+      @Override
+      public OResult next() {
+        long begin = System.nanoTime();
+        try {
+          if (!hasNext()) {
+            throw new IllegalStateException();
+          }
+          created++;
+          locallyCreated++;
+          return new OUpdatableResult((ODocument) ctx.getDatabase().newInstance());
+        } finally {
+          cost += (System.nanoTime() - begin);
         }
-        created++;
-        locallyCreated++;
-        return new OUpdatableResult((ODocument) ctx.getDatabase().newInstance());
       }
 
-      @Override public void close() {
+      @Override
+      public void close() {
 
       }
 
-      @Override public Optional<OExecutionPlan> getExecutionPlan() {
+      @Override
+      public Optional<OExecutionPlan> getExecutionPlan() {
         return null;
       }
 
-      @Override public Map<String, Long> getQueryStats() {
+      @Override
+      public Map<String, Long> getQueryStats() {
         return null;
       }
     };
   }
 
-  @Override public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
+  @Override
+  public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
 
   }
 
-  @Override public void sendResult(Object o, Status status) {
+  @Override
+  public void sendResult(Object o, Status status) {
 
   }
 
-  @Override public String prettyPrint(int depth, int indent) {
+  @Override
+  public String prettyPrint(int depth, int indent) {
     String spaces = OExecutionStepInternal.getIndent(depth, indent);
     StringBuilder result = new StringBuilder();
     result.append(spaces);
@@ -74,5 +91,10 @@ public class CreateRecordStep extends AbstractExecutionStep {
       result.append("  " + total + " record");
     }
     return result.toString();
+  }
+
+  @Override
+  public long getCost() {
+    return cost;
   }
 }

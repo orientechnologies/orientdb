@@ -11,6 +11,8 @@ import java.util.Optional;
  */
 public class EmptyDataGeneratorStep extends AbstractExecutionStep {
 
+  private long cost = 0;
+
   int size;
   int served = 0;
 
@@ -19,51 +21,72 @@ public class EmptyDataGeneratorStep extends AbstractExecutionStep {
     this.size = size;
   }
 
-  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override
+  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
     return new OResultSet() {
-      @Override public boolean hasNext() {
+      @Override
+      public boolean hasNext() {
         return served < size;
       }
 
-      @Override public OResult next() {
-        if (served < size) {
-          served++;
-          OResultInternal result = new OResultInternal();
-          ctx.setVariable("$current", result);
-          return result;
+      @Override
+      public OResult next() {
+        long begin = System.nanoTime();
+        try {
+
+          if (served < size) {
+            served++;
+            OResultInternal result = new OResultInternal();
+            ctx.setVariable("$current", result);
+            return result;
+          }
+          throw new IllegalStateException();
+        } finally {
+          cost += (System.nanoTime() - begin);
         }
-        throw new IllegalStateException();
       }
 
-      @Override public void close() {
+      @Override
+      public void close() {
 
       }
 
-      @Override public Optional<OExecutionPlan> getExecutionPlan() {
+      @Override
+      public Optional<OExecutionPlan> getExecutionPlan() {
         return null;
       }
 
-      @Override public Map<String, Long> getQueryStats() {
+      @Override
+      public Map<String, Long> getQueryStats() {
         return null;
       }
 
-      @Override public void reset() {
+      @Override
+      public void reset() {
         served = 0;
       }
     };
   }
 
-  @Override public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
+  @Override
+  public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
 
   }
 
-  @Override public void sendResult(Object o, Status status) {
+  @Override
+  public void sendResult(Object o, Status status) {
 
   }
 
-  @Override public String prettyPrint(int depth, int indent) {
+  @Override
+  public String prettyPrint(int depth, int indent) {
     String spaces = OExecutionStepInternal.getIndent(depth, indent);
     return spaces + "+ GENERATE " + size + " EMPTY " + (size == 1 ? "RECORD" : "RECORDS");
+  }
+
+  @Override
+  public long getCost() {
+    return cost;
   }
 }

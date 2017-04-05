@@ -20,16 +20,20 @@ public class DistinctExecutionStep extends AbstractExecutionStep {
   OResultSet lastResult = null;
   OResult nextValue;
 
+  private long cost = 0;
+
   public DistinctExecutionStep(OCommandContext ctx) {
     super(ctx);
   }
 
-  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override
+  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
 
     OResultSet result = new OResultSet() {
       int nextLocal = 0;
 
-      @Override public boolean hasNext() {
+      @Override
+      public boolean hasNext() {
         if (nextLocal >= nRecords) {
           return false;
         }
@@ -40,7 +44,8 @@ public class DistinctExecutionStep extends AbstractExecutionStep {
         return nextValue != null;
       }
 
-      @Override public OResult next() {
+      @Override
+      public OResult next() {
         if (nextLocal >= nRecords) {
           throw new IllegalStateException();
         }
@@ -56,15 +61,18 @@ public class DistinctExecutionStep extends AbstractExecutionStep {
         return result;
       }
 
-      @Override public void close() {
+      @Override
+      public void close() {
 
       }
 
-      @Override public Optional<OExecutionPlan> getExecutionPlan() {
+      @Override
+      public Optional<OExecutionPlan> getExecutionPlan() {
         return null;
       }
 
-      @Override public Map<String, Long> getQueryStats() {
+      @Override
+      public Map<String, Long> getQueryStats() {
         return null;
       }
     };
@@ -83,11 +91,16 @@ public class DistinctExecutionStep extends AbstractExecutionStep {
       if (lastResult == null || !lastResult.hasNext()) {
         return;
       }
-      nextValue = lastResult.next();
-      if (alreadyVisited(nextValue)) {
-        nextValue = null;
-      } else {
-        markAsVisited(nextValue);
+      long begin = System.nanoTime();
+      try {
+        nextValue = lastResult.next();
+        if (alreadyVisited(nextValue)) {
+          nextValue = null;
+        } else {
+          markAsVisited(nextValue);
+        }
+      } finally {
+        cost += (System.nanoTime() - begin);
       }
     }
   }
@@ -117,24 +130,33 @@ public class DistinctExecutionStep extends AbstractExecutionStep {
     return pastItems.contains(nextValue);
   }
 
-  @Override public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
+  @Override
+  public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
     //TODO
   }
 
-  @Override public void sendTimeout() {
+  @Override
+  public void sendTimeout() {
 
   }
 
-  @Override public void close() {
+  @Override
+  public void close() {
     prev.ifPresent(x -> x.close());
   }
 
-  @Override public void sendResult(Object o, Status status) {
+  @Override
+  public void sendResult(Object o, Status status) {
 
   }
 
-  @Override public String prettyPrint(int depth, int indent) {
+  @Override
+  public String prettyPrint(int depth, int indent) {
     return OExecutionStepInternal.getIndent(depth, indent) + "+ DISTINCT";
   }
 
+  @Override
+  public long getCost() {
+    return cost;
+  }
 }

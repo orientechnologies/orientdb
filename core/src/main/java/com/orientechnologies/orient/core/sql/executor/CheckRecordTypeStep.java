@@ -16,54 +16,74 @@ import java.util.Optional;
 public class CheckRecordTypeStep extends AbstractExecutionStep {
   private final String clazz;
 
+  private long cost = 0;
+
   public CheckRecordTypeStep(OCommandContext ctx, String c) {
     super(ctx);
     this.clazz = c;
   }
 
-  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override
+  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     OResultSet upstream = prev.get().syncPull(ctx, nRecords);
     return new OResultSet() {
-      @Override public boolean hasNext() {
+      @Override
+      public boolean hasNext() {
         return upstream.hasNext();
       }
 
-      @Override public OResult next() {
+      @Override
+      public OResult next() {
         OResult result = upstream.next();
-        if (!result.isElement()) {
-          throw new OCommandExecutionException("record " + result + " is not an instance of " + clazz);
-        }
-        OElement doc = result.getElement().get();
-        if (doc == null) {
-          throw new OCommandExecutionException("record " + result + " is not an instance of " + clazz);
-        }
-        Optional<OClass> schema = doc.getSchemaType();
+        long begin = System.nanoTime();
+        try {
+          if (!result.isElement()) {
+            throw new OCommandExecutionException("record " + result + " is not an instance of " + clazz);
+          }
+          OElement doc = result.getElement().get();
+          if (doc == null) {
+            throw new OCommandExecutionException("record " + result + " is not an instance of " + clazz);
+          }
+          Optional<OClass> schema = doc.getSchemaType();
 
-        if (!schema.isPresent() || !schema.get().isSubClassOf(clazz)) {
-          throw new OCommandExecutionException("record " + result + " is not an instance of " + clazz);
+          if (!schema.isPresent() || !schema.get().isSubClassOf(clazz)) {
+            throw new OCommandExecutionException("record " + result + " is not an instance of " + clazz);
+          }
+          return result;
+        } finally {
+          cost += (System.nanoTime() - begin);
         }
-        return result;
       }
 
-      @Override public void close() {
+      @Override
+      public void close() {
         upstream.close();
       }
 
-      @Override public Optional<OExecutionPlan> getExecutionPlan() {
+      @Override
+      public Optional<OExecutionPlan> getExecutionPlan() {
         return null;
       }
 
-      @Override public Map<String, Long> getQueryStats() {
+      @Override
+      public Map<String, Long> getQueryStats() {
         return null;
       }
     };
   }
 
-  @Override public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
+  @Override
+  public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
 
   }
 
-  @Override public void sendResult(Object o, Status status) {
+  @Override
+  public void sendResult(Object o, Status status) {
 
+  }
+
+  @Override
+  public long getCost() {
+    return cost;
   }
 }

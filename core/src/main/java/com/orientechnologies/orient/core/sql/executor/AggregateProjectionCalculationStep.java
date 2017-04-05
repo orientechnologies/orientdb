@@ -21,14 +21,16 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
   private Map<List, OResultInternal> aggregateResults = new LinkedHashMap<>();
   private List<OResultInternal>      finalResults     = null;
 
-  private int nextItem = 0;
+  private int  nextItem = 0;
+  private long cost     = 0;
 
   public AggregateProjectionCalculationStep(OProjection projection, OGroupBy groupBy, OCommandContext ctx) {
     super(projection, ctx);
     this.groupBy = groupBy;
   }
 
-  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override
+  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     if (finalResults == null) {
       executeAggregation(ctx, nRecords);
     }
@@ -36,14 +38,16 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
     return new OResultSet() {
       int localNext = 0;
 
-      @Override public boolean hasNext() {
+      @Override
+      public boolean hasNext() {
         if (localNext > nRecords || nextItem >= finalResults.size()) {
           return false;
         }
         return true;
       }
 
-      @Override public OResult next() {
+      @Override
+      public OResult next() {
         if (localNext > nRecords || nextItem >= finalResults.size()) {
           throw new IllegalStateException();
         }
@@ -53,15 +57,18 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
         return result;
       }
 
-      @Override public void close() {
+      @Override
+      public void close() {
 
       }
 
-      @Override public Optional<OExecutionPlan> getExecutionPlan() {
+      @Override
+      public Optional<OExecutionPlan> getExecutionPlan() {
         return null;
       }
 
-      @Override public Map<String, Long> getQueryStats() {
+      @Override
+      public Map<String, Long> getQueryStats() {
         return null;
       }
     };
@@ -93,38 +100,49 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
   }
 
   private void aggregate(OResult next, OCommandContext ctx) {
-    List<Object> key = new ArrayList<>();
-    if (groupBy != null) {
-      for (OExpression item : groupBy.getItems()) {
-        Object val = item.execute(next, ctx);
-        key.add(val);
-      }
-    }
-    OResultInternal preAggr = aggregateResults.get(key);
-    if (preAggr == null) {
-      preAggr = new OResultInternal();
-      aggregateResults.put(key, preAggr);
-    }
-
-    for (OProjectionItem proj : this.projection.getItems()) {
-      String alias = proj.getProjectionAlias().getStringValue();
-      if (proj.isAggregate()) {
-        AggregationContext aggrCtx = preAggr.getProperty(alias);
-        if (aggrCtx == null) {
-          aggrCtx = proj.getAggregationContext(ctx);
-          preAggr.setProperty(alias, aggrCtx);
+    long begin = System.nanoTime();
+    try {
+      List<Object> key = new ArrayList<>();
+      if (groupBy != null) {
+        for (OExpression item : groupBy.getItems()) {
+          Object val = item.execute(next, ctx);
+          key.add(val);
         }
-        aggrCtx.apply(next, ctx);
-      } else {
-        preAggr.setProperty(alias, proj.execute(next, ctx));
       }
+      OResultInternal preAggr = aggregateResults.get(key);
+      if (preAggr == null) {
+        preAggr = new OResultInternal();
+        aggregateResults.put(key, preAggr);
+      }
+
+      for (OProjectionItem proj : this.projection.getItems()) {
+        String alias = proj.getProjectionAlias().getStringValue();
+        if (proj.isAggregate()) {
+          AggregationContext aggrCtx = preAggr.getProperty(alias);
+          if (aggrCtx == null) {
+            aggrCtx = proj.getAggregationContext(ctx);
+            preAggr.setProperty(alias, aggrCtx);
+          }
+          aggrCtx.apply(next, ctx);
+        } else {
+          preAggr.setProperty(alias, proj.execute(next, ctx));
+        }
+      }
+    } finally {
+      cost += (System.nanoTime() - begin);
     }
   }
 
-  @Override public String prettyPrint(int depth, int indent) {
+  @Override
+  public String prettyPrint(int depth, int indent) {
     String spaces = OExecutionStepInternal.getIndent(depth, indent);
-    return spaces + "+ CALCULATE AGGREGATE PROJECTIONS\n" +
-        spaces + "      " + projection.toString() + "" +
-        (groupBy == null ? "" : (spaces + "\n  " + groupBy.toString()));
+    return spaces + "+ CALCULATE AGGREGATE PROJECTIONS\n" + spaces + "      " + projection.toString() + "" + (groupBy == null ?
+        "" :
+        (spaces + "\n  " + groupBy.toString()));
+  }
+
+  @Override
+  public long getCost() {
+    return cost;
   }
 }

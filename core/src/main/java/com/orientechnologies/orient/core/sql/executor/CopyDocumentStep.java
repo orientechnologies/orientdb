@@ -14,66 +14,88 @@ import java.util.Optional;
  * Created by luigidellaquila on 11/08/16.
  */
 public class CopyDocumentStep extends AbstractExecutionStep {
+
+  private long cost = 0;
+
   public CopyDocumentStep(OInsertExecutionPlan result, OCommandContext ctx) {
     super(ctx);
   }
 
-  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override
+  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     OResultSet upstream = getPrev().get().syncPull(ctx, nRecords);
     return new OResultSet() {
-      @Override public boolean hasNext() {
+      @Override
+      public boolean hasNext() {
         return upstream.hasNext();
       }
 
-      @Override public OResult next() {
+      @Override
+      public OResult next() {
         OResult toCopy = upstream.next();
-        ORecord resultDoc = null;
-        if (toCopy.isElement()) {
-          ORecord docToCopy = toCopy.getElement().get().getRecord();
-          if (docToCopy instanceof ODocument) {
-            resultDoc = ((ODocument) docToCopy).copy();
-            resultDoc.getIdentity().reset();
-            ((ODocument) resultDoc).setClassName(null);
-            resultDoc.setDirty();
-          } else if (docToCopy instanceof OBlob) {
-            ORecordBytes newBlob = ((ORecordBytes) docToCopy).copy();
-            OResultInternal result = new OResultInternal();
-            result.setElement(newBlob);
-            return result;
+        long begin = System.nanoTime();
+        try {
+          ORecord resultDoc = null;
+          if (toCopy.isElement()) {
+            ORecord docToCopy = toCopy.getElement().get().getRecord();
+            if (docToCopy instanceof ODocument) {
+              resultDoc = ((ODocument) docToCopy).copy();
+              resultDoc.getIdentity().reset();
+              ((ODocument) resultDoc).setClassName(null);
+              resultDoc.setDirty();
+            } else if (docToCopy instanceof OBlob) {
+              ORecordBytes newBlob = ((ORecordBytes) docToCopy).copy();
+              OResultInternal result = new OResultInternal();
+              result.setElement(newBlob);
+              return result;
+            }
+          } else {
+            resultDoc = toCopy.toElement().getRecord();
           }
-        } else {
-          resultDoc = toCopy.toElement().getRecord();
+          return new OUpdatableResult((ODocument) resultDoc);
+        } finally {
+          cost += (System.nanoTime() - begin);
         }
-        return new OUpdatableResult((ODocument) resultDoc);
       }
 
-      @Override public void close() {
+      @Override
+      public void close() {
         upstream.close();
       }
 
-      @Override public Optional<OExecutionPlan> getExecutionPlan() {
+      @Override
+      public Optional<OExecutionPlan> getExecutionPlan() {
         return null;
       }
 
-      @Override public Map<String, Long> getQueryStats() {
+      @Override
+      public Map<String, Long> getQueryStats() {
         return null;
       }
     };
   }
 
-  @Override public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
+  @Override
+  public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
 
   }
 
-  @Override public void sendResult(Object o, Status status) {
+  @Override
+  public void sendResult(Object o, Status status) {
 
   }
 
-  @Override public String prettyPrint(int depth, int indent) {
+  @Override
+  public String prettyPrint(int depth, int indent) {
     String spaces = OExecutionStepInternal.getIndent(depth, indent);
     StringBuilder result = new StringBuilder();
     result.append(spaces);
     result.append("+ COPY DOCUMENT");
     return result.toString();
+  }
+
+  @Override
+  public long getCost() {
+    return cost;
   }
 }

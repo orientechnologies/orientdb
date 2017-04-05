@@ -33,6 +33,8 @@ public class CreateEdgesStep extends AbstractExecutionStep {
   List toList = new ArrayList<>();
   private boolean inited = false;
 
+  private long cost = 0;
+
   public CreateEdgesStep(OIdentifier targetClass, OIdentifier targetClusterName, OIdentifier fromAlias, OIdentifier toAlias,
       Number wait, Number retry, OBatch batch, OCommandContext ctx) {
     super(ctx);
@@ -68,21 +70,28 @@ public class CreateEdgesStep extends AbstractExecutionStep {
           currentFrom = fromIter.hasNext() ? asVertex(fromIter.next()) : null;
         }
         if (currentBatch < nRecords && (toIterator.hasNext() || (toList.size() > 0 && fromIter.hasNext()))) {
+
           if (currentFrom == null) {
             throw new OCommandExecutionException("Invalid FROM vertex for edge");
           }
 
-          OVertex currentTo = asVertex(toIterator.next());
-          if (currentTo == null) {
-            throw new OCommandExecutionException("Invalid TO vertex for edge");
+          Object obj = toIterator.next();
+          long begin = System.nanoTime();
+          try {
+            OVertex currentTo = asVertex(obj);
+            if (currentTo == null) {
+              throw new OCommandExecutionException("Invalid TO vertex for edge");
+            }
+
+            OEdge edge = currentFrom.addEdge(currentTo, targetClass.getStringValue());
+
+            OUpdatableResult result = new OUpdatableResult(edge);
+            result.setElement(edge);
+            currentBatch++;
+            return result;
+          } finally {
+            cost += (System.nanoTime() - begin);
           }
-
-          OEdge edge = currentFrom.addEdge(currentTo, targetClass.getStringValue());
-
-          OUpdatableResult result = new OUpdatableResult(edge);
-          result.setElement(edge);
-          currentBatch++;
-          return result;
         } else {
           throw new IllegalStateException();
         }
@@ -176,6 +185,11 @@ public class CreateEdgesStep extends AbstractExecutionStep {
       result += "\n" + spaces + "       (target cluster " + targetCluster + ")";
     }
     return result;
+  }
+
+  @Override
+  public long getCost() {
+    return cost;
   }
 }
 

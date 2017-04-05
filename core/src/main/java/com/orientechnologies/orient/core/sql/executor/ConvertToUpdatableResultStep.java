@@ -15,13 +15,17 @@ import java.util.Optional;
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
 public class ConvertToUpdatableResultStep extends AbstractExecutionStep {
+
+  private long cost = 0;
+
   OResultSet prevResult = null;
 
   public ConvertToUpdatableResultStep(OCommandContext ctx) {
     super(ctx);
   }
 
-  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override
+  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     if (!prev.isPresent()) {
       throw new IllegalStateException("filter step requires a previous step");
     }
@@ -54,21 +58,28 @@ public class ConvertToUpdatableResultStep extends AbstractExecutionStep {
             }
           }
           nextItem = prevResult.next();
-          if (nextItem instanceof OUpdatableResult) {
-            break;
-          }
-          if (nextItem.isElement()) {
-            ORecord element = nextItem.getElement().get().getRecord();
-            if (element != null && element instanceof ODocument) {
-              nextItem = new OUpdatableResult((ODocument) element);
+          long begin = System.nanoTime();
+          try {
+            if (nextItem instanceof OUpdatableResult) {
+              break;
             }
-            break;
+            if (nextItem.isElement()) {
+              ORecord element = nextItem.getElement().get().getRecord();
+              if (element != null && element instanceof ODocument) {
+                nextItem = new OUpdatableResult((ODocument) element);
+              }
+              break;
+            }
+
+            nextItem = null;
+          } finally {
+            cost = (System.nanoTime() - begin);
           }
-          nextItem = null;
         }
       }
 
-      @Override public boolean hasNext() {
+      @Override
+      public boolean hasNext() {
         if (fetched >= nRecords || finished) {
           return false;
         }
@@ -83,7 +94,8 @@ public class ConvertToUpdatableResultStep extends AbstractExecutionStep {
         return false;
       }
 
-      @Override public OResult next() {
+      @Override
+      public OResult next() {
         if (fetched >= nRecords || finished) {
           throw new IllegalStateException();
         }
@@ -99,31 +111,42 @@ public class ConvertToUpdatableResultStep extends AbstractExecutionStep {
         return result;
       }
 
-      @Override public void close() {
+      @Override
+      public void close() {
         ConvertToUpdatableResultStep.this.close();
       }
 
-      @Override public Optional<OExecutionPlan> getExecutionPlan() {
+      @Override
+      public Optional<OExecutionPlan> getExecutionPlan() {
         return null;
       }
 
-      @Override public Map<String, Long> getQueryStats() {
+      @Override
+      public Map<String, Long> getQueryStats() {
         return null;
       }
     };
 
   }
 
-  @Override public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
+  @Override
+  public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
 
   }
 
-  @Override public void sendResult(Object o, Status status) {
+  @Override
+  public void sendResult(Object o, Status status) {
 
   }
 
-  @Override public String prettyPrint(int depth, int indent) {
+  @Override
+  public String prettyPrint(int depth, int indent) {
     return OExecutionStepInternal.getIndent(depth, indent) + "+ CONVERT TO UPDATABLE ITEM";
   }
 
+  @Override
+  public long getCost() {
+    return cost;
+  }
 }
+

@@ -25,6 +25,8 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
   OBooleanExpression condition;
 
+  private long cost = 0;
+
   private boolean inited = false;
   private OIndexCursor cursor;
   OMultiCollectionIterator<Map.Entry<Object, OIdentifiable>> customIterator;
@@ -62,15 +64,20 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
         if (!hasNext()) {
           throw new IllegalStateException();
         }
-        Map.Entry<Object, OIdentifiable> currentEntry = nextEntry;
-        fetchNextEntry();
+        long begin = System.nanoTime();
+        try {
+          Map.Entry<Object, OIdentifiable> currentEntry = nextEntry;
+          fetchNextEntry();
 
-        localCount++;
-        OResultInternal result = new OResultInternal();
-        result.setProperty("key", currentEntry.getKey());
-        result.setProperty("rid", currentEntry.getValue());
-        ctx.setVariable("$current", result);
-        return result;
+          localCount++;
+          OResultInternal result = new OResultInternal();
+          result.setProperty("key", currentEntry.getKey());
+          result.setProperty("rid", currentEntry.getValue());
+          ctx.setVariable("$current", result);
+          return result;
+        } finally {
+          cost += (System.nanoTime() - begin);
+        }
       }
 
       @Override
@@ -128,23 +135,28 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
   }
 
   private void init(OBooleanExpression condition) {
-    if (index.getDefinition() == null) {
-      return;
-    }
-    if (condition == null) {
-      processFlatIteration();
-    } else if (condition instanceof OBinaryCondition) {
-      processBinaryCondition();
-    } else if (condition instanceof OBetweenCondition) {
-      processBetweenCondition();
-    } else if (condition instanceof OAndBlock) {
-      processAndBlock();
-    } else if (condition instanceof OInCondition) {
-      //TODO
-      processInCondition();
+    long begin = System.nanoTime();
+    try {
+      if (index.getDefinition() == null) {
+        return;
+      }
+      if (condition == null) {
+        processFlatIteration();
+      } else if (condition instanceof OBinaryCondition) {
+        processBinaryCondition();
+      } else if (condition instanceof OBetweenCondition) {
+        processBetweenCondition();
+      } else if (condition instanceof OAndBlock) {
+        processAndBlock();
+      } else if (condition instanceof OInCondition) {
+        //TODO
+        processInCondition();
 
-    } else {
-      throw new OCommandExecutionException("search for index for " + condition + " is not supported yet");
+      } else {
+        throw new OCommandExecutionException("search for index for " + condition + " is not supported yet");
+      }
+    } finally {
+      cost += (System.nanoTime() - begin);
     }
   }
 
@@ -490,4 +502,8 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
             " and " + additional)));
   }
 
+  @Override
+  public long getCost() {
+    return cost;
+  }
 }

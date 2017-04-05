@@ -3,10 +3,7 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Created by luigidellaquila on 21/07/16.
@@ -24,8 +21,8 @@ public class FetchFromClustersExecutionStep extends AbstractExecutionStep {
    * iterates over a class and its subclasses
    *
    * @param clusterIds the clusters
-   * @param ctx       the query context
-   * @param ridOrder  true to sort by RID asc, false to sort by RID desc, null for no sort.
+   * @param ctx        the query context
+   * @param ridOrder   true to sort by RID asc, false to sort by RID desc, null for no sort.
    */
   public FetchFromClustersExecutionStep(int[] clusterIds, OCommandContext ctx, Boolean ridOrder) {
     super(ctx);
@@ -63,13 +60,15 @@ public class FetchFromClustersExecutionStep extends AbstractExecutionStep {
     }
   }
 
-  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override
+  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
     return new OResultSet() {
 
       int totDispatched = 0;
 
-      @Override public boolean hasNext() {
+      @Override
+      public boolean hasNext() {
         while (true) {
           if (totDispatched >= nRecords) {
             return false;
@@ -90,7 +89,8 @@ public class FetchFromClustersExecutionStep extends AbstractExecutionStep {
         }
       }
 
-      @Override public OResult next() {
+      @Override
+      public OResult next() {
         while (true) {
           if (totDispatched >= nRecords) {
             throw new IllegalStateException();
@@ -112,46 +112,54 @@ public class FetchFromClustersExecutionStep extends AbstractExecutionStep {
         }
       }
 
-      @Override public void close() {
+      @Override
+      public void close() {
         for (FetchFromClusterExecutionStep step : subSteps) {
           step.close();
         }
       }
 
-      @Override public Optional<OExecutionPlan> getExecutionPlan() {
+      @Override
+      public Optional<OExecutionPlan> getExecutionPlan() {
         return Optional.empty();
       }
 
-      @Override public Map<String, Long> getQueryStats() {
+      @Override
+      public Map<String, Long> getQueryStats() {
         return new HashMap<>();
       }
     };
 
   }
 
-  @Override public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
+  @Override
+  public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
 
   }
 
-  @Override public void sendTimeout() {
+  @Override
+  public void sendTimeout() {
     for (OExecutionStepInternal step : subSteps) {
       step.sendTimeout();
     }
     prev.ifPresent(p -> p.sendTimeout());
   }
 
-  @Override public void close() {
+  @Override
+  public void close() {
     for (OExecutionStepInternal step : subSteps) {
       step.close();
     }
     prev.ifPresent(p -> p.close());
   }
 
-  @Override public void sendResult(Object o, OExecutionCallback.Status status) {
+  @Override
+  public void sendResult(Object o, OExecutionCallback.Status status) {
 
   }
 
-  @Override public String prettyPrint(int depth, int indent) {
+  @Override
+  public String prettyPrint(int depth, int indent) {
     StringBuilder builder = new StringBuilder();
     String ind = OExecutionStepInternal.getIndent(depth, indent);
     builder.append(ind);
@@ -166,4 +174,13 @@ public class FetchFromClustersExecutionStep extends AbstractExecutionStep {
     return builder.toString();
   }
 
+  @Override
+  public List<OExecutionStep> getSubSteps() {
+    return Arrays.asList(subSteps);
+  }
+
+  @Override
+  public long getCost() {
+    return Arrays.stream(subSteps).map(x -> x.getCost()).reduce((a, b) -> a + b).orElse(-1L);
+  }
 }

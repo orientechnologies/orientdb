@@ -12,6 +12,9 @@ import java.util.Optional;
  * Created by luigidellaquila on 20/02/17.
  */
 public class CastToEdgeStep extends AbstractExecutionStep {
+
+  private long cost = 0;
+
   public CastToEdgeStep(OCommandContext ctx) {
     super(ctx);
   }
@@ -34,21 +37,26 @@ public class CastToEdgeStep extends AbstractExecutionStep {
       @Override
       public OResult next() {
         OResult result = upstream.next();
-        if (result.getElement().orElse(null) instanceof OEdge) {
-          return result;
-        }
-        if (result.isEdge()) {
-          if (result instanceof OResultInternal) {
-            ((OResultInternal) result).setElement(result.getElement().get().asEdge().get());
-          } else {
-            OResultInternal r = new OResultInternal();
-            r.setElement(result.getElement().get().asEdge().get());
-            result = r;
+        long begin = System.nanoTime();
+        try {
+          if (result.getElement().orElse(null) instanceof OEdge) {
+            return result;
           }
-        } else {
-          throw new OCommandExecutionException("Current element is not a vertex: " + result);
+          if (result.isEdge()) {
+            if (result instanceof OResultInternal) {
+              ((OResultInternal) result).setElement(result.getElement().get().asEdge().get());
+            } else {
+              OResultInternal r = new OResultInternal();
+              r.setElement(result.getElement().get().asEdge().get());
+              result = r;
+            }
+          } else {
+            throw new OCommandExecutionException("Current element is not a vertex: " + result);
+          }
+          return result;
+        } finally {
+          cost += (System.nanoTime() - begin);
         }
-        return result;
       }
 
       @Override
@@ -71,5 +79,10 @@ public class CastToEdgeStep extends AbstractExecutionStep {
   @Override
   public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
 
+  }
+
+  @Override
+  public long getCost() {
+    return cost;
   }
 }

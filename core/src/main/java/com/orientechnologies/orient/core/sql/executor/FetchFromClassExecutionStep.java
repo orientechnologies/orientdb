@@ -207,4 +207,9 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
     }
     return Arrays.asList(subSteps);
   }
+
+  @Override
+  public long getCost() {
+    return Arrays.stream(this.subSteps).map(x -> x.getCost()).reduce((a, b) -> a + b).orElse(0L);
+  }
 }

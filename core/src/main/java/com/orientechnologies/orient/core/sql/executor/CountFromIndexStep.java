@@ -15,6 +15,8 @@ public class CountFromIndexStep extends AbstractExecutionStep {
   private final OIndexIdentifier target;
   private final String           alias;
 
+  private long count = 0;
+
   private boolean executed = false;
 
   public CountFromIndexStep(OIndexIdentifier targetIndex, String alias, OCommandContext ctx) {
@@ -30,6 +32,8 @@ public class CountFromIndexStep extends AbstractExecutionStep {
 
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+    getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
+
     return new OResultSet() {
       @Override
       public boolean hasNext() {
@@ -41,12 +45,17 @@ public class CountFromIndexStep extends AbstractExecutionStep {
         if (executed) {
           throw new IllegalStateException();
         }
-        OIndex<?> idx = ctx.getDatabase().getMetadata().getIndexManager().getIndex(target.getIndexName());
-        long size = idx.getSize();
-        executed = true;
-        OResultInternal result = new OResultInternal();
-        result.setProperty(alias, size);
-        return result;
+        long begin = System.nanoTime();
+        try {
+          OIndex<?> idx = ctx.getDatabase().getMetadata().getIndexManager().getIndex(target.getIndexName());
+          long size = idx.getSize();
+          executed = true;
+          OResultInternal result = new OResultInternal();
+          result.setProperty(alias, size);
+          return result;
+        } finally {
+          count += (System.nanoTime() - begin);
+        }
       }
 
       @Override

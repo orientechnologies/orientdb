@@ -11,13 +11,16 @@ import com.orientechnologies.orient.core.command.OCommandContext;
  */
 public class CountStep extends AbstractExecutionStep {
 
+  private long cost = 0;
+
   boolean executed = false;
 
   public CountStep(OCommandContext ctx) {
     super(ctx);
   }
 
-  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override
+  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     if (executed) {
       return new OInternalResultSet();
     }
@@ -26,33 +29,46 @@ public class CountStep extends AbstractExecutionStep {
     long count = 0;
     while (true) {
       OResultSet prevResult = getPrev().get().syncPull(ctx, nRecords);
+
       if (!prevResult.hasNext()) {
-        OInternalResultSet result = new OInternalResultSet();
-        resultRecord.setProperty("count", count);
-        result.add(resultRecord);
-        return result;
+        long begin = System.nanoTime();
+        try {
+          OInternalResultSet result = new OInternalResultSet();
+          resultRecord.setProperty("count", count);
+          result.add(resultRecord);
+          return result;
+        } finally {
+          cost += (System.nanoTime() - begin);
+        }
       }
       while (prevResult.hasNext()) {
+        count++;
         prevResult.next();
-        resultRecord.setProperty("count", ++count);
       }
     }
   }
 
-  @Override public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
+  @Override
+  public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
 
   }
 
-  @Override public void sendResult(Object o, Status status) {
+  @Override
+  public void sendResult(Object o, Status status) {
 
   }
 
-
-  @Override public String prettyPrint(int depth, int indent) {
+  @Override
+  public String prettyPrint(int depth, int indent) {
     String spaces = OExecutionStepInternal.getIndent(depth, indent);
     StringBuilder result = new StringBuilder();
     result.append(spaces);
     result.append("+ COUNT");
     return result.toString();
+  }
+
+  @Override
+  public long getCost() {
+    return cost;
   }
 }

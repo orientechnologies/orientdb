@@ -18,6 +18,7 @@ public abstract class AbstractTraverseStep extends AbstractExecutionStep {
 
   protected List<OResult> entryPoints = null;
   protected List<OResult> results     = new ArrayList<>();
+  private   long          cost        = 0;
 
   Set<ORID> traversed = new ORidSet();
 
@@ -27,13 +28,15 @@ public abstract class AbstractTraverseStep extends AbstractExecutionStep {
     this.projections = projections.stream().map(x -> x.copy()).collect(Collectors.toList());
   }
 
-  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override
+  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     //TODO
 
     return new OResultSet() {
       int localFetched = 0;
 
-      @Override public boolean hasNext() {
+      @Override
+      public boolean hasNext() {
         if (localFetched >= nRecords) {
           return false;
         }
@@ -46,7 +49,8 @@ public abstract class AbstractTraverseStep extends AbstractExecutionStep {
         return true;
       }
 
-      @Override public OResult next() {
+      @Override
+      public OResult next() {
         if (localFetched >= nRecords) {
           throw new IllegalStateException();
         }
@@ -64,15 +68,18 @@ public abstract class AbstractTraverseStep extends AbstractExecutionStep {
         return result;
       }
 
-      @Override public void close() {
+      @Override
+      public void close() {
 
       }
 
-      @Override public Optional<OExecutionPlan> getExecutionPlan() {
+      @Override
+      public Optional<OExecutionPlan> getExecutionPlan() {
         return null;
       }
 
-      @Override public Map<String, Long> getQueryStats() {
+      @Override
+      public Map<String, Long> getQueryStats() {
         return null;
       }
     };
@@ -92,7 +99,9 @@ public abstract class AbstractTraverseStep extends AbstractExecutionStep {
       if (this.entryPoints.isEmpty()) {
         return;
       }
+      long begin = System.nanoTime();
       fetchNextResults(ctx, nRecords);
+      cost += (System.nanoTime() - begin);
       if (!this.results.isEmpty()) {
         return;
       }
@@ -107,11 +116,18 @@ public abstract class AbstractTraverseStep extends AbstractExecutionStep {
     return entryPoints != null && entryPoints.isEmpty() && results.isEmpty();
   }
 
-  @Override public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
+  @Override
+  public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
 
   }
 
-  @Override public void sendResult(Object o, Status status) {
+  @Override
+  public void sendResult(Object o, Status status) {
 
+  }
+
+  @Override
+  public long getCost() {
+    return cost;
   }
 }

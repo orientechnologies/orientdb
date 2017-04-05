@@ -17,6 +17,7 @@ public class FetchFromIndexedFunctionStep extends AbstractExecutionStep {
   private final OBinaryCondition functionCondition;
   private final OFromClause      queryTarget;
 
+  private long cost = 0;
   //runtime
   Iterator<OIdentifiable> fullResult = null;
 
@@ -46,16 +47,21 @@ public class FetchFromIndexedFunctionStep extends AbstractExecutionStep {
 
       @Override
       public OResult next() {
-        if (localCount >= nRecords) {
-          throw new IllegalStateException();
+        long begin = System.nanoTime();
+        try {
+          if (localCount >= nRecords) {
+            throw new IllegalStateException();
+          }
+          if (!fullResult.hasNext()) {
+            throw new IllegalStateException();
+          }
+          OResultInternal result = new OResultInternal();
+          result.setElement(fullResult.next());
+          localCount++;
+          return result;
+        } finally {
+          cost += (System.nanoTime() - begin);
         }
-        if (!fullResult.hasNext()) {
-          throw new IllegalStateException();
-        }
-        OResultInternal result = new OResultInternal();
-        result.setElement(fullResult.next());
-        localCount++;
-        return result;
       }
 
       @Override
@@ -77,7 +83,12 @@ public class FetchFromIndexedFunctionStep extends AbstractExecutionStep {
 
   private void init(OCommandContext ctx) {
     if (fullResult == null) {
-      fullResult = functionCondition.executeIndexedFunction(queryTarget, ctx).iterator();
+      long begin = System.nanoTime();
+      try {
+        fullResult = functionCondition.executeIndexedFunction(queryTarget, ctx).iterator();
+      } finally {
+        cost += (System.nanoTime() - begin);
+      }
     }
   }
 
@@ -99,5 +110,10 @@ public class FetchFromIndexedFunctionStep extends AbstractExecutionStep {
   @Override
   public void reset() {
     this.fullResult = null;
+  }
+
+  @Override
+  public long getCost() {
+    return cost;
   }
 }

@@ -37,7 +37,7 @@ public class OInfoExecutionStep implements OExecutionStep {
   }
 
   @Override public long getCost() {
-    return 0;
+    return cost;
   }
 
   @Override public OResult toResult() {

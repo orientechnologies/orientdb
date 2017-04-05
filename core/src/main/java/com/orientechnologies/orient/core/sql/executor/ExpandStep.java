@@ -17,6 +17,8 @@ import java.util.Optional;
  */
 public class ExpandStep extends AbstractExecutionStep {
 
+  private long cost = 0;
+
   OResultSet lastResult      = null;
   Iterator   nextSubsequence = null;
   OResult    nextElement     = null;
@@ -25,14 +27,16 @@ public class ExpandStep extends AbstractExecutionStep {
     super(ctx);
   }
 
-  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override
+  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     if (prev == null || !prev.isPresent()) {
       throw new OCommandExecutionException("Cannot expand without a target");
     }
     return new OResultSet() {
       long localCount = 0;
 
-      @Override public boolean hasNext() {
+      @Override
+      public boolean hasNext() {
         if (localCount >= nRecords) {
           return false;
         }
@@ -45,7 +49,8 @@ public class ExpandStep extends AbstractExecutionStep {
         return true;
       }
 
-      @Override public OResult next() {
+      @Override
+      public OResult next() {
         if (localCount >= nRecords) {
           throw new IllegalStateException();
         }
@@ -63,15 +68,18 @@ public class ExpandStep extends AbstractExecutionStep {
         return result;
       }
 
-      @Override public void close() {
+      @Override
+      public void close() {
 
       }
 
-      @Override public Optional<OExecutionPlan> getExecutionPlan() {
+      @Override
+      public Optional<OExecutionPlan> getExecutionPlan() {
         return null;
       }
 
-      @Override public Map<String, Long> getQueryStats() {
+      @Override
+      public Map<String, Long> getQueryStats() {
         return null;
       }
     };
@@ -80,21 +88,26 @@ public class ExpandStep extends AbstractExecutionStep {
   private void fetchNext(OCommandContext ctx, int n) {
     do {
       if (nextSubsequence != null && nextSubsequence.hasNext()) {
-        Object nextElementObj = nextSubsequence.next();
-        if (nextElementObj instanceof OResult) {
-          nextElement = (OResult) nextElementObj;
-        } else if (nextElementObj instanceof OIdentifiable) {
-          ORecord record = ((OIdentifiable) nextElementObj).getRecord();
-          if (record == null) {
-            continue;
+        long begin = System.nanoTime();
+        try {
+          Object nextElementObj = nextSubsequence.next();
+          if (nextElementObj instanceof OResult) {
+            nextElement = (OResult) nextElementObj;
+          } else if (nextElementObj instanceof OIdentifiable) {
+            ORecord record = ((OIdentifiable) nextElementObj).getRecord();
+            if (record == null) {
+              continue;
+            }
+            nextElement = new OResultInternal();
+            ((OResultInternal) nextElement).setElement(record);
+          } else {
+            nextElement = new OResultInternal();
+            ((OResultInternal) nextElement).setProperty("value", nextElementObj);
           }
-          nextElement = new OResultInternal();
-          ((OResultInternal) nextElement).setElement(record);
-        } else {
-          nextElement = new OResultInternal();
-          ((OResultInternal) nextElement).setProperty("value", nextElementObj);
+          break;
+        } finally {
+          cost += (System.nanoTime() - begin);
         }
-        break;
       }
 
       if (nextSubsequence == null || !nextSubsequence.hasNext()) {
@@ -107,48 +120,61 @@ public class ExpandStep extends AbstractExecutionStep {
       }
 
       OResult nextAggregateItem = lastResult.next();
-      if (nextAggregateItem.getPropertyNames().size() == 0) {
-        continue;
-      }
-      if (nextAggregateItem.getPropertyNames().size() > 1) {
-        throw new IllegalStateException("Invalid EXPAND on record " + nextAggregateItem);
-      }
-
-      String propName = nextAggregateItem.getPropertyNames().iterator().next();
-      Object projValue = nextAggregateItem.getProperty(propName);
-      if (projValue == null) {
-        continue;
-      }
-      if (projValue instanceof OIdentifiable) {
-        ORecord rec = ((OIdentifiable) projValue).getRecord();
-        if(rec==null){
+      long begin = System.nanoTime();
+      try {
+        if (nextAggregateItem.getPropertyNames().size() == 0) {
           continue;
         }
-        OResultInternal res = new OResultInternal();
-        res.setElement(rec);
+        if (nextAggregateItem.getPropertyNames().size() > 1) {
+          throw new IllegalStateException("Invalid EXPAND on record " + nextAggregateItem);
+        }
 
-        nextSubsequence = Collections.singleton(res).iterator();
-      } else if (projValue instanceof OResult) {
-        nextSubsequence = Collections.singleton((OResult) projValue).iterator();
-      } else if (projValue instanceof Iterator) {
-        nextSubsequence = (Iterator) projValue;
-      } else if (projValue instanceof Iterable) {
-        nextSubsequence = ((Iterable) projValue).iterator();
+        String propName = nextAggregateItem.getPropertyNames().iterator().next();
+        Object projValue = nextAggregateItem.getProperty(propName);
+        if (projValue == null) {
+          continue;
+        }
+        if (projValue instanceof OIdentifiable) {
+          ORecord rec = ((OIdentifiable) projValue).getRecord();
+          if (rec == null) {
+            continue;
+          }
+          OResultInternal res = new OResultInternal();
+          res.setElement(rec);
+
+          nextSubsequence = Collections.singleton(res).iterator();
+        } else if (projValue instanceof OResult) {
+          nextSubsequence = Collections.singleton((OResult) projValue).iterator();
+        } else if (projValue instanceof Iterator) {
+          nextSubsequence = (Iterator) projValue;
+        } else if (projValue instanceof Iterable) {
+          nextSubsequence = ((Iterable) projValue).iterator();
+        }
+      } finally {
+        cost += (System.nanoTime() - begin);
       }
     } while (true);
 
   }
 
-  @Override public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
+  @Override
+  public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
 
   }
 
-  @Override public void sendResult(Object o, Status status) {
+  @Override
+  public void sendResult(Object o, Status status) {
 
   }
 
-  @Override public String prettyPrint(int depth, int indent) {
+  @Override
+  public String prettyPrint(int depth, int indent) {
     String spaces = OExecutionStepInternal.getIndent(depth, indent);
     return spaces + "+ EXPAND";
+  }
+
+  @Override
+  public long getCost() {
+    return cost;
   }
 }

@@ -18,6 +18,10 @@ public interface OExecutionStep {
 
   List<OExecutionStep> getSubSteps();
 
+  /**
+   * returns the absolute cost (in nanoseconds) of the execution of this step
+   * @return the absolute cost (in nanoseconds) of the execution of this step, -1 if not calculated
+   */
   default long getCost() {
     return -1l;
   }

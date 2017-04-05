@@ -25,25 +25,30 @@ public class CartesianProductStep extends AbstractExecutionStep {
 
   OResultInternal nextRecord;
 
+  private long cost = 0;
+
   public CartesianProductStep(OCommandContext ctx) {
     super(ctx);
   }
 
-  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override
+  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
     init(ctx);
     //    return new OInternalResultSet();
     return new OResultSet() {
       int currentCount = 0;
 
-      @Override public boolean hasNext() {
+      @Override
+      public boolean hasNext() {
         if (currentCount >= nRecords) {
           return false;
         }
         return nextRecord != null;
       }
 
-      @Override public OResult next() {
+      @Override
+      public OResult next() {
         if (currentCount >= nRecords || nextRecord == null) {
           throw new IllegalStateException();
         }
@@ -53,15 +58,18 @@ public class CartesianProductStep extends AbstractExecutionStep {
         return result;
       }
 
-      @Override public void close() {
+      @Override
+      public void close() {
 
       }
 
-      @Override public Optional<OExecutionPlan> getExecutionPlan() {
+      @Override
+      public Optional<OExecutionPlan> getExecutionPlan() {
         return null;
       }
 
-      @Override public Map<String, Long> getQueryStats() {
+      @Override
+      public Map<String, Long> getQueryStats() {
         return null;
       }
     };
@@ -123,31 +131,38 @@ public class CartesianProductStep extends AbstractExecutionStep {
   }
 
   private void buildNextRecord() {
-    if (currentTuple == null) {
-      nextRecord = null;
-      return;
-    }
-    nextRecord = new OResultInternal();
-
-    for (int i = 0; i < this.currentTuple.size(); i++) {
-      OResult res = this.currentTuple.get(i);
-      for (String s : res.getPropertyNames()) {
-        nextRecord.setProperty(s, res.getProperty(s));
+    long begin = System.nanoTime();
+    try {
+      if (currentTuple == null) {
+        nextRecord = null;
+        return;
       }
-      if (!completedPrefetch.get(i)) {
-        preFetches.get(i).add(res);
-        if (!resultSets.get(i).hasNext()) {
-          completedPrefetch.set(i, true);
+      nextRecord = new OResultInternal();
+
+      for (int i = 0; i < this.currentTuple.size(); i++) {
+        OResult res = this.currentTuple.get(i);
+        for (String s : res.getPropertyNames()) {
+          nextRecord.setProperty(s, res.getProperty(s));
+        }
+        if (!completedPrefetch.get(i)) {
+          preFetches.get(i).add(res);
+          if (!resultSets.get(i).hasNext()) {
+            completedPrefetch.set(i, true);
+          }
         }
       }
+    } finally {
+      cost += (System.nanoTime() - begin);
     }
   }
 
-  @Override public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
+  @Override
+  public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
 
   }
 
-  @Override public void sendResult(Object o, Status status) {
+  @Override
+  public void sendResult(Object o, Status status) {
 
   }
 
@@ -155,7 +170,8 @@ public class CartesianProductStep extends AbstractExecutionStep {
     this.subPlans.add(subPlan);
   }
 
-  @Override public String prettyPrint(int depth, int indent) {
+  @Override
+  public String prettyPrint(int depth, int indent) {
     String result = "";
     String ind = OExecutionStepInternal.getIndent(depth, indent);
 
@@ -266,5 +282,10 @@ public class CartesianProductStep extends AbstractExecutionStep {
 
   private String appendPipe(String p) {
     return "| " + p;
+  }
+
+  @Override
+  public long getCost() {
+    return cost;
   }
 }

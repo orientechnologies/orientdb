@@ -13,6 +13,8 @@ public class OrderByStep extends AbstractExecutionStep {
   private final OOrderBy orderBy;
   private       Integer  maxResults;
 
+  private long cost = 0;
+
   List<OResult> cachedResult = null;
   int           nextElement  = 0;
 
@@ -29,7 +31,8 @@ public class OrderByStep extends AbstractExecutionStep {
     }
   }
 
-  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override
+  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     if (cachedResult == null) {
       cachedResult = new ArrayList<>();
       prev.ifPresent(p -> init(p, ctx));
@@ -39,7 +42,8 @@ public class OrderByStep extends AbstractExecutionStep {
       int currentBatchReturned = 0;
       int offset = nextElement;
 
-      @Override public boolean hasNext() {
+      @Override
+      public boolean hasNext() {
         if (currentBatchReturned >= nRecords) {
           return false;
         }
@@ -49,7 +53,8 @@ public class OrderByStep extends AbstractExecutionStep {
         return true;
       }
 
-      @Override public OResult next() {
+      @Override
+      public OResult next() {
         if (currentBatchReturned >= nRecords) {
           throw new IllegalStateException();
         }
@@ -62,66 +67,82 @@ public class OrderByStep extends AbstractExecutionStep {
         return result;
       }
 
-      @Override public void close() {
+      @Override
+      public void close() {
         prev.ifPresent(p -> p.close());
       }
 
-      @Override public Optional<OExecutionPlan> getExecutionPlan() {
+      @Override
+      public Optional<OExecutionPlan> getExecutionPlan() {
         return Optional.empty();
       }
 
-      @Override public Map<String, Long> getQueryStats() {
+      @Override
+      public Map<String, Long> getQueryStats() {
         return new HashMap<>();
       }
     };
   }
 
   private void init(OExecutionStepInternal p, OCommandContext ctx) {
-    boolean sorted = true;
-    do {
-      OResultSet lastBatch = p.syncPull(ctx, 100);
-      if (!lastBatch.hasNext()) {
-        break;
-      }
-      while (lastBatch.hasNext()) {
-        if (this.timedOut) {
+    long begin = System.nanoTime();
+    try {
+      boolean sorted = true;
+      do {
+        OResultSet lastBatch = p.syncPull(ctx, 100);
+        if (!lastBatch.hasNext()) {
           break;
         }
-        cachedResult.add(lastBatch.next());
-        sorted = false;
-        //compact, only at twice as the buffer, to avoid to do it at each add
-        if (this.maxResults != null && maxResults * 2 < cachedResult.size()) {
+        while (lastBatch.hasNext()) {
+          if (this.timedOut) {
+            break;
+          }
+          cachedResult.add(lastBatch.next());
+          sorted = false;
+          //compact, only at twice as the buffer, to avoid to do it at each add
+          if (this.maxResults != null && maxResults * 2 < cachedResult.size()) {
+            cachedResult.sort((a, b) -> orderBy.compare(a, b, ctx));
+            cachedResult = new ArrayList<>(cachedResult.subList(0, maxResults));
+            sorted = true;
+          }
+        }
+        if (timedOut) {
+          break;
+        }
+        //compact at each batch, if needed
+        if (!sorted && this.maxResults != null && maxResults < cachedResult.size()) {
           cachedResult.sort((a, b) -> orderBy.compare(a, b, ctx));
           cachedResult = new ArrayList<>(cachedResult.subList(0, maxResults));
           sorted = true;
         }
-      }
-      if (timedOut) {
-        break;
-      }
-      //compact at each batch, if needed
-      if (!sorted && this.maxResults != null && maxResults < cachedResult.size()) {
+      } while (true);
+      if (!sorted) {
         cachedResult.sort((a, b) -> orderBy.compare(a, b, ctx));
-        cachedResult = new ArrayList<>(cachedResult.subList(0, maxResults));
-        sorted = true;
       }
-    } while (true);
-    if (!sorted) {
-      cachedResult.sort((a, b) -> orderBy.compare(a, b, ctx));
+    } finally {
+      cost += (System.nanoTime() - begin);
     }
   }
 
-  @Override public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
+  @Override
+  public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
 
   }
 
-  @Override public void sendResult(Object o, Status status) {
+  @Override
+  public void sendResult(Object o, Status status) {
 
   }
 
-  @Override public String prettyPrint(int depth, int indent) {
+  @Override
+  public String prettyPrint(int depth, int indent) {
     return OExecutionStepInternal.getIndent(depth, indent) + "+ " + orderBy + (maxResults != null ?
         "\n  (buffer size: " + maxResults + ")" :
         "");
+  }
+
+  @Override
+  public long getCost() {
+    return cost;
   }
 }

@@ -15,6 +15,8 @@ public class CountFromClassStep extends AbstractExecutionStep {
   private final OIdentifier target;
   private final String      alias;
 
+  private long cost = 0;
+
   private boolean executed = false;
 
   public CountFromClassStep(OIdentifier targetIndex, String alias, OCommandContext ctx) {
@@ -30,6 +32,7 @@ public class CountFromClassStep extends AbstractExecutionStep {
 
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+    getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
     return new OResultSet() {
       @Override
       public boolean hasNext() {
@@ -41,12 +44,17 @@ public class CountFromClassStep extends AbstractExecutionStep {
         if (executed) {
           throw new IllegalStateException();
         }
-        OClass clazz = ctx.getDatabase().getClass(target.getStringValue());
-        long size = clazz.count();
-        executed = true;
-        OResultInternal result = new OResultInternal();
-        result.setProperty(alias, size);
-        return result;
+        long begin = System.nanoTime();
+        try {
+          OClass clazz = ctx.getDatabase().getClass(target.getStringValue());
+          long size = clazz.count();
+          executed = true;
+          OResultInternal result = new OResultInternal();
+          result.setProperty(alias, size);
+          return result;
+        } finally {
+          cost += (System.nanoTime() - begin);
+        }
       }
 
       @Override
@@ -86,4 +94,10 @@ public class CountFromClassStep extends AbstractExecutionStep {
     String spaces = OExecutionStepInternal.getIndent(depth, indent);
     return spaces + "+ CALCULATE CLASS SIZE: " + target;
   }
+
+  @Override
+  public long getCost() {
+    return cost;
+  }
+
 }
