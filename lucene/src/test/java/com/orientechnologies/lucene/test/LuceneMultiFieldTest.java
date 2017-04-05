@@ -31,7 +31,7 @@ import org.junit.Test;
 import java.io.InputStream;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Created by enricorisa on 19/09/14.
@@ -66,8 +66,17 @@ public class LuceneMultiFieldTest extends BaseLuceneTest {
 
     List<ODocument> docs = db.query(
         new OSQLSynchQuery<ODocument>("select * from Song where [title,author] LUCENE \"(title:mountain AND author:Fabbio)\""));
-    //List<ODocument> docs = databaseDocumentTx.query(
-    //        new OSQLSynchQuery<ODocument>("select * from Song where [title,author] LUCENE \"(title:mountains)\""));
+
+    assertThat(docs).hasSize(1);
+
+  }
+
+  @Test
+  public void testSelectUsingIndexApi() throws Exception {
+
+    List<ODocument> docs = db.query(
+        new OSQLSynchQuery<ODocument>(
+            " SELECT expand(rid) FROM index:Song.title_author where key = \"(title:mountain AND author:Fabbio)\""));
 
     assertThat(docs).hasSize(1);
 
@@ -116,22 +125,24 @@ public class LuceneMultiFieldTest extends BaseLuceneTest {
   public void testSelectOnIndexWithIgnoreNullValuesToFalse() {
     //#5579
     String script = "create class Item\n"
-        + "create property Item.title string\n"
-        + "create property Item.summary string\n"
-        + "create property Item.content string\n"
-        + "create index Item.i_lucene on Item(title, summary, content) fulltext engine lucene METADATA {ignoreNullValues:false}\n"
-        + "insert into Item set title = 'test', content = 'this is a test'\n";
+        + "create property Item.Title string\n"
+        + "create property Item.Summary string\n"
+        + "create property Item.Content string\n"
+        + "create index Item.i_lucene on Item(Title, Summary, Content) fulltext engine lucene METADATA {ignoreNullValues:false}\n"
+        + "insert into Item set Title = 'wrong', content = 'not me please'\n"
+        + "insert into Item set Title = 'test', content = 'this is a test'\n";
     db.command(new OCommandScript("sql", script)).execute();
 
-    List<ODocument> docs;
-
-    docs = db.query(new OSQLSynchQuery<ODocument>("select * from Item where title lucene 'te*'"));
-
+    List<ODocument> docs = db.query(new OSQLSynchQuery<ODocument>("select * from Item where Title lucene 'te*'"));
     assertThat(docs).hasSize(1);
 
     docs = db
-        .query(new OSQLSynchQuery<ODocument>("select * from Item where [title, summary, content] lucene 'test'"));
+        .query(new OSQLSynchQuery<ODocument>("select * from Item where [Title, Summary, Content] lucene 'test'"));
+    assertThat(docs).hasSize(1);
 
+    //nidex api
+    docs = db.query(
+        new OSQLSynchQuery<ODocument>(" SELECT expand(rid) FROM index:Item.i_lucene where key = \"(Title:test )\""));
     assertThat(docs).hasSize(1);
 
   }
