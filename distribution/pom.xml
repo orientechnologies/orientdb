@@ -22,7 +22,6 @@
     </parent>
 
     <artifactId>orientdb-community</artifactId>
-    <packaging>pom</packaging>
 
     <name>OrientDB Community Distribution</name>
 
@@ -33,6 +32,20 @@
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-test-commons</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.testng</groupId>
+                    <artifactId>testng</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+
         <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-client</artifactId>
@@ -117,6 +130,21 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                    </archive>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>test-jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>1.4.0</version>
@@ -190,4 +218,93 @@
         </plugins>
     </build>
 
+    <profiles>
+        <profile>
+            <id>qa</id>
+            <build>
+                <plugins>
+
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>1.4.0</version>
+                        <executions>
+                            <execution>
+                                <id>build-demodb</id>
+                                <phase>prepare-package</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>${java.home}/bin/java</executable>
+                                    <workingDirectory>${project.basedir}</workingDirectory>
+                                    <arguments>
+                                        <argument>-XX:MaxDirectMemorySize=512g</argument>
+                                        <argument>-classpath</argument>
+                                        <classpath/>
+                                        <argument>com.orientechnologies.orient.console.OConsoleDatabaseApp</argument>
+                                        <argument>CREATE DATABASE plocal:./target/databases/demodb;</argument>
+                                        <argument>LOAD SCRIPT ./src/test/resources/demoDB.osql;</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>integration-test</goal>
+                                    <goal>verify</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <plugin>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>1.8</version>
+                        <executions>
+                            <execution>
+                                <id>start-orient</id>
+                                <phase>pre-integration-test</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <target name="start OrientDB server on localhost">
+                                        <exec executable="${project.build.directory}/${project.build.finalName}.dir/${project.build.finalName}/bin/server.sh"
+                                              spawn="true">
+                                            <env key="ORIENTDB_ROOT_PASSWORD" value="root"/>
+                                        </exec>
+                                    </target>
+                                </configuration>
+                            </execution>
+
+                            <execution>
+                                <id>stop-orient</id>
+                                <phase>post-integration-test</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <target name="stop the running OrientDB server on localhost">
+                                        <exec executable="${project.build.directory}/${project.build.finalName}.dir/${project.build.finalName}/bin/shutdown.sh"
+                                              spawn="false">
+                                        </exec>
+                                    </target>
+                                </configuration>
+
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                </plugins>
+            </build>
+
+        </profile>
+
+    </profiles>
 </project>
