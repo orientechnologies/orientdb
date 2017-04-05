@@ -20,6 +20,20 @@ public class OQueryStats {
     return db.getSharedContext().getQueryStats();
   }
 
+  public long getIndexStats(String indexName, int params, boolean range, boolean additionalRange) {
+    String key = generateKey("INDEX", indexName, String.valueOf(params), String.valueOf(range), String.valueOf(additionalRange));
+    Long val = stats.get(key);
+    if (val != null) {
+      return val;
+    }
+    return -1;
+  }
+
+  public void pushIndexStats(String indexName, int params, boolean range, boolean additionalRange, Long value) {
+    String key = generateKey("INDEX", indexName, String.valueOf(params), String.valueOf(range), String.valueOf(additionalRange));
+    pushValue(key, value);
+  }
+
   public long getAverageOutEdgeSpan(String vertexClass, String edgeClass) {
     String key = generateKey(vertexClass, "-", edgeClass, "->");
     Long val = stats.get(key);
@@ -72,7 +86,7 @@ public class OQueryStats {
       val = value;
     } else {
       //refine this ;-)
-      val = ((Double) ((val * .99) + (value * .01))).longValue();
+      val = ((Double) ((val * .9) + (value * .1))).longValue();
       if (value > 0 && val == 0) {
         val = 1l;
       }
