@@ -267,7 +267,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       }
 
       final long statsDelay = OGlobalConfiguration.DISTRIBUTED_DUMP_STATS_EVERY.getValueAsLong();
-      if (delay > 0) {
+      if (statsDelay > 0) {
         haStatsTask = new TimerTask() {
           @Override
           public void run() {
@@ -461,7 +461,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       }
 
       // DUMP HA STATS
-      ODistributedServerLog.info(this, getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE, "%s", buffer);
+      System.out.println(buffer);
 
     } catch (Throwable t) {
       ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE, "Error on printing HA stats");

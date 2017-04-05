@@ -1011,7 +1011,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     if (totalWorkers < 1)
       throw new ODistributedException("Cannot create configured distributed workers (" + totalWorkers + ")");
 
-    serviceThread = new ODistributedWorker(this, databaseName, -1);
+    serviceThread = new ODistributedWorker(this, databaseName, -3);
     serviceThread.start();
 
     for (int i = 0; i < totalWorkers; ++i) {

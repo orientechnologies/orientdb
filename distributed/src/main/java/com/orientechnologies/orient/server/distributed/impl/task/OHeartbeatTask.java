@@ -135,9 +135,4 @@ public class OHeartbeatTask extends OAbstractRemoteTask {
     return getName() + " timestamp: " + timestamp;
   }
 
-  @Override
-  public int[] getPartitionKey() {
-    return SERVICE;
-  }
-
 }
