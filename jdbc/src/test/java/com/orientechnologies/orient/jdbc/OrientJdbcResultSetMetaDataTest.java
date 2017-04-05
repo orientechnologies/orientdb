@@ -100,12 +100,12 @@ public class OrientJdbcResultSetMetaDataTest extends OrientJdbcBaseTest {
     ResultSetMetaData metaData = rs.getMetaData();
     assertThat(metaData.getColumnCount()).isEqualTo(7);
 
-    assertThat(metaData.getColumnName(1)).isEqualTo("rid");
+    assertThat(metaData.getColumnName(1)).isEqualTo("@rid");
     assertThat(new ORecordId(rs.getString(1)).isPersistent()).isEqualTo(true);
 
     assertThat(rs.getObject(1)).isInstanceOf(String.class);
 
-    assertThat(metaData.getColumnName(2)).isEqualTo("class");
+    assertThat(metaData.getColumnName(2)).isEqualTo("@class");
     assertThat(rs.getString(2)).isEqualTo("Item");
     assertThat(rs.getObject(2)).isInstanceOf(String.class);
 
@@ -132,6 +132,7 @@ public class OrientJdbcResultSetMetaDataTest extends OrientJdbcBaseTest {
 
     ResultSetMetaData metaData = rs.getMetaData();
     while (rs.next()) {
+
       if (rs.getMetaData().getColumnCount() == 6) {
         //record with all attributes
         assertThat(rs.getTimestamp("post_date")).isNotNull();

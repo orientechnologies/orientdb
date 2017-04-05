@@ -6,11 +6,10 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -113,6 +112,7 @@ public class OrientDataSourceTest extends OrientJdbcBaseTest {
           } catch (Exception e) {
             e.printStackTrace();
             fail("fail:::", e);
+            return Boolean.FALSE;
           }
         }
 
@@ -122,17 +122,20 @@ public class OrientDataSourceTest extends OrientJdbcBaseTest {
 
     ExecutorService pool = Executors.newCachedThreadPool();
 
-    //activate 4 clients ≈
-    pool.submit(dbClient);
-    pool.submit(dbClient);
-    pool.submit(dbClient);
-    pool.submit(dbClient);
+    List<Future> futures = new ArrayList<Future>();
+    for (int i = 0; i < 20; i++) {
+      futures.add(pool.submit(dbClient));
+    }
 
     //and let them work
     TimeUnit.SECONDS.sleep(5);
 
     //stop clients
     queryTheDb.set(false);
+
+    for (Future future : futures) {
+      future.get();
+    }
 
     pool.shutdown();
 

@@ -3,6 +3,7 @@ package com.orientechnologies.orient.jdbc;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.sql.DatabaseMetaData;
@@ -97,6 +98,7 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
   }
 
   @Test
+  @Ignore
   public void getFields() throws SQLException {
     ResultSet rs = conn.createStatement().executeQuery("select from OUser");
 
