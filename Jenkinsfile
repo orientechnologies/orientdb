@@ -35,17 +35,17 @@ node("master") {
                 }
             }
 
-            stage('Run QA/Integration tests on Java8') {
-                docker.image("${mvnJdk8Image}")
-                        .inside("${env.VOLUMES}") {
-                    try {
-                        sh "${mvnHome}/bin/mvn -f distribution/pom.xml clean install -Pqa"
-                    } finally {
-                        junit allowEmptyResults: true, testResults: '**/target/failsafe-reports/TEST-*.xml'
-
-                    }
-                }
-            }
+//            stage('Run QA/Integration tests on Java8') {
+//                docker.image("${mvnJdk8Image}")
+//                        .inside("${env.VOLUMES}") {
+//                    try {
+//                        sh "${mvnHome}/bin/mvn -f distribution/pom.xml clean install -Pqa"
+//                    } finally {
+//                        junit allowEmptyResults: true, testResults: '**/target/failsafe-reports/TEST-*.xml'
+//
+//                    }
+//                }
+//            }
 
             stage('Publish Javadoc') {
                 docker.image("${mvnJdk8Image}")
