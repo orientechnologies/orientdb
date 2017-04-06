@@ -4,7 +4,7 @@ import 'rxjs/add/operator/toPromise';
 
 import {Injectable} from "@angular/core";
 import {ProfilerService} from '../../core/services/profiler.service';
-declare var angular:any
+declare var angular: any
 
 @Injectable()
 class AgentService {
@@ -26,7 +26,10 @@ class AgentService {
         this.agent.active = false;
       })
     }
-    return this.agent.active;
+    return new Promise((resolve, reject) => {
+      resolve(this.agent.active);
+    })
+
   }
 
 }

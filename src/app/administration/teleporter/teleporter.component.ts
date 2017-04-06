@@ -48,6 +48,8 @@ class TeleporterComponent implements AfterViewChecked {
   constructor(private teleporterService: TeleporterService, private notification: NotificationService,
               private agentService: AgentService, private zone: NgZone) {
 
+
+
     // agent
     this.agentService.isActive().then(() => {
       this.init();
