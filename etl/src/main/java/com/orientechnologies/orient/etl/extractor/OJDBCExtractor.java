@@ -43,7 +43,6 @@ public class OJDBCExtractor extends OAbstractExtractor {
   protected String       userPassword;
   protected String       query;
   protected String       queryCount;
-
   protected String       driverClass;
   protected Connection   conn;
   protected Statement    stm;
@@ -109,7 +108,7 @@ public class OJDBCExtractor extends OAbstractExtractor {
       columnTypes = new ArrayList<OType>(rsColumns);
 
       for (int i = 1; i <= rsColumns; ++i) {
-        final String colName = rs.getMetaData().getColumnName(i);
+        final String colName = rs.getMetaData().getColumnLabel(i);
         columnNames.add(colName);
 
         OType type = OType.ANY;
