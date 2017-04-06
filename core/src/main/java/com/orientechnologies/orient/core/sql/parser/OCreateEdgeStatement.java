@@ -47,7 +47,7 @@ public class OCreateEdgeStatement extends OStatement {
       }
     }
     ctx.setInputParameters(params);
-    OInsertExecutionPlan executionPlan = createExecutionPlan(ctx);
+    OInsertExecutionPlan executionPlan = createExecutionPlan(ctx, false);
     executionPlan.executeInternal();
     return new OLocalResultSet(executionPlan);
   }
@@ -59,14 +59,14 @@ public class OCreateEdgeStatement extends OStatement {
     }
     ctx.setDatabase(db);
     ctx.setInputParameters(params);
-    OInsertExecutionPlan executionPlan = createExecutionPlan(ctx);
+    OInsertExecutionPlan executionPlan = createExecutionPlan(ctx, false);
     executionPlan.executeInternal();
     return new OLocalResultSet(executionPlan);
   }
 
-  public OInsertExecutionPlan createExecutionPlan(OCommandContext ctx) {
+  public OInsertExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
     OCreateEdgeExecutionPlanner planner = new OCreateEdgeExecutionPlanner(this);
-    return planner.createExecutionPlan(ctx);
+    return planner.createExecutionPlan(ctx, enableProfiling);
   }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {

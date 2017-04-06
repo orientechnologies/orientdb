@@ -12,13 +12,13 @@ import java.util.Optional;
  */
 public class RemoveEmptyOptionalsStep extends AbstractExecutionStep {
 
-  public RemoveEmptyOptionalsStep(OCommandContext ctx, OIdentifier cluster) {
-    super(ctx);
+  public RemoveEmptyOptionalsStep(OCommandContext ctx, OIdentifier cluster, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
 
   }
 
-  public RemoveEmptyOptionalsStep(OCommandContext ctx) {
-    this(ctx, null);
+  public RemoveEmptyOptionalsStep(OCommandContext ctx, boolean profilingEnabled) {
+    this(ctx, null, profilingEnabled);
   }
 
   @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {

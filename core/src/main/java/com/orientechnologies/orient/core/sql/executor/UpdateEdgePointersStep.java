@@ -17,8 +17,8 @@ import java.util.Optional;
 public class UpdateEdgePointersStep extends AbstractExecutionStep {
 
 
-  public UpdateEdgePointersStep(OCommandContext ctx) {
-    super(ctx);
+  public UpdateEdgePointersStep(OCommandContext ctx, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
   }
 
   @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {

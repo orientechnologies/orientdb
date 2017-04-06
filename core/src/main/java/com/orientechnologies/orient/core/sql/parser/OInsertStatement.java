@@ -103,7 +103,7 @@ public class OInsertStatement extends OStatement {
       }
     }
     ctx.setInputParameters(params);
-    OInsertExecutionPlan executionPlan = createExecutionPlan(ctx);
+    OInsertExecutionPlan executionPlan = createExecutionPlan(ctx, false);
     executionPlan.executeInternal();
     return new OLocalResultSet(executionPlan);
   }
@@ -115,14 +115,14 @@ public class OInsertStatement extends OStatement {
     }
     ctx.setDatabase(db);
     ctx.setInputParameters(params);
-    OInsertExecutionPlan executionPlan = createExecutionPlan(ctx);
+    OInsertExecutionPlan executionPlan = createExecutionPlan(ctx, false);
     executionPlan.executeInternal();
     return new OLocalResultSet(executionPlan);
   }
 
-  public OInsertExecutionPlan createExecutionPlan(OCommandContext ctx) {
+  public OInsertExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
     OInsertExecutionPlanner planner = new OInsertExecutionPlanner(this);
-    return planner.createExecutionPlan(ctx);
+    return planner.createExecutionPlan(ctx, enableProfiling);
   }
 
   @Override public boolean equals(Object o) {

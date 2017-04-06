@@ -164,27 +164,28 @@ public interface OrientSqlTreeConstants
   public int JJTOPTIMIZEDATABASESTATEMENT = 158;
   public int JJTCREATELINKSTATEMENT = 159;
   public int JJTEXPLAINSTATEMENT = 160;
-  public int JJTPERMISSION = 161;
-  public int JJTRESOURCEPATHITEM = 162;
-  public int JJTGRANTSTATEMENT = 163;
-  public int JJTREVOKESTATEMENT = 164;
-  public int JJTCREATEFUNCTIONSTATEMENT = 165;
-  public int JJTLETSTATEMENT = 166;
-  public int JJTBEGINSTATEMENT = 167;
-  public int JJTCOMMITSTATEMENT = 168;
-  public int JJTROLLBACKSTATEMENT = 169;
-  public int JJTRETURNSTATEMENT = 170;
-  public int JJTIFSTATEMENT = 171;
-  public int JJTSLEEPSTATEMENT = 172;
-  public int JJTCONSOLESTATEMENT = 173;
-  public int JJTCREATESEQUENCESTATEMENT = 174;
-  public int JJTALTERSEQUENCESTATEMENT = 175;
-  public int JJTDROPSEQUENCESTATEMENT = 176;
-  public int JJTHASTATUSSTATEMENT = 177;
-  public int JJTHAREMOVESERVERSTATEMENT = 178;
-  public int JJTHASYNCDATABASESTATEMENT = 179;
-  public int JJTHASYNCCLUSTERSTATEMENT = 180;
-  public int JJTFOREACHBLOCK = 181;
+  public int JJTPROFILESTATEMENT = 161;
+  public int JJTPERMISSION = 162;
+  public int JJTRESOURCEPATHITEM = 163;
+  public int JJTGRANTSTATEMENT = 164;
+  public int JJTREVOKESTATEMENT = 165;
+  public int JJTCREATEFUNCTIONSTATEMENT = 166;
+  public int JJTLETSTATEMENT = 167;
+  public int JJTBEGINSTATEMENT = 168;
+  public int JJTCOMMITSTATEMENT = 169;
+  public int JJTROLLBACKSTATEMENT = 170;
+  public int JJTRETURNSTATEMENT = 171;
+  public int JJTIFSTATEMENT = 172;
+  public int JJTSLEEPSTATEMENT = 173;
+  public int JJTCONSOLESTATEMENT = 174;
+  public int JJTCREATESEQUENCESTATEMENT = 175;
+  public int JJTALTERSEQUENCESTATEMENT = 176;
+  public int JJTDROPSEQUENCESTATEMENT = 177;
+  public int JJTHASTATUSSTATEMENT = 178;
+  public int JJTHAREMOVESERVERSTATEMENT = 179;
+  public int JJTHASYNCDATABASESTATEMENT = 180;
+  public int JJTHASYNCCLUSTERSTATEMENT = 181;
+  public int JJTFOREACHBLOCK = 182;
 
 
   public String[] jjtNodeName = {
@@ -349,6 +350,7 @@ public interface OrientSqlTreeConstants
     "OptimizeDatabaseStatement",
     "CreateLinkStatement",
     "ExplainStatement",
+    "ProfileStatement",
     "Permission",
     "ResourcePathItem",
     "GrantStatement",
@@ -372,4 +374,4 @@ public interface OrientSqlTreeConstants
     "ForEachBlock",
   };
 }
-/* JavaCC - OriginalChecksum=fb756b557dcc5a93c8c81edf5f07dcb4 (do not edit this line) */
+/* JavaCC - OriginalChecksum=6a2c7c562a5823a37d6e54083d8d45c3 (do not edit this line) */

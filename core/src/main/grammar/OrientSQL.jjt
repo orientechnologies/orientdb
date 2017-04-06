@@ -953,6 +953,7 @@ OStatement StatementInternal():
 }
 {
     (
+        LOOKAHEAD(2)
         (
             (
                 result = QueryStatement()
@@ -1012,6 +1013,7 @@ OStatement StatementInternal():
                 |
                 result = MoveVertexStatement()
                 |
+                LOOKAHEAD(ProfileStorageStatement())
                 result = ProfileStorageStatement()
                 |
                 LOOKAHEAD(TruncateClassStatement())
@@ -1090,6 +1092,9 @@ OStatement StatementInternal():
         )
         |
         result = ExplainStatement()
+        |
+        LOOKAHEAD(ProfileStatement())
+        result = ProfileStatement()
         |
         result = LetStatement()
 
@@ -4342,6 +4347,16 @@ OExplainStatement ExplainStatement():
 {
     (
         <EXPLAIN>
+        jjtThis.statement = StatementInternal()
+    )
+    { return jjtThis; }
+}
+
+OProfileStatement ProfileStatement():
+{}
+{
+    (
+        <PROFILE>
         jjtThis.statement = StatementInternal()
     )
     { return jjtThis; }

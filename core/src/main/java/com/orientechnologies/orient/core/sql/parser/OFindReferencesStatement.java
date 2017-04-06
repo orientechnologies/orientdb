@@ -47,7 +47,7 @@ public class OFindReferencesStatement extends OStatement {
       }
     }
     ctx.setInputParameters(params);
-    OInternalExecutionPlan executionPlan = createExecutionPlan(ctx);
+    OInternalExecutionPlan executionPlan = createExecutionPlan(ctx, false);
 
     return new OLocalResultSet(executionPlan);
   }
@@ -59,13 +59,13 @@ public class OFindReferencesStatement extends OStatement {
     }
     ctx.setDatabase(db);
     ctx.setInputParameters(params);
-    OInternalExecutionPlan executionPlan = createExecutionPlan(ctx);
+    OInternalExecutionPlan executionPlan = createExecutionPlan(ctx, false);
 
     return new OLocalResultSet(executionPlan);
   }
 
-  @Override public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx) {
-    return new OFindReferencesExecutionPlanner(this).createExecutionPlan(ctx);
+  @Override public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
+    return new OFindReferencesExecutionPlanner(this).createExecutionPlan(ctx, enableProfiling);
   }
 
   @Override public void toString(Map<Object, Object> params, StringBuilder builder) {

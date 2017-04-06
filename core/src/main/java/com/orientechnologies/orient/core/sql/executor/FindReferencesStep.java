@@ -33,8 +33,8 @@ public class FindReferencesStep extends AbstractExecutionStep {
   Iterator<ORecordIteratorCluster> clusterIterators;
   OResultInternal                  nextResult;
 
-  public FindReferencesStep(List<OIdentifier> classes, List<OCluster> clusters, OCommandContext ctx) {
-    super(ctx);
+  public FindReferencesStep(List<OIdentifier> classes, List<OCluster> clusters, OCommandContext ctx, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
     this.classes = classes;
     this.clusters = clusters;
   }

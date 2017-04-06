@@ -23,8 +23,8 @@ public class ExpandStep extends AbstractExecutionStep {
   Iterator   nextSubsequence = null;
   OResult    nextElement     = null;
 
-  public ExpandStep(OCommandContext ctx) {
-    super(ctx);
+  public ExpandStep(OCommandContext ctx, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
   }
 
   @Override
@@ -88,7 +88,7 @@ public class ExpandStep extends AbstractExecutionStep {
   private void fetchNext(OCommandContext ctx, int n) {
     do {
       if (nextSubsequence != null && nextSubsequence.hasNext()) {
-        long begin = System.nanoTime();
+        long begin = profilingEnabled ? System.nanoTime() : 0;
         try {
           Object nextElementObj = nextSubsequence.next();
           if (nextElementObj instanceof OResult) {
@@ -106,7 +106,7 @@ public class ExpandStep extends AbstractExecutionStep {
           }
           break;
         } finally {
-          cost += (System.nanoTime() - begin);
+          if(profilingEnabled){cost += (System.nanoTime() - begin);}
         }
       }
 
@@ -120,7 +120,7 @@ public class ExpandStep extends AbstractExecutionStep {
       }
 
       OResult nextAggregateItem = lastResult.next();
-      long begin = System.nanoTime();
+      long begin = profilingEnabled ? System.nanoTime() : 0;
       try {
         if (nextAggregateItem.getPropertyNames().size() == 0) {
           continue;
@@ -151,7 +151,7 @@ public class ExpandStep extends AbstractExecutionStep {
           nextSubsequence = ((Iterable) projValue).iterator();
         }
       } finally {
-        cost += (System.nanoTime() - begin);
+        if(profilingEnabled){cost += (System.nanoTime() - begin);}
       }
     } while (true);
 

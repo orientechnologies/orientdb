@@ -38,7 +38,7 @@ public abstract class ODDLStatement extends OStatement {
       }
     }
     ctx.setInputParameters(params);
-    ODDLExecutionPlan executionPlan = (ODDLExecutionPlan) createExecutionPlan(ctx);
+    ODDLExecutionPlan executionPlan = (ODDLExecutionPlan) createExecutionPlan(ctx, false);
     return executionPlan.executeInternal(ctx);
   }
 
@@ -49,11 +49,11 @@ public abstract class ODDLStatement extends OStatement {
     }
     ctx.setDatabase(db);
     ctx.setInputParameters(params);
-    ODDLExecutionPlan executionPlan = (ODDLExecutionPlan) createExecutionPlan(ctx);
+    ODDLExecutionPlan executionPlan = (ODDLExecutionPlan) createExecutionPlan(ctx, false);
     return executionPlan.executeInternal(ctx);
   }
 
-  public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx) {
+  public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
     return new ODDLExecutionPlan(ctx, this);
   }
 

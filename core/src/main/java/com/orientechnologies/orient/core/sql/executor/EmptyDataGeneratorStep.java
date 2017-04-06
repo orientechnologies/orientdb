@@ -16,8 +16,8 @@ public class EmptyDataGeneratorStep extends AbstractExecutionStep {
   int size;
   int served = 0;
 
-  public EmptyDataGeneratorStep(int size, OCommandContext ctx) {
-    super(ctx);
+  public EmptyDataGeneratorStep(int size, OCommandContext ctx, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
     this.size = size;
   }
 
@@ -32,7 +32,7 @@ public class EmptyDataGeneratorStep extends AbstractExecutionStep {
 
       @Override
       public OResult next() {
-        long begin = System.nanoTime();
+        long begin = profilingEnabled ? System.nanoTime() : 0;
         try {
 
           if (served < size) {
@@ -43,7 +43,7 @@ public class EmptyDataGeneratorStep extends AbstractExecutionStep {
           }
           throw new IllegalStateException();
         } finally {
-          cost += (System.nanoTime() - begin);
+          if(profilingEnabled){cost += (System.nanoTime() - begin);}
         }
       }
 

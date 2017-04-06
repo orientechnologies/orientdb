@@ -14,8 +14,8 @@ import java.util.Optional;
 public class UpdateMergeStep extends AbstractExecutionStep {
   private final OJson json;
 
-  public UpdateMergeStep(OJson json, OCommandContext ctx) {
-    super(ctx);
+  public UpdateMergeStep(OJson json, OCommandContext ctx, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
     this.json = json;
   }
 

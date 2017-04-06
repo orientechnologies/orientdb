@@ -20,7 +20,7 @@ public class OUpdateEdgeStatement extends OUpdateStatement {
     return "UPDATE EDGE ";
   }
 
-  @Override public OUpdateExecutionPlan createExecutionPlan(OCommandContext ctx) {
+  @Override public OUpdateExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
     throw new UnsupportedOperationException();
   }
 

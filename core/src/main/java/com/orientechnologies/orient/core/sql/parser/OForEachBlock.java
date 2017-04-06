@@ -46,7 +46,7 @@ public class OForEachBlock extends OStatement {
       }
     }
     ctx.setInputParameters(params);
-    OUpdateExecutionPlan executionPlan = createExecutionPlan(ctx);
+    OUpdateExecutionPlan executionPlan = createExecutionPlan(ctx, false);
     executionPlan.executeInternal();
     return new OLocalResultSet(executionPlan);
   }
@@ -58,19 +58,19 @@ public class OForEachBlock extends OStatement {
     }
     ctx.setDatabase(db);
     ctx.setInputParameters(params);
-    OUpdateExecutionPlan executionPlan = createExecutionPlan(ctx);
+    OUpdateExecutionPlan executionPlan = createExecutionPlan(ctx, false);
     executionPlan.executeInternal();
     return new OLocalResultSet(executionPlan);
   }
 
-  public OUpdateExecutionPlan createExecutionPlan(OCommandContext ctx) {
+  public OUpdateExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
     OUpdateExecutionPlan plan = new OUpdateExecutionPlan(ctx);
     int nextProg = ++FOREACH_VARIABLE_PROGR;
     if (FOREACH_VARIABLE_PROGR < 0) {
       FOREACH_VARIABLE_PROGR = 0;
     }
     OIdentifier varName = new OIdentifier("__ORIENTDB_FOREACH_VAR_" + nextProg);
-    plan.chain(new LetExpressionStep(varName, loopValues, ctx));
+    plan.chain(new LetExpressionStep(varName, loopValues, ctx, enableProfiling));
 //    ForEachStep step = new ForEachStep(loopVariable, new OExpression(varName), ctx);//TODO
     return plan;
   }

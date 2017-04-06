@@ -52,24 +52,24 @@ public class OUpdateExecutionPlanner {
     this.timeout = oUpdateStatement.getTimeout() == null ? null : oUpdateStatement.getTimeout().copy();
   }
 
-  public OUpdateExecutionPlan createExecutionPlan(OCommandContext ctx) {
+  public OUpdateExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
     OUpdateExecutionPlan result = new OUpdateExecutionPlan(ctx);
 
-    handleTarget(result, ctx, this.target, this.whereClause, this.timeout);
+    handleTarget(result, ctx, this.target, this.whereClause, this.timeout, enableProfiling);
     if(updateEdge){
-      result.chain(new CheckRecordTypeStep(ctx, "E"));
+      result.chain(new CheckRecordTypeStep(ctx, "E", enableProfiling));
     }
-    handleUpsert(result, ctx, this.target, this.whereClause, this.upsert);
-    handleTimeout(result, ctx, this.timeout);
-    convertToModifiableResult(result, ctx);
-    handleLimit(result, ctx, this.limit);
-    handleReturnBefore(result, ctx, this.returnBefore);
-    handleOperations(result, ctx, this.operations);
+    handleUpsert(result, ctx, this.target, this.whereClause, this.upsert, enableProfiling);
+    handleTimeout(result, ctx, this.timeout, enableProfiling);
+    convertToModifiableResult(result, ctx, enableProfiling);
+    handleLimit(result, ctx, this.limit, enableProfiling);
+    handleReturnBefore(result, ctx, this.returnBefore, enableProfiling);
+    handleOperations(result, ctx, this.operations, enableProfiling);
     handleLock(result, ctx, this.lockRecord);
-    handleSave(result, ctx);
-    handleResultForReturnBefore(result, ctx, this.returnBefore, returnProjection);
-    handleResultForReturnAfter(result, ctx, this.returnAfter, returnProjection);
-    handleResultForReturnCount(result, ctx, this.returnCount);
+    handleSave(result, ctx, enableProfiling);
+    handleResultForReturnBefore(result, ctx, this.returnBefore, returnProjection, enableProfiling);
+    handleResultForReturnAfter(result, ctx, this.returnAfter, returnProjection, enableProfiling);
+    handleResultForReturnCount(result, ctx, this.returnCount, enableProfiling);
     return result;
   }
 
@@ -79,50 +79,50 @@ public class OUpdateExecutionPlanner {
    * @param plan the execution plan
    * @param ctx  the executino context
    */
-  private void convertToModifiableResult(OUpdateExecutionPlan plan, OCommandContext ctx) {
-    plan.chain(new ConvertToUpdatableResultStep(ctx));
+  private void convertToModifiableResult(OUpdateExecutionPlan plan, OCommandContext ctx, boolean profilingEnabled) {
+    plan.chain(new ConvertToUpdatableResultStep(ctx, profilingEnabled));
   }
 
-  private void handleResultForReturnCount(OUpdateExecutionPlan result, OCommandContext ctx, boolean returnCount) {
+  private void handleResultForReturnCount(OUpdateExecutionPlan result, OCommandContext ctx, boolean returnCount, boolean profilingEnabled) {
     if (returnCount) {
-      result.chain(new CountStep(ctx));
+      result.chain(new CountStep(ctx, profilingEnabled));
     }
   }
 
   private void handleResultForReturnAfter(OUpdateExecutionPlan result, OCommandContext ctx, boolean returnAfter,
-      OProjection returnProjection) {
+      OProjection returnProjection, boolean profilingEnabled) {
     if (returnAfter) {
       //re-convert to normal step
-      result.chain(new ConvertToResultInternalStep(ctx));
+      result.chain(new ConvertToResultInternalStep(ctx, profilingEnabled));
       if (returnProjection != null) {
-        result.chain(new ProjectionCalculationStep(returnProjection, ctx));
+        result.chain(new ProjectionCalculationStep(returnProjection, ctx, profilingEnabled));
       }
     }
   }
 
   private void handleResultForReturnBefore(OUpdateExecutionPlan result, OCommandContext ctx, boolean returnBefore,
-      OProjection returnProjection) {
+      OProjection returnProjection, boolean profilingEnabled) {
     if (returnBefore) {
-      result.chain(new UnwrapPreviousValueStep(ctx));
+      result.chain(new UnwrapPreviousValueStep(ctx, profilingEnabled));
       if (returnProjection != null) {
-        result.chain(new ProjectionCalculationStep(returnProjection, ctx));
+        result.chain(new ProjectionCalculationStep(returnProjection, ctx, profilingEnabled));
       }
     }
   }
 
-  private void handleSave(OUpdateExecutionPlan result, OCommandContext ctx) {
-    result.chain(new SaveElementStep(ctx));
+  private void handleSave(OUpdateExecutionPlan result, OCommandContext ctx, boolean profilingEnabled) {
+    result.chain(new SaveElementStep(ctx, profilingEnabled));
   }
 
-  private void handleTimeout(OUpdateExecutionPlan result, OCommandContext ctx, OTimeout timeout) {
+  private void handleTimeout(OUpdateExecutionPlan result, OCommandContext ctx, OTimeout timeout, boolean profilingEnabled) {
     if (timeout != null && timeout.getVal().longValue() > 0) {
-      result.chain(new TimeoutStep(timeout, ctx));
+      result.chain(new TimeoutStep(timeout, ctx, profilingEnabled));
     }
   }
 
-  private void handleReturnBefore(OUpdateExecutionPlan result, OCommandContext ctx, boolean returnBefore) {
+  private void handleReturnBefore(OUpdateExecutionPlan result, OCommandContext ctx, boolean returnBefore, boolean profilingEnabled) {
     if (returnBefore) {
-      result.chain(new CopyRecordContentBeforeUpdateStep(ctx));
+      result.chain(new CopyRecordContentBeforeUpdateStep(ctx, profilingEnabled));
     }
   }
 
@@ -130,37 +130,37 @@ public class OUpdateExecutionPlanner {
 
   }
 
-  private void handleLimit(OUpdateExecutionPlan plan, OCommandContext ctx, OLimit limit) {
+  private void handleLimit(OUpdateExecutionPlan plan, OCommandContext ctx, OLimit limit, boolean profilingEnabled) {
     if (limit != null) {
-      plan.chain(new LimitExecutionStep(limit, ctx));
+      plan.chain(new LimitExecutionStep(limit, ctx, profilingEnabled));
     }
   }
 
   private void handleUpsert(OUpdateExecutionPlan plan, OCommandContext ctx, OFromClause target, OWhereClause where,
-      boolean upsert) {
+      boolean upsert, boolean profilingEnabled) {
     if (upsert) {
-      plan.chain(new UpsertStep(target, where, ctx));
+      plan.chain(new UpsertStep(target, where, ctx, profilingEnabled));
     }
   }
 
-  private void handleOperations(OUpdateExecutionPlan plan, OCommandContext ctx, List<OUpdateOperations> ops) {
+  private void handleOperations(OUpdateExecutionPlan plan, OCommandContext ctx, List<OUpdateOperations> ops, boolean profilingEnabled) {
     if (ops != null) {
       for (OUpdateOperations op : ops) {
         switch (op.getType()) {
         case OUpdateOperations.TYPE_SET:
-          plan.chain(new UpdateSetStep(op.getUpdateItems(), ctx));
+          plan.chain(new UpdateSetStep(op.getUpdateItems(), ctx, profilingEnabled));
           if(updateEdge){
-            plan.chain(new UpdateEdgePointersStep( ctx));
+            plan.chain(new UpdateEdgePointersStep( ctx, profilingEnabled));
           }
           break;
         case OUpdateOperations.TYPE_REMOVE:
-          plan.chain(new UpdateRemoveStep(op.getUpdateRemoveItems(), ctx));
+          plan.chain(new UpdateRemoveStep(op.getUpdateRemoveItems(), ctx, profilingEnabled));
           break;
         case OUpdateOperations.TYPE_MERGE:
-          plan.chain(new UpdateMergeStep(op.getJson(), ctx));
+          plan.chain(new UpdateMergeStep(op.getJson(), ctx, profilingEnabled));
           break;
         case OUpdateOperations.TYPE_CONTENT:
-          plan.chain(new UpdateContentStep(op.getJson(), ctx));
+          plan.chain(new UpdateContentStep(op.getJson(), ctx, profilingEnabled));
           break;
         case OUpdateOperations.TYPE_PUT:
         case OUpdateOperations.TYPE_INCREMENT:
@@ -172,7 +172,7 @@ public class OUpdateExecutionPlanner {
   }
 
   private void handleTarget(OUpdateExecutionPlan result, OCommandContext ctx, OFromClause target, OWhereClause whereClause,
-      OTimeout timeout) {
+      OTimeout timeout, boolean profilingEnabled) {
     OSelectStatement sourceStatement = new OSelectStatement(-1);
     sourceStatement.setTarget(target);
     sourceStatement.setWhereClause(whereClause);
@@ -180,6 +180,6 @@ public class OUpdateExecutionPlanner {
       sourceStatement.setTimeout(this.timeout.copy());
     }
     OSelectExecutionPlanner planner = new OSelectExecutionPlanner(sourceStatement);
-    result.chain(new SubQueryStep(planner.createExecutionPlan(ctx), ctx, ctx));
+    result.chain(new SubQueryStep(planner.createExecutionPlan(ctx, profilingEnabled), ctx, ctx, profilingEnabled));
   }
 }

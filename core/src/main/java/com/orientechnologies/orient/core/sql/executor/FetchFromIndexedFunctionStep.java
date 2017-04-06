@@ -21,8 +21,8 @@ public class FetchFromIndexedFunctionStep extends AbstractExecutionStep {
   //runtime
   Iterator<OIdentifiable> fullResult = null;
 
-  public FetchFromIndexedFunctionStep(OBinaryCondition functionCondition, OFromClause queryTarget, OCommandContext ctx) {
-    super(ctx);
+  public FetchFromIndexedFunctionStep(OBinaryCondition functionCondition, OFromClause queryTarget, OCommandContext ctx, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
     this.functionCondition = functionCondition;
     this.queryTarget = queryTarget;
   }
@@ -47,7 +47,7 @@ public class FetchFromIndexedFunctionStep extends AbstractExecutionStep {
 
       @Override
       public OResult next() {
-        long begin = System.nanoTime();
+        long begin = profilingEnabled ? System.nanoTime() : 0;
         try {
           if (localCount >= nRecords) {
             throw new IllegalStateException();
@@ -60,7 +60,7 @@ public class FetchFromIndexedFunctionStep extends AbstractExecutionStep {
           localCount++;
           return result;
         } finally {
-          cost += (System.nanoTime() - begin);
+          if(profilingEnabled){cost += (System.nanoTime() - begin);}
         }
       }
 
@@ -83,11 +83,11 @@ public class FetchFromIndexedFunctionStep extends AbstractExecutionStep {
 
   private void init(OCommandContext ctx) {
     if (fullResult == null) {
-      long begin = System.nanoTime();
+      long begin = profilingEnabled ? System.nanoTime() : 0;
       try {
         fullResult = functionCondition.executeIndexedFunction(queryTarget, ctx).iterator();
       } finally {
-        cost += (System.nanoTime() - begin);
+        if(profilingEnabled){cost += (System.nanoTime() - begin);}
       }
     }
   }

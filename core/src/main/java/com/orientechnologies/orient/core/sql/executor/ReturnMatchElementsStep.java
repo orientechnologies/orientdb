@@ -12,8 +12,8 @@ import java.util.List;
  */
 public class ReturnMatchElementsStep extends AbstractUnrollStep {
 
-  public ReturnMatchElementsStep(OCommandContext context) {
-    super(context);
+  public ReturnMatchElementsStep(OCommandContext context, boolean profilingEnabled) {
+    super(context, profilingEnabled);
   }
 
   @Override protected Collection<OResult> unroll(OResult doc, OCommandContext iContext) {

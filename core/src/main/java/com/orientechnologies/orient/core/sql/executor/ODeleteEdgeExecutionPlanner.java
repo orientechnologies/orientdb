@@ -46,110 +46,116 @@ public class ODeleteEdgeExecutionPlanner {
     this.limit = stm.getLimit() == null ? null : stm.getLimit().copy();
   }
 
-  public ODeleteExecutionPlan createExecutionPlan(OCommandContext ctx) {
+  public ODeleteExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
     ODeleteExecutionPlan result = new ODeleteExecutionPlan(ctx);
 
     if (leftExpression != null || rightExpression != null) {
-      handleGlobalLet(result, new OIdentifier("$__ORIENT_DELETE_EDGE_fromV"), leftExpression, ctx);
-      handleGlobalLet(result, new OIdentifier("$__ORIENT_DELETE_EDGE_toV"), rightExpression, ctx);
-      handleFetchFromTo(result, ctx, "$__ORIENT_DELETE_EDGE_fromV", "$__ORIENT_DELETE_EDGE_toV", className, targetClusterName);
-      handleWhere(result, ctx, whereClause);
+      handleGlobalLet(result, new OIdentifier("$__ORIENT_DELETE_EDGE_fromV"), leftExpression, ctx, enableProfiling);
+      handleGlobalLet(result, new OIdentifier("$__ORIENT_DELETE_EDGE_toV"), rightExpression, ctx, enableProfiling);
+      handleFetchFromTo(result, ctx, "$__ORIENT_DELETE_EDGE_fromV", "$__ORIENT_DELETE_EDGE_toV", className, targetClusterName,
+          enableProfiling);
+      handleWhere(result, ctx, whereClause, enableProfiling);
     } else if (whereClause != null) {
       OFromClause fromClause = new OFromClause(-1);
       OFromItem item = new OFromItem(-1);
       item.setIdentifier(className);
       fromClause.setItem(item);
-      handleTarget(result, ctx, fromClause, this.whereClause);
+      handleTarget(result, ctx, fromClause, this.whereClause, enableProfiling);
     } else {
-      handleTargetClass(result, ctx, className);
-      handleTargetCluster(result, ctx, targetClusterName);
-      handleTargetRids(result, ctx, rids);
+      handleTargetClass(result, ctx, className, enableProfiling);
+      handleTargetCluster(result, ctx, targetClusterName, enableProfiling);
+      handleTargetRids(result, ctx, rids, enableProfiling);
     }
 
-    handleLimit(result, ctx, this.limit);
+    handleLimit(result, ctx, this.limit, enableProfiling);
 
-    handleCastToEdge(result, ctx);
+    handleCastToEdge(result, ctx, enableProfiling);
 
-    handleDelete(result, ctx);
+    handleDelete(result, ctx, enableProfiling);
 
-    handleReturn(result, ctx);
+    handleReturn(result, ctx, enableProfiling);
     return result;
   }
 
-  private void handleWhere(ODeleteExecutionPlan result, OCommandContext ctx, OWhereClause whereClause) {
+  private void handleWhere(ODeleteExecutionPlan result, OCommandContext ctx, OWhereClause whereClause, boolean profilingEnabled) {
     if (whereClause != null) {
-      result.chain(new FilterStep(whereClause, ctx));
+      result.chain(new FilterStep(whereClause, ctx, profilingEnabled));
     }
   }
 
   private void handleFetchFromTo(ODeleteExecutionPlan result, OCommandContext ctx, String fromAlias, String toAlias,
-      OIdentifier targetClass, OIdentifier targetCluster) {
+      OIdentifier targetClass, OIdentifier targetCluster, boolean profilingEnabled) {
     if (fromAlias != null && toAlias != null) {
-      result.chain(new FetchEdgesFromToVerticesStep(fromAlias, toAlias, targetClass, targetCluster, ctx));
+      result.chain(new FetchEdgesFromToVerticesStep(fromAlias, toAlias, targetClass, targetCluster, ctx, profilingEnabled));
     } else if (toAlias != null) {
-      result.chain(new FetchEdgesToVerticesStep(toAlias, targetClass, targetCluster, ctx));
+      result.chain(new FetchEdgesToVerticesStep(toAlias, targetClass, targetCluster, ctx, profilingEnabled));
     }
   }
 
-  private void handleTargetRids(ODeleteExecutionPlan result, OCommandContext ctx, List<ORid> rids) {
+  private void handleTargetRids(ODeleteExecutionPlan result, OCommandContext ctx, List<ORid> rids, boolean profilingEnabled) {
     if (rids != null) {
       result.chain(
-          new FetchFromRidsStep(rids.stream().map(x -> x.toRecordId((OResult) null, ctx)).collect(Collectors.toList()), ctx));
+          new FetchFromRidsStep(rids.stream().map(x -> x.toRecordId((OResult) null, ctx)).collect(Collectors.toList()), ctx,
+              profilingEnabled));
     }
   }
 
-  private void handleTargetCluster(ODeleteExecutionPlan result, OCommandContext ctx, OIdentifier targetClusterName) {
+  private void handleTargetCluster(ODeleteExecutionPlan result, OCommandContext ctx, OIdentifier targetClusterName,
+      boolean profilingEnabled) {
     if (targetClusterName != null) {
       String name = targetClusterName.getStringValue();
       int clusterId = ctx.getDatabase().getClusterIdByName(name);
       if (clusterId < 0) {
         throw new OCommandExecutionException("Cluster not found: " + name);
       }
-      result.chain(new FetchFromClusterExecutionStep(clusterId, ctx));
+      result.chain(new FetchFromClusterExecutionStep(clusterId, ctx, profilingEnabled));
     }
   }
 
-  private void handleTargetClass(ODeleteExecutionPlan result, OCommandContext ctx, OIdentifier className) {
+  private void handleTargetClass(ODeleteExecutionPlan result, OCommandContext ctx, OIdentifier className,
+      boolean profilingEnabled) {
     if (className != null) {
-      result.chain(new FetchFromClassExecutionStep(className.getStringValue(), ctx, null));
+      result.chain(new FetchFromClassExecutionStep(className.getStringValue(), ctx, null, profilingEnabled));
     }
   }
 
   private boolean handleIndexAsTarget(ODeleteExecutionPlan result, OIndexIdentifier indexIdentifier, OWhereClause whereClause,
-      OCommandContext ctx) {
+      OCommandContext ctx, boolean profilingEnabled) {
     if (indexIdentifier == null) {
       return false;
     }
     throw new OCommandExecutionException("DELETE VERTEX FROM INDEX is not supported");
   }
 
-  private void handleDelete(ODeleteExecutionPlan result, OCommandContext ctx) {
-    result.chain(new DeleteStep(ctx));
+  private void handleDelete(ODeleteExecutionPlan result, OCommandContext ctx, boolean profilingEnabled) {
+    result.chain(new DeleteStep(ctx, profilingEnabled));
   }
 
-  private void handleReturn(ODeleteExecutionPlan result, OCommandContext ctx) {
-    result.chain(new CountStep(ctx));
+  private void handleReturn(ODeleteExecutionPlan result, OCommandContext ctx, boolean profilingEnabled) {
+    result.chain(new CountStep(ctx, profilingEnabled));
   }
 
-  private void handleLimit(OUpdateExecutionPlan plan, OCommandContext ctx, OLimit limit) {
+  private void handleLimit(OUpdateExecutionPlan plan, OCommandContext ctx, OLimit limit, boolean profilingEnabled) {
     if (limit != null) {
-      plan.chain(new LimitExecutionStep(limit, ctx));
+      plan.chain(new LimitExecutionStep(limit, ctx, profilingEnabled));
     }
   }
 
-  private void handleCastToEdge(ODeleteExecutionPlan plan, OCommandContext ctx) {
-    plan.chain(new CastToEdgeStep(ctx));
+  private void handleCastToEdge(ODeleteExecutionPlan plan, OCommandContext ctx, boolean profilingEnabled) {
+    plan.chain(new CastToEdgeStep(ctx, profilingEnabled));
   }
 
-  private void handleTarget(OUpdateExecutionPlan result, OCommandContext ctx, OFromClause target, OWhereClause whereClause) {
+  private void handleTarget(OUpdateExecutionPlan result, OCommandContext ctx, OFromClause target, OWhereClause whereClause,
+      boolean profilingEnabled) {
     OSelectStatement sourceStatement = new OSelectStatement(-1);
     sourceStatement.setTarget(target);
     sourceStatement.setWhereClause(whereClause);
     OSelectExecutionPlanner planner = new OSelectExecutionPlanner(sourceStatement);
-    result.chain(new SubQueryStep(planner.createExecutionPlan(ctx), ctx, ctx));
+    result.chain(new SubQueryStep(planner.createExecutionPlan(ctx, profilingEnabled), ctx, ctx, profilingEnabled));
   }
 
-  private void handleGlobalLet(ODeleteExecutionPlan result, OIdentifier name, OExpression expression, OCommandContext ctx) {
-    result.chain(new GlobalLetExpressionStep(name, expression, ctx));
+  private void handleGlobalLet(ODeleteExecutionPlan result, OIdentifier name, OExpression expression, OCommandContext ctx,
+      boolean profilingEnabled) {
+    result.chain(new GlobalLetExpressionStep(name, expression, ctx, profilingEnabled));
   }
 }

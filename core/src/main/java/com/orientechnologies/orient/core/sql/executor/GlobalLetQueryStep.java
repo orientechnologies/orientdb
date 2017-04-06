@@ -20,14 +20,15 @@ public class GlobalLetQueryStep extends AbstractExecutionStep {
 
   boolean executed = false;
 
-  public GlobalLetQueryStep(OIdentifier varName, OStatement query, OCommandContext ctx) {
-    super(ctx);
+
+  public GlobalLetQueryStep(OIdentifier varName, OStatement query, OCommandContext ctx, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
     this.varName = varName;
 
     OBasicCommandContext subCtx = new OBasicCommandContext();
     subCtx.setDatabase(ctx.getDatabase());
     subCtx.setParent(ctx);
-    subExecutionPlan = query.createExecutionPlan(subCtx);
+    subExecutionPlan = query.createExecutionPlan(subCtx, profilingEnabled);
   }
 
   @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {

@@ -15,8 +15,8 @@ import java.util.Optional;
 public class CopyRecordContentBeforeUpdateStep extends AbstractExecutionStep {
   private long cost = 0;
 
-  public CopyRecordContentBeforeUpdateStep(OCommandContext ctx) {
-    super(ctx);
+  public CopyRecordContentBeforeUpdateStep(OCommandContext ctx, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
   }
 
   @Override
@@ -31,7 +31,7 @@ public class CopyRecordContentBeforeUpdateStep extends AbstractExecutionStep {
       @Override
       public OResult next() {
         OResult result = lastFetched.next();
-        long begin = System.nanoTime();
+        long begin = profilingEnabled ? System.nanoTime() : 0;
         try {
 
           if (result instanceof OUpdatableResult) {
@@ -51,7 +51,7 @@ public class CopyRecordContentBeforeUpdateStep extends AbstractExecutionStep {
           }
           return result;
         } finally {
-          cost += (System.nanoTime() - begin);
+          if(profilingEnabled){cost += (System.nanoTime() - begin);}
         }
       }
 

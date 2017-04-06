@@ -20,8 +20,8 @@ public class UpsertStep extends AbstractExecutionStep {
 
   boolean applied = false;
 
-  public UpsertStep(OFromClause target, OWhereClause where, OCommandContext ctx) {
-    super(ctx);
+  public UpsertStep(OFromClause target, OWhereClause where, OCommandContext ctx, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
     this.commandTarget = target;
     this.initialFilter = where;
   }

@@ -20,8 +20,8 @@ public class ConvertToUpdatableResultStep extends AbstractExecutionStep {
 
   OResultSet prevResult = null;
 
-  public ConvertToUpdatableResultStep(OCommandContext ctx) {
-    super(ctx);
+  public ConvertToUpdatableResultStep(OCommandContext ctx, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
   }
 
   @Override
@@ -58,7 +58,7 @@ public class ConvertToUpdatableResultStep extends AbstractExecutionStep {
             }
           }
           nextItem = prevResult.next();
-          long begin = System.nanoTime();
+          long begin = profilingEnabled ? System.nanoTime() : 0;
           try {
             if (nextItem instanceof OUpdatableResult) {
               break;

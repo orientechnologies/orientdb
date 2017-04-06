@@ -33,43 +33,43 @@ public class OInsertExecutionPlanner {
     this.selectStatement = statement.getSelectStatement() == null ? null : statement.getSelectStatement().copy();
   }
 
-  public OInsertExecutionPlan createExecutionPlan(OCommandContext ctx) {
+  public OInsertExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
     OInsertExecutionPlan result = new OInsertExecutionPlan(ctx);
 
     if (targetIndex != null) {
-      result.chain(new InsertIntoIndexStep(targetIndex, insertBody, ctx));
+      result.chain(new InsertIntoIndexStep(targetIndex, insertBody, ctx, enableProfiling));
     } else {
       if (selectStatement != null) {
-        handleInsertSelect(result, this.selectStatement, ctx);
+        handleInsertSelect(result, this.selectStatement, ctx, enableProfiling);
       } else {
-        handleCreateRecord(result, this.insertBody, ctx);
+        handleCreateRecord(result, this.insertBody, ctx, enableProfiling);
       }
-      handleTargetClass(result, targetClass, ctx);
-      handleSetFields(result, insertBody, ctx);
-      handleReturn(result, returnStatement, ctx);
-      handleSave(result, targetClusterName, ctx);
+      handleTargetClass(result, targetClass, ctx, enableProfiling);
+      handleSetFields(result, insertBody, ctx, enableProfiling);
+      handleReturn(result, returnStatement, ctx, enableProfiling);
+      handleSave(result, targetClusterName, ctx, enableProfiling);
     }
     return result;
   }
 
-  private void handleSave(OInsertExecutionPlan result, OIdentifier targetClusterName, OCommandContext ctx) {
-    result.chain(new SaveElementStep(ctx, targetClusterName));
+  private void handleSave(OInsertExecutionPlan result, OIdentifier targetClusterName, OCommandContext ctx, boolean profilingEnabled) {
+    result.chain(new SaveElementStep(ctx, targetClusterName, profilingEnabled));
   }
 
-  private void handleReturn(OInsertExecutionPlan result, OProjection returnStatement, OCommandContext ctx) {
+  private void handleReturn(OInsertExecutionPlan result, OProjection returnStatement, OCommandContext ctx, boolean profilingEnabled) {
     if (returnStatement != null) {
-      result.chain(new ProjectionCalculationStep(returnStatement, ctx));
+      result.chain(new ProjectionCalculationStep(returnStatement, ctx, profilingEnabled));
     }
   }
 
-  private void handleSetFields(OInsertExecutionPlan result, OInsertBody insertBody, OCommandContext ctx) {
+  private void handleSetFields(OInsertExecutionPlan result, OInsertBody insertBody, OCommandContext ctx, boolean profilingEnabled) {
     if (insertBody == null) {
       return;
     }
     if (insertBody.getIdentifierList() != null) {
-      result.chain(new InsertValuesStep(insertBody.getIdentifierList(), insertBody.getValueExpressions(), ctx));
+      result.chain(new InsertValuesStep(insertBody.getIdentifierList(), insertBody.getValueExpressions(), ctx, profilingEnabled));
     } else if (insertBody.getContent() != null) {
-      result.chain(new UpdateContentStep(insertBody.getContent(), ctx));
+      result.chain(new UpdateContentStep(insertBody.getContent(), ctx, profilingEnabled));
     } else if (insertBody.getSetExpressions() != null) {
       List<OUpdateItem> items = new ArrayList<>();
       for (OInsertSetExpression exp : insertBody.getSetExpressions()) {
@@ -79,28 +79,28 @@ public class OInsertExecutionPlanner {
         item.setRight(exp.getRight().copy());
         items.add(item);
       }
-      result.chain(new UpdateSetStep(items, ctx));
+      result.chain(new UpdateSetStep(items, ctx, profilingEnabled));
     }
   }
 
-  private void handleTargetClass(OInsertExecutionPlan result, OIdentifier targetClass, OCommandContext ctx) {
+  private void handleTargetClass(OInsertExecutionPlan result, OIdentifier targetClass, OCommandContext ctx, boolean profilingEnabled) {
     if (targetClass != null) {
-      result.chain(new SetDocumentClassStep(targetClass, ctx));
+      result.chain(new SetDocumentClassStep(targetClass, ctx, profilingEnabled));
     }
   }
 
-  private void handleCreateRecord(OInsertExecutionPlan result, OInsertBody body, OCommandContext ctx) {
+  private void handleCreateRecord(OInsertExecutionPlan result, OInsertBody body, OCommandContext ctx, boolean profilingEnabled) {
     int tot = 1;
     if (body.getValueExpressions() != null && body.getValueExpressions().size() > 0) {
       tot = body.getValueExpressions().size();
     }
-    result.chain(new CreateRecordStep(ctx, tot));
+    result.chain(new CreateRecordStep(ctx, tot, profilingEnabled));
   }
 
-  private void handleInsertSelect(OInsertExecutionPlan result, OSelectStatement selectStatement, OCommandContext ctx) {
-    OInternalExecutionPlan subPlan = selectStatement.createExecutionPlan(ctx);
-    result.chain(new SubQueryStep(subPlan, ctx, ctx));
-    result.chain(new CopyDocumentStep(result, ctx));
+  private void handleInsertSelect(OInsertExecutionPlan result, OSelectStatement selectStatement, OCommandContext ctx, boolean profilingEnabled) {
+    OInternalExecutionPlan subPlan = selectStatement.createExecutionPlan(ctx, profilingEnabled);
+    result.chain(new SubQueryStep(subPlan, ctx, ctx, profilingEnabled));
+    result.chain(new CopyDocumentStep(result, ctx, profilingEnabled));
   }
 
 }

@@ -40,7 +40,8 @@ public class OStatement extends SimpleNode {
 
   }
 
-  @Override public String toString(String prefix) {
+  @Override
+  public String toString(String prefix) {
     StringBuilder builder = new StringBuilder();
     toString(null, builder);
     return builder.toString();
@@ -54,7 +55,7 @@ public class OStatement extends SimpleNode {
     return execute(db, args, null);
   }
 
-  public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentContext){
+  public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentContext) {
     throw new UnsupportedOperationException();
   }
 
@@ -62,11 +63,30 @@ public class OStatement extends SimpleNode {
     return execute(db, args, null);
   }
 
-  public OResultSet execute(ODatabase db, Map args, OCommandContext parentContext){
+  public OResultSet execute(ODatabase db, Map args, OCommandContext parentContext) {
     throw new UnsupportedOperationException();
   }
 
+  /**
+   * creates an execution plan for current statement, with profiling disabled
+   *
+   * @param ctx the context that will be used to execute the statement
+   *
+   * @return an execution plan
+   */
   public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx) {
+    return createExecutionPlan(ctx, false);
+  }
+
+  /**
+   * creates an execution plan for current statement
+   *
+   * @param ctx the context that will be used to execute the statement
+   * @param profile true to enable profiling, false to disable it
+   *
+   * @return an execution plan
+   */
+  public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx, boolean profile) {
     throw new UnsupportedOperationException();
   }
 

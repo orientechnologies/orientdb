@@ -140,7 +140,7 @@ public class OUpdateStatement extends OStatement {
       }
     }
     ctx.setInputParameters(params);
-    OUpdateExecutionPlan executionPlan = createExecutionPlan(ctx);
+    OUpdateExecutionPlan executionPlan = createExecutionPlan(ctx, false);
     executionPlan.executeInternal();
     return new OLocalResultSet(executionPlan);
   }
@@ -152,14 +152,14 @@ public class OUpdateStatement extends OStatement {
     }
     ctx.setDatabase(db);
     ctx.setInputParameters(params);
-    OUpdateExecutionPlan executionPlan = createExecutionPlan(ctx);
+    OUpdateExecutionPlan executionPlan = createExecutionPlan(ctx, false);
     executionPlan.executeInternal();
     return new OLocalResultSet(executionPlan);
   }
 
-  public OUpdateExecutionPlan createExecutionPlan(OCommandContext ctx) {
+  public OUpdateExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
     OUpdateExecutionPlanner planner = new OUpdateExecutionPlanner(this);
-    return planner.createExecutionPlan(ctx);
+    return planner.createExecutionPlan(ctx, enableProfiling);
   }
 
   @Override public boolean equals(Object o) {

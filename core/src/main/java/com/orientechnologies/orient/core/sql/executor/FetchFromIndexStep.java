@@ -36,13 +36,13 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
   private Map.Entry<Object, OIdentifiable> nextEntry = null;
 
   public FetchFromIndexStep(OIndex<?> index, OBooleanExpression condition, OBinaryCondition additionalRangeCondition,
-      OCommandContext ctx) {
-    this(index, condition, additionalRangeCondition, true, ctx);
+      OCommandContext ctx, boolean profilingEnabled) {
+    this(index, condition, additionalRangeCondition, true, ctx, profilingEnabled);
   }
 
   public FetchFromIndexStep(OIndex<?> index, OBooleanExpression condition, OBinaryCondition additionalRangeCondition,
-      boolean orderAsc, OCommandContext ctx) {
-    super(ctx);
+      boolean orderAsc, OCommandContext ctx, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
     this.index = index;
     this.condition = condition;
     this.additionalRangeCondition = additionalRangeCondition;
@@ -66,7 +66,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
         if (!hasNext()) {
           throw new IllegalStateException();
         }
-        long begin = System.nanoTime();
+        long begin = profilingEnabled ? System.nanoTime() : 0;
         try {
           Map.Entry<Object, OIdentifiable> currentEntry = nextEntry;
           fetchNextEntry();
@@ -78,7 +78,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
           ctx.setVariable("$current", result);
           return result;
         } finally {
-          cost += (System.nanoTime() - begin);
+          if(profilingEnabled){cost += (System.nanoTime() - begin);}
         }
       }
 
@@ -170,7 +170,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
   }
 
   private void init(OBooleanExpression condition) {
-    long begin = System.nanoTime();
+    long begin = profilingEnabled ? System.nanoTime() : 0;
     try {
       if (index.getDefinition() == null) {
         return;
@@ -191,7 +191,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
         throw new OCommandExecutionException("search for index for " + condition + " is not supported yet");
       }
     } finally {
-      cost += (System.nanoTime() - begin);
+      if(profilingEnabled){cost += (System.nanoTime() - begin);}
     }
   }
 

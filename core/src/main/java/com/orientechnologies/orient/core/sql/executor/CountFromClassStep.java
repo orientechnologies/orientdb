@@ -19,8 +19,8 @@ public class CountFromClassStep extends AbstractExecutionStep {
 
   private boolean executed = false;
 
-  public CountFromClassStep(OIdentifier targetIndex, String alias, OCommandContext ctx) {
-    super(ctx);
+  public CountFromClassStep(OIdentifier targetIndex, String alias, OCommandContext ctx, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
     this.target = targetIndex;
     this.alias = alias;
   }
@@ -44,7 +44,7 @@ public class CountFromClassStep extends AbstractExecutionStep {
         if (executed) {
           throw new IllegalStateException();
         }
-        long begin = System.nanoTime();
+        long begin = profilingEnabled ? System.nanoTime() : 0;
         try {
           OClass clazz = ctx.getDatabase().getClass(target.getStringValue());
           long size = clazz.count();
@@ -53,7 +53,7 @@ public class CountFromClassStep extends AbstractExecutionStep {
           result.setProperty(alias, size);
           return result;
         } finally {
-          cost += (System.nanoTime() - begin);
+          if(profilingEnabled){cost += (System.nanoTime() - begin);}
         }
       }
 

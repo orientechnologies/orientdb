@@ -94,7 +94,7 @@ public class ODeleteStatement extends OStatement {
     }
     ctx.setDatabase(db);
     ctx.setInputParameters(params);
-    ODeleteExecutionPlan executionPlan = createExecutionPlan(ctx);
+    ODeleteExecutionPlan executionPlan = createExecutionPlan(ctx, false);
     executionPlan.executeInternal();
     return new OLocalResultSet(executionPlan);
   }
@@ -112,14 +112,14 @@ public class ODeleteStatement extends OStatement {
       }
     }
     ctx.setInputParameters(params);
-    ODeleteExecutionPlan executionPlan = createExecutionPlan(ctx);
+    ODeleteExecutionPlan executionPlan = createExecutionPlan(ctx, false);
     executionPlan.executeInternal();
     return new OLocalResultSet(executionPlan);
   }
 
-  public ODeleteExecutionPlan createExecutionPlan(OCommandContext ctx) {
+  public ODeleteExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
     ODeleteExecutionPlanner planner = new ODeleteExecutionPlanner(this);
-    return planner.createExecutionPlan(ctx);
+    return planner.createExecutionPlan(ctx, enableProfiling);
   }
 
   public OFromClause getFromClause() {

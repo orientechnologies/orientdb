@@ -36,7 +36,7 @@ public class OCreateVertexStatement extends OStatement {
     }
     ctx.setDatabase(db);
     ctx.setInputParameters(params);
-    OInsertExecutionPlan executionPlan = (OInsertExecutionPlan) createExecutionPlan(ctx);
+    OInsertExecutionPlan executionPlan = (OInsertExecutionPlan) createExecutionPlan(ctx, false);
     executionPlan.executeInternal();
     return new OLocalResultSet(executionPlan);
   }
@@ -54,14 +54,14 @@ public class OCreateVertexStatement extends OStatement {
       }
     }
     ctx.setInputParameters(params);
-    OInsertExecutionPlan executionPlan = (OInsertExecutionPlan) createExecutionPlan(ctx);
+    OInsertExecutionPlan executionPlan = (OInsertExecutionPlan) createExecutionPlan(ctx, false);
     executionPlan.executeInternal();
     return new OLocalResultSet(executionPlan);
   }
 
-  @Override public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx) {
+  @Override public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
     OCreateVertexExecutionPlanner planner = new OCreateVertexExecutionPlanner(this);
-    return planner.createExecutionPlan(ctx);
+    return planner.createExecutionPlan(ctx, enableProfiling);
   }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {

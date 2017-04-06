@@ -15,8 +15,8 @@ public class MoveVertexStep extends AbstractExecutionStep {
   private String targetCluster;
   private String targetClass;
 
-  public MoveVertexStep(OIdentifier targetClass, OCluster targetCluster, OCommandContext ctx) {
-    super(ctx);
+  public MoveVertexStep(OIdentifier targetClass, OCluster targetCluster, OCommandContext ctx, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
     this.targetClass = targetClass == null ? null : targetClass.getStringValue();
     if (targetCluster != null) {
       this.targetCluster = targetCluster.getClusterName();

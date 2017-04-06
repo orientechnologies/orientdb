@@ -21,8 +21,8 @@ public class LetQueryStep extends AbstractExecutionStep {
   private final OIdentifier varName;
   private final OStatement  query;
 
-  public LetQueryStep(OIdentifier varName, OStatement query, OCommandContext ctx) {
-    super(ctx);
+  public LetQueryStep(OIdentifier varName, OStatement query, OCommandContext ctx, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
     this.varName = varName;
     this.query = query;
   }
@@ -50,7 +50,7 @@ public class LetQueryStep extends AbstractExecutionStep {
         OBasicCommandContext subCtx = new OBasicCommandContext();
         subCtx.setDatabase(ctx.getDatabase());
         subCtx.setParentWithoutOverridingChild(ctx);
-        OInternalExecutionPlan subExecutionPlan = query.createExecutionPlan(subCtx);
+        OInternalExecutionPlan subExecutionPlan = query.createExecutionPlan(subCtx, profilingEnabled);
         result.setProperty(varName.getStringValue(), toList(new OLocalResultSet(subExecutionPlan)));
       }
 

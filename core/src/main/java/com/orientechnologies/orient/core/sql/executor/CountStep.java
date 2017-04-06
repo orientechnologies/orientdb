@@ -15,8 +15,8 @@ public class CountStep extends AbstractExecutionStep {
 
   boolean executed = false;
 
-  public CountStep(OCommandContext ctx) {
-    super(ctx);
+  public CountStep(OCommandContext ctx, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
   }
 
   @Override
@@ -31,14 +31,14 @@ public class CountStep extends AbstractExecutionStep {
       OResultSet prevResult = getPrev().get().syncPull(ctx, nRecords);
 
       if (!prevResult.hasNext()) {
-        long begin = System.nanoTime();
+        long begin = profilingEnabled ? System.nanoTime() : 0;
         try {
           OInternalResultSet result = new OInternalResultSet();
           resultRecord.setProperty("count", count);
           result.add(resultRecord);
           return result;
         } finally {
-          cost += (System.nanoTime() - begin);
+          if(profilingEnabled){cost += (System.nanoTime() - begin);}
         }
       }
       while (prevResult.hasNext()) {

@@ -22,8 +22,8 @@ public class DistinctExecutionStep extends AbstractExecutionStep {
 
   private long cost = 0;
 
-  public DistinctExecutionStep(OCommandContext ctx) {
-    super(ctx);
+  public DistinctExecutionStep(OCommandContext ctx, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
   }
 
   @Override
@@ -91,7 +91,7 @@ public class DistinctExecutionStep extends AbstractExecutionStep {
       if (lastResult == null || !lastResult.hasNext()) {
         return;
       }
-      long begin = System.nanoTime();
+      long begin = profilingEnabled ? System.nanoTime() : 0;
       try {
         nextValue = lastResult.next();
         if (alreadyVisited(nextValue)) {
@@ -100,7 +100,7 @@ public class DistinctExecutionStep extends AbstractExecutionStep {
           markAsVisited(nextValue);
         }
       } finally {
-        cost += (System.nanoTime() - begin);
+        if(profilingEnabled){cost += (System.nanoTime() - begin);}
       }
     }
   }

@@ -18,8 +18,8 @@ import java.util.Optional;
 public class UpdateContentStep extends AbstractExecutionStep {
   private final OJson json;
 
-  public UpdateContentStep(OJson json, OCommandContext ctx) {
-    super(ctx);
+  public UpdateContentStep(OJson json, OCommandContext ctx, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
     this.json = json;
 
   }

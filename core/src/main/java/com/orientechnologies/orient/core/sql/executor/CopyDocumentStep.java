@@ -17,8 +17,8 @@ public class CopyDocumentStep extends AbstractExecutionStep {
 
   private long cost = 0;
 
-  public CopyDocumentStep(OInsertExecutionPlan result, OCommandContext ctx) {
-    super(ctx);
+  public CopyDocumentStep(OInsertExecutionPlan result, OCommandContext ctx, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
   }
 
   @Override
@@ -33,7 +33,7 @@ public class CopyDocumentStep extends AbstractExecutionStep {
       @Override
       public OResult next() {
         OResult toCopy = upstream.next();
-        long begin = System.nanoTime();
+        long begin = profilingEnabled ? System.nanoTime() : 0;
         try {
           ORecord resultDoc = null;
           if (toCopy.isElement()) {
@@ -54,7 +54,7 @@ public class CopyDocumentStep extends AbstractExecutionStep {
           }
           return new OUpdatableResult((ODocument) resultDoc);
         } finally {
-          cost += (System.nanoTime() - begin);
+          if(profilingEnabled){cost += (System.nanoTime() - begin);}
         }
       }
 

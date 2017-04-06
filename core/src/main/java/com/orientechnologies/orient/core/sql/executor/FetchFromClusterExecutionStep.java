@@ -22,15 +22,15 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
   private       Object                 order;
   private long cost = 0;
 
-  public FetchFromClusterExecutionStep(int clusterId, OCommandContext ctx) {
-    super(ctx);
+  public FetchFromClusterExecutionStep(int clusterId, OCommandContext ctx, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
     this.clusterId = clusterId;
   }
 
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
-    long begin = System.nanoTime();
+    long begin = profilingEnabled ? System.nanoTime() : 0;
     try {
       if (iterator == null) {
         iterator = new ORecordIteratorCluster((ODatabaseDocumentInternal) ctx.getDatabase(),
@@ -45,7 +45,7 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
 
         @Override
         public boolean hasNext() {
-          long begin = System.nanoTime();
+          long begin = profilingEnabled ? System.nanoTime() : 0;
           try {
             if (nFetched >= nRecords) {
               return false;
@@ -56,13 +56,13 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
               return iterator.hasNext();
             }
           } finally {
-            cost += (System.nanoTime() - begin);
+            if(profilingEnabled){cost += (System.nanoTime() - begin);}
           }
         }
 
         @Override
         public OResult next() {
-          long begin = System.nanoTime();
+          long begin = profilingEnabled ? System.nanoTime() : 0;
           try {
             if (nFetched >= nRecords) {
               throw new IllegalStateException();
@@ -85,7 +85,7 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
             ctx.setVariable("$current", result);
             return result;
           } finally {
-            cost += (System.nanoTime() - begin);
+            if(profilingEnabled){cost += (System.nanoTime() - begin);}
           }
         }
 
@@ -107,7 +107,7 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
       };
       return rs;
     } finally {
-      cost += (System.nanoTime() - begin);
+      if(profilingEnabled){cost += (System.nanoTime() - begin);}
     }
 
   }

@@ -21,14 +21,14 @@ public class CheckClusterTypeStep extends AbstractExecutionStep {
 
   boolean found = false;
 
-  public CheckClusterTypeStep(String targetClusterName, String clazz, OCommandContext ctx) {
-    super(ctx);
+  public CheckClusterTypeStep(String targetClusterName, String clazz, OCommandContext ctx, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
     this.clusterName = targetClusterName;
     this.targetClass = clazz;
   }
 
-  public CheckClusterTypeStep(OCluster targetCluster, String clazz, OCommandContext ctx) {
-    super(ctx);
+  public CheckClusterTypeStep(OCluster targetCluster, String clazz, OCommandContext ctx, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
     this.cluster = targetCluster;
     this.targetClass = clazz;
 
@@ -37,7 +37,7 @@ public class CheckClusterTypeStep extends AbstractExecutionStep {
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
-    long begin = System.nanoTime();
+    long begin = profilingEnabled ? System.nanoTime() : 0;
     try {
       if (found) {
         return new OInternalResultSet();
@@ -75,7 +75,7 @@ public class CheckClusterTypeStep extends AbstractExecutionStep {
       }
       return new OInternalResultSet();
     } finally {
-      cost += (System.nanoTime() - begin);
+      if(profilingEnabled){cost += (System.nanoTime() - begin);}
     }
   }
 

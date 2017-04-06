@@ -13,8 +13,8 @@ import java.util.Optional;
 public class ProjectionCalculationStep extends AbstractExecutionStep {
   protected final OProjection projection;
 
-  public ProjectionCalculationStep(OProjection projection, OCommandContext ctx) {
-    super(ctx);
+  public ProjectionCalculationStep(OProjection projection, OCommandContext ctx, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
     this.projection = projection;
   }
 

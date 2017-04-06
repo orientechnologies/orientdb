@@ -13,9 +13,9 @@ public class DistinctExecutionStepTest {
 
   @Test public void test() {
     OCommandContext ctx = new OBasicCommandContext();
-    DistinctExecutionStep step = new DistinctExecutionStep(ctx);
+    DistinctExecutionStep step = new DistinctExecutionStep(ctx, false);
 
-    AbstractExecutionStep prev = new AbstractExecutionStep(ctx) {
+    AbstractExecutionStep prev = new AbstractExecutionStep(ctx, false) {
       boolean done = false;
 
       @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {

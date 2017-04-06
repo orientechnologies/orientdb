@@ -21,8 +21,8 @@ public abstract class AbstractUnrollStep extends AbstractExecutionStep {
   Iterator<OResult> nextSubsequence = null;
   OResult           nextElement     = null;
 
-  public AbstractUnrollStep(OCommandContext ctx) {
-    super(ctx);
+  public AbstractUnrollStep(OCommandContext ctx, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
   }
 
   @Override public void reset() {

@@ -17,8 +17,8 @@ public class CreateRecordStep extends AbstractExecutionStep {
   int created = 0;
   int total   = 0;
 
-  public CreateRecordStep(OCommandContext ctx, int total) {
-    super(ctx);
+  public CreateRecordStep(OCommandContext ctx, int total, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
     this.total = total;
   }
 
@@ -38,7 +38,7 @@ public class CreateRecordStep extends AbstractExecutionStep {
 
       @Override
       public OResult next() {
-        long begin = System.nanoTime();
+        long begin = profilingEnabled ? System.nanoTime() : 0;
         try {
           if (!hasNext()) {
             throw new IllegalStateException();
@@ -47,7 +47,7 @@ public class CreateRecordStep extends AbstractExecutionStep {
           locallyCreated++;
           return new OUpdatableResult((ODocument) ctx.getDatabase().newInstance());
         } finally {
-          cost += (System.nanoTime() - begin);
+          if(profilingEnabled){cost += (System.nanoTime() - begin);}
         }
       }
 

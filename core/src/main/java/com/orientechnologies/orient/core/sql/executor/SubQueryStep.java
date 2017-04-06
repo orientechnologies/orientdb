@@ -17,8 +17,8 @@ public class SubQueryStep extends AbstractExecutionStep {
    * @param ctx              the context of the current execution plan
    * @param subCtx           the context of the subquery execution plan
    */
-  public SubQueryStep(OInternalExecutionPlan subExecutionPlan, OCommandContext ctx, OCommandContext subCtx) {
-    super(ctx);
+  public SubQueryStep(OInternalExecutionPlan subExecutionPlan, OCommandContext ctx, OCommandContext subCtx, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
     this.subExecuitonPlan = subExecutionPlan;
     this.childCtx = subCtx;
   }

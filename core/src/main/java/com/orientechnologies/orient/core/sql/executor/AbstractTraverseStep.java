@@ -22,8 +22,8 @@ public abstract class AbstractTraverseStep extends AbstractExecutionStep {
 
   Set<ORID> traversed = new ORidSet();
 
-  public AbstractTraverseStep(List<OTraverseProjectionItem> projections, OWhereClause whileClause, OCommandContext ctx) {
-    super(ctx);
+  public AbstractTraverseStep(List<OTraverseProjectionItem> projections, OWhereClause whileClause, OCommandContext ctx, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
     this.whileClause = whileClause;
     this.projections = projections.stream().map(x -> x.copy()).collect(Collectors.toList());
   }
@@ -99,9 +99,11 @@ public abstract class AbstractTraverseStep extends AbstractExecutionStep {
       if (this.entryPoints.isEmpty()) {
         return;
       }
-      long begin = System.nanoTime();
+      long begin = profilingEnabled ? System.nanoTime() : 0;
       fetchNextResults(ctx, nRecords);
-      cost += (System.nanoTime() - begin);
+      if (profilingEnabled) {
+        cost += (System.nanoTime() - begin);
+      }
       if (!this.results.isEmpty()) {
         return;
       }

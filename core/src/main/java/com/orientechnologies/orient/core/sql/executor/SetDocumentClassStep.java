@@ -17,8 +17,8 @@ import java.util.Optional;
 public class SetDocumentClassStep extends AbstractExecutionStep {
   private final String targetClass;
 
-  public SetDocumentClassStep(OIdentifier targetClass, OCommandContext ctx) {
-    super(ctx);
+  public SetDocumentClassStep(OIdentifier targetClass, OCommandContext ctx, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
     this.targetClass = targetClass.getStringValue();
   }
 

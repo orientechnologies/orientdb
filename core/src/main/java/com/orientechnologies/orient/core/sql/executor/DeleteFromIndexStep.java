@@ -30,13 +30,13 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
   private long cost = 0;
 
   public DeleteFromIndexStep(OIndex<?> index, OBooleanExpression condition, OBinaryCondition additionalRangeCondition,
-      OBooleanExpression ridCondition, OCommandContext ctx) {
-    this(index, condition, additionalRangeCondition, ridCondition, true, ctx);
+      OBooleanExpression ridCondition, OCommandContext ctx, boolean profilingEnabled) {
+    this(index, condition, additionalRangeCondition, ridCondition, true, ctx, profilingEnabled);
   }
 
   public DeleteFromIndexStep(OIndex<?> index, OBooleanExpression condition, OBinaryCondition additionalRangeCondition,
-      OBooleanExpression ridCondition, boolean orderAsc, OCommandContext ctx) {
-    super(ctx);
+      OBooleanExpression ridCondition, boolean orderAsc, OCommandContext ctx, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
     this.index = index;
     this.condition = condition;
     this.additional = additionalRangeCondition;
@@ -59,7 +59,7 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
 
       @Override
       public OResult next() {
-        long begin = System.nanoTime();
+        long begin = profilingEnabled ? System.nanoTime() : 0;
         try {
           if (!hasNext()) {
             throw new IllegalStateException();
@@ -80,7 +80,7 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
           nextEntry = loadNextEntry(ctx);
           return result;
         } finally {
-          cost += (System.nanoTime() - begin);
+          if(profilingEnabled){cost += (System.nanoTime() - begin);}
         }
       }
 
@@ -105,12 +105,12 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
       return;
     }
     inited = true;
-    long begin = System.nanoTime();
+    long begin = profilingEnabled ? System.nanoTime() : 0;
     try {
       init(condition);
       nextEntry = loadNextEntry(ctx);
     } finally {
-      cost += (System.nanoTime() - begin);
+      if(profilingEnabled){cost += (System.nanoTime() - begin);}
     }
   }
 

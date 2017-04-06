@@ -12,8 +12,8 @@ public class LimitExecutionStep extends AbstractExecutionStep {
 
   int loaded = 0;
 
-  public LimitExecutionStep(OLimit limit, OCommandContext ctx) {
-    super(ctx);
+  public LimitExecutionStep(OLimit limit, OCommandContext ctx, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
     this.limit = limit;
   }
 

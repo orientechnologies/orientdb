@@ -13,8 +13,8 @@ import java.util.Optional;
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
 public class UnwrapPreviousValueStep extends AbstractExecutionStep {
-  public UnwrapPreviousValueStep(OCommandContext ctx) {
-    super(ctx);
+  public UnwrapPreviousValueStep(OCommandContext ctx, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
   }
 
   @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {

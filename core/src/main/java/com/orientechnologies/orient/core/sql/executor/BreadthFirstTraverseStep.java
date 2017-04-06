@@ -13,8 +13,8 @@ import java.util.List;
  */
 public class BreadthFirstTraverseStep extends AbstractTraverseStep {
 
-  public BreadthFirstTraverseStep(List<OTraverseProjectionItem> projections, OWhereClause whileClause, OCommandContext ctx) {
-    super(projections, whileClause, ctx);
+  public BreadthFirstTraverseStep(List<OTraverseProjectionItem> projections, OWhereClause whileClause, OCommandContext ctx, boolean profilingEnabled) {
+    super(projections, whileClause, ctx, profilingEnabled);
   }
 
   @Override protected void fetchNextEntryPoints(OCommandContext ctx, int nRecords) {

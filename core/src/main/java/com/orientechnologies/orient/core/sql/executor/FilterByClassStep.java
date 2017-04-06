@@ -16,8 +16,8 @@ public class FilterByClassStep extends AbstractExecutionStep {
 
   OResultSet prevResult = null;
 
-  public FilterByClassStep(OIdentifier identifier, OCommandContext ctx) {
-    super(ctx);
+  public FilterByClassStep(OIdentifier identifier, OCommandContext ctx, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
     this.identifier = identifier;
   }
 

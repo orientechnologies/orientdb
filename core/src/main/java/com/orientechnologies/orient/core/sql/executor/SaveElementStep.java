@@ -14,13 +14,13 @@ public class SaveElementStep extends AbstractExecutionStep {
 
   private final OIdentifier cluster;
 
-  public SaveElementStep(OCommandContext ctx, OIdentifier cluster) {
-    super(ctx);
+  public SaveElementStep(OCommandContext ctx, OIdentifier cluster, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
     this.cluster = cluster;
   }
 
-  public SaveElementStep(OCommandContext ctx) {
-    this(ctx, null);
+  public SaveElementStep(OCommandContext ctx, boolean profilingEnabled) {
+    this(ctx, null, profilingEnabled);
   }
 
   @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {

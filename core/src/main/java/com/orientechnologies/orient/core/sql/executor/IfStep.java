@@ -14,8 +14,8 @@ public class IfStep extends AbstractExecutionStep {
 
   Boolean conditionMet = null;
 
-  public IfStep(OCommandContext ctx) {
-    super(ctx);
+  public IfStep(OCommandContext ctx, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
   }
 
   @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {

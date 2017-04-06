@@ -127,7 +127,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       }
     }
     ctx.setInputParameters(params);
-    OInternalExecutionPlan executionPlan = createExecutionPlan(ctx);
+    OInternalExecutionPlan executionPlan = createExecutionPlan(ctx, false);
 
     return new OLocalResultSet(executionPlan);
   }
@@ -140,14 +140,14 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     }
     ctx.setDatabase(db);
     ctx.setInputParameters(params);
-    OInternalExecutionPlan executionPlan = createExecutionPlan(ctx);
+    OInternalExecutionPlan executionPlan = createExecutionPlan(ctx, false);
 
     return new OLocalResultSet(executionPlan);
   }
 
-  public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx) {
+  public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
     OMatchExecutionPlanner planner = new OMatchExecutionPlanner(this);
-    return planner.createExecutionPlan(ctx);
+    return planner.createExecutionPlan(ctx, enableProfiling);
   }
 
   /**

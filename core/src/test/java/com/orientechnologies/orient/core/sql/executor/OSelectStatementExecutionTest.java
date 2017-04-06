@@ -3092,6 +3092,7 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
+  @Test
   public void stressTestNew() {
     String className = "stressTestNew";
     db.getMetadata().getSchema().createClass(className);

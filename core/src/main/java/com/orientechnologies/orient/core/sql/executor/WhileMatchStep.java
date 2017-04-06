@@ -15,8 +15,8 @@ public class WhileMatchStep extends AbstractUnrollStep {
   private final OInternalExecutionPlan body;
   private final OWhereClause           condition;
 
-  public WhileMatchStep(OCommandContext ctx, OWhereClause condition, OInternalExecutionPlan body) {
-    super(ctx);
+  public WhileMatchStep(OCommandContext ctx, OWhereClause condition, OInternalExecutionPlan body, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
     this.body = body;
     this.condition = condition;
   }

@@ -12,8 +12,8 @@ public class TimeoutStep extends AbstractExecutionStep {
 
   private Long expiryTime;
 
-  public TimeoutStep(OTimeout timeout, OCommandContext ctx) {
-    super(ctx);
+  public TimeoutStep(OTimeout timeout, OCommandContext ctx, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
     this.timeout = timeout;
   }
 

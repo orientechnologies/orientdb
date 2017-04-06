@@ -11,8 +11,8 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 public class ScriptLineStep extends AbstractExecutionStep {
   private final OInternalExecutionPlan plan;
 
-  public ScriptLineStep(OInternalExecutionPlan nextPlan, OCommandContext ctx) {
-    super(ctx);
+  public ScriptLineStep(OInternalExecutionPlan nextPlan, OCommandContext ctx, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
     this.plan = nextPlan;
   }
 

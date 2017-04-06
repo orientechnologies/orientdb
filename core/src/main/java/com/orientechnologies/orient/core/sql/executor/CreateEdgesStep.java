@@ -36,8 +36,8 @@ public class CreateEdgesStep extends AbstractExecutionStep {
   private long cost = 0;
 
   public CreateEdgesStep(OIdentifier targetClass, OIdentifier targetClusterName, OIdentifier fromAlias, OIdentifier toAlias,
-      Number wait, Number retry, OBatch batch, OCommandContext ctx) {
-    super(ctx);
+      Number wait, Number retry, OBatch batch, OCommandContext ctx, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
     this.targetClass = targetClass;
     this.targetCluster = targetClusterName;
     this.fromAlias = fromAlias;
@@ -76,7 +76,7 @@ public class CreateEdgesStep extends AbstractExecutionStep {
           }
 
           Object obj = toIterator.next();
-          long begin = System.nanoTime();
+          long begin = profilingEnabled ? System.nanoTime() : 0;
           try {
             OVertex currentTo = asVertex(obj);
             if (currentTo == null) {
@@ -90,7 +90,7 @@ public class CreateEdgesStep extends AbstractExecutionStep {
             currentBatch++;
             return result;
           } finally {
-            cost += (System.nanoTime() - begin);
+            if(profilingEnabled){cost += (System.nanoTime() - begin);}
           }
         } else {
           throw new IllegalStateException();

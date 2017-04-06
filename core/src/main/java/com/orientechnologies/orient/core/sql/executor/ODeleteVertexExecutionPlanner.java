@@ -21,7 +21,7 @@ public class ODeleteVertexExecutionPlanner {
     this.limit = stm.getLimit() == null ? null : stm.getLimit();
   }
 
-  public ODeleteExecutionPlan createExecutionPlan(OCommandContext ctx) {
+  public ODeleteExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
     ODeleteExecutionPlan result = new ODeleteExecutionPlan(ctx);
 
     if (handleIndexAsTarget(result, fromClause.getItem().getIndex(), whereClause, ctx)) {
@@ -33,12 +33,12 @@ public class ODeleteVertexExecutionPlanner {
       }
 
     } else {
-      handleTarget(result, ctx, this.fromClause, this.whereClause);
-      handleLimit(result, ctx, this.limit);
+      handleTarget(result, ctx, this.fromClause, this.whereClause, enableProfiling);
+      handleLimit(result, ctx, this.limit, enableProfiling);
     }
-    handleCastToVertex(result, ctx);
-    handleDelete(result, ctx);
-    handleReturn(result, ctx, this.returnBefore);
+    handleCastToVertex(result, ctx, enableProfiling);
+    handleDelete(result, ctx, enableProfiling);
+    handleReturn(result, ctx, this.returnBefore, enableProfiling);
     return result;
   }
 
@@ -50,37 +50,37 @@ public class ODeleteVertexExecutionPlanner {
     throw new OCommandExecutionException("DELETE VERTEX FROM INDEX is not supported");
   }
 
-  private void handleDelete(ODeleteExecutionPlan result, OCommandContext ctx) {
-    result.chain(new DeleteStep(ctx));
+  private void handleDelete(ODeleteExecutionPlan result, OCommandContext ctx, boolean profilingEnabled) {
+    result.chain(new DeleteStep(ctx, profilingEnabled));
   }
 
-  private void handleUnsafe(ODeleteExecutionPlan result, OCommandContext ctx, boolean unsafe) {
+  private void handleUnsafe(ODeleteExecutionPlan result, OCommandContext ctx, boolean unsafe, boolean profilingEnabled) {
     if (!unsafe) {
-      result.chain(new CheckSafeDeleteStep(ctx));
+      result.chain(new CheckSafeDeleteStep(ctx, profilingEnabled));
     }
   }
 
-  private void handleReturn(ODeleteExecutionPlan result, OCommandContext ctx, boolean returnBefore) {
+  private void handleReturn(ODeleteExecutionPlan result, OCommandContext ctx, boolean returnBefore, boolean profilingEnabled) {
     if (!returnBefore) {
-      result.chain(new CountStep(ctx));
+      result.chain(new CountStep(ctx, profilingEnabled));
     }
   }
 
-  private void handleLimit(OUpdateExecutionPlan plan, OCommandContext ctx, OLimit limit) {
+  private void handleLimit(OUpdateExecutionPlan plan, OCommandContext ctx, OLimit limit, boolean profilingEnabled) {
     if (limit != null) {
-      plan.chain(new LimitExecutionStep(limit, ctx));
+      plan.chain(new LimitExecutionStep(limit, ctx, profilingEnabled));
     }
   }
 
-  private void handleCastToVertex(ODeleteExecutionPlan plan, OCommandContext ctx) {
-    plan.chain(new CastToVertexStep(ctx));
+  private void handleCastToVertex(ODeleteExecutionPlan plan, OCommandContext ctx, boolean profilingEnabled) {
+    plan.chain(new CastToVertexStep(ctx, profilingEnabled));
   }
 
-  private void handleTarget(OUpdateExecutionPlan result, OCommandContext ctx, OFromClause target, OWhereClause whereClause) {
+  private void handleTarget(OUpdateExecutionPlan result, OCommandContext ctx, OFromClause target, OWhereClause whereClause, boolean profilingEnabled) {
     OSelectStatement sourceStatement = new OSelectStatement(-1);
     sourceStatement.setTarget(target);
     sourceStatement.setWhereClause(whereClause);
     OSelectExecutionPlanner planner = new OSelectExecutionPlanner(sourceStatement);
-    result.chain(new SubQueryStep(planner.createExecutionPlan(ctx), ctx, ctx));
+    result.chain(new SubQueryStep(planner.createExecutionPlan(ctx, profilingEnabled), ctx, ctx, profilingEnabled));
   }
 }

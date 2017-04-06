@@ -20,8 +20,8 @@ public class FetchFromRidsStep extends AbstractExecutionStep {
 
   private OResult nextResult = null;
 
-  public FetchFromRidsStep(Collection<ORecordId> rids, OCommandContext ctx) {
-    super(ctx);
+  public FetchFromRidsStep(Collection<ORecordId> rids, OCommandContext ctx, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
     this.rids = rids;
     reset();
   }

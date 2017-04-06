@@ -241,7 +241,7 @@ public class OSelectStatement extends OStatement {
       }
     }
     ctx.setInputParameters(params);
-    OInternalExecutionPlan executionPlan = createExecutionPlan(ctx);
+    OInternalExecutionPlan executionPlan = createExecutionPlan(ctx, false);
 
     OLocalResultSet result = new OLocalResultSet(executionPlan);
     return result;
@@ -255,15 +255,15 @@ public class OSelectStatement extends OStatement {
     }
     ctx.setDatabase(db);
     ctx.setInputParameters(params);
-    OInternalExecutionPlan executionPlan = createExecutionPlan(ctx);
+    OInternalExecutionPlan executionPlan = createExecutionPlan(ctx, false);
 
     OLocalResultSet result = new OLocalResultSet(executionPlan);
     return result;
   }
 
-  public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx) {
+  public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
     OSelectExecutionPlanner planner = new OSelectExecutionPlanner(this);
-    return planner.createExecutionPlan(ctx);
+    return planner.createExecutionPlan(ctx, enableProfiling);
   }
 
   @Override

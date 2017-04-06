@@ -54,7 +54,7 @@ public class ODeleteEdgeStatement extends OStatement {
     }
     ctx.setDatabase(db);
     ctx.setInputParameters(params);
-    ODeleteExecutionPlan executionPlan = createExecutionPlan(ctx);
+    ODeleteExecutionPlan executionPlan = createExecutionPlan(ctx, false);
     executionPlan.executeInternal();
     return new OLocalResultSet(executionPlan);
   }
@@ -69,9 +69,9 @@ public class ODeleteEdgeStatement extends OStatement {
     return execute(db, params, parentCtx);
   }
 
-  public ODeleteExecutionPlan createExecutionPlan(OCommandContext ctx) {
+  public ODeleteExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
     ODeleteEdgeExecutionPlanner planner = new ODeleteEdgeExecutionPlanner(this);
-    return planner.createExecutionPlan(ctx);
+    return planner.createExecutionPlan(ctx, enableProfiling);
   }
 
 

@@ -7,8 +7,8 @@ import com.orientechnologies.orient.core.command.OCommandContext;
  * Created by luigidellaquila on 08/07/16.
  */
 public class EmptyStep extends AbstractExecutionStep {
-  public EmptyStep(OCommandContext ctx) {
-    super(ctx);
+  public EmptyStep(OCommandContext ctx, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
   }
 
   @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {

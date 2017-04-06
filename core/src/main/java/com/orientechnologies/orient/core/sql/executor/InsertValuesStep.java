@@ -20,8 +20,8 @@ public class InsertValuesStep extends AbstractExecutionStep {
 
   int nextValueSet = 0;
 
-  public InsertValuesStep(List<OIdentifier> identifierList, List<List<OExpression>> valueExpressions, OCommandContext ctx) {
-    super(ctx);
+  public InsertValuesStep(List<OIdentifier> identifierList, List<List<OExpression>> valueExpressions, OCommandContext ctx, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
     this.identifiers = identifierList;
     this.values = valueExpressions;
   }

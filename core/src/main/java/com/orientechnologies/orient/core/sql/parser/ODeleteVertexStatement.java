@@ -36,7 +36,7 @@ public class ODeleteVertexStatement extends OStatement {
     }
     ctx.setDatabase(db);
     ctx.setInputParameters(params);
-    ODeleteExecutionPlan executionPlan = createExecutionPlan(ctx);
+    ODeleteExecutionPlan executionPlan = createExecutionPlan(ctx, false);
     executionPlan.executeInternal();
     return new OLocalResultSet(executionPlan);
   }
@@ -54,14 +54,14 @@ public class ODeleteVertexStatement extends OStatement {
       }
     }
     ctx.setInputParameters(params);
-    ODeleteExecutionPlan executionPlan = createExecutionPlan(ctx);
+    ODeleteExecutionPlan executionPlan = createExecutionPlan(ctx, false);
     executionPlan.executeInternal();
     return new OLocalResultSet(executionPlan);
   }
 
-  public ODeleteExecutionPlan createExecutionPlan(OCommandContext ctx) {
+  public ODeleteExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
     ODeleteVertexExecutionPlanner planner = new ODeleteVertexExecutionPlanner(this);
-    return planner.createExecutionPlan(ctx);
+    return planner.createExecutionPlan(ctx, enableProfiling);
   }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {

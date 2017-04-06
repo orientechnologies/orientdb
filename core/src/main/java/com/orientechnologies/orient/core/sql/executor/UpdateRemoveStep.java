@@ -14,8 +14,8 @@ import java.util.Optional;
 public class UpdateRemoveStep extends AbstractExecutionStep {
   private final List<OUpdateRemoveItem> items;
 
-  public UpdateRemoveStep(List<OUpdateRemoveItem> items, OCommandContext ctx) {
-    super(ctx);
+  public UpdateRemoveStep(List<OUpdateRemoveItem> items, OCommandContext ctx, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
     this.items = items;
   }
 

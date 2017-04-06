@@ -18,8 +18,8 @@ public class CheckRecordTypeStep extends AbstractExecutionStep {
 
   private long cost = 0;
 
-  public CheckRecordTypeStep(OCommandContext ctx, String c) {
-    super(ctx);
+  public CheckRecordTypeStep(OCommandContext ctx, String c, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
     this.clazz = c;
   }
 
@@ -35,7 +35,7 @@ public class CheckRecordTypeStep extends AbstractExecutionStep {
       @Override
       public OResult next() {
         OResult result = upstream.next();
-        long begin = System.nanoTime();
+        long begin = profilingEnabled ? System.nanoTime() : 0;
         try {
           if (!result.isElement()) {
             throw new OCommandExecutionException("record " + result + " is not an instance of " + clazz);
@@ -51,7 +51,7 @@ public class CheckRecordTypeStep extends AbstractExecutionStep {
           }
           return result;
         } finally {
-          cost += (System.nanoTime() - begin);
+          if(profilingEnabled){cost += (System.nanoTime() - begin);}
         }
       }
 

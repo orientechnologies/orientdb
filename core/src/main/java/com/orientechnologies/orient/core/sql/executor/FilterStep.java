@@ -15,8 +15,8 @@ public class FilterStep extends AbstractExecutionStep {
 
   OResultSet prevResult = null;
 
-  public FilterStep(OWhereClause whereClause, OCommandContext ctx) {
-    super(ctx);
+  public FilterStep(OWhereClause whereClause, OCommandContext ctx, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
     this.whereClause = whereClause;
   }
 

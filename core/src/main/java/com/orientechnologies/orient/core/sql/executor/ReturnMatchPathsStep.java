@@ -11,8 +11,8 @@ import java.util.Optional;
  */
 public class ReturnMatchPathsStep extends AbstractExecutionStep {
 
-  public ReturnMatchPathsStep(OCommandContext context) {
-    super(context);
+  public ReturnMatchPathsStep(OCommandContext context, boolean profilingEnabled) {
+    super(context, profilingEnabled);
   }
 
   @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {

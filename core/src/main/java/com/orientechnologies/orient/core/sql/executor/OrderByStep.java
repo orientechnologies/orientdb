@@ -18,12 +18,12 @@ public class OrderByStep extends AbstractExecutionStep {
   List<OResult> cachedResult = null;
   int           nextElement  = 0;
 
-  public OrderByStep(OOrderBy orderBy, OCommandContext ctx) {
-    this(orderBy, null, ctx);
+  public OrderByStep(OOrderBy orderBy, OCommandContext ctx, boolean profilingEnabled) {
+    this(orderBy, null, ctx, profilingEnabled);
   }
 
-  public OrderByStep(OOrderBy orderBy, Integer maxResults, OCommandContext ctx) {
-    super(ctx);
+  public OrderByStep(OOrderBy orderBy, Integer maxResults, OCommandContext ctx, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
     this.orderBy = orderBy;
     this.maxResults = maxResults;
     if (this.maxResults != null && this.maxResults < 0) {
@@ -85,7 +85,7 @@ public class OrderByStep extends AbstractExecutionStep {
   }
 
   private void init(OExecutionStepInternal p, OCommandContext ctx) {
-    long begin = System.nanoTime();
+    long begin = profilingEnabled ? System.nanoTime() : 0;
     try {
       boolean sorted = true;
       do {
@@ -120,7 +120,7 @@ public class OrderByStep extends AbstractExecutionStep {
         cachedResult.sort((a, b) -> orderBy.compare(a, b, ctx));
       }
     } finally {
-      cost += (System.nanoTime() - begin);
+      if(profilingEnabled){cost += (System.nanoTime() - begin);}
     }
   }
 

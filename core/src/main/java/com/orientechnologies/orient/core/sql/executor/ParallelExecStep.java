@@ -16,8 +16,8 @@ public class ParallelExecStep extends AbstractExecutionStep {
   int current = 0;
   private OResultSet currentResultSet = null;
 
-  public ParallelExecStep(List<OInternalExecutionPlan> subExecuitonPlans, OCommandContext ctx) {
-    super(ctx);
+  public ParallelExecStep(List<OInternalExecutionPlan> subExecuitonPlans, OCommandContext ctx, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
     this.subExecutionPlans = subExecuitonPlans;
   }
 

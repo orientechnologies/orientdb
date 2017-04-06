@@ -19,8 +19,8 @@ public class ConvertToResultInternalStep extends AbstractExecutionStep {
 
   OResultSet prevResult = null;
 
-  public ConvertToResultInternalStep(OCommandContext ctx) {
-    super(ctx);
+  public ConvertToResultInternalStep(OCommandContext ctx, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
   }
 
   @Override
@@ -57,7 +57,7 @@ public class ConvertToResultInternalStep extends AbstractExecutionStep {
             }
           }
           nextItem = prevResult.next();
-          long begin = System.nanoTime();
+          long begin = profilingEnabled ? System.nanoTime() : 0;
           try {
             if (nextItem instanceof OUpdatableResult) {
               ORecord element = nextItem.getElement().get().getRecord();
@@ -68,7 +68,7 @@ public class ConvertToResultInternalStep extends AbstractExecutionStep {
               break;
             }
           } finally {
-            cost += (System.nanoTime() - begin);
+            if(profilingEnabled){cost += (System.nanoTime() - begin);}
           }
           nextItem = null;
         }

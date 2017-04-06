@@ -14,8 +14,11 @@ public abstract class AbstractExecutionStep implements OExecutionStepInternal {
   protected Optional<OExecutionStepInternal> next     = Optional.empty();
   protected boolean                          timedOut = false;
 
-  public AbstractExecutionStep(OCommandContext ctx) {
+  protected boolean profilingEnabled = false;
+
+  public AbstractExecutionStep(OCommandContext ctx, boolean profilingEnabled) {
     this.ctx = ctx;
+    this.profilingEnabled = profilingEnabled;
   }
 
   @Override
@@ -51,4 +54,11 @@ public abstract class AbstractExecutionStep implements OExecutionStepInternal {
     prev.ifPresent(p -> p.close());
   }
 
+  public boolean isProfilingEnabled() {
+    return profilingEnabled;
+  }
+
+  public void setProfilingEnabled(boolean profilingEnabled) {
+    this.profilingEnabled = profilingEnabled;
+  }
 }

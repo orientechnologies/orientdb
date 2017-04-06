@@ -14,8 +14,8 @@ import java.util.Optional;
 public class DeleteStep extends AbstractExecutionStep {
   private long cost = 0;
 
-  public DeleteStep(OCommandContext ctx) {
-    super(ctx);
+  public DeleteStep(OCommandContext ctx, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
   }
 
   @Override
@@ -30,14 +30,14 @@ public class DeleteStep extends AbstractExecutionStep {
       @Override
       public OResult next() {
         OResult result = upstream.next();
-        long begin = System.nanoTime();
+        long begin = profilingEnabled ? System.nanoTime() : 0;
         try {
           if (result.isElement()) {
             result.getElement().get().delete();
           }
           return result;
         } finally {
-          cost += (System.nanoTime() - begin);
+          if(profilingEnabled){cost += (System.nanoTime() - begin);}
         }
       }
 

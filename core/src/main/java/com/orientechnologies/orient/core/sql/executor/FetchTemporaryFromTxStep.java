@@ -21,8 +21,8 @@ public class FetchTemporaryFromTxStep extends AbstractExecutionStep {
   private       Iterator<ORecord> txEntries;
   private       Object            order;
 
-  public FetchTemporaryFromTxStep(OCommandContext ctx, String className) {
-    super(ctx);
+  public FetchTemporaryFromTxStep(OCommandContext ctx, String className, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
     this.className = className;
   }
 

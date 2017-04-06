@@ -26,10 +26,10 @@ public class ODeleteExecutionPlanner {
     this.unsafe = stm.isUnsafe();
   }
 
-  public ODeleteExecutionPlan createExecutionPlan(OCommandContext ctx) {
+  public ODeleteExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
     ODeleteExecutionPlan result = new ODeleteExecutionPlan(ctx);
 
-    if (handleIndexAsTarget(result, fromClause.getItem().getIndex(), whereClause, ctx)) {
+    if (handleIndexAsTarget(result, fromClause.getItem().getIndex(), whereClause, ctx,enableProfiling)) {
       if (limit != null) {
         throw new OCommandExecutionException("Cannot apply a LIMIT on a delete from index");
       }
@@ -40,19 +40,19 @@ public class ODeleteExecutionPlanner {
         throw new OCommandExecutionException("Cannot apply a RETURN BEFORE on a delete from index");
       }
 
-      handleReturn(result, ctx, this.returnBefore);
+      handleReturn(result, ctx, this.returnBefore, enableProfiling);
     } else {
-      handleTarget(result, ctx, this.fromClause, this.whereClause);
-      handleUnsafe(result, ctx, this.unsafe);
-      handleLimit(result, ctx, this.limit);
-      handleDelete(result, ctx);
-      handleReturn(result, ctx, this.returnBefore);
+      handleTarget(result, ctx, this.fromClause, this.whereClause, enableProfiling);
+      handleUnsafe(result, ctx, this.unsafe, enableProfiling);
+      handleLimit(result, ctx, this.limit, enableProfiling);
+      handleDelete(result, ctx, enableProfiling);
+      handleReturn(result, ctx, this.returnBefore, enableProfiling);
     }
     return result;
   }
 
   private boolean handleIndexAsTarget(ODeleteExecutionPlan result, OIndexIdentifier indexIdentifier, OWhereClause whereClause,
-      OCommandContext ctx) {
+      OCommandContext ctx, boolean profilingEnabled) {
     if (indexIdentifier == null) {
       return false;
     }
@@ -95,11 +95,11 @@ public class ODeleteExecutionPlanner {
           throw new OCommandExecutionException("Index queries with this kind of condition are not supported yet: " + whereClause);
         }
       }
-      result.chain(new DeleteFromIndexStep(index, keyCondition, null, ridCondition, ctx));
+      result.chain(new DeleteFromIndexStep(index, keyCondition, null, ridCondition, ctx, profilingEnabled));
       if (ridCondition != null) {
         OWhereClause where = new OWhereClause(-1);
         where.setBaseExpression(ridCondition);
-        result.chain(new FilterStep(where, ctx));
+        result.chain(new FilterStep(where, ctx, profilingEnabled));
       }
       return true;
     case VALUES:
@@ -107,48 +107,48 @@ public class ODeleteExecutionPlanner {
       if (!index.supportsOrderedIterations()) {
         throw new OCommandExecutionException("Index " + indexName + " does not allow iteration on values");
       }
-      result.chain(new FetchFromIndexValuesStep(index, true, ctx));
-      result.chain(new GetValueFromIndexEntryStep(ctx));
+      result.chain(new FetchFromIndexValuesStep(index, true, ctx, profilingEnabled));
+      result.chain(new GetValueFromIndexEntryStep(ctx, profilingEnabled));
       break;
     case VALUESDESC:
       if (!index.supportsOrderedIterations()) {
         throw new OCommandExecutionException("Index " + indexName + " does not allow iteration on values");
       }
-      result.chain(new FetchFromIndexValuesStep(index, false, ctx));
-      result.chain(new GetValueFromIndexEntryStep(ctx));
+      result.chain(new FetchFromIndexValuesStep(index, false, ctx, profilingEnabled));
+      result.chain(new GetValueFromIndexEntryStep(ctx, profilingEnabled));
       break;
     }
     return false;
   }
 
-  private void handleDelete(ODeleteExecutionPlan result, OCommandContext ctx) {
-    result.chain(new DeleteStep(ctx));
+  private void handleDelete(ODeleteExecutionPlan result, OCommandContext ctx, boolean profilingEnabled) {
+    result.chain(new DeleteStep(ctx, profilingEnabled));
   }
 
-  private void handleUnsafe(ODeleteExecutionPlan result, OCommandContext ctx, boolean unsafe) {
+  private void handleUnsafe(ODeleteExecutionPlan result, OCommandContext ctx, boolean unsafe, boolean profilingEnabled) {
     if (!unsafe) {
-      result.chain(new CheckSafeDeleteStep(ctx));
+      result.chain(new CheckSafeDeleteStep(ctx, profilingEnabled));
     }
   }
 
-  private void handleReturn(ODeleteExecutionPlan result, OCommandContext ctx, boolean returnBefore) {
+  private void handleReturn(ODeleteExecutionPlan result, OCommandContext ctx, boolean returnBefore, boolean profilingEnabled) {
     if (!returnBefore) {
-      result.chain(new CountStep(ctx));
+      result.chain(new CountStep(ctx, profilingEnabled));
     }
   }
 
-  private void handleLimit(OUpdateExecutionPlan plan, OCommandContext ctx, OLimit limit) {
+  private void handleLimit(OUpdateExecutionPlan plan, OCommandContext ctx, OLimit limit, boolean profilingEnabled) {
     if (limit != null) {
-      plan.chain(new LimitExecutionStep(limit, ctx));
+      plan.chain(new LimitExecutionStep(limit, ctx, profilingEnabled));
     }
   }
 
-  private void handleTarget(OUpdateExecutionPlan result, OCommandContext ctx, OFromClause target, OWhereClause whereClause) {
+  private void handleTarget(OUpdateExecutionPlan result, OCommandContext ctx, OFromClause target, OWhereClause whereClause, boolean profilingEnabled) {
     OSelectStatement sourceStatement = new OSelectStatement(-1);
     sourceStatement.setTarget(target);
     sourceStatement.setWhereClause(whereClause);
     OSelectExecutionPlanner planner = new OSelectExecutionPlanner(sourceStatement);
-    result.chain(new SubQueryStep(planner.createExecutionPlan(ctx), ctx, ctx));
+    result.chain(new SubQueryStep(planner.createExecutionPlan(ctx, profilingEnabled), ctx, ctx, profilingEnabled));
   }
 
   private OBooleanExpression getKeyCondition(OAndBlock andBlock) {

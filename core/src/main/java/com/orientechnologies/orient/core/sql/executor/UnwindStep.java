@@ -24,8 +24,8 @@ public class UnwindStep extends AbstractExecutionStep {
   Iterator<OResult> nextSubsequence = null;
   OResult           nextElement     = null;
 
-  public UnwindStep(OUnwind unwind, OCommandContext ctx) {
-    super(ctx);
+  public UnwindStep(OUnwind unwind, OCommandContext ctx, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
     this.unwind = unwind;
     unwindFields = unwind.getItems().stream().map(x -> x.getStringValue()).collect(Collectors.toList());
   }

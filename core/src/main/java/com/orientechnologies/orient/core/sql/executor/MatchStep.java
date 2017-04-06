@@ -18,8 +18,8 @@ public class MatchStep extends AbstractExecutionStep {
   MatchEdgeTraverser traverser;
   OResult            nextResult;
 
-  public MatchStep(OCommandContext context, EdgeTraversal edge) {
-    super(context);
+  public MatchStep(OCommandContext context, EdgeTraversal edge, boolean profilingEnabled) {
+    super(context, profilingEnabled);
     this.edge = edge;
   }
 

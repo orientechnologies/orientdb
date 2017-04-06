@@ -72,7 +72,7 @@ public class OTraverseStatement extends OStatement {
       }
     }
     ctx.setInputParameters(params);
-    OInternalExecutionPlan executionPlan = createExecutionPlan(ctx);
+    OInternalExecutionPlan executionPlan = createExecutionPlan(ctx, false);
 
     return new OLocalResultSet(executionPlan);
   }
@@ -85,14 +85,14 @@ public class OTraverseStatement extends OStatement {
     }
     ctx.setDatabase(db);
     ctx.setInputParameters(params);
-    OInternalExecutionPlan executionPlan = createExecutionPlan(ctx);
+    OInternalExecutionPlan executionPlan = createExecutionPlan(ctx, false);
 
     return new OLocalResultSet(executionPlan);
   }
 
-  public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx) {
+  public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
     OTraverseExecutionPlanner planner = new OTraverseExecutionPlanner(this);
-    return planner.createExecutionPlan(ctx);
+    return planner.createExecutionPlan(ctx, enableProfiling);
   }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {

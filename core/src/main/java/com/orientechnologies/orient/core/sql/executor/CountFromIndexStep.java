@@ -19,8 +19,8 @@ public class CountFromIndexStep extends AbstractExecutionStep {
 
   private boolean executed = false;
 
-  public CountFromIndexStep(OIndexIdentifier targetIndex, String alias, OCommandContext ctx) {
-    super(ctx);
+  public CountFromIndexStep(OIndexIdentifier targetIndex, String alias, OCommandContext ctx, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
     this.target = targetIndex;
     this.alias = alias;
   }
@@ -45,7 +45,7 @@ public class CountFromIndexStep extends AbstractExecutionStep {
         if (executed) {
           throw new IllegalStateException();
         }
-        long begin = System.nanoTime();
+        long begin = profilingEnabled ? System.nanoTime() : 0;
         try {
           OIndex<?> idx = ctx.getDatabase().getMetadata().getIndexManager().getIndex(target.getIndexName());
           long size = idx.getSize();

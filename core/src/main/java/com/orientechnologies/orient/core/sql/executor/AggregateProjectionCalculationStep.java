@@ -24,8 +24,8 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
   private int  nextItem = 0;
   private long cost     = 0;
 
-  public AggregateProjectionCalculationStep(OProjection projection, OGroupBy groupBy, OCommandContext ctx) {
-    super(projection, ctx);
+  public AggregateProjectionCalculationStep(OProjection projection, OGroupBy groupBy, OCommandContext ctx, boolean profilingEnabled) {
+    super(projection, ctx, profilingEnabled);
     this.groupBy = groupBy;
   }
 
@@ -100,7 +100,7 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
   }
 
   private void aggregate(OResult next, OCommandContext ctx) {
-    long begin = System.nanoTime();
+    long begin = profilingEnabled ? System.nanoTime() : 0;
     try {
       List<Object> key = new ArrayList<>();
       if (groupBy != null) {
@@ -129,7 +129,7 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
         }
       }
     } finally {
-      cost += (System.nanoTime() - begin);
+      if(profilingEnabled){cost += (System.nanoTime() - begin);}
     }
   }
 

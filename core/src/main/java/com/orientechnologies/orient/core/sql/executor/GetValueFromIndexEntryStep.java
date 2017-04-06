@@ -11,8 +11,8 @@ import java.util.Optional;
  * Created by luigidellaquila on 16/03/17.
  */
 public class GetValueFromIndexEntryStep extends AbstractExecutionStep {
-  public GetValueFromIndexEntryStep(OCommandContext ctx) {
-    super(ctx);
+  public GetValueFromIndexEntryStep(OCommandContext ctx, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
   }
 
   @Override

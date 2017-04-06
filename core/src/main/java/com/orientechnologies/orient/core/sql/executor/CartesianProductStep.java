@@ -27,8 +27,8 @@ public class CartesianProductStep extends AbstractExecutionStep {
 
   private long cost = 0;
 
-  public CartesianProductStep(OCommandContext ctx) {
-    super(ctx);
+  public CartesianProductStep(OCommandContext ctx, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
   }
 
   @Override
@@ -131,7 +131,7 @@ public class CartesianProductStep extends AbstractExecutionStep {
   }
 
   private void buildNextRecord() {
-    long begin = System.nanoTime();
+    long begin = profilingEnabled ? System.nanoTime() : 0;
     try {
       if (currentTuple == null) {
         nextRecord = null;
@@ -152,7 +152,7 @@ public class CartesianProductStep extends AbstractExecutionStep {
         }
       }
     } finally {
-      cost += (System.nanoTime() - begin);
+      if(profilingEnabled){cost += (System.nanoTime() - begin);}
     }
   }
 

@@ -52,9 +52,9 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
     return result.toString();
   }
 
-  public void chain(OInternalExecutionPlan nextPlan) {
+  public void chain(OInternalExecutionPlan nextPlan, boolean profilingEnabled) {
     ScriptLineStep lastStep = steps.size() == 0 ? null : steps.get(steps.size() - 1);
-    ScriptLineStep nextStep = new ScriptLineStep(nextPlan, ctx);
+    ScriptLineStep nextStep = new ScriptLineStep(nextPlan, ctx, profilingEnabled);
     if (lastStep != null) {
       lastStep.setNext(nextStep);
       nextStep.setPrevious(lastStep);

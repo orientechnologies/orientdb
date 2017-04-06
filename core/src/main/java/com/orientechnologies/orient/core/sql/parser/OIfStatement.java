@@ -53,7 +53,7 @@ public class OIfStatement extends OStatement {
       }
     }
     ctx.setInputParameters(params);
-    OIfExecutionPlan executionPlan = createExecutionPlan(ctx);
+    OIfExecutionPlan executionPlan = createExecutionPlan(ctx, false);
 
     OExecutionStepInternal last = executionPlan.executeUntilReturn();
     if (isIdempotent()) {
@@ -75,7 +75,7 @@ public class OIfStatement extends OStatement {
     }
     ctx.setDatabase(db);
     ctx.setInputParameters(params);
-    OIfExecutionPlan executionPlan = createExecutionPlan(ctx);
+    OIfExecutionPlan executionPlan = createExecutionPlan(ctx, false);
 
     OExecutionStepInternal last = executionPlan.executeUntilReturn();
     if (isIdempotent()) {
@@ -90,11 +90,11 @@ public class OIfStatement extends OStatement {
     }
   }
 
-  @Override public OIfExecutionPlan createExecutionPlan(OCommandContext ctx) {
+  @Override public OIfExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
 
     OIfExecutionPlan plan = new OIfExecutionPlan(ctx);
 
-    IfStep step = new IfStep(ctx);
+    IfStep step = new IfStep(ctx, enableProfiling);
     step.setCondition(this.expression);
     plan.chain(step);
 
@@ -102,7 +102,7 @@ public class OIfStatement extends OStatement {
     subCtx1.setParent(ctx);
     OScriptExecutionPlan positivePlan = new OScriptExecutionPlan(subCtx1);
     for (OStatement stm : statements) {
-      positivePlan.chain(stm.createExecutionPlan(subCtx1));
+      positivePlan.chain(stm.createExecutionPlan(subCtx1, enableProfiling), enableProfiling);
     }
     step.setPositivePlan(positivePlan);
     if (elseStatements.size() > 0) {
@@ -110,7 +110,7 @@ public class OIfStatement extends OStatement {
       subCtx2.setParent(ctx);
       OScriptExecutionPlan negativePlan = new OScriptExecutionPlan(subCtx2);
       for (OStatement stm : elseStatements) {
-        negativePlan.chain(stm.createExecutionPlan(subCtx2));
+        negativePlan.chain(stm.createExecutionPlan(subCtx2, enableProfiling), enableProfiling);
       }
       step.setNegativePlan(negativePlan);
     }
