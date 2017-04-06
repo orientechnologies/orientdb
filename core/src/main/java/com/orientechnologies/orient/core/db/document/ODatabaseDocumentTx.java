@@ -118,7 +118,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     OrientDBInternal factory;
     synchronized (remote) {
       factory = remote.get(baseUrl);
-      if (factory == null) {
+      if (factory == null || !factory.isOpen()) {
         factory = OrientDBInternal.fromUrl("remote:" + baseUrl, null);
         remote.put(baseUrl, factory);
       }
@@ -132,7 +132,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     OrientDBEmbedded factory;
     synchronized (embedded) {
       factory = (OrientDBEmbedded) embedded.get(baseUrl);
-      if (factory == null) {
+      if (factory == null || !factory.isOpen()) {
         factory = (OrientDBEmbedded) OrientDBInternal.fromUrl("embedded:" + baseUrl, config);
         embedded.put(baseUrl, factory);
       }

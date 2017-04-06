@@ -45,6 +45,7 @@ public class OrientDBRemote implements OrientDBInternal {
   private final OrientDBConfig configurations;
   private final Thread         shutdownThread;
   private final Orient         orient;
+  private volatile boolean open = true;
 
   public OrientDBRemote(String[] hosts, OrientDBConfig configurations, Orient orient) {
     super();
@@ -69,6 +70,7 @@ public class OrientDBRemote implements OrientDBInternal {
 
   @Override
   public synchronized ODatabaseDocument open(String name, String user, String password, OrientDBConfig config) {
+    checkOpen();
     try {
       OStorageRemote storage;
       storage = storages.get(name);
@@ -118,6 +120,7 @@ public class OrientDBRemote implements OrientDBInternal {
   }
 
   private <T> T connectEndExecute(String name, String user, String password, Operation<T> operation) {
+    checkOpen();
     OServerAdmin admin = null;
     try {
       admin = new OServerAdmin(buildUrl(name));
@@ -161,6 +164,7 @@ public class OrientDBRemote implements OrientDBInternal {
 
   @Override
   public ODatabasePoolInternal openPool(String name, String user, String password, OrientDBConfig config) {
+    checkOpen();
     ODatabasePoolImpl pool = new ODatabasePoolImpl(this, name, user, password, solveConfig(config));
     pools.add(pool);
     return pool;
@@ -187,9 +191,9 @@ public class OrientDBRemote implements OrientDBInternal {
       }
     }
     storages.clear();
-
     // SHUTDOWN ENGINES
     remote.shutdown();
+    open = false;
   }
 
   private OrientDBConfig solveConfig(OrientDBConfig config) {
@@ -202,5 +206,15 @@ public class OrientDBRemote implements OrientDBInternal {
 
   public OrientDBConfig getConfigurations() {
     return configurations;
+  }
+
+  private void checkOpen() {
+    if (!open)
+      throw new ODatabaseException("OrientDB Instance is closed");
+  }
+
+  @Override
+  public boolean isOpen() {
+    return open;
   }
 }

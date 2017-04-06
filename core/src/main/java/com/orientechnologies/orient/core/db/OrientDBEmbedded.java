@@ -403,4 +403,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     this.factory = factory;
   }
 
+  public boolean isOpen() {
+    return open;
+  }
 }

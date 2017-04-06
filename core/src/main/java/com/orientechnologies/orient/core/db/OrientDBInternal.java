@@ -218,4 +218,11 @@ public interface OrientDBInternal extends AutoCloseable {
    * @param toRemove
    */
   void removePool(ODatabasePoolInternal toRemove);
+
+  /**
+   * Check if the current instance is open
+   *
+   * @return
+   */
+  boolean isOpen();
 }
