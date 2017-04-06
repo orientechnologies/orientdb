@@ -24,7 +24,8 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
   private int  nextItem = 0;
   private long cost     = 0;
 
-  public AggregateProjectionCalculationStep(OProjection projection, OGroupBy groupBy, OCommandContext ctx, boolean profilingEnabled) {
+  public AggregateProjectionCalculationStep(OProjection projection, OGroupBy groupBy, OCommandContext ctx,
+      boolean profilingEnabled) {
     super(projection, ctx, profilingEnabled);
     this.groupBy = groupBy;
   }
@@ -129,16 +130,22 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
         }
       }
     } finally {
-      if(profilingEnabled){cost += (System.nanoTime() - begin);}
+      if (profilingEnabled) {
+        cost += (System.nanoTime() - begin);
+      }
     }
   }
 
   @Override
   public String prettyPrint(int depth, int indent) {
     String spaces = OExecutionStepInternal.getIndent(depth, indent);
-    return spaces + "+ CALCULATE AGGREGATE PROJECTIONS\n" + spaces + "      " + projection.toString() + "" + (groupBy == null ?
-        "" :
-        (spaces + "\n  " + groupBy.toString()));
+    String result = spaces + "+ CALCULATE AGGREGATE PROJECTIONS";
+    if (profilingEnabled) {
+      result += " (" + getCostFormatted() + ")";
+    }
+    result +=
+        "\n" + spaces + "      " + projection.toString() + "" + (groupBy == null ? "" : (spaces + "\n  " + groupBy.toString()));
+    return result;
   }
 
   @Override

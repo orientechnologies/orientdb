@@ -75,7 +75,9 @@ public class CheckClusterTypeStep extends AbstractExecutionStep {
       }
       return new OInternalResultSet();
     } finally {
-      if(profilingEnabled){cost += (System.nanoTime() - begin);}
+      if (profilingEnabled) {
+        cost += (System.nanoTime() - begin);
+      }
     }
   }
 
@@ -94,7 +96,12 @@ public class CheckClusterTypeStep extends AbstractExecutionStep {
     String spaces = OExecutionStepInternal.getIndent(depth, indent);
     StringBuilder result = new StringBuilder();
     result.append(spaces);
-    result.append("+ CHECK TARGET CLUSTER FOR CLASS\n");
+    result.append("+ CHECK TARGET CLUSTER FOR CLASS");
+    if (profilingEnabled) {
+      result.append(" (" + getCostFormatted() + ")");
+    }
+    result.append("\n");
+    result.append(spaces);
     result.append("  " + this.targetClass);
     return result.toString();
   }

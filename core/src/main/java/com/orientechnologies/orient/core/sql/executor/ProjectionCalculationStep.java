@@ -13,54 +13,83 @@ import java.util.Optional;
 public class ProjectionCalculationStep extends AbstractExecutionStep {
   protected final OProjection projection;
 
+  protected long cost = 0;
+
   public ProjectionCalculationStep(OProjection projection, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.projection = projection;
   }
 
-  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override
+  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     if (!prev.isPresent()) {
       throw new IllegalStateException("Cannot calculate projections without a previous source");
     }
 
     OResultSet parentRs = prev.get().syncPull(ctx, nRecords);
     return new OResultSet() {
-      @Override public boolean hasNext() {
+      @Override
+      public boolean hasNext() {
         return parentRs.hasNext();
       }
 
-      @Override public OResult next() {
+      @Override
+      public OResult next() {
         return calculateProjections(ctx, parentRs.next());
       }
 
-      @Override public void close() {
+      @Override
+      public void close() {
         parentRs.close();
       }
 
-      @Override public Optional<OExecutionPlan> getExecutionPlan() {
+      @Override
+      public Optional<OExecutionPlan> getExecutionPlan() {
         return null;
       }
 
-      @Override public Map<String, Long> getQueryStats() {
+      @Override
+      public Map<String, Long> getQueryStats() {
         return null;
       }
     };
   }
 
   private OResult calculateProjections(OCommandContext ctx, OResult next) {
-    return this.projection.calculateSingle(ctx, next);
+    long begin = profilingEnabled ? System.nanoTime() : 0;
+    try {
+      return this.projection.calculateSingle(ctx, next);
+    } finally {
+      if (profilingEnabled) {
+        cost += (System.nanoTime() - begin);
+      }
+    }
   }
 
-  @Override public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
+  @Override
+  public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
 
   }
 
-  @Override public void sendResult(Object o, Status status) {
+  @Override
+  public void sendResult(Object o, Status status) {
 
   }
 
-  @Override public String prettyPrint(int depth, int indent) {
+  @Override
+  public String prettyPrint(int depth, int indent) {
     String spaces = OExecutionStepInternal.getIndent(depth, indent);
-    return spaces + "+ CALCULATE PROJECTIONS\n"+spaces+"  " + projection.toString() + "";
+
+    String result = spaces + "+ CALCULATE PROJECTIONS";
+    if (profilingEnabled) {
+      result += " (" + getCostFormatted() + ")";
+    }
+    result += ("\n" + spaces + "  " + projection.toString() + "");
+    return result;
+  }
+
+  @Override
+  public long getCost() {
+    return cost;
   }
 }

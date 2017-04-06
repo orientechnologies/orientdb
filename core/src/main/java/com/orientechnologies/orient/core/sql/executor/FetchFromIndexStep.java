@@ -78,7 +78,9 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
           ctx.setVariable("$current", result);
           return result;
         } finally {
-          if(profilingEnabled){cost += (System.nanoTime() - begin);}
+          if (profilingEnabled) {
+            cost += (System.nanoTime() - begin);
+          }
         }
       }
 
@@ -191,7 +193,9 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
         throw new OCommandExecutionException("search for index for " + condition + " is not supported yet");
       }
     } finally {
-      if(profilingEnabled){cost += (System.nanoTime() - begin);}
+      if (profilingEnabled) {
+        cost += (System.nanoTime() - begin);
+      }
     }
   }
 
@@ -534,11 +538,17 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
   @Override
   public String prettyPrint(int depth, int indent) {
-    return OExecutionStepInternal.getIndent(depth, indent) + "+ FETCH FROM INDEX " + index.getName() + (condition == null ?
-        "" :
-        ("\n" + OExecutionStepInternal.getIndent(depth, indent) + "  " + condition + (additionalRangeCondition == null ?
-            "" :
-            " and " + additionalRangeCondition)));
+    String result = OExecutionStepInternal.getIndent(depth, indent) + "+ FETCH FROM INDEX " + index.getName();
+    if (profilingEnabled) {
+      result += " (" + getCostFormatted() + ")";
+    }
+    if (condition != null) {
+      result += ("\n" + OExecutionStepInternal.getIndent(depth, indent) + "  " + condition + (additionalRangeCondition == null ?
+          "" :
+          " and " + additionalRangeCondition));
+    }
+
+    return result;
   }
 
   @Override

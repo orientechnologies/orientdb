@@ -21,7 +21,8 @@ public class FetchFromIndexedFunctionStep extends AbstractExecutionStep {
   //runtime
   Iterator<OIdentifiable> fullResult = null;
 
-  public FetchFromIndexedFunctionStep(OBinaryCondition functionCondition, OFromClause queryTarget, OCommandContext ctx, boolean profilingEnabled) {
+  public FetchFromIndexedFunctionStep(OBinaryCondition functionCondition, OFromClause queryTarget, OCommandContext ctx,
+      boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.functionCondition = functionCondition;
     this.queryTarget = queryTarget;
@@ -60,7 +61,9 @@ public class FetchFromIndexedFunctionStep extends AbstractExecutionStep {
           localCount++;
           return result;
         } finally {
-          if(profilingEnabled){cost += (System.nanoTime() - begin);}
+          if (profilingEnabled) {
+            cost += (System.nanoTime() - begin);
+          }
         }
       }
 
@@ -87,7 +90,9 @@ public class FetchFromIndexedFunctionStep extends AbstractExecutionStep {
       try {
         fullResult = functionCondition.executeIndexedFunction(queryTarget, ctx).iterator();
       } finally {
-        if(profilingEnabled){cost += (System.nanoTime() - begin);}
+        if (profilingEnabled) {
+          cost += (System.nanoTime() - begin);
+        }
       }
     }
   }
@@ -104,7 +109,12 @@ public class FetchFromIndexedFunctionStep extends AbstractExecutionStep {
 
   @Override
   public String prettyPrint(int depth, int indent) {
-    return OExecutionStepInternal.getIndent(depth, indent) + "+ FETCH FROM INDEXED FUNCTION " + functionCondition.toString();
+    String result =
+        OExecutionStepInternal.getIndent(depth, indent) + "+ FETCH FROM INDEXED FUNCTION " + functionCondition.toString();
+    if (profilingEnabled) {
+      result += " (" + getCostFormatted() + ")";
+    }
+    return result;
   }
 
   @Override

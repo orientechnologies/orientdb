@@ -43,7 +43,9 @@ public class EmptyDataGeneratorStep extends AbstractExecutionStep {
           }
           throw new IllegalStateException();
         } finally {
-          if(profilingEnabled){cost += (System.nanoTime() - begin);}
+          if (profilingEnabled) {
+            cost += (System.nanoTime() - begin);
+          }
         }
       }
 
@@ -82,7 +84,11 @@ public class EmptyDataGeneratorStep extends AbstractExecutionStep {
   @Override
   public String prettyPrint(int depth, int indent) {
     String spaces = OExecutionStepInternal.getIndent(depth, indent);
-    return spaces + "+ GENERATE " + size + " EMPTY " + (size == 1 ? "RECORD" : "RECORDS");
+    String result = spaces + "+ GENERATE " + size + " EMPTY " + (size == 1 ? "RECORD" : "RECORDS");
+    if (profilingEnabled) {
+      result += " (" + getCostFormatted() + ")";
+    }
+    return result;
   }
 
   @Override

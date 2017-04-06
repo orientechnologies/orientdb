@@ -56,7 +56,9 @@ public class CheckSafeDeleteStep extends AbstractExecutionStep {
           }
           return result;
         } finally {
-          if(profilingEnabled){cost += (System.nanoTime() - begin);}
+          if (profilingEnabled) {
+            cost += (System.nanoTime() - begin);
+          }
         }
       }
 
@@ -93,6 +95,9 @@ public class CheckSafeDeleteStep extends AbstractExecutionStep {
     StringBuilder result = new StringBuilder();
     result.append(spaces);
     result.append("+ CHECK SAFE DELETE");
+    if (profilingEnabled) {
+      result.append(" (" + getCostFormatted() + ")");
+    }
     return result.toString();
   }
 

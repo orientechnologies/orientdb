@@ -106,7 +106,9 @@ public class ExpandStep extends AbstractExecutionStep {
           }
           break;
         } finally {
-          if(profilingEnabled){cost += (System.nanoTime() - begin);}
+          if (profilingEnabled) {
+            cost += (System.nanoTime() - begin);
+          }
         }
       }
 
@@ -151,7 +153,9 @@ public class ExpandStep extends AbstractExecutionStep {
           nextSubsequence = ((Iterable) projValue).iterator();
         }
       } finally {
-        if(profilingEnabled){cost += (System.nanoTime() - begin);}
+        if (profilingEnabled) {
+          cost += (System.nanoTime() - begin);
+        }
       }
     } while (true);
 
@@ -170,7 +174,11 @@ public class ExpandStep extends AbstractExecutionStep {
   @Override
   public String prettyPrint(int depth, int indent) {
     String spaces = OExecutionStepInternal.getIndent(depth, indent);
-    return spaces + "+ EXPAND";
+    String result = spaces + "+ EXPAND";
+    if (profilingEnabled) {
+      result += " (" + getCostFormatted() + ")";
+    }
+    return result;
   }
 
   @Override

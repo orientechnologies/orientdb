@@ -181,6 +181,9 @@ public class CreateEdgesStep extends AbstractExecutionStep {
     String result = spaces + "+ FOR EACH x in " + fromAlias + "\n";
     result += spaces + "    FOR EACH y in " + toAlias + "\n";
     result += spaces + "       CREATE EDGE " + targetClass + " FROM x TO y";
+    if (profilingEnabled) {
+      result += " (" + getCostFormatted() + ")";
+    }
     if (targetCluster != null) {
       result += "\n" + spaces + "       (target cluster " + targetCluster + ")";
     }

@@ -82,6 +82,15 @@ public class CastToVertexStep extends AbstractExecutionStep {
   }
 
   @Override
+  public String prettyPrint(int depth, int indent) {
+    String result = OExecutionStepInternal.getIndent(depth, indent) + "+ CAST TO VERTEX";
+    if (profilingEnabled) {
+      result += " (" + getCostFormatted() + ")";
+    }
+    return result;
+  }
+
+  @Override
   public long getCost() {
     return cost;
   }

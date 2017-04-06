@@ -92,7 +92,11 @@ public class CountFromClassStep extends AbstractExecutionStep {
   @Override
   public String prettyPrint(int depth, int indent) {
     String spaces = OExecutionStepInternal.getIndent(depth, indent);
-    return spaces + "+ CALCULATE CLASS SIZE: " + target;
+    String result = spaces + "+ CALCULATE CLASS SIZE: " + target;
+    if (profilingEnabled) {
+      result += " (" + getCostFormatted() + ")";
+    }
+    return result;
   }
 
   @Override

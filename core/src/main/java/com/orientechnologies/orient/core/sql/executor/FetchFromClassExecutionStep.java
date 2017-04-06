@@ -189,7 +189,11 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
     StringBuilder builder = new StringBuilder();
     String ind = OExecutionStepInternal.getIndent(depth, indent);
     builder.append(ind);
-    builder.append("+ FETCH FROM CLASS " + className + "\n");
+    builder.append("+ FETCH FROM CLASS " + className);
+    if (profilingEnabled) {
+      builder.append(" (" + getCostFormatted() + ")");
+    }
+    builder.append("\n");
     for (int i = 0; i < subSteps.length; i++) {
       OExecutionStepInternal step = subSteps[i];
       builder.append(step.prettyPrint(depth + 1, indent));

@@ -55,7 +55,9 @@ public class CastToEdgeStep extends AbstractExecutionStep {
           }
           return result;
         } finally {
-          if(profilingEnabled){cost += (System.nanoTime() - begin);}
+          if (profilingEnabled) {
+            cost += (System.nanoTime() - begin);
+          }
         }
       }
 
@@ -79,6 +81,15 @@ public class CastToEdgeStep extends AbstractExecutionStep {
   @Override
   public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
 
+  }
+
+  @Override
+  public String prettyPrint(int depth, int indent) {
+    String result = OExecutionStepInternal.getIndent(depth, indent) + "+ CAST TO EDGE";
+    if (profilingEnabled) {
+      result += " (" + getCostFormatted() + ")";
+    }
+    return result;
   }
 
   @Override

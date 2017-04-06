@@ -38,7 +38,9 @@ public class CountStep extends AbstractExecutionStep {
           result.add(resultRecord);
           return result;
         } finally {
-          if(profilingEnabled){cost += (System.nanoTime() - begin);}
+          if (profilingEnabled) {
+            cost += (System.nanoTime() - begin);
+          }
         }
       }
       while (prevResult.hasNext()) {
@@ -64,6 +66,9 @@ public class CountStep extends AbstractExecutionStep {
     StringBuilder result = new StringBuilder();
     result.append(spaces);
     result.append("+ COUNT");
+    if (profilingEnabled) {
+      result.append(" (" + getCostFormatted() + ")");
+    }
     return result.toString();
   }
 

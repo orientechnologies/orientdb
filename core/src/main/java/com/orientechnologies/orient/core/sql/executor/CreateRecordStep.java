@@ -47,7 +47,9 @@ public class CreateRecordStep extends AbstractExecutionStep {
           locallyCreated++;
           return new OUpdatableResult((ODocument) ctx.getDatabase().newInstance());
         } finally {
-          if(profilingEnabled){cost += (System.nanoTime() - begin);}
+          if (profilingEnabled) {
+            cost += (System.nanoTime() - begin);
+          }
         }
       }
 
@@ -83,7 +85,11 @@ public class CreateRecordStep extends AbstractExecutionStep {
     String spaces = OExecutionStepInternal.getIndent(depth, indent);
     StringBuilder result = new StringBuilder();
     result.append(spaces);
-    result.append("+ CREATE EMPTY RECORDS\n");
+    result.append("+ CREATE EMPTY RECORDS");
+    if (profilingEnabled) {
+      result.append(" (" + getCostFormatted() + ")");
+    }
+    result.append("\n");
     result.append(spaces);
     if (total == 1) {
       result.append("  1 record");

@@ -54,7 +54,9 @@ public class CopyDocumentStep extends AbstractExecutionStep {
           }
           return new OUpdatableResult((ODocument) resultDoc);
         } finally {
-          if(profilingEnabled){cost += (System.nanoTime() - begin);}
+          if (profilingEnabled) {
+            cost += (System.nanoTime() - begin);
+          }
         }
       }
 
@@ -91,6 +93,9 @@ public class CopyDocumentStep extends AbstractExecutionStep {
     StringBuilder result = new StringBuilder();
     result.append(spaces);
     result.append("+ COPY DOCUMENT");
+    if (profilingEnabled) {
+      result.append(" (" + getCostFormatted() + ")");
+    }
     return result.toString();
   }
 

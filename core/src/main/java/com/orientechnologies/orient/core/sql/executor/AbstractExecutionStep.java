@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 
+import java.text.DecimalFormat;
 import java.util.Optional;
 
 /**
@@ -60,5 +61,9 @@ public abstract class AbstractExecutionStep implements OExecutionStepInternal {
 
   public void setProfilingEnabled(boolean profilingEnabled) {
     this.profilingEnabled = profilingEnabled;
+  }
+
+  protected String getCostFormatted() {
+    return new DecimalFormat().format(getCost() / 1000) + "μs";
   }
 }

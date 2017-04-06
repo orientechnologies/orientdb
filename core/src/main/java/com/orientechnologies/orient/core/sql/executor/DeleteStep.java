@@ -37,7 +37,9 @@ public class DeleteStep extends AbstractExecutionStep {
           }
           return result;
         } finally {
-          if(profilingEnabled){cost += (System.nanoTime() - begin);}
+          if (profilingEnabled) {
+            cost += (System.nanoTime() - begin);
+          }
         }
       }
 
@@ -74,6 +76,9 @@ public class DeleteStep extends AbstractExecutionStep {
     StringBuilder result = new StringBuilder();
     result.append(spaces);
     result.append("+ DELETE");
+    if (profilingEnabled) {
+      result.append(" (" + getCostFormatted() + ")");
+    }
     return result.toString();
   }
 

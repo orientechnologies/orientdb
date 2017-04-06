@@ -80,7 +80,9 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
           nextEntry = loadNextEntry(ctx);
           return result;
         } finally {
-          if(profilingEnabled){cost += (System.nanoTime() - begin);}
+          if (profilingEnabled) {
+            cost += (System.nanoTime() - begin);
+          }
         }
       }
 
@@ -110,7 +112,9 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
       init(condition);
       nextEntry = loadNextEntry(ctx);
     } finally {
-      if(profilingEnabled){cost += (System.nanoTime() - begin);}
+      if (profilingEnabled) {
+        cost += (System.nanoTime() - begin);
+      }
     }
   }
 
@@ -385,11 +389,16 @@ public class DeleteFromIndexStep extends AbstractExecutionStep {
 
   @Override
   public String prettyPrint(int depth, int indent) {
-    return OExecutionStepInternal.getIndent(depth, indent) + "+ DELETE FROM INDEX " + index.getName() + (condition == null ?
+    String result = OExecutionStepInternal.getIndent(depth, indent) + "+ DELETE FROM INDEX " + index.getName();
+    if (profilingEnabled) {
+      result += " (" + getCostFormatted() + ")";
+    }
+    result += (condition == null ?
         "" :
         ("\n" + OExecutionStepInternal.getIndent(depth, indent) + "  " + condition + (additional == null ?
             "" :
             " and " + additional)));
+    return result;
   }
 
   @Override

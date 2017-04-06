@@ -51,7 +51,9 @@ public class CopyRecordContentBeforeUpdateStep extends AbstractExecutionStep {
           }
           return result;
         } finally {
-          if(profilingEnabled){cost += (System.nanoTime() - begin);}
+          if (profilingEnabled) {
+            cost += (System.nanoTime() - begin);
+          }
         }
       }
 
@@ -88,6 +90,9 @@ public class CopyRecordContentBeforeUpdateStep extends AbstractExecutionStep {
     StringBuilder result = new StringBuilder();
     result.append(spaces);
     result.append("+ COPY RECORD CONTENT BEFORE UPDATE");
+    if (profilingEnabled) {
+      result.append(" (" + getCostFormatted() + ")");
+    }
     return result.toString();
   }
 

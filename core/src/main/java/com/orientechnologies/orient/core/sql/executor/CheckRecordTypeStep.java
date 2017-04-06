@@ -51,7 +51,9 @@ public class CheckRecordTypeStep extends AbstractExecutionStep {
           }
           return result;
         } finally {
-          if(profilingEnabled){cost += (System.nanoTime() - begin);}
+          if (profilingEnabled) {
+            cost += (System.nanoTime() - begin);
+          }
         }
       }
 
@@ -80,6 +82,16 @@ public class CheckRecordTypeStep extends AbstractExecutionStep {
   @Override
   public void sendResult(Object o, Status status) {
 
+  }
+
+  @Override
+  public String prettyPrint(int depth, int indent) {
+    String result = OExecutionStepInternal.getIndent(depth, indent) + "+ CHECK RECORD TYPE";
+    if (profilingEnabled) {
+      result += " (" + getCostFormatted() + ")";
+    }
+    result += (OExecutionStepInternal.getIndent(depth, indent) + "  " + clazz);
+    return result;
   }
 
   @Override

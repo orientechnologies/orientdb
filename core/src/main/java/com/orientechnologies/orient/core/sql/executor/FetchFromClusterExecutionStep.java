@@ -56,7 +56,9 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
               return iterator.hasNext();
             }
           } finally {
-            if(profilingEnabled){cost += (System.nanoTime() - begin);}
+            if (profilingEnabled) {
+              cost += (System.nanoTime() - begin);
+            }
           }
         }
 
@@ -85,7 +87,9 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
             ctx.setVariable("$current", result);
             return result;
           } finally {
-            if(profilingEnabled){cost += (System.nanoTime() - begin);}
+            if (profilingEnabled) {
+              cost += (System.nanoTime() - begin);
+            }
           }
         }
 
@@ -107,7 +111,9 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
       };
       return rs;
     } finally {
-      if(profilingEnabled){cost += (System.nanoTime() - begin);}
+      if (profilingEnabled) {
+        cost += (System.nanoTime() - begin);
+      }
     }
 
   }
@@ -134,9 +140,14 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
 
   @Override
   public String prettyPrint(int depth, int indent) {
-    return OExecutionStepInternal.getIndent(depth, indent) + "+ FETCH FROM CLUSTER " + clusterId + " " + (ORDER_DESC.equals(order) ?
-        "DESC" :
-        "ASC");
+    String result =
+        OExecutionStepInternal.getIndent(depth, indent) + "+ FETCH FROM CLUSTER " + clusterId + " " + (ORDER_DESC.equals(order) ?
+            "DESC" :
+            "ASC");
+    if (profilingEnabled) {
+      result += " (" + getCostFormatted() + ")";
+    }
+    return result;
   }
 
   public void setOrder(Object order) {

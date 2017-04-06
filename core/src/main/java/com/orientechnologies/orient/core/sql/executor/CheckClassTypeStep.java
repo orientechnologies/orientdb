@@ -59,7 +59,9 @@ public class CheckClassTypeStep extends AbstractExecutionStep {
       }
       return new OInternalResultSet();
     } finally {
-      if(profilingEnabled){cost += (System.nanoTime() - begin);}
+      if (profilingEnabled) {
+        cost += (System.nanoTime() - begin);
+      }
     }
   }
 
@@ -78,7 +80,11 @@ public class CheckClassTypeStep extends AbstractExecutionStep {
     String spaces = OExecutionStepInternal.getIndent(depth, indent);
     StringBuilder result = new StringBuilder();
     result.append(spaces);
-    result.append("+ CHECK CLASS HIERARCHY\n");
+    result.append("+ CHECK CLASS HIERARCHY");
+    if (profilingEnabled) {
+      result.append(" (" + getCostFormatted() + ")");
+    }
+    result.append("\n");
     result.append("  " + this.parentClass);
     return result.toString();
   }

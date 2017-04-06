@@ -85,19 +85,21 @@ public class OrderByStep extends AbstractExecutionStep {
   }
 
   private void init(OExecutionStepInternal p, OCommandContext ctx) {
-    long begin = profilingEnabled ? System.nanoTime() : 0;
-    try {
-      boolean sorted = true;
-      do {
-        OResultSet lastBatch = p.syncPull(ctx, 100);
-        if (!lastBatch.hasNext()) {
+
+    boolean sorted = true;
+    do {
+      OResultSet lastBatch = p.syncPull(ctx, 100);
+      if (!lastBatch.hasNext()) {
+        break;
+      }
+      while (lastBatch.hasNext()) {
+        if (this.timedOut) {
           break;
         }
-        while (lastBatch.hasNext()) {
-          if (this.timedOut) {
-            break;
-          }
-          cachedResult.add(lastBatch.next());
+        OResult item = lastBatch.next();
+        long begin = profilingEnabled ? System.nanoTime() : 0;
+        try {
+          cachedResult.add(item);
           sorted = false;
           //compact, only at twice as the buffer, to avoid to do it at each add
           if (this.maxResults != null && maxResults * 2 < cachedResult.size()) {
@@ -105,23 +107,40 @@ public class OrderByStep extends AbstractExecutionStep {
             cachedResult = new ArrayList<>(cachedResult.subList(0, maxResults));
             sorted = true;
           }
+        } finally {
+          if (profilingEnabled) {
+            cost += (System.nanoTime() - begin);
+          }
         }
-        if (timedOut) {
-          break;
-        }
+      }
+      if (timedOut) {
+        break;
+      }
+      long begin = profilingEnabled ? System.nanoTime() : 0;
+      try {
         //compact at each batch, if needed
         if (!sorted && this.maxResults != null && maxResults < cachedResult.size()) {
           cachedResult.sort((a, b) -> orderBy.compare(a, b, ctx));
           cachedResult = new ArrayList<>(cachedResult.subList(0, maxResults));
           sorted = true;
         }
-      } while (true);
+      } finally {
+        if (profilingEnabled) {
+          cost += (System.nanoTime() - begin);
+        }
+      }
+    } while (true);
+    long begin = profilingEnabled ? System.nanoTime() : 0;
+    try {
       if (!sorted) {
         cachedResult.sort((a, b) -> orderBy.compare(a, b, ctx));
       }
     } finally {
-      if(profilingEnabled){cost += (System.nanoTime() - begin);}
+      if (profilingEnabled) {
+        cost += (System.nanoTime() - begin);
+      }
     }
+
   }
 
   @Override
@@ -136,9 +155,12 @@ public class OrderByStep extends AbstractExecutionStep {
 
   @Override
   public String prettyPrint(int depth, int indent) {
-    return OExecutionStepInternal.getIndent(depth, indent) + "+ " + orderBy + (maxResults != null ?
-        "\n  (buffer size: " + maxResults + ")" :
-        "");
+    String result = OExecutionStepInternal.getIndent(depth, indent) + "+ " + orderBy;
+    if (profilingEnabled) {
+      result += " (" + getCostFormatted() + ")";
+    }
+    result += (maxResults != null ? "\n  (buffer size: " + maxResults + ")" : "");
+    return result;
   }
 
   @Override

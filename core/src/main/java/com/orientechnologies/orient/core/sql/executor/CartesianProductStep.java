@@ -152,7 +152,9 @@ public class CartesianProductStep extends AbstractExecutionStep {
         }
       }
     } finally {
-      if(profilingEnabled){cost += (System.nanoTime() - begin);}
+      if (profilingEnabled) {
+        cost += (System.nanoTime() - begin);
+      }
     }
   }
 
@@ -261,7 +263,11 @@ public class CartesianProductStep extends AbstractExecutionStep {
 
   private String head(int depth, int indent, int nItems) {
     String ind = OExecutionStepInternal.getIndent(depth, indent);
-    return ind + "+ CARTESIAN PRODUCT";
+    String result = ind + "+ CARTESIAN PRODUCT";
+    if (profilingEnabled) {
+      result += " (" + getCostFormatted() + ")";
+    }
+    return result;
   }
 
   private String foot(int[] blockSizes) {
@@ -270,14 +276,6 @@ public class CartesianProductStep extends AbstractExecutionStep {
       result += " V ";//TODO
     }
     return result;
-  }
-
-  private String spaces(int num) {
-    StringBuilder result = new StringBuilder();
-    for (int i = 0; i < num; i++) {
-      result.append(" ");
-    }
-    return result.toString();
   }
 
   private String appendPipe(String p) {

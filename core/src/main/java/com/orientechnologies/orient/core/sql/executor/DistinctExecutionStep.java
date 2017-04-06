@@ -100,7 +100,9 @@ public class DistinctExecutionStep extends AbstractExecutionStep {
           markAsVisited(nextValue);
         }
       } finally {
-        if(profilingEnabled){cost += (System.nanoTime() - begin);}
+        if (profilingEnabled) {
+          cost += (System.nanoTime() - begin);
+        }
       }
     }
   }
@@ -152,7 +154,11 @@ public class DistinctExecutionStep extends AbstractExecutionStep {
 
   @Override
   public String prettyPrint(int depth, int indent) {
-    return OExecutionStepInternal.getIndent(depth, indent) + "+ DISTINCT";
+    String result = OExecutionStepInternal.getIndent(depth, indent) + "+ DISTINCT";
+    if (profilingEnabled) {
+      result += " (" + getCostFormatted() + ")";
+    }
+    return result;
   }
 
   @Override

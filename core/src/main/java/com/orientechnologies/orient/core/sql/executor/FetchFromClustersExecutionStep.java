@@ -163,7 +163,11 @@ public class FetchFromClustersExecutionStep extends AbstractExecutionStep {
     StringBuilder builder = new StringBuilder();
     String ind = OExecutionStepInternal.getIndent(depth, indent);
     builder.append(ind);
-    builder.append("+ FETCH FROM CLUSTERS \n");
+    builder.append("+ FETCH FROM CLUSTERS");
+    if (profilingEnabled) {
+      builder.append(" (" + getCostFormatted() + ")");
+    }
+    builder.append("\n");
     for (int i = 0; i < subSteps.length; i++) {
       OExecutionStepInternal step = subSteps[i];
       builder.append(step.prettyPrint(depth + 1, indent));
