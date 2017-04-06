@@ -22,7 +22,6 @@ public class TestDistributeConfigSerialization extends AbstractServerClusterTest
   protected void executeTest() throws Exception {
     ODatabaseDocumentTx db = new ODatabaseDocumentTx("plocal:target/server0/databases/" + getDatabaseName());
     try {
-      db.setSerializer(new ORecordSerializerSchemaAware2CSV());
       db.create();
       db.getMetadata().getSchema().createClass("TestMessaging");
       db.activateOnCurrentThread();

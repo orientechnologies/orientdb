@@ -36,7 +36,6 @@ public abstract class BareBoneBase2ServerTest extends BareBoneBase2ClientTest {
   }
 
 
-  @Ignore
   public void testReplication() throws Throwable {
     Orient.setRegisterDatabaseByPath(true);
 

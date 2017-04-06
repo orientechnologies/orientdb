@@ -268,18 +268,18 @@ public class TestSharding extends AbstractServerClusterTest {
         ODatabaseDocument g =serverInstance.get(server).getServerInstance().openDatabase(getDatabaseName(),"admin","admin");
         try {
 
-          Iterable<OVertex> result = g.command(new OCommandSQL("select from `Client-Type`")).execute();
+          Iterable<OElement> result = g.command(new OCommandSQL("select from `Client-Type`")).execute();
           int count = 0;
-          for (OVertex v : result) {
+          for (OElement v : result) {
             count++;
 
-            final Iterable<OVertex> knows = v.getVertices(ODirection.OUT, "Knows-Type");
+            final Iterable<OVertex> knows = v.asVertex().get().getVertices(ODirection.OUT, "Knows-Type");
 
-            final Iterable<OVertex> boughtV = v.getVertices(ODirection.OUT, "Buy-Type");
+            final Iterable<OVertex> boughtV = v.asVertex().get().getVertices(ODirection.OUT, "Buy-Type");
             Assert.assertTrue(boughtV.iterator().hasNext());
             Assert.assertEquals(boughtV.iterator().next(), product);
 
-            final Iterable<OEdge> boughtE = v.getEdges(ODirection.OUT, "Buy-Type");
+            final Iterable<OEdge> boughtE = v.asVertex().get().getEdges(ODirection.OUT, "Buy-Type");
             Assert.assertNotNull(boughtE.iterator().next().getProperty("price"));
           }
 
@@ -360,16 +360,16 @@ public class TestSharding extends AbstractServerClusterTest {
       // TEST DISTRIBUTED DELETE WITH DIRECT COMMAND AND SQL
       ODatabaseDocument g =serverInstance.get(0).getServerInstance().openDatabase(getDatabaseName(),"admin","admin");
       try {
-        Iterable<OVertex> countResultBeforeDelete = g.command(new OCommandSQL("select from `Client-Type`")).execute();
+        Iterable<OElement> countResultBeforeDelete = g.command(new OCommandSQL("select from `Client-Type`")).execute();
         long totalBeforeDelete = 0;
-        for (OVertex v : countResultBeforeDelete)
+        for (OElement v : countResultBeforeDelete)
           totalBeforeDelete++;
 
-        Iterable<OVertex> result = g.command(new OCommandSQL("select from `Client-Type`")).execute();
+        Iterable<OElement> result = g.command(new OCommandSQL("select from `Client-Type`")).execute();
 
         int count = 0;
 
-        for (OVertex v : result) {
+        for (OElement v : result) {
           if (count % 2 == 0) {
             // DELETE ONLY EVEN INSTANCES
             v.delete();
@@ -377,9 +377,9 @@ public class TestSharding extends AbstractServerClusterTest {
           }
         }
 
-        Iterable<OVertex> countResultAfterDelete = g.command(new OCommandSQL("select from `Client-type`")).execute();
+        Iterable<OElement> countResultAfterDelete = g.command(new OCommandSQL("select from `Client-type`")).execute();
         long totalAfterDelete = 0;
-        for (OVertex v : countResultAfterDelete)
+        for (OElement v : countResultAfterDelete)
           totalAfterDelete++;
 
         Assert.assertEquals(totalBeforeDelete - count, totalAfterDelete);
@@ -388,9 +388,9 @@ public class TestSharding extends AbstractServerClusterTest {
         g.command(new OCommandSQL("create vertex `Client-Type` set `name-property` = 'temp2'")).execute();
         g.command(new OCommandSQL("create vertex `Client-Type` set `name-property` = 'temp3'")).execute();
 
-        Iterable<OVertex> countResultAfterFullDelete = g.command(new OCommandSQL("select from `Client-Type`")).execute();
+        Iterable<OElement> countResultAfterFullDelete = g.command(new OCommandSQL("select from `Client-Type`")).execute();
         long totalAfterFullDelete = 0;
-        for (OVertex v : countResultAfterFullDelete)
+        for (OElement v : countResultAfterFullDelete)
           totalAfterFullDelete++;
 
         Assert.assertEquals(0, totalAfterFullDelete);
@@ -429,9 +429,9 @@ public class TestSharding extends AbstractServerClusterTest {
       gTx = serverInstance.get(0).getServerInstance().openDatabase(getDatabaseName(),"admin","admin");
       gTx.begin();
       try {
-        Iterable<OVertex> countResultAfterFullDelete = gTx.command(new OCommandSQL("select from `Client-Type`")).execute();
+        Iterable<OElement> countResultAfterFullDelete = gTx.command(new OCommandSQL("select from `Client-Type`")).execute();
         long totalAfterFullDelete = 0;
-        for (OVertex v : countResultAfterFullDelete)
+        for (OElement v : countResultAfterFullDelete)
           totalAfterFullDelete++;
 
         Assert.assertEquals(0, totalAfterFullDelete);
@@ -455,11 +455,11 @@ public class TestSharding extends AbstractServerClusterTest {
       ODatabaseDocument g = serverInstance.get(server).getServerInstance().openDatabase(getDatabaseName(), "admin", "admin");
       try {
 
-        Iterable<OVertex> result = g
+        Iterable<OElement> result = g
             .command(new OCommandSQL("select * from `Client-Type` where `name-property` = 'shard_" + server + "'")).execute();
 
         int count = 0;
-        for (OVertex v : result) {
+        for (OElement v : result) {
           System.out.println("select * from `Client-Type` where `name-property` = 'shard_" + server + "' ->" + v.getRecord());
 
           Assert.assertNotNull(v.getProperty("name-property"));

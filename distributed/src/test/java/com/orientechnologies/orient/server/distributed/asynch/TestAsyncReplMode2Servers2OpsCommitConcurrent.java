@@ -12,7 +12,7 @@ import java.util.concurrent.CountDownLatch;
 
 public class TestAsyncReplMode2Servers2OpsCommitConcurrent extends BareBoneBase2ServerTest {
 
-  private static final int TOTAL   = 50;
+  private static final int TOTAL   = 5;
   private ORID             vertex1Id;
   CountDownLatch           counter = new CountDownLatch(2);
 
@@ -30,8 +30,6 @@ public class TestAsyncReplMode2Servers2OpsCommitConcurrent extends BareBoneBase2
     }else{
       graph.create();
     }
-    OSchema schema = graph.getMetadata().getSchema();
-    schema.createClass("vertextype", schema.getClass("V"));
     OVertex vertex1 = graph.newVertex("vertextype");
     vertex1.save();
     graph.commit();
