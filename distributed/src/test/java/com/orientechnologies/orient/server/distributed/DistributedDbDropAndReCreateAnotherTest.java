@@ -79,7 +79,7 @@ public class DistributedDbDropAndReCreateAnotherTest extends AbstractServerClust
 
     dumpDistributedDatabaseCfgOfAllTheServers();
 
-    Thread.sleep(3000);
+    Thread.sleep(7000);
 
     executeMultipleTest(0);
   }

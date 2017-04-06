@@ -55,7 +55,6 @@ import com.orientechnologies.orient.server.distributed.impl.*;
 import com.orientechnologies.orient.server.distributed.impl.task.OAbstractSyncDatabaseTask;
 import com.orientechnologies.orient.server.distributed.impl.task.ODropDatabaseTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OUpdateDatabaseConfigurationTask;
-import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.OBeforeDatabaseOpenNetworkEventListener;
 import sun.misc.Signal;
@@ -187,6 +186,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         }
       }
 
+      String coordinatorServer = null;
       while (coordinatorServer == null) {
         if (activeNodes.size() == 1) {
           // ONLY CURRENT NODE ONLINE, SET IT AS INITIAL COORDINATOR
@@ -564,7 +564,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       }
     });
 
-    coordinatorServer = null;
     setNodeStatus(NODE_STATUS.OFFLINE);
   }
 
@@ -1012,7 +1011,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     if (state == LifecycleEvent.LifecycleState.MERGED) {
       ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Server merged the existent cluster");
 
-      coordinatorServer = (String) configurationMap.getHazelcastMap().get(CONFIG_COORDINATOR);
+      getLockManagerRequester().setCoordinatorServer((String) configurationMap.getHazelcastMap().get(CONFIG_COORDINATOR));
 
       configurationMap.clearLocalCache();
 
@@ -1249,9 +1248,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       if (entry.getKey().startsWith(CONFIG_DATABASE_PREFIX)) {
         final String databaseName = entry.getKey().substring(CONFIG_DATABASE_PREFIX.length());
 
-        if( OSystemDatabase.SYSTEM_DB_NAME.equals(databaseName))
-          continue;
-
         final Set<String> availableServers = getAvailableNodeNames(databaseName);
         if (availableServers.isEmpty())
           // NO NODE HAS THIS DATABASE AVAILABLE
@@ -1382,7 +1378,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           // IGNORE IT
         }
 
-      if (nodeLeftName.equals(coordinatorServer))
+      if (nodeLeftName.equals(getLockManagerRequester().getCoordinatorServer()))
         electNewCoordinator();
 
       getLockManagerExecutor().handleUnreachableServer(nodeLeftName);
@@ -1473,11 +1469,12 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     final List<String> sortedServers = new ArrayList<String>(getActiveServers());
     Collections.sort(sortedServers);
 
+    String coordinatorServer = getLockManagerRequester().getCoordinatorServer();
+    final String originalCoordinator = coordinatorServer;
+
     int coordinatorServerId = -1;
     if (registeredNodeByName.containsKey(coordinatorServer))
       coordinatorServerId = registeredNodeByName.get(coordinatorServer);
-
-    final String originalCoordinator = coordinatorServer;
 
     int currIndex = coordinatorServerId;
     for (int i = 0; i < registeredNodeById.size(); ++i) {
@@ -1490,8 +1487,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       if (activeNodes.containsKey(newServer)) {
         // TODO: IMPROVE ELECTION BY CHECKING AL THE NODES AGREE ON IT
 
-        coordinatorServer = newServer;
-        getLockManagerRequester().setCoordinatorServer(coordinatorServer);
+        getLockManagerRequester().setCoordinatorServer(newServer);
 
         // TRY TO ACQUIRE A LOCK AGAINST THE NEW COORDINATOR TO VALIDATE IT
         try {
@@ -1503,14 +1499,14 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
                       .info(this, nodeName, null, DIRECTION.NONE, "Elected server '%s' as new coordinator (old=%s)", newServer,
                           originalCoordinator);
 
-                  configurationMap.put(CONFIG_COORDINATOR, newServer);
+                  configurationMap.put(CONFIG_COORDINATOR, getLockManagerRequester().getCoordinatorServer());
                   return null;
                 }
               });
 
           break;
 
-        } catch (ODistributedOperationException e) {
+        } catch (Exception e) {
           // NO SERVER RESPONDED, THE SERVER COULD BE ISOLATED, GO AHEAD WITH THE NEXT IN THE LIST
           ODistributedServerLog
               .info(this, nodeName, null, DIRECTION.NONE, "Cannot elect server '%s' because is offline", newServer);

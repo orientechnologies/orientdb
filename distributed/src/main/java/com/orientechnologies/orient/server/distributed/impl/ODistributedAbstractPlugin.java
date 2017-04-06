@@ -1658,7 +1658,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
               "Cannot release distributed lock against database '%s' coordinator server '%s' (error: %s)", databaseName,
               lockManagerRequester.getCoordinatorServer(), t);
           try {
-            Thread.sleep(1000);
+            Thread.sleep(100);
           } catch (InterruptedException e) {
             break;
           }

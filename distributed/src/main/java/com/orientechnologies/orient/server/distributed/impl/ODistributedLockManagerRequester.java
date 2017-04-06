@@ -36,8 +36,8 @@ import java.util.Set;
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
 public class ODistributedLockManagerRequester implements ODistributedLockManager {
-  private final ODistributedServerManager manager;
-  private       String                    coordinatorServer;
+  private final    ODistributedServerManager manager;
+  private volatile String                    coordinatorServer;
   private Map<String, Long> acquiredResources = new HashMap<String, Long>();
 
   public ODistributedLockManagerRequester(final ODistributedServerManager manager) {

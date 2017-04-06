@@ -20,10 +20,10 @@
         <property name="hazelcast.memcache.enabled">false</property>
         <property name="hazelcast.rest.enabled">false</property>
         <property name="hazelcast.wait.seconds.before.join">2</property>
-        <property name="hazelcast.operation.thread.count">1</property>
-        <property name="hazelcast.operation.generic.thread.count">1</property>
-        <property name="hazelcast.client.event.thread.count">1</property>
-        <property name="hazelcast.event.thread.count">1</property>
+        <property name="hazelcast.operation.thread.count">3</property>
+        <property name="hazelcast.operation.generic.thread.count">3</property>
+        <property name="hazelcast.client.event.thread.count">3</property>
+        <property name="hazelcast.event.thread.count">3</property>
         <property name="hazelcast.heartbeat.interval.seconds">5</property>
         <property name="hazelcast.max.no.heartbeat.seconds">30</property>
         <property name="hazelcast.icmp.enabled">true</property>

@@ -87,6 +87,9 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
 
     // SET ALL DATABASES TO NOT_AVAILABLE
     for (Entry<String, ODistributedDatabaseImpl> m : databases.entrySet()) {
+      if (OSystemDatabase.SYSTEM_DB_NAME.equals(m.getKey()))
+        continue;
+
       try {
         manager.setDatabaseStatus(manager.getLocalNodeName(), m.getKey(), ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
       } catch (Throwable t) {
