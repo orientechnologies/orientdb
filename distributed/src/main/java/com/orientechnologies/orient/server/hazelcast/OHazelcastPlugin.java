@@ -599,7 +599,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           throw new ODistributedException("Cannot find node '" + rNodeName + "'");
       }
 
-      for (int retry = 0; retry < 100; ++retry) {
+      for (int retry = 0; retry < 20; ++retry) {
         ODocument cfg = getNodeConfigurationByUuid(member.getUuid(), false);
         if (cfg == null || cfg.field("listeners") == null) {
           try {
@@ -614,8 +614,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
         final String url = ODistributedAbstractPlugin.getListeningBinaryAddress(cfg);
 
-        if (url == null)
+        if (url == null) {
+          closeRemoteServer(rNodeName);
           throw new ODatabaseException("Cannot connect to a remote node because the url was not found");
+        }
 
         final String userPassword = cfg.field("user_replicator");
 
