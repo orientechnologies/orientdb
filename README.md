@@ -39,7 +39,7 @@ OrientDB Community Edition is free for any use (Apache 2 license). If you are in
 ## Main References
 - [Documentation](http://orientdb.com/docs/last/)
 - For any questions visit the [OrientDB Community Group](http://orientdb.com/active-user-community/)
-- [Professional Support](orientdb.com/support/).
+- [Professional Support](http://orientdb.com/support/).
 
 [Get started with OrientDB](http://orientdb.com/getting-started/).
 
