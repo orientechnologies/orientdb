@@ -55,16 +55,23 @@ public class OrderByStep extends AbstractExecutionStep {
 
       @Override
       public OResult next() {
-        if (currentBatchReturned >= nRecords) {
-          throw new IllegalStateException();
+        long begin = profilingEnabled ? System.nanoTime() : 0;
+        try {
+          if (currentBatchReturned >= nRecords) {
+            throw new IllegalStateException();
+          }
+          if (cachedResult.size() <= nextElement) {
+            throw new IllegalStateException();
+          }
+          OResult result = cachedResult.get(offset + currentBatchReturned);
+          nextElement++;
+          currentBatchReturned++;
+          return result;
+        } finally {
+          if (profilingEnabled) {
+            cost += (System.nanoTime() - begin);
+          }
         }
-        if (cachedResult.size() <= nextElement) {
-          throw new IllegalStateException();
-        }
-        OResult result = cachedResult.get(offset + currentBatchReturned);
-        nextElement++;
-        currentBatchReturned++;
-        return result;
       }
 
       @Override

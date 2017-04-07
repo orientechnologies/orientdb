@@ -21,6 +21,8 @@ public class FetchTemporaryFromTxStep extends AbstractExecutionStep {
   private       Iterator<ORecord> txEntries;
   private       Object            order;
 
+  private long cost = 0;
+
   public FetchTemporaryFromTxStep(OCommandContext ctx, String className, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.className = className;
@@ -48,22 +50,29 @@ public class FetchTemporaryFromTxStep extends AbstractExecutionStep {
 
       @Override
       public OResult next() {
-        if (txEntries == null) {
-          throw new IllegalStateException();
-        }
-        if (currentElement >= nRecords) {
-          throw new IllegalStateException();
-        }
-        if (!txEntries.hasNext()) {
-          throw new IllegalStateException();
-        }
-        ORecord record = txEntries.next();
+        long begin = profilingEnabled ? System.nanoTime() : 0;
+        try {
+          if (txEntries == null) {
+            throw new IllegalStateException();
+          }
+          if (currentElement >= nRecords) {
+            throw new IllegalStateException();
+          }
+          if (!txEntries.hasNext()) {
+            throw new IllegalStateException();
+          }
+          ORecord record = txEntries.next();
 
-        currentElement++;
-        OResultInternal result = new OResultInternal();
-        result.setElement(record);
-        ctx.setVariable("$current", result);
-        return result;
+          currentElement++;
+          OResultInternal result = new OResultInternal();
+          result.setElement(record);
+          ctx.setVariable("$current", result);
+          return result;
+        } finally {
+          if (profilingEnabled) {
+            cost += (System.nanoTime() - begin);
+          }
+        }
       }
 
       @Override
@@ -84,49 +93,56 @@ public class FetchTemporaryFromTxStep extends AbstractExecutionStep {
   }
 
   private void init() {
-    if (this.txEntries == null) {
-      Iterable<? extends ORecordOperation> iterable = ctx.getDatabase().getTransaction().getAllRecordEntries();
+    long begin = profilingEnabled ? System.nanoTime() : 0;
+    try {
+      if (this.txEntries == null) {
+        Iterable<? extends ORecordOperation> iterable = ctx.getDatabase().getTransaction().getAllRecordEntries();
 
-      List<ORecord> records = new ArrayList<>();
-      if (iterable != null) {
-        for (ORecordOperation op : iterable) {
-          ORecord record = op.getRecord();
-          if (matchesClass(record, className) && !hasCluster(record))
-            records.add(record);
+        List<ORecord> records = new ArrayList<>();
+        if (iterable != null) {
+          for (ORecordOperation op : iterable) {
+            ORecord record = op.getRecord();
+            if (matchesClass(record, className) && !hasCluster(record))
+              records.add(record);
+          }
         }
-      }
-      if (order == FetchFromClusterExecutionStep.ORDER_ASC) {
-        Collections.sort(records, new Comparator<ORecord>() {
-          @Override
-          public int compare(ORecord o1, ORecord o2) {
-            long p1 = o1.getIdentity().getClusterPosition();
-            long p2 = o2.getIdentity().getClusterPosition();
-            if (p1 == p2) {
-              return 0;
-            } else if (p1 > p2) {
-              return 1;
-            } else {
-              return -1;
+        if (order == FetchFromClusterExecutionStep.ORDER_ASC) {
+          Collections.sort(records, new Comparator<ORecord>() {
+            @Override
+            public int compare(ORecord o1, ORecord o2) {
+              long p1 = o1.getIdentity().getClusterPosition();
+              long p2 = o2.getIdentity().getClusterPosition();
+              if (p1 == p2) {
+                return 0;
+              } else if (p1 > p2) {
+                return 1;
+              } else {
+                return -1;
+              }
             }
-          }
-        });
-      } else {
-        Collections.sort(records, new Comparator<ORecord>() {
-          @Override
-          public int compare(ORecord o1, ORecord o2) {
-            long p1 = o1.getIdentity().getClusterPosition();
-            long p2 = o2.getIdentity().getClusterPosition();
-            if (p1 == p2) {
-              return 0;
-            } else if (p1 > p2) {
-              return -1;
-            } else {
-              return 1;
+          });
+        } else {
+          Collections.sort(records, new Comparator<ORecord>() {
+            @Override
+            public int compare(ORecord o1, ORecord o2) {
+              long p1 = o1.getIdentity().getClusterPosition();
+              long p2 = o2.getIdentity().getClusterPosition();
+              if (p1 == p2) {
+                return 0;
+              } else if (p1 > p2) {
+                return -1;
+              } else {
+                return 1;
+              }
             }
-          }
-        });
+          });
+        }
+        this.txEntries = records.iterator();
       }
-      this.txEntries = records.iterator();
+    } finally {
+      if (profilingEnabled) {
+        cost += (System.nanoTime() - begin);
+      }
     }
   }
 
@@ -176,7 +192,10 @@ public class FetchTemporaryFromTxStep extends AbstractExecutionStep {
     String spaces = OExecutionStepInternal.getIndent(depth, indent);
     StringBuilder result = new StringBuilder();
     result.append(spaces);
-    result.append("+ FETCH NEW RECORDS FROM CURRENT TRANSACTION SCOPE (if any)\n");
+    result.append("+ FETCH NEW RECORDS FROM CURRENT TRANSACTION SCOPE (if any)");
+    if (profilingEnabled) {
+      result.append(" (" + getCostFormatted() + ")");
+    }
     return result.toString();
   }
 }
