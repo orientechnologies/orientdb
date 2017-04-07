@@ -13,7 +13,8 @@ import java.util.List;
  */
 public class DepthFirstTraverseStep extends AbstractTraverseStep {
 
-  public DepthFirstTraverseStep(List<OTraverseProjectionItem> projections, OWhereClause whileClause, OCommandContext ctx, boolean profilingEnabled) {
+  public DepthFirstTraverseStep(List<OTraverseProjectionItem> projections, OWhereClause whileClause, OCommandContext ctx,
+      boolean profilingEnabled) {
     super(projections, whileClause, ctx, profilingEnabled);
   }
 
@@ -22,6 +23,9 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
     OResultSet nextN = getPrev().get().syncPull(ctx, nRecords);
     while (nextN.hasNext()) {
       OResult item = toTraverseResult(nextN.next());
+      if (item == null) {
+        continue;
+      }
       ((OResultInternal) item).setMetadata("$depth", 0);
       if (item != null && item.isElement() && !traversed.contains(item.getElement().get().getIdentity())) {
         tryAddEntryPoint(item, ctx);
@@ -39,8 +43,14 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
       res.setElement(item.getElement().get());
       res.depth = 0;
       res.setMetadata("$depth", 0);
-    } else {
-      return null;
+    } else if (item.getPropertyNames().size() == 1) {
+      Object val = item.getProperty(item.getPropertyNames().iterator().next());
+      if (val instanceof OIdentifiable) {
+        res = new OTraverseResult();
+        res.setElement((OIdentifiable) val);
+        res.depth = 0;
+        res.setMetadata("$depth", 0);
+      }
     }
 
     return res;
@@ -94,7 +104,7 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
     }
     if (nextStep instanceof OTraverseResult) {
       ((OTraverseResult) nextStep).depth = depth;
-      ((OTraverseResult)nextStep).setMetadata("$depth", depth);
+      ((OTraverseResult) nextStep).setMetadata("$depth", depth);
       tryAddEntryPoint(nextStep, ctx);
     } else {
       OTraverseResult res = new OTraverseResult();
