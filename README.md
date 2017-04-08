@@ -1,6 +1,10 @@
 ## OrientDB
 
-master branch [![Build Status](http://helios.orientdb.com/buildStatus/icon?job=orientdb-master-ci)](http://helios.orientdb.com/job/orientdb-master-ci/) develop branch [![Build Status](http://helios.orientdb.com/buildStatus/icon?job=orientdb-develop)](http://helios.orientdb.com/job/orientdb-develop/) [![Gitter chat](https://badges.gitter.im/orientechnologies/orientdb.png)](https://gitter.im/orientechnologies/orientdb)
+**Develop branch:** [![Build Status](http://helios.orientdb.com/view/multibranch/job/orientdb-multibranch/job/develop/badge/icon)](http://helios.orientdb.com/view/multibranch/job/orientdb-multibranch/job/develop/) 
+
+**2.2.x branch:** [![Build Status](http://helios.orientdb.com/view/multibranch/job/orientdb-multibranch/job/2.2.x/badge/icon)](http://helios.orientdb.com/view/multibranch/job/orientdb-multibranch/job/2.2.x/) 
+
+[![Gitter chat](https://badges.gitter.im/orientechnologies/orientdb.png)](https://gitter.im/orientechnologies/orientdb)
 
 ------
 
