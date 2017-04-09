@@ -90,6 +90,9 @@ public class ODistributedLockManagerRequester implements ODistributedLockManager
             coordinatorServer = manager.getCoordinatorServer();
             continue;
           }
+
+          throw (RuntimeException) result;
+
         } else if (result instanceof RuntimeException)
           throw (RuntimeException) result;
 

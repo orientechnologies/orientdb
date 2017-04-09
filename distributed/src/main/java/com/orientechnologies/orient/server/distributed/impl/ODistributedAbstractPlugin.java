@@ -109,7 +109,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected       TimerTask                                      publishLocalNodeConfigurationTask = null;
   protected       TimerTask                                      haStatsTask                       = null;
   protected       OClusterHealthChecker                          healthCheckerTask                 = null;
-  protected String coordinatorServer;
 
   // LOCAL MSG COUNTER
   protected AtomicLong                          localMessageIdCounter     = new AtomicLong();
@@ -185,7 +184,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
   @Override
   public synchronized String getCoordinatorServer() {
-    return this.coordinatorServer;
+    return lockManagerRequester.getCoordinatorServer();
   }
 
   public File getDefaultDatabaseConfigFile() {

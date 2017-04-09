@@ -95,7 +95,11 @@ public class ServerRun {
   public void disconnectFrom(final ServerRun... serverIds) {
     final Node currentNode = getHazelcastNode(((OHazelcastPlugin) server.getDistributedManager()).getHazelcastInstance());
     for (ServerRun s : serverIds) {
+      ((OHazelcastPlugin) server.getDistributedManager()).closeRemoteServer(s.server.getDistributedManager().getLocalNodeName());
+      ((OHazelcastPlugin) s.server.getDistributedManager()).closeRemoteServer(server.getDistributedManager().getLocalNodeName());
+
       final Node otherNode = getHazelcastNode(((OHazelcastPlugin) s.server.getDistributedManager()).getHazelcastInstance());
+
       currentNode.clusterService.removeAddress(otherNode.address);
       otherNode.clusterService.removeAddress(currentNode.address);
     }
