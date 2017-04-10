@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
 import com.orientechnologies.common.concur.lock.OLockException;
+import com.orientechnologies.common.types.OModifiableInteger;
 import com.orientechnologies.orient.server.OSystemDatabase;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.impl.task.ODistributedLockTask;
@@ -40,6 +41,10 @@ public class ODistributedLockManagerRequester implements ODistributedLockManager
   private       String                    coordinatorServer;
   private Map<String, Long> acquiredResources = new HashMap<String, Long>();
 
+  private static final ThreadLocal<Map<String, OModifiableInteger>> acquired = ThreadLocal.withInitial(() -> {
+    return new HashMap<>();
+  });
+
   public ODistributedLockManagerRequester(final ODistributedServerManager manager) {
     this.manager = manager;
   }
@@ -52,6 +57,12 @@ public class ODistributedLockManagerRequester implements ODistributedLockManager
         manager.getLockManagerExecutor().acquireExclusiveLock(resource, manager.getLocalNodeName(), timeout);
         break;
       } else {
+        OModifiableInteger counter;
+        if ((counter = acquired.get().get(resource)) != null) {
+          counter.increment();
+          return;
+        }
+
         // SEND A DISTRIBUTED MSG TO THE COORDINATOR SERVER
         final Set<String> servers = new HashSet<String>();
         servers.add(coordinatorServer);
@@ -90,6 +101,7 @@ public class ODistributedLockManagerRequester implements ODistributedLockManager
         } else if (result instanceof RuntimeException)
           throw (RuntimeException) result;
 
+        acquired.get().put(resource, new OModifiableInteger(0));
         break;
       }
     }
@@ -106,6 +118,20 @@ public class ODistributedLockManagerRequester implements ODistributedLockManager
       // THE COORDINATOR IS THE LOCAL SERVER, RELEASE IT LOCALLY
       manager.getLockManagerExecutor().releaseExclusiveLock(resource, manager.getLocalNodeName());
     } else {
+      OModifiableInteger counter = acquired.get().get(resource);
+      if (counter == null)
+        //DO NOTHING BECAUSE THE ACQUIRE DIDN'T HAPPEN IN DISTRIBUTED
+        return;
+
+      if (counter.getValue() > 0) {
+        counter.decrement();
+        return;
+      }
+
+
+
+      acquired.get().remove(resource);
+
       // RELEASE THE LOCK INTO THE COORDINATOR SERVER
       ODistributedServerLog.debug(this, manager.getLocalNodeName(), coordinatorServer, ODistributedServerLog.DIRECTION.OUT,
           "Releasing distributed lock on resource '%s'", resource);

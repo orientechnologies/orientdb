@@ -38,7 +38,6 @@ public class OScenarioThreadLocal extends ThreadLocal<OScenarioThreadLocal.RunCo
 
   public static class RunContext {
     public RUN_MODE runMode = RUN_MODE.DEFAULT;
-    public boolean inDatabaseLock;
   }
 
   static {
@@ -103,21 +102,12 @@ public class OScenarioThreadLocal extends ThreadLocal<OScenarioThreadLocal.RunCo
     context.runMode = value;
   }
 
-  public void setInDatabaseLock(final boolean value) {
-    final RunContext context = get();
-    context.inDatabaseLock = value;
-  }
-
   public RUN_MODE getRunMode() {
     return get().runMode;
   }
 
   public boolean isRunModeDistributed() {
     return get().runMode == RUN_MODE.RUNNING_DISTRIBUTED;
-  }
-
-  public boolean isInDatabaseLock() {
-    return get().inDatabaseLock;
   }
 
   @Override
