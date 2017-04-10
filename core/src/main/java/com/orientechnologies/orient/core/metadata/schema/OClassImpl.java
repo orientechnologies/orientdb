@@ -2088,16 +2088,10 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       // NO CHANGES
       return;
 
-    acquireSchemaWriteLock();
-    try {
+    // DON'T GET THE SCHEMA LOCK BECAUSE THIS CHANGE IS USED ONLY TO WRAP THE SELECTION STRATEGY
+    checkEmbedded();
+    this.clusterSelection = iClusterSelection;
 
-      // DON'T GET THE SCHEMA LOCK BECAUSE THIS CHANGE IS USED ONLY TO WRAP THE SELECTION STRATEGY
-      checkEmbedded();
-      this.clusterSelection = iClusterSelection;
-
-    } finally {
-      releaseSchemaWriteLock(false);
-    }
   }
 
   public void fireDatabaseMigration(final ODatabaseDocument database, final String propertyName, final OType type) {

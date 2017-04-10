@@ -371,6 +371,14 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     }
   }
 
+  public void acquireDistributedExclusiveLock(final long timeout) {
+    dManager.getLockManagerRequester().acquireExclusiveLock(getName(), dManager.getLocalNodeName(), timeout);
+  }
+
+  public void releaseDistributedExclusiveLock() {
+    dManager.getLockManagerRequester().releaseExclusiveLock(getName(), dManager.getLocalNodeName());
+  }
+
   protected Object executeCommand(final OCommandRequestText iCommand, String localNodeName, Collection<String> involvedClusters,
       OAbstractCommandTask task, Set<String> nodes, boolean executedLocally) {
     Object localResult;

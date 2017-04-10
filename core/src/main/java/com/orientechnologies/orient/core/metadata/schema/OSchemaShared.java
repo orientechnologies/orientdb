@@ -535,7 +535,14 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OCloseable
     rwSpinLock.releaseReadLock();
   }
 
+  private boolean isDistributed() {
+    return getDatabase().getStorage() instanceof OAutoshardedStorage && !OScenarioThreadLocal.INSTANCE.isRunModeDistributed();
+  }
+
   public void acquireSchemaWriteLock() {
+    if (isDistributed()) {
+      ((OAutoshardedStorage) getDatabase().getStorage()).acquireDistributedExclusiveLock(0);
+    }
     rwSpinLock.acquireWriteLock();
     modificationCounter.increment();
   }
@@ -565,9 +572,10 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OCloseable
       modificationCounter.decrement();
       count = modificationCounter.intValue();
       rwSpinLock.releaseWriteLock();
-
+      if (isDistributed()) {
+        ((OAutoshardedStorage) getDatabase().getStorage()).releaseDistributedExclusiveLock();
+      }
     }
-
     assert count >= 0;
 
     if (count == 0 && getDatabase().getStorage().getUnderlying() instanceof OStorageProxy) {

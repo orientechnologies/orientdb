@@ -1538,7 +1538,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                 "Class '%s', creation of new local cluster '%s' (id=%d)", clazz, newClusterName,
                 iDatabase.getClusterIdByName(newClusterName));
 
-            OScenarioThreadLocal.executeAsDistributed(new Callable<Object>() {
+            OScenarioThreadLocal.executeAsDefault(new Callable<Object>() {
               @Override
               public Object call() throws Exception {
                 try {

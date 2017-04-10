@@ -21,7 +21,7 @@ package com.orientechnologies.orient.core.storage;
 
 /**
  * This interface indicates that used storage is autosharded and provides ability to determine current storage unique id
- * 
+ *
  * @author edegtyarenko
  * @since 15.10.12 10:27
  */
@@ -29,10 +29,14 @@ public interface OAutoshardedStorage {
 
   /**
    * Storage unique id, made by node name + database name
-   * 
+   *
    * @return storage unique id
    */
   String getStorageId();
 
-	String getNodeId();
+  String getNodeId();
+
+  void acquireDistributedExclusiveLock(final long timeout);
+
+  void releaseDistributedExclusiveLock();
 }
