@@ -56,24 +56,24 @@ import java.util.concurrent.atomic.AtomicLong;
  * @copyrights Orient Technologies.com
  */
 public class OEnterpriseProfiler extends OAbstractProfiler implements ODistributedLifecycleListener {
-  protected final static Timer               timer                   = new Timer(true);
-  protected final static int                 BUFFER_SIZE             = 2048;
-  public static final int                    KEEP_ALIVE              = 60 * 1000;
-  protected final List<OProfilerData>        snapshots               = new ArrayList<OProfilerData>();
-  protected final int                        metricProcessors        = Runtime.getRuntime().availableProcessors();
-  protected Date                             lastReset               = new Date();
-  protected OProfilerData                    realTime                = new OProfilerData();
-  protected OProfilerData                    lastSnapshot;
-  protected int                              elapsedToCreateSnapshot = 0;
-  protected int                              maxSnapshots            = 0;
-  protected TimerTask                        archiverTask;
-  protected TimerTask                        autoPause;
-  protected TimerTask                        autoPublish;
-  protected OServer                          server;
-  protected AtomicBoolean                    paused                  = new AtomicBoolean(false);
-  protected AtomicLong                       timestamp               = new AtomicLong(System.currentTimeMillis());
+  protected final static Timer               timer            = new Timer(true);
+  protected final static int                 BUFFER_SIZE      = 2048;
+  public static final    int                 KEEP_ALIVE       = 60 * 1000;
+  protected final        List<OProfilerData> snapshots        = new ArrayList<OProfilerData>();
+  protected final        int                 metricProcessors = Runtime.getRuntime().availableProcessors();
+  protected              Date                lastReset        = new Date();
+  protected              OProfilerData       realTime         = new OProfilerData();
+  protected OProfilerData lastSnapshot;
+  protected int elapsedToCreateSnapshot = 0;
+  protected int maxSnapshots            = 0;
+  protected TimerTask archiverTask;
+  protected TimerTask autoPause;
+  protected TimerTask autoPublish;
+  protected OServer   server;
+  protected AtomicBoolean paused    = new AtomicBoolean(false);
+  protected AtomicLong    timestamp = new AtomicLong(System.currentTimeMillis());
 
-  protected Set<OEnterpriseProfilerListener> profilerListeners       = Collections
+  protected Set<OEnterpriseProfilerListener> profilerListeners = Collections
       .newSetFromMap(new ConcurrentHashMap<OEnterpriseProfilerListener, Boolean>());
 
   public OEnterpriseProfiler() {
@@ -137,8 +137,8 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements ODistribut
 
     acquireExclusiveLock();
     try {
-      OLogManager.instance().info(this, "Profiler is recording metrics with configuration: %d,%d", elapsedToCreateSnapshot,
-          maxSnapshots);
+      OLogManager.instance()
+          .info(this, "Profiler is recording metrics with configuration: %d,%d", elapsedToCreateSnapshot, maxSnapshots);
 
       if (elapsedToCreateSnapshot > 0) {
         lastSnapshot = new OProfilerData();
@@ -375,8 +375,9 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements ODistribut
       buffer.append(" after ");
       buffer.append((now - recordingFrom) / 1000);
       buffer.append(" secs of profiling");
-      buffer.append(String.format("\nFree memory: %2.2fMb (%2.2f%%) - Total memory: %2.2fMb - Max memory: %2.2fMb - CPUs: %d",
-          freeMem, (freeMem * 100 / (float) maxMem), totMem, maxMem, Runtime.getRuntime().availableProcessors()));
+      buffer.append(String
+          .format("\nFree memory: %2.2fMb (%2.2f%%) - Total memory: %2.2fMb - Max memory: %2.2fMb - CPUs: %d", freeMem,
+              (freeMem * 100 / (float) maxMem), totMem, maxMem, Runtime.getRuntime().availableProcessors()));
       buffer.append("\n");
       buffer.append(dumpHookValues());
       buffer.append("\n");
@@ -755,41 +756,38 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements ODistribut
       if (!Boolean.TRUE.equals(paused.get())) {
 
         updateStats();
-        synchronized (server) {
+        ODistributedServerManager distributedManager = server.getDistributedManager();
 
-          ODistributedServerManager distributedManager = server.getDistributedManager();
+        if (distributedManager != null) {
+          String localNodeName = distributedManager.getLocalNodeName();
+          if (distributedManager != null && distributedManager.isEnabled()) {
+            Map<String, Object> configurationMap = distributedManager.getConfigurationMap();
+            if (configurationMap != null) {
+              ODocument doc = (ODocument) configurationMap.get("clusterStats");
 
-          if (distributedManager != null) {
-            String localNodeName = distributedManager.getLocalNodeName();
-            if (distributedManager != null && distributedManager.isEnabled()) {
-              Map<String, Object> configurationMap = distributedManager.getConfigurationMap();
-              if (configurationMap != null) {
-                ODocument doc = (ODocument) configurationMap.get("clusterStats");
+              if (doc == null) {
+                doc = new ODocument();
+                doc.setTrackingChanges(false);
+              }
+              try {
+                ODocument entries = new ODocument().fromJSON(toJSON("realtime", null));
+                doc.field(localNodeName, entries.toMap());
+                configurationMap.put("clusterStats", doc);
 
-                if (doc == null) {
-                  doc = new ODocument();
-                  doc.setTrackingChanges(false);
-                }
+                ODocument stats = doc.copy();
+
                 try {
-                  ODocument entries = new ODocument().fromJSON(toJSON("realtime", null));
-                  doc.field(localNodeName, entries.toMap());
-                  configurationMap.put("clusterStats", doc);
+                  for (OEnterpriseProfilerListener profilerListener : profilerListeners) {
 
-                  ODocument stats = doc.copy();
+                    profilerListener.onStatsPublished(stats);
 
-                  try {
-                    for (OEnterpriseProfilerListener profilerListener : profilerListeners) {
-
-                      profilerListener.onStatsPublished(stats);
-
-                    }
-                  } catch (Exception e) {
-                    OLogManager.instance().debug(this, "Error on listener call", e, localNodeName);
                   }
-
                 } catch (Exception e) {
-                  OLogManager.instance().debug(this, "Cannot publish realtime stats for node %s", e, localNodeName);
+                  OLogManager.instance().debug(this, "Error on listener call", e, localNodeName);
                 }
+
+              } catch (Exception e) {
+                OLogManager.instance().debug(this, "Cannot publish realtime stats for node %s", e, localNodeName);
               }
             }
           }
@@ -868,17 +866,12 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements ODistribut
   }
 
   @Override
-  public void onNodeLeft(String iNode) {
-
+  public void onNodeLeft(final String iNode) {
     if (server.getDistributedManager() != null) {
       final ODistributedServerManager distributedManager = server.getDistributedManager();
-      synchronized (server) {
-        Map<String, Object> configurationMap = distributedManager.getConfigurationMap();
-        ODocument doc = (ODocument) configurationMap.get("clusterStats");
-        if (doc == null) {
-          doc = new ODocument();
-          doc.setTrackingChanges(false);
-        }
+      Map<String, Object> configurationMap = distributedManager.getConfigurationMap();
+      ODocument doc = (ODocument) configurationMap.get("clusterStats");
+      if (doc != null) {
         doc.removeField(iNode);
         ODocumentInternal.clearTrackData(doc);
         configurationMap.put("clusterStats", doc);
