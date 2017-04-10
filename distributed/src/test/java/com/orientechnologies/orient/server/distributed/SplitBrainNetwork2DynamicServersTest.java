@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -50,9 +52,6 @@ public class SplitBrainNetwork2DynamicServersTest extends AbstractHARemoveNode {
     banner("SERVER " + (SERVERS - 1) + " HAS BEEN ISOLATED, WAITING FOR THE DATABASE ON SERVER " + (SERVERS - 1)
         + " TO BE OFFLINE...");
 
-    Assert.assertEquals("europe-0", serverInstance.get(0).getServerInstance().getDistributedManager().getCoordinatorServer());
-    Assert.assertEquals("europe-1", serverInstance.get(1).getServerInstance().getDistributedManager().getCoordinatorServer());
-
     // CHECK THE SPLIT
     waitForDatabaseStatus(0, "europe-1", getDatabaseName(), ODistributedServerManager.DB_STATUS.NOT_AVAILABLE, 30000);
     assertDatabaseStatusEquals(0, "europe-1", getDatabaseName(), ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
@@ -61,6 +60,9 @@ public class SplitBrainNetwork2DynamicServersTest extends AbstractHARemoveNode {
     waitForDatabaseStatus(1, "europe-0", getDatabaseName(), ODistributedServerManager.DB_STATUS.NOT_AVAILABLE, 90000);
     assertDatabaseStatusEquals(1, "europe-0", getDatabaseName(), ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
     assertDatabaseStatusEquals(1, "europe-1", getDatabaseName(), ODistributedServerManager.DB_STATUS.ONLINE);
+
+    Assert.assertEquals("europe-0", serverInstance.get(0).getServerInstance().getDistributedManager().getCoordinatorServer());
+    Assert.assertEquals("europe-1", serverInstance.get(1).getServerInstance().getDistributedManager().getCoordinatorServer());
 
     banner("RUN TEST WITHOUT THE OFFLINE SERVER " + (SERVERS - 1) + "...");
 
@@ -77,8 +79,8 @@ public class SplitBrainNetwork2DynamicServersTest extends AbstractHARemoveNode {
       executeMultipleTest();
     } catch (AssertionError e) {
       final String message = e.getMessage();
-      Assert.assertTrue(message,
-          message.contains("Server 1 count is not what was expected expected:<" + expected + "> but was:<" + (currentRecords) + ">"));
+      Assert.assertTrue(message, message
+          .contains("Server 1 count is not what was expected expected:<" + expected + "> but was:<" + (currentRecords) + ">"));
     }
 
     banner("TEST WITH THE ISOLATED NODE FINISHED, REJOIN THE SERVER " + (SERVERS - 1) + "...");
@@ -96,18 +98,31 @@ public class SplitBrainNetwork2DynamicServersTest extends AbstractHARemoveNode {
     count = 10;
 
     waitForDatabaseIsOnline(0, "europe-0", getDatabaseName(), 90000);
-    waitForDatabaseIsOnline(0, "europe-1", getDatabaseName(), 5000);
-
-    waitForDatabaseIsOnline(1, "europe-0", getDatabaseName(), 5000);
-    waitForDatabaseIsOnline(1, "europe-1", getDatabaseName(), 5000);
-
+    waitForDatabaseIsOnline(0, "europe-1", getDatabaseName(), 30000);
     assertDatabaseStatusEquals(0, "europe-1", getDatabaseName(), ODistributedServerManager.DB_STATUS.ONLINE);
+
+    waitForDatabaseIsOnline(1, "europe-0", getDatabaseName(), 30000);
+    waitForDatabaseIsOnline(1, "europe-1", getDatabaseName(), 30000);
     assertDatabaseStatusEquals(1, "europe-0", getDatabaseName(), ODistributedServerManager.DB_STATUS.ONLINE);
 
     Assert.assertEquals("europe-0", serverInstance.get(0).getServerInstance().getDistributedManager().getCoordinatorServer());
     Assert.assertEquals("europe-0", serverInstance.get(1).getServerInstance().getDistributedManager().getCoordinatorServer());
 
     banner("NETWORK FOR THE ISOLATED NODE " + (SERVERS - 1) + " HAS BEEN RESTORED");
+
+    waitFor(0, new OCallable<Boolean, ODatabaseDocumentTx>() {
+      @Override
+      public Boolean call(final ODatabaseDocumentTx db) {
+        return db.countClass("Person") == expected;
+      }
+    }, 10000);
+
+    waitFor(1, new OCallable<Boolean, ODatabaseDocumentTx>() {
+      @Override
+      public Boolean call(final ODatabaseDocumentTx db) {
+        return db.countClass("Person") == expected;
+      }
+    }, 60000);
 
     poolFactory.reset();
 

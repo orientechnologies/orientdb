@@ -64,6 +64,11 @@ public interface ODistributedServerManager {
     ONLINE,
 
     /**
+     * The server starts to merge to another cluster.
+     */
+    MERGING,
+
+    /**
      * The server is shutting down.
      */
     SHUTTINGDOWN

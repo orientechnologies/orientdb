@@ -1010,8 +1010,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   @Override
   public void stateChanged(final LifecycleEvent event) {
     final LifecycleEvent.LifecycleState state = event.getState();
-    if (state == LifecycleEvent.LifecycleState.MERGED) {
-      ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Server merged the existent cluster");
+    if (state == LifecycleEvent.LifecycleState.MERGING)
+      setNodeStatus(NODE_STATUS.MERGING);
+    else if (state == LifecycleEvent.LifecycleState.MERGED) {
+      ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Server merged the existent cluster, merging databases...");
 
       getLockManagerRequester().setCoordinatorServer((String) configurationMap.getHazelcastMap().get(CONFIG_COORDINATOR));
 
@@ -1022,25 +1024,40 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         @Override
         public void run() {
           try {
-            Thread.sleep(2000);
-          } catch (InterruptedException e) {
-            // IGNORE IT
-          }
-
-          for (final String databaseName : getMessageService().getDatabases()) {
-            executeInDistributedDatabaseLock(databaseName, 0, null, new OCallable<Object, OModifiableDistributedConfiguration>() {
-              @Override
-              public Object call(final OModifiableDistributedConfiguration cfg) {
-                for (Map.Entry<String, Member> entry : activeNodes.entrySet()) {
-                  final String server = entry.getKey();
-                  if (!cfg.getRegisteredServers().contains(server)) {
-                    if (getDatabaseStatus(server, databaseName) != DB_STATUS.OFFLINE)
-                      cfg.addNewNodeInServerList(server);
-                  }
-                }
-                return null;
+            // WAIT THE COORDINATOR IS ONLINE
+            while (!getActiveServers().contains(getCoordinatorServer())) {
+              try {
+                Thread.sleep(1000);
+              } catch (InterruptedException e) {
+                // IGNORE IT
               }
-            });
+            }
+
+            final String cs = getCoordinatorServer();
+
+            ODistributedServerLog
+                .info(this, getLocalNodeName(), null, DIRECTION.NONE, "Merging networks, coordinator=%s (active=%s)...", cs,
+                    getActiveServers().contains(getCoordinatorServer()));
+
+            for (final String databaseName : getMessageService().getDatabases()) {
+              executeInDistributedDatabaseLock(databaseName, 0, null, new OCallable<Object, OModifiableDistributedConfiguration>() {
+                @Override
+                public Object call(final OModifiableDistributedConfiguration cfg) {
+                  for (Map.Entry<String, Member> entry : activeNodes.entrySet()) {
+                    final String server = entry.getKey();
+                    if (!cfg.getRegisteredServers().contains(server)) {
+                      if (getDatabaseStatus(server, databaseName) != DB_STATUS.OFFLINE)
+                        cfg.addNewNodeInServerList(server);
+                    }
+                  }
+                  return null;
+                }
+              });
+            }
+          } finally {
+            ODistributedServerLog
+                .warn(this, getLocalNodeName(), null, DIRECTION.NONE, "Network merged, coordinator=%s...", getCoordinatorServer());
+            setNodeStatus(NODE_STATUS.ONLINE);
           }
         }
       }).start();
