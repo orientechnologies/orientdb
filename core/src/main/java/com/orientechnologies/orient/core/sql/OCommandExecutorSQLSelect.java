@@ -991,7 +991,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   protected void searchInClasses() {
     final String className = parsedTarget.getTargetClasses().keySet().iterator().next();
 
-    final OClass cls = getDatabase().getMetadata().getSchema().getClass(className);
+    final OClass cls = getDatabase().getMetadata().getImmutableSchemaSnapshot().getClass(className);
     if (!searchForIndexes(cls) && !searchForSubclassIndexes(cls)) {
       // CHECK FOR INVERSE ORDER
       final boolean browsingOrderAsc = isBrowsingAscendingOrder();
@@ -1237,7 +1237,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
               if (parsedTarget.getTargetClasses() != null) {
                 final String className = parsedTarget.getTargetClasses().keySet().iterator().next();
-                final OClass cls = getDatabase().getMetadata().getSchema().getClass(className);
+                final OClass cls = getDatabase().getMetadata().getImmutableSchemaSnapshot().getClass(className);
                 count = cls.count();
               } else if (parsedTarget.getTargetClusters() != null) {
                 for (String cluster : parsedTarget.getTargetClusters().keySet()) {
@@ -1281,7 +1281,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     if (parsedTarget.getTargetClasses() != null && user != null
         && user.checkIfAllowed(ORule.ResourceGeneric.BYPASS_RESTRICTED, null, ORole.PERMISSION_READ) == null) {
       for (String className : parsedTarget.getTargetClasses().keySet()) {
-        final OClass cls = getDatabase().getMetadata().getSchema().getClass(className);
+        final OClass cls = getDatabase().getMetadata().getImmutableSchemaSnapshot().getClass(className);
         if (cls.isSubClassOf(OSecurityShared.RESTRICTED_CLASSNAME)) {
           restrictedClasses = true;
           break;
