@@ -444,7 +444,7 @@ ServerModule.controller("ServerDashboardController", ['$scope', '$routeParams', 
     },
     {name: "security", title: "Security", template: 'security', icon: 'fa-lock', wiki: "Security-Config.html"},
     {name: "teleporter", title: "Teleporter", template: 'teleporterNew', icon: 'fa-usb', wiki: "Studio-Teleporter.html"},
-    {name: "neo4jimporter", title: "Neo4j Importer", template: 'neo4jImporter', icon: 'fa-arrow-circle-right'},
+    {name: "neo4jimporter", title: "Neo4j to OrientDB Importer", template: 'neo4jImporter', icon: 'fa-arrow-circle-right'},
     {name: "plugins", title: "Plugins Management", template: 'plugins', icon: 'fa-plug'},
     {
       name: "alerts",

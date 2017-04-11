@@ -60,13 +60,13 @@ class Neo4jImporterComponent implements AfterViewChecked {
       "odbProtocol": "plocal",
       "odbName": "neo4jImport",
       "outDbUrl": "",
-      "overwriteDB": true,
-      "indexesOnRelationships": true,
+      "overwriteDB": false,
+      "indexesOnRelationships": false,
       "logLevel": 2
     }
 
     this.config = angular.copy(this.defaultConfig);
-    this.step = '3';
+    this.step = '1';
 
     this.hints = {
       host: "Address of the host where the neo4j server is available.",
