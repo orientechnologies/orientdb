@@ -102,6 +102,7 @@ import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
+import java.nio.charset.Charset;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
@@ -1811,7 +1812,13 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         final byte[] storageStream = connection.getDatabase().getStorage().callInLock(new Callable<byte[]>() {
           @Override
           public byte[] call() throws Exception {
-            return connection.getDatabase().getStorage().getConfiguration().toStream(connection.getData().protocolVersion);
+            Charset charset;
+            if (connection.getData().protocolVersion >= OChannelBinaryProtocol.PROTOCOL_VERSION_37)
+              charset = Charset.forName("UTF-8");
+            else
+              charset = Charset.defaultCharset();
+
+            return connection.getDatabase().getStorage().getConfiguration().toStream(connection.getData().protocolVersion, charset);
           }
         }, false);
 
@@ -1913,7 +1920,14 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         final byte[] storageStream = connection.getDatabase().getStorage().callInLock(new Callable<byte[]>() {
           @Override
           public byte[] call() throws Exception {
-            return connection.getDatabase().getStorage().getConfiguration().toStream(connection.getData().protocolVersion);
+            Charset charset;
+
+            if (connection.getData().protocolVersion >= OChannelBinaryProtocol.PROTOCOL_VERSION_37)
+              charset = Charset.forName("UTF-8");
+            else
+              charset = Charset.defaultCharset();
+
+            return connection.getDatabase().getStorage().getConfiguration().toStream(connection.getData().protocolVersion, charset);
           }
         }, false);
 

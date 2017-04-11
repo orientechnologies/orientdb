@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.Map;
 
 import com.orientechnologies.common.exception.OException;
@@ -38,7 +39,7 @@ public class OStorageMemoryConfiguration extends OStorageConfiguration {
   private byte[] serializedContent;
 
   public OStorageMemoryConfiguration(OStorage iStorage) {
-    super(iStorage);
+    super(iStorage, Charset.forName("UTF-8"));
   }
 
   public void close() throws IOException {
@@ -56,7 +57,7 @@ public class OStorageMemoryConfiguration extends OStorageConfiguration {
     bindPropertiesToContext(iProperties);
 
     try {
-      fromStream(serializedContent);
+      fromStream(serializedContent, 0, serializedContent.length, Charset.forName("UTF-8"));
     } catch (Exception e) {
       throw OException
           .wrapException(new OSerializationException("Cannot load database configuration. The database seems corrupted"), e);
@@ -75,7 +76,7 @@ public class OStorageMemoryConfiguration extends OStorageConfiguration {
   @Override
   public void update() throws OSerializationException {
     try {
-      serializedContent = toStream();
+      serializedContent = toStream(Charset.forName("UTF-8"));
     } catch (Exception e) {
       throw OException.wrapException(new OSerializationException("Error on update storage configuration"), e);
     }

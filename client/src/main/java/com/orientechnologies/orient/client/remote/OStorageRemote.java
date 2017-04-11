@@ -353,9 +353,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
         parseOptions(iOptions);
 
-        openRemoteDatabase();
+        int serverVersion = openRemoteDatabase();
 
-        final OStorageConfiguration storageConfiguration = new OStorageRemoteConfiguration(this, recordFormat);
+        final OStorageConfiguration storageConfiguration = new OStorageRemoteConfiguration(this, recordFormat, serverVersion);
         storageConfiguration.load(iOptions);
 
         configuration = storageConfiguration;
@@ -1855,7 +1855,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     }
   }
 
-  protected synchronized String openRemoteDatabase() throws IOException {
+  protected synchronized int openRemoteDatabase() throws IOException {
     final String currentURL = getNextAvailableServerURL(true, getCurrentSession());
     return openRemoteDatabase(currentURL);
   }
@@ -1912,15 +1912,17 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     }
   }
 
-  protected String openRemoteDatabase(String currentURL) {
+  protected int openRemoteDatabase(String currentURL) {
     do {
       do {
         OChannelBinaryAsynchClient network = null;
         try {
           network = getNetwork(currentURL);
           openRemoteDatabase(network);
+          final int serverVersion = network.getSrvProtocolVersion();
+
           connectionManager.release(network);
-          return currentURL;
+          return serverVersion;
         } catch (OIOException e) {
           if (network != null) {
             // REMOVE THE NETWORK CONNECTION IF ANY
