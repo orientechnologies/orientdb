@@ -1,9 +1,5 @@
 package com.orientechnologies.orient.client.remote.message;
 
-import java.io.IOException;
-import java.util.*;
-import java.util.Map.Entry;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.client.remote.OClusterRemote;
@@ -24,7 +20,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetwork;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
@@ -32,6 +28,10 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
+
+import java.io.IOException;
+import java.util.*;
+import java.util.Map.Entry;
 
 public class OMessageHelper {
 
@@ -227,7 +227,7 @@ public class OMessageHelper {
     return entry;
   }
 
-  static void writeTransactionIndexChanges(OChannelDataOutput network, ORecordSerializerNetwork serializer,
+  static void writeTransactionIndexChanges(OChannelDataOutput network, ORecordSerializerNetworkV37 serializer,
       List<IndexChange> changes) throws IOException {
     network.writeInt(changes.size());
     for (IndexChange indexChange : changes) {
@@ -269,7 +269,7 @@ public class OMessageHelper {
     }
   }
 
-  static List<IndexChange> readTransactionIndexChanges(OChannelDataInput channel, ORecordSerializerNetwork serializer)
+  static List<IndexChange> readTransactionIndexChanges(OChannelDataInput channel, ORecordSerializerNetworkV37 serializer)
       throws IOException {
     List<IndexChange> changes = new ArrayList<>();
     int val = channel.readInt();

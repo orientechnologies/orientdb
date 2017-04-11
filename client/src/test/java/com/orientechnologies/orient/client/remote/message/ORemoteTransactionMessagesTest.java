@@ -1,26 +1,20 @@
 package com.orientechnologies.orient.client.remote.message;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-
-import org.junit.Test;
-
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetwork;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkFactory;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
+import org.junit.Test;
+
+import java.io.IOException;
+import java.util.*;
+
+import static org.junit.Assert.*;
 
 public class ORemoteTransactionMessagesTest {
 
@@ -46,7 +40,7 @@ public class ORemoteTransactionMessagesTest {
     channel.close();
 
     OBeginTransactionRequest readRequest = new OBeginTransactionRequest();
-    readRequest.read(channel, 0, ORecordSerializerNetwork.INSTANCE);
+    readRequest.read(channel, 0, ORecordSerializerNetworkFactory.INSTANCE.current());
     assertTrue(readRequest.isUsingLog());
     assertEquals(readRequest.getOperations().size(), 1);
     assertEquals(readRequest.getTxId(), 0);
@@ -85,7 +79,7 @@ public class ORemoteTransactionMessagesTest {
     channel.close();
 
     OCommit37Request readRequest = new OCommit37Request();
-    readRequest.read(channel, 0, ORecordSerializerNetwork.INSTANCE);
+    readRequest.read(channel, 0, ORecordSerializerNetworkFactory.INSTANCE.current());
     assertTrue(readRequest.isUsingLog());
     assertEquals(readRequest.getOperations().size(), 1);
     assertEquals(readRequest.getTxId(), 0);
@@ -113,7 +107,7 @@ public class ORemoteTransactionMessagesTest {
     channel.close();
 
     OCommit37Request readRequest = new OCommit37Request();
-    readRequest.read(channel, 0, ORecordSerializerNetwork.INSTANCE);
+    readRequest.read(channel, 0, ORecordSerializerNetworkFactory.INSTANCE.current());
     assertTrue(readRequest.isUsingLog());
     assertNull(readRequest.getOperations());
     assertEquals(readRequest.getTxId(), 0);
@@ -137,7 +131,7 @@ public class ORemoteTransactionMessagesTest {
 
     MockChannel channel = new MockChannel();
     OFetchTransactionResponse response = new OFetchTransactionResponse(10, operations, changes);
-    response.write(channel, 0, ORecordSerializerNetwork.INSTANCE);
+    response.write(channel, 0, ORecordSerializerNetworkV37.INSTANCE);
 
     channel.close();
 

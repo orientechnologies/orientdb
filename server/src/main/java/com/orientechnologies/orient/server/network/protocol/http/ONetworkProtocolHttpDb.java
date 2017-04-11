@@ -19,9 +19,11 @@
     */
 package com.orientechnologies.orient.server.network.protocol.http;
 
+import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostImportDatabase;
@@ -41,8 +43,8 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
   public void config(final OServerNetworkListener iListener, final OServer iServer, final Socket iSocket,
       final OContextConfiguration iConfiguration) throws IOException {
     server = iServer;
-    setName("OrientDB HTTP Connection " + iSocket.getLocalAddress() + ":" + iSocket.getLocalPort() + "<-"
-        + iSocket.getRemoteSocketAddress());
+    setName("OrientDB HTTP Connection " + iSocket.getLocalAddress() + ":" + iSocket.getLocalPort() + "<-" + iSocket
+        .getRemoteSocketAddress());
 
     super.config(iListener, server, iSocket, iConfiguration);
     cmdManager.registerCommand(new OServerCommandPostImportDatabase());
@@ -63,5 +65,10 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
   @Override
   protected void afterExecution() throws InterruptedException {
     ODatabaseRecordThreadLocal.INSTANCE.remove();
+  }
+
+  @Override
+  public OBinaryRequestExecutor executor(OClientConnection connection) {
+    return null;
   }
 }

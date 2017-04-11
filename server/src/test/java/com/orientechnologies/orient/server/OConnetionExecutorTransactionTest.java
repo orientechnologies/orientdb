@@ -2,12 +2,15 @@ package com.orientechnologies.orient.server;
 
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.message.*;
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetwork;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -19,9 +22,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * Created by tglman on 29/12/16.
@@ -201,7 +202,7 @@ public class OConnetionExecutorTransactionTest {
     assertTrue(response instanceof OBeginTransactionResponse);
 
     OQueryRequest query = new OQueryRequest("sql", "update test set name='bla'", new HashMap<>(), true,
-        ORecordSerializerNetwork.INSTANCE, 20);
+        ORecordSerializerNetworkFactory.INSTANCE.current(), 20);
     OQueryResponse queryResponse = (OQueryResponse) query.execute(executor);
 
     assertTrue(queryResponse.isTxChanges());
@@ -225,7 +226,7 @@ public class OConnetionExecutorTransactionTest {
     assertTrue(response instanceof OBeginTransactionResponse);
 
     OQueryRequest query = new OQueryRequest("sql", "update test set name='bla'", new HashMap<>(), true,
-        ORecordSerializerNetwork.INSTANCE, 20);
+        ORecordSerializerNetworkFactory.INSTANCE.current(), 20);
     OQueryResponse queryResponse = (OQueryResponse) query.execute(executor);
 
     assertTrue(queryResponse.isTxChanges());

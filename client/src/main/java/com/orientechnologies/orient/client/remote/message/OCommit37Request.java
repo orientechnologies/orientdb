@@ -9,7 +9,7 @@ import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationReq
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetwork;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
@@ -71,7 +71,7 @@ public class OCommit37Request implements OBinaryRequest<OCommitResponse> {
   @Override
   public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
     //from 3.0 the the serializer is bound to the protocol
-    ORecordSerializerNetwork serializer = ORecordSerializerNetwork.INSTANCE;
+    ORecordSerializerNetworkV37 serializer = ORecordSerializerNetworkV37.INSTANCE;
     network.writeInt(txId);
     network.writeBoolean(hasContent);
     network.writeBoolean(usingLog);
@@ -90,7 +90,6 @@ public class OCommit37Request implements OBinaryRequest<OCommitResponse> {
 
   @Override
   public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
-    assert serializer instanceof ORecordSerializerNetwork;
     txId = channel.readInt();
     hasContent = channel.readBoolean();
     usingLog = channel.readBoolean();
@@ -106,7 +105,7 @@ public class OCommit37Request implements OBinaryRequest<OCommitResponse> {
       } while (hasEntry == 1);
 
       // RECEIVE MANUAL INDEX CHANGES
-      this.indexChanges = OMessageHelper.readTransactionIndexChanges(channel, (ORecordSerializerNetwork) serializer);
+      this.indexChanges = OMessageHelper.readTransactionIndexChanges(channel, (ORecordSerializerNetworkV37) serializer);
     }
   }
 

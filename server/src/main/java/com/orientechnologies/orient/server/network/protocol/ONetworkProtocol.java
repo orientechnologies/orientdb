@@ -19,14 +19,16 @@
  */
 package com.orientechnologies.orient.server.network.protocol;
 
-import java.io.IOException;
-import java.net.Socket;
-
 import com.orientechnologies.common.thread.OSoftThread;
+import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
+import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
+
+import java.io.IOException;
+import java.net.Socket;
 
 public abstract class ONetworkProtocol extends OSoftThread {
   protected OServer server;
@@ -55,4 +57,6 @@ public abstract class ONetworkProtocol extends OSoftThread {
   public OServer getServer() {
     return server;
   }
+
+  public abstract OBinaryRequestExecutor executor(OClientConnection connection);
 }

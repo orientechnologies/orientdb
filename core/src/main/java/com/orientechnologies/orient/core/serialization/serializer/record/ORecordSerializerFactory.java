@@ -19,16 +19,17 @@
   */
 package com.orientechnologies.orient.core.serialization.serializer.record;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetwork;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
+
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Factory of record serialized.
@@ -47,6 +48,8 @@ public class ORecordSerializerFactory {
     register(ORecordSerializerRaw.NAME, new ORecordSerializerRaw());
     register(ORecordSerializerBinary.NAME, ORecordSerializerBinary.INSTANCE);
     register(ORecordSerializerNetwork.NAME, ORecordSerializerNetwork.INSTANCE);
+    register(ORecordSerializerNetworkV37.NAME,ORecordSerializerNetworkV37.INSTANCE);
+
     defaultRecordSerializer = getFormat(OGlobalConfiguration.DB_DOCUMENT_SERIALIZER.getValueAsString());
     if (defaultRecordSerializer == null)
       throw new ODatabaseException(

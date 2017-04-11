@@ -31,7 +31,6 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBagDelegate;
-import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag.Change;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.sbtree.OTreeInternal;
@@ -941,6 +940,8 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     this.size = -1;
 
     changes.putAll(ChangeSerializationHelper.INSTANCE.deserializeChanges(stream, offset));
+
+    offset += OIntegerSerializer.INT_SIZE + (OLinkSerializer.RID_SIZE + Change.SIZE) * changes.size();
 
     return offset;
   }

@@ -24,9 +24,10 @@ import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
-import com.orientechnologies.orient.client.remote.message.*;
+import com.orientechnologies.orient.client.remote.message.OErrorResponse;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -47,10 +48,11 @@ import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetwork;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.enterprise.channel.binary.*;
 import com.orientechnologies.orient.server.OClientConnection;
+import com.orientechnologies.orient.server.OConnectionBinaryExecutor;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
@@ -201,7 +203,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
             tokenBytes = channel.readBytes();
           }
           int protocolVersion = OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION;
-          ORecordSerializer serializer = ORecordSerializerNetwork.INSTANCE;
+          ORecordSerializer serializer = ORecordSerializerNetworkFactory.INSTANCE.forProtocol(protocolVersion);
           if (connection != null) {
             protocolVersion = connection.getData().protocolVersion;
             serializer = connection.getData().getSerializer();
@@ -551,7 +553,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
       OBinaryResponse error = new OErrorResponse(messages, result);
       int protocolVersion = OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION;
-      ORecordSerializer serializationImpl = ORecordSerializerNetwork.INSTANCE;
+      ORecordSerializer serializationImpl = ORecordSerializerNetworkFactory.INSTANCE.current();
       if (connection != null) {
         protocolVersion = connection.getData().protocolVersion;
         serializationImpl = connection.getData().getSerializer();
@@ -738,4 +740,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     return null;
   }
 
+  @Override
+  public OBinaryRequestExecutor executor(OClientConnection connection) {
+    return new OConnectionBinaryExecutor(connection, server,handshakeInfo);
+  }
 }

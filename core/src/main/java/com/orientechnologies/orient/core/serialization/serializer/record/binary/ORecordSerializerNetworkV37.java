@@ -51,9 +51,11 @@ import java.util.Map.Entry;
 
 public class ORecordSerializerNetworkV37 implements ORecordSerializer {
 
-  private static final String    CHARSET_UTF_8    = "UTF-8";
-  private static final ORecordId NULL_RECORD_ID   = new ORecordId(-2, ORID.CLUSTER_POS_INVALID);
-  private static final long      MILLISEC_PER_DAY = 86400000;
+  public static final  String                      NAME             = "onet_ser_v37";
+  private static final String                      CHARSET_UTF_8    = "UTF-8";
+  private static final ORecordId                   NULL_RECORD_ID   = new ORecordId(-2, ORID.CLUSTER_POS_INVALID);
+  private static final long                        MILLISEC_PER_DAY = 86400000;
+  public static final  ORecordSerializerNetworkV37 INSTANCE         = new ORecordSerializerNetworkV37();
 
   public ORecordSerializerNetworkV37() {
   }
@@ -77,6 +79,9 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
       } else {
         value = deserializeValue(bytes, type, document);
       }
+      if (ODocumentInternal.rawContainsField(document, fieldName)) {
+        continue;
+      }
       document.setProperty(fieldName, value);
 
       for (String field : iFields) {
@@ -97,21 +102,21 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
 
     String fieldName;
     OType type;
+    Object value;
     int size = OVarIntSerializer.readAsInteger(bytes);
     while ((size--) > 0) {
       // PARSE FIELD NAME
       fieldName = readString(bytes);
       type = readOType(bytes);
+      if (type == null) {
+        value = null;
+      } else {
+        value = deserializeValue(bytes, type, document);
+      }
       if (ODocumentInternal.rawContainsField(document, fieldName)) {
         continue;
       }
-      if (type == null) {
-        document.setProperty(fieldName, null);
-      } else {
-        final Object value = deserializeValue(bytes, type, document);
-        document.setProperty(fieldName, value, type);
-      }
-
+      document.setProperty(fieldName, value, type);
     }
 
     ORecordInternal.clearSource(document);
@@ -127,7 +132,7 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
       return;
     }
     final Set<Entry<String, ODocumentEntry>> fields = ODocumentInternal.rawEntries(document);
-    OVarIntSerializer.write(bytes, fields.size());
+    OVarIntSerializer.write(bytes, document.fields());
     for (Entry<String, ODocumentEntry> entry : fields) {
       ODocumentEntry docEntry = entry.getValue();
       if (!docEntry.exist())
@@ -195,6 +200,17 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
     } else {
       bytes.bytes[pos] = (byte) type.getId();
     }
+  }
+
+  public byte[] serializeValue(Object value, OType type) {
+    BytesContainer bytes = new BytesContainer();
+    serializeValue(bytes,value,type,null);
+    return bytes.fitBytes();
+  }
+
+  public Object deserializeValue(byte[] val, OType type) {
+    BytesContainer bytes = new BytesContainer(val);
+    return deserializeValue(bytes, type, null);
   }
 
   public Object deserializeValue(BytesContainer bytes, OType type, ODocument document) {
