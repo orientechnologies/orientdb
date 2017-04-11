@@ -59,6 +59,11 @@ public class ONetworkProtocolData {
     serializer = ORecordSerializerFactory.instance().getFormat(serializationImpl);
   }
 
+  public void setSerializer(ORecordSerializer serializer) {
+    this.serializer = serializer;
+    this.serializationImpl = serializer.getName();
+  }
+
   public ORecordSerializer getSerializer() {
     return serializer;
   }

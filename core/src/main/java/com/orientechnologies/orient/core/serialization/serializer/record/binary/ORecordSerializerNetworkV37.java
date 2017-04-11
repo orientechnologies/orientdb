@@ -818,4 +818,9 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
   public boolean getSupportBinaryEvaluate() {
     return false;
   }
+
+  @Override
+  public String getName() {
+    return NAME;
+  }
 }

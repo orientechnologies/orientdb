@@ -1,22 +1,23 @@
 package com.orientechnologies.orient.server.network.protocol.binary;
 
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkFactory;
 
 /**
  * Created by tglman on 29/12/16.
  */
 public class HandshakeInfo {
 
-  private short  protocolVersion;
-  private String driverName;
-  private String driverVersion;
-  private String serializerImpl;
+  private short             protocolVersion;
+  private String            driverName;
+  private String            driverVersion;
+  private ORecordSerializer serializer;
 
   public HandshakeInfo(short protocolVersion, String driverName, String driverVersion) {
     this.protocolVersion = protocolVersion;
     this.driverName = driverName;
     this.driverVersion = driverVersion;
-    this.serializerImpl = ORecordSerializerNetworkV37.NAME;
+    this.serializer = ORecordSerializerNetworkFactory.INSTANCE.forProtocol(protocolVersion);
   }
 
   public short getProtocolVersion() {
@@ -43,7 +44,7 @@ public class HandshakeInfo {
     this.driverVersion = driverVersion;
   }
 
-  public String getSerializerImpl() {
-    return serializerImpl;
+  public ORecordSerializer getSerializer() {
+    return serializer;
   }
 }

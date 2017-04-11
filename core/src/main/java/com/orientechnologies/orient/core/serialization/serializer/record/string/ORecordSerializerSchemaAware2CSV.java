@@ -547,4 +547,10 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 
     return linkedClass;
   }
+
+
+  @Override
+  public String getName() {
+    return NAME;
+  }
 }

@@ -853,7 +853,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     connection.getData().driverVersion = handshakeInfo.getDriverVersion();
     connection.getData().protocolVersion = handshakeInfo.getProtocolVersion();
     connection.getData().clientId = request.getClientId();
-    connection.getData().setSerializationImpl(handshakeInfo.getSerializerImpl());
+    connection.getData().setSerializer(handshakeInfo.getSerializer());
 
     connection.setTokenBased(request.isTokenBased());
     connection.getData().supportsPushMessages = request.isSupportPush();
@@ -945,7 +945,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     connection.getData().driverName = handshakeInfo.getDriverName();
     connection.getData().driverVersion = handshakeInfo.getDriverVersion();
     connection.getData().protocolVersion = handshakeInfo.getProtocolVersion();
-    connection.getData().setSerializationImpl(handshakeInfo.getSerializerImpl());
+    connection.getData().setSerializer(handshakeInfo.getSerializer());
     try {
       connection.setDatabase(
           server.openDatabase(request.getDatabaseName(), request.getUserName(), request.getUserPassword(), connection.getData()));

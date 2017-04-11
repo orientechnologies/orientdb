@@ -151,4 +151,8 @@ public class ORecordSerializerNetwork implements ORecordSerializer {
     return false;
   }
 
+  @Override
+  public String getName() {
+    return NAME;
+  }
 }
