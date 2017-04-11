@@ -25,8 +25,6 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
-import com.orientechnologies.common.util.OPair;
-import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -47,7 +45,6 @@ import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.*;
-import com.orientechnologies.orient.core.index.hashindex.local.OHashIndexBucket;
 import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -2032,35 +2029,39 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       final ORidBag bag = (ORidBag) fieldValue;
 
       if (iVertexToRemove != null) {
-        // SEARCH SEQUENTIALLY (SLOWER)
-        for (Iterator<OIdentifiable> it = bag.rawIterator(); it.hasNext(); ) {
-          final ODocument curr = getDocument(it.next(), forceReload);
+        if (!iAlsoInverse && ODocumentInternal.getImmutableSchemaClass((ODocument) iVertexToRemove.getRecord()).isEdgeType()) {
+          bag.remove(iVertexToRemove);
+        } else {
+          // SEARCH SEQUENTIALLY (SLOWER)
+          for (Iterator<OIdentifiable> it = bag.rawIterator(); it.hasNext(); ) {
+            final ODocument curr = getDocument(it.next(), forceReload);
 
-          if (curr == null)
-            // EDGE REMOVED
-            continue;
+            if (curr == null)
+              // EDGE REMOVED
+              continue;
 
-          if (curr == null)
-            // ALREADY DELETED (BYPASSING GRAPH API?), JUST REMOVE THE REFERENCE FROM BAG
-            it.remove();
-          else if (iVertexToRemove.equals(curr)) {
-            // FOUND AS VERTEX
-            it.remove();
-            if (iAlsoInverse)
-              removeInverseEdge(graph, iVertex, iFieldName, iVertexToRemove, curr, useVertexFieldsForEdgeLabels, autoScaleEdgeType,
-                  forceReload);
-            break;
-
-          } else if (ODocumentInternal.getImmutableSchemaClass(curr).isEdgeType()) {
-            final Direction direction = OrientVertex.getConnectionDirection(iFieldName, useVertexFieldsForEdgeLabels);
-
-            // EDGE, REMOVE THE EDGE
-            if (iVertexToRemove.equals(OrientEdge.getConnection(curr, direction.opposite()))) {
+            if (curr == null)
+              // ALREADY DELETED (BYPASSING GRAPH API?), JUST REMOVE THE REFERENCE FROM BAG
+              it.remove();
+            else if (iVertexToRemove.equals(curr)) {
+              // FOUND AS VERTEX
               it.remove();
               if (iAlsoInverse)
                 removeInverseEdge(graph, iVertex, iFieldName, iVertexToRemove, curr, useVertexFieldsForEdgeLabels,
                     autoScaleEdgeType, forceReload);
               break;
+
+            } else if (ODocumentInternal.getImmutableSchemaClass(curr).isEdgeType()) {
+              final Direction direction = OrientVertex.getConnectionDirection(iFieldName, useVertexFieldsForEdgeLabels);
+
+              // EDGE, REMOVE THE EDGE
+              if (iVertexToRemove.equals(OrientEdge.getConnection(curr, direction.opposite()))) {
+                it.remove();
+                if (iAlsoInverse)
+                  removeInverseEdge(graph, iVertex, iFieldName, iVertexToRemove, curr, useVertexFieldsForEdgeLabels,
+                      autoScaleEdgeType, forceReload);
+                break;
+              }
             }
           }
         }
@@ -2141,6 +2142,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   /**
    * (Internal only)
    */
+
   private static void removeInverseEdge(final OrientBaseGraph graph, final ODocument iVertex, final String iFieldName,
       final OIdentifiable iVertexToRemove, final OIdentifiable currentRecord, final boolean useVertexFieldsForEdgeLabels,
       final boolean autoScaleEdgeType, boolean forceReload) {

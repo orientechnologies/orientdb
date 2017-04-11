@@ -35,14 +35,14 @@ import java.io.IOException;
  * Base class for Tasks to be executed remotely.
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- *
  */
 public abstract class OAbstractRemoteTask implements ORemoteTask {
-  private static final   long  serialVersionUID = 1L;
-  public static final    int[] ALL              = new int[] { -1 };
-  protected static final int[] ANY              = new int[] { -2 };
+  public static final    int[] ALL    = new int[] { -1 };
+  protected static final int[] ANY    = new int[] { -2 };
+  protected static final int[] LOCK   = new int[] { -3 };
+  protected static final int[] UNLOCK = new int[] { -4 };
 
-  protected transient String   nodeSource;
+  protected transient String nodeSource;
 
   /**
    * Constructor used from unmarshalling.

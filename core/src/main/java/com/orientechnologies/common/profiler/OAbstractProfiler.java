@@ -433,7 +433,9 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract
     for (ThreadInfo threadInfo : threadInfos) {
       dump.append('"');
       dump.append(threadInfo.getThreadName());
-      dump.append("\" ");
+      dump.append("\" id=");
+      dump.append(threadInfo.getThreadId());
+      dump.append(" ");
       final Thread.State state = threadInfo.getThreadState();
       dump.append("\n   java.lang.Thread.State: ");
       dump.append(state);

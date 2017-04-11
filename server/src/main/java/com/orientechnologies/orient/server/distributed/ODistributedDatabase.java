@@ -77,7 +77,7 @@ public interface ODistributedDatabase {
    */
   void unlockRecord(OIdentifiable iRecord, ODistributedRequestId requestId);
 
-  void dumpLocks();
+  String dump();
 
   void unlockResourcesOfServer(ODatabaseDocumentInternal database, String serverName);
 

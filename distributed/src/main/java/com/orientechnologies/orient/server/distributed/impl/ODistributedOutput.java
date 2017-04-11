@@ -169,7 +169,7 @@ public class ODistributedOutput {
         // SEARCH FOR THE MEMBER
         ODocument fromMember = null;
         for (ODocument m : members) {
-          if (fromServer.equals(m.field("name"))) {
+          if (m != null && fromServer.equals(m.field("name"))) {
             fromMember = m;
             break;
           }
@@ -637,12 +637,12 @@ public class ODistributedOutput {
     return fromServer + (manager.getLocalNodeName().equals(fromServer) ? "*" : "");
   }
 
-  public static Object formatLocks(final ODistributedAbstractPlugin manager, final String db) {
+  public static Object formatRecordLocks(final ODistributedAbstractPlugin manager, final String db) {
     final ConcurrentHashMap<ORID, ODistributedDatabaseImpl.ODistributedLock> lockManager = manager.getMessageService()
         .getDatabase(db).lockManager;
 
     final StringBuilder buffer = new StringBuilder();
-    buffer.append("\nHA LOCKS FOR DATABASE '" + db + "'");
+    buffer.append("HA RECORD LOCKS FOR DATABASE '" + db + "'");
     final OTableFormatter table = new OTableFormatter(new OTableFormatter.OTableOutput() {
       @Override
       public void onMessage(final String text, final Object... args) {
@@ -674,6 +674,7 @@ public class ODistributedOutput {
         row.field("server", manager.getNodeNameById(lock.reqId.getNodeId()));
         row.field("acquiredOn", dateFormat.format(new Date(lock.acquiredOn)));
         row.field("reqId", lock.reqId);
+        row.field("threadCount", lock.lock.getCount());
       }
     }
 

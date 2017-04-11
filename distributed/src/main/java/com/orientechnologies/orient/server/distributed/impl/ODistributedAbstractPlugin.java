@@ -107,9 +107,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected       List<ODistributedLifecycleListener>            listeners                         = new ArrayList<ODistributedLifecycleListener>();
   protected final ConcurrentMap<String, ORemoteServerController> remoteServers                     = new ConcurrentHashMap<String, ORemoteServerController>();
   protected       TimerTask                                      publishLocalNodeConfigurationTask = null;
-  protected       TimerTask                                      haStatsTask = null;
+  protected       TimerTask                                      haStatsTask                       = null;
   protected       OClusterHealthChecker                          healthCheckerTask                 = null;
-  protected String coordinatorServer;
 
   // LOCAL MSG COUNTER
   protected AtomicLong                          localMessageIdCounter     = new AtomicLong();
@@ -185,7 +184,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
   @Override
   public synchronized String getCoordinatorServer() {
-    return this.coordinatorServer;
+    return lockManagerRequester.getCoordinatorServer();
   }
 
   public File getDefaultDatabaseConfigFile() {
@@ -1591,9 +1590,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       // ALREADY IN LOCK
       try {
         if (ODistributedServerLog.isDebugEnabled())
-          ODistributedServerLog
-              .debug(this, nodeName, null, DIRECTION.NONE, "Current distributed configuration for database '%s': %s", databaseName,
-                  lastCfg.getDocument().toJSON());
+          ODistributedServerLog.debug(this, nodeName, null, DIRECTION.NONE,
+              "Already locked. Current distributed configuration for database '%s': %s", databaseName,
+              lastCfg.getDocument().toJSON());
 
         return (T) iCallback.call(lastCfg);
 
@@ -1601,8 +1600,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
         if (ODistributedServerLog.isDebugEnabled())
           ODistributedServerLog
-              .debug(this, nodeName, null, DIRECTION.NONE, "New distributed configuration for database '%s': %s", databaseName,
-                  lastCfg.getDocument().toJSON());
+              .debug(this, nodeName, null, DIRECTION.NONE, "Already locked. New distributed configuration for database '%s': %s",
+                  databaseName, lastCfg.getDocument().toJSON());
 
         // CONFIGURATION CHANGED, UPDATE IT ON THE CLUSTER AND DISK
         updateCachedDatabaseConfiguration(databaseName, lastCfg, true);
@@ -1614,28 +1613,30 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
       OScenarioThreadLocal.INSTANCE.setInDatabaseLock(true);
 
-      if (lastCfg == null)
-        // ACQUIRE CFG INSIDE THE LOCK
-        lastCfg = getDatabaseConfiguration(databaseName).modify();
-
-      if (ODistributedServerLog.isDebugEnabled())
-        ODistributedServerLog
-            .debug(this, nodeName, null, DIRECTION.NONE, "Current distributed configuration for database '%s': %s", databaseName,
-                lastCfg.getDocument().toJSON());
-
       try {
+        if (lastCfg == null)
+          // ACQUIRE CFG INSIDE THE LOCK
+          lastCfg = getDatabaseConfiguration(databaseName).modify();
 
-        return (T) iCallback.call(lastCfg);
-
-      } finally {
         if (ODistributedServerLog.isDebugEnabled())
           ODistributedServerLog
-              .debug(this, nodeName, null, DIRECTION.NONE, "New distributed configuration for database '%s': %s", databaseName,
+              .debug(this, nodeName, null, DIRECTION.NONE, "Lock acquired. Current distributed configuration for database '%s': %s", databaseName,
                   lastCfg.getDocument().toJSON());
 
-        // CONFIGURATION CHANGED, UPDATE IT ON THE CLUSTER AND DISK
-        updateCachedDatabaseConfiguration(databaseName, lastCfg, true);
+        try {
 
+          return (T) iCallback.call(lastCfg);
+
+        } finally {
+          if (ODistributedServerLog.isDebugEnabled())
+            ODistributedServerLog
+                .debug(this, nodeName, null, DIRECTION.NONE, "Lock acquired. New distributed configuration for database '%s': %s", databaseName,
+                    lastCfg.getDocument().toJSON());
+
+          // CONFIGURATION CHANGED, UPDATE IT ON THE CLUSTER AND DISK
+          updateCachedDatabaseConfiguration(databaseName, lastCfg, true);
+        }
+      } finally {
         OScenarioThreadLocal.INSTANCE.setInDatabaseLock(false);
       }
 
@@ -1645,7 +1646,22 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       throw new RuntimeException(e);
 
     } finally {
-      lockManagerRequester.releaseExclusiveLock(databaseName, nodeName);
+      for (int retry = 0; retry < 10; ++retry)
+        try {
+          lockManagerRequester.releaseExclusiveLock(databaseName, nodeName);
+          // RELEASED
+          break;
+        } catch (Throwable t) {
+          // ERROR: RETRY IN A BIT
+          ODistributedServerLog.error(this, nodeName, databaseName, DIRECTION.OUT,
+              "Cannot release distributed lock against database '%s' coordinator server '%s' (error: %s)", databaseName,
+              lockManagerRequester.getCoordinatorServer(), t);
+          try {
+            Thread.sleep(100);
+          } catch (InterruptedException e) {
+            break;
+          }
+        }
     }
   }
 

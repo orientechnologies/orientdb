@@ -36,8 +36,8 @@ import java.util.Set;
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
 public class ODistributedLockManagerRequester implements ODistributedLockManager {
-  private final ODistributedServerManager manager;
-  private       String                    coordinatorServer;
+  private final    ODistributedServerManager manager;
+  private volatile String                    coordinatorServer;
   private Map<String, Long> acquiredResources = new HashMap<String, Long>();
 
   public ODistributedLockManagerRequester(final ODistributedServerManager manager) {
@@ -83,10 +83,16 @@ public class ODistributedLockManagerRequester implements ODistributedLockManager
             }
 
           if (!manager.getActiveServers().contains(coordinatorServer)) {
-            // THE COORDINATOR WAS DOWN DURING THE REQUEST, RETRY WITH ANOTHER COORDINATOR
+            // THE COORDINATOR WENT DOWN DURING THE REQUEST, RETRY WITH ANOTHER COORDINATOR
+            ODistributedServerLog.warn(this, manager.getLocalNodeName(), coordinatorServer, ODistributedServerLog.DIRECTION.OUT,
+                "Coordinator server '%s' went down during the request of locking resource '%s'. Assigning new coordinator...",
+                coordinatorServer, resource);
             coordinatorServer = manager.getCoordinatorServer();
             continue;
           }
+
+          throw (RuntimeException) result;
+
         } else if (result instanceof RuntimeException)
           throw (RuntimeException) result;
 
@@ -127,6 +133,8 @@ public class ODistributedLockManagerRequester implements ODistributedLockManager
 
     ODistributedServerLog.debug(this, manager.getLocalNodeName(), coordinatorServer, ODistributedServerLog.DIRECTION.OUT,
         "Released distributed lock on resource '%s'", resource);
+
+    acquiredResources.remove(resource);
   }
 
   public void setCoordinatorServer(final String coordinatorServer) {
@@ -154,5 +162,9 @@ public class ODistributedLockManagerRequester implements ODistributedLockManager
             "Error on re-acquiring %d locks against the new coordinator '%s'", acquiredResources.size(), coordinatorServer);
       }
     }
+  }
+
+  public String getCoordinatorServer() {
+    return coordinatorServer;
   }
 }

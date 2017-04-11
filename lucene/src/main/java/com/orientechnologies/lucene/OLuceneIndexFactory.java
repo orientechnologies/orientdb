@@ -39,11 +39,11 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import static com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE.*;
+import static com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE.FULLTEXT;
 
 public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleListener {
 
-  public static final String       LUCENE_ALGORITHM = "LUCENE";
+  public static final String LUCENE_ALGORITHM = "LUCENE";
 
   private static final Set<String> TYPES;
   private static final Set<String> ALGORITHMS;
@@ -102,8 +102,8 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
   }
 
   @Override
-  public OIndexEngine createIndexEngine(String algorithm, String indexName, Boolean durableInNonTxMode, OStorage storage, int version,
-      Map<String, String> engineProperties) {
+  public OIndexEngine createIndexEngine(String algorithm, String indexName, Boolean durableInNonTxMode, OStorage storage,
+      int version, Map<String, String> engineProperties) {
 
     return new OLuceneFullTextIndexEngine(storage, indexName);
 
@@ -115,20 +115,15 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
   }
 
   @Override
-  public void onCreate(ODatabaseInternal db) {
-    OLogManager.instance().debug(this, "onCreate");
-
+  public void onCreate(ODatabaseInternal iDatabase) {
   }
 
   @Override
-  public void onOpen(ODatabaseInternal db) {
-    OLogManager.instance().debug(this, "onOpen");
-
+  public void onOpen(ODatabaseInternal iDatabase) {
   }
 
   @Override
-  public void onClose(ODatabaseInternal db) {
-    OLogManager.instance().debug(this, "onClose");
+  public void onClose(ODatabaseInternal iDatabase) {
   }
 
   @Override

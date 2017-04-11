@@ -43,15 +43,14 @@ import java.util.Date;
  * This task uses the same partition keys used by TxTask to avoid synchronizing all the worker threads (and queues).
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- *
  */
 public class OHeartbeatTask extends OAbstractRemoteTask {
-  private static final long             serialVersionUID = 1L;
-  public static final int               FACTORYID        = 16;
+  private static final long serialVersionUID = 1L;
+  public static final  int  FACTORYID        = 16;
 
-  private long                          timestamp        = System.currentTimeMillis();
+  private long timestamp = System.currentTimeMillis();
 
-  private final static SimpleDateFormat dateFormat       = new SimpleDateFormat(ODateHelper.DEF_DATETIME_FORMAT);
+  private final static SimpleDateFormat dateFormat = new SimpleDateFormat(ODateHelper.DEF_DATETIME_FORMAT);
 
   public OHeartbeatTask() {
   }
@@ -62,8 +61,9 @@ public class OHeartbeatTask extends OAbstractRemoteTask {
 
     if (ODistributedServerLog.isDebugEnabled())
       synchronized (dateFormat) {
-        ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-            "Received heartbeat (sourceTimeStamp=%s)", dateFormat.format(new Date(timestamp)));
+        ODistributedServerLog
+            .debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "Received heartbeat (sourceTimeStamp=%s)",
+                dateFormat.format(new Date(timestamp)));
       }
 
     // RETURN LOCAL TIME
@@ -134,4 +134,5 @@ public class OHeartbeatTask extends OAbstractRemoteTask {
   public String toString() {
     return getName() + " timestamp: " + timestamp;
   }
+
 }

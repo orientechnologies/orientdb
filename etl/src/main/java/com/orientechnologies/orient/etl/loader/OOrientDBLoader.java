@@ -361,15 +361,21 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
         OServerAdmin admin = new OServerAdmin(documentDatabase.getURL()).connect(serverUser, serverPassword);
         boolean exists = admin.existsDatabase();
         if (!exists && dbAutoCreate) {
+          log(INFO, "creating database: " + dbURL);
+
           admin.createDatabase(documentDatabase.getName(), dbType.name(), "plocal");
         } else if (exists && dbAutoDropIfExists) {
+          log(INFO, "dropping database: " + dbURL);
           admin.dropDatabase(documentDatabase.getName(), documentDatabase.getType());
+          log(INFO, "creating database: " + dbURL);
+          admin.createDatabase(documentDatabase.getName(), dbType.name(), "plocal");
         }
         admin.close();
 
       } catch (IOException e) {
         throw new OLoaderException(e);
       }
+      documentDatabase.activateOnCurrentThread();
       documentDatabase.close();
     }
   }

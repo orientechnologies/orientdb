@@ -84,7 +84,7 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
       dateFormat = iConfiguration.<String>field("dateFormat");
     }
     if (iConfiguration.containsField("dateTimeFormat")) {
-      dateFormat = iConfiguration.<String>field("dateTimeFormat");
+      dateTimeFormat = iConfiguration.<String>field("dateTimeFormat");
     }
 
     if (iConfiguration.containsField("ignoreEmptyLines")) {

@@ -48,8 +48,8 @@ public abstract class OAbstractSyncDatabaseTask extends OAbstractReplicatedTask 
   public static final String DEPLOYDB       = "deploydb.";
   public static final int    FACTORYID      = 14;
 
-  protected long             lastOperationTimestamp;
-  protected long             random;
+  protected long lastOperationTimestamp;
+  protected long random;
 
   public OAbstractSyncDatabaseTask() {
   }

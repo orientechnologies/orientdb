@@ -40,20 +40,17 @@ import java.util.Iterator;
  * @since 06/11/14
  */
 public class OPartitionedDatabasePoolFactory extends OOrientListenerAbstract {
-  private volatile int                                                          maxPoolSize      = 64;
-  private boolean                                                               closed           = false;
+  private volatile int     maxPoolSize = 64;
+  private          boolean closed      = false;
 
   private final ConcurrentLinkedHashMap<PoolIdentity, OPartitionedDatabasePool> poolStore;
 
-  private final EvictionListener<PoolIdentity, OPartitionedDatabasePool>        evictionListener = new EvictionListener<PoolIdentity, OPartitionedDatabasePool>() {
-                                                                                                   @Override
-                                                                                                   public void onEviction(
-                                                                                                       final PoolIdentity poolIdentity,
-                                                                                                       final OPartitionedDatabasePool partitionedDatabasePool) {
-                                                                                                     partitionedDatabasePool
-                                                                                                         .close();
-                                                                                                   }
-                                                                                                 };
+  private final EvictionListener<PoolIdentity, OPartitionedDatabasePool> evictionListener = new EvictionListener<PoolIdentity, OPartitionedDatabasePool>() {
+    @Override
+    public void onEviction(final PoolIdentity poolIdentity, final OPartitionedDatabasePool partitionedDatabasePool) {
+      partitionedDatabasePool.close();
+    }
+  };
 
   public OPartitionedDatabasePoolFactory() {
     this(100);
@@ -101,6 +98,9 @@ public class OPartitionedDatabasePoolFactory extends OOrientListenerAbstract {
   }
 
   public OPartitionedDatabasePool get(final String url, final String userName, final String userPassword) {
+    if (url == null)
+      throw new IllegalArgumentException("url parameter is null");
+
     checkForClose();
 
     final PoolIdentity poolIdentity = new PoolIdentity(url, userName, userPassword);
@@ -163,7 +163,7 @@ public class OPartitionedDatabasePoolFactory extends OOrientListenerAbstract {
     private final String userName;
     private final String userPassword;
 
-    private PoolIdentity(String url, String userName, String userPassword) {
+    private PoolIdentity(final String url, final String userName, final String userPassword) {
       this.url = url;
       this.userName = userName;
       this.userPassword = userPassword;

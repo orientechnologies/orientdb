@@ -24,13 +24,28 @@ node("master") {
                 docker.image("${mvnJdk8Image}")
                         .inside("${env.VOLUMES}") {
                     try {
-                        sh "${mvnHome}/bin/mvn  --batch-mode -V clean install  -Dsurefire.useFile=false"
-                        sh "${mvnHome}/bin/mvn  --batch-mode -V deploy -DskipTests"
+                        //skip integration test for now
+                        sh "${mvnHome}/bin/mvn  --batch-mode -V clean install   -Dsurefire.useFile=false -DskipITs"
+                        sh "${mvnHome}/bin/mvn -f distribution/pom.xml clean"
+                        sh "${mvnHome}/bin/mvn  --batch-mode -V deploy -DskipTests -DskipITs"
                     } finally {
                         junit allowEmptyResults: true, testResults: '**/target/surefire-reports/TEST-*.xml'
+
                     }
                 }
             }
+
+//            stage('Run QA/Integration tests on Java8') {
+//                docker.image("${mvnJdk8Image}")
+//                        .inside("${env.VOLUMES}") {
+//                    try {
+//                        sh "${mvnHome}/bin/mvn -f distribution/pom.xml clean install -Pqa"
+//                    } finally {
+//                        junit allowEmptyResults: true, testResults: '**/target/failsafe-reports/TEST-*.xml'
+//
+//                    }
+//                }
+//            }
 
             stage('Publish Javadoc') {
                 docker.image("${mvnJdk8Image}")
