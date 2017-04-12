@@ -70,8 +70,6 @@ public class OEnterpriseDistributedStrategy extends ODefaultDistributedStrategy 
         nodesConcurToTheQuorum.add(localNode);
     }
 
-    manager.getAvailableNodes(nodesConcurToTheQuorum, databaseName);
-
     return nodesConcurToTheQuorum;
   }
 }
