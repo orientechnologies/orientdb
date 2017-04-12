@@ -83,6 +83,11 @@ public class OUnreachableServerLocalTask extends OAbstractRemoteTask {
   }
 
   @Override
+  public boolean isUsingDatabase() {
+    return false;
+  }
+
+  @Override
   public int getFactoryId() {
     return FACTORYID;
   }

@@ -2031,8 +2031,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     }
   }
 
-  public int assignAndCheckCluster(ORecord record, String iClusterName) {
-    ORecordId rid = (ORecordId) record.getIdentity();
+  public int assignAndCheckCluster(final ORecord record, final String iClusterName) {
+    final ORecordId rid = (ORecordId) record.getIdentity();
     // if provided a cluster name use it.
     if (rid.getClusterId() <= ORID.CLUSTER_POS_INVALID && iClusterName != null) {
       rid.setClusterId(getClusterIdByName(iClusterName));
@@ -2072,9 +2072,14 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         String messageClusterName = getClusterNameById(rid.getClusterId());
         checkRecordClass(schemaClass, messageClusterName, rid);
         if (!schemaClass.hasClusterId(rid.getClusterId())) {
-          throw new IllegalArgumentException(
-              "Cluster name '" + messageClusterName + "' (id=" + rid.getClusterId() + ") is not configured to store the class '"
-                  + schemaClass.getName() + "', valid are " + Arrays.toString(schemaClass.getClusterIds()));
+          // BYPASS THE IMMUTABLE CLASS
+          final OClass dbClass = metadata.getSchema().getClass(schemaClass.getName());
+
+          if (!dbClass.hasClusterId(rid.getClusterId())) {
+            throw new IllegalArgumentException(
+                "Cluster name '" + messageClusterName + "' (id=" + rid.getClusterId() + ") is not configured to store the class '"
+                    + schemaClass.getName() + "', valid are " + Arrays.toString(schemaClass.getClusterIds()));
+          }
         }
       }
     }

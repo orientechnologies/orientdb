@@ -571,6 +571,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     if (rNodeName == null)
       throw new IllegalArgumentException("Server name is NULL");
 
+    if (rNodeName.equalsIgnoreCase(getLocalNodeName()))
+      throw new IllegalArgumentException("Cannot send remote message to the local server");
+
     ORemoteServerController remoteServer = remoteServers.get(rNodeName);
     if (remoteServer == null) {
       Member member = activeNodes.get(rNodeName);
@@ -710,7 +713,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
             cfg.addNewNodeInServerList(nodeName);
 
             // COLLECT ALL THE CLUSTERS WITH REMOVED NODE AS OWNER
-            reassignClustersOwnership(nodeName, databaseName, cfg);
+            reassignClustersOwnership(nodeName, databaseName, cfg, true);
 
             try {
               ddb.getSyncConfiguration().setLastLSN(nodeName, ((OLocalPaginatedStorage) stg.getUnderlying()).getLSN(), false);
@@ -1460,7 +1463,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
       for (String databaseName : getManagedDatabases()) {
         try {
-          reassignClustersOwnership(nodeName, databaseName, null);
+          reassignClustersOwnership(nodeName, databaseName, null, false);
         } catch (Exception e) {
           // IGNORE IT
           ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE,
@@ -1503,7 +1506,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         currIndex = 0;
 
       final String newServer = registeredNodeById.get(currIndex);
-      if (activeNodes.containsKey(newServer)) {
+      if (newServer.equalsIgnoreCase(getLocalNodeName()) || activeNodes.containsKey(newServer)) {
         // TODO: IMPROVE ELECTION BY CHECKING AL THE NODES AGREE ON IT
 
         getLockManagerRequester().setCoordinatorServer(newServer);

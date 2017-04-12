@@ -387,20 +387,20 @@ public class ODistributedWorker extends Thread {
     final ODistributedResponse response = new ODistributedResponse(iRequest.getId(), localNodeName, senderNodeName,
         responsePayload);
 
-    try {
-      // GET THE SENDER'S RESPONSE QUEUE
-      final ORemoteServerController remoteSenderServer = manager.getRemoteServer(senderNodeName);
+    if (!senderNodeName.equalsIgnoreCase(manager.getLocalNodeName()))
+      try {
+        // GET THE SENDER'S RESPONSE QUEUE
+        final ORemoteServerController remoteSenderServer = manager.getRemoteServer(senderNodeName);
 
-      ODistributedServerLog
-          .debug(current, localNodeName, senderNodeName, ODistributedServerLog.DIRECTION.OUT, "Sending response %s back (reqId=%s)",
-              response, iRequest);
+        ODistributedServerLog.debug(current, localNodeName, senderNodeName, ODistributedServerLog.DIRECTION.OUT,
+            "Sending response %s back (reqId=%s)", response, iRequest);
 
-      remoteSenderServer.sendResponse(response);
+        remoteSenderServer.sendResponse(response);
 
-    } catch (Exception e) {
-      ODistributedServerLog.debug(current, localNodeName, senderNodeName, ODistributedServerLog.DIRECTION.OUT,
-          "Error on sending response '%s' back (reqId=%s err=%s)", response, iRequest.getId(), e.toString());
-    }
+      } catch (Exception e) {
+        ODistributedServerLog.debug(current, localNodeName, senderNodeName, ODistributedServerLog.DIRECTION.OUT,
+            "Error on sending response '%s' back (reqId=%s err=%s)", response, iRequest.getId(), e.toString());
+      }
   }
 
   private void waitNodeIsOnline() throws OTimeoutException {

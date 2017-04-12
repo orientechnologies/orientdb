@@ -72,8 +72,6 @@ public class ODefaultDistributedStrategy implements ODistributedStrategy {
         nodesConcurToTheQuorum.add(manager.getLocalNodeName());
     }
 
-    manager.getAvailableNodes(nodesConcurToTheQuorum, databaseName);
-
     return nodesConcurToTheQuorum;
   }
 }
