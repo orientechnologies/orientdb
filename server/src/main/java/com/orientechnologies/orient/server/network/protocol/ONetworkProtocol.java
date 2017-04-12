@@ -33,7 +33,7 @@ public abstract class ONetworkProtocol extends OSoftThread {
 
   public ONetworkProtocol(final ThreadGroup group, final String name) {
     super(group, name);
-    //setDumpExceptions(false);
+    setDumpExceptions(false);
   }
 
   public abstract void config(final OServerNetworkListener iListener, final OServer iServer, final Socket iSocket,
