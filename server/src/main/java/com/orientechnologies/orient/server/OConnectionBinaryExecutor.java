@@ -64,6 +64,7 @@ import com.orientechnologies.orient.server.tx.OTransactionOptimisticServer;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
@@ -233,10 +234,16 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       // SEND THE DB CONFIGURATION INSTEAD SINCE IT WAS ON RECORD 0:0
       OFetchHelper.checkFetchPlanValid(fetchPlanString);
 
+      Charset charset;
+      if (connection.getData().protocolVersion >= OChannelBinaryProtocol.PROTOCOL_VERSION_38)
+        charset = Charset.forName("UTF-8");
+      else
+        charset = Charset.defaultCharset();
+
       final byte[] record = connection.getDatabase().getStorage().callInLock(new Callable<byte[]>() {
         @Override
         public byte[] call() throws Exception {
-          return connection.getDatabase().getStorage().getConfiguration().toStream(connection.getData().protocolVersion);
+          return connection.getDatabase().getStorage().getConfiguration().toStream(connection.getData().protocolVersion, charset);
         }
       }, false);
 
@@ -293,10 +300,16 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       // SEND THE DB CONFIGURATION INSTEAD SINCE IT WAS ON RECORD 0:0
       OFetchHelper.checkFetchPlanValid(fetchPlanString);
 
+      Charset charset;
+      if (connection.getData().protocolVersion >= OChannelBinaryProtocol.PROTOCOL_VERSION_38)
+        charset = Charset.forName("UTF-8");
+      else
+        charset = Charset.defaultCharset();
+
       final byte[] record = connection.getDatabase().getStorage().callInLock(new Callable<byte[]>() {
         @Override
         public byte[] call() throws Exception {
-          return connection.getDatabase().getStorage().getConfiguration().toStream(connection.getData().protocolVersion);
+          return connection.getDatabase().getStorage().getConfiguration().toStream(connection.getData().protocolVersion, charset);
         }
       }, false);
 

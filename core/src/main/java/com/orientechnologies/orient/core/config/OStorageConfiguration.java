@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.text.DecimalFormatSymbols;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -97,7 +98,11 @@ public class OStorageConfiguration implements OSerializableStream {
   private volatile transient boolean validation = true;
   private volatile boolean txRequiredForSQLGraphOperations;
 
-  public OStorageConfiguration(final OStorage iStorage) {
+  protected final Charset streamCharset;
+
+  public OStorageConfiguration(final OStorage iStorage, Charset streamCharset) {
+    this.streamCharset = streamCharset;
+
     storage = iStorage;
 
     initConfiguration(new OContextConfiguration());
@@ -147,7 +152,8 @@ public class OStorageConfiguration implements OSerializableStream {
 
     binaryFormatVersion = CURRENT_BINARY_FORMAT_VERSION;
 
-    txRequiredForSQLGraphOperations = getContextConfiguration().getValueAsString(OGlobalConfiguration.SQL_GRAPH_CONSISTENCY_MODE).equalsIgnoreCase("tx");
+    txRequiredForSQLGraphOperations = getContextConfiguration().getValueAsString(OGlobalConfiguration.SQL_GRAPH_CONSISTENCY_MODE)
+        .equalsIgnoreCase("tx");
   }
 
   private void autoInitClusters() {
@@ -174,7 +180,9 @@ public class OStorageConfiguration implements OSerializableStream {
    * 0.9.25.
    *
    * @param configuration
+   *
    * @return
+   *
    * @throws OSerializationException
    * @compatibility 0.9.25
    */
@@ -186,13 +194,13 @@ public class OStorageConfiguration implements OSerializableStream {
     if (record == null)
       throw new OStorageException("Cannot load database configuration. The database seems corrupted");
 
-    fromStream(record);
+    fromStream(record, 0, record.length, streamCharset);
 
     return this;
   }
 
   public void update() throws OSerializationException {
-    final byte[] record = toStream();
+    final byte[] record = toStream(streamCharset);
     storage.updateRecord(CONFIG_RID, true, record, -1, OBlob.RECORD_TYPE, 0, null);
   }
 
@@ -201,7 +209,9 @@ public class OStorageConfiguration implements OSerializableStream {
   }
 
   public String getDirectory() {
-    return fileTemplate.location != null ? fileTemplate.getLocation() : ((OLocalPaginatedStorage) storage).getStoragePath().toString();
+    return fileTemplate.location != null ?
+        fileTemplate.getLocation() :
+        ((OLocalPaginatedStorage) storage).getStoragePath().toString();
   }
 
   public Locale getLocaleInstance() {
@@ -235,10 +245,10 @@ public class OStorageConfiguration implements OSerializableStream {
     return unusualSymbols;
   }
 
-  public void fromStream(final byte[] stream, int offset, int length) {
+  public void fromStream(final byte[] stream, int offset, int length, Charset charset) {
     clear();
 
-    final String[] values = new String(stream, offset, length).split("\\|");
+    final String[] values = new String(stream, offset, length, charset).split("\\|");
     int index = 0;
     version = Integer.parseInt(read(values[index++]));
 
@@ -258,7 +268,7 @@ public class OStorageConfiguration implements OSerializableStream {
     dateTimeFormat = read(values[index++]);
 
     timeZone = TimeZone.getTimeZone(read(values[index++]));
-    charset = read(values[index++]);
+    this.charset = read(values[index++]);
 
     final ORecordConflictStrategyFactory conflictStrategyFactory = Orient.instance().getRecordConflictStrategy();
     conflictStrategy = conflictStrategyFactory.getStrategy(read(values[index++])).getName();
@@ -307,9 +317,9 @@ public class OStorageConfiguration implements OSerializableStream {
         OStorageClusterConfiguration.STATUS status = OStorageClusterConfiguration.STATUS.ONLINE;
         status = OStorageClusterConfiguration.STATUS.valueOf(read(values[index++]));
 
-        currentCluster = new OStoragePaginatedClusterConfiguration(this, clusterId, clusterName, null, cc, bb, aa, clusterCompression,
-            clusterEncryption, configuration.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY), clusterConflictStrategy,
-            status);
+        currentCluster = new OStoragePaginatedClusterConfiguration(this, clusterId, clusterName, null, cc, bb, aa,
+            clusterCompression, clusterEncryption, configuration.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY),
+            clusterConflictStrategy, status);
 
       } else if (clusterType.equals("p"))
         // PHYSICAL CLUSTER
@@ -412,23 +422,36 @@ public class OStorageConfiguration implements OSerializableStream {
     }
   }
 
+  /**
+   * @deprecated because method uses native encoding use {@link #fromStream(byte[], int, int, Charset)} instead.
+   */
+  @Deprecated
   public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {
-    fromStream(iStream, 0, iStream.length);
+    fromStream(iStream, 0, iStream.length, Charset.defaultCharset());
     return this;
   }
 
+  /**
+   * @deprecated because method uses native encoding use {@link #toStream(Charset)} instead.
+   */
   public byte[] toStream() throws OSerializationException {
-    return toStream(Integer.MAX_VALUE);
+    return toStream(Integer.MAX_VALUE, Charset.defaultCharset());
+  }
+
+  public byte[] toStream(Charset charset) throws OSerializationException {
+    return toStream(Integer.MAX_VALUE, charset);
   }
 
   /**
    * Added version used for managed Network Versioning.
    *
    * @param iNetworkVersion
+   *
    * @return
+   *
    * @throws OSerializationException
    */
-  public byte[] toStream(final int iNetworkVersion) throws OSerializationException {
+  public byte[] toStream(final int iNetworkVersion, Charset charset) throws OSerializationException {
     final StringBuilder buffer = new StringBuilder(8192);
 
     write(buffer, CURRENT_VERSION);
@@ -557,7 +580,7 @@ public class OStorageConfiguration implements OSerializableStream {
     // PLAIN: ALLOCATE ENOUGH SPACE TO REUSE IT EVERY TIME
     buffer.append("|");
 
-    return buffer.toString().getBytes();
+    return buffer.toString().getBytes(charset);
   }
 
   public void lock() throws IOException {

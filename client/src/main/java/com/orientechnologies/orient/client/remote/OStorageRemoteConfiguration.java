@@ -22,14 +22,27 @@ package com.orientechnologies.orient.client.remote;
 
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 
+import java.nio.charset.Charset;
+
 public class OStorageRemoteConfiguration extends OStorageConfiguration {
 
   private static final long serialVersionUID = -3850696054909943272L;
-  private String            networkRecordSerializer;
+  private String networkRecordSerializer;
 
-  public OStorageRemoteConfiguration(OStorageRemote oStorageRemote, String iRecordSerializer) {
-    super(oStorageRemote);
+  public OStorageRemoteConfiguration(OStorageRemote oStorageRemote, String iRecordSerializer, int serverVersion) {
+    super(oStorageRemote, getCharset(serverVersion));
+
     networkRecordSerializer = iRecordSerializer;
+  }
+
+  private static Charset getCharset(int serverVersion) {
+    Charset charset;
+    if (serverVersion >= 38)
+      charset = Charset.forName("UTF-8");
+    else
+      charset = Charset.defaultCharset();
+
+    return charset;
   }
 
   @Override
