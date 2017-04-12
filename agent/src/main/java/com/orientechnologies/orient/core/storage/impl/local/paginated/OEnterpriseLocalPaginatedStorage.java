@@ -597,7 +597,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
       }
     }
 
-    configuration.fromStream(buffer, 0, rb);
+    configuration.fromStream(buffer, 0, rb, Charset.forName(configuration.getCharset()));
     configuration.update();
 
     configuration.close();
