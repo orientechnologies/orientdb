@@ -96,7 +96,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected static final String NODE_NAME_ENV             = "ORIENTDB_NODE_NAME";
 
   protected OServer serverInstance;
-  protected boolean enabled = true;
   protected String nodeUuid;
   protected String nodeName = null;
   protected int    nodeId   = -1;

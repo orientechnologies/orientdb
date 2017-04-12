@@ -37,16 +37,15 @@ import java.util.Set;
 /**
  * Allow the execution of server-side scripting. This could be a security hole in your configuration if users have access to the
  * database and can execute any kind of code.
- * 
+ *
  * @author Luca
- * 
  */
 public class OServerSideScriptInterpreter extends OServerPluginAbstract {
-  protected boolean     enabled          = false;
   protected Set<String> allowedLanguages = new HashSet<String>();
 
   @Override
   public void config(final OServer iServer, OServerParameterConfiguration[] iParams) {
+    enabled = false;
     for (OServerParameterConfiguration param : iParams) {
       if (param.name.equalsIgnoreCase("enabled")) {
         if (Boolean.parseBoolean(param.value))
@@ -70,8 +69,8 @@ public class OServerSideScriptInterpreter extends OServerPluginAbstract {
     if (!enabled)
       return;
 
-    OCommandManager.instance().registerExecutor(OCommandScript.class, OCommandExecutorScript.class,
-        new OCallable<Void, OCommandRequest>() {
+    OCommandManager.instance()
+        .registerExecutor(OCommandScript.class, OCommandExecutorScript.class, new OCallable<Void, OCommandRequest>() {
           @Override
           public Void call(OCommandRequest iArgument) {
             final String language = ((OCommandScript) iArgument).getLanguage().toLowerCase();

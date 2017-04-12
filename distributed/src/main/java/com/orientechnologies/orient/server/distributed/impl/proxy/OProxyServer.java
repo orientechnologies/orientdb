@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Map;
 
 public class OProxyServer extends OServerPluginAbstract {
-  protected boolean                    enabled                     = true;
   protected String                     remoteHost                  = "localhost";
   protected Map<Integer, Integer>      ports                       = new HashMap<Integer, Integer>();
   protected int                        bufferSize                  = 16384;

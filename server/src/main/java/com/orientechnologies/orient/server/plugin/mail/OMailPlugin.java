@@ -65,7 +65,8 @@ public class OMailPlugin extends OServerPluginAbstract implements OScriptInjecti
 
     for (OServerParameterConfiguration param : iParams) {
       if (param.name.equalsIgnoreCase("enabled")) {
-        configuration.field("enabled", Boolean.parseBoolean(param.value));
+        enabled = Boolean.parseBoolean(param.value);
+        configuration.field("enabled", enabled);
       } else if (param.name.startsWith(CONFIG_PROFILE_PREFIX)) {
         final String parts = param.name.substring(CONFIG_PROFILE_PREFIX.length());
         int pos = parts.indexOf('.');

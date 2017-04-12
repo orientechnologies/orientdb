@@ -36,7 +36,8 @@ public class OrientTokenHandler extends OServerPluginAbstract implements OTokenH
     String algorithm = null;
     for (OServerParameterConfiguration param : iParams) {
       if (param.name.equalsIgnoreCase("enabled")) {
-        if (!Boolean.parseBoolean(param.value))
+        enabled = Boolean.parseBoolean(param.value);
+        if (!enabled)
           return;
       } else if (param.name.equalsIgnoreCase(SIGN_KEY_PAR)) {
         key = param.value;

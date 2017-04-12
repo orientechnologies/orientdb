@@ -19,28 +19,21 @@
  */
 package com.orientechnologies.orient.server.plugin.livequery;
 
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OLiveCommandExecutorSQLFactory;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
 /**
  * Created by Luigi Dell'Aquila
- *
+ * <p>
  * Not needed anymore, keeping the class for backward compatibilty
  */
 @Deprecated
 public class OLiveQueryPlugin extends OServerPluginAbstract implements ODatabaseLifecycleListener {
-
-  private boolean enabled = false;
 
   public boolean isEnabled() {
     return enabled;
@@ -52,6 +45,7 @@ public class OLiveQueryPlugin extends OServerPluginAbstract implements ODatabase
 
   @Override
   public void config(final OServer iServer, final OServerParameterConfiguration[] iParams) {
+    enabled = false;
     super.config(iServer, iParams);
     for (OServerParameterConfiguration param : iParams) {
       if (param.name.equalsIgnoreCase("enabled")) {
@@ -72,13 +66,7 @@ public class OLiveQueryPlugin extends OServerPluginAbstract implements ODatabase
   }
 
   @Override
-  public void startup() {
-    super.startup();
-  }
-
-  @Override
   public void onCreate(ODatabaseInternal iDatabase) {
-
   }
 
   @Override

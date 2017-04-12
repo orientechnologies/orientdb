@@ -44,7 +44,8 @@ public class OJMXPlugin extends OServerPluginAbstract {
   public void config(final OServer oServer, final OServerParameterConfiguration[] iParams) {
     for (OServerParameterConfiguration param : iParams) {
       if (param.name.equalsIgnoreCase("enabled")) {
-        if (!Boolean.parseBoolean(param.value))
+        enabled = Boolean.parseBoolean(param.value);
+        if (!enabled)
           // DISABLE IT
           return;
       } else if (param.name.equalsIgnoreCase("profilerManaged"))
@@ -70,10 +71,10 @@ public class OJMXPlugin extends OServerPluginAbstract {
   }
 
   /*
-   * (non-Javadoc)
-   * 
-   * @see com.orientechnologies.orient.server.handler.OServerHandlerAbstract#shutdown()
-   */
+     * (non-Javadoc)
+     *
+     * @see com.orientechnologies.orient.server.handler.OServerHandlerAbstract#shutdown()
+     */
   @Override
   public void shutdown() {
     try {

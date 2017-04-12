@@ -6,7 +6,7 @@ import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 /**
  * Created by frank on 21/01/2016.
  */
-public class OServerFailingOnStarupPluginStub extends OServerPluginAbstract {
+public class OServerFailingOnStartupPluginStub extends OServerPluginAbstract {
 
   @Override
   public void startup() {

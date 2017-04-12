@@ -25,13 +25,16 @@ import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 
 /**
  * Abstract class to make OServerHandler implementation easier.
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * 
  */
 public abstract class OServerPluginAbstract implements OServerPlugin {
+  protected boolean enabled = true;
+
   @Override
   public void startup() {
+    if (!enabled)
+      return;
   }
 
   @Override
