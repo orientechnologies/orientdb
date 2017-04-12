@@ -29,20 +29,10 @@ public class OStorageRemoteConfiguration extends OStorageConfiguration {
   private static final long serialVersionUID = -3850696054909943272L;
   private String networkRecordSerializer;
 
-  public OStorageRemoteConfiguration(OStorageRemote oStorageRemote, String iRecordSerializer, int serverVersion) {
-    super(oStorageRemote, getCharset(serverVersion));
+  public OStorageRemoteConfiguration(OStorageRemote oStorageRemote, String iRecordSerializer) {
+    super(oStorageRemote,  Charset.forName("UTF-8"));
 
     networkRecordSerializer = iRecordSerializer;
-  }
-
-  private static Charset getCharset(int serverVersion) {
-    Charset charset;
-    if (serverVersion >= 38)
-      charset = Charset.forName("UTF-8");
-    else
-      charset = Charset.defaultCharset();
-
-    return charset;
   }
 
   @Override

@@ -389,10 +389,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         if (strategy != null)
           connectionStrategy = CONNECTION_STRATEGY.valueOf(strategy.toUpperCase());
 
-        final int serverVersion = openRemoteDatabase();
+        openRemoteDatabase();
 
         final OStorageConfiguration storageConfiguration = new OStorageRemoteConfiguration(this,
-            ORecordSerializerFactory.instance().getDefaultRecordSerializer().toString(), serverVersion);
+            ORecordSerializerFactory.instance().getDefaultRecordSerializer().toString());
         storageConfiguration.load(conf);
 
         configuration = storageConfiguration;
@@ -1249,9 +1249,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     }
   }
 
-  protected synchronized int openRemoteDatabase() throws IOException {
+  protected synchronized void openRemoteDatabase() throws IOException {
     final String currentURL = getNextAvailableServerURL(true, getCurrentSession());
-    return openRemoteDatabase(currentURL);
+    openRemoteDatabase(currentURL);
   }
 
   public void openRemoteDatabase(OChannelBinaryAsynchClient network) throws IOException {
@@ -1299,7 +1299,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     }
   }
 
-  protected int openRemoteDatabase(String currentURL) {
+  protected void openRemoteDatabase(String currentURL) {
     do {
       do {
         OChannelBinaryAsynchClient network = null;
@@ -1307,8 +1307,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           network = getNetwork(currentURL);
           final int serverVersion = network.getSrvProtocolVersion();
           openRemoteDatabase(network);
-
-          return serverVersion;
+          return;
         } catch (OIOException e) {
           if (network != null) {
             // REMOVE THE NETWORK CONNECTION IF ANY

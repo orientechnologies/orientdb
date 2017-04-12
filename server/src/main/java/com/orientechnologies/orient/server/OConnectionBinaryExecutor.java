@@ -234,16 +234,10 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       // SEND THE DB CONFIGURATION INSTEAD SINCE IT WAS ON RECORD 0:0
       OFetchHelper.checkFetchPlanValid(fetchPlanString);
 
-      Charset charset;
-      if (connection.getData().protocolVersion >= OChannelBinaryProtocol.PROTOCOL_VERSION_38)
-        charset = Charset.forName("UTF-8");
-      else
-        charset = Charset.defaultCharset();
-
       final byte[] record = connection.getDatabase().getStorage().callInLock(new Callable<byte[]>() {
         @Override
         public byte[] call() throws Exception {
-          return connection.getDatabase().getStorage().getConfiguration().toStream(connection.getData().protocolVersion, charset);
+          return connection.getDatabase().getStorage().getConfiguration().toStream(connection.getData().protocolVersion, Charset.forName("UTF-8"));
         }
       }, false);
 
@@ -300,16 +294,10 @@ final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       // SEND THE DB CONFIGURATION INSTEAD SINCE IT WAS ON RECORD 0:0
       OFetchHelper.checkFetchPlanValid(fetchPlanString);
 
-      Charset charset;
-      if (connection.getData().protocolVersion >= OChannelBinaryProtocol.PROTOCOL_VERSION_38)
-        charset = Charset.forName("UTF-8");
-      else
-        charset = Charset.defaultCharset();
-
       final byte[] record = connection.getDatabase().getStorage().callInLock(new Callable<byte[]>() {
         @Override
         public byte[] call() throws Exception {
-          return connection.getDatabase().getStorage().getConfiguration().toStream(connection.getData().protocolVersion, charset);
+          return connection.getDatabase().getStorage().getConfiguration().toStream(connection.getData().protocolVersion, Charset.forName("UTF-8"));
         }
       }, false);
 
