@@ -1812,13 +1812,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         final byte[] storageStream = connection.getDatabase().getStorage().callInLock(new Callable<byte[]>() {
           @Override
           public byte[] call() throws Exception {
-            Charset charset;
-            if (connection.getData().protocolVersion >= OChannelBinaryProtocol.PROTOCOL_VERSION_37)
-              charset = Charset.forName("UTF-8");
-            else
-              charset = Charset.defaultCharset();
-
-            return connection.getDatabase().getStorage().getConfiguration().toStream(connection.getData().protocolVersion, charset);
+            return connection.getDatabase().getStorage().getConfiguration().toStream(connection.getData().protocolVersion, Charset.forName("UTF-8"));
           }
         }, false);
 
@@ -1920,14 +1914,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         final byte[] storageStream = connection.getDatabase().getStorage().callInLock(new Callable<byte[]>() {
           @Override
           public byte[] call() throws Exception {
-            Charset charset;
-
-            if (connection.getData().protocolVersion >= OChannelBinaryProtocol.PROTOCOL_VERSION_37)
-              charset = Charset.forName("UTF-8");
-            else
-              charset = Charset.defaultCharset();
-
-            return connection.getDatabase().getStorage().getConfiguration().toStream(connection.getData().protocolVersion, charset);
+            return connection.getDatabase().getStorage().getConfiguration().toStream(connection.getData().protocolVersion,  Charset.forName("UTF-8"));
           }
         }, false);
 
