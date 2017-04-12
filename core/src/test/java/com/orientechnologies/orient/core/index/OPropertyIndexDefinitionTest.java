@@ -9,7 +9,9 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @Test
@@ -98,7 +100,44 @@ public class OPropertyIndexDefinitionTest {
     database.drop();
     Assert.assertEquals(result, propertyIndex);
   }
+  
+  @Test
+  public void testIndexOnSubProperty() {
+    final ODatabaseDocumentTx database = new ODatabaseDocumentTx("memory:propertytest");
+    try {
+      database.create();
+      OClass topClass = database.getMetadata().getSchema().createClass("TopLevel");
+      OClass embeddedClass = database.getMetadata().getSchema().createClass("EmbeddedClass");
+      embeddedClass.createProperty("toIndex", OType.STRING);
+      topClass.createProperty("embedded", OType.EMBEDDED).setLinkedClass(embeddedClass);
+      topClass.createIndex("subFieldIndex", INDEX_TYPE.DICTIONARY, "embedded.toIndex");
+    
+      database.drop();
+    } finally {
+      if (database.exists())
+        database.drop();
+    }
+  }
 
+  @Test
+  public void testIndexOnSubProperties() {
+    final ODatabaseDocumentTx database = new ODatabaseDocumentTx("memory:propertytest");
+    try {
+      database.create();
+      OClass topClass = database.getMetadata().getSchema().createClass("TopLevel");
+      OClass embeddedClass = database.getMetadata().getSchema().createClass("EmbeddedClass");
+      embeddedClass.createProperty("toIndex2", OType.STRING);
+      topClass.createProperty("toIndex", OType.STRING);
+      topClass.createProperty("embedded", OType.EMBEDDED).setLinkedClass(embeddedClass);
+      topClass.createIndex("multipleFieldIndex", INDEX_TYPE.DICTIONARY, "toIndex", "embedded.toIndex2");
+    
+      database.drop();
+    } finally {
+      if (database.exists())
+        database.drop();
+    }
+  }
+  
   @Test
   public void testIndexReload() {
     final ODocument docToStore = propertyIndex.toStream();
