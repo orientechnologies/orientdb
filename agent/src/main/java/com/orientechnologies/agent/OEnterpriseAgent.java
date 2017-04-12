@@ -64,7 +64,6 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
   private static final String ORIENDB_ENTERPRISE_VERSION = "2.2"; // CHECK IF THE ORIENTDB COMMUNITY EDITION STARTS WITH THIS
   public  OServer server;
   private String  license;
-  private boolean enabled = false;
   public static final String TOKEN;
 
   static {
@@ -86,6 +85,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
 
   @Override
   public void config(OServer oServer, OServerParameterConfiguration[] iParams) {
+    enabled = false;
     server = oServer;
     for (OServerParameterConfiguration p : iParams) {
       if (p.name.equals("license"))
