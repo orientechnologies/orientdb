@@ -86,6 +86,11 @@ public abstract class OAbstractRemoteTask implements ORemoteTask {
   }
 
   @Override
+  public boolean hasResponse() {
+    return true;
+  }
+
+  @Override
   public RESULT_STRATEGY getResultStrategy() {
     return RESULT_STRATEGY.ANY;
   }

@@ -68,6 +68,11 @@ public class OUnreachableServerLocalTask extends OAbstractRemoteTask {
   }
 
   @Override
+  public boolean hasResponse() {
+    return false;
+  }
+
+  @Override
   public String getName() {
     return "unreachable-server";
   }

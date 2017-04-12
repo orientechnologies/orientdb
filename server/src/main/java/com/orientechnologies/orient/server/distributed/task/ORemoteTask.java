@@ -36,6 +36,8 @@ import java.io.IOException;
  * @author Luca Garulli
  */
 public interface ORemoteTask {
+  boolean hasResponse();
+
   enum RESULT_STRATEGY {
     ANY, UNION
   }

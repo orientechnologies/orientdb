@@ -571,8 +571,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     if (rNodeName == null)
       throw new IllegalArgumentException("Server name is NULL");
 
-    if (rNodeName.equalsIgnoreCase(getLocalNodeName()))
-      throw new IllegalArgumentException("Cannot send remote message to the local server");
+// TODO: check if it's possible to bypass remote call
+//    if (rNodeName.equalsIgnoreCase(getLocalNodeName()))
+//      throw new IllegalArgumentException("Cannot send remote message to the local server");
 
     ORemoteServerController remoteServer = remoteServers.get(rNodeName);
     if (remoteServer == null) {
