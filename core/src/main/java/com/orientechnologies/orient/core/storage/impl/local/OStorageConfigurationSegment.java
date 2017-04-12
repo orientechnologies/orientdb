@@ -163,10 +163,11 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
       if (!f.isOpen())
         return;
 
-      final byte[] buffer = toStream();
+      final Charset utf8 = Charset.forName("UTF-8");
+      final byte[] buffer = toStream(utf8);
 
       final String encodingName = "UTF-8";
-      final byte[] binaryEncodingName = encodingName.getBytes(Charset.forName("UTF-8"));
+      final byte[] binaryEncodingName = encodingName.getBytes(utf8);
 
       //length of presentation of configuration + configuration + 3 utf-8 encoding flags + length of utf-8 encoding name +
       //utf-8 encoding name
