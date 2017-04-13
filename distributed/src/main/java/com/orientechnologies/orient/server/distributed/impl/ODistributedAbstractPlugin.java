@@ -96,7 +96,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected static final String NODE_NAME_ENV             = "ORIENTDB_NODE_NAME";
 
   protected OServer serverInstance;
-  protected String nodeUuid;
+  protected String  nodeUuid;
   protected String nodeName = null;
   protected int    nodeId   = -1;
   protected File defaultDatabaseConfigFile;
@@ -1645,22 +1645,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       throw new RuntimeException(e);
 
     } finally {
-      for (int retry = 0; retry < 10; ++retry)
-        try {
-          lockManagerRequester.releaseExclusiveLock(databaseName, nodeName);
-          // RELEASED
-          break;
-        } catch (Throwable t) {
-          // ERROR: RETRY IN A BIT
-          ODistributedServerLog.error(this, nodeName, databaseName, DIRECTION.OUT,
-              "Cannot release distributed lock against database '%s' coordinator server '%s' (error: %s)", databaseName,
-              lockManagerRequester.getCoordinatorServer(), t);
-          try {
-            Thread.sleep(100);
-          } catch (InterruptedException e) {
-            break;
-          }
-        }
+      lockManagerRequester.releaseExclusiveLock(databaseName, nodeName);
     }
   }
 
@@ -2037,7 +2022,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   }
 
   public static String getListeningBinaryAddress(final ODocument cfg) {
-    if( cfg == null )
+    if (cfg == null)
       return null;
 
     String url = cfg.field("publicAddress");

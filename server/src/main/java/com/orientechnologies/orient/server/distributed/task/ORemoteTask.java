@@ -71,6 +71,11 @@ public interface ORemoteTask {
 
   int getFactoryId();
 
+  /**
+   * Checks the request is still valid.
+   */
+  void checkIsValid(ODistributedServerManager dManager);
+
   void toStream(DataOutput out) throws IOException;
 
   void fromStream(DataInput in, ORemoteTaskFactory factory) throws IOException;

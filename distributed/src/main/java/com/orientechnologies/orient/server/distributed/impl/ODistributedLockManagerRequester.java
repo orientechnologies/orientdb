@@ -59,9 +59,9 @@ public class ODistributedLockManagerRequester implements ODistributedLockManager
         ODistributedServerLog.debug(this, manager.getLocalNodeName(), coordinatorServer, ODistributedServerLog.DIRECTION.OUT,
             "Server '%s' is acquiring distributed lock on resource '%s'...", nodeSource, resource);
 
-        final ODistributedResponse dResponse = manager
-            .sendRequest(OSystemDatabase.SYSTEM_DB_NAME, null, servers, new ODistributedLockTask(resource, timeout, true),
-                manager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
+        final ODistributedResponse dResponse = manager.sendRequest(OSystemDatabase.SYSTEM_DB_NAME, null, servers,
+            new ODistributedLockTask(coordinatorServer, resource, timeout, true), manager.getNextMessageIdCounter(),
+            ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
 
         if (dResponse == null) {
           ODistributedServerLog.warn(this, manager.getLocalNodeName(), coordinatorServer, ODistributedServerLog.DIRECTION.OUT,
@@ -108,27 +108,53 @@ public class ODistributedLockManagerRequester implements ODistributedLockManager
 
   @Override
   public void releaseExclusiveLock(final String resource, final String nodeSource) {
-    if (coordinatorServer == null || coordinatorServer.equals(manager.getLocalNodeName())) {
-      // THE COORDINATOR IS THE LOCAL SERVER, RELEASE IT LOCALLY
-      manager.getLockManagerExecutor().releaseExclusiveLock(resource, manager.getLocalNodeName());
-    } else {
-      // RELEASE THE LOCK INTO THE COORDINATOR SERVER
-      ODistributedServerLog.debug(this, manager.getLocalNodeName(), coordinatorServer, ODistributedServerLog.DIRECTION.OUT,
-          "Releasing distributed lock on resource '%s'", resource);
+    while (true) {
+      if (coordinatorServer == null || coordinatorServer.equals(manager.getLocalNodeName())) {
+        // THE COORDINATOR IS THE LOCAL SERVER, RELEASE IT LOCALLY
+        manager.getLockManagerExecutor().releaseExclusiveLock(resource, manager.getLocalNodeName());
+        break;
+      } else {
+        // RELEASE THE LOCK INTO THE COORDINATOR SERVER
+        ODistributedServerLog.debug(this, manager.getLocalNodeName(), coordinatorServer, ODistributedServerLog.DIRECTION.OUT,
+            "Releasing distributed lock on resource '%s'", resource);
 
-      final Set<String> servers = new HashSet<String>();
-      servers.add(coordinatorServer);
+        final Set<String> servers = new HashSet<String>();
+        servers.add(coordinatorServer);
 
-      final ODistributedResponse dResponse = manager
-          .sendRequest(OSystemDatabase.SYSTEM_DB_NAME, null, servers, new ODistributedLockTask(resource, 0, false),
-              manager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
+        final ODistributedResponse dResponse = manager.sendRequest(OSystemDatabase.SYSTEM_DB_NAME, null, servers,
+            new ODistributedLockTask(coordinatorServer, resource, 0, false), manager.getNextMessageIdCounter(),
+            ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
 
-      if (dResponse == null)
-        throw new OLockException("Cannot release exclusive lock on resource '" + resource + "'");
+        if (dResponse == null)
+          throw new OLockException("Cannot release exclusive lock on resource '" + resource + "'");
 
-      final Object result = dResponse.getPayload();
-      if (result instanceof RuntimeException)
-        throw (RuntimeException) result;
+        final Object result = dResponse.getPayload();
+
+        if (result instanceof ODistributedOperationException) {
+          if (manager.getActiveServers().contains(coordinatorServer))
+            // WAIT ONLY IN THE CASE THE COORDINATOR IS STILL ONLINE
+            try {
+              Thread.sleep(500);
+            } catch (InterruptedException e) {
+              // IGNORE IT
+            }
+
+          if (!manager.getActiveServers().contains(coordinatorServer)) {
+            // THE COORDINATOR WENT DOWN DURING THE REQUEST, RETRY WITH ANOTHER COORDINATOR
+            ODistributedServerLog.warn(this, manager.getLocalNodeName(), coordinatorServer, ODistributedServerLog.DIRECTION.OUT,
+                "Coordinator server '%s' went down during the request of releasing resource '%s'. Assigning new coordinator...",
+                coordinatorServer, resource);
+            coordinatorServer = manager.getCoordinatorServer();
+            continue;
+          }
+
+          throw (RuntimeException) result;
+
+        } else if (result instanceof RuntimeException)
+          throw (RuntimeException) result;
+
+        break;
+      }
     }
 
     ODistributedServerLog.debug(this, manager.getLocalNodeName(), coordinatorServer, ODistributedServerLog.DIRECTION.OUT,

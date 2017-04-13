@@ -78,6 +78,10 @@ public abstract class OAbstractRemoteTask implements ORemoteTask {
   }
 
   @Override
+  public void checkIsValid(final ODistributedServerManager dManager) {
+  }
+
+  @Override
   public long getTotalTimeout(final int iTotalNodes) {
     if (iTotalNodes <= 0)
       return getDistributedTimeout();

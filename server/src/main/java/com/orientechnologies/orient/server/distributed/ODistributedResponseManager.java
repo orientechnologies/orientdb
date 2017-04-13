@@ -315,6 +315,8 @@ public class ODistributedResponseManager {
           break;
         }
 
+        request.getTask().checkIsValid(dManager);
+
         if (missingActiveNodes == 0) {
           // NO MORE ACTIVE NODES TO WAIT
           ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
