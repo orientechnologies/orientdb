@@ -6,6 +6,8 @@ import org.junit.Test;
 import java.math.BigDecimal;
 import java.sql.*;
 import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.TimeZone;
 
 import static java.sql.Types.BIGINT;
@@ -100,12 +102,12 @@ public class OrientJdbcResultSetMetaDataTest extends OrientJdbcBaseTest {
     ResultSetMetaData metaData = rs.getMetaData();
     assertThat(metaData.getColumnCount()).isEqualTo(7);
 
-    assertThat(metaData.getColumnName(1)).isEqualTo("@rid");
+    assertThat(metaData.getColumnName(1)).isEqualTo("rid");
     assertThat(new ORecordId(rs.getString(1)).isPersistent()).isEqualTo(true);
 
     assertThat(rs.getObject(1)).isInstanceOf(String.class);
 
-    assertThat(metaData.getColumnName(2)).isEqualTo("@class");
+    assertThat(metaData.getColumnName(2)).isEqualTo("class");
     assertThat(rs.getString(2)).isEqualTo("Item");
     assertThat(rs.getObject(2)).isInstanceOf(String.class);
 
@@ -133,17 +135,47 @@ public class OrientJdbcResultSetMetaDataTest extends OrientJdbcBaseTest {
     ResultSetMetaData metaData = rs.getMetaData();
     while (rs.next()) {
 
-      if (rs.getMetaData().getColumnCount() == 6) {
-        //record with all attributes
-        assertThat(rs.getTimestamp("post_date")).isNotNull();
-        assertThat(rs.getTime("post_date")).isNotNull();
-        assertThat(rs.getDate("post_date")).isNotNull();
-      } else {
-        //record missing date; only 5 column
-        assertThat(rs.getTimestamp("post_date")).isNull();
-        assertThat(rs.getTime("post_date")).isNull();
-        assertThat(rs.getDate("post_date")).isNull();
+      while (rs.next()) {
+        int columnCount = rs.getMetaData().getColumnCount();
+
+        assertThat(columnCount).isEqualTo(6);
+
+        //map a record to a Map
+        Map<String, Object> record = new HashMap<String, Object>();
+        for (int i = 1; i <= columnCount; i++) {
+          record.put(rs.getMetaData().getColumnName(i), rs.getObject(i));
+        }
+
+        //all fields must be present even if with  null values
+        assertThat(record).containsKeys("uuid", "post_date", "post_uuid", "post_title", "post_content", "post_in_Writes");
+
       }
+
+    }
+  }
+
+  @Test
+  public void shouldMapMissingFieldsToNull2() throws Exception {
+    Statement stmt = conn.createStatement();
+
+    ResultSet rs = stmt.executeQuery(
+        "select writer_uuid, posts.uuid as post_uuid,  posts.date as post_date, posts.title as post_title  from (\n"
+            + " select uuid as writer_uuid, out('Writes') as posts from writer  unwind posts) order by writer_uuid");
+
+    while (rs.next()) {
+
+      int columnCount = rs.getMetaData().getColumnCount();
+
+      assertThat(columnCount).isEqualTo(4);
+
+      //map a record to a Map
+      Map<String, Object> record = new HashMap<String, Object>();
+      for (int i = 1; i <= columnCount; i++) {
+        record.put(rs.getMetaData().getColumnName(i), rs.getObject(i));
+      }
+
+      //all fields must be present even if with  null values
+      assertThat(record).containsKeys("writer_uuid", "post_uuid", "post_date", "post_title");
 
     }
   }

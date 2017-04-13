@@ -106,11 +106,30 @@ public class OrientJdbcResultSetTest extends OrientJdbcBaseTest {
   }
 
   @Test
+  public void shouldSelectContentInsertedByInsertContent() throws Exception {
+
+    Statement insert = conn.createStatement();
+    insert.execute("INSERT INTO Article CONTENT {'uuid':'1234567',  'title':'title', 'content':'content'} ");
+
+    Statement stmt = conn.createStatement();
+
+    assertThat(stmt.execute("SELECT uuid,date, title, content FROM Article WHERE uuid = 1234567")).isTrue();
+
+    ResultSet rs = stmt.getResultSet();
+    assertThat(rs).isNotNull();
+
+    assertThat(rs.getFetchSize()).isEqualTo(1);
+
+    assertThat(rs.getLong("uuid")).isEqualTo(1234567);
+
+  }
+
+  @Test
   public void shouldSelectWithDistinct() throws Exception {
 
     Statement stmt = conn.createStatement();
 
-    assertThat(stmt.execute("SELECT DISTINCT(published) AS published FROM Item ")).isTrue();
+    assertThat(stmt.execute("SELECT DISTINCT(published) as pub FROM Item ")).isTrue();
 
     ResultSet rs = stmt.getResultSet();
     assertThat(rs).isNotNull();
@@ -118,7 +137,7 @@ public class OrientJdbcResultSetTest extends OrientJdbcBaseTest {
     assertThat(rs.getFetchSize()).isEqualTo(2);
 
     assertThat(rs.getBoolean(1)).isEqualTo(true);
-    assertThat(rs.getBoolean("published")).isEqualTo(true);
+    assertThat(rs.getBoolean("pub")).isEqualTo(true);
 
   }
 
