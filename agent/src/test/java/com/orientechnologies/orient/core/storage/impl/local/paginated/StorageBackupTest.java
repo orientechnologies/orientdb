@@ -52,11 +52,15 @@ public class StorageBackupTest {
 
   @Test
   public void testSingeThreadFullBackup() throws IOException {
-    final String dbDirectory = buildDirectory + File.separator + StorageBackupTest.class.getSimpleName();
+    final String dbName = StorageBackupTest.class.getSimpleName();
+    final String dbDirectory = buildDirectory + File.separator + dbName;
+
     OFileUtils.deleteRecursively(new File(dbDirectory));
 
-    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("plocal:" + dbDirectory);
-    db.create();
+    OrientDB orientDB = new OrientDB("embedded:" + buildDirectory, OrientDBConfig.defaultConfig());
+    orientDB.create(dbName, ODatabaseType.PLOCAL);
+
+    ODatabaseDocument db = orientDB.open(dbName, "admin", "admin");
 
     final OSchema schema = db.getMetadata().getSchema();
     final OClass backupClass = schema.createClass("BackupClass");
@@ -86,21 +90,16 @@ public class StorageBackupTest {
       Assert.assertTrue(backupDir.mkdirs());
 
     db.incrementalBackup(backupDir.getAbsolutePath());
-    final OStorage storage = db.getStorage();
-    db.close();
+    orientDB.close();
 
-    storage.close(true, false);
+    final String backupDbName = StorageBackupTest.class.getSimpleName() + "BackUp";
+    final String backedUpDbDirectory = buildDirectory + File.separator + backupDbName;
 
-    final String backedUpDbDirectory = buildDirectory + File.separator + StorageBackupTest.class.getSimpleName() + "BackUp";
     OFileUtils.deleteRecursively(new File(backedUpDbDirectory));
 
-    final ODatabaseDocumentTx backedUpDb = new ODatabaseDocumentTx("plocal:" + backedUpDbDirectory);
-    backedUpDb.create(backupDir.getAbsolutePath());
-
-    final OStorage backupStorage = backedUpDb.getStorage();
-    backedUpDb.close();
-
-    backupStorage.close(true, false);
+    OrientDBEmbedded embedded = (OrientDBEmbedded) OrientDBInternal.embedded(buildDirectory, OrientDBConfig.defaultConfig());
+    embedded.restore(backupDbName, backupDir.getAbsolutePath(), OrientDBConfig.defaultConfig());
+    embedded.close();
 
     final ODatabaseCompare compare = new ODatabaseCompare("plocal:" + dbDirectory, "plocal:" + backedUpDbDirectory, "admin",
         "admin", new OCommandOutputListener() {
@@ -112,11 +111,13 @@ public class StorageBackupTest {
 
     Assert.assertTrue(compare.compare());
 
-    db.open("admin", "admin");
-    db.drop();
+    ODatabaseDocumentTx.closeAll();
 
-    backedUpDb.open("admin", "admin");
-    backedUpDb.drop();
+    orientDB = new OrientDB("embedded:" + buildDirectory, OrientDBConfig.defaultConfig());
+    orientDB.drop(dbName);
+    orientDB.drop(backupDbName);
+
+    orientDB.close();
 
     OFileUtils.deleteRecursively(backupDir);
   }
