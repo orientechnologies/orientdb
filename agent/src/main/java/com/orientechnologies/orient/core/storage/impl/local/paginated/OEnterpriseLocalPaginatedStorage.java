@@ -51,8 +51,10 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
-  public static final String        IBU_EXTENSION                 = ".ibu";
-  public static final String        CONF_ENTRY_NAME               = "database.ocf";
+  public static final  String IBU_EXTENSION         = ".ibu";
+  public static final  String CONF_ENTRY_NAME       = "database.ocf";
+  private static final String CONF_UTF_8_ENTRY_NAME = "database_utf8.ocf";
+
   public static final String        INCREMENTAL_BACKUP_DATEFORMAT = "yyyy-MM-dd-HH-mm-ss";
   private final       AtomicBoolean backupInProgress              = new AtomicBoolean(false);
 
@@ -270,10 +272,10 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
 
             try {
               lastLsn = backupPagesWithChanges(fromLsn, zipOutputStream);
-              final ZipEntry configurationEntry = new ZipEntry(CONF_ENTRY_NAME);
+              final ZipEntry configurationEntry = new ZipEntry(CONF_UTF_8_ENTRY_NAME);
 
               zipOutputStream.putNextEntry(configurationEntry);
-              final byte[] btConf = configuration.toStream();
+              final byte[] btConf = configuration.toStream(Charset.forName("UTF-8"));
 
               zipOutputStream.write(btConf);
               zipOutputStream.closeEntry();
@@ -442,7 +444,13 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
       entryLoop:
       while ((zipEntry = zipInputStream.getNextEntry()) != null) {
         if (zipEntry.getName().equals(CONF_ENTRY_NAME)) {
-          replaceConfiguration(zipInputStream);
+          replaceConfiguration(zipInputStream, Charset.defaultCharset());
+
+          continue;
+        }
+
+        if (zipEntry.getName().equals(CONF_UTF_8_ENTRY_NAME)) {
+          replaceConfiguration(zipInputStream, Charset.forName("UTF-8"));
 
           continue;
         }
@@ -490,18 +498,17 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
 
           final long pageIndex = OLongSerializer.INSTANCE.deserializeNative(data, 0);
 
-          OCacheEntry cacheEntry = readCache.loadForRead(fileId, pageIndex, true, writeCache, 1);
+          OCacheEntry cacheEntry = readCache.loadForWrite(fileId, pageIndex, true, writeCache, 1);
 
           if (cacheEntry == null) {
             do {
               if (cacheEntry != null)
-                readCache.releaseFromRead(cacheEntry, writeCache);
+                readCache.releaseFromWrite(cacheEntry, writeCache);
 
               cacheEntry = readCache.allocateNewPage(fileId, writeCache);
             } while (cacheEntry.getPageIndex() != pageIndex);
           }
 
-          cacheEntry.acquireExclusiveLock();
           try {
             final ByteBuffer buffer = cacheEntry.getCachePointer().getSharedBuffer();
             final OLogSequenceNumber backedUpPageLsn = ODurablePage.getLogSequenceNumber(OLongSerializer.LONG_SIZE, data);
@@ -527,8 +534,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
               }
             }
           } finally {
-            cacheEntry.releaseExclusiveLock();
-            readCache.releaseFromRead(cacheEntry, writeCache);
+            readCache.releaseFromWrite(cacheEntry, writeCache);
           }
         }
       }
@@ -575,7 +581,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
     }
   }
 
-  private void replaceConfiguration(ZipInputStream zipInputStream) throws IOException {
+  private void replaceConfiguration(ZipInputStream zipInputStream, Charset charset) throws IOException {
     OContextConfiguration config = configuration.getContextConfiguration();
 
     byte[] buffer = new byte[1024];
@@ -597,7 +603,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
       }
     }
 
-    configuration.fromStream(buffer, 0, rb);
+    configuration.fromStream(buffer, 0, rb, charset);
     configuration.update();
 
     configuration.close();

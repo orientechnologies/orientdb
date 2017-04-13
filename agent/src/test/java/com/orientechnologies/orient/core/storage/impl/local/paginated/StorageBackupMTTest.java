@@ -3,6 +3,8 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -24,24 +26,25 @@ import java.util.concurrent.*;
  * @since 9/17/2015
  */
 public class StorageBackupMTTest {
-  private final CountDownLatch latch = new CountDownLatch(1);
-  private ODatabaseDocumentTx databaseDocumentTx;
-  private volatile boolean stop = false;
-  private String dbURL;
+  private final    CountDownLatch latch = new CountDownLatch(1);
+  private volatile boolean        stop  = false;
+  private OrientDB orientDB;
+  private String   dbName;
 
   @Test
   public void testParallelBackup() throws Exception {
     String buildDirectory = System.getProperty("buildDirectory", ".");
-    String dbDirectory = buildDirectory + File.separator + StorageBackupMTTest.class.getSimpleName();
+    dbName = StorageBackupMTTest.class.getSimpleName();
+    String dbDirectory = buildDirectory + File.separator + dbName;
 
     OFileUtils.deleteRecursively(new File(dbDirectory));
 
-    dbURL = "plocal:" + dbDirectory;
+    orientDB = new OrientDB("embedded:" + buildDirectory, OrientDBConfig.defaultConfig());
+    orientDB.create(dbName, ODatabaseType.PLOCAL);
 
-    databaseDocumentTx = new ODatabaseDocumentTx(dbURL);
-    databaseDocumentTx.create();
+    ODatabaseDocument db = orientDB.open(dbName, "admin", "admin");
 
-    final OSchema schema = databaseDocumentTx.getMetadata().getSchema();
+    final OSchema schema = db.getMetadata().getSchema();
     final OClass backupClass = schema.createClass("BackupClass");
     backupClass.createProperty("num", OType.INTEGER);
     backupClass.createProperty("data", OType.BINARY);
@@ -74,25 +77,19 @@ public class StorageBackupMTTest {
     }
 
     System.out.println("do inc backup last time");
-    databaseDocumentTx.incrementalBackup(backupDir.getAbsolutePath());
+    db.incrementalBackup(backupDir.getAbsolutePath());
 
-    final OStorage storage = databaseDocumentTx.getStorage();
-    databaseDocumentTx.close();
+    orientDB.close();
 
-    storage.close(true, false);
-
-    final String backedUpDbDirectory = buildDirectory + File.separator + StorageBackupMTTest.class.getSimpleName() + "BackUp";
+    final String backupDbName = StorageBackupMTTest.class.getSimpleName() + "BackUp";
+    final String backedUpDbDirectory = buildDirectory + File.separator + backupDbName;
     OFileUtils.deleteRecursively(new File(backedUpDbDirectory));
 
-    System.out.println("create");
-    final ODatabaseDocumentTx backedUpDb = new ODatabaseDocumentTx("plocal:" + backedUpDbDirectory);
-    backedUpDb.create(backupDir.getAbsolutePath());
+    System.out.println("create and restore");
 
-    System.out.println("restore");
-    final OStorage backupStorage = backedUpDb.getStorage();
-    backedUpDb.close();
-
-    backupStorage.close(true, false);
+    OrientDBEmbedded embedded = (OrientDBEmbedded) OrientDBInternal.embedded(buildDirectory, OrientDBConfig.defaultConfig());
+    embedded.restore(backupDbName, backupDir.getAbsolutePath(), OrientDBConfig.defaultConfig());
+    embedded.close();
 
     final ODatabaseCompare compare = new ODatabaseCompare("plocal:" + dbDirectory, "plocal:" + backedUpDbDirectory, "admin",
         "admin", new OCommandOutputListener() {
@@ -106,11 +103,13 @@ public class StorageBackupMTTest {
     boolean areSame = compare.compare();
     Assert.assertTrue(areSame);
 
-    databaseDocumentTx.open("admin", "admin");
-    databaseDocumentTx.drop();
+    ODatabaseDocumentTx.closeAll();
 
-    backedUpDb.open("admin", "admin");
-    backedUpDb.drop();
+    orientDB = new OrientDB("embedded:" + buildDirectory, OrientDBConfig.defaultConfig());
+    orientDB.drop(dbName);
+    orientDB.drop(backupDbName);
+
+    orientDB.close();
 
     OFileUtils.deleteRecursively(backupDir);
   }
@@ -121,8 +120,7 @@ public class StorageBackupMTTest {
       latch.await();
 
       System.out.println(Thread.currentThread() + " - start writing");
-      final ODatabaseDocumentTx databaseDocumentTx = new ODatabaseDocumentTx(dbURL);
-      databaseDocumentTx.open("admin", "admin");
+      final ODatabaseDocument db = orientDB.open(dbName, "admin", "admin");
 
       final Random random = new Random();
       try {
@@ -153,7 +151,7 @@ public class StorageBackupMTTest {
           }
         }
       } finally {
-        databaseDocumentTx.close();
+        db.close();
       }
 
       System.out.println(Thread.currentThread() + " - done writing");
@@ -173,8 +171,7 @@ public class StorageBackupMTTest {
     public Void call() throws Exception {
       latch.await();
 
-      final ODatabaseDocumentTx databaseDocumentTx = new ODatabaseDocumentTx(dbURL);
-      databaseDocumentTx.open("admin", "admin");
+      final ODatabaseDocument db = orientDB.open(dbName, "admin", "admin");
 
       System.out.println(Thread.currentThread() + " - start backup");
 
@@ -183,7 +180,7 @@ public class StorageBackupMTTest {
           TimeUnit.MINUTES.sleep(5);
 
           System.out.println(Thread.currentThread() + " do inc backup");
-          databaseDocumentTx.incrementalBackup(backupPath);
+          db.incrementalBackup(backupPath);
           System.out.println(Thread.currentThread() + " done inc backup");
 
         }
@@ -197,7 +194,7 @@ public class StorageBackupMTTest {
         e.printStackTrace();
         throw e;
       } finally {
-        databaseDocumentTx.close();
+        db.close();
       }
 
       System.out.println(Thread.currentThread() + " - stop backup");
