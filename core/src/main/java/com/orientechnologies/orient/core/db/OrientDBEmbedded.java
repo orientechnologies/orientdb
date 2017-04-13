@@ -189,11 +189,12 @@ public class OrientDBEmbedded implements OrientDBInternal {
       throw new ODatabaseException("Cannot create new storage '" + name + "' because it already exists");
   }
 
-  public synchronized void restore(String name, String path) {
+  public synchronized void restore(String name, String path, OrientDBConfig config) {
     if (!exists(name, null, null)) {
       try {
         OAbstractPaginatedStorage storage;
         storage = (OAbstractPaginatedStorage) disk.createStorage(buildName(name), new HashMap<>());
+        internalCreate(config, storage);
         storage.restoreFromIncrementalBackup(path);
         storages.put(name, storage);
       } catch (Exception e) {

@@ -85,10 +85,10 @@ public class OServer {
   protected Map<String, OServerSocketFactory>              networkSocketFactories = new HashMap<String, OServerSocketFactory>();
   protected List<OServerNetworkListener>                   networkListeners       = new ArrayList<OServerNetworkListener>();
   protected List<OServerLifecycleListener>                 lifecycleListeners     = new ArrayList<OServerLifecycleListener>();
-  protected OServerPluginManager            pluginManager;
-  protected OConfigurableHooksManager       hookManager;
-  protected ODistributedServerManager       distributedManager;
-  protected OServerSecurity                 serverSecurity;
+  protected OServerPluginManager      pluginManager;
+  protected OConfigurableHooksManager hookManager;
+  protected ODistributedServerManager distributedManager;
+  protected OServerSecurity           serverSecurity;
   private SecureRandom        random    = new SecureRandom();
   private Map<String, Object> variables = new HashMap<String, Object>();
   private String                   serverRootDirectory;
@@ -1154,6 +1154,6 @@ public class OServer {
   }
 
   public void restore(String name, String path) {
-    databases.restore(name, path);
+    databases.restore(name, path, OrientDBConfig.defaultConfig());
   }
 }
