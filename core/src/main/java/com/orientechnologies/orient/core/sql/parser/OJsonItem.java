@@ -31,7 +31,7 @@ public class OJsonItem {
       return leftString;
     }
     if (leftIdentifier != null) {
-      leftIdentifier.getStringValue();
+      return leftIdentifier.getStringValue();
     }
     return null;
   }
