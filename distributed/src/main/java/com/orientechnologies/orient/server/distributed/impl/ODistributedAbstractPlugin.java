@@ -1995,7 +1995,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     if (!lastServerDump.equals(compactStatus)) {
       lastServerDump = compactStatus;
 
-      ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "Distributed servers status:\n%s",
+      ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "Distributed servers status (*=current @=coordinator):\n%s",
           ODistributedOutput.formatServerStatus(this, cfg));
     }
   }
