@@ -10,6 +10,59 @@
     <artifactId>orientdb-studio</artifactId>
     <version>3.0.0-SNAPSHOT</version>
 
+    <name>OrientDB Studio</name>
+    <description>OrientDB Studio - web interface for OrientDB server</description>
+    <url>http://www.orientdb.com</url>
+
+    <organization>
+        <name>OrientDB</name>
+        <url>https://orientdb.com</url>
+    </organization>
+    <licenses>
+        <license>
+            <name>Apache 2</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+
+    <scm>
+        <connection>scm:git:git@github.com:orientechnologies/orientdb-studio.git</connection>
+        <developerConnection>scm:git:git@github.com:orientechnologies/orientdb-studio.git</developerConnection>
+        <url>scm:git:git@github.com:orientechnologies/orientdb-studio.git</url>
+    </scm>
+    <issueManagement>
+        <system>GitHub Issues</system>
+        <url>https://github.com/orientechnologies/orientdb-studio/issues</url>
+    </issueManagement>
+
+
+    <developers>
+        <developer>
+            <id>l.garulli</id>
+            <name>Luca Garulli</name>
+            <email>l.garulli@orientdb.com</email>
+            <organization>OrientDB</organization>
+            <organizationUrl>https://www.orientdb.com</organizationUrl>
+            <roles>
+                <role>architect</role>
+                <role>developer</role>
+                <role>founder</role>
+            </roles>
+            <timezone>+1</timezone>
+        </developer>
+        <developer>
+            <id>e.risa</id>
+            <name>Enrico Risa</name>
+            <email>e.risa@orientdb.com</email>
+            <organization>OrientDB</organization>
+            <organizationUrl>https://www.orientdb.com</organizationUrl>
+            <roles>
+                <role>architect</role>
+                <role>developer</role>
+            </roles>
+            <timezone>+1</timezone>
+        </developer>
+    </developers>
     <distributionManagement>
         <repository>
             <id>sonatype-nexus-staging</id>
@@ -88,6 +141,53 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>2.4</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.10.4</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <version>2.8.2</version>
+            </plugin>
         </plugins>
     </build>
+
+
+    <profiles>
+        <profile>
+            <id>release-sign-artifacts</id>
+            <activation>
+                <property>
+                    <name>performRelease</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>1.6</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+    </profiles>
 </project>
