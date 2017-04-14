@@ -167,7 +167,7 @@ public class OClusterHealthChecker extends TimerTask {
         // ONLY NOT_AVAILABLE NODE/DB CAN BE RECOVERED
         continue;
 
-      final List<String> servers = manager.getOnlineNodes(dbName);
+      final Set<String> servers = manager.getAvailableNodeNames(dbName);
       servers.remove(manager.getLocalNodeName());
 
       if (servers.isEmpty()) {
@@ -208,7 +208,7 @@ public class OClusterHealthChecker extends TimerTask {
         // ONLY ONLINE NODE/DB CAN CHECK FOR OTHERS
         continue;
 
-      final List<String> servers = manager.getOnlineNodes(dbName);
+      final Set<String> servers = manager.getAvailableNodeNames(dbName);
       servers.remove(manager.getLocalNodeName());
 
       if (servers.isEmpty())
