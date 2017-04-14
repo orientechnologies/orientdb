@@ -269,7 +269,7 @@ public class ODistributedTransactionManager {
     } catch (Exception e) {
 
       for (ORecordOperation op : iTx.getAllRecordEntries()) {
-        if (iTx.hasRecordCreation()) {
+        if (op.type == ORecordOperation.CREATED) {
           final ORecordId lockEntireCluster = (ORecordId) op.getRID().copy();
           localDistributedDatabase.getDatabaseRepairer().enqueueRepairCluster(lockEntireCluster.getClusterId());
         }

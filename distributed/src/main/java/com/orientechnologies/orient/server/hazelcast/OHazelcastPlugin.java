@@ -1378,7 +1378,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   }
 
   @Override
-  public synchronized void removeServer(final String nodeLeftName, final boolean removeOnlyDynamicServers) {
+  public void removeServer(final String nodeLeftName, final boolean removeOnlyDynamicServers) {
     if (nodeLeftName == null)
       return;
 

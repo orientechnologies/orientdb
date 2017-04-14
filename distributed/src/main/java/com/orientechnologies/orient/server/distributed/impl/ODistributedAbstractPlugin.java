@@ -74,10 +74,7 @@ import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
 import java.io.*;
 import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -117,8 +114,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected              Map<String, Member>  activeNodes            = new ConcurrentHashMap<String, Member>();
   protected              Map<String, String>  activeNodesNamesByUuid = new ConcurrentHashMap<String, String>();
   protected              Map<String, String>  activeNodesUuidByName  = new ConcurrentHashMap<String, String>();
-  protected final        List<String>         registeredNodeById     = new ArrayList<String>();
-  protected final        Map<String, Integer> registeredNodeByName   = new HashMap<String, Integer>();
+  protected final        List<String>         registeredNodeById     = new CopyOnWriteArrayList<String>();
+  protected final        Map<String, Integer> registeredNodeByName   = new ConcurrentHashMap<String, Integer>();
   protected              Map<String, Long>    autoRemovalOfServers   = new ConcurrentHashMap<String, Long>();
   protected volatile ODistributedMessageServiceImpl messageService;
   protected Date                 startedOn              = new Date();
@@ -693,12 +690,10 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
   @Override
   public int getNodeIdByName(final String name) {
-    synchronized (registeredNodeByName) {
-      final Integer val = registeredNodeByName.get(name);
-      if (val == null)
-        return -1;
-      return val.intValue();
-    }
+    final Integer val = registeredNodeByName.get(name);
+    if (val == null)
+      return -1;
+    return val.intValue();
   }
 
   @Override
@@ -1995,8 +1990,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     if (!lastServerDump.equals(compactStatus)) {
       lastServerDump = compactStatus;
 
-      ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "Distributed servers status (*=current @=coordinator):\n%s",
-          ODistributedOutput.formatServerStatus(this, cfg));
+      ODistributedServerLog
+          .info(this, getLocalNodeName(), null, DIRECTION.NONE, "Distributed servers status (*=current @=coordinator):\n%s",
+              ODistributedOutput.formatServerStatus(this, cfg));
     }
   }
 

@@ -51,7 +51,7 @@ public class OUnreachableServerLocalTask extends OAbstractRemoteTask {
    */
   @Override
   public int[] getPartitionKey() {
-    return ALL;
+    return ANY;
   }
 
   @Override
