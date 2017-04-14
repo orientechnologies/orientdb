@@ -87,8 +87,18 @@ public class ODistributedLockManagerRequester implements ODistributedLockManager
             ODistributedServerLog.warn(this, manager.getLocalNodeName(), coordinatorServer, ODistributedServerLog.DIRECTION.OUT,
                 "Coordinator server '%s' went down during the request of locking resource '%s'. Assigning new coordinator...",
                 coordinatorServer, resource);
-            coordinatorServer = manager.getCoordinatorServer();
-            continue;
+
+            final String lastCoordinator = coordinatorServer;
+            try {
+              manager.reassignCoordinatorFromCluster();
+            } catch (InterruptedException e) {
+              Thread.currentThread().interrupt();
+              break;
+            }
+
+            if (coordinatorServer.equals(lastCoordinator))
+              // NOT CHANGED, RETRY
+              continue;
           }
 
           throw (RuntimeException) result;

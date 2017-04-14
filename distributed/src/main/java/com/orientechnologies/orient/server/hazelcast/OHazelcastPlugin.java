@@ -186,25 +186,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         }
       }
 
-      String coordinatorServer = null;
-      while (coordinatorServer == null) {
-        if (activeNodes.size() == 1) {
-          // ONLY CURRENT NODE ONLINE, SET IT AS INITIAL COORDINATOR
-          coordinatorServer = nodeName;
-          if (configurationMap.putIfAbsent(CONFIG_COORDINATOR, coordinatorServer) == null)
-            break;
-        } else {
-          coordinatorServer = (String) configurationMap.get(CONFIG_COORDINATOR);
-          if (coordinatorServer != null)
-            break;
-        }
-
-        Thread.sleep(100);
-      }
-
-      getLockManagerRequester().setCoordinatorServer(coordinatorServer);
-
-      OLogManager.instance().info(this, "Distributed coordinator server is '%s'", coordinatorServer);
+      reassignCoordinatorFromCluster();
 
       initRegisteredNodeIds();
 
@@ -304,6 +286,28 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     }
 
     dumpServersStatus();
+  }
+
+  public void reassignCoordinatorFromCluster() throws InterruptedException {
+    String coordinatorServer = null;
+    while (coordinatorServer == null) {
+      if (activeNodes.size() == 1) {
+        // ONLY CURRENT NODE ONLINE, SET IT AS INITIAL COORDINATOR
+        coordinatorServer = nodeName;
+        if (configurationMap.putIfAbsent(CONFIG_COORDINATOR, coordinatorServer) == null)
+          break;
+      } else {
+        coordinatorServer = (String) configurationMap.get(CONFIG_COORDINATOR);
+        if (coordinatorServer != null)
+          break;
+      }
+
+      Thread.sleep(100);
+    }
+
+    getLockManagerRequester().setCoordinatorServer(coordinatorServer);
+
+    OLogManager.instance().info(this, "Distributed coordinator server is '%s'", coordinatorServer);
   }
 
   /**
