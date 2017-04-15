@@ -272,6 +272,4 @@ public interface ODistributedServerManager {
    */
   <T> T executeInDistributedDatabaseLock(String databaseName, long timeoutLocking, OModifiableDistributedConfiguration lastCfg,
       OCallable<T, OModifiableDistributedConfiguration> iCallback);
-
-  void reassignCoordinatorFromCluster() throws InterruptedException;
 }

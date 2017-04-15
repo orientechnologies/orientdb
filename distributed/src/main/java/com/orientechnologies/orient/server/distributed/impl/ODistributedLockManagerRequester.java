@@ -79,26 +79,22 @@ public class ODistributedLockManagerRequester implements ODistributedLockManager
             try {
               Thread.sleep(500);
             } catch (InterruptedException e) {
-              // IGNORE IT
+              break;
             }
 
           if (!manager.getActiveServers().contains(coordinatorServer)) {
             // THE COORDINATOR WENT DOWN DURING THE REQUEST, RETRY WITH ANOTHER COORDINATOR
             ODistributedServerLog.warn(this, manager.getLocalNodeName(), coordinatorServer, ODistributedServerLog.DIRECTION.OUT,
-                "Coordinator server '%s' went down during the request of locking resource '%s'. Assigning new coordinator...",
+                "Coordinator server '%s' went down during the request of locking resource '%s'. Waiting for the election of a new coordinator...",
                 coordinatorServer, resource);
 
-            final String lastCoordinator = coordinatorServer;
             try {
-              manager.reassignCoordinatorFromCluster();
+              Thread.sleep(1000);
             } catch (InterruptedException e) {
-              Thread.currentThread().interrupt();
               break;
             }
 
-            if (coordinatorServer.equals(lastCoordinator))
-              // NOT CHANGED, RETRY
-              continue;
+            continue;
           }
 
           throw (RuntimeException) result;
@@ -173,16 +169,17 @@ public class ODistributedLockManagerRequester implements ODistributedLockManager
     acquiredResources.remove(resource);
   }
 
-  public void setCoordinatorServer(final String coordinatorServer) {
-    this.coordinatorServer = coordinatorServer;
-  }
-
   @Override
   public void handleUnreachableServer(final String nodeLeftName) {
-    if (nodeLeftName.equals(coordinatorServer)) {
-      // GET THE NEW COORDINATOR SERVER ELECTED
-      coordinatorServer = manager.getCoordinatorServer();
+  }
 
+  public void setCoordinatorServer(final String coordinatorServer) {
+    final String currentCoordinator = this.coordinatorServer;
+    if (currentCoordinator != null && currentCoordinator.equals(coordinatorServer))
+      // NO CHANGES
+      return;
+
+    if (currentCoordinator != null) {
       // REACQUIRE AL THE LOCKS AGAINST THE NEW COORDINATOR
       try {
         for (String resource : acquiredResources.keySet()) {
@@ -196,11 +193,19 @@ public class ODistributedLockManagerRequester implements ODistributedLockManager
       } catch (OLockException e) {
         ODistributedServerLog.error(this, manager.getLocalNodeName(), coordinatorServer, ODistributedServerLog.DIRECTION.OUT,
             "Error on re-acquiring %d locks against the new coordinator '%s'", acquiredResources.size(), coordinatorServer);
+        throw e;
       }
     }
+
+    this.coordinatorServer = coordinatorServer;
   }
 
   public String getCoordinatorServer() {
     return coordinatorServer;
+  }
+
+  @Override
+  public void shutdown() {
+    acquiredResources.clear();
   }
 }

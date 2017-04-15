@@ -126,7 +126,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected        CountDownLatch                      serverStarted           = new CountDownLatch(1);
   private          ODistributedConflictResolverFactory conflictResolverFactory = new ODistributedConflictResolverFactory();
   private final    ODistributedLockManagerRequester    lockManagerRequester    = new ODistributedLockManagerRequester(this);
-  private final    ODistributedLockManagerExecutor     lockManagerExecutor     = new ODistributedLockManagerExecutor(this);
+  private ODistributedLockManagerExecutor lockManagerExecutor;
 
   protected ODistributedAbstractPlugin() {
   }
@@ -166,6 +166,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         setDefaultDatabaseConfigFile(param.value);
       }
     }
+
+    lockManagerExecutor = new ODistributedLockManagerExecutor(this);
 
     if (serverInstance.getUser("replicator") == null)
       // DROP THE REPLICATOR USER. THIS USER WAS NEEDED BEFORE 2.2, BUT IT'S NOT REQUIRED ANYMORE
@@ -238,6 +240,12 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     activeNodes.clear();
     activeNodesNamesByUuid.clear();
     activeNodesUuidByName.clear();
+
+    if( lockManagerExecutor != null )
+      lockManagerExecutor.shutdown();
+
+    if( lockManagerRequester != null )
+      lockManagerRequester.shutdown();
 
     setNodeStatus(NODE_STATUS.OFFLINE);
 
@@ -1992,7 +2000,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
       ODistributedServerLog
           .info(this, getLocalNodeName(), null, DIRECTION.NONE, "Distributed servers status (*=current @=coordinator[%s]):\n%s",
-              ODistributedOutput.formatServerStatus(this, cfg), getCoordinatorServer());
+              getCoordinatorServer(), ODistributedOutput.formatServerStatus(this, cfg));
     }
   }
 

@@ -42,9 +42,11 @@ import java.util.concurrent.TimeUnit;
 public class ODistributedLockManagerExecutor implements ODistributedLockManager {
   private final ODistributedServerManager manager;
   private final ConcurrentHashMap<String, ODistributedLock> lockManager = new ConcurrentHashMap<String, ODistributedLock>(256);
+  private final String localNodeName;
 
   public ODistributedLockManagerExecutor(final ODistributedServerManager manager) {
     this.manager = manager;
+    this.localNodeName = manager.getLocalNodeName();
   }
 
   private class ODistributedLock {
@@ -59,26 +61,11 @@ public class ODistributedLockManagerExecutor implements ODistributedLockManager 
     }
   }
 
-  public void handleUnreachableServer(final String nodeLeftName) {
-    final List<String> unlockedResources = new ArrayList<String>();
-    for (Iterator<Map.Entry<String, ODistributedLock>> it = lockManager.entrySet().iterator(); it.hasNext(); ) {
-      final Map.Entry<String, ODistributedLock> entry = it.next();
-
-      final ODistributedLock lock = entry.getValue();
-
-      if (lock != null && lock.server != null && lock.server.equals(nodeLeftName)) {
-        OLogManager.instance().info(this, "Forcing unlocking resource '%s' acquired by '%s'", entry.getKey(), lock.server);
-        unlockedResources.add(entry.getKey());
-        it.remove();
-      }
-    }
-
-    if (unlockedResources.size() > 0)
-      ODistributedServerLog.info(this, manager.getLocalNodeName(), nodeLeftName, DIRECTION.IN,
-          "Forced unlocked %d resources %s owned by server '%s'", unlockedResources.size(), unlockedResources, nodeLeftName);
-  }
-
   public void acquireExclusiveLock(final String resource, final String nodeSource, final long timeout) {
+    if (!localNodeName.equals(manager.getCoordinatorServer()))
+      throw new OLockException(
+          "Cannot lock resource '" + resource + "' because current server '" + localNodeName + "' is not the coordinator");
+
     final ODistributedLock lock = new ODistributedLock(nodeSource);
 
     ODistributedLock currentLock = lockManager.putIfAbsent(resource, lock);
@@ -91,7 +78,7 @@ public class ODistributedLockManagerExecutor implements ODistributedLockManager 
         final long startTime = System.currentTimeMillis();
         do {
           try {
-            ODistributedServerLog.info(this, manager.getLocalNodeName(), nodeSource, ODistributedServerLog.DIRECTION.IN,
+            ODistributedServerLog.info(this, localNodeName, nodeSource, ODistributedServerLog.DIRECTION.IN,
                 "Waiting to acquire distributed lock on resource '%s' (threadId=%d timeout=%d)...", resource,
                 Thread.currentThread().getId(), timeout);
 
@@ -114,7 +101,7 @@ public class ODistributedLockManagerExecutor implements ODistributedLockManager 
     if (currentLock != null) {
       // CHECK THE OWNER SERVER IS ONLINE. THIS AVOIDS ANY "WALKING DEAD" LOCKS
       if (currentLock.server == null || !manager.isNodeAvailable(currentLock.server)) {
-        ODistributedServerLog.info(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
+        ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE,
             "Forcing unlock of resource '%s' because the owner server '%s' is offline", resource, currentLock.server);
 
         // FORCE THE UNLOCK AND LOCK OF CURRENT REQ-ID
@@ -126,10 +113,10 @@ public class ODistributedLockManagerExecutor implements ODistributedLockManager 
     if (ODistributedServerLog.isDebugEnabled())
       if (currentLock == null) {
         ODistributedServerLog
-            .debug(this, manager.getLocalNodeName(), nodeSource, DIRECTION.IN, "Resource '%s' locked by server '%s' (threadId=%d)",
-                resource, nodeSource, Thread.currentThread().getId());
+            .debug(this, localNodeName, nodeSource, DIRECTION.IN, "Resource '%s' locked by server '%s' (threadId=%d)", resource,
+                nodeSource, Thread.currentThread().getId());
       } else {
-        ODistributedServerLog.debug(this, manager.getLocalNodeName(), nodeSource, DIRECTION.IN,
+        ODistributedServerLog.debug(this, localNodeName, nodeSource, DIRECTION.IN,
             "Cannot lock resource '%s' owned by server '%s' (timeout=%d threadId=%d)", resource, nodeSource, timeout,
             Thread.currentThread().getId());
       }
@@ -147,26 +134,49 @@ public class ODistributedLockManagerExecutor implements ODistributedLockManager 
     final ODistributedLock owner = lockManager.remove(resource);
     if (owner != null) {
       if (!owner.server.equals(nodeSource)) {
-        ODistributedServerLog.error(this, manager.getLocalNodeName(), nodeSource, DIRECTION.IN,
-            "Cannot unlock resource %s because owner server '%s' <> current '%s'", resource, owner.server,
-            manager.getLocalNodeName());
+        ODistributedServerLog.error(this, localNodeName, nodeSource, DIRECTION.IN,
+            "Cannot unlock resource %s because owner server '%s' <> current '%s'", resource, owner.server, localNodeName);
         return;
       }
 
       if (ODistributedServerLog.isDebugEnabled())
         ODistributedServerLog
-            .debug(this, manager.getLocalNodeName(), owner.server, DIRECTION.IN, "Unlocked resource '%s' (owner=%s elapsed=%s)",
-                resource, owner.server, (System.currentTimeMillis() - owner.acquiredOn));
+            .debug(this, localNodeName, owner.server, DIRECTION.IN, "Unlocked resource '%s' (owner=%s elapsed=%s)", resource,
+                owner.server, (System.currentTimeMillis() - owner.acquiredOn));
 
       // NOTIFY ANY WAITERS
       owner.lock.countDown();
     }
   }
 
+  public void handleUnreachableServer(final String nodeLeftName) {
+    final List<String> unlockedResources = new ArrayList<String>();
+    for (Iterator<Map.Entry<String, ODistributedLock>> it = lockManager.entrySet().iterator(); it.hasNext(); ) {
+      final Map.Entry<String, ODistributedLock> entry = it.next();
+
+      final ODistributedLock lock = entry.getValue();
+
+      if (lock != null && lock.server != null && lock.server.equals(nodeLeftName)) {
+        OLogManager.instance().info(this, "Forcing unlocking resource '%s' acquired by '%s'", entry.getKey(), lock.server);
+        unlockedResources.add(entry.getKey());
+
+        it.remove();
+
+        // NOTIFY ANY WAITERS
+        lock.lock.countDown();
+      }
+    }
+
+    if (unlockedResources.size() > 0)
+      ODistributedServerLog
+          .info(this, localNodeName, nodeLeftName, DIRECTION.IN, "Forced unlocked %d resources %s owned by server '%s'",
+              unlockedResources.size(), unlockedResources, nodeLeftName);
+  }
+
   public String dumpLocks() {
     final StringBuilder buffer = new StringBuilder();
 
-    buffer.append("HA RESOURCE LOCKS FOR SERVER '" + manager.getLocalNodeName() + "'");
+    buffer.append("HA RESOURCE LOCKS FOR SERVER '" + localNodeName + "'");
 
     final long now = System.currentTimeMillis();
     for (Map.Entry<String, ODistributedLock> entry : lockManager.entrySet()) {
@@ -175,5 +185,18 @@ public class ODistributedLockManagerExecutor implements ODistributedLockManager 
     }
 
     return buffer.toString();
+  }
+
+  @Override
+  public void shutdown() {
+    for (Iterator<Map.Entry<String, ODistributedLock>> it = lockManager.entrySet().iterator(); it.hasNext(); ) {
+      final Map.Entry<String, ODistributedLock> entry = it.next();
+      final ODistributedLock lock = entry.getValue();
+
+      it.remove();
+
+      // NOTIFY ANY WAITERS
+      lock.lock.countDown();
+    }
   }
 }

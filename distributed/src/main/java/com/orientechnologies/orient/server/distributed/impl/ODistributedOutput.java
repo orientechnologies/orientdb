@@ -60,10 +60,10 @@ public class ODistributedOutput {
 
         String serverLabel = serverName;
         if (manager.getLocalNodeName().equals(serverName))
-          serverLabel += "*";
+          serverLabel += "(*)";
 
         if (manager.getCoordinatorServer().equals(serverName))
-          serverLabel += "@";
+          serverLabel += "(@)";
 
         serverRow.field("Name", serverLabel);
         serverRow.field("Status", m.field("status"));
