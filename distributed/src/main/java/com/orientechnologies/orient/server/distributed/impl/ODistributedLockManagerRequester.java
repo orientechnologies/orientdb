@@ -59,21 +59,29 @@ public class ODistributedLockManagerRequester implements ODistributedLockManager
         ODistributedServerLog.debug(this, manager.getLocalNodeName(), coordinatorServer, ODistributedServerLog.DIRECTION.OUT,
             "Server '%s' is acquiring distributed lock on resource '%s'...", nodeSource, resource);
 
-        final ODistributedResponse dResponse = manager.sendRequest(OSystemDatabase.SYSTEM_DB_NAME, null, servers,
-            new ODistributedLockTask(coordinatorServer, resource, timeout, true), manager.getNextMessageIdCounter(),
-            ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
+        Object result;
+        try {
+          final ODistributedResponse dResponse = manager.sendRequest(OSystemDatabase.SYSTEM_DB_NAME, null, servers,
+              new ODistributedLockTask(coordinatorServer, resource, timeout, true), manager.getNextMessageIdCounter(),
+              ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
 
-        if (dResponse == null) {
-          ODistributedServerLog.warn(this, manager.getLocalNodeName(), coordinatorServer, ODistributedServerLog.DIRECTION.OUT,
-              "Server '%s' cannot acquire distributed lock on resource '%s' (timeout=%d)...", nodeSource, resource, timeout);
+          if (dResponse == null) {
+            ODistributedServerLog.warn(this, manager.getLocalNodeName(), coordinatorServer, ODistributedServerLog.DIRECTION.OUT,
+                "Server '%s' cannot acquire distributed lock on resource '%s' (timeout=%d)...", nodeSource, resource, timeout);
 
-          throw new OLockException(
-              "Server '" + nodeSource + "' cannot acquire exclusive lock on resource '" + resource + "' (timeout=" + timeout + ")");
+            throw new OLockException(
+                "Server '" + nodeSource + "' cannot acquire exclusive lock on resource '" + resource + "' (timeout=" + timeout
+                    + ")");
+          }
+          result = dResponse.getPayload();
+        } catch (ODistributedException e) {
+          result = e;
         }
 
-        final Object result = dResponse.getPayload();
+        final boolean distribException =
+            result instanceof ODistributedOperationException || result instanceof ODistributedException;
 
-        if (result instanceof ODistributedOperationException) {
+        if (distribException) {
           if (manager.getActiveServers().contains(coordinatorServer))
             // WAIT ONLY IN THE CASE THE COORDINATOR IS STILL ONLINE
             try {
@@ -127,16 +135,24 @@ public class ODistributedLockManagerRequester implements ODistributedLockManager
         final Set<String> servers = new HashSet<String>();
         servers.add(coordinatorServer);
 
-        final ODistributedResponse dResponse = manager.sendRequest(OSystemDatabase.SYSTEM_DB_NAME, null, servers,
-            new ODistributedLockTask(coordinatorServer, resource, 0, false), manager.getNextMessageIdCounter(),
-            ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
+        Object result;
+        try {
+          final ODistributedResponse dResponse = manager.sendRequest(OSystemDatabase.SYSTEM_DB_NAME, null, servers,
+              new ODistributedLockTask(coordinatorServer, resource, 0, false), manager.getNextMessageIdCounter(),
+              ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
 
-        if (dResponse == null)
-          throw new OLockException("Cannot release exclusive lock on resource '" + resource + "'");
+          if (dResponse == null)
+            throw new OLockException("Cannot release exclusive lock on resource '" + resource + "'");
 
-        final Object result = dResponse.getPayload();
+          result = dResponse.getPayload();
+        } catch (ODistributedException e) {
+          result = e;
+        }
 
-        if (result instanceof ODistributedOperationException) {
+        final boolean distribException =
+            result instanceof ODistributedOperationException || result instanceof ODistributedException;
+
+        if (distribException) {
           if (manager.getActiveServers().contains(coordinatorServer))
             // WAIT ONLY IN THE CASE THE COORDINATOR IS STILL ONLINE
             try {
