@@ -47,7 +47,7 @@ logs() {
 }
 
 status() {
-	PID=` ps auxw | grep 'orientdb.www.path' | grep java | grep -v grep | awk '{print $2}'`
+	PID=` ps auxw | grep 'orientdb.www.path' | grep [j]ava | awk '{print $2}'`
 	if [ "x$PID" = "x" ]
 	then
 		PID=0
