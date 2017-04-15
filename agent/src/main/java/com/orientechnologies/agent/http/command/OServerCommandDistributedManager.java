@@ -33,6 +33,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
+import com.orientechnologies.orient.server.hazelcast.OHazelcastDistributedMap;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
@@ -292,9 +293,12 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
 
 
   public ODocument getClusterConfig(ODistributedServerManager manager) {
-    ODocument doc;
-    doc = manager.getClusterConfiguration();
-    doc.field("clusterStats", manager.getConfigurationMap().get("clusterStats"));
+
+    ODocument doc = manager.getClusterConfiguration().copy();
+    final OHazelcastDistributedMap map = (OHazelcastDistributedMap) manager.getConfigurationMap();
+    doc.field("clusterStats", map.getLocalCachedValue("clusterStats"));
+    doc.field("databasesStatus", calculateDBStatus(manager, doc));
+
     return doc;
   }
 
