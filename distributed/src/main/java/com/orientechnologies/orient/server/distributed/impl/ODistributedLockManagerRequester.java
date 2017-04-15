@@ -195,25 +195,23 @@ public class ODistributedLockManagerRequester implements ODistributedLockManager
       // NO CHANGES
       return;
 
-    if (currentCoordinator != null) {
-      // REACQUIRE AL THE LOCKS AGAINST THE NEW COORDINATOR
-      try {
-        for (String resource : acquiredResources.keySet()) {
-          acquireExclusiveLock(resource, manager.getLocalNodeName(), 10000);
-        }
-
-        // LOCKED
-        ODistributedServerLog.info(this, manager.getLocalNodeName(), coordinatorServer, ODistributedServerLog.DIRECTION.OUT,
-            "Re-acquired %d locks against the new coordinator server '%s'", acquiredResources.size(), coordinatorServer);
-
-      } catch (OLockException e) {
-        ODistributedServerLog.error(this, manager.getLocalNodeName(), coordinatorServer, ODistributedServerLog.DIRECTION.OUT,
-            "Error on re-acquiring %d locks against the new coordinator '%s'", acquiredResources.size(), coordinatorServer);
-        throw e;
-      }
-    }
-
     this.coordinatorServer = coordinatorServer;
+
+    // REACQUIRE AL THE LOCKS AGAINST THE NEW COORDINATOR
+    try {
+      for (String resource : acquiredResources.keySet()) {
+        acquireExclusiveLock(resource, manager.getLocalNodeName(), 10000);
+      }
+
+      // LOCKED
+      ODistributedServerLog.info(this, manager.getLocalNodeName(), coordinatorServer, ODistributedServerLog.DIRECTION.OUT,
+          "Re-acquired %d locks against the new coordinator server '%s'", acquiredResources.size(), coordinatorServer);
+
+    } catch (OLockException e) {
+      ODistributedServerLog.error(this, manager.getLocalNodeName(), coordinatorServer, ODistributedServerLog.DIRECTION.OUT,
+          "Error on re-acquiring %d locks against the new coordinator '%s'", acquiredResources.size(), coordinatorServer);
+      throw e;
+    }
   }
 
   public String getCoordinatorServer() {
