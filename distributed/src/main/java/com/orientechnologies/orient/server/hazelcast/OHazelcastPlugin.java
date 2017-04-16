@@ -172,9 +172,13 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
       OServer.registerServerInstance(localNodeName, serverInstance);
 
+      initRegisteredNodeIds();
+
       // PUBLISH CURRENT NODE NAME
       final ODocument nodeCfg = new ODocument();
       nodeCfg.setTrackingChanges(false);
+
+      nodeCfg.field("id", nodeId);
       nodeCfg.field("uuid", nodeUuid);
       nodeCfg.field("name", nodeName);
       ORecordInternal.setRecordSerializer(nodeCfg, ODatabaseDocumentTx.getDefaultSerializer());
@@ -207,8 +211,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       }
 
       assignCoordinatorFromCluster();
-
-      initRegisteredNodeIds();
 
       messageService = new ODistributedMessageServiceImpl(this);
 
