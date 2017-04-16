@@ -172,15 +172,37 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
       OServer.registerServerInstance(localNodeName, serverInstance);
 
+      // PUBLISH CURRENT NODE NAME
+      final ODocument nodeCfg = new ODocument();
+      nodeCfg.setTrackingChanges(false);
+
+      nodeCfg.field("id", nodeId);
+      nodeCfg.field("uuid", nodeUuid);
+      nodeCfg.field("name", nodeName);
+      ORecordInternal.setRecordSerializer(nodeCfg, ODatabaseDocumentTx.getDefaultSerializer());
+      configurationMap.put(CONFIG_NODE_PREFIX + nodeUuid, nodeCfg);
+
       // REGISTER CURRENT NODES
       for (Member m : hazelcastInstance.getCluster().getMembers()) {
         if (!m.getUuid().equals(nodeUuid)) {
-          final String memberName = getNodeName(m, false);
-          if (memberName != null && !memberName.startsWith("ext:")) {
+          boolean found = false;
+          for (int retry = 0; retry < 10; ++retry) {
+            final String memberName = getNodeName(m, false);
+
+            if (memberName == null || memberName.startsWith("ext:")) {
+              // ACTIVE NODE IN HZ, BUT NOT YET REGISTERED, WAIT AND RETRY
+              Thread.sleep(1000);
+              continue;
+            }
+
+            found = true;
             activeNodes.put(memberName, m);
             activeNodesNamesByUuid.put(m.getUuid(), memberName);
             activeNodesUuidByName.put(memberName, m.getUuid());
-          } else if (!m.equals(hazelcastInstance.getCluster().getLocalMember()))
+            break;
+          }
+
+          if (!found)
             ODistributedServerLog
                 .warn(this, localNodeName, null, DIRECTION.NONE, "Cannot find configuration for member: %s, uuid", m, m.getUuid());
         }
@@ -201,8 +223,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       for (Iterator<Map.Entry<String, Object>> it = configurationMap.getHazelcastMap().entrySet().iterator(); it.hasNext(); ) {
         final Map.Entry<String, Object> entry = it.next();
         if (entry.getKey().startsWith(CONFIG_NODE_PREFIX)) {
-          final ODocument nodeCfg = (ODocument) entry.getValue();
-          if (nodeName.equals(nodeCfg.field("name"))) {
+          final ODocument nCfg = (ODocument) entry.getValue();
+          if (nodeName.equals(nCfg.field("name"))) {
             // SAME NODE NAME: REMOVE IT
             node2Remove.add(entry.getKey());
           }
@@ -1477,7 +1499,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   /**
    * Elects a new server as coordinator. The election browse the ordered server list.
    */
-  private synchronized void electNewCoordinator() {
+  private void electNewCoordinator() {
     // TRY ALL THE SERVERS IN ORDER (ALL THE SERVERS HAVE THE SAME LIST)
     final List<String> sortedServers = new ArrayList<String>(getActiveServers());
     Collections.sort(sortedServers);

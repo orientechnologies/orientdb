@@ -840,7 +840,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   }
 
   @Override
-  public synchronized boolean installDatabase(final boolean iStartup, final String databaseName, final boolean forceDeployment,
+  public boolean installDatabase(final boolean iStartup, final String databaseName, final boolean forceDeployment,
       final boolean tryWithDeltaFirst) {
     if (getDatabaseStatus(getLocalNodeName(), databaseName) == DB_STATUS.OFFLINE)
       // OFFLINE: AVOID TO INSTALL IT
@@ -1487,7 +1487,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   /**
    * Guarantees that each class has own master cluster.
    */
-  public synchronized boolean installClustersOfClass(final ODatabaseInternal iDatabase, final OClass iClass,
+  public boolean installClustersOfClass(final ODatabaseInternal iDatabase, final OClass iClass,
       OModifiableDistributedConfiguration cfg) {
 
     final String databaseName = iDatabase.getName();
