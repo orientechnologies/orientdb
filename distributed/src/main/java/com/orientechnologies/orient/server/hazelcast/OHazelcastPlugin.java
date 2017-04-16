@@ -175,8 +175,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       // PUBLISH CURRENT NODE NAME
       final ODocument nodeCfg = new ODocument();
       nodeCfg.setTrackingChanges(false);
-
-      nodeCfg.field("id", nodeId);
       nodeCfg.field("uuid", nodeUuid);
       nodeCfg.field("name", nodeName);
       ORecordInternal.setRecordSerializer(nodeCfg, ODatabaseDocumentTx.getDefaultSerializer());
