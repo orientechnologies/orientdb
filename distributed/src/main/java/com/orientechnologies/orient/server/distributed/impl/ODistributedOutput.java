@@ -670,12 +670,12 @@ public class ODistributedOutput {
       SimpleDateFormat dateFormat = new SimpleDateFormat(ODateHelper.DEF_DATETIME_FORMAT);
 
       for (ORID rid : orderedRIDs) {
-        final ODocument row = new ODocument();
-        rows.add(row);
-
         final ODistributedDatabaseImpl.ODistributedLock lock = lockManager.get(rid);
         if (lock == null)
           continue;
+
+        final ODocument row = new ODocument();
+        rows.add(row);
 
         row.field("rid", rid);
         row.field("server", manager.getNodeNameById(lock.reqId.getNodeId()));

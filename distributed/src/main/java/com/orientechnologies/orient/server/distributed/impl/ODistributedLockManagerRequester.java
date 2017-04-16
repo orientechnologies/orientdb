@@ -138,7 +138,7 @@ public class ODistributedLockManagerRequester implements ODistributedLockManager
         Object result;
         try {
           final ODistributedResponse dResponse = manager.sendRequest(OSystemDatabase.SYSTEM_DB_NAME, null, servers,
-              new ODistributedLockTask(coordinatorServer, resource, 0, false), manager.getNextMessageIdCounter(),
+              new ODistributedLockTask(coordinatorServer, resource, 20000, false), manager.getNextMessageIdCounter(),
               ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
 
           if (dResponse == null)
@@ -201,7 +201,7 @@ public class ODistributedLockManagerRequester implements ODistributedLockManager
       // REACQUIRE AL THE LOCKS AGAINST THE NEW COORDINATOR
       try {
         for (String resource : acquiredResources.keySet()) {
-          acquireExclusiveLock(resource, manager.getLocalNodeName(), 10000);
+          acquireExclusiveLock(resource, manager.getLocalNodeName(), 20000);
         }
 
         // LOCKED

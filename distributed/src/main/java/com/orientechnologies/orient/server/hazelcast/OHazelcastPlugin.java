@@ -705,7 +705,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         // INIT THE STORAGE
         final ODistributedStorage stg = getStorage(databaseName);
 
-        executeInDistributedDatabaseLock(databaseName, 0, null, new OCallable<Object, OModifiableDistributedConfiguration>() {
+        executeInDistributedDatabaseLock(databaseName, 20000, null, new OCallable<Object, OModifiableDistributedConfiguration>() {
           @Override
           public Object call(OModifiableDistributedConfiguration cfg) {
             ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Current node started as %s for database '%s'",
@@ -1052,7 +1052,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
                     getActiveServers().contains(getCoordinatorServer()));
 
             for (final String databaseName : getMessageService().getDatabases()) {
-              executeInDistributedDatabaseLock(databaseName, 0, null, new OCallable<Object, OModifiableDistributedConfiguration>() {
+              executeInDistributedDatabaseLock(databaseName, 20000, null, new OCallable<Object, OModifiableDistributedConfiguration>() {
                 @Override
                 public Object call(final OModifiableDistributedConfiguration cfg) {
                   for (Map.Entry<String, Member> entry : activeNodes.entrySet()) {
@@ -1372,7 +1372,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       }
     }
 
-    final boolean found = executeInDistributedDatabaseLock(databaseName, 0, cfg,
+    final boolean found = executeInDistributedDatabaseLock(databaseName, 20000, cfg,
         new OCallable<Boolean, OModifiableDistributedConfiguration>() {
           @Override
           public Boolean call(OModifiableDistributedConfiguration cfg) {

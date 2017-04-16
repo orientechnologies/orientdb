@@ -724,7 +724,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     // REASSIGN CLUSTERS WITHOUT AN OWNER, AVOIDING TO REBALANCE EXISTENT
     final ODatabaseDocumentTx database = serverInstance.openDatabase(databaseName, "internal", "internal", null, true);
     try {
-      executeInDistributedDatabaseLock(databaseName, 15000, cfg, new OCallable<Boolean, OModifiableDistributedConfiguration>() {
+      executeInDistributedDatabaseLock(databaseName, 20000, cfg, new OCallable<Boolean, OModifiableDistributedConfiguration>() {
         @Override
         public Boolean call(final OModifiableDistributedConfiguration cfg) {
           rebalanceClusterOwnership(iNode, database, cfg, canCreateNewClusters);
@@ -852,7 +852,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
     final ODistributedDatabaseImpl distrDatabase = messageService.registerDatabase(databaseName, null);
 
-    return executeInDistributedDatabaseLock(databaseName, 0, null, new OCallable<Boolean, OModifiableDistributedConfiguration>() {
+    return executeInDistributedDatabaseLock(databaseName, 20000, null, new OCallable<Boolean, OModifiableDistributedConfiguration>() {
       @Override
       public Boolean call(OModifiableDistributedConfiguration cfg) {
         // GET ALL THE OTHER SERVERS
@@ -1526,7 +1526,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     if (cluster2Create.isEmpty())
       return;
 
-    executeInDistributedDatabaseLock(iDatabase.getName(), 0, cfg, new OCallable<Object, OModifiableDistributedConfiguration>() {
+    executeInDistributedDatabaseLock(iDatabase.getName(), 20000, cfg, new OCallable<Object, OModifiableDistributedConfiguration>() {
       @Override
       public Object call(final OModifiableDistributedConfiguration cfg) {
 
@@ -1858,7 +1858,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
       try {
         final ODistributedAbstractPlugin me = this;
-        executeInDistributedDatabaseLock(databaseName, 0, cfg, new OCallable<Void, OModifiableDistributedConfiguration>() {
+        executeInDistributedDatabaseLock(databaseName, 20000, cfg, new OCallable<Void, OModifiableDistributedConfiguration>() {
           @Override
           public Void call(final OModifiableDistributedConfiguration cfg) {
             try {

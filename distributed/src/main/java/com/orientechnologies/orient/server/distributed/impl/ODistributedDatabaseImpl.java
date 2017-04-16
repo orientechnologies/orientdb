@@ -1005,7 +1005,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   protected void checkLocalNodeInConfiguration(final ODistributedConfiguration cfg) {
-    manager.executeInDistributedDatabaseLock(databaseName, 0, cfg != null ? cfg.modify() : null,
+    manager.executeInDistributedDatabaseLock(databaseName, 20000, cfg != null ? cfg.modify() : null,
         new OCallable<Void, OModifiableDistributedConfiguration>() {
           @Override
           public Void call(final OModifiableDistributedConfiguration lastCfg) {

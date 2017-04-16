@@ -326,7 +326,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
           if (exec.involveSchema())
             // EXECUTE THE COMMAND IN LOCK
-            result = dManager.executeInDistributedDatabaseLock(getName(), 0, dManager.getDatabaseConfiguration(getName()).modify(),
+            result = dManager.executeInDistributedDatabaseLock(getName(), 20000, dManager.getDatabaseConfiguration(getName()).modify(),
                 new OCallable<Object, OModifiableDistributedConfiguration>() {
                   @Override
                   public Object call(OModifiableDistributedConfiguration iArgument) {
@@ -1502,7 +1502,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
         // EXECUTE THIS OUTSIDE LOCK TO AVOID DEADLOCKS
         Object result = null;
         try {
-          result = dManager.executeInDistributedDatabaseLock(getName(), 0, dManager.getDatabaseConfiguration(getName()).modify(),
+          result = dManager.executeInDistributedDatabaseLock(getName(), 20000, dManager.getDatabaseConfiguration(getName()).modify(),
               new OCallable<Object, OModifiableDistributedConfiguration>() {
                 @Override
                 public Object call(OModifiableDistributedConfiguration iArgument) {

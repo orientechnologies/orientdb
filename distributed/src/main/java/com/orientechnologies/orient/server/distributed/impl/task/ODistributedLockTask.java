@@ -104,12 +104,14 @@ public class ODistributedLockTask extends OAbstractReplicatedTask {
   public void toStream(final DataOutput out) throws IOException {
     out.writeUTF(resource);
     out.writeBoolean(acquire);
+    out.writeLong(timeout);
   }
 
   @Override
   public void fromStream(final DataInput in, final ORemoteTaskFactory factory) throws IOException {
     resource = in.readUTF();
     acquire = in.readBoolean();
+    timeout = in.readLong();
   }
 
   @Override
