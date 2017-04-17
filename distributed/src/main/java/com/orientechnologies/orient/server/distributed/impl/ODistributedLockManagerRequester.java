@@ -85,7 +85,7 @@ public class ODistributedLockManagerRequester implements ODistributedLockManager
           if (manager.getActiveServers().contains(coordinatorServer))
             // WAIT ONLY IN THE CASE THE COORDINATOR IS STILL ONLINE
             try {
-              Thread.sleep(500);
+              Thread.sleep(1000);
             } catch (InterruptedException e) {
               break;
             }
@@ -156,7 +156,7 @@ public class ODistributedLockManagerRequester implements ODistributedLockManager
           if (manager.getActiveServers().contains(coordinatorServer))
             // WAIT ONLY IN THE CASE THE COORDINATOR IS STILL ONLINE
             try {
-              Thread.sleep(500);
+              Thread.sleep(1000);
             } catch (InterruptedException e) {
               // IGNORE IT
             }
@@ -166,6 +166,13 @@ public class ODistributedLockManagerRequester implements ODistributedLockManager
             ODistributedServerLog.warn(this, manager.getLocalNodeName(), coordinatorServer, ODistributedServerLog.DIRECTION.OUT,
                 "Coordinator server '%s' went down during the request of releasing resource '%s'. Assigning new coordinator...",
                 coordinatorServer, resource);
+
+            try {
+              Thread.sleep(1000);
+            } catch (InterruptedException e) {
+              // IGNORE IT
+            }
+
             coordinatorServer = manager.getCoordinatorServer();
             continue;
           }
