@@ -74,9 +74,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   final OSchemaShared owner;
   private final Map<String, OProperty> properties       = new HashMap<String, OProperty>();
   private       int                    defaultClusterId = NOT_EXISTENT_CLUSTER_ID;
-  private String name;
-  private String description;
-  private int[]  clusterIds;
+  private volatile String name;
+  private          String description;
+  private          int[]  clusterIds;
   private List<OClassImpl> superClasses = new ArrayList<OClassImpl>();
   private int[]        polymorphicClusterIds;
   private List<OClass> subclasses;
@@ -338,12 +338,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   public String getName() {
-    acquireSchemaReadLock();
-    try {
-      return name;
-    } finally {
-      releaseSchemaReadLock();
-    }
+    return name;
   }
 
   @Override
@@ -1465,12 +1460,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
   @Override
   public String toString() {
-    acquireSchemaReadLock();
-    try {
-      return name;
-    } finally {
-      releaseSchemaReadLock();
-    }
+    return name;
   }
 
   @Override
