@@ -42,7 +42,7 @@ import java.util.concurrent.TimeUnit;
 public class ODistributedLockManagerExecutor implements ODistributedLockManager {
   private final ODistributedServerManager manager;
   private final ConcurrentHashMap<String, ODistributedLock> lockManager = new ConcurrentHashMap<String, ODistributedLock>(256);
-  private final String localNodeName;
+  private String localNodeName;
 
   public ODistributedLockManagerExecutor(final ODistributedServerManager manager) {
     this.manager = manager;
@@ -62,6 +62,9 @@ public class ODistributedLockManagerExecutor implements ODistributedLockManager 
   }
 
   public void acquireExclusiveLock(final String resource, final String nodeSource, final long timeout) {
+    if (localNodeName == null)
+      localNodeName = manager.getLocalNodeName();
+
     if (!localNodeName.equals(manager.getCoordinatorServer()))
       throw new OLockException(
           "Cannot lock resource '" + resource + "' because current server '" + localNodeName + "' is not the coordinator");
@@ -130,6 +133,9 @@ public class ODistributedLockManagerExecutor implements ODistributedLockManager 
   public void releaseExclusiveLock(final String resource, final String nodeSource) {
     if (resource == null)
       return;
+
+    if (localNodeName == null)
+      localNodeName = manager.getLocalNodeName();
 
     final ODistributedLock owner = lockManager.remove(resource);
     if (owner != null) {

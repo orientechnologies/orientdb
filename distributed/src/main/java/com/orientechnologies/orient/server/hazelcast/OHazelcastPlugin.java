@@ -805,11 +805,13 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
           if (this.nodeName.equals(joinedNodeName)) {
             ODistributedServerLog.error(this, joinedNodeName, getNodeName(iEvent.getMember()), DIRECTION.IN,
-                "Found a new node with the same name as current: '" + joinedNodeName
-                    + "'. The node has been excluded. Change the name in its config/orientdb-dserver-config.xml file");
+                "Found a new node (%s) with the same name as current: '" + joinedNodeName
+                    + "'. The node has been excluded. Change the name in its config/orientdb-dserver-config.xml file",
+                iEvent.getMember());
 
-            throw new ODistributedException("Found a new node with the same name as current: '" + joinedNodeName
-                + "'. The node has been excluded. Change the name in its config/orientdb-dserver-config.xml file");
+            throw new ODistributedException(
+                "Found a new node (" + iEvent.getMember().toString() + ") with the same name as current: '" + joinedNodeName
+                    + "'. The node has been excluded. Change the name in its config/orientdb-dserver-config.xml file");
           }
 
           registerNode(iEvent.getMember(), joinedNodeName);
@@ -1052,19 +1054,20 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
                     getActiveServers().contains(getCoordinatorServer()));
 
             for (final String databaseName : getMessageService().getDatabases()) {
-              executeInDistributedDatabaseLock(databaseName, 20000, null, new OCallable<Object, OModifiableDistributedConfiguration>() {
-                @Override
-                public Object call(final OModifiableDistributedConfiguration cfg) {
-                  for (Map.Entry<String, Member> entry : activeNodes.entrySet()) {
-                    final String server = entry.getKey();
-                    if (!cfg.getRegisteredServers().contains(server)) {
-                      if (getDatabaseStatus(server, databaseName) != DB_STATUS.OFFLINE)
-                        cfg.addNewNodeInServerList(server);
+              executeInDistributedDatabaseLock(databaseName, 20000, null,
+                  new OCallable<Object, OModifiableDistributedConfiguration>() {
+                    @Override
+                    public Object call(final OModifiableDistributedConfiguration cfg) {
+                      for (Map.Entry<String, Member> entry : activeNodes.entrySet()) {
+                        final String server = entry.getKey();
+                        if (!cfg.getRegisteredServers().contains(server)) {
+                          if (getDatabaseStatus(server, databaseName) != DB_STATUS.OFFLINE)
+                            cfg.addNewNodeInServerList(server);
+                        }
+                      }
+                      return null;
                     }
-                  }
-                  return null;
-                }
-              });
+                  });
             }
           } finally {
             ODistributedServerLog
