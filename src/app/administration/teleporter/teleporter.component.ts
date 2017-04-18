@@ -45,17 +45,21 @@ class TeleporterComponent implements AfterViewChecked {
   private sourceDBTables = [];
   private includedTables = [];
 
+  // JSON configuration for modelling
+  private modellingConfig;
+
   constructor(private teleporterService: TeleporterService, private notification: NotificationService,
               private agentService: AgentService, private zone: NgZone) {
-
-
 
     // agent
     this.agentService.isActive().then(() => {
       this.init();
     });
 
+  }
 
+  updateModellingConfig() {
+    this.modellingConfig.vertices[0].name = "Parent";
   }
 
   init() {
@@ -65,9 +69,9 @@ class TeleporterComponent implements AfterViewChecked {
     this.logLevels = ["NO","DEBUG","INFO","WARNING","ERROR"];
 
     this.dbConnection = {
-      "host": "",
-      "port": "",
-      "dbName": "",
+      "host": "localhost",
+      "port": "5432",
+      "dbName": "dvdrental",
       "sid": ""
     }
 
@@ -76,10 +80,10 @@ class TeleporterComponent implements AfterViewChecked {
     this.defaultConfig = {
       "driver": "PostgreSQL",
       "jurl": "",
-      "username": "",
-      "password": "",
+      "username": "postgres",
+      "password": "postgres",
       "protocol": "plocal",
-      "outDBName": "",
+      "outDBName": "dvdrental",
       "outDbUrl": "",
       "strategy": "naive",
       "mapper": "basicDBMapper",
@@ -90,7 +94,7 @@ class TeleporterComponent implements AfterViewChecked {
     }
 
     this.config = angular.copy(this.defaultConfig);
-    this.step = '1';
+    this.step = '8';
 
     // fetching driver name and jurl pattern
     this.drivers().then((data) => {
@@ -134,6 +138,8 @@ class TeleporterComponent implements AfterViewChecked {
     this.keepSorted = true;
     this.key = "id";
     this.fieldToDisplay = "tableName";
+
+    this.buildConfigJSON();
   }
 
   ngAfterViewChecked() {
@@ -252,6 +258,318 @@ class TeleporterComponent implements AfterViewChecked {
   scrollLogAreaDown() {
     var logArea = $("#logArea");
     logArea.scrollTop(9999999);
+  }
+
+  buildConfigJSON() {
+    this.modellingConfig = {
+      "vertices": [
+        {
+          "name": "Project",
+          "mapping": {
+            "sourceTables": [
+              {
+                "name": "hsqldb_PROJECT",
+                "dataSource": "hsqldb",
+                "tableName": "PROJECT",
+                "primaryKey": [
+                  "ID"
+                ]
+              }
+            ]
+          },
+          "externalKey": [
+            "id"
+          ],
+          "properties": {
+            "id": {
+              "include": true,
+              "type": "STRING",
+              "ordinalPosition": 1,
+              "mandatory": false,
+              "readOnly": false,
+              "notNull": false,
+              "mapping": {
+                "source": "hsqldb_PROJECT",
+                "columnName": "ID",
+                "type": "VARCHAR"
+              }
+            },
+            "projectName": {
+              "include": true,
+              "type": "STRING",
+              "ordinalPosition": 2,
+              "mandatory": false,
+              "readOnly": false,
+              "notNull": false,
+              "mapping": {
+                "source": "hsqldb_PROJECT",
+                "columnName": "PROJECT_NAME",
+                "type": "VARCHAR"
+              }
+            },
+            "description": {
+              "include": true,
+              "type": "STRING",
+              "ordinalPosition": 3,
+              "mandatory": false,
+              "readOnly": false,
+              "notNull": false,
+              "mapping": {
+                "source": "hsqldb_PROJECT",
+                "columnName": "DESCRIPTION",
+                "type": "VARCHAR"
+              }
+            },
+            "startDate": {
+              "include": true,
+              "type": "DATE",
+              "ordinalPosition": 4,
+              "mandatory": false,
+              "readOnly": false,
+              "notNull": false,
+              "mapping": {
+                "source": "hsqldb_PROJECT",
+                "columnName": "START_DATE",
+                "type": "DATE"
+              }
+            },
+            "expectedEndDate": {
+              "include": true,
+              "type": "DATE",
+              "ordinalPosition": 5,
+              "mandatory": false,
+              "readOnly": false,
+              "notNull": false,
+              "mapping": {
+                "source": "hsqldb_PROJECT",
+                "columnName": "EXPECTED_END_DATE",
+                "type": "DATE"
+              }
+            }
+          }
+        },
+        {
+          "name": "Department",
+          "mapping": {
+            "sourceTables": [
+              {
+                "name": "hsqldb_DEPARTMENT",
+                "dataSource": "hsqldb",
+                "tableName": "DEPARTMENT",
+                "primaryKey": [
+                  "ID"
+                ]
+              }
+            ]
+          },
+          "externalKey": [
+            "id"
+          ],
+          "properties": {
+            "id": {
+              "include": true,
+              "type": "STRING",
+              "ordinalPosition": 1,
+              "mandatory": false,
+              "readOnly": false,
+              "notNull": false,
+              "mapping": {
+                "source": "hsqldb_DEPARTMENT",
+                "columnName": "ID",
+                "type": "VARCHAR"
+              }
+            },
+            "departmentName": {
+              "include": true,
+              "type": "STRING",
+              "ordinalPosition": 2,
+              "mandatory": false,
+              "readOnly": false,
+              "notNull": false,
+              "mapping": {
+                "source": "hsqldb_DEPARTMENT",
+                "columnName": "DEPARTMENT_NAME",
+                "type": "VARCHAR"
+              }
+            },
+            "location": {
+              "include": true,
+              "type": "STRING",
+              "ordinalPosition": 3,
+              "mandatory": false,
+              "readOnly": false,
+              "notNull": false,
+              "mapping": {
+                "source": "hsqldb_DEPARTMENT",
+                "columnName": "LOCATION",
+                "type": "VARCHAR"
+              }
+            }
+          }
+        },
+        {
+          "name": "Employee",
+          "mapping": {
+            "sourceTables": [
+              {
+                "name": "hsqldb_EMPLOYEE",
+                "dataSource": "hsqldb",
+                "tableName": "EMPLOYEE",
+                "primaryKey": [
+                  "ID"
+                ]
+              }
+            ]
+          },
+          "externalKey": [
+            "id"
+          ],
+          "properties": {
+            "id": {
+              "include": true,
+              "type": "STRING",
+              "ordinalPosition": 1,
+              "mandatory": false,
+              "readOnly": false,
+              "notNull": false,
+              "mapping": {
+                "source": "hsqldb_EMPLOYEE",
+                "columnName": "ID",
+                "type": "VARCHAR"
+              }
+            },
+            "firstName": {
+              "include": true,
+              "type": "STRING",
+              "ordinalPosition": 2,
+              "mandatory": false,
+              "readOnly": false,
+              "notNull": false,
+              "mapping": {
+                "source": "hsqldb_EMPLOYEE",
+                "columnName": "FIRST_NAME",
+                "type": "VARCHAR"
+              }
+            },
+            "lastName": {
+              "include": true,
+              "type": "STRING",
+              "ordinalPosition": 3,
+              "mandatory": false,
+              "readOnly": false,
+              "notNull": false,
+              "mapping": {
+                "source": "hsqldb_EMPLOYEE",
+                "columnName": "LAST_NAME",
+                "type": "VARCHAR"
+              }
+            },
+            "salary": {
+              "include": true,
+              "type": "DOUBLE",
+              "ordinalPosition": 4,
+              "mandatory": false,
+              "readOnly": false,
+              "notNull": false,
+              "mapping": {
+                "source": "hsqldb_EMPLOYEE",
+                "columnName": "SALARY",
+                "type": "DOUBLE"
+              }
+            },
+            "email": {
+              "include": true,
+              "type": "STRING",
+              "ordinalPosition": 5,
+              "mandatory": false,
+              "readOnly": false,
+              "notNull": false,
+              "mapping": {
+                "source": "hsqldb_EMPLOYEE",
+                "columnName": "EMAIL",
+                "type": "VARCHAR"
+              }
+            },
+            "department": {
+              "include": true,
+              "type": "STRING",
+              "ordinalPosition": 6,
+              "mandatory": false,
+              "readOnly": false,
+              "notNull": false,
+              "mapping": {
+                "source": "hsqldb_EMPLOYEE",
+                "columnName": "DEPARTMENT",
+                "type": "VARCHAR"
+              }
+            }
+          }
+        }
+      ],
+      "edges": [
+        {
+          "HasDepartment": {
+            "isLogical": false,
+            "mapping": [
+              {
+                "fromTable": "EMPLOYEE",
+                "fromColumns": [
+                  "DEPARTMENT"
+                ],
+                "toTable": "DEPARTMENT",
+                "toColumns": [
+                  "ID"
+                ],
+                "direction": "direct"
+              }
+            ],
+            "properties": {}
+          }
+        },
+        {
+          "EmployeeProject": {
+            "isLogical": false,
+            "mapping": [
+              {
+                "fromTable": "EMPLOYEE",
+                "fromColumns": [
+                  "ID"
+                ],
+                "toTable": "PROJECT",
+                "toColumns": [
+                  "ID"
+                ],
+                "joinTable": {
+                  "tableName": "EMPLOYEE_PROJECT",
+                  "fromColumns": [
+                    "EMPLOYEE_ID"
+                  ],
+                  "toColumns": [
+                    "PROJECT_ID"
+                  ]
+                },
+                "direction": "direct"
+              }
+            ],
+            "properties": {
+              "role": {
+                "include": true,
+                "type": "STRING",
+                "ordinalPosition": 1,
+                "mandatory": false,
+                "readOnly": false,
+                "notNull": false,
+                "mapping": {
+                  "source": "hsqldb_EMPLOYEE_PROJECT",
+                  "columnName": "ROLE",
+                  "type": "VARCHAR"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
   }
 
 }

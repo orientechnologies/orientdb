@@ -1,0 +1,40 @@
+<div class="panel panel-info">
+
+  <div class="panel-heading">
+    <div class="row" id="firstRow">
+      <div class="col-md-9" id="search">
+        <div class="input-group">
+          <span class="input-group-addon">Search</span>
+          <input type="text" id="modelClass" name="modelClass" class="form-control"
+                 placeholder="Class name"/>
+          <div class="input-group-btn">
+            <button class="btn btn-default" type="submit" style="width: 34px; height: 34px;"><i class="fa fa-search"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-1"></div>
+
+      <div class="col-md-2" id="headerButtons">
+        <div class="form-group">
+          <div class="btn-group">
+            <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
+              Actions <span class="caret"></span></button>
+            <ul class="dropdown-menu" role="menu">
+              <li><a href="#">List All Classes</a></li>
+              <li><a href="#">Aggregate Classes</a></li>
+              <li><a href="#">Split Class</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel-body svg-content-responsive" style="height: 450px"
+       ng-o-graph="graphOptions">
+    {{modellingConfig.vertices[0].name}}
+    <button class="btn-primary" (click)="updateModellingConfig()">Change value</button>
+  </div>
+
+</div>
