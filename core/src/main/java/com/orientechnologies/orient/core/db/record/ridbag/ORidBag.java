@@ -82,8 +82,8 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
 
   public ORidBag(final ORidBag ridBag) {
     init();
-    for (OIdentifiable identifiable : ridBag)
-      add(identifiable);
+    for (Iterator<OIdentifiable> it = ridBag.rawIterator(); it.hasNext();)
+      add(it.next());
   }
 
   public ORidBag() {
