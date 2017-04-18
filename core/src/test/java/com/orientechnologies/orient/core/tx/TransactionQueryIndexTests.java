@@ -14,7 +14,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 /**
  * Created by tglman on 12/04/17.
@@ -46,6 +45,28 @@ public class TransactionQueryIndexTests {
     assertEquals(1L, res.stream().count());
 
     res = database.query("select from Test where test='aaaaa' ");
+
+    System.out.println(res.getExecutionPlan().get().prettyPrint(0, 0));
+    assertEquals(0L, res.stream().count());
+  }
+
+  @Test
+  public void test2() {
+    OClass clazz = database.createClass("Test2");
+    clazz.createProperty("foo", OType.STRING);
+    clazz.createProperty("bar", OType.STRING);
+    clazz.createIndex("Test2.foo_bar", OClass.INDEX_TYPE.NOTUNIQUE, "foo", "bar");
+
+    database.begin();
+    ODocument doc = database.newInstance("Test2");
+    doc.setProperty("foo", "abcdefg");
+    doc.setProperty("bar", "abcdefg");
+    database.save(doc);
+    OResultSet res = database.query("select from Test2 where foo='abcdefg' and bar = 'abcdefg' ");
+
+    assertEquals(1L, res.stream().count());
+
+    res = database.query("select from Test2 where foo='aaaaa' and bar = 'aaa'");
 
     System.out.println(res.getExecutionPlan().get().prettyPrint(0, 0));
     assertEquals(0L, res.stream().count());
