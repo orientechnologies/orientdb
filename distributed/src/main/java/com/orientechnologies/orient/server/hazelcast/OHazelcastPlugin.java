@@ -357,7 +357,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         } else
           // NO CONFIG_REGISTEREDNODES, BUT MORE THAN ONE NODE PRESENT: REPAIR THE CONFIGURATION
           repairActiveServers();
-
       }
 
       registeredNodesFromCluster.field("ids", registeredNodeById, OType.EMBEDDEDLIST);

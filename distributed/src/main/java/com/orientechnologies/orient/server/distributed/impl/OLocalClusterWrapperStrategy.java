@@ -94,7 +94,8 @@ public class OLocalClusterWrapperStrategy implements OClusterSelectionStrategy {
         readConfiguration();
 
         ODistributedServerLog.info(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-            "New cluster list for class '%s': %s (dCfgVersion=%d)", cls.getName(), localScopedClass.bestClusterIds, lastVersion);
+            "New cluster list for class '%s': %s (dCfgVersion=%d)", cls.getName(), Arrays.toString(localScopedClass.bestClusterIds),
+            lastVersion);
       }
     }
 

@@ -1958,8 +1958,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   }
 
   public long getNextMessageIdCounter() {
-    final long v = localMessageIdCounter.getAndIncrement();
-    return v;
+    return localMessageIdCounter.getAndIncrement();
   }
 
   public void closeRemoteServer(final String node) {
