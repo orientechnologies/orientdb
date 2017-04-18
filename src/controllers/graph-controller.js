@@ -1199,7 +1199,7 @@ GraphModule.controller("GraphController", ['$scope', '$routeParams', '$location'
       }
     }
     var modalPromise = $modal({
-      template: 'views/database/modalNewEdge.html',
+      templateUrl: 'views/database/modalNewEdge.html',
       persist: false,
       show: false,
       scope: modalScope,
@@ -1228,7 +1228,7 @@ GraphModule.controller("GraphController", ['$scope', '$routeParams', '$location'
       }, 100)
     }
     $modal({
-      template: 'views/database/modalNew.html',
+      templateUrl: 'views/database/modalNew.html',
       persist: false,
       show: true,
       scope: modalScope,

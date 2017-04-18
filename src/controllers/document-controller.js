@@ -118,7 +118,7 @@ DocController.controller("DocumentModalController", ['$scope', '$routeParams', '
   }
 
 
-  $scope.onReload = function(){
+  $scope.onReload = function () {
 
   }
 
@@ -172,8 +172,12 @@ DocController.controller("DocumentModalController", ['$scope', '$routeParams', '
     $scope.headers = Database.getPropertyFromDoc($scope.doc);
     $scope.selectClass = false;
 
-
   }
+
+  $scope.fillClasses = function (classes) {
+    return SchemaService.vertexClasses(classes).map((c) => c.name);
+  }
+
   $scope.deleteField = function (name) {
     delete $scope.doc[name];
     var idx = $scope.headers.indexOf(name);
@@ -183,19 +187,17 @@ DocController.controller("DocumentModalController", ['$scope', '$routeParams', '
     $scope.selectClass = false;
     $scope.reload();
   } else {
-
     $scope.selectClass = true;
     Database.refreshMetadata($scope.db, () => {
-      $scope.listClasses = SchemaService.vertexClasses(Database.listClasses()).map((c) => c.name);
+      $scope.listClasses = $scope.fillClasses(Database.listClasses());
       if ($scope.listClasses.length == 1) {
         $scope.selectedClass = $scope.listClasses[0];
       }
     });
+
   }
 
 }]);
-
-
 
 
 DocController.controller("DocumentModalEdgeController", ['$scope', '$routeParams', '$location', 'CommandApi', 'DocumentApi', 'Database', 'Notification', '$controller', 'SchemaService', function ($scope, $routeParams, $location, CommandApi, DocumentApi, Database, Notification, $controller, SchemaService) {
@@ -203,14 +205,9 @@ DocController.controller("DocumentModalEdgeController", ['$scope', '$routeParams
   $controller('DocumentModalController', {$scope: $scope});
 
 
-  Database.refreshMetadata($routeParams.database, () => {
-    $scope.listClasses = SchemaService.edgeClasses(Database.listClasses()).map((c) => c.name);
-
-    if ($scope.listClasses.length == 1) {
-      $scope.selectedClass = $scope.listClasses[0];
-    }
-  })
-
+  $scope.fillClasses = function (classes) {
+    return SchemaService.edgeClasses(classes).map((c) => c.name);
+  }
 
   $scope.lightweight = false;
   $scope.save = function (cls) {
@@ -251,7 +248,6 @@ DocController.controller("DocumentModalEdgeController", ['$scope', '$routeParams
   $scope.setSelectClass = function (cls) {
     $scope.doc = DocumentApi.createNewDoc(cls);
 
-
     delete $scope.doc["in"];
     delete $scope.doc["out"];
 
@@ -262,6 +258,7 @@ DocController.controller("DocumentModalEdgeController", ['$scope', '$routeParams
 
 
   }
+
 
   $scope.createLightEdge = function (cls) {
     $scope.save(cls);
