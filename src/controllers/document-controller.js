@@ -107,6 +107,7 @@ DocController.controller("DocumentModalController", ['$scope', '$routeParams', '
   $scope.reload = function () {
     $scope.doc = DocumentApi.get({database: $scope.db, document: $scope.rid}, function () {
       $scope.headers = Database.getPropertyFromDoc($scope.doc);
+      $scope.onReload();
     }, function (error) {
       Notification.push({content: JSON.stringify(error)});
       $location.path('/404');
@@ -115,6 +116,12 @@ DocController.controller("DocumentModalController", ['$scope', '$routeParams', '
   $scope.showClass = function () {
     $scope.$hide();
   }
+
+
+  $scope.onReload = function(){
+
+  }
+
   $scope.save = function () {
 
     if ($scope.isNew) {
@@ -187,7 +194,11 @@ DocController.controller("DocumentModalController", ['$scope', '$routeParams', '
   }
 
 }]);
-DocController.controller("DocumentModalEdgeController", ['$scope', '$routeParams', '$location', 'CommandApi', 'Database', 'Notification', '$controller', 'SchemaService', function ($scope, $routeParams, $location, CommandApi, Database, Notification, $controller, SchemaService) {
+
+
+
+
+DocController.controller("DocumentModalEdgeController", ['$scope', '$routeParams', '$location', 'CommandApi', 'DocumentApi', 'Database', 'Notification', '$controller', 'SchemaService', function ($scope, $routeParams, $location, CommandApi, DocumentApi, Database, Notification, $controller, SchemaService) {
 
   $controller('DocumentModalController', {$scope: $scope});
 
@@ -199,6 +210,8 @@ DocController.controller("DocumentModalEdgeController", ['$scope', '$routeParams
       $scope.selectedClass = $scope.listClasses[0];
     }
   })
+
+
   $scope.lightweight = false;
   $scope.save = function (cls) {
 
@@ -233,6 +246,23 @@ DocController.controller("DocumentModalEdgeController", ['$scope', '$routeParams
       $scope.cancelSave(err);
     });
   }
+
+
+  $scope.setSelectClass = function (cls) {
+    $scope.doc = DocumentApi.createNewDoc(cls);
+
+
+    delete $scope.doc["in"];
+    delete $scope.doc["out"];
+
+    $scope.headers = $scope.headers = Database.getPropertyFromDoc($scope.doc).filter((c) => {
+      return c != "in" && c != "out";
+    });
+    $scope.selectClass = false;
+
+
+  }
+
   $scope.createLightEdge = function (cls) {
     $scope.save(cls);
     $scope.$hide();

@@ -16,6 +16,7 @@ import '../views/database/graph/asideEmpty.html';
 import '../views/database/graph/asideEdge.html';
 import '../views/database/graph/asideVertex.html';
 import '../views/database/graphConfig.html';
+import '../views/database/modalEditEdge.html';
 import '../views/vertex/modalConnection.html';
 import '../views/vertex/modalVertexSelect.html';
 import '../views/hints/template-hint.html';
@@ -1251,13 +1252,23 @@ GraphModule.controller("GraphController", ['$scope', '$routeParams', '$location'
         });
       }
     }
-    $modal({
-      template: 'views/database/modalEdit.html',
-      persist: false,
-      show: true,
-      scope: modalScope,
-      modalClass: 'editEdge'
-    });
+    if (v.edge) {
+      $modal({
+        template: 'views/database/modalEditEdge.html',
+        persist: false,
+        show: true,
+        scope: modalScope,
+        modalClass: 'editEdge'
+      });
+    } else {
+      $modal({
+        template: 'views/database/modalEdit.html',
+        persist: false,
+        show: true,
+        scope: modalScope,
+        modalClass: 'editEdge'
+      });
+    }
 
   };
   $scope.saveConfig = function () {
@@ -1309,8 +1320,20 @@ GraphModule.controller("GraphController", ['$scope', '$routeParams', '$location'
   }
 
 
-}])
-;
+}]);
+
+GraphModule.controller('ModalEdgeEditController', ['$scope', '$controller', 'Database', function ($scope, $controller, Database) {
+
+  $controller('DocumentModalController', {$scope: $scope});
+
+
+  $scope.onReload = function () {
+    $scope.headers = $scope.headers = Database.getPropertyFromDoc($scope.doc).filter((c) => {
+      return c != "in" && c != "out";
+    });
+  }
+
+}]);
 GraphModule.controller("VertexAsideController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'Spinner', 'Aside', 'Icon', '$rootScope', function ($scope, $routeParams, $location, Database, CommandApi, Spinner, Aside, Icon, $rootScope) {
 
 
