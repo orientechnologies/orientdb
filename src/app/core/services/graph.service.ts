@@ -6,7 +6,7 @@ import {downgradeInjectable} from '@angular/upgrade/static';
  *
  *  Holds the Graph Editor info in Memory (Query + Data)
  */
-declare var angular : any;
+declare var angular: any;
 let GraphService = Class({
   constructor: [function () {
     this.databases = {}
@@ -31,6 +31,19 @@ let GraphService = Class({
     this.init(db, user);
     this.databases[db][user].data.edges = this.databases[db][user].data.edges.concat(data.edges);
     this.databases[db][user].data.vertices = this.databases[db][user].data.vertices.concat(data.vertices);
+  },
+
+  removeEdge(db, user, e){
+    this.init(db, user);
+    this.databases[db][user].data.edges = this.databases[db][user].data.edges.filter((edge) => {
+      return edge["@rid"] !== e.edge["@rid"];
+    })
+  },
+  removeVertex(db, user, v){
+    this.init(db, user);
+    this.databases[db][user].data.vertices = this.databases[db][user].data.vertices.filter((vertex) => {
+      return vertex["@rid"] !== v["@rid"];
+    })
   },
   data(db, user){
     this.init(db, user);

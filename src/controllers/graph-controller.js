@@ -925,6 +925,10 @@ GraphModule.controller("GraphController", ['$scope', '$routeParams', '$location'
                 verbose: false
               }, function (data) {
                 $scope.graph.removeEdge(e);
+
+                $timeout(function () {
+                  GraphService.removeEdge($scope.database, $scope.currentUser, e);
+                }, 100)
               });
             }
           });
@@ -1053,6 +1057,9 @@ GraphModule.controller("GraphController", ['$scope', '$routeParams', '$location'
                         verbose: false
                       }, function (data) {
                         $scope.graph.removeVertex(v);
+                        $timeout(function () {
+                          GraphService.removeVertex($scope.database, $scope.currentUser, v);
+                        }, 100);
                       });
                     }
                   });
@@ -1178,6 +1185,11 @@ GraphModule.controller("GraphController", ['$scope', '$routeParams', '$location'
     modalScope.confirmSave = function (docs) {
       $scope.graph.endEdgeCreation();
       $scope.graph.data({edges: docs}).redraw();
+      $timeout(function () {
+        GraphService.add($scope.database, $scope.currentUser,
+          {vertices: [], edges: docs}
+        );
+      }, 100)
     }
     modalScope.cancelSave = function (error) {
 
@@ -1207,6 +1219,13 @@ GraphModule.controller("GraphController", ['$scope', '$routeParams', '$location'
     modalScope.confirmSave = function (doc) {
 
       $scope.graph.data({vertices: [doc]}).redraw();
+
+
+      $timeout(function () {
+        GraphService.add($scope.database, $scope.currentUser,
+          {vertices: [doc], edges: []}
+        );
+      }, 100)
     }
     $modal({
       template: 'views/database/modalNew.html',
@@ -1308,8 +1327,7 @@ GraphModule.controller("GraphController", ['$scope', '$routeParams', '$location'
         GraphService.query($scope.database, $scope.currentUser, $scope.queryText);
         GraphService.add($scope.database, $scope.currentUser,
           data.graph
-        )
-        ;
+        );
       }, 1000);
     }).catch(function (err) {
       Spinner.stopSpinner();
