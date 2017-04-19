@@ -30,8 +30,7 @@ public interface OResult {
   }
 
   default Optional<OVertex> getVertex() {
-    Optional<OVertex> result = getElement().flatMap(x -> x.asVertex());
-    return result;
+    return getElement().flatMap(x -> x.asVertex());
   }
 
   default boolean isEdge() {
@@ -39,7 +38,6 @@ public interface OResult {
   }
 
   default Optional<OEdge> getEdge() {
-
     return getElement().flatMap(x -> x.asEdge());
   }
 
