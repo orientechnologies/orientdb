@@ -17,13 +17,9 @@
  */
 package com.orientechnologies.orient.jdbc;
 
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.junit.Test;
 
 import java.sql.*;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -101,15 +97,13 @@ public class OrientJdbcResultSetTest extends OrientJdbcBaseTest {
   @Test
   public void shouldReadRowWithNullValue() throws Exception {
 
-    db.activateOnCurrentThread();
-    db.command(new OCommandSQL("INSERT INTO Article(uuid, date, title, content) VALUES (123456, null, 'title', 'the content')"))
-        .execute();
-
-    List<ODocument> docs = db.query(new OSQLSynchQuery<>("SELECT uuid,date, title, content FROM Article WHERE uuid = 123456"));
-
-    //    docs.stream().forEach(d -> System.out.println(d.toJSON()));
-
     Statement stmt = conn.createStatement();
+
+    stmt.execute("INSERT INTO Article(uuid, date, title, content) VALUES (123456, null, 'title', 'the content')");
+
+    stmt.close();
+
+    stmt = conn.createStatement();
 
     assertThat(stmt.execute("SELECT uuid,date, title, content FROM Article WHERE uuid = 123456")).isTrue();
     ResultSet rs = stmt.getResultSet();
@@ -127,16 +121,18 @@ public class OrientJdbcResultSetTest extends OrientJdbcBaseTest {
 
     Statement insert = conn.createStatement();
     insert.execute("INSERT INTO Article CONTENT {'uuid':'1234567',  'title':'title', 'content':'content'} ");
+    insert.close();
 
     Statement stmt = conn.createStatement();
 
-    assertThat(stmt.execute("SELECT uuid,date, title, content FROM Article WHERE uuid = 1234567")).isTrue();
+    assertThat(stmt.execute("SELECT uuid, date, title, content FROM Article WHERE uuid = 1234567")).isTrue();
 
     ResultSet rs = stmt.getResultSet();
     assertThat(rs).isNotNull();
 
     assertThat(rs.getFetchSize()).isEqualTo(1);
 
+    assertThat(rs.getLong(1)).isEqualTo(1234567);
     assertThat(rs.getLong("uuid")).isEqualTo(1234567);
 
   }
@@ -170,8 +166,8 @@ public class OrientJdbcResultSetTest extends OrientJdbcBaseTest {
 
     assertThat(rs.getFetchSize()).isEqualTo(1);
 
-    assertThat(rs.getLong(1)).isEqualTo(3438);
-    assertThat(rs.getLong("totalScore")).isEqualTo(3438);
+    assertThat(rs.getBigDecimal(1).intValue()).isEqualTo(3438);
+    assertThat(rs.getBigDecimal("totalScore").intValue()).isEqualTo(3438);
 
     stmt.close();
     stmt = conn.createStatement();
@@ -184,11 +180,10 @@ public class OrientJdbcResultSetTest extends OrientJdbcBaseTest {
 
     assertThat(rs.getFetchSize()).isEqualTo(1);
 
-    assertThat(rs.getLong(1)).isEqualTo(3438);
-    assertThat(rs.getLong("totalScore")).isEqualTo(3438);
+    assertThat(rs.getBigDecimal(1).intValue()).isEqualTo(3438);
+    assertThat(rs.getBigDecimal("totalScore").intValue()).isEqualTo(3438);
 
   }
-
 
   @Test
   public void shouldSelectWithCount() throws Exception {
@@ -203,7 +198,7 @@ public class OrientJdbcResultSetTest extends OrientJdbcBaseTest {
     assertThat(rs.getFetchSize()).isEqualTo(1);
 
     assertThat(rs.getLong(1)).isEqualTo(20);
-    assertThat(rs.getLong("count")).isEqualTo(20);
+    assertThat(rs.getLong("count(*)")).isEqualTo(20);
 
     stmt.close();
 
@@ -218,14 +213,16 @@ public class OrientJdbcResultSetTest extends OrientJdbcBaseTest {
     assertThat(rs.getFetchSize()).isEqualTo(1);
 
     assertThat(rs.getLong(1)).isEqualTo(20);
-    assertThat(rs.getLong("COUNT")).isEqualTo(20);
+    assertThat(rs.getLong("COUNT(*)")).isEqualTo(20);
 
     stmt.close();
 
   }
+
   @Test
   public void shouldFetchEmbeddedList() throws Exception {
 
+    String[] expectedNamee = new String[] { "John", "Chris", "Jill", "Karl", "Susan" };
     Statement stmt = conn.createStatement();
 
     stmt.executeUpdate("CREATE CLASS ListDemo");
@@ -242,23 +239,16 @@ public class OrientJdbcResultSetTest extends OrientJdbcBaseTest {
 
     ResultSetMetaData metaData = resultSet.getMetaData();
 
-    System.out.println("metaData.getColumnTypeName(1) = " + metaData.getColumnTypeName(1));
-
-    System.out.println("metaData.getColumnType(1) = " + metaData.getColumnType(1));
-
-    System.out.println("metaData.getColumnCalssName(1) = " + metaData.getColumnClassName(1));
-
     assertThat(metaData.getColumnType(1)).isEqualTo(Types.ARRAY);
 
     while (resultSet.next()) {
 
-      System.out.println("resultSet.getArray(1) = " + resultSet.getArray(1));
       Array namesRef = resultSet.getArray(1);
 
       Object[] names = (Object[]) namesRef.getArray();
 
       assertThat(names).isNotNull();
-      System.out.println("names = " + names[0]);
+      assertThat(names).isSubsetOf(expectedNamee);
     }
   }
 }

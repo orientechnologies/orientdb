@@ -1,22 +1,23 @@
 /**
  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- * 	http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
+ * <p>
  * For more information: http://orientdb.com
  */
 package com.orientechnologies.orient.jdbc;
 
+import com.orientechnologies.orient.core.db.OrientDB;
 import org.junit.Test;
 
 import java.sql.Connection;
@@ -38,7 +39,7 @@ public class OrientDataSourceTest extends OrientJdbcBaseTest {
   public void shouldConnect() throws SQLException {
 
     OrientDataSource ds = new OrientDataSource();
-    ds.setUrl("jdbc:orient:memory:OrientDataSourceTest");
+    ds.setDbUrl("jdbc:orient:memory:" + name.getMethodName());
     ds.setUsername("admin");
     ds.setPassword("admin");
 
@@ -54,6 +55,8 @@ public class OrientDataSourceTest extends OrientJdbcBaseTest {
     conn.close();
     assertThat(conn.isClosed()).isTrue();
 
+    ds.close();
+
   }
 
   @Test
@@ -62,30 +65,30 @@ public class OrientDataSourceTest extends OrientJdbcBaseTest {
     Properties info = new Properties();
     info.setProperty("db.usePool", "TRUE");
     info.setProperty("db.pool.min", "1");
-    info.setProperty("db.pool.max", "10");
+    info.setProperty("db.pool.max", "1");
 
-    final OrientDataSource ds = new OrientDataSource();
-    ds.setUrl("jdbc:orient:memory:OrientDataSourceTest");
+    final OrientDataSource ds = new OrientDataSource(conn.getOrientDB());
+    ds.setDbUrl("jdbc:orient:memory:" + name.getMethodName());
     ds.setUsername("admin");
     ds.setPassword("admin");
     ds.setInfo(info);
 
-    //pool size is 1: database should be the same on different connection
-    //NOTE: not safe in production!
     OrientJdbcConnection conn = (OrientJdbcConnection) ds.getConnection();
     assertThat(conn).isNotNull();
-
-    OrientJdbcConnection conn2 = (OrientJdbcConnection) ds.getConnection();
-    assertThat(conn2).isNotNull();
-    conn.getDatabase();
-
-    assertThat(conn.getDatabase()).isSameAs(conn2.getDatabase());
 
     conn.close();
     assertThat(conn.isClosed()).isTrue();
 
+
+    OrientJdbcConnection conn2 = (OrientJdbcConnection) ds.getConnection();
+    assertThat(conn2).isNotNull();
     conn2.close();
     assertThat(conn2.isClosed()).isTrue();
+
+    assertThat(conn.getDatabase()).isSameAs(conn2.getDatabase());
+
+
+
 
   }
 
@@ -96,8 +99,8 @@ public class OrientDataSourceTest extends OrientJdbcBaseTest {
     info.setProperty("db.pool.min", "1");
     info.setProperty("db.pool.max", "10");
 
-    final OrientDataSource ds = new OrientDataSource();
-    ds.setUrl("jdbc:orient:memory:OrientDataSourceTest");
+    final OrientDataSource ds = new OrientDataSource(conn.getOrientDB());
+    ds.setDbUrl("jdbc:orient:memory:" + name.getMethodName());
     ds.setUsername("admin");
     ds.setPassword("admin");
     ds.setInfo(info);
@@ -120,10 +123,19 @@ public class OrientDataSourceTest extends OrientJdbcBaseTest {
           rs.close();
 
           statement.close();
-          conn1.close();
-          assertThat(conn1.isClosed()).isTrue();
         } catch (SQLException e) {
+          e.printStackTrace();
           fail();
+        } finally {
+          if (conn1 != null) {
+            try {
+              conn1.close();
+              assertThat(conn1.isClosed()).isTrue();
+            } catch (SQLException e) {
+              e.printStackTrace();
+              fail();
+            }
+          }
         }
       });
     };

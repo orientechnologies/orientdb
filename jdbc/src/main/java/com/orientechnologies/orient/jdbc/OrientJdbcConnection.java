@@ -1,28 +1,30 @@
 /**
  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- * 	http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
+ * <p>
  * For more information: http://orientdb.com
  */
 package com.orientechnologies.orient.jdbc;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
-import com.orientechnologies.orient.core.db.OPartitionedDatabasePoolFactory;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.util.OURLConnection;
+import com.orientechnologies.orient.core.util.OURLHelper;
 
 import java.sql.*;
 import java.util.Map;
@@ -35,13 +37,10 @@ import java.util.concurrent.Executor;
  */
 public class OrientJdbcConnection implements Connection {
 
-  protected static final OPartitionedDatabasePoolFactory POOL_FACTORY = new OPartitionedDatabasePoolFactory();
-
-  private final String     dbUrl;
-  private final Properties info;
-  private final boolean    usePool;
-
   private ODatabaseDocument database;
+  private String            dbUrl;
+  private Properties        info;
+  private OrientDB          orientDB;
   private boolean           readOnly;
   private boolean           autoCommit;
   private ODatabase.STATUS  status;
@@ -53,19 +52,26 @@ public class OrientJdbcConnection implements Connection {
     this.info = info;
 
     readOnly = false;
+
     final String username = info.getProperty("user", "admin");
     final String password = info.getProperty("password", "admin");
 
-    usePool = Boolean.parseBoolean(info.getProperty("db.usePool", "false"));
-    if (usePool) {
-      OPartitionedDatabasePool pool = POOL_FACTORY.get(dbUrl, username, password);
-      database = pool.acquire();
-    } else {
-      database = new ODatabaseDocumentTx(this.dbUrl);
-      database.open(username, password);
-      database.activateOnCurrentThread();
-    }
+    OURLConnection connUrl = OURLHelper.parseNew(dbUrl);
+    orientDB = new OrientDB(connUrl.getType() + connUrl.getPath(), username, password, OrientDBConfig.defaultConfig());
+    orientDB.createIfNotExists(connUrl.getDbName(), connUrl.getDbType().orElse(ODatabaseType.MEMORY));
+
+    database = orientDB.open(connUrl.getDbName(), username, password);
     status = ODatabase.STATUS.OPEN;
+  }
+
+  public OrientJdbcConnection(ODatabaseDocument database, Properties info) {
+    this.database = database;
+    this.info = info;
+    status = ODatabase.STATUS.OPEN;
+  }
+
+  protected OrientDB getOrientDB() {
+    return orientDB;
   }
 
   public Statement createStatement() throws SQLException {
@@ -108,6 +114,9 @@ public class OrientJdbcConnection implements Connection {
       database.activateOnCurrentThread();
       database.close();
       database = null;
+    }
+    if (orientDB != null) {
+      orientDB.close();
     }
   }
 

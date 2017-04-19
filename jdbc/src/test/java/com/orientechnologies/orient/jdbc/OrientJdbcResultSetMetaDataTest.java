@@ -1,18 +1,18 @@
 /**
  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- * 	http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
+ * <p>
  * For more information: http://orientdb.com
  */
 package com.orientechnologies.orient.jdbc;
@@ -47,7 +47,7 @@ public class OrientJdbcResultSetMetaDataTest extends OrientJdbcBaseTest {
     assertThat(metaData.getColumnType(3)).isEqualTo(Types.VARCHAR);
     assertThat(rs.getObject(3)).isInstanceOf(String.class);
 
-    assertThat(metaData.getColumnType(4)).isEqualTo(BIGINT);
+    assertThat(metaData.getColumnType(4)).isEqualTo(Types.INTEGER);
     assertThat(metaData.getColumnType(5)).isEqualTo(Types.TIMESTAMP);
 
     assertThat(metaData.getColumnType(6)).isEqualTo(Types.DECIMAL);
@@ -68,7 +68,8 @@ public class OrientJdbcResultSetMetaDataTest extends OrientJdbcBaseTest {
     assertThat(rs.getInt(2)).isEqualTo(1);
     assertThat(rs.getInt("intKey")).isEqualTo(1);
 
-    assertThat(rs.getString("text")).hasSize(rs.getInt("length"));
+    assertThat(rs.getString("text"))
+        .hasSize(rs.getInt("length"));
 
     Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
     cal.add(Calendar.HOUR_OF_DAY, -1);
@@ -101,12 +102,13 @@ public class OrientJdbcResultSetMetaDataTest extends OrientJdbcBaseTest {
     ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM Author limit 10");
     int count = 0;
     while (rs.next()) {
-      assertThat(rs.getDouble("uuid")).isNotNull().isInstanceOf(Double.class);
+      assertThat(rs.getLong("uuid"))
+          .isNotNull()
+          .isInstanceOf(Long.class);
       count++;
     }
     assertThat(count).isEqualTo(10);
   }
-
 
   @Test
   public void shouldNavigateResultSetByMetadata() throws Exception {
@@ -119,11 +121,11 @@ public class OrientJdbcResultSetMetaDataTest extends OrientJdbcBaseTest {
     ResultSetMetaData metaData = rs.getMetaData();
     assertThat(metaData.getColumnCount()).isEqualTo(7);
 
-    assertThat(metaData.getColumnName(1)).isEqualTo("rid");
+    assertThat(metaData.getColumnName(1)).isEqualTo("@rid");
     assertThat(new ORecordId(rs.getString(1)).isPersistent()).isEqualTo(true);
     assertThat(rs.getObject(1)).isInstanceOf(String.class);
 
-    assertThat(metaData.getColumnName(2)).isEqualTo("class");
+    assertThat(metaData.getColumnName(2)).isEqualTo("@class");
     assertThat(rs.getString(2)).isEqualTo("Item");
     assertThat(rs.getObject(2)).isInstanceOf(String.class);
 
@@ -177,10 +179,9 @@ public class OrientJdbcResultSetMetaDataTest extends OrientJdbcBaseTest {
 
     ResultSetMetaData metaData = rs.getMetaData();
 
-
-    assertThat(metaData.getColumnName(1)).isEqualTo("stringKey");
-    assertThat(metaData.getColumnTypeName(1)).isEqualTo("STRING");
-    assertThat(rs.getObject(1)).isInstanceOf(String.class);
+    assertThat(metaData.getColumnName(1)).isEqualTo("intKey");
+    assertThat(metaData.getColumnTypeName(1)).isEqualTo("INTEGER");
+    assertThat(rs.getObject(1)).isInstanceOf(Integer.class);
 
   }
 

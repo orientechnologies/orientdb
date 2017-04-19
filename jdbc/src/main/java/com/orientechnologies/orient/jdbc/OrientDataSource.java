@@ -17,10 +17,17 @@
  */
 package com.orientechnologies.orient.jdbc;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabasePool;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.util.OURLConnection;
+import com.orientechnologies.orient.core.util.OURLHelper;
+
 import javax.sql.DataSource;
 import java.io.PrintWriter;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.util.Properties;
@@ -36,14 +43,14 @@ public class OrientDataSource implements DataSource {
     }
   }
 
-  private String url;
-  private String username;
-  private String password;
-
-  private Properties info;
-
-  private PrintWriter logger;
-  private int         loginTimeout;
+  private PrintWriter   logger;
+  private int           loginTimeout;
+  private String        dbUrl;
+  private String        username;
+  private String        password;
+  private Properties    info;
+  private OrientDB      orientDB;
+  private ODatabasePool pool;
 
   public OrientDataSource() {
     info = new Properties();
@@ -55,17 +62,22 @@ public class OrientDataSource implements DataSource {
   /**
    * Creates a {@link DataSource}
    *
-   * @param url
+   * @param dbUrl
    * @param username
    * @param password
    * @param info
    */
-  public OrientDataSource(String url, String username, String password, Properties info) {
-    this.url = url;
+  public OrientDataSource(String dbUrl, String username, String password, Properties info) {
+    this.dbUrl = dbUrl;
     this.username = username;
     this.password = password;
     this.info = info;
 
+  }
+
+  public OrientDataSource(OrientDB orientDB) {
+
+    this.orientDB = orientDB;
   }
 
   @Override
@@ -100,11 +112,32 @@ public class OrientDataSource implements DataSource {
     info.put("user", username);
     info.put("password", password);
 
-    return DriverManager.getConnection(url, info);
+//    return DriverManager.getConnection(url, info);
+
+    String orientDbUrl = dbUrl.replace("jdbc:orient:", "");
+
+    OURLConnection connUrl = OURLHelper.parseNew(orientDbUrl);
+
+    OrientDBConfig settings = OrientDBConfig.builder()
+        .addConfig(OGlobalConfiguration.DB_POOL_MIN, Integer.valueOf(info.getProperty("db.pool.min", "1")))
+        .addConfig(OGlobalConfiguration.DB_POOL_MAX, Integer.valueOf(info.getProperty("db.pool.max", "10")))
+        .build();
+
+    if (orientDB == null) {
+      orientDB = new OrientDB(connUrl.getType() + connUrl.getPath(), username, password, settings);
+      orientDB.createIfNotExists(connUrl.getDbName(), connUrl.getDbType().orElse(ODatabaseType.MEMORY));
+
+    }
+    if (pool == null) {
+
+      pool = new ODatabasePool(orientDB, connUrl.getDbName(), username, password, settings);
+    }
+
+    return new OrientJdbcConnection(pool.acquire(), info);
   }
 
-  public void setUrl(String url) {
-    this.url = url;
+  public void setDbUrl(String dbUrl) {
+    this.dbUrl = dbUrl;
   }
 
   public void setUsername(String username) {
@@ -138,4 +171,8 @@ public class OrientDataSource implements DataSource {
     throw new SQLFeatureNotSupportedException();
   }
 
+
+  public void  close() {
+    orientDB.close();
+  }
 }

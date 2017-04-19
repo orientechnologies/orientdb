@@ -90,7 +90,7 @@ public class OrientJdbcPreparedStatementTest extends OrientJdbcBaseTest {
     ResultSet result = conn.createStatement().executeQuery("INSERT INTO Insertable(id) VALUES(1) return @rid");
 
     assertThat(result.next()).isTrue();
-    assertThat(result.getObject("id")).isNotNull();
+    assertThat(result.getObject("@rid")).isNotNull();
   }
 
   @Test
@@ -139,16 +139,17 @@ public class OrientJdbcPreparedStatementTest extends OrientJdbcBaseTest {
     stmt.setString(1, "someRandomUid");
     stmt.setInt(2, 42);
     stmt.execute();
+    stmt.close();
 
     // Let's verify the previous process
     ResultSet resultSet = conn.createStatement()
         .executeQuery("SELECT count(*) AS num FROM insertable WHERE id = 'someRandomUid'");
-    assertThat(resultSet.getInt(1)).isEqualTo(1);
+    assertThat(resultSet.getLong(1)).isEqualTo(1);
 
     //without alias!
     resultSet = conn.createStatement()
         .executeQuery("SELECT count(*) FROM insertable WHERE id = 'someRandomUid'");
-    assertThat(resultSet.getInt(1)).isEqualTo(1);
+    assertThat(resultSet.getLong(1)).isEqualTo(1);
   }
 
   @Test
@@ -186,7 +187,7 @@ public class OrientJdbcPreparedStatementTest extends OrientJdbcBaseTest {
   }
 
   @Test(expected = SQLException.class)
-  public void shouldTrhowSqlExceptionOnError() throws SQLException {
+  public void shouldThrowSqlExceptionOnError() throws SQLException {
 
     String query = "select sequence('?').next()";
     PreparedStatement stmt = conn.prepareStatement(query);

@@ -19,11 +19,10 @@ package com.orientechnologies.orient.jdbc;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.OBlob;
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.math.BigDecimal;
 import java.sql.ResultSetMetaData;
@@ -67,10 +66,12 @@ public class OrientJdbcResultSetMetaData implements ResultSetMetaData {
     typesSqlTypes.put(OType.TRANSIENT, Types.NULL);
   }
 
-  private OrientJdbcResultSet resultSet;
+  private final String[]            fieldNames;
+  private final OrientJdbcResultSet resultSet;
 
-  public OrientJdbcResultSetMetaData(final OrientJdbcResultSet iResultSet) {
-    resultSet = iResultSet;
+  public OrientJdbcResultSetMetaData(OrientJdbcResultSet orientJdbcResultSet, List<String> fieldNames) {
+    resultSet = orientJdbcResultSet;
+    this.fieldNames = fieldNames.toArray(new String[] {});
   }
 
   public static Integer getSqlType(final OType iType) {
@@ -78,8 +79,10 @@ public class OrientJdbcResultSetMetaData implements ResultSetMetaData {
   }
 
   public int getColumnCount() throws SQLException {
-    final ODocument currentRecord = getCurrentRecord();
-    return currentRecord.fields();
+//    final ODocument currentRecord = getCurrentRecord();
+//    return currentRecord.fields();
+
+    return fieldNames.length;
   }
 
   public String getCatalogName(final int column) throws SQLException {
@@ -98,19 +101,20 @@ public class OrientJdbcResultSetMetaData implements ResultSetMetaData {
     return 0;
   }
 
+  @Override
   public String getColumnLabel(final int column) throws SQLException {
     return this.getColumnName(column);
   }
 
+  @Override
   public String getColumnName(final int column) throws SQLException {
-    final ODocument currentRecord = getCurrentRecord();
-    return currentRecord.fieldNames()[column - 1];
+
+    return fieldNames[column - 1];
   }
 
+  @Override
   public int getColumnType(final int column) throws SQLException {
-    final ODocument currentRecord = getCurrentRecord();
-
-    final String[] fieldNames = currentRecord.fieldNames();
+    final OResult currentRecord = getCurrentRecord();
 
     if (column > fieldNames.length)
       return Types.NULL;
@@ -120,10 +124,13 @@ public class OrientJdbcResultSetMetaData implements ResultSetMetaData {
     // the schema class
     // results in a NullPointerException
     // OClass oclass = currentRecord.getSchemaClass();
-    OType otype = currentRecord.fieldType(fieldName);
+
+    OType otype = currentRecord.toElement().getSchemaType()
+        .map(st -> st.getProperty(fieldName).getType())
+        .orElse(null);
 
     if (otype == null) {
-      Object value = currentRecord.field(fieldName);
+      Object value = currentRecord.getProperty(fieldName);
 
       if (value == null) {
         return Types.NULL;
@@ -149,7 +156,7 @@ public class OrientJdbcResultSetMetaData implements ResultSetMetaData {
       return this.getSQLTypeFromJavaClass(value);
     } else {
       if (otype == OType.EMBEDDED || otype == OType.LINK) {
-        Object value = currentRecord.field(fieldName);
+        Object value = currentRecord.getProperty(fieldName);
         if (value == null) {
           return Types.NULL;
         }
@@ -162,7 +169,7 @@ public class OrientJdbcResultSetMetaData implements ResultSetMetaData {
         }
       } else {
         if (otype == OType.EMBEDDEDLIST || otype == OType.LINKLIST) {
-          Object value = currentRecord.field(fieldName);
+          Object value = currentRecord.getProperty(fieldName);
           if (value == null) {
             return Types.NULL;
           }
@@ -194,8 +201,8 @@ public class OrientJdbcResultSetMetaData implements ResultSetMetaData {
     }
   }
 
-  protected ODocument getCurrentRecord() throws SQLException {
-    final ODocument currentRecord = this.resultSet.unwrap(ODocument.class);
+  protected OResult getCurrentRecord() throws SQLException {
+    final OResult currentRecord = this.resultSet.unwrap(OResult.class);
     if (currentRecord == null)
       throw new SQLException("No current record");
     return currentRecord;
@@ -230,12 +237,13 @@ public class OrientJdbcResultSetMetaData implements ResultSetMetaData {
 
   @Override
   public String getColumnTypeName(final int column) throws SQLException {
-    final ODocument currentRecord = getCurrentRecord();
+    final OResult currentRecord = getCurrentRecord();
 
-    OType columnType = currentRecord.fieldType(currentRecord.fieldNames()[column - 1]);
-    if (columnType == null)
-      return null;
-    return columnType.toString();
+    String columnLabel = fieldNames[column -1];
+
+    return currentRecord.toElement().getSchemaType()
+        .map(st -> st.getProperty(columnLabel).getType().toString())
+        .orElse(null);
   }
 
   public int getPrecision(final int column) throws SQLException {
@@ -247,11 +255,11 @@ public class OrientJdbcResultSetMetaData implements ResultSetMetaData {
   }
 
   public String getSchemaName(final int column) throws SQLException {
-    final ODocument currentRecord = getCurrentRecord();
+    final OResult currentRecord = getCurrentRecord();
     if (currentRecord == null)
       return "";
     else
-      return currentRecord.getDatabase().getName();
+      return currentRecord.toElement().getDatabase().getName();
   }
 
   public String getTableName(final int column) throws SQLException {
@@ -292,8 +300,12 @@ public class OrientJdbcResultSetMetaData implements ResultSetMetaData {
   }
 
   public boolean isSigned(final int column) throws SQLException {
-    final ODocument currentRecord = getCurrentRecord();
-    return this.isANumericColumn(currentRecord.fieldType(currentRecord.fieldNames()[column - 1]));
+    final OResult currentRecord = getCurrentRecord();
+    OType otype = currentRecord.toElement().getSchemaType()
+        .map(st -> st.getProperty(fieldNames[column - 1]).getType())
+        .orElse(null);
+
+    return this.isANumericColumn(otype);
   }
 
   public boolean isWritable(final int column) throws SQLException {
@@ -309,20 +321,22 @@ public class OrientJdbcResultSetMetaData implements ResultSetMetaData {
   }
 
   private boolean isANumericColumn(final OType type) {
-    return type == OType.BYTE || type == OType.DOUBLE || type == OType.FLOAT || type == OType.INTEGER || type == OType.LONG
+    return type == OType.BYTE
+        || type == OType.DOUBLE
+        || type == OType.FLOAT
+        || type == OType.INTEGER
+        || type == OType.LONG
         || type == OType.SHORT;
   }
 
   protected OProperty getProperty(final int column) throws SQLException {
-    final ODocument currentRecord = getCurrentRecord();
 
-    final OClass schemaClass = currentRecord.getSchemaClass();
-    if (schemaClass != null) {
-      final String fieldName = currentRecord.fieldNames()[column - 1];
-      return schemaClass.getProperty(fieldName);
-    }
+    String fieldName = getColumnName(column);
 
-    return null;
+    return getCurrentRecord().toElement().getSchemaType()
+        .map(st -> st.getProperty(fieldName))
+        .orElse(null);
+
   }
 
 }

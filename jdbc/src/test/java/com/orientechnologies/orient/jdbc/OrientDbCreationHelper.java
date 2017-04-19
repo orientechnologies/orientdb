@@ -17,9 +17,7 @@
  */
 package com.orientechnologies.orient.jdbc;
 
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -40,7 +38,7 @@ import java.util.*;
 
 public class OrientDbCreationHelper {
 
-  public static void loadDB(ODatabaseDocumentTx db, int documents) throws IOException {
+  public static void loadDB(ODatabaseDocument db, int documents) throws IOException {
 
     db.declareIntent(new OIntentMassiveInsert());
 
@@ -77,7 +75,7 @@ public class OrientDbCreationHelper {
     doc.field("text", contents);
     doc.field("title", "orientDB");
     doc.field("score", BigDecimal.valueOf(contents.length() / id));
-    doc.field("length", contents.length());
+    doc.field("length", contents.length(), OType.LONG);
     doc.field("published", (id % 2 > 0));
     doc.field("author", "anAuthor" + id);
     // doc.field("tags", asList("java", "orient", "nosql"),
@@ -92,14 +90,14 @@ public class OrientDbCreationHelper {
     return doc;
   }
 
-  public static void createAuthorAndArticles(ODatabaseDocumentTx db, int totAuthors, int totArticles) throws IOException {
+  public static void createAuthorAndArticles(ODatabaseDocument db, int totAuthors, int totArticles) throws IOException {
     int articleSerial = 0;
     for (int a = 1; a <= totAuthors; ++a) {
       ODocument author = new ODocument("Author");
       List<ODocument> articles = new ArrayList<>(totArticles);
       author.field("articles", articles);
 
-      author.field("uuid", a);
+      author.field("uuid", a, OType.DOUBLE);
       author.field("name", "Jay");
       author.field("rating", new Random().nextDouble());
 
@@ -122,7 +120,7 @@ public class OrientDbCreationHelper {
     }
   }
 
-  public static ODocument createArticleWithAttachmentSplitted(ODatabaseDocumentTx db) throws IOException {
+  public static ODocument createArticleWithAttachmentSplitted(ODatabaseDocument db) throws IOException {
 
     ODocument article = new ODocument("Article");
     Calendar instance = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
@@ -183,11 +181,11 @@ public class OrientDbCreationHelper {
 
   }
 
-  private static OBlob loadFile(ODatabaseDocumentInternal database, String filePath) throws IOException {
+  private static OBlob loadFile(ODatabaseDocument database, String filePath) throws IOException {
     final File f = new File(filePath);
     if (f.exists()) {
       BufferedInputStream inputStream = new BufferedInputStream(new FileInputStream(f));
-      OBlob record = new ORecordBytes(database);
+      OBlob record = new ORecordBytes();
       record.fromInputStream(inputStream);
       return record;
     }
@@ -195,7 +193,7 @@ public class OrientDbCreationHelper {
     return null;
   }
 
-  private static List<ORID> loadFile(ODatabaseDocumentInternal database, String filePath, int bufferSize) throws IOException {
+  private static List<ORID> loadFile(ODatabaseDocument database, String filePath, int bufferSize) throws IOException {
     File binaryFile = new File(filePath);
     long binaryFileLength = binaryFile.length();
     int numberOfRecords = (int) (binaryFileLength / bufferSize);
@@ -214,7 +212,7 @@ public class OrientDbCreationHelper {
       else
         chunk = new byte[bufferSize];
       binaryStream.read(chunk);
-      recordChunk = new ORecordBytes(database, chunk);
+      recordChunk = new ORecordBytes(chunk);
       database.save(recordChunk);
       binaryChuncks.add(recordChunk.getIdentity());
     }
@@ -223,7 +221,7 @@ public class OrientDbCreationHelper {
     return binaryChuncks;
   }
 
-  public static void createSchemaDB(ODatabaseDocumentTx db) {
+  public static void createSchemaDB(ODatabaseDocument db) {
 
     OSchema schema = db.getMetadata().getSchema();
 
@@ -236,7 +234,7 @@ public class OrientDbCreationHelper {
     item.createProperty("time", OType.DATETIME).createIndex(INDEX_TYPE.NOTUNIQUE);
     item.createProperty("text", OType.STRING);
     item.createProperty("score", OType.DECIMAL);
-    item.createProperty("length", OType.LONG).createIndex(INDEX_TYPE.NOTUNIQUE);
+    item.createProperty("length", OType.INTEGER).createIndex(INDEX_TYPE.NOTUNIQUE);
     item.createProperty("published", OType.BOOLEAN).createIndex(INDEX_TYPE.NOTUNIQUE);
     item.createProperty("title", OType.STRING).createIndex(INDEX_TYPE.NOTUNIQUE);
     item.createProperty("author", OType.STRING).createIndex(INDEX_TYPE.NOTUNIQUE);
@@ -245,7 +243,7 @@ public class OrientDbCreationHelper {
     // class Article
     OClass article = schema.createClass("Article");
 
-    article.createProperty("uuid", OType.INTEGER).createIndex(INDEX_TYPE.UNIQUE);
+    article.createProperty("uuid", OType.LONG).createIndex(INDEX_TYPE.UNIQUE);
     article.createProperty("date", OType.DATE).createIndex(INDEX_TYPE.NOTUNIQUE);
     article.createProperty("title", OType.STRING);
     article.createProperty("content", OType.STRING);

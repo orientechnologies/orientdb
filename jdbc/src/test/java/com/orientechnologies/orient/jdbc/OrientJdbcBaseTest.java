@@ -1,26 +1,30 @@
 /**
  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- * 	http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
+ * <p>
  * For more information: http://orientdb.com
  */
 package com.orientechnologies.orient.jdbc;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.ODatabasePool;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
+import org.junit.rules.TestName;
 
 import java.io.File;
 import java.sql.DriverManager;
@@ -31,47 +35,45 @@ import static com.orientechnologies.orient.jdbc.OrientDbCreationHelper.loadDB;
 
 public abstract class OrientJdbcBaseTest {
 
+  @Rule
+  public TestName name = new TestName();
+
   protected OrientJdbcConnection conn;
-  protected ODatabaseDocumentTx  db;
+  protected ODatabaseDocument    db;
+  protected OrientDB             orientDB;
+  protected ODatabasePool        pool;
 
   @Before
   public void prepareDatabase() throws Exception {
-    String dbUrl = "memory:" + getClass().getSimpleName();
-    db = new ODatabaseDocumentTx(dbUrl);
 
-    String username = "admin";
-    String password = "admin";
+    String dbName = name.getMethodName();
+    Properties info = new Properties();
+    info.put("user", "admin");
+    info.put("password", "admin");
+    conn = (OrientJdbcConnection) DriverManager.getConnection("jdbc:orient:" + "memory:" + dbName, info);
 
-    if (db.exists()) {
-      db.activateOnCurrentThread();
-      db.open(username, password);
-      db.drop();
-    }
+    orientDB = conn.getOrientDB();
 
-    db.create();
+    pool = new ODatabasePool(orientDB, dbName, "admin", "admin");
+    db = pool.acquire();
 
     createSchemaDB(db);
 
     if (!new File("./src/test/resources/file.pdf").exists())
-      OLogManager.instance().warn(this, "TEST IS NOT RUNNING UNDER distributed folder, attachment will be not loaded!");
+      OLogManager.instance().warn(this, "attachment will be not loaded!");
 
     loadDB(db, 20);
 
-    Properties info = new Properties();
-    info.put("user", username);
-    info.put("password", password);
+    db.close();
 
-    conn = (OrientJdbcConnection) DriverManager.getConnection("jdbc:orient:" + dbUrl, info);
   }
 
   @After
   public void closeConnection() throws Exception {
     if (conn != null && !conn.isClosed())
       conn.close();
-    db.activateOnCurrentThread();
-    db.drop();
+    pool.close();
+    orientDB.close();
 
-    //should reset the underlying pool because the db is dropped
-    OrientJdbcConnection.POOL_FACTORY.reset();
   }
 }

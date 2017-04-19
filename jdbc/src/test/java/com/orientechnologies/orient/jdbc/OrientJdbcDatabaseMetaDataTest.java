@@ -1,18 +1,18 @@
 /**
  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- * 	http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
+ * <p>
  * For more information: http://orientdb.com
  */
 package com.orientechnologies.orient.jdbc;
@@ -43,7 +43,7 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
   @Test
   public void verifyDriverAndDatabaseVersions() throws SQLException {
 
-    assertEquals("memory:OrientJdbcDatabaseMetaDataTest", metaData.getURL());
+    assertEquals("memory:" + name.getMethodName(), metaData.getURL());
     assertEquals("admin", metaData.getUserName());
     assertEquals("OrientDB", metaData.getDatabaseProductName());
     assertEquals(OConstants.ORIENT_VERSION, metaData.getDatabaseProductVersion());
@@ -51,7 +51,7 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
     assertEquals(0, metaData.getDatabaseMinorVersion());
 
     assertEquals("OrientDB JDBC Driver", metaData.getDriverName());
-    assertEquals("OrientDB "+OConstants.getVersion()+" JDBC Driver", metaData.getDriverVersion());
+    assertEquals("OrientDB " + OConstants.getVersion() + " JDBC Driver", metaData.getDriverVersion());
     assertEquals(3, metaData.getDriverMajorVersion());
     assertEquals(0, metaData.getDriverMinorVersion());
 
@@ -97,7 +97,8 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
   @Test
   public void shouldRetrieveUniqueIndexInfoForTable() throws Exception {
 
-    ResultSet indexInfo = metaData.getIndexInfo("OrientJdbcDatabaseMetaDataTest", "OrientJdbcDatabaseMetaDataTest", "Item", true, false);
+    ResultSet indexInfo = metaData
+        .getIndexInfo("OrientJdbcDatabaseMetaDataTest", "OrientJdbcDatabaseMetaDataTest", "Item", true, false);
 
     indexInfo.next();
 
@@ -162,8 +163,8 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
     ResultSet rs = metaData.getTables(null, null, null, null);
 
     while (rs.next()) {
-      assertThat(rs.getString("TABLE_SCHEM")).isEqualTo("OrientJdbcDatabaseMetaDataTest");
-      assertThat(rs.getString("TABLE_CAT")).isEqualTo("OrientJdbcDatabaseMetaDataTest");
+      assertThat(rs.getString("TABLE_SCHEM")).isEqualTo(name.getMethodName());
+      assertThat(rs.getString("TABLE_CAT")).isEqualTo(name.getMethodName());
     }
 
   }
@@ -193,8 +194,8 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
     ResultSet rs = metaData.getTables(null, null, "ouser", null);
     rs.next();
     assertThat(rs.getString("TABLE_NAME")).isEqualTo("OUser");
-    assertThat(rs.getString("TABLE_CAT")).isEqualTo("OrientJdbcDatabaseMetaDataTest");
-    assertThat(rs.getString("TABLE_SCHEM")).isEqualTo("OrientJdbcDatabaseMetaDataTest");
+    assertThat(rs.getString("TABLE_CAT")).isEqualTo(name.getMethodName());
+    assertThat(rs.getString("TABLE_SCHEM")).isEqualTo(name.getMethodName());
     assertThat(rs.getString("REMARKS")).isNull();
     assertThat(rs.getString("REF_GENERATION")).isNull();
     assertThat(rs.getString("TYPE_NAME")).isNull();
@@ -209,8 +210,8 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
 
     assertThat(rs.getString("TABLE_NAME")).isEqualTo("Article");
     assertThat(rs.getString("COLUMN_NAME")).isEqualTo("uuid");
-    assertThat(rs.getString("TYPE_NAME")).isEqualTo("INTEGER");
-    assertThat(rs.getInt("DATA_TYPE")).isEqualTo(4);
+    assertThat(rs.getString("TYPE_NAME")).isEqualTo("LONG");
+    assertThat(rs.getInt("DATA_TYPE")).isEqualTo(-5);
 
     assertThat(rs.next()).isFalse();
   }
@@ -222,8 +223,10 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
     while (rs.next()) {
       assertThat(rs.getString("TABLE_NAME")).isEqualTo("Article");
       assertThat(rs.getString("COLUMN_NAME")).isIn("date", "uuid", "author", "title", "content");
-      assertThat(rs.getInt("DATA_TYPE")).isIn(9, 12, 4, 91, 2000);
-      assertThat(rs.getString("TYPE_NAME")).isIn("LINK", "DATE", "STRING", "INTEGER");
+
+//      System.out.println("rs = " + rs.getInt("DATA_TYPE"));
+      assertThat(rs.getInt("DATA_TYPE")).isIn(-5, 12, 91, 2000);
+      assertThat(rs.getString("TYPE_NAME")).isIn("LONG", "LINK", "DATE", "STRING", "INTEGER");
 
     }
   }
@@ -238,7 +241,7 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
     assertThat(rs.getString("INDEX_NAME")).isEqualTo("Article.uuid");
     assertThat(rs.getBoolean("NON_UNIQUE")).isFalse();
 
-    }
+  }
 
   @Test
   public void shouldGetPrimaryKeyOfArticle() throws Exception {
