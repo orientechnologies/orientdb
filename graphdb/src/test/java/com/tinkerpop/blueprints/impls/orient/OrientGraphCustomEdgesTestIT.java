@@ -9,20 +9,15 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 /**
- * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
- * @since 2/6/14
+ * Test suite for OrientDB graph implementation that store edges using custom classes derived by labels.
+ * 
+ * @author Luca Garulli (l.garulli--(at)--orientdb.com) (http://orientdb.com)
  */
 @RunWith(JUnit4.class)
-public class OrientGraphDefaultRemoteTest extends OrientGraphRemoteTest {
-  @Before
-  public void setUp() throws Exception {
-//    Assume.assumeThat(getEnvironment(), AnyOf.anyOf(IsEqual.equalTo(ENV.CI), IsEqual.equalTo(ENV.RELEASE)));
-    super.setUp();
-  }
+public class OrientGraphCustomEdgesTestIT extends OrientGraphTest {
 
   public Graph generateGraph(final String graphDirectoryName) {
     OrientGraph graph = (OrientGraph) super.generateGraph(graphDirectoryName);
-    graph.setUseLightweightEdges(true);
 
     if (graph.getEdgeType("friend") == null)
       graph.createEdgeType("friend");
@@ -42,17 +37,10 @@ public class OrientGraphDefaultRemoteTest extends OrientGraphRemoteTest {
       graph.createEdgeType("test-edge");
     if (graph.getEdgeType("self") == null)
       graph.createEdgeType("self");
-    if (graph.getEdgeType("x") == null)
-      graph.createEdgeType("x");
-    if (graph.getEdgeType("y") == null)
-      graph.createEdgeType("y");
-    if (graph.getEdgeType("test1") == null)
-      graph.createEdgeType("test1");
-    if (graph.getEdgeType("test2") == null)
-      graph.createEdgeType("test2");
-    if (graph.getEdgeType("test3") == null)
-      graph.createEdgeType("test3");
+    if (graph.getEdgeType("pets") == null)
+      graph.createEdgeType("pets");
 
     return graph;
   }
+
 }

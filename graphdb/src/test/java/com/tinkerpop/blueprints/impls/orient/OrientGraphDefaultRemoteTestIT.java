@@ -9,21 +9,15 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 /**
- * Test suite for OrientDB graph implementation that store edges using custom classes derived by labels.
- * 
- * @author Luca Garulli (l.garulli--(at)--orientdb.com) (http://orientdb.com)
+ * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
+ * @since 2/6/14
  */
 @RunWith(JUnit4.class)
-public class OrientGraphCustomEdgesNoLightweightTest extends OrientGraphTest {
-  @Before
-  public void setUp() throws Exception {
-    Assume.assumeThat(getEnvironment(), AnyOf.anyOf(IsEqual.equalTo(ENV.CI), IsEqual.equalTo(ENV.RELEASE)));
-    super.setUp();
-  }
+public class OrientGraphDefaultRemoteTestIT extends OrientGraphRemoteTest {
 
   public Graph generateGraph(final String graphDirectoryName) {
-    final OrientGraph graph = (OrientGraph) super.generateGraph(graphDirectoryName);
-    graph.setUseLightweightEdges(false);
+    OrientGraph graph = (OrientGraph) super.generateGraph(graphDirectoryName);
+    graph.setUseLightweightEdges(true);
 
     if (graph.getEdgeType("friend") == null)
       graph.createEdgeType("friend");
@@ -56,5 +50,4 @@ public class OrientGraphCustomEdgesNoLightweightTest extends OrientGraphTest {
 
     return graph;
   }
-
 }

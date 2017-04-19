@@ -22,10 +22,13 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -37,6 +40,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Created by Enrico Risa on 07/07/15.
  */
+@RunWith(JUnit4.class)
 public class OLuceneBackupRestoreTest extends OLuceneBaseTest {
 
   @Rule
@@ -44,6 +48,9 @@ public class OLuceneBackupRestoreTest extends OLuceneBaseTest {
 
   @Before
   public void setUp() throws Exception {
+    final String os = System.getProperty("os.name").toLowerCase();
+    Assume.assumeFalse(os.contains("win"));
+
 
     dropDatabase();
     super.setupDatabase("ci");

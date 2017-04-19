@@ -17,13 +17,13 @@ import java.util.*;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 12.08.13
  */
-public class SBTreeTest {
+public class SBTreeTestIT {
   private static final int KEYS_COUNT = 500000;
   protected OSBTree<Integer, OIdentifiable> sbTree;
   protected ODatabaseDocumentTx             databaseDocumentTx;
   private   String                          buildDirectory;
 
-  public SBTreeTest() {
+  public SBTreeTestIT() {
     buildDirectory = System.getProperty("buildDirectory");
     if (buildDirectory == null)
       buildDirectory = ".";

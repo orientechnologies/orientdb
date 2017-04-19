@@ -14,15 +14,10 @@ import org.junit.runners.JUnit4;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com) (http://orientdb.com)
  */
 @RunWith(JUnit4.class)
-public class OrientGraphCustomEdgesTest extends OrientGraphTest {
-  @Before
-  public void setUp() throws Exception {
-    Assume.assumeThat(getEnvironment(), AnyOf.anyOf(IsEqual.equalTo(ENV.CI), IsEqual.equalTo(ENV.RELEASE)));
-    super.setUp();
-  }
-
+public class OrientGraphCustomEdgesNoLightweightTestIT extends OrientGraphTest {
   public Graph generateGraph(final String graphDirectoryName) {
-    OrientGraph graph = (OrientGraph) super.generateGraph(graphDirectoryName);
+    final OrientGraph graph = (OrientGraph) super.generateGraph(graphDirectoryName);
+    graph.setUseLightweightEdges(false);
 
     if (graph.getEdgeType("friend") == null)
       graph.createEdgeType("friend");
@@ -42,8 +37,16 @@ public class OrientGraphCustomEdgesTest extends OrientGraphTest {
       graph.createEdgeType("test-edge");
     if (graph.getEdgeType("self") == null)
       graph.createEdgeType("self");
-    if (graph.getEdgeType("pets") == null)
-      graph.createEdgeType("pets");
+    if (graph.getEdgeType("x") == null)
+      graph.createEdgeType("x");
+    if (graph.getEdgeType("y") == null)
+      graph.createEdgeType("y");
+    if (graph.getEdgeType("test1") == null)
+      graph.createEdgeType("test1");
+    if (graph.getEdgeType("test2") == null)
+      graph.createEdgeType("test2");
+    if (graph.getEdgeType("test3") == null)
+      graph.createEdgeType("test3");
 
     return graph;
   }

@@ -5,7 +5,6 @@ import com.orientechnologies.orient.core.exception.OPaginatedClusterException;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import org.assertj.core.api.Assertions;
 import org.junit.*;
 
@@ -18,7 +17,7 @@ import java.util.*;
  * @since 26.03.13
  */
 
-public class LocalPaginatedClusterTest {
+public class LocalPaginatedClusterTestIT {
   protected static String              buildDirectory;
   static           OPaginatedCluster   paginatedCluster;
   static           ODatabaseDocumentTx databaseDocumentTx;
@@ -26,7 +25,7 @@ public class LocalPaginatedClusterTest {
   @BeforeClass
   public static void beforeClass() throws IOException {
 
-    System.out.println("Start LocalPaginatedClusterTest");
+    System.out.println("Start LocalPaginatedClusterTestIT");
     buildDirectory = System.getProperty("buildDirectory");
     if (buildDirectory == null || buildDirectory.isEmpty())
       buildDirectory = ".";
@@ -34,7 +33,7 @@ public class LocalPaginatedClusterTest {
     buildDirectory += "/localPaginatedClusterTest";
 
     databaseDocumentTx = new ODatabaseDocumentTx(
-        "plocal:" + buildDirectory + File.separator + LocalPaginatedClusterTest.class.getSimpleName());
+        "plocal:" + buildDirectory + File.separator + LocalPaginatedClusterTestIT.class.getSimpleName());
     if (databaseDocumentTx.exists()) {
       databaseDocumentTx.open("admin", "admin");
       databaseDocumentTx.drop();
@@ -54,7 +53,7 @@ public class LocalPaginatedClusterTest {
     paginatedCluster.delete();
 
     databaseDocumentTx.drop();
-    System.out.println("End LocalPaginatedClusterTest");
+    System.out.println("End LocalPaginatedClusterTestIT");
   }
 
   @Before

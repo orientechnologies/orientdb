@@ -24,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @since 5/8/13
  */
 
-public class LocalPaginatedClusterWithWALTest extends LocalPaginatedClusterTest {
+public class LocalPaginatedClusterWithWALTestIT extends LocalPaginatedClusterTestIT {
   static {
     OGlobalConfiguration.FILE_LOCK.setValue(false);
   }

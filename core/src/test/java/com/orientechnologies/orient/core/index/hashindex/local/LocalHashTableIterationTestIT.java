@@ -13,7 +13,7 @@ import java.util.*;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 13.03.13
  */
-public class LocalHashTableIterationTest {
+public class LocalHashTableIterationTestIT {
   private static final int KEYS_COUNT = 500000;
 
   private ODatabaseDocumentTx databaseDocumentTx;

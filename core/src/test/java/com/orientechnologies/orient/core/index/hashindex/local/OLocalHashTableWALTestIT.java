@@ -29,7 +29,7 @@ import java.util.List;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 5/19/14
  */
-public class OLocalHashTableWALTest extends OLocalHashTableBase {
+public class OLocalHashTableWALTestIT extends OLocalHashTableBase {
   static {
     OGlobalConfiguration.FILE_LOCK.setValue(false);
   }

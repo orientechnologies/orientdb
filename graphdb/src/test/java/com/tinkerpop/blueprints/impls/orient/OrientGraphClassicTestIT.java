@@ -14,12 +14,7 @@ import org.junit.runners.JUnit4;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com) (http://orientdb.com)
  */
 @RunWith(JUnit4.class)
-public class OrientGraphClassicTest extends OrientGraphTest {
-  @Before
-  public void setUp() throws Exception {
-    Assume.assumeThat(getEnvironment(), AnyOf.anyOf(IsEqual.equalTo(ENV.CI), IsEqual.equalTo(ENV.RELEASE)));
-    super.setUp();
-  }
+public class OrientGraphClassicTestIT extends OrientGraphTest {
 
   public Graph generateGraph(final String graphDirectoryName) {
     OrientGraph graph = (OrientGraph) super.generateGraph(graphDirectoryName);

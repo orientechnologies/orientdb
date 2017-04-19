@@ -13,9 +13,9 @@ import java.io.IOException;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 19.02.13
  */
-public class OLocalHashTableTest extends OLocalHashTableBase {
+public class OLocalHashTableTestIT extends OLocalHashTableBase {
 
-  public OLocalHashTableTest() {
+  public OLocalHashTableTestIT() {
 
     String buildDirectory = System.getProperty("buildDirectory");
     if (buildDirectory == null)

@@ -35,6 +35,8 @@ import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.handler.OAutomaticBackup;
 import org.junit.*;
 import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -52,6 +54,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Created by Enrico Risa on 07/07/15.
  */
+@RunWith(JUnit4.class)
 public class OLuceneAutomaticBackupRestoreTest {
 
   private final static String          DBNAME     = "OLuceneAutomaticBackupRestoreTest";
@@ -67,6 +70,9 @@ public class OLuceneAutomaticBackupRestoreTest {
 
   @Before
   public void setUp() throws Exception {
+    final String os = System.getProperty("os.name").toLowerCase();
+
+    Assume.assumeFalse(os.contains("win"));
 
     server = new OServer() {
       @Override
@@ -115,10 +121,13 @@ public class OLuceneAutomaticBackupRestoreTest {
 
   @After
   public void tearDown() throws Exception {
-    dropIfExists();
+    final String os = System.getProperty("os.name").toLowerCase();
 
-    tempFolder.delete();
+    if (!os.contains("win")) {
+      dropIfExists();
 
+      tempFolder.delete();
+    }
   }
 
   @Test

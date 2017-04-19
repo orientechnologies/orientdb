@@ -28,7 +28,7 @@ import java.util.TreeSet;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 12.08.13
  */
-public class OSBTreeBonsaiLocalTest {
+public class OSBTreeBonsaiLocalTestIT {
   private static final int KEYS_COUNT = 500000;
   protected static OSBTreeBonsaiLocal<Integer, OIdentifiable> sbTree;
   protected static ODatabaseDocumentTx                        databaseDocumentTx;

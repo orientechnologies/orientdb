@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.core.index.sbtree.local;
+package com.orientechnologies.orient.core.index.sbtreebonsai.local;
 
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -10,17 +10,12 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
-import org.assertj.core.api.Assertions;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,36 +27,38 @@ import java.util.List;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 8/27/13
  */
-public class SBTreeWALTest extends SBTreeTest {
+public class OSBTreeBonsaiWALTestIT extends OSBTreeBonsaiLocalTestIT {
   static {
     OGlobalConfiguration.FILE_LOCK.setValue(false);
   }
 
   private String buildDirectory;
 
-  private ODatabaseDocumentTx expectedDatabaseDocumentTx;
-
   private String actualStorageDir;
   private String expectedStorageDir;
 
-  private ODiskWriteAheadLog writeAheadLog;
+  private ODatabaseDocumentTx expectedDatabaseDocumentTx;
+
+  private OReadCache  expectedReadCache;
+  private OWriteCache expectedWriteCache;
 
   private OLocalPaginatedStorage actualStorage;
-  private OReadCache             actualReadCache;
-  private OWriteCache            actualWriteCache;
 
-  private OLocalPaginatedStorage expectedStorage;
-  private OReadCache             expectedReadCache;
-  private OWriteCache            expectedWriteCache;
+  private OAtomicOperationsManager actualAtomicOperationsManager;
+
+  @BeforeClass
+  public static void beforeClass() {
+  }
+
+  @AfterClass
+  public static void afterClass() throws Exception {
+  }
 
   @Before
-  public void before() throws IOException {
+  public void beforeMethod() throws IOException {
     buildDirectory = System.getProperty("buildDirectory", ".");
-    buildDirectory += "/sbtreeWithWALTest";
 
-    final File buildDir = new File(buildDirectory);
-    if (!buildDir.exists())
-      buildDir.mkdirs();
+    buildDirectory += "/sbtreeWithWALTest";
 
     createExpectedSBTree();
     createActualSBTree();
@@ -70,56 +67,64 @@ public class SBTreeWALTest extends SBTreeTest {
   @After
   @Override
   public void afterMethod() throws Exception {
-    databaseDocumentTx.open("admin", "admin");
-    databaseDocumentTx.drop();
+    Assert.assertNull(actualAtomicOperationsManager.getCurrentOperation());
 
     expectedDatabaseDocumentTx.open("admin", "admin");
     expectedDatabaseDocumentTx.drop();
 
-    final File actualStorage = new File(actualStorageDir);
-    if (actualStorage.exists())
-      Assert.assertTrue(actualStorage.delete());
+    databaseDocumentTx.open("admin", "admin");
+    databaseDocumentTx.drop();
 
-    final File expectedStorage = new File(expectedStorageDir);
-    if (expectedStorage.exists())
-      Assert.assertTrue(expectedStorage.delete());
+    File ad = new File(actualStorageDir);
+    if (ad.exists())
+      Assert.assertTrue(ad.delete());
 
-    final File buildDir = new File(buildDirectory);
-    if (buildDir.exists())
-      Assert.assertTrue(buildDir.delete());
+    File ed = new File(expectedStorageDir);
+    if (ed.exists())
+      Assert.assertTrue(ed.delete());
+
+    File bd = new File(buildDirectory);
+    if (bd.exists())
+      Assert.assertTrue(bd.delete());
   }
 
   private void createActualSBTree() throws IOException {
     actualStorageDir = buildDirectory + "/sbtreeWithWALTestActual";
+    File buildDir = new File(buildDirectory);
+    if (!buildDir.exists())
+      buildDir.mkdirs();
 
     File actualStorageDirFile = new File(actualStorageDir);
     if (!actualStorageDirFile.exists())
       actualStorageDirFile.mkdirs();
 
-    databaseDocumentTx = new ODatabaseDocumentTx("plocal:" + actualStorageDir);
+    databaseDocumentTx = new ODatabaseDocumentTx("plocal:" + actualStorageDirFile);
     if (databaseDocumentTx.exists()) {
       databaseDocumentTx.open("admin", "admin");
       databaseDocumentTx.drop();
-    } else {
-      databaseDocumentTx.create();
     }
 
+    databaseDocumentTx.create();
+
     actualStorage = (OLocalPaginatedStorage) databaseDocumentTx.getStorage();
-    writeAheadLog = (ODiskWriteAheadLog) actualStorage.getWALInstance();
+    actualAtomicOperationsManager = actualStorage.getAtomicOperationsManager();
+    ODiskWriteAheadLog writeAheadLog = (ODiskWriteAheadLog) actualStorage.getWALInstance();
 
     actualStorage.synch();
     writeAheadLog.preventCutTill(writeAheadLog.getFlushedLsn());
 
-    actualReadCache = ((OAbstractPaginatedStorage) databaseDocumentTx.getStorage()).getReadCache();
-
-    sbTree = new OSBTree<>("actualSBTree", ".sbt", true, ".nbt", actualStorage);
-    sbTree.create(OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, 1, false);
+    sbTree = new OSBTreeBonsaiLocal<Integer, OIdentifiable>("actualSBTree", ".sbt", actualStorage);
+    sbTree.create(OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE);
   }
 
   private void createExpectedSBTree() {
     expectedStorageDir = buildDirectory + "/sbtreeWithWALTestExpected";
 
-    File expectedStorageDirFile = new File(expectedStorageDir);
+    final File buildDir = new File(buildDirectory);
+    if (!buildDir.exists())
+      buildDir.mkdirs();
+
+    final File expectedStorageDirFile = new File(expectedStorageDir);
     if (!expectedStorageDirFile.exists())
       expectedStorageDirFile.mkdirs();
 
@@ -127,17 +132,17 @@ public class SBTreeWALTest extends SBTreeTest {
     if (expectedDatabaseDocumentTx.exists()) {
       expectedDatabaseDocumentTx.open("admin", "admin");
       expectedDatabaseDocumentTx.drop();
-    } else {
-      expectedDatabaseDocumentTx.create();
     }
 
-    expectedStorage = (OLocalPaginatedStorage) expectedDatabaseDocumentTx.getStorage();
-    expectedReadCache = expectedStorage.getReadCache();
+    expectedDatabaseDocumentTx.create();
+
+    final OLocalPaginatedStorage expectedStorage = (OLocalPaginatedStorage) expectedDatabaseDocumentTx.getStorage();
     expectedWriteCache = expectedStorage.getWriteCache();
+    expectedReadCache = expectedStorage.getReadCache();
+
   }
 
   @Override
-  @Test
   public void testKeyPut() throws Exception {
     super.testKeyPut();
 
@@ -165,7 +170,6 @@ public class SBTreeWALTest extends SBTreeTest {
     assertFileRestoreFromWAL();
   }
 
-  @Test
   @Override
   public void testKeyDeleteRandomGaussian() throws Exception {
     super.testKeyDeleteRandomGaussian();
@@ -210,30 +214,29 @@ public class SBTreeWALTest extends SBTreeTest {
 
   @Test
   @Ignore
-  @Override
-  public void testNullKeysInSBTree() {
-    super.testNullKeysInSBTree();
+  public void testGetFisrtKeyInEmptyTree() throws Exception {
+    super.testGetFisrtKeyInEmptyTree();
   }
 
   @Test
   @Ignore
   @Override
-  public void testIterateEntriesMajor() {
-    super.testIterateEntriesMajor();
+  public void testValuesMajor() {
+    super.testValuesMajor();
   }
 
   @Test
   @Ignore
   @Override
-  public void testIterateEntriesMinor() {
-    super.testIterateEntriesMinor();
+  public void testValuesMinor() {
+    super.testValuesMinor();
   }
 
   @Test
   @Ignore
   @Override
-  public void testIterateEntriesBetween() {
-    super.testIterateEntriesBetween();
+  public void testValuesBetween() {
+    super.testValuesBetween();
   }
 
   private void assertFileRestoreFromWAL() throws IOException {
@@ -248,6 +251,8 @@ public class SBTreeWALTest extends SBTreeTest {
     expectedDatabaseDocumentTx.close();
     storage = expectedDatabaseDocumentTx.getStorage();
     storage.close(true, false);
+
+    expectedReadCache.clear();
 
     assertFileContentIsTheSame("expectedSBTree", sbTree.getName());
   }
@@ -313,8 +318,8 @@ public class SBTreeWALTest extends SBTreeTest {
         atomicUnit.clear();
       } else {
         Assert.assertTrue(walRecord instanceof OUpdatePageRecord || walRecord instanceof ONonTxOperationPerformedWALRecord
-            || walRecord instanceof OFileCreatedWALRecord || walRecord instanceof OFuzzyCheckpointStartRecord ||
-            walRecord instanceof OFuzzyCheckpointEndRecord);
+            || walRecord instanceof OFileCreatedWALRecord || walRecord instanceof OFuzzyCheckpointStartRecord
+            || walRecord instanceof OFuzzyCheckpointEndRecord);
       }
 
       lsn = log.next(lsn);
@@ -341,7 +346,8 @@ public class SBTreeWALTest extends SBTreeTest {
     while (bytesRead >= 0) {
       fileTwo.readFully(actualContent, 0, bytesRead);
 
-      Assertions.assertThat(expectedContent).isEqualTo(actualContent);
+      Assert.assertArrayEquals(expectedContent, actualContent);
+
       expectedContent = new byte[OClusterPage.PAGE_SIZE];
       actualContent = new byte[OClusterPage.PAGE_SIZE];
       bytesRead = fileOne.read(expectedContent);
