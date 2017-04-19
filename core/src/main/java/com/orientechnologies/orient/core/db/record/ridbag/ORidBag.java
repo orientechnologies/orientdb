@@ -44,7 +44,7 @@ import java.util.*;
 /**
  * A collection that contain links to {@link OIdentifiable}. Bag is similar to set but can contain several entering of the same
  * object.<br>
- * 
+ * <p>
  * Could be tree based and embedded representation.<br>
  * <ul>
  * <li>
@@ -66,7 +66,7 @@ import java.util.*;
  * <br>
  * Does not implement {@link Collection} interface because some operations could not be efficiently implemented and that's why
  * should be avoided.<br>
- * 
+ *
  * @author Artem Orobets (enisher-at-gmail.com)
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 1.7rc1
@@ -75,15 +75,15 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     OTrackedMultiValue<OIdentifiable, OIdentifiable>, OCollection<OIdentifiable> {
   private ORidBagDelegate delegate;
 
-  private int             topThreshold    = OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
-  private int             bottomThreshold = OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.getValueAsInteger();
+  private int topThreshold    = OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
+  private int bottomThreshold = OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.getValueAsInteger();
 
-  private UUID            uuid;
+  private UUID uuid;
 
   public ORidBag(final ORidBag ridBag) {
     init();
-    for (OIdentifiable identifiable : ridBag)
-      add(identifiable);
+    for (Iterator<OIdentifiable> it = ridBag.rawIterator(); it.hasNext();)
+      add(it.next());
   }
 
   public ORidBag() {
@@ -123,8 +123,8 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
   /**
    * THIS IS VERY EXPENSIVE METHOD AND CAN NOT BE CALLED IN REMOTE STORAGE.
    *
-   * @param identifiable
-   *          Object to check.
+   * @param identifiable Object to check.
+   *
    * @return true if ridbag contains at leas one instance with the same rid as passed in identifiable.
    */
   public boolean contains(OIdentifiable identifiable) {
@@ -246,8 +246,8 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
 
     boolean hasUuid = uuid != null;
 
-    final int serializedSize = OByteSerializer.BYTE_SIZE + delegate.getSerializedSize()
-        + ((hasUuid) ? OUUIDSerializer.UUID_SIZE : 0);
+    final int serializedSize =
+        OByteSerializer.BYTE_SIZE + delegate.getSerializedSize() + ((hasUuid) ? OUUIDSerializer.UUID_SIZE : 0);
     int pointer = bytesContainer.alloc(serializedSize);
     int offset = pointer;
     final byte[] stream = bytesContainer.bytes;
@@ -339,9 +339,9 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
 
   /**
    * Temporary id of collection to track changes in remote mode.
-   * 
+   * <p>
    * WARNING! Method is for internal usage.
-   * 
+   *
    * @return UUID
    */
   public UUID getTemporaryId() {
@@ -350,11 +350,10 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
 
   /**
    * Notify collection that changes has been saved. Converts to non embedded implementation if needed.
-   * 
+   * <p>
    * WARNING! Method is for internal usage.
-   * 
-   * @param newPointer
-   *          new collection pointer
+   *
+   * @param newPointer new collection pointer
    */
   public void notifySaved(OBonsaiCollectionPointer newPointer) {
     if (newPointer.isValid()) {
@@ -422,9 +421,8 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
 
   /**
    * Silently replace delegate by tree implementation.
-   * 
-   * @param pointer
-   *          new collection pointer
+   *
+   * @param pointer new collection pointer
    */
   private void replaceWithSBTree(OBonsaiCollectionPointer pointer) {
     delegate.requestDelete();

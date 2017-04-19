@@ -87,7 +87,11 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
       else
         lastKey = indexChanges.getLowerKey(toKey);
 
-      nextKey = firstKey;
+      if (firstKey != null && ODefaultComparator.INSTANCE.compare(firstKey, toKey) > 0) {
+        nextKey = null;
+      } else {
+        nextKey = firstKey;
+      }
     }
 
     @Override
@@ -134,7 +138,11 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
       else
         lastKey = indexChanges.getLowerKey(toKey);
 
-      nextKey = lastKey;
+      if (firstKey != null && ODefaultComparator.INSTANCE.compare(firstKey, fromKey) < 0) {
+        nextKey = null;
+      } else {
+        nextKey = lastKey;
+      }
     }
 
     @Override

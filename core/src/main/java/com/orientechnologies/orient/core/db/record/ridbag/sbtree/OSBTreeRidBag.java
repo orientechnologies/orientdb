@@ -31,7 +31,6 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBagDelegate;
-import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag.Change;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.sbtree.OTreeInternal;
@@ -653,7 +652,8 @@ public class OSBTreeRidBag implements ORidBagDelegate {
 
   public void add(final OIdentifiable identifiable) {
     if (identifiable == null)
-      throw new NullPointerException("Impossible to add a null identifiable in a ridbag");
+      throw new IllegalArgumentException("Impossible to add a null identifiable in a ridbag");
+
     if (identifiable.getIdentity().isValid()) {
       Change counter = changes.get(identifiable);
       if (counter == null)
@@ -1066,6 +1066,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
    * Removes entry with given key from {@link #newEntries}.
    *
    * @param identifiable key to remove
+   *
    * @return true if entry have been removed
    */
   private boolean removeFromNewEntries(final OIdentifiable identifiable) {

@@ -40,15 +40,15 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OL
 import java.util.*;
 
 public class OEmbeddedRidBag implements ORidBagDelegate {
-  private boolean                                                       contentWasChanged = false;
+  private boolean contentWasChanged = false;
 
-  private Object[]                                                      entries           = OCommonConst.EMPTY_OBJECT_ARRAY;
-  private int                                                           entriesLength     = 0;
+  private Object[] entries       = OCommonConst.EMPTY_OBJECT_ARRAY;
+  private int      entriesLength = 0;
 
-  private boolean                                                       convertToRecord   = true;
-  private int                                                           size              = 0;
+  private boolean convertToRecord = true;
+  private int     size            = 0;
 
-  private transient ORecord                                             owner;
+  private transient ORecord owner;
 
   private List<OMultiValueChangeListener<OIdentifiable, OIdentifiable>> changeListeners;
 
@@ -211,15 +211,16 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
   @Override
   public void add(final OIdentifiable identifiable) {
     if (identifiable == null)
-      throw new NullPointerException("Impossible to add a null identifiable in a ridbag");
+      throw new IllegalArgumentException("Impossible to add a null identifiable in a ridbag");
 
     addEntry(identifiable);
 
     size++;
     contentWasChanged = true;
 
-    fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD,
-        identifiable, identifiable));
+    fireCollectionChangedEvent(
+        new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD, identifiable,
+            identifiable));
   }
 
   public OEmbeddedRidBag copy() {
@@ -329,7 +330,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
     if (size < 10) {
       final StringBuilder sb = new StringBuilder(256);
       sb.append('[');
-      for (final Iterator<OIdentifiable> it = this.iterator(); it.hasNext();) {
+      for (final Iterator<OIdentifiable> it = this.iterator(); it.hasNext(); ) {
         try {
           OIdentifiable e = it.next();
           if (e != null) {

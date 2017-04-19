@@ -170,10 +170,10 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Set<OIdentifiable>> {
       else
         lastKey = indexChanges.getLowerKey(toKey);
 
-      if (firstKey != null && ODefaultComparator.INSTANCE.compare(firstKey, toKey) > 0) {
+      if (firstKey != null && ODefaultComparator.INSTANCE.compare(firstKey, fromKey) < 0) {
         nextKey = null;
       } else {
-        nextKey = firstKey;
+        nextKey = lastKey;
       }
     }
 
