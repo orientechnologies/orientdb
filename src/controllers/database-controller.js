@@ -490,7 +490,7 @@ dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$l
 
   console.log('outside if')
   //if($scope.item.rawData.executionPlan && $scope.item.executedQuery.startsWith('explain')) {
-  if($scope.item.executedQuery.startsWith('explain')) {
+  if($scope.item.executedQuery.startsWith('explain') || $scope.item.executedQuery.startsWith('profile')) {
     console.log('inside if')
     $scope.showExplain();
   }
