@@ -27,8 +27,8 @@ class GraphModelPanelComponent {
 
 }
 
-angular.module('ermodelpanel.component', []).directive(
-  `er-model-panel`,
+angular.module('graphmodelpanel.component', []).directive(
+  `graph-model-panel`,
   downgradeComponent({component: GraphModelPanelComponent}));
 
 

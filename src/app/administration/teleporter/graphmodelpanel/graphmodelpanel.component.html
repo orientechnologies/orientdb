@@ -31,10 +31,12 @@
     </div>
   </div>
 
-  <div class="panel-body svg-content-responsive" style="height: 450px"
-       ng-o-graph="graphOptions">
+  <div #canvas id="canvas" class="panel-body svg-content-responsive" style="height: 450px">
     {{modellingConfig.vertices[0].name}}
     <button class="btn-primary" (click)="updateModellingConfig()">Change value</button>
+
+    <graph [modellingConfig]="modellingConfig" [element]="canvas"></graph>
+
   </div>
 
 </div>
