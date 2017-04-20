@@ -44,7 +44,9 @@ public class OrientJdbcResultSet implements ResultSet {
   private final List<String>                fieldNames;
   private List<ODocument> records = null;
   private OrientJdbcStatement statement;
-  private ODocument           document;
+
+
+  private ODocument document;
   private int cursor   = -1;
   private int rowCount = 0;
   private int type;
@@ -149,6 +151,11 @@ public class OrientJdbcResultSet implements ResultSet {
       fields.addAll(Arrays.asList(document.fieldNames()));
     }
     return fields;
+  }
+
+
+  protected ODocument getDocument() {
+    return document;
   }
 
   private void activateDatabaseOnCurrentThread() {

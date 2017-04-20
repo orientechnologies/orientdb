@@ -188,7 +188,7 @@ public class OrientJdbcResultSetMetaDataTest extends OrientJdbcBaseTest {
     conn.getInfo().setProperty("spark", "true");
     Statement stmt = conn.createStatement();
 
-    ResultSet rs = stmt.executeQuery("select * from (select * from item) where 1=0");
+    ResultSet rs = stmt.executeQuery("select * from (select * from item) WHERE 1=0");
 
     ResultSetMetaData metaData = rs.getMetaData();
 

@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.junit.Test;
 
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.Statement;
 import java.util.List;
 
@@ -203,6 +204,28 @@ public class OrientJdbcResultSetTest extends OrientJdbcBaseTest {
     assertThat(rs.getLong("COUNT")).isEqualTo(20);
 
     stmt.close();
+
+  }
+
+
+  @Test
+  public void shouldExecuteQueryInSparkMode() throws Exception {
+
+    //set spark "profile"
+
+    conn.getInfo().setProperty("spark", "true");
+    Statement stmt = conn.createStatement();
+
+//    ResultSet rs = stmt.executeQuery("select author from item where author = 'anAuthor1' ");
+    ResultSet rs = stmt.executeQuery("select author from item  ");
+
+    OrientJdbcResultSetMetaData metaData = (OrientJdbcResultSetMetaData) rs.getMetaData();
+
+    assertThat(metaData.getColumnName(1)).isEqualTo("author");
+    assertThat(rs.getString(1)).isEqualTo("anAuthor1");
+    assertThat(metaData.getColumnTypeName(1)).isEqualTo("STRING");
+    assertThat(rs.getObject(1)).isInstanceOf(String.class);
+
 
   }
 

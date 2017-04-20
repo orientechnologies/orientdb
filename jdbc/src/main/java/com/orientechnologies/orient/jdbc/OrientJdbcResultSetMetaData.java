@@ -1,18 +1,18 @@
 /**
  * Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- * 	http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
+ * <p>
  * For more information: http://www.orientechnologies.com
  */
 package com.orientechnologies.orient.jdbc;
@@ -110,10 +110,7 @@ public class OrientJdbcResultSetMetaData implements ResultSetMetaData {
   }
 
   public String getColumnName(final int column) throws SQLException {
-
-    String fieldName = fieldNames[column - 1];
-
-    return fieldName;
+    return fieldNames[column - 1];
   }
 
   public int getColumnType(final int column) throws SQLException {
@@ -122,7 +119,7 @@ public class OrientJdbcResultSetMetaData implements ResultSetMetaData {
     if (column > fieldNames.length)
       return Types.NULL;
 
-    String fieldName = fieldNames[column - 1];
+    String fieldName = getColumnName(column);
     // The OClass is not available so attempting to retrieve the OType from
     // the schema class
     // results in a NullPointerException
@@ -202,7 +199,7 @@ public class OrientJdbcResultSetMetaData implements ResultSetMetaData {
   }
 
   protected ODocument getCurrentRecord() throws SQLException {
-    final ODocument currentRecord = resultSet.unwrap(ODocument.class);
+    final ODocument currentRecord = resultSet.getDocument();
     if (currentRecord == null)
       throw new SQLException("No current record");
     return currentRecord;
@@ -239,10 +236,18 @@ public class OrientJdbcResultSetMetaData implements ResultSetMetaData {
   public String getColumnTypeName(final int column) throws SQLException {
     final ODocument currentRecord = getCurrentRecord();
 
-    OType columnType = currentRecord.fieldType(currentRecord.fieldNames()[column - 1]);
-    if (columnType == null)
-      return null;
+    OType columnType = currentRecord.fieldType(fieldNames[column - 1]);
+
+    if (columnType == null) {
+
+      String columnName = getColumnName(column);
+      Object originalValue = currentRecord.field(columnName);
+      return OType.getTypeByValue(originalValue).toString();
+
+    }
+
     return columnType.toString();
+
   }
 
   public int getPrecision(final int column) throws SQLException {
