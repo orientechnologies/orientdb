@@ -11,8 +11,8 @@ import java.util.stream.Collectors;
  * Created by luigidellaquila on 28/07/15.
  */
 public class Pattern {
-  Map<String, PatternNode> aliasToNode = new LinkedHashMap<String, PatternNode>();
-  int                      numOfEdges  = 0;
+  public Map<String, PatternNode> aliasToNode = new LinkedHashMap<String, PatternNode>();
+  public int                      numOfEdges  = 0;
 
   public void addExpression(OMatchExpression expression) {
     PatternNode originNode = getOrCreateNode(expression.origin);
