@@ -103,7 +103,7 @@ public class OrientJdbcResultSetMetaDataTest extends OrientJdbcBaseTest {
     assertThat(metaData.getColumnCount()).isEqualTo(7);
 
     assertThat(metaData.getColumnName(1)).isEqualTo("@rid");
-//    assertThat(new ORecordId(rs.getString(1)).isPersistent()).isEqualTo(true);
+    assertThat(new ORecordId(rs.getString(1)).isPersistent()).isEqualTo(true);
 
     assertThat(rs.getObject(1)).isInstanceOf(String.class);
 
