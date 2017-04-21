@@ -80,6 +80,11 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
     return name;
   }
 
+  @Override
+  public String getFileName() {
+    return getName();
+  }
+
   public OAutoShardingStrategy getStrategy() {
     return strategy;
   }
@@ -105,7 +110,7 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void load(final String indexName, final OBinarySerializer valueSerializer, final boolean isAutomatic,
+  public void load(final String indexName, String fileName, final OBinarySerializer valueSerializer, final boolean isAutomatic,
       final OBinarySerializer keySerializer, final OType[] keyTypes, final boolean nullPointerSupport, final int keySize,
       final Map<String, String> engineProperties) {
 
@@ -122,7 +127,7 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
 
       int i = 0;
       for (OHashTable<Object, Object> p : partitions)
-        p.load(indexName + "_" + (i++), keyTypes, nullPointerSupport);
+        p.load(indexName + "_" + (i), fileName + (i++), keyTypes, nullPointerSupport);
     }
 
     hashFunction.setValueSerializer(keySerializer);
@@ -160,9 +165,9 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
 
     partitions = new ArrayList<OHashTable<Object, Object>>(partitionSize);
     for (int i = 0; i < partitionSize; ++i) {
-      partitions.add(
-          new OLocalHashTable<Object, Object>(name + "_" + i, SUBINDEX_METADATA_FILE_EXTENSION, SUBINDEX_TREE_FILE_EXTENSION,
-              SUBINDEX_BUCKET_FILE_EXTENSION, SUBINDEX_NULL_BUCKET_FILE_EXTENSION, hashFunction, storage));
+      partitions.add(new OLocalHashTable<Object, Object>(name + "_" + i, getFileName() + "_" + i, SUBINDEX_METADATA_FILE_EXTENSION,
+          SUBINDEX_TREE_FILE_EXTENSION, SUBINDEX_BUCKET_FILE_EXTENSION, SUBINDEX_NULL_BUCKET_FILE_EXTENSION, hashFunction,
+          storage));
     }
   }
 

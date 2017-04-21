@@ -76,6 +76,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
   protected final OAbstractPaginatedStorage storage;
   private final   String                    databaseName;
   private final   String                    name;
+  private String fileName;
   private final OReadersWriterSpinLock rwLock         = new OReadersWriterSpinLock();
   private final AtomicLong             rebuildVersion = new AtomicLong();
   private final      int                version;
@@ -88,7 +89,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
   private volatile boolean             rebuilding       = false;
   private          Map<String, String> engineProperties = new HashMap<String, String>();
 
-  public OIndexAbstract(String name, final String type, final String algorithm, final String valueContainerAlgorithm,
+  public OIndexAbstract(String name, String fileName,  final String type, final String algorithm, final String valueContainerAlgorithm,
       final ODocument metadata, final int version, final OStorage storage) {
     acquireExclusiveLock();
     try {
@@ -96,6 +97,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
 
       this.version = version;
       this.name = name;
+      this.fileName = fileName;//TODO!!!
       this.type = type;
       this.algorithm = algorithm;
       this.metadata = metadata;
@@ -114,6 +116,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
   public static OIndexMetadata loadMetadataInternal(final ODocument config, final String type, final String algorithm,
       final String valueContainerAlgorithm) {
     final String indexName = config.field(OIndexInternal.CONFIG_NAME);
+    final String fileName = config.field(OIndexInternal.CONFIG_FILE_NAME);
 
     final ODocument indexDefinitionDoc = config.field(OIndexInternal.INDEX_DEFINITION);
     OIndexDefinition loadedIndexDefinition = null;
@@ -168,7 +171,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
 
     final Set<String> clusters = new HashSet<String>((Collection<String>) config.field(CONFIG_CLUSTERS, OType.EMBEDDEDSET));
 
-    return new OIndexMetadata(indexName, loadedIndexDefinition, clusters, type, algorithm, valueContainerAlgorithm);
+    return new OIndexMetadata(indexName, fileName, loadedIndexDefinition, clusters, type, algorithm, valueContainerAlgorithm);
   }
 
   public void flush() {
@@ -224,7 +227,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
       final Boolean durableInNonTxMode = isDurableInNonTxMode();
 
       indexId = storage
-          .addIndexEngine(name, algorithm, type, indexDefinition, valueSerializer, isAutomatic(), durableInNonTxMode, version,
+          .addIndexEngine(name, fileName, algorithm, type, indexDefinition, valueSerializer, isAutomatic(), durableInNonTxMode, version,
               getEngineProperties(), clustersToIndex, metadata);
       assert indexId >= 0;
 
@@ -299,6 +302,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
       configuration = indexConfigurationInstance(config);
       clustersToIndex.clear();
 
+
       final OIndexMetadata indexMetadata = loadMetadata(config);
       indexDefinition = indexMetadata.getIndexDefinition();
       clustersToIndex.addAll(indexMetadata.getClustersToIndex());
@@ -307,10 +311,9 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
 
       try {
         indexId = storage.loadIndexEngine(name);
-
         if (indexId == -1) {
           indexId = storage
-              .loadExternalIndexEngine(name, algorithm, type, indexDefinition, determineValueSerializer(), isAutomatic(),
+              .loadExternalIndexEngine(name, this.fileName, algorithm, type, indexDefinition, determineValueSerializer(), isAutomatic(),
                   isDurableInNonTxMode(), version, getEngineProperties());
         }
 
@@ -460,7 +463,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
       removeValuesContainer();
 
       indexId = storage
-          .addIndexEngine(name, algorithm, type, indexDefinition, determineValueSerializer(), isAutomatic(), isDurableInNonTxMode(),
+          .addIndexEngine(name, fileName, algorithm, type, indexDefinition, determineValueSerializer(), isAutomatic(), isDurableInNonTxMode(),
               version, getEngineProperties(), clustersToIndex, metadata);
 
       onIndexEngineChange(indexId);
@@ -646,6 +649,10 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
     return name;
   }
 
+  public String getFileName() {
+    return fileName;
+  }
+
   public String getType() {
     return type;
   }
@@ -730,7 +737,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
   }
 
   public ODocument updateConfiguration() {
-    configuration.updateConfiguration(type, name, version, indexDefinition, clustersToIndex, algorithm, valueContainerAlgorithm);
+    configuration.updateConfiguration(type, name, fileName, version, indexDefinition, clustersToIndex, algorithm, valueContainerAlgorithm);
     if (metadata != null)
       configuration.document.field(OIndexInternal.METADATA, metadata, OType.EMBEDDED);
     return configuration.getDocument();
@@ -1056,9 +1063,11 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
       final OReadCache readCache = storage.getReadCache();
       final OWriteCache writeCache = storage.getWriteCache();
 
+
+
       if (atomicOperation == null) {
         try {
-          final String fileName = getName() + OIndexRIDContainer.INDEX_FILE_EXTENSION;
+          final String fileName = this.fileName + OIndexRIDContainer.INDEX_FILE_EXTENSION;
           if (writeCache.exists(fileName)) {
             final long fileId = writeCache.loadFile(fileName);
             readCache.deleteFile(fileId, writeCache);
@@ -1068,7 +1077,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
         }
       } else {
         try {
-          final String fileName = getName() + OIndexRIDContainer.INDEX_FILE_EXTENSION;
+          final String fileName = this.fileName + OIndexRIDContainer.INDEX_FILE_EXTENSION;
           if (atomicOperation.isFileExists(fileName)) {
             final long fileId = atomicOperation.loadFile(fileName);
             atomicOperation.deleteFile(fileId);
@@ -1124,10 +1133,11 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
       return document;
     }
 
-    public synchronized ODocument updateConfiguration(String type, String name, int version, OIndexDefinition indexDefinition,
+    public synchronized ODocument updateConfiguration(String type, String name, String fileName, int version, OIndexDefinition indexDefinition,
         Set<String> clustersToIndex, String algorithm, String valueContainerAlgorithm) {
       document.field(OIndexInternal.CONFIG_TYPE, type);
       document.field(OIndexInternal.CONFIG_NAME, name);
+      document.field(OIndexInternal.CONFIG_FILE_NAME, fileName);
       document.field(OIndexInternal.INDEX_VERSION, version);
 
       if (indexDefinition != null) {

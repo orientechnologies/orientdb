@@ -46,8 +46,15 @@ public interface OIndexEngine {
 
   void deleteWithoutLoad(String indexName);
 
-  void load(String indexName, OBinarySerializer valueSerializer, boolean isAutomatic, OBinarySerializer keySerializer,
+//  void load(String indexName, OBinarySerializer valueSerializer, boolean isAutomatic, OBinarySerializer keySerializer,
+//      OType[] keyTypes, boolean nullPointerSupport, int keySize, Map<String, String> engineProperties);
+
+//  default
+  void load(String indexName, String fileName, OBinarySerializer valueSerializer, boolean isAutomatic, OBinarySerializer keySerializer,
       OType[] keyTypes, boolean nullPointerSupport, int keySize, Map<String, String> engineProperties);
+//  {
+//    load(indexName, valueSerializer, isAutomatic, keySerializer, keyTypes, nullPointerSupport, keySize, engineProperties);
+//  }
 
   boolean contains(Object key);
 
@@ -99,6 +106,10 @@ public interface OIndexEngine {
   int getVersion();
 
   String getName();
+
+  default String getFileName(){
+    return getName();
+  }
 
   /**
    * <p>Acquires exclusive lock in the active atomic operation running on the current thread for this index engine.

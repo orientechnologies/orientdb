@@ -41,7 +41,7 @@ public class LocalHashTableIterationTestIT {
       }
     };
 
-    localHashTable = new OLocalHashTable<Integer, String>("localHashTableIterationTest", ".imc", ".tsc", ".obf", ".nbh",
+    localHashTable = new OLocalHashTable<Integer, String>("localHashTableIterationTest", "localHashTableIterationTest",".imc", ".tsc", ".obf", ".nbh",
         hashFunction, (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
 
     localHashTable

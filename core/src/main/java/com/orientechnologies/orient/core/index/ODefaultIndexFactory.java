@@ -92,7 +92,8 @@ public class ODefaultIndexFactory implements OIndexFactory {
     return ALGORITHMS;
   }
 
-  public OIndexInternal<?> createIndex(String name, OStorage storage, String indexType, String algorithm,
+
+  public OIndexInternal<?> createIndex(String name, String fileName, OStorage storage, String indexType, String algorithm,
       String valueContainerAlgorithm, ODocument metadata, int version) throws OConfigurationException {
     if (valueContainerAlgorithm == null)
       valueContainerAlgorithm = NONE_VALUE_CONTAINER;
@@ -101,23 +102,23 @@ public class ODefaultIndexFactory implements OIndexFactory {
       version = getLastVersion();
 
     if (SBTREE_ALGORITHM.equals(algorithm))
-      return createSBTreeIndex(name, indexType, valueContainerAlgorithm, metadata,
+      return createSBTreeIndex(name,fileName, indexType, valueContainerAlgorithm, metadata,
           (OAbstractPaginatedStorage) storage.getUnderlying(), version);
 
     throw new OConfigurationException("Unsupported type: " + indexType);
   }
 
-  private OIndexInternal<?> createSBTreeIndex(String name, String indexType, String valueContainerAlgorithm, ODocument metadata,
+  private OIndexInternal<?> createSBTreeIndex(String name, String fileName, String indexType, String valueContainerAlgorithm, ODocument metadata,
       OAbstractPaginatedStorage storage, int version) {
 
     if (OClass.INDEX_TYPE.UNIQUE.toString().equals(indexType)) {
-      return new OIndexUnique(name, indexType, SBTREE_ALGORITHM, version, storage, valueContainerAlgorithm, metadata);
+      return new OIndexUnique(name, fileName, indexType, SBTREE_ALGORITHM, version, storage, valueContainerAlgorithm, metadata);
     } else if (OClass.INDEX_TYPE.NOTUNIQUE.toString().equals(indexType)) {
-      return new OIndexNotUnique(name, indexType, SBTREE_ALGORITHM, version, storage, valueContainerAlgorithm, metadata);
+      return new OIndexNotUnique(name, fileName,indexType, SBTREE_ALGORITHM, version, storage, valueContainerAlgorithm, metadata);
     } else if (OClass.INDEX_TYPE.FULLTEXT.toString().equals(indexType)) {
-      return new OIndexFullText(name, indexType, SBTREE_ALGORITHM, version, storage, valueContainerAlgorithm, metadata);
+      return new OIndexFullText(name, fileName,indexType, SBTREE_ALGORITHM, version, storage, valueContainerAlgorithm, metadata);
     } else if (OClass.INDEX_TYPE.DICTIONARY.toString().equals(indexType)) {
-      return new OIndexDictionary(name, indexType, SBTREE_ALGORITHM, version, storage, valueContainerAlgorithm, metadata);
+      return new OIndexDictionary(name, fileName, indexType, SBTREE_ALGORITHM, version, storage, valueContainerAlgorithm, metadata);
     }
 
     throw new OConfigurationException("Unsupported type: " + indexType);
@@ -129,17 +130,17 @@ public class ODefaultIndexFactory implements OIndexFactory {
   }
 
   @Override
-  public OIndexEngine createIndexEngine(String algorithm, String name, Boolean durableInNonTxMode, OStorage storage, int version,
+  public OIndexEngine createIndexEngine(String algorithm, String name, String fileName, Boolean durableInNonTxMode, OStorage storage, int version,
       Map<String, String> engineProperties) {
 
     final OIndexEngine indexEngine;
 
     final String storageType = storage.getType();
     if (storageType.equals("memory") || storageType.equals("plocal"))
-      indexEngine = new OSBTreeIndexEngine(name, durableInNonTxMode, (OAbstractPaginatedStorage) storage, version);
+      indexEngine = new OSBTreeIndexEngine(name, fileName, durableInNonTxMode, (OAbstractPaginatedStorage) storage, version);
     else if (storageType.equals("distributed"))
       // DISTRIBUTED CASE: HANDLE IT AS FOR LOCAL
-      indexEngine = new OSBTreeIndexEngine(name, durableInNonTxMode, (OAbstractPaginatedStorage) storage.getUnderlying(), version);
+      indexEngine = new OSBTreeIndexEngine(name, fileName, durableInNonTxMode, (OAbstractPaginatedStorage) storage.getUnderlying(), version);
     else if (storageType.equals("remote"))
       indexEngine = new ORemoteIndexEngine(name);
     else

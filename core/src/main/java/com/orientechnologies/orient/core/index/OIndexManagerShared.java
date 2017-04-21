@@ -144,7 +144,9 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
           metadata.field("trackMode", "FULL");
       }
 
-      index = OIndexes.createIndex(getStorage(), iName, type, algorithm, valueContainerAlgorithm, metadata, -1);
+      index = OIndexes
+          .createIndex(getStorage(), iName, iName + System.currentTimeMillis(), type, algorithm, valueContainerAlgorithm, metadata,
+              -1);
       if (progressListener == null)
         // ASSIGN DEFAULT PROGRESS LISTENER
         progressListener = new OIndexRebuildOutputListener(index);
@@ -382,8 +384,9 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
                     d.<String>field(OIndexInternal.VALUE_CONTAINER_ALGORITHM));
 
             index = OIndexes
-                .createIndex(getStorage(), newIndexMetadata.getName(), newIndexMetadata.getType(), newIndexMetadata.getAlgorithm(),
-                    newIndexMetadata.getValueContainerAlgorithm(), (ODocument) d.field(OIndexInternal.METADATA), indexVersion);
+                .createIndex(getStorage(), newIndexMetadata.getName(), newIndexMetadata.getFileName(), newIndexMetadata.getType(),
+                    newIndexMetadata.getAlgorithm(), newIndexMetadata.getValueContainerAlgorithm(),
+                    (ODocument) d.field(OIndexInternal.METADATA), indexVersion);
 
             final String normalizedName = newIndexMetadata.getName().toLowerCase(locale);
 
@@ -574,7 +577,8 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
           for (Iterator<OIndexFactory> it = OIndexes.getAllFactories(); it.hasNext(); ) {
             try {
               final OIndexFactory indexFactory = it.next();
-              final OIndexEngine engine = indexFactory.createIndexEngine(null, index.getName(), false, storage, 0, null);
+              //TODO!!! check the file name!!!
+              final OIndexEngine engine = indexFactory.createIndexEngine(null, index.getName(), index.getName(), false, storage, 0, null);
 
               engine.deleteWithoutLoad(index.getName());
             } catch (Exception e2) {
@@ -635,6 +639,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
 
     private OIndexInternal<?> createIndex(ODocument idx) {
       final String indexName = idx.field(OIndexInternal.CONFIG_NAME);
+      final String indexFileName = idx.field(OIndexInternal.CONFIG_FILE_NAME);
       final String indexType = idx.field(OIndexInternal.CONFIG_TYPE);
       String algorithm = idx.field(OIndexInternal.ALGORITHM);
       String valueContainerAlgorithm = idx.field(OIndexInternal.VALUE_CONTAINER_ALGORITHM);
@@ -645,7 +650,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
         throw new OIndexException("Index type is null, will process other record. Index configuration: " + idx.toString());
       }
 
-      return OIndexes.createIndex(storage, indexName, indexType, algorithm, valueContainerAlgorithm, metadata, -1);
+      return OIndexes.createIndex(storage, indexName, indexFileName, indexType, algorithm, valueContainerAlgorithm, metadata, -1);
     }
   }
 

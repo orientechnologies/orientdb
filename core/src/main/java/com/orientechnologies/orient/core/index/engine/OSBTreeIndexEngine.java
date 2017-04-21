@@ -47,9 +47,11 @@ public class OSBTreeIndexEngine implements OIndexEngine {
   private final OSBTree<Object, Object> sbTree;
   private       int                     version;
   private final String                  name;
+  private final String                  fileName;
 
-  public OSBTreeIndexEngine(String name, Boolean durableInNonTxMode, OAbstractPaginatedStorage storage, int version) {
+  public OSBTreeIndexEngine(String name,String fileName, Boolean durableInNonTxMode, OAbstractPaginatedStorage storage, int version) {
     this.name = name;
+    this.fileName = fileName;
     boolean durableInNonTx;
 
     if (durableInNonTxMode == null)
@@ -60,7 +62,7 @@ public class OSBTreeIndexEngine implements OIndexEngine {
 
     this.version = version;
 
-    sbTree = new OSBTree<Object, Object>(name, DATA_FILE_EXTENSION, durableInNonTx, NULL_BUCKET_FILE_EXTENSION, storage);
+    sbTree = new OSBTree<Object, Object>(name, fileName,  DATA_FILE_EXTENSION, durableInNonTx, NULL_BUCKET_FILE_EXTENSION, storage);
   }
 
   @Override
@@ -70,6 +72,11 @@ public class OSBTreeIndexEngine implements OIndexEngine {
   @Override
   public String getName() {
     return name;
+  }
+
+  @Override
+  public String getFileName() {
+    return fileName;
   }
 
   @Override
@@ -93,10 +100,11 @@ public class OSBTreeIndexEngine implements OIndexEngine {
     sbTree.deleteWithoutLoad(indexName);
   }
 
+
   @Override
-  public void load(String indexName, OBinarySerializer valueSerializer, boolean isAutomatic, OBinarySerializer keySerializer,
+  public void load(String indexName, String fileName, OBinarySerializer valueSerializer, boolean isAutomatic, OBinarySerializer keySerializer,
       OType[] keyTypes, boolean nullPointerSupport, int keySize, Map<String, String> engineProperties) {
-    sbTree.load(indexName, keySerializer, valueSerializer, keyTypes, keySize, nullPointerSupport);
+    sbTree.load(indexName, fileName, keySerializer, valueSerializer, keyTypes, keySize, nullPointerSupport);
   }
 
   @Override

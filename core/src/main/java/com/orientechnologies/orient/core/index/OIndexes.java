@@ -142,14 +142,14 @@ public final class OIndexes {
    * @throws OIndexException
    *           if index type does not exist
    */
-  public static OIndexInternal<?> createIndex(OStorage storage, String name, String indexType, String algorithm,
+  public static OIndexInternal<?> createIndex(OStorage storage, String name, String fileName, String indexType, String algorithm,
       String valueContainerAlgorithm, ODocument metadata, int version) throws OConfigurationException, OIndexException {
     if (indexType.equalsIgnoreCase(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name())
         || indexType.equalsIgnoreCase(OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.name())
         || indexType.equalsIgnoreCase(OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.name()))
       algorithm = OHashIndexFactory.HASH_INDEX_ALGORITHM;
 
-    return findFactoryByAlgorithmAndType(algorithm, indexType).createIndex(name, storage, indexType, algorithm,
+    return findFactoryByAlgorithmAndType(algorithm, indexType).createIndex(name,fileName, storage, indexType, algorithm,
         valueContainerAlgorithm, metadata, version);
 
   }
@@ -166,13 +166,13 @@ public final class OIndexes {
         "Index type: " + indexType + " is not supported. Types are " + OCollections.toString(getIndexTypes()));
   }
 
-  public static OIndexEngine createIndexEngine(final String name, final String algorithm, final String type,
+  public static OIndexEngine createIndexEngine(final String name, final String fileName, final String algorithm, final String type,
       final Boolean durableInNonTxMode, final OStorage storage, final int version, final Map<String, String> indexProperties,
       ODocument metadata) {
 
     final OIndexFactory factory = findFactoryByAlgorithmAndType(algorithm, type);
 
-    return factory.createIndexEngine(algorithm, name, durableInNonTxMode, storage, version, indexProperties);
+    return factory.createIndexEngine(algorithm, name, fileName, durableInNonTxMode, storage, version, indexProperties);
   }
 
   public static String chooseDefaultIndexAlgorithm(String type) {

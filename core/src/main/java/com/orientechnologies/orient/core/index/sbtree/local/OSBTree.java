@@ -93,9 +93,9 @@ public class OSBTree<K, V> extends ODurableComponent {
   private OBinarySerializer<V> valueSerializer;
   private boolean              nullPointerSupport;
 
-  public OSBTree(String name, String dataFileExtension, boolean durableInNonTxMode, String nullFileExtension,
+  public OSBTree(String name, String fileName, String dataFileExtension, boolean durableInNonTxMode, String nullFileExtension,
       OAbstractPaginatedStorage storage) {
-    super(storage, name, dataFileExtension, name + dataFileExtension);
+    super(storage, name, fileName, dataFileExtension, fileName + dataFileExtension);
     acquireExclusiveLock();
     try {
       this.nullFileExtension = nullFileExtension;
@@ -134,7 +134,7 @@ public class OSBTree<K, V> extends ODurableComponent {
         fileId = addFile(atomicOperation, getFullName());
 
         if (nullPointerSupport)
-          nullBucketFileId = addFile(atomicOperation, getName() + nullFileExtension);
+          nullBucketFileId = addFile(atomicOperation, getFileName() + nullFileExtension);
 
         OCacheEntry rootCacheEntry = addPage(atomicOperation, fileId);
         try {
@@ -550,15 +550,15 @@ public class OSBTree<K, V> extends ODurableComponent {
           deleteFile(atomicOperation, fileId);
         }
 
-        if (isFileExists(atomicOperation, getName() + nullFileExtension)) {
-          final long nullFileId = openFile(atomicOperation, getName() + nullFileExtension);
+        if (isFileExists(atomicOperation, getFileName() + nullFileExtension)) {
+          final long nullFileId = openFile(atomicOperation, getFileName() + nullFileExtension);
           deleteFile(atomicOperation, nullFileId);
         }
 
         endAtomicOperation(false, null);
       } catch (IOException ioe) {
         rollback(ioe);
-        throw OException.wrapException(new OSBTreeException("Exception during deletion of sbtree " + getName(), this), ioe);
+        throw OException.wrapException(new OSBTreeException("Exception during deletion of sbtree " + getName()+" "+getFileName(), this), ioe);
       } catch (Exception e) {
         rollback(e);
         throw OException.wrapException(new OSBTreeException("Exception during deletion of sbtree " + getName(), this), e);
@@ -570,7 +570,7 @@ public class OSBTree<K, V> extends ODurableComponent {
     }
   }
 
-  public void load(String name, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer, OType[] keyTypes,
+  public void load(String name, String fileName, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer, OType[] keyTypes,
       int keySize, boolean nullPointerSupport) {
     startOperation();
     try {
@@ -588,12 +588,12 @@ public class OSBTree<K, V> extends ODurableComponent {
 
         fileId = openFile(atomicOperation, getFullName());
         if (nullPointerSupport)
-          nullBucketFileId = openFile(atomicOperation, name + nullFileExtension);
+          nullBucketFileId = openFile(atomicOperation, fileName + nullFileExtension);
 
         this.keySerializer = keySerializer;
         this.valueSerializer = valueSerializer;
       } catch (IOException e) {
-        throw OException.wrapException(new OSBTreeException("Exception during loading of sbtree " + name, this), e);
+        throw OException.wrapException(new OSBTreeException("Exception during loading of sbtree " + fileName, this), e);
       } finally {
         releaseExclusiveLock();
       }

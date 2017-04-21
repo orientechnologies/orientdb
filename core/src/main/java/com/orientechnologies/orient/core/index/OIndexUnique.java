@@ -55,9 +55,9 @@ public class OIndexUnique extends OIndexOneValue {
     }
   };
 
-  public OIndexUnique(String name, String typeId, String algorithm, int version, OAbstractPaginatedStorage storage,
+  public OIndexUnique(String name, String filename, String typeId, String algorithm, int version, OAbstractPaginatedStorage storage,
       String valueContainerAlgorithm, ODocument metadata) {
-    super(name, typeId, algorithm, version, storage, valueContainerAlgorithm, metadata);
+    super(name, filename, typeId, algorithm, version, storage, valueContainerAlgorithm, metadata);
   }
 
   @Override

@@ -62,9 +62,9 @@ public class OIndexFullText extends OIndexMultiValues {
 
   private Set<String> stopWords;
 
-  public OIndexFullText(String name, String typeId, String algorithm, int version, OAbstractPaginatedStorage storage,
+  public OIndexFullText(String name, String fileName, String typeId, String algorithm, int version, OAbstractPaginatedStorage storage,
       String valueContainerAlgorithm, ODocument metadata) {
-    super(name, typeId, algorithm, version, storage, valueContainerAlgorithm, metadata);
+    super(name, fileName, typeId, algorithm, version, storage, valueContainerAlgorithm, metadata);
     acquireExclusiveLock();
     try {
       config();
@@ -127,7 +127,7 @@ public class OIndexFullText extends OIndexMultiValues {
                   if (refsc == null) {
                     // WORD NOT EXISTS: CREATE THE KEYWORD CONTAINER THE FIRST TIME THE WORD IS FOUND
                     if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
-                      result = new OIndexRIDContainer(getName(), durable);
+                      result = new OIndexRIDContainer(getFileName(), durable);
                     } else {
                       throw new IllegalStateException("MBRBTreeContainer is not supported any more");
                     }

@@ -15,11 +15,6 @@
  */
 package com.orientechnologies.orient.core.sharding.auto;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.index.engine.ORemoteIndexEngine;
@@ -28,6 +23,11 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 /**
  * Auto-sharding index factory.<br>
  * Supports index types:
@@ -35,13 +35,13 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
  * <li>UNIQUE</li>
  * <li>NOTUNIQUE</li>
  * </ul>
- * 
+ *
  * @since 3.0
  */
 public class OAutoShardingIndexFactory implements OIndexFactory {
 
-  public static final String       AUTOSHARDING_ALGORITHM = "AUTOSHARDING";
-  public static final String       NONE_VALUE_CONTAINER   = "NONE";
+  public static final String AUTOSHARDING_ALGORITHM = "AUTOSHARDING";
+  public static final String NONE_VALUE_CONTAINER   = "NONE";
 
   private static final Set<String> TYPES;
   private static final Set<String> ALGORITHMS;
@@ -86,7 +86,7 @@ public class OAutoShardingIndexFactory implements OIndexFactory {
     return ALGORITHMS;
   }
 
-  public OIndexInternal<?> createIndex(String name, OStorage storage, String indexType, String algorithm,
+  public OIndexInternal<?> createIndex(String name, String fileName, OStorage storage, String indexType, String algorithm,
       String valueContainerAlgorithm, ODocument metadata, int version) throws OConfigurationException {
     if (valueContainerAlgorithm == null)
       valueContainerAlgorithm = NONE_VALUE_CONTAINER;
@@ -105,9 +105,9 @@ public class OAutoShardingIndexFactory implements OIndexFactory {
       final ODocument metadata, final OAbstractPaginatedStorage storage, final int version) {
 
     if (OClass.INDEX_TYPE.UNIQUE.toString().equals(indexType)) {
-      return new OIndexUnique(name, indexType, AUTOSHARDING_ALGORITHM, version, storage, valueContainerAlgorithm, metadata);
+      return new OIndexUnique(name, name, indexType, AUTOSHARDING_ALGORITHM, version, storage, valueContainerAlgorithm, metadata);
     } else if (OClass.INDEX_TYPE.NOTUNIQUE.toString().equals(indexType)) {
-      return new OIndexNotUnique(name, indexType, AUTOSHARDING_ALGORITHM, version, storage, valueContainerAlgorithm, metadata);
+      return new OIndexNotUnique(name, name, indexType, AUTOSHARDING_ALGORITHM, version, storage, valueContainerAlgorithm, metadata);
     }
 
     throw new OConfigurationException("Unsupported type: " + indexType);
@@ -119,7 +119,7 @@ public class OAutoShardingIndexFactory implements OIndexFactory {
   }
 
   @Override
-  public OIndexEngine createIndexEngine(final String algorithm, final String name, final Boolean durableInNonTxMode,
+  public OIndexEngine createIndexEngine(final String algorithm, final String name, String fileName, final Boolean durableInNonTxMode,
       final OStorage storage, final int version, final Map<String, String> engineProperties) {
 
     final OIndexEngine indexEngine;
@@ -139,4 +139,6 @@ public class OAutoShardingIndexFactory implements OIndexFactory {
 
     return indexEngine;
   }
+
+
 }

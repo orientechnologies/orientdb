@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 
@@ -65,19 +64,22 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
   protected final OPerformanceStatisticManager performanceStatisticManager;
 
   private volatile String name;
+  private volatile String fileName;
   private volatile String fullName;
 
   protected final String extension;
 
   private volatile String lockName;
 
-  public ODurableComponent(OAbstractPaginatedStorage storage, String name, String extension, String lockName) {
+  public ODurableComponent(OAbstractPaginatedStorage storage, String name, String fileName, String extension, String lockName) {
     super(true);
 
     assert name != null;
+    assert fileName != null;
     this.extension = extension;
     this.storage = storage;
-    this.fullName = name + extension;
+    this.fileName = fileName;
+    this.fullName = fileName + extension;
     this.name = name;
     this.atomicOperationsManager = storage.getAtomicOperationsManager();
     this.readCache = storage.getReadCache();
@@ -96,7 +98,16 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
 
   public void setName(String name) {
     this.name = name;
-    this.fullName = name + extension;
+//    this.fullName = name + extension;
+  }
+
+  public String getFileName() {
+    return fileName;
+  }
+
+  public void setFileName(String fileName) {
+    this.fileName = fileName;
+    this.fullName = fileName + extension;
   }
 
   public String getFullName() {
@@ -117,7 +128,7 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
   }
 
   /**
-   * @see OAtomicOperationsManager#startAtomicOperation(com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent, boolean)
+   * @see OAtomicOperationsManager#startAtomicOperation(com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent, * boolean)
    */
   protected OAtomicOperation startAtomicOperation(boolean trackNonTxOperations) throws IOException {
     return atomicOperationsManager.startAtomicOperation(this, trackNonTxOperations);

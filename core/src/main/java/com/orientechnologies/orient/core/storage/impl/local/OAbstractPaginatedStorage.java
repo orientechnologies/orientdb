@@ -271,13 +271,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     for (String indexName : indexNames) {
       final OStorageConfiguration.IndexEngineData engineData = configuration.getIndexEngine(indexName);
       final OIndexEngine engine = OIndexes
-          .createIndexEngine(engineData.getName(), engineData.getAlgorithm(), engineData.getIndexType(),
+          .createIndexEngine(engineData.getName(), engineData.getFileName(), engineData.getAlgorithm(), engineData.getIndexType(),
               engineData.getDurableInNonTxMode(), this, engineData.getVersion(), engineData.getEngineProperties(), null);
 
       try {
-        engine.load(engineData.getName(), cf.binarySerializerFactory.getObjectSerializer(engineData.getValueSerializerId()),
-            engineData.isAutomatic(), cf.binarySerializerFactory.getObjectSerializer(engineData.getKeySerializedId()),
-            engineData.getKeyTypes(), engineData.isNullValuesSupport(), engineData.getKeySize(), engineData.getEngineProperties());
+        engine.load(engineData.getName(), engineData.getFileName(),
+            cf.binarySerializerFactory.getObjectSerializer(engineData.getValueSerializerId()), engineData.isAutomatic(),
+            cf.binarySerializerFactory.getObjectSerializer(engineData.getKeySerializedId()), engineData.getKeyTypes(),
+            engineData.isNullValuesSupport(), engineData.getKeySize(), engineData.getEngineProperties());
 
         indexEngineNameMap.put(engineData.getName().toLowerCase(configuration.getLocaleInstance()), engine);
         indexEngines.add(engine);
@@ -1364,9 +1365,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  public int loadExternalIndexEngine(String engineName, String algorithm, String indexType, OIndexDefinition indexDefinition,
-      OBinarySerializer valueSerializer, boolean isAutomatic, Boolean durableInNonTxMode, int version,
-      Map<String, String> engineProperties) {
+  public int loadExternalIndexEngine(String engineName, String fileName, String algorithm, String indexType,
+      OIndexDefinition indexDefinition, OBinarySerializer valueSerializer, boolean isAutomatic, Boolean durableInNonTxMode,
+      int version, Map<String, String> engineProperties) {
     checkOpenness();
 
     stateLock.acquireWriteLock();
@@ -1392,13 +1393,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final OType[] keyTypes = indexDefinition != null ? indexDefinition.getTypes() : null;
       final boolean nullValuesSupport = indexDefinition != null && !indexDefinition.isNullValuesIgnored();
 
-      final OStorageConfiguration.IndexEngineData engineData = new OStorageConfiguration.IndexEngineData(originalName, algorithm,
-          indexType, durableInNonTxMode, version, valueSerializer.getId(), keySerializer.getId(), isAutomatic, keyTypes,
+      final OStorageConfiguration.IndexEngineData engineData = new OStorageConfiguration.IndexEngineData(originalName, fileName,
+          algorithm, indexType, durableInNonTxMode, version, valueSerializer.getId(), keySerializer.getId(), isAutomatic, keyTypes,
           nullValuesSupport, keySize, engineProperties);
 
       final OIndexEngine engine = OIndexes
-          .createIndexEngine(originalName, algorithm, indexType, durableInNonTxMode, this, version, engineProperties, null);
-      engine.load(originalName, valueSerializer, isAutomatic, keySerializer, keyTypes, nullValuesSupport, keySize,
+          .createIndexEngine(originalName, fileName, algorithm, indexType, durableInNonTxMode, this, version, engineProperties,
+              null);
+      engine.load(originalName, fileName, valueSerializer, isAutomatic, keySerializer, keyTypes, nullValuesSupport, keySize,
           engineData.getEngineProperties());
 
       indexEngineNameMap.put(engineName, engine);
@@ -1413,7 +1415,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  public int addIndexEngine(String engineName, final String algorithm, final String indexType,
+  public int addIndexEngine(String engineName,String fileName, final String algorithm, final String indexType,
       final OIndexDefinition indexDefinition, final OBinarySerializer valueSerializer, final boolean isAutomatic,
       final Boolean durableInNonTxMode, final int version, final Map<String, String> engineProperties,
       final Set<String> clustersToIndex, final ODocument metadata) {
@@ -1427,6 +1429,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       final String originalName = engineName;
       engineName = engineName.toLowerCase(configuration.getLocaleInstance());
+
 
       if (indexEngineNameMap.containsKey(engineName)) {
         // OLD INDEX FILE ARE PRESENT: THIS IS THE CASE OF PARTIAL/BROKEN INDEX
@@ -1453,7 +1456,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         serializerId = -1;
 
       final OIndexEngine engine = OIndexes
-          .createIndexEngine(originalName, algorithm, indexType, durableInNonTxMode, this, version, engineProperties, metadata);
+          .createIndexEngine(originalName, fileName, algorithm, indexType, durableInNonTxMode, this, version, engineProperties,
+              metadata);
 
       engine.create(valueSerializer, isAutomatic, keyTypes, nullValuesSupport, keySerializer, keySize, clustersToIndex,
           engineProperties, metadata);
@@ -1462,7 +1466,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       indexEngines.add(engine);
 
-      final OStorageConfiguration.IndexEngineData engineData = new OStorageConfiguration.IndexEngineData(originalName, algorithm,
+      final OStorageConfiguration.IndexEngineData engineData = new OStorageConfiguration.IndexEngineData(originalName, fileName, algorithm,
           indexType, durableInNonTxMode, version, serializerId, keySerializer.getId(), isAutomatic, keyTypes, nullValuesSupport,
           keySize, engineProperties);
 
@@ -3066,7 +3070,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         OLogManager.instance().error(this, "Error on recycling record " + rid + " (cluster: " + cluster + ")", e);
 
         throw OException
-          .wrapException(new OStorageException("Error on recycling record " + rid + " (cluster: " + cluster + ")"), e);      
+            .wrapException(new OStorageException("Error on recycling record " + rid + " (cluster: " + cluster + ")"), e);
       }
 
       if (OLogManager.instance().isDebugEnabled())
@@ -3078,7 +3082,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       OLogManager.instance().error(this, "Error on recycling record " + rid + " (cluster: " + cluster + ")", ioe);
 
       throw OException
-        .wrapException(new OStorageException("Error on recycling record " + rid + " (cluster: " + cluster + ")"), ioe);    
+          .wrapException(new OStorageException("Error on recycling record " + rid + " (cluster: " + cluster + ")"), ioe);
     }
   }
 

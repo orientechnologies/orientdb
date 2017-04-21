@@ -45,6 +45,11 @@ public class ORemoteIndexEngine implements OIndexEngine {
   }
 
   @Override
+  public String getFileName() {
+    return null;
+  }
+
+  @Override
   public String getIndexNameByKey(Object key) {
     return name;
   }
@@ -72,7 +77,7 @@ public class ORemoteIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void load(String indexName, OBinarySerializer valueSerializer, boolean isAutomatic, OBinarySerializer keySerializer,
+  public void load(String indexName, String fileName, OBinarySerializer valueSerializer, boolean isAutomatic, OBinarySerializer keySerializer,
       OType[] keyTypes, boolean nullPointerSupport, int keySize, Map<String, String> engineProperties) {
   }
 

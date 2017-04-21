@@ -44,6 +44,7 @@ public interface OIndexFactory {
    * Creates an index.
    * 
    * @param name
+   * @param fileName
    * @param storage TODO
    * @param indexType
    *          index type
@@ -53,9 +54,10 @@ public interface OIndexFactory {
    * @throws OConfigurationException
    *           if index creation failed
    */
-  OIndexInternal<?> createIndex(String name, OStorage storage, String indexType, String algorithm,
+  OIndexInternal<?> createIndex(String name, String fileName, OStorage storage, String indexType, String algorithm,
       String valueContainerAlgorithm, ODocument metadata, int version) throws OConfigurationException;
 
-  OIndexEngine createIndexEngine(String algorithm, String name, Boolean durableInNonTxMode, OStorage storage, int version,
+
+  OIndexEngine createIndexEngine(String algorithm, String name, String fileName, Boolean durableInNonTxMode, OStorage storage, int version,
       Map<String, String> engineProperties);
 }

@@ -83,7 +83,7 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
   }
 
   @Override
-  public OIndexInternal<?> createIndex(String name, OStorage storage, String indexType, String algorithm,
+  public OIndexInternal<?> createIndex(String name, String fileName, OStorage storage, String indexType, String algorithm,
       String valueContainerAlgorithm, ODocument metadata, int version) throws OConfigurationException {
 
     OAbstractPaginatedStorage pagStorage = (OAbstractPaginatedStorage) storage.getUnderlying();
@@ -102,7 +102,7 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
   }
 
   @Override
-  public OIndexEngine createIndexEngine(String algorithm, String indexName, Boolean durableInNonTxMode, OStorage storage,
+  public OIndexEngine createIndexEngine(String algorithm, String indexName, String fileName, Boolean durableInNonTxMode, OStorage storage,
       int version, Map<String, String> engineProperties) {
 
     return new OLuceneFullTextIndexEngine(storage, indexName);

@@ -54,7 +54,7 @@ public final class OHashTableIndexEngine implements OIndexEngine {
 
   private final String name;
 
-  public OHashTableIndexEngine(String name, Boolean durableInNonTxMode, OAbstractPaginatedStorage storage, int version) {
+  public OHashTableIndexEngine(String name, String fileName, Boolean durableInNonTxMode, OAbstractPaginatedStorage storage, int version) {
     hashFunction = new OMurmurHash3HashFunction<Object>();
 
     boolean durableInNonTx;
@@ -66,10 +66,10 @@ public final class OHashTableIndexEngine implements OIndexEngine {
 
     this.version = version;
     if (version < 2)
-      hashTable = new OLocalHashTable20<Object, Object>(name, METADATA_FILE_EXTENSION, TREE_FILE_EXTENSION, BUCKET_FILE_EXTENSION,
+      hashTable = new OLocalHashTable20<Object, Object>(name, fileName, METADATA_FILE_EXTENSION, TREE_FILE_EXTENSION, BUCKET_FILE_EXTENSION,
           NULL_BUCKET_FILE_EXTENSION, hashFunction, durableInNonTx, storage);
     else
-      hashTable = new OLocalHashTable<Object, Object>(name, METADATA_FILE_EXTENSION, TREE_FILE_EXTENSION, BUCKET_FILE_EXTENSION,
+      hashTable = new OLocalHashTable<Object, Object>(name, fileName, METADATA_FILE_EXTENSION, TREE_FILE_EXTENSION, BUCKET_FILE_EXTENSION,
           NULL_BUCKET_FILE_EXTENSION, hashFunction, storage);
 
     this.name = name;
@@ -112,10 +112,11 @@ public final class OHashTableIndexEngine implements OIndexEngine {
     hashTable.delete();
   }
 
+
   @Override
-  public void load(String indexName, OBinarySerializer valueSerializer, boolean isAutomatic, OBinarySerializer keySerializer,
+  public void load(String indexName, String fileName, OBinarySerializer valueSerializer, boolean isAutomatic, OBinarySerializer keySerializer,
       OType[] keyTypes, boolean nullPointerSupport, int keySize, Map<String, String> engineProperties) {
-    hashTable.load(indexName, keyTypes, nullPointerSupport);
+    hashTable.load(indexName, fileName, keyTypes, nullPointerSupport);
     hashFunction.setValueSerializer(hashTable.getKeySerializer());
   }
 

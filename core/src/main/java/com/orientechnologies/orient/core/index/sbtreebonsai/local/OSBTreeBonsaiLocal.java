@@ -75,7 +75,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
   private OBinarySerializer<V> valueSerializer;
 
   public OSBTreeBonsaiLocal(String name, String dataFileExtension, OAbstractPaginatedStorage storage) {
-    super(storage, name, dataFileExtension, name + dataFileExtension);
+    super(storage, name, name, dataFileExtension, name + dataFileExtension);
   }
 
   public void create(OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer) {

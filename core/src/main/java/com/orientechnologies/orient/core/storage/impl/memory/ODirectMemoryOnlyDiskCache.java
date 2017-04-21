@@ -364,7 +364,7 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
 
       fileNameIdMap.remove(fileName);
 
-      fileName = newFileName + fileName.substring(fileName.lastIndexOf(oldFileName) + fileName.length());
+      fileName = newFileName;
 
       fileIdNameMap.put(intId, fileName);
       fileNameIdMap.put(fileName, intId);

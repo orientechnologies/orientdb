@@ -130,10 +130,10 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
 
   private final boolean durableInNonTxMode;
 
-  public OLocalHashTable20(String name, String metadataConfigurationFileExtension, String treeStateFileExtension,
+  public OLocalHashTable20(String name, String fileName, String metadataConfigurationFileExtension, String treeStateFileExtension,
       String bucketFileExtension, String nullBucketFileExtension, OHashFunction<K> keyHashFunction, boolean durableInNonTxMode,
       OAbstractPaginatedStorage abstractPaginatedStorage) {
-    super(abstractPaginatedStorage, name, bucketFileExtension, name + bucketFileExtension);
+    super(abstractPaginatedStorage, name, fileName, bucketFileExtension, fileName + bucketFileExtension);
 
     this.metadataConfigurationFileExtension = metadataConfigurationFileExtension;
     this.treeStateFileExtension = treeStateFileExtension;
@@ -618,7 +618,7 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
   }
 
   @Override
-  public void load(String name, OType[] keyTypes, boolean nullKeyIsSupported) {
+  public void load(String name, String fileName, OType[] keyTypes, boolean nullKeyIsSupported) {
     acquireExclusiveLock();
     try {
       if (keyTypes != null)
@@ -630,7 +630,7 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
 
       OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
-      fileStateId = openFile(atomicOperation, name + metadataConfigurationFileExtension);
+      fileStateId = openFile(atomicOperation, fileName + metadataConfigurationFileExtension);
       final OCacheEntry hashStateEntry = loadPageForRead(atomicOperation, fileStateId, 0, true);
       hashStateEntryIndex = hashStateEntry.getPageIndex();
 
@@ -649,7 +649,7 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
       }
 
       if (nullKeyIsSupported)
-        nullBucketFileId = openFile(atomicOperation, name + nullBucketFileExtension);
+        nullBucketFileId = openFile(atomicOperation, fileName + nullBucketFileExtension);
     } catch (IOException e) {
       throw OException.wrapException(new OIndexException("Exception during hash table loading"), e);
     } finally {

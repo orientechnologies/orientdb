@@ -23,21 +23,22 @@ import java.util.Set;
 
 /**
  * Contains the index metadata.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public class OIndexMetadata {
   private final String           name;
+  private final String           fileName;
   private final OIndexDefinition indexDefinition;
   private final Set<String>      clustersToIndex;
   private final String           type;
   private final String           algorithm;
   private final String           valueContainerAlgorithm;
 
-  public OIndexMetadata(String name, OIndexDefinition indexDefinition, Set<String> clustersToIndex, String type, String algorithm,
+  public OIndexMetadata(String name, String fileName, OIndexDefinition indexDefinition, Set<String> clustersToIndex, String type, String algorithm,
       String valueContainerAlgorithm) {
     this.name = name;
+    this.fileName = fileName;
     this.indexDefinition = indexDefinition;
     this.clustersToIndex = clustersToIndex;
     this.type = type;
@@ -82,6 +83,8 @@ public class OIndexMetadata {
       return false;
     if (!name.equals(that.name))
       return false;
+    if (fileName != null ? !fileName.equals(that.fileName) : that.fileName != null)
+      return false;
     if (!type.equals(that.type))
       return false;
 
@@ -95,10 +98,15 @@ public class OIndexMetadata {
     result = 31 * result + clustersToIndex.hashCode();
     result = 31 * result + type.hashCode();
     result = 31 * result + (algorithm != null ? algorithm.hashCode() : 0);
+    result = 31 * result + (fileName != null ? fileName.hashCode() : 0);
     return result;
   }
 
   String getValueContainerAlgorithm() {
     return valueContainerAlgorithm;
+  }
+
+  public String getFileName() {
+    return fileName;
   }
 }

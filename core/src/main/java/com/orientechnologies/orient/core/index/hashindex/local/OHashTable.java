@@ -67,7 +67,7 @@ public interface OHashTable<K, V> {
 
   OHashIndexBucket.Entry<K, V>[] higherEntries(K key, int limit);
 
-  void load(String name, OType[] keyTypes, boolean nullKeyIsSupported);
+  void load(String name, String fileName, OType[] keyTypes, boolean nullKeyIsSupported);
 
   void deleteWithoutLoad(String name);
 

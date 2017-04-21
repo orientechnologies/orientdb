@@ -38,9 +38,9 @@ import java.util.*;
  * @author Luca Garulli
  */
 public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
-  public OIndexOneValue(String name, final String type, String algorithm, int version, OAbstractPaginatedStorage storage,
+  public OIndexOneValue(String name, String fileName, final String type, String algorithm, int version, OAbstractPaginatedStorage storage,
       String valueContainerAlgorithm, ODocument metadata) {
-    super(name, type, algorithm, valueContainerAlgorithm, metadata, version, storage);
+    super(name, fileName, type, algorithm, valueContainerAlgorithm, metadata, version, storage);
   }
 
   public OIdentifiable get(Object iKey) {

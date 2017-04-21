@@ -104,7 +104,7 @@ public class OLocalHashTableWALTestIT extends OLocalHashTableBase {
     OMurmurHash3HashFunction<Integer> murmurHash3HashFunction = new OMurmurHash3HashFunction<Integer>();
     murmurHash3HashFunction.setValueSerializer(OIntegerSerializer.INSTANCE);
 
-    localHashTable = new OLocalHashTable<Integer, String>("actualLocalHashTable", ".imc", ".tsc", ".obf", ".nbh",
+    localHashTable = new OLocalHashTable<Integer, String>("actualLocalHashTable", "actualLocalHashTable",".imc", ".tsc", ".obf", ".nbh",
         murmurHash3HashFunction, (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
     localHashTable
         .create(OIntegerSerializer.INSTANCE, OBinarySerializerFactory.getInstance().<String>getObjectSerializer(OType.STRING), null,

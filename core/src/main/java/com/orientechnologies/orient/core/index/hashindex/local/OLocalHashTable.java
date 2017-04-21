@@ -117,9 +117,9 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
   private OHashTableDirectory directory;
 
 
-  public OLocalHashTable(String name, String metadataConfigurationFileExtension, String treeStateFileExtension,
+  public OLocalHashTable(String name, String fileName, String metadataConfigurationFileExtension, String treeStateFileExtension,
       String bucketFileExtension, String nullBucketFileExtension, OHashFunction<K> keyHashFunction, OAbstractPaginatedStorage abstractPaginatedStorage) {
-    super(abstractPaginatedStorage, name, bucketFileExtension, name + bucketFileExtension);
+    super(abstractPaginatedStorage, name, fileName, bucketFileExtension, fileName + bucketFileExtension);
 
     this.metadataConfigurationFileExtension = metadataConfigurationFileExtension;
     this.treeStateFileExtension = treeStateFileExtension;
@@ -155,7 +155,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
 
           this.directory = new OHashTableDirectory(treeStateFileExtension, getName(), getFullName(), storage);
 
-          fileStateId = addFile(atomicOperation, getName() + metadataConfigurationFileExtension);
+          fileStateId = addFile(atomicOperation, getFileName() + metadataConfigurationFileExtension);
 
           directory.create();
 
@@ -180,7 +180,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
           initHashTreeState(atomicOperation);
 
           if (nullKeyIsSupported)
-            nullBucketFileId = addFile(atomicOperation, getName() + nullBucketFileExtension);
+            nullBucketFileId = addFile(atomicOperation, this.getFileName() + nullBucketFileExtension);
 
           endAtomicOperation(false, null);
         } catch (IOException e) {
@@ -621,7 +621,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
   }
 
   @Override
-  public void load(String name, OType[] keyTypes, boolean nullKeyIsSupported) {
+  public void load(String name, String fileName, OType[] keyTypes, boolean nullKeyIsSupported) {
     startOperation();
     try {
       acquireExclusiveLock();
@@ -635,7 +635,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
 
         OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
-        fileStateId = openFile(atomicOperation, name + metadataConfigurationFileExtension);
+        fileStateId = openFile(atomicOperation, fileName + metadataConfigurationFileExtension);
         final OCacheEntry hashStateEntry = loadPageForRead(atomicOperation, fileStateId, 0, true);
         hashStateEntryIndex = hashStateEntry.getPageIndex();
 
@@ -659,7 +659,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
         }
 
         if (nullKeyIsSupported)
-          nullBucketFileId = openFile(atomicOperation, name + nullBucketFileExtension);
+          nullBucketFileId = openFile(atomicOperation, fileName + nullBucketFileExtension);
 
         fileId = openFile(atomicOperation, getFullName());
       } catch (IOException e) {

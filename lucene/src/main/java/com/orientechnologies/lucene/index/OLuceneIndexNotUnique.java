@@ -52,7 +52,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
       OAbstractPaginatedStorage storage,
       String valueContainerAlgorithm,
       ODocument metadata) {
-    super(name, typeId, algorithm, valueContainerAlgorithm, metadata, version, storage);
+    super(name, name, typeId, algorithm, valueContainerAlgorithm, metadata, version, storage);
   }
 
   @Override

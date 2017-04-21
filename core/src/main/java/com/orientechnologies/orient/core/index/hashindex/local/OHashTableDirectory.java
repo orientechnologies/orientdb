@@ -46,9 +46,8 @@ public class OHashTableDirectory extends ODurableComponent {
 
   private final long firstEntryIndex;
 
-
   OHashTableDirectory(String defaultExtension, String name, String lockName, OAbstractPaginatedStorage storage) {
-    super(storage, name, defaultExtension, lockName);
+    super(storage, name, name, defaultExtension, lockName);
     this.firstEntryIndex = 0;
   }
 
@@ -677,7 +676,6 @@ public class OHashTableDirectory extends ODurableComponent {
       releasePageFromWrite(atomicOperation, cacheEntry);
     else
       releasePageFromRead(atomicOperation, cacheEntry);
-
 
   }
 

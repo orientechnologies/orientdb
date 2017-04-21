@@ -1658,9 +1658,18 @@ public class IndexTest extends ObjectDBBaseTest {
     final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) database.getStorage();
 
     final OWriteCache writeCache = storageLocalAbstract.getWriteCache();
-    Assert.assertTrue(writeCache.exists("ValuesContainerIsRemovedIfIndexIsRemovedIndex.irs"));
+    Assert.assertTrue(existsFile(writeCache.files().keySet(), "ValuesContainerIsRemovedIfIndexIsRemovedIndex", ".irs"));
     database.command(new OCommandSQL("drop index ValuesContainerIsRemovedIfIndexIsRemovedIndex")).execute();
-    Assert.assertTrue(!writeCache.exists("ValuesContainerIsRemovedIfIndexIsRemovedIndex.irs"));
+    Assert.assertFalse(existsFile(writeCache.files().keySet(), "ValuesContainerIsRemovedIfIndexIsRemovedIndex", ".irs"));
+  }
+
+  private boolean existsFile(Set<String> strings, String prefix, String suffix) {
+    for (String s : strings) {
+      if (s.startsWith(prefix) && s.endsWith(suffix)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public void testPreservingIdentityInIndexTx() {

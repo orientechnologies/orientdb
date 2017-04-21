@@ -34,9 +34,9 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
  */
 public class OIndexDictionary extends OIndexOneValue {
 
-  public OIndexDictionary(String name, String typeId, String algorithm, int version, OAbstractPaginatedStorage storage,
+  public OIndexDictionary(String name, String fileName, String typeId, String algorithm, int version, OAbstractPaginatedStorage storage,
       String valueContainerAlgorithm, ODocument metadata) {
-    super(name, typeId, algorithm, version, storage, valueContainerAlgorithm, metadata);
+    super(name, fileName, typeId, algorithm, version, storage, valueContainerAlgorithm, metadata);
   }
 
   public OIndexOneValue put(Object key, final OIdentifiable value) {

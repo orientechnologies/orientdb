@@ -69,7 +69,7 @@ public class OStorageConfiguration implements OSerializableStream {
   public static final String DEFAULT_DATETIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
 
   private String charset;
-  public static final int                              CURRENT_VERSION               = 17;
+  public static final int                              CURRENT_VERSION               = 18;
   public static final int                              CURRENT_BINARY_FORMAT_VERSION = 12;
   private final       List<OStorageEntryConfiguration> properties                    = new ArrayList<OStorageEntryConfiguration>();
   protected final transient  OStorage                               storage;
@@ -369,6 +369,12 @@ public class OStorageConfiguration implements OSerializableStream {
 
       for (int i = 0; i < enginesSize; i++) {
         final String name = read(values[index++]);
+        final String fileName;
+        if (version > 17) {
+          fileName = read(values[index++]);
+        } else {
+          fileName = name;
+        }
         final String algorithm = read(values[index++]);
         final String indexType;
 
@@ -414,8 +420,8 @@ public class OStorageConfiguration implements OSerializableStream {
           }
         }
 
-        final IndexEngineData indexEngineData = new IndexEngineData(name, algorithm, indexType, durableInNonTxMode, version,
-            valueSerializerId, keySerializerId, isAutomatic, types, nullValuesSupport, keySize, engineProperties);
+        final IndexEngineData indexEngineData = new IndexEngineData(name, fileName, algorithm, indexType, durableInNonTxMode,
+            version, valueSerializerId, keySerializerId, isAutomatic, types, nullValuesSupport, keySize, engineProperties);
 
         indexEngines.put(name.toLowerCase(getLocaleInstance()), indexEngineData);
       }
@@ -544,6 +550,7 @@ public class OStorageConfiguration implements OSerializableStream {
     write(buffer, indexEngines.size());
     for (IndexEngineData engineData : indexEngines.values()) {
       write(buffer, engineData.name);
+      write(buffer, engineData.fileName);
       write(buffer, engineData.algorithm);
       write(buffer, engineData.indexType == null ? "" : engineData.indexType);
 
@@ -885,6 +892,7 @@ public class OStorageConfiguration implements OSerializableStream {
 
   public static final class IndexEngineData {
     private final String              name;
+    private final String              fileName;
     private final String              algorithm;
     private final String              indexType;
     private final Boolean             durableInNonTxMode;
@@ -897,10 +905,12 @@ public class OStorageConfiguration implements OSerializableStream {
     private final int                 keySize;
     private final Map<String, String> engineProperties;
 
-    public IndexEngineData(final String name, final String algorithm, String indexType, final Boolean durableInNonTxMode,
-        final int version, final byte valueSerializerId, final byte keySerializedId, final boolean isAutomatic,
-        final OType[] keyTypes, final boolean nullValuesSupport, final int keySize, final Map<String, String> engineProperties) {
+    public IndexEngineData(final String name, final String fileName, final String algorithm, String indexType,
+        final Boolean durableInNonTxMode, final int version, final byte valueSerializerId, final byte keySerializedId,
+        final boolean isAutomatic, final OType[] keyTypes, final boolean nullValuesSupport, final int keySize,
+        final Map<String, String> engineProperties) {
       this.name = name;
+      this.fileName = fileName;
       this.algorithm = algorithm;
       this.indexType = indexType;
       this.durableInNonTxMode = durableInNonTxMode;
@@ -966,6 +976,10 @@ public class OStorageConfiguration implements OSerializableStream {
 
     public String getIndexType() {
       return indexType;
+    }
+
+    public String getFileName() {
+      return fileName;
     }
   }
 }
