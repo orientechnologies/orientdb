@@ -790,7 +790,7 @@ public class ODistributedTransactionManager {
 
       if (ODistributedServerLog.isDebugEnabled())
         ODistributedServerLog.debug(this, localNodeName, serversToFollowup.toString(), ODistributedServerLog.DIRECTION.OUT,
-            "Distributed transaction completed (quorum=%d received=%d responses=%s reqId=%s), servers %s need a followup message", resp.getQuorum(),
+            "Distributed transaction completed (quorum=%d received=%s responses=%s reqId=%s), servers %s need a followup message", resp.getQuorum(),
             quorumResponse, resp.getRespondingNodes(), resp.getMessageId(), serversToFollowup);
 
       // REMOVE HERE THE CONTEXT TO AVOID A CONCURRENT ROLLBACK (TIMEOUT?)
