@@ -29,19 +29,16 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRecordReplicatedTask;
-import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -112,8 +109,13 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
         .getClusterById(rid.getClusterId());
     final OPaginatedCluster.RECORD_STATUS recordStatus = cluster.getRecordStatus(rid.getClusterPosition());
 
+    if (ODistributedServerLog.isDebugEnabled())
+      ODistributedServerLog
+          .debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "Found record %s/%s status=%s reqId=%s...",
+              database.getName(), rid.toString(), recordStatus, requestId);
+
     switch (recordStatus) {
-    case REMOVED:
+    case REMOVED: {
       // RECYCLE THE RID AND OVERWRITE IT WITH THE NEW CONTENT
       ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().recyclePosition(rid, new byte[] {}, version, recordType);
 
@@ -122,21 +124,17 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
       ORecordInternal.fill(loadedRecordInstance, rid, version, content, true);
       loadedRecordInstance.save();
       return new OPlaceholder(rid, loadedRecordInstance.getVersion());
+    }
 
     case ALLOCATED:
-    case PRESENT:
-      final OStorageOperationResult<ORawBuffer> loadedRecord = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
-          .readRecord(rid, null, true, false, null);
+    case PRESENT: {
+      // LOAD IT AS RECORD
+      getRecord();
+      record.save();
+      break;
+    }
 
-      if (loadedRecord.getResult() != null) {
-        // ALREADY PRESENT
-        record = forceUpdate(iManager, database, requestId, loadedRecord.getResult());
-        return new OPlaceholder(record);
-      }
-
-      // GOES DOWN
-
-    case NOT_EXISTENT:
+    case NOT_EXISTENT: {
       // try {
       ORecordId newRid;
       do {
@@ -170,49 +168,15 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
             "Record " + rid + " has been saved with the different RID " + newRid + " on server " + iManager.getLocalNodeName());
       }
 
-      ODistributedServerLog
-          .debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "+-> assigned new rid %s/%s v.%d reqId=%s",
-              database.getName(), rid.toString(), record.getVersion(), requestId);
+      ODistributedServerLog.debug(this, iManager.getLocalNodeName(),
 
-      // } catch (ORecordDuplicatedException e) {
-      // // DUPLICATED INDEX ON THE TARGET: CREATE AN EMPTY RECORD JUST TO MAINTAIN THE RID AND LET TO THE FIX OPERATION TO SORT OUT
-      // // WHAT HAPPENED
-      // ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-      // "+-> duplicated record %s (existent=%s), assigned new rid %s/%s v.%d reqId=%s", record, e.getRid(), database.getName(),
-      // rid.toString(), record.getVersion(), requestId);
-      //
-      // record.clear();
-      // if (clusterId > -1)
-      // record.save(database.getClusterNameById(clusterId), true);
-      // else if (rid.getClusterId() != -1)
-      // record.save(database.getClusterNameById(rid.getClusterId()), true);
-      // else
-      // record.save();
-      //
-      // throw e;
-      // }
+          getNodeSource(), DIRECTION.IN, "+-> assigned new rid %s/%s v.%d reqId=%s", database.getName(), rid.toString(),
+          record.getVersion(), requestId);
+    }
     }
 
     // IMPROVED TRANSPORT BY AVOIDING THE RECORD CONTENT, BUT JUST RID + VERSION
     return new OPlaceholder(record);
-  }
-
-  protected ORecord forceUpdate(final ODistributedServerManager manager, final ODatabaseDocumentInternal database,
-      final ODistributedRequestId requestId, final ORawBuffer loadedRecord) {
-    // LOAD IT AS RECORD
-    final ORecord loadedRecordInstance = Orient.instance().getRecordFactoryManager().newInstance(loadedRecord.recordType);
-    ORecordInternal.fill(loadedRecordInstance, rid, loadedRecord.version, loadedRecord.getBuffer(), false);
-
-    // RECORD HAS BEEN ALREADY CREATED (PROBABLY DURING DATABASE SYNC) CHECKING COHERENCY
-    if (Arrays.equals(loadedRecord.getBuffer(), content))
-      // SAME CONTENT
-      return loadedRecordInstance;
-
-    ODistributedServerLog.debug(this, manager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-        "Error on creating record in an existent position. toStore=%s stored=%s reqId=%s", getRecord(), loadedRecordInstance,
-        requestId);
-
-    throw new ODistributedOperationException("Cannot create the record " + rid + " in an already existent position");
   }
 
   @Override
@@ -238,12 +202,12 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
 
         final long minPos = Math.max(badResult.getIdentity().getClusterPosition() - 1, 0);
         for (long pos = minPos; pos < goodResult.getIdentity().getClusterPosition(); ++pos) {
-          // UPDATE INTERMEDIATE RECORDS
+// UPDATE INTERMEDIATE RECORDS
           final ORecordId toUpdateRid = new ORecordId(goodResult.getIdentity().getClusterId(), pos);
 
           final ORecord toUpdateRecord;
           if (dManager.getLocalNodeName().equals(executorNode)) {
-            // SAME SERVER: LOAD THE RECORD FROM ANOTHER NODE
+// SAME SERVER: LOAD THE RECORD FROM ANOTHER NODE
             final ODistributedConfiguration dCfg = dManager.getDatabaseConfiguration(iRequest.getDatabaseName());
             final List<String> nodes = dCfg
                 .getServers(ODatabaseRecordThreadLocal.INSTANCE.get().getClusterNameById(clusterId), dManager.getLocalNodeName());

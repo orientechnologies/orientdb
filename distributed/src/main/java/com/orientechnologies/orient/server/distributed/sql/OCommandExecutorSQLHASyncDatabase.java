@@ -82,8 +82,7 @@ public class OCommandExecutorSQLHASyncDatabase extends OCommandExecutorSQLAbstra
 
     final String databaseName = database.getName();
 
-    return dManager.installDatabase(true, databaseName, false,
-        OGlobalConfiguration.DISTRIBUTED_BACKUP_TRY_INCREMENTAL_FIRST.getValueAsBoolean());
+    return dManager.installDatabase(true, databaseName, false, false);
   }
 
   @Override
