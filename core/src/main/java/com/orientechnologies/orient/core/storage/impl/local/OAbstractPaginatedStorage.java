@@ -3711,7 +3711,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
 
     if (writeAheadLog.begin() == null) {
-      OLogManager.instance().error(this, "Restore is not possible because write ahead log is empty.");
+      OLogManager.instance().warn(this, "Restore is not possible because write ahead log is empty.");
       return null;
     }
 

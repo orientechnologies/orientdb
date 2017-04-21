@@ -184,10 +184,8 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
               "received response for message %d after the timeout (%dms)", msgId,
               OGlobalConfiguration.DISTRIBUTED_ASYNCH_RESPONSES_TIMEOUT.getValueAsLong());
       } else if (asynchMgr.collectResponse(response)) {
-
         // ALL RESPONSE RECEIVED, REMOVE THE RESPONSE MANAGER WITHOUT WAITING THE PURGE THREAD REMOVE THEM FOR TIMEOUT
-        final ODistributedResponseManager resp = responsesByRequestIds.remove(msgId);
-
+        responsesByRequestIds.remove(msgId);
       }
     } finally {
       Orient.instance().getProfiler()

@@ -183,4 +183,13 @@ public class OTxTask extends OAbstract2pcTask {
   public int getFactoryId() {
     return FACTORYID;
   }
+
+  public List<ORecordId> getInvolvedRecords() {
+    final List<ORecordId> list = new ArrayList<ORecordId>();
+    for (OAbstractRecordReplicatedTask t : tasks) {
+      if (t.getRid() != null)
+        list.add(t.getRid());
+    }
+    return list;
+  }
 }

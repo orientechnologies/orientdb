@@ -124,8 +124,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     if (iDatabaseName.equals(OSystemDatabase.SYSTEM_DB_NAME))
       return;
 
-    checkLocalNodeInConfiguration(cfg);
-
     startTxTimeoutTimerTask();
 
     repairer = new OConflictResolverDatabaseRepairer(manager, databaseName);
@@ -411,7 +409,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   @Override
   public ODistributedResponse send2Nodes(final ODistributedRequest iRequest, final Collection<String> iClusterNames,
       Collection<String> iNodes, final ODistributedRequest.EXECUTION_MODE iExecutionMode, final Object localResult,
-      final OCallable<Void, ODistributedRequestId> iAfterSentCallback) {
+      final OCallable<Void, ODistributedRequestId> iAfterSentCallback,
+      final OCallable<Void, ODistributedResponseManager> endCallback) {
     boolean afterSendCallBackCalled = false;
     try {
       checkForServerOnline(iRequest);
@@ -453,11 +452,13 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       final ODistributedResponseManager currentResponseMgr = new ODistributedResponseManager(manager, iRequest, iNodes,
           nodesConcurToTheQuorum, expectedResponses, quorum, waitLocalNode,
           adjustTimeoutWithLatency(iNodes, task.getSynchronousTimeout(expectedResponses)),
-          adjustTimeoutWithLatency(iNodes, task.getTotalTimeout(availableNodes)), groupByResponse);
+          adjustTimeoutWithLatency(iNodes, task.getTotalTimeout(availableNodes)), groupByResponse, endCallback);
 
-      if (localResult != null)
+      if (localResult != null) {
         // COLLECT LOCAL RESULT
-        currentResponseMgr.setLocalResult(localNodeName, localResult);
+        if( currentResponseMgr.setLocalResult(localNodeName, localResult) )
+          return currentResponseMgr.getQuorumResponse();
+      }
 
       // SORT THE NODE TO GUARANTEE THE SAME ORDER OF DELIVERY
       if (!(iNodes instanceof List))
@@ -1004,16 +1005,17 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     return currentResponseMgr.getFinalResponse();
   }
 
-  protected void checkLocalNodeInConfiguration(final ODistributedConfiguration cfg) {
+  @Override
+  public void checkNodeInConfiguration(final ODistributedConfiguration cfg, final String serverName) {
     manager.executeInDistributedDatabaseLock(databaseName, 20000, cfg != null ? cfg.modify() : null,
         new OCallable<Void, OModifiableDistributedConfiguration>() {
           @Override
           public Void call(final OModifiableDistributedConfiguration lastCfg) {
             // GET LAST VERSION IN LOCK
-            final List<String> foundPartition = lastCfg.addNewNodeInServerList(localNodeName);
+            final List<String> foundPartition = lastCfg.addNewNodeInServerList(serverName);
             if (foundPartition != null) {
               ODistributedServerLog
-                  .info(this, localNodeName, null, DIRECTION.NONE, "Adding node '%s' in partition: %s db=%s v=%d", localNodeName,
+                  .info(this, localNodeName, null, DIRECTION.NONE, "Adding node '%s' in partition: %s db=%s v=%d", serverName,
                       foundPartition, databaseName, lastCfg.getVersion());
             }
             return null;

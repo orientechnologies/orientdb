@@ -86,7 +86,7 @@ public class OClusterHealthChecker extends TimerTask {
           try {
             final ODistributedResponse response = manager
                 .sendRequest(databaseName, null, nodes, new ORequestDatabaseConfigurationTask(databaseName),
-                    manager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
+                    manager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
 
             final Object payload = response != null ? response.getPayload() : null;
             if (payload instanceof Map) {
@@ -181,6 +181,10 @@ public class OClusterHealthChecker extends TimerTask {
         ODistributedServerLog.info(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
             "Trying to recover current server for database '%s'...", dbName);
 
+        if (manager.getNodeStatus() != ODistributedServerManager.NODE_STATUS.ONLINE)
+          // ONLY ONLINE NODE CAN TRY TO RECOVER FOR SINGLE DB STATUS
+          return;
+
         final ODistributedConfiguration dCfg = ((ODistributedStorage) manager.getStorage(dbName)).getDistributedConfiguration();
         if (dCfg != null) {
           final boolean result = manager.installDatabase(true, dbName, false,
@@ -221,7 +225,7 @@ public class OClusterHealthChecker extends TimerTask {
       try {
         final ODistributedResponse response = manager
             .sendRequest(dbName, null, servers, new OHeartbeatTask(), manager.getNextMessageIdCounter(),
-                ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
+                ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
 
         final Object payload = response != null ? response.getPayload() : null;
         if (payload instanceof Map) {

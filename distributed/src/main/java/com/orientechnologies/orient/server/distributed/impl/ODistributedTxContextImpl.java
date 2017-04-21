@@ -91,26 +91,13 @@ public class ODistributedTxContextImpl implements ODistributedTxContext {
   }
 
   public synchronized void fix(final ODatabaseDocumentInternal database, final List<ORemoteTask> fixTasks) {
-    ODistributedServerLog.debug(this, db.getManager().getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-        "Distributed transaction %s: fixing transaction (db=%s tasks=%d)", reqId, db.getDatabaseName(), fixTasks.size());
-
-    for (ORemoteTask fixTask : fixTasks) {
-      try {
-        if (fixTask instanceof OAbstractRecordReplicatedTask)
-          ((OAbstractRecordReplicatedTask) fixTask).setLockRecords(false);
-
-        fixTask.execute(reqId, db.getManager().getServerInstance(), db.getManager(), database);
-
-      } catch (Exception e) {
-        ODistributedServerLog.error(this, db.getManager().getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-            "Error on fixing transaction %s db=%s task=%s", e, reqId, db.getDatabaseName(), fixTask);
-      }
-    }
+    executeFix(this, database, fixTasks, reqId, db);
   }
 
   public synchronized int rollback(final ODatabaseDocumentInternal database) {
     ODistributedServerLog.debug(this, db.getManager().getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-        "Distributed transaction %s: rolling back transaction (%d ops) on database '%s'", reqId, undoTasks.size(), database);
+        "Distributed transaction %s: rolling back transaction (%d ops) on database '%s'", reqId, undoTasks.size(),
+        database != null ? database.getName() : "?");
 
     for (ORemoteTask task : undoTasks) {
       try {
@@ -143,5 +130,24 @@ public class ODistributedTxContextImpl implements ODistributedTxContext {
 
   public long getStartedOn() {
     return startedOn;
+  }
+
+  public static void executeFix(final Object me, final ODatabaseDocumentInternal database, final List<ORemoteTask> fixTasks,
+      ODistributedRequestId requestId, final ODistributedDatabase ddb) {
+    ODistributedServerLog.debug(me, ddb.getManager().getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+        "Distributed transaction %s: fixing transaction (db=%s tasks=%d)", requestId, ddb.getDatabaseName(), fixTasks.size());
+
+    for (ORemoteTask fixTask : fixTasks) {
+      try {
+        if (fixTask instanceof OAbstractRecordReplicatedTask)
+          ((OAbstractRecordReplicatedTask) fixTask).setLockRecords(false);
+
+        fixTask.execute(requestId, ddb.getManager().getServerInstance(), ddb.getManager(), database);
+
+      } catch (Exception e) {
+        ODistributedServerLog.error(me, ddb.getManager().getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+            "Error on fixing transaction %s db=%s task=%s", e, requestId, ddb.getDatabaseName(), fixTask);
+      }
+    }
   }
 }

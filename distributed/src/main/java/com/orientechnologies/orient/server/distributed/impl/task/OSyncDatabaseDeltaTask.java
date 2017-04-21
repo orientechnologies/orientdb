@@ -45,10 +45,10 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class OSyncDatabaseDeltaTask extends OAbstractSyncDatabaseTask {
-  public static final int      FACTORYID            = 13;
+  public static final int FACTORYID = 13;
 
   protected OLogSequenceNumber startLSN;
-  protected Set<String>        excludedClusterNames = new HashSet<String>();
+  protected Set<String> excludedClusterNames = new HashSet<String>();
 
   public OSyncDatabaseDeltaTask() {
   }
@@ -73,8 +73,8 @@ public class OSyncDatabaseDeltaTask extends OAbstractSyncDatabaseTask {
         return chunk;
 
     } else
-      ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE,
-          "Skip deploying database from the same node");
+      ODistributedServerLog
+          .debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE, "Skip deploying database from the same node");
 
     return Boolean.FALSE;
   }
@@ -100,8 +100,9 @@ public class OSyncDatabaseDeltaTask extends OAbstractSyncDatabaseTask {
 
     iManager.setDatabaseStatus(getNodeSource(), databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
 
-    ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-        "Deploying database '%s' with delta of changes...", databaseName);
+    ODistributedServerLog
+        .info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT, "Deploying database '%s' with delta of changes...",
+            databaseName);
 
     // CREATE A BACKUP OF DATABASE
     final File backupFile = new File(Orient.getTempPath() + "/backup_" + getNodeSource() + "_" + database.getName() + ".zip");
@@ -132,8 +133,8 @@ public class OSyncDatabaseDeltaTask extends OAbstractSyncDatabaseTask {
 
     try {
       final AtomicLong counter = new AtomicLong(0);
-      endLSN.set(((OAbstractPaginatedStorage) storage).recordsChangedAfterLSN(startLSN, fileOutputStream, excludedClusterNames,
-          new OCommandOutputListener() {
+      endLSN.set(((OAbstractPaginatedStorage) storage)
+          .recordsChangedAfterLSN(startLSN, fileOutputStream, excludedClusterNames, new OCommandOutputListener() {
             @Override
             public void onMessage(final String iText) {
               if (iText.startsWith("read")) {
@@ -179,8 +180,8 @@ public class OSyncDatabaseDeltaTask extends OAbstractSyncDatabaseTask {
       throw exception.get();
     }
 
-    ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-        "Deploy delta database task completed");
+    ODistributedServerLog
+        .info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT, "Deploy delta database task completed");
 
     // GET THE MOMENTUM, BUT OVERWRITE THE LAST LSN RECEIVED FROM THE DELTA
     final ODistributedMomentum momentum = dDatabase.getSyncConfiguration().getMomentum().copy();
@@ -188,8 +189,9 @@ public class OSyncDatabaseDeltaTask extends OAbstractSyncDatabaseTask {
 
     final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(backupFile, 0, CHUNK_MAX_SIZE, momentum, false);
 
-    ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-        "- transferring chunk #%d offset=%d size=%s...", 1, 0, OFileUtils.getSizeAsNumber(chunk.buffer.length));
+    ODistributedServerLog
+        .info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT, "- transferring chunk #%d offset=%d size=%s...", 1,
+            0, OFileUtils.getSizeAsNumber(chunk.buffer.length));
 
     if (chunk.last)
       // NO MORE CHUNKS: SET THE NODE ONLINE (SYNCHRONIZING ENDED)

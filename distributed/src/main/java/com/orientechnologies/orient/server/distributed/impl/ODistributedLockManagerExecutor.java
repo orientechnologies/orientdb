@@ -26,10 +26,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -82,8 +79,9 @@ public class ODistributedLockManagerExecutor implements ODistributedLockManager 
         do {
           try {
             ODistributedServerLog.info(this, localNodeName, nodeSource, ODistributedServerLog.DIRECTION.IN,
-                "Waiting to acquire distributed lock on resource '%s' (threadId=%d timeout=%d)...", resource,
-                Thread.currentThread().getId(), timeout);
+                "Server %s is waiting to acquire distributed lock on resource '%s' owned by %s on %s (threadId=%d timeout=%d)...",
+                nodeSource, resource, currentLock.server, new Date(currentLock.acquiredOn), Thread.currentThread().getId(),
+                timeout);
 
             if (timeout > 0) {
               if (!currentLock.lock.await(timeout, TimeUnit.MILLISECONDS))

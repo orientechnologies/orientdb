@@ -111,8 +111,8 @@ public class OLocalClusterWrapperStrategy implements OClusterSelectionStrategy {
 
     if (ODistributedServerLog.isDebugEnabled())
       ODistributedServerLog.debug(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-          "%d Selected cluster %d for class '%s' from %s (dCfgVersion=%d)", Thread.currentThread().getId(), cluster, cls.getName(),
-          Arrays.toString(localScopedClass.bestClusterIds), lastVersion);
+          "Selected cluster %d for class '%s' from %s (threadId=%d dCfgVersion=%d)", cluster, cls.getName(),
+          Arrays.toString(localScopedClass.bestClusterIds), Thread.currentThread().getId(), lastVersion);
 
     return cluster;
   }

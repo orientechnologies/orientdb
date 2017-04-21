@@ -37,6 +37,7 @@ import com.orientechnologies.orient.server.distributed.task.ODistributedOperatio
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -231,6 +232,8 @@ public class ODistributedWorker extends Thread {
   protected ODistributedRequest readRequest() throws InterruptedException {
     // GET FROM DISTRIBUTED QUEUE. IF EMPTY WAIT FOR A MESSAGE
     ODistributedRequest req = nextMessage();
+    if( req == null )
+      return null;
 
     if (manager.isOffline())
       waitNodeIsOnline();
@@ -251,7 +254,7 @@ public class ODistributedWorker extends Thread {
 
   protected ODistributedRequest nextMessage() throws InterruptedException {
     waitingForNextRequest.set(true);
-    final ODistributedRequest req = localQueue.take();
+    final ODistributedRequest req = localQueue.poll(2000, TimeUnit.MILLISECONDS);
     waitingForNextRequest.set(false);
     processedRequests.incrementAndGet();
     return req;
@@ -386,7 +389,7 @@ public class ODistributedWorker extends Thread {
 
     final String senderNodeName = manager.getNodeNameById(iRequest.getId().getNodeId());
 
-    final ODistributedResponse response = new ODistributedResponse(iRequest.getId(), localNodeName, senderNodeName,
+    final ODistributedResponse response = new ODistributedResponse(null, iRequest.getId(), localNodeName, senderNodeName,
         responsePayload);
 
     // TODO: check if using remote channel for local node still makes sense
@@ -451,7 +454,6 @@ public class ODistributedWorker extends Thread {
 
   public void sendShutdown() {
     running = false;
-    this.interrupt();
   }
 
   public ODistributedRequest getProcessing() {

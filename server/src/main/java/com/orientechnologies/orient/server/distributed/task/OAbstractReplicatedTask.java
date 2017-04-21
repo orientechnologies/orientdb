@@ -28,10 +28,8 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
  * Base class for Replicated tasks.
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- *
  */
 public abstract class OAbstractReplicatedTask extends OAbstractRemoteTask {
-  private static final long serialVersionUID = 1L;
   protected OLogSequenceNumber lastLSN;
 
   public ORemoteTask getFixTask(ODistributedRequest iRequest, ORemoteTask iOriginalTask, Object iBadResponse, Object iGoodResponse,
@@ -43,7 +41,7 @@ public abstract class OAbstractReplicatedTask extends OAbstractRemoteTask {
     return null;
   }
 
-  public OLogSequenceNumber getLastLSN(){
+  public OLogSequenceNumber getLastLSN() {
     return lastLSN;
   }
 }

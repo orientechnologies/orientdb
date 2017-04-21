@@ -216,7 +216,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
       initSystemDatabase();
 
-      ODistributedServerLog.warn(this, localNodeName, null, DIRECTION.NONE, "Servers in cluster: %s", activeNodes.keySet());
+      ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE, "Servers in cluster: %s", activeNodes.keySet());
 
       // REMOVE ANY PREVIOUS REGISTERED SERVER WITH THE SAME NODE NAME
       final Set<String> node2Remove = new HashSet<String>();
@@ -258,6 +258,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
       // REGISTER CURRENT MEMBERS
       setNodeStatus(NODE_STATUS.ONLINE);
+
+      publishLocalNodeConfiguration();
 
       final long delay = OGlobalConfiguration.DISTRIBUTED_PUBLISH_NODE_STATUS_EVERY.getValueAsLong();
       if (delay > 0) {
@@ -319,7 +321,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     defaultCfg.field("autoDeploy", false);
     final OModifiableDistributedConfiguration sysCfg = new OModifiableDistributedConfiguration(defaultCfg);
     sysCfg.removeServer("<NEW_NODE>");
-    messageService.registerDatabase(OSystemDatabase.SYSTEM_DB_NAME, sysCfg);
+
+    ODistributedDatabaseImpl ddb = messageService.registerDatabase(OSystemDatabase.SYSTEM_DB_NAME, sysCfg);
+    sysCfg.addNewNodeInServerList(getLocalNodeName());
   }
 
   private void initRegisteredNodeIds() {
@@ -771,7 +775,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         if (!servers.isEmpty() && messageService.getDatabase(databaseName) != null) {
           final ODistributedResponse dResponse = sendRequest(databaseName, null, servers,
               new OUpdateDatabaseConfigurationTask(databaseName, document), getNextMessageIdCounter(),
-              ODistributedRequest.EXECUTION_MODE.NO_RESPONSE, null, null);
+              ODistributedRequest.EXECUTION_MODE.NO_RESPONSE, null, null, null);
         }
 
       } else
@@ -1008,7 +1012,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       updateLastClusterChange();
       final String addedNodeName = getNodeName(iEvent.getMember());
       ODistributedServerLog
-          .warn(this, nodeName, null, DIRECTION.NONE, "Added new node id=%s name=%s", iEvent.getMember(), addedNodeName);
+          .info(this, nodeName, null, DIRECTION.NONE, "Added new node id=%s name=%s", iEvent.getMember(), addedNodeName);
 
       // REMOVE THE NODE FROM AUTO REMOVAL
       autoRemovalOfServers.remove(addedNodeName);
@@ -1103,6 +1107,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       final ODistributedConfiguration cfg = getDatabaseConfiguration(dbName);
 
       final ODistributedDatabaseImpl distribDatabase = messageService.registerDatabase(dbName, cfg);
+      distribDatabase.checkNodeInConfiguration(cfg, getLocalNodeName());
       distribDatabase.resume();
       distribDatabase.setOnline();
 
@@ -1191,7 +1196,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
       if (!servers.isEmpty() && messageService.getDatabase(dbName) != null)
         sendRequest(dbName, null, servers, new ODropDatabaseTask(), getNextMessageIdCounter(),
-            ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
+            ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
     }
 
     super.onDrop(iDatabase);
@@ -1300,7 +1305,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
               OGlobalConfiguration.DISTRIBUTED_BACKUP_TRY_INCREMENTAL_FIRST.getValueAsBoolean());
         } catch (Exception e) {
           ODistributedServerLog
-              .error(this, getLocalNodeName(), null, DIRECTION.IN, "Error on installing database '%s' on local node", databaseName);
+              .error(this, getLocalNodeName(), null, DIRECTION.IN, "Error on installing database '%s' on local node (error=%s)",
+                  databaseName, e.toString());
           setDatabaseStatus(getLocalNodeName(), databaseName, DB_STATUS.NOT_AVAILABLE);
         }
       }
@@ -1573,7 +1579,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       // NODE HAS NOT IS YET
       return;
 
-    // NOTIFY NODE IS GOING TO BE ADDED. EVERYBODY IS OK?
+    // NOTIFY NODE IS GOING TO BE ADDED. IS EVERYBODY OK?
     for (ODistributedLifecycleListener l : listeners) {
       if (!l.onNodeJoining(joinedNodeName)) {
         // DENY JOIN
@@ -1584,29 +1590,31 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       }
     }
 
-    activeNodes.put(joinedNodeName, member);
-    activeNodesNamesByUuid.put(member.getUuid(), joinedNodeName);
-    activeNodesUuidByName.put(joinedNodeName, member.getUuid());
+    if (activeNodes.putIfAbsent(joinedNodeName, member) == null) {
+      activeNodesNamesByUuid.put(member.getUuid(), joinedNodeName);
+      activeNodesUuidByName.put(joinedNodeName, member.getUuid());
 
-    try {
-      getRemoteServer(joinedNodeName);
-    } catch (IOException e) {
-      ODistributedServerLog.error(this, nodeName, joinedNodeName, DIRECTION.OUT, "Error on connecting to node %s", joinedNodeName);
+      try {
+        getRemoteServer(joinedNodeName);
+      } catch (IOException e) {
+        ODistributedServerLog
+            .error(this, nodeName, joinedNodeName, DIRECTION.OUT, "Error on connecting to node %s", joinedNodeName);
+      }
+
+      ODistributedServerLog.info(this, nodeName, getNodeName(member), DIRECTION.IN,
+          "Added node configuration id=%s name=%s, now %d nodes are configured", member, getNodeName(member), activeNodes.size());
+
+      // NOTIFY NODE WAS ADDED SUCCESSFULLY
+      for (ODistributedLifecycleListener l : listeners)
+        l.onNodeJoined(joinedNodeName);
+
+      // FORCE THE ALIGNMENT FOR ALL THE ONLINE DATABASES AFTER THE JOIN ONLY IF AUTO-DEPLOY IS SET
+      for (String db : messageService.getDatabases())
+        if (getDatabaseConfiguration(db).isAutoDeploy() && getDatabaseStatus(joinedNodeName, db) == DB_STATUS.ONLINE)
+          setDatabaseStatus(joinedNodeName, db, DB_STATUS.NOT_AVAILABLE);
+
+      dumpServersStatus();
     }
-
-    ODistributedServerLog.info(this, nodeName, getNodeName(member), DIRECTION.IN,
-        "Added node configuration id=%s name=%s, now %d nodes are configured", member, getNodeName(member), activeNodes.size());
-
-    // NOTIFY NODE WAS ADDED SUCCESSFULLY
-    for (ODistributedLifecycleListener l : listeners)
-      l.onNodeJoined(joinedNodeName);
-
-    // FORCE THE ALIGNMENT FOR ALL THE ONLINE DATABASES AFTER THE JOIN
-    for (String db : messageService.getDatabases())
-      if (getDatabaseStatus(joinedNodeName, db) == DB_STATUS.ONLINE)
-        setDatabaseStatus(joinedNodeName, db, DB_STATUS.NOT_AVAILABLE);
-
-    dumpServersStatus();
   }
 
   /**

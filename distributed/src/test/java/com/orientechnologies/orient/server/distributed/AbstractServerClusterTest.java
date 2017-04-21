@@ -502,7 +502,7 @@ public abstract class AbstractServerClusterTest {
 
     ODistributedResponse response = dManager
         .sendRequest(getDatabaseName(), clusterNames, Arrays.asList(servers), new OReadRecordTask(rid),
-            dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
+            dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
 
     if (response != null) {
       final ORawBuffer buffer = (ORawBuffer) response.getPayload();
@@ -521,7 +521,7 @@ public abstract class AbstractServerClusterTest {
     return dManager.sendRequest(getDatabaseName(), clusterNames, Arrays.asList(servers),
         new OCreateRecordTask((ORecordId) record.getIdentity(), record.toStream(), record.getVersion(),
             ORecordInternal.getRecordType(record)), dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE,
-        null, null);
+        null, null, null);
   }
 
   protected ODistributedResponse updateRemoteRecord(final int serverId, final ORecord record, final String[] servers) {
@@ -533,7 +533,7 @@ public abstract class AbstractServerClusterTest {
     return dManager.sendRequest(getDatabaseName(), clusterNames, Arrays.asList(servers),
         new OFixUpdateRecordTask((ORecordId) record.getIdentity(), record.toStream(), record.getVersion(),
             ORecordInternal.getRecordType(record)), dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE,
-        null, null);
+        null, null, null);
   }
 
   protected ODistributedResponse deleteRemoteRecord(final int serverId, final ORecordId rid, final String[] servers) {
@@ -543,7 +543,7 @@ public abstract class AbstractServerClusterTest {
     clusterNames.add(ODatabaseRecordThreadLocal.INSTANCE.get().getClusterNameById(rid.getClusterId()));
 
     return dManager.sendRequest(getDatabaseName(), clusterNames, Arrays.asList(servers), new OFixCreateRecordTask(rid, -1),
-        dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
+        dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
   }
 
   protected List<ServerRun> createServerList(final int... serverIds) {

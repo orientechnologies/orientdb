@@ -63,7 +63,7 @@ public class ODistributedLockManagerRequester implements ODistributedLockManager
         try {
           final ODistributedResponse dResponse = manager.sendRequest(OSystemDatabase.SYSTEM_DB_NAME, null, servers,
               new ODistributedLockTask(coordinatorServer, resource, timeout, true), manager.getNextMessageIdCounter(),
-              ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
+              ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
 
           if (dResponse == null) {
             ODistributedServerLog.warn(this, manager.getLocalNodeName(), coordinatorServer, ODistributedServerLog.DIRECTION.OUT,
@@ -139,7 +139,7 @@ public class ODistributedLockManagerRequester implements ODistributedLockManager
         try {
           final ODistributedResponse dResponse = manager.sendRequest(OSystemDatabase.SYSTEM_DB_NAME, null, servers,
               new ODistributedLockTask(coordinatorServer, resource, 20000, false), manager.getNextMessageIdCounter(),
-              ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
+              ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
 
           if (dResponse == null)
             throw new OLockException("Cannot release exclusive lock on resource '" + resource + "'");
@@ -148,6 +148,9 @@ public class ODistributedLockManagerRequester implements ODistributedLockManager
         } catch (ODistributedException e) {
           result = e;
         }
+
+        if (manager.getNodeStatus() == ODistributedServerManager.NODE_STATUS.OFFLINE)
+          throw new ODistributedException("Server is OFFLINE");
 
         final boolean distribException =
             result instanceof ODistributedOperationException || result instanceof ODistributedException;
@@ -164,8 +167,8 @@ public class ODistributedLockManagerRequester implements ODistributedLockManager
           if (!manager.getActiveServers().contains(coordinatorServer)) {
             // THE COORDINATOR WENT DOWN DURING THE REQUEST, RETRY WITH ANOTHER COORDINATOR
             ODistributedServerLog.warn(this, manager.getLocalNodeName(), coordinatorServer, ODistributedServerLog.DIRECTION.OUT,
-                "Coordinator server '%s' went down during the request of releasing resource '%s'. Assigning new coordinator...",
-                coordinatorServer, resource);
+                "Coordinator server '%s' went down during the request of releasing resource '%s'. Assigning new coordinator (error: %s)...",
+                coordinatorServer, resource, result);
 
             try {
               Thread.sleep(1000);

@@ -228,11 +228,12 @@ public interface ODistributedServerManager {
    * @param localResult        It's the result of the request executed locally
    * @param iAfterSentCallback
    *
+   * @param endCallback
    * @return
    */
   ODistributedResponse sendRequest(String iDatabaseName, Collection<String> iClusterNames, Collection<String> iTargetNodeNames,
       ORemoteTask iTask, long messageId, EXECUTION_MODE iExecutionMode, Object localResult,
-      OCallable<Void, ODistributedRequestId> iAfterSentCallback);
+      OCallable<Void, ODistributedRequestId> iAfterSentCallback, OCallable<Void, ODistributedResponseManager> endCallback);
 
   ODocument getStats();
 

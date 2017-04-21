@@ -250,7 +250,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
 
             final ODistributedResponse response = dManager
                 .sendRequest(iRequest.getDatabaseName(), null, nodes, new OReadRecordTask(toUpdateRid),
-                    dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
+                    dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
 
             final ORawBuffer remoteReadRecord = (ORawBuffer) response.getPayload();
 

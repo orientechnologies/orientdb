@@ -21,6 +21,7 @@ package com.orientechnologies.orient.server.distributed.impl.task;
 
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.server.OServer;
@@ -61,8 +62,8 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
   public Object executeRecordTask(ODistributedRequestId requestId, final OServer iServer, ODistributedServerManager iManager,
       final ODatabaseDocumentInternal database) throws Exception {
     ODistributedServerLog
-        .debug(this, iManager.getLocalNodeName(), null, DIRECTION.IN, "Deleting record %s/%s v.%d", database.getName(),
-            rid.toString(), version);
+        .debug(this, iManager.getLocalNodeName(), null, DIRECTION.IN, "Deleting record %s/%s v.%d (reqId=%s)", database.getName(),
+            rid.toString(), version, requestId);
 
     prepareUndoOperation();
     if (previousRecord == null)
@@ -70,8 +71,13 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
       return true;
 
     final ORecord loadedRecord = previousRecord.copy();
-    if (loadedRecord != null)
-      loadedRecord.delete();
+    if (loadedRecord != null) {
+      try {
+        loadedRecord.delete();
+      } catch (ORecordNotFoundException e) {
+        // NO ERROR, IT WAS ALREADY DELETED
+      }
+    }
 
     return true;
   }
