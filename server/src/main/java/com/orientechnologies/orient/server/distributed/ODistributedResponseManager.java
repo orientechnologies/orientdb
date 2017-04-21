@@ -729,12 +729,11 @@ public class ODistributedResponseManager {
       if (receivedResponses >= quorum) {
         int responsesForQuorum = 0;
         for (Map.Entry<String, Object> response : responses.entrySet()) {
-          if (response.getValue() != NO_RESPONSE && nodesConcurInQuorum.contains(response.getKey())) {
-            if (++responsesForQuorum >= quorum) {
-              // QUORUM REACHED
-              setQuorumResponse((ODistributedResponse) response.getValue());
-              return true;
-            }
+          if (response.getValue() != NO_RESPONSE && nodesConcurInQuorum.contains(response.getKey())
+              && ++responsesForQuorum >= quorum) {
+            // QUORUM REACHED
+            setQuorumResponse((ODistributedResponse) response.getValue());
+            return true;
           }
         }
       }

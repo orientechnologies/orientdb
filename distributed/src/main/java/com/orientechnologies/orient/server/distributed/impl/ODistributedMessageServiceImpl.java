@@ -49,8 +49,8 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
   private Thread responseThread;
   private          long[]                      responseTimeMetrics = new long[10];
   private volatile boolean                     running             = true;
-  private          Map<String, OProfilerEntry> latencies           = new HashMap<String, OProfilerEntry>();
-  private          Map<String, AtomicLong>     messagesStats       = new HashMap<String, AtomicLong>();
+  private final    Map<String, OProfilerEntry> latencies           = new HashMap<String, OProfilerEntry>();
+  private final    Map<String, AtomicLong>     messagesStats       = new HashMap<String, AtomicLong>();
 
   public ODistributedMessageServiceImpl(final OHazelcastPlugin manager) {
     this.manager = manager;

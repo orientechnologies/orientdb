@@ -322,7 +322,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     final OModifiableDistributedConfiguration sysCfg = new OModifiableDistributedConfiguration(defaultCfg);
     sysCfg.removeServer("<NEW_NODE>");
 
-    ODistributedDatabaseImpl ddb = messageService.registerDatabase(OSystemDatabase.SYSTEM_DB_NAME, sysCfg);
+    messageService.registerDatabase(OSystemDatabase.SYSTEM_DB_NAME, sysCfg);
     sysCfg.addNewNodeInServerList(getLocalNodeName());
   }
 

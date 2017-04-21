@@ -57,10 +57,9 @@ public class ODistributedResponse {
 
   @Override
   public boolean equals(final Object obj) {
-    if (obj instanceof ODistributedResponse) {
-      if (((ODistributedResponse) obj).payload != null)
-        return ((ODistributedResponse) obj).payload.equals(payload);
-    }
+    if (obj instanceof ODistributedResponse && ((ODistributedResponse) obj).payload != null)
+      return ((ODistributedResponse) obj).payload.equals(payload);
+
     return false;
   }
 

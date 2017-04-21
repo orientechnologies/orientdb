@@ -160,7 +160,7 @@ public class OClientConnection {
     } else {
       //IF the byte from the network are the same of the one i have a don't check them
       if (tokenBytes != null && tokenBytes.length > 0) {
-        if (tokenBytes.equals(tokenFromNetwork)) // SAME SESSION AND TOKEN DO
+        if (Arrays.equals(tokenBytes, tokenFromNetwork)) // SAME SESSION AND TOKEN DO
           return;
       }
       

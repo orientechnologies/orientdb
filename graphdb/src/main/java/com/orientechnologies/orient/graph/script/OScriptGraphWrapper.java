@@ -119,7 +119,7 @@ public class OScriptGraphWrapper implements TransactionalGraph {
   }
 
   public boolean equals(final Object obj) {
-    return graph.equals(obj);
+    return obj == this || graph.equals(obj);
   }
 
   public void drop() {

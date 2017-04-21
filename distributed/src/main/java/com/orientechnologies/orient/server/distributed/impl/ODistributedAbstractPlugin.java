@@ -97,7 +97,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected String nodeName = null;
   protected int    nodeId   = -1;
   protected File defaultDatabaseConfigFile;
-  protected          ConcurrentHashMap<String, ODistributedStorage> storages = new ConcurrentHashMap<String, ODistributedStorage>();
+  protected final    ConcurrentHashMap<String, ODistributedStorage> storages = new ConcurrentHashMap<String, ODistributedStorage>();
   protected volatile NODE_STATUS                                    status   = NODE_STATUS.OFFLINE;
   protected long lastClusterChangeOn;
   protected       List<ODistributedLifecycleListener>            listeners                         = new ArrayList<ODistributedLifecycleListener>();

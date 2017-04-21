@@ -88,21 +88,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   private volatile OClusterSelectionStrategy clusterSelection;                                          // @SINCE 1.7
   private volatile int                       hashCode;
 
-  private static Set<String> reserved = new HashSet<String>();
-
-  static {
-    // reserved.add("select");
-    reserved.add("traverse");
-    reserved.add("insert");
-    reserved.add("update");
-    reserved.add("delete");
-    reserved.add("from");
-    reserved.add("where");
-    reserved.add("skip");
-    reserved.add("limit");
-    reserved.add("timeout");
-  }
-
   /**
    * Constructor used in unmarshalling.
    */

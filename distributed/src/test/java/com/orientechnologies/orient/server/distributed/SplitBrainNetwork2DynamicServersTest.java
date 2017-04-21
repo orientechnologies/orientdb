@@ -25,7 +25,7 @@ import org.junit.Test;
  * proxy) and then it re-merges the cluster again.
  */
 public class SplitBrainNetwork2DynamicServersTest extends AbstractHARemoveNode {
-  final static int SERVERS = 2;
+  private final static int SERVERS = 2;
 
   @Test
   public void test() throws Exception {

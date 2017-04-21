@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Distributed TX test against "plocal" protocol + shutdown and restart of a node.
  */
 public class HARemoveNodeFromCfgTest extends AbstractServerClusterTxTest {
-  final static int      SERVERS      = 3;
+  private final static int      SERVERS      = 3;
   private AtomicBoolean lastNodeIsUp = new AtomicBoolean(true);
 
   @Test

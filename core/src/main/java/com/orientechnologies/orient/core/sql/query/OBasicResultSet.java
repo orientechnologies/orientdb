@@ -19,33 +19,27 @@
  */
 package com.orientechnologies.orient.core.sql.query;
 
+import com.orientechnologies.orient.core.record.ORecord;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.NoSuchElementException;
-
-import com.orientechnologies.orient.core.record.ORecord;
+import java.util.*;
 
 /**
  * ResultSet class that implements List interface for retro compatibility.
  *
- * @author Luca Garulli
- *
  * @param <T>
+ *
+ * @author Luca Garulli
  * @see OSQLAsynchQuery
  */
 public class OBasicResultSet<T> implements OResultSet<T> {
-  protected List<T>       underlying;
+  protected List<T> underlying;
   protected transient int limit = -1;
   // Reference to temporary record for avoid garbace collection
   private List<ORecord> temporaryRecordCache;
-  
+
   public OBasicResultSet() {
     underlying = Collections.synchronizedList(new ArrayList<T>());
   }
@@ -99,8 +93,8 @@ public class OBasicResultSet<T> implements OResultSet<T> {
       @Override
       public T next() {
         if (index > size() || size() == 0)
-          throw new NoSuchElementException("Error on browsing at element " + index + " while the resultset contains only " + size()
-              + " items");
+          throw new NoSuchElementException(
+              "Error on browsing at element " + index + " while the resultset contains only " + size() + " items");
 
         return underlying.get(index++);
 
@@ -166,7 +160,10 @@ public class OBasicResultSet<T> implements OResultSet<T> {
 
   @Override
   public boolean equals(final Object o) {
-    return underlying.equals(o);
+    if (o instanceof OResultSet)
+      return underlying.equals(o);
+
+    return false;
   }
 
   @Override
@@ -246,5 +243,5 @@ public class OBasicResultSet<T> implements OResultSet<T> {
   public void setTemporaryRecordCache(List<ORecord> temporaryRecordCache) {
     this.temporaryRecordCache = temporaryRecordCache;
   }
-  
+
 }

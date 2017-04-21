@@ -32,14 +32,14 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class ODistributedSyncConfiguration {
-  private final ODistributedServerManager       dManager;
-  private final Map<String, OLogSequenceNumber> lastLSN                = new ConcurrentHashMap<String, OLogSequenceNumber>();
-  private final String                          databaseName;
+  private final ODistributedServerManager dManager;
+  private final Map<String, OLogSequenceNumber> lastLSN = new ConcurrentHashMap<String, OLogSequenceNumber>();
+  private final String databaseName;
 
-  private ODistributedMomentum                  momentum;
-  private File                                  file;
-  private long                                  lastOperationTimestamp = -1;
-  private long                                  lastLSNWrittenOnDisk   = 0l;
+  private final ODistributedMomentum momentum;
+  private       File                 file;
+  private long lastOperationTimestamp = -1;
+  private long lastLSNWrittenOnDisk   = 0l;
 
   public ODistributedSyncConfiguration(final ODistributedServerManager manager, final String databaseName, final File file)
       throws IOException {

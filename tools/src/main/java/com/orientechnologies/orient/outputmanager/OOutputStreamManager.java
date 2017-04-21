@@ -20,6 +20,7 @@ package com.orientechnologies.orient.outputmanager;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.Arrays;
 
 /**
  * It contains and manages an OutputStream at different and desired levels.
@@ -119,7 +120,7 @@ public class OOutputStreamManager {
   public void error(String format, Object... args) {
     if (!(this.level == BLANK_LEVEL) && format != null) {
       if (this.level <= ERROR_LEVEL)
-        this.outputStream.printf(format, "\nERROR: ", args);
+        this.outputStream.printf(format, "\nERROR: ", Arrays.toString(args));
     }
   }
 

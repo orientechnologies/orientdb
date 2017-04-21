@@ -20,13 +20,7 @@
 
 package com.orientechnologies.orient.object.jpa;
 
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Properties;
-import java.util.Set;
+import com.orientechnologies.orient.object.jpa.parsing.JPAVersion;
 
 import javax.persistence.PersistenceException;
 import javax.persistence.SharedCacheMode;
@@ -35,8 +29,11 @@ import javax.persistence.spi.ClassTransformer;
 import javax.persistence.spi.PersistenceUnitInfo;
 import javax.persistence.spi.PersistenceUnitTransactionType;
 import javax.sql.DataSource;
-
-import com.orientechnologies.orient.object.jpa.parsing.JPAVersion;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
 
 /**
  * An implementation of PersistenceUnit for parsed persistence unit metadata
@@ -101,8 +98,6 @@ public class OJPAPersistenceUnitInfo implements PersistenceUnitInfo {
 	/**
 	 * TODO: implement transformer provider-supplied transformer that the container invokes at class-(re)definition time
 	 */
-	private final Set<ClassTransformer>						classTransformers				= new HashSet<ClassTransformer>();
-
 	private final List<URL>												jarFileUrls							= new ArrayList<URL>();
 
 	private String																providerClassName;
@@ -118,7 +113,7 @@ public class OJPAPersistenceUnitInfo implements PersistenceUnitInfo {
 	 *          may be null
 	 * @param unitRootUrl
 	 *          root of the persistence unit
-	 * @param schemaVersion
+	 * @param xmlSchemaVersion
 	 *          The version of the JPA schema used in persistence.xml
 	 */
 	public OJPAPersistenceUnitInfo(String unitName, String transactionType, URL unitRootUrl, String xmlSchemaVersion) {
@@ -132,7 +127,7 @@ public class OJPAPersistenceUnitInfo implements PersistenceUnitInfo {
 	}
 
 	/**
-	 * @param provider
+	 * @param providerClassName
 	 */
 	public void setProviderClassName(String providerClassName) {
 		this.providerClassName = providerClassName;
@@ -286,7 +281,6 @@ public class OJPAPersistenceUnitInfo implements PersistenceUnitInfo {
 
 	@Override
 	public void addTransformer(ClassTransformer transformer) {
-		classTransformers.add(transformer);
 	}
 
 	@Override

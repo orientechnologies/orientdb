@@ -33,7 +33,7 @@ import java.util.Iterator;
  * Start 2 servers and execute query across the cluster
  */
 public class ServerClusterQueryTest extends AbstractServerClusterTest {
-  final static int     SERVERS = 2;
+  private final static int     SERVERS = 2;
   private OrientVertex v1;
   private OrientVertex v2;
   private OrientVertex v3;

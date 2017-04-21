@@ -38,7 +38,7 @@ import java.util.List;
 
 /**
  * Returns information about the server.
- * 
+ *
  * @author Luca Garulli
  */
 public class OServerInfo {
@@ -75,10 +75,9 @@ public class OServerInfo {
       final String lastCommandOn;
       final String connectedOn;
 
-      synchronized (dateTimeFormat) {
-        lastCommandOn = dateTimeFormat.format(new Date(stats.lastCommandReceived));
-        connectedOn = dateTimeFormat.format(new Date(c.getSince()));
-      }
+      lastCommandOn = dateTimeFormat.format(new Date(stats.lastCommandReceived));
+      connectedOn = dateTimeFormat.format(new Date(c.getSince()));
+      
       String lastDatabase;
       String lastUser;
       if (stats.lastDatabase != null && stats.lastUser != null) {
@@ -90,8 +89,9 @@ public class OServerInfo {
       }
       json.beginObject(2);
       writeField(json, 2, "connectionId", c.getId());
-      writeField(json, 2, "remoteAddress", c.getProtocol().getChannel() != null ? c.getProtocol().getChannel().toString() : "Disconnected");
-      writeField(json, 2, "db", lastDatabase!= null ? lastDatabase : "-");
+      writeField(json, 2, "remoteAddress",
+          c.getProtocol().getChannel() != null ? c.getProtocol().getChannel().toString() : "Disconnected");
+      writeField(json, 2, "db", lastDatabase != null ? lastDatabase : "-");
       writeField(json, 2, "user", lastUser != null ? lastUser : "-");
       writeField(json, 2, "totalRequests", stats.totalRequests);
       writeField(json, 2, "commandInfo", data.commandInfo);
@@ -180,8 +180,8 @@ public class OServerInfo {
     json.endCollection(1, false);
   }
 
-  private static void writeField(final OJSONWriter json, final int iLevel, final String iAttributeName, final Object iAttributeValue)
-      throws IOException {
+  private static void writeField(final OJSONWriter json, final int iLevel, final String iAttributeName,
+      final Object iAttributeValue) throws IOException {
     json.writeAttribute(iLevel, true, iAttributeName, iAttributeValue != null ? iAttributeValue.toString() : "-");
   }
 }

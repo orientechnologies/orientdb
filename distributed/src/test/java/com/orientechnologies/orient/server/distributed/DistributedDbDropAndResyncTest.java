@@ -26,8 +26,8 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
  * Distributed test on drop database and further resync.
  */
 public class DistributedDbDropAndResyncTest extends AbstractServerClusterTxTest {
-  final static int SERVERS = 2;
-  final long       TIMEOUT = 15000;
+  private final static int SERVERS = 2;
+  private final long       TIMEOUT = 15000;
 
   @Test
   public void test() throws Exception {

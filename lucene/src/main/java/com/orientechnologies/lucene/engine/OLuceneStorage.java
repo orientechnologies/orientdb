@@ -75,7 +75,6 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
   protected ControlledRealTimeReopenThread        nrt;
   private   OLuceneDocumentBuilder                builder;
   private   OLuceneQueryBuilder                   queryBuilder;
-  private   Map<String, OLuceneClassIndexContext> oindexes;
   private   long                                  reopenToken;
 
   private Analyzer indexAnalyzer;
@@ -92,7 +91,6 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
     indexAnalyzer = new OLucenePerFieldAnalyzerWrapper(new StandardAnalyzer());
     queryAnalyzer = new OLucenePerFieldAnalyzerWrapper(new StandardAnalyzer());
 
-    oindexes = new HashMap<String, OLuceneClassIndexContext>();
     try {
 
       reOpen();
@@ -199,7 +197,6 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
   public void initIndex(OLuceneClassIndexContext indexContext) {
 
     OLogManager.instance().info(this, "START INIT initIndex:: name " + indexContext.name + " def :: " + indexContext.definition);
-    oindexes.put(indexContext.name, indexContext);
 
     //    initializerAnalyzers(indexContext.indexClass, indexContext.metadata);
 

@@ -692,7 +692,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
                     throw e;
                   } catch (Exception e) {
                     executeUndoOnLocalServer(null, task);
-                    ODatabaseException.wrapException(new ODistributedException("Cannot execute distributed create record"), e);
+                    throw ODatabaseException.wrapException(new ODistributedException("Cannot execute distributed create record"), e);
                   }
 
                 } else {
@@ -969,7 +969,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
                     throw e;
                   } catch (Exception e) {
                     executeUndoOnLocalServer(null, task);
-                    ODatabaseException.wrapException(new ODistributedException("Cannot execute distributed update record"), e);
+                    throw ODatabaseException.wrapException(new ODistributedException("Cannot execute distributed update record"), e);
                   }
                 }
 
@@ -1130,7 +1130,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
                     throw e;
                   } catch (Exception e) {
                     executeUndoOnLocalServer(null, task);
-                    ODatabaseException.wrapException(new ODistributedException("Cannot execute distributed delete record"), e);
+                    throw ODatabaseException.wrapException(new ODistributedException("Cannot execute distributed delete record"), e);
                   }
                 }
 

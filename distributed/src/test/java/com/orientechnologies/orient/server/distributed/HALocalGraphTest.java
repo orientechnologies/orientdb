@@ -46,7 +46,7 @@ public class HALocalGraphTest extends AbstractServerClusterTxTest {
   protected final AtomicBoolean serverRestarting = new AtomicBoolean(false);
   protected final AtomicBoolean serverRestarted  = new AtomicBoolean(false);
 
-  List<Future<?>> ths = new ArrayList<Future<?>>();
+  private List<Future<?>> ths = new ArrayList<Future<?>>();
   private TimerTask task;
   private volatile long sleep = 10;
 

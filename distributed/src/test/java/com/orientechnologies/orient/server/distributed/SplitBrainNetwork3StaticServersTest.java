@@ -23,7 +23,7 @@ import org.junit.Test;
  * and then it re-merges the cluster again.
  */
 public class SplitBrainNetwork3StaticServersTest extends AbstractHARemoveNode {
-  final static int SERVERS = 3;
+  private final static int SERVERS = 3;
 
   @Test
   public void test() throws Exception {

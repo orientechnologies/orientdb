@@ -15,18 +15,16 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import org.junit.Assert;
-import org.junit.Test;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Distributed test on drop database.
  */
 public class DistributedDbDropTest extends AbstractServerClusterTxTest {
-  final static int SERVERS       = 3;
-  int              serverStarted = 0;
+  private final static int SERVERS = 3;
 
   @Test
   public void test() throws Exception {

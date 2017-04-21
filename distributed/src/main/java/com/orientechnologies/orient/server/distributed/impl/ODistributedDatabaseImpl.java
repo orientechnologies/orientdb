@@ -454,10 +454,9 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
           adjustTimeoutWithLatency(iNodes, task.getSynchronousTimeout(expectedResponses)),
           adjustTimeoutWithLatency(iNodes, task.getTotalTimeout(availableNodes)), groupByResponse, endCallback);
 
-      if (localResult != null) {
+      if (localResult != null && currentResponseMgr.setLocalResult(localNodeName, localResult)) {
         // COLLECT LOCAL RESULT
-        if( currentResponseMgr.setLocalResult(localNodeName, localResult) )
-          return currentResponseMgr.getQuorumResponse();
+        return currentResponseMgr.getQuorumResponse();
       }
 
       // SORT THE NODE TO GUARANTEE THE SAME ORDER OF DELIVERY

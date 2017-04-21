@@ -34,12 +34,12 @@ import java.util.concurrent.atomic.AtomicInteger;
  * automatic restart must be executed.
  */
 public class OneNodeBackupTest extends AbstractServerClusterTxTest {
-  final static int           SERVERS              = 3;
-  volatile     boolean       inserting            = true;
-  volatile     int           serverStarted        = 0;
-  final        AtomicBoolean backupInProgress     = new AtomicBoolean(false);
-  final        AtomicInteger nodeLefts            = new AtomicInteger();
-  private      long          verticesBeforeBackup = 0;
+  private final static int           SERVERS              = 3;
+  private volatile     boolean       inserting            = true;
+  private volatile     int           serverStarted        = 0;
+  private final        AtomicBoolean backupInProgress     = new AtomicBoolean(false);
+  private final        AtomicInteger nodeLefts            = new AtomicInteger();
+  private              long          verticesBeforeBackup = 0;
 
   @Test
   public void test() throws Exception {
