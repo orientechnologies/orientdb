@@ -21,6 +21,7 @@ package com.orientechnologies.orient.server.distributed.impl.task;
 
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OPlaceholder;
@@ -127,8 +128,12 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
     }
 
     case ALLOCATED:
+      getRecord();
+      // FORCE CREATION
+      database.save(record, ODatabase.OPERATION_MODE.SYNCHRONOUS, true, null, null);
+      break;
+
     case PRESENT: {
-      // LOAD IT AS RECORD
       getRecord();
       record.save();
       break;

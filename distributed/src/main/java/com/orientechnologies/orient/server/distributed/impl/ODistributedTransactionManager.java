@@ -625,7 +625,7 @@ public class ODistributedTransactionManager {
             else {
               final OStorageOperationResult<ORawBuffer> loadedBuffer = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
                   .getUnderlying().readRecord(rid, null, true, false, null);
-              if (loadedBuffer != null) {
+              if (loadedBuffer != null && loadedBuffer.getResult() != null) {
                 // LOAD THE RECORD FROM THE STORAGE AVOIDING USING THE DB TO GET THE TRANSACTIONAL CHANGES
                 final ORecord loaded = Orient.instance().getRecordFactoryManager().newInstance(loadedBuffer.getResult().recordType);
                 ORecordInternal.fill(loaded, rid, loadedBuffer.getResult().version, loadedBuffer.getResult().getBuffer(), false);
@@ -790,8 +790,8 @@ public class ODistributedTransactionManager {
 
       if (ODistributedServerLog.isDebugEnabled())
         ODistributedServerLog.debug(this, localNodeName, serversToFollowup.toString(), ODistributedServerLog.DIRECTION.OUT,
-            "Distributed transaction completed (quorum=%d received=%s responses=%s reqId=%s), servers %s need a followup message", resp.getQuorum(),
-            quorumResponse, resp.getRespondingNodes(), resp.getMessageId(), serversToFollowup);
+            "Distributed transaction completed (quorum=%d received=%s responses=%s reqId=%s), servers %s need a followup message",
+            resp.getQuorum(), quorumResponse, resp.getRespondingNodes(), resp.getMessageId(), serversToFollowup);
 
       // REMOVE HERE THE CONTEXT TO AVOID A CONCURRENT ROLLBACK (TIMEOUT?)
       final ODistributedTxContext ctx = localDistributedDatabase.popTxContext(resp.getMessageId());

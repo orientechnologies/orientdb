@@ -35,6 +35,7 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRecordReplicatedTask;
+import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 import java.io.DataInput;
@@ -46,17 +47,16 @@ import java.util.Arrays;
  * Distributed updated record task used for synchronization.
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- *
  */
 public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
   private static final long serialVersionUID = 1L;
-  public static final int   FACTORYID        = 3;
+  public static final  int  FACTORYID        = 3;
 
-  protected byte            recordType;
-  protected byte[]          content;
+  protected byte   recordType;
+  protected byte[] content;
 
   private transient ORecord record;
-  private byte[]            previousRecordContent;
+  private           byte[]  previousRecordContent;
 
   public OUpdateRecordTask() {
   }
@@ -92,20 +92,21 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
   public Object executeRecordTask(ODistributedRequestId requestId, final OServer iServer, ODistributedServerManager iManager,
       final ODatabaseDocumentInternal database) throws Exception {
     if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-          "Updating record %s/%s v.%d reqId=%s...", database.getName(), rid.toString(), version, requestId);
+      ODistributedServerLog
+          .debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "Updating record %s/%s v.%d reqId=%s...",
+              database.getName(), rid.toString(), version, requestId);
 
     prepareUndoOperation();
     if (previousRecord == null) {
       // RESURRECT/CREATE IT
 
-      final OPlaceholder ph = (OPlaceholder) new OCreateRecordTask(rid, content, version, recordType).executeRecordTask(requestId,
-          iServer, iManager, database);
+      final OPlaceholder ph = (OPlaceholder) new OCreateRecordTask(rid, content, version, recordType)
+          .executeRecordTask(requestId, iServer, iManager, database);
       record = ph.getRecord();
 
       if (record == null)
-        ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-            "+-> Error on updating record %s", rid);
+        ODistributedServerLog
+            .debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "+-> Error on updating record %s", rid);
 
     } else {
       // UPDATE IT
@@ -132,18 +133,23 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
         record = database.save(loadedRecord);
 
         if (record == null)
-          ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-              "+-> Error on updating record %s", rid);
+          ODistributedServerLog
+              .debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "+-> Error on updating record %s", rid);
 
         if (version < 0 && ODistributedServerLog.isDebugEnabled())
-          ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-              "+-> Reverted %s from version %d to %d", rid, loadedVersion, record.getVersion());
+          ODistributedServerLog
+              .debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "+-> Reverted %s from version %d to %d", rid,
+                  loadedVersion, record.getVersion());
       }
     }
 
+    if (record == null)
+      throw new ODistributedOperationException("Cannot update record " + rid);
+
     if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-          "+-> updated record %s/%s v.%d [%s]", database.getName(), rid.toString(), record.getVersion(), record);
+      ODistributedServerLog
+          .debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "+-> updated record %s/%s v.%d [%s]",
+              database.getName(), rid.toString(), record.getVersion(), record);
 
     return record.getVersion();
   }

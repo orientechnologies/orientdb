@@ -3080,7 +3080,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final int version, final byte recordType, final ORecordCallback<Integer> callback, final OCluster cluster) {
 
     try {
-
       final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(rid.getClusterPosition()));
       if (!checkForRecordValidity(ppos)) {
         final int recordVersion = -1;
