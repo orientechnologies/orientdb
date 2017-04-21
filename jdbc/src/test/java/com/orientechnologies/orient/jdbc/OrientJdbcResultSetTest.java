@@ -102,4 +102,128 @@ public class OrientJdbcResultSetTest extends OrientJdbcBaseTest {
     rs.getDate(2);
 
   }
+
+  @Test
+  public void shouldSelectContentInsertedByInsertContent() throws Exception {
+
+    Statement insert = conn.createStatement();
+    insert.execute("INSERT INTO Article CONTENT {'uuid':'1234567',  'title':'title', 'content':'content'} ");
+
+    Statement stmt = conn.createStatement();
+
+    assertThat(stmt.execute("SELECT uuid,date, title, content FROM Article WHERE uuid = 1234567")).isTrue();
+
+    ResultSet rs = stmt.getResultSet();
+    assertThat(rs).isNotNull();
+
+    assertThat(rs.getFetchSize()).isEqualTo(1);
+
+    assertThat(rs.getLong("uuid")).isEqualTo(1234567);
+
+  }
+
+  @Test
+  public void shouldSelectWithDistinct() throws Exception {
+
+    Statement stmt = conn.createStatement();
+
+    assertThat(stmt.execute("SELECT DISTINCT(published) as pub FROM Item ")).isTrue();
+
+    ResultSet rs = stmt.getResultSet();
+    assertThat(rs).isNotNull();
+
+    assertThat(rs.getFetchSize()).isEqualTo(2);
+
+    assertThat(rs.getBoolean(1)).isEqualTo(true);
+    assertThat(rs.getBoolean("pub")).isEqualTo(true);
+
+  }
+
+  @Test
+  public void shouldSelectWithSum() throws Exception {
+
+    Statement stmt = conn.createStatement();
+
+    assertThat(stmt.execute("SELECT SUM(score) AS totalScore FROM Item ")).isTrue();
+
+    ResultSet rs = stmt.getResultSet();
+    assertThat(rs).isNotNull();
+
+    assertThat(rs.getFetchSize()).isEqualTo(1);
+
+    assertThat(rs.getLong(1)).isEqualTo(3438);
+    assertThat(rs.getLong("totalScore")).isEqualTo(3438);
+
+    stmt.close();
+    stmt = conn.createStatement();
+
+    //double check in lowercase
+    assertThat(stmt.execute("SELECT sum(score) AS totalScore FROM Item ")).isTrue();
+
+    rs = stmt.getResultSet();
+    assertThat(rs).isNotNull();
+
+    assertThat(rs.getFetchSize()).isEqualTo(1);
+
+    assertThat(rs.getLong(1)).isEqualTo(3438);
+    assertThat(rs.getLong("totalScore")).isEqualTo(3438);
+
+  }
+
+  @Test
+  public void shouldSelectWithCount() throws Exception {
+
+    Statement stmt = conn.createStatement();
+
+    assertThat(stmt.execute("SELECT count(*) FROM Item ")).isTrue();
+
+    ResultSet rs = stmt.getResultSet();
+    assertThat(rs).isNotNull();
+
+    assertThat(rs.getFetchSize()).isEqualTo(1);
+
+    assertThat(rs.getLong(1)).isEqualTo(20);
+    assertThat(rs.getLong("count")).isEqualTo(20);
+
+    stmt.close();
+
+    //
+    stmt = conn.createStatement();
+
+    assertThat(stmt.execute("SELECT COUNT(*) FROM Item ")).isTrue();
+
+    rs = stmt.getResultSet();
+    assertThat(rs).isNotNull();
+
+    assertThat(rs.getFetchSize()).isEqualTo(1);
+
+    assertThat(rs.getLong(1)).isEqualTo(20);
+    assertThat(rs.getLong("COUNT")).isEqualTo(20);
+
+    stmt.close();
+
+  }
+
+
+  @Test
+  public void shouldExecuteQueryInSparkMode() throws Exception {
+
+    //set spark "profile"
+
+    conn.getInfo().setProperty("spark", "true");
+    Statement stmt = conn.createStatement();
+
+//    ResultSet rs = stmt.executeQuery("select author from item where author = 'anAuthor1' ");
+    ResultSet rs = stmt.executeQuery("select author from item  ");
+
+    OrientJdbcResultSetMetaData metaData = (OrientJdbcResultSetMetaData) rs.getMetaData();
+
+    assertThat(metaData.getColumnName(1)).isEqualTo("author");
+    assertThat(rs.getString(1)).isEqualTo("anAuthor1");
+    assertThat(metaData.getColumnTypeName(1)).isEqualTo("STRING");
+    assertThat(rs.getObject(1)).isInstanceOf(String.class);
+
+
+  }
+
 }

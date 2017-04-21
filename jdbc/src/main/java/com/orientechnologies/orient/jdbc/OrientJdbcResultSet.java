@@ -33,35 +33,17 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
 import java.net.URL;
-import java.sql.Array;
-import java.sql.Blob;
-import java.sql.Clob;
+import java.sql.*;
 import java.sql.Date;
-import java.sql.NClob;
-import java.sql.Ref;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.RowId;
-import java.sql.SQLException;
-import java.sql.SQLFeatureNotSupportedException;
-import java.sql.SQLWarning;
-import java.sql.SQLXML;
-import java.sql.Statement;
-import java.sql.Time;
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Roberto Franchini (CELI srl - franchin--at--celi.it)
  * @author Salvatore Piccione (TXT e-solutions SpA - salvo.picci--at--gmail.com)
  */
 public class OrientJdbcResultSet implements ResultSet {
-  private final List<String> fieldNames;
+  private final OrientJdbcResultSetMetaData resultSetMetaData;
+  private final List<String>                fieldNames;
   private List<ODocument> records = null;
   private OrientJdbcStatement statement;
   private int cursor   = -1;
@@ -105,20 +87,28 @@ public class OrientJdbcResultSet implements ResultSet {
       throw new SQLException(
           "Bad ResultSet Holdability type: " + holdability + " instead of one of the following values: " + HOLD_CURSORS_OVER_COMMIT
               + " or" + CLOSE_CURSORS_AT_COMMIT);
+
+    resultSetMetaData = new OrientJdbcResultSetMetaData(this, fieldNames);
   }
 
   private List<String> extractFieldNames(OrientJdbcStatement statement) {
     List<String> fields = new ArrayList<String>();
     if (statement.sql != null && !statement.sql.isEmpty()) {
       try {
-        OrientSql osql = new OrientSql(new ByteArrayInputStream(statement.sql.getBytes()));
+        final OrientSql osql = new OrientSql(new ByteArrayInputStream(statement.sql.getBytes()));
 
         final OSelectStatement select = osql.SelectStatement();
         if (select.getProjection() != null) {
 
           List<OProjectionItem> items = select.getProjection().getItems();
 
-          for (OProjectionItem item : items)
+          for (OProjectionItem item : items) {
+
+            if(item.getExpression().toString().contains("*")) {
+              fields.clear();
+              break;
+            }
+
             if (!item.isAll()) {
 
               if (item.getAlias() != null) {
@@ -133,7 +123,7 @@ public class OrientJdbcResultSet implements ResultSet {
                   fields.add(alias);
               }
             }
-
+          }
         }
 
         if (fields.size() == 1 && fields.contains("*")) {
@@ -151,8 +141,13 @@ public class OrientJdbcResultSet implements ResultSet {
     return fields;
   }
 
+  protected ODocument getDocument() {
+    return document;
+  }
+
   private void activateDatabaseOnCurrentThread() {
-    statement.database.activateOnCurrentThread();
+    if (!statement.database.isActiveOnCurrentThread())
+      statement.database.activateOnCurrentThread();
   }
 
   public void close() throws SQLException {
@@ -232,7 +227,7 @@ public class OrientJdbcResultSet implements ResultSet {
   }
 
   public ResultSetMetaData getMetaData() throws SQLException {
-    return new OrientJdbcResultSetMetaData(this);
+    return resultSetMetaData;
   }
 
   public void deleteRow() throws SQLException {
@@ -483,9 +478,17 @@ public class OrientJdbcResultSet implements ResultSet {
     return 0;
   }
 
+  public void setFetchDirection(int direction) throws SQLException {
+
+  }
+
   public int getFetchSize() throws SQLException {
 
     return rowCount;
+  }
+
+  public void setFetchSize(int rows) throws SQLException {
+
   }
 
   public float getFloat(int columnIndex) throws SQLException {
@@ -572,6 +575,12 @@ public class OrientJdbcResultSet implements ResultSet {
   }
 
   public Object getObject(String columnLabel) throws SQLException {
+    if ("@rid".equals(columnLabel) || "rid".equals(columnLabel)) {
+      return ((ODocument) document.field("rid")).getIdentity().toString();
+    }
+    if ("@class".equals(columnLabel) || "class".equals(columnLabel))
+      return ((ODocument) document.field("rid")).getClassName();
+
     try {
       Object value = document.field(columnLabel);
       if (value == null) {
@@ -657,10 +666,17 @@ public class OrientJdbcResultSet implements ResultSet {
   }
 
   public String getString(String columnLabel) throws SQLException {
-    if ("@rid".equals(columnLabel))
-      return document.getIdentity().toString();
-    if ("@class".equals(columnLabel))
+
+    if ("@rid".equals(columnLabel) || "rid".equals(columnLabel)) {
+      return ((ODocument) document.field("rid")).getIdentity().toString();
+    }
+
+    if ("@class".equals(columnLabel) || "class".equals(columnLabel)) {
+      if (document.getClassName() != null)
       return document.getClassName();
+      return ((ODocument) document.field("rid")).getClassName();
+    }
+
     try {
       return document.field(columnLabel, OType.STRING);
     } catch (Exception e) {
@@ -778,14 +794,6 @@ public class OrientJdbcResultSet implements ResultSet {
   public boolean rowUpdated() throws SQLException {
 
     return false;
-  }
-
-  public void setFetchDirection(int direction) throws SQLException {
-
-  }
-
-  public void setFetchSize(int rows) throws SQLException {
-
   }
 
   public void updateArray(int columnIndex, Array x) throws SQLException {

@@ -154,6 +154,7 @@ public class OrientJdbcStatement implements Statement {
   protected <RET> RET executeCommand(OCommandRequest query) throws SQLException {
 
     try {
+      database.activateOnCurrentThread();
     return database.command(query).execute();
     } catch (OQueryParsingException e) {
       throw new SQLSyntaxErrorException("Error while parsing command", e);
@@ -368,11 +369,10 @@ public class OrientJdbcStatement implements Statement {
   protected String mayCleanForSpark(String sql) {
     //SPARK support
     if (parseBoolean(info.getProperty("spark", "false"))) {
-      String sqlToClean = sql.toLowerCase();
-      if (sqlToClean.endsWith("where 1=0")) {
-        sqlToClean = sqlToClean.replace("where 1=0", " limit 1");
+      if (sql.endsWith("WHERE 1=0")) {
+        sql = sql.replace("WHERE 1=0", " LIMIT 1");
       }
-      return sqlToClean.replace('"', ' ');
+      return sql.replace('"', ' ');
     }
     return sql;
   }

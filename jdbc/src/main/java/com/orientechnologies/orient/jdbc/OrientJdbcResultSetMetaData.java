@@ -29,10 +29,7 @@ import java.math.BigDecimal;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.ListIterator;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Roberto Franchini (CELI Srl - franchini@celi.it)
@@ -60,20 +57,23 @@ public class OrientJdbcResultSetMetaData implements ResultSetMetaData {
     // NOT SURE ABOUT THE FOLLOWING MAPPINGS
     typesSqlTypes.put(OType.BINARY, Types.BINARY);
     typesSqlTypes.put(OType.EMBEDDED, Types.JAVA_OBJECT);
-    typesSqlTypes.put(OType.EMBEDDEDLIST, Types.JAVA_OBJECT);
+    typesSqlTypes.put(OType.EMBEDDEDLIST, Types.ARRAY);
     typesSqlTypes.put(OType.EMBEDDEDMAP, Types.JAVA_OBJECT);
-    typesSqlTypes.put(OType.EMBEDDEDSET, Types.JAVA_OBJECT);
+    typesSqlTypes.put(OType.EMBEDDEDSET, Types.ARRAY);
     typesSqlTypes.put(OType.LINK, Types.JAVA_OBJECT);
-    typesSqlTypes.put(OType.LINKLIST, Types.JAVA_OBJECT);
+    typesSqlTypes.put(OType.LINKLIST, Types.ARRAY);
     typesSqlTypes.put(OType.LINKMAP, Types.JAVA_OBJECT);
-    typesSqlTypes.put(OType.LINKSET, Types.JAVA_OBJECT);
+    typesSqlTypes.put(OType.LINKSET, Types.ARRAY);
     typesSqlTypes.put(OType.TRANSIENT, Types.NULL);
   }
 
-  private OrientJdbcResultSet resultSet;
+  private final OrientJdbcResultSet resultSet;
+  private final String[]            fieldNames;
 
-  public OrientJdbcResultSetMetaData(final OrientJdbcResultSet iResultSet) {
-    resultSet = iResultSet;
+  public OrientJdbcResultSetMetaData(OrientJdbcResultSet orientJdbcResultSet, List<String> fieldNames) {
+    resultSet = orientJdbcResultSet;
+    this.fieldNames = fieldNames.toArray(new String[] {});
+
   }
 
   public static Integer getSqlType(final OType iType) {
@@ -82,7 +82,8 @@ public class OrientJdbcResultSetMetaData implements ResultSetMetaData {
 
   public int getColumnCount() throws SQLException {
     final ODocument currentRecord = getCurrentRecord();
-    return currentRecord.fields();
+
+    return fieldNames.length;
   }
 
   public String getCatalogName(final int column) throws SQLException {
@@ -94,7 +95,7 @@ public class OrientJdbcResultSetMetaData implements ResultSetMetaData {
     Object value = this.resultSet.getObject(column);
     if (value == null)
       return null;
-    return value.getClass().getName();
+    return value.getClass().getCanonicalName();
   }
 
   public int getColumnDisplaySize(final int column) throws SQLException {
@@ -106,19 +107,16 @@ public class OrientJdbcResultSetMetaData implements ResultSetMetaData {
   }
 
   public String getColumnName(final int column) throws SQLException {
-    final ODocument currentRecord = getCurrentRecord();
-    return currentRecord.fieldNames()[column - 1];
+    return fieldNames[column - 1];
   }
 
   public int getColumnType(final int column) throws SQLException {
     final ODocument currentRecord = getCurrentRecord();
 
-    final String[] fieldNames = currentRecord.fieldNames();
-
     if (column > fieldNames.length)
       return Types.NULL;
 
-    String fieldName = fieldNames[column - 1];
+    String fieldName = getColumnName(column);
     // The OClass is not available so attempting to retrieve the OType from
     // the schema class
     // results in a NullPointerException
@@ -187,7 +185,7 @@ public class OrientJdbcResultSetMetaData implements ResultSetMetaData {
               return Types.BLOB;
             }
           } else {
-            return Types.JAVA_OBJECT;
+            return typesSqlTypes.get(otype);
           }
         } else {
           return typesSqlTypes.get(otype);
@@ -197,7 +195,7 @@ public class OrientJdbcResultSetMetaData implements ResultSetMetaData {
   }
 
   protected ODocument getCurrentRecord() throws SQLException {
-    final ODocument currentRecord = this.resultSet.unwrap(ODocument.class);
+    final ODocument currentRecord = resultSet.getDocument();
     if (currentRecord == null)
       throw new SQLException("No current record");
     return currentRecord;
@@ -224,6 +222,8 @@ public class OrientJdbcResultSetMetaData implements ResultSetMetaData {
       return typesSqlTypes.get(OType.SHORT);
     else if (value instanceof String)
       return typesSqlTypes.get(OType.STRING);
+    else if (value instanceof List)
+      return typesSqlTypes.get(OType.EMBEDDEDLIST);
     else
       return Types.JAVA_OBJECT;
   }
@@ -232,9 +232,16 @@ public class OrientJdbcResultSetMetaData implements ResultSetMetaData {
   public String getColumnTypeName(final int column) throws SQLException {
     final ODocument currentRecord = getCurrentRecord();
 
-    OType columnType = currentRecord.fieldType(currentRecord.fieldNames()[column - 1]);
-    if (columnType == null)
-      return null;
+    OType columnType = currentRecord.fieldType(fieldNames[column - 1]);
+
+    if (columnType == null) {
+
+      String columnName = getColumnName(column);
+      Object originalValue = currentRecord.field(columnName);
+      return OType.getTypeByValue(originalValue).toString();
+
+    }
+
     return columnType.toString();
   }
 
@@ -293,7 +300,7 @@ public class OrientJdbcResultSetMetaData implements ResultSetMetaData {
 
   public boolean isSigned(final int column) throws SQLException {
     final ODocument currentRecord = getCurrentRecord();
-    return this.isANumericColumn(currentRecord.fieldType(currentRecord.fieldNames()[column - 1]));
+    return this.isANumericColumn(currentRecord.fieldType(fieldNames[column - 1]));
   }
 
   public boolean isWritable(final int column) throws SQLException {
@@ -309,16 +316,20 @@ public class OrientJdbcResultSetMetaData implements ResultSetMetaData {
   }
 
   private boolean isANumericColumn(final OType type) {
-    return type == OType.BYTE || type == OType.DOUBLE || type == OType.FLOAT || type == OType.INTEGER || type == OType.LONG
+    return type == OType.BYTE
+        || type == OType.DOUBLE
+        || type == OType.FLOAT
+        || type == OType.INTEGER
+        || type == OType.LONG
         || type == OType.SHORT;
   }
 
   protected OProperty getProperty(final int column) throws SQLException {
-    final ODocument currentRecord = getCurrentRecord();
 
-    final OClass schemaClass = currentRecord.getSchemaClass();
+    String fieldName = getColumnName(column);
+
+    final OClass schemaClass = getCurrentRecord().getSchemaClass();
     if (schemaClass != null) {
-      final String fieldName = currentRecord.fieldNames()[column - 1];
       return schemaClass.getProperty(fieldName);
     }
 
