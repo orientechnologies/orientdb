@@ -110,9 +110,7 @@ public class RestrictedTest extends DocumentDBBaseTest {
     adminRecord.field("user", "writer-hacker");
     try {
       adminRecord.save();
-    } catch (OSecurityException e) {
-      // OK AS EXCEPTION
-    } catch (ORecordNotFoundException e) {
+    }catch(OSecurityException | ORecordNotFoundException  e) /*multi-catch refactor*/ {
       // OK AS EXCEPTION
     }
     database.close();
@@ -126,9 +124,7 @@ public class RestrictedTest extends DocumentDBBaseTest {
     database.open("writer", "writer");
     try {
       adminRecord.delete();
-    } catch (OSecurityException e) {
-      // OK AS EXCEPTION
-    } catch (ORecordNotFoundException e) {
+    }catch(OSecurityException | ORecordNotFoundException  e) /*multi-catch refactor*/ {
       // OK AS EXCEPTION
     }
     database.close();
@@ -146,9 +142,7 @@ public class RestrictedTest extends DocumentDBBaseTest {
       Set<OIdentifiable> allows = adminRecord.field(OSecurityShared.ALLOW_ALL_FIELD);
       allows.add(database.getMetadata().getSecurity().getUser(database.getUser().getName()).getDocument().getIdentity());
       adminRecord.save();
-    } catch (OSecurityException e) {
-      // OK AS EXCEPTION
-    } catch (ORecordNotFoundException e) {
+    }catch(OSecurityException | ORecordNotFoundException  e) /*multi-catch refactor*/ {
       // OK AS EXCEPTION
     }
     database.close();
@@ -250,7 +244,7 @@ public class RestrictedTest extends DocumentDBBaseTest {
     try {
       database.command(new OCommandSQL("truncate class CMSDocument")).execute();
       Assert.fail();
-    } catch (OSecurityException e) {
+    }catch (OSecurityException e) {
       Assert.assertTrue(true);
     }
 
@@ -261,7 +255,7 @@ public class RestrictedTest extends DocumentDBBaseTest {
     database.open("admin", "admin");
     try {
       database.command(new OCommandSQL("truncate cluster CMSDocument")).execute();
-    } catch (OSecurityException e) {
+    }catch (OSecurityException e) {
 
     }
 

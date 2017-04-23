@@ -98,7 +98,7 @@ public class TTYConsoleReader implements OConsoleReader {
         inStream = new InputStreamReader(System.in);
         outStream = System.out;
       }
-    } catch (FileNotFoundException fnfe) {
+    }catch (FileNotFoundException fnfe) {
       OLogManager.instance().error(this, "History file not found", fnfe);
     } catch (IOException ioe) {
       OLogManager.instance().error(this, "Error reading history file", ioe);
@@ -287,11 +287,7 @@ public class TTYConsoleReader implements OConsoleReader {
             cachedConsoleWidth = Integer.parseInt(line);
           } else
             cachedConsoleWidth = -2;
-        } catch (IOException e) {
-          cachedConsoleWidth = -2;
-        } catch (InterruptedException e) {
-          cachedConsoleWidth = -2;
-        } catch (NumberFormatException e) {
+        }catch(IOException | InterruptedException | NumberFormatException  e) /*multi-catch refactor*/ {
           cachedConsoleWidth = -2;
         }
       }
@@ -548,14 +544,14 @@ public class TTYConsoleReader implements OConsoleReader {
     if (!file.exists()) {
       try {
         file.createNewFile();
-      } catch (IOException ioe) {
+      }catch (IOException ioe) {
         OLogManager.instance().error(this, "Error creating history file", ioe);
       }
     } else if (!read) {
       file.delete();
       try {
         file.createNewFile();
-      } catch (IOException ioe) {
+      }catch (IOException ioe) {
         OLogManager.instance().error(this, "Error creating history file", ioe);
       }
     }
