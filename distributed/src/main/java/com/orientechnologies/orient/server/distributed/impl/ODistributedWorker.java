@@ -80,7 +80,7 @@ public class ODistributedWorker extends Thread {
   public void processRequest(final ODistributedRequest request) {
     try {
       localQueue.put(request);
-    } catch (InterruptedException e) {
+    }catch (InterruptedException e) {
       ODistributedServerLog.warn(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
           "Received interruption signal, closing distributed worker thread (worker=%d)", id);
 
@@ -106,17 +106,14 @@ public class ODistributedWorker extends Thread {
 
         currentExecuting = null;
 
-      } catch (InterruptedException e) {
+      }catch(DistributedObjectDestroyedException | HazelcastInstanceNotActiveException  e) {
+        Thread.currentThread().interrupt();
+        break;
+      } catch(InterruptedException  e) {
         // EXIT CURRENT THREAD
         Thread.currentThread().interrupt();
         break;
-      } catch (DistributedObjectDestroyedException e) {
-        Thread.currentThread().interrupt();
-        break;
-      } catch (HazelcastInstanceNotActiveException e) {
-        Thread.currentThread().interrupt();
-        break;
-      } catch (Throwable e) {
+      } catch(Throwable  e) {
         try {
           if (e.getCause() instanceof InterruptedException)
             Thread.currentThread().interrupt();
@@ -124,12 +121,16 @@ public class ODistributedWorker extends Thread {
             ODistributedServerLog.error(this, localNodeName, reqId != null ? manager.getNodeNameById(reqId.getNodeId()) : "?",
                 ODistributedServerLog.DIRECTION.IN, "Error on executing distributed request %s: (%s) worker=%d", e,
                 message != null ? message.getId() : -1, message != null ? message.getTask() : "-", id);
-        } catch (Throwable t) {
+        }catch (Throwable t) {
           ODistributedServerLog.error(this, localNodeName, "?", ODistributedServerLog.DIRECTION.IN,
               "Error on executing distributed request %s: (%s) worker=%d", e, message != null ? message.getId() : -1,
               message != null ? message.getTask() : "-", id);
         }
-      }
+      } catch(Throwable  t) /*multi-catch refactor*/ {
+          ODistributedServerLog.error(this, localNodeName, "?", ODistributedServerLog.DIRECTION.IN,
+              "Error on executing distributed request %s: (%s) worker=%d", e, message != null ? message.getId() : -1,
+              message != null ? message.getTask() : "-", id);
+        }
     }
 
     ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE, "End of reading requests for database %s", databaseName);
@@ -146,11 +147,7 @@ public class ODistributedWorker extends Thread {
           // OK
           break;
 
-        } catch (OStorageException e) {
-          // WAIT FOR A WHILE, THEN RETRY
-          if (!dbNotAvailable(retry))
-            return;
-        } catch (OConfigurationException e) {
+        }catch(OStorageException | OConfigurationException  e) /*multi-catch refactor*/ {
           // WAIT FOR A WHILE, THEN RETRY
           if (!dbNotAvailable(retry))
             return;
@@ -178,7 +175,7 @@ public class ODistributedWorker extends Thread {
       ODistributedServerLog.info(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
           "Database '%s' not present, waiting for it (retry=%d/%d)...", databaseName, retry, 100);
       Thread.sleep(300);
-    } catch (InterruptedException e1) {
+    }catch (InterruptedException e1) {
       Thread.currentThread().interrupt();
       return false;
     }
@@ -200,7 +197,7 @@ public class ODistributedWorker extends Thread {
       if (pendingMsgs > 0)
         try {
           join(MAX_SHUTDOWN_TIMEOUT);
-        } catch (Exception e) {
+        }catch (Exception e) {
           ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
               "Interrupted shutdown of distributed worker thread");
         }
@@ -216,7 +213,7 @@ public class ODistributedWorker extends Thread {
         database.close();
       }
 
-    } catch (Exception e) {
+    }catch (Exception e) {
       ODistributedServerLog
           .warn(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE, "Error on shutting down distributed worker '%s'",
               e, getName());
@@ -269,7 +266,7 @@ public class ODistributedWorker extends Thread {
 
       try {
         Thread.sleep(200);
-      } catch (InterruptedException e) {
+      }catch (InterruptedException e) {
         Thread.currentThread().interrupt();
         throw new ODistributedException("Execution has been interrupted");
       }
@@ -318,7 +315,7 @@ public class ODistributedWorker extends Thread {
           } else
             origin = null;
 
-        } catch (Throwable ex) {
+        }catch (Throwable ex) {
           OLogManager.instance().error(this, "Failed on user switching database. " + ex.getMessage());
         }
       }
@@ -334,7 +331,7 @@ public class ODistributedWorker extends Thread {
                 "Database is frozen, waiting and retrying. Request %s (retry=%d, worker=%d)", iRequest, retry, id);
 
             Thread.sleep(1000);
-          } catch (InterruptedException e) {
+          }catch (InterruptedException e) {
           }
         } else {
           // OPERATION EXECUTED (OK OR ERROR), NO RETRY NEEDED
@@ -397,7 +394,7 @@ public class ODistributedWorker extends Thread {
 
       remoteSenderServer.sendResponse(response);
 
-    } catch (Exception e) {
+    }catch (Exception e) {
       ODistributedServerLog.debug(current, localNodeName, senderNodeName, ODistributedServerLog.DIRECTION.OUT,
           "Error on sending response '%s' back (reqId=%s err=%s)", response, iRequest.getId(), e.toString());
     }
@@ -423,7 +420,7 @@ public class ODistributedWorker extends Thread {
 
           try {
             Thread.sleep(2000);
-          } catch (InterruptedException e) {
+          }catch (InterruptedException e) {
           }
         } else
           // OK, RETURN

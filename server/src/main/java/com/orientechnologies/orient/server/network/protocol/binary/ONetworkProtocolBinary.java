@@ -198,7 +198,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         distributedRequest(connection, requestType, clientTxId);
       } else
         sessionRequest(connection, requestType, clientTxId);
-    } catch (Exception e) {
+    }catch (Exception e) {
       // if an exception arrive to this point we need to kill the current socket.
       sendShutdown();
       throw e;
@@ -212,7 +212,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       timer = Orient.instance().getProfiler().startChrono();
       try {
         connection = onBeforeHandshakeRequest(connection, channel);
-      } catch (Exception e) {
+      }catch (Exception e) {
         sendError(null, clientTxId, e);
         handleConnectionError(null, e);
         afterOperationRequest(null);
@@ -304,7 +304,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       timer = Orient.instance().getProfiler().startChrono();
       try {
         connection = onBeforeOperationalRequest(connection, channel);
-      } catch (Exception e) {
+      }catch (Exception e) {
         if (requestType != OChannelBinaryProtocol.REQUEST_DB_CLOSE) {
           try {
             sendError(connection, clientTxId, e);
@@ -320,7 +320,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
             try {
               channel.close();
-            } catch (Exception exx) {
+            }catch (Exception exx) {
               // IGNORE IT
             }
 
@@ -388,12 +388,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
           connection.setServerUser(server.getUser(connection.getData().serverUsername));
         }
       }
-    } catch (RuntimeException e) {
-      if (connection != null)
-        server.getClientConnectionManager().disconnect(connection);
-      ODatabaseRecordThreadLocal.INSTANCE.remove();
-      throw e;
-    } catch (IOException e) {
+    }catch(RuntimeException | IOException  e) /*multi-catch refactor*/ {
       if (connection != null)
         server.getClientConnectionManager().disconnect(connection);
       ODatabaseRecordThreadLocal.INSTANCE.remove();
@@ -442,12 +437,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       connection.statsUpdate();
       OServerPluginHelper.invokeHandlerCallbackOnBeforeClientRequest(server, connection, (byte) requestType);
 
-    } catch (RuntimeException e) {
-      if (connection != null)
-        server.getClientConnectionManager().disconnect(connection);
-      ODatabaseRecordThreadLocal.INSTANCE.remove();
-      throw e;
-    } catch (IOException e) {
+    }catch(RuntimeException | IOException  e) /*multi-catch refactor*/ {
       if (connection != null)
         server.getClientConnectionManager().disconnect(connection);
       ODatabaseRecordThreadLocal.INSTANCE.remove();
@@ -467,7 +457,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
           } else
             manager.waitUntilNodeOnline(manager.getLocalNodeName(), connection.getToken().getDatabase());
 
-        } catch (InterruptedException e) {
+        }catch (InterruptedException e) {
           Thread.currentThread().interrupt();
           throw new OInterruptedException("Request interrupted");
         }
@@ -659,7 +649,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       }
 
       return true;
-    } catch (RuntimeException e) {
+    }catch (RuntimeException e) {
       if (connection != null && connection.getDatabase() != null) {
         final OSBTreeCollectionManager collectionManager = connection.getDatabase().getSbTreeCollectionManager();
         if (collectionManager != null)
@@ -845,7 +835,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
     try {
       connection.setDatabase((ODatabaseDocumentTx) server.openDatabase(dbURL, user, passwd, connection.getData()));
-    } catch (OException e) {
+    }catch (OException e) {
       server.getClientConnectionManager().disconnect(connection);
       throw e;
     }
@@ -1000,7 +990,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     while (manager.getMessageService() == null)
       try {
         Thread.sleep(100);
-      } catch (InterruptedException e) {
+      }catch (InterruptedException e) {
         return;
       }
 
@@ -1258,7 +1248,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         String key;
         try {
           key = cfg.getKey();
-        } catch (Exception e) {
+        }catch (Exception e) {
           key = "?";
         }
 
@@ -1268,7 +1258,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         else
           try {
             value = cfg.getValueAsString() != null ? cfg.getValueAsString() : "";
-          } catch (Exception e) {
+          }catch (Exception e) {
             value = "";
           }
 
@@ -1333,7 +1323,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     try {
       try {
         connection.getDatabase().begin(tx);
-      } catch (final ORecordNotFoundException e) {
+      }catch (final ORecordNotFoundException e) {
         sendShutdown();
         throw e.getCause() instanceof OOfflineClusterException ? (OOfflineClusterException) e.getCause() : e;
       }
@@ -1341,7 +1331,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       try {
         try {
           connection.getDatabase().commit();
-        } catch (final ORecordNotFoundException e) {
+        }catch (final ORecordNotFoundException e) {
           throw e.getCause() instanceof OOfflineClusterException ? (OOfflineClusterException) e.getCause() : e;
         }
         beginResponse();
@@ -1371,7 +1361,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         } finally {
           endResponse(connection);
         }
-      } catch (Exception e) {
+      }catch (Exception e) {
         if (connection != null && connection.getDatabase() != null) {
           if (connection.getDatabase().getTransaction().isActive())
             connection.getDatabase().rollback(true);
@@ -1383,7 +1373,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
         sendErrorOrDropConnection(connection, clientTxId, e);
       }
-    } catch (OTransactionAbortedException e) {
+    }catch (OTransactionAbortedException e) {
       // TX ABORTED BY THE CLIENT
     } catch (Exception e) {
       // Error during TX initialization, possibly index constraints violation.
@@ -1482,7 +1472,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         if (listener.isEmpty())
           try {
             sendOk(connection, clientTxId);
-          } catch (IOException ignored) {
+          }catch (IOException ignored) {
           }
         channel.writeByte((byte) 0); // NO MORE RECORDS
 
@@ -1550,7 +1540,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
             listener.result(o);
 
           writeIdentifiable(connection, (OIdentifiable) o);
-        } catch (Exception e) {
+        }catch (Exception e) {
           OLogManager.instance().warn(this, "Cannot serialize record: " + o);
           // WRITE NULL RECORD TO AVOID BREAKING PROTOCOL
           writeIdentifiable(connection, null);
@@ -1568,7 +1558,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
             channel.writeByte((byte) 1); // ONE MORE RECORD
             writeIdentifiable(connection, (OIdentifiable) o);
-          } catch (Exception e) {
+          }catch (Exception e) {
             OLogManager.instance().warn(this, "Cannot serialize record: " + o);
           }
         }
@@ -1586,7 +1576,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
               listener.result(o);
 
             writeIdentifiable(connection, (OIdentifiable) o);
-          } catch (Exception e) {
+          }catch (Exception e) {
             OLogManager.instance().warn(this, "Cannot serialize record: " + o);
           }
         }
@@ -2051,7 +2041,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   protected void handleConnectionError(OClientConnection connection, final Throwable e) {
     try {
       channel.flush();
-    } catch (IOException e1) {
+    }catch (IOException e1) {
       OLogManager.instance().debug(this, "Error during channel flush", e1);
     }
     OLogManager.instance().error(this, "Error executing request", e);
@@ -2170,7 +2160,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       objectOutputStream.close();
 
       channel.writeBytes(result);
-    } catch (Exception e) {
+    }catch (Exception e) {
       OLogManager.instance().warn(this, "Cannot serialize an exception object", e);
 
       // Write empty stream for binary compatibility
@@ -2194,7 +2184,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     shutdownThread.start();
     try {
       shutdownThread.join();
-    } catch (InterruptedException ignored) {
+    }catch (InterruptedException ignored) {
       Thread.currentThread().interrupt();
     }
   }
@@ -2733,7 +2723,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
       iDatabase.delete(rid, version);
       return 1;
-    } catch (ORecordNotFoundException e) {
+    }catch (ORecordNotFoundException e) {
       // MAINTAIN COHERENT THE BEHAVIOR FOR ALL THE STORAGE TYPES
       if (e.getCause() instanceof OOfflineClusterException)
         throw (OOfflineClusterException) e.getCause();
@@ -2749,7 +2739,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     try {
       iDatabase.hide(rid);
       return 1;
-    } catch (ORecordNotFoundException e) {
+    }catch (ORecordNotFoundException e) {
       return 0;
     }
   }
@@ -2782,7 +2772,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     if (newRecord instanceof ODocument) {
       try {
         currentRecord = database.load(rid);
-      } catch (ORecordNotFoundException e) {
+      }catch (ORecordNotFoundException e) {
         // MAINTAIN COHERENT THE BEHAVIOR FOR ALL THE STORAGE TYPES
         if (e.getCause() instanceof OOfflineClusterException)
           throw (OOfflineClusterException) e.getCause();
@@ -2838,7 +2828,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       int realLength = trimCsvSerializedContent(connection, stream);
 
       channel.writeBytes(stream, realLength);
-    } catch (Exception e) {
+    }catch (Exception e) {
       channel.writeBytes(null);
       final String message = "Error on unmarshalling record " + iRecord.getIdentity().toString() + " (" + e + ")";
       OLogManager.instance().error(this, message, e);
@@ -2904,7 +2894,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
             OLogManager.instance().debug(ONetworkProtocolBinary.this, iText);
             if (iText != null)
               channel.writeString(iText);
-          } catch (IOException e) {
+          }catch (IOException e) {
             OLogManager.instance().warn(ONetworkProtocolBinary.this, "Error sending import message \"%s\" to client", iText);
             OLogManager.instance().debug(ONetworkProtocolBinary.this, "Error sending import message ", e);
           }
