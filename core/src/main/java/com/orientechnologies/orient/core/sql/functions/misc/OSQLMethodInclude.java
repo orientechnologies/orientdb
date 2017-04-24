@@ -32,25 +32,25 @@ import java.util.Map;
 /**
  * Filter the content by including only some fields. If the content is a document, then creates a copy with only the included
  * fields. If it's a collection of documents it acts against on each single entry.
- * 
+ * <p>
  * <p>
  * Syntax: <blockquote>
- * 
+ * <p>
  * <pre>
  * include(&lt;field|value|expression&gt; [,&lt;field-name&gt;]* )
  * </pre>
- * 
+ * <p>
  * </blockquote>
- * 
+ * <p>
  * <p>
  * Examples: <blockquote>
- * 
+ * <p>
  * <pre>
  * SELECT <b>include(roles, 'name')</b> FROM OUser
  * </pre>
- * 
+ * <p>
  * </blockquote>
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 
@@ -71,7 +71,7 @@ public class OSQLMethodInclude extends OAbstractSQLMethod {
   public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
 
     if (iParams[0] != null) {
-      if(iThis instanceof OIdentifiable){
+      if (iThis instanceof OIdentifiable) {
         iThis = ((OIdentifiable) iThis).getRecord();
       }
       if (iThis instanceof ODocument) {
@@ -100,8 +100,22 @@ public class OSQLMethodInclude extends OAbstractSQLMethod {
     final ODocument doc = new ODocument();
     for (int i = 0; i < iFieldNames.length; ++i) {
       if (iFieldNames[i] != null) {
+
         final String fieldName = (String) iFieldNames[i].toString();
-        doc.field(fieldName, document.<Object>field(fieldName));
+
+        if (fieldName.endsWith("*")) {
+          final String fieldPart = fieldName.substring(0, fieldName.length() - 1);
+          final List<String> toInclude = new ArrayList<String>();
+          for (String f : document.fieldNames()) {
+            if (f.startsWith(fieldPart))
+              toInclude.add(f);
+          }
+
+          for (String f : toInclude)
+            doc.field(fieldName, document.<Object>field(f));
+
+        } else
+          doc.field(fieldName, document.<Object>field(fieldName));
       }
     }
     return doc;
@@ -111,8 +125,21 @@ public class OSQLMethodInclude extends OAbstractSQLMethod {
     final ODocument doc = new ODocument();
     for (int i = 0; i < iFieldNames.length; ++i) {
       if (iFieldNames[i] != null) {
-        final String fieldName = (String) iFieldNames[i].toString();
-        doc.field(fieldName, map.get(fieldName));
+        final String fieldName = iFieldNames[i].toString();
+
+        if (fieldName.endsWith("*")) {
+          final String fieldPart = fieldName.substring(0, fieldName.length() - 1);
+          final List<String> toInclude = new ArrayList<String>();
+          for (Object f : map.keySet()) {
+            if (f.toString().startsWith(fieldPart))
+              toInclude.add(f.toString());
+          }
+
+          for (String f : toInclude)
+            doc.field(fieldName, map.get(f));
+
+        } else
+          doc.field(fieldName, map.get(fieldName));
       }
     }
     return doc;
