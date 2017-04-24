@@ -4,8 +4,11 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import java.util.Map;
 
-public
-class OHaSyncDatabaseStatement extends OStatement {
+public class OHaSyncDatabaseStatement extends OStatement {
+
+  public boolean force = false;
+  public boolean full  = false;
+
   public OHaSyncDatabaseStatement(int id) {
     super(id);
   }
@@ -14,13 +17,30 @@ class OHaSyncDatabaseStatement extends OStatement {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
 
-  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("HA SYNC DATABASE");
+    if(force){
+      builder.append(" -force");
+    }
+    if(full){
+      builder.append(" -full");
+    }
+  }
+
+  public boolean isForce() {
+    return force;
+  }
+
+  public boolean isFull() {
+    return full;
   }
 }
 /* JavaCC - OriginalChecksum=f2c9070be78798e3093a98669129ce0d (do not edit this line) */

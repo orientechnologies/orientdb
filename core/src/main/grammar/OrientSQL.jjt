@@ -4633,6 +4633,8 @@ OHaSyncDatabaseStatement HaSyncDatabaseStatement():
 {
     (
         <HA> <SYNC> <DATABASE>
+        [ "-force" { jjtThis.force = true; } ]
+        [ "-full" { jjtThis.full = true; } ]
     )
     { return jjtThis; }
 }

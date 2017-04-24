@@ -82,7 +82,7 @@ public class OCommandExecutorSQLHASyncDatabase extends OCommandExecutorSQLAbstra
 
     final String databaseName = database.getName();
 
-    return dManager.installDatabase(true, databaseName, false, false);
+    return dManager.installDatabase(true, databaseName, parsedStatement.isForce(), !parsedStatement.isFull());
   }
 
   @Override
