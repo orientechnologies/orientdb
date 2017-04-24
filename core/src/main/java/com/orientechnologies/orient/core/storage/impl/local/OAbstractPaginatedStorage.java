@@ -280,7 +280,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             cf.binarySerializerFactory.getObjectSerializer(engineData.getKeySerializedId()), engineData.getKeyTypes(),
             engineData.isNullValuesSupport(), engineData.getKeySize(), engineData.getEngineProperties());
 
-        indexEngineNameMap.put(engineData.getName().toLowerCase(configuration.getLocaleInstance()), engine);
+        indexEngineNameMap.put(engineData.getName(), engine);
         indexEngines.add(engine);
       } catch (RuntimeException e) {
         OLogManager.instance()
@@ -1352,7 +1352,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       checkOpenness();
 
-      final OIndexEngine engine = indexEngineNameMap.get(name.toLowerCase(configuration.getLocaleInstance()));
+      final OIndexEngine engine = indexEngineNameMap.get(name);
       if (engine == null)
         return -1;
 
@@ -1381,7 +1381,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         return -1;
 
       final String originalName = engineName;
-      engineName = engineName.toLowerCase(configuration.getLocaleInstance());
 
       if (indexEngineNameMap.containsKey(engineName))
         throw new OIndexException("Index with name " + engineName + " already exists");
@@ -1428,8 +1427,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       checkLowDiskSpaceRequestsAndBackgroundDataFlushExceptions();
 
       final String originalName = engineName;
-      engineName = engineName.toLowerCase(configuration.getLocaleInstance());
-
 
       if (indexEngineNameMap.containsKey(engineName)) {
         // OLD INDEX FILE ARE PRESENT: THIS IS THE CASE OF PARTIAL/BROKEN INDEX
@@ -1528,7 +1525,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       engine.delete();
 
-      final String engineName = engine.getName().toLowerCase(configuration.getLocaleInstance());
+      final String engineName = engine.getName();
       indexEngineNameMap.remove(engineName);
       configuration.deleteIndexEngine(engineName);
     } catch (IOException e) {

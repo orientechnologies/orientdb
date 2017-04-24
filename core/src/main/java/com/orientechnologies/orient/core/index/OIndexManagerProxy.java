@@ -121,7 +121,7 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManagerAbstract> i
       reload();
 
       final Locale locale = delegate.getServerLocale();
-      return delegate.preProcessBeforeReturn(getDatabase(), delegate.getIndex(iName.toLowerCase(locale)));
+      return delegate.preProcessBeforeReturn(getDatabase(), delegate.getIndex(iName));
     } finally {
       delegate.releaseExclusiveLock();
     }

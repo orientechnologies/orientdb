@@ -93,14 +93,15 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
       parserRequiredKeyword("INSERT");
       parserRequiredKeyword("INTO");
 
-      String subjectName = parserRequiredWord(true, "Invalid subject name. Expected cluster, class or index");
+      String subjectNameOriginal = parserRequiredWord(false, "Invalid subject name. Expected cluster, class or index");
+      String subjectName = subjectNameOriginal.toUpperCase();
       if (subjectName.startsWith(OCommandExecutorSQLAbstract.CLUSTER_PREFIX))
         // CLUSTER
         clusterName = subjectName.substring(OCommandExecutorSQLAbstract.CLUSTER_PREFIX.length());
 
       else if (subjectName.startsWith(OCommandExecutorSQLAbstract.INDEX_PREFIX))
         // INDEX
-        indexName = subjectName.substring(OCommandExecutorSQLAbstract.INDEX_PREFIX.length());
+        indexName = subjectNameOriginal.substring(OCommandExecutorSQLAbstract.INDEX_PREFIX.length());
 
       else {
         // CLASS

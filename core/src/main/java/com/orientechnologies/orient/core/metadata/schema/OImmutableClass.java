@@ -113,7 +113,7 @@ public class OImmutableClass implements OClass {
 
     properties = new HashMap<String, OProperty>();
     for (OProperty p : oClass.declaredProperties())
-      properties.put(p.getName().toLowerCase(), new OImmutableProperty(p, this));
+      properties.put(p.getName(), new OImmutableProperty(p, this));
 
     Map<String, String> customFields = new HashMap<String, String>();
     for (String key : oClass.getCustomKeys())
@@ -275,8 +275,6 @@ public class OImmutableClass implements OClass {
   public OProperty getProperty(String propertyName) {
     initSuperClasses();
 
-    propertyName = propertyName.toLowerCase();
-
     OProperty p = properties.get(propertyName);
     if (p != null)
       return p;
@@ -318,7 +316,6 @@ public class OImmutableClass implements OClass {
 
   @Override
   public boolean existsProperty(String propertyName) {
-    propertyName = propertyName.toLowerCase();
     boolean result = properties.containsKey(propertyName);
     if (result)
       return true;

@@ -181,7 +181,7 @@ public class PropertyIndexTest extends DocumentDBBaseTest {
     final OClass oClass = schema.getClass("PropertyIndexTestClass");
 
     oClass.createIndex("PropertyIndexFirstIndex", OClass.INDEX_TYPE.UNIQUE.toString(), null, new ODocument().fields("ignoreNullValues", true), new String[]{ "prop4"});
-    oClass.createIndex("PropertyIndexSecondIndex", OClass.INDEX_TYPE.UNIQUE.toString(), null, new ODocument().fields("ignoreNullValues", true), new String[]{ "pROp4"});
+    oClass.createIndex("PropertyIndexSecondIndex", OClass.INDEX_TYPE.UNIQUE.toString(), null, new ODocument().fields("ignoreNullValues", true), new String[]{ "prop4"});
 
     oClass.getProperty("prop4").dropIndexes();
 
@@ -194,7 +194,7 @@ public class PropertyIndexTest extends DocumentDBBaseTest {
     final OSchema schema = database.getMetadata().getSchema();
     final OClass oClass = schema.getClass("PropertyIndexTestClass");
 
-    oClass.createIndex("PropertyIndexFirstIndex", OClass.INDEX_TYPE.UNIQUE.toString(), null, new ODocument().fields("ignoreNullValues", true), new String[]{"pROp4"});
+    oClass.createIndex("PropertyIndexFirstIndex", OClass.INDEX_TYPE.UNIQUE.toString(), null, new ODocument().fields("ignoreNullValues", true), new String[]{"prop4"});
     oClass.createIndex("PropertyIndexSecondIndex", OClass.INDEX_TYPE.UNIQUE.toString(), null, new ODocument().fields("ignoreNullValues", true), new String[]{"prop4", "prop5"});
 
     try {
