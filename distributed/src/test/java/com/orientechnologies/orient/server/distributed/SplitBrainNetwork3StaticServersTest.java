@@ -41,10 +41,10 @@ public class SplitBrainNetwork3StaticServersTest extends AbstractHARemoveNode {
     Assert.assertEquals("europe-0", serverInstance.get(1).getServerInstance().getDistributedManager().getCoordinatorServer());
     Assert.assertEquals("europe-0", serverInstance.get(2).getServerInstance().getDistributedManager().getCoordinatorServer());
 
-    banner("SIMULATE ISOLATION OF SERVER " + (SERVERS - 1) + "...");
-
     checkInsertedEntries();
     checkIndexedEntries();
+
+    banner("SIMULATE ISOLATION OF SERVER " + (SERVERS - 1) + "...");
 
     serverInstance.get(2).disconnectFrom(serverInstance.get(0), serverInstance.get(1));
 
@@ -63,6 +63,8 @@ public class SplitBrainNetwork3StaticServersTest extends AbstractHARemoveNode {
     assertDatabaseStatusEquals(2, "europe-0", getDatabaseName(), ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
     waitForDatabaseStatus(2, "europe-1", getDatabaseName(), ODistributedServerManager.DB_STATUS.NOT_AVAILABLE, 30000);
     assertDatabaseStatusEquals(2, "europe-1", getDatabaseName(), ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
+
+    waitForDatabaseStatus(2, "europe-2", getDatabaseName(), ODistributedServerManager.DB_STATUS.ONLINE, 20000);
     assertDatabaseStatusEquals(2, "europe-2", getDatabaseName(), ODistributedServerManager.DB_STATUS.ONLINE);
 
     Assert.assertEquals("europe-0", serverInstance.get(0).getServerInstance().getDistributedManager().getCoordinatorServer());

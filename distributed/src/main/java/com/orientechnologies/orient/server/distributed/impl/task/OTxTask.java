@@ -130,27 +130,6 @@ public class OTxTask extends OAbstract2pcTask {
 
       database.commit();
 
-      // SEND BACK CHANGED VALUE TO UPDATE
-      for (int i = 0; i < result.results.size(); ++i) {
-        final Object currentResult = result.results.get(i);
-
-        if (currentResult == NON_LOCAL_CLUSTER)
-          // SKIP IT
-          continue;
-
-        final OAbstractRecordReplicatedTask task = tasks.get(i);
-        if (task instanceof OCreateRecordTask) {
-          // SEND RID + VERSION
-          final OCreateRecordTask t = (OCreateRecordTask) task;
-          result.results.set(i, new OPlaceholder(t.getRecord()));
-        } else if (task instanceof OUpdateRecordTask) {
-          // SEND VERSION
-          result.results.set(i, task.getRecord().getVersion());
-        }
-      }
-
-      return result;
-
     } catch (Throwable e) {
       // if (e instanceof ODistributedRecordLockedException)
       // ddb.dumpLocks();
@@ -158,7 +137,8 @@ public class OTxTask extends OAbstract2pcTask {
           "Rolling back transaction on local server db=%s (reqId=%s error=%s)...", database.getName(), requestId, e);
 
       database.rollback();
-      // ddb.popTxContext(requestId);
+
+      // AVOID TO UNLOCK AND WAIT FOR THE COORDINATOR TO DO THAT
       reqContext.unlock();
 
       if (!(e instanceof ONeedRetryException || e instanceof OTransactionException || e instanceof ORecordDuplicatedException
@@ -168,6 +148,27 @@ public class OTxTask extends OAbstract2pcTask {
 
       return e;
     }
+
+    // SEND BACK CHANGED VALUE TO UPDATE
+    for (int i = 0; i < result.results.size(); ++i) {
+      final Object currentResult = result.results.get(i);
+
+      if (currentResult == NON_LOCAL_CLUSTER)
+        // SKIP IT
+        continue;
+
+      final OAbstractRecordReplicatedTask task = tasks.get(i);
+      if (task instanceof OCreateRecordTask) {
+        // SEND RID + VERSION
+        final OCreateRecordTask t = (OCreateRecordTask) task;
+        result.results.set(i, new OPlaceholder(t.getRecord()));
+      } else if (task instanceof OUpdateRecordTask) {
+        // SEND VERSION
+        result.results.set(i, task.getRecord().getVersion());
+      }
+    }
+
+    return result;
   }
 
   protected long getRecordLock() {

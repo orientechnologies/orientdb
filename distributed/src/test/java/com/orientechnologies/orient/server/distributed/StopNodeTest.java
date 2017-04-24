@@ -150,7 +150,7 @@ public class StopNodeTest extends AbstractServerClusterTxTest {
   protected void onAfterExecution() throws Exception {
     inserting = false;
     Assert.assertTrue("Found no node has been stopped", nodeLefts.get() > 0);
-    Assert.assertEquals("Node didn not rejoin", 0, nodeReJoined.size());
+    Assert.assertEquals("Node did not rejoin", 0, nodeReJoined.size());
   }
 
   @Override

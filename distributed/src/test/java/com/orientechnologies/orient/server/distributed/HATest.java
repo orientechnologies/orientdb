@@ -50,6 +50,8 @@ public class HATest extends AbstractHARemoveNode {
     if (serverInstance.get(SERVERS - 1).server.getPluginByClass(OHazelcastPlugin.class) != null)
       serverInstance.get(SERVERS - 1).server.getPluginByClass(OHazelcastPlugin.class).waitUntilNodeOnline();
 
+    waitForDatabaseIsOnline(0, "europe-2", getDatabaseName(), 10000);
+
     banner("RESTARTING TESTS WITH SERVER " + (SERVERS - 1) + " UP...");
 
     count = 10;

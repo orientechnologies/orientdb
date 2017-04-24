@@ -676,18 +676,19 @@ public class ODistributedTransactionManager {
 
         final OAbstractRecordReplicatedTask task = txTask.getTasks().get(i);
 
-        if (task instanceof OCreateRecordTask) {
-          final OCreateRecordTask t = (OCreateRecordTask) task;
-          iTx.updateIdentityAfterCommit(t.getRid(), ((OPlaceholder) o).getIdentity());
-          final ORecord rec = iTx.getRecord(t.getRid());
-          if (rec != null)
-            ORecordInternal.setVersion(rec, ((OPlaceholder) o).getVersion());
-        } else if (task instanceof OUpdateRecordTask) {
-          final OUpdateRecordTask t = (OUpdateRecordTask) task;
-          ORecordInternal.setVersion(iTx.getRecord(t.getRid()), (Integer) o);
-        } else if (task instanceof ODeleteRecordTask) {
+        if (!OAbstract2pcTask.NON_LOCAL_CLUSTER.equals(o))
+          if (task instanceof OCreateRecordTask) {
+            final OCreateRecordTask t = (OCreateRecordTask) task;
+            iTx.updateIdentityAfterCommit(t.getRid(), ((OPlaceholder) o).getIdentity());
+            final ORecord rec = iTx.getRecord(t.getRid());
+            if (rec != null)
+              ORecordInternal.setVersion(rec, ((OPlaceholder) o).getVersion());
+          } else if (task instanceof OUpdateRecordTask) {
+            final OUpdateRecordTask t = (OUpdateRecordTask) task;
+            ORecordInternal.setVersion(iTx.getRecord(t.getRid()), (Integer) o);
+          } else if (task instanceof ODeleteRecordTask) {
 
-        }
+          }
       }
 
       // RESET DIRTY FLAGS TO AVOID CALLING AUTO-SAVE
@@ -805,14 +806,16 @@ public class ODistributedTransactionManager {
             sendTxCompleted(localNodeName, involvedClusters, OMultiValue.getSingletonList(s), resp.getMessageId(), true,
                 txTask.getPartitionKey());
           else {
-            // SEND ROLLBACK (IF NO EXCEPTION IS NEEDED TO REVERT THE OLD VALUES AND FREE THE LOCKS)
+            // SEND ROLLBACK ANYWAY (IS NEEDED TO REVERT THE OLD VALUES AND FREE THE LOCKS)
             try {
               sendTxCompleted(localNodeName, involvedClusters, OMultiValue.getSingletonList(s), resp.getMessageId(), false,
                   txTask.getPartitionKey());
             } finally {
+              // REPAIR RECORD: THIS IS NEEDED BECAUSE IN CASE OF LOCK A CONTINUE RETRY IS NEEDED
+
+              // TODO: IN SOME CASES, LIKE WHEN THE RESPONSE IS LOCK EXCEPTION, THE REPAIR COULD BE AVOIDED
               final List<ORecordId> involvedRecords = txTask.getInvolvedRecords();
 
-              // REPAIR RECORD: THIS IS NEEDED BECAUSE IN CASE OF LOCK A CONTINUE RETRY IS NEEDED
               ODistributedServerLog.debug(this, localNodeName, serversToFollowup.toString(), ODistributedServerLog.DIRECTION.OUT,
                   "Distributed transaction found server %s not in quorum, schedule a repair records for %s (reqId=%s)", s,
                   involvedRecords, resp.getMessageId());

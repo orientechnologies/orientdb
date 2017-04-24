@@ -44,7 +44,7 @@ public class OMajorityDistributedConflictResolver extends OAbstractDistributedCo
     final OConflictResult result = new OConflictResult();
 
     final Object bestResult = getBestResult(candidates, null);
-    if (bestResult == null)
+    if (bestResult == NOT_FOUND)
       return result;
 
     final ODistributedConfiguration dCfg = dManager.getDatabaseConfiguration(databaseName);
@@ -63,16 +63,17 @@ public class OMajorityDistributedConflictResolver extends OAbstractDistributedCo
       exclude.add(bestResult);
 
       final Object secondBestResult = getBestResult(candidates, exclude);
-      if (bestResultServerCount > candidates.get(secondBestResult).size()) {
+      if (secondBestResult != NOT_FOUND && bestResultServerCount > candidates.get(secondBestResult).size()) {
+        result.winner = bestResult;
+
         OLogManager.instance().debug(this,
             "Majority Conflict Resolver decided the value '%s' is the winner for the record %s because it is the majority even if under the configured writeQuorum (%d). Servers ok=%s",
             bestResult, rid, writeQuorum, candidates.get(result.winner));
 
-        result.winner = bestResult;
       } else {
         // NO MAJORITY: DON'T TAKE ANY ACTION
-        OLogManager.instance().debug(this, "Majority Conflict Resolver could not find a winner for the record %s (candidates=%s)", rid,
-            candidates);
+        OLogManager.instance()
+            .debug(this, "Majority Conflict Resolver could not find a winner for the record %s (candidates=%s)", rid, candidates);
 
         // COLLECT ALL THE RESULT == BEST RESULT
         result.candidates.put(bestResult, candidates.get(bestResult));
@@ -81,11 +82,11 @@ public class OMajorityDistributedConflictResolver extends OAbstractDistributedCo
 
         Object lastBestResult = getBestResult(candidates, exclude);
         int resultCount = candidates.get(secondBestResult).size();
-        while (lastBestResult != null && resultCount == bestResultServerCount && exclude.size() < candidates.size()) {
+        while (lastBestResult != NOT_FOUND && resultCount == bestResultServerCount && exclude.size() < candidates.size()) {
           result.candidates.put(lastBestResult, candidates.get(lastBestResult));
           exclude.add(lastBestResult);
           lastBestResult = getBestResult(candidates, exclude);
-          if (lastBestResult == null)
+          if (lastBestResult == NOT_FOUND)
             break;
           resultCount = candidates.get(lastBestResult).size();
         }
