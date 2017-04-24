@@ -26,6 +26,7 @@ import com.orientechnologies.common.util.OSizeable;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.lang.reflect.Array;
@@ -50,7 +51,8 @@ public class OMultiValue {
   public static boolean isMultiValue(final Class<?> iType) {
     return OCollection.class.isAssignableFrom(iType) || Collection.class.isAssignableFrom(iType) || iType.isArray() || Map.class
         .isAssignableFrom(iType) || OMultiCollectionIterator.class.isAssignableFrom(iType) || (
-        Iterable.class.isAssignableFrom(iType) && !(OIdentifiable.class.isAssignableFrom(iType)));
+        Iterable.class.isAssignableFrom(iType) && !(OIdentifiable.class.isAssignableFrom(iType))) || OResultSet.class
+        .isAssignableFrom(iType);
   }
 
   /**

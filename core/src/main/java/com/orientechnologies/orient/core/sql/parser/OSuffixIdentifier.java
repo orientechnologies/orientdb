@@ -12,6 +12,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.AggregationContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
 import java.util.*;
 
@@ -161,6 +162,11 @@ public class OSuffixIdentifier extends SimpleNode {
     List<Object> result = new ArrayList<>();
     while (iterator.hasNext()) {
       result.add(execute(iterator.next(), ctx));
+    }
+    if(iterator instanceof OResultSet){
+      try{
+        ((OResultSet) iterator).reset();
+      }catch (Exception e){}
     }
     return result;
   }
