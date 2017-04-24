@@ -145,7 +145,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
       }
 
       index = OIndexes
-          .createIndex(getStorage(), iName, iName + System.currentTimeMillis(), type, algorithm, valueContainerAlgorithm, metadata,
+          .createIndex(getStorage(), iName, iName + (System.nanoTime() / 1000), type, algorithm, valueContainerAlgorithm, metadata,
               -1);
       if (progressListener == null)
         // ASSIGN DEFAULT PROGRESS LISTENER
@@ -577,8 +577,8 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
           for (Iterator<OIndexFactory> it = OIndexes.getAllFactories(); it.hasNext(); ) {
             try {
               final OIndexFactory indexFactory = it.next();
-              //TODO!!! check the file name!!!
-              final OIndexEngine engine = indexFactory.createIndexEngine(null, index.getName(), index.getName(), false, storage, 0, null);
+              final OIndexEngine engine = indexFactory.createIndexEngine(null, index.getName(),
+                  indexMetadata.getFileName() == null ? index.getName() : indexMetadata.getFileName(), false, storage, 0, null);
 
               engine.deleteWithoutLoad(index.getName());
             } catch (Exception e2) {

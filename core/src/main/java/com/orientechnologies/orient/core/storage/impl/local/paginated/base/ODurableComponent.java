@@ -98,7 +98,6 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
 
   public void setName(String name) {
     this.name = name;
-//    this.fullName = name + extension;
   }
 
   public String getFileName() {

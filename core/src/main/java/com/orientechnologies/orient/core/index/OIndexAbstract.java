@@ -97,7 +97,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
 
       this.version = version;
       this.name = name;
-      this.fileName = fileName;//TODO!!!
+      this.fileName = fileName;
       this.type = type;
       this.algorithm = algorithm;
       this.metadata = metadata;
