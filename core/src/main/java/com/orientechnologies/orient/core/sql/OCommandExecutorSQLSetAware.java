@@ -54,7 +54,8 @@ public abstract class OCommandExecutorSQLSetAware extends OCommandExecutorSQLAbs
     String fieldName;
     String fieldValue;
 
-    while (!parserIsEnded() && (fields.size() == 0 || parserGetLastSeparator() == ',' || parserGetCurrentChar() == ',')) {
+    boolean firstLap = true;
+    while (!parserIsEnded() && (firstLap || parserGetLastSeparator() == ',' || parserGetCurrentChar() == ',')) {
       fieldName = parserRequiredWord(false, "Field name expected");
       if (fieldName.equalsIgnoreCase(KEYWORD_WHERE)) {
         parserGoBack();
@@ -69,6 +70,7 @@ public abstract class OCommandExecutorSQLSetAware extends OCommandExecutorSQLAbs
 
       fields.add(new OPair(fieldName, v));
       parserSkipWhiteSpaces();
+      firstLap = false;
     }
 
     if (fields.size() == 0)
