@@ -26,6 +26,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
@@ -278,8 +279,8 @@ public class OIOUtils {
     if (s == null)
       return false;
 
-    return s.length() > 1
-        && (s.charAt(0) == '\'' && s.charAt(s.length() - 1) == '\'' || s.charAt(0) == '"' && s.charAt(s.length() - 1) == '"');
+    return s.length() > 1 && (s.charAt(0) == '\'' && s.charAt(s.length() - 1) == '\''
+        || s.charAt(0) == '"' && s.charAt(s.length() - 1) == '"');
   }
 
   public static String getStringContent(final Object iValue) {
@@ -291,8 +292,8 @@ public class OIOUtils {
     if (s == null)
       return null;
 
-    if (s.length() > 1
-        && (s.charAt(0) == '\'' && s.charAt(s.length() - 1) == '\'' || s.charAt(0) == '"' && s.charAt(s.length() - 1) == '"'))
+    if (s.length() > 1 && (s.charAt(0) == '\'' && s.charAt(s.length() - 1) == '\''
+        || s.charAt(0) == '"' && s.charAt(s.length() - 1) == '"'))
       return s.substring(1, s.length() - 1);
 
     if (s.length() > 1 && (s.charAt(0) == '`' && s.charAt(s.length() - 1) == '`'))
@@ -314,14 +315,7 @@ public class OIOUtils {
   }
 
   public static boolean equals(final byte[] buffer, final byte[] buffer2) {
-    if (buffer == null || buffer2 == null || buffer.length != buffer2.length)
-      return false;
-
-    for (int i = 0; i < buffer.length; ++i)
-      if (buffer[i] != buffer2[i])
-        return false;
-
-    return true;
+    return Arrays.equals(buffer, buffer2);
   }
 
   public static boolean isLong(final String iText) {
