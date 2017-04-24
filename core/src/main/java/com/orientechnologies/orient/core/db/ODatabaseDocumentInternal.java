@@ -162,7 +162,7 @@ public interface ODatabaseDocumentInternal extends ODatabaseDocument, ODatabaseI
    *
    * @return true if the database was synchronized, false otherwise
    */
-  default boolean sync() {
+  default boolean sync(boolean forceDeployment, boolean tryWithDelta) {
     return false;
   }
 

@@ -10,7 +10,12 @@ import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
+import java.util.Map;
+
 public class OHaSyncDatabaseStatement extends OSimpleExecStatement {
+  protected boolean force = false;
+  protected boolean full  = false;
+
   public OHaSyncDatabaseStatement(int id) {
     super(id);
   }
@@ -24,7 +29,7 @@ public class OHaSyncDatabaseStatement extends OSimpleExecStatement {
     final ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();
 
     try {
-      boolean result = database.sync();
+      boolean result = database.sync(force, !full);
       OResultInternal r = new OResultInternal();
       r.setProperty("result", result);
       OInternalResultSet rs = new OInternalResultSet();
@@ -40,6 +45,17 @@ public class OHaSyncDatabaseStatement extends OSimpleExecStatement {
    **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
+  }
+
+  @Override
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("HA SYNC DATABASE");
+    if (force) {
+      builder.append(" -force");
+    }
+    if (full) {
+      builder.append(" -full");
+    }
   }
 }
 /* JavaCC - OriginalChecksum=f2c9070be78798e3093a98669129ce0d (do not edit this line) */

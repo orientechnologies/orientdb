@@ -49,7 +49,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   @Override
-  public boolean sync() {
+  public boolean sync(boolean forceDeployment, boolean tryWithDelta) {
     checkSecurity(ORule.ResourceGeneric.DATABASE, "sync", ORole.PERMISSION_UPDATE);
     final OStorage stg = getStorage();
     if (!(stg instanceof ODistributedStorage))
@@ -63,7 +63,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
     final String databaseName = getName();
 
-    return dManager.installDatabase(true, databaseName, dStg.getDistributedConfiguration().getDocument(), false, true);
+    return dManager.installDatabase(true, databaseName, dStg.getDistributedConfiguration().getDocument(), forceDeployment, tryWithDelta);
   }
 
   @Override

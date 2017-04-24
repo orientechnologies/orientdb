@@ -761,6 +761,8 @@ public interface OrientSqlConstants {
     "\"-messages\"",
     "\"-all\"",
     "\"-output=text\"",
+    "\"-force\"",
+    "\"-full\"",
     "\"-full_replace\"",
     "\"-merge\"",
   };
