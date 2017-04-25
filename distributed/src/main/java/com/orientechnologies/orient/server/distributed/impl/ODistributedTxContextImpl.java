@@ -119,6 +119,21 @@ public class ODistributedTxContextImpl implements ODistributedTxContext {
     undoTasks.clear();
   }
 
+  /**
+   * Releases and re-acquires locks after a while.
+   */
+  @Override
+  public synchronized void relock(final long waitTime) throws InterruptedException {
+    final List<ORID> locked = new ArrayList<ORID>(acquiredLocks);
+
+    unlock();
+
+    Thread.sleep(waitTime);
+
+    for (ORID rid : locked)
+      lock(rid);
+  }
+
   @Override
   public synchronized void unlock() {
     if (!acquiredLocks.isEmpty()) {

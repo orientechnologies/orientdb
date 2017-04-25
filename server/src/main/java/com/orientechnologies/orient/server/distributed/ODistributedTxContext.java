@@ -49,5 +49,7 @@ public interface ODistributedTxContext {
 
   void unlock();
 
+  void relock(long waitTime) throws InterruptedException;
+
   long getStartedOn();
 }

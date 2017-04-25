@@ -178,6 +178,22 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       final ODocument nodeCfg = new ODocument();
       nodeCfg.setTrackingChanges(false);
 
+      // REMOVE ANY PREVIOUS REGISTERED SERVER WITH THE SAME NODE NAME
+      final Set<String> node2Remove = new HashSet<String>();
+      for (Iterator<Map.Entry<String, Object>> it = configurationMap.getHazelcastMap().entrySet().iterator(); it.hasNext(); ) {
+        final Map.Entry<String, Object> entry = it.next();
+        if (entry.getKey().startsWith(CONFIG_NODE_PREFIX)) {
+          final ODocument nCfg = (ODocument) entry.getValue();
+          if (nodeName.equals(nCfg.field("name"))) {
+            // SAME NODE NAME: REMOVE IT
+            node2Remove.add(entry.getKey());
+          }
+        }
+      }
+
+      for (String n : node2Remove)
+        configurationMap.getHazelcastMap().remove(n);
+
       nodeCfg.field("id", nodeId);
       nodeCfg.field("uuid", nodeUuid);
       nodeCfg.field("name", nodeName);
@@ -217,22 +233,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       initSystemDatabase();
 
       ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE, "Servers in cluster: %s", activeNodes.keySet());
-
-      // REMOVE ANY PREVIOUS REGISTERED SERVER WITH THE SAME NODE NAME
-      final Set<String> node2Remove = new HashSet<String>();
-      for (Iterator<Map.Entry<String, Object>> it = configurationMap.getHazelcastMap().entrySet().iterator(); it.hasNext(); ) {
-        final Map.Entry<String, Object> entry = it.next();
-        if (entry.getKey().startsWith(CONFIG_NODE_PREFIX)) {
-          final ODocument nCfg = (ODocument) entry.getValue();
-          if (nodeName.equals(nCfg.field("name"))) {
-            // SAME NODE NAME: REMOVE IT
-            node2Remove.add(entry.getKey());
-          }
-        }
-      }
-
-      for (String n : node2Remove)
-        configurationMap.getHazelcastMap().remove(n);
 
       publishLocalNodeConfiguration();
 
@@ -1579,18 +1579,20 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       // NODE HAS NOT IS YET
       return;
 
-    // NOTIFY NODE IS GOING TO BE ADDED. IS EVERYBODY OK?
-    for (ODistributedLifecycleListener l : listeners) {
-      if (!l.onNodeJoining(joinedNodeName)) {
-        // DENY JOIN
-        ODistributedServerLog
-            .info(this, nodeName, getNodeName(member), DIRECTION.IN, "Denied node to join the cluster id=%s name=%s", member,
-                getNodeName(member));
-        return;
-      }
-    }
-
     if (activeNodes.putIfAbsent(joinedNodeName, member) == null) {
+      // NOTIFY NODE IS GOING TO BE ADDED. IS EVERYBODY OK?
+      for (ODistributedLifecycleListener l : listeners) {
+        if (!l.onNodeJoining(joinedNodeName)) {
+          // DENY JOIN
+          ODistributedServerLog
+              .info(this, nodeName, getNodeName(member), DIRECTION.IN, "Denied node to join the cluster id=%s name=%s", member,
+                  getNodeName(member));
+
+          activeNodes.remove(joinedNodeName);
+          return;
+        }
+      }
+
       activeNodesNamesByUuid.put(member.getUuid(), joinedNodeName);
       activeNodesUuidByName.put(joinedNodeName, member.getUuid());
 

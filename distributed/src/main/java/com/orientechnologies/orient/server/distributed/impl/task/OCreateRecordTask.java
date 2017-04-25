@@ -172,10 +172,9 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
             "Record " + rid + " has been saved with the different RID " + newRid + " on server " + iManager.getLocalNodeName());
       }
 
-      ODistributedServerLog.debug(this, iManager.getLocalNodeName(),
-
-          getNodeSource(), DIRECTION.IN, "+-> assigned new rid %s/%s v.%d reqId=%s", database.getName(), rid.toString(),
-          record.getVersion(), requestId);
+      ODistributedServerLog
+          .debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "+-> assigned new rid %s/%s v.%d reqId=%s",
+              database.getName(), rid.toString(), record.getVersion(), requestId);
     }
     }
 
@@ -206,12 +205,12 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
 
         final long minPos = Math.max(badResult.getIdentity().getClusterPosition() - 1, 0);
         for (long pos = minPos; pos < goodResult.getIdentity().getClusterPosition(); ++pos) {
-// UPDATE INTERMEDIATE RECORDS
+          // UPDATE INTERMEDIATE RECORDS
           final ORecordId toUpdateRid = new ORecordId(goodResult.getIdentity().getClusterId(), pos);
 
           final ORecord toUpdateRecord;
           if (dManager.getLocalNodeName().equals(executorNode)) {
-// SAME SERVER: LOAD THE RECORD FROM ANOTHER NODE
+            // SAME SERVER: LOAD THE RECORD FROM ANOTHER NODE
             final ODistributedConfiguration dCfg = dManager.getDatabaseConfiguration(iRequest.getDatabaseName());
             final List<String> nodes = dCfg
                 .getServers(ODatabaseRecordThreadLocal.INSTANCE.get().getClusterNameById(clusterId), dManager.getLocalNodeName());

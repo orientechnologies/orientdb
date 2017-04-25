@@ -533,7 +533,7 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
                 if (winner == NOT_FOUND) {
                   // NO WINNER, SKIP IT
                   ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-                      "Auto repair cannot find a winner for record %s and the following groups of contents %s", rid, groupedResult);
+                      "Auto repair cannot find a winner for record %s and the following groups of contents: %s", rid, groupedResult);
                   continue;
                 }
 
