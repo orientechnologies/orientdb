@@ -510,7 +510,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   public void acquireExclusiveLockTillOperationComplete(ODurableComponent durableComponent) {
     final OAtomicOperation operation = currentOperation.get();
     assert operation != null;
-    acquireExclusiveLockTillOperationComplete(operation, durableComponent.getFullName());
+    acquireExclusiveLockTillOperationComplete(operation, durableComponent.getLockName());
   }
 
   public void acquireReadLock(ODurableComponent durableComponent) {

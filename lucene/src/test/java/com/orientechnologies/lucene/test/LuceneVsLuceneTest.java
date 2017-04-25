@@ -43,8 +43,11 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.NIOFSDirectory;
 import org.assertj.core.api.Assertions;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,6 +59,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Created by enricorisa on 08/10/14.
  */
+@RunWith(JUnit4.class)
 public class LuceneVsLuceneTest extends BaseLuceneTest {
 
   private IndexWriter                    indexWriter;
@@ -63,6 +67,9 @@ public class LuceneVsLuceneTest extends BaseLuceneTest {
 
   @Before
   public void init() {
+    final String os = System.getProperty("os.name").toLowerCase();
+    Assume.assumeFalse(os.contains("win"));
+
     InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql");
 
     db.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
